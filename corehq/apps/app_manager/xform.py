@@ -1208,7 +1208,7 @@ class XForm(WrappedNode):
                 'calculate': self.resolve_path(path),
             }))
 
-    def add_care_plan(self, form, mode, case_type, case_name_path, case_changes):
+    def add_care_plan(self, form):
         from const import CAREPLAN_GOAL, CAREPLAN_TASK
         self.add_meta_2()
 
@@ -1219,20 +1219,20 @@ class XForm(WrappedNode):
                 nodeset=self.resolve_path('parent_case_id'),
                 calculate=session_var('parent_id')
             )
-            case_block.add_index_ref('parent', form.get_case_type(), ref_path='parent_case_id')
+            case_block.add_index_ref('parent', form.get_parent_case_type(), ref_path='parent_case_id')
 
-        if case_type == CAREPLAN_GOAL:
-            if mode == 'create':
+        if form.case_type == CAREPLAN_GOAL:
+            if form.mode == 'create':
                 case_block = CaseBlock(self)
                 case_block.add_create_block(
                     relevance='true()',
-                    case_name=case_name_path,
-                    case_type=case_type,
+                    case_name=form.name_path,
+                    case_type=form.case_type,
                     autoset_owner_id=False,
                     case_id=session_var('new_goal_id')
                 )
 
-                case_block.add_update_block(case_changes)
+                case_block.add_update_block(form.case_updates())
 
                 add_parent_case_id(case_block)
 
@@ -1244,25 +1244,25 @@ class XForm(WrappedNode):
                 )
 
                 self.data_node.append(case_block.elem)
-            elif mode == 'update':
+            elif form.mode == 'update':
                 case_parent = self.data_node
                 case_block = CaseBlock(self)
-                case_block.add_update_block(case_changes)
+                case_block.add_update_block(form.case_updates())
 
                 self.add_setvalue(
                     ref='case/@case_id',
                     value=SESSION_CASE_ID
                 )
 
-                case_block.add_close_block("%s = '%s'" % (self.resolve_path('close_goal'), 'yes'))
+                case_block.add_close_block("%s = '%s'" % (form.close_path, 'yes'))
 
                 # preload values from case
                 self.add_setvalue(
-                    ref=self.resolve_path('description_group/description'),
+                    ref=form.description_path,
                     value=SESSION_CASE_ID.case().property('description')
                 )
                 self.add_setvalue(
-                    ref=self.resolve_path('followup_date'),
+                    ref=form.date_followup_path,
                     value=SESSION_CASE_ID.case().property('date_followup')
                 )
 
@@ -1281,12 +1281,12 @@ class XForm(WrappedNode):
                 )
 
                 self.data_node.find('{x}tasks_to_close').append(task_case_block.elem)
-        elif case_type == CAREPLAN_TASK:
-            if mode == 'create':
+        elif form.case_type == CAREPLAN_TASK:
+            if form.mode == 'create':
                 case_block = CaseBlock(self, path=self.resolve_path('task_repeat'))
                 case_block.add_create_block(
                     relevance='true()',
-                    case_name='../../../name',
+                    case_name=form.name_path,
                     case_type=CAREPLAN_TASK,
                     autoset_owner_id=False,
                     case_id=session_var('new_task_id')
@@ -1299,20 +1299,20 @@ class XForm(WrappedNode):
                     event='xforms-revalidate'
                 )
 
-                case_block.add_update_block(case_changes)
+                case_block.add_update_block(form.case_updates())
 
                 add_parent_case_id(case_block)
                 case_block.add_index_ref('goal', CAREPLAN_TASK, ref_path='case_id_goal')
 
                 self.data_node.find('{x}task_repeat').append(case_block.elem)
-            elif mode == 'update':
+            elif form.mode == 'update':
                 case_block = CaseBlock(self)
-                case_block.add_update_block(case_changes)
+                case_block.add_update_block(form.case_updates())
 
                 self.add_setvalue(
                     ref='case/@case_id',
                     value=SESSION_CASE_ID
                 )
 
-                case_block.add_close_block(self.resolve_path('/data/task_complete'), 'yes')
+                case_block.add_close_block(form.close_path, 'yes')
                 self.data_node.append(case_block.elem)

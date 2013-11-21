@@ -31,8 +31,7 @@ from restkit.errors import ResourceError
 from couchdbkit.resource import ResourceNotFound
 
 from corehq.apps.app_manager.commcare_settings import check_condition
-from corehq.apps.app_manager.const import APP_V1, APP_V2, CAREPLAN_TASK, CAREPLAN_GOAL, \
-    CAREPLAN_DEFAULT_CASE_PROPERTIES, CAREPLAN_NAME_PATH, CAREPLAN_CASE_NAMES
+from corehq.apps.app_manager.const import APP_V1, APP_V2, CAREPLAN_TASK, CAREPLAN_GOAL, CAREPLAN_CASE_NAMES
 from corehq.apps.app_manager.xpath import dot_interpolate
 from corehq.util.hash_compat import make_password
 from dimagi.utils.couch.lazy_attachment_doc import LazyAttachmentDoc
@@ -1047,37 +1046,40 @@ class Module(ModuleBase):
 
 
 class CareplanForm(FormBase, IndexedSchema, NavMenuItemMediaMixin):
-
-    case_type = StringProperty(required=True, choices=[CAREPLAN_GOAL, CAREPLAN_TASK])
     mode = StringProperty(required=True, choices=['create', 'update'])
     custom_case_updates = DictProperty()
 
     @classmethod
-    def new_form(cls, lang, name, case_type, mode):
-        action = 'Update' if mode == 'update' else 'New'
-        name = name or '%s Careplan %s' % (action, CAREPLAN_CASE_NAMES[case_type])
-        form = CareplanForm(name={lang: name}, case_type=case_type, mode=mode)
-        source = load_form_template('%s_%s.xml' % (case_type, mode))
-        return form, source
-
-    def _case_changes(self):
-        case_changes = CAREPLAN_DEFAULT_CASE_PROPERTIES[self.case_type][self.mode].copy()
-        case_changes.update(self.custom_case_updates)
-        return case_changes
+    def wrap(cls, data):
+        if cls is CareplanForm:
+            doc_type = data['doc_type']
+            if doc_type == 'CareplanGoalForm':
+                return CareplanGoalForm.wrap(data)
+            elif doc_type == 'CareplanTaskForm':
+                return CareplanTaskForm.wrap(data)
+            else:
+                raise ValueError('Unexpected doc_type for CareplanForm', doc_type)
+        else:
+            return super(CareplanForm, cls).wrap(data)
 
     def add_stuff_to_xform(self, xform):
         super(CareplanForm, self).add_stuff_to_xform(xform)
-        case_changes = self._case_changes()
-        xform.add_care_plan(self, self.mode, self.case_type, CAREPLAN_NAME_PATH, case_changes)
+        xform.add_care_plan(self)
 
     def get_app(self):
         return self._parent._parent
 
     def get_case_updates(self, case_type):
         if case_type == self.case_type:
-            return self._case_changes().keys()
+            return self.case_updates().keys()
         else:
             return []
+
+    def get_case_type(self):
+        return self.case_type
+
+    def get_parent_case_type(self):
+        return self._parent.case_type
 
     def get_parent_types_and_contributed_properties(self, module_case_type, case_type):
         parent_types = set()
@@ -1087,9 +1089,105 @@ class CareplanForm(FormBase, IndexedSchema, NavMenuItemMediaMixin):
                 parent_types.add(module_case_type)
             elif case_type == CAREPLAN_TASK:
                 parent_types.add(CAREPLAN_GOAL)
-            case_properties.update(self._case_changes().keys())
+            case_properties.update(self.case_updates().keys())
 
         return parent_types, case_properties
+
+
+class CareplanGoalForm(CareplanForm):
+    case_type = CAREPLAN_GOAL
+    name_path = StringProperty(required=True, default='/data/name')
+    date_followup_path = StringProperty(required=True, default='/data/date_followup')
+    description_path = StringProperty(required=True, default='/data/description')
+    close_path = StringProperty(required=True, default='/data/close_goal')
+
+    @classmethod
+    def new_form(cls, lang, name, mode):
+        action = 'Update' if mode == 'update' else 'New'
+        form = CareplanGoalForm(mode=mode)
+        name = name or '%s Careplan %s' % (action, CAREPLAN_CASE_NAMES[form.case_type])
+        form.name = {lang: name}
+        if mode == 'update':
+            form.description_path = '/data/description_group/description'
+        source = load_form_template('%s_%s.xml' % (form.case_type, mode))
+        return form, source
+
+    def case_updates(self):
+        changes = self.custom_case_updates.copy()
+        changes.update({
+            'date_followup': self.date_followup_path,
+            'description': self.description_path,
+        })
+        return changes
+
+    def get_fixed_questions(self):
+        def q(name, label):
+            return {
+                'name': name,
+                'label': label,
+                'path': self[name]
+            }
+        questions = [
+            q('description_path', _('Description')),
+            q('date_followup_path', _('Followup date')),
+        ]
+        if self.mode == 'create':
+            return [q('name_path', _('Name'))] + questions
+        else:
+            return questions + [q('close_path', _('Close if'))]
+
+
+class CareplanTaskForm(CareplanForm):
+    case_type = CAREPLAN_TASK
+    name_path = StringProperty(required=True, default='/data/task_repeat/name')
+    date_followup_path = StringProperty(required=True, default='/data/date_followup')
+    description_path = StringProperty(required=True, default='/data/description')
+    latest_report_path = StringProperty(required=True, default='/data/progress_group/progress_update')
+    close_path = StringProperty(required=True, default='/data/task_complete')
+
+    @classmethod
+    def new_form(cls, lang, name, mode):
+        action = 'Update' if mode == 'update' else 'New'
+        form = CareplanTaskForm(mode=mode)
+        name = name or '%s Careplan %s' % (action, CAREPLAN_CASE_NAMES[form.case_type])
+        form.name = {lang: name}
+        if mode == 'create':
+            form.date_followup_path = '/data/task_repeat/date_followup'
+            form.description_path = '/data/task_repeat/description'
+        source = load_form_template('%s_%s.xml' % (form.case_type, mode))
+        return form, source
+
+    def case_updates(self):
+        changes = self.custom_case_updates.copy()
+        changes.update({
+            'date_followup': self.date_followup_path,
+        })
+        if self.mode == 'create':
+            changes['description'] = self.description_path,
+        else:
+            changes['latest_report'] = self.latest_report_path
+        return changes
+
+    def get_fixed_questions(self):
+        def q(name, label):
+            return {
+                'name': name,
+                'label': label,
+                'path': self[name]
+            }
+        questions = [
+            q('date_followup_path', _('Followup date')),
+        ]
+        if self.mode == 'create':
+            return [
+                q('name_path', _('Name')),
+                q('description_path', _('Description')),
+            ] + questions
+        else:
+            return questions + [
+                q('latest_report_path', _('Latest report')),
+                q('close_path', _('Close if')),
+            ]
 
 
 class CareplanModule(ModuleBase):

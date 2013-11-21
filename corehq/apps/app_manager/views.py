@@ -58,7 +58,7 @@ from corehq.apps.reports import util as report_utils
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
 from corehq.apps.app_manager.models import Application, get_app, DetailColumn, Form, FormActions,\
     AppError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, \
-    DeleteApplicationRecord, str_to_cls, validate_lang, SavedAppBuild, ParentSelect, Module, CareplanModule, CareplanForm
+    DeleteApplicationRecord, str_to_cls, validate_lang, SavedAppBuild, ParentSelect, Module, CareplanModule, CareplanForm, CareplanGoalForm, CareplanTaskForm
 from corehq.apps.app_manager.models import DETAIL_TYPES, import_app as import_app_util, SortElement
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST
@@ -835,8 +835,8 @@ def _new_careplan_module(req, domain, app, name, lang):
         target_module.case_type)
     )
 
-    forms = [CareplanForm.new_form(lang, name, case_type, mode)
-                for case_type in [CAREPLAN_GOAL, CAREPLAN_TASK]
+    forms = [form_class.new_form(lang, name, mode)
+                for form_class in [CareplanGoalForm, CareplanTaskForm]
                 for mode in ['create', 'update']]
 
     for form, source in forms:
