@@ -201,3 +201,16 @@ def get_correct_app_class(doc):
         "RemoteApp": RemoteApp,
         "RemoteApp-Deleted": RemoteApp,
     }[doc['doc_type']]
+
+
+def all_apps_by_domain(domain):
+    from corehq.apps.app_manager.models import ApplicationBase
+    rows = ApplicationBase.get_db().view(
+        'app_manager/applications',
+        startkey=[domain, None],
+        endkey=[domain, None, {}],
+        include_docs=True,
+    ).all()
+    for row in rows:
+        doc = row['doc']
+        yield get_correct_app_class(doc).wrap(doc)
