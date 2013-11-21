@@ -360,6 +360,7 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
     ] if not is_user_registration else None
 
     context = {
+        'nav_form': form if not is_user_registration else '',
         'xform_languages': languages,
         "xform_questions": xform_questions,
         'case_reserved_words_json': load_case_reserved_words(),
@@ -370,12 +371,12 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
 
     if isinstance(form, CareplanForm):
         context.update({
-
+            'fixed_questions': form.get_fixed_questions(),
+            'custom_case_properties': form.custom_case_updates,
         })
         return "app_manager/form_view_careplan.html", context
     else:
         context.update({
-            'nav_form': form if not is_user_registration else '',
             'is_user_registration': is_user_registration,
             'show_custom_ref': toggle_enabled(toggles.APP_BUILDER_CUSTOM_PARENT_REF, request.user.username),
         })
@@ -1233,6 +1234,18 @@ def edit_form_actions(req, domain, app_id, module_id, form_id):
     response_json = {}
     app.save(response_json)
     response_json['propertiesMap'] = get_all_case_properties(app)
+    return json_response(response_json)
+
+@no_conflict_require_POST
+@require_can_edit_apps
+def edit_careplan_form_actions(req, domain, app_id, module_id, form_id):
+    app = get_app(domain, app_id)
+    form = app.get_module(module_id).get_form(form_id)
+    fixed_questions = json.loads(req.POST.get('fixed_questions'))
+    for question in fixed_questions:
+        setattr(form, question['name'], question['path'])
+    response_json = {}
+    app.save(response_json)
     return json_response(response_json)
 
 @require_can_edit_apps
