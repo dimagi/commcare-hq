@@ -15,7 +15,7 @@
                         <update_description>yes</update_description>
                         <description/>
                     </description_group>
-                    <followup_date/>
+                    <date_followup/>
                     <child_tasks/>
                     <count_tasks/>
                     <cur_count>0</cur_count>
@@ -40,7 +40,7 @@
                   relevant="/data/description_group/update_description = 'yes'"
                   required="true()"/>
 
-            <bind nodeset="/data/followup_date" type="xsd:date" relevant="/data/close_goal = 'no'" required="true()"/>
+            <bind nodeset="/data/date_followup" type="xsd:date" relevant="/data/close_goal = 'no'" required="true()"/>
 
             <bind nodeset="/data/display_closed_group" relevant="/data/close_goal='yes'"/>
 
@@ -72,7 +72,7 @@
                     <text id="description-label">
                         <value>Goal Description</value>
                     </text>
-                    <text id="followup_date-label">
+                    <text id="date_followup-label">
                         <value>When will you next follow up about this goal?</value>
                     </text>
                     <text id="tasks_to_close-label">
@@ -116,8 +116,8 @@
                 <label ref="jr:itext('description-label')"/>
             </input>
         </group>
-        <input ref="/data/followup_date">
-            <label ref="jr:itext('followup_date-label')"/>
+        <input ref="/data/date_followup">
+            <label ref="jr:itext('date_followup-label')"/>
         </input>
         <group ref="/data/display_closed_group">
             <group>
