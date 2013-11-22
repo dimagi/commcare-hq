@@ -30,17 +30,17 @@ LAST_NAMES = [ "Acevedo", "Acosta", "Andrews", "Baldwin", "Ball", "Barton", "Bea
                "Shannon", "Simpson", "Snyder", "Stevenson", "Swanson", "Tate", "Thornton", "Turner",
                "Vinson", "Waller", "Webster", "William", "Wilson", "Wong" ]
 
-def random_firstname():
+def arbitrary_firstname():
     return random.choice(FIRST_NAMES) 
 
-def random_lastname():
+def arbitrary_lastname():
     return random.choice(LAST_NAMES) 
 
-def random_fullname():
-    return "%s %s" % (random_firstname(), random_lastname())
+def arbitrary_fullname():
+    return "%s %s" % (arbitrary_firstname(), arbitrary_lastname())
 
-def random_username():
-    return username_from_name(random_fullname())
+def arbitrary_username():
+    return username_from_name(arbitrary_fullname())
 
 def username_from_name(name):
     if " " not in name:
@@ -68,6 +68,6 @@ def instantiate(generator_or_value):
 def arbitrary_unique_name(prefix=None, suffix=None):
     prefix = instantiate(prefix or '')
     suffix = instantiate(suffix or '')
-    return prefix + random_lastname() + uuid.uuid4().hex + suffix
+    return prefix + arbitrary_lastname() + uuid.uuid4().hex + suffix
 
 
