@@ -1,5 +1,6 @@
 import logging
 from django.dispatch import Signal
+from corehq.apps.commtrack import const
 from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.apps.commtrack.models import Program, SupplyPointCase, Product, RequisitionCase
 from corehq.apps.domain.models import Domain
@@ -165,7 +166,7 @@ def sync_requisition_from_openlmis(domain, requisition_id, openlmis_endpoint):
     cases = []
     send_notification = False
     lmis_requisition_details = openlmis_endpoint.get_requisition_details(requisition_id)
-    rec_cases = RequisitionCase.get_by_external_id(domain, lmis_requisition_details.id)
+    rec_cases = [RequisitionCase.wrap(c._doc) for c in RequisitionCase.get_by_external_id(domain, lmis_requisition_details.id) if c.type == const.REQUISITION_CASE_TYPE]
     if rec_cases is None:
         for product in lmis_requisition_details.products:
             pdt = Product.get_by_code(domain, product.code)

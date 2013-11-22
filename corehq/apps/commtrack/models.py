@@ -903,7 +903,7 @@ class RequisitionCase(CommCareCase):
 
     @classmethod
     def get_by_external_id(cls, domain, external_id):
-        return cls.view('commtrack/requisition_by_external',
+        return cls.view('hqcase/by_domain_external_id',
                         key=[domain, external_id],
                         inlude_docs=True)
 
