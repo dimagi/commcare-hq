@@ -1,4 +1,5 @@
 import random
+import uuid
 
 # these lists arbitrarily generated once from http://www.generatedata.com/
 
@@ -29,17 +30,22 @@ LAST_NAMES = [ "Acevedo", "Acosta", "Andrews", "Baldwin", "Ball", "Barton", "Bea
                "Shannon", "Simpson", "Snyder", "Stevenson", "Swanson", "Tate", "Thornton", "Turner",
                "Vinson", "Waller", "Webster", "William", "Wilson", "Wong" ]
 
-def random_firstname():
+
+def arbitrary_firstname():
     return random.choice(FIRST_NAMES) 
 
-def random_lastname():
+
+def arbitrary_lastname():
     return random.choice(LAST_NAMES) 
 
-def random_fullname():
-    return "%s %s" % (random_firstname(), random_lastname())
 
-def random_username():
-    return username_from_name(random_fullname())
+def arbitrary_fullname():
+    return "%s %s" % (arbitrary_firstname(), arbitrary_lastname())
+
+
+def arbitrary_username():
+    return username_from_name(arbitrary_fullname())
+
 
 def username_from_name(name):
     if " " not in name:
@@ -47,6 +53,27 @@ def username_from_name(name):
     splits = name.split(" ")
     return ("%s%s" % (splits[0][0], splits[-1])).lower()
 
+
 def random_phonenumber(numdigits=11):
     return "+" + "".join(str(random.randint(0,9)) for i in range(numdigits))
+
+
+def instantiate(generator_or_value):
+    """
+    Dynamic typing hack to try to call generators if provided,
+    otherwise return the value directly if not callable. This will
+    break badly if used for values that can be callable.
+    """
+
+    if callable(generator_or_value):
+        return generator_or_value()
+    else:
+        return generator_or_value
+
+
+def arbitrary_unique_name(prefix=None, suffix=None):
+    prefix = instantiate(prefix or '')
+    suffix = instantiate(suffix or '')
+    return prefix + arbitrary_lastname() + uuid.uuid4().hex + suffix
+
 
