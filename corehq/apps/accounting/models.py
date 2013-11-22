@@ -4,29 +4,17 @@ from django.db import models
 from corehq.apps.accounting.exceptions import HQAccountingSetupError
 
 
-class BaseChoice(object):
-
-    @classmethod
-    def get_choices(cls):
-        """
-        Returns a list of choices:
-        [
-            (<value>, <user text>),
-        ]
-        """
-        raise NotImplementedError("please return a list of choices")
-
-
-class BillingAccountType(BaseChoice):
+class BillingAccountType(object):
     CONTRACT = "CONTRACT"
     USER_CREATED = "USER_CREATED"
+    CHOICES = (
+        (CONTRACT, "Created by contract"),
+        (USER_CREATED, "Created by user"),
+    )
 
-    @classmethod
-    def get_choices(cls):
-        return (
-            (cls.CONTRACT, "Created by contract"),
-            (cls.USER_CREATED, "Created by user"),
-        )
+
+
+
 
 
 class Currency(models.Model):
@@ -82,7 +70,7 @@ class BillingAccount(models.Model):
     account_type = models.CharField(
         max_length=25,
         default=BillingAccountType.CONTRACT,
-        choices=BillingAccountType.get_choices(),
+        choices=BillingAccountType.CHOICES,
     )
 
     @property
