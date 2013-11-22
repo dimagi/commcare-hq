@@ -30,23 +30,29 @@ LAST_NAMES = [ "Acevedo", "Acosta", "Andrews", "Baldwin", "Ball", "Barton", "Bea
                "Shannon", "Simpson", "Snyder", "Stevenson", "Swanson", "Tate", "Thornton", "Turner",
                "Vinson", "Waller", "Webster", "William", "Wilson", "Wong" ]
 
+
 def arbitrary_firstname():
     return random.choice(FIRST_NAMES) 
+
 
 def arbitrary_lastname():
     return random.choice(LAST_NAMES) 
 
+
 def arbitrary_fullname():
     return "%s %s" % (arbitrary_firstname(), arbitrary_lastname())
 
+
 def arbitrary_username():
     return username_from_name(arbitrary_fullname())
+
 
 def username_from_name(name):
     if " " not in name:
         return name.lower()
     splits = name.split(" ")
     return ("%s%s" % (splits[0][0], splits[-1])).lower()
+
 
 def random_phonenumber(numdigits=11):
     return "+" + "".join(str(random.randint(0,9)) for i in range(numdigits))
