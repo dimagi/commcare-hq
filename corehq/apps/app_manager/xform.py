@@ -14,7 +14,7 @@ def parse_xml(string):
     try:
         return ET.fromstring(string, parser=ET.XMLParser(encoding="utf-8", remove_comments=True))
     except ET.ParseError, e:
-        raise XFormError("Error parsing XML" + (": %s" % e if e.message else ""))
+        raise XFormError("Error parsing XML" + (": %s" % str(e)))
 
 
 namespaces = dict(
@@ -81,6 +81,29 @@ class IndicatorXpath(XPath):
         return XPath(u"instance('%s')/indicators/case[@id = current()/@case_id]" % self).slash(indicator_name)
 
 
+class WrappedAttribs(object):
+    def __init__(self, attrib, namespaces=namespaces):
+        self.attrib = attrib
+        self.namespaces = namespaces
+
+    def __getattr__(self, name):
+        return getattr(self.attrib, name)
+
+    def __contains__(self, item):
+        return item.format(**self.namespaces) in self.attrib
+
+    def __setitem__(self, item, value):
+        self.attrib[item.format(**self.namespaces)] = value
+
+    def get(self, item, default=None):
+        try:
+            return self[item]
+        except KeyError:
+            return default
+
+    def __getitem__(self, item):
+        return self.attrib[item.format(**self.namespaces)]
+
 class WrappedNode(object):
     def __init__(self, xml, namespaces=namespaces):
         if isinstance(xml, basestring):
@@ -89,26 +112,36 @@ class WrappedNode(object):
             self.xml = xml
         self.namespaces=namespaces
 
-    def __getattr__(self, name):
-        if name in ('find', 'findall', 'findtext'):
-            wrap = {
-                'find': WrappedNode,
-                'findall': lambda list: map(WrappedNode, list),
-                'findtext': lambda text: text
-            }[name]
-            none = {
-                'find': lambda: WrappedNode(None),
-                'findall': list,
-                'findtext': lambda: None
-            }[name]
-            def _fn(xpath, *args, **kwargs):
-                if self.xml is not None:
-                    return wrap(getattr(self.xml, name)(xpath.format(**self.namespaces), *args, **kwargs))
-                else:
-                    return none()
-            return _fn
+    def find(self, xpath, *args, **kwargs):
+        if self.xml:
+            return WrappedNode(self.xml.find(
+                xpath.format(**self.namespaces), *args, **kwargs))
         else:
-            return getattr(self.xml, name)
+            return WrappedNode(None)
+
+    def findall(self, xpath, *args, **kwargs):
+        if self.xml:
+            return [WrappedNode(n) for n in self.xml.findall(
+                    xpath.format(**self.namespaces), *args, **kwargs)]
+        else:
+            return []
+
+    def findtext(self, xpath, *args, **kwargs):
+        if self.xml:
+            return self.xml.findtext(
+                    xpath.format(**self.namespaces), *args, **kwargs)
+        else:
+            return None
+
+    @property
+    def attrib(self):
+        return WrappedAttribs(self.xml.attrib, namespaces=self.namespaces)
+
+    def __getattr__(self, attr):
+        return getattr(self.xml, attr)
+
+    def __nonzero__(self):
+        return self.xml is not None
 
     @property
     def tag_xmlns(self):
