@@ -8,11 +8,7 @@ class BillingAccountType(object):
         (CONTRACT, "Created by contract"),
         (USER_CREATED, "Created by user"),
     )
-
-
-
-
-
+    
 
 class Currency(models.Model):
     """
