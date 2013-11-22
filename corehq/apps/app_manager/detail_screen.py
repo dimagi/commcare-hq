@@ -1,6 +1,6 @@
 from corehq.apps.app_manager import suite_xml as sx
 from corehq.apps.app_manager.util import is_sort_only_column
-from corehq.apps.app_manager.xform import CaseXPath, IndicatorXpath
+from corehq.apps.app_manager.xml_utils import CaseXPath, IndicatorXpath
 from corehq.apps.app_manager.xpath import dot_interpolate
 
 CASE_PROPERTY_MAP = {

@@ -1,0 +1,128 @@
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+	<h:head>
+		<h:title>New Careplan Task</h:title>
+		<model>
+			<instance>
+				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://dev.commcarehq.org/pact/careplan/task/create" uiVersion="1" version="1" name="New Careplan Task">
+					
+					<task_repeat jr:template="">
+					<g/>
+					
+						<case xmlns="http://commcarehq.org/case/transaction/v2" case_id="" date_modified="" user_id="">
+			    			<create>
+			    				<case_type>pact_careplan_task</case_type>
+			        			<owner_id/>
+			        			<case_name/>
+			    			</create>
+			    			<update>
+								<description/>
+								<date_followup/>
+			    			</update>
+			    			<index>
+			    				<parent case_type="cc_path_client"/>
+			    				<goal case_type="pact_careplan_goal"/>
+			    			</index>
+						</case>
+
+					
+						<name />
+						<description />
+						<date_followup />
+					</task_repeat>
+					
+					<parent_case_id/>
+					<pact_id/>
+					<orx:meta xmlns:cc="http://commcarehq.org/xforms">
+						<orx:deviceID />
+						<orx:timeStart />
+						<orx:timeEnd />
+						<orx:username />
+						<orx:userID />
+						<orx:instanceID />
+						<cc:appVersion />
+					</orx:meta>
+				</data>
+			</instance>
+			<instance src="jr://instance/session" id="commcaresession" />
+			<instance id="casedb" src="jr://instance/casedb"/>
+			
+			<setvalue ref="/data/meta/deviceID" event="xforms-ready"
+				value="instance('commcaresession')/session/context/deviceid" />
+			<setvalue ref="/data/meta/timeStart" event="xforms-ready"
+				value="now()" />
+			<bind nodeset="/data/meta/timeStart" type="xsd:dateTime" />
+			<setvalue ref="/data/meta/timeEnd" event="xforms-revalidate"
+				value="now()" />
+			<bind nodeset="/data/meta/timeEnd" type="xsd:dateTime" />
+			<setvalue ref="/data/meta/username" event="xforms-ready"
+				value="instance('commcaresession')/session/context/username" />
+			<setvalue ref="/data/meta/userID" event="xforms-ready"
+				value="instance('commcaresession')/session/context/userid" />
+			<setvalue ref="/data/meta/instanceID" event="xforms-ready"
+				value="uuid()" />
+			<setvalue ref="/data/meta/appVersion" event="xforms-ready"
+				value="instance('commcaresession')/session/context/appversion" />
+				
+			
+							
+			<bind nodeset="/data/task_repeat/case/@date_modified" type="xsd:dateTime" calculate="/data/meta/timeEnd"/>
+			<bind nodeset="/data/task_repeat/case/@user_id" calculate="/data/meta/userID"/>
+			<bind nodeset="/data/task_repeat/case/@case_id" type="xsd:string" calculate="uuid()"/>
+			
+			<bind nodeset="/data/parent_case_id" calculate="instance('commcaresession')/session/data/case_id"/>
+			<bind nodeset="/data/pact_id" calculate="instance('casedb')/casedb/case[@case_id= /data/parent_case_id]/pactid" />		
+			
+			
+			<bind nodeset="/data/task_repeat/case/create/case_name" type="xsd:string" calculate="../../../name"/>
+			<bind nodeset="/data/task_repeat/case/create/case_name" type="xsd:string" calculate="../../../name"/>
+			<bind nodeset="/data/task_repeat/case/create/owner_id" calculate="instance('casedb')/casedb/case[@case_id= /data/parent_case_id]/@owner_id"/>
+						
+			<bind nodeset="/data/task_repeat/case/update/description" type="xsd:string" calculate="../../../description"/>
+			<bind nodeset="/data/task_repeat/case/update/date_followup" calculate="../../../date_followup"/>
+			
+			
+			<bind nodeset="/data/task_repeat/case/index/parent" calculate="/data/parent_case_id"/>
+			<bind nodeset="/data/task_repeat/case/index/goal" calculate="instance('commcaresession')/session/data/case_id_goal"/>
+			
+			<bind nodeset="/data/task_repeat" />
+			<bind nodeset="/data/task_repeat/name" type="xsd:string" required="true()" />
+			<bind nodeset="/data/task_repeat/description" type="xsd:string"/>
+			<bind nodeset="/data/task_repeat/date_followup" type="xsd:date" />
+			
+			<itext>
+				<translation lang="en" default="">
+					<text id="task_repeat-label">
+						<value>Care Plan Tasks</value>
+					</text>
+					<text id="name-label">
+						<value>Give this task a short name which will be used to refer to it later</value>
+					</text>
+					<text id="description-label">
+						<value>Describe this the task and what needs to be done for it to be accomplished</value>
+					</text>
+					<text id="date_followup-label">
+						<value>When will you follow up to check on progress towards this task?</value>
+					</text>
+				</translation>
+			</itext>
+		</model>
+	</h:head>
+	<h:body>
+		<group>
+			<label ref="jr:itext('task_repeat-label')" />
+			<repeat nodeset="/data/task_repeat">
+				<group ref="/data/task_repeat/g" appearance="field-list">
+				<input ref="/data/task_repeat/name">
+					<label ref="jr:itext('name-label')" />
+				</input>
+				<input ref="/data/task_repeat/description">
+					<label ref="jr:itext('description-label')" />
+				</input>
+				<input ref="/data/task_repeat/date_followup">
+					<label ref="jr:itext('date_followup-label')" />
+				</input>
+				</group>
+			</repeat>
+		</group>
+	</h:body>
+</h:html>

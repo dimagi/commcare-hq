@@ -519,13 +519,13 @@ class SuiteGenerator(object):
         from corehq.apps.app_manager.detail_screen import get_column_generator
         if not self.app.use_custom_suite:
             for module in self.modules:
-                for detail_type, detail in module.get_details():
+                for detail_type, detail, enabled in module.get_details():
                     detail_column_infos = get_detail_column_infos(
                         detail,
                         include_sort=detail_type.endswith('short'),
                     )
 
-                    if detail_column_infos and detail_type in ('case_short', 'case_long'):
+                    if detail_column_infos and enabled:
                         d = Detail(
                             id=self.id_strings.detail(module, detail_type),
                             title=Text(locale_id=self.id_strings.detail_title_locale(module, detail_type))
@@ -604,7 +604,7 @@ class SuiteGenerator(object):
     @property
     def entries(self):
         # avoid circular dependency
-        from corehq.apps.app_manager.models import CareplanForm
+        from corehq.apps.app_manager.models import CareplanForm, Module
 
         detail_ids = [detail.id for detail in self.details]
         def get_detail_id_safe(module, detail_type):
@@ -624,7 +624,7 @@ class SuiteGenerator(object):
                                    src='jr://instance/session')
 
                 indicator_sets = []
-                for _, detail in module.get_details():
+                for _, detail, _ in module.get_details():
                     for column in detail.get_columns():
                         if column.field_type == FIELD_TYPE_INDICATOR:
                             indicator_set, _ = column.field_property.split('/', 1)
@@ -661,13 +661,13 @@ class SuiteGenerator(object):
                 ))
 
         def add_careplan_stuff(module, form, e):
-            e.instances.extend(Instance(id='casedb', src='jr://instance/casedb'))
+            e.instances.append(Instance(id='casedb', src='jr://instance/casedb'))
             if form.case_type == CAREPLAN_TASK or form.mode == 'update':
-                e.instances.extend(Instance(id='commcaresession', src='jr://instance/session'))
+                e.instances.append(Instance(id='commcaresession', src='jr://instance/session'))
 
             parent_module = self.get_module_by_id(module.parent_select.module_id)
             e.datums.append(SessionDatum(
-                id='parent_id',
+                id='case_id',
                 nodeset=self.get_nodeset_xpath(parent_module, False),
                 value="./@case_id",
                 detail_select=get_detail_id_safe(module, 'case_short'),
@@ -676,7 +676,7 @@ class SuiteGenerator(object):
 
             def session_datum(datum_id, case_type, parent_ref, parent_val):
                 nodeset = CaseTypeXpath(case_type).case().select(
-                    'index/%s' % parent_ref, session_var(parent_val)
+                    'index/%s' % parent_ref, session_var(parent_val), quote=False
                 ).select('@status', 'open')
                 return SessionDatum(
                     id=datum_id,
@@ -698,35 +698,35 @@ class SuiteGenerator(object):
                         if_clause='{count} = 1'.format(count=CaseIDXPath(session_var('new_goal_id')).case().count())
                     )
                     frame.add_command(self.id_strings.menu(parent_module))
-                    frame.add_datum(StackDatum(id='parent_id', value=session_var('parent_id')))
+                    frame.add_datum(StackDatum(id='case_id', value=session_var('case_id')))
                     frame.add_command(self.id_strings.menu(module))
-                    frame.add_datum(StackDatum(id='case_id', value=session_var('new_goal_id')))
+                    frame.add_datum(StackDatum(id='case_id_goal', value=session_var('new_goal_id')))
                     e.stack.add_frame(frame)
                 elif form.mode == 'update':
-                    e.datums.append(session_datum('case_id', CAREPLAN_GOAL, 'parent', 'parent_id'))
+                    e.datums.append(session_datum('case_id_goal', CAREPLAN_GOAL, 'parent', 'case_id'))
             elif form.case_type == CAREPLAN_TASK:
                 if form.mode == 'create':
                     e.datums.append(SessionDatum(
                         id='new_task_id',
                         function='uuid()'
                     ))
-                    e.datums.append(session_datum('case_id_goal', CAREPLAN_GOAL, 'parent', 'parent_id'))
+                    e.datums.append(session_datum('case_id_goal', CAREPLAN_GOAL, 'parent', 'case_id'))
                 elif form.mode == 'update':
-                    e.datums.append(session_datum('case_id_goal', CAREPLAN_GOAL, 'parent', 'parent_id'))
-                    e.datums.append(session_datum('case_id', CAREPLAN_TASK, 'goal', 'case_id_goal'))
+                    e.datums.append(session_datum('case_id_goal', CAREPLAN_GOAL, 'parent', 'case_id'))
+                    e.datums.append(session_datum('case_id_task', CAREPLAN_TASK, 'goal', 'case_id_goal'))
 
                     e.stack = Stack()
                     count = CaseTypeXpath(CAREPLAN_TASK).case().select(
-                        'index/goal', session_var('case_goal_id')
+                        'index/goal', session_var('case_id_goal'), quote=False
                     ).select('@status', 'open').count()
                     frame = CreateFrame(
                         if_clause='{count} = 1'.format(count=count)
                     )
                     frame.add_command(self.id_strings.menu(parent_module))
-                    frame.add_datum(StackDatum(id='parent_id', value=session_var('parent_id')))
+                    frame.add_datum(StackDatum(id='case_id', value=session_var('case_id')))
                     frame.add_command(self.id_strings.menu(module))
-                    frame.add_datum(StackDatum(id='case_goal_id', value=session_var('case_goal_id')))
-                    frame.add_command(Command(id=self.id_strings.form_command(module.get_form_by_type(CAREPLAN_TASK, 'update'))))
+                    frame.add_datum(StackDatum(id='case_id_goal', value=session_var('case_id_goal')))
+                    frame.add_command(self.id_strings.form_command(module.get_form_by_type(CAREPLAN_TASK, 'update')))
                     e.stack.add_frame(frame)
 
         def case_sharing_requires_assertion(form):
@@ -763,7 +763,7 @@ class SuiteGenerator(object):
                 if self.app.case_sharing and case_sharing_requires_assertion(form):
                     add_case_sharing_assertion(e)
                 yield e
-            if module.case_list.show:
+            if isinstance(module, Module) and module.case_list.show:
                 e = Entry(
                     command=Command(
                         id=self.id_strings.case_list_command(module),
@@ -784,20 +784,20 @@ class SuiteGenerator(object):
                 create_menu = Menu(
                     id=self.id_strings.menu(parent),
                     locale_id=self.id_strings.module_locale(parent),
-                    commands=[Command(id=self.id_strings.form_command(create_goal_form))]
                 )
+                create_menu.commands.append(Command(id=self.id_strings.form_command(create_goal_form)))
                 yield create_menu
 
                 update_menu = Menu(
                     id=self.id_strings.menu(module),
                     root=self.id_strings.menu(parent),
                     locale_id=self.id_strings.module_locale(module),
-                    commands=[
-                        Command(id=self.id_strings.form_command(module.get_form_by_type(CAREPLAN_GOAL, 'update'))),
-                        Command(id=self.id_strings.form_command(module.get_form_by_type(CAREPLAN_TASK, 'create'))),
-                        Command(id=self.id_strings.form_command(module.get_form_by_type(CAREPLAN_TASK, 'update'))),
-                    ]
                 )
+                update_menu.commands.extend([
+                    Command(id=self.id_strings.form_command(module.get_form_by_type(CAREPLAN_GOAL, 'update'))),
+                    Command(id=self.id_strings.form_command(module.get_form_by_type(CAREPLAN_TASK, 'create'))),
+                    Command(id=self.id_strings.form_command(module.get_form_by_type(CAREPLAN_TASK, 'update'))),
+                ])
                 yield update_menu
             else:
                 menu = Menu(

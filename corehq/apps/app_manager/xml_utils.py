@@ -58,8 +58,10 @@ class XMLTag(XMLObject):
         else:
             return children
 
+
 def session_var(var):
     return u"instance('commcaresession')/session/data/%s" % var
+
 
 class XPath(unicode):
     def slash(self, xpath):
@@ -68,8 +70,10 @@ class XPath(unicode):
         else:
             return XPath(xpath)
 
-    def select(self, ref, value):
-        return XPath('{self}[{ref} = {value}]'.format(self=self, ref=ref, value=value))
+    def select(self, ref, value, quote=True):
+        if quote:
+            value = "'{val}'".format(val=value)
+        return XPath("{self}[{ref}={value}]".format(self=self, ref=ref, value=value))
 
     def count(self):
         return XPath('count({self})'.format(self=self))
@@ -89,6 +93,9 @@ class CaseIDXPath(CaseSelectionXPath):
 class CaseTypeXpath(CaseSelectionXPath):
     selector = '@case_type'
 
+    def case(self):
+        return CaseXPath(u"instance('casedb')/casedb/case[%s='%s']" % (self.selector, self))
+
 
 class CaseXPath(XPath):
 
@@ -100,3 +107,9 @@ class CaseXPath(XPath):
 
     def property(self, property):
         return self.slash(property)
+
+
+class IndicatorXpath(XPath):
+
+    def indicator(self, indicator_name):
+        return XPath(u"instance('%s')/indicators/case[@id = current()/@case_id]" % self).slash(indicator_name)

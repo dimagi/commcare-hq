@@ -51,12 +51,6 @@ def get_case_parent_id_xpath(parent_path):
 SESSION_CASE_ID = CaseIDXPath(session_var('case_id'))
 
 
-class IndicatorXpath(XPath):
-
-    def indicator(self, indicator_name):
-        return XPath(u"instance('%s')/indicators/case[@id = current()/@case_id]" % self).slash(indicator_name)
-
-
 class WrappedAttribs(object):
     def __init__(self, attrib, namespaces=namespaces):
         self.attrib = attrib
@@ -1246,13 +1240,14 @@ class XForm(WrappedNode):
     def add_care_plan(self, form):
         from const import CAREPLAN_GOAL, CAREPLAN_TASK
         self.add_meta_2()
+        self.add_instance('casedb', src='jr://instance/casedb')
 
         def add_parent_case_id(case_block):
             parent_case_id = _make_elem('parent_case_id')
             self.data_node.append(parent_case_id)
             self.add_bind(
                 nodeset=self.resolve_path('parent_case_id'),
-                calculate=session_var('parent_id')
+                calculate=session_var('case_id')
             )
             case_block.add_index_ref('parent', form.get_parent_case_type(), ref_path='parent_case_id')
 
@@ -1284,9 +1279,10 @@ class XForm(WrappedNode):
                 case_block = CaseBlock(self)
                 case_block.add_update_block(form.case_updates())
 
+                idx_path = CaseIDXPath(session_var('case_id_goal'))
                 self.add_setvalue(
                     ref='case/@case_id',
-                    value=SESSION_CASE_ID
+                    value=session_var('case_id_goal')
                 )
 
                 case_block.add_close_block("%s = '%s'" % (form.close_path, 'yes'))
@@ -1294,25 +1290,28 @@ class XForm(WrappedNode):
                 # preload values from case
                 self.add_setvalue(
                     ref=form.description_path,
-                    value=SESSION_CASE_ID.case().property('description')
+                    value=idx_path.case().property('description')
                 )
                 self.add_setvalue(
                     ref=form.date_followup_path,
-                    value=SESSION_CASE_ID.case().property('date_followup')
+                    value=idx_path.case().property('date_followup')
                 )
 
                 # load task case ID's into child_tasks node
                 self.add_setvalue(
                     ref=self.resolve_path('child_tasks'),
-                    value="join(' ', %s)" % CaseTypeXpath(CAREPLAN_TASK).case().select('index/goal', SESSION_CASE_ID).select('@status', 'open').slash('@case_id')
+                    value="join(' ', %s)" % CaseTypeXpath(CAREPLAN_TASK).case().select(
+                        'index/goal', session_var('case_id_goal'), quote=False
+                    ).select('@status', 'open').slash('@case_id')
                 )
 
                 case_parent.append(case_block.elem)
 
-                task_case_block = CaseBlock(self, path='tasks_to_close')
-                self.add_setvalue(
-                    ref='case/@case_id',
-                    value='selected-at(%s, ../../@index)' % self.resolve_path('child_tasks')
+                task_case_block = CaseBlock(self, path='tasks_to_close/')
+                task_case_block.elem.append(make_case_elem('close'))
+                self.add_bind(
+                    nodeset=self.resolve_path('tasks_to_close/case/@case_id'),
+                    calculate='selected-at(%s, ../../@index)' % self.resolve_path('child_tasks')
                 )
 
                 self.data_node.find('{x}tasks_to_close').append(task_case_block.elem)
@@ -1346,7 +1345,7 @@ class XForm(WrappedNode):
 
                 self.add_setvalue(
                     ref='case/@case_id',
-                    value=SESSION_CASE_ID
+                    value=CaseIDXPath(session_var('case_id_task'))
                 )
 
                 case_block.add_close_block(form.close_path, 'yes')
