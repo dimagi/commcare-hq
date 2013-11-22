@@ -168,7 +168,7 @@ class CaseBlock(object):
 
         self.xform.add_bind(
             nodeset="%scase/@date_modified" % path,
-            type="dateTime",
+            type="xsd:dateTime",
             calculate=self.xform.resolve_path("meta/timeEnd")
         )
         self.xform.add_bind(

@@ -33,7 +33,7 @@
                     </text>
                 </translation>
             </itext>
-            <bind nodeset="/data/case/@date_modified" type="dateTime" calculate="/data/meta/timeEnd"/>
+            <bind nodeset="/data/case/@date_modified" type="xsd:dateTime" calculate="/data/meta/timeEnd"/>
             <bind nodeset="/data/case/@user_id" calculate="/data/meta/userID"/>
             <setvalue ref="/data/case/@case_id" event="xforms-ready" value="uuid()"/>
             <bind nodeset="/data/case/create/case_name" calculate="/data/question1"/>

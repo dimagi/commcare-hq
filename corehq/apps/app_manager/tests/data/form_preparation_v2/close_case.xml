@@ -29,7 +29,7 @@
                     </text>
                 </translation>
             </itext>
-            <bind nodeset="/data/case/@date_modified" type="dateTime" calculate="/data/meta/timeEnd"/>
+            <bind nodeset="/data/case/@date_modified" type="xsd:dateTime" calculate="/data/meta/timeEnd"/>
             <bind nodeset="/data/case/@user_id" calculate="/data/meta/userID"/>
             <bind nodeset="/data/case/@case_id" calculate="instance('commcaresession')/session/data/case_id"/>
             <setvalue ref="/data/meta/deviceID" event="xforms-ready" value="instance('commcaresession')/session/context/deviceid"/>
