@@ -16,7 +16,7 @@ class MCHBaseReport(CustomProjectReport, CaseListReport):
     emailable = False
 
     fields = [
-        'corehq.apps.reports.fields.GroupField',
+        'custom.bihar.fields.SelectCaseSharingGroupField',
         'corehq.apps.reports.fields.SelectOpenCloseField',
     ]
 
