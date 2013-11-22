@@ -3,7 +3,7 @@ Created on Nov 30, 2011
 
 @author: czue
 '''
-from dimagi.utils.data.generator import random_phonenumber, random_fullname,\
+from dimagi.utils.data.generator import random_phonenumber, arbitrary_fullname,\
     random_lastname, arbitrary_username
 from lxml import etree
 import random
@@ -20,16 +20,16 @@ CRS_CHECKLIST = "http://openrosa.org/formdesigner/51283B9F-F810-44C9-8BCE-0A170F
 CRS_BIRTH = "http://openrosa.org/formdesigner/B3CEEEFF-0673-4AAF-8A77-AC6C0DB68ADD"
 
 FORM_CONFIG = { CRS_REGISTRATION: {
-                    "full_name": random_fullname,
+                    "full_name": arbitrary_fullname,
                     "age": random_momage,
                     "number": random_phonenumber,
-                    "husband_name": random_fullname,
+                    "husband_name": arbitrary_fullname,
                     "hamlet_name": random_lastname,
-                    "case/create/case_name": random_fullname, 
-                    "case/update/husband_name": random_fullname,
+                    "case/create/case_name": arbitrary_fullname,
+                    "case/update/husband_name": arbitrary_fullname,
                     "meta/username": arbitrary_username },
                 CRS_CHECKLIST: {
-                    "client_name": random_fullname,
+                    "client_name": arbitrary_fullname,
                     "meta/username": arbitrary_username,
                     # all the yes/no's that we want to randomize
                     # this is pretty ugly but we'll deal with it for now
