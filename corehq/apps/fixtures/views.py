@@ -215,81 +215,134 @@ def view(request, domain, template='fixtures/view.html'):
 DELETE_HEADER = "Delete(Y/N)"
 @require_can_edit_fixtures
 def download_item_lists(request, domain):
-    data_types = FixtureDataType.by_domain(domain)
-    data_type_schemas = []
-    max_fields = 0
-    max_groups = 0
-    max_users = 0
-    mmax_groups = 0
-    mmax_users = 0
-    data_tables = []
+    data_types_view = FixtureDataType.by_domain(domain)
+    # book-keeping data from views for latter use
+    data_types_book = []
+    data_items_boook_by_type = {}
+    item_helpers_by_type = {}
+    """
+        Contains all excel sheets in following format
+        excel_sheets = {
+            "types": {
+                "headers": [],
+                "rows": [(row), (row), (row)]
+            }
+            "next-sheet": {
+                "headers": [],
+                "rows": [(row), (row), (row)]
+            },
+            ...
+        }
+    """
+    excel_sheets = {}
     
     def _get_empty_list(length):
         return ["" for x in range(0, length)]
 
-
-    # Fills sheets' schemas and data
-    for data_type in data_types:
-        type_schema = [str(_id_from_doc(data_type)), "N", data_type.name, data_type.tag, yesno(data_type.is_global)]
-        fields = [field for field in data_type.fields]
-        type_id = data_type.get_id
-        data_table_of_type = []
-        for item_row in FixtureDataItem.by_data_type(domain, type_id):
+    max_fields = 0
+    """
+        - Helper to generate headers like "field 2: property 1"
+        - Captures max_num_of_properties for any field of any type at the list-index.
+        Example values:
+            [0, 1] -> "field 2: property 1" (first-field has zero-props, second has 1 property)
+            [1, 1] -> "field 1: property 1" (first-field has 1 property, second has 1 property)
+            [0, 2] -> "field 2: property 1", "field 2: property 2"
+    """
+    field_prop_count = []
+    """
+        captures all possible 'field-property' values for each data-type
+        Example value
+          {u'clinics': {'field 2 : property 1': u'lang'}, u'growth_chart': {'field 2 : property 2': u'maxWeight'}}
+    """
+    type_field_properties = {}
+    get_field_prop_format = lambda x, y: "field " + str(x) +" : property" + str(y) 
+    for data_type in data_types_view:
+        # Helpers to generate 'types' sheet
+        type_field_properties[data_type.name] = {}
+        data_types_book.append(data_type)
+        if len(data_type.fields) > max_fields:
+            max_fields = len(data_type.fields)
+        for index, field in enumerate(data_type.fields):
+            if len(field_prop_count) <= index:
+                field_prop_count.append(len(field.properties))
+            elif field_prop_count[index] <= len(field.properties):
+                field_prop_count[index] = len(field.properties)
+            if len(field.properties) > 0:
+                for prop_index, property in enumerate(field.properties):
+                    prop_key = get_field_prop_format(index + 1, prop_index + 1)
+                    type_field_properties[data_type.name][prop_key] = property
+        # Helpers to generate item-sheets
+        data_items_boook_by_type[data_type.name] = []
+        max_users = 0
+        max_groups = 0
+        max_field_prop_combos = {field_name: 0 for field_name in data_type.fields_without_attributes}
+        property_check = {field.field_name: False if len(field.properties)==0 else True for field in data_type.fields}
+        for item_row in FixtureDataItem.by_data_type(domain, data_type.get_id):
+            data_items_boook_by_type[data_type.name].append(item_row)
             group_len = len(item_row.get_groups())
             max_groups = group_len if group_len>max_groups else max_groups
             user_len = len(item_row.get_users())
             max_users = user_len if user_len>max_users else max_users
-        for item_row in FixtureDataItem.by_data_type(domain, type_id):
-            groups = [group.name for group in item_row.get_groups()] + _get_empty_list(max_groups - len(item_row.get_groups()))
-            users = [user.raw_username for user in item_row.get_users()] + _get_empty_list(max_users - len(item_row.get_users()))
-            data_row = tuple([str(_id_from_doc(item_row)), "N"] +
-                             [item_row.fields.get(field, None) or "" for field in fields] +
-                             groups + users)
-            data_table_of_type.append(data_row)
-        type_schema.extend(fields)
-        data_type_schemas.append(tuple(type_schema))
-        if max_fields<len(type_schema):
-            max_fields = len(type_schema)
-        data_tables.append((data_type.tag,tuple(data_table_of_type)))
-        mmax_users = max_users if max_users>mmax_users else mmax_users
-        mmax_groups = max_groups if max_groups>mmax_groups else mmax_groups
-        max_users = 0
-        max_groups = 0
+            for field_key in item_row.fields:
+                max_combos = max_field_prop_combos[field_key]
+                cur_combo_len = len(item_row.fields[field_key].field_list)
+                max_combos = cur_combo_len if cur_combo_len > max_combos else max_combos
+                max_field_prop_combos[field_key] = max_combos
+        item_helpers = {
+            "max_users": max_users, 
+            "max_groups": max_groups, 
+            "max_field_prop_combos": max_field_prop_combos,
+            "property_check": property_check
+        }
+        item_helpers_by_type[data_type.name] = item_helpers
 
-    type_headers = ["UID", DELETE_HEADER, "name", "tag", 'is_global?'] + ["field %d" % x for x in range(1, max_fields - 4)]
-    type_headers = ("types", tuple(type_headers))
-    table_headers = [type_headers]    
-    for type_schema in data_type_schemas:
-        item_header = (type_schema[3], tuple(["UID", DELETE_HEADER] +
-                                             ["field: " + x for x in type_schema[5:]] +
-                                             ["group %d" % x for x in range(1, mmax_groups + 1)] +
-                                             ["user %d" % x for x in range(1, mmax_users + 1)]))
-        table_headers.append(item_header)
+    ###########################################################################
+    #                       Prepare 'types' sheet data
+    ###########################################################################
+    types_sheet = {"headers": [], "rows": []}
+    types_sheet["headers"] = ["UID", DELETE_HEADER, "name", "tag", 'is_global?']
+    types_sheet["headers"].extend(["field %d" % x for x in range(1, max_fields + 1)])
+    field_prop_headers = []   
+    for field_num, prop_num in enumerate(field_prop_count):
+        if prop_num > 0:
+            for c in range(0, prop_num):
+                prop_key = get_field_prop_format(field_num + 1, c + 1)
+                field_prop_headers.append(prop_key)
+                types_sheet["headers"].append(prop_key)
 
-    table_headers = tuple(table_headers)
-    type_rows = ("types", tuple(data_type_schemas))
-    data_tables = tuple([type_rows]+data_tables)
+    for data_type in data_types_book:
+        common_vals = [str(_id_from_doc(data_type)), "N", data_type.name, data_type.tag, yesno(data_type.is_global)]
+        field_vals = [field.field_name for field in data_type.fields] + 
+                    _get_empty_list(max_fields - len(data_type.fields))
+        prop_vals = []
+        if type_field_properties.has_key(data_type.name):
+            props = type_field_properties.get(data_type.name)
+            prop_vals.extend([props.get(key, "") for key in field_prop_headers])
+        row = tuple(common_vals + field_vals + prop_vals)
+        types_sheet["rows"].append(row)
 
-    """
-    Example of sheets preperation:
-    
-    headers:
-     (("employee", ("id", "name", "gender")),
-      ("building", ("id", "name", "address")))
-    
-    data:
-     (("employee", (("1", "cory", "m"),
-                    ("2", "christian", "m"),
-                    ("3", "amelia", "f"))),
-      ("building", (("1", "dimagi", "585 mass ave."),
-                    ("2", "old dimagi", "529 main st."))))
-    """
-    
-    fd, path = tempfile.mkstemp()
-    with os.fdopen(fd, 'w') as temp:
-        export_raw((table_headers), (data_tables), temp)
-    format = Format.XLS_2007
-    return export_response(open(path), format, "%s_fixtures" % domain)
+    excel_sheets["types"] = types_sheet
+    print field_prop_count, type_field_properties, types_sheet
+
+    ###########################################################################
+    #                Prepare 'items' sheet data for each data-type
+    ###########################################################################
+
+    for data_type in data_types_book:
+        item_sheet = {"headers": [], "rows": []}
+        common_headers = ["UID", DELETE_HEADER]
+        user_headers = []
+        group_headers = []
+        field_headers = []
+        item_helpers = item_helpers_by_type[data_type.name]
+        max_users = item_helpers["max_users"]
+        max_groups = item_helpers["max_groups"]
+        max_field_prop_combos = item_helpers["max_field_prop_combos"]
+        for item in data_items_boook_by_type[data_type.name]:
+            user_headers = ["user %d" % x for x in range(1, mmax_users + 1)]
+            group_headers = ["group %d" % x for x in range(1, mmax_groups + 1)]
+            for field_key in item.fields:
+
 
 
 class UploadItemLists(TemplateView):
