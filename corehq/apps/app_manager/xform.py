@@ -440,7 +440,7 @@ class XForm(WrappedNode):
             langs.append(translation.attrib['lang'])
         return langs
 
-    def get_questions(self, langs):
+    def get_questions(self, langs, include_triggers=False):
         """
         parses out the questions from the xform, into the format:
         [{"label": label, "tag": tag, "value": value}, ...]
@@ -476,14 +476,15 @@ class XForm(WrappedNode):
         def build_questions(group, path_context="", repeat_context="", exclude=False):
             repeat_contexts.add(repeat_context)
             for prompt in group.findall('*'):
-                if prompt.tag_xmlns == namespaces['f'][1:-1] and prompt.tag_name != "label":
+                tag = prompt.tag_name
+                if prompt.tag_xmlns == namespaces['f'][1:-1] and tag != "label":
                     path = self.resolve_path(get_path(prompt), path_context)
                     excluded_paths.add(path)
-                    if prompt.tag_name == "group":
+                    if tag == "group":
                         build_questions(prompt, path_context=path, repeat_context=repeat_context)
-                    elif prompt.tag_name == "repeat":
+                    elif tag == "repeat":
                         build_questions(prompt, path_context=path, repeat_context=path)
-                    elif prompt.tag_name not in ("trigger", "label"):
+                    elif include_triggers or tag != "trigger":
                         if not exclude:
                             question = {
                                 "label": self.get_label_text(prompt, langs),

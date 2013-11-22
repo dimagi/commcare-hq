@@ -305,7 +305,7 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
 
         try:
             form.validate_form()
-            xform_questions = xform.get_questions(langs)
+            xform_questions = xform.get_questions(langs, include_triggers=True)
         except etree.XMLSyntaxError as e:
             form_errors.append("Syntax Error: %s" % e)
         except AppError as e:
