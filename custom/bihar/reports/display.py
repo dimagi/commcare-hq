@@ -1,5 +1,6 @@
 from datetime import date, timedelta
 import re
+import dateutil
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
 from casexml.apps.case.models import CommCareCase
 from django.utils.translation import ugettext as _
@@ -32,17 +33,16 @@ class MCHDisplay(CaseDisplay):
 
         if self.user:
             setattr(self, "_village", get_property(self.user.user_data, "village"))
-            setattr(self, "_asha_name", self.user.full_name if get_property(self.user.user_data, "role").upper() is "ASHA" else get_property(self.user.user_data, "partner_name"))
-
-            if get_property(self.user.user_data, "role").upper() is "ASHA":
-                setattr(self, "_asha_number", self.user.phone_numbers[0] if len(self.user.phone_numbers) > 0 else EMPTY_FIELD)
+            setattr(self, "_asha_name", self.user.full_name if get_property(self.user.user_data, "role").upper() == "ASHA" else get_property(self.user.user_data, "partner_name"))
+            if get_property(self.user.user_data, "role").upper() == "ASHA":
+                setattr(self, "_asha_number", self.user.default_phone_number if self.user.default_phone_number else EMPTY_FIELD)
             else:
                 setattr(self, "_asha_number", get_property(self.user.user_data, "partner_phone"))
 
             setattr(self, "_awc_code_name", "%s, %s" % (get_property(self.user.user_data, "awc-code"), get_property(self.user.user_data, "village")))
-            setattr(self, "_aww_name", get_property(self.user.user_data, "name") if get_property(self.user.user_data, "role").upper() is "AWW" else get_property(self.user.user_data, "partner_name"))
+            setattr(self, "_aww_name", get_property(self.user.user_data, "name") if get_property(self.user.user_data, "role").upper() == "AWW" else get_property(self.user.user_data, "partner_name"))
 
-            if get_property(self.user.user_data, "role").upper() is "AWW":
+            if get_property(self.user.user_data, "role").upper() == "AWW":
                 setattr(self, "_aww_number", self.user.phone_numbers[0] if len(self.user.phone_numbers) > 0 else EMPTY_FIELD)
             else:
                 setattr(self, "_aww_number", get_property(self.user.user_data, "partner_phone"))
@@ -87,6 +87,12 @@ class MCHDisplay(CaseDisplay):
     @property
     def caste(self):
         return getattr(self, "_caste", EMPTY_FIELD)
+
+    def parse_date(self, date_string):
+        if date_string != EMPTY_FIELD and date_string != '' and date_string is not None:
+            return self.report.date_to_json(CaseDisplay.parse_date(self, date_string))
+        else:
+            return EMPTY_FIELD
 
 
 class MCHMotherDisplay(MCHDisplay):
@@ -165,7 +171,11 @@ class MCHMotherDisplay(MCHDisplay):
 
     @property
     def mobile_number_whose(self):
-        return get_property(self.case, "mobile_number_whose")
+        number = get_property(self.case, "mobile_number_whose")
+        if re.match(r"^mobile_", number):
+            return re.sub(r"^mobile_", "", number, flags=re.IGNORECASE)
+        else:
+            return number
 
     @property
     def mcts_id(self):
@@ -178,9 +188,9 @@ class MCHMotherDisplay(MCHDisplay):
                 mother_dob = self.case["mother_dob"]
 
                 if type(mother_dob) is dict:
-                    mother_dob =  mother_dob["#value"]
-
-                days = (date.today() - self.parse_date(mother_dob).date()).days
+                    mother_dob = mother_dob["#value"]
+                days = (date.today() - CaseDisplay.parse_date(self, mother_dob).date()).days
+                mother_dob = self.parse_date(mother_dob)
                 return "%s, %s" % (mother_dob, days/365)
             except:
                 return _("Bad date format!")
@@ -189,47 +199,47 @@ class MCHMotherDisplay(MCHDisplay):
 
     @property
     def lmp(self):
-        return get_property(self.case, "lmp")
+        return self.parse_date(get_property(self.case, "lmp"))
 
     @property
     def edd(self):
-        return get_property(self.case, "edd")
+        return self.parse_date(get_property(self.case, "edd"))
 
     @property
     def anc_date_1(self):
-        return get_property(self.case, "anc_1_date")
+        return self.parse_date(get_property(self.case, "anc_1_date"))
 
     @property
     def anc_date_2(self):
-        return get_property(self.case, "anc_2_date")
+        return self.parse_date(get_property(self.case, "anc_2_date"))
 
     @property
     def anc_date_3(self):
-        return get_property(self.case, "anc_3_date")
+        return self.parse_date(get_property(self.case, "anc_3_date"))
 
     @property
     def anc_date_4(self):
-        return get_property(self.case, "anc_4_date")
+        return self.parse_date(get_property(self.case, "anc_4_date"))
 
     @property
     def tt1_date(self):
-        return get_property(self.case, "tt_1_date")
+        return self.parse_date(get_property(self.case, "tt_1_date"))
 
     @property
     def tt2_date(self):
-        return get_property(self.case, "tt_2_date")
+        return self.parse_date(get_property(self.case, "tt_2_date"))
 
     @property
     def tt_booster(self):
-        return get_property(self.case, "tt_booster")
+        return self.parse_date(get_property(self.case, "tt_booster"))
 
     @property
     def ifa_tablets(self):
-        return get_property(self.case, "ifa_tablets_100")
+        return self.parse_date(get_property(self.case, "ifa_tablets_100"))
 
     @property
     def add(self):
-        return get_property(self.case, "add")
+        return self.parse_date(get_property(self.case, "add"))
 
     @property
     def first_pnc_time(self):
@@ -320,7 +330,7 @@ class MCHMotherDisplay(MCHDisplay):
         lmp = self.lmp
         anc_date_1 = self.anc_date_1
         if lmp != EMPTY_FIELD and anc_date_1 != EMPTY_FIELD:
-            return _("yes") if self.parse_date(self.anc_date_1) < (self.parse_date(self.lmp) + timedelta(days=12*7)) else _("no")
+            return _("yes") if CaseDisplay.parse_date(self, self.anc_date_1) < (CaseDisplay.parse_date(self, self.lmp) + timedelta(days=12*7)) else _("no")
         else:
             return EMPTY_FIELD
 
@@ -409,7 +419,7 @@ class MCHChildDisplay(MCHDisplay):
                 parent_json = parent_case.case_properties()
 
                 setattr(self, "_father_mother_name", "%s, %s" %(get_property(parent_json,"husband_name"), get_property(parent_json, "mother_name")))
-                setattr(self, "_mcts_id", get_property(parent_json, "mcts_id"))
+                setattr(self, "_full_mcts_id", get_property(parent_json, "full_mcts_id"))
                 setattr(self, "_ward_number", get_property(parent_json, "ward_number"))
                 setattr(self, "_mobile_number", get_property(parent_json, "mobile_number"))
                 setattr(self, "_mobile_number_whose", get_property(parent_json, "mobile_number_whose"))
@@ -438,7 +448,7 @@ class MCHChildDisplay(MCHDisplay):
 
     @property
     def mcts_id(self):
-        return getattr(self, "_mcts_id", EMPTY_FIELD)
+        return getattr(self, "_full_mcts_id", EMPTY_FIELD)
 
     @property
     def ward_number(self):
@@ -462,83 +472,83 @@ class MCHChildDisplay(MCHDisplay):
 
     @property
     def bcg_date(self):
-        return get_property(self.case, "bcg_date")
+        return self.parse_date(get_property(self.case, "bcg_date"))
 
     @property
     def opv_0_date(self):
-        return get_property(self.case, "opv_0_date")
+        return self.parse_date(get_property(self.case, "opv_0_date"))
 
     @property
     def hep_b_0_date(self):
-        return get_property(self.case, "hep_b_0_date")
+        return self.parse_date(get_property(self.case, "hep_b_0_date"))
 
     @property
     def dpt_1_date(self):
-        return get_property(self.case, "dpt_1_date")
+        return self.parse_date(get_property(self.case, "dpt_1_date"))
 
     @property
     def opv_1_date(self):
-        return get_property(self.case, "opv_1_date")
+        return self.parse_date(get_property(self.case, "opv_1_date"))
 
     @property
     def hep_b_1_date(self):
-        return get_property(self.case, "hep_b_1_date")
+        return self.parse_date(get_property(self.case, "hep_b_1_date"))
 
     @property
     def dpt_2_date(self):
-        return get_property(self.case, "dpt_2_date")
+        return self.parse_date(get_property(self.case, "dpt_2_date"))
 
     @property
     def opv_2_date(self):
-        return get_property(self.case, "opv_2_date")
+        return self.parse_date(get_property(self.case, "opv_2_date"))
 
     @property
     def hep_b_2_date(self):
-        return get_property(self.case, "hep_b_2_date")
+        return self.parse_date(get_property(self.case, "hep_b_2_date"))
 
     @property
     def dpt_3_date(self):
-        return get_property(self.case, "dpt_3_date")
+        return self.parse_date(get_property(self.case, "dpt_3_date"))
 
     @property
     def opv_3_date(self):
-        return get_property(self.case, "opv_3_date")
+        return self.parse_date(get_property(self.case, "opv_3_date"))
 
     @property
     def hep_b_3_date(self):
-        return get_property(self.case, "hep_b_3_date")
+        return self.parse_date(get_property(self.case, "hep_b_3_date"))
 
     @property
     def measles_date(self):
-        return get_property(self.case, "measles_date")
+        return self.parse_date(get_property(self.case, "measles_date"))
 
     @property
     def vit_a_1_date(self):
-        return get_property(self.case, "vit_a_1_date")
+        return self.parse_date(get_property(self.case, "vit_a_1_date"))
 
     @property
     def date_measles_booster(self):
-        return get_property(self.case, "date_measles_booster")
+        return self.parse_date(get_property(self.case, "date_measles_booster"))
 
     @property
     def dpt_booster_date(self):
-        return get_property(self.case, "dpt_booster_date")
+        return self.parse_date(get_property(self.case, "dpt_booster_date"))
 
     @property
     def opv_booster_date(self):
-        return get_property(self.case, "opv_booster_date")
+        return self.parse_date(get_property(self.case, "opv_booster_date"))
 
     @property
     def vit_a_2_date(self):
-        return get_property(self.case, "vit_a_2_date")
+        return self.parse_date(get_property(self.case, "vit_a_2_date"))
 
     @property
     def vit_a_3_date(self):
-        return get_property(self.case, "vit_a_3_date")
+        return self.parse_date(get_property(self.case, "vit_a_3_date"))
 
     @property
     def date_je(self):
-        return get_property(self.case, "date_je")
+        return self.parse_date(get_property(self.case, "date_je"))
 
     @property
     def dob_age(self):
@@ -547,10 +557,10 @@ class MCHChildDisplay(MCHDisplay):
                 dob = self.case["dob"]
 
                 if type(dob) is dict:
-                    dob =  dob["#value"]
-
-                days = (date.today() - self.parse_date(dob).date()).days
-                return "%s, %s" % (dob, days/365)
+                    dob = dob["#value"]
+                days = (date.today() - CaseDisplay.parse_date(self, dob).date()).days
+                dob = self.parse_date(dob)
+                return "%s, %s" % (dob, int(days/365.25))
             except:
                 return _("Bad date format!")
         else:
