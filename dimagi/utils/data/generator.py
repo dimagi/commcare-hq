@@ -1,4 +1,5 @@
 import random
+import uuid
 
 # these lists arbitrarily generated once from http://www.generatedata.com/
 
@@ -49,4 +50,24 @@ def username_from_name(name):
 
 def random_phonenumber(numdigits=11):
     return "+" + "".join(str(random.randint(0,9)) for i in range(numdigits))
+
+
+def instantiate(generator_or_value):
+    """
+    Dynamic typing hack to try to call generators if provided,
+    otherwise return the value directly if not callable. This will
+    break badly if used for values that can be callable.
+    """
+
+    if callable(generator_or_value):
+        return generator_or_value()
+    else:
+        return generator_or_value
+
+
+def random_unique_name(prefix=None, suffix=None):
+    prefix = instantiate(prefix or '')
+    suffix = instantiate(suffix or '')
+    return prefix + random_lastname() + uuid.uuid4().hex + suffix
+
 
