@@ -32,7 +32,7 @@ class ApplicationStatusReport(DeploymentsReport):
     def headers(self):
         return DataTablesHeader(DataTablesColumn(_("Username")),
             DataTablesColumn(_("Last Seen (UTC)"),sort_type=DTSortType.NUMERIC),
-            DataTablesColumn(_("Application [Deployed Build]")))
+            DataTablesColumn(_("Application (Deployed Build)")))
 
     @property
     def rows(self):
