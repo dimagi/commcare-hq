@@ -1,9 +1,31 @@
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-from corehq.apps.accounting.exceptions import HQAccountingSetupError
 from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES
-from corehq.apps.accounting.utils import BillingAccountType
+
+
+class BaseChoice(object):
+
+    @classmethod
+    def get_choices(cls):
+        """
+        Returns a list of choices:
+        [
+            (<value>, <user text>),
+        ]
+        """
+        raise NotImplementedError("please return a list of choices")
+
+
+class BillingAccountType(BaseChoice):
+    CONTRACT = "CONTRACT"
+    USER_CREATED = "USER_CREATED"
+
+    @classmethod
+    def get_choices(cls):
+        return (
+            (cls.CONTRACT, "Created by contract"),
+            (cls.USER_CREATED, "Created by user"),
+        )
 
 
 class Currency(models.Model):
