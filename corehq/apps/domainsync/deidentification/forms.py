@@ -4,7 +4,7 @@ Created on Nov 30, 2011
 @author: czue
 '''
 from dimagi.utils.data.generator import random_phonenumber, arbitrary_fullname,\
-    random_lastname, arbitrary_username
+    arbitrary_lastname, arbitrary_username
 from lxml import etree
 import random
 from couchforms.models import XFormInstance
@@ -24,7 +24,7 @@ FORM_CONFIG = { CRS_REGISTRATION: {
                     "age": random_momage,
                     "number": random_phonenumber,
                     "husband_name": arbitrary_fullname,
-                    "hamlet_name": random_lastname,
+                    "hamlet_name": arbitrary_lastname,
                     "case/create/case_name": arbitrary_fullname,
                     "case/update/husband_name": arbitrary_fullname,
                     "meta/username": arbitrary_username },
