@@ -140,6 +140,9 @@ def supply_point_to_json(supply_point):
     return base
 
 
+def sync_stock_data_to_openlmis(submission, openlmis_endpoint):
+    return openlmis_endpoint.submit_requisition(submission)
+
 def sync_supply_point_to_openlmis(supply_point, openlmis_endpoint, create=True):
     """
     https://github.com/OpenLMIS/documents/blob/master/4.1-CreateVirtualFacility%20API.md
