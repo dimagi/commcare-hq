@@ -65,7 +65,7 @@ def instantiate(generator_or_value):
         return generator_or_value
 
 
-def random_unique_name(prefix=None, suffix=None):
+def arbitrary_unique_name(prefix=None, suffix=None):
     prefix = instantiate(prefix or '')
     suffix = instantiate(suffix or '')
     return prefix + random_lastname() + uuid.uuid4().hex + suffix
