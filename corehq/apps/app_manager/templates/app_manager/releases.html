@@ -259,27 +259,7 @@
                 <h3>{% trans "Deploying version" %} <span data-bind="text: version"></span></h3>
             </div>
             <div class="modal-body">
-                <div data-bind="visible: case_sharing() && $root.users_cannot_share.length">
-                    <p>
-                        <span class="label label-important">{% trans "Warning!" %}</span>
-                        {% blocktrans %}
-                        The following users cannot use this case sharing app because they have either more or less than one group.
-                        To fix this, please 
-                        {% endblocktrans %}
-                        <a href="{% url "commcare_users" domain %}?cannot_share=true&more_columns=true">{% trans "edit their group settings" %}</a>
-                        {% trans "so that they all belong to exactly one group." %}
-                    </p>
-                    <ul data-bind="foreach: $root.users_cannot_share">
-                        <li data-bind="text: username"></li>
-                    </ul>
-                    <p>
-                        <a href="{% url "commcare_users" domain %}?cannot_share=true&more_columns=true" class="btn">{% trans "Edit mobile users" %}</a>
-                        <a class="btn" data-bind="click: function () {return $root.deployAnyway[id()](true);}">{% trans "Deploy anyway" %}</a>
-                    </p>
-                </div>
-                <div class="accordion" data-bind="bootstrapCollapse: true,
-                    visible: $root.deployAnyway[id()]() || !(case_sharing() && $root.users_cannot_share.length)
-                ">
+                <div class="accordion" data-bind="bootstrapCollapse: true">
                     <div class="accordion-group">
                         <div class="accordion-heading">
                             <a class="accordion-toggle" data-bind="attr: {href: $root.url('emulator', id)}">
