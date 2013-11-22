@@ -83,4 +83,4 @@ class ForceCloseCaseTest(TestCase):
             case.force_close_referral(case.referrals[i])
         case.force_close("/a/{domain}/receiver".format(domain=domain))
         case = CommCareCase.get(case_id)
-        self.failUnless(case.closed)
+        self.assertTrue(case.closed)

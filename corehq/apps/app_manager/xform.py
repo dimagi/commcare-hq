@@ -269,6 +269,16 @@ class CaseBlock(object):
             calculate=self.xform.resolve_path(ref_path),
         )
 
+
+def autoset_owner_id_for_open_case(actions):
+    return not ('update_case' in actions and
+                'owner_id' in actions['update_case'].update)
+
+
+def autoset_owner_id_for_subcase(subcase):
+    return 'owner_id' not in subcase.case_properties
+
+
 class XForm(WrappedNode):
     """
     A bunch of utility functions for doing certain specific
@@ -283,7 +293,7 @@ class XForm(WrappedNode):
             self.namespaces.update(x="{%s}" % xmlns)
 
     def validate(self, version='1.0'):
-        validation_results = formtranslate.api.validate(ET.tostring(self.xml) if self.xml else '', version=version)
+        validation_results = formtranslate.api.validate(ET.tostring(self.xml) if self.xml is not None else '', version=version)
         if not validation_results.success:
             raise XFormValidationError(validation_results.fatal_error, version, validation_results.problems)
         return self
@@ -762,10 +772,7 @@ class XForm(WrappedNode):
                     case_name=open_case_action.name_path,
                     case_type=form.get_case_type(),
                     path='',
-                    autoset_owner_id=not (
-                        'update_case' in actions and
-                        'owner_id' in actions['update_case'].update
-                    ),
+                    autoset_owner_id=autoset_owner_id_for_open_case(actions),
                     has_case_sharing=form.get_app().case_sharing,
                 )
                 if 'external_id' in actions['open_case'] and actions['open_case'].external_id:
@@ -875,7 +882,7 @@ class XForm(WrappedNode):
                     case_type=subcase.case_type,
                     path=path,
                     delay_case_id=bool(subcase.repeat_context),
-                    autoset_owner_id='owner_id' not in subcase.case_properties,
+                    autoset_owner_id=autoset_owner_id_for_subcase(subcase),
                     has_case_sharing=form.get_app().case_sharing,
                 )
 

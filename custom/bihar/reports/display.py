@@ -6,7 +6,7 @@ from django.utils.translation import ugettext as _
 import logging
 from custom.bihar.calculations.utils.xmlns import BP, NEW, MTB_ABORT, DELIVERY
 from couchdbkit.exceptions import ResourceNotFound
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, CouchUser
 
 EMPTY_FIELD = "---"
 
@@ -23,7 +23,13 @@ class MCHDisplay(CaseDisplay):
 
     def __init__(self, report, case):
 
-        self.user = CommCareUser.get_by_user_id(case["user_id"])
+        try:
+            self.user = CommCareUser.get_by_user_id(case["user_id"])
+        except CouchUser.AccountTypeError:
+            # if we have web users submitting forms (e.g. via cloudcare) just don't bother
+            # with the rest of this data.
+            self.user = None
+
         if self.user:
             setattr(self, "_village", get_property(self.user.user_data, "village"))
             setattr(self, "_asha_name", self.user.full_name if get_property(self.user.user_data, "role").upper() is "ASHA" else get_property(self.user.user_data, "partner_name"))

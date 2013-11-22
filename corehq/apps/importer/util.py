@@ -139,15 +139,20 @@ def convert_custom_fields_to_struct(config):
 
     return field_map
 
+
 class InvalidDateException(Exception):
     pass
 
+
 def parse_excel_date(date_val):
     """ Convert field value from excel to a date value """
-    try:
-        parsed_date = str(date(*xldate_as_tuple(date_val, 0)[:3]))
-    except Exception:
-        raise InvalidDateException
+    if date_val:
+        try:
+            parsed_date = str(date(*xldate_as_tuple(date_val, 0)[:3]))
+        except Exception:
+            raise InvalidDateException
+    else:
+        parsed_date = ''
 
     return parsed_date
 

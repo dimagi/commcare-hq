@@ -61,7 +61,7 @@ def cloudcare_main(request, domain, urlPath):
         apps = [_app_latest_build_json(app["_id"]) for app in apps]
     else:
         apps = ApplicationBase.view('app_manager/applications_brief', startkey=[domain], endkey=[domain, {}])
-        apps = [get_app_json(app) for app in apps if app and app.application_version == "2.0"]
+        apps = [get_app_json(app) for app in apps if app and app.application_version == V2]
 
     # trim out empty apps
     apps = filter(lambda app: app, apps)

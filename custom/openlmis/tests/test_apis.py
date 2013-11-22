@@ -6,7 +6,7 @@ from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.apps.commtrack.tests import bootstrap_domain
 from corehq.apps.locations.models import Location
 from custom.openlmis.api import get_facilities, Facility, get_facility_programs, FacilityProgramLink, get_programs_and_products, Program, RequisitionDetails, RequisitionStatus, get_requisition_statuses, Requisition
-from custom.openlmis.commtrack import sync_supply_point_to_openlmis, submit_requisition, approve_requisition, delivery_update
+from custom.openlmis.commtrack import sync_supply_point_to_openlmis, submit_requisition
 from custom.openlmis.tests.mock_api import MockOpenLMISEndpoint
 
 
@@ -165,9 +165,3 @@ class PostApiTest(TestCase):
         with open(os.path.join(self.datapath, 'sample_requisition_data.json')) as f:
             requisition = Requisition.from_json(json.loads(f.read()))
         self.assertTrue(submit_requisition(requisition, self.api))
-
-
-    def testConfirmDelivery(self):
-        with open(os.path.join(self.datapath, 'sample_requisition_details.json')) as f:
-            requisition = RequisitionDetails.from_json(json.loads(f.read()))
-        self.assertTrue(delivery_update(requisition, self.api))

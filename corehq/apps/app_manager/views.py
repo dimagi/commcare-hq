@@ -24,6 +24,7 @@ from unidecode import unidecode
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse, RegexURLResolver
 from django.shortcuts import render
+from dimagi.utils.django.cached_object import CachedObject
 from django.utils.http import urlencode
 from django.views.decorators.http import require_GET
 from django.conf import settings
@@ -562,14 +563,13 @@ def release_build(request, domain, app_id, saved_app_id):
         return HttpResponseRedirect(reverse('release_manager', args=[domain, app_id]))
 
 
-def get_module_view_context(app, module):
-    case_type = module.case_type
+def get_module_view_context_and_template(app, module):
     builder = ParentCasePropertyBuilder(
         app,
         defaults=('name', 'date-opened', 'status')
     )
 
-    def get_parent_modules_and_save():
+    def get_parent_modules_and_save(case_type):
         """
         This closure is so we don't override the `module` variable
 
@@ -589,12 +589,14 @@ def get_module_view_context(app, module):
                     'is_parent': module.unique_id in parent_module_ids,
                 } for module in app.modules if module.case_type != case_type]
 
-    sort_elements = [prop.values() for prop in
-                     module.case_details.short.sort_elements]
-    return {
-        'parent_modules': get_parent_modules_and_save(),
+    def get_sort_elements(details):
+        return [prop.values() for prop in details.sort_elements]
+
+    case_type = module.case_type
+    return "app_manager/module_view.html", {
+        'parent_modules': get_parent_modules_and_save(case_type),
         'case_properties': sorted(builder.get_properties(case_type)),
-        "sortElements": json.dumps(sort_elements)
+        "sortElements": json.dumps(get_sort_elements(module.case_details.short))
     }
 
 
@@ -654,7 +656,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         app.save()
 
     context.update({
-        'show_care_plan': toggle_enabled(toggles.APP_BUILDER_CARE_PLAN, req.user.username),
+        'show_care_plan': toggle_enabled(toggles.APP_BUILDER_CAREPLAN, req.user.username),
         'module': module,
         'form': form,
     })
@@ -669,8 +671,8 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         })
         context.update(get_form_view_context(req, form, context['langs'], is_user_registration))
     elif module:
-        context.update(get_module_view_context(app, module))
-        template = "app_manager/module_view.html"
+        template, module_context = get_module_view_context_and_template(app, module)
+        context.update(module_context)
     else:
         template = "app_manager/app_view.html"
         if app:
@@ -765,6 +767,8 @@ def new_app(req, domain):
         app.new_form(0, "Untitled Form", lang)
     else:
         app = cls.new_app(domain, "Untitled Application", lang=lang)
+    if req.project.secure_submissions:
+        app.secure_submissions = True
     app.save()
     _clear_app_cache(req, domain)
     app_id = app.id
@@ -787,7 +791,7 @@ def new_module(req, domain, app_id):
         response = back_to_main(req, domain, app_id=app_id, module_id=module_id)
         response.set_cookie('suppress_build_errors', 'yes')
         return response
-    elif module_type == 'care-plan':
+    elif module_type == 'careplan':
         return new_care_plan_module(req, domain, app, name, lang)
     else:
         logger.error('Unexpected module type for new module: "%s"' % module_type)
@@ -966,6 +970,7 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
 
     """
     params = json_request(req.POST)
+    detail_type = params.get('type')
     screens = params.get('screens')
     parent_select = params.get('parent_select')
     sort_elements = screens['sort_elements']
@@ -975,20 +980,22 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
 
     app = get_app(domain, app_id)
     module = app.get_module(module_id)
-    detail = module.case_details.short
 
-    detail.sort_elements = []
+    if detail_type == 'case':
+        detail = module.case_details
+    else:
+        return HttpResponseBadRequest("Unknown detail type '%s'" % detail_type)
 
-    module.case_details.short.columns = map(DetailColumn.wrap, screens['short'])
-    module.case_details.long.columns = map(DetailColumn.wrap, screens['long'])
+    detail.short.columns = map(DetailColumn.wrap, screens['short'])
+    detail.long.columns = map(DetailColumn.wrap, screens['long'])
 
+    detail.short.sort_elements = []
     for sort_element in sort_elements:
         item = SortElement()
         item.field = sort_element['field']
         item.type = sort_element['type']
         item.direction = sort_element['direction']
-        detail.sort_elements.append(item)
-
+        detail.short.sort_elements.append(item)
 
     module.parent_select = ParentSelect.wrap(parent_select)
     resp = {}
@@ -1628,9 +1635,10 @@ def download_file(req, domain, app_id, path):
         'txt': 'text/plain',
     }
     try:
-        response = HttpResponse(mimetype=mimetype_map[path.split('.')[-1]])
+        mimetype = mimetype_map[path.split('.')[-1]]
     except KeyError:
-        response = HttpResponse()
+        mimetype = None
+    response = HttpResponse(mimetype=mimetype)
 
     if path in ('CommCare.jad', 'CommCare.jar'):
         set_file_download(response, path)
@@ -1640,7 +1648,17 @@ def download_file(req, domain, app_id, path):
 
     try:
         assert req.app.copy_of
-        payload = req.app.fetch_attachment(full_path)
+        obj = CachedObject(str(app_id) + ":" + full_path)
+        if not obj.is_cached():
+            payload = req.app.fetch_attachment(full_path)
+            if type(payload) is unicode:
+                payload = payload.encode('utf-8')
+            buffer = StringIO(payload)
+            metadata = {'content_type': mimetype}
+            obj.cache_put(buffer, metadata)
+        else:
+            _, buffer = obj.get()
+            payload = buffer.getvalue()
         response.write(payload)
         response['Content-Length'] = len(response.content)
         return response

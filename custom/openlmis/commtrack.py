@@ -7,7 +7,9 @@ from corehq.apps.locations.models import Location
 from custom.openlmis.api import OpenLMISEndpoint
 from custom.openlmis.exceptions import BadParentException, OpenLMISAPIException
 
-approved_requisition = Signal(providing_args=["requisitions"])
+requisition_approved = Signal(providing_args=["requisitions"])
+requisition_receipt = Signal(providing_args=["requisitions"])
+
 
 def _apply_updates(doc, update_dict):
     # updates the doc with items from the dict
@@ -175,10 +177,11 @@ def approve_requisition(requisition_cases, openlmis_endpoint):
     return openlmis_endpoint.approve_requisition(approve_data)
 
 
-def delivery_update(requisition_details, openlmis_endpoint):
-    order_id = requisition_details.order_id
+def delivery_update(requisition_cases, openlmis_endpoint):
+    order_id = requisition_cases[0].get_case_property("order_id")
     products = []
-    for product in requisition_details.products:
-        products.append({'productCode': product.code, 'quantityReceived': product.quantity_received})
+    for rec in requisition_cases:
+        product = Product.get(rec.product_id)
+        products.append({'productCode': product.code, 'quantityReceived': rec.amount_received})
     delivery_data = {'podLineItems': products}
     return openlmis_endpoint.confirm_delivery(order_id, delivery_data)
