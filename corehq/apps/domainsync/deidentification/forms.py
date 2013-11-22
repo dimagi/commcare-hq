@@ -4,7 +4,7 @@ Created on Nov 30, 2011
 @author: czue
 '''
 from dimagi.utils.data.generator import random_phonenumber, random_fullname,\
-    random_lastname, random_username
+    random_lastname, arbitrary_username
 from lxml import etree
 import random
 from couchforms.models import XFormInstance
@@ -27,10 +27,10 @@ FORM_CONFIG = { CRS_REGISTRATION: {
                     "hamlet_name": random_lastname,
                     "case/create/case_name": random_fullname, 
                     "case/update/husband_name": random_fullname,
-                    "meta/username": random_username },
+                    "meta/username": arbitrary_username },
                 CRS_CHECKLIST: {
                     "client_name": random_fullname,
-                    "meta/username": random_username,
+                    "meta/username": arbitrary_username,
                     # all the yes/no's that we want to randomize
                     # this is pretty ugly but we'll deal with it for now
                     "previous_registration_done": random_yesno, 
@@ -98,7 +98,7 @@ FORM_CONFIG = { CRS_REGISTRATION: {
                     "case/update/manual-labor-info": random_yesno,
                     "case/update/knows-closest-facility": random_yesno },
                 CRS_BIRTH: {
-                    "meta/username": random_username }
+                    "meta/username": arbitrary_username }
               }
     
 def deidentify_form(doctransform):
@@ -136,4 +136,3 @@ def deidentify_form(doctransform):
         # to return anything, to prevent potentially identified
         # data from sneaking in
         return None
-    
