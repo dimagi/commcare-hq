@@ -33,21 +33,6 @@ class Currency(models.Model):
         return default
 
 
-class BillingContact(models.Model):
-    """
-    This is the information we use to bill the client. It links to an existing WebUser
-    by username, as WebUser currently lives in Couch.
-    """
-    web_user = models.CharField(max_length=80)
-    phone_number = models.CharField(max_length=40)
-    first_line = models.CharField(max_length=40)
-    second_line = models.CharField(max_length=40, blank=True)
-    city = models.CharField(max_length=40)
-    state_province_region = models.CharField(max_length=40, blank=True)
-    postal_code = models.CharField(max_length=40, blank=True)
-    country = models.CharField(max_length=40)
-
-
 class BillingAccount(models.Model):
     """
     The key model that links a Subscription to its financial source and methods of payment.
@@ -60,7 +45,7 @@ class BillingAccount(models.Model):
     )
     created_by = models.CharField(max_length=80)
     date_created = models.DateField(auto_now_add=True)
-    contact = models.ForeignKey(BillingContact, on_delete=models.PROTECT)
+    web_user_contact = models.CharField(max_length=80)
     currency = models.ForeignKey(Currency, on_delete=models.PROTECT)
     is_auto_invoiceable = models.BooleanField(default=False)
     account_type = models.CharField(
