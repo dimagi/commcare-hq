@@ -186,7 +186,7 @@ def excel_fields(request, domain):
 @require_POST
 @require_can_edit_data
 def excel_commit(request, domain):
-    config = ImporterConfig(request)
+    config = ImporterConfig.from_request(request)
 
     excel_id = request.session.get(EXCEL_SESSION_ID)
 
