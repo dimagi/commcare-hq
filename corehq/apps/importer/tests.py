@@ -17,11 +17,7 @@ class MockExcelFile(object):
         self.header_columns = header_columns or []
         self.num_rows = num_rows
         self.has_errors = has_errors
-        if row_generator is None:
-            # by default, just return [propertyname-rowid] for every cell
-            def row_generator(self, index):
-                return ['{col}-{row}'.format(row=index, col=col) for col in self.header_columns]
-        self.row_generator = row_generator
+        self.row_generator = row_generator or default_row_generator
 
     def get_header_columns(self):
         return self.header_columns
@@ -32,11 +28,22 @@ class MockExcelFile(object):
     def get_row(self, index):
         return self.row_generator(self, index)
 
+def default_row_generator(excel_file, index):
+    # by default, just return [propertyname-rowid] for every cell
+    return ['{col}-{row}'.format(row=index, col=col) for col in excel_file.header_columns]
+
+def case_id_match_generator(case_id):
+    def match(excel_file, index):
+        return [case_id] + ['{col}-{row}'.format(row=index, col=col) for col in excel_file.header_columns[1:]]
+    return match
+
 class ImporterTest(TestCase):
 
     def setUp(self):
         self.domain = create_domain("importer-test").name
         self.default_case_type = 'importer-test-casetype'
+        self.default_headers = ['case_id', 'age', 'sex', 'location']
+
         self.couch_user = WebUser.create(None, "test", "foobar")
         self.couch_user.add_domain_membership(self.domain, is_admin=True)
         self.couch_user.save()
@@ -47,7 +54,7 @@ class ImporterTest(TestCase):
 
     def _config(self, col_names=None, search_column=None, case_type=None,
                 search_field='case_id', named_columns=False, create_new_cases=True):
-        col_names = col_names or ['case_id']
+        col_names = col_names or self.default_headers
         case_type = case_type or self.default_case_type
         search_column = search_column or col_names[0]
         return ImporterConfig(
@@ -76,9 +83,8 @@ class ImporterTest(TestCase):
         self.assertEqual(0, len(get_case_ids_in_domain(self.domain)))
 
     def testImportBasic(self):
-        headers = ['case_id', 'age', 'sex', 'location']
-        config = self._config(headers)
-        file = MockExcelFile(header_columns=headers, num_rows=5)
+        config = self._config(self.default_headers)
+        file = MockExcelFile(header_columns=self.default_headers, num_rows=5)
         res = do_import(file, config, self.domain)
         self.assertEqual(5, res['created_count'])
         self.assertEqual(0, res['match_count'])
@@ -90,17 +96,65 @@ class ImporterTest(TestCase):
             self.assertEqual(self.couch_user._id, case.user_id)
             self.assertEqual(self.couch_user._id, case.owner_id)
             self.assertEqual(self.default_case_type, case.type)
-            for prop in headers[1:]:
+            for prop in self.default_headers[1:]:
                 self.assertTrue(prop in case.get_case_property(prop))
                 self.assertFalse(case.get_case_property(prop) in properties_seen)
                 properties_seen.add(case.get_case_property(prop))
 
     def testImportNamedColumns(self):
-        headers = ['case_id', 'age', 'sex', 'location']
-        config = self._config(headers, named_columns=True)
-        file = MockExcelFile(header_columns=headers, num_rows=5)
+        config = self._config(self.default_headers, named_columns=True)
+        file = MockExcelFile(header_columns=self.default_headers, num_rows=5)
         res = do_import(file, config, self.domain)
         # we create 1 less since we knock off the header column
         self.assertEqual(4, res['created_count'])
         self.assertEqual(4, len(get_case_ids_in_domain(self.domain)))
 
+    def testCaseIdMatching(self):
+        # bootstrap a stub case
+        case = CommCareCase(domain=self.domain, type=self.default_case_type)
+        case.importer_test_prop = 'foo'
+        case.save()
+        self.assertEqual(1, len(get_case_ids_in_domain(self.domain)))
+
+        config = self._config(self.default_headers)
+        file = MockExcelFile(header_columns=self.default_headers, num_rows=3, row_generator=case_id_match_generator(case._id))
+        res = do_import(file, config, self.domain)
+        self.assertEqual(0, res['created_count'])
+        self.assertEqual(3, res['match_count'])
+        self.assertEqual(0, res['errors'])
+
+        # shouldn't create any more cases, just the one
+        self.assertEqual(1, len(get_case_ids_in_domain(self.domain)))
+        [case] = get_cases_in_domain(self.domain)
+        for prop in self.default_headers[1:]:
+            self.assertTrue(prop in case.get_case_property(prop))
+
+        # shouldn't touch existing properties
+        self.assertEqual('foo', case.importer_test_prop)
+
+    def testCaseLookupTypeCheck(self):
+        case = CommCareCase(domain=self.domain, type='nonmatch-type')
+        case.save()
+        self.assertEqual(1, len(get_case_ids_in_domain(self.domain)))
+        config = self._config(self.default_headers)
+        file = MockExcelFile(header_columns=self.default_headers, num_rows=3,
+                             row_generator=case_id_match_generator(case._id))
+        res = do_import(file, config, self.domain)
+        # because the type is wrong these shouldn't match
+        self.assertEqual(3, res['created_count'])
+        self.assertEqual(0, res['match_count'])
+        self.assertEqual(4, len(get_case_ids_in_domain(self.domain)))
+
+    def testCaseLookupDomainCheck(self):
+        case = CommCareCase(domain='not-right-domain', type=self.default_case_type)
+        case.save()
+        self.assertEqual(0, len(get_case_ids_in_domain(self.domain)))
+        config = self._config(self.default_headers)
+        file = MockExcelFile(header_columns=self.default_headers, num_rows=3,
+                             row_generator=case_id_match_generator(case._id))
+        res = do_import(file, config, self.domain)
+
+        # because the domain is wrong these shouldn't match
+        self.assertEqual(3, res['created_count'])
+        self.assertEqual(0, res['match_count'])
+        self.assertEqual(3, len(get_case_ids_in_domain(self.domain)))
