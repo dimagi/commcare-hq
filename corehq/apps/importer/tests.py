@@ -32,9 +32,9 @@ def default_row_generator(excel_file, index):
     # by default, just return [propertyname-rowid] for every cell
     return ['{col}-{row}'.format(row=index, col=col) for col in excel_file.header_columns]
 
-def case_id_match_generator(case_id):
+def id_match_generator(id):
     def match(excel_file, index):
-        return [case_id] + ['{col}-{row}'.format(row=index, col=col) for col in excel_file.header_columns[1:]]
+        return [id] + ['{col}-{row}'.format(row=index, col=col) for col in excel_file.header_columns[1:]]
     return match
 
 class ImporterTest(TestCase):
@@ -89,6 +89,7 @@ class ImporterTest(TestCase):
         self.assertEqual(5, res['created_count'])
         self.assertEqual(0, res['match_count'])
         self.assertEqual(0, res['errors'])
+        self.assertEqual(1, res['num_chunks'])
         cases = list(get_cases_in_domain(self.domain))
         self.assertEqual(5, len(cases))
         properties_seen = set()
@@ -117,7 +118,7 @@ class ImporterTest(TestCase):
         self.assertEqual(1, len(get_case_ids_in_domain(self.domain)))
 
         config = self._config(self.default_headers)
-        file = MockExcelFile(header_columns=self.default_headers, num_rows=3, row_generator=case_id_match_generator(case._id))
+        file = MockExcelFile(header_columns=self.default_headers, num_rows=3, row_generator=id_match_generator(case._id))
         res = do_import(file, config, self.domain)
         self.assertEqual(0, res['created_count'])
         self.assertEqual(3, res['match_count'])
@@ -138,7 +139,7 @@ class ImporterTest(TestCase):
         self.assertEqual(1, len(get_case_ids_in_domain(self.domain)))
         config = self._config(self.default_headers)
         file = MockExcelFile(header_columns=self.default_headers, num_rows=3,
-                             row_generator=case_id_match_generator(case._id))
+                             row_generator=id_match_generator(case._id))
         res = do_import(file, config, self.domain)
         # because the type is wrong these shouldn't match
         self.assertEqual(3, res['created_count'])
@@ -151,13 +152,34 @@ class ImporterTest(TestCase):
         self.assertEqual(0, len(get_case_ids_in_domain(self.domain)))
         config = self._config(self.default_headers)
         file = MockExcelFile(header_columns=self.default_headers, num_rows=3,
-                             row_generator=case_id_match_generator(case._id))
+                             row_generator=id_match_generator(case._id))
         res = do_import(file, config, self.domain)
 
         # because the domain is wrong these shouldn't match
         self.assertEqual(3, res['created_count'])
         self.assertEqual(0, res['match_count'])
         self.assertEqual(3, len(get_case_ids_in_domain(self.domain)))
+
+    def testExternalIdMatching(self):
+        # bootstrap a stub case
+        case = CommCareCase(domain=self.domain, type=self.default_case_type)
+        external_id = 'importer-test-external-id'
+        case.external_id = external_id
+        case.save()
+        self.assertEqual(1, len(get_case_ids_in_domain(self.domain)))
+
+        headers = ['external_id', 'age', 'sex', 'location']
+        config = self._config(headers, search_field='external_id')
+        file = MockExcelFile(header_columns=headers, num_rows=3,
+                             row_generator=id_match_generator(external_id))
+        res = do_import(file, config, self.domain)
+        self.assertEqual(0, res['created_count'])
+        self.assertEqual(3, res['match_count'])
+        self.assertEqual(0, res['errors'])
+
+        # shouldn't create any more cases, just the one
+        self.assertEqual(1, len(get_case_ids_in_domain(self.domain)))
+
 
     def testNoCreateNew(self):
         config = self._config(self.default_headers, create_new_cases=False)
@@ -178,4 +200,25 @@ class ImporterTest(TestCase):
         self.assertEqual(5, res['created_count'])
         self.assertEqual(5, len(get_case_ids_in_domain(self.domain)))
 
+    def testExternalIdChunking(self):
+        # bootstrap a stub case
+        external_id = 'importer-test-external-id'
 
+        headers = ['external_id', 'age', 'sex', 'location']
+        config = self._config(headers, search_field='external_id')
+        file = MockExcelFile(header_columns=headers, num_rows=3,
+                             row_generator=id_match_generator(external_id))
+
+        # the first one should create the case, and the remaining two should update it
+        res = do_import(file, config, self.domain)
+        self.assertEqual(1, res['created_count'])
+        self.assertEqual(2, res['match_count'])
+        self.assertEqual(0, res['errors'])
+        self.assertEqual(2, res['num_chunks']) # the lookup causes an extra chunk
+
+        # should just create the one case
+        self.assertEqual(1, len(get_case_ids_in_domain(self.domain)))
+        [case] = get_cases_in_domain(self.domain)
+        self.assertEqual(external_id, case.external_id)
+        for prop in self.default_headers[1:]:
+            self.assertTrue(prop in case.get_case_property(prop))

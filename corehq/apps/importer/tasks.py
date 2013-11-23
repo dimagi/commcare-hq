@@ -104,6 +104,7 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
             _submit_caseblocks(caseblocks)
             num_chunks += 1
             caseblocks = []
+            ids_seen = set()  # also clear ids_seen, since all the cases will now be in the database
 
         case, error = importer_util.lookup_case(
             config.search_field,
@@ -180,6 +181,8 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
                 )
                 caseblocks.append(caseblock)
                 created_count += 1
+                if external_id:
+                    ids_seen.add(external_id)
             except CaseBlockError:
                 errors += 1
         else:
@@ -200,8 +203,6 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
                 match_count += 1
             except CaseBlockError:
                 errors += 1
-        if external_id:
-            ids_seen.add(external_id)
 
         # check if we've reached a reasonable chunksize
         # and if so submit
