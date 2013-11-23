@@ -25,5 +25,6 @@ class Command(BaseCommand):
         with open(config_file, 'r') as f:
             config = ImporterConfig.from_json(f.read())
 
+        config.couch_user_id = user._id
         spreadsheet = ExcelFile(export_file, True)
         print json.dumps(do_import(spreadsheet, config, domain))
