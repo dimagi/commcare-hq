@@ -27,22 +27,51 @@ class ImporterConfig(object):
     be pickled and passed to celery tasks.
     """
 
-    def __init__(self, request):
-        self.couch_user_id = request.couch_user._id
-        self.excel_fields = request.POST.getlist('excel_field[]')
-        self.case_fields = request.POST.getlist('case_field[]')
-        self.custom_fields = request.POST.getlist('custom_field[]')
-        self.type_fields = request.POST.getlist('type_field[]')
+    def __init__(self,
+        couch_user_id=None,
+        excel_fields=None,
+        case_fields=None,
+        custom_fields=None,
+        type_fields=None,
+        search_column=None,
+        key_column=None,
+        value_column=None,
+        named_columns=None,
+        case_type=None,
+        search_field=None,
+        create_new_cases=None
+    ):
+        self.couch_user_id=couch_user_id
+        self.excel_fields=excel_fields
+        self.case_fields=case_fields
+        self.custom_fields=custom_fields
+        self.type_fields=type_fields
+        self.search_column=search_column
+        self.key_column=key_column
+        self.value_column=value_column
+        self.named_columns=named_columns
+        self.case_type=case_type
+        self.search_field=search_field
+        self.create_new_cases=create_new_cases
 
-        self.search_column = request.POST['search_column']
 
-        self.key_column = request.POST['key_column']
-        self.value_column = request.POST['value_column']
+    @classmethod
+    def from_request(cls, request):
+        return ImporterConfig(
+            couch_user_id=request.couch_user._id,
+            excel_fields=request.POST.getlist('excel_field[]'),
+            case_fields=request.POST.getlist('case_field[]'),
+            custom_fields=request.POST.getlist('custom_field[]'),
+            type_fields=request.POST.getlist('type_field[]'),
+            search_column=request.POST['search_column'],
+            key_column=request.POST['key_column'],
+            value_column=request.POST['value_column'],
+            named_columns=request.POST['named_columns'],
+            case_type=request.POST['case_type'],
+            search_field=request.POST['search_field'],
+            create_new_cases=request.POST['create_new_cases'] == 'True',
 
-        self.named_columns = request.POST['named_columns']
-        self.case_type = request.POST['case_type']
-        self.search_field = request.POST['search_field']
-        self.create_new_cases = request.POST['create_new_cases'] == 'True'
+        )
 
 class ExcelFile(object):
     """
