@@ -25,7 +25,7 @@ def bulk_import_async(import_id, config, domain, excel_id):
     return do_import(spreadsheet, config, domain, task=bulk_import_async)
 
 
-def do_import(spreadsheet, config, domain, task=None):
+def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKSIZE):
     if not spreadsheet:
         return {'error': 'EXPIRED'}
     if spreadsheet.has_errors:
@@ -33,7 +33,7 @@ def do_import(spreadsheet, config, domain, task=None):
 
     row_count = spreadsheet.get_num_rows()
     columns = spreadsheet.get_header_columns()
-    match_count = created_count = too_many_matches = errors = 0
+    match_count = created_count = too_many_matches = errors = num_chunks = 0
     blank_external_ids = []
     invalid_dates = []
     owner_id_errors = []
@@ -98,7 +98,11 @@ def do_import(spreadsheet, config, domain, task=None):
         if any([lookup_id and lookup_id in ids_seen for lookup_id in [search_id, parent_id, parent_external_id]]):
             # clear out the queue to make sure we've processed any potential
             # cases we want to look up
+            # note: these three lines are repeated a few places, and could be converted
+            # to a function that makes use of closures (and globals) to do the same thing,
+            # but that seems sketchier than just beeing a little RY
             _submit_caseblocks(caseblocks)
+            num_chunks += 1
             caseblocks = []
 
         case, error = importer_util.lookup_case(
@@ -201,13 +205,15 @@ def do_import(spreadsheet, config, domain, task=None):
 
         # check if we've reached a reasonable chunksize
         # and if so submit
-        if len(caseblocks) > CASEBLOCK_CHUNKSIZE:
+        if len(caseblocks) >= chunksize:
             _submit_caseblocks(caseblocks)
+            num_chunks += 1
             caseblocks = []
 
 
     # final purge of anything left in the queue
     _submit_caseblocks(caseblocks)
+    num_chunks += 1
     return {
         'created_count': created_count,
         'match_count': match_count,
@@ -216,6 +222,7 @@ def do_import(spreadsheet, config, domain, task=None):
         'invalid_dates': invalid_dates,
         'owner_id_errors': owner_id_errors,
         'errors': errors,
+        'num_chunks': num_chunks,
     }
 
 def submit_case_block(caseblock, domain, username, user_id):

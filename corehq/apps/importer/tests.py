@@ -158,3 +158,24 @@ class ImporterTest(TestCase):
         self.assertEqual(3, res['created_count'])
         self.assertEqual(0, res['match_count'])
         self.assertEqual(3, len(get_case_ids_in_domain(self.domain)))
+
+    def testNoCreateNew(self):
+        config = self._config(self.default_headers, create_new_cases=False)
+        file = MockExcelFile(header_columns=self.default_headers, num_rows=5)
+        res = do_import(file, config, self.domain)
+
+        # no matching and no create new set - should do nothing
+        self.assertEqual(0, res['created_count'])
+        self.assertEqual(0, res['match_count'])
+        self.assertEqual(0, len(get_case_ids_in_domain(self.domain)))
+
+    def testBasicChunking(self):
+        config = self._config(self.default_headers)
+        file = MockExcelFile(header_columns=self.default_headers, num_rows=5)
+        res = do_import(file, config, self.domain, chunksize=2)
+        # 5 cases in chunks of 2 = 3 chunks
+        self.assertEqual(3, res['num_chunks'])
+        self.assertEqual(5, res['created_count'])
+        self.assertEqual(5, len(get_case_ids_in_domain(self.domain)))
+
+
