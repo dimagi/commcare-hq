@@ -66,7 +66,7 @@ class ImporterConfig(object):
             search_column=request.POST['search_column'],
             key_column=request.POST['key_column'],
             value_column=request.POST['value_column'],
-            named_columns=request.POST['named_columns'],
+            named_columns=request.POST['named_columns'] == 'True',
             case_type=request.POST['case_type'],
             search_field=request.POST['search_field'],
             create_new_cases=request.POST['create_new_cases'] == 'True',
