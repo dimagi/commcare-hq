@@ -1,3 +1,4 @@
+import json
 import xlrd
 from dimagi.utils.couch.database import get_db
 from corehq.apps.importer.const import LookupErrors
@@ -54,6 +55,32 @@ class ImporterConfig(object):
         self.search_field=search_field
         self.create_new_cases=create_new_cases
 
+    def to_dict(self):
+        return {
+            'couch_user_id': self.couch_user_id,
+            'excel_fields': self.excel_fields,
+            'case_fields': self.case_fields,
+            'custom_fields': self.custom_fields,
+            'type_fields': self.type_fields,
+            'search_column': self.search_column,
+            'key_column': self.key_column,
+            'value_column': self.value_column,
+            'named_columns': self.named_columns,
+            'case_type': self.case_type,
+            'search_field': self.search_field,
+            'create_new_cases': self.create_new_cases,
+        }
+
+    def to_json(self):
+        return json.dumps(self.to_dict())
+
+    @classmethod
+    def from_dict(cls, json_dict):
+        return cls(**json_dict)
+
+    @classmethod
+    def from_json(cls, json_rep):
+        return cls.from_dict(json.loads(json_rep))
 
     @classmethod
     def from_request(cls, request):
