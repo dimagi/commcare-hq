@@ -31,7 +31,7 @@ from corehq.apps.users.views import BaseFullEditUserView, BaseUserSettingsView
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
 from dimagi.utils.decorators.view import get_file
-from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound, JSONReaderError
+from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound, JSONReaderError, HeaderValueError
 
 
 DEFAULT_USER_LIST_LIMIT = 10
@@ -565,6 +565,9 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
             messages.error(request,
                            'Your upload was unsuccessful. %s' % e.message)
             return HttpResponseRedirect(redirect)
+        except HeaderValueError as e:
+            return HttpResponseBadRequest("Upload encountered a data type error: %s"
+                                          % e.message)
 
         try:
             self.user_specs = self.workbook.get_worksheet(title='users')
