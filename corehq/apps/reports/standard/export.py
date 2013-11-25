@@ -250,8 +250,6 @@ class CaseExportReport(ExportReport):
             group=True,
             group_level=2).all()
         context = super(CaseExportReport, self).report_context
-        for case in cases:
-            print case
         context.update(
             case_types=[case['key'][1] for case in cases],
         )
