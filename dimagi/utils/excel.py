@@ -88,7 +88,7 @@ class IteratorJSONReader(object):
         obj = {}
         for field, value in zip(self.headers, [''] * len(self.headers)):
             if not isinstance(field, basestring):
-                raise HeaderValueError("Field " + str(field) + " is not a string.")
+                raise HeaderValueError(u'Field %s is not a string.' % field)
             self.set_field_value(obj, field, value)
         return obj.keys()
 
