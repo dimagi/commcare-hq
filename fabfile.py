@@ -769,6 +769,30 @@ def clear_services_dir():
             'conf_location': services_dir,
         }, user=env.sudo_user)
 
+
+@roles('lb')
+def configtest():
+    """test Apache configuration"""
+    require('root', provided_by=('staging', 'preview', 'production'))
+    sudo('apache2ctl configtest')
+
+
+@roles('lb')
+def apache_reload():
+    """reload Apache on remote host"""
+    require('root', provided_by=('staging', 'preview', 'production'))
+    if what_os() == 'redhat':
+        sudo('/etc/init.d/httpd reload')
+    elif what_os() == 'ubuntu':
+        sudo('/etc/init.d/apache2 reload')
+
+
+@roles('lb')
+def apache_restart():
+    """restart Apache on remote host"""
+    require('root', provided_by=('staging', 'preview', 'production'))
+    sudo('/etc/init.d/apache2 restart')
+
 @task
 def netstat_plnt():
     """run netstat -plnt on a remote host"""
