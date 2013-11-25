@@ -520,7 +520,7 @@ class MalariaConsortiumFluff(fluff.IndicatorDocument):
     internal_adult_referral_needed = _filtered_calc_alias(
         xmlns=ADULT_REGISTRATION_XMLNS,
         property_path='form/preg_danger_signs/treatment_preg_ds',
-        property_value='yes',
+        property_value='OK',
     )
     internal_adult_referral_given = _filtered_calc_alias(
         xmlns=ADULT_REGISTRATION_XMLNS,
