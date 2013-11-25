@@ -28,7 +28,7 @@ def get_redis_default_cache():
     """
     try:
         return cache.get_cache('redis')
-    except InvalidCacheBackendError:
+    except (InvalidCacheBackendError, ValueError):
         return cache.cache
 
 
