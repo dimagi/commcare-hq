@@ -99,6 +99,14 @@ class SoftwareProductRate(models.Model):
     date_created = models.DateField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
 
+    @classmethod
+    def new_rate(cls, product_name, monthly_fee, save=True):
+        product, _ = SoftwareProduct.objects.get_or_create(name=product_name)
+        rate = SoftwareProductRate(product=product, monthly_fee=monthly_fee)
+        if save:
+            rate.save()
+        return rate
+
 
 class Feature(models.Model):
     """
@@ -120,6 +128,23 @@ class FeatureRate(models.Model):
     per_excess_fee = models.FloatField(default=0.0)
     date_created = models.DateField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
+
+    @classmethod
+    def new_rate(cls, feature_name, feature_type,
+                 monthly_fee=None, monthly_limit=None, per_excess_fee=None, save=True):
+        feature, _ = Feature.objects.get_or_create(name=feature_name, feature_type=feature_type)
+        rate = FeatureRate(feature=feature)
+
+        if monthly_fee is not None:
+            rate.monthly_fee = monthly_fee
+        if monthly_limit is not None:
+            rate.monthly_limit = monthly_limit
+        if per_excess_fee is not None:
+            rate.per_excess_fee = per_excess_fee
+
+        if save:
+            rate.save()
+        return rate
 
 
 class SoftwarePlan(models.Model):
