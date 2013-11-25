@@ -213,10 +213,10 @@ def view(request, domain, template='fixtures/view.html'):
     })
 
 DELETE_HEADER = "Delete(Y/N)"
-#@require_can_edit_fixtures
+@require_can_edit_fixtures
 def download_item_lists(request, domain):
     data_types_view = FixtureDataType.by_domain(domain)
-    # book-keeping data from views for latter use
+    # book-keeping data from view_results for repeated use
     data_types_book = []
     data_items_boook_by_type = {}
     item_helpers_by_type = {}
@@ -294,9 +294,7 @@ def download_item_lists(request, domain):
         }
         item_helpers_by_type[data_type.name] = item_helpers
 
-    ###########################################################################
-    #                       Prepare 'types' sheet data
-    ###########################################################################
+    # Prepare 'types' sheet data
     types_sheet = {"headers": [], "rows": []}
     types_sheet["headers"] = ["UID", DELETE_HEADER, "name", "tag", 'is_global?']
     types_sheet["headers"].extend(["field %d" % x for x in range(1, max_fields + 1)])
@@ -322,9 +320,8 @@ def download_item_lists(request, domain):
     types_sheet["headers"] = tuple(types_sheet["headers"])
     excel_sheets["types"] = types_sheet
     print field_prop_count, type_field_properties, types_sheet
-    ###########################################################################
-    #                Prepare 'items' sheet data for each data-type
-    ###########################################################################
+    
+    # Prepare 'items' sheet data for each data-type
     for data_type in data_types_book:
         item_sheet = {"headers": [], "rows": []}
         item_helpers = item_helpers_by_type[data_type.name]
@@ -522,17 +519,19 @@ def run_upload(request, domain, workbook):
     }
     failure_messages = {
         "has_no_column": "Workbook 'types' has no column {column_name}.",
-        "has_no_field_column": "Excel-sheet {tag} does not contain the column '{field}' "
+        "has_no_field_column": "Excel-sheet '{tag}' does not contain the column '{field}' "
                                "as specified in its 'types' definition",
-        "has_extra_column": "Excel-sheet {tag} has an extra column" + 
+        "has_extra_column": "Excel-sheet '{tag}' has an extra column" + 
                             "'{field}' that's not defined in its 'types' definition",
-        "sheet_has_no_property": "Excel-sheet {tag} does not contain property " +
-                            "{property} of the field {field} as specified in its 'types' definition",
-        "sheet_has_extra_property": "Excel-sheet {tag} has an extra property" +
-                            "{property} of the field {field} that's not defined in its 'types' definition",
+        "wrong_property_syntax": "Properties should be specified as 'field 1: property 1'. In 'types' sheet, " +
+                            "'{prop_key}' for field '{field}' is not correctly formatted",
+        "sheet_has_no_property": "Excel-sheet '{tag}' does not contain property " +
+                            "'{property}' of the field '{field}' as specified in its 'types' definition",
+        "sheet_has_extra_property": "Excel-sheet '{tag}'' has an extra property " +
+                            "'{property}' for the field '{field}' that's not defined in its 'types' definition. Re-check the formatting", 
         "invalid_field_with_property": "Fields with attributes should be numbered as 'field: {field} integer",
         "invalid_property": "Attribute should be written as '{field}: {prop} interger'",
-        "wrong_field_property_combos": "Number of values for field {field} and attribute {prop} should be same"
+        "wrong_field_property_combos": "Number of values for field '{field}' and attribute '{prop}' should be same"
     }
 
     group_memoizer = GroupMemoizer(domain)
@@ -561,7 +560,14 @@ def run_upload(request, domain, workbook):
             for count, field in enumerate(type_definition_fields):
                 prop_key = "field " + str(count + 1)
                 if dt.has_key(prop_key):
-                    property_list = dt[prop_key]["property"]
+                    try:
+                        property_list = dt[prop_key]["property"]
+                    except KeyError:
+                        error_message = failure_messages["wrong_property_syntax"].format(
+                            prop_key=prop_key,
+                            field=field
+                        )
+                        raise ExcelMalformatException(_(error_message))
                 else:
                     property_list = []
                 field_with_prop = FixtureTypeField(
