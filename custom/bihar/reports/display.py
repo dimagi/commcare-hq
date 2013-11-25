@@ -183,7 +183,8 @@ class MCHMotherDisplay(MCHDisplay):
     def mobile_number_whose(self):
         number = get_property(self.case, "mobile_number_whose")
         if re.match(r"^mobile_", number):
-            return re.sub(r"^mobile_", "", number, re.IGNORECASE)
+            r = re.compile(r"^mobile_", re.IGNORECASE)
+            return r.sub("", number)
         else:
             return number
 
