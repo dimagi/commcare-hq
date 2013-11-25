@@ -42,6 +42,10 @@ class JSONReaderError(Exception):
     pass
 
 
+class HeaderValueError(Exception):
+    pass
+
+
 class IteratorJSONReader(object):
     """
     >>> def normalize(it):
@@ -83,6 +87,8 @@ class IteratorJSONReader(object):
     def get_fieldnames(self):
         obj = {}
         for field, value in zip(self.headers, [''] * len(self.headers)):
+            if not isinstance(field, basestring):
+                raise HeaderValueError(u'Field %s is not a string.' % field)
             self.set_field_value(obj, field, value)
         return obj.keys()
 
