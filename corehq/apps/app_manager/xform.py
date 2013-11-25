@@ -489,7 +489,6 @@ class XForm(WrappedNode):
         repeat_contexts = set([''])
 
         excluded_paths = set()
-        repeat_contexts = set()
 
         for node_data in self.get_control_nodes(include_triggers=include_triggers):
             node, path, repeat_context, items, is_leaf = node_data
