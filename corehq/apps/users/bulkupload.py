@@ -121,7 +121,7 @@ def create_or_update_locations(domain, location_specs, log):
             # TODO
             return
 
-        user.commtrack_location = location._id
+        user.location = location._id
         user.save()
 
 

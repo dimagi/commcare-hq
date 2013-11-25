@@ -1034,6 +1034,80 @@ class StockReport(object):
                                    endkey=endkey,
                                    include_docs=True)]
 
+
+class CommTrackUser(CommCareUser):
+    locations = ListProperty()
+
+    #@classmethod
+    #def wrap(cls, data):
+        ## lazy migration from commtrack_location to locations
+        #if 'commtrack_location' in data:
+            #original_location = data['commtrack_location']
+            #del data['commtrack_location']
+            ##self.set_locations([original_location])
+
+        #return super(CommTrackUser, cls).wrap(data)
+
+    def location_map_case(self):
+        try:
+            return CommCareCase.get('user-owner-mapping-' + self._id)
+        except ResourceNotFound:
+            return None
+
+    @property
+    def locations(self):
+        mapping = self.location_map_case()
+
+        return [Location.wrap(index.referenced_case.to_json()) for index in mapping.indices]
+
+    def add_location(self, location):
+        sp = SupplyPointCase.get_by_location(location)
+        mapping = self.location_map_case()
+
+        if mapping:
+            caseblock = CaseBlock(
+                create=False,
+                case_id=mapping._id,
+                version=V2,
+                index={'sp-' + sp._id: (sp.type, sp._id)}
+            )
+        else:
+            caseblock = CaseBlock(
+                create=True,
+                case_type='user-owner-mapping-case',
+                case_id='user-owner-mapping-' + self._id,
+                version=V2,
+                owner_id=self._id,
+                index={'sp-' + sp._id: (sp.type, sp._id)}
+            )
+
+        submit_case_blocks(
+            ElementTree.tostring(caseblock.as_xml()),
+            self.domain,
+            self.username,
+            self._id
+        )
+
+    def remove_location(self, location):
+        sp = SupplyPointCase.get_by_location(location)
+        mapping = self.location_map_case()
+
+        if mapping:
+            caseblock = CaseBlock(
+                create=False,
+                case_id=mapping._id,
+                version=V2,
+                index={'sp-' + sp._id: (sp.type, '')}
+            )
+
+            submit_case_blocks(
+                ElementTree.tostring(caseblock.as_xml()),
+                self.domain,
+                self.username,
+                self._id
+            )
+
+
 def sync_location_supply_point(loc):
     # circular import
     from corehq.apps.domain.models import Domain

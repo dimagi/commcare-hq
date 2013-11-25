@@ -9,7 +9,7 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.models import Location
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.commtrack.util import bootstrap_commtrack_settings_if_necessary
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.commtrack.models import CommTrackUser, SupplyPointCase
 from corehq.apps.sms.backend import test
 from django.utils.unittest.case import TestCase
 from corehq.apps.commtrack.helpers import make_supply_point,\
@@ -86,14 +86,24 @@ def bootstrap_user(setup, username=TEST_USER, domain=TEST_DOMAIN,
                    home_loc=None, user_data=None,
                    ):
     user_data = user_data or {}
-    user = CommCareUser.create(domain, username, password, phone_numbers=[TEST_NUMBER],
-                               user_data=user_data, first_name=first_name,
-                               last_name=last_name)
+    user = CommTrackUser.create(
+        domain,
+        username,
+        password,
+        phone_numbers=[TEST_NUMBER],
+        user_data=user_data,
+        first_name=first_name,
+        last_name=last_name
+    )
     if home_loc == setup.loc.site_code:
-        user.commtrack_location = setup.loc._id
+        if not SupplyPointCase.get_by_location(setup.loc):
+            make_supply_point(domain, setup.loc)
+
+        user.add_location(setup.loc)
         user.save()
+
     user.save_verified_number(domain, phone_number, verified=True, backend_id=backend)
-    return user
+    return CommTrackUser.wrap(user.to_json())
 
 def make_loc(code, name=None, domain=TEST_DOMAIN, type=TEST_LOCATION_TYPE, parent=None):
     name = name or code
