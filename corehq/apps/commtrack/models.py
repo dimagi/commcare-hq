@@ -226,7 +226,7 @@ class CommtrackConfig(Document):
     def for_domain(cls, domain):
         result = cls.view("commtrack/domain_config",
                           key=[domain],
-                          include_docs=True).one()
+                          include_docs=True).first()
         return result
 
     def all_actions(self):
