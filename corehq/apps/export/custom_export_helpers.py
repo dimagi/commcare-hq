@@ -179,7 +179,7 @@ class FormCustomExportHelper(CustomExportHelper):
         return self.custom_export.get_default_order()
 
     def update_table_conf_with_questions(self, table_conf):
-        column_conf = table_conf[0].get("column_configuration", {})
+        column_conf = table_conf[0].get("column_configuration", [])
         current_questions = set(self.custom_export.question_order)
         remaining_questions = current_questions.copy()
 
@@ -208,6 +208,13 @@ class FormCustomExportHelper(CustomExportHelper):
             ).to_config_format(selected=self.creating_new_export)
             for q in remaining_questions
         ])
+
+        # show all questions in repeat groups by default
+        for conf in table_conf:
+            if conf["index"].startswith('#.form.'):
+                for col in conf.get("column_configuration", []):
+                    col["show"] = True
+
 
         table_conf[0]["column_configuration"] = column_conf
         return table_conf
