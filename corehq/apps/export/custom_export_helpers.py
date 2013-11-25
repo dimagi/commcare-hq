@@ -156,7 +156,7 @@ class FormCustomExportHelper(CustomExportHelper):
     allow_repeats = True
 
     default_questions = ["form.case.@case_id", "form.meta.timeEnd", "_id", "id", "form.meta.username"]
-    questions_to_show = default_questions[:] + ["form.meta.timeStart", "received_on"]
+    questions_to_show = default_questions + ["form.meta.timeStart", "received_on"]
 
     @property
     def export_title(self):
