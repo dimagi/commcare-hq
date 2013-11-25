@@ -255,7 +255,7 @@ def download_item_lists(request, domain):
           {u'clinics': {'field 2 : property 1': u'lang'}, u'growth_chart': {'field 2 : property 2': u'maxWeight'}}
     """
     type_field_properties = {}
-    get_field_prop_format = lambda x, y: "field " + str(x) +" : property" + str(y) 
+    get_field_prop_format = lambda x, y: "field " + str(x) +" : property " + str(y) 
     for data_type in data_types_view:
         # Helpers to generate 'types' sheet
         type_field_properties[data_type.name] = {}
@@ -382,11 +382,11 @@ def download_item_lists(request, domain):
         item_sheet["rows"] = tuple(item_sheet["rows"])
         excel_sheets[data_type.name] = item_sheet
 
-    header_groups = [excel_sheets["types"]["headers"]]
-    value_groups = [excel_sheets["types"]["rows"]]
+    header_groups = [("types", excel_sheets["types"]["headers"])]
+    value_groups = [("types", excel_sheets["types"]["rows"])]
     for data_type in data_types_book:
-        header_groups.append(excel_sheets[data_type.name]["headers"])
-        value_groups.append(excel_sheets[data_type.name]["types"])
+        header_groups.append((data_type.tag, excel_sheets[data_type.name]["headers"]))
+        value_groups.append((data_type.tag, excel_sheets[data_type.name]["rows"]))
 
     fd, path = tempfile.mkstemp()
     with os.fdopen(fd, 'w') as temp:
