@@ -66,10 +66,20 @@ class MalariaConsortiumFluff(fluff.IndicatorDocument):
         property_path='form/pregnant',
         property_value='1',
     )
+    home_visits_non_pregnant = _filtered_calc_alias(
+        xmlns=ADULT_REGISTRATION_XMLNS,
+        property_path='form/pregnant',
+        property_value='0',
+    )
     home_visits_postpartem = _filtered_calc_alias(
         xmlns=ADULT_REGISTRATION_XMLNS,
         property_path='form/post_partum',
         property_value='1',
+    )
+    home_visits_non_postpartem = _filtered_calc_alias(
+        xmlns=ADULT_REGISTRATION_XMLNS,
+        property_path='form/post_partum',
+        property_value='0',
     )
     home_visits_male_reg = _filtered_calc_alias(
         xmlns=ADULT_REGISTRATION_XMLNS,
@@ -91,15 +101,11 @@ class MalariaConsortiumFluff(fluff.IndicatorDocument):
     home_visits_child_followup = _filtered_calc_alias(
         xmlns=CHILD_FOLLOWUP_XMLNS,
     )
-
     home_visits_children = _or_alias(
-         [home_visits_child_reg, home_visits_child_followup]
+        [home_visits_child_reg, home_visits_child_followup]
     )
-    home_visits_non_pregnant = _filtered_calc_alias(
-        xmlns=ADULT_REGISTRATION_XMLNS,
-        property_path='form/pregnant',
-        property_value='1',
-        operator=xcalculators.NOT_EQUAL,
+    home_visits_other_women = _and_alias(
+        [home_visits_non_pregnant, home_visits_non_postpartem]
     )
     home_visits_adult_followup = _filtered_calc_alias(
         xmlns=ADULT_FOLLOWUP_XMLNS,
@@ -111,7 +117,7 @@ class MalariaConsortiumFluff(fluff.IndicatorDocument):
         [home_visits_newborn_followup, home_visits_child_followup, home_visits_adult_followup]
     )
     home_visits_other = _or_alias(
-        [home_visits_non_pregnant, home_visits_male_reg, home_visits_adult_followup]
+        [home_visits_other_women, home_visits_male_reg, home_visits_adult_followup]
     )
     home_visits_total = _or_alias(
         [home_visits_pregnant, home_visits_postpartem, home_visits_newborn, home_visits_children, home_visits_other]
