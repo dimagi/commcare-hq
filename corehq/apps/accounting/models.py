@@ -50,7 +50,7 @@ class Currency(models.Model):
     name = models.CharField(max_length=25, db_index=True)
     symbol = models.CharField(max_length=10)
     rate_to_usd = models.FloatField(default=1.0)
-    date_updated=models.DateField(auto_now=True)
+    date_updated = models.DateField(auto_now=True)
 
 
 class BillingAccount(models.Model):
