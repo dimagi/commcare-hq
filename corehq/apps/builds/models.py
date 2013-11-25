@@ -1,11 +1,11 @@
 from datetime import datetime
-import logging
 from zipfile import ZipFile
 from corehq.apps.app_manager.const import APP_V1, APP_V2
 from couchdbkit.exceptions import ResourceNotFound, BadValueError
 from couchdbkit.ext.django.schema import *
 from corehq.apps.builds.fixtures import commcare_build_config
 from corehq.apps.builds.jadjar import JadJar
+
 
 class SemanticVersionProperty(StringProperty):
     def validate(self, value, required=True):
@@ -17,7 +17,8 @@ class SemanticVersionProperty(StringProperty):
         except Exception:
             raise BadValueError("Build version %r does not comply with the x.y.z schema" % value)
         return value
-    
+
+
 class CommCareBuild(Document):
     """
     #python manage.py shell
@@ -89,6 +90,7 @@ class CommCareBuild(Document):
     def minor_release(self):
         major, minor, _ = self.version.split('.')
         return int(major), int(minor)
+
     def major_release(self):
         major, _, _ = self.version.split('.')
         return int(major)
@@ -129,6 +131,7 @@ class CommCareBuild(Document):
     def all_builds(cls):
         return cls.view('builds/all', include_docs=True, reduce=False)
 
+
 class BuildSpec(DocumentSchema):
     version = StringProperty()
     build_number = IntegerProperty(required=False)
@@ -155,8 +158,10 @@ class BuildSpec(DocumentSchema):
         fmt = "{self.version}/"
         fmt += "latest" if self.latest else "{self.build_number}"
         return fmt.format(self=self)
+
     def to_string(self):
         return str(self)
+
     @classmethod
     def from_string(cls, string):
         version, build_number = string.split('/')
@@ -167,9 +172,12 @@ class BuildSpec(DocumentSchema):
             return cls(version=version, build_number=build_number)
 
     def minor_release(self):
-        return ".".join(self.version.split('.')[:2])
+        major, minor, _ = self.version.split('.')
+        return int(major), int(minor)
+
     def major_release(self):
         return self.version.split('.')[0]
+
 
 class BuildMenuItem(DocumentSchema):
     build = SchemaProperty(BuildSpec)
@@ -181,7 +189,8 @@ class BuildMenuItem(DocumentSchema):
 
     def get_label(self):
         return self.label or self.build.get_label()
-    
+
+
 class CommCareBuildConfig(Document):
     _ID = 'config--commcare-builds'
 

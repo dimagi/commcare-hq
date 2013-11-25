@@ -365,6 +365,7 @@ var CaseConfig = (function () {
                 },
                 write: function (value) {
                     self.close_condition.type(value ? 'always' : 'never');
+                    self.caseConfig.saveButton.fire('change');
                 }
             });
 
@@ -726,7 +727,7 @@ var CaseConfig = (function () {
             q;
         excludeHidden = excludeHidden || false;
         includeRepeat = includeRepeat || false;
-        filter = filter.split(" ");
+        filter = filter.split(" ").concat(["trigger"]);
         if (!excludeHidden) {
             filter.push('hidden');
         }

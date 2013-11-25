@@ -47,10 +47,7 @@ class BaseMyAccountView(BaseSectionPageView):
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
-        if request.couch_user.is_commcare_user():
-            from corehq.apps.users.views.mobile.users import EditCommCareUserView
-            return HttpResponseRedirect(reverse(EditCommCareUserView.urlname,
-                                         args=[request.couch_user.domain, request.couch_user._id]))
+        # this is only here to add the login_required decorator
         return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
 
     @property

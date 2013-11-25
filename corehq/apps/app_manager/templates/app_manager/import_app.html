@@ -1,8 +1,11 @@
 {% extends "app_manager/apps_base.html" %}
 {% load url from future %}
 {% load i18n %}
+{% load hq_shared_tags %}
 
 {% block js-inline %}{{ block.super }}
+    <script src="{% static 'hqwebapp/js/lib/compression.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/main.js' %}"></script>
     <script>
         $(function () {
             $(".historyBack").click(function () {
@@ -10,6 +13,22 @@
                 return false;
             });
         });
+
+        function CompressionViewModel(source, post_url){
+            var self = this;
+            self.name = ko.observable("");
+            self.source = ko.observable(source);
+            self.save = function(formElement) {
+                $.postGo(post_url,
+                         {name : self.name(),
+                          compressed: LZW.compress(self.source())}
+                        );
+                return false;
+            };
+        }
+        var source = {{ app.export_json|JSON }};
+        var post_url = "{% url "corehq.apps.app_manager.views.import_app" domain %}";
+        ko.applyBindings(new CompressionViewModel(source, post_url));
     </script>
 {% endblock %}
 
@@ -18,7 +37,7 @@
 {% endblock %}
 
 {% block main_column %}
-    <form action="{% url "corehq.apps.app_manager.views.import_app" domain %}" method="post">
+    <form action="{% url "corehq.apps.app_manager.views.import_app" domain %}" method="post" data-bind="submit: save">
 {% if app %}
         <p>Import application <strong>{{ app.name }}</strong> from domain <strong>{{ app.domain }}</strong>?</p>
         <table {% if not is_superuser %}class="hide"{% endif %}>
@@ -28,11 +47,11 @@
 {% endif %}
             <tr>
                 <th>Name:</th>
-                <td><input type="text" name="name"/></td>
+                <td><input type="text" name="name" data-bind="value: name"/></td>
             </tr>
             <tr>
                 <th>Source:</th>
-                <td><textarea name="source">{{ app.export_json }}</textarea></td>
+                <td><textarea name="source" data-bind="value: source"></textarea></td>
             </tr>
         </table>
         <a href="#" class="historyBack">No, take me back.</a>

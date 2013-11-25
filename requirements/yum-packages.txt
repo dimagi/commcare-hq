@@ -1,3 +1,36 @@
+git
+gcc
+gcc-c++
+make
+libtool
+zlib-devel
+openssl-devel
+rubygem-rake
+ruby-rdoc
+curl-devel
+openssl-devel
+libicu-devel
+postgresql
+postgresql-devel
+postgresql-lib
+postgresql-server
+libtool
+python-devel
+yum-utils
+httpd
+
+# couchdb installation dependencies
+erlang
+libicu-devel
+openssl-devel
+curl-devel
+make
+gcc
+js-devel
+libtool
+which
+
+# old stale content of this file
 cairo-devel
 htop
 postgresql

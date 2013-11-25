@@ -54,6 +54,7 @@ class LegacyMixin(object):
             'total': sum(days_used),
             'days_used': len(days_used),
             'days_on': len(days_on),
+            'days_missed': len(days_on) - len(days_used),
             'icon': icon,
         }
 
@@ -98,5 +99,7 @@ class LegacyReportView(LegacyMixin, CustomProjectReport):
                 get_individual('strategy'), 'peace'),
             'individual_game': self.context_for(
                 get_individual('game'), 'smiley'),
+            'site_weekly': self.report.weekly_totals,
+            'individual_weekly': get_individual('weekly_totals'),
         }
 

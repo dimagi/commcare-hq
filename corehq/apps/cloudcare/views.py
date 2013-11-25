@@ -61,7 +61,7 @@ def cloudcare_main(request, domain, urlPath):
         apps = [_app_latest_build_json(app["_id"]) for app in apps]
     else:
         apps = ApplicationBase.view('app_manager/applications_brief', startkey=[domain], endkey=[domain, {}])
-        apps = [get_app_json(app) for app in apps if app and app.application_version == "2.0"]
+        apps = [get_app_json(app) for app in apps if app and app.application_version == V2]
 
     # trim out empty apps
     apps = filter(lambda app: app, apps)
@@ -137,9 +137,11 @@ def form_context(request, domain, app_id, module_id, form_id):
     form_url = "%s%s" % (get_url_base(), reverse('download_xform', args=[domain, app_id, module_id, form_id]))
     case_id = request.GET.get('case_id')
     delegation = request.GET.get('task-list') == 'true'
+    offline = request.GET.get('offline') == 'true'
     return json_response(
         touchforms_api.get_full_context(domain, request.couch_user, 
-                                        app, form_url, case_id, delegation=delegation))
+                                        app, form_url, case_id,
+                                        delegation=delegation, offline=offline))
         
 
 cloudcare_api = login_or_digest_ex(allow_cc_users=True)

@@ -1,15 +1,18 @@
 from collections import defaultdict
 from datetime import datetime, timedelta, time
+
 from django.template.loader import render_to_string
+from django.utils.translation import ugettext as _
+
+from dimagi.utils.couch.database import get_db
+from corehq.couchapps.models import ReportsForm
 from corehq.apps.domain.models import Domain
 from corehq.apps.reminders.models import CaseReminderHandler
 from corehq.apps.reports.util import make_form_couch_key
 from corehq.apps.users.models import CouchUser
-from corehq.elastic import es_query, ADD_TO_ES_FILTER
+from corehq.elastic import es_query, ADD_TO_ES_FILTER, ES_URLS
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
-from dimagi.utils.couch.database import get_db
-from django.utils.translation import ugettext as _
 
 
 def num_web_users(domain, *args):
@@ -94,12 +97,18 @@ def active(domain, *args):
     now = now.strftime(DATE_FORMAT)
 
     key = ['submission', domain]
-    row = get_db().view("reports_forms/all_forms", startkey=key+[then], endkey=key+[now]).all()
+    row = get_db().view(
+        "reports_forms/all_forms",
+        startkey=key+[then],
+        endkey=key+[now],
+        limit=1
+    ).all()
     return True if row else False
 
 def display_time(row, display=True):
     if display:
-        return datetime.strptime((row["value"]["submission_time"]), DATE_FORMAT).strftime(DISPLAY_DATE_FORMAT)
+        reports_form = ReportsForm(row['value'])
+        return reports_form.submission_time.strftime(DISPLAY_DATE_FORMAT)
     else:
         return row["value"]["submission_time"]
 
@@ -218,3 +227,20 @@ def _all_domain_stats():
 
 ES_CALCED_PROPS = ["cp_n_web_users", "cp_n_active_cc_users", "cp_n_cc_users", "cp_n_active_cases" , "cp_n_cases",
                    "cp_n_forms", "cp_first_form", "cp_last_form", "cp_is_active", 'cp_has_app']
+
+def total_distinct_users(domains=None):
+    """
+    Get total number of users who've ever submitted a form.
+    """
+    query = {"in": {"domain.exact": domains}} if domains is not None else {"match_all": {}}
+    q = {
+        "query": query,
+        "filter": {"and": ADD_TO_ES_FILTER["forms"][:]},
+    }
+
+    res = es_query(q=q, facets=["form.meta.userID"], es_url=ES_URLS["forms"], size=0)
+
+    excluded_ids = ['commtrack-system', 'demo_user']
+    user_ids = reduce(list.__add__, [CouchUser.ids_by_domain(d) for d in domains], [])
+    terms = [t.get('term') for t in res["facets"]["form.meta.userID"]["terms"]]
+    return len(filter(lambda t: t and t not in excluded_ids and t in user_ids, terms))

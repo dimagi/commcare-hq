@@ -836,6 +836,7 @@ def stats_data(request):
     histo_type = request.GET.get('histogram_type')
     interval = request.GET.get("interval", "week")
     datefield = request.GET.get("datefield")
+    individual_domain_limit = request.GET.get("individual_domain_limit[]") or 16
 
     params, __ = parse_args_for_es(request, prefix='es_')
 
@@ -846,7 +847,7 @@ def stats_data(request):
         domain_results = es_domain_query(params, fields=["name"], size=99999, show_stats=False)
         domains = [d["fields"]["name"] for d in domain_results["hits"]["hits"]]
 
-        if len(domains) <= 10:
+        if len(domains) <= individual_domain_limit:
             domain_info = [{"names": [d], "display_name": d} for d in domains]
         elif len(domains) < ES_MAX_CLAUSE_COUNT:
             domain_info = [{"names": [d for d in domains], "display_name": _("Domains Matching Filter")}]

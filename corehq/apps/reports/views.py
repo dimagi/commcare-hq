@@ -15,6 +15,7 @@ from corehq.apps.reports.export import (
     CustomBulkExportHelper,
     save_metadata_export_to_tempfile)
 from corehq.apps.reports.models import ReportConfig, ReportNotification
+from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.tasks import create_metadata_export
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.export import export_users
@@ -246,7 +247,6 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
     elif export_id:
         # this is a custom export
         try:
-            export_type = request.GET.get('type', 'form')
             export_object = CustomExportHelper.make(request, export_type, domain, export_id).custom_export
             if safe_only and not export_object.is_safe:
                 return HttpResponseForbidden()
@@ -265,6 +265,10 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
         except ValueError:
             return HttpResponseBadRequest()
         assert(export_tag[0] == domain)
+        # hack - also filter instances here rather than mess too much with trying to make this
+        # look more like a FormExportSchema
+        if export_type == 'form':
+            filter &= SerializableFunction(instances)
         export_object = FakeSavedExportSchema(index=export_tag)
 
     if not filename:
@@ -646,7 +650,7 @@ def case_details(request, domain, case_id):
     
     if case is None or case.doc_type != "CommCareCase" or case.domain != domain:
         messages.info(request, "Sorry, we couldn't find that case. If you think this is a mistake please report an issue.")
-        return HttpResponseRedirect(inspect.CaseListReport.get_url(domain=domain))
+        return HttpResponseRedirect(CaseListReport.get_url(domain=domain))
 
     try:
         owner_name = CommCareUser.get_by_user_id(case.owner_id, domain).raw_username
@@ -668,10 +672,10 @@ def case_details(request, domain, case_id):
         "case": case,
         "username": username, 
         "owner_name": owner_name,
-        "slug": inspect.CaseListReport.slug,
+        "slug": CaseListReport.slug,
         "report": dict(
             name=case_inline_display(case),
-            slug=inspect.CaseListReport.slug,
+            slug=CaseListReport.slug,
             is_async=False,
         ),
         "layout_flush_content": True,
@@ -787,9 +791,14 @@ def _get_form_context(request, domain, instance_id):
 def _get_form_or_404(id):
     # maybe this should be a more general utility a-la-django's get_object_or_404
     try:
-        return XFormInstance.get(id)
+        xform_json = XFormInstance.get_db().get(id)
     except ResourceNotFound:
         raise Http404()
+
+    if xform_json.get('doc_type') not in ('XFormInstance',):
+        raise Http404()
+
+    return XFormInstance.wrap(xform_json)
 
 
 @require_form_view_permission

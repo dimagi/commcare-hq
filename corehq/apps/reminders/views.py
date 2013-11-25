@@ -1270,12 +1270,13 @@ def reminders_in_error(request, domain):
         case = reminder.case
         reminders.append({
             "reminder_id" : reminder._id,
+            "handler_type" : handler.reminder_type,
             "handler_id" : reminder.handler_id,
             "handler_name" : handler.nickname,
             "case_id" : case.get_id if case is not None else None,
             "case_name" : case.name if case is not None else None,
             "next_fire" : tz_utils.adjust_datetime_to_timezone(reminder.next_fire, pytz.utc.zone, timezone.zone).strftime("%Y-%m-%d %H:%M:%S"),
-            "error_msg" : reminder.error_msg,
+            "error_msg" : reminder.error_msg or "-",
             "recipient_name" : get_recipient_name(recipient),
         })
     context = {

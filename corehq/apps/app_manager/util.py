@@ -19,6 +19,7 @@ def split_path(path):
     path = '/'.join(path_parts)
     return path, name
 
+
 def save_xform(app, form, xml):
     try:
         xform = XForm(xml)
@@ -72,24 +73,17 @@ class ParentCasePropertyBuilder(object):
         forms_info = []
         for module in self.app.get_modules():
             for form in module.get_forms():
-                forms_info.append((module.case_type, form.actions))
+                forms_info.append((module.case_type, form))
         return forms_info
 
     @memoized
     def get_parent_types_and_contributed_properties(self, case_type):
         parent_types = set()
         case_properties = set()
-        for m_case_type, f_actions in self.forms_info:
-            for subcase in f_actions.subcases:
-                if subcase.case_type == case_type:
-                    case_properties.update(
-                        subcase.case_properties.keys()
-                    )
-                    if case_type != m_case_type and (
-                            f_actions.open_case.is_active() or
-                            f_actions.update_case.is_active() or
-                            f_actions.close_case.is_active()):
-                        parent_types.add(m_case_type)
+        for m_case_type, form in self.forms_info:
+            p_types, c_props = form.get_parent_types_and_contributed_properties(m_case_type, case_type)
+            parent_types.update(p_types)
+            case_properties.update(c_props)
         return parent_types, case_properties
 
     def get_parent_types(self, case_type):
@@ -109,11 +103,9 @@ class ParentCasePropertyBuilder(object):
 
         case_properties = set(self.defaults)
 
-        for m_case_type, f_actions in self.forms_info:
-            if m_case_type == case_type:
-                case_properties.update(
-                    f_actions.update_case.update.keys()
-                )
+        for m_case_type, form in self.forms_info:
+            case_properties.update(form.get_case_updates(case_type))
+
         parent_types, contributed_properties = \
             self.get_parent_types_and_contributed_properties(case_type)
         case_properties.update(contributed_properties)
@@ -199,3 +191,26 @@ def create_temp_sort_column(field, index):
 def is_sort_only_column(column):
     from corehq.apps.app_manager.models import SortOnlyDetailColumn
     return isinstance(column, SortOnlyDetailColumn)
+
+
+def get_correct_app_class(doc):
+    from corehq.apps.app_manager.models import Application, RemoteApp
+    return {
+        'Application': Application,
+        'Application-Deleted': Application,
+        "RemoteApp": RemoteApp,
+        "RemoteApp-Deleted": RemoteApp,
+    }[doc['doc_type']]
+
+
+def all_apps_by_domain(domain):
+    from corehq.apps.app_manager.models import ApplicationBase
+    rows = ApplicationBase.get_db().view(
+        'app_manager/applications',
+        startkey=[domain, None],
+        endkey=[domain, None, {}],
+        include_docs=True,
+    ).all()
+    for row in rows:
+        doc = row['doc']
+        yield get_correct_app_class(doc).wrap(doc)

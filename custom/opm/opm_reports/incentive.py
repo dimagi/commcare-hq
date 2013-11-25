@@ -34,6 +34,7 @@ class Worker(object):
         # make sure worker passes the filters
         report.filter(
             lambda key: worker.user_data.get(key),
+            # user.awc, user.block
             [('awc', 'awcs'), ('block', 'blocks')]
         )
 
@@ -52,11 +53,12 @@ class Worker(object):
         self.account_number = fluff_attr('account_number')
         self.block = fluff_attr('block')
 
-        def get_result(calculator):
+        def get_result(calculator, reduce=True):
             return OpmFormFluff.get_result(
                 calculator,
                 [DOMAIN, worker._id],
                 report.date_range,
+                reduce=reduce,
             )['total']
 
         self.women_registered = len(OpmCaseFluff.get_result(
@@ -71,6 +73,7 @@ class Worker(object):
             report.date_range,
         )['total']
         self.service_forms_count = 'yes' if get_result('service_forms') else 'no'
+
         self.growth_monitoring_count = get_result('growth_monitoring')
 
         FIXTURES = get_fixture_data()

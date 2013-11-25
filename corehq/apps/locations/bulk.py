@@ -3,6 +3,7 @@ from corehq.apps.locations.models import Location
 from corehq.apps.locations.forms import LocationForm
 from corehq.apps.locations.util import defined_location_types, allowed_child_types
 import itertools
+from soil import DownloadBase
 
 class LocationCache(object):
     """
@@ -36,11 +37,12 @@ class LocationCache(object):
             if key in self._existing_by_type:
                 self._existing_by_type[key][location.name] = location
 
-def import_locations(domain, f, update_existing=False):
-    r = csv.DictReader(f)
-    data = list(r)
 
-    fields = r.fieldnames
+def import_locations(domain, worksheet, update_existing=False, task=None):
+    fields = worksheet.headers
+
+    data = list(worksheet)
+
     hierarchy_fields = []
     loc_types = defined_location_types(domain)
     for field in fields:
@@ -55,7 +57,10 @@ def import_locations(domain, f, update_existing=False):
         return
 
     loc_cache = LocationCache(domain)
-    for loc in data:
+    for index, loc in enumerate(data):
+        if task:
+            DownloadBase.set_progress(task, index, len(data))
+
         for m in import_location(domain, loc, hierarchy_fields, property_fields, update_existing, loc_cache):
             yield m
 
@@ -64,8 +69,10 @@ def import_location(domain, loc_row, hierarchy_fields, property_fields, update, 
         loc_cache = LocationCache(domain)
 
     def get_cell(field):
-        val = loc_row[field].strip()
-        return val if val else None
+        if loc_row[field]:
+            return loc_row[field].strip()
+        else:
+            return None
 
     hierarchy = [(p, get_cell(p)) for p in hierarchy_fields]
     properties = dict((p, get_cell(p)) for p in property_fields)

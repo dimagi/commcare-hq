@@ -2,7 +2,7 @@ import datetime
 from django.http import HttpResponse
 from django.views.decorators.http import require_GET
 from corehq.apps.domain.decorators import login_or_digest_ex
-from corehq.apps.mobile_auth.utils import new_key_record, get_mobile_auth_payload
+from corehq.apps.mobile_auth.utils import new_key_record, get_mobile_auth_payload, bump_expiry
 from corehq.apps.mobile_auth.models import MobileAuthKeyRecord
 from dimagi.utils.parsing import string_to_datetime
 
@@ -15,7 +15,7 @@ class FetchKeyRecords(object):
         self.now = datetime.datetime.utcnow()
 
     def key_for_time(self, now):
-        return MobileAuthKeyRecord.current_for_user(
+        return MobileAuthKeyRecord.key_for_time(
             domain=self.domain,
             user_id=self.user_id,
             now=now,
@@ -30,6 +30,9 @@ class FetchKeyRecords(object):
                 now=self.now,
                 valid=self.now - datetime.timedelta(days=30),
             )
+            key_record.save()
+        elif key_record.expires <= self.now:
+            bump_expiry(key_record, now=self.now)
             key_record.save()
         return key_record
 

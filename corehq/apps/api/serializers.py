@@ -1,11 +1,16 @@
 
-import defusedxml.lxml as lxml
-from lxml.etree import Element, tostring, LxmlError
-from django.utils.encoding import force_unicode
-
+# Standard library imports
 from io import BytesIO
+
+# Django & Tastypie imports
+from django.utils.encoding import force_unicode
 from tastypie.bundle import Bundle
 from tastypie.serializers import Serializer, get_type_string
+
+# External imports
+import defusedxml.lxml as lxml
+from lxml.etree import Element, tostring, LxmlError
+
 
 class CommCareCaseSerializer(Serializer):
     '''
@@ -86,4 +91,20 @@ class CommCareCaseSerializer(Serializer):
                     element.text = force_unicode(simple_data)
 
         return element
-        
+
+
+class CustomXMLSerializer(Serializer):
+    def to_etree(self, data, options=None, name=None, depth=0):
+        etree = super(CustomXMLSerializer, self).to_etree(data, options, name, depth)
+        id = etree.find('id')
+        if id is not None:
+            etree.attrib['id'] = id.findtext('.')
+            etree.remove(id)
+        return etree
+
+class XFormInstanceSerializer(Serializer):
+    def to_xml(self, data, options=None):
+        if isinstance(data, Bundle):
+            return data.obj.get_xml()
+        else:
+            return super(XFormInstanceSerializer, self).to_xml(data, options=options)

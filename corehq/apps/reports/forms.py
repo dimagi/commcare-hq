@@ -20,7 +20,8 @@ class ScheduledReportForm(forms.Form):
     day = forms.TypedChoiceField(
         label="Day",
         coerce=int,
-        choices=[(i, i) for i in range(1, 32)])
+        required=False,
+        choices=[(i, i) for i in range(0, 32)])
 
     hour = forms.TypedChoiceField(
         label='Time',
@@ -45,6 +46,8 @@ class ScheduledReportForm(forms.Form):
 
     def clean(self):
         cleaned_data = super(ScheduledReportForm, self).clean()
+        if cleaned_data["interval"] == "daily":
+            del cleaned_data["day"]
         _verify_email(cleaned_data)
         return cleaned_data
 

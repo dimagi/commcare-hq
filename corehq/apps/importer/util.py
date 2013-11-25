@@ -1,3 +1,4 @@
+import json
 import xlrd
 from dimagi.utils.couch.database import get_db
 from corehq.apps.importer.const import LookupErrors
@@ -27,22 +28,77 @@ class ImporterConfig(object):
     be pickled and passed to celery tasks.
     """
 
-    def __init__(self, request):
-        self.couch_user_id = request.couch_user._id
-        self.excel_fields = request.POST.getlist('excel_field[]')
-        self.case_fields = request.POST.getlist('case_field[]')
-        self.custom_fields = request.POST.getlist('custom_field[]')
-        self.type_fields = request.POST.getlist('type_field[]')
+    def __init__(self,
+        couch_user_id=None,
+        excel_fields=None,
+        case_fields=None,
+        custom_fields=None,
+        type_fields=None,
+        search_column=None,
+        key_column=None,
+        value_column=None,
+        named_columns=None,
+        case_type=None,
+        search_field=None,
+        create_new_cases=None
+    ):
+        self.couch_user_id=couch_user_id
+        self.excel_fields=excel_fields
+        self.case_fields=case_fields
+        self.custom_fields=custom_fields
+        self.type_fields=type_fields
+        self.search_column=search_column
+        self.key_column=key_column
+        self.value_column=value_column
+        self.named_columns=named_columns
+        self.case_type=case_type
+        self.search_field=search_field
+        self.create_new_cases=create_new_cases
 
-        self.search_column = request.POST['search_column']
+    def to_dict(self):
+        return {
+            'couch_user_id': self.couch_user_id,
+            'excel_fields': self.excel_fields,
+            'case_fields': self.case_fields,
+            'custom_fields': self.custom_fields,
+            'type_fields': self.type_fields,
+            'search_column': self.search_column,
+            'key_column': self.key_column,
+            'value_column': self.value_column,
+            'named_columns': self.named_columns,
+            'case_type': self.case_type,
+            'search_field': self.search_field,
+            'create_new_cases': self.create_new_cases,
+        }
 
-        self.key_column = request.POST['key_column']
-        self.value_column = request.POST['value_column']
+    def to_json(self):
+        return json.dumps(self.to_dict())
 
-        self.named_columns = request.POST['named_columns']
-        self.case_type = request.POST['case_type']
-        self.search_field = request.POST['search_field']
-        self.create_new_cases = request.POST['create_new_cases'] == 'True'
+    @classmethod
+    def from_dict(cls, json_dict):
+        return cls(**json_dict)
+
+    @classmethod
+    def from_json(cls, json_rep):
+        return cls.from_dict(json.loads(json_rep))
+
+    @classmethod
+    def from_request(cls, request):
+        return ImporterConfig(
+            couch_user_id=request.couch_user._id,
+            excel_fields=request.POST.getlist('excel_field[]'),
+            case_fields=request.POST.getlist('case_field[]'),
+            custom_fields=request.POST.getlist('custom_field[]'),
+            type_fields=request.POST.getlist('type_field[]'),
+            search_column=request.POST['search_column'],
+            key_column=request.POST['key_column'],
+            value_column=request.POST['value_column'],
+            named_columns=request.POST['named_columns'] == 'True',
+            case_type=request.POST['case_type'],
+            search_field=request.POST['search_field'],
+            create_new_cases=request.POST['create_new_cases'] == 'True',
+
+        )
 
 class ExcelFile(object):
     """
@@ -139,15 +195,20 @@ def convert_custom_fields_to_struct(config):
 
     return field_map
 
+
 class InvalidDateException(Exception):
     pass
 
+
 def parse_excel_date(date_val):
     """ Convert field value from excel to a date value """
-    try:
-        parsed_date = str(date(*xldate_as_tuple(date_val, 0)[:3]))
-    except Exception:
-        raise InvalidDateException
+    if date_val:
+        try:
+            parsed_date = str(date(*xldate_as_tuple(date_val, 0)[:3]))
+        except Exception:
+            raise InvalidDateException
+    else:
+        parsed_date = ''
 
     return parsed_date
 
@@ -264,7 +325,7 @@ def populate_updated_fields(config, columns, row):
             # existing case field was chosen
             update_field_name = field_map[key]['case']
 
-        if update_value:
+        if update_value is not None:
             if field_map[key]['type_field'] == 'date':
                 update_value = parse_excel_date(update_value)
             elif field_map[key]['type_field'] == 'integer':
@@ -292,4 +353,4 @@ def is_valid_id(uploaded_id, domain, cache):
         return cache[uploaded_id]
 
     owner = get_wrapped_owner(uploaded_id)
-    return owner and owner.domain == domain and is_user_or_case_sharing_group(owner)
+    return owner and is_user_or_case_sharing_group(owner) and owner.is_member_of(domain)

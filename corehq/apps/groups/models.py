@@ -204,6 +204,9 @@ class Group(UndoableDocument):
                 "has the user in there twice"
             )
 
+    def is_member_of(self, domain):
+        return self.domain == domain
+
     def __repr__(self):
         return ("Group(domain={self.domain!r}, name={self.name!r}, "
                 + "case_sharing={self.case_sharing!r}, users={users!r})"

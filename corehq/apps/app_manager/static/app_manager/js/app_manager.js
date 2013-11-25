@@ -233,8 +233,6 @@
             if (!form.data('clicked')) {
                 form.data('clicked', 'true');
                 $('.new-module-icon').removeClass().addClass("icon-refresh icon-spin");
-                var module_type = $(this).data('type');
-                $('#new-module-type').val(module_type);
                 form.submit();
             }
         });

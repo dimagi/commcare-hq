@@ -373,6 +373,13 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         required=False,
         help_text=_("Delete your custom logo and use the standard one.")
     )
+    secure_submissions = BooleanField(
+        label=_("Only accept secure submissions"),
+        required=False,
+        help_text=_("Turn this on to prevent others from impersonating your "
+                    "mobile workers. To use, all of your deployed applications "
+                    "must be using secure submissions."),
+    )
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
@@ -467,6 +474,7 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
                 domain.call_center_config.case_type = self.cleaned_data.get('call_center_case_type', None)
             domain.restrict_superusers = self.cleaned_data.get('restrict_superusers', False)
             domain.ota_restore_caching = self.cleaned_data.get('ota_restore_caching', False)
+            domain.secure_submissions = self.cleaned_data.get('secure_submissions', False)
             domain.save()
             return True
         except Exception:

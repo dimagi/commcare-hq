@@ -339,6 +339,7 @@ var DetailScreenConfig = (function () {
             var i, column, model, property, header,
                 that = this, columns;
             eventize(this);
+            this.type = spec.type;
             this.saveUrl = options.saveUrl;
             this.$home = $home;
             this.config = config;
@@ -516,6 +517,7 @@ var DetailScreenConfig = (function () {
                     url: this.saveUrl,
                     type: "POST",
                     data: {
+                        type: this.type,
                         screens: JSON.stringify(this.serialize()),
                         parent_select: JSON.stringify({
                             module_id: parentSelect.moduleId(),
@@ -617,13 +619,12 @@ var DetailScreenConfig = (function () {
                         column.duplicate();
                     };
                 }
-
                 if (!this.edit && _.isEmpty(this.columns)) {
                     $('<p/>').text(DetailScreenConfig.message.EMPTY_SCREEN).appendTo($box);
                 } else {
                     if (this.edit) {
                         if (window.enableNewSort) {
-                            var $detailBody = $('#detail-screen-config-body');
+                            var $detailBody = $('#' + this.type + '-detail-screen-config-body');
                             $('<div id="saveBtn" class="clearfix">')
                                 .append(this.saveButton.ui)
                                 .prependTo($detailBody);
@@ -737,8 +738,9 @@ var DetailScreenConfig = (function () {
         };
         DetailScreenConfig.init = function ($home, spec) {
             var ds = new DetailScreenConfig($home, spec);
-            var $sortRowsHome = $('#detail-screen-sort');
-            var $parentSelectHome = $('#detail-screen-parent');
+            var type = spec.state.type;
+            var $sortRowsHome = $('#' + type + '-detail-screen-sort');
+            var $parentSelectHome = $('#' + type + '-detail-screen-parent');
             ko.applyBindings(ds.sortRows, $sortRowsHome.get(0));
             ko.applyBindings(ds.parentSelect, $parentSelectHome.get(0));
             $parentSelectHome.on('change', '*', function () {

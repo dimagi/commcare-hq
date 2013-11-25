@@ -1,4 +1,4 @@
-from django.http import HttpResponse, HttpResponseRedirect, Http404
+from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpResponseServerError
 from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_POST
 from corehq.apps.commtrack.views import BaseCommTrackManageView
@@ -18,6 +18,13 @@ import urllib
 from django.utils.translation import ugettext as _, ugettext_noop
 from dimagi.utils.decorators.memoized import memoized
 from custom.openlmis.tasks import bootstrap_domain_task
+from soil.util import expose_download
+import uuid
+from corehq.apps.commtrack.tasks import import_locations_async
+from soil import DownloadBase
+from django.shortcuts import render_to_response
+from django.template.context import RequestContext
+from soil.heartbeat import heartbeat_enabled, is_alive
 
 
 @domain_admin_required
@@ -134,10 +141,96 @@ class FacilitySyncView(BaseLocationView):
     def page_context(self):
         return {'lmis_config': self.domain_object.commtrack_settings.openlmis_config}
 
+
 class EditLocationHierarchy(BaseLocationView):
     urlname = 'location_hierarchy'
     page_title = ugettext_noop("Location Hierarchy")
     template_name = 'locations/location_hierarchy.html'
+
+
+class LocationImportStatusView(BaseLocationView):
+    urlname = 'location_import_status'
+    page_title = ugettext_noop('Location Import Status')
+    template_name = 'locations/manage/import_status.html'
+
+    @property
+    def page_context(self):
+        return {}
+
+    def get(self, request, *args, **kwargs):
+        context = {
+            'domain': self.domain,
+            'download_id': kwargs['download_id']
+        }
+        return render(request, 'locations/manage/import_status.html', context)
+
+
+class LocationImportView(BaseLocationView):
+    urlname = 'location_import'
+    page_title = ugettext_noop('Upload Locations from Excel')
+    template_name = 'locations/manage/import.html'
+
+    @property
+    def page_context(self):
+        return {}
+
+    def post(self, request, *args, **kwargs):
+        upload = request.FILES.get('locs')
+        if not upload:
+            return HttpResponse(_('no file uploaded'))
+        if not args:
+            return HttpResponse(_('no domain specified'))
+
+        domain = args[0]
+
+        update_existing = bool(request.POST.get('update'))
+
+        # stash this in soil to make it easier to pass to celery
+        file_ref = expose_download(upload.read(),
+                                   expiry=1*60*60)
+        task = import_locations_async.delay(
+            domain,
+            file_ref.download_id,
+            update_existing
+        )
+        file_ref.set_task(task)
+
+        return HttpResponseRedirect(
+            reverse(
+                LocationImportStatusView.urlname,
+                args=[domain, file_ref.download_id]
+            )
+        )
+
+
+def location_importer_job_poll(request, domain, download_id, template="locations/manage/partials/status.html"):
+    download_data = DownloadBase.get(download_id)
+    is_ready = False
+
+    if download_data is None:
+        download_data = DownloadBase(download_id=download_id)
+        try:
+            if download_data.task.failed():
+                return HttpResponseServerError()
+        except (TypeError, NotImplementedError):
+            # no result backend / improperly configured
+            pass
+
+    alive = True
+    if heartbeat_enabled():
+        alive = is_alive()
+
+    context = RequestContext(request)
+
+    if download_data.task.state == 'SUCCESS':
+        is_ready = True
+        context['result'] = download_data.task.result.get('messages')
+
+    context['is_ready'] = is_ready
+    context['is_alive'] = alive
+    context['progress'] = download_data.get_progress()
+    context['download_id'] = download_id
+    return render_to_response(template, context_instance=context)
 
 
 @domain_admin_required # TODO: will probably want less restrictive permission
