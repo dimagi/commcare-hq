@@ -4,6 +4,76 @@ from dimagi.utils.data import generator
 from corehq.apps.accounting.models import *
 from corehq.apps.users.models import WebUser
 
+COMMCARE_PLANS = [
+    {
+        'name': "CommCare Community",
+        'fee': 0.0,
+        'rates': [
+            {
+                'name': "User Community",
+                'limit': 50,
+                'excess': 1.00,
+                'type': FeatureType.USER,
+            },
+            {
+                'name': "SMS Community",
+                'type': FeatureType.SMS,
+            },
+        ],
+    },
+    {
+        'name': "CommCare Standard",
+        'fee': 100.00,
+        'rates': [
+            {
+                'name': "User Standard",
+                'limit': 100,
+                'excess': 1.00,
+                'type': FeatureType.USER,
+            },
+            {
+                'name': "SMS Standard",
+                'limit': 250,
+                'type': FeatureType.SMS,
+            },
+        ],
+    },
+    {
+        'name': "CommCare Pro",
+        'fee': 500.00,
+        'rates': [
+            {
+                'name': "User Pro",
+                'limit': 500,
+                'excess': 1.00,
+                'type': FeatureType.USER,
+            },
+            {
+                'name': "SMS Pro",
+                'limit': 1000,
+                'type': FeatureType.SMS,
+            },
+        ],
+    },
+    {
+        'name': "CommCare Advanced",
+        'fee': 1000.00,
+        'rates': [
+            {
+                'name': "User Advanced",
+                'limit': 1000,
+                'excess': 1.00,
+                'type': FeatureType.USER,
+            },
+            {
+                'name': "SMS Advanced",
+                'limit': 2000,
+                'type': FeatureType.SMS,
+            },
+        ],
+    },
+]
+
 
 def currency_usd():
     currency, _ = Currency.objects.get_or_create(code="USD", name="US Dollar")
@@ -39,3 +109,33 @@ def billing_account(web_user_creator, web_user_contact, currency=None, save=True
 
     return billing_account
 
+
+def instantiate_plans(plan_list=None):
+    plan_list = plan_list or COMMCARE_PLANS
+    for plan in plan_list:
+        software_plan, created = SoftwarePlan.objects.get_or_create(name=plan['name'])
+        plan_version = SoftwarePlanVersion(plan=software_plan)
+        plan_version.save()
+        plan_version.product_rates.add(SoftwareProductRate.new_rate(plan['name'], plan['fee']))
+        for rate in plan['rates']:
+            plan_version.feature_rates.add(
+                FeatureRate.new_rate(
+                    rate['name'],
+                    rate['type'],
+                    monthly_fee=rate.get('fee'),
+                    monthly_limit=rate.get('limit'),
+                    per_excess_fee=rate.get('excess'),
+                )
+            )
+        plan_version.save()
+
+
+def delete_all_plans():
+    SoftwarePlanVersion.objects.all().delete()
+    SoftwarePlan.objects.all().delete()
+
+    SoftwareProductRate.objects.all().delete()
+    SoftwareProduct.objects.all().delete()
+
+    FeatureRate.objects.all().delete()
+    Feature.objects.all().delete()
