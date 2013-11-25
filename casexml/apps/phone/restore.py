@@ -1,3 +1,4 @@
+import hashlib
 from couchdbkit import ResourceConflict
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.case.exceptions import BadStateException, RestoreException
@@ -6,6 +7,7 @@ import logging
 from dimagi.utils.couch.database import get_db, get_safe_write_kwargs
 from casexml.apps.phone import xml
 from datetime import datetime
+from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from receiver.xml import get_response_element, get_simple_response_xml,\
     ResponseNature
 from casexml.apps.case.xml import check_version, V1
@@ -24,6 +26,7 @@ class RestoreConfig(object):
         self.version = version
         self.state_hash = state_hash
         self.caching_enabled = caching_enabled
+        self.cache = get_redis_default_cache()
 
     @property
     @memoized
@@ -48,10 +51,9 @@ class RestoreConfig(object):
 
         self.validate()
 
-        if self.caching_enabled and self.sync_log:
-            payload = self.sync_log.get_cached_payload(self.version)
-            if payload:
-                return payload
+        cached_payload = self.get_cached_payload()
+        if cached_payload:
+            return cached_payload
 
         sync_operation = user.get_case_updates(last_sync)
         case_xml_elements = [xml.get_case_element(op.case, op.required_updates, self.version)
@@ -89,14 +91,7 @@ class RestoreConfig(object):
             response.append(case_elem)
 
         resp = xml.tostring(response)
-        if self.caching_enabled and self.sync_log:
-            try:
-                self.sync_log.set_cached_payload(resp, self.version)
-            except ResourceConflict:
-                # if one sync takes a long time and another one updates the sync log
-                # this can fail. in this event, don't fail to respond, since it's just
-                # a caching optimization
-                pass
+        self.set_cached_payload_if_enabled(resp)
         return resp
 
     def get_response(self):
@@ -111,6 +106,32 @@ class RestoreConfig(object):
             )
             return HttpResponse(response, mimetype="text/xml",
                                 status=412)  # precondition failed
+
+    def _initial_cache_key(self):
+        return hashlib.md5('ota-restore-{user}-{version}'.format(
+            user=self.user.user_id,
+            version=self.version,
+        )).hexdigest()
+
+    def get_cached_payload(self):
+        if self.caching_enabled:
+            if self.sync_log:
+                return self.sync_log.get_cached_payload(self.version)
+            else:
+                return self.cache.get(self._initial_cache_key())
+
+    def set_cached_payload_if_enabled(self, resp):
+        if self.caching_enabled:
+            if self.sync_log:
+                try:
+                    self.sync_log.set_cached_payload(resp, self.version)
+                except ResourceConflict:
+                    # if one sync takes a long time and another one updates the sync log
+                    # this can fail. in this event, don't fail to respond, since it's just
+                    # a caching optimization
+                    pass
+            else:
+                self.cache.set(self._initial_cache_key(), resp, 60*60)
 
 
 def generate_restore_payload(user, restore_id="", version=V1, state_hash=""):
