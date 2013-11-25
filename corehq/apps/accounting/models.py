@@ -50,7 +50,7 @@ class BillingAccount(models.Model):
         db_index=True,
         max_length=80,
         blank=True,
-        help_text="This is the organization name in Salesforce",
+        help_text="This is how we link to the salesforce account",
     )
     created_by = models.CharField(max_length=80)
     date_created = models.DateField(auto_now_add=True)
