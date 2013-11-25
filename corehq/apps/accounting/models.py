@@ -21,6 +21,17 @@ class FeatureType(object):
     )
 
 
+class SoftwareProductType(object):
+    COMMCARE = "CommCare"
+    COMMTRACK = "CommTrack"
+    COMMCONNECT = "CommConnect"
+    CHOICES = (
+        (COMMCARE, "CommCare"),
+        (COMMTRACK, "CommTrack"),
+        (COMMCONNECT, "CommConnect"),
+    )
+
+
 class SoftwarePlanVisibility(object):
     PUBLIC = "PUBLIC"
     INTERNAL = "INTERNAL"
@@ -28,6 +39,7 @@ class SoftwarePlanVisibility(object):
         (PUBLIC, "Anyone can subscribe"),
         (INTERNAL, "Dimagi must create subscription"),
     )
+
 
 class Currency(models.Model):
     """
@@ -74,6 +86,7 @@ class SoftwareProduct(models.Model):
     Specifies a product name that can be included in a subscription. e.g. CommTrack Pro, CommCare Community, etc.
     """
     name = models.CharField(max_length=40, unique=True)
+    product_type = models.CharField(max_length=10, db_index=True, choices=SoftwareProductType.CHOICES)
 
 
 class SoftwareProductRate(models.Model):
@@ -93,7 +106,7 @@ class Feature(models.Model):
     the FeatureRate references to provide a monthly fee, limit and per-excess fee.
     """
     name = models.CharField(max_length=40, unique=True)
-    feature_type = models.CharField(max_length=10, choices=FeatureType.CHOICES)
+    feature_type = models.CharField(max_length=10, db_index=True, choices=FeatureType.CHOICES)
 
 
 class FeatureRate(models.Model):
