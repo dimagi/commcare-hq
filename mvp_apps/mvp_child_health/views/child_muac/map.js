@@ -18,7 +18,7 @@ function (doc) {
                     try {
                         var cur_muac = parseFloat(indicators.cur_muac.value);
                         last_muac_indicators["muac_reading"] = case_id;
-                        if (cur_muac < 125.0) {
+                        if ((cur_muac < 125.0 && cur_muac > 49) || (cur_muac <12.5)) {
                             last_muac_indicators["muac_wasting"] = case_id;
                         }
                     } catch (e) {
