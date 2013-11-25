@@ -5,16 +5,9 @@ from corehq.apps.accounting.models import *
 from corehq.apps.users.models import WebUser
 
 
-def currency_usd(save=True):
-    currency_usd = Currency(
-        code="USD",
-        name="US Dollar",
-    )
-
-    if save:
-        currency_usd.save()
-
-    return currency_usd
+def currency_usd():
+    currency, _ = Currency.objects.get_or_create(code="USD", name="US Dollar")
+    return currency
 
 
 def arbitrary_web_user(save=True):
