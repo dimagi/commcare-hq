@@ -839,7 +839,7 @@ def restart_services():
     execute(services_restart)
 
 
-@roles('django_app', 'django_celery', 'django_monolith')
+@roles('django_app', 'django_celery', 'django_pillowtop', 'django_monolith')
 def services_restart():
     """Stop and restart all supervisord services"""
     require('environment',
