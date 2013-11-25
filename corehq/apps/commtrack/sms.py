@@ -45,7 +45,8 @@ def process(domain, data):
     inst_xml = to_instance(data)
     logger.debug(inst_xml)
     
-    stockreport.process(domain, inst_xml)
+    # TODO: just submit straight from here
+    #stockreport.process(domain, inst_xml)
 
 class StockReportParser(object):
     """a helper object for parsing raw stock report texts"""
@@ -84,27 +85,22 @@ class StockReportParser(object):
             self.location = self.location_from_code(args[0])
             args = args[1:]
 
-        # single action stock report
-        if action_keyword in self.C.stock_keywords():
+        action = self.C.action_by_keyword(action_keyword)
+        if action and action.type == 'stock':
+            # single action stock report
             # TODO: support single-action by product, as well as by action?
-            action_name = self.C.all_keywords()[action_keyword]
-            action = self.C.all_actions_by_name[action_name]
+            _tx = self.single_action_transactions(action, args, self.transaction_factory(stockreport.StockTransaction))
 
-            _tx = self.single_action_transactions(action, args, transaction_factory(self.location, stockreport.StockTransaction))
-
-        # requisition
-        elif action_keyword in self.C.requisition_keywords():
-            action_name = self.C.all_keywords()[action_keyword]
-            action = self.C.all_actions_by_name[action_name]
-
-            if action.action_type in [RequisitionActions.APPROVAL, RequisitionActions.PACK]:
+        elif action and action.type == 'req':
+            # requisition
+            if action.action in [RequisitionActions.APPROVAL, RequisitionActions.PACK]:
                 _tx = self.requisition_bulk_action(action, args)
             else:
-                _tx = self.single_action_transactions(action, args, transaction_factory(self.location, stockreport.Requisition))
+                _tx = self.single_action_transactions(action, args, self.transaction_factory(stockreport.Requisition))
 
         # multiple action stock report
-        elif self.C.multiaction_enabled and action_keyword == self.C.multiaction_keyword.lower():
-            _tx = self.multiple_action_transactions(args, transaction_factory(self.location, stockreport.StockTransaction))
+        elif self.C.multiaction_enabled and action_keyword == self.C.multiaction_keyword:
+            _tx = self.multiple_action_transactions(args, self.transaction_factory(stockreport.StockTransaction))
 
         else:
             # initial keyword not recognized; delegate to another handler
@@ -124,21 +120,18 @@ class StockReportParser(object):
 
     def single_action_transactions(self, action, args, make_tx):
         # special case to handle immediate stock-out reports
-        if action.action_type == 'stockout':
+        if action.action == const.StockActions.STOCKOUT:
             if all(looks_like_prod_code(arg) for arg in args):
                 for prod_code in args:
                     yield make_tx(
-                        domain=self.domain,
                         product=self.product_from_code(prod_code),
-                        action_name=action.name,
+                        action=action,
                         value=0,
                     )
 
                 return
             else:
                 raise SMSError("can't include a quantity for stock-out action")
-
-        grouping_allowed = (action.action_type == 'stockedoutfor')
 
         products = []
         for arg in args:
@@ -147,7 +140,7 @@ class StockReportParser(object):
             else:
                 if not products:
                     raise SMSError('quantity "%s" doesn\'t have a product' % arg)
-                if len(products) > 1 and not grouping_allowed:
+                if len(products) > 1:
                     raise SMSError('missing quantity for product "%s"' % products[-1].code)
 
                 try:
@@ -156,17 +149,14 @@ class StockReportParser(object):
                     raise SMSError('could not understand product quantity "%s"' % arg)
 
                 for p in products:
-                    yield make_tx(domain=self.domain, product=p, action_name=action.name, value=value)
+                    yield make_tx(product=p, action=action, value=value)
                 products = []
         if products:
             raise SMSError('missing quantity for product "%s"' % products[-1].code)
 
     def multiple_action_transactions(self, args, make_tx):
-        action_name = None
-        action_code = None
+        action = None
         product = None
-
-        action_defs = self.C.all_actions_by_name
 
         # TODO: catch that we don't mix in requisiton and stock report keywords in the same multi-action message?
 
@@ -183,17 +173,14 @@ class StockReportParser(object):
                     raise SMSError('product expected for action "%s"' % action_code)
                 break
 
-            try:
-                old_action_code = action_code
-                action_name, action_code = self.C.keywords(multi=True)[keyword], keyword
-                action = action_defs.get(action_name)
-
+            old_action = action
+            _next_action = self.C.action_by_keyword(keyword)
+            if _next_action:
+                action = _next_action
                 if not found_product_for_action:
-                    raise SMSError('product expected for action "%s"' % old_action_code)
+                    raise SMSError('product expected for action "%s"' % old_action.keyword)
                 found_product_for_action = False
                 continue
-            except KeyError:
-                pass
 
             try:
                 product = self.product_from_code(keyword)
@@ -203,7 +190,7 @@ class StockReportParser(object):
             if product:
                 if not action:
                     raise SMSError('need to specify an action before product')
-                elif action.action_type == 'stockout':
+                elif action.action == const.StockActions.STOCKOUT:
                     value = 0
                 else:
                     try:
@@ -211,7 +198,7 @@ class StockReportParser(object):
                     except (ValueError, StopIteration):
                         raise SMSError('quantity expected for product "%s"' % product.code)
 
-                yield make_tx(product=product, action_name=action_name, value=value)
+                yield make_tx(product=product, action=action, value=value)
                 continue
 
             raise SMSError('do not recognize keyword "%s"' % keyword)
@@ -225,6 +212,13 @@ class StockReportParser(object):
             action_type=action.action_type,
             action_name=action.action_name,
             location_id=self.location.location_[-1],
+        )
+
+    def transaction_factory(self, baseclass):
+        return lambda **kwargs: baseclass(
+            domain=self.domain,
+            location=self.location,
+            **kwargs
         )
 
     def location_from_code(self, loc_code):
@@ -249,44 +243,6 @@ def looks_like_prod_code(code):
         return False
     except:
         return True
-
-def product_subcases(supply_point):
-    """given a supply point, return all the sub-cases for each product stocked at that supply point
-    actually returns a mapping: product doc id => sub-case id
-    ACTUALLY returns a dict that will create non-existent product sub-cases on demand
-    """
-    product_subcase_uuids = [ix.referenced_id for ix in supply_point.reverse_indices if ix.identifier == const.PARENT_CASE_REF]
-    product_subcases = CommCareCase.view('_all_docs', keys=product_subcase_uuids, include_docs=True)
-    product_subcase_mapping = dict((subcase.dynamic_properties().get('product'), subcase._id) for subcase in product_subcases)
-
-    def create_product_subcase(product_uuid):
-        return make_supply_point_product(supply_point, product_uuid)._id
-
-    class DefaultDict(dict):
-        """similar to collections.defaultdict(), but factory function has access
-        to 'key'
-        """
-        def __init__(self, factory, *args, **kwargs):
-            super(DefaultDict, self).__init__(*args, **kwargs)
-            self.factory = factory
-
-        def __getitem__(self, key):
-            if key in self:
-                val = self.get(key)
-            else:
-                val = self.factory(key)
-                self[key] = val
-            return val
-
-    return DefaultDict(create_product_subcase, product_subcase_mapping)
-
-def transaction_factory(location, baseclass):
-    """build the product->subcase mapping once and return a closure"""
-    product_subcase_mapping = product_subcases(location)
-    product_caseid = lambda product_id: product_subcase_mapping[product_id]
-    return lambda **kwargs: baseclass(get_caseid=product_caseid,
-                                      location=location,
-                                      **kwargs)
 
 def to_instance(data):
     """convert the parsed sms stock report into an instance like what would be

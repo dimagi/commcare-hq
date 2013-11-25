@@ -81,6 +81,8 @@ def process(domain, instance):
                      headers={'HTTP_X_SUBMIT_TIME': submit_time},
                      hqsubmission=False)
 
+
+# TODO merge this with model class
 class StockTransaction(object):
     def __init__(self, **kwargs):
         self.domain = kwargs.get('domain')

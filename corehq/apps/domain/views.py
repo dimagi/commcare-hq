@@ -970,11 +970,12 @@ class BasicCommTrackSettingsView(BaseCommTrackAdminView):
             'administrative': loctype.administrative,
         }
 
+    # FIXME
     def _get_action_info(self, action):
         return {
-            'type': action.action_type,
+            'type': action.action,
             'keyword': action.keyword,
-            'name': action.action_name,
+            'name': action.subaction,
             'caption': action.caption,
         }
 

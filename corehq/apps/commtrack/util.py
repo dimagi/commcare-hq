@@ -22,7 +22,7 @@ def supply_point_type_categories(domain):
 def all_sms_codes(domain):
     config = CommtrackConfig.for_domain(domain)
 
-    actions = dict((action_config._keyword(False), action_config) for action_config in config.actions)
+    actions = dict((action.keyword, action) for action in config.actions)
     products = dict((p.code, p) for p in Product.by_domain(domain))
     commands = {
         config.multiaction_keyword: {'type': 'stock_report_generic', 'caption': 'Stock Report'},
@@ -54,7 +54,7 @@ def make_product(domain, name, code):
     p.save()
     return p
 
-def bootstrap_commtrack_settings_if_necessary(domain, requisitions_enabled=True):
+def bootstrap_commtrack_settings_if_necessary(domain, requisitions_enabled=False): #True):
     if not(domain and domain.commtrack_enabled and not domain.commtrack_settings):
         return
 
@@ -64,34 +64,30 @@ def bootstrap_commtrack_settings_if_necessary(domain, requisitions_enabled=True)
         multiaction_keyword='report',
         actions=[
             CommtrackActionConfig(
-                action_type='receipts',
+                action='receipts',
                 keyword='r',
                 caption='Received',
-                name='received',
             ),
             CommtrackActionConfig(
-                action_type='consumption',
+                action='consumption',
                 keyword='c',
                 caption='Consumed',
-                name='consumed',
             ),
             CommtrackActionConfig(
-                action_type='consumption',
+                action='consumption',
+                subaction='loss',
                 keyword='l',
                 caption='Losses',
-                name='lost',
             ),
             CommtrackActionConfig(
-                action_type='stockonhand',
+                action='stockonhand',
                 keyword='soh',
                 caption='Stock on hand',
-                name='stock_on_hand',
             ),
             CommtrackActionConfig(
-                action_type='stockout',
+                action='stockout',
                 keyword='so',
                 caption='Stock-out',
-                name='stock_out',
             ),
         ],
         location_types=[
