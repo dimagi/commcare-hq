@@ -74,5 +74,5 @@ class LegacyWeeklyReport(Document):
             return
 
         site = groups[0].name
-        return self.by_site(site, date)
+        return cls.by_site(site, date)
 
