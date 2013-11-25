@@ -551,7 +551,7 @@ class MalariaConsortiumFluff(fluff.IndicatorDocument):
     # danger signs not referred
     internal_newborn_has_danger_sign = _filtered_calc_alias(
         xmlns=NEWBORN_REGISTRATION_XMLNS,
-        property_path='form/has_danager_sign',
+        property_path='form/has_danger_sign',
         property_value='yes',
     )
     internal_newborn_referral_not_given = _filtered_calc_alias(
