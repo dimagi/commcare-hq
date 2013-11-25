@@ -1,4 +1,4 @@
-from functools import partial
+import logging
 from custom.bihar.reports.supervisor import BiharNavReport, MockEmptyReport, \
     url_and_params, BiharSummaryReport, \
     ConvenientBaseMixIn, GroupReferenceMixIn, list_prompt, shared_bihar_context,\
@@ -187,7 +187,7 @@ class IndicatorClientList(ClientListBase, IndicatorMixIn):
     slug = "indicatorclientlist"
     name = ugettext_noop("Client List") 
 
-    extra_context_providers = [name_context]
+    extra_context_providers = [shared_bihar_context, name_context]
 
     @property
     def _name(self):
@@ -229,13 +229,35 @@ class IndicatorClientList(ClientListBase, IndicatorMixIn):
     @property
     def rows(self):
         results = self.verbose_results[self.indicator.fluff_calculator.primary]
+        numerators = self.verbose_results['numerator']
+        def _reconcile(numerators, denominators):
+            def _is_match(num, denom):
+                return num['id'] == denom['id'] and num['key'][-1] == denom['key'][-1]
+
+            num_copy = copy(numerators)
+            for denom in denominators:
+                denom['in_num'] = False
+                for num in num_copy:
+                    if _is_match(num, denom):
+                        num_copy.remove(num)
+                        denom['in_num'] = True
+                        break
+            if num_copy:
+                logging.error('expected no indicators left in the numerator but found some')
+
+
+        def _key(result):
+            return (result['in_num'], result['key'][-1])
+
+        _reconcile(numerators, results)
+        results = sorted(results, key=_key)
         case_ids = set([res['id'] for res in results])
         cases = dict((c._id, c) for c in CommCareCase.view('_all_docs', keys=list(case_ids),
                                                            include_docs=True))
 
         return [
             self.indicator.as_row(cases[result['id']], self.fluff_results, fluff_row=result)
-            for result in reversed(results)
+            for result in results
         ]
 
 class MyPerformanceList(IndicatorClientList):

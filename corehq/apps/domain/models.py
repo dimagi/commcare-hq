@@ -190,6 +190,7 @@ class DynamicReportConfig(DocumentSchema):
     report = StringProperty() # fully-qualified path to template report class
     name = StringProperty() # report display name in sidebar
     kwargs = DictProperty() # arbitrary settings to configure report
+    previewers_only = BooleanProperty()
 
 class DynamicReportSet(DocumentSchema):
     """a set of dynamic reports grouped under a section header in the sidebar"""

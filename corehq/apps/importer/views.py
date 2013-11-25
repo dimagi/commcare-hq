@@ -186,7 +186,7 @@ def excel_fields(request, domain):
 @require_POST
 @require_can_edit_data
 def excel_commit(request, domain):
-    config = ImporterConfig(request)
+    config = ImporterConfig.from_request(request)
 
     excel_id = request.session.get(EXCEL_SESSION_ID)
 
@@ -245,7 +245,7 @@ def importer_job_poll(request, domain, download_id, template="importer/partials/
     context = RequestContext(request)
 
     if download_data.task.result and 'error' in download_data.task.result:
-        error = download_data.result['error']
+        error = download_data.task.result['error']
         if error == 'EXPIRED':
             return _spreadsheet_expired(request, domain)
         elif error == 'HAS_ERRORS':

@@ -12,10 +12,12 @@ from corehq.apps.domain.signals import commcare_domain_post_save
 from corehq.apps.locations.models import Location
 from corehq.apps.sms.api import send_sms_to_verified_number
 from dimagi.utils import create_unique_filter
+from custom.openlmis.commtrack import requisition_receipt, requisition_approved
 
 
 supply_point_modified = Signal(providing_args=['supply_point', 'created'])
 
+requisition_modified = Signal(providing_args=['cases'])
 
 def attach_locations(xform, cases):
     """
@@ -109,7 +111,15 @@ def raise_events(xform, cases):
     for sp in supply_points:
         created = any(filter(lambda update: update.id == sp._id and update.creates_case(), case_updates))
         supply_point_modified.send(sender=None, supply_point=sp, created=created)
+    requisition_cases = [RequisitionCase.wrap(c._doc) for c in cases if c.type == const.REQUISITION_CASE_TYPE]
+    if requisition_cases and requisition_cases[0].requisition_status is RequisitionStatus.APPROVED:
+        requisition_approved.send(sender=None, requisitions=requisition_cases)
+    if requisition_cases and requisition_cases[0].requisition_status is RequisitionStatus.RECEIVED:
+        requisition_receipt.send(sender=None, requisitions=requisition_cases)
 
+    requisition_cases = [RequisitionCase.wrap(c._doc) for c in cases if c.type == const.REQUISITION_CASE_TYPE]
+    if requisition_cases:
+        requisition_modified.send(sender=None, cases=requisition_cases)
 
 def commtrack_processing(sender, xform, cases, **kwargs):
     if is_commtrack_form(xform):

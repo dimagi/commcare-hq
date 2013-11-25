@@ -24,6 +24,7 @@ from unidecode import unidecode
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse, RegexURLResolver
 from django.shortcuts import render
+from dimagi.utils.django.cached_object import CachedObject
 from django.utils.http import urlencode
 from django.views.decorators.http import require_GET
 from django.conf import settings
@@ -35,6 +36,7 @@ from corehq.apps.app_manager.util import save_xform, get_settings_values
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin
 from corehq.apps.translations import system_text as st_trans
+from corehq.util.compression import decompress
 from couchexport.export import FormattedRow, export_raw
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
@@ -229,7 +231,8 @@ def import_app(req, domain, template="app_manager/import_app.html"):
     if req.method == "POST":
         _clear_app_cache(req, domain)
         name = req.POST.get('name')
-        source = req.POST.get('source')
+        compressed = req.POST.get('compressed')
+        source = decompress([chr(int(x)) if int(x) < 256 else int(x) for x in compressed.split(',')])
         source = json.loads(source)
         assert(source is not None)
         app = import_app_util(source, domain, name=name)
@@ -302,7 +305,7 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
 
         try:
             form.validate_form()
-            xform_questions = xform.get_questions(langs)
+            xform_questions = xform.get_questions(langs, include_triggers=True)
         except etree.XMLSyntaxError as e:
             form_errors.append("Syntax Error: %s" % e)
         except AppError as e:
@@ -324,7 +327,7 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
         try:
             form_action_errors = form.validate_for_build()
             if not form_action_errors:
-                xform.add_case_and_meta(form)
+                form.add_stuff_to_xform(xform)
                 if settings.DEBUG and False:
                     xform.validate()
         except CaseError as e:
@@ -357,7 +360,6 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
         'nav_form': form if not is_user_registration else '',
         'xform_languages': languages,
         "xform_questions": xform_questions,
-        'form_actions': form.actions.to_json(),
         'case_reserved_words_json': load_case_reserved_words(),
         'is_user_registration': is_user_registration,
         'module_case_types': module_case_types,
@@ -480,8 +482,9 @@ def get_apps_base_context(request, domain, app):
 @login_and_domain_required
 def paginate_releases(request, domain, app_id):
     limit = request.GET.get('limit', 10)
-    start_build = json.loads(request.GET.get('start_build'))
-    if start_build:
+    start_build_param = request.GET.get('start_build')
+    if start_build_param and json.loads(start_build_param):
+        start_build = json.loads(start_build_param)
         assert isinstance(start_build, int)
     else:
         start_build = {}
@@ -559,6 +562,43 @@ def release_build(request, domain, app_id, saved_app_id):
         return HttpResponseRedirect(reverse('release_manager', args=[domain, app_id]))
 
 
+def get_module_view_context_and_template(app, module):
+    builder = ParentCasePropertyBuilder(
+        app,
+        defaults=('name', 'date-opened', 'status')
+    )
+
+    def get_parent_modules_and_save(case_type):
+        """
+        This closure is so we don't override the `module` variable
+
+        """
+        parent_types = builder.get_parent_types(case_type)
+        modules = app.modules
+        # make sure all modules have unique ids
+        if any(not module.unique_id for module in modules):
+            for module in modules:
+                module.get_or_create_unique_id()
+            app.save()
+        parent_module_ids = [module.unique_id for module in modules
+                             if module.case_type in parent_types]
+        return [{
+                    'unique_id': module.unique_id,
+                    'name': module.name,
+                    'is_parent': module.unique_id in parent_module_ids,
+                } for module in app.modules if module.case_type != case_type]
+
+    def get_sort_elements(details):
+        return [prop.values() for prop in details.sort_elements]
+
+    case_type = module.case_type
+    return "app_manager/module_view.html", {
+        'parent_modules': get_parent_modules_and_save(case_type),
+        'case_properties': sorted(builder.get_properties(case_type)),
+        "sortElements": json.dumps(get_sort_elements(module.case_details.short))
+    }
+
+
 @retry_resource(3)
 def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user_registration=False):
     """
@@ -590,7 +630,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
     except IndexError:
         return bail(req, domain, app_id)
 
-    base_context = get_apps_base_context(req, domain, app)
+    context = get_apps_base_context(req, domain, app)
     if not app:
         all_applications = ApplicationBase.view('app_manager/applications_brief',
             startkey=[domain],
@@ -614,64 +654,24 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         del app['use_commcare_sense']
         app.save()
 
-    context = {
-        'show_care_plan': toggle_enabled(toggles.APP_BUILDER_CARE_PLAN, req.user.username),
-    }
-    if module:
-        if not form:
-            case_type = module.case_type
-            builder = ParentCasePropertyBuilder(
-                app,
-                defaults=('name', 'date-opened', 'status')
-            )
-
-            def get_parent_modules_and_save():
-                """
-                This closure is so we don't override the `module` variable
-
-                """
-                parent_types = builder.get_parent_types(case_type)
-                modules = app.modules
-                # make sure all modules have unique ids
-                if any(not module.unique_id for module in modules):
-                    for module in modules:
-                        module.get_or_create_unique_id()
-                    app.save()
-                parent_module_ids = [module.unique_id for module in modules
-                                     if module.case_type in parent_types]
-                return [{
-                    'unique_id': module.unique_id,
-                    'name': module.name,
-                    'is_parent': module.unique_id in parent_module_ids,
-                } for module in app.modules if module.case_type != case_type]
-            context.update({
-                'parent_modules': get_parent_modules_and_save(),
-                'case_properties': sorted(builder.get_properties(case_type)),
-            })
-        else:
-            context.update({
-                'case_properties': get_all_case_properties(app),
-            })
-
     context.update({
-        'domain': domain,
-
-        'app': app,
+        'show_care_plan': toggle_enabled(toggles.APP_BUILDER_CAREPLAN, req.user.username),
         'module': module,
         'form': form,
     })
-    context.update(base_context)
+
     if app and not module and hasattr(app, 'translations'):
         context.update({"translations": app.translations.get(context['lang'], {})})
 
     if form:
         template = "app_manager/form_view.html"
+        context.update({
+            'case_properties': get_all_case_properties(app),
+        })
         context.update(get_form_view_context(req, form, context['langs'], is_user_registration))
     elif module:
-        sort_elements = [prop.values() for prop in
-                         module.get_detail('case_short').sort_elements]
-        context.update({"sortElements": json.dumps(sort_elements)})
-        template = "app_manager/module_view.html"
+        template, module_context = get_module_view_context_and_template(app, module)
+        context.update(module_context)
     else:
         template = "app_manager/app_view.html"
         if app:
@@ -766,6 +766,8 @@ def new_app(req, domain):
         app.new_form(0, "Untitled Form", lang)
     else:
         app = cls.new_app(domain, "Untitled Application", lang=lang)
+    if req.project.secure_submissions:
+        app.secure_submissions = True
     app.save()
     _clear_app_cache(req, domain)
     app_id = app.id
@@ -788,7 +790,7 @@ def new_module(req, domain, app_id):
         response = back_to_main(req, domain, app_id=app_id, module_id=module_id)
         response.set_cookie('suppress_build_errors', 'yes')
         return response
-    elif module_type == 'care-plan':
+    elif module_type == 'careplan':
         return new_care_plan_module(req, domain, app, name, lang)
     else:
         logger.error('Unexpected module type for new module: "%s"' % module_type)
@@ -967,35 +969,32 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
 
     """
     params = json_request(req.POST)
+    detail_type = params.get('type')
     screens = params.get('screens')
     parent_select = params.get('parent_select')
+    sort_elements = screens['sort_elements']
 
     if not screens:
         return HttpResponseBadRequest("Requires JSON encoded param 'screens'")
 
     app = get_app(domain, app_id)
     module = app.get_module(module_id)
-    detail = module.get_detail('case_short')
 
-    detail.sort_elements = []
-    if 'sort_elements' in screens:
-        for sort_element in json.load(StringIO(screens['sort_elements'])):
-            item = SortElement()
-            item.field = sort_element['field']
-            item.type = sort_element['type']
-            item.direction = sort_element['direction']
-            detail.sort_elements.append(item)
+    if detail_type == 'case':
+        detail = module.case_details
+    else:
+        return HttpResponseBadRequest("Unknown detail type '%s'" % detail_type)
 
-        del screens['sort_elements']
+    detail.short.columns = map(DetailColumn.wrap, screens['short'])
+    detail.long.columns = map(DetailColumn.wrap, screens['long'])
 
-    for detail_type in screens:
-        if detail_type not in DETAIL_TYPES:
-            return HttpResponseBadRequest("All detail types must be in %r"
-                                          % DETAIL_TYPES)
-
-    for detail_type in screens:
-        module.get_detail(detail_type).columns = \
-            [DetailColumn.wrap(c) for c in screens[detail_type]]
+    detail.short.sort_elements = []
+    for sort_element in sort_elements:
+        item = SortElement()
+        item.field = sort_element['field']
+        item.type = sort_element['type']
+        item.direction = sort_element['direction']
+        detail.short.sort_elements.append(item)
 
     module.parent_select = ParentSelect.wrap(parent_select)
     resp = {}
@@ -1082,9 +1081,6 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
             data_paths_dict[path.split('/')[-1]] = path
         form.data_paths = data_paths_dict
 
-    if should_edit("requires"):
-        requires = req.POST['requires']
-        form.set_requires(requires)
     if should_edit("name"):
         name = req.POST['name']
         form.name[lang] = name
@@ -1490,11 +1486,6 @@ def rearrange(req, domain, app_id, key):
             messages.warning(req, CASE_TYPE_CONFLICT_MSG,  extra_tags="html")
     elif "modules" == key:
         app.rearrange_modules(i, j)
-    elif "detail" == key:
-        module_id = int(req.POST['module_id'])
-        app.rearrange_detail_columns(module_id, req.POST['detail_type'], i, j)
-    elif "langs" == key:
-        app.rearrange_langs(i, j)
     app.save(resp)
     if ajax:
         return HttpResponse(json.dumps(resp))
@@ -1643,9 +1634,10 @@ def download_file(req, domain, app_id, path):
         'txt': 'text/plain',
     }
     try:
-        response = HttpResponse(mimetype=mimetype_map[path.split('.')[-1]])
+        mimetype = mimetype_map[path.split('.')[-1]]
     except KeyError:
-        response = HttpResponse()
+        mimetype = None
+    response = HttpResponse(mimetype=mimetype)
 
     if path in ('CommCare.jad', 'CommCare.jar'):
         set_file_download(response, path)
@@ -1655,7 +1647,17 @@ def download_file(req, domain, app_id, path):
 
     try:
         assert req.app.copy_of
-        payload = req.app.fetch_attachment(full_path)
+        obj = CachedObject(str(app_id) + ":" + full_path)
+        if not obj.is_cached():
+            payload = req.app.fetch_attachment(full_path)
+            if type(payload) is unicode:
+                payload = payload.encode('utf-8')
+            buffer = StringIO(payload)
+            metadata = {'content_type': mimetype}
+            obj.cache_put(buffer, metadata)
+        else:
+            _, buffer = obj.get()
+            payload = buffer.getvalue()
         response.write(payload)
         response['Content-Length'] = len(response.content)
         return response

@@ -4,7 +4,7 @@ Fields for use in Tastypie Resources
 
 import six
 
-from tastypie.fields import ApiField
+from tastypie.fields import ApiField, CharField
 import dimagi.utils.modules
 
 def get_referenced_class(class_or_str):
@@ -43,6 +43,22 @@ class UseIfRequested(object):
 
     def __getattr__(self, attr):
         return getattr(self.underlying_field, attr)
+
+class CallableApiField(ApiField):
+    """
+    A minor fix to Tastypie's ApiField to actually support callable attributes in general.
+    TODO: PR this to upstream.
+    """
+
+    def dehydrate(self, bundle):
+        if callable(self.attribute):
+            return self.convert(self.attribute(bundle.obj))
+        else:
+            return super(CallableApiField, self).dehydrate(bundle)
+
+class CallableCharField(CharField, CallableApiField):
+    pass
+
 
 class ToManyDocumentsField(ApiField):
     '''

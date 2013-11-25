@@ -9,7 +9,7 @@ from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, D
 from corehq.apps.reports.graph_models import MultiBarChart, LineChart, Axis
 from corehq.apps.reports.sqlreport import SqlTabularReport, DatabaseColumn, SummingSqlTabularReport, AggregateColumn, calculate_total_row
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
-from corehq.apps.reports.standard.inspect import GenericMapReport
+from corehq.apps.reports.standard.maps import GenericMapReport
 from corehq.apps.reports.util import format_datatables_data
 from dimagi.utils.decorators.memoized import memoized
 from util import get_unique_combinations,  capitalize_fn

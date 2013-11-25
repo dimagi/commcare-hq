@@ -3,11 +3,12 @@ from django.utils import html
 from django.core.urlresolvers import reverse, NoReverseMatch
 import pytz
 from django.utils.translation import ugettext as _
+from corehq.apps.reports.standard.cases.basic import CaseListReport
 
 from corehq.apps.api.es import ReportCaseES
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.standard.inspect import CaseDisplay, CaseListReport
+from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
 from corehq.pillows.base import restore_property_dict
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.timezones import utils as tz_utils
@@ -78,7 +79,7 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
               'custom.apps.crs_reports.fields.SelectSubCenterField', # Todo: Currently there is no data about it in case
               'custom.apps.crs_reports.fields.SelectASHAField',
               'custom.apps.crs_reports.fields.SelectPNCStatusField',
-              'corehq.apps.reports.standard.inspect.CaseSearchFilter']
+              'corehq.apps.reports.standard.cases.filters.CaseSearchFilter']
 
     ajax_pagination = True
     include_inactive = True

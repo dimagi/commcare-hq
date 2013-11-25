@@ -75,6 +75,27 @@
         <nav id="app-list" ></nav>
         <nav id="module-list" ></nav>
         <nav id="form-list" ></nav>
+
+        <!-- keep this well-hidden for now -->
+        <nav id="debug-opts" style="display: none;">
+          <script>
+function enableOffline() {
+    $('#debug-opts').show();
+    $('#use-offline').attr('checked', 'checked');
+}
+if (window.location.href.indexOf('offline=true') != -1) {
+    // doesn't work?
+    enableOffline();
+}
+          </script>
+          <ul class="nav nav-list">
+            <li>
+              <label class="checkbox">
+                <input id="use-offline" type="checkbox" /> Use offline CloudCare
+              </label>
+            </li>
+          </ul>
+        </nav>
     </section>
 {% endblock %}
 
@@ -96,6 +117,13 @@
                 {% endblocktrans %}
         </div>
     {% endif %}
+    <div id="offline-prompt" class="alert fade in alert-block alert-full alert-danger" style="display: none;">
+        {% blocktrans %}
+            Offline CloudCare is not running!
+            <a href="http://mrgris.com/a/dimagi/offline-cloudcare.jnlp">Launch it here</a>.
+            (It may take a moment to start up once it has downloaded)
+        {% endblocktrans %}
+    </div>
     <div id="cloudcare-main" style="position:relative;">
         {% if not apps_raw %}
             <h3>No Apps found</h3>

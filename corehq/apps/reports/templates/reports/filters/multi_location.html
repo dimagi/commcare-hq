@@ -18,6 +18,8 @@
     var LOAD_FDIS_URL = '{{ api_root }}';
     var hierarchy = {{ hierarchy|JSON }};
     var selected = '{{ selected_fdi_id|safe }}';
+    var prev_selected_fixt ;
+    var prev_selected_child;
 
     function api_get_children(fdi_uuid, depth, callback) {
         var params = (fdi_uuid ? {parent_id: fdi_uuid} : {});
@@ -100,7 +102,11 @@
                     $("input[name = 'fixture_id']").val("");
 
                 return val;}
-            if (val == null || val.depth >= hierarchy.length || val == "_all") { all_loaded = true;
+            if (val == null || val.depth >= hierarchy.length || val == "_all") { 
+                all_loaded = true;                
+                if (prev_selected_child){
+                    prev_selected_fixt.selected_child(prev_selected_child);
+                }
                 return;
             }
 
@@ -159,6 +165,8 @@
             this.children($.map(children, function(e) {
                 if (e.id == selected){
                     var to_ret = new FixtureModel(e, root, fixt.depth + 1);
+                    prev_selected_fixt = fixt;
+                    prev_selected_child = to_ret;
                     return to_ret;
                 }
                 else

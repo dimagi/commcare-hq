@@ -4,7 +4,7 @@ import copy
 import dateutil
 import numpy
 import datetime
-from couchdbkit.ext.django.schema import Document, StringProperty, IntegerProperty, ListProperty, DateTimeProperty
+from couchdbkit.ext.django.schema import Document, StringProperty, IntegerProperty, DateTimeProperty
 from couchdbkit.schema.base import DocumentSchema
 from couchdbkit.schema.properties import LazyDict
 from casexml.apps.case.models import CommCareCase
@@ -17,6 +17,8 @@ from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan, add_months, months_between
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.modules import to_function
+from dimagi.utils.couch.cache import cache_core
+
 
 class DocumentNotInDomainError(Exception):
     pass
@@ -47,13 +49,15 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
         self.class_path = self._class_path
 
     def __str__(self):
-        return "\n\n%(class_name)s - Modified %(last_modified)s\n %(slug)s, v. %(version)s, namespace: %(namespace)s." % {
+        return "\n\n%(class_name)s - Modified %(last_modified)s\n %(slug)s, domain: %(domain)s," \
+            " version: %(version)s, namespace: %(namespace)s." % {
                 'class_name': self.__class__.__name__,
                 'slug': self.slug,
+                'domain': self.domain,
                 'version': self.version,
                 'namespace': self.namespace,
-                'last_modified': self.last_modified.strftime('%M %B %Y at %H:%M')
-                        if self.last_modified else "Ages Ago"
+                'last_modified': (self.last_modified.strftime('%M %B %Y at %H:%M')
+                                  if self.last_modified else "Ages Ago")
             }
 
     @classmethod
@@ -360,13 +364,12 @@ class CouchIndicatorDef(DynamicIndicatorDefinition):
             view_kwargs.update(
                 reduce=reduce
             )
-        return get_db().view(self.couch_view,
-            **view_kwargs
-        ).all()
+
+        return cache_core.cached_view(self.get_db(), self.couch_view, cache_expire=60*60*6, **view_kwargs)
 
     def get_raw_results(self, user_ids, datespan=False, date_group_level=False, reduce=False):
         """
-            date_group_level can be 0 to group by year, 1 to group by month and 2 to group by day
+        date_group_level can be 0 to group by year, 1 to group by month and 2 to group by day
         """
         datespan = self._apply_datespan_shifts(datespan)
         results = []

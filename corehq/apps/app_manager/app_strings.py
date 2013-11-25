@@ -1,3 +1,4 @@
+from distutils.version import LooseVersion
 import functools
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.app_manager.util import is_sort_only_column
@@ -15,8 +16,9 @@ def _create_custom_app_strings(app, lang):
 
     def trans(d):
         return clean_trans(d, langs)
-    def numfirst(text):
-        if float(app.build_spec.minor_release()) >= 2.8:
+
+    def maybe_add_index(text):
+        if LooseVersion(app.build_spec.version) >= '2.8':
             numeric_nav_on = app.profile.get('properties', {}).get('cc-entry-mode') == 'cc-entry-review'
             if app.profile.get('features', {}).get('sense') == 'true' or numeric_nav_on:
                 text = "${0} %s" % (text,) if not (text and text[0].isdigit()) else text
@@ -37,30 +39,30 @@ def _create_custom_app_strings(app, lang):
             yield lc, name
 
     for module in app.get_modules():
-        for detail in module.get_details():
-            if detail.type.startswith('case'):
+        for detail_type, detail in module.get_details():
+            if detail_type.startswith('case'):
                 label = trans(module.case_label)
             else:
                 label = trans(module.referral_label)
-            yield id_strings.detail_title_locale(module, detail), label
+            yield id_strings.detail_title_locale(module, detail_type), label
 
-            detail_column_infos = get_detail_column_infos(detail)
+            detail_column_infos = get_detail_column_infos(detail, include_sort=detail_type == 'case_short')
             for (column, sort_element, order) in detail_column_infos:
                 if not is_sort_only_column(column):
-                    yield id_strings.detail_column_header_locale(module, detail, column), trans(column.header)
+                    yield id_strings.detail_column_header_locale(module, detail_type, column), trans(column.header)
 
                 if column.format in ('enum', 'enum-image'):
                     for item in column.enum:
-                        yield id_strings.detail_column_enum_variable(module, detail, column, item.key), trans(item.value)
+                        yield id_strings.detail_column_enum_variable(module, detail_type, column, item.key), trans(item.value)
 
-        yield id_strings.module_locale(module), numfirst(trans(module.name))
+        yield id_strings.module_locale(module), maybe_add_index(trans(module.name))
         if module.case_list.show:
             yield id_strings.case_list_locale(module), trans(module.case_list.label) or "Case List"
         if module.referral_list.show:
             yield id_strings.referral_list_locale(module), trans(module.referral_list.label)
         for form in module.get_forms():
             form_name = trans(form.name) + ('${0}' if form.show_count else '')
-            yield id_strings.form_locale(form), numfirst(form_name)
+            yield id_strings.form_locale(form), maybe_add_index(form_name)
 
 
 class AppStringsBase(object):
@@ -101,6 +103,11 @@ class AppStringsBase(object):
                 # do not overwrite a real trans with a blank trans
                 if not (val == '' and key in messages):
                     messages[key] = val
+
+        if 'case_sharing.exactly_one_group' not in messages:
+            messages['case_sharing.exactly_one_group'] = \
+                u'Your phone is not set up properly for case sharing. Please contact your supervisor.'
+
         return commcare_translations.dumps(messages).encode('utf-8')
 
 

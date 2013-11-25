@@ -1,7 +1,12 @@
 from .models import XFormsSession, XFORMS_SESSION_SMS
 from datetime import datetime
 from corehq.apps.cloudcare.touchforms_api import get_session_data
-from touchforms.formplayer.api import XFormsConfig, DigestAuth, get_raw_instance
+from touchforms.formplayer.api import (
+    XFormsConfig,
+    DigestAuth,
+    get_raw_instance,
+    InvalidSessionIdException,
+)
 from touchforms.formplayer import sms as tfsms
 from django.conf import settings
 from xml.etree.ElementTree import XML, tostring
@@ -121,7 +126,12 @@ def submit_unfinished_form(session_id, include_case_side_effects=False):
     session = XFormsSession.latest_by_session_id(session_id)
     if session is not None and session.end_time is None:
         # Get and clean the raw xml
-        xml = get_raw_instance(session_id)
+        try:
+            xml = get_raw_instance(session_id)
+        except InvalidSessionIdException:
+            session.end(completed=False)
+            session.save()
+            return
         root = XML(xml)
         case_tag_regex = re.compile("^(\{.*\}){0,1}case$") # Use regex in order to search regardless of namespace
         meta_tag_regex = re.compile("^(\{.*\}){0,1}meta$")

@@ -1,12 +1,14 @@
 from django.utils.translation import ugettext as _
+from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.api.es import ReportCaseES
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.standard.inspect import CaseListReport
 
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 from dimagi.utils.decorators.memoized import memoized
-from custom.bihar.reports.display import MCHMotherDisplay, MCHChildDisplay
+from custom.bihar.reports.display import MCHMotherDisplay, MCHChildDisplay, EMPTY_FIELD
+from dimagi.utils.timezones import utils as tz_utils
+import pytz
 
 
 class MCHBaseReport(CustomProjectReport, CaseListReport):
@@ -16,7 +18,7 @@ class MCHBaseReport(CustomProjectReport, CaseListReport):
     emailable = False
 
     fields = [
-        'corehq.apps.reports.fields.GroupField',
+        'custom.bihar.fields.SelectCaseSharingGroupField',
         'corehq.apps.reports.fields.SelectOpenCloseField',
     ]
 
@@ -40,6 +42,10 @@ class MCHBaseReport(CustomProjectReport, CaseListReport):
     def rendered_report_title(self):
         return self.name
 
+    def date_to_json(self, date):
+        return tz_utils.adjust_datetime_to_timezone\
+            (date, pytz.utc.zone, self.timezone.zone).strftime\
+            ('%d/%m/%Y') if date else ""
 
 
 class MotherMCHRegister(MCHBaseReport):
@@ -235,7 +241,7 @@ class ChildMCHRegister(MCHBaseReport):
                                    DataTablesColumnGroup(
                                        _("Beneficiary Information"),
                                        DataTablesColumn(_("Child Name"), sortable=False),
-                                       DataTablesColumn(_("Father an Mother Name"), sortable=False),
+                                       DataTablesColumn(_("Father and Mother Name"), sortable=False),
                                        DataTablesColumn(_("Mother's MCTS ID"), sortable=False),
                                        DataTablesColumn(_("Gender"), sortable=False),
                                        DataTablesColumn(_("City/ward/village"), sortable=False),

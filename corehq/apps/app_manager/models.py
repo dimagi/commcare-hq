@@ -32,6 +32,8 @@ from couchdbkit.resource import ResourceNotFound
 
 from corehq.apps.app_manager.commcare_settings import check_condition
 from corehq.apps.app_manager.const import APP_V1, APP_V2
+from corehq.apps.app_manager.xpath import dot_interpolate
+from corehq.apps.builds import get_default_build_spec
 from corehq.util.hash_compat import make_password
 from dimagi.utils.couch.lazy_attachment_doc import LazyAttachmentDoc
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
@@ -50,7 +52,7 @@ from corehq.apps.users.util import cc_user_domain
 from corehq.apps.domain.models import cached_property
 from corehq.apps.app_manager import current_builds, app_strings, remote_app
 from corehq.apps.app_manager import fixtures, suite_xml, commcare_settings, build_error_utils
-from corehq.apps.app_manager.util import split_path, save_xform
+from corehq.apps.app_manager.util import split_path, save_xform, get_correct_app_class
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml
 from .exceptions import AppError, VersioningError, XFormError, XFormValidationError
 
@@ -77,8 +79,8 @@ def load_case_reserved_words():
 
 
 @memoized
-def load_default_user_registration():
-    with open(os.path.join(os.path.dirname(__file__), 'data', 'register_user.xhtml')) as f:
+def load_form_template(filename):
+    with open(os.path.join(os.path.dirname(__file__), 'data', filename)) as f:
         return f.read()
 
 
@@ -389,7 +391,7 @@ class FormBase(DocumentSchema):
 
         xml_valid = False
         if self.source == '':
-            errors.append(dict(type="blank form"))
+            errors.append(dict(type="blank form", **meta))
         else:
             try:
                 _parse_xml(self.source)
@@ -532,7 +534,7 @@ class Form(FormBase, IndexedSchema, NavMenuItemMediaMixin):
         return actions
 
     def active_actions(self):
-        if self.get_app().application_version == '1.0':
+        if self.get_app().application_version == APP_V1:
             action_types = (
                 'open_case', 'update_case', 'close_case',
                 'open_referral', 'update_referral', 'close_referral',
@@ -624,24 +626,6 @@ class Form(FormBase, IndexedSchema, NavMenuItemMediaMixin):
 
         return errors
 
-    def set_requires(self, requires):
-        if requires == "none":
-            self.actions.update_referral = DocumentSchema()
-            self.actions.close_case = DocumentSchema()
-            self.actions.close_referral = DocumentSchema()
-            self.actions.case_preload = DocumentSchema()
-            self.actions.referral_preload = DocumentSchema()
-        elif requires == "case":
-            self.actions.open_case = DocumentSchema()
-            self.actions.close_referral= DocumentSchema()
-            self.actions.update_referral = DocumentSchema()
-            self.actions.referral_preload = DocumentSchema()
-        elif requires == "referral":
-            self.actions.open_case = DocumentSchema()
-            self.actions.open_referral = DocumentSchema()
-
-        self.requires = requires
-
     def requires_case(self):
         # all referrals also require cases
         return self.requires in ("case", "referral")
@@ -680,6 +664,28 @@ class Form(FormBase, IndexedSchema, NavMenuItemMediaMixin):
         ))
 
         return errors
+
+    def get_case_updates(self, case_type):
+        if self.get_module().case_type == case_type:
+            return self.actions.update_case.update.keys()
+
+        return []
+
+    @memoized
+    def get_parent_types_and_contributed_properties(self, module_case_type, case_type):
+        parent_types = set()
+        case_properties = set()
+        for subcase in self.actions.subcases:
+            if subcase.case_type == case_type:
+                case_properties.update(
+                    subcase.case_properties.keys()
+                )
+                if case_type != module_case_type and (
+                        self.actions.open_case.is_active() or
+                        self.actions.update_case.is_active() or
+                        self.actions.close_case.is_active()):
+                    parent_types.add(module_case_type)
+        return parent_types, case_properties
 
 
 class UserRegistrationForm(FormBase):
@@ -814,7 +820,7 @@ class Detail(IndexedSchema):
     Full configuration for a case selection screen
 
     """
-    type = StringProperty(choices=DETAIL_TYPES)
+    display = StringProperty(choices=['short', 'long'])
 
     columns = SchemaListProperty(DetailColumn)
     get_columns = IndexedSchema.Getter('columns')
@@ -829,16 +835,15 @@ class Detail(IndexedSchema):
         for column in self.columns:
             column.rename_lang(old_lang, new_lang)
 
-    @property
-    def display(self):
-        return "short" if self.type.endswith('short') else 'long'
-
     def filter_xpath(self):
-
         filters = []
         for i,column in enumerate(self.columns):
             if column.format == 'filter':
-                filters.append("(%s)" % column.filter_xpath.replace('.', '%s_%s_%s' % (column.model, column.field, i + 1)))
+                value = dot_interpolate(
+                    column.filter_xpath,
+                    '%s_%s_%s' % (column.model, column.field, i + 1)
+                )
+                filters.append("(%s)" % value)
         xpath = ' and '.join(filters)
         return partial_escape(xpath)
 
@@ -860,40 +865,33 @@ class ParentSelect(DocumentSchema):
     module_id = StringProperty()
 
 
-class Module(IndexedSchema, NavMenuItemMediaMixin):
-    """
-    A group of related forms, and configuration that applies to them all.
-    Translates to a top-level menu on the phone.
-
-    """
-    name = DictProperty()
-    case_label = DictProperty()
-    referral_label = DictProperty()
-    forms = SchemaListProperty(Form)
-    details = SchemaListProperty(Detail)
-    case_type = StringProperty()
-    put_in_root = BooleanProperty(default=False)
-    case_list = SchemaProperty(CaseList)
-    referral_list = SchemaProperty(CaseList)
-    task_list = SchemaProperty(CaseList)
-    parent_select = SchemaProperty(ParentSelect)
-    unique_id = StringProperty()
+class DetailPair(DocumentSchema):
+    short = SchemaProperty(Detail)
+    long = SchemaProperty(Detail)
 
     @classmethod
-    def new_module(cls, name, lang):
-        return Module(
-            name={(lang or 'en'): name or ugettext("Untitled Module")},
-            forms=[],
-            case_type='',
-            details=[Detail(
-                type=detail_type,
-                columns=[DetailColumn(
-                    format='plain',
-                    header={(lang or 'en'): ugettext("Name")},
-                    field='name',
-                    model='case',
-                )],
-            ) for detail_type in DETAIL_TYPES])
+    def wrap(cls, data):
+        self = super(DetailPair, cls).wrap(data)
+        self.short.display = 'short'
+        self.long.display = 'long'
+        return self
+
+
+class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
+    name = DictProperty()
+    unique_id = StringProperty()
+    case_type = StringProperty()
+
+    @classmethod
+    def wrap(cls, data):
+        if cls is ModuleBase:
+            doc_type = data['doc_type']
+            if doc_type == 'Module':
+                return Module.wrap(data)
+            else:
+                raise ValueError('Unexpected doc_type for Module', doc_type)
+        else:
+            return super(ModuleBase, cls).wrap(data)
 
     def get_or_create_unique_id(self):
         """
@@ -909,15 +907,6 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
             self.unique_id = FormBase.generate_id()
         return self.unique_id
 
-    def rename_lang(self, old_lang, new_lang):
-        _rename_key(self.name, old_lang, new_lang)
-        for form in self.get_forms():
-            form.rename_lang(old_lang, new_lang)
-        for detail in self.details:
-            detail.rename_lang(old_lang, new_lang)
-        for case_list in (self.case_list, self.referral_list):
-            case_list.rename_lang(old_lang, new_lang)
-
     get_forms = IndexedSchema.Getter('forms')
 
     @parse_int([1])
@@ -925,18 +914,89 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
         self__forms = self.forms
         return self__forms[i].with_id(i%len(self.forms), self)
 
-    get_details = IndexedSchema.Getter('details')
+    def requires_case_details(self):
+        return False
 
-    def get_detail(self, detail_type):
-        for detail in self.get_details():
-            if detail.type == detail_type:
-                return detail
-        raise Exception("Module %s has no detail type %s" % (self, detail_type))
+
+class Module(ModuleBase):
+    """
+    A group of related forms, and configuration that applies to them all.
+    Translates to a top-level menu on the phone.
+
+    """
+    case_label = DictProperty()
+    referral_label = DictProperty()
+    forms = SchemaListProperty(Form)
+    case_details = SchemaProperty(DetailPair)
+    ref_details = SchemaProperty(DetailPair)
+    put_in_root = BooleanProperty(default=False)
+    case_list = SchemaProperty(CaseList)
+    referral_list = SchemaProperty(CaseList)
+    task_list = SchemaProperty(CaseList)
+    parent_select = SchemaProperty(ParentSelect)
+
+    @classmethod
+    def wrap(cls, data):
+        if 'details' in data:
+            try:
+                case_short, case_long, ref_short, ref_long = data['details']
+            except ValueError:
+                # "need more than 0 values to unpack"
+                pass
+            else:
+                data['case_details'] = {
+                    'short': case_short,
+                    'long': case_long,
+                }
+                data['ref_details'] = {
+                    'short': ref_short,
+                    'long': ref_long,
+                }
+            finally:
+                del data['details']
+        return super(Module, cls).wrap(data)
+
+    @classmethod
+    def new_module(cls, name, lang):
+        detail = Detail(
+            columns=[DetailColumn(
+                format='plain',
+                header={(lang or 'en'): ugettext("Name")},
+                field='name',
+                model='case',
+            )]
+        )
+        return Module(
+            name={(lang or 'en'): name or ugettext("Untitled Module")},
+            forms=[],
+            case_type='',
+            case_details=DetailPair(
+                short=Detail(detail.to_json()),
+                long=Detail(detail.to_json()),
+            ),
+        )
+
+    def rename_lang(self, old_lang, new_lang):
+        _rename_key(self.name, old_lang, new_lang)
+        for form in self.get_forms():
+            form.rename_lang(old_lang, new_lang)
+        for _, detail in self.get_details():
+            detail.rename_lang(old_lang, new_lang)
+        for case_list in (self.case_list, self.referral_list):
+            case_list.rename_lang(old_lang, new_lang)
+
+    def get_details(self):
+        return (
+            ('case_short', self.case_details.short),
+            ('case_long', self.case_details.long),
+            ('ref_short', self.ref_details.short),
+            ('ref_long', self.ref_details.long),
+        )
 
     @property
     def detail_sort_elements(self):
         try:
-            return self.get_detail('case_short').sort_elements
+            return self.case_details.short.sort_elements
         except Exception:
             return []
 
@@ -1223,7 +1283,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
 
         self = super(ApplicationBase, cls).wrap(data)
         if not self.build_spec or self.build_spec.is_null():
-            self.build_spec = CommCareBuildConfig.fetch().get_default(self.application_version)
+            self.build_spec = get_default_build_spec(self.application_version)
 
         if should_save:
             self.save()
@@ -1324,7 +1384,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
     @property
     def commcare_minor_release(self):
         """This is mostly just for views"""
-        return self.build_spec.minor_release()
+        return '%d.%d' % self.build_spec.minor_release()
 
     def get_build_label(self):
         for item in CommCareBuildConfig.fetch().menu:
@@ -1632,7 +1692,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     """
     user_registration = SchemaProperty(UserRegistrationForm)
     show_user_registration = BooleanProperty(default=False, required=True)
-    modules = SchemaListProperty(Module)
+    modules = SchemaListProperty(ModuleBase)
     name = StringProperty()
     # profile's schema is {'features': {}, 'properties': {}}
     # ended up not using a schema because properties is a reserved word
@@ -1835,15 +1895,15 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     @property
     def custom_suite(self):
         try:
-            return self.fetch_attachment('custom_suite.xml')
-        except Exception:
+            return self.lazy_fetch_attachment('custom_suite.xml')
+        except ResourceNotFound:
             return ""
 
     def set_custom_suite(self, value):
         self.put_attachment(value, 'custom_suite.xml')
 
     def create_suite(self):
-        if self.application_version == '1.0':
+        if self.application_version == APP_V1:
             template='app_manager/suite-%s.xml' % self.application_version
             return render_to_string(template, {
                 'app': self,
@@ -1893,7 +1953,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         form = self.user_registration
         form._app = self
         if not form.source:
-            form.source = load_default_user_registration()
+            form.source = load_form_template('register_user.xhtml')
         return form
 
     def get_forms(self, bare=True):
@@ -2098,7 +2158,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                         needs_case_detail=True
                     )
                 )
-            for column in module.get_detail('case_short').columns:
+            for column in module.case_details.short.columns:
                 if column.format == 'filter':
                     try:
                         etree.XPath(column.filter_xpath or '')
@@ -2312,12 +2372,7 @@ def get_app(domain, app_id, wrap_cls=None, latest=False):
             raise Http404
     if domain and app['domain'] != domain:
         raise Http404
-    cls = wrap_cls or {
-        'Application': Application,
-        'Application-Deleted': Application,
-        "RemoteApp": RemoteApp,
-        "RemoteApp-Deleted": RemoteApp,
-    }[app['doc_type']]
+    cls = wrap_cls or get_correct_app_class(app)
     app = cls.wrap(app)
     return app
 
@@ -2390,7 +2445,7 @@ class DeleteModuleRecord(DeleteRecord):
 
     app_id = StringProperty()
     module_id = IntegerProperty()
-    module = SchemaProperty(Module)
+    module = SchemaProperty(ModuleBase)
 
     def undo(self):
         app = Application.get(self.app_id)
@@ -2417,7 +2472,7 @@ class DeleteFormRecord(DeleteRecord):
 Form.get_command_id = lambda self: "m{module.id}-f{form.id}".format(module=self.get_module(), form=self)
 Form.get_locale_id = lambda self: "forms.m{module.id}f{form.id}".format(module=self.get_module(), form=self)
 
-Module.get_locale_id = lambda self: "modules.m{module.id}".format(module=self)
+ModuleBase.get_locale_id = lambda self: "modules.m{module.id}".format(module=self)
 
 Module.get_case_list_command_id = lambda self: "m{module.id}-case-list".format(module=self)
 Module.get_case_list_locale_id = lambda self: "case_lists.m{module.id}".format(module=self)

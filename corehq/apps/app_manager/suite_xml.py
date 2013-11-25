@@ -5,9 +5,10 @@ from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, N
 from corehq.apps.hqmedia.models import HQMediaMapItem
 from .exceptions import MediaResourceError, ParentModuleReferenceError, SuiteValidationError
 from corehq.apps.app_manager.util import split_path, create_temp_sort_column
-from corehq.apps.app_manager.xform import SESSION_CASE_ID
+from corehq.apps.app_manager.xform import SESSION_CASE_ID, autoset_owner_id_for_open_case, autoset_owner_id_for_subcase
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_url_base
+from .xpath import dot_interpolate
 
 FIELD_TYPE_INDICATOR = 'indicator'
 FIELD_TYPE_PROPERTY = 'property'
@@ -138,16 +139,22 @@ class SessionDatum(IdNode, OrderedXmlObject):
     detail_confirm = StringField('@detail-confirm')
 
 
+class Assertion(XmlObject):
+    ROOT_NAME = 'assert'
+
+    test = StringField('@test')
+    text = NodeListField('text', Text)
+
 class Entry(XmlObject):
     ROOT_NAME = 'entry'
 
     form = StringField('form')
     command = NodeField('command', Command)
-    instance = NodeField('instance', Instance)
     instances = NodeListField('instance', Instance)
 
     datums = NodeListField('session/datum', SessionDatum)
-    datum = NodeField('session/datum', SessionDatum)
+
+    assertions = NodeListField('assertions/assert', Assertion)
 
 
 class Menu(DisplayNode, IdNode):
@@ -286,24 +293,24 @@ class IdStrings(object):
     def media_resource(self, multimedia_id, name):
         return u'media-{id}-{name}'.format(id=multimedia_id, name=name)
 
-    def detail(self, module, detail):
-        return u"m{module.id}_{detail.type}".format(module=module, detail=detail)
+    def detail(self, module, detail_type):
+        return u"m{module.id}_{detail_type}".format(module=module, detail_type=detail_type)
 
-    def detail_title_locale(self, module, detail):
-        return u"m{module.id}.{detail.type}.title".format(module=module, detail=detail)
+    def detail_title_locale(self, module, detail_type):
+        return u"m{module.id}.{detail_type}.title".format(module=module, detail_type=detail_type)
 
-    def detail_column_header_locale(self, module, detail, column):
-        return u"m{module.id}.{detail.type}.{d.model}_{d.field}_{d_id}.header".format(
-            detail=detail,
+    def detail_column_header_locale(self, module, detail_type, column):
+        return u"m{module.id}.{detail_type}.{d.model}_{d.field}_{d_id}.header".format(
+            detail_type=detail_type,
             module=module,
             d=column,
             d_id=column.id + 1
         )
 
-    def detail_column_enum_variable(self, module, detail, column, key):
-        return u"m{module.id}.{detail.type}.{d.model}_{d.field}_{d_id}.enum.k{key}".format(
+    def detail_column_enum_variable(self, module, detail_type, column, key):
+        return u"m{module.id}.{detail_type}.{d.model}_{d.field}_{d_id}.enum.k{key}".format(
             module=module,
-            detail=detail,
+            detail_type=detail_type,
             d=column,
             d_id=column.id + 1,
             key=key,
@@ -339,18 +346,17 @@ class IdStrings(object):
         return u"indicators_%s" % indicator_set_name
 
 
-def get_detail_column_infos(detail):
+def get_detail_column_infos(detail, include_sort):
     """
     This is not intented to be a widely used format
     just a packaging of column info into a form most convenient for rendering
     """
     from corehq.apps.app_manager.models import SortElement
 
-    if detail.type != 'case_short':
-        return [(column, None, None) for column in detail.get_columns()]
-
     DetailColumnInfo = namedtuple('DetailColumnInfo',
                                   'column sort_element order')
+    if not include_sort:
+        return [DetailColumnInfo(column, None, None) for column in detail.get_columns()]
 
     if detail.sort_elements:
         sort_elements = detail.sort_elements
@@ -465,17 +471,23 @@ class SuiteGenerator(object):
         from corehq.apps.app_manager.detail_screen import get_column_generator
         if not self.app.use_custom_suite:
             for module in self.modules:
-                for detail in module.get_details():
-                    detail_column_infos = get_detail_column_infos(detail)
+                for detail_type, detail in module.get_details():
+                    detail_column_infos = get_detail_column_infos(
+                        detail,
+                        include_sort=detail_type == 'case_short',
+                    )
 
-                    if detail_column_infos and detail.type in ('case_short', 'case_long'):
+                    if detail_column_infos and detail_type in ('case_short', 'case_long'):
                         d = Detail(
-                            id=self.id_strings.detail(module, detail),
-                            title=Text(locale_id=self.id_strings.detail_title_locale(module, detail))
+                            id=self.id_strings.detail(module, detail_type),
+                            title=Text(locale_id=self.id_strings.detail_title_locale(module, detail_type))
                         )
 
                         for column_info in detail_column_infos:
-                            fields = get_column_generator(self.app, module, detail, *column_info).fields
+                            fields = get_column_generator(
+                                self.app, module, detail,
+                                detail_type=detail_type, *column_info
+                            ).fields
                             d.fields.extend(fields)
 
                         try:
@@ -491,7 +503,7 @@ class SuiteGenerator(object):
 
     def get_filter_xpath(self, module, delegation=False):
         from corehq.apps.app_manager.detail_screen import Filter
-        short_detail = module.details[0]
+        short_detail = module.case_details.short
         filters = []
         for column in short_detail.get_columns():
             if column.format == 'filter':
@@ -553,7 +565,7 @@ class SuiteGenerator(object):
                                    src='jr://instance/session')
 
                 indicator_sets = []
-                for detail in module.get_details():
+                for _, detail in module.get_details():
                     for column in detail.get_columns():
                         if column.field_type == FIELD_TYPE_INDICATOR:
                             indicator_set, _ = column.field_property.split('/', 1)
@@ -569,7 +581,7 @@ class SuiteGenerator(object):
             def get_detail_id_safe(module, detail_type):
                 detail_id = self.id_strings.detail(
                     module=module,
-                    detail=module.get_detail(detail_type)
+                    detail_type=detail_type,
                 )
                 return detail_id if detail_id in detail_ids else None
 
@@ -598,6 +610,22 @@ class SuiteGenerator(object):
                     )
                 ))
 
+        def case_sharing_requires_assertion(form):
+            actions = form.active_actions()
+            if 'open_case' in actions and autoset_owner_id_for_open_case(actions):
+                return True
+            if 'subcases' in actions:
+                for subcase in actions['subcases']:
+                    if autoset_owner_id_for_subcase(subcase):
+                        return True
+            return False
+
+        def add_case_sharing_assertion(e):
+            e.instances.append(Instance(id='groups', src='jr://fixture/user-groups'))
+            assertion = Assertion(test="count(instance('groups')/groups/group) = 1")
+            assertion.text.append(Text(locale_id='case_sharing.exactly_one_group'))
+            e.assertions.append(assertion)
+
         for module in self.modules:
             for form in module.get_forms():
                 e = Entry()
@@ -610,6 +638,8 @@ class SuiteGenerator(object):
                 )
                 if form.requires == "case":
                     add_case_stuff(module, e, use_filter=True)
+                if self.app.case_sharing and case_sharing_requires_assertion(form):
+                    add_case_sharing_assertion(e)
                 yield e
             if module.case_list.show:
                 e = Entry(
@@ -620,6 +650,7 @@ class SuiteGenerator(object):
                 )
                 add_case_stuff(module, e, use_filter=False)
                 yield e
+
     @property
     def menus(self):
         for module in self.modules:
@@ -636,9 +667,8 @@ class SuiteGenerator(object):
                     if module.all_forms_require_a_case() and \
                             not module.put_in_root and \
                             getattr(form, 'form_filter', None):
-                        command.relevant = form.form_filter.replace('.',
-                            SESSION_CASE_ID.case()
-                        )
+                        command.relevant = dot_interpolate(
+                                form.form_filter, SESSION_CASE_ID.case())
                     yield command
 
                 if module.case_list.show:

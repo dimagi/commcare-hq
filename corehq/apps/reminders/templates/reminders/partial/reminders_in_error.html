@@ -71,7 +71,21 @@
                     <tr>
                         <td style="text-align: center;"><input class="selected_reminders" type="checkbox" name="selected_reminders" value="{{ info.reminder_id }}" /></td>
                         <td>{{ info.next_fire }}</td>
-                        <td><a href="{% url "edit_complex" domain info.handler_id %}">{{ info.handler_name }}</a></td>
+                        <td>
+                            {% if info.handler_type == 'DEFAULT' %}
+                                <a href="{% url "edit_complex" domain info.handler_id %}">{{ info.handler_name }}</a>
+                            {% else %}
+                                {% if info.handler_type == 'KEYWORD_INITIATED' %}
+                                    {% trans 'Keyword Response' %}
+                                {% else %}
+                                    {% if info.handler_type == 'ONE_TIME' %}
+                                        {% trans 'Broadcast' %}
+                                    {% else %}
+                                        {% trans '(unknown)' %}
+                                    {% endif %}
+                                {% endif %}
+                            {% endif %}
+                        </td>
                         <td>{{ info.recipient_name }}</td>
                         <td>
                             {% if info.case_id %}

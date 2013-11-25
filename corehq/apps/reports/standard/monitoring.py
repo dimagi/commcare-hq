@@ -14,7 +14,8 @@ from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, 
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType, DataTablesColumnGroup
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.util import make_form_couch_key, friendly_timedelta, format_datatables_data
-from corehq.elastic import es_query
+from corehq.apps.users.models import CommCareUser
+from corehq.elastic import es_query, ADD_TO_ES_FILTER
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from dimagi.utils.couch.database import get_db
@@ -31,8 +32,8 @@ class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, Proje
     exportable = True
 
     def get_user_link(self, user):
+        from corehq.apps.reports.standard.cases.basic import CaseListReport
         user_link_template = '<a href="%(link)s?individual=%(user_id)s">%(username)s</a>'
-        from corehq.apps.reports.standard.inspect import CaseListReport
         user_link = user_link_template % {"link": "%s%s" % (get_url_base(),
                                                             CaseListReport.get_url(domain=self.domain)),
                                           "user_id": user.get('user_id'),
@@ -826,7 +827,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
     def users_to_iterate(self):
         if '_all' in self.group_ids:
             from corehq.apps.groups.models import Group
-            ret = [util._report_user_dict(u) for u in util.user_list(self.domain)]
+            ret = [util._report_user_dict(u) for u in list(CommCareUser.by_domain(self.domain))]
             for r in ret:
                 r["group_ids"] = Group.by_user(r["user_id"], False)
             return ret
@@ -844,6 +845,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                                 "from": datespan.startdate_param,
                                 "to": datespan.enddate_param,
                                 "include_upper": True}}}]}}}
+        q["filter"] = {"and": ADD_TO_ES_FILTER["forms"][:]}
         facets = ['form.meta.userID']
         return es_query(q=q, facets=facets, es_url=XFORM_INDEX + '/xform/_search', size=1, dict_only=dict_only)
 

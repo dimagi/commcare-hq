@@ -6,7 +6,8 @@ from corehq.apps.reports import util
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.reports.models import HQUserType
-from corehq.apps.reports.standard.inspect import CaseListMixin, CaseDisplay
+from corehq.apps.reports.standard.cases.basic import CaseListMixin
+from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _

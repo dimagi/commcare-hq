@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 import re
 import json
 import pytz
@@ -11,7 +11,13 @@ from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadReque
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from corehq.apps.api.models import require_api_user_permission, PERMISSION_POST_SMS
-from corehq.apps.sms.api import send_sms, incoming, send_sms_with_backend_name, send_sms_to_verified_number
+from corehq.apps.sms.api import (
+    send_sms,
+    incoming,
+    send_sms_with_backend_name,
+    send_sms_to_verified_number,
+    DomainScopeValidationError,
+)
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_permission
@@ -36,9 +42,17 @@ from casexml.apps.case.models import CommCareCase
 from dimagi.utils.parsing import json_format_datetime, string_to_boolean
 from dateutil.parser import parse
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.logging import notify_exception
 from django.conf import settings
 
 DEFAULT_MESSAGE_COUNT_THRESHOLD = 50
+
+# Tuple of (description, days in the past)
+SMS_CHAT_HISTORY_CHOICES = (
+    (ugettext_noop("Yesterday"), 1),
+    (ugettext_noop("1 Week"), 7),
+    (ugettext_noop("30 Days"), 30),
+)
 
 @login_and_domain_required
 def default(request, domain):
@@ -252,7 +266,23 @@ def message_test(request, domain, phone_number):
     if request.method == "POST":
         message = request.POST.get("message", "")
         domain_scope = None if request.couch_user.is_superuser else domain
-        incoming(phone_number, message, "TEST", domain_scope=domain_scope)
+        try:
+            incoming(phone_number, message, "TEST", domain_scope=domain_scope)
+        except DomainScopeValidationError:
+            messages.error(
+                request,
+                _("Invalid phone number being simulated. You may only " \
+                  "simulate SMS from verified numbers belonging to contacts " \
+                  "in this domain.")
+            )
+        except Exception:
+            notify_exception(request)
+            messages.error(
+                request,
+                _("An error has occurred. Please try again in a few minutes " \
+                  "and if the issue persists, please contact CommCareHQ " \
+                  "Support.")
+            )
 
     context = get_sms_autocomplete_context(request, domain)
     context['domain'] = domain
@@ -627,12 +657,34 @@ def chat_contacts(request, domain):
 @require_permission(Permissions.edit_data)
 def chat(request, domain, contact_id):
     domain_obj = Domain.get_by_name(domain, strict=True)
+    timezone = report_utils.get_timezone(None, domain)
+
+    # floored_utc_timestamp is the datetime in UTC representing
+    # midnight today in local time. This is used to calculate
+    # all message history choices' timestamps, so that choosing
+    # "Yesterday", for example, gives you data from yesterday at
+    # midnight local time.
+    local_date = datetime.now(timezone).date()
+    floored_utc_timestamp = tz_utils.adjust_datetime_to_timezone(
+        datetime.combine(local_date, time(0,0)),
+        timezone.zone,
+        pytz.utc.zone
+    ).replace(tzinfo=None)
+
+    def _fmt(d):
+        return json_format_datetime(floored_utc_timestamp - timedelta(days=d))
+    history_choices = [(_(x), _fmt(y)) for (x, y) in SMS_CHAT_HISTORY_CHOICES]
+    history_choices.append(
+        (_("All Time"), json_format_datetime(datetime(1970, 1, 1)))
+    )
+
     context = {
         "domain" : domain,
         "contact_id" : contact_id,
         "contact" : get_contact(contact_id),
         "message_count_threshold" : domain_obj.chat_message_count_threshold or DEFAULT_MESSAGE_COUNT_THRESHOLD,
         "custom_case_username" : domain_obj.custom_case_username,
+        "history_choices" : history_choices,
     }
     template = settings.CUSTOM_CHAT_TEMPLATES.get(domain_obj.custom_chat_template) or "sms/chat.html"
     return render(request, template, context)

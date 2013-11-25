@@ -38,6 +38,8 @@ class BaseReport(MonthYearMixin, GenericTabularReport, CustomProjectReport):
     name = None
     slug = None
     model = None
+    report_template_path = "opm/report.html"
+    printable = True
 
     @property
     def fields(self):
@@ -54,7 +56,7 @@ class BaseReport(MonthYearMixin, GenericTabularReport, CustomProjectReport):
         the same logic in incentive, beneficiary, and snapshot.
         """
         if filter_fields is None:
-            filter_fields = [('awc_name', 'awcs'), ('block_name', 'blocks')]
+            filter_fields = [('awc_name', 'awcs'), ('block', 'blocks')]
         for key, field in filter_fields:
             keys = self.filter_data.get(field, []) 
             if keys and fn(key) not in keys:

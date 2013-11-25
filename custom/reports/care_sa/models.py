@@ -1,7 +1,7 @@
 from couchforms.models import XFormInstance
 import fluff
 from corehq.fluff.calculators import xform as xcalculators
-from fluff.filters import ANDFilter, NOTFilter, Filter
+from fluff.filters import ANDFilter, NOTFilter
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 from corehq.apps.groups.models import Group
@@ -12,6 +12,8 @@ HCT_XMLNS = 'http://openrosa.org/formdesigner/BA7D3B3F-151C-4709-A020-CF79B7F2E8
 HBC_XMLNS = "http://openrosa.org/formdesigner/19A3BDCB-5EE6-4D1B-B64B-79361D7D9885"
 PMM_XMLNS = "http://openrosa.org/formdesigner/d234f78e65e30eb72527c1118cf0de15e1181ddc"
 IACT_XMLNS = "http://openrosa.org/formdesigner/BE27B9F4-A260-4110-B187-28D572B46DB0"
+TB_XMLNS = "http://openrosa.org/formdesigner/9CB2E10D-18BE-4653-AE8F-A75958991D38"
+
 
 class CareSAForm(XFormInstance):
     @property
@@ -107,6 +109,7 @@ class CareSAFluff(fluff.IndicatorDocument):
         'gender',
     )
 
+
     # Report 1
     # Testing and Counseling
 
@@ -143,19 +146,34 @@ class CareSAFluff(fluff.IndicatorDocument):
         operator=xcalculators.ANY,
     )
 
-    #1e
-    internal_tb_screening = xcalculators.filtered_form_calc(
+    #1ea
+    tb_screened = xcalculators.filtered_form_calc(
+        xmlns=TB_XMLNS,
+        property_path='form/tb_screening',
+        operator=xcalculators.ANY,
+    )
+
+    #1eb
+    internal_tb_screening_any = xcalculators.filtered_form_calc(
         xmlns=HCT_XMLNS,
         property_path='form/tb_screening',
         operator=xcalculators.ANY,
     )
-    internal_tested_before = xcalculators.filtered_form_calc(
+    internal_testing_counseling = xcalculators.filtered_form_calc(
         xmlns=HCT_XMLNS,
-        property_path='form/tested_b4',
-        property_value='yes',
+        property_path='form/testing_consent',
+        property_value='only_counseling',
     )
-    hiv_known_screened = xcalculators.and_calc(
-        [internal_tb_screening, internal_tested_before]
+    internal_testing_referral = xcalculators.filtered_form_calc(
+        xmlns=HCT_XMLNS,
+        property_path='form/testing_consent',
+        property_value='only_referral',
+    )
+    internal_testing_answers = xcalculators.or_calc(
+        [internal_testing_counseling, internal_testing_referral]
+    )
+    hct_screened = xcalculators.and_calc(
+        [internal_tb_screening_any, internal_testing_answers]
     )
 
     #1f

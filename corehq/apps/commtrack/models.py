@@ -226,7 +226,7 @@ class CommtrackConfig(Document):
     def for_domain(cls, domain):
         result = cls.view("commtrack/domain_config",
                           key=[domain],
-                          include_docs=True).one()
+                          include_docs=True).first()
         return result
 
     def all_actions(self):
@@ -900,6 +900,12 @@ class RequisitionCase(CommCareCase):
         data['product_name'] = product['name'] if product else ''
         data['balance'] = self.get_default_value()
         return data
+
+    @classmethod
+    def get_by_external_id(cls, domain, external_id):
+        return cls.view('hqcase/by_domain_external_id',
+                        key=[domain, external_id],
+                        inlude_docs=True)
 
     @classmethod
     def get_display_config(cls):

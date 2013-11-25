@@ -96,7 +96,7 @@ class OrgDomainStatsReport(DomainStatsReport):
         organization = Organization.get_by_name(org, strict=True)
         if organization and \
                 (self.request.couch_user.is_superuser or self.request.couch_user.is_member_of_org(org)):
-            return [d for d in Domain.get_by_organization(organization.name).all()]
+            return [d for d in Domain.get_by_organization(organization.name)]
         return []
 
     def is_custom_param(self, param):
@@ -226,7 +226,8 @@ def es_domain_query(params=None, facets=None, domains=None, start_at=None, size=
 
     q["facets"] = {}
     if show_stats:
-        stats = ['cp_n_active_cases', 'cp_n_inactive_cases', 'cp_n_active_cc_users', 'cp_n_cc_users', 'cp_n_60_day_cases', 'cp_n_web_users', 'cp_n_forms', 'cp_n_cases']
+        stats = ['cp_n_active_cases', 'cp_n_inactive_cases', 'cp_n_active_cc_users', 'cp_n_cc_users',
+                 "cp_n_users_submitted_form", 'cp_n_60_day_cases', 'cp_n_web_users', 'cp_n_forms', 'cp_n_cases']
         for prop in stats:
             q["facets"].update({"%s-STATS" % prop: {"statistical": {"field": prop}}})
 
@@ -234,20 +235,6 @@ def es_domain_query(params=None, facets=None, domains=None, start_at=None, size=
 
     return es_query(params, facets, terms, q, DOMAIN_INDEX + '/hqdomain/_search', start_at, size, fields=fields)
 
-def total_distinct_users(domains=None):
-    """
-    Get total number of users who've ever submitted a form.
-    """
-    query = {"in": {"domain.exact": domains}} if domains is not None else {"match_all": {}}
-    q = {
-        "query": query,
-        "filter": {"and": ADD_TO_ES_FILTER["forms"][:]},
-    }
-
-    res = es_query(q=q, facets=["form.meta.userID"], es_url=ES_URLS["forms"], size=0)
-    excluded_ids = ['commtrack-system', 'demo_user']
-    terms = [t.get('term') for t in res["facets"]["form.meta.userID"]["terms"]]
-    return len(filter(lambda t: t and t not in excluded_ids, terms))
 
 ES_PREFIX = "es_"
 class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
@@ -263,15 +250,6 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
     def template_context(self):
         ctxt = super(AdminDomainStatsReport, self).template_context
         ctxt["interval"] = "week"
-
-        if self.es_params:
-            domain_results = es_domain_query(self.es_params, fields=["name"], size=99999, show_stats=False)
-            domains = filter(None, [d.get("fields", {}).get("name") for d in domain_results["hits"]["hits"]])
-            if len(domains) < ES_MAX_CLAUSE_COUNT:
-                ctxt["total_distinct_users"] = total_distinct_users(domains)
-                ctxt["matching_filters"] = True
-        if "total_distinct_users" not in ctxt:
-            ctxt["total_distinct_users"] = total_distinct_users()
 
         ctxt["domain_datefields"] = [
             {"value": "date_created", "name": _("Date Created")},
@@ -297,6 +275,8 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                 prop_name="cp_n_active_cc_users",
                 help_text=_("The number of mobile workers who have submitted a form in the last 30 days")),
             DataTablesColumn(_("# Mobile Workers"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_cc_users"),
+            DataTablesColumn(_("# Mobile Workers (Submitted Form)"), sort_type=DTSortType.NUMERIC,
+                             prop_name="cp_n_users_submitted_form"),
             DataTablesColumn(_("# Cases in last 60"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_60_day_cases",
                 help_text=_("The number of cases modified in the last 60 days")),
             DataTablesColumn(_("# Active Cases"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_active_cases",
@@ -327,12 +307,13 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
         CALCS_ROW_INDEX = {
             4: "cp_n_active_cc_users",
             5: "cp_n_cc_users",
-            6: "cp_n_60_day_cases",
-            7: "cp_n_active_cases",
-            8: "cp_n_inactive_cases",
-            9: "cp_n_cases",
-            10: "cp_n_forms",
-            13: "cp_n_web_users",
+            6: "cp_n_users_submitted_form",
+            7: "cp_n_60_day_cases",
+            8: "cp_n_active_cases",
+            9: "cp_n_inactive_cases",
+            10: "cp_n_cases",
+            11: "cp_n_forms",
+            14: "cp_n_web_users",
         }
         def stat_row(name, what_to_get, type='float'):
             row = [name]
@@ -363,6 +344,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                     (dom.get("deployment") or {}).get('country') or _('No country'),
                     dom.get("cp_n_active_cc_users", _("Not yet calculated")),
                     dom.get("cp_n_cc_users", _("Not yet calculated")),
+                    dom.get("cp_n_users_submitted_form", _("Not yet calculated")),
                     dom.get("cp_n_60_day_cases", _("Not yet calculated")),
                     dom.get("cp_n_active_cases", _("Not yet calculated")),
                     dom.get("cp_n_inactive_cases", _("Not yet calculated")),

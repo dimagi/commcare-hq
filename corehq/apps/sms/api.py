@@ -24,6 +24,9 @@ from corehq.apps.groups.models import Group
 REGISTRATION_KEYWORDS = ["JOIN"]
 REGISTRATION_MOBILE_WORKER_KEYWORDS = ["WORKER"]
 
+class DomainScopeValidationError(Exception):
+    pass
+
 class BackendAuthorizationException(Exception):
     pass
 
@@ -224,7 +227,10 @@ def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None,
     if domain_scope:
         # only process messages for phones known to be associated with this domain
         if v is None or v.domain != domain_scope:
-            raise RuntimeError('attempted to simulate incoming sms from phone number not verified with this domain')
+            raise DomainScopeValidationError(
+                'Attempted to simulate incoming sms from phone number not ' \
+                'verified with this domain'
+            )
 
     # Log message in message log
     msg = SMSLog(

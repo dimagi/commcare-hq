@@ -1,6 +1,7 @@
 from corehq.apps.app_manager import suite_xml as sx
 from corehq.apps.app_manager.util import is_sort_only_column
 from corehq.apps.app_manager.xform import CaseXPath, IndicatorXpath
+from corehq.apps.app_manager.xpath import dot_interpolate
 
 CASE_PROPERTY_MAP = {
     # IMPORTANT: if you edit this you probably want to also edit
@@ -14,9 +15,9 @@ CASE_PROPERTY_MAP = {
 
 
 def get_column_generator(app, module, detail, column, sort_element=None,
-                         order=None):
+                         order=None, detail_type=None):
     cls = get_class_for_format(column.format)
-    return cls(app, module, detail, column, sort_element, order)
+    return cls(app, module, detail, column, sort_element, order, detail_type=detail_type)
 
 
 def get_class_for_format(slug):
@@ -74,10 +75,11 @@ class FormattedDetailColumn(object):
     template_form = None
 
     def __init__(self, app, module, detail, column, sort_element=None,
-                 order=None):
+                 order=None, detail_type=None):
         self.app = app
         self.module = module
         self.detail = detail
+        self.detail_type = detail_type
         self.column = column
         self.sort_element = sort_element
         self.order = order
@@ -87,7 +89,7 @@ class FormattedDetailColumn(object):
     def locale_id(self):
         if not is_sort_only_column(self.column):
             return self.id_strings.detail_column_header_locale(
-                self.module, self.detail, self.column,
+                self.module, self.detail_type, self.column,
             )
         else:
             return None
@@ -293,7 +295,7 @@ class Enum(FormattedDetailColumn):
         for item in self.column.enum:
             v_key = u"k{key}".format(key=item.key)
             v_val= self.id_strings.detail_column_enum_variable(self.module,
-                                                               self.detail,
+                                                               self.detail_type,
                                                                self.column,
                                                                item.key)
             variables[v_key] = v_val
@@ -329,7 +331,7 @@ class Filter(HideShortColumn):
 
     @property
     def filter_xpath(self):
-        return self.column.filter_xpath.replace('.', self.xpath)
+        return dot_interpolate(self.column.filter_xpath, self.xpath)
 
 
 @register_format_type('address')

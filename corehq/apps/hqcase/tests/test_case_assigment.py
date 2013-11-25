@@ -82,6 +82,25 @@ class CaseAssignmentTest(TestCase):
         new_num_forms = XFormInstance.get_db().view('couchforms/by_xmlns').all()[0]['value']
         self.assertEqual(new_num_forms, num_forms)
 
+    def test_assign_exclusion(self):
+        self._make_tree()
+        assign_case(self.primary, self.primary_user._id, include_subcases=True, include_parent_cases=True,
+                    exclude=(self.grandfather._id, self.primary._id, self.grandson._id))
+        self._check_state(new_owner_id=self.primary_user._id, expected_changed=[
+            self.grandmother, self.parent, self.son, self.daughter,self.granddaughter, self.grandson2
+        ])
+
+    def test_assign_bad_index_ref(self):
+        # the case has to exist to create the index, but if we delete it later the assignment
+        # shouldn't fail
+        case = self._new_case()
+        case_with_bad_ref = self._new_case(index={'parent': ('person', case._id)})
+        case.delete()
+        # this call previously failed
+        res = assign_case(case_with_bad_ref, self.primary_user._id, include_subcases=True, include_parent_cases=True)
+        self.assertEqual(1, len(res))
+        self.assertEqual(case_with_bad_ref._id, res[0])
+
     def _make_tree(self):
         # create a tree that looks like this:
         #      grandmother    grandfather

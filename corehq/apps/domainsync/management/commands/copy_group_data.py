@@ -18,7 +18,7 @@ class Command(LabelCommand):
     label = ""
     option_list = LabelCommand.option_list + (
         make_option('--include-user-owned',
-            action='store_true', dest='include_user_cases', default=False,
+            action='store_true', dest='include_user_owned', default=False,
             help="In addition to getting cases owned by the group itself, also get those owned by all users in the group"),
         make_option('--include-sync-logs',
             action='store_true', dest='include_sync_logs', default=False,
@@ -40,6 +40,7 @@ class Command(LabelCommand):
 
         sourcedb = Database(args[0])
         group_id = args[1]
+        include_user_owned = options["include_user_owned"]
 
         print 'getting group'
         group = Group.wrap(sourcedb.get(group_id))
@@ -53,7 +54,7 @@ class Command(LabelCommand):
         domain.save(force_update=True)
 
         owners = [group_id]
-        if options["include_user_cases"]:
+        if include_user_owned:
             owners.extend(group.users)
 
         def keys_for_owner(domain, owner_id):
@@ -92,6 +93,15 @@ class Command(LabelCommand):
 
             self.lenient_bulk_save(CommCareCase, cases)
 
+        if include_user_owned:
+            # also grab submissions that may not have included any case data
+            for user_id in group.users:
+                xform_ids.update(res['id'] for res in sourcedb.view(
+                    'couchforms/by_user',
+                    startkey=[user_id],
+                    endkey=[user_id, {}],
+                    reduce=False
+                ))
 
         print 'copying %s xforms' % len(xform_ids)
         user_ids = set(group.users)

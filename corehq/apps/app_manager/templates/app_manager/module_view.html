@@ -30,18 +30,14 @@
         {% endif %}
 
         $(function () {
-            var $home = $("#detail-screen-config");
+            var $home = $("#case-detail-screen-config");
             var detailScreenConfig = DetailScreenConfig.init($home, {
                 state: {
-                    case_short: {{ module.details.0|JSON }},
-                    case_long: {{ module.details.1|JSON }},
-                    ref_short: {{ module.details.2|JSON }},
-                    ref_long: {{ module.details.3|JSON }}
+                    type: 'case',
+                    short: {{ module.case_details.short|JSON }},
+                    long: {{ module.case_details.long|JSON }}
                 },
-                properties: {
-                    'case': {{ case_properties|JSON }},
-                    referral: ["id", "type", "date-due", "date-created"]
-                },
+                properties: {{ case_properties|JSON }},
                 lang: {{ lang|JSON }},
                 langs: {{ app.langs|JSON }},
                 edit: {{ edit|JSON }},
@@ -209,7 +205,7 @@
             <fieldset>
                 <legend>{% trans "Advanced" %}</legend>
                 {% include 'app_manager/partials/case_list_setting.html' with LABEL="Case List Menu Item" DESC="Whether to have an item in the module's menu that lets you browse the case list without moving on to fill out a form." SLUG="case_list" case_list=module.case_list %}
-                {% if app.application_version != '1.0' and request.project.survey_management_enabled %}
+                {% if app.application_version == '2.0' and request.project.survey_management_enabled %}
                     {% include 'app_manager/partials/case_list_setting.html' with LABEL="Task List" DESC="Whether to have an item in the module's menu that lets you see all of your delegated tasks. Only makes sense if you're using a delegation workflow." SLUG="task_list" case_list=module.task_list %}
                 {% endif %}
             </fieldset>
@@ -235,8 +231,8 @@
                 </ol>
             {% endblocktrans %}
         </div>
-        <div id="detail-screen-config-body">
-            <div id="detail-screen-sort">
+        <div id="case-detail-screen-config-body">
+            <div id="case-detail-screen-sort">
             {% if app.enable_multi_sort %}
                 <legend data-bind="visible: rowCount() > 0">
                     {% trans "Sort Properties" %}
@@ -327,12 +323,12 @@
                 </div>
             {% endif %}
             </div>
-            <div id="detail-screen-config">
+            <div id="case-detail-screen-config">
                 <legend>
                     {% trans "Display Properties" %}
                 </legend>
             </div>
-            <div id="detail-screen-parent" data-bind="visible: moduleOptions().length">
+            <div id="case-detail-screen-parent" data-bind="visible: moduleOptions().length">
                 <legend>{% trans "Parent Child Selection" %}</legend>
                 <label class="checkbox">
                     <input type="checkbox" data-bind="checked: active"/>

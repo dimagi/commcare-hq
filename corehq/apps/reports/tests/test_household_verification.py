@@ -72,10 +72,10 @@ class HouseholdVerificationTest(TestCase):
         self._helper(stats)
 
     def _helper(self, stats):
-        self.failUnlessEqual(stats[0]['userID'], 'DANNY')
-        self.failUnlessEqual(stats[0]['total'], 4)
-        self.failUnlessEqual(stats[0]['correct'], 4)
+        self.assertEqual(stats[0]['userID'], 'DANNY')
+        self.assertEqual(stats[0]['total'], 4)
+        self.assertEqual(stats[0]['correct'], 4)
         
-        self.failUnlessEqual(stats[1]['userID'], 'JOHAN')
-        self.failUnlessEqual(stats[1]['total'], 7)
-        self.failUnlessEqual(stats[1]['correct'], 3)
+        self.assertEqual(stats[1]['userID'], 'JOHAN')
+        self.assertEqual(stats[1]['total'], 7)
+        self.assertEqual(stats[1]['correct'], 3)
