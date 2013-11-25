@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.core import cache
+from django.core.cache import InvalidCacheBackendError
 
 COUCH_CACHE_TIMEOUT = 43200
 MOCK_REDIS_CACHE = None
@@ -16,11 +17,24 @@ CACHED_VIEW_PREFIX = '#cached_view_'
 CACHED_DOC_PREFIX = '#cached_doc_'
 CACHED_DOC_PROP_PREFIX = '#cached_doc_helper_'
 
+
 def rcache():
-    return MOCK_REDIS_CACHE or cache.get_cache('redis')
+    return MOCK_REDIS_CACHE or get_redis_default_cache()
+
+
+def get_redis_default_cache():
+    """
+    Get the redis cache, or just the default if it doesn't exist
+    """
+    try:
+        return cache.get_cache('redis')
+    except InvalidCacheBackendError:
+        return cache.cache
+
 
 def key_doc_prop(doc_id, prop_name):
     return ':'.join([CACHED_DOC_PROP_PREFIX, doc_id, prop_name])
+
 
 def key_doc_id(doc_id):
     """
