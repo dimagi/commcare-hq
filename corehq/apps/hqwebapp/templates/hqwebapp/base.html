@@ -317,6 +317,7 @@
                 </script>
             {% endif %}
 
+        {% if request.couch_user.is_superuser %}
         <script>
             var KS = {
                 gen_click_fn: function(selector) {
@@ -353,6 +354,7 @@
                 ko.applyBindings(new KBConfigFormModel(), $('#keyboard-shortcuts-config-form').get(0));
             });
         </script>
+        {% endif %}
 
         {% if request.couch_user.keyboard_shortcuts.enabled %}
         <script>
