@@ -1,10 +1,9 @@
 from django.conf import settings
-from django.core import cache
 import django.core.exceptions
-from django.utils import simplejson
 from dimagi.utils.couch.cache import cache_core
 
-rcache = cache.get_cache('redis')
+
+rcache = cache_core.get_redis_default_cache()
 
 ############################################################################################################
 from corehq.apps.users.models import CouchUser, PublicUser, InvalidUser
