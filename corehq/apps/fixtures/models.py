@@ -195,7 +195,7 @@ class FixtureDataItem(Document):
             else:
                 for field_with_attr in self.fields[field.field_name].field_list:
                     xField = ElementTree.SubElement(xData, field.field_name)
-                    xField.text = field_with_attr.field_value
+                    xField.text = field_with_attr.field_value or ""
                     for attribute in field_with_attr.properties:
                         xField.attrib[attribute] = field_with_attr.properties[attribute]
         return xData
