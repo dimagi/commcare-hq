@@ -1038,15 +1038,16 @@ class StockReport(object):
 class CommTrackUser(CommCareUser):
     locations = ListProperty()
 
-    #@classmethod
-    #def wrap(cls, data):
-        ## lazy migration from commtrack_location to locations
-        #if 'commtrack_location' in data:
-            #original_location = data['commtrack_location']
-            #del data['commtrack_location']
-            ##self.set_locations([original_location])
+    @classmethod
+    def wrap(cls, data):
+        instance = super(CommTrackUser, cls).wrap(data)
+        # lazy migration from commtrack_location to locations
+        if 'commtrack_location' in data:
+            original_location = data['commtrack_location']
+            del data['commtrack_location']
+            instance.set_locations([Location.get(original_location)])
 
-        #return super(CommTrackUser, cls).wrap(data)
+        return instance
 
     def location_map_case(self):
         try:

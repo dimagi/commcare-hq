@@ -81,3 +81,19 @@ class LocationsTest(CommTrackTest):
         # and will have access to these two
         self.check_supply_point(user, sp1._id, False)
         self.check_supply_point(user, sp2._id, False)
+
+    def test_location_migration(self):
+        user = CommCareUser.create(
+            'test',
+            'commcareuser',
+            'password',
+            phone_numbers=['123123'],
+            user_data={},
+            first_name='test',
+            last_name='user'
+        )
+
+        user.commtrack_location = 'someloc'
+        ct_user = CommTrackUser.wrap(user.to_json())
+        self.assertEqual(1, len(ct_user.locations))
+        self.assertEqual('someloc', ct_user.locations[0])
