@@ -264,8 +264,9 @@ class CaseCustomExportHelper(CustomExportHelper):
 
     export_type = 'case'
 
-    default_properties = ["_id", "closed", "meta.closed_by_username", "closed_on", "meta.last_modified_by_username",
-                          "modified_on", "meta.opened_by_username", "opened_on", "meta.owner_name", "id"]
+    default_properties = ["_id", "closed", "closed_on", "modified_on", "opened_on", "info.owner_name", "id"]
+    default_transformed_properties = ["info.closed_by_username", "info.last_modified_by_username",
+                                      "info.opened_by_username", "info.owner_name"]
     meta_properties = ["_id", "closed", "closed_by", "closed_on", "domain", "computed_modified_on_",
                        "server_modified_on", "modified_on", "opened_by", "opened_on", "owner_id",
                        "user_id", "type", "version", "external_id"]
@@ -279,12 +280,12 @@ class CaseCustomExportHelper(CustomExportHelper):
     def format_config_for_javascript(self, table_configuration):
         custom_columns = [
             CustomColumn(slug='last_modified_by_username', index='user_id',
-                         display='meta.last_modified_by_username', transform=USERNAME_TRANSFORM),
+                         display='info.last_modified_by_username', transform=USERNAME_TRANSFORM),
             CustomColumn(slug='opened_by_username', index='opened_by',
-                         display='meta.opened_by_username', transform=USERNAME_TRANSFORM),
+                         display='info.opened_by_username', transform=USERNAME_TRANSFORM),
             CustomColumn(slug='closed_by_username', index='closed_by',
-                         display='meta.closed_by_username', transform=USERNAME_TRANSFORM),
-            CustomColumn(slug='owner_name', index='owner_id', display='meta.owner_name',
+                         display='info.closed_by_username', transform=USERNAME_TRANSFORM),
+            CustomColumn(slug='owner_name', index='owner_id', display='info.owner_name',
                          transform=OWNERNAME_TRANSFORM),
         ]
         main_table_columns = table_configuration[0]['column_configuration']
@@ -315,8 +316,11 @@ class CaseCustomExportHelper(CustomExportHelper):
             if not is_special_type(prop) and prop not in current_properties:
                 col["tag"] = "deleted"
                 col["show"] = False
-            if self.creating_new_export and (display in self.default_properties or prop in current_properties):
-                col["selected"] = True
+            if prop in self.default_properties + list(current_properties) or \
+                            display in self.default_transformed_properties:
+                col["show"] = True
+                if self.creating_new_export:
+                    col["selected"] = True
 
         column_conf.extend([
             ExportColumn(

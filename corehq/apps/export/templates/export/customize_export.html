@@ -268,7 +268,7 @@
 
                 self.setAllSelected = function (table, selected) {
                     _(table.column_configuration()).each(function (column) {
-                        if (self.show_deleted() || column.show()) {
+                        if (!selected || self.show_deleted() || column.show()) {
                             column.selected(selected);
                         }
                     });
