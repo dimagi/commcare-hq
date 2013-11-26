@@ -113,23 +113,23 @@ class WrappedNode(object):
         self.namespaces=namespaces
 
     def find(self, xpath, *args, **kwargs):
-        if self.xml:
+        if self.xml is not None:
             return WrappedNode(self.xml.find(
                 xpath.format(**self.namespaces), *args, **kwargs))
         else:
             return WrappedNode(None)
 
     def findall(self, xpath, *args, **kwargs):
-        if self.xml:
+        if self.xml is not None:
             return [WrappedNode(n) for n in self.xml.findall(
                     xpath.format(**self.namespaces), *args, **kwargs)]
         else:
             return []
 
     def findtext(self, xpath, *args, **kwargs):
-        if self.xml:
+        if self.xml is not None:
             return self.xml.findtext(
-                    xpath.format(**self.namespaces), *args, **kwargs)
+                xpath.format(**self.namespaces), *args, **kwargs)
         else:
             return None
 
