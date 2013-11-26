@@ -32,16 +32,16 @@ class Command(BaseCommand):
         for role in self.BOOTSTRAP_PRIVILEGES + self.BOOTSTRAP_PLANS:
             self.ensure_role(role, dry_run=dry_run)
 
-        for (plan_role_name, privs) in self.BOOTSTRAP_GRANTS.items():
-            for priv_role_name in privs:
-                self.ensure_grant(plan_role_name, priv_role_name, dry_run=dry_run)
+        for (plan_role_slug, privs) in self.BOOTSTRAP_GRANTS.items():
+            for priv_role_slug in privs:
+                self.ensure_grant(plan_role_slug, priv_role_slug, dry_run=dry_run)
 
     def ensure_role(self, role, dry_run=False):
         """
         Adds the role if it does not already exist, otherwise skips it.
         """
 
-        existing_roles = Role.objects.filter(name=role.name)
+        existing_roles = Role.objects.filter(slug=role.slug)
 
         if existing_roles:
             logger.info('Role already exists: %s', role.name)
@@ -53,60 +53,60 @@ class Command(BaseCommand):
                 logger.info('Creating role: %s', role.name)
                 role.save()
 
-    def ensure_grant(self, grantee_name, priv_name, dry_run=False):
+    def ensure_grant(self, grantee_slug, priv_slug, dry_run=False):
         """
-        Adds a parameterless grant between grantee and priv, looked up by name.
+        Adds a parameterless grant between grantee and priv, looked up by slug.
         """
 
         if dry_run:
-            grants = Grant.objects.filter(from_role__name=grantee_name,
-                                          to_role__name=priv_name)
+            grants = Grant.objects.filter(from_role__slug=grantee_slug,
+                                          to_role__slug=priv_slug)
             if not grants:
-                logger.info('[DRY RUN] Granting privilege: %s => %s', grantee_name, priv_name)
+                logger.info('[DRY RUN] Granting privilege: %s => %s', grantee_slug, priv_slug)
         else:
-            grantee = Role.objects.get(name=grantee_name)
-            priv = Role.objects.get(name=priv_name)
+            grantee = Role.objects.get(slug=grantee_slug)
+            priv = Role.objects.get(slug=priv_slug)
 
             if grantee.has_privilege(priv):
-                logger.info('Privilege already granted: %s => %s', grantee.name, priv.name)
+                logger.info('Privilege already granted: %s => %s', grantee.slug, priv.slug)
             else:
-                logger.info('Granting privilege: %s => %s', grantee.name, priv.name)
+                logger.info('Granting privilege: %s => %s', grantee.slug, priv.slug)
                 Grant.objects.create(
                     from_role=grantee,
                     to_role=priv,
                 )
 
     BOOTSTRAP_PRIVILEGES = [
-        Role(name='multimedia', friendly_name='Multimedia Support', description=''),
-        Role(name='app_builder', friendly_name='CommCare Application Builder', description=''),
-        Role(name='commcare_exchange', friendly_name='CommCare Exchange', description=''),
-        Role(name='api_access', friendly_name='API Access', description=''),
-        Role(name='lookup_tables', friendly_name='Lookup Tables', description=''),
-        Role(name='cloudcare', friendly_name='Web-based Applications (CloudCare)', description=''),
-        Role(name='custom_branding', friendly_name='Custom Branding', description=''),
-        Role(name='data_export', friendly_name='Data Export', description=''),
-        Role(name='standard_reports', friendly_name='Standard Reports', description=''),
-        Role(name='cross_project_reports', friendly_name='Cross-Project Reports', description=''),
-        Role(name='custom_reports', friendly_name='Custom Reports', description=''),
-        Role(name='active_data_management', friendly_name='Active Data Management', description=''),
-        Role(name='outbound_messaging', friendly_name='Outbound Messaging', description=''),
-        Role(name='rules_engine', friendly_name='Rules Engine', description=''),
-        Role(name='android_sms_gateway', friendly_name='Android-based SMS Gateway', description=''),
-        Role(name='sms_data_collection', friendly_name='SMS Data Collection', description=''),
-        Role(name='inbound_sms', friendly_name='Inbound SMS (where available)', description=''),
-        Role(name='user_groups', friendly_name='User Groups', description=''),
-        Role(name='role_based_access', friendly_name='Role-based Access', description=''),
-        Role(name='bulk_user_management', friendly_name='Bulk User Management', description=''),
-        Role(name='hipaa_compliance_assurance', friendly_name='HIPAA Compliance Assurance', description=''),
-        Role(name='deidentified_data', friendly_name='De-identified Data', description=''),
+        Role(slug='multimedia', name='Multimedia Support', description=''),
+        Role(slug='app_builder', name='CommCare Application Builder', description=''),
+        Role(slug='commcare_exchange', name='CommCare Exchange', description=''),
+        Role(slug='api_access', name='API Access', description=''),
+        Role(slug='lookup_tables', name='Lookup Tables', description=''),
+        Role(slug='cloudcare', name='Web-based Applications (CloudCare)', description=''),
+        Role(slug='custom_branding', name='Custom Branding', description=''),
+        Role(slug='data_export', name='Data Export', description=''),
+        Role(slug='standard_reports', name='Standard Reports', description=''),
+        Role(slug='cross_project_reports', name='Cross-Project Reports', description=''),
+        Role(slug='custom_reports', name='Custom Reports', description=''),
+        Role(slug='active_data_management', name='Active Data Management', description=''),
+        Role(slug='outbound_messaging', name='Outbound Messaging', description=''),
+        Role(slug='rules_engine', name='Rules Engine', description=''),
+        Role(slug='android_sms_gateway', name='Android-based SMS Gateway', description=''),
+        Role(slug='sms_data_collection', name='SMS Data Collection', description=''),
+        Role(slug='inbound_sms', name='Inbound SMS (where available)', description=''),
+        Role(slug='user_groups', name='User Groups', description=''),
+        Role(slug='role_based_access', name='Role-based Access', description=''),
+        Role(slug='bulk_user_management', name='Bulk User Management', description=''),
+        Role(slug='deidentified_data', name='De-identified Data', description=''),
+        Role(slug='hipaa_compliance_assurance', name='HIPAA Compliance Assurance', description=''),
     ]
 
     BOOTSTRAP_PLANS = [
-        Role(name='community_plan_v0', friendly_name='Community Plan', description=''),
-        Role(name='standard_plan_v0', friendly_name='Standard Plan', description=''),
-        Role(name='pro_plan_v0', friendly_name='Pro Plan', description=''),
-        Role(name='advanced_plan_v0', friendly_name='Advanced Plan', description=''),
-        Role(name='enterprise_plan_v0', friendly_name='Enterprise Plan', description=''),
+        Role(slug='community_plan_v0', name='Community Plan', description=''),
+        Role(slug='standard_plan_v0', name='Standard Plan', description=''),
+        Role(slug='pro_plan_v0', name='Pro Plan', description=''),
+        Role(slug='advanced_plan_v0', name='Advanced Plan', description=''),
+        Role(slug='enterprise_plan_v0', name='Enterprise Plan', description=''),
     ]
 
     community_plan_features = [
