@@ -1,4 +1,5 @@
 import hashlib
+import logging
 import mimetypes
 import os
 import uuid
@@ -181,17 +182,23 @@ class CachedObject(object):
         #todo: once key_hash determined with object stream, create stream file and deposit onto static machine
         #generate url and retrieve by key_hash url.
         self.key_hash = hashlib.md5(cache_key).hexdigest()
-        stream_keys, meta_keys = self.get_all_keys()
-
-        self.stream_keys = stream_keys
-        self.meta_keys = meta_keys
+        try:
+            stream_keys, meta_keys = self.get_all_keys()
+            self.stream_keys = stream_keys
+            self.meta_keys = meta_keys
+        except AssertionError as e:
+            logging.exception(e.message)
 
     def is_cached(self):
-        metas, streams = self.get_all_keys()
-        if len(metas) == 0:
+        try:
+            metas, streams = self.get_all_keys()
+            if len(metas) == 0:
+                return False
+            else:
+                return True
+        except AssertionError as e:
+            logging.exception(e.message)
             return False
-        else:
-            return True
 
     @property
     def key_prefix(self):
@@ -259,7 +266,10 @@ class CachedObject(object):
         full_stream_keys = self.rcache.keys(self.stream_key(WILDCARD))
         full_meta_keys = self.rcache.keys(self.meta_key(WILDCARD))
 
-        assert len(full_stream_keys) == len(full_meta_keys), "Error stream and meta keys must be 1:1 - something went wrong in the configuration"
+        assert len(full_stream_keys) == len(full_meta_keys),\
+            "Error stream and meta keys must be 1:1 - something went wrong in the configuration "\
+            "for key=%s, full_stream_keys=%s, full_meta_keys=%s"\
+            % (self.cache_key, str(full_stream_keys), str(full_meta_keys))
         return full_stream_keys, full_meta_keys
 
 
