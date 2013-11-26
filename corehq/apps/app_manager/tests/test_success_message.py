@@ -76,7 +76,7 @@ class SuccessMessageTest(TestCase):
                 self.num_forms_this_week += 1
             if time > day_start:
                 self.num_forms_today += 1
-            self.failUnlessEqual(
+            self.assertEqual(
                 response.content,
                 get_simple_response_xml(("Thanks {self.first_name} ({self.first_name} {self.last_name})! "
                 "You have submitted {self.num_forms_today} forms today "
@@ -85,7 +85,7 @@ class SuccessMessageTest(TestCase):
             )
 
     def testRender(self):
-        self.failUnlessEqual(
+        self.assertEqual(
             self.sm.render(),
             ("Thanks {self.first_name} ({self.first_name} {self.last_name})! "
             "You have submitted {self.num_forms_today} forms today "

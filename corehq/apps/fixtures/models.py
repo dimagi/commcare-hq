@@ -84,7 +84,7 @@ class FixtureDataItem(Document):
         xData = ElementTree.Element(self.data_type.tag)
         for field in self.data_type.fields:
             xField = ElementTree.SubElement(xData, field)
-            xField.text = unicode(self.fields[field]) if self.fields.has_key(field) else ""
+            xField.text = unicode(self.fields[field] or "") if self.fields.has_key(field) else ""
         return xData
 
     def get_groups(self, wrap=True):

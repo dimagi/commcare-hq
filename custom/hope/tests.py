@@ -33,26 +33,22 @@ class TestHOPECaseResource(TestCase):
         to make sure none of the _HOPE properties crash
         """
 
-        hope_case._HOPE_admission_date
-        hope_case._HOPE_age_of_beneficiary
         hope_case._HOPE_all_anc_doses_given
         hope_case._HOPE_all_dpt1_opv1_hb1_doses_given
         hope_case._HOPE_all_dpt2_opv2_hb2_doses_given
         hope_case._HOPE_all_dpt3_opv3_hb3_doses_given
         hope_case._HOPE_all_ifa_doses_given
         hope_case._HOPE_all_tt_doses_given
-        hope_case._HOPE_bpl_indicator
-        hope_case._HOPE_child_age
+        hope_case._HOPE_bcg_indicator
+        hope_case._HOPE_delivery_nature
         hope_case._HOPE_delivery_type
-        hope_case._HOPE_discharge_date
-        hope_case._HOPE_education
         hope_case._HOPE_existing_child_count
         hope_case._HOPE_ifa1_date
         hope_case._HOPE_ifa2_date
         hope_case._HOPE_ifa3_date
         hope_case._HOPE_measles_dose_given
-        hope_case._HOPE_num_visits
-        hope_case._HOPE_patient_reg_num
+        hope_case._HOPE_number_of_visits
+        hope_case._HOPE_opv_1_indicator
         hope_case._HOPE_registration_date
         hope_case._HOPE_time_of_birth
         hope_case._HOPE_tubal_ligation

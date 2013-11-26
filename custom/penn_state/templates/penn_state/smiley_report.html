@@ -6,6 +6,7 @@
     <link href="{% static 'hqstyle/css/core/hqstyle-core.css' %}" rel="stylesheet"/>
     <link href="{% static 'penn_state/css/smiley_reports.css' %}" rel="stylesheet"/>
     <link href="{% static 'hqwebapp/js/lib/nvd3/nv.d3.css' %}" rel="stylesheet"/>
+    <meta name='viewport' content='width=device-width, initial-scale=.1, maximum-scale=1'/>
     <title>Legacy Together</title>
 </head>
 
@@ -79,12 +80,10 @@
     <script src="{% static 'hqwebapp/js/lib/nvd3/nv.d3.v1.1.10b.min.js' %}"></script>
     <script src="{% static 'penn_state/js/charts.js' %}"></script>
     <script type="text/javascript">
-        var site = {{ site_strategy|JSON }}
-        var individual = {{ individual_strategy|JSON }}
-        pieChart('site-pie-chart', site);
-        pieChart('individual-pie-chart', individual);
-        barChart('site-bar-chart', site);
-        barChart('individual-bar-chart', individual);
+        pieChart('site-pie-chart', {{ site_strategy|JSON }} );
+        pieChart('individual-pie-chart', {{ individual_strategy|JSON }} );
+        barChart('site-bar-chart', {{ site_weekly|JSON }} );
+        barChart('individual-bar-chart', {{ individual_weekly|JSON }} );
     </script>
     {% comment %}
     <script type="text/javascript" src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>

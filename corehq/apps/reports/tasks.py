@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
-from corehq.apps.domain.calculations import CALC_FNS, _all_domain_stats
+from corehq.apps.domain.calculations import CALC_FNS, _all_domain_stats, total_distinct_users
 from corehq.apps.hqadmin.escheck import check_es_cluster_health, CLUSTER_HEALTH, check_case_es_index, check_xform_es_index, check_reportcase_es_index, check_reportxform_es_index
 from corehq.apps.reports.export import save_metadata_export_to_tempfile
 from corehq.apps.reports.models import (ReportNotification,
@@ -131,6 +131,7 @@ def update_calculated_properties():
             "cp_n_active_cc_users": int(CALC_FNS["mobile_users"](dom)),
             "cp_n_cc_users": int(all_stats["commcare_users"][dom]),
             "cp_n_active_cases": int(CALC_FNS["cases_in_last"](dom, 120)),
+            "cp_n_users_submitted_form": total_distinct_users([dom]),
             "cp_n_inactive_cases": int(CALC_FNS["inactive_cases_in_last"](dom, 120)),
             "cp_n_60_day_cases": int(CALC_FNS["cases_in_last"](dom, 60)),
             "cp_n_cases": int(all_stats["cases"][dom]),

@@ -10,6 +10,7 @@
     <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
 
     {% if app.application_version == '2.0' %}
+        <script src="{% static 'app_manager/js/case-knockout-bindings.js' %}"></script>
         <script src="{% static 'app_manager/js/case-config-ui-2.js' %}"></script>
     {% else %}
         <script src="{% static 'app_manager/js/ejs.min.js' %}"></script>
@@ -164,7 +165,7 @@
                 moduleCaseTypes: {{ module_case_types|JSON }},
                 caseType: {{ form.get_case_type|JSON }},
                 propertiesMap: {{ case_properties|JSON }}
-                {% if app.application_version != '1.0' %}
+                {% if app.application_version == '1.0' %}
                 ,ejs_urls: {
                     template: "{% static 'app_manager/ejs/case-config-ui-2.ejs' %}",
                     condition_ejs: "{% static 'app_manager/ejs/condition.ejs' %}",
@@ -187,7 +188,7 @@
             var cloudCareUrl = getCloudCareUrl("{% url "cloudcare_main" domain '' %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}") + "?preview=true";
             $("#cloudcare-preview-url").attr("href", cloudCareUrl);
 
-            {% if app.application_version != '1.0' %}
+            {% if app.application_version == '2.0' %}
                 var allFormsRequireACase = {{ module.all_forms_require_a_case|BOOL }};
                 var putInRoot = {{ module.put_in_root|BOOL }};
                 var formFilter = {{ form.form_filter|JSON }};
@@ -375,7 +376,7 @@
                     </div>
                 </div>
                 {% include "app_manager/partials/nav_menu_media.html" with item=form %}
-                {% if app.application_version != '1.0' %}
+                {% if app.application_version == '2.0' %}
                     <div class="control-group">
                         <label class="control-label">
                             {% trans "Display Condition" %}

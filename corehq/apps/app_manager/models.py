@@ -32,6 +32,8 @@ from couchdbkit.resource import ResourceNotFound
 
 from corehq.apps.app_manager.commcare_settings import check_condition
 from corehq.apps.app_manager.const import APP_V1, APP_V2
+from corehq.apps.app_manager.xpath import dot_interpolate
+from corehq.apps.builds import get_default_build_spec
 from corehq.util.hash_compat import make_password
 from dimagi.utils.couch.lazy_attachment_doc import LazyAttachmentDoc
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
@@ -50,7 +52,7 @@ from corehq.apps.users.util import cc_user_domain
 from corehq.apps.domain.models import cached_property
 from corehq.apps.app_manager import current_builds, app_strings, remote_app
 from corehq.apps.app_manager import fixtures, suite_xml, commcare_settings, build_error_utils
-from corehq.apps.app_manager.util import split_path, save_xform
+from corehq.apps.app_manager.util import split_path, save_xform, get_correct_app_class
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml
 from .exceptions import AppError, VersioningError, XFormError, XFormValidationError
 
@@ -389,7 +391,7 @@ class FormBase(DocumentSchema):
 
         xml_valid = False
         if self.source == '':
-            errors.append(dict(type="blank form"))
+            errors.append(dict(type="blank form", **meta))
         else:
             try:
                 _parse_xml(self.source)
@@ -532,7 +534,7 @@ class Form(FormBase, IndexedSchema, NavMenuItemMediaMixin):
         return actions
 
     def active_actions(self):
-        if self.get_app().application_version == '1.0':
+        if self.get_app().application_version == APP_V1:
             action_types = (
                 'open_case', 'update_case', 'close_case',
                 'open_referral', 'update_referral', 'close_referral',
@@ -834,11 +836,14 @@ class Detail(IndexedSchema):
             column.rename_lang(old_lang, new_lang)
 
     def filter_xpath(self):
-
         filters = []
         for i,column in enumerate(self.columns):
             if column.format == 'filter':
-                filters.append("(%s)" % column.filter_xpath.replace('.', '%s_%s_%s' % (column.model, column.field, i + 1)))
+                value = dot_interpolate(
+                    column.filter_xpath,
+                    '%s_%s_%s' % (column.model, column.field, i + 1)
+                )
+                filters.append("(%s)" % value)
         xpath = ' and '.join(filters)
         return partial_escape(xpath)
 
@@ -872,25 +877,63 @@ class DetailPair(DocumentSchema):
         return self
 
 
-class Module(IndexedSchema, NavMenuItemMediaMixin):
+class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
+    name = DictProperty()
+    unique_id = StringProperty()
+    case_type = StringProperty()
+
+    @classmethod
+    def wrap(cls, data):
+        if cls is ModuleBase:
+            doc_type = data['doc_type']
+            if doc_type == 'Module':
+                return Module.wrap(data)
+            else:
+                raise ValueError('Unexpected doc_type for Module', doc_type)
+        else:
+            return super(ModuleBase, cls).wrap(data)
+
+    def get_or_create_unique_id(self):
+        """
+        It is the caller's responsibility to save the Application
+        after calling this function.
+
+        WARNING: If called on the same doc in different requests without saving,
+        this function will return a different uuid each time,
+        likely causing unexpected behavior
+
+        """
+        if not self.unique_id:
+            self.unique_id = FormBase.generate_id()
+        return self.unique_id
+
+    get_forms = IndexedSchema.Getter('forms')
+
+    @parse_int([1])
+    def get_form(self, i):
+        self__forms = self.forms
+        return self__forms[i].with_id(i%len(self.forms), self)
+
+    def requires_case_details(self):
+        return False
+
+
+class Module(ModuleBase):
     """
     A group of related forms, and configuration that applies to them all.
     Translates to a top-level menu on the phone.
 
     """
-    name = DictProperty()
     case_label = DictProperty()
     referral_label = DictProperty()
     forms = SchemaListProperty(Form)
     case_details = SchemaProperty(DetailPair)
     ref_details = SchemaProperty(DetailPair)
-    case_type = StringProperty()
     put_in_root = BooleanProperty(default=False)
     case_list = SchemaProperty(CaseList)
     referral_list = SchemaProperty(CaseList)
     task_list = SchemaProperty(CaseList)
     parent_select = SchemaProperty(ParentSelect)
-    unique_id = StringProperty()
 
     @classmethod
     def wrap(cls, data):
@@ -933,20 +976,6 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
             ),
         )
 
-    def get_or_create_unique_id(self):
-        """
-        It is the caller's responsibility to save the Application
-        after calling this function.
-
-        WARNING: If called on the same doc in different requests without saving,
-        this function will return a different uuid each time,
-        likely causing unexpected behavior
-
-        """
-        if not self.unique_id:
-            self.unique_id = FormBase.generate_id()
-        return self.unique_id
-
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.name, old_lang, new_lang)
         for form in self.get_forms():
@@ -955,13 +984,6 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
             detail.rename_lang(old_lang, new_lang)
         for case_list in (self.case_list, self.referral_list):
             case_list.rename_lang(old_lang, new_lang)
-
-    get_forms = IndexedSchema.Getter('forms')
-
-    @parse_int([1])
-    def get_form(self, i):
-        self__forms = self.forms
-        return self__forms[i].with_id(i%len(self.forms), self)
 
     def get_details(self):
         return (
@@ -1261,7 +1283,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
 
         self = super(ApplicationBase, cls).wrap(data)
         if not self.build_spec or self.build_spec.is_null():
-            self.build_spec = CommCareBuildConfig.fetch().get_default(self.application_version)
+            self.build_spec = get_default_build_spec(self.application_version)
 
         if should_save:
             self.save()
@@ -1670,7 +1692,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     """
     user_registration = SchemaProperty(UserRegistrationForm)
     show_user_registration = BooleanProperty(default=False, required=True)
-    modules = SchemaListProperty(Module)
+    modules = SchemaListProperty(ModuleBase)
     name = StringProperty()
     # profile's schema is {'features': {}, 'properties': {}}
     # ended up not using a schema because properties is a reserved word
@@ -1694,7 +1716,14 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     module['referral_label'][lang] = commcare_translations.load_translations(lang).get('cchq.referral', 'Referrals')
         if not data.get('build_langs'):
             data['build_langs'] = data['langs']
-        return super(Application, cls).wrap(data)
+        self = super(Application, cls).wrap(data)
+
+        # make sure all form versions are None on working copies
+        if not self.copy_of:
+            for form in self.get_forms():
+                form.version = None
+
+        return self
 
     def save(self, *args, **kwargs):
         super(Application, self).save(*args, **kwargs)
@@ -1710,6 +1739,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             # reset the form's validation cache, since the form content is
             # likely to have changed in the revert!
             form.validation_cache = None
+            form.version = None
 
         return app
 
@@ -1774,25 +1804,28 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             for form_stuff in self.get_forms(bare=False):
                 filename = 'files/%s' % self.get_form_filename(**form_stuff)
                 form = form_stuff["form"]
+                form_version = None
                 try:
                     previous_form = previous_version.get_form(form.unique_id)
-                    # we don't want to perform any validation on previous_form
-                    # because it could have been built with an eariler version
-                    # of commcarehq in which there was a bug
-                    # that let invalid forms through
+                    # take the previous version's compiled form as-is
+                    # (generation code may have changed since last build)
                     previous_source = previous_version.fetch_attachment(filename)
                 except (ResourceNotFound, KeyError):
-                    # if this is a new form just use my version
-                    form.version = self.version
+                    pass
                 else:
                     previous_hash = _hash(previous_source)
 
                     # hack - temporarily set my version to the previous version
                     # so that that's not treated as the diff
-                    form.version = previous_form.get_version()
+                    previous_form_version = previous_form.get_version()
+                    form.version = previous_form_version
                     my_hash = _hash(self.fetch_xform(form=form))
-                    if previous_hash != my_hash:
-                        form.version = self.version
+                    if previous_hash == my_hash:
+                        form_version = previous_form_version
+                if form_version is None:
+                    form.version = None
+                else:
+                    form.version = form_version
 
     def set_media_versions(self, previous_version):
         # access to .multimedia_map is slow
@@ -1881,7 +1914,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         self.put_attachment(value, 'custom_suite.xml')
 
     def create_suite(self):
-        if self.application_version == '1.0':
+        if self.application_version == APP_V1:
             template='app_manager/suite-%s.xml' % self.application_version
             return render_to_string(template, {
                 'app': self,
@@ -2350,12 +2383,7 @@ def get_app(domain, app_id, wrap_cls=None, latest=False):
             raise Http404
     if domain and app['domain'] != domain:
         raise Http404
-    cls = wrap_cls or {
-        'Application': Application,
-        'Application-Deleted': Application,
-        "RemoteApp": RemoteApp,
-        "RemoteApp-Deleted": RemoteApp,
-    }[app['doc_type']]
+    cls = wrap_cls or get_correct_app_class(app)
     app = cls.wrap(app)
     return app
 
@@ -2428,7 +2456,7 @@ class DeleteModuleRecord(DeleteRecord):
 
     app_id = StringProperty()
     module_id = IntegerProperty()
-    module = SchemaProperty(Module)
+    module = SchemaProperty(ModuleBase)
 
     def undo(self):
         app = Application.get(self.app_id)
@@ -2455,7 +2483,7 @@ class DeleteFormRecord(DeleteRecord):
 Form.get_command_id = lambda self: "m{module.id}-f{form.id}".format(module=self.get_module(), form=self)
 Form.get_locale_id = lambda self: "forms.m{module.id}f{form.id}".format(module=self.get_module(), form=self)
 
-Module.get_locale_id = lambda self: "modules.m{module.id}".format(module=self)
+ModuleBase.get_locale_id = lambda self: "modules.m{module.id}".format(module=self)
 
 Module.get_case_list_command_id = lambda self: "m{module.id}-case-list".format(module=self)
 Module.get_case_list_locale_id = lambda self: "case_lists.m{module.id}".format(module=self)

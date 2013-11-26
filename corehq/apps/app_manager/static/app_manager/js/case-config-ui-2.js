@@ -4,71 +4,6 @@ var CaseConfig = (function () {
     "use strict";
 
 
-    var utils = {
-        getDisplay: function (question, MAXLEN) {
-            return utils.getLabel(question, MAXLEN) + " (" + question.value + ")";
-        },
-        getLabel: function (question, MAXLEN) {
-            return utils.truncateLabel((question.repeat ? '- ' : '') + question.label, question.tag == 'hidden' ? ' (Hidden)' : '', MAXLEN);
-        },
-        truncateLabel: function (label, suffix, MAXLEN) {
-            suffix = suffix || "";
-            var MAXLEN = MAXLEN || 40,
-                maxlen = MAXLEN - suffix.length;
-            return ((label.length <= maxlen) ? (label) : (label.slice(0, maxlen) + "...")) + suffix;
-        },
-        escapeQuotes: function (string) {
-            return string.replace(/'/g, "&apos;").replace(/"/g, "&quot;");
-        },
-        action_is_active: function (action) {
-            return action && action.condition && (action.condition.type === "if" || action.condition.type === "always");
-        }
-    };
-
-    ko.bindingHandlers.questionsSelect = {
-        init: function (element, valueAccessor) {
-            $(element).addClass('input-large');
-            $(element).after('<div class="alert alert-error"></div>');
-        },
-        update: function (element, valueAccessor, allBindingsAccessor) {
-            var optionObjects = ko.utils.unwrapObservable(valueAccessor());
-            var allBindings = ko.utils.unwrapObservable(allBindingsAccessor());
-            var value = ko.utils.unwrapObservable(allBindings.value);
-            var $warning = $(element).next();
-            if (value && !_.some(optionObjects, function (option) {
-                        return option.value === value;
-                    })) {
-                var option = {
-                    label: 'Unidentified Question (' + value + ')',
-                    value: value
-                };
-                optionObjects = [option].concat(optionObjects);
-                $warning.show().text('We cannot find this question in the form. It is likely that you deleted or renamed the question. Please choose a valid question from the dropdown.');
-            } else {
-                $warning.hide();
-            }
-            _.delay(function () {
-                $(element).select2({
-                    placeholder: 'Select a Question',
-                    data: {
-                        results: _(optionObjects).map(function (o) {
-                            return {id: o.value, text: utils.getDisplay(o), question: o};
-                        })
-                    },
-                    formatSelection: function (o) {
-                        return utils.getDisplay(o.question);
-                    },
-                    formatResult: function (o) {
-                        return utils.getDisplay(o.question, 90);
-                    },
-                    dropdownCssClass: 'bigdrop'
-                });
-            });
-            allBindings.optstrText = utils.getLabel;
-        }
-    };
-
-
     var CaseConfig = function (params) {
         var self = this;
         var i;
@@ -91,7 +26,6 @@ var CaseConfig = (function () {
         self.reserved_words = params.reserved_words;
         self.moduleCaseTypes = params.moduleCaseTypes;
         self.propertiesMap = {};
-        self.utils = utils;
 
         self.setPropertiesMap = function (propertiesMap) {
             _(self.moduleCaseTypes).each(function (case_type) {
@@ -186,7 +120,6 @@ var CaseConfig = (function () {
             });
         }
     };
-    CaseConfig.prototype = utils;
 
 
     var CaseConfigViewModel = function (caseConfig) {
@@ -365,6 +298,7 @@ var CaseConfig = (function () {
                 },
                 write: function (value) {
                     self.close_condition.type(value ? 'always' : 'never');
+                    self.caseConfig.saveButton.fire('change');
                 }
             });
 
@@ -726,7 +660,7 @@ var CaseConfig = (function () {
             q;
         excludeHidden = excludeHidden || false;
         includeRepeat = includeRepeat || false;
-        filter = filter.split(" ");
+        filter = filter.split(" ").concat(["trigger"]);
         if (!excludeHidden) {
             filter.push('hidden');
         }

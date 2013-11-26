@@ -106,8 +106,8 @@ DISTRICT_WEEKLY_REPORT = [
     {
         'section': _('Home Visits'),
         'columns': [
-            _('home_visits_newborn_reg'),
-            _('home_visits_child_reg'),
+            _('home_visits_newborn'),
+            _('home_visits_children'),
             _('home_visits_pregnant'),
             _('home_visits_non_pregnant'),
             _('home_visits_followup'),
@@ -120,17 +120,18 @@ DISTRICT_WEEKLY_REPORT = [
             _('deaths_children'),
         ]
     },
-    # {
-    #     'section': _('Stock Balance'),
-    #     'columns': [
-    #         'heath_ed_talks',
-    #         'heath_ed_participants',
-    #     ]
-    # },
+    {
+        'section': _('Stock Balance'),
+        'type': 'form_lookup',
+        'xmlns': WEEKLY_SUMMARY_XMLNS,
+        'columns': [
+            _('form/stock/stock_coartem_yellow'),
+            _('form/stock/stock_coartem_blue'),
+        ]
+    },
     {
         'section': _('Validation of Diagnosis and Treatment'),
         'columns': [
-            # todo: display num/denom groupings
             {
                 'slug': _('patients_given_pneumonia_meds'),
                 'columns': ('patients_given_pneumonia_meds_num', 'patients_given_pneumonia_meds_denom'),

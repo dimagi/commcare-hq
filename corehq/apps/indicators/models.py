@@ -4,7 +4,7 @@ import copy
 import dateutil
 import numpy
 import datetime
-from couchdbkit.ext.django.schema import Document, StringProperty, IntegerProperty, ListProperty, DateTimeProperty
+from couchdbkit.ext.django.schema import Document, StringProperty, IntegerProperty, DateTimeProperty
 from couchdbkit.schema.base import DocumentSchema
 from couchdbkit.schema.properties import LazyDict
 from casexml.apps.case.models import CommCareCase
@@ -17,6 +17,8 @@ from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan, add_months, months_between
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.modules import to_function
+from dimagi.utils.couch.cache import cache_core
+
 
 class DocumentNotInDomainError(Exception):
     pass
@@ -90,8 +92,8 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
     @classmethod
     def increment_or_create_unique(cls, namespace, domain, slug=None, version=None, **kwargs):
         """
-            If an indicator with the same namespace, domain, and version exists, create a new indicator with the
-            version number incremented.
+        If an indicator with the same namespace, domain, and version exists, create a new indicator with the
+        version number incremented.
         """
         couch_key = cls._generate_couch_key(
             namespace=namespace,
@@ -126,6 +128,7 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
         return new_indicator
 
     @classmethod
+    @memoized
     def get_current(cls, namespace, domain, slug, version=None, wrap=True, **kwargs):
         couch_key = cls._generate_couch_key(
             namespace=namespace,
@@ -135,13 +138,15 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
             reverse=True,
             **kwargs
         )
-        doc = get_db().view(cls.indicator_list_view(),
+        results = cache_core.cached_view(cls.get_db(), cls.indicator_list_view(),
+            cache_expire=60*60*6,
             reduce=False,
             include_docs=False,
             descending=True,
             **couch_key
-        ).first()
-        if wrap:
+        )
+        doc = results[0] if results else None
+        if wrap and doc:
             try:
                 doc_class = to_function(doc.get('value', "%s.%s" % (cls._class_path, cls.__name__)))
                 return doc_class.get(doc.get('id'))
@@ -169,6 +174,7 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
         return [item.get('key',[])[-1] for item in data]
 
     @classmethod
+    @memoized
     def get_all(cls, namespace, domain, version=None, **kwargs):
         all_slugs = cls.all_slugs(namespace, domain, **kwargs)
         all_indicators = list()
@@ -362,13 +368,12 @@ class CouchIndicatorDef(DynamicIndicatorDefinition):
             view_kwargs.update(
                 reduce=reduce
             )
-        return get_db().view(self.couch_view,
-            **view_kwargs
-        ).all()
+
+        return cache_core.cached_view(self.get_db(), self.couch_view, cache_expire=60*60*6, **view_kwargs)
 
     def get_raw_results(self, user_ids, datespan=False, date_group_level=False, reduce=False):
         """
-            date_group_level can be 0 to group by year, 1 to group by month and 2 to group by day
+        date_group_level can be 0 to group by year, 1 to group by month and 2 to group by day
         """
         datespan = self._apply_datespan_shifts(datespan)
         results = []

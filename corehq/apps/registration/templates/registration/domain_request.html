@@ -20,7 +20,7 @@
                 <span class="divider">></span>
             </li>
             <li class="active">
-                {% blocktrans %}Request a Project Space{% endblocktrans %}
+                {% blocktrans %}Create a Project Space{% endblocktrans %}
                 <span class="divider">></span>
             </li>
             <li>
@@ -45,13 +45,13 @@
     </p>
     <p>
     {% blocktrans %}
-    Before you can view any of your own data from CommCare, you will need to request a project space.
+    Before you can view any of your own data from CommCare, you will need to create a project space.
     {% endblocktrans %}
     </p>
     {% endif %}
     <form class="form-horizontal" method="post" action="{{ request.get_full_path }}">
         <fieldset>
-            <legend>{% if is_new %}{% trans "Request a Project Space" %}{% else %}{% trans "Create a Project Space" %}{% endif %}</legend>
+            <legend>{% trans "Create a Project Space" %}</legend>
             {% for global_error in form.non_field_errors %}
                 <div class="alert alert-error">
                     {{ global_error }}
@@ -81,7 +81,7 @@
         </fieldset>
         <div class="form-actions"{% if not is_new %} style="margin-top:24px; padding-top:18px;"{% endif %}>
             <button type="submit" class="btn btn-primary btn-large disable-on-submit">
-                {% if is_new %}{% trans "Request Project" %}{% else %}{% trans "Create Project" %}{% endif %}
+                {% trans "Create Project" %}
             </button>
         </div>
     </form>
