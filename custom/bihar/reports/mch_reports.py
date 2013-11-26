@@ -1,14 +1,15 @@
 from django.utils.translation import ugettext as _
+from corehq.apps.groups.models import Group
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.api.es import ReportCaseES
-from corehq.apps.reports.generic import GenericTabularReport
 
-from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
+from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 from dimagi.utils.decorators.memoized import memoized
-from custom.bihar.reports.display import MCHMotherDisplay, MCHChildDisplay, EMPTY_FIELD
+from custom.bihar.reports.display import MCHMotherDisplay, MCHChildDisplay
 from dimagi.utils.timezones import utils as tz_utils
 import pytz
+from custom.bihar.utils import get_all_owner_ids_from_group
 
 
 class MCHBaseReport(CustomProjectReport, CaseListReport):
@@ -18,17 +19,25 @@ class MCHBaseReport(CustomProjectReport, CaseListReport):
     emailable = False
 
     fields = [
-        'custom.bihar.fields.SelectCaseSharingGroupField',
+        'corehq.apps.reports.fields.GroupField',
         'corehq.apps.reports.fields.SelectOpenCloseField',
     ]
 
     @property
     def case_filter(self):
-        group = self.request_params.get('group', '')
+        group_id = self.request_params.get('group', '')
         filters = []
 
-        if group:
-            filters.append({'term': {'owner_id': group}})
+        if group_id:
+            group = Group.get(group_id)
+            users_in_group = get_all_owner_ids_from_group(group)
+            if users_in_group:
+                or_stm = []
+                for user_id in users_in_group:
+                    or_stm.append({'term': {'opened_by': user_id}})
+                filters.append({"or": or_stm})
+            else:
+                filters.append({'term': {'owner_id': group_id}})
 
         return {'and': filters} if filters else {}
 
