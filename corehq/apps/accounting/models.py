@@ -6,6 +6,7 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models
 from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES
 
+from django_prbac.models import Role
 from dimagi.utils.couch.database import SafeSaveDocument
 from dimagi.utils.decorators.memoized import memoized
 
@@ -215,7 +216,7 @@ class Subscription(models.Model):
     account = models.ForeignKey(BillingAccount, on_delete=models.PROTECT)
     plan = models.ForeignKey(SoftwarePlanVersion, on_delete=models.PROTECT)
     subscriber = models.ForeignKey(Subscriber, on_delete=models.PROTECT)
-    # todo: hook in roles = models.ForeignKey(Roles)
+    role = models.ForeignKey(Role)
     salesforce_contract_id = models.CharField(blank=True, max_length=80)
     date_start = models.DateField()
     date_end = models.DateField(blank=True)
