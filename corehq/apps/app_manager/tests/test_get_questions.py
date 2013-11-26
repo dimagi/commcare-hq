@@ -8,25 +8,25 @@ from corehq.apps.app_manager.models import Application, Module, APP_V2
 QUESTIONS = [
     {
         'tag': 'input',
-        'repeat': '',
+        'repeat': None,
         'value': '/data/question1',
         'label': 'label en ____ label en'
     },
     {
         'tag': 'input',
-        'repeat': '',
+        'repeat': None,
         'value': '/data/question2',
         'label': 'label en ____ label en'
     },
     {
         'tag': 'input',
-        'repeat': '',
+        'repeat': None,
         'value': '/data/question3',
         'label': 'no references here!'
     },
     {
         'tag': 'trigger',
-        'repeat': '',
+        'repeat': None,
         'value': '/data/hi',
         'label': 'woo'
     },
@@ -56,13 +56,13 @@ QUESTIONS = [
     },
     {
         'tag': 'input',
-        'repeat': '',
+        'repeat': None,
         'value': '/data/thing',
         'label': None
     },
     {
         'tag': 'hidden',
-        'repeat': '',
+        'repeat': None,
         'value': '/data/datanode',
         'label': '/data/datanode'
     },

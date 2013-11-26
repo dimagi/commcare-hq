@@ -486,8 +486,7 @@ class XForm(WrappedNode):
             return []
 
         questions = []
-        repeat_contexts = set([''])
-
+        repeat_contexts = set()
         excluded_paths = set()
 
         for node_data in self.get_control_nodes(include_triggers=include_triggers):
@@ -496,7 +495,9 @@ class XForm(WrappedNode):
             if not is_leaf:
                 continue
 
-            repeat_contexts.add(repeat_context)
+            if repeat_context is not None:
+                repeat_contexts.add(repeat_context)
+
             question = {
                 "label": self.get_label_text(node, langs),
                 "tag": node.tag_name,
@@ -523,10 +524,12 @@ class XForm(WrappedNode):
        
         for data_node, path in self.get_leaf_data_nodes():
             if path not in excluded_paths:
-                matching_repeat_context = (
-                    repeat_context for repeat_context in repeat_contexts
-                    if repeat_context in path
-                ).next()
+                try:
+                    matching_repeat_context = [
+                        rc for rc in repeat_contexts if path.startswith(rc)
+                    ][0]
+                except IndexError:
+                    matching_repeat_context = None
                 questions.append({
                     "label": path,
                     "tag": "hidden",
@@ -542,7 +545,7 @@ class XForm(WrappedNode):
 
         control_nodes = []
 
-        def for_each_control_node(group, path_context="", repeat_context=""):
+        def for_each_control_node(group, path_context="", repeat_context=None):
             for node in group.findall('*'):
                 is_leaf = False
                 items = None
