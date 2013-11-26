@@ -106,8 +106,8 @@ DISTRICT_WEEKLY_REPORT = [
     {
         'section': _('Home Visits'),
         'columns': [
-            _('home_visits_newborn_reg'),
-            _('home_visits_child_reg'),
+            _('home_visits_newborn'),
+            _('home_visits_children'),
             _('home_visits_pregnant'),
             _('home_visits_non_pregnant'),
             _('home_visits_followup'),
