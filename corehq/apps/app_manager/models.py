@@ -1716,7 +1716,14 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     module['referral_label'][lang] = commcare_translations.load_translations(lang).get('cchq.referral', 'Referrals')
         if not data.get('build_langs'):
             data['build_langs'] = data['langs']
-        return super(Application, cls).wrap(data)
+        self = super(Application, cls).wrap(data)
+
+        # make sure all form versions are None on working copies
+        if not self.copy_of:
+            for form in self.get_forms():
+                form.version = None
+
+        return self
 
     def save(self, *args, **kwargs):
         super(Application, self).save(*args, **kwargs)
@@ -1732,6 +1739,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             # reset the form's validation cache, since the form content is
             # likely to have changed in the revert!
             form.validation_cache = None
+            form.version = None
 
         return app
 
@@ -1796,25 +1804,28 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             for form_stuff in self.get_forms(bare=False):
                 filename = 'files/%s' % self.get_form_filename(**form_stuff)
                 form = form_stuff["form"]
+                form_version = None
                 try:
                     previous_form = previous_version.get_form(form.unique_id)
-                    # we don't want to perform any validation on previous_form
-                    # because it could have been built with an eariler version
-                    # of commcarehq in which there was a bug
-                    # that let invalid forms through
+                    # take the previous version's compiled form as-is
+                    # (generation code may have changed since last build)
                     previous_source = previous_version.fetch_attachment(filename)
                 except (ResourceNotFound, KeyError):
-                    # if this is a new form just use my version
-                    form.version = self.version
+                    pass
                 else:
                     previous_hash = _hash(previous_source)
 
                     # hack - temporarily set my version to the previous version
                     # so that that's not treated as the diff
-                    form.version = previous_form.get_version()
+                    previous_form_version = previous_form.get_version()
+                    form.version = previous_form_version
                     my_hash = _hash(self.fetch_xform(form=form))
-                    if previous_hash != my_hash:
-                        form.version = self.version
+                    if previous_hash == my_hash:
+                        form_version = previous_form_version
+                if form_version is None:
+                    form.version = None
+                else:
+                    form.version = form_version
 
     def set_media_versions(self, previous_version):
         # access to .multimedia_map is slow
