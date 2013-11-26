@@ -6,7 +6,7 @@
         <model>
             <instance>
                 <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
-                      xmlns="http://dev.commcarehq.org/pact/careplan/goal/update"
+                      xmlns="http://dev.commcarehq.org/careplan/goal/update"
                       uiVersion="1" version="1" name="Update Careplan Goal">
 
                     <close_goal/>

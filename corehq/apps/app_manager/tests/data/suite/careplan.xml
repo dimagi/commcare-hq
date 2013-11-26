@@ -262,7 +262,7 @@
     </command>
   </entry>
   <entry>
-    <form>http://dev.commcarehq.org/pact/careplan/goal/create</form>
+    <form>http://dev.commcarehq.org/careplan/goal/create</form>
     <command id="m1-f0">
       <text>
         <locale id="forms.m1f0"/>
@@ -283,7 +283,7 @@
     </stack>
   </entry>
   <entry>
-    <form>http://dev.commcarehq.org/pact/careplan/goal/update</form>
+    <form>http://dev.commcarehq.org/careplan/goal/update</form>
     <command id="m1-f1">
       <text>
         <locale id="forms.m1f1"/>
@@ -297,7 +297,7 @@
     </session>
   </entry>
   <entry>
-    <form>http://dev.commcarehq.org/pact/careplan/task/create</form>
+    <form>http://dev.commcarehq.org/careplan/task/create</form>
     <command id="m1-f2">
       <text>
         <locale id="forms.m1f2"/>
@@ -312,7 +312,7 @@
     </session>
   </entry>
   <entry>
-    <form>http://dev.commcarehq.org/pact/careplan/task/update</form>
+    <form>http://dev.commcarehq.org/careplan/task/update</form>
     <command id="m1-f3">
       <text>
         <locale id="forms.m1f3"/>

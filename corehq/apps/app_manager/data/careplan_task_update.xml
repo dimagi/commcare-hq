@@ -6,7 +6,7 @@
 		<model>
 			<instance>
 				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
-					xmlns="http://dev.commcarehq.org/pact/careplan/task/update"
+					xmlns="http://dev.commcarehq.org/careplan/task/update"
 					uiVersion="1" version="1" name="Edit Careplan Task">
 					<task_complete />
 					<progress_group>

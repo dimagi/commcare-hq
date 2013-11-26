@@ -432,7 +432,7 @@
            "forms": [
                {
                    "doc_type": "CareplanGoalForm",
-                   "xmlns": "http://dev.commcarehq.org/pact/careplan/goal/create",
+                   "xmlns": "http://dev.commcarehq.org/careplan/goal/create",
                    "close_path": "/data/close_goal",
                    "name": {
                        "en": "New Careplan Goal"
@@ -453,7 +453,7 @@
                },
                {
                    "doc_type": "CareplanGoalForm",
-                   "xmlns": "http://dev.commcarehq.org/pact/careplan/goal/update",
+                   "xmlns": "http://dev.commcarehq.org/careplan/goal/update",
                    "close_path": "/data/close_goal",
                    "name": {
                        "en": "Update Careplan Goal"
@@ -474,7 +474,7 @@
                },
                {
                    "doc_type": "CareplanTaskForm",
-                   "xmlns": "http://dev.commcarehq.org/pact/careplan/task/create",
+                   "xmlns": "http://dev.commcarehq.org/careplan/task/create",
                    "close_path": "/data/task_complete",
                    "name": {
                        "en": "New Careplan Task"
@@ -496,7 +496,7 @@
                },
                {
                    "doc_type": "CareplanTaskForm",
-                   "xmlns": "http://dev.commcarehq.org/pact/careplan/task/update",
+                   "xmlns": "http://dev.commcarehq.org/careplan/task/update",
                    "close_path": "/data/task_complete",
                    "name": {
                        "en": "Update Careplan Task"
