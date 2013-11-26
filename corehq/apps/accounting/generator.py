@@ -1,4 +1,5 @@
 from __future__ import unicode_literals, absolute_import, print_function
+import random
 
 from dimagi.utils.data import generator
 from corehq.apps.accounting.models import *
@@ -139,3 +140,8 @@ def delete_all_plans():
 
     FeatureRate.objects.all().delete()
     Feature.objects.all().delete()
+
+
+def arbitrary_subscribable_plan():
+    subscribable_plans = [plan['name'] for plan in COMMCARE_PLANS if plan['name'] != "CommCare Community"]
+    return SoftwarePlan.objects.get(name=random.choice(subscribable_plans))
