@@ -794,6 +794,7 @@ COUCHDB_APPS = [
     'pact',
     'psi',
     'trialconnect',
+    'accounting',
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
