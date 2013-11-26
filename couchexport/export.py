@@ -455,7 +455,7 @@ def format_tables(tables, id_label='id', separator='.', include_headers=True,
     for table_name, table in sorted(tables.items()):
         new_table = []
         keys = sorted(table.items()[0][1].keys()) # the keys for every row are the same
-        
+
         if include_headers:
             id_key = [id_label]
             id_len = len(table.keys()[0]) # this is a proxy for the complexity of the ID

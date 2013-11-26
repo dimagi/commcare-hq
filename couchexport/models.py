@@ -230,13 +230,31 @@ class ExportColumn(DocumentSchema):
     display = StringProperty()
     # signature: transform(val, doc) -> val
     transform = SerializableFunctionProperty(default=None)
+    tag = StringProperty()
+    is_sensitive = BooleanProperty(default=False)
+    show = BooleanProperty(default=False)
+
+    @classmethod
+    def wrap(self, data):
+        if 'is_sensitive' not in data and data.get('transform', None):
+            data['is_sensitive'] = True
+        return super(ExportColumn, self).wrap(data)
+
+    def get_display(self):
+         return '{primary}{extra}'.format(
+             primary=self.display,
+             extra=" [sensitive]" if self.is_sensitive else ''
+         )
 
     def to_config_format(self, selected=True):
         return {
             "index": self.index,
             "display": self.display,
             "transform": self.transform.dumps() if self.transform else None,
+            "is_sensitive": self.is_sensitive,
             "selected": selected,
+            "tag": self.tag,
+            "show": self.show,
         }
 
 class ExportTable(DocumentSchema):
@@ -261,8 +279,8 @@ class ExportTable(DocumentSchema):
     @property
     @memoized
     def displays_by_index(self):
-        return dict((c.index, c.display + (" [sensitive]" if c.transform else '')) for c in self.columns)
-    
+        return dict((c.index, c.get_display()) for c in self.columns)
+
     def get_column_configuration(self, all_cols):
         selected_cols = set()
         for c in self.columns:
@@ -279,7 +297,7 @@ class ExportTable(DocumentSchema):
         from couchexport.export import FormattedRow
         headers = []
         for col in self.columns:
-            display = self.displays_by_index[col.index]
+            display = col.get_display()
             if col.index == 'id':
                 id_len = len(
                     filter(lambda part: part == '#', self.index.split('.'))
@@ -307,9 +325,12 @@ class ExportTable(DocumentSchema):
     def get_items_in_order(self, row):
         row_data = list(row.get_data())
         for column in self.columns:
-            i = self.row_positions_by_index[column.index]
-            val = row_data[i]
-            yield column, val
+            try:
+                i = self.row_positions_by_index[column.index]
+                val = row_data[i]
+                yield column, val
+            except KeyError:
+                yield column, ''
 
     def trim(self, data, doc, apply_transforms, global_transform):
         from couchexport.export import FormattedRow, Constant, transform_error_constant
@@ -323,7 +344,7 @@ class ExportTable(DocumentSchema):
             id = None
             cells = []
             for column, val in self.get_items_in_order(row):
-                # DEID TRANSFORM BABY!
+                # TRANSFORM BABY!
                 if apply_transforms:
                     if column.transform and not isinstance(val, Constant):
                         try:
@@ -332,7 +353,6 @@ class ExportTable(DocumentSchema):
                             val = transform_error_constant
                     elif global_transform:
                         val = global_transform(val, doc)
-
 
                 if column.index == 'id':
                     id = val
