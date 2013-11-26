@@ -1,6 +1,13 @@
+import datetime
+from couchdbkit.ext.django.schema import DateTimeProperty, StringProperty
+
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models
 from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES
+
+from dimagi.utils.couch.database import SafeSaveDocument
+from dimagi.utils.decorators.memoized import memoized
 
 
 class BillingAccountType(object):
@@ -40,6 +47,18 @@ class SoftwarePlanVisibility(object):
     CHOICES = (
         (PUBLIC, "Anyone can subscribe"),
         (INTERNAL, "Dimagi must create subscription"),
+    )
+
+class AdjustmentReason(object):
+    DIRECT_PAYMENT = "DIRECT_PAYMENT"
+    SALESFORCE = "SALESFORCE"
+    INVOICE = "INVOICE"
+    MANUAL = "MANUAL"
+    CHOICES = (
+        (MANUAL, "manual"),
+        (SALESFORCE, "via Salesforce"),
+        (INVOICE, "invoice generated"),
+        (DIRECT_PAYMENT, "payment from client received"),
     )
 
 
@@ -203,3 +222,170 @@ class Subscription(models.Model):
     date_delay_invoicing = models.DateField(blank=True)
     date_created = models.DateField(auto_now_add=True)
     is_active = models.BooleanField(default=False)
+
+
+class Invoice(models.Model):
+    """
+    This is what we'll use to calculate the balance on the accounts based on the current balance
+    held by the Invoice. Balance updates will be tied to CreditAdjustmentTriggers which are tied
+    to CreditAdjustments.
+    """
+    subscription = models.ForeignKey(Subscription, on_delete=models.PROTECT)
+    tax_rate = models.FloatField(default=0.0)
+    balance = models.FloatField(default=0.0)
+    date_due = models.DateField(db_index=True)
+    date_paid = models.DateField(blank=True, db_index=True)
+    date_created = models.DateField(auto_now_add=True)
+    date_received = models.DateField(blank=True, db_index=True)
+    date_start = models.DateField()
+    date_end = models.DateField()
+
+    @property
+    def line_items(self):
+        """
+        All the LineItems related to this Invoice.
+        """
+        return LineItem.objects.filter(invoice=self.id)
+
+    @property
+    def credit_adjustments(self):
+        """
+        All CreditAdjustments that reference this Invoice as the adjuster.
+        """
+        return CreditAdjustment.objects.filter(invoice=self.id)
+
+    @property
+    @memoized
+    def subtotal(self):
+        """
+        This will be inserted in the subtotal field on the printed invoice.
+        """
+        return sum([l.total for l in self.line_items])
+
+    @property
+    def applied_tax(self):
+        return self.tax_rate * self.subtotal
+
+    @property
+    def applied_credit(self):
+        return sum([credit.amount for credit in self.credit_adjustments])
+
+    @property
+    def total(self):
+        """
+        This will be inserted in the total field on the printed invoice.
+        """
+        return self.subtotal + self.applied_tax + self.applied_credit
+
+    def update_balance(self):
+        self.balance = self.total
+        self.save()
+
+    def calculate_credit_adjustments(self):
+        """
+        This goes through all credit lines that:
+        - do not have feature/product rates, but specify the related subscription and billing account
+        - do not have feature/product rates or a subscription, but specify the related billing account
+        """
+        # todo: implement
+        pass
+
+
+class BillingRecord(models.Model):
+    """
+    This stores any interaction we have with the client in sending a physical / pdf invoice to their contact email.
+    """
+    invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT)
+    date_emailed = models.DateField(auto_now_add=True, db_index=True)
+    emailed_to = models.CharField(max_length=254, db_index=True)
+    pdf_data_id = models.CharField(max_length=48)
+
+    @property
+    def pdf(self):
+        return InvoicePdf.get(self.pdf_data_id)
+
+
+class InvoicePdf(SafeSaveDocument):
+    invoice_id = StringProperty()
+    date_created = DateTimeProperty()
+
+    def generate_pdf(self, invoice):
+        # todo generate pdf
+        invoice.pdf_data_id = self._id
+        # self.put_attachment(pdf_data)
+        self.invoice_id = invoice.id
+        self.date_created = datetime.datetime.now()
+
+
+class LineItem(models.Model):
+    invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT)
+    feature_rate = models.ForeignKey(FeatureRate, on_delete=models.PROTECT, null=True)
+    product_rate = models.ForeignKey(SoftwareProductRate, on_delete=models.PROTECT, null=True)
+    description = models.TextField()
+    unit_cost = models.FloatField(default=0.0)
+    quantity = models.IntegerField(default=1)
+
+    @property
+    def subtotal(self):
+        return self.unit_cost * self.quantity
+
+    @property
+    def credit_adjustments(self):
+        """
+        All CreditAdjustments that reference this LineItem as the adjuster.
+        """
+        return CreditAdjustment.objects.filter(line_item=self.id)
+
+    @property
+    @memoized
+    def applied_credit(self):
+        """
+        The total amount of credit applied specifically to this LineItem.
+        """
+        return sum([credit.amount for credit in self.credit_adjustments])
+
+    @property
+    def total(self):
+        return self.subtotal + self.applied_credit
+
+    def calculate_credit_adjustments(self):
+        """
+        This goes through all credit lines that:
+        - specify the related feature or product rate that generated this line item
+        """
+        # todo: implement
+        pass
+
+
+class CreditLine(models.Model):
+    """
+    The amount of money in USD that exists can can be applied toward a specific account,
+    a specific subscription, or specific rates in that subscription.
+    """
+    account = models.ForeignKey(BillingAccount, on_delete=models.PROTECT)
+    subscription = models.ForeignKey(Subscription, on_delete=models.PROTECT, null=True)
+    product_rates = models.ManyToManyField(SoftwareProductRate)
+    feature_rates = models.ManyToManyField(FeatureRate)
+    date_created = models.DateField(auto_now_add=True)
+    balance = models.FloatField(default=0.0)
+
+
+class CreditAdjustment(models.Model):
+    """
+    A record of any addition (positive amounts) s or deductions (negative amounts) that contributed to the
+    current balance of the associated CreditLine.
+    """
+    credit_line = models.ForeignKey(CreditLine, on_delete=models.PROTECT)
+    reason = models.CharField(max_length=25, default=AdjustmentReason.MANUAL, choices=AdjustmentReason.CHOICES)
+    note = models.TextField()
+    amount = models.FloatField(default=0.0)
+    line_item = models.ForeignKey(LineItem, on_delete=models.PROTECT, null=True)
+    invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT, null=True)
+    # todo payment_method = models.ForeignKey(PaymentMethod)
+
+    def clean(self):
+        """
+        Only one of either a line item or invoice may be specified as the adjuster.
+        """
+        if self.line_item and self.invoice is not None:
+            raise ValidationError("You can't specify both an invoice and a line item.")
