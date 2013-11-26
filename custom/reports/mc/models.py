@@ -554,14 +554,19 @@ class MalariaConsortiumFluff(fluff.IndicatorDocument):
         property_path='form/has_danger_sign',
         property_value='yes',
     )
-    internal_newborn_referral_not_given = _filtered_calc_alias(
+    internal_newborn_referral_not_reported = _filtered_calc_alias(
         xmlns=NEWBORN_REGISTRATION_XMLNS,
-        property_path='form/self_report/referral_given',
+        property_path='form/self_report/referral_reported',
         property_value='0',
+    )
+    internal_newborn_referral_reported = _filtered_calc_alias(
+        xmlns=NEWBORN_REGISTRATION_XMLNS,
+        property_path='form/self_report/referral_reported',
+        property_value='1',
     )
     internal_newborn_danger_sign_handled_wrong = _and_alias([
         internal_newborn_has_danger_sign,
-        internal_newborn_referral_not_given,
+        internal_newborn_referral_not_reported,
     ])
     internal_child_has_danger_sign = _filtered_calc_alias(
         xmlns=CHILD_REGISTRATION_XMLNS,
@@ -609,15 +614,8 @@ class MalariaConsortiumFluff(fluff.IndicatorDocument):
         internal_child_no_malaria_meds,
         internal_adult_no_malaria_meds,
     ])
-
-
-    internal_newborn_referral_given = _filtered_calc_alias(
-        xmlns=NEWBORN_REGISTRATION_XMLNS,
-        property_path='form/self_report/referral_reported',
-        property_value='1',
-    )
     cases_transferred = _or_alias([
-        internal_newborn_referral_given,
+        internal_newborn_referral_reported,
         internal_child_referral_given,
         internal_adult_referral_given,
     ])
