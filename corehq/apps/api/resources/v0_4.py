@@ -356,6 +356,7 @@ class HOPECaseResource(CommCareCaseResource):
     asha_id = fields.CharField(attribute='_HOPE_asha_id', readonly=True, null=True)
     bcg_indicator = fields.BooleanField(attribute='_HOPE_bcg_indicator', readonly=True, null=True)
     child_name = fields.CharField(attribute='_HOPE_child_name', readonly=True, null=True)
+    delivery_nature = fields.CharField(attribute='_HOPE_delivery_nature', readonly=True, null=True)
     delivery_type = fields.CharField(attribute='_HOPE_delivery_type', readonly=True, null=True)
     dpt_1_indicator = fields.BooleanField(attribute='_HOPE_dpt_1_indicator', readonly=True, null=True)
     existing_child_count = fields.IntegerField(attribute='_HOPE_existing_child_count', readonly=True, null=True)

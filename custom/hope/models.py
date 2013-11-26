@@ -140,6 +140,17 @@ class HOPECase(CommCareCase):
             return None
 
     @property
+    def _HOPE_delivery_nature(self):
+        add = self.get_case_property('add')
+
+        if not add:
+            return None
+        elif self.delivery_forms:
+            return self.delivery_forms[-1].get_form.get('delivery_nature')
+        else:
+            return None
+
+    @property
     def _HOPE_delivery_type(self):
         if not self.get_case_property('add'):
             return None
@@ -148,13 +159,14 @@ class HOPECase(CommCareCase):
             if birth_place == 'home':
                 return 'home'
             elif birth_place == ',':
-                return 'institution'
+                return 'institutional'
             else:
                 return None
 
     @property
     def _HOPE_dpt_1_indicator(self):
         return bool(self.get_case_property('dpt_1_date'))
+
 
     @property
     def _HOPE_education(self):

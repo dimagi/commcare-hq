@@ -40,6 +40,7 @@ class TestHOPECaseResource(TestCase):
         hope_case._HOPE_all_ifa_doses_given
         hope_case._HOPE_all_tt_doses_given
         hope_case._HOPE_bcg_indicator
+        hope_case._HOPE_delivery_nature
         hope_case._HOPE_delivery_type
         hope_case._HOPE_existing_child_count
         hope_case._HOPE_ifa1_date
