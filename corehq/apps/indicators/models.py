@@ -92,8 +92,8 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
     @classmethod
     def increment_or_create_unique(cls, namespace, domain, slug=None, version=None, **kwargs):
         """
-            If an indicator with the same namespace, domain, and version exists, create a new indicator with the
-            version number incremented.
+        If an indicator with the same namespace, domain, and version exists, create a new indicator with the
+        version number incremented.
         """
         couch_key = cls._generate_couch_key(
             namespace=namespace,
@@ -137,13 +137,15 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
             reverse=True,
             **kwargs
         )
-        doc = get_db().view(cls.indicator_list_view(),
+        results = cache_core.cached_view(cls.get_db(), cls.indicator_list_view(),
+            cache_expire=60*60*6,
             reduce=False,
             include_docs=False,
             descending=True,
             **couch_key
-        ).first()
-        if wrap:
+        )
+        doc = results[0] if results else None
+        if wrap and doc:
             try:
                 doc_class = to_function(doc.get('value', "%s.%s" % (cls._class_path, cls.__name__)))
                 return doc_class.get(doc.get('id'))
