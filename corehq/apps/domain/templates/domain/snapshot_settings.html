@@ -58,7 +58,14 @@
         <tbody>
         {% for snapshot in snapshots %}
         <tr>
-            <td><a class="btn btn-primary" href="{% url "project_info" snapshot.name %}">View</a></td>
+            <td>
+                <a class="btn btn-primary"
+                   href="{% url "project_info" snapshot.name %}"
+                   onclick="_gaq.push(['_trackEvent', 'Exchange', 'View', '{{ snapshot.name }}']);"
+                >
+                    View
+                </a>
+            </td>
             <td>{{ snapshot.snapshot_time }}</td>
             <td>{{ snapshot.get_license_display }}</td>
             {% if snapshot.published %}
