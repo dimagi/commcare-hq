@@ -238,13 +238,15 @@ class CachedObject(object):
 
         return (meta, stream)
 
-    def cache_put(self, object_stream, metadata):
+    def cache_put(self, object_stream, metadata, timeout=None):
         object_meta = CachedObjectMeta.make_meta(object_stream, OBJECT_ORIGINAL, metadata)
 
         rcache = self.rcache
         object_stream.seek(0)
-        rcache.set(self.stream_key(OBJECT_ORIGINAL), object_stream.read())
-        rcache.set(self.meta_key(OBJECT_ORIGINAL), simplejson.dumps(object_meta.to_json()))
+        rcache.set(self.stream_key(OBJECT_ORIGINAL), object_stream.read(),
+                   timeout=timeout)
+        rcache.set(self.meta_key(OBJECT_ORIGINAL), simplejson.dumps(object_meta.to_json()),
+                   timeout=timeout)
 
     @property
     def rcache(self):

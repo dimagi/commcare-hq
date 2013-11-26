@@ -19,7 +19,7 @@ class FakeCache(object):
         filtered = filter(lambda x: x.startswith(pattern[:-1]), all_keys)
         return filtered
 
-    def set(self, key, value):
+    def set(self, key, value, timeout=None):
         self.cache_dict[key] = value
 
 
