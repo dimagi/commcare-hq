@@ -222,10 +222,9 @@ def all_apps_by_domain(domain):
 def languages_mapping():
     mapping = cache.get('__languages_mapping')
     if not mapping:
-        langs_file = open('submodules/langcodes/langs.json')
-        lang_data = json.load(langs_file)
-        mapping = dict([(l["two"], l["names"]) for l in lang_data])
+        with open('submodules/langcodes/langs.json') as langs_file:
+            lang_data = json.load(langs_file)
+            mapping = dict([(l["two"], l["names"]) for l in lang_data])
         mapping["default"] = ["Default Language"]
         cache.set('__languages_mapping', mapping, 12*60*60)
-        langs_file.close()
     return mapping
