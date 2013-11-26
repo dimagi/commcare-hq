@@ -384,7 +384,6 @@ def get_app_view_context(request, app):
     options_labels = [option.get_label() for option in options]
     options_builds = [option.build.to_string() for option in options]
 
-
     (build_spec_setting,) = filter(
         lambda x: x['type'] == 'hq' and x['id'] == 'build_spec',
         [setting for section in context['settings_layout']
