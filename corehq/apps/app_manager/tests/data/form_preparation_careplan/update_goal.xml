@@ -112,7 +112,7 @@
 			<setvalue event="xforms-ready" ref="/data/meta/instanceID" value="uuid()"/>
 			<setvalue event="xforms-ready" ref="/data/meta/appVersion" value="instance('commcaresession')/session/context/appversion"/>
 
-            <bind calculate="/data/meta/timeEnd" nodeset="/data/case/@date_modified" type="dateTime"/>
+            <bind calculate="/data/meta/timeEnd" nodeset="/data/case/@date_modified" type="xsd:dateTime"/>
 			<bind calculate="/data/meta/userID" nodeset="/data/case/@user_id"/>
 
 			<bind calculate="/data/date_followup" nodeset="/data/case/update/date_followup" relevant="count(/data/date_followup) &gt; 0"/>
@@ -125,9 +125,9 @@
 
 			<setvalue event="xforms-ready" ref="/data/child_tasks" value="join(' ', instance('casedb')/casedb/case[@case_type='careplan_task'][index/goal=instance('commcaresession')/session/data/case_id_goal][@status='open']/@case_id)"/>
 
-            <bind calculate="/data/meta/timeEnd" nodeset="/data/tasks_to_close/case/@date_modified" type="dateTime"/>
+            <bind calculate="/data/meta/timeEnd" nodeset="/data/tasks_to_close/case/@date_modified" type="xsd:dateTime"/>
 			<bind calculate="/data/meta/userID" nodeset="/data/tasks_to_close/case/@user_id"/>
-            <bind nodeset="/data/tasks_to_close/case/@case_id" calculate="selected-at(/data/child_tasks, ../../@index)"/>
+            <bind calculate="selected-at(/data/child_tasks, ../../@index)" nodeset="/data/tasks_to_close/case/@case_id"/>
 		</model>
 	</h:head>
 	<h:body>

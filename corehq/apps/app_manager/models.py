@@ -1281,10 +1281,11 @@ class CareplanModule(ModuleBase):
 
     @classmethod
     def _get_detail(cls, lang, detail_type):
+        header = ugettext('Goal') if detail_type.startswith('goal') else ugettext('Task')
         columns = [
             DetailColumn(
                 format='plain',
-                header={lang: ugettext("Goal")},
+                header={lang: header},
                 field='name',
                 model='case'),
             DetailColumn(

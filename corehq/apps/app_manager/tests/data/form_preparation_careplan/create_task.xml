@@ -76,13 +76,13 @@
 
             <bind calculate="/data/meta/timeEnd" nodeset="/data/task_repeat/case/@date_modified" type="xsd:dateTime"/>
 			<bind calculate="/data/meta/userID" nodeset="/data/task_repeat/case/@user_id"/>
-            <setvalue event="xforms-ready" ref="/data/task_repeat/case/@case_id" value="instance('commcaresession')/session/data/new_task_id"/>
+            <bind calculate="instance('commcaresession')/session/data/new_task_id" nodeset="/data/task_repeat/case/@case_id"/>
 
-			<bind calculate="/data/task_repeat/name" nodeset="/data/task_repeat/case/create/case_name"/>
-			<setvalue event="xforms-revalidate" ref="/data/task_repeat/case/create/owner_id" value="instance('casedb')/casedb/case[@case_id=/data/parent_case_id]/@owner_id"/>
+			<bind calculate="../../../name" nodeset="/data/task_repeat/case/create/case_name"/>
+			<bind calculate="instance('casedb')/casedb/case[@case_id=/data/parent_case_id]/@owner_id" nodeset="/data/task_repeat/case/create/owner_id"/>
 
-            <bind calculate="/data/task_repeat/date_followup" nodeset="/data/task_repeat/case/update/date_followup" relevant="count(/data/task_repeat/date_followup) &gt; 0"/>
-			<bind calculate="/data/task_repeat/description" nodeset="/data/task_repeat/case/update/description" relevant="count(/data/task_repeat/description) &gt; 0"/>
+            <bind calculate="../../../date_followup" nodeset="/data/task_repeat/case/update/date_followup" relevant="count(../../../date_followup) &gt; 0"/>
+			<bind calculate="../../../description" nodeset="/data/task_repeat/case/update/description" relevant="count(../../../description) &gt; 0"/>
 
 			<bind calculate="instance('commcaresession')/session/data/case_id" nodeset="/data/parent_case_id"/>
 

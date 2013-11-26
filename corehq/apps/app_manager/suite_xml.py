@@ -662,16 +662,15 @@ class SuiteGenerator(object):
 
         def add_careplan_stuff(module, form, e):
             e.instances.append(Instance(id='casedb', src='jr://instance/casedb'))
-            if form.case_type == CAREPLAN_TASK or form.mode == 'update':
-                e.instances.append(Instance(id='commcaresession', src='jr://instance/session'))
+            e.instances.append(Instance(id='commcaresession', src='jr://instance/session'))
 
             parent_module = self.get_module_by_id(module.parent_select.module_id)
             e.datums.append(SessionDatum(
                 id='case_id',
                 nodeset=self.get_nodeset_xpath(parent_module, False),
                 value="./@case_id",
-                detail_select=get_detail_id_safe(module, 'case_short'),
-                detail_confirm=get_detail_id_safe(module, 'case_long')
+                detail_select=get_detail_id_safe(parent_module, 'case_short'),
+                detail_confirm=get_detail_id_safe(parent_module, 'case_long')
             ))
 
             def session_datum(datum_id, case_type, parent_ref, parent_val):

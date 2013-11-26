@@ -48,6 +48,19 @@ def get_case_parent_id_xpath(parent_path):
         return xpath
 
 
+def relative_path(from_path, to_path):
+            from_nodes = from_path.split('/')
+            to_nodes = to_path.split('/')
+            while True:
+                if to_nodes[0] == from_nodes[0]:
+                    from_nodes.pop(0)
+                    to_nodes.pop(0)
+                else:
+                    break
+
+            return '%s/%s' % ('/'.join(['..' for n in from_nodes]), '/'.join(to_nodes))
+
+
 SESSION_CASE_ID = CaseIDXPath(session_var('case_id'))
 
 
@@ -184,7 +197,8 @@ class CaseBlock(object):
 
     def add_create_block(self, relevance, case_name, case_type, path='',
                          delay_case_id=False, autoset_owner_id=True,
-                         has_case_sharing=False, case_id='uuid()'):
+                         has_case_sharing=False, case_id='uuid()',
+                         make_relative=False):
         create_block = make_case_elem('create')
         self.elem.append(create_block)
         case_type_node = make_case_elem('case_type')
@@ -209,9 +223,15 @@ class CaseBlock(object):
             ref='%scase/@case_id' % path,
             value=case_id,
         )
+
+        nodeset = self.xform.resolve_path("%scase/create/case_name" % path)
+        name_path = self.xform.resolve_path(case_name)
+        if make_relative:
+            name_path = relative_path(nodeset, name_path)
+
         self.xform.add_bind(
-            nodeset="%scase/create/case_name" % path,
-            calculate=self.xform.resolve_path(case_name),
+            nodeset=nodeset,
+            calculate=name_path,
         )
 
         if not autoset_owner_id:
@@ -236,7 +256,7 @@ class CaseBlock(object):
             required="true()",
         )
 
-    def add_update_block(self, updates, path=''):
+    def add_update_block(self, updates, path='', make_relative=False):
         update_block = make_case_elem('update')
         self.elem.append(update_block)
         update_mapping = {}
@@ -251,9 +271,13 @@ class CaseBlock(object):
             update_block.append(make_case_elem(key))
 
         for key, q_path in sorted(update_mapping.items()):
+            nodeset = self.xform.resolve_path("%scase/update/%s" % (path, key))
             resolved_path = self.xform.resolve_path(q_path)
+            if make_relative:
+                resolved_path = relative_path(nodeset, resolved_path)
+
             self.xform.add_bind(
-                nodeset="%scase/update/%s" % (path, key),
+                nodeset=nodeset,
                 calculate=resolved_path,
                 relevant=("count(%s) > 0" % resolved_path)
             )
@@ -1337,17 +1361,18 @@ class XForm(WrappedNode):
                     case_name=form.name_path,
                     case_type=CAREPLAN_TASK,
                     autoset_owner_id=False,
-                    case_id=session_var('new_task_id')
+                    delay_case_id=True,
+                    case_id=session_var('new_task_id'),
+                    make_relative=True
                 )
 
                 # set case owner to whatever parent case owner is
-                self.add_setvalue(
-                    ref="%scase/create/owner_id" % path,
-                    value=CaseIDXPath(self.resolve_path('parent_case_id')).case().property('@owner_id'),
-                    event='xforms-revalidate'
+                self.add_bind(
+                    nodeset="%scase/create/owner_id" % path,
+                    calculate=CaseIDXPath(self.resolve_path('parent_case_id')).case().property('@owner_id')
                 )
 
-                case_block.add_update_block(form.case_updates(), path=path)
+                case_block.add_update_block(form.case_updates(), path=path, make_relative=True)
 
                 add_parent_case_id(case_block, case_path=path)
                 case_block.add_index_ref('goal', CAREPLAN_GOAL, session_var('case_id_goal'), case_path=path)
