@@ -195,15 +195,13 @@ def approve_requisition(requisition_cases, openlmis_endpoint):
     products = []
     for rec in requisition_cases:
         product = Product.get(rec.product_id)
-        products.append({"productCode": product.code, "approvedQuantity": requisition_cases.amount_approved})
+        products.append({"productCode": product.code, "quantityApproved": rec.amount_approved})
 
     approve_data = {
-         "requisitionId": requisition_cases.external_id,
-         "approverName": requisition_cases.approved_by,
-         "products": products
+        "products": products
     }
 
-    return openlmis_endpoint.approve_requisition(approve_data)
+    return openlmis_endpoint.approve_requisition(approve_data, requisition_cases[0].external_id)
 
 
 def delivery_update(requisition_cases, openlmis_endpoint):

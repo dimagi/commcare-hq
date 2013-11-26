@@ -3,7 +3,7 @@ from corehq.apps.commtrack.tests.util import CommTrackTest
 from corehq.apps.commtrack.stockreport import Requisition
 from corehq.apps.commtrack.const import RequisitionActions
 from corehq.apps.commtrack.requisitions import create_requisition
-from custom.openlmis.commtrack import approve_requisition, approved_requisition
+from custom.openlmis.commtrack import requisition_approved
 from custom.openlmis.tests.mock_api import MockOpenLMISEndpoint
 
 
@@ -34,4 +34,4 @@ class ApproveRequisitionTest(CommTrackTest):
             )
             req = create_requisition(self.user._id, spp, transaction)
             requisition_cases.append(req)
-        self.assertTrue(approved_requisition.send(sender=None, requisitions=requisition_cases))
+        self.assertTrue(requisition_approved.send(sender=None, requisitions=requisition_cases))
