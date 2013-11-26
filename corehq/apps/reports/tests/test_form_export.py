@@ -82,3 +82,21 @@ class FormExportTest(TestCase):
         data = json.loads(tmp.getvalue())
         self.assertEqual(data['Export']['headers'], ['Name'])
         self.assertEqual(len(data['Export']['rows']), 1)
+
+    def test_exclude_unknown_users(self):
+        self.post_it(form_id='good', user_id=self.couch_user._id)
+        tmp, _ = self.custom_export.get_export_files()
+        data = json.loads(tmp.getvalue())
+        self.assertEqual(len(data['Export']['rows']), 1)
+
+        # posting from a non-real user shouldn't update
+        self.post_it(form_id='bad', user_id='notarealuser')
+        tmp, _ = self.custom_export.get_export_files()
+        data = json.loads(tmp.getvalue())
+        self.assertEqual(len(data['Export']['rows']), 1)
+
+        # posting from the real user should update
+        self.post_it(form_id='stillgood', user_id=self.couch_user._id)
+        tmp, _ = self.custom_export.get_export_files()
+        data = json.loads(tmp.getvalue())
+        self.assertEqual(len(data['Export']['rows']), 2)
