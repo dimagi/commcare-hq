@@ -56,4 +56,28 @@ class LocationsTest(CommTrackTest):
         user.remove_location(loc)
 
         self.check_supply_point(user, sp._id, False)
-        self.assertTrue(len(user.locations), 0)
+        self.assertEqual(len(user.locations), 1)
+
+    def test_can_clear_locations(self):
+        user = self.reporters['fixed']
+        user.clear_locations()
+
+        self.assertEqual(len(user.locations), 0)
+
+    def test_can_set_locations(self):
+        user = self.reporters['fixed']
+
+        loc1 = make_loc('secondloc')
+        sp1 = make_supply_point(self.domain, loc1)
+
+        loc2 = make_loc('thirdloc')
+        sp2 = make_supply_point(self.domain, loc2)
+
+        user.set_locations([loc1, loc2])
+
+        # should only have the two new cases
+        self.assertEqual(len(user.locations), 2)
+
+        # and will have access to these two
+        self.check_supply_point(user, sp1._id, False)
+        self.check_supply_point(user, sp2._id, False)

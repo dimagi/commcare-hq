@@ -1058,10 +1058,21 @@ class CommTrackUser(CommCareUser):
     def locations(self):
         mapping = self.location_map_case()
 
-        return [Location.wrap(index.referenced_case.to_json()) for index in mapping.indices]
+        if mapping:
+            return [Location.wrap(index.referenced_case.to_json()) for index in mapping.indices]
+        else:
+            return []
 
     def add_location(self, location):
         sp = SupplyPointCase.get_by_location(location)
+
+        if not sp:
+            logging.error(('no linked supply point found for location {loc} ({id}) '
+                           'in {dom}. ownership was not set').format(
+                loc=location.name, id=location._id, dom=location.domain,
+            ))
+            return
+
         mapping = self.location_map_case()
 
         if mapping:
@@ -1080,6 +1091,35 @@ class CommTrackUser(CommCareUser):
                 owner_id=self._id,
                 index={'sp-' + sp._id: (sp.type, sp._id)}
             )
+
+        submit_case_blocks(
+            ElementTree.tostring(caseblock.as_xml()),
+            self.domain,
+            self.username,
+            self._id
+        )
+
+    def clear_locations(self):
+        mapping = self.location_map_case()
+        if mapping:
+            mapping.delete()
+
+    def set_locations(self, locations):
+        self.clear_locations()
+
+        index = {}
+        for location in locations:
+            sp = SupplyPointCase.get_by_location(location)
+            index['sp-' + sp._id] = (sp.type, sp._id)
+
+        caseblock = CaseBlock(
+            create=True,
+            case_type='user-owner-mapping-case',
+            case_id='user-owner-mapping-' + self._id,
+            version=V2,
+            owner_id=self._id,
+            index=index
+        )
 
         submit_case_blocks(
             ElementTree.tostring(caseblock.as_xml()),
