@@ -16,6 +16,8 @@ SUPPLY_POINT_CASE_TYPE = 'supply-point'
 REQUISITION_CASE_TYPE = 'commtrack-requisition'
 ORDER_CASE_TYPE = 'commtrack-order'
 
+INFERRED_TRANSACTION = '_inferred'
+
 def is_commtrack_case(case):
     return case.type in [
         SUPPLY_POINT_CASE_TYPE,

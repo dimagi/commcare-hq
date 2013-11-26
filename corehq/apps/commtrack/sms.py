@@ -13,7 +13,7 @@ from dimagi.utils.parsing import json_format_datetime
 from datetime import datetime
 from helpers import make_supply_point_product
 from corehq.apps.commtrack.util import get_supply_point
-from corehq.apps.commtrack.models import Product, CommtrackConfig
+from corehq.apps.commtrack.models import Product, CommtrackConfig, StockTransaction
 
 logger = logging.getLogger('commtrack.sms')
 
@@ -60,7 +60,7 @@ class StockReportParser(object):
         if isinstance(u, CommCareUser):
             linked_loc_id = u.dynamic_properties().get('commtrack_location')
             if linked_loc_id:
-                self.location = get_supply_point(self.domain.name, loc=Location.get(linked_loc_id))['case']
+                self.location = get_supply_point(self.domain.name, loc=Location.get(linked_loc_id))['location']
 
         self.C = domain.commtrack_settings
 
@@ -89,18 +89,18 @@ class StockReportParser(object):
         if action and action.type == 'stock':
             # single action stock report
             # TODO: support single-action by product, as well as by action?
-            _tx = self.single_action_transactions(action, args, self.transaction_factory(stockreport.StockTransaction))
+            _tx = self.single_action_transactions(action, args, self.transaction_factory(StockTransaction))
 
         elif action and action.type == 'req':
             # requisition
             if action.action in [RequisitionActions.APPROVAL, RequisitionActions.PACK]:
                 _tx = self.requisition_bulk_action(action, args)
             else:
-                _tx = self.single_action_transactions(action, args, self.transaction_factory(stockreport.Requisition))
+                _tx = self.single_action_transactions(action, args, self.transaction_factory(Requisition))
 
         # multiple action stock report
         elif self.C.multiaction_enabled and action_keyword == self.C.multiaction_keyword:
-            _tx = self.multiple_action_transactions(args, self.transaction_factory(stockreport.StockTransaction))
+            _tx = self.multiple_action_transactions(args, self.transaction_factory(StockTransaction))
 
         else:
             # initial keyword not recognized; delegate to another handler
@@ -126,7 +126,7 @@ class StockReportParser(object):
                     yield make_tx(
                         product=self.product_from_code(prod_code),
                         action=action,
-                        value=0,
+                        quantity=0,
                     )
 
                 return
@@ -149,7 +149,7 @@ class StockReportParser(object):
                     raise SMSError('could not understand product quantity "%s"' % arg)
 
                 for p in products:
-                    yield make_tx(product=p, action=action, value=value)
+                    yield make_tx(product=p, action=action, quantity=value)
                 products = []
         if products:
             raise SMSError('missing quantity for product "%s"' % products[-1].code)
@@ -198,7 +198,7 @@ class StockReportParser(object):
                     except (ValueError, StopIteration):
                         raise SMSError('quantity expected for product "%s"' % product.code)
 
-                yield make_tx(product=product, action=action, value=value)
+                yield make_tx(product=product, action=action, quantity=value)
                 continue
 
             raise SMSError('do not recognize keyword "%s"' % keyword)
@@ -216,14 +216,14 @@ class StockReportParser(object):
 
     def transaction_factory(self, baseclass):
         return lambda **kwargs: baseclass(
-            domain=self.domain,
-            location=self.location,
+            domain=self.domain.name,
+            location_id=self.location._id,
             **kwargs
         )
 
     def location_from_code(self, loc_code):
         """return the supply point case referenced by loc_code"""
-        result = get_supply_point(self.domain.name, loc_code)['case']
+        result = get_supply_point(self.domain.name, loc_code)['location']
         if not result:
             raise SMSError('invalid location code "%s"' % loc_code)
         return result

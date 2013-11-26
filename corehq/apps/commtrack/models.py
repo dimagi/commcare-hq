@@ -64,11 +64,19 @@ class Product(Document):
     domain = StringProperty()
     name = StringProperty()
     unit = StringProperty()
-    code = StringProperty()
+    code_ = StringProperty()
     description = StringProperty()
     category = StringProperty()
     program_id = StringProperty()
     cost = DecimalProperty()
+
+    @property
+    def code(self):
+        return self.code_
+
+    @code.setter
+    def code(self, val):
+        self.code_ = val.lower() if val else None
 
     @classmethod
     def get_by_code(cls, domain, code):
@@ -375,13 +383,14 @@ class StockTransaction(Document):
     """
     domain = StringProperty()
     timestamp = DateTimeProperty()
-    #location (supply point case or loc id)
-    #product
+    location_id = StringProperty() # location record, not supply point case
+    product_id = StringProperty()
     action = StringProperty()
     subaction = StringProperty()
     quantity = FloatProperty()
     processing_order = IntegerProperty()
 
+    """
     @classmethod
     def by_domain(cls, domain, skip=0, limit=100):
         return [StockTransaction.force_wrap(row["value"]) for row in _view_shared(
@@ -399,29 +408,22 @@ class StockTransaction(Document):
                                        startkey=[product_case, start_date],
                                        endkey=[product_case, end_date, {}])
         return [StockTransaction.force_wrap(row['value']) for row in q]
-
+    """
 
     def __init__(self, **kwargs):
-        self.domain = kwargs.get('domain')
-        self.location = kwargs.get('location')
-        self.location_id = self.location.location_[-1] if self.location else None
-        self.product = kwargs.get('product')
-        self.product_id = kwargs.get('product_id') or self.product._id
-        self.action_name = kwargs['action_name']
-        self.value = kwargs['value']
-        self.case_id = kwargs.get('case_id') or kwargs.get('get_caseid', lambda p: None)(self.product_id)
-        self.inferred = kwargs.get('inferred', False)
-        self.processing_order = kwargs.get('order')
-
-        self.config = kwargs.get('config')
-        if self.config:
-            if not self.domain:
-                self.domain = self.config.domain
-            self.action_config = self.config.all_actions_by_name[self.action_name]
-            self.priority_order = [action.action_name for action in self.config.all_actions()].index(self.action_name)
-
-        assert self.product_id
-        assert self.case_id
+        if kwargs.get('action'):
+            action = kwargs['action']
+            del kwargs['action']
+            kwargs['action'] = action.action
+            kwargs['subaction'] = action.subaction
+        if kwargs.get('product'):
+            kwargs['product_id'] = kwargs['product']._id
+            del kwargs['product']
+        if kwargs.get('inferred'):
+            kwargs['subaction'] = const.INFERRED_TRANSACTION
+            del kwargs['inferred']
+        # processing order?
+        super(StockTransaction, self).__init__(**kwargs)
 
     @classmethod
     def from_xml(cls, tx, config):
@@ -463,11 +465,7 @@ class StockTransaction(Document):
         return '%s%s' % (self.product.code.lower(), quantity)
 
     def __repr__(self):
-        return '{action}: {value} (case: {case}, product: {product})'.format(
-            action=self.action_name, value=self.value, case=self.case_id,
-            product=self.product_id
-        )
-
+        return '{action} ({subaction}): {quantity} (loc: {location_id}, product: {product_id})'.format(**self._doc)
 
 
 def _get_single_index(case, identifier, type, wrapper=None):
