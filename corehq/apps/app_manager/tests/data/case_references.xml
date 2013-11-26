@@ -38,7 +38,7 @@
 			<bind nodeset="/data/question15/question21" />
 			<bind nodeset="/data/question15/question25" type="xsd:int" />
             <bind nodeset="/data/thing" type="xsd:string" />
-            <bind nodeset="/data/datanode" />
+            <bind nodeset="/data/datanode" calculate="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/nonexistent_child_property"/>
 
 			<itext>
                 <translation lang="en" default="">
