@@ -133,7 +133,7 @@ class DomainRegistrationForm(forms.Form):
     """
     org = forms.CharField(widget=forms.HiddenInput(), required=False)
     domain_name = forms.CharField(label='Project Name:', max_length=25,
-                                  help_text="Project name cannot contain spaces.")
+                                  help_text=_("Project name cannot contain spaces."))
     domain_type = forms.CharField(widget=forms.HiddenInput(), required=False,
                                   initial='commcare')
     domain_timezone = TimeZoneChoiceField(
