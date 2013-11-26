@@ -147,6 +147,7 @@ class MessageLog(SafeSaveDocument, UnicodeMixIn):
 
 class SMSLog(MessageLog):
     text = StringProperty()
+    backend_message_id = StringProperty()
     
     @property
     def outbound_backend(self):

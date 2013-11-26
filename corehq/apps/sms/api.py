@@ -210,7 +210,7 @@ def process_sms_registration(msg):
     
     return registration_processed
 
-def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None, delay=True):
+def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None, delay=True, backend_message_id=None):
     """
     entry point for incoming sms
 
@@ -238,7 +238,8 @@ def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None,
         direction       = INCOMING,
         date            = timestamp or datetime.utcnow(),
         text            = text,
-        backend_api     = backend_api
+        backend_api     = backend_api,
+        backend_message_id = backend_message_id,
     )
     if v is not None and v.verified:
         msg.couch_recipient_doc_type    = v.owner_doc_type
