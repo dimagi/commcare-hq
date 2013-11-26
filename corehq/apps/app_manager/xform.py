@@ -265,15 +265,17 @@ class CaseBlock(object):
             relevant=relevance,
         )
 
-    def add_index_ref(self, reference_id, case_type, case_path='', ref_path="case/@case_id"):
-        index_node = make_case_elem('index')
+    def add_index_ref(self, reference_id, case_type, ref, case_path=''):
+        index_node = self.elem.find('{cx2}index'.format(**namespaces))
+        if index_node is None:
+            index_node = make_case_elem('index')
+            self.elem.append(index_node)
         parent_index = make_case_elem(reference_id, {'case_type': case_type})
         index_node.append(parent_index)
-        self.elem.append(index_node)
 
         self.xform.add_bind(
             nodeset='{path}case/index/{ref}'.format(path=case_path, ref=reference_id),
-            calculate=self.xform.resolve_path(ref_path),
+            calculate=ref,
         )
 
 
@@ -937,7 +939,12 @@ class XForm(WrappedNode):
 
                 if case_block is not None and subcase.case_type != form.get_case_type():
                     reference_id = subcase.reference_id or 'parent'
-                    subcase_block.add_index_ref(reference_id, form.get_case_type(), case_path=path)
+                    subcase_block.add_index_ref(
+                        reference_id,
+                        form.get_case_type(),
+                        self.resolve_path("case/@case_id"),
+                        case_path=path
+                    )
 
         case = self.case_node
         case_parent = self.data_node
@@ -1242,14 +1249,19 @@ class XForm(WrappedNode):
         self.add_meta_2()
         self.add_instance('casedb', src='jr://instance/casedb')
 
-        def add_parent_case_id(case_block):
+        def add_parent_case_id(case_block, case_path=''):
             parent_case_id = _make_elem('parent_case_id')
             self.data_node.append(parent_case_id)
             self.add_bind(
                 nodeset=self.resolve_path('parent_case_id'),
                 calculate=session_var('case_id')
             )
-            case_block.add_index_ref('parent', form.get_parent_case_type(), ref_path='parent_case_id')
+            case_block.add_index_ref(
+                'parent',
+                form.get_parent_case_type(),
+                self.resolve_path('parent_case_id'),
+                case_path=case_path
+            )
 
         if form.case_type == CAREPLAN_GOAL:
             if form.mode == 'create':
@@ -1317,8 +1329,10 @@ class XForm(WrappedNode):
                 self.data_node.find('{x}tasks_to_close').append(task_case_block.elem)
         elif form.case_type == CAREPLAN_TASK:
             if form.mode == 'create':
-                case_block = CaseBlock(self, path=self.resolve_path('task_repeat'))
+                path = 'task_repeat/'
+                case_block = CaseBlock(self, path=self.resolve_path(path))
                 case_block.add_create_block(
+                    path=path,
                     relevance='true()',
                     case_name=form.name_path,
                     case_type=CAREPLAN_TASK,
@@ -1328,15 +1342,15 @@ class XForm(WrappedNode):
 
                 # set case owner to whatever parent case owner is
                 self.add_setvalue(
-                    ref="case/create/owner_id",
+                    ref="%scase/create/owner_id" % path,
                     value=CaseIDXPath(self.resolve_path('parent_case_id')).case().property('@owner_id'),
                     event='xforms-revalidate'
                 )
 
-                case_block.add_update_block(form.case_updates())
+                case_block.add_update_block(form.case_updates(), path=path)
 
-                add_parent_case_id(case_block)
-                case_block.add_index_ref('goal', CAREPLAN_TASK, ref_path='case_id_goal')
+                add_parent_case_id(case_block, case_path=path)
+                case_block.add_index_ref('goal', CAREPLAN_GOAL, session_var('case_id_goal'), case_path=path)
 
                 self.data_node.find('{x}task_repeat').append(case_block.elem)
             elif form.mode == 'update':
@@ -1347,6 +1361,6 @@ class XForm(WrappedNode):
                     ref='case/@case_id',
                     value=CaseIDXPath(session_var('case_id_task'))
                 )
-
-                case_block.add_close_block(form.close_path, 'yes')
+                relevance = "%s = '%s'" % (self.resolve_path(form.close_path), 'yes')
+                case_block.add_close_block(relevance)
                 self.data_node.append(case_block.elem)

@@ -1221,7 +1221,7 @@ class CareplanTaskForm(CareplanForm):
             'date_followup': self.date_followup_path,
         })
         if self.mode == 'create':
-            changes['description'] = self.description_path,
+            changes['description'] = self.description_path
         else:
             changes['latest_report'] = self.latest_report_path
         return changes

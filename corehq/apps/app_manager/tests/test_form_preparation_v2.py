@@ -6,7 +6,7 @@ import io
 import lxml.etree
 
 from casexml.apps.case.tests.util import check_xml_line_by_line
-from corehq.apps.app_manager.const import APP_V2, CAREPLAN_GOAL
+from corehq.apps.app_manager.const import APP_V2, CAREPLAN_GOAL, CAREPLAN_TASK
 from corehq.apps.app_manager.models import Application, OpenCaseAction, UpdateCaseAction, PreloadAction, FormAction, Module, CareplanModule
 from django.test import TestCase
 from corehq.apps.app_manager.tests.util import TestFileMixin
@@ -137,3 +137,11 @@ class FormPreparationCareplanTest(FormPrepBase):
     def test_update_goal(self):
         form = self.careplan_module.get_form_by_type(CAREPLAN_GOAL, 'update')
         self.assert_xml_equiv(form.render_xform(), self.get_xml('update_goal'))
+
+    def test_create_task(self):
+        form = self.careplan_module.get_form_by_type(CAREPLAN_TASK, 'create')
+        self.assert_xml_equiv(form.render_xform(), self.get_xml('create_task'))
+
+    def test_update_task(self):
+        form = self.careplan_module.get_form_by_type(CAREPLAN_TASK, 'update')
+        self.assert_xml_equiv(form.render_xform(), self.get_xml('update_task'))
