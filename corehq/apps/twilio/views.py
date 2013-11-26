@@ -4,7 +4,7 @@ from django.http import HttpResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
 
 EMPTY_RESPONSE = """<?xml version="1.0" encoding="UTF-8" ?>
-<Response />"""
+<Response></Response>"""
 
 @csrf_exempt
 def sms_in(request):
