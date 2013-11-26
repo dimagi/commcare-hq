@@ -77,7 +77,16 @@
             {% else %}
             <td></td>
             <td>
-                <a class="btn btn-primary" data-action="{% url "domain_set_published" domain snapshot.name %}" data-toggle="modal" data-target="#contentDistributionAgreement" href="#contentDistributionAgreement">Publish</a> (only one snapshot can be published at a time)
+                <a class="btn btn-primary"
+                   data-action="{% url "domain_set_published" domain snapshot.name %}"
+                   data-toggle="modal"
+                   data-target="#contentDistributionAgreement"
+                   href="#contentDistributionAgreement"
+                   onclick="_gaq.push(['_trackEvent', 'Exchange', 'Publish', 'Previous Version']);"
+                >
+                    Publish
+                </a>
+                (only one snapshot can be published at a time)
             </td>
             {% endif %}
         </tr>

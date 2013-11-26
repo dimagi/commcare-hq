@@ -16,7 +16,14 @@
         <dt><h4>Most Recent Version</h4></dt>
         <dd>
             <form method="get" action="{% url "domain_create_snapshot" domain %}">
-                <a class="btn btn-primary" data-action="{% url "domain_set_published" domain version.name %}" data-toggle="modal" data-target="#contentDistributionAgreement" href="#contentDistributionAgreement">Publish</a>
+                <a class="btn btn-primary"
+                   data-action="{% url "domain_set_published" domain version.name %}"
+                   data-toggle="modal" data-target="#contentDistributionAgreement"
+                   href="#contentDistributionAgreement"
+                   onclick="_gaq.push(['_trackEvent', 'Exchange', 'Publish', 'Most Recent']);"
+                >
+                    Publish
+                </a>
                 <button type="submit" class="btn btn-primary">Edit</button>
             </form>
         </dd>
