@@ -128,6 +128,7 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
         return new_indicator
 
     @classmethod
+    @memoized
     def get_current(cls, namespace, domain, slug, version=None, wrap=True, **kwargs):
         couch_key = cls._generate_couch_key(
             namespace=namespace,
@@ -173,6 +174,7 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
         return [item.get('key',[])[-1] for item in data]
 
     @classmethod
+    @memoized
     def get_all(cls, namespace, domain, version=None, **kwargs):
         all_slugs = cls.all_slugs(namespace, domain, **kwargs)
         all_indicators = list()
