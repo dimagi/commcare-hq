@@ -22,7 +22,7 @@
     <div data-bind="visible: type() === 'if'">
         <a href="#" data-bind="click: function () {type('always')}, visible: $root.edit"><i class="icon-remove"></i></a>
         {% trans "Only if the answer to" %}
-        <input type="hidden" data-bind="
+        <input class="input-large" type="hidden" data-bind="
             questionsSelect: $root.getQuestions('select1', false, $parent.case_transaction.allow.repeats()),
             value: question,
             optionsCaption: ' ',
@@ -43,7 +43,7 @@
 </script>
 
 <script type="text/html" id="case-config:case-properties:question">
-    <input type="hidden" data-bind="
+    <input class="input-large" type="hidden" data-bind="
         questionsSelect: $root.getQuestions('all', false, case_transaction.allow.repeats()),
         value: path,
         optionsCaption: ' ',
