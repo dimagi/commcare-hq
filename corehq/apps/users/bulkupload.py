@@ -305,8 +305,8 @@ def get_location_rows(domain):
 
     mappings = []
     for user in users:
-        if hasattr(user, 'commtrack_location'):
-            location = Location.get(user.commtrack_location)
+        locations = user.locations
+        for location in locations:
             mappings.append([
                 user.username,
                 location.site_code,

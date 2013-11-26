@@ -33,7 +33,7 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
 from dimagi.utils.decorators.view import get_file
 from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound, JSONReaderError
-
+from corehq.apps.commtrack.models import CommTrackUser
 
 DEFAULT_USER_LIST_LIMIT = 10
 
@@ -148,8 +148,9 @@ class EditCommCareUserView(BaseFullEditUserView):
     def update_commtrack_form(self):
         if self.request.method == "POST" and self.request.POST['form_type'] == "commtrack":
             return CommtrackUserForm(self.request.POST, domain=self.domain)
-        linked_loc = self.editable_user.dynamic_properties().get('commtrack_location')
-        return CommtrackUserForm(domain=self.domain, initial={'supply_point': linked_loc})
+        # currently only support one location on the UI
+        linked_loc = CommTrackUser.wrap(self.editable_user.to_json()).location
+        return CommtrackUserForm(domain=self.domain, initial={'supply_point': linked_loc._id})
 
     @property
     def page_context(self):
