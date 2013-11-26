@@ -1,7 +1,9 @@
 import functools
+import json
 from corehq.apps.app_manager.xform import XForm, XFormError, parse_xml
 import re
 from dimagi.utils.decorators.memoized import memoized
+from django.core.cache import cache
 
 
 def get_app_id(form):
@@ -214,3 +216,16 @@ def all_apps_by_domain(domain):
     for row in rows:
         doc = row['doc']
         yield get_correct_app_class(doc).wrap(doc)
+
+
+
+def languages_mapping():
+    mapping = cache.get('__languages_mapping')
+    if not mapping:
+        langs_file = open('submodules/langcodes/langs.json')
+        lang_data = json.load(langs_file)
+        mapping = dict([(l["two"], l["names"]) for l in lang_data])
+        mapping["default"] = ["Default Language"]
+        cache.set('__languages_mapping', mapping, 12*60*60)
+        langs_file.close()
+    return mapping
