@@ -15,6 +15,7 @@ class SmsGatewayFeeCriteria(models.Model):
     for that field.
     """
     backend_api_id = models.CharField(max_length=100, db_index=True)
+    backend_instance = models.CharField(max_length=255, db_index=True, null=True)
     direction = models.CharField(max_length=10, db_index=True, choices=DIRECTION_CHOICES)
     country_code = models.CharField(max_length=5, null=True, db_index=True)
 
