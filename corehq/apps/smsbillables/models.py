@@ -1,48 +1,96 @@
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 
 from corehq.apps.accounting import models as accounting
 from corehq.apps.sms.models import DIRECTION_CHOICES
 
 
-class SmsRate(models.Model):
+class SmsGatewayFeeCriteria(models.Model):
     """
     These are the parameters we'll use to try and calculate the cost of sending a message through
-    our gateways.
-    When attempting to find an SmsRate for a message sent, we will try to match most specific rate
-    (all null fields filled out) to least specific rate if no specific rates are matched.
-    If no matching rates are found, only a DIMAGI_SMS_USAGE_FEE will be applied.
+    our gateways. We configure the SMS fee criteria based on parameters given to us by specific
+    gateway providers.
+
+    Nullable fields indicate criteria that can be applied globally to all messages with no specific matches
+    for that field.
     """
     backend_api_id = models.CharField(max_length=100, db_index=True)
     direction = models.CharField(max_length=10, db_index=True, choices=DIRECTION_CHOICES)
     country_code = models.CharField(max_length=5, null=True, db_index=True)
 
 
-class SmsRateVersion(models.Model):
+class SmsGatewayFee(models.Model):
     """
-    The rate for a particular backend api, direction, and country code match may change over time.
-    This is how we'll keep track of those changes, by adding a date_created field. When an SmsBillable
-    is calculated, it will use the most recent SmsRateVersion available to determine the gateway_charge.
+    The fee for sending or receiving an SMS Message based on gateway.
+    When an SmsBillable is calculated, it will use the most recent SmsFee available from the criteria
+    to determine the gateway_charge.
+
+    Once an SmsFee is created, it cannot be modified.
     """
-    rate = models.ForeignKey(SmsRate, on_delete=models.PROTECT)
-    fee = models.FloatField(default=0.0)
+    criteria = models.ForeignKey(SmsGatewayFeeCriteria, on_delete=models.PROTECT)
+    amount = models.FloatField(default=0.0)
     currency = models.ForeignKey(accounting.Currency, on_delete=models.PROTECT)
+    date_created = models.DateField(auto_now_add=True)
+
+
+class SmsUsageFeeCriteria(models.Model):
+    """
+    Criteria for determining a usage fee applied for each SMS message sent or received.
+
+    Nullable fields indicate criteria that can be applied globally to all messages with no specific matches
+    for that field.
+    """
+    direction = models.CharField(max_length=10, db_index=True, choices=DIRECTION_CHOICES)
+    domain = models.CharField(max_length=25, db_index=True, null=True)
+
+
+class SmsUsageFee(models.Model):
+    """
+    The usage fee, with version information, based on domain or globally.
+    When an SmsBillable is calculated, it will use the most recent SmsUsageFee available from the
+    criteria to determine the usage_charge.
+
+    Currency is always in USD since this is something we control.
+
+    Once an SmsUsageFee is created, it cannot be modified.
+    """
+    criteria = models.ForeignKey(SmsUsageFeeCriteria, on_delete=models.PROTECT)
+    amount = models.FloatField(default=0.0)
     date_created = models.DateField(auto_now_add=True)
 
 
 class SmsBillable(models.Model):
     """
-    A record of applying a charge to a particular MessageLog (or SMSLog).
-    Every message log sent will have one of these Billables, even on custom SmsBackends, as there will be
-    a usage charge for each message sent.
+    A record of matching a fee to a particular MessageLog (or SMSLog).
+
+    If on closer inspection we determine a particular SmsBillable is invalid (whether something is
+    awry with the api_response, or we used the incorrect fee and want to recalculate) we can set
+    this billable to is_valid = False and it will not be used toward calculating the SmsLineItem in
+    the monthly Invoice.
     """
-    rate_version = models.ForeignKey(SmsRate, blank=True, on_delete=models.PROTECT)
+    gateway_fee = models.ForeignKey(SmsGatewayFee, blank=True, on_delete=models.PROTECT)
+    usage_fee = models.ForeignKey(SmsUsageFee, blank=True, on_delete=models.PROTECT)
     log_id = models.CharField(max_length=50)
-    domain = models.CharField(max_length=25, db_index=True)
-    direction = models.CharField(max_length=10, db_index=True, choices=DIRECTION_CHOICES)
     phone_number = models.CharField(max_length=50)
-    gateway_charge = models.FloatField(default=0.0)
-    usage_charge = models.FloatField(default=0.0)
     api_response = models.TextField(blank=True)
     is_valid = models.BooleanField(default=True, db_index=True)
+    domain = models.CharField(max_length=25, db_index=True)
+    direction = models.CharField(max_length=10, db_index=True, choices=DIRECTION_CHOICES)
     date_sent = models.DateField()
     date_created = models.DateField(auto_now_add=True)
+
+    @property
+    def gateway_charge(self):
+        try:
+            charge = SmsGatewayFee.objects.get(id=self.gateway_fee.id)
+            return charge.amount
+        except ObjectDoesNotExist:
+            return 0.0
+
+    @property
+    def usage_charge(self):
+        try:
+            charge = SmsUsageFee.objects.get(id=self.usage_fee.id)
+            return charge.amount
+        except ObjectDoesNotExist:
+            return 0.0
