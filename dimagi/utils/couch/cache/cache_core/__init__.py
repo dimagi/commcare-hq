@@ -2,6 +2,7 @@ from django.conf import settings
 from django.core import cache
 from django.core.cache import InvalidCacheBackendError
 
+
 COUCH_CACHE_TIMEOUT = 43200
 MOCK_REDIS_CACHE = None
 
@@ -43,7 +44,8 @@ def key_doc_id(doc_id):
     ret = ":".join([CACHED_DOC_PREFIX, doc_id])
     return ret
 
-
-
+# has to be down here because of cyclic dependency
+# todo: move all above out of init; this should really be the only thing in init
 from .api import *
 from .gen import *
+from .const import *

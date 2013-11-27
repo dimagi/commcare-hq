@@ -1,0 +1,2 @@
+MISSING = object()
+INTERRUPTED = object()

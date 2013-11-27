@@ -1,8 +1,9 @@
-import uuid
 from django.utils import http, importlib
 from . import CACHED_VIEW_PREFIX, rcache, COUCH_CACHE_TIMEOUT, CACHE_VIEWS
 from django.conf import settings
+from redis_cache.exceptions import ConnectionInterrumped
 import simplejson
+from dimagi.utils.couch.cache.cache_core.const import INTERRUPTED, MISSING
 
 
 class GenerationCache(object):
@@ -101,18 +102,23 @@ class GenerationCache(object):
         """
         from .api import cached_open_doc
 
-        if force_invalidate:
-            self.invalidate_all()
-
         include_docs = params.get('include_docs', False)
 
-        MISSING = uuid.uuid4().hex
-        cache_view_key = self._mk_view_cache_key(view_name, params)
+        try:
+            if force_invalidate:
+                self.invalidate_all()
+            cache_view_key = self._mk_view_cache_key(view_name, params)
+            cached_view = rcache().get(cache_view_key, MISSING)
+        except ConnectionInterrumped:
+            cache_view_key = INTERRUPTED
+            cached_view = INTERRUPTED
+
+        is_cache_hit = cached_view not in (MISSING, INTERRUPTED) and CACHE_VIEWS
+
         if include_docs:
             # include_docs=True results in couchdbkit remove the 'rows' result
             # and returns just the actual rows in an array
-            cached_view = rcache().get(cache_view_key, MISSING)
-            if cached_view != MISSING and CACHE_VIEWS:
+            if is_cache_hit:
                 results = simplejson.loads(cached_view)
                 final_results = {}
 
@@ -165,24 +171,25 @@ class GenerationCache(object):
                     retval = [wrapper(x['doc']) for x in view_results['rows']]
                 else:
                     retval = view_results['rows']
-                rcache().set(cache_view_key, simplejson.dumps(cached_results), timeout=cache_expire)
+                if cached_view is not INTERRUPTED:
+                    rcache().set(cache_view_key, simplejson.dumps(cached_results), timeout=cache_expire)
                 return retval
 
         else:
             # include_docs=False just returns the entire view verbatim
-            cached_view = rcache().get(cache_view_key, MISSING)
-            if cached_view != MISSING and CACHE_VIEWS:
+            if is_cache_hit:
                 results = simplejson.loads(cached_view)
                 return results
             else:
                 view_results = db.view(view_name, **params).all()
-                rcache().set(cache_view_key, simplejson.dumps(view_results), timeout=cache_expire)
-                for row in view_results:
-                    doc_id = row.get('id', None)
-                    if doc_id:
-                        # a non reduce view will have doc_ids on each row, we want to reverse index these
-                        # to know when to invalidate
-                        self._cached_view_doc(doc_id)
+                if cached_view is not INTERRUPTED:
+                    rcache().set(cache_view_key, simplejson.dumps(view_results), timeout=cache_expire)
+                    for row in view_results:
+                        doc_id = row.get('id', None)
+                        if doc_id:
+                            # a non reduce view will have doc_ids on each row, we want to reverse index these
+                            # to know when to invalidate
+                            self._cached_view_doc(doc_id)
                 return view_results
 
 
