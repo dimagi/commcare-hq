@@ -3,6 +3,7 @@ from distutils.version import LooseVersion
 from django.core.urlresolvers import reverse
 from lxml import etree
 from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, NodeField
+from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.hqmedia.models import HQMediaMapItem
 from .exceptions import MediaResourceError, ParentModuleReferenceError, SuiteValidationError
 from corehq.apps.app_manager.util import split_path, create_temp_sort_column, languages_mapping
@@ -416,9 +417,9 @@ class SuiteGenerator(object):
                 remote=path,
             )
             if form_stuff['type'] == 'module_form' and LooseVersion(self.app.build_spec.version) >= '2.9':
-                resource.descriptor = "Form: (Module {module_name}) - {form_name}".format(
-                    module_name=form_stuff["module"]["name"][self.app.default_language],
-                    form_name=form["name"][self.app.default_language]
+                resource.descriptor = u"Form: (Module {module_name}) - {form_name}".format(
+                    module_name=trans(form_stuff["module"]["name"], langs=[self.app.default_language]),
+                    form_name=trans(form["name"], langs=[self.app.default_language])
                 )
             this_list.append(resource)
         for x in first:
@@ -438,7 +439,8 @@ class SuiteGenerator(object):
                 remote=path,
             )
             if LooseVersion(self.app.build_spec.version) >= '2.9':
-                resource.descriptor = "Translations: %s" % languages_mapping().get(lang, ["Unknown Language"])[0]
+                unknown_lang_txt = u"Unknown Language (%s)" % lang
+                resource.descriptor = u"Translations: %s" % languages_mapping().get(lang, [unknown_lang_txt])[0]
             yield resource
 
     @property
