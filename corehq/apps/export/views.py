@@ -13,7 +13,7 @@ from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from couchexport.models import SavedExportSchema
-from couchexport.schema import build_latest_schema
+from couchexport.schema import build_latest_schema, BASIC_FORM_SCHEMA, create_basic_form_checkpoint
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop
 from dimagi.utils.web import json_response
@@ -93,6 +93,9 @@ class BaseCreateCustomExportView(BaseExportView):
             return HttpResponseBadRequest()
 
         schema = build_latest_schema(export_tag)
+
+        if not schema and self.export_helper.export_type == "form":
+            schema = create_basic_form_checkpoint(export_tag)
 
         if schema:
             app_id = request.GET.get('app_id')
