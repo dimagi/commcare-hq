@@ -5,6 +5,7 @@ from django.views.decorators.cache import cache_page
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.app_manager.suite_xml import SuiteGenerator
 from corehq.apps.cloudcare.models import CaseSpec, ApplicationAccess
+from corehq.apps.cloudcare.util import all_domain_apps_versions
 from corehq.apps.cloudcare.touchforms_api import DELEGATION_STUB_CASE_TYPE
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest_ex, domain_admin_required
 from corehq.apps.groups.models import Group
@@ -58,6 +59,7 @@ def cloudcare_main(request, domain, urlPath):
     if not preview:
         apps = get_cloudcare_apps(domain)
         # replace the apps with the last build of each app
+        all_app_versions = all_domain_apps_versions(apps, domain)
         apps = [_app_latest_build_json(app["_id"]) for app in apps]
     else:
         apps = ApplicationBase.view('app_manager/applications_brief', startkey=[domain], endkey=[domain, {}])
@@ -100,7 +102,7 @@ def cloudcare_main(request, domain, urlPath):
         
         app = None
         if app_id:
-            if app_id in [a['_id'] for a in apps]:
+            if app_id in [a['_id'] for a in all_app_versions]:
                 app = look_up_app_json(domain, app_id)
             else:
                 messages.info(request, _("That app is no longer valid. Try using the "
@@ -118,6 +120,14 @@ def cloudcare_main(request, domain, urlPath):
             "app": app,
             "case": case
         }
+
+    # check if selected app is not in list, otherwise add it
+    selected_app_id = _url_context()['app']['_id']
+    selected_app = next((i for i in all_app_versions if i['_id'] == selected_app_id), None)
+
+    if selected_app is not None and selected_app not in apps:
+        selected_app['name'] = "%s (version %s)" % (selected_app['name'], selected_app['version'])
+        apps.append(selected_app)
 
     context = {
        "domain": domain,
