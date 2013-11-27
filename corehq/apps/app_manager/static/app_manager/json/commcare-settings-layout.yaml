@@ -6,6 +6,7 @@
     # Application
     - hq.case_sharing  # Case Sharing
     - hq.cloudcare_enabled  # CloudCare
+    - hq.case_management_in_vellum
     - hq.use_custom_suite
     - hq.custom_suite
     # RemoteApp

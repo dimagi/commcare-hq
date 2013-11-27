@@ -147,6 +147,8 @@ function CommcareSettings(options) {
             read: function () {
                 var retu;
                 if (setting.enabled()) {
+                    // this behaves incorrectly if value is false and the setting
+                    // does not have default == false
                     retu = setting.value() || setting.computeDefault();
                 } else {
                     retu = setting.computeDefault();
@@ -175,6 +177,8 @@ function CommcareSettings(options) {
         setting.valueToSave = ko.computed({
             read: function () {
                 if (setting.enabled()) {
+                    // this behaves incorrectly if value is false and the
+                    // setting does not have default == false
                     return setting.value() || setting.computeDefault();
                 } else {
                     return null;

@@ -27,15 +27,18 @@
     <script src="{% static 'formdesigner/js/lib/codemirror/xml.js' %}"></script>
 
     <script src="{% static 'formdesigner/js/lib/classy-1.4.js' %}"></script>
+
     <script src="{% static 'formdesigner/js/formdesigner.javarosa.js' %}"></script>
-    <script src="{% static 'formdesigner/js/window.js' %}"></script>
+    <script src="{% static 'formdesigner/js/formdesigner.commcare.js' %}"></script>
+    <script src="{% static 'formdesigner/js/window.js' %}"></script> {# wtf #}
+    
     <script src="{% static 'formdesigner/js/util.js' %}"></script>
     <script src="{% static 'formdesigner/js/multimedia.js' %}"></script>
     <script src="{% static 'formdesigner/js/widgets.js' %}"></script>
     <script src="{% static 'formdesigner/js/model.js' %}"></script>
     <script src="{% static 'formdesigner/js/controller.js' %}"></script>
     <script src="{% static 'formdesigner/js/ui.js' %}"></script>
-    <script src="{% static 'formdesigner/js/window.js' %}"></script>
+    <script src="{% static 'formdesigner/js/window.js' %}"></script>  {# wtf #}
 
     {% include 'hqmedia/partials/multimedia_js.html' %} {# todo We should have a discussion at some point how we'd like to organize this in the future. #}
 {% endblock %}
@@ -83,7 +86,16 @@
                 form: {{ form.source|JSON }},
                 langs: {{ app.langs|JSON }},
                 formName: "{{ form.name|trans:app.langs }}",
-                displayLanguage: {{ lang|JSON }}
+                displayLanguage: {{ lang|JSON }},
+                plugins: [
+                    "javaRosa", 
+                    {% if commcare_options %}
+                        "commCare"
+                    {% endif %}
+                ],
+                pluginOptions: {
+                    commCare: {{ commcare_options|JSON }}
+                }
             });
             formdesigner.on('form-saved', function (args) {
                 var response = args.response;
