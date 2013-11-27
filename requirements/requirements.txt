@@ -63,6 +63,7 @@ unittest2
 pycurl==7.19.0
 fakecouch==0.0.5
 # WeasyPrint==0.19.2
+twilio==3.6.4
 
 # required by ctable
 SQLAlchemy==0.8.2

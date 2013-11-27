@@ -213,6 +213,7 @@ HQ_APPS = (
     'corehq.apps.smsforms',
     'corehq.apps.ivr',
     'corehq.apps.tropo',
+    'corehq.apps.twilio',
     'corehq.apps.kookoo',
     'corehq.apps.sislog',
     'corehq.apps.yo',
@@ -808,6 +809,7 @@ SMS_LOADED_BACKENDS = [
     "corehq.apps.sms.test_backend.TestSMSBackend",
     "corehq.apps.sms.backend.test.TestBackend",
     "corehq.apps.grapevine.api.GrapevineBackend",
+    "corehq.apps.twilio.models.TwilioBackend",
 ]
 
 # These are functions that can be called to retrieve custom content in a reminder event.
