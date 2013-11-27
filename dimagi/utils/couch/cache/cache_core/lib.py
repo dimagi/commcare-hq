@@ -19,5 +19,3 @@ def _get_cached_doc_only(doc_id):
         return simplejson.loads(doc)
     else:
         return None
-
-

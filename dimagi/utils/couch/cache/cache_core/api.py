@@ -1,5 +1,7 @@
+from redis_cache.exceptions import ConnectionInterrumped
 import simplejson
 from . import COUCH_CACHE_TIMEOUT, CACHE_DOCS, rcache, key_doc_id, key_doc_prop
+from .const import INTERRUPTED, MISSING
 from .gen import GenerationCache
 from .lib import invalidate_doc_generation, _get_cached_doc_only
 
@@ -32,10 +34,14 @@ def cached_open_doc(db, doc_id, cache_expire=COUCH_CACHE_TIMEOUT, **params):
     """
     Main wrapping function to open up a doc. Replace db.open_doc(doc_id)
     """
-    cached_doc = _get_cached_doc_only(doc_id)
-    if not cached_doc:
+    try:
+        cached_doc = _get_cached_doc_only(doc_id)
+    except ConnectionInterrumped:
+        cached_doc = INTERRUPTED
+    if cached_doc in (None, INTERRUPTED):
         doc = db.open_doc(doc_id, **params)
-        do_cache_doc(doc, cache_expire=cache_expire)
+        if cached_doc is not INTERRUPTED:
+            do_cache_doc(doc, cache_expire=cache_expire)
         return doc
     else:
         return cached_doc
@@ -58,8 +64,11 @@ def cache_doc_prop(doc_id, prop_name, doc_data, cache_expire=COUCH_CACHE_TIMEOUT
 
 def get_cached_prop(doc_id, prop_name):
     key = key_doc_prop(doc_id, prop_name)
-    retval = rcache().get(key, None)
-    if retval and CACHE_DOCS:
+    try:
+        retval = rcache().get(key, MISSING)
+    except ConnectionInterrumped:
+        retval = INTERRUPTED
+    if retval not in (MISSING, INTERRUPTED) and CACHE_DOCS:
         return simplejson.loads(retval)
     else:
         return None
