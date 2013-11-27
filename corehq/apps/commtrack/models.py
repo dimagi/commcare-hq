@@ -420,6 +420,10 @@ def get_case_wrapper(data):
     }.get(data.get('type'))
 
 
+class LinkedSupplyPointNotFoundError(Exception):
+    pass
+
+
 class SupplyPointCase(CommCareCase):
     """
     A wrapper around CommCareCases to get more built in functionality
@@ -520,7 +524,8 @@ class SupplyPointCase(CommCareCase):
 
     @classmethod
     def get_by_location(cls, location):
-        return cls.view('commtrack/supply_point_by_loc',
+        return cls.view(
+            'commtrack/supply_point_by_loc',
             key=[location.domain, location._id],
             include_docs=True,
             classes={'CommCareCase': SupplyPointCase},
@@ -1042,8 +1047,6 @@ class StockReport(object):
 
 
 class CommTrackUser(CommCareUser):
-    locations = ListProperty()
-
     @classmethod
     def wrap(cls, data):
         instance = super(CommTrackUser, cls).wrap(data)
@@ -1051,7 +1054,11 @@ class CommTrackUser(CommCareUser):
         if 'commtrack_location' in data:
             original_location = data['commtrack_location']
             del data['commtrack_location']
-            instance.set_locations([Location.get(original_location)])
+            try:
+                instance.set_locations([Location.get(original_location)])
+            except ResourceNotFound:
+                # if there was bad data in there before, we can ignore it
+                pass
 
         return instance
 
@@ -1078,15 +1085,22 @@ class CommTrackUser(CommCareUser):
         else:
             return []
 
-    def add_location(self, location):
-        sp = SupplyPointCase.get_by_location(location)
+    def supply_point_index_mapping(self, supply_point, clear=False):
+        if supply_point:
+            return {
+                'supply_point-' + supply_point._id:
+                (
+                    supply_point.type,
+                    supply_point._id if not clear else ''
+                )
+            }
+        else:
+            raise LinkedSupplyPointNotFoundError(
+                "There was no linked supply point for the location."
+            )
 
-        if not sp:
-            logging.error(('no linked supply point found for location {loc} ({id}) '
-                           'in {dom}. ownership was not set').format(
-                loc=location.name, id=location._id, dom=location.domain,
-            ))
-            return
+    def add_location(self, location):
+        sp = location.linked_supply_point()
 
         mapping = self.location_map_case()
 
@@ -1095,7 +1109,7 @@ class CommTrackUser(CommCareUser):
                 create=False,
                 case_id=mapping._id,
                 version=V2,
-                index={'sp-' + sp._id: (sp.type, sp._id)}
+                index=self.supply_point_index_mapping(sp)
             )
         else:
             caseblock = CaseBlock(
@@ -1104,7 +1118,7 @@ class CommTrackUser(CommCareUser):
                 case_id='user-owner-mapping-' + self._id,
                 version=V2,
                 owner_id=self._id,
-                index={'sp-' + sp._id: (sp.type, sp._id)}
+                index=self.supply_point_index_mapping(sp)
             )
 
         submit_case_blocks(
@@ -1125,7 +1139,7 @@ class CommTrackUser(CommCareUser):
         index = {}
         for location in locations:
             sp = SupplyPointCase.get_by_location(location)
-            index['sp-' + sp._id] = (sp.type, sp._id)
+            index.update(self.supply_point_index_mapping(sp))
 
         caseblock = CaseBlock(
             create=True,
@@ -1145,6 +1159,7 @@ class CommTrackUser(CommCareUser):
 
     def remove_location(self, location):
         sp = SupplyPointCase.get_by_location(location)
+
         mapping = self.location_map_case()
 
         if mapping:
@@ -1152,7 +1167,7 @@ class CommTrackUser(CommCareUser):
                 create=False,
                 case_id=mapping._id,
                 version=V2,
-                index={'sp-' + sp._id: (sp.type, '')}
+                index=self.supply_point_index_mapping(sp, True)
             )
 
             submit_case_blocks(
