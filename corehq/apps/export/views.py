@@ -227,7 +227,7 @@ BASIC_FORM_SCHEMA = {
     ],
     "received_on": "string",
     "app_id": "string",
-    "last_sync_token": None,
+    "last_sync_token": "string",
     "submit_ip": "string",
     "computed_": {
     },
@@ -238,7 +238,7 @@ BASIC_FORM_SCHEMA = {
     },
     "date_header": "string",
     "path": "string",
-    "computed_modified_on_": None,
+    "computed_modified_on_": "string",
     "_id": "string"
 }
 
