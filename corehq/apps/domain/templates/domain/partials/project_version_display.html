@@ -37,7 +37,7 @@
     <dd>{% if version.is_approved %}Approved{% else %}Not yet approved{% endif %}</dd>
     <dd>
         <a href="{% url "project_info" version.name %}"
-           onclick="_gaq.push(['_trackEvent', 'Exchange', 'View', '{{ version.name }}']);"
+           onclick="_gaq.push(['_trackEvent', 'Exchange', 'View on exchange', '{{ version.name }}']);"
         >
             View on exchange
         </a>
