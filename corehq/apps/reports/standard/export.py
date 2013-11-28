@@ -60,7 +60,8 @@ class FormExportReportBase(ExportReport, DatespanMixin):
 
     def get_filter_params(self):
         params = self.request.GET.copy()
-        params['startdate'] = self.datespan.startdate_display
+        if self.datespan.startdate_display:  # when no forms have been submitted to a domain, this defaults to None
+            params['startdate'] = self.datespan.startdate_display
         params['enddate'] = self.datespan.enddate_display
         return params
 
