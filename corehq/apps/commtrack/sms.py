@@ -13,6 +13,7 @@ from dimagi.utils.parsing import json_format_datetime
 from datetime import datetime
 from helpers import make_supply_point_product
 from corehq.apps.commtrack.util import get_supply_point
+from corehq.apps.commtrack.xmlutil import XML
 from corehq.apps.commtrack.models import Product, CommtrackConfig, StockTransaction
 
 logger = logging.getLogger('commtrack.sms')
@@ -41,7 +42,9 @@ def handle(verified_contact, text, msg=None):
     return True
 
 def process(domain, data):
-    logger.debug(data)
+    import pprint
+    logger.debug(pprint.pformat(data))
+
     inst_xml = to_instance(data)
     logger.debug(inst_xml)
     
@@ -60,7 +63,7 @@ class StockReportParser(object):
         if isinstance(u, CommCareUser):
             linked_loc_id = u.dynamic_properties().get('commtrack_location')
             if linked_loc_id:
-                self.location = get_supply_point(self.domain.name, loc=Location.get(linked_loc_id))['location']
+                self.location = get_supply_point(self.domain.name, loc=Location.get(linked_loc_id))
 
         self.C = domain.commtrack_settings
 
@@ -114,7 +117,7 @@ class StockReportParser(object):
             'timestamp': datetime.utcnow(),
             'user': self.v.owner,
             'phone': self.v.phone_number,
-            'location': self.location,
+            'location': self.location['location'],
             'transactions': tx,
         }
 
@@ -217,13 +220,14 @@ class StockReportParser(object):
     def transaction_factory(self, baseclass):
         return lambda **kwargs: baseclass(
             domain=self.domain.name,
-            location_id=self.location._id,
+            location_id=self.location['location']._id,
+            case_id=self.location['case']._id,
             **kwargs
         )
 
     def location_from_code(self, loc_code):
         """return the supply point case referenced by loc_code"""
-        result = get_supply_point(self.domain.name, loc_code)['location']
+        result = get_supply_point(self.domain.name, loc_code)
         if not result:
             raise SMSError('invalid location code "%s"' % loc_code)
         return result
@@ -247,8 +251,8 @@ def looks_like_prod_code(code):
 def to_instance(data):
     """convert the parsed sms stock report into an instance like what would be
     submitted from a commcare phone"""
-    E = stockreport.XML()
-    M = stockreport.XML(stockreport.META_XMLNS, 'jrm')
+    E = XML()
+    M = XML(const.META_XMLNS, 'jrm')
 
     deviceID = ''
     if data.get('phone'):

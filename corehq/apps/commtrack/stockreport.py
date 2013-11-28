@@ -2,8 +2,6 @@ import itertools
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2
-from lxml import etree
-from lxml.builder import ElementMaker
 from xml import etree as legacy_etree
 from datetime import date, timedelta
 from corehq.apps.commtrack.const import RequisitionActions
@@ -18,16 +16,6 @@ from corehq.apps.commtrack.requisitions import RequisitionState
 from corehq.apps.commtrack import const
 
 logger = logging.getLogger('commtrack.incoming')
-
-XMLNS = const.COMMTRACK_REPORT_XMLNS
-META_XMLNS = 'http://openrosa.org/jr/xforms'
-def _(tag, ns=XMLNS):
-    return '{%s}%s' % (ns, tag)
-def XML(ns=XMLNS, prefix=None):
-    prefix_map = None
-    if prefix:
-        prefix_map = {prefix: ns}
-    return ElementMaker(namespace=ns, nsmap=prefix_map)
 
 def process(domain, instance):
     """process an incoming commtrack stock report instance"""

@@ -19,6 +19,7 @@ from django.dispatch import receiver
 from corehq.apps.locations.signals import location_created, location_edited
 from corehq.apps.locations.models import Location
 from corehq.apps.commtrack.const import StockActions, RequisitionActions, RequisitionStatus
+from corehq.apps.commtrack.xmlutil import XML
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -383,7 +384,8 @@ class StockTransaction(Document):
     """
     domain = StringProperty()
     timestamp = DateTimeProperty()
-    location_id = StringProperty() # location record, not supply point case
+    location_id = StringProperty() # location record id
+    case_id = StringProperty() # supply point case id
     product_id = StringProperty()
     action = StringProperty()
     subaction = StringProperty()
@@ -439,17 +441,27 @@ class StockTransaction(Document):
         if not E:
             E = XML()
 
-        attr = {}
-        if self.inferred:
-            attr['inferred'] = 'true'
-        if self.processing_order is not None:
-            attr['order'] = str(self.processing_order + 1)
+        tx_type = 'balance' if self.action in (
+            StockActions.STOCKONHAND,
+            StockActions.STOCKOUT,
+        ) else 'transfer'
 
-        return E.transaction(
-            E.product(self.product_id),
-            E.product_entry(self.case_id),
-            E.action(self.action_name),
-            E.value(str(self.value)),
+        attr = {}
+        if self.timestamp:
+            attr['date'] = dateparse.json_format_datetime(self.timestamp)
+
+        if tx_type == 'balance':
+            attr['entity-id'] = self.case_id
+        elif tx_type == 'transfer':
+            here, there = ('dest', 'src') if self.action == StockActions.RECEIPTS else ('src', 'dest') 
+            attr[here] = self.case_id
+            attr[there] = self.subaction or self.action
+
+        return getattr(E, tx_type)(
+            E.product(
+                id=self.product_id,
+                quantity=str(self.quantity if self.action != StockActions.STOCKOUT else 0),
+            ),
             **attr
         )
 
