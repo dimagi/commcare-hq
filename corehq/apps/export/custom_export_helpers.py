@@ -324,11 +324,11 @@ class CaseCustomExportHelper(CustomExportHelper):
 
         column_conf.extend([
             ExportColumn(
-                index=q,
+                index=prop,
                 display='',
                 show=True,
             ).to_config_format(selected=self.creating_new_export)
-            for q in remaining_properties
+            for prop in filter(lambda prop: not prop.startswith("parent/"), remaining_properties)
         ])
 
         table_conf[0]["column_configuration"] = column_conf
