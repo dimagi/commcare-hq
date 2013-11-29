@@ -2,12 +2,10 @@ from corehq.apps.grapevine.api import GrapevineBackend
 from corehq.apps.sms.api import incoming as incoming_sms
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
-from datetime import datetime
 from xml.etree import ElementTree as ET
 from xml.sax.saxutils import unescape
 
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%S'
-
 
 @csrf_exempt
 def sms_in(request):
@@ -62,8 +60,7 @@ def sms_in(request):
             content_text = root.find('content').text
             text = unescape(content_text) if content_text else ''
 
-            timestamp = datetime.strptime(date_string, DATE_FORMAT)
-            incoming_sms(phone_number, text, GrapevineBackend.get_api_id(), timestamp=timestamp)
+            incoming_sms(phone_number, text, GrapevineBackend.get_api_id())
         elif root.tag == 'gviSmsResponse':
             date_string = root.find('responseDateTime').text
             phone_number = root.find('recipient/msisdn').text
@@ -72,8 +69,7 @@ def sms_in(request):
             if resp_type == 'reply':
                 response_text = root.find('response').text
                 message_text = unescape(response_text) if response_text else ''
-                timestamp = datetime.strptime(date_string, DATE_FORMAT)
-                incoming_sms(phone_number, message_text, GrapevineBackend.get_api_id(), timestamp=timestamp)
+                incoming_sms(phone_number, message_text, GrapevineBackend.get_api_id())
 
         return HttpResponse()
     else:
