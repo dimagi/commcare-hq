@@ -252,10 +252,10 @@ class SingleSignOnResource(JsonResource, DomainSpecificResourceMixin):
         return user_resource.create_response(request, bundle, response_class=HttpResponse)
 
     def get_list(self, bundle, **kwargs):
-        return HttpForbidden()
+        return HttpResponseForbidden()
 
     def get_detail(self, bundle, **kwargs):
-        return HttpForbidden()
+        return HttpResponseForbidden()
 
     class Meta(v0_1.CustomResourceMeta):
         authentication = Authentication() 
