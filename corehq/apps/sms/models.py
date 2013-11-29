@@ -10,7 +10,7 @@ from casexml.apps.case.models import CommCareCase
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.signals import case_post_save
-from .mixin import CommCareMobileContactMixin, MobileBackend, PhoneNumberInUseException
+from .mixin import CommCareMobileContactMixin, MobileBackend, PhoneNumberInUseException, InvalidFormatException
 from corehq.apps.sms import util as smsutil
 from dimagi.utils.couch.database import SafeSaveDocument
 
@@ -313,7 +313,7 @@ class CommConnectCase(CommCareCase, CommCareMobileContactMixin):
         elif contact_phone_number_is_verified:
             try:
                 self.save_verified_number(self.domain, contact_phone_number, True, contact_backend_id, ivr_backend_id=contact_ivr_backend_id, only_one_number_allowed=True)
-            except PhoneNumberInUseException:
+            except (PhoneNumberInUseException, InvalidFormatException):
                 try:
                     self.delete_verified_number()
                 except:
