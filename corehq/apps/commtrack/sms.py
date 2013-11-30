@@ -11,7 +11,6 @@ import logging
 from dimagi.utils.couch.loosechange import map_reduce
 from dimagi.utils.parsing import json_format_datetime
 from datetime import datetime
-from helpers import make_supply_point_product
 from corehq.apps.commtrack.util import get_supply_point
 from corehq.apps.commtrack.xmlutil import XML, _
 from corehq.apps.commtrack.models import Product, CommtrackConfig, StockTransaction

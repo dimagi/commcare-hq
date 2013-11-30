@@ -429,10 +429,11 @@ class StockTransaction(Document):
                 'subaction': const.INFERRED_TRANSACTION,
             }
         def _config(val):
-            ret = {}
+            ret = {
+                'processing_order': STOCK_ACTION_ORDER.index(kwargs['action']),
+            }
             if not kwargs.get('domain'):
                 ret['domain'] = val.domain
-            # processing order?
             return ret
 
         for name, var in locals().iteritems():
@@ -463,7 +464,7 @@ class StockTransaction(Document):
         }
         if action_tag == 'balance':
             data.update({
-                    'action': const.StockActions.STOCKONHAND,
+                    'action': const.StockActions.STOCKONHAND if data['quantity'] > 0 else const.StockActions.STOCKOUT,
                     'case_id': action_node['@entity-id'],
                 })
         elif action_tag == 'transfer':
@@ -484,9 +485,6 @@ class StockTransaction(Document):
                     'subaction': there if there != action else None,
                     'case_id': here,
                 })
-        """
-        processing_order: logic + config
-        """
         return cls(config=config, **data)
 
     def to_xml(self, E=None, **kwargs):

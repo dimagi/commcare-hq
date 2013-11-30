@@ -1,8 +1,14 @@
 import logging
 from dimagi.utils.logging import log_exception
-from corehq.apps.commtrack.models import CommtrackConfig, StockTransaction
+from corehq.apps.commtrack.models import CommtrackConfig, StockTransaction, SupplyPointCase
 from corehq.apps.commtrack import const
 import collections
+from dimagi.utils.couch.loosechange import map_reduce
+
+from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.xml import V2
+from xml import etree as legacy_etree
 
 logger = logging.getLogger('commtrack.incoming')
 
@@ -14,68 +20,61 @@ def process_stock(sender, xform, config=None, **kwargs):
 
     config = CommtrackConfig.for_domain(domain)
     transactions = list(unpack_commtrack(xform, config))
+    # omitted: normalize_transactions (used for bulk requisitions?)
+    if not transactions:
+        return
 
-    print transactions
+    grouped_tx = map_reduce(lambda tx: [((tx.case_id, tx.product_id),)],
+                            lambda v: sorted(v, key=lambda tx: (tx.timestamp, tx.processing_order)),
+                            data=transactions,
+                            include_docs=True)
 
-    return
-    #####
+    supply_point_cases = SupplyPointCase.view('_all_docs',
+                                              keys=list(set(k[0] for k in grouped_tx)),
+                                              include_docs=True)
+    supply_point_product_subcases = dict((sp._id, product_subcases(sp)) for sp in supply_point_cases)
 
-def asdf():
-    user_id, transactions = unpack_transactions(root, config)
-    transactions = list(normalize_transactions(transactions))
-
-    def get_transactions(all_tx, type_filter):
-        """get all the transactions of the relevant type (filtered by type_filter),
-        grouped by product (returns a dict of 'product subcase id' => list of transactions),
-        with each set of transactions sorted in the correct order for processing
-        """
-        return map_reduce(lambda tx: [(tx.case_id,)],
-                          lambda v: sorted(v, key=lambda tx: tx.priority_order), # important!
-                          data=filter(type_filter, all_tx),
-                          include_docs=True)
-
-    # split transactions by type and product
-    stock_transactions = get_transactions(transactions, lambda tx: tx.category == 'stock')
-    requisition_transactions = get_transactions(transactions, lambda tx: tx.category == 'requisition')
-
-    case_ids = list(set(itertools.chain(*[tx.get_case_ids() for tx in transactions])))
-    cases = dict((c._id, c) for c in CommCareCase.view('_all_docs', keys=case_ids, include_docs=True))
-
-    # TODO: code to auto generate / update requisitions from transactions if
-    # project is configured for that.
-
-    # TODO: when we start receiving commcare-submitted reports, we should be using a server time rather
-    # than relying on timeStart (however timeStart is set to server time for reports received via sms)
-    submit_time = root.find('.//%s' % _('timeStart', META_XMLNS)).text
+    submit_time = xform['received_on']
     post_processed_transactions = list(transactions)
-    for product_id, product_case in cases.iteritems():
-        stock_txs = stock_transactions.get(product_id, [])
-        if stock_txs:
+    for (supply_point_id, product_id), txs in grouped_tx.iteritems():
+        subcase = supply_point_product_subcases[supply_point_id][product_id]
+
+        print subcase
+
+        """
             case_block, reconciliations = process_product_transactions(user_id, submit_time, product_case, stock_txs)
             root.append(case_block)
             post_processed_transactions.extend(reconciliations)
+        """
 
-        req_txs = requisition_transactions.get(product_id, [])
-        if req_txs and config.requisitions_enabled:
-            req = RequisitionState.from_transactions(user_id, product_case, req_txs)
-            case_block = etree.fromstring(req.to_xml())
-            root.append(case_block)
+        #req_txs = requisition_transactions.get(product_id, [])
+        #if req_txs and config.requisitions_enabled:
+        #    req = RequisitionState.from_transactions(user_id, product_case, req_txs)
+        #    case_block = etree.fromstring(req.to_xml())
+        #    root.append(case_block)
     replace_transactions(root, post_processed_transactions)
+
+
+    # argh, need to make a submission here again
 
     submission = etree.tostring(root)
     logger.debug('submitting: %s' % submission)
 
 
 
+
+    return
+    #####
+
     """
-    get da stock transactions out of the form
-    convert to stocktransaction objects
+    x get da stock transactions out of the form
+    x convert to stocktransaction objects
 
     operate on stocktx thereon
 
-    group stocktx by (loc, product)
+    x group stocktx by (loc, product)
 
-    fetch subcases
+    x fetch subcases
 
     for each subcase, order tx appropriately
 
@@ -84,6 +83,40 @@ def asdf():
     submit case update form
     """
 
+
+
+# TODO retire this with move to new data model
+def product_subcases(supply_point):
+    """given a supply point, return all the sub-cases for each product stocked at that supply point
+    actually returns a mapping: product doc id => sub-case id
+    ACTUALLY returns a dict that will create non-existent product sub-cases on demand
+    """
+    from helpers import make_supply_point_product
+
+    product_subcase_uuids = [ix.referenced_id for ix in supply_point.reverse_indices if ix.identifier == const.PARENT_CASE_REF]
+    product_subcases = CommCareCase.view('_all_docs', keys=product_subcase_uuids, include_docs=True)
+    product_subcase_mapping = dict((subcase.dynamic_properties().get('product'), subcase._id) for subcase in product_subcases)
+
+    def create_product_subcase(product_uuid):
+        return make_supply_point_product(supply_point, product_uuid)._id
+
+    class DefaultDict(dict):
+        """similar to collections.defaultdict(), but factory function has access
+        to 'key'
+        """
+        def __init__(self, factory, *args, **kwargs):
+            super(DefaultDict, self).__init__(*args, **kwargs)
+            self.factory = factory
+
+        def __getitem__(self, key):
+            if key in self:
+                val = self.get(key)
+            else:
+                val = self.factory(key)
+                self[key] = val
+            return val
+
+    return DefaultDict(create_product_subcase, product_subcase_mapping)
 
 def unpack_commtrack(xform, config):
     global_context = {
