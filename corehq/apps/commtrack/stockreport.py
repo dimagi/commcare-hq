@@ -7,15 +7,10 @@ from datetime import date, timedelta
 from corehq.apps.commtrack.const import RequisitionActions
 from dimagi.utils.create_unique_filter import create_unique_filter
 from dimagi.utils.decorators.memoized import memoized
-from receiver.util import spoof_submission
-from corehq.apps.receiverwrapper.util import get_submit_url
 from dimagi.utils.couch.loosechange import map_reduce
-import logging
 from corehq.apps.commtrack.models import CommtrackConfig, RequisitionCase, SupplyPointProductCase
 from corehq.apps.commtrack.requisitions import RequisitionState
 from corehq.apps.commtrack import const
-
-logger = logging.getLogger('commtrack.incoming')
 
 def process(domain, instance):
     """process an incoming commtrack stock report instance"""
@@ -64,10 +59,6 @@ def process(domain, instance):
 
     submission = etree.tostring(root)
     logger.debug('submitting: %s' % submission)
-
-    spoof_submission(get_submit_url(domain), submission,
-                     headers={'HTTP_X_SUBMIT_TIME': submit_time},
-                     hqsubmission=False)
 
 
 # TODO merge this with model class

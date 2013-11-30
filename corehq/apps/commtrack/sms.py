@@ -13,8 +13,11 @@ from dimagi.utils.parsing import json_format_datetime
 from datetime import datetime
 from helpers import make_supply_point_product
 from corehq.apps.commtrack.util import get_supply_point
-from corehq.apps.commtrack.xmlutil import XML
+from corehq.apps.commtrack.xmlutil import XML, _
 from corehq.apps.commtrack.models import Product, CommtrackConfig, StockTransaction
+from corehq.apps.receiverwrapper.util import get_submit_url
+from receiver.util import spoof_submission
+
 
 logger = logging.getLogger('commtrack.sms')
 
@@ -45,11 +48,16 @@ def process(domain, data):
     import pprint
     logger.debug(pprint.pformat(data))
 
-    inst_xml = to_instance(data)
-    logger.debug(inst_xml)
-    
-    # TODO: just submit straight from here
-    #stockreport.process(domain, inst_xml)
+    xmlroot = to_instance(data)
+
+    submit_time = xmlroot.find('.//%s' % _('timeStart', const.META_XMLNS)).text
+    submission = etree.tostring(xmlroot, encoding='utf-8', pretty_print=True)
+    logger.debug(submission)
+
+    # submit it
+    spoof_submission(get_submit_url(domain), submission,
+                     headers={'HTTP_X_SUBMIT_TIME': submit_time},
+                     hqsubmission=False)
 
 class StockReportParser(object):
     """a helper object for parsing raw stock report texts"""
@@ -277,7 +285,7 @@ def to_instance(data):
         *[tx.to_xml() for tx in transactions]
     )
 
-    return etree.tostring(root, encoding='utf-8', pretty_print=True)
+    return root
 
 def truncate(text, maxlen, ellipsis='...'):
     if len(text) > maxlen:
@@ -288,13 +296,12 @@ def truncate(text, maxlen, ellipsis='...'):
 def send_confirmation(v, data):
     C = CommtrackConfig.for_domain(v.domain)
 
-    static_loc = Location.get(data['location'].location_[-1])
+    static_loc = data['location']
     location_name = static_loc.name
 
-    action_to_code = dict((v, k) for k, v in C.all_keywords().iteritems())
-    tx_by_action = map_reduce(lambda tx: [(tx.action_name,)], data=data['transactions'], include_docs=True)
+    tx_by_action = map_reduce(lambda tx: [(tx.action_config(C).name,)], data=data['transactions'], include_docs=True)
     def summarize_action(action, txs):
-        return '%s %s' % (action_to_code[action].upper(), ' '.join(sorted(tx.fragment() for tx in txs)))
+        return '%s %s' % (txs[0].action_config(C).keyword.upper(), ' '.join(sorted(tx.fragment() for tx in txs)))
 
     msg = 'received stock report for %s(%s) %s' % (
         static_loc.site_code,

@@ -122,6 +122,10 @@ class CommtrackActionConfig(DocumentSchema):
         self._keyword = val.lower() if val else None
 
     @property
+    def name(self):
+        return ':'.join(filter(None, [self.action, self.subaction]))
+
+    @property
     def is_stock(self):
         return self.action in STOCK_ACTION_ORDER
 
@@ -227,6 +231,10 @@ class CommtrackConfig(Document):
                           include_docs=True).one()
         return result
 
+    @property
+    def all_actions(self):
+        return self.actions + (self.requisition_config.actions if self.requisitions_enabled else [])
+
     def action_by_keyword(self, keyword):
         def _action(action, type):
             action.type = type
@@ -237,15 +245,6 @@ class CommtrackConfig(Document):
         return dict((a.keyword, a) for a in actions).get(keyword)
 
     """
-    def all_actions(self):
-        if self.requisitions_enabled:
-            return self.actions + self.requisition_config.actions
-        return self.actions
-
-    def _keywords(self, action_list, multi):
-        return dict((action_config._keyword(multi), action_config.action_name) \
-                    for action_config in action_list)
-
     @property
     def keywords(self):
         return self._keywords(self.actions, multi)
@@ -420,12 +419,22 @@ class StockTransaction(Document):
             kwargs['subaction'] = action.subaction
         if kwargs.get('product'):
             kwargs['product_id'] = kwargs['product']._id
+            # FIXME want to store product in memory object (but not persist to couch...
+            # is this possible in jsonobject?)
+            #self.product = kwargs['product']
             del kwargs['product']
         if kwargs.get('inferred'):
             kwargs['subaction'] = const.INFERRED_TRANSACTION
             del kwargs['inferred']
         # processing order?
         super(StockTransaction, self).__init__(**kwargs)
+
+    def action_config(self, commtrack_config):
+        action = CommtrackActionConfig(action=self.action, subaction=self.subaction)
+        for a in commtrack_config.all_actions:
+            if a.name == action.name:
+                return a
+        return None
 
     @classmethod
     def from_xml(cls, tx, config):
@@ -473,8 +482,12 @@ class StockTransaction(Document):
         """
         A short string representation of this to be used in sms correspondence
         """
-        quantity = self.value if self.value is not None else ''
-        return '%s%s' % (self.product.code.lower(), quantity)
+        if self.quantity is not None:
+            quant = int(self.quantity) if self.quantity == int(self.quantity) else self.quantity
+        else:
+            quant = ''
+        # FIXME product fetch here is inefficient
+        return '%s%s' % (Product.get(self.product_id).code.lower(), quant)
 
     def __repr__(self):
         return '{action} ({subaction}): {quantity} (loc: {location_id}, product: {product_id})'.format(**self._doc)
