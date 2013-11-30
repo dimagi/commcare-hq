@@ -136,7 +136,7 @@ class StockReportParser(object):
                 for prod_code in args:
                     yield make_tx(
                         product=self.product_from_code(prod_code),
-                        action=action,
+                        action_def=action,
                         quantity=0,
                     )
 
@@ -160,7 +160,7 @@ class StockReportParser(object):
                     raise SMSError('could not understand product quantity "%s"' % arg)
 
                 for p in products:
-                    yield make_tx(product=p, action=action, quantity=value)
+                    yield make_tx(product=p, action_def=action, quantity=value)
                 products = []
         if products:
             raise SMSError('missing quantity for product "%s"' % products[-1].code)
@@ -209,7 +209,7 @@ class StockReportParser(object):
                     except (ValueError, StopIteration):
                         raise SMSError('quantity expected for product "%s"' % product.code)
 
-                yield make_tx(product=product, action=action, quantity=value)
+                yield make_tx(product=product, action_def=action, quantity=value)
                 continue
 
             raise SMSError('do not recognize keyword "%s"' % keyword)

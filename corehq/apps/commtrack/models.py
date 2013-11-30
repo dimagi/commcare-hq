@@ -412,21 +412,37 @@ class StockTransaction(Document):
     """
 
     def __init__(self, **kwargs):
-        if kwargs.get('action'):
-            action = kwargs['action']
-            del kwargs['action']
-            kwargs['action'] = action.action
-            kwargs['subaction'] = action.subaction
-        if kwargs.get('product'):
-            kwargs['product_id'] = kwargs['product']._id
+        def _action_def(val):
+            return {
+                'action': val.action,
+                'subaction': val.subaction,
+            }
+        def _product(val):
             # FIXME want to store product in memory object (but not persist to couch...
             # is this possible in jsonobject?)
-            #self.product = kwargs['product']
-            del kwargs['product']
-        if kwargs.get('inferred'):
-            kwargs['subaction'] = const.INFERRED_TRANSACTION
-            del kwargs['inferred']
-        # processing order?
+            #self.product = val
+            return {
+                'product_id': val._id,
+            }
+        def _inferred(val):
+            return {
+                'subaction': const.INFERRED_TRANSACTION,
+            }
+        def _config(val):
+            ret = {}
+            if not kwargs.get('domain'):
+                ret['domain'] = val.domain
+            # processing order?
+            return ret
+
+        for name, var in locals().iteritems():
+            if hasattr(var, '__call__') and name.startswith('_'):
+                attr = name[1:]
+                if kwargs.get(attr):
+                    val = kwargs[attr]
+                    del kwargs[attr]
+                    kwargs.update(var(val))
+
         super(StockTransaction, self).__init__(**kwargs)
 
     def action_config(self, commtrack_config):
@@ -437,13 +453,40 @@ class StockTransaction(Document):
         return None
 
     @classmethod
-    def from_xml(cls, tx, config):
+    # note: works on 'jsonified' xml as produced by couchforms
+    def from_xml(cls, config, global_context, action_tag, action_node, product_node):
         data = {
-            'product_id': tx.find(_('product')).text,
-            'value': int(tx.find(_('value')).text),
-            'subaction': tx.attrib.get('inferred') == 'true',
-            'action': tx.find(_('action')).text,
+            'timestamp': action_node.get('@date', global_context['timestamp']),
+            'product_id': product_node.get('@id'),
+            'quantity': float(product_node.get('@quantity')),
+            # note: no location id
         }
+        if action_tag == 'balance':
+            data.update({
+                    'action': const.StockActions.STOCKONHAND,
+                    'case_id': action_node['@entity-id'],
+                })
+        elif action_tag == 'transfer':
+            # ghetto -- need a better way to distinguish case ids from 'abstract' sources/sinks
+            is_uuid = lambda x: len(x) >= 32
+            src, dst = [action_node['@%s' % k] for k in ('src', 'dest')]
+            if is_uuid(src):
+                action = const.StockActions.CONSUMPTION
+                here = src
+                there = dst
+            else:
+                action = const.StockActions.RECEIPTS
+                here = dst
+                there = src
+            assert not is_uuid(there) # this would be a requisiton use case; we'd have to create multiple transactions
+            data.update({
+                    'action': action,
+                    'subaction': there if there != action else None,
+                    'case_id': here,
+                })
+        """
+        processing_order: logic + config
+        """
         return cls(config=config, **data)
 
     def to_xml(self, E=None, **kwargs):
