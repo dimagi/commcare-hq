@@ -4,7 +4,7 @@ from corehq.apps.domain.models import Domain
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.locations.models import Location
-from corehq.apps.commtrack import stockreport, const
+from corehq.apps.commtrack import const
 from corehq.apps.sms.api import send_sms_to_verified_number
 from lxml import etree
 import logging

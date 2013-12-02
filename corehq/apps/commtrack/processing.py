@@ -12,6 +12,9 @@ from casexml.apps.case.xml import V2
 from xml import etree as legacy_etree
 from datetime import datetime, date
 from lxml import etree
+from corehq.apps.receiverwrapper.util import get_submit_url
+from receiver.util import spoof_submission
+
 
 logger = logging.getLogger('commtrack.incoming')
 
@@ -62,10 +65,13 @@ def process_stock(sender, xform, config=None, **kwargs):
     post_processed_transactions.extend(map(lambda tx: LegacyStockTransaction.convert(tx, supply_point_product_subcases), transactions))
     set_transactions(root, post_processed_transactions, E)
 
-    # argh, need to make a submission here again
+    submission = etree.tostring(root, encoding='utf-8', pretty_print=True)
+    logger.debug(submission)
+    spoof_submission(get_submit_url(domain), submission,
+                     headers={'HTTP_X_SUBMIT_TIME': submit_time},
+                     hqsubmission=False)
 
-    submission = etree.tostring(root)
-    logger.debug('submitting: %s' % submission)
+
 
 
 # TODO retire this with move to new data model
