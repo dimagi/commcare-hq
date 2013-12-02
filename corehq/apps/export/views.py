@@ -193,18 +193,6 @@ BASIC_FORM_SCHEMA = {
         "@uiVersion": "string",
         "@name": "string",
         "#type": "string",
-        "case": {
-            "@xmlns": "string",
-            "@date_modified": "string",
-            "create": {
-                "case_type": "string",
-                "owner_id": "string",
-                "case_name": "string"
-            },
-            "@user_id": "string",
-            "update": None,
-            "@case_id": "string"
-        },
         "meta": {
             "@xmlns": "string",
             "username": "string",
