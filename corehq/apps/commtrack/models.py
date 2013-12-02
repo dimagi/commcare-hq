@@ -1110,31 +1110,8 @@ class CommTrackUser(CommCareUser):
     def add_location(self, location):
         sp = location.linked_supply_point()
 
-        mapping = self.location_map_case()
-
-        if mapping:
-            caseblock = CaseBlock(
-                create=False,
-                case_id=mapping._id,
-                version=V2,
-                index=self.supply_point_index_mapping(sp)
-            )
-        else:
-            caseblock = CaseBlock(
-                create=True,
-                case_type='user-owner-mapping-case',
-                case_id='user-owner-mapping-' + self._id,
-                version=V2,
-                owner_id=self._id,
-                index=self.supply_point_index_mapping(sp)
-            )
-
-        submit_case_blocks(
-            ElementTree.tostring(caseblock.as_xml()),
-            self.domain,
-            self.username,
-            self._id
-        )
+        from corehq.apps.commtrack.util import submit_mapping_case_block
+        submit_mapping_case_block(self, self.supply_point_index_mapping(sp))
 
     def clear_locations(self):
         mapping = self.location_map_case()

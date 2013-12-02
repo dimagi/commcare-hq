@@ -1,7 +1,3 @@
-# hack to avoid importing from users/xml.py
-from __future__ import absolute_import
-from xml.etree import ElementTree
-
 from StringIO import StringIO
 from couchdbkit.exceptions import MultipleResultsFound, ResourceNotFound
 from django.core.exceptions import ValidationError
@@ -11,11 +7,10 @@ from corehq.apps.users.forms import CommCareAccountForm
 from corehq.apps.users.util import normalize_username, raw_username
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.domain.models import Domain
-from corehq.apps.locations.models import Location
 from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.excel import flatten_json, json_to_headers, \
     alphanumeric_sort_key
-from corehq.apps.commtrack.util import get_supply_point
+from corehq.apps.commtrack.util import get_supply_point, submit_mapping_case_block
 from corehq.apps.commtrack.models import CommTrackUser, SupplyPointCase
 
 
@@ -26,7 +21,7 @@ class UserUploadError(Exception):
 required_headers = set(['username'])
 allowed_headers = set(['password', 'phone-number', 'email', 'user_id', 'name', 'group', 'data', 'language']) | required_headers
 
-    
+
 def check_headers(user_specs):
     headers = set(user_specs.fieldnames)
 
@@ -103,6 +98,7 @@ class GroupMemoizer(object):
     def save_all(self):
         Group.bulk_save(self.groups)
 
+
 def _fmt_phone(phone_number):
     if phone_number and not isinstance(phone_number, basestring):
         phone_number = str(int(phone_number))
@@ -116,17 +112,13 @@ class UserLocMapping(object):
         self.to_add = set()
         self.to_remove = set()
 
-    #def lookup_location(self, location_cache, sms_code):
-    def lookup_location(self, sms_code):
-        #if sms_code in location_cache:
-            #return location_cache[sms_code]
-        #else:
+    def get_supply_point_from_location(self, sms_code):
         location = get_supply_point(
             self.domain,
             sms_code
         )['location']
-        #    location_cache[location.site_code] = location
-        return location
+
+        return SupplyPointCase.get_by_location(location)
 
     def save(self):
         """
@@ -140,71 +132,17 @@ class UserLocMapping(object):
         commit_list = {}
         for loc in self.to_add:
             if loc not in current_location_codes:
-                # TODO cache the loc_id -> sp relationship
-                location = self.lookup_location(loc)
-                sp = SupplyPointCase.get_by_location(location)
-                commit_list.update(self.supply_point_index_mapping(sp))
+                sp = self.get_supply_point_from_location(loc)
+                commit_list.update(user.supply_point_index_mapping(sp))
 
         for loc in self.to_remove:
             if loc in current_location_codes:
-                location = self.lookup_location(loc)
-                sp = SupplyPointCase.get_by_location(location)
-                commit_list.update(self.supply_point_index_mapping(sp, True))
-
-        # TODO TODO NOTE
-        """
-        can either submit from this point or try alternative approach
-        of adding/removing from starting list and then doing a set_locations
-        call
-        """
+                sp = self.get_supply_point_from_location(loc)
+                commit_list.update(user.supply_point_index_mapping(sp, True))
 
         if commit_list:
-            mapping = user.location_map_case()
+            submit_mapping_case_block(user, commit_list)
 
-            # TODO duplication
-            from casexml.apps.case.mock import CaseBlock
-            from casexml.apps.case.xml import V2
-            from corehq.apps.hqcase.utils import submit_case_blocks
-            if mapping:
-                caseblock = CaseBlock(
-                    create=False,
-                    case_id=mapping._id,
-                    version=V2,
-                    index=commit_list
-                )
-            else:
-                caseblock = CaseBlock(
-                    create=True,
-                    case_type='user-owner-mapping-case',
-                    case_id='user-owner-mapping-' + user._id,
-                    version=V2,
-                    owner_id=user._id,
-                    index=commit_list
-                )
-
-            submit_case_blocks(
-                ElementTree.tostring(caseblock.as_xml()),
-                user.domain,
-                user.username,
-                user._id
-            )
-
-
-    # TODO this is duplication
-    def supply_point_index_mapping(self, supply_point, clear=False):
-        if supply_point:
-            return {
-                'supply_point-' + supply_point._id:
-                (
-                    supply_point.type,
-                    supply_point._id if not clear else ''
-                )
-            }
-        else:
-            #raise LinkedSupplyPointNotFoundError(
-            raise Exception(
-                "There was no linked supply point for the location."
-            )
 
 def create_or_update_locations(domain, location_specs, log):
     users = {}  # todo: see if can reuse usercache thing from group upload
@@ -224,21 +162,6 @@ def create_or_update_locations(domain, location_specs, log):
 
     for username, mapping in users.iteritems():
         mapping.save()
-        #try:
-            #user = CommTrackUser.wrap(CommTrackUser.get_by_username(username).to_json())
-        #except:
-            #log['errors'].append('User with username %s was not found.' % username)
-            #continue
-
-        #user.clear_locations()
-        #for sms_code in mapping.to_add:
-            #try:
-                #location = lookup_location(location_cache, sms_code)
-            #except:
-                #log['errors'].append('Location with code %s was not found.' % row.get('location-sms-code'))
-                ## TODO store bad locations for optimization
-                #continue
-            #user.add_location(location)
 
 
 def create_or_update_groups(domain, group_specs, log):
