@@ -434,7 +434,8 @@ class TestWebUserResource(APIResourceTest):
     """
     Basic sanity checking of v0_1.CommCareUserResource
     """
-    resource = v0_1.WebUserResource
+    resource = v0_5.WebUserResource
+    api_name = 'v0.5'
 
     def _check_user_data(self, user, json_user):
         self.assertEqual(user._id, json_user['id'])
@@ -486,6 +487,72 @@ class TestWebUserResource(APIResourceTest):
 
         api_user = simplejson.loads(response.content)
         self._check_user_data(self.user, api_user)
+
+    def test_create(self):
+        self.client.login(username=self.username, password=self.password)
+
+        user_json = {
+            "username":"test_1234",
+            "password":"qwer1234",
+            "email":"admin@example.com",
+            "first_name":"Joe",
+            "is_admin": True,
+            "last_name":"Admin",
+            "permissions":{
+                "edit_apps":True,
+                "edit_commcare_users":True,
+                "edit_data":True,
+                "edit_web_users":True,
+                "view_reports":True
+            },
+            "phone_numbers":[
+            ],
+            "role":"admin"
+        }
+        response = self.client.post(self.list_endpoint,
+                                    simplejson.dumps(user_json),
+                                    content_type='application/json')
+        self.assertEqual(response.status_code, 201)
+        user_back = WebUser.get_by_username("test_1234")
+        self.assertEqual(user_back.username, "test_1234")
+        self.assertEqual(user_back.first_name, "Joe")
+        self.assertEqual(user_back.last_name, "Admin")
+        self.assertEqual(user_back.email, "admin@example.com")
+        user_back.delete()
+
+    def test_update(self):
+        self.client.login(username=self.username, password=self.password)
+
+        user = WebUser.create(domain=self.domain.name, username="test", password="qwer1234")
+
+        user_json = {
+            "email":"admin@example.com",
+            "first_name":"Joe",
+            "is_admin": True,
+            "last_name":"Admin",
+            "permissions":{
+                "edit_apps":True,
+                "edit_commcare_users":True,
+                "edit_data":True,
+                "edit_web_users":True,
+                "view_reports":True
+            },
+            "phone_numbers":[
+            ],
+            "role":"admin"
+        }
+
+        backend_id = user._id
+        response = self.client.put(self.single_endpoint(backend_id),
+                                   simplejson.dumps(user_json),
+                                   content_type='application/json')
+        self.assertEqual(response.status_code, 204, response.content)
+        modified = WebUser.get(backend_id)
+        self.assertEqual(modified.username, "test")
+        self.assertEqual(modified.first_name, "Joe")
+        self.assertEqual(modified.last_name, "Admin")
+        self.assertEqual(modified.email, "admin@example.com")
+        modified.delete()
 
 class TestRepeaterResource(APIResourceTest):
     """
