@@ -241,7 +241,7 @@ class ExportColumn(DocumentSchema):
         return super(ExportColumn, self).wrap(data)
 
     def get_display(self):
-         return '{primary}{extra}'.format(
+         return u'{primary}{extra}'.format(
              primary=self.display,
              extra=" [sensitive]" if self.is_sensitive else ''
          )
