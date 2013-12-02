@@ -5,6 +5,7 @@ from couchdbkit.ext.django.schema import *
 from django.utils.translation import ugettext as _
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V1, V2
+from corehq import Domain
 
 from corehq.apps.commtrack import const
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -110,6 +111,8 @@ class Product(Document):
 
 
 def product_fixture_generator(user, version=V1, last_sync=None):
+    if not Domain.get_by_name(user.domain).commtrack_enabled:
+        return []
     root = ElementTree.Element('fixture',
                                attrib={'id': 'commtrack:products',
                                        'user_id': user.user_id})
