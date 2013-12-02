@@ -949,6 +949,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
                 source.has_key('commcare_accounts') and \
                 source.has_key('web_accounts'):
             from . import old_couch_user_models
+            # todo: remove this functionality and the old user models module
+            logging.error('still accessing old user models')
             user_id = old_couch_user_models.CouchUser.wrap(source).default_account.login_id
             return cls.get_by_user_id(user_id)
         else:
@@ -1117,6 +1119,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
                 return [to_function(m).name for m in models]
             return models
         except AttributeError:
+            # todo: what is this here for? we should really be catching something
+            # more specific and the try/catch should be more isolated.
             return []
 
     def get_exportable_reports(self, domain=None):
