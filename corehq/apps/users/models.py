@@ -98,6 +98,19 @@ class Permissions(DocumentSchema):
     view_reports = BooleanProperty(default=False)
     view_report_list = StringListProperty(default=[])
 
+    @classmethod
+    def wrap(cls, data):
+        # this is why you don't store module paths in the database...
+        MOVED_REPORT_MAPPING = {
+            'corehq.apps.reports.standard.inspect.CaseListReport': 'corehq.apps.reports.standard.cases.basic.CaseListReport'
+        }
+        reports = data.get('view_report_list', [])
+        for i, report_name in enumerate(reports):
+            if report_name in MOVED_REPORT_MAPPING:
+                reports[i] = MOVED_REPORT_MAPPING[report_name]
+
+        return super(Permissions, cls).wrap(data)
+
     def view_report(self, report, value=None):
         """Both a getter (when value=None) and setter (when value=True|False)"""
 
