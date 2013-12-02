@@ -105,20 +105,34 @@ def _fmt_phone(phone_number):
     return phone_number.lstrip("+")
 
 
+class LocationCache(object):
+    def __init__(self):
+        self.cache = {}
+
+    def get(self, site_code, domain):
+        if not site_code:
+            return None
+        if site_code in self.cache:
+            return self.cache[site_code]
+        else:
+            supply_point = get_supply_point(
+                domain,
+                site_code
+            )['case']
+            self.cache[site_code] = supply_point
+            return supply_point
+
+
 class UserLocMapping(object):
-    def __init__(self, username, domain):
+    def __init__(self, username, domain, location_cache):
         self.username = username
         self.domain = domain
         self.to_add = set()
         self.to_remove = set()
+        self.location_cache = location_cache
 
     def get_supply_point_from_location(self, sms_code):
-        location = get_supply_point(
-            self.domain,
-            sms_code
-        )['location']
-
-        return SupplyPointCase.get_by_location(location)
+        return self.location_cache.get(sms_code, self.domain)
 
     def save(self):
         """
