@@ -4,7 +4,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from couchdbkit.ext.django.schema import *
 from django.utils.translation import ugettext as _
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.xml import V2
+from casexml.apps.case.xml import V1, V2
 
 from corehq.apps.commtrack import const
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -107,6 +107,32 @@ class Product(Document):
             return Product.view(**kwargs)
         else:
             return [row["doc"] for row in Product.view(wrap_doc=False, **kwargs)]
+
+
+def product_fixture_generator(user, version=V1, last_sync=None):
+    root = ElementTree.Element('fixture',
+                               attrib={'id': 'commtrack:products',
+                                       'user_id': user.user_id})
+    products = ElementTree.Element('products')
+    root.append(products)
+    for product_data in Product.by_domain(user.domain):
+        product = (ElementTree.Element('product',
+                                       {'id': product_data.get_id}))
+        products.append(product)
+        product_fields = ['name',
+                          'unit',
+                          'code',
+                          'description',
+                          'category',
+                          'program_id',
+                          'cost']
+        for product_field in product_fields:
+            field = ElementTree.Element(product_field)
+            field.text = str(getattr(product_data, product_field) or '')
+            product.append(field)
+
+    return [root]
+
 
 class CommtrackActionConfig(DocumentSchema):
     action_type = StringProperty() # a value in ACTION_TYPES (could be converted to enum?)
