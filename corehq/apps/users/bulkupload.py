@@ -159,20 +159,21 @@ class UserLocMapping(object):
 
 
 def create_or_update_locations(domain, location_specs, log):
-    users = {}  # todo: see if can reuse usercache thing from group upload
+    location_cache = LocationCache()
+    users = {}
     for row in location_specs:
         username = row.get('username')
         location_code = row.get('location-sms-code')
         if username in users:
             user_mapping = users[username]
         else:
-            user_mapping = UserLocMapping(username, domain)
+            user_mapping = UserLocMapping(username, domain, location_cache)
             users[username] = user_mapping
-        # todo deletion?
-        user_mapping.to_add.add(location_code)
 
-    # at this point we have a map of all usernames to locs that need to be added and deleted
-    # just iterate through this map and do the operation per-user
+        if row.get('remove') == 'y':
+            user_mapping.to_remove.add(location_code)
+        else:
+            user_mapping.to_add.add(location_code)
 
     for username, mapping in users.iteritems():
         mapping.save()
