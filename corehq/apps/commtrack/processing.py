@@ -39,11 +39,13 @@ def process_stock(sender, xform, config=None, **kwargs):
                                               include_docs=True)
     supply_point_product_subcases = dict((sp._id, product_subcases(sp)) for sp in supply_point_cases)
 
-    E = XML(ns=COMMTRACK_LEGACY_REPORT_XMLNS)
-    user_id = 'asdf' ### FIXME
+
+    user_id = xform.form['meta']['userID']
     submit_time = xform['received_on']
+
+    post_processed_transactions = []
+    E = XML(ns=COMMTRACK_LEGACY_REPORT_XMLNS)
     root = E.commtrack_data()
-    post_processed_transactions = list(transactions)
     for (supply_point_id, product_id), txs in grouped_tx.iteritems():
         subcase = supply_point_product_subcases[supply_point_id][product_id]
 
@@ -56,18 +58,14 @@ def process_stock(sender, xform, config=None, **kwargs):
         #    req = RequisitionState.from_transactions(user_id, product_case, req_txs)
         #    case_block = etree.fromstring(req.to_xml())
         #    root.append(case_block)
-    set_transactions(root, post_processed_transactions)  # todo convert to legacy style
 
-    print etree.tostring(root, pretty_print=True)
+    post_processed_transactions.extend(map(lambda tx: LegacyStockTransaction.convert(tx, supply_point_product_subcases), transactions))
+    set_transactions(root, post_processed_transactions, E)
+
     # argh, need to make a submission here again
 
     submission = etree.tostring(root)
     logger.debug('submitting: %s' % submission)
-
-
-
-
-    return
 
 
 # TODO retire this with move to new data model
@@ -124,9 +122,9 @@ def unpack_commtrack(xform, config):
         for prod_entry in products:
             yield StockTransaction.from_xml(config, global_context, tag, node, prod_entry)
 
-def set_transactions(root, new_tx):
+def set_transactions(root, new_tx, E):
     for tx in new_tx:
-        root.append(tx.to_xml())
+        root.append(tx.to_legacy_xml(E))
 
 def process_product_transactions(user_id, timestamp, case, txs):
     """process all the transactions from a stock report for an individual
@@ -150,6 +148,31 @@ def process_product_transactions(user_id, timestamp, case, txs):
         set_order(tx)
     return current_state.to_case_block(user_id=user_id), reconciliations
 
+from couchdbkit.ext.django.schema import *
+class LegacyStockTransaction(StockTransaction):
+    product_subcase = StringProperty()
+
+    def to_legacy_xml(self, E):
+        attr = {}
+        if self.subaction == const.INFERRED_TRANSACTION:
+            attr['inferred'] = 'true'
+        if self.processing_order is not None:
+            attr['order'] = str(self.processing_order + 1)
+
+        return E.transaction(
+            E.product(self.product_id),
+            E.product_entry(self.product_subcase),
+            E.action((self.subaction if self.subaction != const.INFERRED_TRANSACTION else None) or self.action),
+            E.value(str(self.quantity)),
+            **attr
+        )
+
+    @classmethod
+    def convert(cls, tx, product_subcases):
+        ltx = LegacyStockTransaction(**dict(tx.iteritems()))
+        ltx.product_subcase = product_subcases[tx.case_id][tx.product_id]._id
+        return ltx
+
 class StockState(object):
     def __init__(self, case, reported_on):
         self.case = case
@@ -166,9 +189,9 @@ class StockState(object):
         """
         reconciliation_transaction = None
         def mk_reconciliation(diff):
-            return StockTransaction(
+            return LegacyStockTransaction(
                 product_id=self.case.product,
-                case_id=self.case._id, # note: wrong case type
+                product_subcase=self.case._id,
                 action=const.StockActions.RECEIPTS if diff > 0 else const.StockActions.CONSUMPTION,
                 quantity=abs(diff),
                 inferred=True,
