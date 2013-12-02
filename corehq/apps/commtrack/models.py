@@ -708,16 +708,13 @@ DEFAULT_CONSUMPTION = 10. # per month
 
 # TODO eliminate this
 class SupplyPointProductCase(CommCareCase):
-    pass
-"""
-class SupplyPointProductCase(CommCareCase):
-    ""
+    """
     A wrapper around CommCareCases to get more built in functionality
     specific to supply point products.
 
     See
     https://confluence.dimagi.com/display/ctinternal/Data+Model+Documentation
-    ""
+    """
     class Meta: 
         # This is necessary otherwise syncdb will confuse this app with casexml
         app_label = "commtrack"
@@ -914,7 +911,7 @@ class SupplyPointProductCase(CommCareCase):
         if reversed:
             return None
         return super(SupplyPointProductCase, self).get_index_map(reversed)
-"""
+
 
 
 class RequisitionCase(CommCareCase):

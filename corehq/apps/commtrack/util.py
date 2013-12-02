@@ -10,14 +10,6 @@ import bisect
 from lxml.builder import ElementMaker
 from corehq.apps.commtrack import const
 
-def _(tag, ns=const.COMMTRACK_REPORT_XMLNS):
-    return '{%s}%s' % (ns, tag)
-def XML(ns=const.COMMTRACK_REPORT_XMLNS, prefix=None):
-    prefix_map = None
-    if prefix:
-        prefix_map = {prefix: ns}
-    return ElementMaker(namespace=ns, nsmap=prefix_map)
-
 
 def all_supply_point_types(domain):
     return [e['key'][1] for e in get_db().view('commtrack/supply_point_types', startkey=[domain], endkey=[domain, {}], group_level=2)]
