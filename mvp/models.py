@@ -145,6 +145,7 @@ class MVPChildCasesByAgeIndicatorDefinition(MVPActiveCasesIndicatorDefinition):
 
     def _filter_by_age(self, results, datespan):
         valid_case_ids = []
+        datespan = self._apply_datespan_shifts(datespan)
         for item in results:
             if item.get('value'):
                 try:
