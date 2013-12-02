@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-12-02 17:44-0500\n"
+"POT-Creation-Date: 2013-12-02 18:20-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2539,7 +2539,7 @@ msgstr "हॉ"
 
 #: corehq/apps/domain/calculations.py:192 custom/bihar/reports/display.py:344
 msgid "no"
-msgstr ""
+msgstr "नहीं"
 
 #: corehq/apps/domain/forms.py:36 corehq/apps/domain/forms.py:108
 msgid "Project Category"
@@ -10366,11 +10366,11 @@ msgstr "ऑगनवाड़ी सेविका"
 
 #: custom/bihar/utils.py:7
 msgid "ANM"
-msgstr ""
+msgstr "ए.ऐन.ऐम"
 
 #: custom/bihar/utils.py:8
 msgid "LS"
-msgstr ""
+msgstr "सुपरवाइजर"
 
 #: custom/bihar/calculations/familyplanning.py:34
 #: custom/bihar/reports/indicators/indicators.py:200
@@ -10479,7 +10479,7 @@ msgstr "निष्क्रिय लाभार्थी"
 
 #: custom/bihar/reports/display.py:81
 msgid "Unknown user"
-msgstr ""
+msgstr "अनजान उपयोगकर्ता"
 
 #: custom/bihar/reports/display.py:207 custom/bihar/reports/display.py:577
 #, fuzzy
@@ -10488,35 +10488,35 @@ msgstr "गृह भ्रमण की जानकारी"
 
 #: custom/bihar/reports/due_list.py:24
 msgid "ANC"
-msgstr ""
+msgstr "प्रसव पूर्व जाँच"
 
 #: custom/bihar/reports/due_list.py:34
 msgid "TT"
-msgstr ""
+msgstr "टी.टी"
 
 #: custom/bihar/reports/due_list.py:43 custom/bihar/reports/mch_reports.py:272
 msgid "BCG"
-msgstr "BCG "
+msgstr "बी.सी.जी."
 
 #: custom/bihar/reports/due_list.py:48
 msgid "OPV"
-msgstr "OPV0"
+msgstr "पोलियो खुराख"
 
 #: custom/bihar/reports/due_list.py:59
 msgid "DPT"
-msgstr ""
+msgstr "डी. पी. टी."
 
 #: custom/bihar/reports/due_list.py:68
 msgid "Hepatitis B"
-msgstr ""
+msgstr "हेपेटाइटिस बी"
 
 #: custom/bihar/reports/due_list.py:77
 msgid "Measles"
-msgstr ""
+msgstr "खसरा"
 
 #: custom/bihar/reports/due_list.py:82
 msgid "Vitamin A"
-msgstr ""
+msgstr "विटामिन ए"
 
 #: custom/bihar/reports/due_list.py:95 custom/bihar/reports/due_list.py:315
 msgid "Due List"
@@ -10529,7 +10529,7 @@ msgstr "संकेतक नेवीगेशन"
 
 #: custom/bihar/reports/due_list.py:111
 msgid "Care Due"
-msgstr ""
+msgstr "देखभाल बाकी"
 
 #: custom/bihar/reports/due_list.py:123
 #, fuzzy
@@ -10538,7 +10538,7 @@ msgstr "टीम का नाम"
 
 #: custom/bihar/reports/due_list.py:138
 msgid "# Due"
-msgstr ""
+msgstr "# बाकी"
 
 #: custom/bihar/reports/due_list.py:151
 #, fuzzy
@@ -10562,19 +10562,19 @@ msgstr "कुल लाभार्थी"
 
 #: custom/bihar/reports/due_list.py:283
 msgid "Care Due Today"
-msgstr ""
+msgstr "देखभाल आज"
 
 #: custom/bihar/reports/due_list.py:289 custom/bihar/reports/due_list.py:295
 msgid "Care Due Tomorrow"
-msgstr ""
+msgstr "देखभाल कल"
 
 #: custom/bihar/reports/due_list.py:301
 msgid "Care Due In 2 Days"
-msgstr ""
+msgstr "देखभाल दो दिन में"
 
 #: custom/bihar/reports/due_list.py:307
 msgid "Care Due In 3 Days"
-msgstr ""
+msgstr "देखभाल तीन दिन में"
 
 #: custom/bihar/reports/mch_reports.py:69
 #: custom/bihar/reports/mch_reports.py:251
@@ -10585,7 +10585,7 @@ msgstr "लाभार्थी के पहचान हेतु आवश�
 #: custom/bihar/reports/mch_reports.py:70
 #, fuzzy
 msgid "Mother Name"
-msgstr "नाम "
+msgstr "नाम "
 
 #: custom/bihar/reports/mch_reports.py:71
 #, fuzzy
@@ -10918,11 +10918,11 @@ msgstr "जन्म के समय"
 
 #: custom/bihar/reports/mch_reports.py:273
 msgid "OPV0"
-msgstr "OPV0"
+msgstr "पोलियो खुराख - 0"
 
 #: custom/bihar/reports/mch_reports.py:274
 msgid "Hepatitis-Birth dose "
-msgstr "Hepatitis-Birth dose "
+msgstr "हेपेटाइटिस बी - 0"
 
 #: custom/bihar/reports/mch_reports.py:276
 msgid "At 6 Weeks"
@@ -10930,15 +10930,15 @@ msgstr "जन्म के 6 सप्ताह पर"
 
 #: custom/bihar/reports/mch_reports.py:277
 msgid "DPT1"
-msgstr "DPT1"
+msgstr "डी. पी. टी. - 1"
 
 #: custom/bihar/reports/mch_reports.py:278
 msgid "OPV1"
-msgstr "OPV1"
+msgstr "पोलियो खुराख - 1"
 
 #: custom/bihar/reports/mch_reports.py:279
 msgid "Hepatitis-B1"
-msgstr "Hepatitis-B1"
+msgstr "हेपेटाइटिस बी - 1"
 
 #: custom/bihar/reports/mch_reports.py:281
 msgid "At 10 Weeks"
@@ -10946,15 +10946,15 @@ msgstr "जन्म के 10 सप्ताह पर"
 
 #: custom/bihar/reports/mch_reports.py:282
 msgid "DPT2"
-msgstr "DPT2"
+msgstr "डी. पी. टी. - 2"
 
 #: custom/bihar/reports/mch_reports.py:283
 msgid "OPV2"
-msgstr "OPV2"
+msgstr "पोलियो खुराख - 2"
 
 #: custom/bihar/reports/mch_reports.py:284
 msgid "Hepatitis-B2"
-msgstr "Hepatitis-B2"
+msgstr "हेपेटाइटिस बी - 2"
 
 #: custom/bihar/reports/mch_reports.py:286
 msgid "At 14 Weeks"
@@ -10962,15 +10962,15 @@ msgstr "जन्म के 14 सप्ताह पर"
 
 #: custom/bihar/reports/mch_reports.py:287
 msgid "DPT3"
-msgstr "DPT3"
+msgstr "डी. पी. टी. - 3"
 
 #: custom/bihar/reports/mch_reports.py:288
 msgid "OPV3"
-msgstr "OPV3"
+msgstr "पोलियो खुराख - 3"
 
 #: custom/bihar/reports/mch_reports.py:289
 msgid "Hepatitis-B3"
-msgstr "Hepatitis-B3"
+msgstr "हेपेटाइटिस बी - 3"
 
 #: custom/bihar/reports/mch_reports.py:291
 msgid "Between 9-12 Months"
@@ -10978,7 +10978,7 @@ msgstr "जन्म के 9-12 महीने तक"
 
 #: custom/bihar/reports/mch_reports.py:292
 msgid "Measles (1st  dose)"
-msgstr "Measles (1st  dose)"
+msgstr "खसरे का टीका"
 
 #: custom/bihar/reports/mch_reports.py:294
 msgid "Between 16-24 Months"
@@ -10986,11 +10986,11 @@ msgstr "जन्म के 16- 24 महीने तक"
 
 #: custom/bihar/reports/mch_reports.py:296
 msgid "Vitamin A dose-1 "
-msgstr "Vitamin A dose-1"
+msgstr "विटामिन ए -1"
 
 #: custom/bihar/reports/mch_reports.py:297
 msgid "Measles (2nd dose)/ MR Vaccine"
-msgstr "Measles (2nd dose)/ MR Vaccine"
+msgstr "खसरे का बूस्टर टीका"
 
 #: custom/bihar/reports/mch_reports.py:299
 msgid "After 2 Years"
@@ -10998,23 +10998,23 @@ msgstr "2 या 2 वर्ष के बाद "
 
 #: custom/bihar/reports/mch_reports.py:300
 msgid "DPT Booster"
-msgstr "DPT Booster"
+msgstr "डी. पी. टी - बूस्टर"
 
 #: custom/bihar/reports/mch_reports.py:301
 msgid "OPV Booster"
-msgstr "OPV Booster"
+msgstr "पोलियो - बूस्टर"
 
 #: custom/bihar/reports/mch_reports.py:302
 msgid "Vitamin A dose-2"
-msgstr "Vitamin A dose-2"
+msgstr "विटामिन ए -2"
 
 #: custom/bihar/reports/mch_reports.py:303
 msgid "Vitamin A dose-3"
-msgstr "Vitamin A dose-3"
+msgstr "विटामिन ए -3"
 
 #: custom/bihar/reports/mch_reports.py:304
 msgid "JE Vaccine"
-msgstr "JE Vaccine"
+msgstr "जे. ई."
 
 #: custom/bihar/reports/supervisor.py:200
 msgid "Select Subcenter"
@@ -11146,11 +11146,11 @@ msgstr "बॉकी"
 
 #: custom/bihar/reports/indicators/clientlistdisplay.py:162
 msgid "Days Late"
-msgstr ""
+msgstr "कितने दिन विलंबित"
 
 #: custom/bihar/reports/indicators/clientlistdisplay.py:179
 msgid "Days Due"
-msgstr ""
+msgstr "कितने दिन बाकी"
 
 #: custom/bihar/reports/indicators/clientlistdisplay.py:200
 #, python-format
@@ -11320,7 +11320,7 @@ msgstr "संकेतक"
 
 #: custom/bihar/reports/indicators/reports.py:84
 msgid "My Performance"
-msgstr ""
+msgstr "मेरा कार्य प्रदर्शन"
 
 #: custom/bihar/reports/indicators/reports.py:126
 msgid "Charts"
@@ -11336,7 +11336,7 @@ msgstr "लाभार्थी सूचि"
 
 #: custom/bihar/templates/bihar/client_listing.html:11
 msgid "Sorry, there are no clients matching this report"
-msgstr ""
+msgstr "अफ़सोस, इस रिपोर्ट से जुड़े हुए कोई लाभार्थी नहीं है"
 
 #: custom/fri/forms.py:15
 msgid "Please choose a file."
@@ -11821,20 +11821,20 @@ msgstr "प्राईवेट अस्पताल"
 msgid "Indicator"
 msgstr "संकेतक"
 
-#: custom/reports/mc/reports/sql.py:392
+#: custom/reports/mc/reports/sql.py:388
 msgid "Health Facility Monthly Report"
 msgstr ""
 
-#: custom/reports/mc/reports/sql.py:402
+#: custom/reports/mc/reports/sql.py:398
 msgid "District Monthly Report"
 msgstr ""
 
-#: custom/reports/mc/reports/sql.py:412
+#: custom/reports/mc/reports/sql.py:408
 #, fuzzy
 msgid "District Weekly Report"
 msgstr "संकेतक"
 
-#: custom/reports/mc/reports/sql.py:479
+#: custom/reports/mc/reports/sql.py:475
 msgid "Health Facility Weekly Report"
 msgstr ""
 
