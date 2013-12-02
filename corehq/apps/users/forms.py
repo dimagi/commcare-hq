@@ -296,4 +296,5 @@ class CommtrackUserForm(forms.Form):
         location_id = self.cleaned_data['supply_point']
         if location_id:
             loc = Location.get(location_id)
-            commtrack_user.set_locations([loc])
+            commtrack_user.clear_locations()
+            commtrack_user.add_location(loc)

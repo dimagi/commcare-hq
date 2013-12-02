@@ -1049,18 +1049,26 @@ class StockReport(object):
 class CommTrackUser(CommCareUser):
     @classmethod
     def wrap(cls, data):
-        instance = super(CommTrackUser, cls).wrap(data)
-        # lazy migration from commtrack_location to locations
-        if 'commtrack_location' in data:
-            original_location = data['commtrack_location']
-            del data['commtrack_location']
-            try:
-                instance.set_locations([Location.get(original_location)])
-            except ResourceNotFound:
-                # if there was bad data in there before, we can ignore it
-                pass
+        try:
+            instance = super(CommTrackUser, cls).wrap(data)
+            # lazy migration from commtrack_location to locations
+            if 'commtrack_location' in data:
+                original_location = data['commtrack_location']
+                del data['commtrack_location']
+                try:
+                    instance.set_locations([Location.get(original_location)])
+                except ResourceNotFound:
+                    # if there was bad data in there before, we can ignore it
+                    pass
 
-        return instance
+            return instance
+        except Exception, e:
+            import bpdb; bpdb.set_trace()
+
+    @classmethod
+    def by_domain(cls, domain, is_active=True, reduce=False, limit=None, skip=0, strict=False, doc_type=None):
+        doc_type = doc_type or 'CommCareUser'
+        return super(CommTrackUser, cls).by_domain(domain, is_active, reduce, limit, skip, strict, doc_type)
 
     def location_map_case(self):
         try:
@@ -1081,7 +1089,7 @@ class CommTrackUser(CommCareUser):
         mapping = self.location_map_case()
 
         if mapping:
-            return [Location.wrap(index.referenced_case.to_json()) for index in mapping.indices]
+            return [SupplyPointCase.wrap(index.referenced_case.to_json()).location for index in mapping.indices]
         else:
             return []
 

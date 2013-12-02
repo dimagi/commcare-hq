@@ -1,3 +1,7 @@
+# hack to avoid importing from users/xml.py
+from __future__ import absolute_import
+from xml.etree import ElementTree
+
 from StringIO import StringIO
 from couchdbkit.exceptions import MultipleResultsFound, ResourceNotFound
 from django.core.exceptions import ValidationError
@@ -12,6 +16,7 @@ from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.excel import flatten_json, json_to_headers, \
     alphanumeric_sort_key
 from corehq.apps.commtrack.util import get_supply_point
+from corehq.apps.commtrack.models import CommTrackUser, SupplyPointCase
 
 
 class UserUploadError(Exception):
@@ -104,25 +109,136 @@ def _fmt_phone(phone_number):
     return phone_number.lstrip("+")
 
 
+class UserLocMapping(object):
+    def __init__(self, username, domain):
+        self.username = username
+        self.domain = domain
+        self.to_add = set()
+        self.to_remove = set()
+
+    #def lookup_location(self, location_cache, sms_code):
+    def lookup_location(self, sms_code):
+        #if sms_code in location_cache:
+            #return location_cache[sms_code]
+        #else:
+        location = get_supply_point(
+            self.domain,
+            sms_code
+        )['location']
+        #    location_cache[location.site_code] = location
+        return location
+
+    def save(self):
+        """
+        Calculate which locations need added or removed, then submit
+        one caseblock to handle this
+        """
+        user = CommTrackUser.wrap(CommTrackUser.get_by_username(self.username).to_json())
+        current_locations = user.locations
+        current_location_codes = [loc.site_code for loc in current_locations]
+
+        commit_list = {}
+        for loc in self.to_add:
+            if loc not in current_location_codes:
+                # TODO cache the loc_id -> sp relationship
+                location = self.lookup_location(loc)
+                sp = SupplyPointCase.get_by_location(location)
+                commit_list.update(self.supply_point_index_mapping(sp))
+
+        for loc in self.to_remove:
+            if loc in current_location_codes:
+                location = self.lookup_location(loc)
+                sp = SupplyPointCase.get_by_location(location)
+                commit_list.update(self.supply_point_index_mapping(sp, True))
+
+        # TODO TODO NOTE
+        """
+        can either submit from this point or try alternative approach
+        of adding/removing from starting list and then doing a set_locations
+        call
+        """
+
+        if commit_list:
+            mapping = user.location_map_case()
+
+            # TODO duplication
+            from casexml.apps.case.mock import CaseBlock
+            from casexml.apps.case.xml import V2
+            from corehq.apps.hqcase.utils import submit_case_blocks
+            if mapping:
+                caseblock = CaseBlock(
+                    create=False,
+                    case_id=mapping._id,
+                    version=V2,
+                    index=commit_list
+                )
+            else:
+                caseblock = CaseBlock(
+                    create=True,
+                    case_type='user-owner-mapping-case',
+                    case_id='user-owner-mapping-' + user._id,
+                    version=V2,
+                    owner_id=user._id,
+                    index=commit_list
+                )
+
+            submit_case_blocks(
+                ElementTree.tostring(caseblock.as_xml()),
+                user.domain,
+                user.username,
+                user._id
+            )
+
+
+    # TODO this is duplication
+    def supply_point_index_mapping(self, supply_point, clear=False):
+        if supply_point:
+            return {
+                'supply_point-' + supply_point._id:
+                (
+                    supply_point.type,
+                    supply_point._id if not clear else ''
+                )
+            }
+        else:
+            #raise LinkedSupplyPointNotFoundError(
+            raise Exception(
+                "There was no linked supply point for the location."
+            )
+
 def create_or_update_locations(domain, location_specs, log):
+    users = {}  # todo: see if can reuse usercache thing from group upload
     for row in location_specs:
-        try:
-            user = CommCareUser.get_by_username(row.get('username'))
-        except:
-            # TODO
-            return
-        try:
-            location = get_supply_point(
-                domain,
-                row.get('location-sms-code')
-            )['location']
+        username = row.get('username')
+        location_code = row.get('location-sms-code')
+        if username in users:
+            user_mapping = users[username]
+        else:
+            user_mapping = UserLocMapping(username, domain)
+            users[username] = user_mapping
+        # todo deletion?
+        user_mapping.to_add.add(location_code)
 
-        except:
-            # TODO
-            return
+    # at this point we have a map of all usernames to locs that need to be added and deleted
+    # just iterate through this map and do the operation per-user
 
-        user.location = location._id
-        user.save()
+    for username, mapping in users.iteritems():
+        mapping.save()
+        #try:
+            #user = CommTrackUser.wrap(CommTrackUser.get_by_username(username).to_json())
+        #except:
+            #log['errors'].append('User with username %s was not found.' % username)
+            #continue
+
+        #user.clear_locations()
+        #for sms_code in mapping.to_add:
+            #try:
+                #location = lookup_location(location_cache, sms_code)
+            #except:
+                #log['errors'].append('Location with code %s was not found.' % row.get('location-sms-code'))
+                ## TODO store bad locations for optimization
+                #continue
+            #user.add_location(location)
 
 
 def create_or_update_groups(domain, group_specs, log):
@@ -301,7 +417,7 @@ class GroupNameError(Exception):
 
 
 def get_location_rows(domain):
-    users = CommCareUser.by_domain(domain)
+    users = CommTrackUser.by_domain(domain)
 
     mappings = []
     for user in users:
@@ -393,7 +509,7 @@ def dump_users_and_groups(response, domain):
     commtrack_enabled = Domain.get_by_name(domain).commtrack_enabled
     if commtrack_enabled:
         headers.append(
-            ('locations', [['username', 'sms code', 'location name (optional)']])
+            ('locations', [['username', 'location-sms-code', 'location name (optional)']])
         )
 
     writer.open(
