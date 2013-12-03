@@ -59,7 +59,7 @@ class SmsGatewayFee(models.Model):
     Once an SmsFee is created, it cannot be modified.
     """
     criteria = models.ForeignKey(SmsGatewayFeeCriteria, on_delete=models.PROTECT)
-    amount = models.DecimalField(default=0.0, max_digits=7, decimal_places=4)
+    amount = models.DecimalField(default=0.0, max_digits=10, decimal_places=4)
     # todo hook back in with accounting when the time comes
     #currency = models.ForeignKey(accounting.Currency, on_delete=models.PROTECT)
     date_created = models.DateField(auto_now_add=True)
@@ -136,7 +136,7 @@ class SmsUsageFee(models.Model):
     Once an SmsUsageFee is created, it cannot be modified.
     """
     criteria = models.ForeignKey(SmsUsageFeeCriteria, on_delete=models.PROTECT)
-    amount = models.DecimalField(default=0.0, max_digits=7, decimal_places=4)
+    amount = models.DecimalField(default=0.0, max_digits=10, decimal_places=4)
     date_created = models.DateField(auto_now_add=True)
 
     @classmethod
