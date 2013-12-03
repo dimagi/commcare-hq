@@ -89,11 +89,14 @@ class WrappedAttribs(object):
     def __getattr__(self, name):
         return getattr(self.attrib, name)
 
+    def _get_item_name(self, item):
+        return item if item.startswith('{http') else item.format(**self.namespaces)
+
     def __contains__(self, item):
-        return item.format(**self.namespaces) in self.attrib
+        return self._get_item_name(item) in self.attrib
 
     def __setitem__(self, item, value):
-        self.attrib[item.format(**self.namespaces)] = value
+        self.attrib[self._get_item_name(item)] = value
 
     def get(self, item, default=None):
         try:
@@ -102,7 +105,7 @@ class WrappedAttribs(object):
             return default
 
     def __getitem__(self, item):
-        return self.attrib[item.format(**self.namespaces)]
+        return self.attrib[self._get_item_name(item)]
 
 class WrappedNode(object):
     def __init__(self, xml, namespaces=namespaces):
