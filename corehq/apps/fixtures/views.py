@@ -15,7 +15,8 @@ from django.views.generic.base import TemplateView
 from django.shortcuts import render
 
 from corehq.apps.domain.decorators import login_or_digest
-from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem, _id_from_doc
+from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem, _id_from_doc, FieldList, FixtureTypeField, FixtureItemField
+from corehq.apps.fixtures.exceptions import ExcelMalformatException
 from corehq.apps.groups.models import Group
 from corehq.apps.users.bulkupload import GroupMemoizer
 from corehq.apps.users.decorators import require_permission
@@ -214,82 +215,180 @@ def view(request, domain, template='fixtures/view.html'):
 DELETE_HEADER = "Delete(Y/N)"
 @require_can_edit_fixtures
 def download_item_lists(request, domain):
-    data_types = FixtureDataType.by_domain(domain)
-    data_type_schemas = []
-    max_fields = 0
-    max_groups = 0
-    max_users = 0
-    mmax_groups = 0
-    mmax_users = 0
-    data_tables = []
+    data_types_view = FixtureDataType.by_domain(domain)
+    # book-keeping data from view_results for repeated use
+    data_types_book = []
+    data_items_boook_by_type = {}
+    item_helpers_by_type = {}
+    """
+        Contains all excel sheets in following format
+        excel_sheets = {
+            "types": {
+                "headers": [],
+                "rows": [(row), (row), (row)]
+            }
+            "next-sheet": {
+                "headers": [],
+                "rows": [(row), (row), (row)]
+            },
+            ...
+        }
+    """
+    excel_sheets = {}
     
-    def _get_empty_list(length):
+    def empty_padding_list(length):
         return ["" for x in range(0, length)]
 
-
-    # Fills sheets' schemas and data
-    for data_type in data_types:
-        type_schema = [str(_id_from_doc(data_type)), "N", data_type.name, data_type.tag, yesno(data_type.is_global)]
-        fields = [field for field in data_type.fields]
-        type_id = data_type.get_id
-        data_table_of_type = []
-        for item_row in FixtureDataItem.by_data_type(domain, type_id):
+    max_fields = 0
+    """
+        - Helper to generate headers like "field 2: property 1"
+        - Captures max_num_of_properties for any field of any type at the list-index.
+        Example values:
+            [0, 1] -> "field 2: property 1" (first-field has zero-props, second has 1 property)
+            [1, 1] -> "field 1: property 1" (first-field has 1 property, second has 1 property)
+            [0, 2] -> "field 2: property 1", "field 2: property 2"
+    """
+    field_prop_count = []
+    """
+        captures all possible 'field-property' values for each data-type
+        Example value
+          {u'clinics': {'field 2 : property 1': u'lang'}, u'growth_chart': {'field 2 : property 2': u'maxWeight'}}
+    """
+    type_field_properties = {}
+    get_field_prop_format = lambda x, y: "field " + str(x) +" : property " + str(y) 
+    for data_type in data_types_view:
+        # Helpers to generate 'types' sheet
+        type_field_properties[data_type.tag] = {}
+        data_types_book.append(data_type)
+        if len(data_type.fields) > max_fields:
+            max_fields = len(data_type.fields)
+        for index, field in enumerate(data_type.fields):
+            if len(field_prop_count) <= index:
+                field_prop_count.append(len(field.properties))
+            elif field_prop_count[index] <= len(field.properties):
+                field_prop_count[index] = len(field.properties)
+            if len(field.properties) > 0:
+                for prop_index, property in enumerate(field.properties):
+                    prop_key = get_field_prop_format(index + 1, prop_index + 1)
+                    type_field_properties[data_type.tag][prop_key] = property
+        # Helpers to generate item-sheets
+        data_items_boook_by_type[data_type.tag] = []
+        max_users = 0
+        max_groups = 0
+        max_field_prop_combos = {field_name: 0 for field_name in data_type.fields_without_attributes}
+        for item_row in FixtureDataItem.by_data_type(domain, data_type.get_id):
+            data_items_boook_by_type[data_type.tag].append(item_row)
             group_len = len(item_row.get_groups())
             max_groups = group_len if group_len>max_groups else max_groups
             user_len = len(item_row.get_users())
             max_users = user_len if user_len>max_users else max_users
-        for item_row in FixtureDataItem.by_data_type(domain, type_id):
-            groups = [group.name for group in item_row.get_groups()] + _get_empty_list(max_groups - len(item_row.get_groups()))
-            users = [user.raw_username for user in item_row.get_users()] + _get_empty_list(max_users - len(item_row.get_users()))
-            data_row = tuple([str(_id_from_doc(item_row)), "N"] +
-                             [item_row.fields.get(field, None) or "" for field in fields] +
-                             groups + users)
-            data_table_of_type.append(data_row)
-        type_schema.extend(fields)
-        data_type_schemas.append(tuple(type_schema))
-        if max_fields<len(type_schema):
-            max_fields = len(type_schema)
-        data_tables.append((data_type.tag,tuple(data_table_of_type)))
-        mmax_users = max_users if max_users>mmax_users else mmax_users
-        mmax_groups = max_groups if max_groups>mmax_groups else mmax_groups
-        max_users = 0
-        max_groups = 0
+            for field_key in item_row.fields:
+                max_combos = max_field_prop_combos[field_key]
+                cur_combo_len = len(item_row.fields[field_key].field_list)
+                max_combos = cur_combo_len if cur_combo_len > max_combos else max_combos
+                max_field_prop_combos[field_key] = max_combos
+        item_helpers = {
+            "max_users": max_users, 
+            "max_groups": max_groups, 
+            "max_field_prop_combos": max_field_prop_combos,
+        }
+        item_helpers_by_type[data_type.tag] = item_helpers
 
-    type_headers = ["UID", DELETE_HEADER, "name", "tag", 'is_global?'] + ["field %d" % x for x in range(1, max_fields - 4)]
-    type_headers = ("types", tuple(type_headers))
-    table_headers = [type_headers]    
-    for type_schema in data_type_schemas:
-        item_header = (type_schema[3], tuple(["UID", DELETE_HEADER] +
-                                             ["field: " + x for x in type_schema[5:]] +
-                                             ["group %d" % x for x in range(1, mmax_groups + 1)] +
-                                             ["user %d" % x for x in range(1, mmax_users + 1)]))
-        table_headers.append(item_header)
+    # Prepare 'types' sheet data
+    types_sheet = {"headers": [], "rows": []}
+    types_sheet["headers"] = ["UID", DELETE_HEADER, "table_id", 'is_global?']
+    types_sheet["headers"].extend(["field %d" % x for x in range(1, max_fields + 1)])
+    field_prop_headers = []   
+    for field_num, prop_num in enumerate(field_prop_count):
+        if prop_num > 0:
+            for c in range(0, prop_num):
+                prop_key = get_field_prop_format(field_num + 1, c + 1)
+                field_prop_headers.append(prop_key)
+                types_sheet["headers"].append(prop_key)
 
-    table_headers = tuple(table_headers)
-    type_rows = ("types", tuple(data_type_schemas))
-    data_tables = tuple([type_rows]+data_tables)
+    for data_type in data_types_book:
+        common_vals = [str(_id_from_doc(data_type)), "N", data_type.tag, yesno(data_type.is_global)]
+        field_vals = [field.field_name for field in data_type.fields] + empty_padding_list(max_fields - len(data_type.fields))
+        prop_vals = []
+        if type_field_properties.has_key(data_type.tag):
+            props = type_field_properties.get(data_type.tag)
+            prop_vals.extend([props.get(key, "") for key in field_prop_headers])
+        row = tuple(common_vals + field_vals + prop_vals)
+        types_sheet["rows"].append(row)
 
-    """
-    Example of sheets preperation:
+    types_sheet["rows"] = tuple(types_sheet["rows"])
+    types_sheet["headers"] = tuple(types_sheet["headers"])
+    excel_sheets["types"] = types_sheet
     
-    headers:
-     (("employee", ("id", "name", "gender")),
-      ("building", ("id", "name", "address")))
-    
-    data:
-     (("employee", (("1", "cory", "m"),
-                    ("2", "christian", "m"),
-                    ("3", "amelia", "f"))),
-      ("building", (("1", "dimagi", "585 mass ave."),
-                    ("2", "old dimagi", "529 main st."))))
-    """
-    
+    # Prepare 'items' sheet data for each data-type
+    for data_type in data_types_book:
+        item_sheet = {"headers": [], "rows": []}
+        item_helpers = item_helpers_by_type[data_type.tag]
+        max_users = item_helpers["max_users"]
+        max_groups = item_helpers["max_groups"]
+        max_field_prop_combos = item_helpers["max_field_prop_combos"]
+        common_headers = ["UID", DELETE_HEADER]
+        user_headers = ["user %d" % x for x in range(1, max_users + 1)]
+        group_headers = ["group %d" % x for x in range(1, max_groups + 1)]
+        field_headers = []
+        for field in data_type.fields:
+            if len(field.properties) == 0:
+                field_headers.append("field: " + field.field_name)
+            else:
+                prop_headers = []
+                for x in range(1, max_field_prop_combos[field.field_name] + 1):
+                    for property in field.properties:
+                        prop_headers.append("%(name)s: %(prop)s %(count)s" % {
+                            "name": field.field_name,
+                            "prop": property,
+                            "count": x
+                        })
+                    prop_headers.append("field: %(name)s %(count)s" %{
+                        "name": field.field_name,
+                        "count": x                        
+                    })
+                field_headers.extend(prop_headers)
+        item_sheet["headers"] = tuple(
+            common_headers + field_headers + user_headers + group_headers
+        )
+        excel_sheets[data_type.tag] = item_sheet
+        for item_row in data_items_boook_by_type[data_type.tag]:
+            common_vals = [str(_id_from_doc(item_row)), "N"]
+            user_vals = [user.raw_username for user in item_row.get_users()] + empty_padding_list(max_users - len(item_row.get_users()))
+            group_vals = [group.name for group in item_row.get_groups()] + empty_padding_list(max_groups - len(item_row.get_groups()))
+            field_vals = []
+            for field in data_type.fields:
+                if len(field.properties) == 0:
+                    field_vals.append(item_row.fields.get(field.field_name).field_list[0].field_value or "")
+                else:
+                    field_prop_vals = []
+                    cur_combo_count = len(item_row.fields.get(field.field_name).field_list)
+                    cur_prop_count = len(field.properties)
+                    for count, field_prop_combo in enumerate(item_row.fields.get(field.field_name).field_list):
+                        for property in field.properties:
+                            field_prop_vals.append(field_prop_combo.properties.get(property, None) or "")
+                        field_prop_vals.append(field_prop_combo.field_value)
+                    padding_list_len = (max_field_prop_combos[field.field_name] - cur_combo_count)*(cur_prop_count)
+                    field_prop_vals.extend(empty_padding_list(padding_list_len))
+                    field_vals.extend(field_prop_vals)
+            row = tuple(
+                common_vals + field_vals + user_vals + group_vals
+            )
+            item_sheet["rows"].append(row)
+        item_sheet["rows"] = tuple(item_sheet["rows"])
+        excel_sheets[data_type.tag] = item_sheet
+
+    header_groups = [("types", excel_sheets["types"]["headers"])]
+    value_groups = [("types", excel_sheets["types"]["rows"])]
+    for data_type in data_types_book:
+        header_groups.append((data_type.tag, excel_sheets[data_type.tag]["headers"]))
+        value_groups.append((data_type.tag, excel_sheets[data_type.tag]["rows"]))
+
     fd, path = tempfile.mkstemp()
     with os.fdopen(fd, 'w') as temp:
-        export_raw((table_headers), (data_tables), temp)
+        export_raw(tuple(header_groups), tuple(value_groups), temp)
     format = Format.XLS_2007
     return export_response(open(path), format, "%s_fixtures" % domain)
-
 
 class UploadItemLists(TemplateView):
 
@@ -328,9 +427,13 @@ class UploadItemLists(TemplateView):
         except WorksheetNotFound as e:
             messages.error(request, _("Workbook does not contain a sheet called '%(title)s'") % {'title': e.title})
             return error_redirect()
+        except ExcelMalformatException as e:
+            messages.error(request, _("Uploaded excel file has following formatting-problems: '%(e)s'") % {'e': e})
+            return error_redirect()
         except Exception as e:
             notify_exception(request)
-            messages.error(request, _("Fixture upload could not complete due to the following error: '%(e)s'") % {'e': e})
+            messages.error(request, _("Fixture upload failed for some reason and we have noted this failure. "
+                                      "Please make sure the excel file is correctly formatted and try again."))
             return error_redirect()
 
         return HttpResponseRedirect(reverse('fixture_view', args=[self.domain]))
@@ -349,7 +452,7 @@ def upload_fixture_api(request, domain, **kwargs):
         "has_no_permission": "User {attr} doesn't have permission to upload fixtures",
         "invalid_file": "Error processing your file. Submit a valid (.xlsx) file",
         "has_no_sheet": "Workbook does not have a sheet called {attr}",
-        "has_no_column": "Fixture upload couldn't succeed due to the following error: {attr}",
+        "unknown_fail": "Fixture upload couldn't succeed due to the following error: {attr}",
     }
     
     def _return_response(code, message):
@@ -377,9 +480,12 @@ def upload_fixture_api(request, domain, **kwargs):
     except WorksheetNotFound as e:
         error_message = error_messages["has_no_sheet"].format(attr=e.title)
         return _return_response(response_codes["fail"], error_message)
+    except ExcelMalformatException as e:
+        notify_exception(request)
+        return _return_response(response_codes["fail"], str(e))
     except Exception as e:
         notify_exception(request)
-        error_message = error_messages["has_no_column"].format(attr=e)
+        error_message = error_messages["unknown_fail"].format(attr=e)
         return _return_response(response_codes["fail"], error_message)
 
     num_unknown_groups = len(upload_resp["unknown_groups"])
@@ -410,6 +516,23 @@ def run_upload(request, domain, workbook):
         "unknown_users": [], 
         "number_of_fixtures": 0,
     }
+    failure_messages = {
+        "has_no_column": "Workbook 'types' has no column {column_name}.",
+        "has_no_field_column": "Excel-sheet '{tag}' does not contain the column '{field}' "
+                               "as specified in its 'types' definition",
+        "has_extra_column": "Excel-sheet '{tag}' has an extra column" + 
+                            "'{field}' that's not defined in its 'types' definition",
+        "wrong_property_syntax": "Properties should be specified as 'field 1: property 1'. In 'types' sheet, " +
+                            "'{prop_key}' for field '{field}' is not correctly formatted",
+        "sheet_has_no_property": "Excel-sheet '{tag}' does not contain property " +
+                            "'{property}' of the field '{field}' as specified in its 'types' definition",
+        "sheet_has_extra_property": "Excel-sheet '{tag}'' has an extra property " +
+                            "'{property}' for the field '{field}' that's not defined in its 'types' definition. Re-check the formatting", 
+        "invalid_field_with_property": "Fields with attributes should be numbered as 'field: {field} integer",
+        "invalid_property": "Attribute should be written as '{field}: {prop} interger'",
+        "wrong_field_property_combos": "Number of values for field '{field}' and attribute '{prop}' should be same"
+    }
+
     group_memoizer = GroupMemoizer(domain)
 
     data_types = workbook.get_worksheet(title='types')
@@ -418,20 +541,45 @@ def run_upload(request, domain, workbook):
         try:
             return container[attr]
         except KeyError:
-            raise Exception("Workbook 'types' has no column '{attr}'".format(attr=attr))
+            raise ExcelMalformatException(_(failure_messages["has_no_column"].format(attr=attr)))
+
+    def diff_lists(list_a, list_b):
+        set_a = set(list_a)
+        set_b = set(list_b)
+        not_in_b = set_a.difference(set_b)
+        not_in_a = set_a.difference(set_a)
+        return list(not_in_a), list(not_in_b)
    
     number_of_fixtures = -1
     with CouchTransaction() as transaction:
         for number_of_fixtures, dt in enumerate(data_types):
             tag = _get_or_raise(dt, 'tag')
             type_definition_fields = _get_or_raise(dt, 'field')
+            type_fields_with_properties = []
+            for count, field in enumerate(type_definition_fields):
+                prop_key = "field " + str(count + 1)
+                if dt.has_key(prop_key):
+                    try:
+                        property_list = dt[prop_key]["property"]
+                    except KeyError:
+                        error_message = failure_messages["wrong_property_syntax"].format(
+                            prop_key=prop_key,
+                            field=field
+                        )
+                        raise ExcelMalformatException(_(error_message))
+                else:
+                    property_list = []
+                field_with_prop = FixtureTypeField(
+                    field_name =field,
+                    properties =property_list
+                    )
+                type_fields_with_properties.append(field_with_prop)
 
             new_data_type = FixtureDataType(
-                    domain=domain,
-                    is_global=dt.get('is_global', False),
-                    name=_get_or_raise(dt, 'name'),
-                    tag=_get_or_raise(dt, 'tag'),
-                    fields=type_definition_fields,
+                domain=domain,
+                is_global=dt.get('is_global', False),
+                tag=_get_or_raise(dt, 'tag'),
+                fields=type_fields_with_properties,
             )
             try:
                 if dt['UID']:
@@ -439,7 +587,7 @@ def run_upload(request, domain, workbook):
                 else:
                     data_type = new_data_type
                     pass
-                data_type.fields = type_definition_fields
+                data_type.fields = type_fields_with_properties
                 data_type.is_global = dt.get('is_global', False)
                 assert data_type.doc_type == FixtureDataType._doc_type
                 if data_type.domain != domain:
@@ -455,16 +603,82 @@ def run_upload(request, domain, workbook):
             data_items = workbook.get_worksheet(data_type.tag)
             for sort_key, di in enumerate(data_items):
                 # Check that type definitions in 'types' sheet vs corresponding columns in the item-sheet MATCH
-                item_fields = di['field']
-                for field in type_definition_fields:
-                    if not item_fields.has_key(field):
-                        raise Exception(_("Workbook '%(tag)s' does not contain the column " +
-                                          "'%(field)s' specified in its 'types' definition") % {'tag': tag, 'field': field})
                 item_fields_list = di['field'].keys()
-                for field in item_fields_list:
-                    if not field in type_definition_fields:
-                        raise Exception(_("""Workbook '%(tag)s' has an extra column 
-                                          '%(field)s' that's not defined in its 'types' definition""") % {'tag': tag, 'field': field})                
+                not_in_sheet, not_in_types = diff_lists(item_fields_list, data_type.fields_without_attributes)
+                if len(not_in_sheet)>0:
+                    error_message = failure_messages["has_no_field_column"].format(tag=tag, field=not_in_sheet[0])
+                    raise ExcelMalformatException(_(error_message))
+                if len(not_in_types)>0:
+                    error_message = failure_messages["has_extra_column"].format(tag=tag, field=not_in_types[0])
+                    raise ExcelMalformatException(_(error_message))
+
+                # check that properties in 'types' sheet vs item-sheet MATCH
+                for field in data_type.fields:
+                    if len(field.properties)>0:
+                        sheet_props = di.get(field.field_name, {})
+                        sheet_props_list = sheet_props.keys()
+                        type_props = field.properties
+                        not_in_sheet, not_in_types = diff_lists(sheet_props_list, type_props)
+                        if len(not_in_sheet)>0:
+                            error_message = failure_messages["sheet_has_no_property"].format(
+                                tag=tag,
+                                property=not_in_sheet[0],
+                                field=field.field_name
+                            )
+                            raise ExcelMalformatException(_(error_message))
+                        if len(not_in_types)>0:
+                            error_message = failure_messages["sheet_has_extra_property"].format(
+                                tag=tag,
+                                property=not_in_types[0],
+                                field=field.field_name
+                            )
+                            raise ExcelMalformatException(_(error_message))
+                        # check that fields with properties are numbered
+                        if type(di['field'][field.field_name]) != list:
+                            error_message = failure_messages["invalid_field_with_property"].format(field=field.field_name)
+                            raise ExcelMalformatException(_(error_message))
+                        field_prop_len = len(di['field'][field.field_name])
+                        for prop in sheet_props:
+                            if type(sheet_props[prop]) != list:
+                                error_message = failure_messages["invalid_property"].format(
+                                    field=field.field_name,
+                                    prop=prop
+                                )
+                                raise ExcelMalformatException(_(error_message))
+                            if len(sheet_props[prop]) != field_prop_len:
+                                error_message = failure_messages["wrong_field_property_combos"].format(
+                                    field=field.field_name,
+                                    prop=prop
+                                )
+                                raise ExcelMalformatException(_(error_message))
+
+                # excel format check should have been covered by this line. Can make assumptions about data now
+                type_fields = data_type.fields
+                item_fields = {}
+                for field in type_fields:
+                    # if field doesn't have properties
+                    if len(field.properties) == 0:
+                        item_fields[field.field_name] = FieldList(
+                            field_list=[FixtureItemField(
+                                field_value=str(di['field'][field.field_name]),
+                                properties={}
+                            )]
+                        )
+                    else:
+                        field_list = []
+                        field_prop_combos = di['field'][field.field_name]
+                        prop_combo_len = len(field_prop_combos)
+                        prop_dict = di[field.field_name]
+                        for x in range(0, prop_combo_len):
+                            fix_item_field = FixtureItemField(
+                                field_value=str(field_prop_combos[x]),
+                                properties={prop: str(prop_dict[prop][x]) for prop in prop_dict}
+                            )
+                            field_list.append(fix_item_field)
+                        item_fields[field.field_name] = FieldList(
+                            field_list=field_list
+                        )
+
                 new_data_item = FixtureDataItem(
                     domain=domain,
                     data_type_id=data_type.get_id,
@@ -477,7 +691,7 @@ def run_upload(request, domain, workbook):
                     else:
                         old_data_item = new_data_item
                         pass
-                    old_data_item.fields = di['field']   
+                    old_data_item.fields = item_fields   
                     if old_data_item.domain != domain:
                         old_data_item = new_data_item
                         messages.error(request, _("'%(UID)s' is not a valid UID. But the new item is created.") % {'UID': di['UID'] })
