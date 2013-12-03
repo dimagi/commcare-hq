@@ -58,9 +58,9 @@ class StockReportParser(object):
         u = v.owner
         if isinstance(u, CommCareUser):
             # currently only support one location on the UI
-            linked_loc_id = u.location
-            if linked_loc_id:
-                self.location = get_supply_point(self.domain.name, loc=Location.get(linked_loc_id))['case']
+            linked_loc = u.location
+            if linked_loc:
+                self.location = get_supply_point(self.domain.name, loc=linked_loc)['case']
 
         self.C = domain.commtrack_settings
 

@@ -139,6 +139,7 @@ class CommTrackTest(TestCase):
         self.backend = test.bootstrap(TEST_BACKEND, to_console=True)
         self.domain = bootstrap_domain(requisitions_enabled=self.requisitions_enabled)
         self.loc = make_loc('loc1')
+        self.sp = make_supply_point(self.domain.name, self.loc)
 
         self.reporters = dict((k, bootstrap_user(self, **v)) for k, v in REPORTING_USERS.iteritems())
         # backwards compatibility
@@ -154,8 +155,9 @@ class CommTrackTest(TestCase):
                            users=[u._id for u in self.users],
                            case_sharing=True)
         self.group.save()
+        self.sp.owner_id = self.group._id
+        self.sp.save()
 
-        self.sp = make_supply_point(self.domain.name, self.loc, owner_id=self.group._id)
         self.products = Product.by_domain(self.domain.name)
         self.assertEqual(3, len(self.products))
         self.spps = {}
