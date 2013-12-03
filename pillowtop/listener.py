@@ -309,11 +309,10 @@ class PythonPillow(BasicPillow):
                 except Exception:
                     logging.exception('something went wrong processing change %s (%s)' % (change['seq'], change['id']))
 
-
     def processor(self, change, do_set_checkpoint=True):
         self.changes_seen += 1
-        self.change_queue.append(change)
         if self.use_chunking:
+            self.change_queue.append(change)
             if len(self.change_queue) > self.chunk_size:
                 self.process_chunk()
         else:
