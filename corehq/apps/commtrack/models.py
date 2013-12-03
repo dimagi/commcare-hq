@@ -19,6 +19,7 @@ from django.dispatch import receiver
 from corehq.apps.locations.signals import location_created, location_edited
 from corehq.apps.locations.models import Location
 from corehq.apps.commtrack.const import RequisitionActions, RequisitionStatus
+from corehq.apps.commtrack.exceptions import LinkedSupplyPointNotFoundError
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -418,10 +419,6 @@ def get_case_wrapper(data):
         const.SUPPLY_POINT_PRODUCT_CASE_TYPE: SupplyPointProductCase,
         const.REQUISITION_CASE_TYPE: RequisitionCase
     }.get(data.get('type'))
-
-
-class LinkedSupplyPointNotFoundError(Exception):
-    pass
 
 
 class SupplyPointCase(CommCareCase):
@@ -1049,28 +1046,26 @@ class StockReport(object):
 class CommTrackUser(CommCareUser):
     @classmethod
     def wrap(cls, data):
-        try:
-            instance = super(CommTrackUser, cls).wrap(data)
-            # lazy migration from commtrack_location to locations
-            if 'commtrack_location' in data:
-                original_location = data['commtrack_location']
-                del data['commtrack_location']
-                try:
-                    instance.set_locations([Location.get(original_location)])
-                except ResourceNotFound:
-                    # if there was bad data in there before, we can ignore it
-                    pass
+        instance = super(CommTrackUser, cls).wrap(data)
+        # lazy migration from commtrack_location to locations
+        if 'commtrack_location' in data:
+            original_location = data['commtrack_location']
+            del data['commtrack_location']
+            try:
+                original_location_object = Location.get(original_location)
+            except ResourceNotFound:
+                # if there was bad data in there before, we can ignore it
+                return instance
+            instance.set_locations([original_location_object])
 
-            return instance
-        except Exception, e:
-            import bpdb; bpdb.set_trace()
+        return instance
 
     @classmethod
     def by_domain(cls, domain, is_active=True, reduce=False, limit=None, skip=0, strict=False, doc_type=None):
         doc_type = doc_type or 'CommCareUser'
         return super(CommTrackUser, cls).by_domain(domain, is_active, reduce, limit, skip, strict, doc_type)
 
-    def location_map_case(self):
+    def get_location_map_case(self):
         try:
             return CommCareCase.get('user-owner-mapping-' + self._id)
         except ResourceNotFound:
@@ -1086,7 +1081,7 @@ class CommTrackUser(CommCareUser):
 
     @property
     def locations(self):
-        mapping = self.location_map_case()
+        mapping = self.get_location_map_case()
 
         if mapping:
             return [SupplyPointCase.wrap(index.referenced_case.to_json()).location for index in mapping.indices]
@@ -1114,7 +1109,7 @@ class CommTrackUser(CommCareUser):
         submit_mapping_case_block(self, self.supply_point_index_mapping(sp))
 
     def clear_locations(self):
-        mapping = self.location_map_case()
+        mapping = self.get_location_map_case()
         if mapping:
             mapping.delete()
 
@@ -1145,7 +1140,7 @@ class CommTrackUser(CommCareUser):
     def remove_location(self, location):
         sp = SupplyPointCase.get_by_location(location)
 
-        mapping = self.location_map_case()
+        mapping = self.get_location_map_case()
 
         if mapping:
             caseblock = CaseBlock(

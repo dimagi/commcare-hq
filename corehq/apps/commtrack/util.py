@@ -209,7 +209,7 @@ def num_periods_late(product_case, schedule, *schedule_args):
     return bisect.bisect_right(stream, stream.normalize(last_reported))
 
 def submit_mapping_case_block(user, index):
-    mapping = user.location_map_case()
+    mapping = user.get_location_map_case()
 
     if mapping:
         caseblock = CaseBlock(
