@@ -415,13 +415,14 @@ class SuiteGenerator(object):
                 version=form.get_version(),
                 local=path,
                 remote=path,
-                descriptor=u"User Registration Form",
             )
             if form_stuff['type'] == 'module_form' and LooseVersion(self.app.build_spec.version) >= '2.9':
                 resource.descriptor = u"Form: (Module {module_name}) - {form_name}".format(
                     module_name=trans(form_stuff["module"]["name"], langs=[self.app.default_language]),
                     form_name=trans(form["name"], langs=[self.app.default_language])
                 )
+            elif path == './user_registration.xml':
+                resource.descriptor=u"User Registration Form"
             this_list.append(resource)
         for x in first:
             yield x
