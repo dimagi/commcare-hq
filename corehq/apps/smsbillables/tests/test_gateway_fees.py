@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from corehq.apps.accounting import generator as gen_accounting
+# from corehq.apps.accounting import generator as gen_accounting
 from corehq.apps.sms.models import SMSLog
 from corehq.apps.sms.util import get_available_backends
 from corehq.apps.smsbillables.models import *
@@ -10,7 +10,7 @@ from corehq.apps.smsbillables import generator
 class TestGatewayFee(TestCase):
 
     def setUp(self):
-        self.currency_usd = gen_accounting.currency_usd()
+        # self.currency_usd = gen_accounting.currency_usd()
         self.available_backends = get_available_backends().values()
 
         self.least_specific_fees = generator.arbitrary_fees_by_direction_and_backend()
@@ -56,6 +56,6 @@ class TestGatewayFee(TestCase):
         SmsGatewayFeeCriteria.objects.all().delete()
         SmsUsageFee.objects.all().delete()
         SmsUsageFeeCriteria.objects.all().delete()
-        self.currency_usd.delete()
+        # self.currency_usd.delete()
         for log in SMSLog.by_domain_asc(generator.TEST_DOMAIN):
             log.delete()
