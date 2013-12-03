@@ -322,7 +322,7 @@
                         </div>
                         <div class="accordion-body collapse">
                             <div class="accordion-inner">
-                                <label class="checkbox">
+                                <label class="checkbox" data-bind="visible: allow_media_install">
                                     <input type="checkbox" data-bind="checked: include_media, enable: mm_supported()">
                                     {% trans "Include Multimedia" %}
                                     <span data-bind="visible: !mm_supported()" class="label">
@@ -376,7 +376,7 @@
                                         <div class="tab-content" data-bind="foreach: [short_url(), short_odk_url()]">
                                             <div class="tab-pane">
                                                 <div data-bind="visible: $data">
-                                                    <label class="checkbox" data-bind="visible: $parent.short_odk_media_url && $index() === 1">
+                                                    <label class="checkbox" data-bind="visible: $parent.allow_media_install && $parent.get_short_odk_url && $index() === 1">
                                                         <input type="checkbox" data-bind="checked: $parent.include_media, enable: $parent.mm_supported()">
                                                         {% trans "Include Multimedia" %}
                                                         <span data-bind="visible: !$parent.mm_supported()" class="label">
