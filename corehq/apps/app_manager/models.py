@@ -54,6 +54,7 @@ from corehq.apps.app_manager import current_builds, app_strings, remote_app
 from corehq.apps.app_manager import fixtures, suite_xml, commcare_settings, build_error_utils
 from corehq.apps.app_manager.util import split_path, save_xform, get_correct_app_class
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml
+from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from .exceptions import AppError, VersioningError, XFormError, XFormValidationError
 
 
@@ -476,13 +477,22 @@ class FormBase(DocumentSchema):
         self.source = source
 
     def default_name(self):
-        return self.name[self.get_app().default_language]
+        return trans(
+            self.name,
+            [self.get_app().default_language] + self.build_langs,
+            include_lang=False
+        )
 
     @property
     def full_path_name(self):
+        module_name = trans(
+            self.get_module().name,
+            [self.get_app().default_language] + self.build_langs,
+            include_lang=False
+        )
         return "%(app_name)s > %(module_name)s > %(form_name)s" % {
             'app_name': self.get_app().name,
-            'module_name': self.get_module().name[self.get_app().default_language],
+            'module_name': module_name,
             'form_name': self.default_name()
         }
 
