@@ -54,8 +54,17 @@ API_LIST = (
         ReportResource,
     )),
     ((0, 5), (
+        v0_4.ApplicationResource,
+        v0_4.CommCareCaseResource,
+        v0_4.XFormInstanceResource,
+        v0_4.RepeaterResource,
+        v0_4.SingleSignOnResource,
+        v0_4.HOPECaseResource,
         v0_5.CommCareUserResource,
         v0_5.WebUserResource,
+        v0_5.GroupResource,
+        FixtureResource,
+        ReportResource,
     ))
 )
 

@@ -1035,3 +1035,88 @@ class TestSingleSignOnResource(APIResourceTest):
         response = self.client.post(self.list_endpoint, {'username': self.username})
         self.assertEqual(response.status_code, 400)
 
+class TestGroupResource(APIResourceTest):
+
+    resource = v0_5.GroupResource
+    api_name = 'v0.5'
+
+    def test_get_list(self):
+        self.client.login(username=self.username, password=self.password)
+
+        group = Group({"name": "test", "domain": self.domain.name})
+        group.save()
+        backend_id = group.get_id
+
+        response = self.client.get(self.list_endpoint)
+        self.assertEqual(response.status_code, 200)
+
+        api_groups = simplejson.loads(response.content)['objects']
+        self.assertEqual(len(api_groups), 1)
+        self.assertEqual(api_groups[0]['id'], backend_id)
+
+        group.delete()
+
+    def test_get_single(self):
+        self.client.login(username=self.username, password=self.password)
+
+        group = Group({"name": "test", "domain": self.domain.name})
+        group.save()
+        backend_id = group.get_id
+
+        response = self.client.get(self.single_endpoint(backend_id))
+        self.assertEqual(response.status_code, 200)
+
+        api_groups = simplejson.loads(response.content)
+        self.assertEqual(api_groups['id'], backend_id)
+
+    def test_create(self):
+        self.client.login(username=self.username, password=self.password)
+
+        self.assertEqual(0, len(Group.by_domain(self.domain.name)))
+
+        group_json = {
+            "case_sharing": True,
+            "metadata": {
+                "localization": "Ghana"
+            },
+            "name": "test group",
+            "reporting": True,
+        }
+        response = self.client.post(self.list_endpoint,
+                                    simplejson.dumps(group_json),
+                                    content_type='application/json')
+        self.assertEqual(response.status_code, 201)
+        [group_back] = Group.by_domain(self.domain.name)
+        self.assertEqual(group_back.name, "test group")
+        self.assertTrue(group_back.reporting)
+        self.assertTrue(group_back.case_sharing)
+        self.assertEqual(group_back.metadata["localization"], "Ghana")
+        group_back.delete()
+
+    def test_update(self):
+        self.client.login(username=self.username, password=self.password)
+
+        group = Group({"name": "test", "domain": self.domain.name})
+        group.save()
+
+        group_json =  {
+            "case_sharing": True,
+            "metadata": {
+                "localization": "Ghana"
+            },
+            "name": "test group",
+            "reporting": True,
+        }
+
+        backend_id = group._id
+        response = self.client.put(self.single_endpoint(backend_id),
+                                   simplejson.dumps(group_json),
+                                   content_type='application/json')
+        self.assertEqual(response.status_code, 204, response.content)
+        self.assertEqual(1, len(Group.by_domain(self.domain.name)))
+        modified = Group.get(backend_id)
+        self.assertEqual(modified.name, "test group")
+        self.assertTrue(modified.reporting)
+        self.assertTrue(modified.case_sharing)
+        self.assertEqual(modified.metadata["localization"], "Ghana")
+        modified.delete()
