@@ -4,14 +4,13 @@ from eulxml.xmlmap.fields import StringListField
 from lxml import etree
 from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, NodeField
 from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK
-from corehq.apps.app_manager.xml_utils import CaseIDXPath, session_var, CaseTypeXpath
 from corehq.apps.hqmedia.models import HQMediaMapItem
 from .exceptions import MediaResourceError, ParentModuleReferenceError, SuiteValidationError
 from corehq.apps.app_manager.util import split_path, create_temp_sort_column
 from corehq.apps.app_manager.xform import SESSION_CASE_ID, autoset_owner_id_for_open_case, autoset_owner_id_for_subcase
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_url_base
-from .xpath import dot_interpolate
+from .xpath import dot_interpolate, CaseIDXPath, session_var, CaseTypeXpath
 
 FIELD_TYPE_INDICATOR = 'indicator'
 FIELD_TYPE_PROPERTY = 'property'
