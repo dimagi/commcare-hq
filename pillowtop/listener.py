@@ -97,6 +97,7 @@ class BasicPillow(object):
     document_class = None  # couchdbkit Document class
     changes_seen = 0
     couch_db = None
+    include_docs = True
 
     def __init__(self, couch_db=None, document_class=None):
         if document_class:
@@ -116,7 +117,7 @@ class BasicPillow(object):
         http://couchdbkit.org/docs/changes.html
         """
         with ChangesStream(self.couch_db, feed='continuous', heartbeat=True, since=self.since,
-                           filter=self.couch_filter, include_docs=True, **self.extra_args) as st:
+                           filter=self.couch_filter, include_docs=self.include_docs, **self.extra_args) as st:
             for c in st:
                 self.processor(c)
 
@@ -284,6 +285,7 @@ class PythonPillow(BasicPillow):
         self.chunk_size = chunk_size
         self.use_chunking = chunk_size > 0
         self.checkpoint_frequency = checkpoint_frequency
+        self.include_docs = False  # python pillows don't use include_docs
         if self.document_class:
             if self.use_chunking:
                 self.couch_db = CachedCouchDB(self.document_class.get_db().uri, readonly=False)
