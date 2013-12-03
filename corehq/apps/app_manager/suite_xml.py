@@ -415,6 +415,7 @@ class SuiteGenerator(object):
                 version=form.get_version(),
                 local=path,
                 remote=path,
+                descriptor=u"User Registration Form",
             )
             if form_stuff['type'] == 'module_form' and LooseVersion(self.app.build_spec.version) >= '2.9':
                 resource.descriptor = u"Form: (Module {module_name}) - {form_name}".format(
