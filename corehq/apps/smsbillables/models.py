@@ -69,8 +69,8 @@ class SmsBillable(models.Model):
     this billable to is_valid = False and it will not be used toward calculating the SmsLineItem in
     the monthly Invoice.
     """
-    gateway_fee = models.ForeignKey(SmsGatewayFee, blank=True, on_delete=models.PROTECT)
-    usage_fee = models.ForeignKey(SmsUsageFee, blank=True, on_delete=models.PROTECT)
+    gateway_fee = models.ForeignKey(SmsGatewayFee, null=True, on_delete=models.PROTECT)
+    usage_fee = models.ForeignKey(SmsUsageFee, null=True, on_delete=models.PROTECT)
     log_id = models.CharField(max_length=50)
     phone_number = models.CharField(max_length=50)
     api_response = models.TextField(blank=True)
