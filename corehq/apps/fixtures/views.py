@@ -258,7 +258,7 @@ def download_item_lists(request, domain):
     get_field_prop_format = lambda x, y: "field " + str(x) +" : property " + str(y) 
     for data_type in data_types_view:
         # Helpers to generate 'types' sheet
-        type_field_properties[data_type.name] = {}
+        type_field_properties[data_type.tag] = {}
         data_types_book.append(data_type)
         if len(data_type.fields) > max_fields:
             max_fields = len(data_type.fields)
@@ -270,14 +270,14 @@ def download_item_lists(request, domain):
             if len(field.properties) > 0:
                 for prop_index, property in enumerate(field.properties):
                     prop_key = get_field_prop_format(index + 1, prop_index + 1)
-                    type_field_properties[data_type.name][prop_key] = property
+                    type_field_properties[data_type.tag][prop_key] = property
         # Helpers to generate item-sheets
-        data_items_boook_by_type[data_type.name] = []
+        data_items_boook_by_type[data_type.tag] = []
         max_users = 0
         max_groups = 0
         max_field_prop_combos = {field_name: 0 for field_name in data_type.fields_without_attributes}
         for item_row in FixtureDataItem.by_data_type(domain, data_type.get_id):
-            data_items_boook_by_type[data_type.name].append(item_row)
+            data_items_boook_by_type[data_type.tag].append(item_row)
             group_len = len(item_row.get_groups())
             max_groups = group_len if group_len>max_groups else max_groups
             user_len = len(item_row.get_users())
@@ -292,11 +292,11 @@ def download_item_lists(request, domain):
             "max_groups": max_groups, 
             "max_field_prop_combos": max_field_prop_combos,
         }
-        item_helpers_by_type[data_type.name] = item_helpers
+        item_helpers_by_type[data_type.tag] = item_helpers
 
     # Prepare 'types' sheet data
     types_sheet = {"headers": [], "rows": []}
-    types_sheet["headers"] = ["UID", DELETE_HEADER, "name", "tag", 'is_global?']
+    types_sheet["headers"] = ["UID", DELETE_HEADER, "table_id", 'is_global?']
     types_sheet["headers"].extend(["field %d" % x for x in range(1, max_fields + 1)])
     field_prop_headers = []   
     for field_num, prop_num in enumerate(field_prop_count):
@@ -307,11 +307,11 @@ def download_item_lists(request, domain):
                 types_sheet["headers"].append(prop_key)
 
     for data_type in data_types_book:
-        common_vals = [str(_id_from_doc(data_type)), "N", data_type.name, data_type.tag, yesno(data_type.is_global)]
+        common_vals = [str(_id_from_doc(data_type)), "N", data_type.tag, yesno(data_type.is_global)]
         field_vals = [field.field_name for field in data_type.fields] + empty_padding_list(max_fields - len(data_type.fields))
         prop_vals = []
-        if type_field_properties.has_key(data_type.name):
-            props = type_field_properties.get(data_type.name)
+        if type_field_properties.has_key(data_type.tag):
+            props = type_field_properties.get(data_type.tag)
             prop_vals.extend([props.get(key, "") for key in field_prop_headers])
         row = tuple(common_vals + field_vals + prop_vals)
         types_sheet["rows"].append(row)
@@ -319,12 +319,11 @@ def download_item_lists(request, domain):
     types_sheet["rows"] = tuple(types_sheet["rows"])
     types_sheet["headers"] = tuple(types_sheet["headers"])
     excel_sheets["types"] = types_sheet
-    print field_prop_count, type_field_properties, types_sheet
     
     # Prepare 'items' sheet data for each data-type
     for data_type in data_types_book:
         item_sheet = {"headers": [], "rows": []}
-        item_helpers = item_helpers_by_type[data_type.name]
+        item_helpers = item_helpers_by_type[data_type.tag]
         max_users = item_helpers["max_users"]
         max_groups = item_helpers["max_groups"]
         max_field_prop_combos = item_helpers["max_field_prop_combos"]
@@ -352,8 +351,8 @@ def download_item_lists(request, domain):
         item_sheet["headers"] = tuple(
             common_headers + field_headers + user_headers + group_headers
         )
-        excel_sheets[data_type.name] = item_sheet
-        for item_row in data_items_boook_by_type[data_type.name]:
+        excel_sheets[data_type.tag] = item_sheet
+        for item_row in data_items_boook_by_type[data_type.tag]:
             common_vals = [str(_id_from_doc(item_row)), "N"]
             user_vals = [user.raw_username for user in item_row.get_users()] + empty_padding_list(max_users - len(item_row.get_users()))
             group_vals = [group.name for group in item_row.get_groups()] + empty_padding_list(max_groups - len(item_row.get_groups()))
@@ -377,13 +376,13 @@ def download_item_lists(request, domain):
             )
             item_sheet["rows"].append(row)
         item_sheet["rows"] = tuple(item_sheet["rows"])
-        excel_sheets[data_type.name] = item_sheet
+        excel_sheets[data_type.tag] = item_sheet
 
     header_groups = [("types", excel_sheets["types"]["headers"])]
     value_groups = [("types", excel_sheets["types"]["rows"])]
     for data_type in data_types_book:
-        header_groups.append((data_type.tag, excel_sheets[data_type.name]["headers"]))
-        value_groups.append((data_type.tag, excel_sheets[data_type.name]["rows"]))
+        header_groups.append((data_type.tag, excel_sheets[data_type.tag]["headers"]))
+        value_groups.append((data_type.tag, excel_sheets[data_type.tag]["rows"]))
 
     fd, path = tempfile.mkstemp()
     with os.fdopen(fd, 'w') as temp:
@@ -579,7 +578,6 @@ def run_upload(request, domain, workbook):
             new_data_type = FixtureDataType(
                 domain=domain,
                 is_global=dt.get('is_global', False),
-                name=_get_or_raise(dt, 'name'),
                 tag=_get_or_raise(dt, 'tag'),
                 fields=type_fields_with_properties,
             )
