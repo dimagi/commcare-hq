@@ -242,13 +242,6 @@ class Invoice(models.Model):
     date_end = models.DateField()
 
     @property
-    def line_items(self):
-        """
-        All the LineItems related to this Invoice.
-        """
-        return LineItem.objects.filter(invoice=self.id)
-
-    @property
     def credit_adjustments(self):
         """
         All CreditAdjustments that reference this Invoice as the adjuster.
@@ -261,7 +254,7 @@ class Invoice(models.Model):
         """
         This will be inserted in the subtotal field on the printed invoice.
         """
-        return sum([l.total for l in self.line_items])
+        return self.lineitem_set.aggregate(models.Sum('total'))
 
     @property
     def applied_tax(self):
