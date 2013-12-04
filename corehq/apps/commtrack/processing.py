@@ -5,6 +5,8 @@ from corehq.apps.commtrack import const
 import collections
 from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.commtrack.xmlutil import XML
+from casexml.apps.case.models import CommCareCaseAction
+from casexml.apps.case.xml.parser import AbstractAction
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
@@ -42,9 +44,14 @@ def process_stock(sender, xform, config=None, **kwargs):
                                               include_docs=True)
     supply_point_product_subcases = dict((sp._id, product_subcases(sp)) for sp in supply_point_cases)
 
-
     user_id = xform.form['meta']['userID']
     submit_time = xform['received_on']
+
+    # touch the supply point cases
+    for spc in supply_point_cases:
+        case_action = CommCareCaseAction.from_parsed_action(submit_time, user_id, xform, AbstractAction('commtrack'))
+        spc.actions.append(case_action)
+        spc.save()
 
     post_processed_transactions = []
     E = XML(ns=COMMTRACK_LEGACY_REPORT_XMLNS)
