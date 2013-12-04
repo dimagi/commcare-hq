@@ -169,6 +169,7 @@ class SmsBillable(models.Model):
     the monthly Invoice.
     """
     gateway_fee = models.ForeignKey(SmsGatewayFee, null=True, on_delete=models.PROTECT)
+    gateway_fee_conversion_rate = models.DecimalField(default=1.0, null=True, max_digits=10, decimal_places=9)
     usage_fee = models.ForeignKey(SmsUsageFee, null=True, on_delete=models.PROTECT)
     log_id = models.CharField(max_length=50)
     phone_number = models.CharField(max_length=50)
@@ -220,6 +221,11 @@ class SmsBillable(models.Model):
         billable.gateway_fee = SmsGatewayFee.get_by_criteria(
             backend_api_id, direction, backend_instance=backend_instance, country_code=country_code
         )
+        conversion_rate = billable.gateway_fee.currency.rate_to_usd
+        if conversion_rate != 0:
+            # If the conversion rate is ever 0, something happened with the Currency API and we should
+            # flag appropriately.
+            billable.gateway_fee_conversion_rate = conversion_rate
 
         # Fetch usage_fee todo
         domain = message_log.domain
