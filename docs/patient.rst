@@ -5,8 +5,6 @@ When in the reports in patient.py, it presents you an EMR like view with multipl
 
 a pact patient is a case.
 
-info
-====
 
 demographic info
 ================
