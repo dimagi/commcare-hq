@@ -4,7 +4,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 
 from corehq.apps.accounting import models as accounting
-#from corehq.apps.accounting.models import Currency
+from corehq.apps.accounting.models import Currency
 from corehq.apps.sms.models import DIRECTION_CHOICES
 from corehq.apps.sms.util import clean_phone_number
 
@@ -60,20 +60,19 @@ class SmsGatewayFee(models.Model):
     """
     criteria = models.ForeignKey(SmsGatewayFeeCriteria, on_delete=models.PROTECT)
     amount = models.DecimalField(default=0.0, max_digits=10, decimal_places=4)
-    # todo hook back in with accounting when the time comes
-    #currency = models.ForeignKey(accounting.Currency, on_delete=models.PROTECT)
+    currency = models.ForeignKey(accounting.Currency, on_delete=models.PROTECT)
     date_created = models.DateField(auto_now_add=True)
 
     @classmethod
     def create_new(cls, backend_api_id, direction, amount,
                    currency=None, backend_instance=None, country_code=None, save=True):
-        #currency = currency or Currency.get_default()
+        currency = currency or Currency.get_default()
         criteria, _ = SmsGatewayFeeCriteria.objects.get_or_create(
             backend_api_id=backend_api_id, direction=direction,
             backend_instance=backend_instance, country_code=country_code
         )
         new_fee = SmsGatewayFee(
-            #currency=currency,
+            currency=currency,
             amount=amount,
             criteria=criteria
         )
