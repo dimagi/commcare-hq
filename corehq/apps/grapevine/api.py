@@ -1,6 +1,7 @@
 import urllib2
 import urlparse
 from xml.etree import ElementTree
+from django.http import HttpResponse
 from tastypie.authentication import Authentication
 from tastypie.authorization import Authorization
 from tastypie.resources import Resource
@@ -12,7 +13,6 @@ from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.sms.mixin import SMSBackend
 from couchdbkit.ext.django.schema import *
 from xml.sax.saxutils import escape, unescape
-from corehq.apps.sms.api import incoming as incoming_sms
 from django.conf import settings
 import logging
 
@@ -203,3 +203,9 @@ class GrapevineResource(Resource):
             incoming_sms_async.delay(bundle.obj.phonenumber, bundle.obj.text, GrapevineBackend.get_api_id())
 
         return bundle
+
+    def post_list(self, request, **kwargs):
+        super(GrapevineResource, self).post_list(request, **kwargs)
+        # respond with 200 OK instead of 201 CREATED
+        return HttpResponse()
+
