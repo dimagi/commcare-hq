@@ -1120,6 +1120,9 @@ class CommTrackUser(CommCareUser):
     def set_locations(self, locations):
         self.clear_locations()
 
+        if not locations:
+            return
+
         index = {}
         for location in locations:
             sp = SupplyPointCase.get_by_location(location)
