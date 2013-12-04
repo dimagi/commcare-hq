@@ -1704,9 +1704,8 @@ def download_file(req, domain, app_id, path):
 
     try:
         assert req.app.copy_of
-        obj = CachedObject('{primary}-{secondary}:{path}'.format(
-            primary=app_id,
-            secondary=req.app._id,
+        obj = CachedObject('{id}::{path}'.format(
+            id=req.app._id,
             path=full_path,
         ))
         if not obj.is_cached():
