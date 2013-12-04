@@ -59,6 +59,18 @@ class LocationsTest(CommTrackTest):
         self.check_supply_point(user, sp._id, False)
         self.assertEqual(len(user.locations), 1)
 
+    def test_location_removal_only_submits_if_it_existed(self):
+        user = self.reporters['fixed']
+
+        # can't test with the original since the user already owns it
+        loc = make_loc('secondloc')
+        make_supply_point(self.domain, loc)
+
+        with patch('corehq.apps.commtrack.models.CommTrackUser.submit_location_block') as submit_blocks:
+            user.remove_location(loc)
+            self.assertEqual(submit_blocks.call_count, 0)
+
+
     def test_can_clear_locations(self):
         user = self.reporters['fixed']
         user.clear_locations()

@@ -1158,7 +1158,7 @@ class CommTrackUser(CommCareUser):
 
         mapping = self.get_location_map_case()
 
-        if mapping:
+        if mapping and location._id in [loc._id for loc in self.locations]:
             caseblock = CaseBlock(
                 create=False,
                 case_id=mapping._id,
