@@ -1,12 +1,14 @@
 import json
+from corehq.apps.app_manager.tests.util import add_build
 from corehq.apps.app_manager.util import add_odk_profile_after_build
 from dimagi.utils.decorators.memoized import memoized
 import os
 
 from django.test import TestCase
 from corehq.apps.app_manager.models import Application, DetailColumn, import_app, APP_V1, ApplicationBase, Module
-from corehq.apps.builds.models import CommCareBuild, BuildSpec
+from corehq.apps.builds.models import BuildSpec
 from corehq.apps.domain.shortcuts import create_domain
+
 
 class AppManagerTest(TestCase):
     with open(os.path.join(os.path.dirname(__file__), "data", "itext_form.xml")) as f:
@@ -34,10 +36,6 @@ class AppManagerTest(TestCase):
         self.build1 = {'version': '1.2.dev', 'build_number': 7106}
         self.build2 = {'version': '2.7.0', 'build_number': 20655}
 
-        def add_build(version, build_number):
-            path = os.path.join(os.path.dirname(__file__), "jadjar")
-            jad_path = os.path.join(path, 'CommCare_%s_%s.zip' % (version, build_number))
-            CommCareBuild.create_from_zip(jad_path, version, build_number)
         add_build(**self.build1)
         add_build(**self.build2)
 

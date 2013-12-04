@@ -4,10 +4,13 @@ from django.http import Http404
 from django.utils import html
 from django.utils.safestring import mark_safe
 import pytz
+from corehq import Domain
 from corehq.apps import reports
 from corehq.apps.app_manager.models import get_app
+from corehq.apps.app_manager.util import ParentCasePropertyBuilder
 from corehq.apps.reports.display import xmlns_to_name
 from couchdbkit.ext.django.schema import *
+from corehq.apps.reports.exportfilters import form_matches_users
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
 from couchexport.models import SavedExportSchema, GroupExportConfiguration
 from couchexport.transforms import couch_to_excel_datetime, identity
@@ -505,7 +508,8 @@ class AppNotFound(Exception):
 
 class HQExportSchema(SavedExportSchema):
     doc_type = 'SavedExportSchema'
-    transform_dates = BooleanProperty(default=False)
+    domain = StringProperty()
+    transform_dates = BooleanProperty(default=True)
 
     @property
     def global_transform_function(self):
@@ -514,12 +518,19 @@ class HQExportSchema(SavedExportSchema):
         else:
             return identity
 
+    @classmethod
+    def wrap(cls, data):
+        if 'transform_dates' not in data:
+            data['transform_dates'] = False
+        self = super(HQExportSchema, cls).wrap(data)
+        if not self.domain:
+            self.domain = self.index[0]
+        return self
 
 class FormExportSchema(HQExportSchema):
     doc_type = 'SavedExportSchema'
     app_id = StringProperty()
     include_errors = BooleanProperty(default=False)
-
 
     @property
     @memoized
@@ -548,8 +559,9 @@ class FormExportSchema(HQExportSchema):
 
     @property
     def filter(self):
-        f = SerializableFunction()
-
+        user_ids = set(CouchUser.ids_by_domain(self.domain))
+        user_ids.update(CouchUser.ids_by_domain(self.domain, is_active=False))
+        f = SerializableFunction(form_matches_users, users=user_ids)
         if self.app_id is not None:
             f.add(reports.util.app_export_filter, app_id=self.app_id)
         if not self.include_errors:
@@ -568,9 +580,16 @@ class FormExportSchema(HQExportSchema):
     def formname(self):
         return xmlns_to_name(self.domain, self.xmlns, app_id=self.app_id)
 
-    def get_default_order(self):
-        if not self.app:
-            return []
+    @property
+    @memoized
+    def question_order(self):
+        try:
+            if not self.app:
+                return []
+        except AppNotFound:
+            if settings.DEBUG:
+                return []
+            raise
         else:
             questions = self.app.get_questions(self.xmlns)
 
@@ -582,7 +601,10 @@ class FormExportSchema(HQExportSchema):
             index = '.'.join(index_parts[1:])
             order.append(index)
 
-        return {'#': order}
+        return order
+
+    def get_default_order(self):
+        return {'#': self.question_order}
 
 
 class FormDeidExportSchema(FormExportSchema):
@@ -595,6 +617,32 @@ class FormDeidExportSchema(FormExportSchema):
     def get_case(cls, doc, case_id):
         pass
 
+class CaseExportSchema(HQExportSchema):
+    doc_type = 'SavedExportSchema'
+
+    @property
+    def domain(self):
+        return self.index[0]
+
+    @property
+    def domain_obj(self):
+        return Domain.get_by_name(self.domain)
+
+    @property
+    def case_type(self):
+        return self.index[1]
+
+    @property
+    def applications(self):
+        return self.domain_obj.full_applications(include_builds=False)
+
+    @property
+    def case_properties(self):
+        props = set([])
+        for app in self.applications:
+            builder = ParentCasePropertyBuilder(app, ("name",))
+            props |= set(builder.get_properties(self.case_type))
+        return props
 
 class HQGroupExportConfiguration(GroupExportConfiguration):
     """

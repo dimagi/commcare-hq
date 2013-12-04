@@ -37,11 +37,7 @@ from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.django.database import get_unique_value
 
-from casexml.apps.case.xml import V2
-import uuid
-from xml.etree import ElementTree
-from corehq.apps.hqcase.utils import submit_case_blocks
-from couchdbkit.exceptions import ResourceConflict, MultipleResultsFound, NoResultFound
+from couchdbkit.exceptions import ResourceConflict, NoResultFound
 
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
@@ -101,6 +97,19 @@ class Permissions(DocumentSchema):
 
     view_reports = BooleanProperty(default=False)
     view_report_list = StringListProperty(default=[])
+
+    @classmethod
+    def wrap(cls, data):
+        # this is why you don't store module paths in the database...
+        MOVED_REPORT_MAPPING = {
+            'corehq.apps.reports.standard.inspect.CaseListReport': 'corehq.apps.reports.standard.cases.basic.CaseListReport'
+        }
+        reports = data.get('view_report_list', [])
+        for i, report_name in enumerate(reports):
+            if report_name in MOVED_REPORT_MAPPING:
+                reports[i] = MOVED_REPORT_MAPPING[report_name]
+
+        return super(Permissions, cls).wrap(data)
 
     def view_report(self, report, value=None):
         """Both a getter (when value=None) and setter (when value=True|False)"""
@@ -831,12 +840,13 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         return CouchUser.view("users/by_username", include_docs=True)
 
     @classmethod
-    def by_domain(cls, domain, is_active=True, reduce=False, limit=None, skip=0, strict=False):
+    def by_domain(cls, domain, is_active=True, reduce=False, limit=None, skip=0, strict=False, doc_type=None):
         flag = "active" if is_active else "inactive"
+        doc_type = doc_type or cls.__name__
         if cls.__name__ == "CouchUser":
             key = [flag, domain]
         else:
-            key = [flag, domain, cls.__name__]
+            key = [flag, domain, doc_type]
         extra_args = dict()
         if not reduce:
             extra_args.update(include_docs=True)
@@ -953,6 +963,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
                 source.has_key('commcare_accounts') and \
                 source.has_key('web_accounts'):
             from . import old_couch_user_models
+            # todo: remove this functionality and the old user models module
+            logging.error('still accessing old user models')
             user_id = old_couch_user_models.CouchUser.wrap(source).default_account.login_id
             return cls.get_by_user_id(user_id)
         else:
@@ -1121,6 +1133,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
                 return [to_function(m).name for m in models]
             return models
         except AttributeError:
+            # todo: what is this here for? we should really be catching something
+            # more specific and the try/catch should be more isolated.
             return []
 
     def get_exportable_reports(self, domain=None):
@@ -1536,7 +1550,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         return lang
 
     def __repr__(self):
-        return ("CommCareUser(username={self.username!r})".format(self=self))
+        return ("{class_name}(username={self.username!r})".format(
+            class_name=self.__class__.__name__,
+            self=self
+        ))
 
 
 class OrgMembershipMixin(DocumentSchema):

@@ -1,0 +1,94 @@
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms"
+	xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	xmlns:jr="http://openrosa.org/javarosa">
+	<h:head>
+		<h:title>Edit Careplan Task</h:title>
+		<model>
+			<instance>
+				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
+					xmlns="http://dev.commcarehq.org/careplan/task/update"
+					uiVersion="1" version="1" name="Edit Careplan Task">
+					<task_complete />
+					<progress_group>
+						<progress_made>yes</progress_made>
+						<progress_update />
+					</progress_group>
+					<date_followup />
+					
+				</data>
+			</instance>
+
+			<bind nodeset="/data/task_complete" required="true()" />
+			<bind nodeset="/data/progress_group" relevant="/data/task_complete = 'no'"/>
+			<bind nodeset="/data/progress_group/progress_made" required="true()" />
+			<bind nodeset="/data/progress_group/progress_update" type="xsd:string"
+				relevant="/data/progress_group/progress_made = 'yes'" required="true()" />
+			<bind nodeset="/data/date_followup" type="xsd:date" relevant="/data/task_complete = 'no'" required="true()"/>
+
+			<itext>
+				<translation lang="en" default="">
+					<text id="task_complete-label">
+						<value>Has the task been completed?</value>
+					</text>
+					<text id="task_complete-yes-label">
+						<value>Yes</value>
+					</text>
+					<text id="task_complete-no-label">
+						<value>Not Yet</value>
+					</text>
+					<text id="progress_group-label">
+						<value>Progress</value>
+					</text>
+					<text id="progress_made-label">
+						<value>Has progress been made towards this goal?</value>
+					</text>
+					<text id="progress_made-yes-label">
+						<value>Yes</value>
+					</text>
+					<text id="progress_made-no-label">
+						<value>No</value>
+					</text>
+					<text id="progress_update-label">
+						<value>What's happened since the last update?</value>
+					</text>
+					<text id="date_followup-label">
+						<value>When will you follow up again about this task?</value>
+					</text>
+				</translation>
+			</itext>
+		</model>
+	</h:head>
+	<h:body>
+		<select1 ref="/data/task_complete">
+			<label ref="jr:itext('task_complete-label')" />
+			<item>
+				<label ref="jr:itext('task_complete-yes-label')" />
+				<value>yes</value>
+			</item>
+			<item>
+				<label ref="jr:itext('task_complete-no-label')" />
+				<value>no</value>
+			</item>
+		</select1>
+		<group ref="/data/progress_group" appearance="field-list">
+			<label ref="jr:itext('progress_group-label')" />
+			<select1 ref="/data/progress_group/progress_made">
+				<label ref="jr:itext('progress_made-label')" />
+				<item>
+					<label ref="jr:itext('progress_made-yes-label')" />
+					<value>yes</value>
+				</item>
+				<item>
+					<label ref="jr:itext('progress_made-no-label')" />
+					<value>no</value>
+				</item>
+			</select1>
+			<input ref="/data/progress_group/progress_update">
+				<label ref="jr:itext('progress_update-label')" />
+			</input>
+		</group>
+		<input ref="/data/date_followup">
+			<label ref="jr:itext('date_followup-label')" />
+		</input>
+	</h:body>
+</h:html>

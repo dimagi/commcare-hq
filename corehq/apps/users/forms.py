@@ -9,11 +9,11 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from django.template.loader import get_template
 from django.template import Context
-from corehq.apps.commtrack.helpers import set_commtrack_location
 from corehq.apps.locations.models import Location
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.app_manager.models import validate_lang
+from corehq.apps.commtrack.models import CommTrackUser
 import re
 
 
@@ -292,7 +292,9 @@ class CommtrackUserForm(forms.Form):
         self.fields['supply_point'].widget = SupplyPointSelectWidget(domain=domain)
 
     def save(self, user):
+        commtrack_user = CommTrackUser.wrap(user.to_json())
         location_id = self.cleaned_data['supply_point']
         if location_id:
             loc = Location.get(location_id)
-            set_commtrack_location(user, loc)
+            commtrack_user.clear_locations()
+            commtrack_user.add_location(loc)

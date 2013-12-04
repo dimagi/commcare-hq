@@ -213,6 +213,7 @@ HQ_APPS = (
     'corehq.apps.smsforms',
     'corehq.apps.ivr',
     'corehq.apps.tropo',
+    'corehq.apps.twilio',
     'corehq.apps.kookoo',
     'corehq.apps.sislog',
     'corehq.apps.yo',
@@ -397,6 +398,7 @@ FIXTURE_GENERATORS = [
     "corehq.apps.fixtures.fixturegenerators.item_lists",
     "corehq.apps.reportfixtures.fixturegenerators.indicators",
     "custom.bihar.reports.indicators.fixtures.generator",
+    "corehq.apps.commtrack.models.product_fixture_generator",
 ]
 
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
@@ -808,6 +810,7 @@ SMS_LOADED_BACKENDS = [
     "corehq.apps.sms.test_backend.TestSMSBackend",
     "corehq.apps.sms.backend.test.TestBackend",
     "corehq.apps.grapevine.api.GrapevineBackend",
+    "corehq.apps.twilio.models.TwilioBackend",
 ]
 
 # These are functions that can be called to retrieve custom content in a reminder event.

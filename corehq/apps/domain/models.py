@@ -222,7 +222,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     # domain metadata
     project_type = StringProperty() # e.g. MCH, HIV
     customer_type = StringProperty() # plus, full, etc.
-    is_test = BooleanProperty(default=True)
+    is_test = StringProperty(choices=["true", "false", "none"], default="none")
     description = StringProperty()
     short_description = StringProperty()
     is_shared = BooleanProperty(default=False)
@@ -319,6 +319,10 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         if 'slug' in data and data["slug"]:
             data["hr_name"] = data["slug"]
             del data["slug"]
+
+        if 'is_test' in data and isinstance(data["is_test"], bool):
+            data["is_test"] = "true" if data["is_test"] else "false"
+            should_save = True
 
         self = super(Domain, cls).wrap(data)
         if self.deployment is None:
@@ -599,7 +603,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         new_domain.cda.type = None
         new_domain.cda.user_id = None
         new_domain.cda.user_ip = None
-        new_domain.is_test = True
+        new_domain.is_test = "none"
         new_domain.internal = InternalProperties()
         new_domain.creating_user = user.username if user else None
 

@@ -1,19 +1,19 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <suite>
   <xform>
-    <resource id="29ebcedf7f9fa2f9ece004272f88abe64b940131" version="149">
+    <resource id="29ebcedf7f9fa2f9ece004272f88abe64b940131">
       <location authority="local">./modules-0/forms-0.xml</location>
       <location authority="remote">./modules-0/forms-0.xml</location>
     </resource>
   </xform>
   <xform>
-    <resource id="a3a8f7f25ad392648b2db1f0e4b35969180cbfa" version="44">
+    <resource id="a3a8f7f25ad392648b2db1f0e4b35969180cbfa">
       <location authority="local">./modules-0/forms-1.xml</location>
       <location authority="remote">./modules-0/forms-1.xml</location>
     </resource>
   </xform>
   <xform>
-    <resource id="fc9e6fa0209dc903b6065e2573ad82b03aaaf2bf" version="152">
+    <resource id="fc9e6fa0209dc903b6065e2573ad82b03aaaf2bf">
       <location authority="local">./modules-1/forms-0.xml</location>
       <location authority="remote">./modules-1/forms-0.xml</location>
     </resource>

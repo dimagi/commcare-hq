@@ -742,7 +742,9 @@ var DetailScreenConfig = (function () {
             var $sortRowsHome = $('#' + type + '-detail-screen-sort');
             var $parentSelectHome = $('#' + type + '-detail-screen-parent');
             ko.applyBindings(ds.sortRows, $sortRowsHome.get(0));
-            ko.applyBindings(ds.parentSelect, $parentSelectHome.get(0));
+            if ($parentSelectHome.get(0)){
+                ko.applyBindings(ds.parentSelect, $parentSelectHome.get(0));
+            }
             $parentSelectHome.on('change', '*', function () {
                 ds.screens[0].fire('change');
             });

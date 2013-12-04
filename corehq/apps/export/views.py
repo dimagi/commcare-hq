@@ -12,11 +12,11 @@ from corehq.apps.reports.standard.export import ExcelExportReport, CaseExportRep
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-from couchexport.models import SavedExportSchema
+from couchexport.models import SavedExportSchema, ExportSchema
 from couchexport.schema import build_latest_schema
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop
-from dimagi.utils.web import json_request, json_response
+from dimagi.utils.web import json_response
 
 require_form_export_permission = require_permission(
     Permissions.view_report,
@@ -94,6 +94,9 @@ class BaseCreateCustomExportView(BaseExportView):
 
         schema = build_latest_schema(export_tag)
 
+        if not schema and self.export_helper.export_type == "form":
+            schema = create_basic_form_checkpoint(export_tag)
+
         if schema:
             app_id = request.GET.get('app_id')
             self.export_helper.custom_export = self.export_helper.ExportSchemaClass.default(
@@ -105,7 +108,7 @@ class BaseCreateCustomExportView(BaseExportView):
                 ),
                 type=self.export_helper.export_type
             )
-            if self.export_helper.export_type == 'form':
+            if self.export_helper.export_type in ['form', 'case']:
                 self.export_helper.custom_export.app_id = app_id
             return super(BaseCreateCustomExportView, self).get(request, *args, **kwargs)
 
@@ -181,3 +184,53 @@ class DeleteCustomExportView(BaseModifyCustomExportView):
         messages.success(request, _("Custom export was deleted."))
         return super(DeleteCustomExportView, self).post(request, *args, **kwargs)
 
+BASIC_FORM_SCHEMA = {
+    "doc_type": "string",
+    "domain": "string",
+    "xmlns": "string",
+    "form": {
+        "@xmlns": "string",
+        "@uiVersion": "string",
+        "@name": "string",
+        "#type": "string",
+        "meta": {
+            "@xmlns": "string",
+            "username": "string",
+            "instanceID": "string",
+            "userID": "string",
+            "timeEnd": "string",
+            "appVersion": {
+                "@xmlns": "string",
+                "#text": "string"
+            },
+            "timeStart": "string",
+            "deviceID": "string"
+        },
+        "@version": "string"
+    },
+    "partial_submission": "string",
+    "_rev": "string",
+    "#export_tag": [
+       "string"
+    ],
+    "received_on": "string",
+    "app_id": "string",
+    "last_sync_token": "string",
+    "submit_ip": "string",
+    "computed_": {
+    },
+    "openrosa_headers": {
+       "HTTP_DATE": "string",
+       "HTTP_ACCEPT_LANGUAGE": "string",
+       "HTTP_X_OPENROSA_VERSION": "string"
+    },
+    "date_header": "string",
+    "path": "string",
+    "computed_modified_on_": "string",
+    "_id": "string"
+}
+
+def create_basic_form_checkpoint(index):
+    checkpoint = ExportSchema(seq="0", schema=BASIC_FORM_SCHEMA, timestamp=datetime.utcnow(), index=index)
+    checkpoint.save()
+    return checkpoint

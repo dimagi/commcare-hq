@@ -1,12 +1,14 @@
 import json
 from corehq.apps.reports.standard import export
-from corehq.apps.reports.models import FormExportSchema, HQGroupExportConfiguration, HQExportSchema
+from corehq.apps.reports.models import FormExportSchema, HQGroupExportConfiguration, CaseExportSchema
 from corehq.apps.reports.standard.export import DeidExportReport
-from couchexport.models import SavedExportSchema, ExportTable, ExportSchema
+from couchexport.models import ExportTable, ExportSchema, ExportColumn
 from django.utils.translation import ugettext as _
 from dimagi.utils.decorators.memoized import memoized
-from couchexport.transforms import couch_to_excel_datetime
-from couchexport.util import SerializableFunction
+
+
+USERNAME_TRANSFORM = 'corehq.apps.export.transforms.user_id_to_username'
+OWNERNAME_TRANSFORM = 'corehq.apps.export.transforms.owner_id_to_display'
 
 
 class AbstractProperty(object):
@@ -39,6 +41,9 @@ class CustomExportHelper(object):
     def update_custom_params(self):
         pass
 
+    def format_config_for_javascript(self, table_configuration):
+        return table_configuration
+
     class DEID(object):
         options = (
             ('', ''),
@@ -53,6 +58,7 @@ class CustomExportHelper(object):
         self.domain = domain
         self.presave = False
         self.transform_dates = False
+        self.creating_new_export = not bool(export_id)
 
         if export_id:
             self.custom_export = self.ExportSchemaClass.get(export_id)
@@ -122,7 +128,7 @@ class CustomExportHelper(object):
             HQGroupExportConfiguration.remove_custom_export(self.domain, self.custom_export.get_id)
 
     def get_context(self):
-        table_configuration = self.custom_export.table_configuration
+        table_configuration = self.format_config_for_javascript(self.custom_export.table_configuration)
         return {
             'custom_export': self.custom_export,
             'default_order': self.default_order,
@@ -149,6 +155,9 @@ class FormCustomExportHelper(CustomExportHelper):
     allow_deid = True
     allow_repeats = True
 
+    default_questions = ["form.case.@case_id", "form.meta.timeEnd", "_id", "id", "form.meta.username"]
+    questions_to_show = default_questions + ["form.meta.timeStart", "received_on"]
+
     @property
     def export_title(self):
         return _('Export Submissions to Excel')
@@ -169,17 +178,166 @@ class FormCustomExportHelper(CustomExportHelper):
     def default_order(self):
         return self.custom_export.get_default_order()
 
+    def update_table_conf_with_questions(self, table_conf):
+        column_conf = table_conf[0].get("column_configuration", [])
+        current_questions = set(self.custom_export.question_order)
+        remaining_questions = current_questions.copy()
+
+        def is_special_type(q):
+            return any([q.startswith('form.#'), q.startswith('form.@'), q.startswith('form.case.'),
+                        q.startswith('form.meta.'), q.startswith('form.subcase_')])
+
+        for col in column_conf:
+            question = col["index"]
+            if question in remaining_questions:
+                remaining_questions.discard(question)
+                col["show"] = True
+            if question.startswith("form.") and not is_special_type(question) and question not in current_questions:
+                col["tag"] = "deleted"
+                col["show"] = False
+            if question in self.questions_to_show:
+                col["show"] = True
+            if self.creating_new_export and (question in self.default_questions or question in current_questions):
+                col["selected"] = True
+
+        column_conf.extend([
+            ExportColumn(
+                index=q,
+                display='',
+                show=True,
+            ).to_config_format(selected=self.creating_new_export)
+            for q in remaining_questions
+        ])
+
+        # show all questions in repeat groups by default
+        for conf in table_conf:
+            if conf["index"].startswith('#.form.'):
+                for col in conf.get("column_configuration", []):
+                    col["show"] = True
+
+
+        table_conf[0]["column_configuration"] = column_conf
+        return table_conf
+
+    def get_context(self):
+        ctxt = super(FormCustomExportHelper, self).get_context()
+        self.update_table_conf_with_questions(ctxt["table_configuration"])
+        return ctxt
+
+class CustomColumn(object):
+
+    def __init__(self, slug, index, display, transform, is_sensitive=False, tag=None):
+        self.slug = slug
+        self.index = index
+        self.display = display
+        self.transform = transform
+        self.is_sensitive = is_sensitive
+        self.tag = tag
+
+    def match(self, col):
+         return col['index'] == self.index and col['transform'] == self.transform
+
+    def format_for_javascript(self, col):
+        # this is js --> js conversion so the name is pretty bad
+        # couch --> javascript UI code
+        col['special'] = self.slug
+
+    def default_column(self):
+        # this is kinda hacky - mirrors ExportColumn.to_config_format to add custom columns
+        # to the existing export UI
+        return {
+            'index': self.index,
+            'selected': False,
+            'display': self.display,
+            'transform': self.transform,
+            "is_sensitive": self.is_sensitive,
+            'tag': self.tag,
+            'special': self.slug,
+            'show': False,
+        }
+
 
 class CaseCustomExportHelper(CustomExportHelper):
 
-    ExportSchemaClass = HQExportSchema
+    ExportSchemaClass = CaseExportSchema
     ExportReport = export.CaseExportReport
 
     export_type = 'case'
 
+    default_properties = ["_id", "closed", "closed_on", "modified_on", "opened_on", "info.owner_name", "id"]
+    default_transformed_properties = ["info.closed_by_username", "info.last_modified_by_username",
+                                      "info.opened_by_username", "info.owner_name"]
+    meta_properties = ["_id", "closed", "closed_by", "closed_on", "domain", "computed_modified_on_",
+                       "server_modified_on", "modified_on", "opened_by", "opened_on", "owner_id",
+                       "user_id", "type", "version", "external_id"]
+    server_properties = ["_rev", "doc_type", "-deletion_id", "initial_processing_complete"]
+    row_properties = ["id"]
+
     @property
     def export_title(self):
         return _('Export Cases, Referrals, and Users')
+
+    def format_config_for_javascript(self, table_configuration):
+        custom_columns = [
+            CustomColumn(slug='last_modified_by_username', index='user_id',
+                         display='info.last_modified_by_username', transform=USERNAME_TRANSFORM),
+            CustomColumn(slug='opened_by_username', index='opened_by',
+                         display='info.opened_by_username', transform=USERNAME_TRANSFORM),
+            CustomColumn(slug='closed_by_username', index='closed_by',
+                         display='info.closed_by_username', transform=USERNAME_TRANSFORM),
+            CustomColumn(slug='owner_name', index='owner_id', display='info.owner_name',
+                         transform=OWNERNAME_TRANSFORM),
+        ]
+        main_table_columns = table_configuration[0]['column_configuration']
+        for custom in custom_columns:
+            matches = filter(custom.match, main_table_columns)
+            if not matches:
+                main_table_columns.append(custom.default_column())
+            else:
+                for match in matches:
+                    custom.format_for_javascript(match)
+
+        return table_configuration
+
+    def update_table_conf(self, table_conf):
+        column_conf = table_conf[0].get("column_configuration", {})
+        current_properties = set(self.custom_export.case_properties)
+        remaining_properties = current_properties.copy()
+
+        def is_special_type(p):
+            return any([p in self.meta_properties, p in self.server_properties, p in self.row_properties])
+
+        for col in column_conf:
+            prop = col["index"]
+            display = col.get('display') or prop
+            if prop in remaining_properties:
+                remaining_properties.discard(prop)
+                col["show"] = True
+            if not is_special_type(prop) and prop not in current_properties:
+                col["tag"] = "deleted"
+                col["show"] = False
+            if prop in self.default_properties + list(current_properties) or \
+                            display in self.default_transformed_properties:
+                col["show"] = True
+                if self.creating_new_export:
+                    col["selected"] = True
+
+        column_conf.extend([
+            ExportColumn(
+                index=prop,
+                display='',
+                show=True,
+            ).to_config_format(selected=self.creating_new_export)
+            for prop in filter(lambda prop: not prop.startswith("parent/"), remaining_properties)
+        ])
+
+        table_conf[0]["column_configuration"] = column_conf
+        return table_conf
+
+    def get_context(self):
+        ctxt = super(CaseCustomExportHelper, self).get_context()
+        self.update_table_conf(ctxt["table_configuration"])
+        return ctxt
 
 
 CustomExportHelper.subclasses_map.update({
