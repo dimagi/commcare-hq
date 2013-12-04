@@ -6,9 +6,12 @@ from corehq.apps.groups.models import Group
 from corehq.apps.users.forms import CommCareAccountForm
 from corehq.apps.users.util import normalize_username, raw_username
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.domain.models import Domain
 from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.excel import flatten_json, json_to_headers, \
     alphanumeric_sort_key
+from corehq.apps.commtrack.util import get_supply_point, submit_mapping_case_block
+from corehq.apps.commtrack.models import CommTrackUser, SupplyPointCase
 
 
 class UserUploadError(Exception):
@@ -18,7 +21,7 @@ class UserUploadError(Exception):
 required_headers = set(['username'])
 allowed_headers = set(['password', 'phone-number', 'email', 'user_id', 'name', 'group', 'data', 'language']) | required_headers
 
-    
+
 def check_headers(user_specs):
     headers = set(user_specs.fieldnames)
 
@@ -95,10 +98,86 @@ class GroupMemoizer(object):
     def save_all(self):
         Group.bulk_save(self.groups)
 
+
 def _fmt_phone(phone_number):
     if phone_number and not isinstance(phone_number, basestring):
         phone_number = str(int(phone_number))
     return phone_number.lstrip("+")
+
+
+class LocationCache(object):
+    def __init__(self):
+        self.cache = {}
+
+    def get(self, site_code, domain):
+        if not site_code:
+            return None
+        if site_code in self.cache:
+            return self.cache[site_code]
+        else:
+            supply_point = get_supply_point(
+                domain,
+                site_code
+            )['case']
+            self.cache[site_code] = supply_point
+            return supply_point
+
+
+class UserLocMapping(object):
+    def __init__(self, username, domain, location_cache):
+        self.username = username
+        self.domain = domain
+        self.to_add = set()
+        self.to_remove = set()
+        self.location_cache = location_cache
+
+    def get_supply_point_from_location(self, sms_code):
+        return self.location_cache.get(sms_code, self.domain)
+
+    def save(self):
+        """
+        Calculate which locations need added or removed, then submit
+        one caseblock to handle this
+        """
+        user = CommTrackUser.wrap(CommTrackUser.get_by_username(self.username).to_json())
+        current_locations = user.locations
+        current_location_codes = [loc.site_code for loc in current_locations]
+
+        commit_list = {}
+        for loc in self.to_add:
+            if loc not in current_location_codes:
+                sp = self.get_supply_point_from_location(loc)
+                commit_list.update(user.supply_point_index_mapping(sp))
+
+        for loc in self.to_remove:
+            if loc in current_location_codes:
+                sp = self.get_supply_point_from_location(loc)
+                commit_list.update(user.supply_point_index_mapping(sp, True))
+
+        if commit_list:
+            submit_mapping_case_block(user, commit_list)
+
+
+def create_or_update_locations(domain, location_specs, log):
+    location_cache = LocationCache()
+    users = {}
+    for row in location_specs:
+        username = row.get('username')
+        location_code = row.get('location-sms-code')
+        if username in users:
+            user_mapping = users[username]
+        else:
+            user_mapping = UserLocMapping(username, domain, location_cache)
+            users[username] = user_mapping
+
+        if row.get('remove') == 'y':
+            user_mapping.to_remove.add(location_code)
+        else:
+            user_mapping.to_add.add(location_code)
+
+    for username, mapping in users.iteritems():
+        mapping.save()
+
 
 def create_or_update_groups(domain, group_specs, log):
     group_memoizer = GroupMemoizer(domain)
@@ -143,7 +222,7 @@ def create_or_update_groups(domain, group_specs, log):
     return group_memoizer
 
 
-def create_or_update_users_and_groups(domain, user_specs, group_specs):
+def create_or_update_users_and_groups(domain, user_specs, group_specs, location_specs):
     ret = {"errors": [], "rows": []}
     group_memoizer = create_or_update_groups(domain, group_specs, log=ret)
     usernames = set()
@@ -254,11 +333,13 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs):
 
                 except UserUploadError as e:
                     status_row['flag'] = '%s' % e
-                    
+
             ret["rows"].append(status_row)
     finally:
         group_memoizer.save_all()
-    
+
+    create_or_update_locations(domain, location_specs, log=ret)
+
     return ret
 
 
@@ -271,6 +352,22 @@ class GroupNameError(Exception):
         return "The following group ids have a blank name: %s." % (
             ', '.join([group.get_id for group in self.blank_groups])
         )
+
+
+def get_location_rows(domain):
+    users = CommTrackUser.by_domain(domain)
+
+    mappings = []
+    for user in users:
+        locations = user.locations
+        for location in locations:
+            mappings.append([
+                user.username,
+                location.site_code,
+                location.name
+            ])
+
+    return mappings
 
 
 def dump_users_and_groups(response, domain):
@@ -342,11 +439,19 @@ def dump_users_and_groups(response, domain):
         {'data': dict([(key, None) for key in group_data_keys])}
     ))
 
+    headers = [
+        ('users', [user_headers]),
+        ('groups', [group_headers]),
+    ]
+
+    commtrack_enabled = Domain.get_by_name(domain).commtrack_enabled
+    if commtrack_enabled:
+        headers.append(
+            ('locations', [['username', 'location-sms-code', 'location name (optional)']])
+        )
+
     writer.open(
-        header_table=[
-            ('users', [user_headers]),
-            ('groups', [group_headers]),
-        ],
+        header_table=headers,
         file=file,
     )
 
@@ -360,10 +465,18 @@ def dump_users_and_groups(response, domain):
             row = dict(flatten_json(group_dict))
             yield [row.get(header) or '' for header in group_headers]
 
-    writer.write([
+    rows = [
         ('users', get_user_rows()),
         ('groups', get_group_rows()),
-    ])
+    ]
+
+    if commtrack_enabled:
+        rows.append(
+            ('locations', get_location_rows(domain))
+        )
+
+
+    writer.write(rows)
 
     writer.close()
     response.write(file.getvalue())

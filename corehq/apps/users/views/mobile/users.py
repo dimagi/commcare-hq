@@ -23,6 +23,7 @@ from couchexport.models import Format
 from corehq.apps.users.forms import CommCareAccountForm, UpdateCommCareUserInfoForm, CommtrackUserForm, MultipleSelectionForm
 from corehq.apps.users.models import CommCareUser, UserRole, CouchUser
 from corehq.apps.groups.models import Group
+from corehq.apps.domain.models import Domain
 from corehq.apps.users.bulkupload import create_or_update_users_and_groups,\
     check_headers, dump_users_and_groups, GroupNameError, UserUploadError
 from corehq.apps.users.tasks import bulk_upload_async
@@ -32,7 +33,7 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
 from dimagi.utils.decorators.view import get_file
 from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound, JSONReaderError, HeaderValueError
-
+from corehq.apps.commtrack.models import CommTrackUser
 
 DEFAULT_USER_LIST_LIMIT = 10
 
@@ -147,8 +148,10 @@ class EditCommCareUserView(BaseFullEditUserView):
     def update_commtrack_form(self):
         if self.request.method == "POST" and self.request.POST['form_type'] == "commtrack":
             return CommtrackUserForm(self.request.POST, domain=self.domain)
-        linked_loc = self.editable_user.dynamic_properties().get('commtrack_location')
-        return CommtrackUserForm(domain=self.domain, initial={'supply_point': linked_loc})
+        # currently only support one location on the UI
+        linked_loc = CommTrackUser.wrap(self.editable_user.to_json()).location
+        initial_id = linked_loc._id if linked_loc else None
+        return CommtrackUserForm(domain=self.domain, initial={'supply_point': initial_id})
 
     @property
     def page_context(self):
@@ -582,6 +585,12 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
         except WorksheetNotFound:
             self.group_specs = []
 
+        if Domain.get_by_name(self.domain).commtrack_enabled:
+            try:
+                self.location_specs = self.workbook.get_worksheet(title='locations')
+            except WorksheetNotFound:
+                self.location_specs = []
+
         try:
             check_headers(self.user_specs)
         except UserUploadError as e:
@@ -592,15 +601,24 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
         async = request.REQUEST.get("async", False)
         if async:
             download_id = uuid.uuid4().hex
-            bulk_upload_async.delay(download_id, self.domain,
+            bulk_upload_async.delay(
+                download_id,
+                self.domain,
                 list(self.user_specs),
-                list(self.group_specs))
+                list(self.group_specs),
+                list(self.location_specs)
+            )
             messages.success(request,
                 'Your upload is in progress. You can check the progress <a href="%s">here</a>.' %\
                 reverse('hq_soil_download', kwargs={'domain': self.domain, 'download_id': download_id}),
                 extra_tags="html")
         else:
-            ret = create_or_update_users_and_groups(self.domain, self.user_specs, self.group_specs)
+            ret = create_or_update_users_and_groups(
+                self.domain,
+                self.user_specs,
+                self.group_specs,
+                self.location_specs
+            )
             for error in ret["errors"]:
                 messages.error(request, error)
 

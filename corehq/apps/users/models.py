@@ -840,12 +840,13 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         return CouchUser.view("users/by_username", include_docs=True)
 
     @classmethod
-    def by_domain(cls, domain, is_active=True, reduce=False, limit=None, skip=0, strict=False):
+    def by_domain(cls, domain, is_active=True, reduce=False, limit=None, skip=0, strict=False, doc_type=None):
         flag = "active" if is_active else "inactive"
+        doc_type = doc_type or cls.__name__
         if cls.__name__ == "CouchUser":
             key = [flag, domain]
         else:
-            key = [flag, domain, cls.__name__]
+            key = [flag, domain, doc_type]
         extra_args = dict()
         if not reduce:
             extra_args.update(include_docs=True)
@@ -1549,7 +1550,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         return lang
 
     def __repr__(self):
-        return ("CommCareUser(username={self.username!r})".format(self=self))
+        return ("{class_name}(username={self.username!r})".format(
+            class_name=self.__class__.__name__,
+            self=self
+        ))
 
 
 class OrgMembershipMixin(DocumentSchema):
