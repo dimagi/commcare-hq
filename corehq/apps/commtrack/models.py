@@ -1117,7 +1117,21 @@ class CommTrackUser(CommCareUser):
         if mapping:
             mapping.delete()
 
+    def submit_location_block(self, caseblock):
+        submit_case_blocks(
+            ElementTree.tostring(caseblock.as_xml()),
+            self.domain,
+            self.username,
+            self._id
+        )
+
     def set_locations(self, locations):
+        if set([loc._id for loc in locations]) == set([loc._id for loc in self.locations]):
+            # don't do anything if the list passed is the same
+            # as the users current locations. the check is a little messy
+            # as we can't compare the location objects themself
+            return
+
         self.clear_locations()
 
         if not locations:
@@ -1137,12 +1151,7 @@ class CommTrackUser(CommCareUser):
             index=index
         )
 
-        submit_case_blocks(
-            ElementTree.tostring(caseblock.as_xml()),
-            self.domain,
-            self.username,
-            self._id
-        )
+        self.submit_location_block(caseblock)
 
     def remove_location(self, location):
         sp = SupplyPointCase.get_by_location(location)
@@ -1157,12 +1166,7 @@ class CommTrackUser(CommCareUser):
                 index=self.supply_point_index_mapping(sp, True)
             )
 
-            submit_case_blocks(
-                ElementTree.tostring(caseblock.as_xml()),
-                self.domain,
-                self.username,
-                self._id
-            )
+            self.submit_location_block(caseblock)
 
 
 def sync_location_supply_point(loc):

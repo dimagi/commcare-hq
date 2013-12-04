@@ -6,6 +6,7 @@ from corehq.apps.commtrack.helpers import make_supply_point
 from casexml.apps.case.tests.util import check_user_has_case
 from casexml.apps.case.xml import V2
 from casexml.apps.case.mock import CaseBlock
+from mock import patch
 
 
 class LocationsTest(CommTrackTest):
@@ -81,6 +82,38 @@ class LocationsTest(CommTrackTest):
         # and will have access to these two
         self.check_supply_point(user, sp1._id)
         self.check_supply_point(user, sp2._id)
+
+    def test_setting_new_list_causes_submit(self):
+        """
+        this test mostly exists to make sure the one
+        testing no submits doesn't silently stop actually working
+        """
+        user = self.reporters['fixed']
+
+        loc1 = make_loc('secondloc')
+        make_supply_point(self.domain, loc1)
+
+        with patch('corehq.apps.commtrack.models.CommTrackUser.submit_location_block') as submit_blocks:
+            user.set_locations([loc1])
+            self.assertEqual(submit_blocks.call_count, 1)
+
+    def test_setting_existing_list_does_not_submit(self):
+        user = self.reporters['fixed']
+
+        user.clear_locations()
+
+        loc1 = make_loc('secondloc')
+        make_supply_point(self.domain, loc1)
+
+        loc2 = make_loc('thirdloc')
+        make_supply_point(self.domain, loc2)
+
+        user.add_location(loc1)
+        user.add_location(loc2)
+
+        with patch('corehq.apps.commtrack.models.CommTrackUser.submit_location_block') as submit_blocks:
+            user.set_locations([loc1, loc2])
+            self.assertEqual(submit_blocks.call_count, 0)
 
     def test_location_migration(self):
         user = CommCareUser.create(
