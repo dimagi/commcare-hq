@@ -4,6 +4,8 @@ from corehq.apps.domain.models import Domain
 from couchdbkit import ResourceNotFound
 from django.utils.translation import ugettext as _
 from dimagi.utils.couch.loosechange import map_reduce
+from couchexport.writers import Excel2007ExportWriter
+from StringIO import StringIO
 
 def load_locs_json(domain, selected_loc_id=None):
     """initialize a json location tree for drill-down controls on
@@ -194,3 +196,52 @@ def property_uniqueness(domain, loc, prop_name, val, scope='global'):
             uniqueness_set = loc.siblings()
 
         return set(l._id for l in uniqueness_set if val == normalize(getattr(l, prop_name, None)))
+
+
+def dump_locations(response, domain):
+    file = StringIO()
+    writer = Excel2007ExportWriter()
+
+    location_types = defined_location_types(domain)
+    leaf_type = location_types[-1]
+
+    leafs = Location.filter_by_type(domain, leaf_type)
+
+    included_leaf_properties = [
+        'site_code',
+        'address',
+        'landmark',
+        'contact_name',
+        'contact_phone',
+    ]
+
+    writer.open(
+        header_table=[
+            ('locations', [location_types + included_leaf_properties])
+        ],
+        file=file,
+    )
+
+    rows = []
+    for leaf in leafs:
+        # since some location types have different possible parents,
+        # we may not fill in every possible type
+        row = [''] * (len(location_types) - 1)
+        for loc_id in leaf.lineage:
+            loc = Location.get(loc_id)
+            lineage_position = location_types.index(loc.location_type)
+            row[lineage_position] = loc.name
+
+        row.append(leaf.name)
+
+        for key in included_leaf_properties:
+            row.append(leaf[key])
+
+        rows.append(row)
+
+    writer.write([
+        ('locations', rows)
+    ])
+
+    writer.close()
+    response.write(file.getvalue())
