@@ -15,7 +15,6 @@ from casexml.apps.phone.fixtures import generator
 from django.http import HttpResponse, Http404
 from casexml.apps.phone.checksum import CaseStateHash
 
-
 class RestoreConfig(object):
     """
     A collection of attributes associated with an OTA restore
@@ -53,6 +52,43 @@ class RestoreConfig(object):
                                         actual=parsed_hash,
                                         case_ids=self.sync_log.get_footprint_of_cases_on_phone())
 
+    def get_commtrack_payload(self, syncop):
+        # uh-oh, cross-submodule circular reference
+        from corehq.apps.reports.commtrack.data_sources import StockStatusDataSource
+
+        cases = [e.case for e in syncop.actual_cases_to_sync]
+        supply_points = [c for c in cases if c.type == 'supply-point']
+        def product_entries():
+            for sp in supply_points:
+                location = sp.location_[-1]
+                # seems unavoidable to make a separate couch request per supply point
+                spps = StockStatusDataSource({
+                        'domain': sp.domain,
+                        'location_id': location,
+                    }).get_data()
+                for spp in spps:
+                    spp['supply_point'] = sp._id
+                    yield spp
+
+        from dimagi.utils.couch.loosechange import map_reduce
+        product_by_supply_point = map_reduce(lambda e: [(e['supply_point'],)], data=product_entries(), include_docs=True)
+
+        from lxml.builder import ElementMaker
+        E = ElementMaker()
+        def mk_product(e):
+            def _(attr):
+                val = e.get(attr)
+                return str(val) if val is not None else ''
+            return E.product(
+                id=_('product_id'),
+                quantity=_('current_stock'),
+                consumption_rate=_('consumption'),
+                stock_category=_('category'),
+                stockout_since=_('stockout_since'),
+            )
+        for supply_point, products in product_by_supply_point.iteritems():
+            yield E.balance(*(mk_product(e) for e in products), **{'entity-id': supply_point})
+
     def get_payload(self):
         user = self.user
         last_sync = self.sync_log
@@ -66,7 +102,7 @@ class RestoreConfig(object):
         sync_operation = user.get_case_updates(last_sync)
         case_xml_elements = [xml.get_case_element(op.case, op.required_updates, self.version)
                              for op in sync_operation.actual_cases_to_sync]
-
+        commtrack_elements = self.get_commtrack_payload(sync_operation)
 
         last_seq = str(get_db().info()["update_seq"])
 
@@ -97,6 +133,8 @@ class RestoreConfig(object):
         # case blocks
         for case_elem in case_xml_elements:
             response.append(case_elem)
+        for ct_elem in commtrack_elements:
+            response.append(ct_elem)
 
         if self.items:
             response.attrib['items'] = '%d' % len(response.getchildren())
