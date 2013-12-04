@@ -98,5 +98,7 @@ class LocationsTest(CommTrackTest):
 
         user.commtrack_location = loc._id
         ct_user = CommTrackUser.wrap(user.to_json())
+
         self.assertEqual(1, len(ct_user.locations))
         self.assertEqual('someloc', ct_user.locations[0].name)
+        self.assertFalse(hasattr(ct_user, 'commtrack_location'))

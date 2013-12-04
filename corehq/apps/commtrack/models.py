@@ -1046,11 +1046,13 @@ class StockReport(object):
 class CommTrackUser(CommCareUser):
     @classmethod
     def wrap(cls, data):
-        instance = super(CommTrackUser, cls).wrap(data)
         # lazy migration from commtrack_location to locations
         if 'commtrack_location' in data:
             original_location = data['commtrack_location']
             del data['commtrack_location']
+
+            instance = super(CommTrackUser, cls).wrap(data)
+
             try:
                 original_location_object = Location.get(original_location)
             except ResourceNotFound:
@@ -1058,7 +1060,9 @@ class CommTrackUser(CommCareUser):
                 return instance
             instance.set_locations([original_location_object])
 
-        return instance
+            return instance
+        else:
+            return super(CommTrackUser, cls).wrap(data)
 
     @classmethod
     def by_domain(cls, domain, is_active=True, reduce=False, limit=None, skip=0, strict=False, doc_type=None):
