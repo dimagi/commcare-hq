@@ -436,7 +436,8 @@ class MCHChildDisplay(MCHDisplay):
 
                 number = get_property(parent_case, "mobile_number_whose")
                 if re.match(r"^mobile_", number):
-                    setattr(self, "_mobile_number_whose", re.sub(r"^mobile_", "", number, flags=re.IGNORECASE))
+                    r = re.compile(r"^mobile_", re.IGNORECASE)
+                    setattr(self, "_mobile_number_whose", r.sub("", number))
                 else:
                     setattr(self, "_mobile_number_whose", number)
 
