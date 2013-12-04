@@ -722,6 +722,7 @@ class SupplyPointProductCase(CommCareCase):
     # can flesh this out more as needed
     product = StringProperty() # would be nice if this was product_id but is grandfathered in
     current_stock = StringProperty()
+    stocked_out_since = DateProperty()
 
     @memoized
     def get_product(self):
@@ -737,7 +738,7 @@ class SupplyPointProductCase(CommCareCase):
 
     @property
     def current_stock_level(self):
-        return int(self.current_stock) if self.current_stock is not None else None
+        return float(self.current_stock) if self.current_stock is not None else None
 
     @property
     @memoized
