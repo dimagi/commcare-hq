@@ -1,14 +1,16 @@
 from collections import namedtuple
 from django.core.urlresolvers import reverse
+from eulxml.xmlmap.fields import StringListField
 from lxml import etree
 from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, NodeField
+from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK
 from corehq.apps.hqmedia.models import HQMediaMapItem
 from .exceptions import MediaResourceError, ParentModuleReferenceError, SuiteValidationError
 from corehq.apps.app_manager.util import split_path, create_temp_sort_column
 from corehq.apps.app_manager.xform import SESSION_CASE_ID, autoset_owner_id_for_open_case, autoset_owner_id_for_subcase
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_url_base
-from .xpath import dot_interpolate
+from .xpath import dot_interpolate, CaseIDXPath, session_var, CaseTypeXpath
 
 FIELD_TYPE_INDICATOR = 'indicator'
 FIELD_TYPE_PROPERTY = 'property'
@@ -131,12 +133,53 @@ class Instance(IdNode, OrderedXmlObject):
 
 class SessionDatum(IdNode, OrderedXmlObject):
     ROOT_NAME = 'datum'
-    ORDER = ('id', 'nodeset', 'value', 'detail_select', 'detail_confirm')
+    ORDER = ('id', 'nodeset', 'value', 'function', 'detail_select', 'detail_confirm')
 
     nodeset = StringField('@nodeset')
     value = StringField('@value')
+    function = StringField('@function')
     detail_select = StringField('@detail-select')
     detail_confirm = StringField('@detail-confirm')
+
+
+class StackDatum(IdNode):
+    ROOT_NAME = 'datum'
+
+    value = StringField('@value')
+
+
+class BaseFrame(XmlObject):
+    if_clause = StringField('@if')
+
+
+class CreatePushBase(IdNode, BaseFrame):
+    def add_command(self, command):
+        node = etree.SubElement(self.node, 'command')
+        node.text = command
+
+    def add_datum(self, datum):
+        self.node.append(datum.node)
+
+
+class CreateFrame(CreatePushBase):
+    ROOT_NAME = 'create'
+
+
+class PushFrame(CreatePushBase):
+    ROOT_NAME = 'push'
+
+
+class ClearFrame(BaseFrame):
+    ROOT_NAME = 'clear'
+
+    frame = StringField('@frame')
+
+
+class Stack(XmlObject):
+    ROOT_NAME = 'stack'
+
+    def add_frame(self, frame):
+        self.node.append(frame.node)
 
 
 class Assertion(XmlObject):
@@ -144,6 +187,7 @@ class Assertion(XmlObject):
 
     test = StringField('@test')
     text = NodeListField('text', Text)
+
 
 class Entry(XmlObject):
     ROOT_NAME = 'entry'
@@ -154,12 +198,15 @@ class Entry(XmlObject):
 
     datums = NodeListField('session/datum', SessionDatum)
 
+    stack = NodeField('stack', Stack)
+
     assertions = NodeListField('assertions/assert', Assertion)
 
 
 class Menu(DisplayNode, IdNode):
     ROOT_NAME = 'menu'
 
+    root = StringField('@root')
     commands = NodeListField('command', Command)
 
 
@@ -471,13 +518,13 @@ class SuiteGenerator(object):
         from corehq.apps.app_manager.detail_screen import get_column_generator
         if not self.app.use_custom_suite:
             for module in self.modules:
-                for detail_type, detail in module.get_details():
+                for detail_type, detail, enabled in module.get_details():
                     detail_column_infos = get_detail_column_infos(
                         detail,
-                        include_sort=detail_type == 'case_short',
+                        include_sort=detail_type.endswith('short'),
                     )
 
-                    if detail_column_infos and detail_type in ('case_short', 'case_long'):
+                    if detail_column_infos and enabled:
                         d = Detail(
                             id=self.id_strings.detail(module, detail_type),
                             title=Text(locale_id=self.id_strings.detail_title_locale(module, detail_type))
@@ -524,9 +571,9 @@ class SuiteGenerator(object):
             filter_xpath=self.get_filter_xpath(module) if use_filter else '',
         )
 
-    def get_parent_filter(self, module, parent_id):
+    def get_parent_filter(self, relationship, parent_id):
         return "[index/{relationship}=instance('commcaresession')/session/data/{parent_id}]".format(
-            relationship=module.parent_select.relationship,
+            relationship=relationship,
             parent_id=parent_id,
         )
 
@@ -555,6 +602,17 @@ class SuiteGenerator(object):
 
     @property
     def entries(self):
+        # avoid circular dependency
+        from corehq.apps.app_manager.models import CareplanForm, Module
+
+        detail_ids = [detail.id for detail in self.details]
+        def get_detail_id_safe(module, detail_type):
+            detail_id = self.id_strings.detail(
+                module=module,
+                detail_type=detail_type,
+            )
+            return detail_id if detail_id in detail_ids else None
+
         def add_case_stuff(module, e, use_filter=False):
             def get_instances():
                 yield Instance(id='casedb', src='jr://instance/casedb')
@@ -565,7 +623,7 @@ class SuiteGenerator(object):
                                    src='jr://instance/session')
 
                 indicator_sets = []
-                for _, detail in module.get_details():
+                for _, detail, _ in module.get_details():
                     for column in detail.get_columns():
                         if column.field_type == FIELD_TYPE_INDICATOR:
                             indicator_set, _ = column.field_property.split('/', 1)
@@ -575,15 +633,6 @@ class SuiteGenerator(object):
                                        src='jr://fixture/indicators:%s' % indicator_set)
 
             e.instances.extend(get_instances())
-
-            detail_ids = [detail.id for detail in self.details]
-
-            def get_detail_id_safe(module, detail_type):
-                detail_id = self.id_strings.detail(
-                    module=module,
-                    detail_type=detail_type,
-                )
-                return detail_id if detail_id in detail_ids else None
 
             select_chain = self.get_select_chain(module)
             # generate names ['child_id', 'parent_id', 'parent_parent_id', ...]
@@ -597,7 +646,7 @@ class SuiteGenerator(object):
                 except IndexError:
                     parent_filter = ''
                 else:
-                    parent_filter = self.get_parent_filter(module, parent_id)
+                    parent_filter = self.get_parent_filter(module.parent_select.relationship, parent_id)
                 e.datums.append(SessionDatum(
                     id=datum_ids[i],
                     nodeset=(self.get_nodeset_xpath(module, use_filter)
@@ -609,6 +658,74 @@ class SuiteGenerator(object):
                         if i == 0 else None
                     )
                 ))
+
+        def add_careplan_stuff(module, form, e):
+            e.instances.append(Instance(id='casedb', src='jr://instance/casedb'))
+            e.instances.append(Instance(id='commcaresession', src='jr://instance/session'))
+
+            parent_module = self.get_module_by_id(module.parent_select.module_id)
+            e.datums.append(SessionDatum(
+                id='case_id',
+                nodeset=self.get_nodeset_xpath(parent_module, False),
+                value="./@case_id",
+                detail_select=get_detail_id_safe(parent_module, 'case_short'),
+                detail_confirm=get_detail_id_safe(parent_module, 'case_long')
+            ))
+
+            def session_datum(datum_id, case_type, parent_ref, parent_val):
+                nodeset = CaseTypeXpath(case_type).case().select(
+                    'index/%s' % parent_ref, session_var(parent_val), quote=False
+                ).select('@status', 'open')
+                return SessionDatum(
+                    id=datum_id,
+                    nodeset=nodeset,
+                    value="./@case_id",
+                    detail_select=get_detail_id_safe(module, '%s_short' % case_type),
+                    detail_confirm=get_detail_id_safe(module, '%s_long' % case_type)
+                )
+
+            if form.case_type == CAREPLAN_GOAL:
+                if form.mode == 'create':
+                    e.datums.append(SessionDatum(
+                        id='new_goal_id',
+                        function='uuid()'
+                    ))
+
+                    e.stack = Stack()
+                    frame = CreateFrame(
+                        if_clause='{count} = 1'.format(count=CaseIDXPath(session_var('new_goal_id')).case().count())
+                    )
+                    frame.add_command(self.id_strings.menu(parent_module))
+                    frame.add_datum(StackDatum(id='case_id', value=session_var('case_id')))
+                    frame.add_command(self.id_strings.menu(module))
+                    frame.add_datum(StackDatum(id='case_id_goal', value=session_var('new_goal_id')))
+                    e.stack.add_frame(frame)
+                elif form.mode == 'update':
+                    e.datums.append(session_datum('case_id_goal', CAREPLAN_GOAL, 'parent', 'case_id'))
+            elif form.case_type == CAREPLAN_TASK:
+                if form.mode == 'create':
+                    e.datums.append(SessionDatum(
+                        id='new_task_id',
+                        function='uuid()'
+                    ))
+                    e.datums.append(session_datum('case_id_goal', CAREPLAN_GOAL, 'parent', 'case_id'))
+                elif form.mode == 'update':
+                    e.datums.append(session_datum('case_id_goal', CAREPLAN_GOAL, 'parent', 'case_id'))
+                    e.datums.append(session_datum('case_id_task', CAREPLAN_TASK, 'goal', 'case_id_goal'))
+
+                    e.stack = Stack()
+                    count = CaseTypeXpath(CAREPLAN_TASK).case().select(
+                        'index/goal', session_var('case_id_goal'), quote=False
+                    ).select('@status', 'open').count()
+                    frame = CreateFrame(
+                        if_clause='{count} = 1'.format(count=count)
+                    )
+                    frame.add_command(self.id_strings.menu(parent_module))
+                    frame.add_datum(StackDatum(id='case_id', value=session_var('case_id')))
+                    frame.add_command(self.id_strings.menu(module))
+                    frame.add_datum(StackDatum(id='case_id_goal', value=session_var('case_id_goal')))
+                    frame.add_command(self.id_strings.form_command(module.get_form_by_type(CAREPLAN_TASK, 'update')))
+                    e.stack.add_frame(frame)
 
         def case_sharing_requires_assertion(form):
             actions = form.active_actions()
@@ -636,12 +753,15 @@ class SuiteGenerator(object):
                     media_image=form.media_image,
                     media_audio=form.media_audio,
                 )
-                if form.requires == "case":
+                if isinstance(form, CareplanForm):
+                    add_careplan_stuff(module, form, e)
+                elif form.requires == "case":
                     add_case_stuff(module, e, use_filter=True)
+
                 if self.app.case_sharing and case_sharing_requires_assertion(form):
                     add_case_sharing_assertion(e)
                 yield e
-            if module.case_list.show:
+            if isinstance(module, Module) and module.case_list.show:
                 e = Entry(
                     command=Command(
                         id=self.id_strings.case_list_command(module),
@@ -653,30 +773,54 @@ class SuiteGenerator(object):
 
     @property
     def menus(self):
+        # avoid circular dependency
+        from corehq.apps.app_manager.models import CareplanModule
         for module in self.modules:
-            menu = Menu(
-                id='root' if module.put_in_root else self.id_strings.menu(module),
-                locale_id=self.id_strings.module_locale(module),
-                media_image=module.media_image,
-                media_audio=module.media_audio,
-            )
+            if isinstance(module, CareplanModule):
+                parent = self.get_module_by_id(module.parent_select.module_id)
+                create_goal_form = module.get_form_by_type(CAREPLAN_GOAL, 'create')
+                create_menu = Menu(
+                    id=self.id_strings.menu(parent),
+                    locale_id=self.id_strings.module_locale(parent),
+                )
+                create_menu.commands.append(Command(id=self.id_strings.form_command(create_goal_form)))
+                yield create_menu
 
-            def get_commands():
-                for form in module.get_forms():
-                    command = Command(id=self.id_strings.form_command(form))
-                    if module.all_forms_require_a_case() and \
-                            not module.put_in_root and \
-                            getattr(form, 'form_filter', None):
-                        command.relevant = dot_interpolate(
-                                form.form_filter, SESSION_CASE_ID.case())
-                    yield command
+                update_menu = Menu(
+                    id=self.id_strings.menu(module),
+                    root=self.id_strings.menu(parent),
+                    locale_id=self.id_strings.module_locale(module),
+                )
+                update_menu.commands.extend([
+                    Command(id=self.id_strings.form_command(module.get_form_by_type(CAREPLAN_GOAL, 'update'))),
+                    Command(id=self.id_strings.form_command(module.get_form_by_type(CAREPLAN_TASK, 'create'))),
+                    Command(id=self.id_strings.form_command(module.get_form_by_type(CAREPLAN_TASK, 'update'))),
+                ])
+                yield update_menu
+            else:
+                menu = Menu(
+                    id='root' if module.put_in_root else self.id_strings.menu(module),
+                    locale_id=self.id_strings.module_locale(module),
+                    media_image=module.media_image,
+                    media_audio=module.media_audio,
+                )
 
-                if module.case_list.show:
-                    yield Command(id=self.id_strings.case_list_command(module))
+                def get_commands():
+                    for form in module.get_forms():
+                        command = Command(id=self.id_strings.form_command(form))
+                        if module.all_forms_require_a_case() and \
+                                not module.put_in_root and \
+                                getattr(form, 'form_filter', None):
+                            command.relevant = dot_interpolate(
+                                    form.form_filter, SESSION_CASE_ID.case())
+                        yield command
 
-            menu.commands.extend(get_commands())
+                    if module.case_list.show:
+                        yield Command(id=self.id_strings.case_list_command(module))
 
-            yield menu
+                menu.commands.extend(get_commands())
+
+                yield menu
 
     @property
     def fixtures(self):

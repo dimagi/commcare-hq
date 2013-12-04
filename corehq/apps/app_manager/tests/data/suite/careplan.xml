@@ -1,0 +1,359 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<suite version="13">
+  <xform>
+    <resource id="92a98005164cd9ab52878f95583158085ea9d15d" version="13">
+      <location authority="local">./modules-0/forms-0.xml</location>
+      <location authority="remote">./modules-0/forms-0.xml</location>
+    </resource>
+  </xform>
+  <xform>
+    <resource id="d95d14ea8e5d572b1a2d4bd05638d88760aaf676" version="13">
+      <location authority="local">./modules-1/forms-0.xml</location>
+      <location authority="remote">./modules-1/forms-0.xml</location>
+    </resource>
+  </xform>
+  <xform>
+    <resource id="b260e42baf7fd2e661dbe300d6ef71ed4064a88f" version="13">
+      <location authority="local">./modules-1/forms-1.xml</location>
+      <location authority="remote">./modules-1/forms-1.xml</location>
+    </resource>
+  </xform>
+  <xform>
+    <resource id="bb6e0ea76a8c45a68facb066a9afd4baf24724e1" version="13">
+      <location authority="local">./modules-1/forms-2.xml</location>
+      <location authority="remote">./modules-1/forms-2.xml</location>
+    </resource>
+  </xform>
+  <xform>
+    <resource id="59e62c5cdf6075bdd0a319d09fdf343c940cf80f" version="13">
+      <location authority="local">./modules-1/forms-3.xml</location>
+      <location authority="remote">./modules-1/forms-3.xml</location>
+    </resource>
+  </xform>
+  <locale language="default">
+    <resource id="app_default_strings" version="13">
+      <location authority="local">./default/app_strings.txt</location>
+      <location authority="remote">./default/app_strings.txt</location>
+    </resource>
+  </locale>
+  <locale language="en">
+    <resource id="app_en_strings" version="13">
+      <location authority="local">./en/app_strings.txt</location>
+      <location authority="remote">./en/app_strings.txt</location>
+    </resource>
+  </locale>
+  <detail id="m0_case_short">
+    <title>
+      <text>
+        <locale id="m0.case_short.title"/>
+      </text>
+    </title>
+    <field>
+      <header>
+        <text>
+          <locale id="m0.case_short.case_name_1.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </template>
+      <sort type="string" order="1" direction="ascending">
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </sort>
+    </field>
+  </detail>
+  <detail id="m0_case_long">
+    <title>
+      <text>
+        <locale id="m0.case_long.title"/>
+      </text>
+    </title>
+    <field>
+      <header>
+        <text>
+          <locale id="m0.case_long.case_name_1.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </template>
+    </field>
+  </detail>
+  <detail id="m1_careplan_goal_short">
+    <title>
+      <text>
+        <locale id="m1.careplan_goal_short.title"/>
+      </text>
+    </title>
+    <field>
+      <header>
+        <text>
+          <locale id="m1.careplan_goal_short.case_name_1.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </template>
+      <sort type="string" order="1" direction="ascending">
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </sort>
+    </field>
+    <field>
+      <header>
+        <text>
+          <locale id="m1.careplan_goal_short.case_date_followup_2.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="if(date_followup = '', '', format_date(date(if(date_followup = '', 0, date_followup)),'short'))"/>
+        </text>
+      </template>
+      <sort type="string">
+        <text>
+          <xpath function="date_followup"/>
+        </text>
+      </sort>
+    </field>
+  </detail>
+  <detail id="m1_careplan_goal_long">
+    <title>
+      <text>
+        <locale id="m1.careplan_goal_long.title"/>
+      </text>
+    </title>
+    <field>
+      <header>
+        <text>
+          <locale id="m1.careplan_goal_long.case_name_1.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </template>
+    </field>
+    <field>
+      <header>
+        <text>
+          <locale id="m1.careplan_goal_long.case_date_followup_2.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="if(date_followup = '', '', format_date(date(if(date_followup = '', 0, date_followup)),'short'))"/>
+        </text>
+      </template>
+    </field>
+    <field>
+      <header>
+        <text>
+          <locale id="m1.careplan_goal_long.case_description_3.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="description"/>
+        </text>
+      </template>
+    </field>
+  </detail>
+  <detail id="m1_careplan_task_short">
+    <title>
+      <text>
+        <locale id="m1.careplan_task_short.title"/>
+      </text>
+    </title>
+    <field>
+      <header>
+        <text>
+          <locale id="m1.careplan_task_short.case_name_1.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </template>
+      <sort type="string" order="1" direction="ascending">
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </sort>
+    </field>
+    <field>
+      <header>
+        <text>
+          <locale id="m1.careplan_task_short.case_date_followup_2.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="if(date_followup = '', '', format_date(date(if(date_followup = '', 0, date_followup)),'short'))"/>
+        </text>
+      </template>
+      <sort type="string">
+        <text>
+          <xpath function="date_followup"/>
+        </text>
+      </sort>
+    </field>
+  </detail>
+  <detail id="m1_careplan_task_long">
+    <title>
+      <text>
+        <locale id="m1.careplan_task_long.title"/>
+      </text>
+    </title>
+    <field>
+      <header>
+        <text>
+          <locale id="m1.careplan_task_long.case_name_1.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </template>
+    </field>
+    <field>
+      <header>
+        <text>
+          <locale id="m1.careplan_task_long.case_date_followup_2.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="if(date_followup = '', '', format_date(date(if(date_followup = '', 0, date_followup)),'short'))"/>
+        </text>
+      </template>
+    </field>
+    <field>
+      <header>
+        <text>
+          <locale id="m1.careplan_task_long.case_description_3.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="description"/>
+        </text>
+      </template>
+    </field>
+  </detail>
+  <entry>
+    <form>http://openrosa.org/formdesigner/C61EDE3C-A8AE-43B8-A79B-4FBE165A72A3</form>
+    <command id="m0-f0">
+      <text>
+        <locale id="forms.m0f0"/>
+      </text>
+    </command>
+  </entry>
+  <entry>
+    <form>http://dev.commcarehq.org/careplan/goal/create</form>
+    <command id="m1-f0">
+      <text>
+        <locale id="forms.m1f0"/>
+      </text>
+    </command>
+    <instance id="casedb" src="jr://instance/casedb"/>
+    <instance id="commcaresession" src="jr://instance/session"/>
+    <session>
+      <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='patient'][@status='open']" value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
+      <datum id="new_goal_id" function="uuid()"/>
+    </session>
+    <stack>
+      <create if="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/new_goal_id]) = 1">
+        <command>m0</command>
+        <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
+        <command>m1</command>
+        <datum id="case_id_goal" value="instance('commcaresession')/session/data/new_goal_id"/>
+      </create>
+    </stack>
+  </entry>
+  <entry>
+    <form>http://dev.commcarehq.org/careplan/goal/update</form>
+    <command id="m1-f1">
+      <text>
+        <locale id="forms.m1f1"/>
+      </text>
+    </command>
+    <instance id="casedb" src="jr://instance/casedb"/>
+    <instance id="commcaresession" src="jr://instance/session"/>
+    <session>
+      <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='patient'][@status='open']" value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
+      <datum id="case_id_goal" nodeset="instance('casedb')/casedb/case[@case_type='careplan_goal'][index/parent=instance('commcaresession')/session/data/case_id][@status='open']" value="./@case_id" detail-select="m1_careplan_goal_short" detail-confirm="m1_careplan_goal_long"/>
+    </session>
+  </entry>
+  <entry>
+    <form>http://dev.commcarehq.org/careplan/task/create</form>
+    <command id="m1-f2">
+      <text>
+        <locale id="forms.m1f2"/>
+      </text>
+    </command>
+    <instance id="casedb" src="jr://instance/casedb"/>
+    <instance id="commcaresession" src="jr://instance/session"/>
+    <session>
+      <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='patient'][@status='open']" value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
+      <datum id="new_task_id" function="uuid()"/>
+      <datum id="case_id_goal" nodeset="instance('casedb')/casedb/case[@case_type='careplan_goal'][index/parent=instance('commcaresession')/session/data/case_id][@status='open']" value="./@case_id" detail-select="m1_careplan_goal_short" detail-confirm="m1_careplan_goal_long"/>
+    </session>
+  </entry>
+  <entry>
+    <form>http://dev.commcarehq.org/careplan/task/update</form>
+    <command id="m1-f3">
+      <text>
+        <locale id="forms.m1f3"/>
+      </text>
+    </command>
+    <instance id="casedb" src="jr://instance/casedb"/>
+    <instance id="commcaresession" src="jr://instance/session"/>
+    <session>
+      <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='patient'][@status='open']" value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
+      <datum id="case_id_goal" nodeset="instance('casedb')/casedb/case[@case_type='careplan_goal'][index/parent=instance('commcaresession')/session/data/case_id][@status='open']" value="./@case_id" detail-select="m1_careplan_goal_short" detail-confirm="m1_careplan_goal_long"/>
+      <datum id="case_id_task" nodeset="instance('casedb')/casedb/case[@case_type='careplan_task'][index/goal=instance('commcaresession')/session/data/case_id_goal][@status='open']" value="./@case_id" detail-select="m1_careplan_task_short" detail-confirm="m1_careplan_task_long"/>
+    </session>
+    <stack>
+      <create if="count(instance('casedb')/casedb/case[@case_type='careplan_task'][index/goal=instance('commcaresession')/session/data/case_id_goal][@status='open']) = 1">
+        <command>m0</command>
+        <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
+        <command>m1</command>
+        <datum id="case_id_goal" value="instance('commcaresession')/session/data/case_id_goal"/>
+        <command>m1-f3</command>
+      </create>
+    </stack>
+  </entry>
+  <menu id="m0">
+    <text>
+      <locale id="modules.m0"/>
+    </text>
+    <command id="m0-f0"/>
+  </menu>
+  <menu id="m0">
+    <text>
+      <locale id="modules.m0"/>
+    </text>
+    <command id="m1-f0"/>
+  </menu>
+  <menu root="m0" id="m1">
+    <text>
+      <locale id="modules.m1"/>
+    </text>
+    <command id="m1-f1"/>
+    <command id="m1-f2"/>
+    <command id="m1-f3"/>
+  </menu>
+</suite>

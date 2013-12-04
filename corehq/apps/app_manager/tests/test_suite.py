@@ -5,6 +5,7 @@ from corehq.apps.app_manager.suite_xml import dot_interpolate
 
 from lxml import etree
 import commcare_translations
+import difflib
 
 
 # snippet from http://stackoverflow.com/questions/321795/comparing-xml-in-a-unit-test-in-python/7060342#7060342
@@ -18,6 +19,8 @@ class XmlTest(TestCase):
         checker = LXMLOutputChecker()
         if not checker.check_output(want, got, 0):
             message = checker.output_difference(Example("", want), got, 0)
+            for line in difflib.unified_diff(want.splitlines(1), got.splitlines(1), fromfile='want.xml', tofile='got.xml'):
+                print line
             raise AssertionError(message)
 # end snippet
 
@@ -69,6 +72,9 @@ class SuiteTest(XmlTest, TestFileMixin):
 
     def test_callcenter_suite(self):
         self._test_generic_suite('call-center')
+
+    def test_careplan_suite(self):
+        self._test_generic_suite('careplan')
 
     def test_case_assertions(self):
         self._test_generic_suite('app_case_sharing', 'suite-case-sharing')

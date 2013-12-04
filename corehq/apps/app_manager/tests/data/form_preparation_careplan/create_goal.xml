@@ -1,0 +1,97 @@
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+	<h:head>
+		<h:title>New Careplan Goal</h:title>
+		<model>
+			<instance>
+				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://dev.commcarehq.org/careplan/goal/create" uiVersion="1" version="3" name="New Careplan Goal">
+					<name/>
+					<description/>
+					<date_followup/>
+                    
+				    <group/>
+
+                    <orx:meta xmlns:cc="http://commcarehq.org/xforms">
+                        <orx:deviceID/>
+                        <orx:timeStart/>
+                        <orx:timeEnd/>
+                        <orx:username/>
+                        <orx:userID/>
+                        <orx:instanceID/>
+                        <cc:appVersion/>
+                    </orx:meta>
+                    <parent_case_id/>
+                    <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="" date_modified="" user_id="">
+                        <create>
+                            <case_name/>
+                            <owner_id>-</owner_id>
+                            <case_type>careplan_goal</case_type>
+                        </create>
+                        <update>
+                            <date_followup/>
+                            <description/>
+                        </update>
+                        <index>
+                            <parent case_type="test_case_type"/>
+                        </index>
+                    </case>
+				</data>
+			</instance>
+            <instance id="casedb" src="jr://instance/casedb"/>
+			<instance id="commcaresession" src="jr://instance/session"/>
+
+			<bind nodeset="/data/name" type="xsd:string" required="true()"/>
+			<bind nodeset="/data/description" type="xsd:string" required="false()"/>
+			<bind nodeset="/data/date_followup" type="xsd:date" required="true()"/>
+			
+			<itext>
+				<translation lang="en" default="">
+					<text id="name-label">
+						<value>Give this goal a short name which will be used to refer to it later</value>
+					</text>
+					<text id="description-label">
+						<value>Describe the goal that the patient wants to reach</value>
+					</text>
+					<text id="date_followup-label">
+						<value>When are they hoping to reach this goal?</value>
+					</text>
+				</translation>
+			</itext>
+
+            <setvalue event="xforms-ready" ref="/data/meta/deviceID" value="instance('commcaresession')/session/context/deviceid"/>
+			<setvalue event="xforms-ready" ref="/data/meta/timeStart" value="now()"/>
+			<bind nodeset="/data/meta/timeStart" type="xsd:dateTime"/>
+			<setvalue event="xforms-revalidate" ref="/data/meta/timeEnd" value="now()"/>
+			<bind nodeset="/data/meta/timeEnd" type="xsd:dateTime"/>
+			<setvalue event="xforms-ready" ref="/data/meta/username" value="instance('commcaresession')/session/context/username"/>
+			<setvalue event="xforms-ready" ref="/data/meta/userID" value="instance('commcaresession')/session/context/userid"/>
+			<setvalue event="xforms-ready" ref="/data/meta/instanceID" value="uuid()"/>
+			<setvalue event="xforms-ready" ref="/data/meta/appVersion" value="instance('commcaresession')/session/context/appversion"/>
+
+            <bind calculate="/data/meta/timeEnd" nodeset="/data/case/@date_modified" type="xsd:dateTime"/>
+			<bind calculate="/data/meta/userID" nodeset="/data/case/@user_id"/>
+			<setvalue event="xforms-ready" ref="/data/case/@case_id" value="instance('commcaresession')/session/data/new_goal_id"/>
+
+			<bind calculate="/data/name" nodeset="/data/case/create/case_name"/>
+			<bind calculate="/data/date_followup" nodeset="/data/case/update/date_followup" relevant="count(/data/date_followup) &gt; 0"/>
+			<bind calculate="/data/description" nodeset="/data/case/update/description" relevant="count(/data/description) &gt; 0"/>
+			<bind calculate="instance('commcaresession')/session/data/case_id" nodeset="/data/parent_case_id"/>
+			<bind calculate="/data/parent_case_id" nodeset="/data/case/index/parent"/>
+
+            <setvalue event="xforms-revalidate" ref="/data/case/create/owner_id" value="instance('casedb')/casedb/case[@case_id=/data/parent_case_id]/@owner_id"/>
+
+		</model>
+	</h:head>
+	<h:body>
+		<group ref="/data/group" appearance="field-list">
+			<input ref="/data/name">
+				<label ref="jr:itext('name-label')"/>
+			</input>
+			<input ref="/data/description">
+				<label ref="jr:itext('description-label')"/>
+			</input>
+			<input ref="/data/date_followup">
+				<label ref="jr:itext('date_followup-label')"/>
+			</input>
+		</group>
+	</h:body>
+</h:html>
