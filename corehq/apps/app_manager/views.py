@@ -1647,7 +1647,11 @@ def download_file(req, domain, app_id, path):
 
     try:
         assert req.app.copy_of
-        obj = CachedObject(str(app_id) + ":" + full_path)
+        obj = CachedObject('{primary}-{secondary}:{path}'.format(
+            primary=app_id,
+            secondary=req.app._id,
+            path=full_path,
+        ))
         if not obj.is_cached():
             payload = req.app.fetch_attachment(full_path)
             if type(payload) is unicode:
