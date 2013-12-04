@@ -10,6 +10,7 @@ import bisect
 from corehq.apps.hqcase.utils import submit_case_blocks
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
+from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 
 
 def all_supply_point_types(domain):
@@ -221,8 +222,8 @@ def submit_mapping_case_block(user, index):
     else:
         caseblock = CaseBlock(
             create=True,
-            case_type='user-owner-mapping-case',
-            case_id='user-owner-mapping-' + user._id,
+            case_type=USER_LOCATION_OWNER_MAP_TYPE,
+            case_id=location_map_case_id(user),
             version=V2,
             owner_id=user._id,
             index=index
@@ -234,3 +235,7 @@ def submit_mapping_case_block(user, index):
         user.username,
         user._id
     )
+
+
+def location_map_case_id(user):
+    return 'user-owner-mapping-' + user._id

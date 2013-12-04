@@ -18,7 +18,7 @@ from copy import copy
 from django.dispatch import receiver
 from corehq.apps.locations.signals import location_created, location_edited
 from corehq.apps.locations.models import Location
-from corehq.apps.commtrack.const import RequisitionActions, RequisitionStatus
+from corehq.apps.commtrack.const import RequisitionActions, RequisitionStatus, USER_LOCATION_OWNER_MAP_TYPE
 from corehq.apps.commtrack.exceptions import LinkedSupplyPointNotFoundError
 
 from dimagi.utils.decorators.memoized import memoized
@@ -1071,7 +1071,8 @@ class CommTrackUser(CommCareUser):
 
     def get_location_map_case(self):
         try:
-            return CommCareCase.get('user-owner-mapping-' + self._id)
+            from corehq.apps.commtrack.util import location_map_case_id
+            return CommCareCase.get(location_map_case_id(self))
         except ResourceNotFound:
             return None
 
@@ -1142,10 +1143,11 @@ class CommTrackUser(CommCareUser):
             sp = SupplyPointCase.get_by_location(location)
             index.update(self.supply_point_index_mapping(sp))
 
+        from corehq.apps.commtrack.util import location_map_case_id
         caseblock = CaseBlock(
             create=True,
-            case_type='user-owner-mapping-case',
-            case_id='user-owner-mapping-' + self._id,
+            case_type=USER_LOCATION_OWNER_MAP_TYPE,
+            case_id=location_map_case_id(self),
             version=V2,
             owner_id=self._id,
             index=index
