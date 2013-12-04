@@ -1,10 +1,7 @@
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-
-
-class HQAccountingSetupError(Exception):
-    pass
+from corehq.apps.accounting.exceptions import HQAccountingSetupError
 
 
 class Currency(models.Model):
