@@ -583,19 +583,15 @@ def get_module_view_context_and_template(app, module):
     )
 
     def get_parent_modules_and_save(case_type):
-        """
-        This closure is so we don't override the `module` variable
-
-        """
         parent_types = builder.get_parent_types(case_type)
         modules = app.modules
         # make sure all modules have unique ids
-        if any(not module.unique_id for module in modules):
-            for module in modules:
-                module.get_or_create_unique_id()
+        if any(not mod.unique_id for mod in modules):
+            for mod in modules:
+                mod.get_or_create_unique_id()
             app.save()
-        parent_module_ids = [module.unique_id for module in modules
-                             if module.case_type in parent_types]
+        parent_module_ids = [mod.unique_id for mod in modules
+                             if mod.case_type in parent_types]
         return [{
                     'unique_id': mod.unique_id,
                     'name': mod.name,
