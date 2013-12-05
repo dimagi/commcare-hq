@@ -2507,6 +2507,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             return setting
         return yaml_setting.get("default")
 
+    @property
+    def has_careplan_module(self):
+        return any((module for module in self.modules if isinstance(module, CareplanModule)))
+
 
 class RemoteApp(ApplicationBase):
     """
