@@ -38,7 +38,6 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
     slug = 'submit_history'
     fields = [
               'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
-              'corehq.apps.reports.fields.CombinedSelectUsersField',
               'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
               'corehq.apps.reports.fields.DatespanField']
     ajax_pagination = True
@@ -79,16 +78,12 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
             if xmlnss:
                 q["filter"]["and"].append({"terms": {"xmlns.exact": xmlnss}})
 
-            def any_in(a, b):
-                return any(i in b for i in a)
-
-            if self.request.GET.get('all_mws', 'off') != 'on' or any_in(
-                    [str(HQUserType.DEMO_USER), str(HQUserType.ADMIN), str(HQUserType.UNKNOWN)],
-                    self.request.GET.getlist('ufilter')):
+            users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
+            if "_all" not in self.request.GET.getlist("emw") or users_data["admin_and_demo_users"]:
                 q["filter"]["and"].append(
-                    {"terms": {"form.meta.userID": filter(None, self.combined_user_ids)}})
+                    {"terms": {"form.meta.userID": filter(None, [u["user_id"] for u in users_data["combined_users"]])}})
             else:
-                ids = filter(None, [user['user_id'] for user in self.get_admins_and_demo_users()])
+                ids = filter(None, [user['user_id'] for user in users_data["admin_and_demo_users"]])
                 q["filter"]["and"].append({"not": {"terms": {"form.meta.userID": ids}}})
 
             q["sort"] = self.get_sorting_block() if self.get_sorting_block() else [{"form.meta.timeEnd" : {"order": "desc"}}]
