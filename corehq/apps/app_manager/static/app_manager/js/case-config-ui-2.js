@@ -218,7 +218,8 @@ var CaseConfig = (function () {
             } catch (e) {
                 self.case_name = null;
             }
-            self.suggestedProperties = ko.computed(self.suggestedProperties, self);
+            self.suggestedPreloadProperties = ko.computed(self.suggestedProperties, self);
+            self.suggestedSaveProperties = ko.computed(self.suggestedProperties, self);
 
             self.addProperty = function () {
                 var property = CaseProperty.wrap({

@@ -1272,8 +1272,32 @@ class XForm(WrappedNode):
 
     def add_care_plan(self, form):
         from const import CAREPLAN_GOAL, CAREPLAN_TASK
+        from corehq.apps.app_manager.util import split_path
         self.add_meta_2()
         self.add_instance('casedb', src='jr://instance/casedb')
+
+        for property, nodeset in form.case_preload.items():
+            parent_path, property = split_path(property)
+            property_xpath = {
+                'name': 'case_name',
+                'owner_id': '@owner_id'
+            }.get(property, property)
+
+            id_xpath = {
+                'parent': CaseIDXPath(session_var('case_id')),
+                'goal': CaseIDXPath(session_var('case_id_goal'))
+            }.get(parent_path.split('/')[-1])
+
+            if id_xpath:
+                self.add_setvalue(
+                    ref=nodeset,
+                    value=id_xpath.case().property(property_xpath),
+                )
+            else:
+                raise CaseError("Unknown parent reference '{ref}' for case type '{type}'".format(
+                    ref=parent_path,
+                    type=form.get_case_type())
+                )
 
         def add_parent_case_id(case_block, case_path=''):
             parent_case_id = _make_elem('parent_case_id')
