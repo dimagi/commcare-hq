@@ -8,6 +8,7 @@ import numpy
 import operator
 import pytz
 from corehq.apps.reports import util
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.reports.standard import ProjectReportParametersMixin, \
     DatespanMixin, ProjectReport, DATE_FORMAT
 from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, FormsByApplicationFilter, SingleFormByApplicationFilter
@@ -102,9 +103,8 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
     """
     name = ugettext_noop('Case Activity')
     slug = 'case_activity'
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.CaseTypeField',
-              'corehq.apps.reports.fields.GroupField']
+    fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
+              'corehq.apps.reports.fields.CaseTypeField']
     all_users = None
     display_data = ['percent']
     emailable = True
@@ -238,7 +238,8 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
 
     @property
     def rows(self):
-        rows = [self.Row(self, user) for user in self.users]
+        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
+        rows = [self.Row(self, user) for user in users_data["combined_users"]]
 
         total_row = self.TotalRow(rows, _("All Users"))
 
