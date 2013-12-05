@@ -215,7 +215,8 @@ class StockState(object):
                 reconciliation_transaction = mk_reconciliation(-self.current_stock)
 
             self.current_stock = 0
-            self.stocked_out_since = date.today()
+            if not self.stocked_out_since:
+                self.stocked_out_since = date.today()
 
         else:
             if action_type == const.StockActions.STOCKONHAND:

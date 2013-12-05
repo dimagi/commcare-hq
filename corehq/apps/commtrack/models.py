@@ -722,7 +722,7 @@ class SupplyPointProductCase(CommCareCase):
     # can flesh this out more as needed
     product = StringProperty() # would be nice if this was product_id but is grandfathered in
     current_stock = StringProperty()
-    stocked_out_since = DateProperty()
+    stocked_out_since = StringProperty()
 
     @memoized
     def get_product(self):
@@ -784,8 +784,9 @@ class SupplyPointProductCase(CommCareCase):
     @property
     def stockout_duration_in_months(self):
         if self.stocked_out_since:
+            sos = datetime.strptime(self.stocked_out_since, '%Y-%m-%d').date()
             today = datetime.today().date()
-            return (today - self.stocked_out_since).days / DAYS_PER_MONTH
+            return (today - sos).days / DAYS_PER_MONTH
         else:
             return None
 
