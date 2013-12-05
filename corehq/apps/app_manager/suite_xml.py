@@ -718,7 +718,7 @@ class SuiteGenerator(object):
                         'index/goal', session_var('case_id_goal'), quote=False
                     ).select('@status', 'open').count()
                     frame = CreateFrame(
-                        if_clause='{count} = 1'.format(count=count)
+                        if_clause='{count} >= 1'.format(count=count)
                     )
                     frame.add_command(self.id_strings.menu(parent_module))
                     frame.add_datum(StackDatum(id='case_id', value=session_var('case_id')))

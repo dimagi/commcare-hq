@@ -327,7 +327,7 @@
       <datum id="case_id_task" nodeset="instance('casedb')/casedb/case[@case_type='careplan_task'][index/goal=instance('commcaresession')/session/data/case_id_goal][@status='open']" value="./@case_id" detail-select="m1_careplan_task_short" detail-confirm="m1_careplan_task_long"/>
     </session>
     <stack>
-      <create if="count(instance('casedb')/casedb/case[@case_type='careplan_task'][index/goal=instance('commcaresession')/session/data/case_id_goal][@status='open']) = 1">
+      <create if="count(instance('casedb')/casedb/case[@case_type='careplan_task'][index/goal=instance('commcaresession')/session/data/case_id_goal][@status='open']) >= 1">
         <command>m0</command>
         <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
         <command>m1</command>
