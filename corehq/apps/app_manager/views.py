@@ -254,7 +254,7 @@ def import_app(req, domain, template="app_manager/import_app.html"):
                     messages.error(req, "We can't find a project called %s." % redirect_domain)
                 else:
                     messages.error(req, "You left the project name blank.")
-                return HttpResponseRedirect(req.META['HTTP_REFERER'])
+                return HttpResponseRedirect(req.META.get('HTTP_REFERER', req.path))
 
         if app_id:
             app = get_app(None, app_id)
