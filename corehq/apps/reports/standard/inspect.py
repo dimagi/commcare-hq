@@ -4,6 +4,7 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
 from jsonobject import DateTimeProperty
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
@@ -36,6 +37,7 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
     name = ugettext_noop('Submit History')
     slug = 'submit_history'
     fields = [
+              'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
               'corehq.apps.reports.fields.CombinedSelectUsersField',
               'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
               'corehq.apps.reports.fields.DatespanField']
