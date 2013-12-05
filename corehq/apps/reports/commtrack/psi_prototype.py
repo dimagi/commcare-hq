@@ -40,7 +40,7 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
 
     @property
     def actions(self):
-        return sorted(action_config.action_name for action_config in self.config.actions)
+        return sorted(action_config.name for action_config in self.config.actions)
 
     def ordered_actions(self, ordering):
         return sorted(self.actions, key=lambda a: (0, ordering.index(a)) if a in ordering else (1, a))
@@ -301,9 +301,9 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
         for p in self.active_products:
             for a in self.ordered_actions(ACTION_ORDERING):
                 if slug:
-                    cols.append('data: %s %s' % (cfg.actions_by_name[a].keyword, p['code']))
+                    cols.append('data: %s %s' % (dict((act.name, act) for act in cfg.actions)[a].keyword, p['code']))
                 else:
-                    cols.append('%s (%s)' % (cfg.actions_by_name[a].caption, p['name']))
+                    cols.append('%s (%s)' % (dict((act.name, act) for act in cfg.actions)[a].caption, p['name']))
 
         return cols
 

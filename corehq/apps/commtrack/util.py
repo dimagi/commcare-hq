@@ -52,7 +52,7 @@ def make_product(domain, name, code):
     p = Product()
     p.domain = domain
     p.name = name
-    p.code = code.lower()
+    p.code = code
     p.save()
     return p
 
@@ -171,7 +171,7 @@ def due_date_monthly(day, from_end=False, past_period=0):
     return date(y, m, min(day, monthrange(y, m)[1]))
 
 def num_periods_late(product_case, schedule, *schedule_args):
-    last_reported = getattr(product_case, 'last_reported', datetime(2000, 1, 1)).date()
+    last_reported = datetime.strptime(getattr(product_case, 'last_reported', '2000-01-01')[:10], '%Y-%m-%d').date()
 
     class DueDateStream(object):
         """mimic an array of due dates to perform a binary search"""

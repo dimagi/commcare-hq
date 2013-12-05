@@ -991,27 +991,13 @@ class BasicCommTrackSettingsView(BaseCommTrackAdminView):
 
         self.commtrack_settings.multiaction_keyword = payload['keyword']
 
-        def make_action_name(caption, actions):
-            existing = filter(None, [a.get('name') for a in actions])
-            name = ''.join(c.lower() if c.isalpha() else '_' for c in caption)
-            disambig = 1
-
-            def _name():
-                return name + ('_%s' % disambig if disambig > 1 else '')
-
-            while _name() in existing:
-                disambig += 1
-
-            return _name()
-
         def mk_action(action):
-            action['action_type'] = action['type']
-            del action['type']
-
-            if not action.get('name'):
-                action['name'] = make_action_name(action['caption'], payload['actions'])
-
-            return CommtrackActionConfig(**action)
+            return CommtrackActionConfig(**{
+                    'action': action['type'],
+                    'subaction': action['caption'],
+                    'keyword': action['keyword'],
+                    'caption': action['caption'],
+                })
 
         def mk_loctype(loctype):
             loctype['allowed_parents'] = [p or '' for p in loctype['allowed_parents']]
