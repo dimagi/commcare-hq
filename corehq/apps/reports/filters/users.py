@@ -210,16 +210,18 @@ class BaseGroupedMobileWorkerFilter(BaseSingleOptionFilter):
 class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     slug = "emw"
     label = ugettext_noop("User/Group Filter")
-    default_text = ugettext_noop("")
+    default_options = ["_all_mobile_workers"]
 
     @classmethod
     @memoized
     def pull_users_and_groups(cls, domain, request, simplified_users=False, combined=False, CommCareUser=CommCareUser):
         emws = request.GET.getlist('emw')
 
+        users = []
         user_ids = [u[3:] for u in filter(lambda s: s.startswith("u__"), emws)]
-        users = util.get_all_users_by_domain(domain=domain, user_ids=user_ids, simplified=simplified_users,
-                                             CommCareUser=CommCareUser)
+        if user_ids or "_all_mobile_workers" in emws:
+            users = util.get_all_users_by_domain(domain=domain, user_ids=user_ids, simplified=simplified_users,
+                                                 CommCareUser=CommCareUser)
 
         user_type_ids = [int(t[3:]) for t in filter(lambda s: s.startswith("t__"), emws)]
         user_filter = tuple([HQUserToggle(id, id in user_type_ids) for id in range(4)])
@@ -254,6 +256,6 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         user_type_opts = [("t__%s" % (i+1), "[%s]" % name) for i, name in enumerate(HQUserType.human_readable[1:])]
         user_opts = [("u__%s" % u.get_id, "%s [user]" % u.human_friendly_name) for u in util.user_list(self.domain)]
         group_opts = [("g__%s" % g.get_id, "%s [group]" % g.name) for g in Group.get_reporting_groups(self.domain)]
-        return user_type_opts + user_opts + group_opts
+        return [("_all_mobile_workers", _("[All mobile workers]"))] + user_type_opts + user_opts + group_opts
 
 

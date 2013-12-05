@@ -4,6 +4,7 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
 from jsonobject import DateTimeProperty
+from corehq.apps.reports import util
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 
 from corehq.apps.reports.models import HQUserType
@@ -79,11 +80,12 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
                 q["filter"]["and"].append({"terms": {"xmlns.exact": xmlnss}})
 
             users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
-            if "_all" not in self.request.GET.getlist("emw") or users_data["admin_and_demo_users"]:
+            if "_all_mobile_workers" not in self.request.GET.getlist("emw") or users_data["admin_and_demo_users"]:
                 q["filter"]["and"].append(
                     {"terms": {"form.meta.userID": filter(None, [u["user_id"] for u in users_data["combined_users"]])}})
             else:
-                ids = filter(None, [user['user_id'] for user in users_data["admin_and_demo_users"]])
+                negated_ids = util.get_all_users_by_domain(self.domain, user_filter=HQUserType.all_but_users(), simplified=True)
+                ids = filter(None, [user['user_id'] for user in negated_ids])
                 q["filter"]["and"].append({"not": {"terms": {"form.meta.userID": ids}}})
 
             q["sort"] = self.get_sorting_block() if self.get_sorting_block() else [{"form.meta.timeEnd" : {"order": "desc"}}]
