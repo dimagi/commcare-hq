@@ -585,11 +585,14 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
         except WorksheetNotFound:
             self.group_specs = []
 
+        self.location_specs = []
         if Domain.get_by_name(self.domain).commtrack_enabled:
             try:
                 self.location_specs = self.workbook.get_worksheet(title='locations')
             except WorksheetNotFound:
-                self.location_specs = []
+                # if there is no sheet for locations (since this was added
+                # later and is optional) we don't error
+                pass
 
         try:
             check_headers(self.user_specs)
