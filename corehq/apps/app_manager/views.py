@@ -679,7 +679,9 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
 
     v2_app = app and app.application_version == APP_V2
     context.update({
-        'show_care_plan': (v2_app and toggle_enabled(toggles.APP_BUILDER_CAREPLAN, req.user.username)),
+        'show_care_plan': (v2_app
+                           and not (app and app.has_careplan_module)
+                           and toggle_enabled(toggles.APP_BUILDER_CAREPLAN, req.user.username)),
         'module': module,
         'form': form,
     })
@@ -815,8 +817,15 @@ def new_module(req, domain, app_id):
         response.set_cookie('suppress_build_errors', 'yes')
         return response
     elif module_type == 'careplan':
-        if app.application_version == APP_V1:
-            messages.warning(req, _('Please upgrade you app to > 2.0 in order to add a Careplan module'))
+        validations = [
+            (lambda a: a.application_version == APP_V1,
+             _('Please upgrade you app to > 2.0 in order to add a Careplan module')),
+            (lambda a: app.has_careplan_module,
+             _('This application already has a Careplan module'))
+        ]
+        error = next((v[1] for v in validations if v[0](app)), None)
+        if error:
+            messages.warning(req, error)
             return back_to_main(req, domain, app_id=app.id)
         else:
             return _new_careplan_module(req, domain, app, name, lang)
