@@ -677,7 +677,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         del app['use_commcare_sense']
         app.save()
 
-    v2_app = app.application_version == APP_V2
+    v2_app = app and app.application_version == APP_V2
     context.update({
         'show_care_plan': (v2_app and toggle_enabled(toggles.APP_BUILDER_CAREPLAN, req.user.username)),
         'module': module,
