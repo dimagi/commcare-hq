@@ -468,18 +468,18 @@ class StockTransaction(Document):
                     'case_id': action_node['@entity-id'],
                 })
         elif action_tag == 'transfer':
-            # ghetto -- need a better way to distinguish case ids from 'abstract' sources/sinks
-            is_uuid = lambda x: len(x) >= 32
-            src, dst = [action_node['@%s' % k] for k in ('src', 'dest')]
-            if is_uuid(src):
+            src, dst = [action_node.get('@%s' % k) for k in ('src', 'dest')]
+            action_type = action_node.get('@type')
+
+            if src is not None:
                 action = const.StockActions.CONSUMPTION
-                here = src
-                there = dst
+                here, other = src, dst
             else:
                 action = const.StockActions.RECEIPTS
-                here = dst
-                there = src
-            assert not is_uuid(there) # this would be a requisiton use case; we'd have to create multiple transactions
+                here, other = dst, src
+            there = action_type
+            assert other is None # this would be a requisiton use case; we'd have to create multiple transactions
+
             data.update({
                     'action': action,
                     'subaction': there if there != action else None,
@@ -505,7 +505,9 @@ class StockTransaction(Document):
         elif tx_type == 'transfer':
             here, there = ('dest', 'src') if self.action == StockActions.RECEIPTS else ('src', 'dest') 
             attr[here] = self.case_id
-            attr[there] = self.subaction or self.action
+            # no 'there' for now
+            if self.subaction:
+                attr['type'] = self.subaction
 
         return getattr(E, tx_type)(
             E.product(
