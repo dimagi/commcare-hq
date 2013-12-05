@@ -229,6 +229,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     commtrack_enabled = BooleanProperty(default=False)
     call_center_config = SchemaProperty(CallCenterProperties)
     restrict_superusers = BooleanProperty(default=False)
+    location_restriction_for_users = BooleanProperty(default=True)
 
     case_display = SchemaProperty(CaseDisplaySettings)
 
