@@ -209,8 +209,9 @@ class BaseGroupedMobileWorkerFilter(BaseSingleOptionFilter):
 
 class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     slug = "emw"
-    label = ugettext_noop("User/Group Filter")
+    label = ugettext_noop("Groups or Users")
     default_options = ["_all_mobile_workers"]
+    placeholder = ugettext_noop("Start typing to specify the groups and users to include in the report. You can select multiple users and groups.")
 
     @classmethod
     @memoized
