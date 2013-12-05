@@ -21,6 +21,7 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.export import export_users
 from corehq.apps.users.models import Permissions
 import couchexport
+from couchexport.tasks import rebuild_schemas
 from couchexport.export import UnsupportedExportFormat
 from couchexport.util import SerializableFunction
 from couchforms.models import XFormInstance
@@ -44,6 +45,7 @@ from couchexport.models import Format, FakeSavedExportSchema, SavedBasicExport
 from couchexport import views as couchexport_views
 from couchexport.shortcuts import export_data_shared, export_raw_data,\
     export_response
+from couchexport.export import SchemaMismatchException, ExportConfiguration
 from django.views.decorators.http import (require_http_methods, require_POST,
     require_GET)
 from couchforms.filters import instances
@@ -286,7 +288,16 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
     else:
         if not next:
             next = export.ExcelExportReport.get_url(domain=domain)
-        resp = export_object.download_data(format, filter=filter)
+        try:
+            resp = export_object.download_data(format, filter=filter)
+        except SchemaMismatchException, e:
+            rebuild_schemas.delay(export_object.index)
+            messages.error(
+                request,
+                "Sorry, the export failed for %s, please try again later" \
+                    % export_object.name
+            )
+            return HttpResponseRedirect(next)
         if resp:
             return resp
         else:
