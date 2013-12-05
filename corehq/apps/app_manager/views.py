@@ -829,6 +829,10 @@ def _new_careplan_module(req, domain, app, name, lang):
     from corehq.apps.app_manager.util import new_careplan_module
     target_module_index = req.POST.get('target_module_id')
     target_module = app.get_module(target_module_index)
+    if not target_module.case_type:
+        name = target_module.name[lang]
+        messages.error(req, _("Please set the case type for the target module '{name}'.".format(name=name)))
+        return back_to_main(req, domain, app_id=app.id)
     module = new_careplan_module(app, name, lang, target_module)
     app.save()
     response = back_to_main(req, domain, app_id=app.id, module_id=module.id)
@@ -978,6 +982,9 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
         if is_valid_case_type(case_type):
             # todo: something better than nothing when invalid
             module["case_type"] = case_type
+            for cp_mod in (mod for mod in app.modules if isinstance(mod, CareplanModule)):
+                if cp_mod.unique_id != module.unique_id and cp_mod.parent_select.module_id == module.unique_id:
+                    cp_mod.case_type = case_type
         else:
             return HttpResponseBadRequest("case type is improperly formatted")
     if should_edit("put_in_root"):
