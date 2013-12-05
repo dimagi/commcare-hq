@@ -5,6 +5,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponse
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_protect
+from auditcare.utils import login_template
 from dimagi.utils import csv 
 from auditcare.decorators.login import lockout_response
 from auditcare.decorators.login import log_request
@@ -57,7 +58,7 @@ from django.contrib.auth import views as auth_views
 @never_cache
 def audited_login(request, *args, **kwargs):
     func = auth_views.login
-    kwargs['template_name'] = settings.LOGIN_TEMPLATE
+    kwargs['template_name'] = login_template()
     # call the login function
     response = func(request, *args, **kwargs)
     if request.method == 'POST':
