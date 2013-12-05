@@ -1,6 +1,7 @@
 import traceback
 from django.conf.urls.defaults import *
-import settings
+from auditcare.utils import logout_template, login_template
+
 
 def is_test_trace(item):
     if item.find('/django/test/') > 0:
@@ -8,6 +9,7 @@ def is_test_trace(item):
     if item.find('/django/contrib/auth/tests/') > 0:
         return True
     return False
+
 
 traces = traceback.format_stack(limit=5)
 is_tests = filter(is_test_trace, traces)
@@ -21,9 +23,9 @@ urlpatterns = patterns('',
     url(r'^auditor/models/(?P<model_name>\w+)/$', 'auditcare.views.single_model_history', name='single_model_history'),
     url(r'^auditor/models/(?P<model_name>\w+)/(?P<model_uuid>.*)/$', 'auditcare.views.model_instance_history', name='model_instance_history'),
 
-    #directly overriding due to wrapped functions causing serious problems with tests
-    url(r'^accounts/login/$', 'auditcare.views.audited_login', {'template_name': settings.LOGIN_TEMPLATE}, name='auth_login'),
-    url(r'^accounts/logout/$', 'auditcare.views.audited_logout', {'template_name': settings.LOGGEDOUT_TEMPLATE}, name='auth_logout'),
+    # directly overriding due to wrapped functions causing serious problems with tests
+    url(r'^accounts/login/$', 'auditcare.views.audited_login', {'template_name': login_template()}, name='auth_login'),
+    url(r'^accounts/logout/$', 'auditcare.views.audited_logout', {'template_name': logout_template()}, name='auth_logout'),
 )
 
 
