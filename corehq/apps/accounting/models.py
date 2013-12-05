@@ -203,6 +203,7 @@ class SoftwarePlanVersion(models.Model):
     feature_rates = models.ManyToManyField(FeatureRate, blank=True)
     date_created = models.DateField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
+    role = models.ForeignKey(Role)
 
 
 class Subscriber(models.Model):
@@ -220,7 +221,6 @@ class Subscription(models.Model):
     account = models.ForeignKey(BillingAccount, on_delete=models.PROTECT)
     plan = models.ForeignKey(SoftwarePlanVersion, on_delete=models.PROTECT)
     subscriber = models.ForeignKey(Subscriber, on_delete=models.PROTECT)
-    role = models.ForeignKey(Role)
     salesforce_contract_id = models.CharField(blank=True, max_length=80)
     date_start = models.DateField()
     date_end = models.DateField(blank=True)
