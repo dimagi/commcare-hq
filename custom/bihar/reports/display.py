@@ -41,7 +41,7 @@ class MCHDisplay(CaseDisplay):
             else:
                 setattr(self, "_asha_number", get_property(self.user.user_data, "partner_phone"))
 
-            setattr(self, "_awc_code_namohe", "%s, %s" % (get_property(self.user.user_data, "awc-code"), get_property(self.user.user_data, "village")))
+            setattr(self, "_awc_code_name", "%s, %s" % (get_property(self.user.user_data, "awc-code"), get_property(self.user.user_data, "village")))
             setattr(self, "_aww_name", self.user.full_name if get_property(self.user.user_data, "role").upper() == "AWW" else get_property(self.user.user_data, "partner_name"))
 
             if get_property(self.user.user_data, "role").upper() == "AWW":
@@ -94,7 +94,7 @@ class MCHDisplay(CaseDisplay):
         if date_string != EMPTY_FIELD and date_string != '' and date_string is not None:
             try:
                 return self.report.date_to_json(CaseDisplay.parse_date(self, date_string))
-            except:
+            except AttributeError:
                 return _("Bad date format!")
         else:
             return EMPTY_FIELD
@@ -207,7 +207,7 @@ class MCHMotherDisplay(MCHDisplay):
                 days = (date.today() - CaseDisplay.parse_date(self, mother_dob).date()).days
                 mother_dob = self.parse_date(mother_dob)
                 return "%s, %s" % (mother_dob, days/365)
-            except:
+            except AttributeError:
                 return _("Bad date format!")
         else:
             return EMPTY_FIELD
@@ -347,7 +347,7 @@ class MCHMotherDisplay(MCHDisplay):
         if lmp != EMPTY_FIELD and anc_date_1 != EMPTY_FIELD:
             try:
                 return _("yes") if CaseDisplay.parse_date(self, self.anc_date_1) < (CaseDisplay.parse_date(self, self.lmp) + timedelta(days=12*7)) else _("no")
-            except:
+            except AttributeError:
                 return _("Bad date format!")
         else:
             return EMPTY_FIELD
@@ -580,7 +580,7 @@ class MCHChildDisplay(MCHDisplay):
                 days = (date.today() - CaseDisplay.parse_date(self, dob).date()).days
                 dob = self.parse_date(dob)
                 return "%s, %s" % (dob, int(days/365.25))
-            except:
+            except AttributeError:
                 return _("Bad date format!")
         else:
             return EMPTY_FIELD
