@@ -74,7 +74,8 @@ class RestoreConfig(object):
         product_by_supply_point = map_reduce(lambda e: [(e['supply_point'],)], data=product_entries(), include_docs=True)
 
         from lxml.builder import ElementMaker
-        E = ElementMaker()
+        from corehq.apps.commtrack import const
+        E = ElementMaker(namespace=const.COMMTRACK_REPORT_XMLNS)
         def mk_product(e):
             def _(attr):
                 val = e.get(attr)
