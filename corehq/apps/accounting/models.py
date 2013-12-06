@@ -12,7 +12,7 @@ class Currency(models.Model):
     code = models.CharField(max_length=3, unique=True)
     name = models.CharField(max_length=25, db_index=True)
     symbol = models.CharField(max_length=10)
-    rate_to_usd = models.DecimalField(default=1.0, max_digits=10, decimal_places=9)
+    rate_to_default = models.DecimalField(default=1.0, max_digits=10, decimal_places=9)
     date_updated = models.DateField(auto_now=True)
 
     @classmethod
