@@ -75,6 +75,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
     SLUG_LOCATION_LINEAGE = 'location_lineage'
     SLUG_STOCKOUT_SINCE = 'stockout_since'
     SLUG_STOCKOUT_DURATION = 'stockout_duration'
+    SLUG_LAST_REPORTED = 'last_reported'
 
     SLUG_CATEGORY = 'category'
     _slug_attrib_map = {
@@ -88,6 +89,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
         SLUG_CATEGORY: 'current_stock_category',
         SLUG_STOCKOUT_SINCE: 'stocked_out_since',
         SLUG_STOCKOUT_DURATION: 'stockout_duration_in_months',
+        SLUG_LAST_REPORTED: 'last_reported',
     }
 
     def slugs(self):
