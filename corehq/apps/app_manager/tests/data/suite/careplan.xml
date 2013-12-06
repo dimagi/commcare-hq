@@ -308,7 +308,6 @@
     <instance id="commcaresession" src="jr://instance/session"/>
     <session>
       <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='patient'][@status='open']" value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
-      <datum id="new_task_id" function="uuid()"/>
       <datum id="case_id_goal" nodeset="instance('casedb')/casedb/case[@case_type='careplan_goal'][index/parent=instance('commcaresession')/session/data/case_id][@status='open']" value="./@case_id" detail-select="m1_careplan_goal_short" detail-confirm="m1_careplan_goal_long"/>
     </session>
   </entry>
