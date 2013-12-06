@@ -64,7 +64,7 @@ class HQToggle(object):
         self.name = name
         self.show = show
 
-    def __str__(self):
+    def __repr__(self):
         return "%(klass)s[%(type)s:%(show)s:%(name)s]" % dict(
             klass = self.__class__.__name__,
             type=self.type,

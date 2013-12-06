@@ -1,0 +1,133 @@
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms"
+        xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+        xmlns:jr="http://openrosa.org/javarosa">
+    <h:head>
+        <h:title>Update Careplan Goal</h:title>
+        <model>
+            <instance>
+                <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
+                      xmlns="http://dev.commcarehq.org/careplan/goal/update"
+                      uiVersion="1" version="1" name="Update Careplan Goal">
+
+                    <close_goal/>
+
+                    <description_group>
+                        <update_description>yes</update_description>
+                        <description/>
+                    </description_group>
+                    <date_followup/>
+                    <child_tasks/>
+                    <count_tasks/>
+                    <cur_count>0</cur_count>
+
+                    <tasks_to_close jr:template="" index="" id="">
+                        <close_task_label/>
+                    </tasks_to_close>
+
+                    <display_closed_group/>
+                </data>
+            </instance>
+
+            <bind nodeset="/data/count_tasks" calculate="count-selected(/data/child_tasks)"/>
+
+            <setvalue event="jr-insert" ref="/data/tasks_to_close/@index" value="/data/cur_count"/>
+            <setvalue event="jr-insert" ref="/data/cur_count" value="/data/cur_count + 1"/>
+
+            <bind nodeset="/data/close_goal" required="true()"/>
+            <bind nodeset="/data/description_group" relevant="/data/close_goal = 'no'" required="true()"/>
+            <bind nodeset="/data/description_group/update_description" required="true()"/>
+            <bind nodeset="/data/description_group/description" type="xsd:string"
+                  relevant="/data/description_group/update_description = 'yes'"
+                  required="true()"/>
+
+            <bind nodeset="/data/date_followup" type="xsd:date" relevant="/data/close_goal = 'no'" required="true()"/>
+
+            <bind nodeset="/data/display_closed_group" relevant="/data/close_goal='yes'"/>
+
+            <bind nodeset="/data/tasks_to_close"/>
+            <bind nodeset="/data/tasks_to_close/close_task_label" type="xsd:string"/>
+            <itext>
+                <translation lang="en" default="">
+                    <text id="close_goal-label">
+                        <value>Has the goal been completed?</value>
+                    </text>
+                    <text id="close_goal-yes-label">
+                        <value>Yes</value>
+                    </text>
+                    <text id="close_goal-no-label">
+                        <value>No</value>
+                    </text>
+                    <text id="description_group-label">
+                        <value>Description</value>
+                    </text>
+                    <text id="update_description-label">
+                        <value>Update the goal's description?</value>
+                    </text>
+                    <text id="update_description-yes-label">
+                        <value>Yes</value>
+                    </text>
+                    <text id="update_description-no-label">
+                        <value>No</value>
+                    </text>
+                    <text id="description-label">
+                        <value>Goal Description</value>
+                    </text>
+                    <text id="date_followup-label">
+                        <value>When will you next follow up about this goal?</value>
+                    </text>
+                    <text id="tasks_to_close-label">
+                        <value>Tasks</value>
+                    </text>
+                    <text id="close_task_label-label">
+                        <value>This task is still pending followup and will be closed:
+                            <output ref="instance('casedb')/casedb/case[@case_id= ../case/@case_id]/case_name"/>
+                        </value>
+                    </text>
+                </translation>
+            </itext>
+        </model>
+    </h:head>
+    <h:body>
+        <select1 ref="/data/close_goal">
+            <label ref="jr:itext('close_goal-label')"/>
+            <item>
+                <label ref="jr:itext('close_goal-yes-label')"/>
+                <value>yes</value>
+            </item>
+            <item>
+                <label ref="jr:itext('close_goal-no-label')"/>
+                <value>no</value>
+            </item>
+        </select1>
+        <group ref="/data/description_group" appearance="field-list">
+            <label ref="jr:itext('description_group-label')"/>
+            <select1 ref="/data/description_group/update_description">
+                <label ref="jr:itext('update_description-label')"/>
+                <item>
+                    <label ref="jr:itext('update_description-yes-label')"/>
+                    <value>yes</value>
+                </item>
+                <item>
+                    <label ref="jr:itext('update_description-no-label')"/>
+                    <value>no</value>
+                </item>
+            </select1>
+            <input ref="/data/description_group/description">
+                <label ref="jr:itext('description-label')"/>
+            </input>
+        </group>
+        <input ref="/data/date_followup">
+            <label ref="jr:itext('date_followup-label')"/>
+        </input>
+        <group ref="/data/display_closed_group">
+            <group>
+                <label ref="jr:itext('tasks_to_close-label')"/>
+                <repeat nodeset="/data/tasks_to_close" jr:count="/data/count_tasks">
+                    <trigger ref="/data/tasks_to_close/close_task_label">
+                        <label ref="jr:itext('close_task_label-label')"/>
+                    </trigger>
+                </repeat>
+            </group>
+        </group>
+    </h:body>
+</h:html>

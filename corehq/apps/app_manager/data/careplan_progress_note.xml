@@ -1,0 +1,122 @@
+<h:html xmlns:h="http://www.w3.org/1999/xhtml"
+
+        xmlns="http://www.w3.org/2002/xforms"
+
+        xmlns:ev="http://www.w3.org/2001/xml-events"
+
+        xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+
+        xmlns:jr="http://openrosa.org/javarosa"
+        xmlns:orx="http://openrosa.org/jr/xforms">
+
+    <h:head>
+        <h:title ref="jr:itext('odk_form_title')">Progress Note</h:title>
+        <meta jr:name="pact_progress_note"/>
+        <model>
+            <itext>
+
+                <translation lang="en" default="true">
+                    <text id="odk_form_title">
+                        <value>Client #
+                            <output ref="/progress_note/note/pact_id"/>
+                        </value>
+                    </text>
+
+                    <text id="encounter_date">
+                        <value>Date of Encounter</value>
+                    </text>
+                    <text id="discussed_goals">
+                        <value>Discussed goals for current/upcoming appointment</value>
+                    </text>
+                    <text id="yes">
+                        <value>Yes</value>
+                    </text>
+                    <text id="no">
+                        <value>No</value>
+                    </text>
+                    <text id="care_plan_topics_discussed">
+                        <value>Please check any care plan tasks discussed during the visit</value>
+                    </text>
+                </translation>
+
+            </itext>
+
+            <instance>
+                <progress_note xmlns="http://dev.commcarehq.org/progress_note"
+                               xmlns:cc="http://commcarehq.org/xforms" xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
+                               version="6" uiVersion="9">
+                    <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="" date_modified="" user_id="">
+                        <update>
+                            <last_note/>
+                        </update>
+                    </case>
+
+                    <note>
+                        <encounter_date/>
+                        <discussed_goals>no</discussed_goals>
+                        <care_tasks_discussed/>
+                    </note>
+
+                    <care_plan_item_count/>
+                </progress_note>
+            </instance>
+
+            <instance id="commcaresession" src="jr://instance/session"/>
+            <instance id="casedb" src="jr://instance/casedb"/>
+
+
+            <setvalue event="xforms-ready" ref="/progress_note/case/@case_id"
+                      value="instance('commcaresession')/session/data/case_id"/>
+
+            <setvalue event="xforms-ready" ref="/progress_note/care_plan_item_count"
+                      value="count(instance('casedb')/casedb/case[@case_type='careplan_task'][index/parent = instance('commcaresession')/session/data/case_id][@status='open'])"/>
+
+            <bind nodeset="/data/note/care_tasks_discussed" relevant="/progress_note/care_plan_item_count &gt; 0"/>
+
+            <bind nodeset="/progress_note/case/@date_modified" type="xsd:dateTime"
+                  calculate="/progress_note/meta/timeEnd"/>
+            <bind nodeset="/progress_note/case/@user_id" calculate="/progress_note/meta/userID"/>
+
+            <bind nodeset="/progress_note/case/update/last_note" calculate="/progress_note/note/encounter_date"/>
+
+            <bind nodeset="/progress_note/note/encounter_date" type="xsd:date"
+                  constraint="int(.) &lt;= (int(today())+1)" jr:constraintMsg="Encounter date cannot be in the future"
+                  required="true()"/>
+
+        </model>
+
+    </h:head>
+
+    <h:body>
+
+        <group>
+        <label ref="jr:itext('odk_form_title')"/>
+
+        <input ref="/progress_note/note/encounter_date">
+            <label ref="jr:itext('encounter_date')"/>
+        </input>
+        <select1 ref="/progress_note/note/discussed_goals">
+            <label ref="jr:itext('discussed_goals')"/>
+            <item>
+                <value>yes</value>
+                <label ref="jr:itext('yes')"/>
+            </item>
+            <item>
+                <value>no</value>
+                <label ref="jr:itext('no')"/>
+            </item>
+        </select1>
+
+        <select ref="/progress_note/note/care_tasks_discussed">
+            <label ref="jr:itext('care_plan_topics_discussed')"/>
+            <itemset
+                    nodeset="instance('casedb')/casedb/case[@case_type='careplan_task'][index/parent = instance('commcaresession')/session/data/case_id][@status='open']"
+                    >
+                <label ref="case_name"/>
+                <value ref="@case_id"/>
+            </itemset>
+        </select>
+
+    </h:body>
+</h:html>
+
