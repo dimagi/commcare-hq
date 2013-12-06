@@ -25,14 +25,14 @@ def export_async(custom_export, download_id, format=None, filename=None, **kwarg
             mimetype="text/html",
             download_id=download_id
         ).save(expiry)
-
-    try:
-        format = tmp.format
-    except AttributeError:
-        pass
-    if not filename:
-        filename = custom_export.name
-    return cache_file_to_be_served(tmp, checkpoint, download_id, format, filename)
+    else:
+        try:
+            format = tmp.format
+        except AttributeError:
+            pass
+        if not filename:
+            filename = custom_export.name
+        return cache_file_to_be_served(tmp, checkpoint, download_id, format, filename)
 
 @task
 def rebuild_schemas(index):
