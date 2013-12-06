@@ -1646,6 +1646,8 @@ class OrgMembershipMixin(DocumentSchema):
 class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobileContactMixin):
     #do sync and create still work?
 
+    location_id = StringProperty()
+
     def sync_from_old_couch_user(self, old_couch_user):
         super(WebUser, self).sync_from_old_couch_user(old_couch_user)
         for dm in old_couch_user.web_account.domain_memberships:

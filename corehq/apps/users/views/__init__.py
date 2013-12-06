@@ -4,7 +4,6 @@ import re
 import urllib
 from django.utils.decorators import method_decorator
 from corehq import Domain
-from corehq.apps.commtrack.helpers import set_commtrack_location
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.locations.models import Location
 from corehq.apps.sms.mixin import BadSMSConfigException
@@ -316,7 +315,7 @@ class EditMyAccountDomainView(BaseFullEditUserView):
     def localization_form(self):
         if self.request.method == "POST" and self.request.POST['form_type'] == "commtrack":
             return CommtrackUserForm(self.request.POST, domain=self.domain)
-        linked_loc = self.couch_user._obj.get('commtrack_location')
+        linked_loc = self.couch_user._obj.get('location_id')
         return CommtrackUserForm(domain=self.domain, initial={'supply_point': linked_loc})
 
     def get(self, request, *args, **kwargs):
@@ -327,8 +326,8 @@ class EditMyAccountDomainView(BaseFullEditUserView):
 
     def post(self, request, *args, **kwargs):
         if self.request.POST['form_type'] == "commtrack":
-            location = Location.get(self.request.POST['supply_point'])
-            set_commtrack_location(self.editable_user, location)
+            self.editable_user.location_id = self.request.POST['supply_point']
+            self.editable_user.save()
         return super(EditMyAccountDomainView, self).post(request, *args, **kwargs)
 
 
@@ -450,8 +449,7 @@ class UserInvitationView(InvitationView):
         user.add_domain_membership(domain=self.domain)
         user.set_role(self.domain, invitation.role)
         if project.commtrack_enabled and not project.location_restriction_for_users:
-            location = Location.get(invitation.supply_point)
-            set_commtrack_location(user, location)
+            user.location_id = invitation.supply_point
         user.save()
 
 
