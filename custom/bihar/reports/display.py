@@ -26,6 +26,8 @@ class MCHDisplay(CaseDisplay):
 
         try:
             self.user = CommCareUser.get_by_user_id(case["user_id"])
+            if self.user is None:
+                self.user = CommCareUser.get_by_user_id(case["opened_by"])
         except CouchUser.AccountTypeError:
             # if we have web users submitting forms (e.g. via cloudcare) just don't bother
             # with the rest of this data.
@@ -40,7 +42,7 @@ class MCHDisplay(CaseDisplay):
                 setattr(self, "_asha_number", get_property(self.user.user_data, "partner_phone"))
 
             setattr(self, "_awc_code_name", "%s, %s" % (get_property(self.user.user_data, "awc-code"), get_property(self.user.user_data, "village")))
-            setattr(self, "_aww_name", get_property(self.user.user_data, "name") if get_property(self.user.user_data, "role").upper() == "AWW" else get_property(self.user.user_data, "partner_name"))
+            setattr(self, "_aww_name", self.user.full_name if get_property(self.user.user_data, "role").upper() == "AWW" else get_property(self.user.user_data, "partner_name"))
 
             if get_property(self.user.user_data, "role").upper() == "AWW":
                 setattr(self, "_aww_number", self.user.phone_numbers[0] if len(self.user.phone_numbers) > 0 else EMPTY_FIELD)
@@ -90,7 +92,10 @@ class MCHDisplay(CaseDisplay):
 
     def parse_date(self, date_string):
         if date_string != EMPTY_FIELD and date_string != '' and date_string is not None:
-            return self.report.date_to_json(CaseDisplay.parse_date(self, date_string))
+            try:
+                return self.report.date_to_json(CaseDisplay.parse_date(self, date_string))
+            except AttributeError:
+                return _("Bad date format!")
         else:
             return EMPTY_FIELD
 
@@ -147,9 +152,9 @@ class MCHMotherDisplay(MCHDisplay):
                             if "anc%s_blood_pressure" % i in anc:
                                 setattr(self, "_blood_pressure_%s" % i, anc["anc%s_blood_pressure" % i])
                             if "anc%s_weight" % i in anc:
-                                setattr(self, "_weight_%s" % i, anc["anc%s_weight" % i])
+                                setattr(self, "_weight_%s" % i, str(anc["anc%s_weight" % i]))
                             if "anc%s_hemoglobin" % i in anc and i == 1:
-                                setattr(self, "_hemoglobin" % i, anc["anc%s_hemoglobin" % i])
+                                setattr(self, "_hemoglobin", anc["anc%s_hemoglobin" % i])
                 setattr(self, "_anemia", get_property(form_dict, "anemia"))
                 setattr(self, "_complications", get_property(form_dict, "bp_complications"))
                 setattr(self, "_rti_sti", get_property(form_dict, "rti_sti"))
@@ -160,7 +165,6 @@ class MCHMotherDisplay(MCHDisplay):
             setattr(self, "_jsy_beneficiary", jsy_beneficiary)
         else:
             setattr(self, "_jsy_beneficiary", jsy_money)
-
         super(MCHMotherDisplay, self).__init__(report, case_dict)
 
     @property
@@ -190,7 +194,7 @@ class MCHMotherDisplay(MCHDisplay):
 
     @property
     def mcts_id(self):
-        return get_property(self.case, "mcts_id")
+        return get_property(self.case, "full_mcts_id")
 
     @property
     def dob_age(self):
@@ -203,7 +207,7 @@ class MCHMotherDisplay(MCHDisplay):
                 days = (date.today() - CaseDisplay.parse_date(self, mother_dob).date()).days
                 mother_dob = self.parse_date(mother_dob)
                 return "%s, %s" % (mother_dob, days/365)
-            except:
+            except AttributeError:
                 return _("Bad date format!")
         else:
             return EMPTY_FIELD
@@ -341,7 +345,10 @@ class MCHMotherDisplay(MCHDisplay):
         lmp = self.lmp
         anc_date_1 = self.anc_date_1
         if lmp != EMPTY_FIELD and anc_date_1 != EMPTY_FIELD:
-            return _("yes") if CaseDisplay.parse_date(self, self.anc_date_1) < (CaseDisplay.parse_date(self, self.lmp) + timedelta(days=12*7)) else _("no")
+            try:
+                return _("yes") if CaseDisplay.parse_date(self, self.anc_date_1) < (CaseDisplay.parse_date(self, self.lmp) + timedelta(days=12*7)) else _("no")
+            except AttributeError:
+                return _("Bad date format!")
         else:
             return EMPTY_FIELD
 
@@ -574,7 +581,7 @@ class MCHChildDisplay(MCHDisplay):
                 days = (date.today() - CaseDisplay.parse_date(self, dob).date()).days
                 dob = self.parse_date(dob)
                 return "%s, %s" % (dob, int(days/365.25))
-            except:
+            except AttributeError:
                 return _("Bad date format!")
         else:
             return EMPTY_FIELD

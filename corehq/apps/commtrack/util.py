@@ -1,12 +1,16 @@
+from xml.etree import ElementTree
 from dimagi.utils.couch.database import get_db
-from corehq.apps.commtrack.models import *
+from corehq.apps.commtrack.models import CommtrackConfig, CommtrackActionConfig, LocationType, RequisitionActions, CommtrackRequisitionConfig, Product, SupplyPointCase
 from corehq.apps.locations.models import Location
-from casexml.apps.case.models import CommCareCase
 import itertools
 from datetime import datetime, date, timedelta
 from calendar import monthrange
 import math
 import bisect
+from corehq.apps.hqcase.utils import submit_case_blocks
+from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.xml import V2
+from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 
 
 def all_supply_point_types(domain):
@@ -204,3 +208,34 @@ def num_periods_late(product_case, schedule, *schedule_args):
     # find the earliest due date that is on or after the most-recent report date,
     # and return how many reporting periods back it occurs
     return bisect.bisect_right(stream, stream.normalize(last_reported))
+
+def submit_mapping_case_block(user, index):
+    mapping = user.get_location_map_case()
+
+    if mapping:
+        caseblock = CaseBlock(
+            create=False,
+            case_id=mapping._id,
+            version=V2,
+            index=index
+        )
+    else:
+        caseblock = CaseBlock(
+            create=True,
+            case_type=USER_LOCATION_OWNER_MAP_TYPE,
+            case_id=location_map_case_id(user),
+            version=V2,
+            owner_id=user._id,
+            index=index
+        )
+
+    submit_case_blocks(
+        ElementTree.tostring(caseblock.as_xml()),
+        user.domain,
+        user.username,
+        user._id
+    )
+
+
+def location_map_case_id(user):
+    return 'user-owner-mapping-' + user._id

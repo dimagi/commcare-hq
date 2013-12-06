@@ -254,7 +254,7 @@ def import_app(req, domain, template="app_manager/import_app.html"):
                     messages.error(req, "We can't find a project called %s." % redirect_domain)
                 else:
                     messages.error(req, "You left the project name blank.")
-                return HttpResponseRedirect(req.META['HTTP_REFERER'])
+                return HttpResponseRedirect(req.META.get('HTTP_REFERER', req.path))
 
         if app_id:
             app = get_app(None, app_id)
@@ -583,19 +583,15 @@ def get_module_view_context_and_template(app, module):
     )
 
     def get_parent_modules_and_save(case_type):
-        """
-        This closure is so we don't override the `module` variable
-
-        """
         parent_types = builder.get_parent_types(case_type)
         modules = app.modules
         # make sure all modules have unique ids
-        if any(not module.unique_id for module in modules):
-            for module in modules:
-                module.get_or_create_unique_id()
+        if any(not mod.unique_id for mod in modules):
+            for mod in modules:
+                mod.get_or_create_unique_id()
             app.save()
-        parent_module_ids = [module.unique_id for module in modules
-                             if module.case_type in parent_types]
+        parent_module_ids = [mod.unique_id for mod in modules
+                             if mod.case_type in parent_types]
         return [{
                     'unique_id': mod.unique_id,
                     'name': mod.name,
@@ -677,9 +673,11 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         del app['use_commcare_sense']
         app.save()
 
-    v2_app = app.application_version == APP_V2
+    v2_app = app and app.application_version == APP_V2
     context.update({
-        'show_care_plan': (v2_app and toggle_enabled(toggles.APP_BUILDER_CAREPLAN, req.user.username)),
+        'show_care_plan': (v2_app
+                           and not (app and app.has_careplan_module)
+                           and toggle_enabled(toggles.APP_BUILDER_CAREPLAN, req.user.username)),
         'module': module,
         'form': form,
     })
@@ -815,8 +813,15 @@ def new_module(req, domain, app_id):
         response.set_cookie('suppress_build_errors', 'yes')
         return response
     elif module_type == 'careplan':
-        if app.application_version == APP_V1:
-            messages.warning(req, _('Please upgrade you app to > 2.0 in order to add a Careplan module'))
+        validations = [
+            (lambda a: a.application_version == APP_V1,
+             _('Please upgrade you app to > 2.0 in order to add a Careplan module')),
+            (lambda a: app.has_careplan_module,
+             _('This application already has a Careplan module'))
+        ]
+        error = next((v[1] for v in validations if v[0](app)), None)
+        if error:
+            messages.warning(req, error)
             return back_to_main(req, domain, app_id=app.id)
         else:
             return _new_careplan_module(req, domain, app, name, lang)
@@ -1704,9 +1709,8 @@ def download_file(req, domain, app_id, path):
 
     try:
         assert req.app.copy_of
-        obj = CachedObject('{primary}-{secondary}:{path}'.format(
-            primary=app_id,
-            secondary=req.app._id,
+        obj = CachedObject('{id}::{path}'.format(
+            id=req.app._id,
             path=full_path,
         ))
         if not obj.is_cached():

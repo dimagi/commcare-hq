@@ -288,6 +288,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'corehq.apps.yo',
     'crispy_forms',
     'django_extensions',
+    'django_prbac',
     'djcelery',
     'djtables',
     'djkombu',

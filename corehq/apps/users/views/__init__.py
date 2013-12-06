@@ -3,7 +3,9 @@ import json
 import re
 import urllib
 from django.utils.decorators import method_decorator
+from corehq import Domain
 from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.locations.models import Location
 from corehq.apps.sms.mixin import BadSMSConfigException
 from corehq.apps.users.decorators import require_can_edit_web_users, require_permission_to_edit_user
 from dimagi.utils.decorators.memoized import memoized
@@ -26,7 +28,7 @@ from dimagi.utils.web import json_response
 from corehq.apps.registration.forms import AdminInvitesUserForm
 from corehq.apps.prescriptions.models import Prescription
 from corehq.apps.hqwebapp.utils import InvitationView
-from corehq.apps.users.forms import (UpdateUserRoleForm, BaseUserInfoForm, UpdateMyAccountInfoForm)
+from corehq.apps.users.forms import (UpdateUserRoleForm, BaseUserInfoForm, UpdateMyAccountInfoForm, CommtrackUserForm)
 from corehq.apps.users.models import (CouchUser, CommCareUser, WebUser,
                                       DomainRemovalRecord, UserRole, AdminUserRole, DomainInvitation, PublicUser,
                                       DomainMembershipError)
@@ -301,13 +303,32 @@ class EditMyAccountDomainView(BaseFullEditUserView):
 
     @property
     def page_context(self):
-        return {}
+        context = {}
+        if self.request.project.commtrack_enabled and not self.request.project.location_restriction_for_users:
+            context.update({
+                'update_form': self.localization_form,
+            })
+        return context
+
+    @property
+    @memoized
+    def localization_form(self):
+        if self.request.method == "POST" and self.request.POST['form_type'] == "commtrack":
+            return CommtrackUserForm(self.request.POST, domain=self.domain)
+        linked_loc = self.couch_user._obj.get('location_id')
+        return CommtrackUserForm(domain=self.domain, initial={'supply_point': linked_loc})
 
     def get(self, request, *args, **kwargs):
         if self.couch_user.is_commcare_user():
             from corehq.apps.users.views.mobile import EditCommCareUserView
             return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[self.domain, self.editable_user_id]))
         return super(EditMyAccountDomainView, self).get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        if self.request.POST['form_type'] == "commtrack":
+            self.editable_user.location_id = self.request.POST['supply_point']
+            self.editable_user.save()
+        return super(EditMyAccountDomainView, self).post(request, *args, **kwargs)
 
 
 class ListWebUsersView(BaseUserSettingsView):
@@ -350,7 +371,8 @@ class ListWebUsersView(BaseUserSettingsView):
             'user_roles': self.user_roles,
             'default_role': UserRole.get_default(),
             'report_list': get_possible_reports(self.domain),
-            'invitations': self.invitations
+            'invitations': self.invitations,
+            'domain_object': self.domain_object
         }
 
 
@@ -423,8 +445,11 @@ class UserInvitationView(InvitationView):
         return reverse("domain_homepage", args=[self.domain,])
 
     def invite(self, invitation, user):
+        project = Domain.get_by_name(self.domain)
         user.add_domain_membership(domain=self.domain)
         user.set_role(self.domain, invitation.role)
+        if project.commtrack_enabled and not project.location_restriction_for_users:
+            user.location_id = invitation.supply_point
         user.save()
 
 
@@ -473,9 +498,10 @@ class InviteWebUserView(BaseManageWebUserView):
             return AdminInvitesUserForm(
                 self.request.POST,
                 excluded_emails=current_users + pending_invites,
-                role_choices=role_choices
+                role_choices=role_choices,
+                domain=self.domain
             )
-        return AdminInvitesUserForm(role_choices=role_choices)
+        return AdminInvitesUserForm(role_choices=role_choices, domain=self.domain)
 
     @property
     def page_context(self):
@@ -702,3 +728,12 @@ def audit_logs(request, domain):
             except Exception:
                 pass
     return json_response(data)
+
+@domain_admin_required
+@require_POST
+def location_restriction_for_users(request, domain):
+    project = Domain.get_by_name(domain)
+    if "restrict_users" in request.POST:
+        project.location_restriction_for_users = json.loads(request.POST["restrict_users"])
+    project.save()
+    return HttpResponse()

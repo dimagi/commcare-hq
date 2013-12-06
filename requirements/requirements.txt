@@ -51,7 +51,7 @@ gitdb==0.5.4
 gevent==0.13.8
 rawes==0.3.6
 numpy==1.7.1
-six==1.2.0
+six==1.4.1
 socketpool==0.5.2
 markdown==2.2.1
 amqp==1.0.8

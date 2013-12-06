@@ -1,7 +1,7 @@
 from django.utils.translation import ugettext as _
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.standard.cases.basic import CaseListReport
-from corehq.apps.api.es import ReportCaseES
+from corehq.apps.api.es import CaseES
 
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
@@ -9,7 +9,6 @@ from dimagi.utils.decorators.memoized import memoized
 from custom.bihar.reports.display import MCHMotherDisplay, MCHChildDisplay
 from dimagi.utils.timezones import utils as tz_utils
 import pytz
-from custom.bihar.utils import get_all_owner_ids_from_group
 
 
 class MCHBaseReport(CustomProjectReport, CaseListReport):
@@ -29,22 +28,14 @@ class MCHBaseReport(CustomProjectReport, CaseListReport):
         filters = []
 
         if group_id:
-            group = Group.get(group_id)
-            users_in_group = get_all_owner_ids_from_group(group)
-            if users_in_group:
-                or_stm = []
-                for user_id in users_in_group:
-                    or_stm.append({'term': {'opened_by': user_id}})
-                filters.append({"or": or_stm})
-            else:
-                filters.append({'term': {'owner_id': group_id}})
+            filters.append({'term': {'owner_id': group_id}})
 
         return {'and': filters} if filters else {}
 
     @property
     @memoized
     def case_es(self):
-        return ReportCaseES(self.domain)
+        return CaseES(self.domain)
 
     @property
     @memoized
