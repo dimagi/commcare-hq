@@ -17,10 +17,14 @@ def export_async(custom_export, download_id, format=None, filename=None, **kwarg
     except SchemaMismatchException, e:
         # fire off a delayed force update to prevent this from happening again
         rebuild_schemas.delay(custom_export.index)
-        msg = "Export failed for custom export {id}. Index is {index}. The specific error is {msg}."
-        raise Exception(msg.format(id=custom_export._id,
-                                   index=custom_export.index,
-                                   msg=str(e)))
+        expiry = 10*60*60
+        expose_download(
+            "Sorry, the export failed for %s, please try again later" % custom_export._id,
+            expiry,
+            content_disposition="",
+            mimetype="text/html",
+            download_id=download_id
+        ).save(expiry)
 
     try:
         format = tmp.format
