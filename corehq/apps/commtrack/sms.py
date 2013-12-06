@@ -2,7 +2,6 @@ from django.conf import settings
 from corehq.apps.commtrack.const import RequisitionActions
 from corehq.apps.domain.models import Domain
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.users.models import CommCareUser
 from corehq.apps.locations.models import Location
 from corehq.apps.commtrack import stockreport, const
 from corehq.apps.sms.api import send_sms_to_verified_number
@@ -13,7 +12,7 @@ from dimagi.utils.parsing import json_format_datetime
 from datetime import datetime
 from helpers import make_supply_point_product
 from corehq.apps.commtrack.util import get_supply_point
-from corehq.apps.commtrack.models import Product, CommtrackConfig
+from corehq.apps.commtrack.models import Product, CommtrackConfig, CommTrackUser
 
 logger = logging.getLogger('commtrack.sms')
 
@@ -56,9 +55,9 @@ class StockReportParser(object):
 
         self.location = None
         u = v.owner
-        if isinstance(u, CommCareUser):
+        if domain.commtrack_enabled:
             # currently only support one location on the UI
-            linked_loc = u.location
+            linked_loc = CommTrackUser.wrap(u.to_json()).location
             if linked_loc:
                 self.location = get_supply_point(self.domain.name, loc=linked_loc)['case']
 
