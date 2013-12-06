@@ -43,4 +43,7 @@ def _cached_case_id_to_case_name(case_id):
         case = CommCareCase.get_lite(case_id)
     except ResourceNotFound:
         return None
-    return case['name'] if "name" in case else None
+    ret = case['name'] if "name" in case else None
+    if ret:
+        cache.set(key, ret)
+    return ret
