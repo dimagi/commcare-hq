@@ -23,11 +23,6 @@ def export_for_group(export_id_or_group, output_dir):
         except SchemaMismatchException, e:
             # fire off a delayed force update to prevent this from happening again
             rebuild_schemas.delay(config.index)
-            msg = "Saved export failed for group export {index}. The specific error is {msg}."
-            notify_exception(None, msg.format(index=config.index,
-                                              msg=str(e)))
-            # TODO: do we care enough to notify the user?
-            # This is typically only called by things like celerybeat.
             continue
 
         payload = Temp(tmp).payload
