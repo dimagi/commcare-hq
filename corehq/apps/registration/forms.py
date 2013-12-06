@@ -1,7 +1,7 @@
 from corehq.apps.users.models import CouchUser
 from django import forms
 from django.contrib.auth.models import User
-from corehq.apps.users.forms import RoleForm
+from corehq.apps.users.forms import RoleForm, SupplyPointSelectWidget
 import re
 from corehq.apps.domain.forms import clean_password, max_pwd
 from django.core.validators import validate_email
@@ -190,7 +190,13 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
     role = forms.ChoiceField(choices=(), label="Project Role")
 
     def __init__(self, data=None, excluded_emails=None, *args, **kwargs):
+        domain = None
+        if 'domain' in kwargs:
+            domain = Domain.get_by_name(kwargs['domain'])
+            del kwargs['domain']
         super(AdminInvitesUserForm, self).__init__(data=data, *args, **kwargs)
+        if domain and not domain.location_restriction_for_users:
+            self.fields['supply_point'] = forms.CharField(label='Supply Point:', required=False, widget=SupplyPointSelectWidget(domain=domain.name))
         self.excluded_emails = excluded_emails or []
 
     def clean_email(self):
