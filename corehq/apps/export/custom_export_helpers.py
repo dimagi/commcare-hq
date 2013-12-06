@@ -189,15 +189,17 @@ class FormCustomExportHelper(CustomExportHelper):
                         q.startswith('form.meta.'), q.startswith('form.subcase_')])
 
         def generate_additional_columns():
+            ret = []
             case_name_col = CustomColumn(slug='case_name', index='form.case.@case_id', display='info.case_name',
                                      transform=CASENAME_TRANSFORM, show=True)
             matches = filter(case_name_col.match, column_conf)
-            if not matches:
-                return [case_name_col.default_column()]
-            else:
-                return [case_name_col.format_for_javascript(match) for match in matches]
+            if matches:
+                for match in matches:
+                    case_name_col.format_for_javascript(match)
+            elif filter(lambda col: col["index"] == case_name_col.index, column_conf):
+                ret.append(case_name_col.default_column())
+            return ret
 
-        additional_columns = []
         for col in column_conf:
             question = col["index"]
             if question in remaining_questions:
@@ -210,10 +212,8 @@ class FormCustomExportHelper(CustomExportHelper):
                 col["show"] = True
             if self.creating_new_export and (question in self.default_questions or question in current_questions):
                 col["selected"] = True
-            if col["index"] == 'form.case.@case_id':  # add the case_name column if case_id exists
-                additional_columns = generate_additional_columns()
 
-        column_conf.extend(additional_columns)
+        column_conf.extend(generate_additional_columns())
         column_conf.extend([
             ExportColumn(
                 index=q,
