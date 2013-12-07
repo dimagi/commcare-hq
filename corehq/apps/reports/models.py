@@ -50,6 +50,11 @@ class HQUserType(object):
         return [HQUserToggle(i, defaults[i]) for i in range(len(cls.human_readable))]
 
     @classmethod
+    def all_but_users(cls):
+        no_users = [False, True, True, True]
+        return [HQUserToggle(i, no_users[i]) for i in range(len(cls.human_readable))]
+
+    @classmethod
     def use_filter(cls, ufilter):
         return [HQUserToggle(i, unicode(i) in ufilter) for i in range(len(cls.human_readable))]
 
