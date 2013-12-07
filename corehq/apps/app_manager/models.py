@@ -1717,6 +1717,10 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
         return self.name if len(self.name) <= 12 else '%s..' % self.name[:10]
 
     @property
+    def has_careplan_module(self):
+        return False
+
+    @property
     def url_base(self):
         return get_url_base()
 
