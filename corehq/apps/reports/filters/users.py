@@ -1,12 +1,14 @@
+from corehq.apps.users.models import CommCareUser
+from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 from corehq.apps.groups.models import Group
 from corehq.apps.reports import util
 
-from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseReportFilter, BaseSingleOptionFilter, BaseSingleOptionTypeaheadFilter
+from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseReportFilter, BaseSingleOptionFilter, BaseSingleOptionTypeaheadFilter, BaseMultipleOptionFilter
 from corehq.apps.groups.hierarchy import (get_hierarchy,
         get_user_data_from_hierarchy)
-from corehq.apps.reports.models import HQUserType
+from corehq.apps.reports.models import HQUserType, HQUserToggle
 
 
 class LinkedUserFilter(BaseDrilldownOptionFilter):
@@ -204,5 +206,57 @@ class BaseGroupedMobileWorkerFilter(BaseSingleOptionFilter):
                 users = group.get_users(is_active=True, only_commcare=True)
                 options.extend([(u.user_id, u.username_in_report) for u in users])
         return options
+
+class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
+    slug = "emw"
+    label = ugettext_noop("Groups or Users")
+    default_options = ["_all_mobile_workers"]
+    placeholder = ugettext_noop("Start typing to specify the groups and users to include in the report. You can select multiple users and groups.")
+
+    @classmethod
+    @memoized
+    def pull_users_and_groups(cls, domain, request, simplified_users=False, combined=False, CommCareUser=CommCareUser):
+        emws = request.GET.getlist('emw')
+
+        users = []
+        user_ids = [u[3:] for u in filter(lambda s: s.startswith("u__"), emws)]
+        if user_ids or "_all_mobile_workers" in emws:
+            users = util.get_all_users_by_domain(domain=domain, user_ids=user_ids, simplified=simplified_users,
+                                                 CommCareUser=CommCareUser)
+
+        user_type_ids = [int(t[3:]) for t in filter(lambda s: s.startswith("t__"), emws)]
+        user_filter = tuple([HQUserToggle(id, id in user_type_ids) for id in range(4)])
+        other_users = util.get_all_users_by_domain(domain=domain, user_filter=user_filter, simplified=simplified_users,
+                                                   CommCareUser=CommCareUser)
+
+        group_ids = [g[3:] for g in filter(lambda s: s.startswith("g__"), emws)]
+        groups = [Group.get(g) for g in group_ids]
+
+        ret = {
+            "users": users + other_users,
+            "admin_and_demo_users": other_users,
+            "groups": groups,
+        }
+
+        if combined:
+            user_dict = {}
+            for group in groups:
+                user_dict["%s|%s" % (group.name, group._id)] = util.get_all_users_by_domain(
+                    group=group,
+                    simplified=simplified_users
+                )
+
+            users_in_groups = [user for sublist in user_dict.values() for user in sublist]
+
+            ret["users_by_group"] = user_dict
+            ret["combined_users"] = ret["users"] + users_in_groups
+        return ret
+
+    @property
+    def options(self):
+        user_type_opts = [("t__%s" % (i+1), "[%s]" % name) for i, name in enumerate(HQUserType.human_readable[1:])]
+        user_opts = [("u__%s" % u.get_id, "%s [user]" % u.human_friendly_name) for u in util.user_list(self.domain)]
+        group_opts = [("g__%s" % g.get_id, "%s [group]" % g.name) for g in Group.get_reporting_groups(self.domain)]
+        return [("_all_mobile_workers", _("[All mobile workers]"))] + user_type_opts + user_opts + group_opts
 
 
