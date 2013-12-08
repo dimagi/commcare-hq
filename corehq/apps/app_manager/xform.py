@@ -1362,7 +1362,6 @@ class XForm(WrappedNode):
                     case_type=CAREPLAN_TASK,
                     autoset_owner_id=False,
                     delay_case_id=True,
-                    case_id=session_var('new_task_id'),
                     make_relative=True
                 )
 

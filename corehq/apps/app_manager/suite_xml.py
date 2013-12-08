@@ -720,10 +720,6 @@ class SuiteGenerator(object):
                     e.datums.append(session_datum('case_id_goal', CAREPLAN_GOAL, 'parent', 'case_id'))
             elif form.case_type == CAREPLAN_TASK:
                 if form.mode == 'create':
-                    e.datums.append(SessionDatum(
-                        id='new_task_id',
-                        function='uuid()'
-                    ))
                     e.datums.append(session_datum('case_id_goal', CAREPLAN_GOAL, 'parent', 'case_id'))
                 elif form.mode == 'update':
                     e.datums.append(session_datum('case_id_goal', CAREPLAN_GOAL, 'parent', 'case_id'))
