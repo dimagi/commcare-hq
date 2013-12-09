@@ -8,7 +8,7 @@ import json
 from django.template.loader import render_to_string
 from django.shortcuts import render
 
-import pytz
+import pytz, tempfile, os
 from corehq.apps.reports.models import ReportConfig
 from corehq.apps.reports import util
 from corehq.apps.reports.datatables import DataTablesHeader
@@ -565,6 +565,12 @@ class GenericReportView(CacheableRequestMixIn):
             slug=self.slug,
             url_root=self.url_root
         )
+
+    @property
+    def excel_response(self):
+        file = StringIO()
+        export_from_tables(self.export_table, file, self.export_format)
+        return file
 
     @property
     @request_cache("filters", expiry=60 * 10)

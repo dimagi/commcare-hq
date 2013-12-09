@@ -335,7 +335,7 @@ class ReportConfig(Document):
         except CouchUser.AccountTypeError:
             return CommCareUser.get_by_user_id(self.owner_id)
 
-    def get_report_content(self):
+    def get_report_content(self, attach_excel=False):
         """
         Get the report's HTML content as rendered by the static view format.
 
@@ -361,8 +361,13 @@ class ReportConfig(Document):
         try:
             response = self._dispatcher.dispatch(request, render_as='email',
                 **self.view_kwargs)
-            return json.loads(response.content)['report']
-        except Exception:
+            if attach_excel is True:
+                file_obj = self._dispatcher.dispatch(request, render_as='excel',
+                **self.view_kwargs)
+            else:
+                file_obj = None
+            return json.loads(response.content)['report'], file_obj
+        except Exception as e:
             notify_exception(None, "Error generating report")
             return _("An error occurred while generating this report.")
 
@@ -378,6 +383,7 @@ class ReportNotification(Document):
     recipient_emails = StringListProperty()
     config_ids = StringListProperty()
     send_to_owner = BooleanProperty()
+    attach_excel = BooleanProperty()
 
     hour = IntegerProperty(default=8)
     day = IntegerProperty(default=1)
@@ -497,9 +503,9 @@ class ReportNotification(Document):
 
         if self.all_recipient_emails:
             title = "Scheduled report from CommCare HQ"
-            body = get_scheduled_report_response(self.owner, self.domain, self._id).content
+            body, excel_files = get_scheduled_report_response(self.owner, self.domain, self._id, attach_excel=self.attach_excel)
             for email in self.all_recipient_emails:
-                send_HTML_email(title, email, body, email_from=settings.DEFAULT_FROM_EMAIL)
+                send_HTML_email(title, email, body.content, email_from=settings.DEFAULT_FROM_EMAIL, excel_files=excel_files)
 
 
 class AppNotFound(Exception):
