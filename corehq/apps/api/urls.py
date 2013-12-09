@@ -3,7 +3,7 @@ from corehq.apps.api.object_fetch_api import CaseAttachmentAPI
 
 from corehq.apps.api.domainapi import DomainAPI
 from corehq.apps.api.redis_assets import RedisAssetsAPI
-from corehq.apps.api.resources import v0_1, v0_2, v0_3, v0_4
+from corehq.apps.api.resources import v0_1, v0_2, v0_3, v0_4, v0_5
 from corehq.apps.commtrack.resources.v0_1 import ProductResource,\
     StockStatusResource, StockReportResource, FullStockTransactionResource
 from corehq.apps.fixtures.resources.v0_1 import FixtureResource
@@ -50,6 +50,19 @@ API_LIST = (
         v0_4.RepeaterResource,
         v0_4.SingleSignOnResource,
         v0_4.HOPECaseResource,
+        FixtureResource,
+        ReportResource,
+    )),
+    ((0, 5), (
+        v0_4.ApplicationResource,
+        v0_4.CommCareCaseResource,
+        v0_4.XFormInstanceResource,
+        v0_4.RepeaterResource,
+        v0_4.SingleSignOnResource,
+        v0_4.HOPECaseResource,
+        v0_5.CommCareUserResource,
+        v0_5.WebUserResource,
+        v0_5.GroupResource,
         FixtureResource,
         ReportResource,
     ))

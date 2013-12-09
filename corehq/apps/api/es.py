@@ -10,13 +10,14 @@ from corehq.elastic import get_es
 from django.views.generic import View
 from corehq.pillows.base import restore_property_dict, VALUE_TAG
 from dimagi.utils.logging import notify_exception
-from corehq.apps.reports.exceptions import BadRequestError
+from no_exceptions.exceptions import Http400
 
 
 DEFAULT_SIZE = 10
 
-class ESUserError(BadRequestError):
+class ESUserError(Http400):
     pass
+
 
 class ESView(View):
     """
@@ -260,6 +261,50 @@ class XFormES(ESView):
         return es_results
 
 
+class UserES(ESView):
+    index = "hqusers"
+
+    def validate_query(self, query):
+        if 'password' in query['fields']:
+            raise ESUserError("You cannot include password in the results")
+
+    def run_query(self, es_query, es_type=None):
+        """
+        Must be called with a "fields" parameter
+        Returns the raw query json back, or None if there's an error
+        """
+
+        logging.info("ESlog: [%s.%s] ESquery: %s" % (
+            self.__class__.__name__, self.domain, simplejson.dumps(es_query)))
+
+        self.validate_query(es_query)
+
+        es_base = self.es[self.index] if es_type is None else \
+            self.es[self.index][es_type]
+        es_results = es_base.get('_search', data=es_query)
+
+        if 'error' in es_results:
+            msg = "Error in elasticsearch query [%s]: %s\nquery: %s" % (
+                self.index, es_results['error'], es_query)
+            notify_exception(None, message=msg)
+            return None
+
+        hits = []
+        for res in es_results['hits']['hits']:
+            if '_source' in res:
+                raise ESUserError(
+                    "This query does not support full document lookups")
+            res_domain = res['fields'].get('domain_membership.domain', None)
+
+            # security check
+            if res_domain == self.domain:
+                hits.append(res)
+            else:
+                logging.info(
+                    "Requester domain %s does not match result domain %s" % (
+                    self.domain, res_domain))
+        es_results['hits']['hits'] = hits
+        return es_results
 
 
 def report_term_filter(terms, mapping):

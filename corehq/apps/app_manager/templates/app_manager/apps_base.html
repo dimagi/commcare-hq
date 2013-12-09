@@ -45,6 +45,47 @@
     });
     </script>
 {% endblock %}
+{% block keyboard_shortcuts %}
+    <script>
+        var nav_key = {{ request.couch_user.keyboard_shortcuts.main_key|JSON }};
+
+        // overrides default behavior and allows for shortcuts in inputs
+        KEY.filter = function(event) {
+            return true;
+        };
+
+        KEYBOARD_SHORTCUTS.push({
+            shortcut: nav_key + "+s",
+            handler: KS.gen_click_fn("#settings-save-btn .btn, #fd-save-button .btn"),
+            desc: "Save application"
+        });
+
+        function gen_sidebar_elements() {
+            return $('.sidebar .nav-list a:not(a:has(.icon-pencil))');
+        }
+        var sidebar_navigator = new KeyboardNavigator();
+        sidebar_navigator.init({
+            nav_key: 'option',
+            action_key: 'enter',
+            forward_keys: ['j', 'down'],
+            back_keys: ['k', 'up'],
+            element_list_generator: gen_sidebar_elements,
+            reset_index: false
+        });
+
+        function gen_tab_elements() {
+            return $("[data-toggle='tab']:not(.sidebar .nav-list a)");
+        }
+        var tab_navigator = new KeyboardNavigator();
+        tab_navigator.init({
+            name: 'tabs',
+            nav_key: 'option',
+            action_key: 'enter',
+            element_list_generator: gen_tab_elements,
+            reset_index: false
+        });
+    </script>
+{% endblock %}
 
 {% block sidebar %}
 {% endblock %}

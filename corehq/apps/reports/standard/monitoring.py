@@ -744,10 +744,10 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
         chart.add_data(d)
 
         # mapping between numbers 0..6 and its day of the week label
-        day_names = "Sun Mon Tue Wed Thu Fri Sat".split(" ")
+        day_names = "Mon Tue Wed Thu Fri Sat Sun".split(" ")
         # the order, bottom-to-top, in which the days should appear
         # i.e. Sun, Sat, Fri, Thu, etc
-        days = (0, 6, 5, 4, 3, 2, 1)
+        days = (6, 5, 4, 3, 2, 1, 0)
 
         sizes=[]
         for d in days:

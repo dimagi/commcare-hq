@@ -51,7 +51,7 @@ gitdb==0.5.4
 gevent==0.13.8
 rawes==0.3.6
 numpy==1.7.1
-six==1.2.0
+six==1.4.1
 socketpool==0.5.2
 markdown==2.2.1
 amqp==1.0.8
@@ -63,6 +63,7 @@ unittest2
 pycurl==7.19.0
 fakecouch==0.0.5
 # WeasyPrint==0.19.2
+twilio==3.6.4
 
 # required by ctable
 SQLAlchemy==0.8.2

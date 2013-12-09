@@ -1,7 +1,9 @@
 import functools
+import json
 from corehq.apps.app_manager.xform import XForm, XFormError, parse_xml
 import re
 from dimagi.utils.decorators.memoized import memoized
+from django.core.cache import cache
 
 
 def get_app_id(form):
@@ -18,6 +20,7 @@ def split_path(path):
     name = path_parts.pop(-1)
     path = '/'.join(path_parts)
     return path, name
+
 
 def save_xform(app, form, xml):
     try:
@@ -190,3 +193,59 @@ def create_temp_sort_column(field, index):
 def is_sort_only_column(column):
     from corehq.apps.app_manager.models import SortOnlyDetailColumn
     return isinstance(column, SortOnlyDetailColumn)
+
+
+def get_correct_app_class(doc):
+    from corehq.apps.app_manager.models import Application, RemoteApp
+    return {
+        'Application': Application,
+        'Application-Deleted': Application,
+        "RemoteApp": RemoteApp,
+        "RemoteApp-Deleted": RemoteApp,
+    }[doc['doc_type']]
+
+
+def all_apps_by_domain(domain):
+    from corehq.apps.app_manager.models import ApplicationBase
+    rows = ApplicationBase.get_db().view(
+        'app_manager/applications',
+        startkey=[domain, None],
+        endkey=[domain, None, {}],
+        include_docs=True,
+    ).all()
+    for row in rows:
+        doc = row['doc']
+        yield get_correct_app_class(doc).wrap(doc)
+
+
+def new_careplan_module(app, name, lang, target_module):
+    from corehq.apps.app_manager.models import CareplanModule, CareplanGoalForm, CareplanTaskForm
+    module = app.add_module(CareplanModule.new_module(
+        app,
+        name,
+        lang,
+        target_module.unique_id,
+        target_module.case_type)
+    )
+
+    forms = [form_class.new_form(lang, name, mode)
+                for form_class in [CareplanGoalForm, CareplanTaskForm]
+                for mode in ['create', 'update']]
+
+    for form, source in forms:
+        module.forms.append(form)
+        form = module.get_form(-1)
+        form.source = source
+
+    return module
+
+
+def languages_mapping():
+    mapping = cache.get('__languages_mapping')
+    if not mapping:
+        with open('submodules/langcodes/langs.json') as langs_file:
+            lang_data = json.load(langs_file)
+            mapping = dict([(l["two"], l["names"]) for l in lang_data])
+        mapping["default"] = ["Default Language"]
+        cache.set('__languages_mapping', mapping, 12*60*60)
+    return mapping

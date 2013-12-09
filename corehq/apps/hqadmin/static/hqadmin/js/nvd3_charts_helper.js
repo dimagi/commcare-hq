@@ -111,10 +111,10 @@ function trim_data(data) {
         var reverse_index = get_first(anarr);
         return reverse_index > -1 ? arr.length - reverse_index : -1;
     }
-    var gt_zero = function (n) {return n > 0};
+    var gte_zero = function (n) {return n >= 0};
 
-    var firsts = _.filter(_.map(data, function(d) { return get_first(d.values); }), gt_zero);
-    var lasts = _.filter(_.map(data, function(d) { return get_last(d.values); }), gt_zero);
+    var firsts = _.filter(_.map(data, function(d) { return get_first(d.values); }), gte_zero);
+    var lasts = _.filter(_.map(data, function(d) { return get_last(d.values); }), gte_zero);
     var first = firsts.length > 0 ? Math.min.apply(null, firsts) : 0;
     var last = lasts.length > 0 ? Math.max.apply(null, lasts) : data[0].values.length;
 
@@ -143,7 +143,7 @@ function format_data(data, start, end, interval, no_trim) {
 }
 
 function formatDataForCumGraphs(data, init_val) {
-    ret = {"key": data.key, "values": []};
+    var ret = {"key": data.key, "values": []};
     var total = init_val;
     for (var i = 0; i < data.values.length; i++) {
         total += data.values[i].y;
@@ -153,26 +153,27 @@ function formatDataForCumGraphs(data, init_val) {
 }
 
 function findEnds(data, starting_time, ending_time) {
+    var start = ending_time, end = starting_time;
     for (var key in data) {
         if (data.hasOwnProperty(key)) {
             if (data[key].length > 0) {
-                if (starting_time > data[key][0].time ){
-                    starting_time = data[key][0].time;
+                if (start > data[key][0].time ){
+                    start = data[key][0].time;
                 }
-                if (ending_time < data[key][data[key].length-1].time ){
-                    ending_time = data[key][data[key].length-1].time;
+                if (end < data[key][data[key].length-1].time ){
+                    end = data[key][data[key].length-1].time;
                 }
             }
         }
     }
     return {
-        start: starting_time,
-        end: ending_time
+        start: start,
+        end: end
     }
 }
 
 function loadCharts(chart_name, xname, data, initial_values, starting_time, ending_time, interval) {
-    ends = findEnds(data, starting_time, ending_time);
+    var ends = findEnds(data, starting_time, ending_time);
     starting_time = ends.start, ending_time = ends.end;
     var domain_data = format_data(data, starting_time, ending_time, interval);
     var cum_domain_data = _.map(domain_data, function (domain_datum) {

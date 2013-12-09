@@ -21,7 +21,7 @@
 		<td>{{ domain.deployment.region|default:"" }}</td>
 		<td>{{ domain.project_type|default:"" }}</td>
 		<td>{{ domain.customer_type|default:"" }}</td>
-		<td>{{ domain.is_test|yesno }}</td>
+		<td>{{ domain.is_test }}</td>
 		<td>{{ domain.web_users }}<span title="{{ domain.web_users }}"></span></td>
         <td>{{ domain.commcare_users }}<span title="{{ domain.commcare_users }}"></span></td>
         <td>{{ domain.cases }}<span title="{{ domain.cases }}"></span></td>

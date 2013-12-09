@@ -32,7 +32,7 @@
                     </text>
                 </translation>
             </itext>
-            <bind nodeset="/data/case/@date_modified" type="dateTime" calculate="/data/meta/timeEnd"/>
+            <bind nodeset="/data/case/@date_modified" type="xsd:dateTime" calculate="/data/meta/timeEnd"/>
             <bind nodeset="/data/case/@user_id" calculate="/data/meta/userID"/>
             <bind nodeset="/data/case/@case_id" calculate="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/index/parent"/>
             <bind nodeset="/data/case/update/question1" relevant="count(/data/question1) &gt; 0" calculate="/data/question1"/>

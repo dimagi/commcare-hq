@@ -1,34 +1,33 @@
+
+# Standard library imports
 from functools import wraps
 import json
 
+# Django imports
 from django.http import Http404, HttpResponse
 from django.conf import settings
 
+# Tastypie imports
 from tastypie import fields
 from tastypie.authentication import Authentication
 from tastypie.authorization import ReadOnlyAuthorization, Authorization
 from tastypie.exceptions import BadRequest
-from tastypie.serializers import Serializer
 from tastypie.throttle import CacheThrottle
 
+# External imports
 from casexml.apps.case.models import CommCareCase
 from couchforms.models import XFormInstance
+
+# CCHQ imports
 from corehq.apps.domain.decorators import login_or_digest, domain_admin_required
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser, WebUser
 
+# API imports
+from corehq.apps.api.serializers import CustomXMLSerializer, XFormInstanceSerializer
 from corehq.apps.api.util import get_object_or_not_exist
 from corehq.apps.api.resources import JsonResource, DomainSpecificResourceMixin
 
-
-class CustomXMLSerializer(Serializer):
-    def to_etree(self, data, options=None, name=None, depth=0):
-        etree = super(CustomXMLSerializer, self).to_etree(data, options, name, depth)
-        id = etree.find('id')
-        if id is not None:
-            etree.attrib['id'] = id.findtext('.')
-            etree.remove(id)
-        return etree
 
 def api_auth(view_func):
     @wraps(view_func)
@@ -210,6 +209,7 @@ class CommCareCaseResource(JsonResource, DomainSpecificResourceMixin):
         detail_allowed_methods = ['get']
         resource_name = 'case'
 
+
 class XFormInstanceResource(JsonResource, DomainSpecificResourceMixin):
     type = "form"
     id = fields.CharField(attribute='get_id', readonly=True, unique=True)
@@ -230,3 +230,4 @@ class XFormInstanceResource(JsonResource, DomainSpecificResourceMixin):
         list_allowed_methods = []
         detail_allowed_methods = ['get']
         resource_name = 'form'
+        serializer = XFormInstanceSerializer()

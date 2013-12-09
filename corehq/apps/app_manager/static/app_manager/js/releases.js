@@ -19,6 +19,10 @@ function SavedApp(o, r) {
         return false;
     });
 
+    self.allow_media_install = ko.computed(function(){
+        return self.doc_type() !== "RemoteApp";  // remote apps don't support multimedia
+    });
+
     self.mm_supported = function() {
         // This is added to fix legacy issues with incorrectly formatted media_profile.ccpr files.
         // Files that were generated prior to 10/16/2013 are affected, so don't support remote mm for build made before then.

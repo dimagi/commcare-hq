@@ -1,3 +1,4 @@
+from StringIO import StringIO
 from mimetypes import guess_all_extensions, guess_type
 import tempfile
 import zipfile
@@ -27,6 +28,7 @@ from corehq.apps.hqmedia.tasks import process_bulk_upload_zip
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.django.cached_object import CachedObject
 from soil.util import expose_download
 from django.utils.translation import ugettext as _
 
@@ -502,9 +504,16 @@ class ViewMultimediaFile(View):
             return None
 
     def get(self, request, *args, **kwargs):
-        data, content_type = self.multimedia.get_display_file()
-        if self.thumb:
-            data = CommCareImage.get_thumbnail_data(data, self.thumb)
-        response = HttpResponse(mimetype=content_type)
-        response.write(data)
-        return response
+        obj = CachedObject(str(self.doc_id) + ':' + self.kwargs.get('media_type'))
+        if not obj.is_cached():
+            data, content_type = self.multimedia.get_display_file()
+            if self.thumb:
+                data = CommCareImage.get_thumbnail_data(data, self.thumb)
+            buffer = StringIO(data)
+            metadata = {'content_type': content_type}
+            obj.cache_put(buffer, metadata, timeout=0)
+        else:
+            metadata, buffer = obj.get()
+            data = buffer.getvalue()
+            content_type = metadata['content_type']
+        return HttpResponse(data, mimetype=content_type)

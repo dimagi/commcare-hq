@@ -277,7 +277,9 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
     )
     is_test = ChoiceField(
         label=_("Test Project"),
-        choices=tf_choices('Test', _('Real'))
+        choices=(('true', _('Test')),
+                 ('false', _('Real')),
+                 ('none', _('Not Sure')))
     )
     commconnect_enabled = BooleanField(
         label=_("CommConnect Enabled"),
@@ -373,6 +375,13 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         required=False,
         help_text=_("Delete your custom logo and use the standard one.")
     )
+    secure_submissions = BooleanField(
+        label=_("Only accept secure submissions"),
+        required=False,
+        help_text=_("Turn this on to prevent others from impersonating your "
+                    "mobile workers. To use, all of your deployed applications "
+                    "must be using secure submissions."),
+    )
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
@@ -450,7 +459,7 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
 
             domain.project_type = self.cleaned_data['project_type']
             domain.customer_type = self.cleaned_data['customer_type']
-            domain.is_test = self.cleaned_data['is_test'] == 'true'
+            domain.is_test = self.cleaned_data['is_test']
             domain.commconnect_enabled = self.cleaned_data.get(
                     'commconnect_enabled', False)
             domain.survey_management_enabled = self.cleaned_data.get('survey_management_enabled', False)
@@ -467,6 +476,7 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
                 domain.call_center_config.case_type = self.cleaned_data.get('call_center_case_type', None)
             domain.restrict_superusers = self.cleaned_data.get('restrict_superusers', False)
             domain.ota_restore_caching = self.cleaned_data.get('ota_restore_caching', False)
+            domain.secure_submissions = self.cleaned_data.get('secure_submissions', False)
             domain.save()
             return True
         except Exception:

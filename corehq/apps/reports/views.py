@@ -1,65 +1,69 @@
-from datetime import datetime, timedelta, date
+import os
 import json
 import tempfile
 import re
+from datetime import datetime, timedelta, date
 from urllib2 import URLError
+
 from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth.decorators import permission_required
 from django.core.cache import cache
 from django.core.servers.basehttp import FileWrapper
-import os
+from django.core.urlresolvers import reverse
+from django.http import (HttpResponseRedirect, HttpResponse,
+    HttpResponseBadRequest, Http404, HttpResponseForbidden)
+from django.shortcuts import render
+from django.utils.safestring import mark_safe
+from django.utils.translation import ugettext as _
+from django.views.decorators.http import (require_http_methods,
+    require_POST, require_GET)
+
+from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.templatetags.case_tags import case_inline_display
+from couchdbkit.exceptions import ResourceNotFound
+import couchexport
+from couchexport import views as couchexport_views
+from couchexport.export import SchemaMismatchException
+from couchexport.export import UnsupportedExportFormat
+from couchexport.models import Format, FakeSavedExportSchema, SavedBasicExport
+from couchexport.shortcuts import (export_data_shared, export_raw_data,
+    export_response)
+from couchexport.tasks import rebuild_schemas
+from couchexport.util import SerializableFunction
+import couchforms.views as couchforms_views
+from couchforms.filters import instances
+from couchforms.models import XFormInstance
+from couchforms.templatetags.xform_tags import render_form
+from dimagi.utils.chunked import chunked
+from dimagi.utils.couch.bulk import wrapped_docs
+from dimagi.utils.couch.loosechange import parse_date
+from dimagi.utils.decorators.datespan import datespan_in_request
+from dimagi.utils.export import WorkBook
+from dimagi.utils.parsing import json_format_datetime, string_to_boolean
+from dimagi.utils.web import json_request, json_response
+from fields import FilterUsersField
+from soil import DownloadBase
+from soil.tasks import prepare_download
+
+from corehq.apps.domain.decorators import (login_and_domain_required,
+    login_or_digest)
 from corehq.apps.export.custom_export_helpers import CustomExportHelper
-from corehq.apps.reports import util
-from corehq.apps.reports.standard import inspect, export, ProjectReport
-from corehq.apps.reports.export import (
-    ApplicationBulkExportHelper,
-    CustomBulkExportHelper,
-    save_metadata_export_to_tempfile)
+from corehq.apps.groups.models import Group
+from corehq.apps.hqcase.export import export_cases_and_referrals
+from corehq.apps.reports.dispatcher import ProjectReportDispatcher
 from corehq.apps.reports.models import ReportConfig, ReportNotification
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.tasks import create_metadata_export
+from corehq.apps.reports import util
+from corehq.apps.reports.util import get_all_users_by_domain
+from corehq.apps.reports.standard import inspect, export, ProjectReport
+from corehq.apps.reports.export import (ApplicationBulkExportHelper,
+    CustomBulkExportHelper, save_metadata_export_to_tempfile)
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.export import export_users
-from corehq.apps.users.models import Permissions
-import couchexport
-from couchexport.export import UnsupportedExportFormat
-from couchexport.util import SerializableFunction
-from couchforms.models import XFormInstance
-from dimagi.utils.couch.bulk import wrapped_docs
-from dimagi.utils.couch.loosechange import parse_date
-from dimagi.utils.export import WorkBook
-from dimagi.utils.web import json_request, json_response
-from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404, HttpResponseForbidden
-from django.shortcuts import render
-from django.core.urlresolvers import reverse
-from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
-import couchforms.views as couchforms_views
-from django.contrib import messages
-from dimagi.utils.parsing import json_format_datetime, string_to_boolean
-from django.contrib.auth.decorators import permission_required
-from dimagi.utils.decorators.datespan import datespan_in_request
-from casexml.apps.case.models import CommCareCase
-from corehq.apps.hqcase.export import export_cases_and_referrals
 from corehq.apps.users.models import CommCareUser
-from couchexport.models import Format, FakeSavedExportSchema, SavedBasicExport
-from couchexport import views as couchexport_views
-from couchexport.shortcuts import export_data_shared, export_raw_data,\
-    export_response
-from django.views.decorators.http import (require_http_methods, require_POST,
-    require_GET)
-from couchforms.filters import instances
-from couchdbkit.exceptions import ResourceNotFound
-from fields import FilterUsersField
-from util import get_all_users_by_domain
-from corehq.apps.groups.models import Group
-from soil import DownloadBase
-from soil.tasks import prepare_download
-from django.utils.translation import ugettext as _
-from django.utils.safestring import mark_safe
-from dimagi.utils.chunked import chunked
-
-from casexml.apps.case.templatetags.case_tags import case_inline_display
-from couchforms.templatetags.xform_tags import render_form
-from corehq.apps.reports.dispatcher import ProjectReportDispatcher
+from corehq.apps.users.models import Permissions
 
 
 DATE_FORMAT = "%Y-%m-%d"
@@ -74,7 +78,7 @@ require_form_export_permission = require_permission(Permissions.view_report, 'co
 require_case_export_permission = require_permission(Permissions.view_report, 'corehq.apps.reports.standard.export.CaseExportReport', login_decorator=None)
 
 require_form_view_permission = require_permission(Permissions.view_report, 'corehq.apps.reports.standard.inspect.SubmitHistory', login_decorator=None)
-require_case_view_permission = require_permission(Permissions.view_report, 'corehq.apps.reports.standard.inspect.CaseListReport', login_decorator=None)
+require_case_view_permission = require_permission(Permissions.view_report, 'corehq.apps.reports.standard.cases.basic.CaseListReport', login_decorator=None)
 
 require_can_view_all_reports = require_permission(Permissions.view_reports)
 
@@ -146,8 +150,8 @@ def export_data(req, domain):
     user_filter, _ = FilterUsersField.get_user_filter(req)
 
     if user_filter:
-        users_matching_filter = map(lambda x: x.get('user_id'), get_all_users_by_domain(domain,
-            user_filter=user_filter, simplified=True))
+        users_matching_filter = map(lambda x: x.get('user_id'),
+                                    get_all_users_by_domain(domain, user_filter=user_filter, simplified=True))
         def _ufilter(user):
             try:
                 return user['form']['meta']['userID'] in users_matching_filter
@@ -286,7 +290,16 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
     else:
         if not next:
             next = export.ExcelExportReport.get_url(domain=domain)
-        resp = export_object.download_data(format, filter=filter)
+        try:
+            resp = export_object.download_data(format, filter=filter)
+        except SchemaMismatchException, e:
+            rebuild_schemas.delay(export_object.index)
+            messages.error(
+                request,
+                "Sorry, the export failed for %s, please try again later" \
+                    % export_object.name
+            )
+            return HttpResponseRedirect(next)
         if resp:
             return resp
         else:

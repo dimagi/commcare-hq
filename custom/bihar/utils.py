@@ -15,8 +15,8 @@ def get_team_members(group, roles=FLW_ROLES):
     Get any commcare users that are either "asha" or "aww".
     """
     users = group.get_users(only_commcare=True)
-    return sorted([u for u in users if u.user_data.get('role', '') in roles],
-                  key=lambda u: u.user_data['role'])
+    return sorted([u for u in users if u.user_data.get('role', '').upper() in roles],
+                  key=lambda u: u.user_data['role'].upper())
 
 def groups_for_user(user, domain):
     if user.is_commcare_user():

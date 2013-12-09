@@ -3,15 +3,11 @@ import datetime, logging
 from celery.task import periodic_task
 from celery.schedules import crontab
 from django.conf import settings
-from django.core.mail import send_mail
 
-from dimagi.utils.web import get_url_base
-from dimagi.utils.couch.database import get_db
 from corehq.apps.groups.models import Group
 from couchforms.models import XFormInstance
 
 from .models import LegacyWeeklyReport
-from .reports import LegacyReportView
 from .constants import *
 
 
@@ -104,11 +100,8 @@ def save_report(date=None):
     """
     if date is None:
         date = datetime.date.today()
-    # exclude = []
-    # for group in [g for g in Group.by_domain(DOMAIN) if g not in exclude]:
 
-    # This is a temporary fix while the app is on the mikesproject domain
-    for group in [g for g in Group.by_domain(DOMAIN) if "Afterschool" in g.name]:
+    for group in Group.by_domain(DOMAIN):
         site = Site(group, date)
         report = LegacyWeeklyReport(
             domain=DOMAIN,
@@ -122,15 +115,6 @@ def save_report(date=None):
         report.save()
         msg = "Saving legacy group %s to doc %s" % (group.name, report._id)
         logging.info(msg)
-        
-        # send an email to each site
-        report_link = get_url_base() + LegacyReportView.get_url(DOMAIN)
-        send_mail(
-            "This week's Legacy report is available",
-            "You can view your report here:\n{link}".format(link=report_link),
-            settings.SERVER_EMAIL,
-            site.emails
-        )
 
 
 @periodic_task(

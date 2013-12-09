@@ -3,7 +3,6 @@ from corehq.apps.users.models import WebUser
 from corehq.apps.domain.shortcuts import create_domain
 from django.test.client import Client
 from django.core.urlresolvers import reverse
-from StringIO import StringIO
 import os
 
 class SubmissionTest(TestCase):
