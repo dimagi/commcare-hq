@@ -22,7 +22,7 @@ from django.utils.translation import ugettext as _
 from corehq.apps.reports.cache import CacheableRequestMixIn, request_cache
 from django.core.urlresolvers import reverse
 import uuid
-from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
+from corehq.apps.users.models import WebUser
 
 """
     Note: Fields is being phased out in favor of filters.
@@ -505,12 +505,12 @@ class AsyncLocationField(ReportField):
                                                         'resource_name': 'location', 
                                                         'api_name': 'v0.3'})
         selected_loc_id = self.request.GET.get('location_id')
-        user = CouchUser.get_by_username(str(self.request.user))
+        user = WebUser.get_by_username(str(self.request.user))
         domain = Domain.get_by_name(self.domain)
 
         context = {}
 
-        if not selected_loc_id and user.location_id and domain.commtrack_enabled:
+        if not selected_loc_id and user and user.location_id and domain.commtrack_enabled:
             selected_loc_id = user.location_id
             if domain.location_restriction_for_users:
                 context.update({'restriction': domain.location_restriction_for_users})
