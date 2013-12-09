@@ -25,15 +25,16 @@ def _apply_updates(doc, update_dict):
 
 def bootstrap_domain(domain):
     project = Domain.get_by_name(domain)
-    endpoint = OpenLMISEndpoint.from_config(project.commtrack_settings.openlmis_config)
-    for f in endpoint.get_all_facilities():
-        try:
-            sync_facility_to_supply_point(domain, f)
-        except OpenLMISAPIException, e:
-            logging.exception('Problem syncing facility %s' % f.code)
+    if project.commtrack_settings and project.commtrack_settings.openlmis_config.is_configured:
+        endpoint = OpenLMISEndpoint.from_config(project.commtrack_settings.openlmis_config)
+        for f in endpoint.get_all_facilities():
+            try:
+                sync_facility_to_supply_point(domain, f)
+            except OpenLMISAPIException, e:
+                logging.exception('Problem syncing facility %s' % f.code)
 
-    for program in endpoint.get_all_programs(include_products=True):
-        sync_openlmis_program(domain, program)
+        for program in endpoint.get_all_programs(include_products=True):
+            sync_openlmis_program(domain, program)
 
 
 

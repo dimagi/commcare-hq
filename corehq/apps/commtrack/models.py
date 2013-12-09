@@ -225,6 +225,10 @@ class OpenLMISConfig(DocumentSchema):
 
     using_requisitions = BooleanProperty(default=False) # whether openlmis handles our requisitions for us
 
+    @property
+    def is_configured(self):
+        return True if self.enabled and self.url and self.password and self.username else False
+
 
 class CommtrackConfig(Document):
 
