@@ -162,10 +162,10 @@ class HOPECase(CommCareCase):
             birth_place = self.get_case_property('birth_place').strip()
             if birth_place == 'home':
                 return 'home'
-            elif birth_place == ',':
-                return 'institutional'
-            else:
+            elif birth_place == '':
                 return None
+            else:
+                return 'institutional'
 
     @property
     def _HOPE_dpt_1_indicator(self):
