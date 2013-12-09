@@ -1,4 +1,5 @@
 from corehq.apps.users.models import CommCareUser
+from corehq.util import remove_dups
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
@@ -249,7 +250,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             users_in_groups = [user for sublist in user_dict.values() for user in sublist]
 
             ret["users_by_group"] = user_dict
-            ret["combined_users"] = ret["users"] + users_in_groups
+            ret["combined_users"] = remove_dups(ret["users"] + users_in_groups, "user_id")
         return ret
 
     @property
