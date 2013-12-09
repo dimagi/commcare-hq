@@ -109,6 +109,3 @@
 [submodule "submodules/xml2json"]
 	path = submodules/xml2json
 	url = git://github.com/dimagi/xml2json.git
-[submodule "dimagi-utils-src"]
-	path = dimagi-utils-src
-	url = ./submodules/dimagi-utils-src/

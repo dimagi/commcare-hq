@@ -8,7 +8,7 @@ import json
 from django.template.loader import render_to_string
 from django.shortcuts import render
 
-import pytz, tempfile, os
+import pytz
 from corehq.apps.reports.models import ReportConfig
 from corehq.apps.reports import util
 from corehq.apps.reports.datatables import DataTablesHeader
