@@ -1,4 +1,5 @@
 from datetime import datetime
+from couchdbkit import ResourceNotFound
 
 import dateutil.parser
 from dateutil.relativedelta import relativedelta
@@ -6,6 +7,7 @@ from dateutil.relativedelta import relativedelta
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.users.models import CommCareUser
+
 
 class HOPECase(CommCareCase):
     '''
@@ -79,9 +81,11 @@ class HOPECase(CommCareCase):
     @memoized
     def user(self):
         user_id = self.user_id
-
         if user_id:
-            return CommCareUser.get(user_id)
+            try:
+                return CommCareUser.get(user_id)
+            except ResourceNotFound:
+                return None
         else:
             return None
 
