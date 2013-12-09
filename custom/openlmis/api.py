@@ -4,6 +4,7 @@ import feedparser
 import time
 import requests
 from requests.auth import HTTPBasicAuth
+from corehq.apps.commtrack.const import REQUISITION_CASE_TYPE
 from corehq.apps.commtrack.models import RequisitionCase
 from custom.openlmis.exceptions import OpenLMISAPIException
 
@@ -181,16 +182,15 @@ class OpenLMISEndpoint(object):
         # feeds
         self._feed_uri = self._urlcombine(self.base_uri, '/feeds')
         self.facility_master_feed_uri = self._urlcombine(self._feed_uri, '/facilities')
-        self.facility_program_feed_uri = self._urlcombine(self._feed_uri, '/programSupported')
-        self.program_catalog_feed_uri = self._urlcombine(self._feed_uri, '/programCatalogChanges')
+        self.facility_program_feed_uri = self._urlcombine(self._feed_uri, '/programs-supported')
+        self.program_catalog_feed_uri = self._urlcombine(self._feed_uri, '/program-catalog-changes')
         self.requisition_status_feed_uri = self._urlcombine(self._feed_uri, '/requisition-status')
 
         # rest apis
         self._rest_uri = self._urlcombine(self.base_uri, '/rest-api')
-        self.create_virtual_facility_url = self._urlcombine(self._rest_uri, '/agent.json')
-        self.update_virtual_facility_base_url = self._urlcombine(self._rest_uri, '/agent')
-        self.program_product_url = self._urlcombine(self._rest_uri, '/programProducts.json')
-        self.submit_requisition_url = self._urlcombine(self._rest_uri, '/submitRequisition') #todo waiting for update document, added some url for testing
+        self.create_virtual_facility_url = self._urlcombine(self._rest_uri, '/agents.json')
+        self.update_virtual_facility_base_url = self._urlcombine(self._rest_uri, '/agents')
+        self.program_product_url = self._urlcombine(self._rest_uri, '/program-products.json')
         self.requisition_details_url = self._urlcombine(self._rest_uri, '/requisitions')
         self.confirm_delivery_base_url = self._urlcombine(self._rest_uri, '/orders')
 
@@ -216,8 +216,10 @@ class OpenLMISEndpoint(object):
     def _response(self, response):
         # todo: error handling and such
         res = response.json()
-        if res.get('Success', False):
+        if res.get('success', False) or res == "Requisition approved successfully":
             return True
+        elif res.get('requisitionId', False):
+            return res
         else:
             raise OpenLMISAPIException(res['error'])
 
@@ -243,7 +245,10 @@ class OpenLMISEndpoint(object):
     def get_requisition_details(self, id):
         response = requests.get(self.update_requisition_details_url(id), auth=self._auth())
 
-        return RequisitionDetails.from_json(response.json())
+        if response.json().get('requisition'):
+            return RequisitionDetails.from_json(response.json())
+        else:
+            return None
 
 
     def create_virtual_facility(self, facility_data):
@@ -270,7 +275,7 @@ class OpenLMISEndpoint(object):
         return self._response(response)
 
     def submit_requisition(self, requisition_data):
-        response = requests.post(self.submit_requisition_url,
+        response = requests.post(self.requisition_details_url,
                                  data=json.dumps(requisition_data),
                                  headers={'content-type': 'application/json'},
                                  auth=self._auth())
@@ -291,7 +296,7 @@ class OpenLMISEndpoint(object):
 
     def approve_requisition(self, approve_requisition, requisition_id):
         response = requests.put(self.approve_requisition_url(requisition_id),
-                                data=approve_requisition,
+                                data=json.dumps(approve_requisition),
                                 headers={'content-type': 'application/json'},
                                 auth=self._auth())
         return self._response(response)
@@ -403,6 +408,7 @@ class RequisitionDetails(Requisition):
 
     def to_requisition_case(self, product_id):
         req_case = RequisitionCase()
+        req_case.type = REQUISITION_CASE_TYPE
         req_case.user_id = self.agent_code
         req_case.set_case_property("program_id", self.program_id)
         req_case.set_case_property("period_id", self.period_id)
@@ -413,7 +419,7 @@ class RequisitionDetails(Requisition):
         req_case.set_case_property("order_status", self.order_status)
         req_case.set_case_property("emergency", self.emergency)
         req_case.set_case_property("start_date", self.period_start_date)
-        req_case.set_case_peoperty("end_date", self.period_end_date)
+        req_case.set_case_property("end_date", self.period_end_date)
         return req_case
 
 
