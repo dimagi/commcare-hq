@@ -9,6 +9,7 @@ from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.fields import SelectMobileWorkerField, SelectOpenCloseField
 from corehq.apps.reports.filters.search import SearchFilter
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.reports.generic import ElasticProjectInspectionReport
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReportParametersMixin
@@ -20,7 +21,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin):
     fields = [
-        'corehq.apps.reports.fields.FilterUsersField',
+        'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
         'corehq.apps.reports.fields.SelectCaseOwnerField',
         'corehq.apps.reports.fields.CaseTypeField',
         'corehq.apps.reports.fields.SelectOpenCloseField',
@@ -113,12 +114,15 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     @property
     @memoized
     def case_owners(self):
+        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
+        user_ids = filter(None, [u.get("user_id") for u in users_data["combined_users"]])
         if self.individual:
+            ret = [self.individual] if not user_ids or self.individual in user_ids else []
             group_owners_raw = self.case_sharing_groups
         else:
+            ret = user_ids
             group_owners_raw = Group.get_case_sharing_groups(self.domain)
         group_owners = [group._id for group in group_owners_raw]
-        ret = [user.get('user_id') for user in self.users]
         if len(self.request.GET.getlist('ufilter')) == 1 and str(HQUserType.UNKNOWN) in self.request.GET.getlist('ufilter'):
             #not applying group filter
             pass
