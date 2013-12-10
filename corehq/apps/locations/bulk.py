@@ -89,10 +89,18 @@ def import_location(domain, location_type, location_data):
     form_data['name'] = data.pop('name')
     form_data['location_type'] = location_type
 
+    properties = {}
     for k, v in data.iteritems():
-        form_data[(location_type, k)] = v
+        properties[(location_type, k)] = v
 
-    return submit_form(domain, parent, form_data, existing, location_type)
+    return submit_form(
+        domain,
+        parent,
+        form_data,
+        properties,
+        existing,
+        location_type
+    )
 
 
 def check_parent_id(parent_id, domain, location_type):
@@ -114,9 +122,24 @@ def check_parent_id(parent_id, domain, location_type):
                     parent_obj.location_type, location_type)
             }
 
+def anything_to_update(existing, properties, form_data):
+    for prop, val in properties.iteritems():
+        if getattr(existing, prop[1], None) != val:
+            return True
+    for key, val in form_data.iteritems():
+        if getattr(existing, key, None) != val:
+            return True
+    return False
 
-def submit_form(domain, parent, form_data, existing, location_type):
-    # TODO don't return update/create message if there was no changes
+def submit_form(domain, parent, form_data, properties, existing, location_type):
+    # don't save if there is nothing to save
+    if existing and not anything_to_update(existing, properties, form_data):
+        return {
+            'id': existing._id,
+            'message': 'no changes for %s %s' % (location_type, existing.name)
+        }
+
+    form_data.update(properties)
 
     form = make_form(domain, parent, form_data, existing)
     form.strict = False  # optimization hack to turn off strict validation
