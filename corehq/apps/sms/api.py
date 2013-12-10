@@ -51,6 +51,7 @@ def send_sms(domain, contact, phone_number, text, **kwargs):
         phone_number=phone_number,
         direction=OUTGOING,
         date = datetime.utcnow(),
+        backend_id=None,
         text = text
     )
     if contact:
@@ -60,7 +61,7 @@ def send_sms(domain, contact, phone_number, text, **kwargs):
     
     def onerror():
         logging.exception("Problem sending SMS to %s" % phone_number)
-    return send_message_via_backend(msg, onerror=onerror)
+    return queue_outgoing_sms(msg, onerror=onerror)
 
 def send_sms_to_verified_number(verified_number, text, **kwargs):
     """
@@ -71,20 +72,22 @@ def send_sms_to_verified_number(verified_number, text, **kwargs):
     
     return  True on success, False on failure
     """
+    backend = verified_number.backend
     msg = SMSLog(
-        couch_recipient_doc_type    = verified_number.owner_doc_type,
-        couch_recipient             = verified_number.owner_id,
-        phone_number                = "+" + str(verified_number.phone_number),
-        direction                   = OUTGOING,
-        date                        = datetime.utcnow(),
-        domain                      = verified_number.domain,
-        text                        = text
+        couch_recipient_doc_type = verified_number.owner_doc_type,
+        couch_recipient = verified_number.owner_id,
+        phone_number = "+" + str(verified_number.phone_number),
+        direction = OUTGOING,
+        date = datetime.utcnow(),
+        domain = verified_number.domain,
+        backend_id = backend._id if backend else None,
+        text = text
     )
     add_msg_tags(msg, **kwargs)
 
     def onerror():
         logging.exception("Exception while sending SMS to VerifiedNumber id " + verified_number._id)
-    return send_message_via_backend(msg, verified_number.backend, onerror=onerror)
+    return queue_outgoing_sms(msg, onerror=onerror)
 
 def send_sms_with_backend(domain, phone_number, text, backend_id, **kwargs):
     phone_number = clean_phone_number(phone_number)
@@ -93,35 +96,52 @@ def send_sms_with_backend(domain, phone_number, text, backend_id, **kwargs):
         phone_number=phone_number,
         direction=OUTGOING,
         date=datetime.utcnow(),
+        backend_id=backend_id,
         text=text
     )
     add_msg_tags(msg, **kwargs)
 
     def onerror():
         logging.exception("Exception while sending SMS to %s with backend %s" % (phone_number, backend_id))
-    return send_message_via_backend(msg, MobileBackend.load(backend_id), onerror=onerror)
+    return queue_outgoing_sms(msg, onerror=onerror)
 
 def send_sms_with_backend_name(domain, phone_number, text, backend_name, **kwargs):
     phone_number = clean_phone_number(phone_number)
+    backend = MobileBackend.load_by_name(domain, backend_name)
     msg = SMSLog(
         domain=domain,
         phone_number=phone_number,
         direction=OUTGOING,
         date=datetime.utcnow(),
+        backend_id=backend._id,
         text=text
     )
     add_msg_tags(msg, **kwargs)
 
     def onerror():
         logging.exception("Exception while sending SMS to %s with backend name %s from domain %s" % (phone_number, backend_name, domain))
-    return send_message_via_backend(msg, MobileBackend.load_by_name(domain, backend_name), onerror=onerror)
+    return queue_outgoing_sms(msg, onerror=onerror)
+
+def queue_outgoing_sms(msg, onerror=lambda: None):
+    if settings.SMS_QUEUE_ENABLED:
+        try:
+            msg.processed = False
+            msg.datetime_to_process = msg.date
+            msg.save()
+            return True
+        except:
+            onerror()
+            return False
+    else:
+        msg.processed = True
+        return send_message_via_backend(msg, onerror=onerror)
 
 def send_message_via_backend(msg, backend=None, onerror=lambda: None):
     """send sms using a specific backend
 
     msg - outbound message object
-    backend - MobileBackend object to use for sending; if None, use the default
-      backend guessing rules
+    backend - MobileBackend object to use for sending; if None, use
+      msg.outbound_backend
     onerror - error handler; mostly useful for logging a custom message to the
       error log
     """
@@ -136,6 +156,9 @@ def send_message_via_backend(msg, backend=None, onerror=lambda: None):
             # verification, thus the backend is None. it's best to only call
             # send_sms_to_verified_number on truly verified contacts, though
 
+        if not msg.backend_id:
+            msg.backend_id = backend._id
+
         if backend.domain_is_authorized(msg.domain):
             backend.send(msg)
         else:
@@ -143,7 +166,6 @@ def send_message_via_backend(msg, backend=None, onerror=lambda: None):
 
         try:
             msg.backend_api = backend.__class__.get_api_id()
-            msg.backend_id = backend._id
         except Exception:
             pass
         msg.save()
@@ -210,21 +232,41 @@ def process_sms_registration(msg):
     
     return registration_processed
 
-def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None, delay=True, backend_message_id=None):
+def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None, backend_message_id=None, delay=True):
     """
     entry point for incoming sms
 
     phone_number - originating phone number
     text - message content
-    backend_api - backend ID of receiving sms backend
+    backend_api - backend API ID of receiving sms backend
     timestamp - message received timestamp; defaults to now (UTC)
     domain_scope - if present, only messages from phone numbers that can be
       definitively linked to this domain will be processed; others will be
       dropped (useful to provide security when simulating incoming sms)
     """
+    # Log message in message log
     phone_number = clean_phone_number(phone_number)
-    v = VerifiedNumber.by_phone(phone_number, include_pending=True)
-    if domain_scope:
+    msg = SMSLog(
+        phone_number = phone_number,
+        direction = INCOMING,
+        date = timestamp or datetime.utcnow(),
+        text = text,
+        domain_scope = domain_scope,
+        backend_api = backend_api,
+        backend_message_id = backend_message_id,
+    )
+    if settings.SMS_QUEUE_ENABLED:
+        msg.processed = False
+        msg.datetime_to_process = msg.date
+        msg.save()
+    else:
+        msg.processed = True
+        msg.save()
+        process_incoming(msg, delay=delay)
+
+def process_incoming(msg, delay=True):
+    v = VerifiedNumber.by_phone(msg.phone_number, include_pending=True)
+    if msg.domain_scope:
         # only process messages for phones known to be associated with this domain
         if v is None or v.domain != domain_scope:
             raise DomainScopeValidationError(
@@ -232,22 +274,13 @@ def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None,
                 'verified with this domain'
             )
 
-    # Log message in message log
-    msg = SMSLog(
-        phone_number    = phone_number,
-        direction       = INCOMING,
-        date            = timestamp or datetime.utcnow(),
-        text            = text,
-        backend_api     = backend_api,
-        backend_message_id = backend_message_id,
-    )
     if v is not None and v.verified:
-        msg.couch_recipient_doc_type    = v.owner_doc_type
-        msg.couch_recipient             = v.owner_id
-        msg.domain                      = v.domain
-    msg.save()
+        msg.couch_recipient_doc_type = v.owner_doc_type
+        msg.couch_recipient = v.owner_id
+        msg.domain = v.domain
+        msg.save()
 
-    create_billable_for_sms(msg, backend_api, delay=delay)
+    create_billable_for_sms(msg, msg.backend_api, delay=delay)
     
     if v is not None and v.verified:
         for h in settings.SMS_HANDLERS:
@@ -258,9 +291,9 @@ def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None,
                 continue
 
             try:
-                was_handled = handler(v, text, msg=msg)
+                was_handled = handler(v, msg.text, msg=msg)
             except:
-                logging.exception('unhandled error in sms handler %s for message [%s]' % (h, text))
+                logging.exception('unhandled error in sms handler %s for message [%s]' % (h, msg._id))
                 was_handled = False
 
             if was_handled:
@@ -268,9 +301,7 @@ def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None,
     else:
         if not process_sms_registration(msg):
             import verify
-            verify.process_verification(phone_number, msg)
-
-    return msg
+            verify.process_verification(msg.phone_number, msg)
 
 def format_choices(choices_list):
     choices = {}

@@ -458,6 +458,8 @@ MACH_CONFIG = {"username": "Dimagi",
                "password": "changeme",
                "service_profile": "changeme"}
 
+SMS_QUEUE_ENABLED = False
+
 #auditcare parameters
 AUDIT_MODEL_SAVE = [
     'corehq.apps.app_manager.Application',

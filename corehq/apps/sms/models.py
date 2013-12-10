@@ -42,6 +42,12 @@ class MessageLog(SafeSaveDocument, UnicodeMixIn):
     workflow = StringProperty() # One of the WORKFLOW_* constants above describing what kind of workflow this sms was a part of
     xforms_session_couch_id = StringProperty() # Points to the _id of an instance of corehq.apps.smsforms.models.XFormsSession that this sms is tied to
     reminder_id = StringProperty() # Points to the _id of an instance of corehq.apps.reminders.models.CaseReminder that this sms is tied to
+    processed = BooleanProperty(default=True)
+    datetime_to_process = DateTimeProperty()
+    num_processing_attempts = IntegerProperty(default=0)
+    error = BooleanProperty(default=False)
+    # If the message was simulated from a domain, this is the domain
+    domain_scope = StringProperty()
 
     def __unicode__(self):
         to_from = (self.direction == INCOMING) and "from" or "to"
@@ -152,10 +158,13 @@ class SMSLog(MessageLog):
     @property
     def outbound_backend(self):
         """appropriate outbound sms backend"""
-        return MobileBackend.auto_load(
-            smsutil.clean_phone_number(self.phone_number),
-            self.domain
-        )
+        if self.backend_id:
+            return MobileBackend.load(self.backend_id)
+        else:
+            return MobileBackend.auto_load(
+                smsutil.clean_phone_number(self.phone_number),
+                self.domain
+            )
 
     def __unicode__(self):
 
@@ -172,7 +181,6 @@ class CallLog(MessageLog):
     duration = IntegerProperty() # Length of the call in seconds
     gateway_session_id = StringProperty() # This is the session id returned from the backend
     xforms_session_id = StringProperty()
-    error = BooleanProperty(default=False)
     error_message = StringProperty()
     submit_partial_form = BooleanProperty(default=False) # True to submit a partial form on hangup if it's not completed yet
     include_case_side_effects = BooleanProperty(default=False)
