@@ -567,6 +567,12 @@ class GenericReportView(CacheableRequestMixIn):
         )
 
     @property
+    def excel_response(self):
+        file = StringIO()
+        export_from_tables(self.export_table, file, self.export_format)
+        return file
+
+    @property
     @request_cache("filters", expiry=60 * 10)
     def filters_response(self):
         """
