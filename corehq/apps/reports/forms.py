@@ -34,7 +34,7 @@ class ScheduledReportForm(forms.Form):
         required=False)
 
     attach_excel = forms.BooleanField(
-        label='Attach Excel',
+        label='Attach Excel Report',
         required=False)
 
     recipient_emails = MultiEmailField(
