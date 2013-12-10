@@ -223,7 +223,7 @@ def require_privilege(privilege_slug, fallback_view=None):
                 logger.warn('require_privilege invoked with nonexistent role %s', privilege_slug)
                 return fallback_view(request, *args, **kwargs)
 
-            privilege = privileges[0]
+            privilege = privileges.get()
 
             if not hasattr(request, 'role'):
                 logger.debug('require_privilege invoked with no role on request object')
