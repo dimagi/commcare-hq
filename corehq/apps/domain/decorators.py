@@ -207,7 +207,7 @@ def require_privilege(privilege_slug, fallback_view=None):
 
     if fallback_view is None:
         def fallback_view(request, *args, **kwargs):
-            return HttpResponseForbidden('You do not have adequate privileges for this view')
+            return HttpResponseForbidden(_('You do not have adequate privileges for this view'))
 
     def decorator(view_func):
 
