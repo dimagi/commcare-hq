@@ -32,7 +32,6 @@
             currentVersion: '{% url "corehq.apps.app_manager.views.current_app_version" domain app.id %}',
         };
         var o = {
-            users_cannot_share: {{ users_cannot_share|JSON }},
             urls: urls,
             currentAppVersion: {% if app.version %}{{ app.version }}{% else %}-1{% endif %},
             recipient_contacts: {{ sms_contacts|JSON }}

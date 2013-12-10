@@ -534,12 +534,10 @@ def release_manager(request, domain, app_id, template='app_manager/releases.html
 
     saved_apps = []
 
-    users_cannot_share = CommCareUser.cannot_share(domain)
     context.update({
         'release_manager': True,
         'saved_apps': saved_apps,
         'latest_release': latest_release,
-        'users_cannot_share': users_cannot_share,
     })
     if not app.is_remote_app():
         # Multimedia is not supported for remote applications at this time.
