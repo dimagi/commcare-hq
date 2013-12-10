@@ -45,6 +45,9 @@
         <div class="span9">
             <h1>{% trans "Fixtures" %} <a href="{% url "upload_fixtures" domain %}" class="btn btn-primary pull-right">Bulk upload/download Fixtures</a></h1>
             <div class="well" data-bind="visible: !data_types().length && loading" style="text-align: center;">Loading...</div>
+            <div>
+                Okay, fixtures now has attribute-support, but this old_view is still hanging around. It will be removed. Work with excels for now 
+            </div>
             <div data-bind="visible: data_types().length">
                 {% trans "Number of fixtures types: " %}<span data-bind="text: data_types().length"></span>
             </div>
