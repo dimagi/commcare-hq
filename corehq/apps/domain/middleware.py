@@ -14,6 +14,7 @@ import toggle.shortcuts
 from django_prbac.models import Role
 
 # CCHQ imports
+from corehq import toggles
 
 class CCHQPRBACMiddleware(object):
     """
@@ -34,7 +35,7 @@ class CCHQPRBACMiddleware(object):
 
         # Until we have real roles, we can demo for certain users by just letting them specify
         # on the querystring
-        if hasattr(request, 'user') and toggle.shortcuts.toggle_enabled('prbacdemo', request.user.username):
+        if hasattr(request, 'user') and toggle.shortcuts.toggle_enabled(toggles.PRBAC_DEMO, request.user.username):
             role_slug = request.GET.get('role', 'community_plan_v0')
             request.role = Role.objects.get(slug=role_slug)
             return None

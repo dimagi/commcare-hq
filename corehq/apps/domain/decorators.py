@@ -20,6 +20,7 @@ import toggle.shortcuts
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.users.models import CouchUser, PublicUser
+from corehq import toggles
 
 ########################################################################################################
 
@@ -214,7 +215,7 @@ def require_privilege(privilege_slug, fallback_view=None):
         def wrapped_view(request, *args, **kwargs):
 
             # Skip this for non-demo users
-            if not hasattr(request, 'user') or not toggle.shortcuts.toggle_enabled('prbacdemo', request.user.username):
+            if not hasattr(request, 'user') or not toggle.shortcuts.toggle_enabled(toggles.PRBAC_DEMO, request.user.username):
                 return view_func(request, *args, **kwargs)
 
             # Warn and deny permission if the privilege does not exist.
