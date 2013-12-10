@@ -39,7 +39,9 @@ class BaseReport(MonthYearMixin, GenericTabularReport, CustomProjectReport):
     slug = None
     model = None
     report_template_path = "opm/report.html"
+    default_rows = 50
     printable = True
+    exportable = True
 
     @property
     def fields(self):
