@@ -505,7 +505,7 @@ class ReportNotification(Document):
             title = "Scheduled report from CommCare HQ"
             body, excel_files = get_scheduled_report_response(self.owner, self.domain, self._id, attach_excel=self.attach_excel)
             for email in self.all_recipient_emails:
-                send_HTML_email(title, email, body.content, email_from=settings.DEFAULT_FROM_EMAIL, excel_files=excel_files)
+                send_HTML_email(title, email, body.content, email_from=settings.DEFAULT_FROM_EMAIL, file_attachments=excel_files)
 
 
 class AppNotFound(Exception):
