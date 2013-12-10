@@ -181,12 +181,12 @@ class Calculator(object):
         if verbose_results:
             assert not reduce, "can't have reduce set for verbose results"
 
-        if self.window:
+        if date_range is not None:
+            start, end = date_range
+        elif self.window:
             now = self.fluff.get_now()
             start = now - self.window
             end = now
-        elif date_range is not None:
-            start, end = date_range
         result = {}
         for emitter_name in self._fluff_emitters:
             shared_key = [self.fluff._doc_type] + key + [self.slug, emitter_name]
@@ -240,11 +240,11 @@ class Calculator(object):
 
         return result
 
-    def aggregate_results(self, keys, reduce=True, verbose_results=False):
+    def aggregate_results(self, keys, reduce=True, verbose_results=False, date_range=None):
 
         def iter_results():
             for key in keys:
-                result = self.get_result(key, reduce=reduce,
+                result = self.get_result(key, reduce=reduce, date_range=date_range,
                                          verbose_results=verbose_results)
                 for slug, value in result.items():
                     yield slug, value
@@ -570,9 +570,16 @@ class IndicatorDocument(schema.Document):
         return calculator.get_result(key, date_range=date_range, reduce=reduce)
 
     @classmethod
-    def aggregate_results(cls, calc_name, keys, reduce=True):
+    def aggregate_results(cls, calc_name, keys, reduce=True, date_range=None):
         calculator = cls.get_calculator(calc_name)
-        return calculator.aggregate_results(keys, reduce=reduce)
+        return calculator.aggregate_results(keys, reduce=reduce, date_range=date_range)
+
+    @classmethod
+    def aggregate_all_results(cls, keys, reduce=True, date_range=None):
+        return dict(
+            (calc_name, calc.aggregate_results(keys, reduce=reduce, date_range=date_range))
+            for calc_name, calc in cls._calculators.items()
+        )
 
     class Meta:
         app_label = 'fluff'
