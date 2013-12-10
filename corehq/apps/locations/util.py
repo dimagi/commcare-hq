@@ -198,50 +198,35 @@ def property_uniqueness(domain, loc, prop_name, val, scope='global'):
         return set(l._id for l in uniqueness_set if val == normalize(getattr(l, prop_name, None)))
 
 
+def get_custom_property_labels(domain, loc_type):
+    return [prop.label for prop in location_custom_properties(domain, loc_type)]
+
+
 def dump_locations(response, domain):
     file = StringIO()
     writer = Excel2007ExportWriter()
 
     location_types = defined_location_types(domain)
-    leaf_type = location_types[-1]
 
-    leafs = Location.filter_by_type(domain, leaf_type)
-
-    included_leaf_properties = [
-        'site_code',
-        'address',
-        'landmark',
-        'contact_name',
-        'contact_phone',
-    ]
-
+    common_types = ['id', 'name', 'parent_id']
     writer.open(
         header_table=[
-            ('locations', [location_types + included_leaf_properties])
+            (loc_type, [common_types + get_custom_property_labels(domain, loc_type)])
+            for loc_type in location_types
         ],
         file=file,
     )
 
-    rows = []
-    for leaf in leafs:
-        # since some location types have different possible parents,
-        # we may not fill in every possible type
-        row = [''] * (len(location_types) - 1)
-        for loc_id in leaf.lineage:
-            loc = Location.get(loc_id)
-            lineage_position = location_types.index(loc.location_type)
-            row[lineage_position] = loc.name
-
-        row.append(leaf.name)
-
-        for key in included_leaf_properties:
-            row.append(leaf[key])
-
-        rows.append(row)
-
-    writer.write([
-        ('locations', rows)
-    ])
+    for loc_type in location_types:
+        tab_rows = []
+        locations = Location.filter_by_type(domain, loc_type)
+        for loc in locations:
+            parent_id = loc.parent._id if loc.parent else ''
+            custom_prop_values = [loc[prop.name] or '' for prop in location_custom_properties(domain, loc.location_type)]
+            tab_rows.append(
+                [loc._id, loc.name, parent_id] + custom_prop_values
+            )
+        writer.write([(loc_type, tab_rows)])
 
     writer.close()
     response.write(file.getvalue())
