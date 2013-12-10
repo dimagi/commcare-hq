@@ -524,7 +524,7 @@ def run_upload(request, domain, workbook):
         "number_of_fixtures": 0,
     }
     failure_messages = {
-        "has_no_column": "Workbook 'types' has no column {column_name}.",
+        "has_no_column": "Workbook 'types' has no column '{column_name}'.",
         "has_no_field_column": "Excel-sheet '{tag}' does not contain the column '{field}' "
                                "as specified in its 'types' definition",
         "has_extra_column": "Excel-sheet '{tag}' has an extra column" + 
@@ -548,7 +548,7 @@ def run_upload(request, domain, workbook):
         try:
             return container[attr]
         except KeyError:
-            raise ExcelMalformatException(_(failure_messages["has_no_column"].format(attr=attr)))
+            raise ExcelMalformatException(_(failure_messages["has_no_column"].format(column_name=attr)))
 
     def diff_lists(list_a, list_b):
         set_a = set(list_a)
@@ -560,7 +560,7 @@ def run_upload(request, domain, workbook):
     number_of_fixtures = -1
     with CouchTransaction() as transaction:
         for number_of_fixtures, dt in enumerate(data_types):
-            tag = _get_or_raise(dt, 'tag')
+            tag = _get_or_raise(dt, 'table_id')
             type_definition_fields = _get_or_raise(dt, 'field')
             type_fields_with_properties = []
             for count, field in enumerate(type_definition_fields):
@@ -585,7 +585,7 @@ def run_upload(request, domain, workbook):
             new_data_type = FixtureDataType(
                 domain=domain,
                 is_global=dt.get('is_global', False),
-                tag=_get_or_raise(dt, 'tag'),
+                tag=_get_or_raise(dt, 'table_id'),
                 fields=type_fields_with_properties,
             )
             try:
@@ -667,7 +667,8 @@ def run_upload(request, domain, workbook):
                     if len(field.properties) == 0:
                         item_fields[field.field_name] = FieldList(
                             field_list=[FixtureItemField(
-                                field_value=str(di['field'][field.field_name]),
+                                # using unicode here, to cast ints, and multi-language strings
+                                field_value=unicode(di['field'][field.field_name]),
                                 properties={}
                             )]
                         )
@@ -678,8 +679,8 @@ def run_upload(request, domain, workbook):
                         prop_dict = di[field.field_name]
                         for x in range(0, prop_combo_len):
                             fix_item_field = FixtureItemField(
-                                field_value=str(field_prop_combos[x]),
-                                properties={prop: str(prop_dict[prop][x]) for prop in prop_dict}
+                                field_value=unicode(field_prop_combos[x]),
+                                properties={prop: unicode(prop_dict[prop][x]) for prop in prop_dict}
                             )
                             field_list.append(fix_item_field)
                         item_fields[field.field_name] = FieldList(
