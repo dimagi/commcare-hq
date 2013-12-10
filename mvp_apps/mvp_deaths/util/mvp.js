@@ -76,7 +76,7 @@ function get_user_id(doc) {
     if (doc.doc_type === 'XFormInstance') {
         return doc.form.meta.userID;
     }
-    return doc.user_id;
+    return doc.owner_id || doc.user_id;
 }
 
 function get_case_id(doc) {
