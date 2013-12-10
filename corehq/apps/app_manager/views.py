@@ -228,6 +228,18 @@ def app_source(req, domain, app_id):
     return HttpResponse(app.export_json())
 
 @login_and_domain_required
+def copy_app_check_domain(req, domain):
+    app_id = req.GET.get('app')
+    name = req.GET.get('name')
+
+    app_copy = import_app_util(app_id, domain, name=name)
+    return back_to_main(req, app_copy.domain, app_id=app_copy._id)
+
+@login_and_domain_required
+def copy_app(req, domain):
+    return copy_app_check_domain(req, req.GET.get('domain'))
+
+@login_and_domain_required
 def import_app(req, domain, template="app_manager/import_app.html"):
     if req.method == "POST":
         _clear_app_cache(req, domain)
