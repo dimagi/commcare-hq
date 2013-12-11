@@ -200,6 +200,15 @@ class DynamicReportSet(DocumentSchema):
 
 LOGO_ATTACHMENT = 'logo.png'
 
+class DayTimeWindow(DocumentSchema):
+    """
+    Defines a window of time in a day of the week.
+    Day/time combinations should be in UTC.
+    """
+    # 0 - 6 is Monday - Sunday
+    day = IntegerProperty()
+    start_time = TimeProperty()
+    end_time = TimeProperty()
 
 class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     """Domain is the highest level collection of people/stuff
@@ -247,6 +256,21 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     chat_message_count_threshold = IntegerProperty()
     custom_chat_template = StringProperty() # See settings.CUSTOM_CHAT_TEMPLATES
     custom_case_username = StringProperty() # Case property to use when showing the case's name in a chat window
+    # If empty, sms can be sent at any time. Otherwise, only send during
+    # these windows of time. SMS_QUEUE_ENABLED must be True in localsettings
+    # for this be considered.
+    restricted_sms_times = SchemaListProperty(DayTimeWindow)
+    # If empty, this is ignored. Otherwise, the framework will make sure
+    # that during these days/times, no automated outbound sms will be sent
+    # to someone if they have sent in an sms within sms_conversation_length
+    # minutes. Outbound sms sent from a user in a chat window, however, will
+    # still be sent. This is meant to prevent chat conversations from being
+    # interrupted by automated sms reminders.
+    # SMS_QUEUE_ENABLED must be True in localsettings for this to be
+    # considered.
+    sms_conversation_times = SchemaListProperty(DayTimeWindow)
+    # In minutes, see above.
+    sms_conversation_length = IntegerProperty()
 
     # exchange/domain copying stuff
     is_snapshot = BooleanProperty(default=False)
