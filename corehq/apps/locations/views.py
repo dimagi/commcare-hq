@@ -185,15 +185,12 @@ class LocationImportView(BaseLocationView):
 
         domain = args[0]
 
-        update_existing = bool(request.POST.get('update'))
-
         # stash this in soil to make it easier to pass to celery
         file_ref = expose_download(upload.read(),
                                    expiry=1*60*60)
         task = import_locations_async.delay(
             domain,
             file_ref.download_id,
-            update_existing
         )
         file_ref.set_task(task)
 
