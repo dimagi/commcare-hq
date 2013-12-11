@@ -73,6 +73,23 @@ class Program(Document):
     code = StringProperty()
     description = StringProperty()
 
+    @classmethod
+    def get_by_domain(cls, domain, wrap=True):
+        """
+        Gets all programs in a domain.
+        """
+        kwargs = dict(
+            view_name='commtrack/programs',
+            startkey=[domain],
+            endkey=[domain, {}],
+            include_docs=True
+        )
+        if wrap:
+            return Program.view(**kwargs)
+        else:
+            return [row["doc"] for row in Program.view(wrap_doc=False, **kwargs)]
+
+
 
 class Product(Document):
     """

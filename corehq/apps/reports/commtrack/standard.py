@@ -95,7 +95,7 @@ class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Inventory')
     slug = StockStatusDataSource.slug
     fields = ['corehq.apps.reports.fields.AsyncLocationField',
-              'corehq.apps.reports.fields.MultiSelectProductField']
+              'corehq.apps.reports.fields.SelectProgramField']
     exportable = True
     emailable = True
 

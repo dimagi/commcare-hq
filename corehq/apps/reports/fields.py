@@ -770,15 +770,10 @@ class CombinedSelectUsersField(ReportField):
 class SelectProgramField(ReportSelectField):
     slug = "program"
     name = ugettext_noop("Program")
-    cssId = "select"
-    default_option = ['_all']
-    placeholder = 'Click to select product'
+    cssId = "program_select"
 
-    @property
-    def options(self):
-        user = WebUser.get_by_username(str(self.request.user))
-        programs = Program
-        opts = [dict(val=product.get_id, text=product.name) for product in self.products]
+    def update_params(self):
+        self.programs = Program.get_by_domain(self.domain)
+        opts = [dict(val=program.get_id, text=program.name) for program in self.programs]
         opts.insert(0, {'text': 'All', 'val': '_all'})
-        return opts
-
+        self.options = opts
