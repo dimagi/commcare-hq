@@ -22,3 +22,22 @@ chw_schedule
 admin_chw_reports, admin_dot_reports, admin_reports
   tabular reports that allow for direct csv downloads
 
+
+Case Properties of Note
+=======================
+
+dot_status
+  Whether they're in the DOT monitoring program. When they're DOT, the case properties for dot
+  regimens need to be filled in. The options for this is their PACT_DOT_CHOICES for how frequently they'll be visited.
+
+hp_status
+  Whether they're in the primary health promotion monitoring program.
+  The options for this is their PACT_HP_CHOICES for how frequently they'll be visited.
+
+hp
+  This is the actual assigned CHW. All CHWS are part of a case sharing group, but the remote app's ability
+  to differentiate actual case assignment happens via this custom property.
+
+pactid
+  This is the pact internal identifier.
+

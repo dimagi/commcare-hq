@@ -8,18 +8,18 @@ a pact patient is a case.
 
 demographic info
 ================
-it provides a link to cloudcare forms for dot, patient info and bloodwork
+It provides a link to cloudcare forms for dot, patient info and bloodwork
 there is also a custom form workflow for modifying demographics. This submits a custom made xform to update patient level information in the case.
 
 submissions
 ===========
-custom list using knockout showing submissions for the given patient. this is elasticsearch backed
+Custom list using knockout showing submissions for the given patient. this is elasticsearch backed
 
 schedule
 ========
-knockout based view of viewing/adding/removing scheduled visits for a given patient.
+Knockout based view of viewing/adding/removing scheduled visits for a given patient.
 
-it's a weekly/daily view of allowing a patient to see  "what chws are supposed to visit me which day of the week"
+It's a weekly/daily view of allowing a patient to see  "what chws are supposed to visit me which day of the week"
 
 This is used for how to compute chw visitations.
 
@@ -39,6 +39,6 @@ active at the time of the visit.
 dots
 ====
 
-take a deep breath and head to the dots documentation file
+Take a deep breath and head to the dots documentation file
 
 

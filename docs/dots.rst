@@ -89,7 +89,7 @@ empty = pillbox is empty they took their meds
 partial = they took only some of their meds (if it's a multi drug dose or something)
 full = didn't take their meds
 
-method can be:
+Method can be:
 direct: chw saw them take their meds - the most trustworthy way.
 self: patient reported to chw
 pillbox: chw didn't see, but was physically present to inspect pillbox for that day
@@ -124,7 +124,7 @@ Submission workflow
 ===================
 
 When a dots submission comes in, a signal will see the submission, and rerun the calculation.
-The calculation will then create a NEW xform and resubmit with the latest dots information. The signal will ignore these submissions
+The calculation will then create a NEW xform and resubmit with the latest dots information. The signal will ignore these machine created submissions
 so as to prevent an infinite loop of submissions.
 
 
