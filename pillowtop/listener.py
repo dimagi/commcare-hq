@@ -285,7 +285,7 @@ class PythonPillow(BasicPillow):
         self.chunk_size = chunk_size
         self.use_chunking = chunk_size > 0
         self.checkpoint_frequency = checkpoint_frequency
-        self.include_docs = chunk_size == 0
+        self.include_docs = not self.use_chunking
         if self.document_class:
             if self.use_chunking:
                 self.couch_db = CachedCouchDB(self.document_class.get_db().uri, readonly=False)
