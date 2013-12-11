@@ -285,7 +285,7 @@ class PythonPillow(BasicPillow):
         self.chunk_size = chunk_size
         self.use_chunking = chunk_size > 0
         self.checkpoint_frequency = checkpoint_frequency
-        self.include_docs = False  # python pillows don't use include_docs
+        self.include_docs = chunk_size == 0
         if self.document_class:
             if self.use_chunking:
                 self.couch_db = CachedCouchDB(self.document_class.get_db().uri, readonly=False)
@@ -317,7 +317,7 @@ class PythonPillow(BasicPillow):
             self.change_queue.append(change)
             if len(self.change_queue) > self.chunk_size:
                 self.process_chunk()
-        else:
+        elif self.python_filter(change['doc']):
             self.process_change(change)
         if self.changes_seen % self.checkpoint_frequency == 0 and do_set_checkpoint:
             # if using chunking make sure we never allow the checkpoint to get in
