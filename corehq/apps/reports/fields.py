@@ -4,6 +4,7 @@ from django.template.loader import render_to_string
 import pytz
 import warnings
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.commtrack.util import is_commtrack_location
 from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from corehq.apps.orgs.models import Organization
@@ -509,8 +510,7 @@ class AsyncLocationField(ReportField):
         domain = Domain.get_by_name(self.domain)
 
         context = {}
-
-        if not selected_loc_id and user and user.location_id and domain.commtrack_enabled:
+        if is_commtrack_location(user, domain):
             selected_loc_id = user.location_id
             if domain.location_restriction_for_users:
                 context.update({'restriction': domain.location_restriction_for_users})
