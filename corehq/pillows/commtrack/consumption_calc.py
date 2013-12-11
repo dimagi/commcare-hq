@@ -8,7 +8,7 @@ from dimagi.utils import parsing as dateparse
 from datetime import datetime, timedelta
 from corehq.apps.domain.models import Domain
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.commtrack.models import ACTION_TYPES
+from corehq.apps.commtrack.models import STOCK_ACTION_ORDER
 
 pillow_logging = logging.getLogger("pillowtop")
 
@@ -30,17 +30,15 @@ class ConsumptionRatePillow(BasicPillow):
             txs = [txs]
         touched_products = set(tx['product_entry'] for tx in txs)
 
-        action_defs = Domain.get_by_name(doc_dict['domain']).commtrack_settings.all_actions_by_name
+        actions = Domain.get_by_name(doc_dict['domain']).commtrack_settings.all_actions
         def get_base_action(action):
-            try:
-                return action_defs[action].action_type
-            except KeyError:
-                # this arises because inferred transactions might not map cleanly to user-defined action types
-                # need to find a more understandable solution
-                if action in ACTION_TYPES:
-                    return action
-                else:
-                    raise
+            for a in actions:
+                if action == a.subaction:
+                    return a.action
+            if action in STOCK_ACTION_ORDER:
+                return action
+            else:
+                raise RuntimeError()
 
         for case_id in touched_products:
             rate = compute_consumption(case_id, from_ts(doc_dict['received_on']), get_base_action)
