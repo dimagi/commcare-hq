@@ -1,7 +1,11 @@
 """
-Intersects ... faster.  Suports GenomicInterval datatype and multiple
-chromosomes.
 
+Interval tree library data structure.
+
+Given a set of data that represents data that spans some time interval, create an object in memory
+that given a query with a datetime timestamp, return the relevant data back whose time interval matches that.
+
+Intersects ... faster.  Suports GenomicInterval datatype and multiple chromosomes.
 
 source:
 http://bitbucket.org/james_taylor/bx-python/src/14b6a6c95da6/lib/bx/intervals/operations/quicksect.py

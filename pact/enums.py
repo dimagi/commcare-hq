@@ -23,7 +23,7 @@ PACT_PROVIDER_FIXTURE_TAG = 'provider'
 #Deprecated static sequence of time labels. needed to support legacy data pre labeling
 TIME_LABEL_LOOKUP = (
     (),
-    ('Dose',),
+    ('Dose',), #dose is the legacy code for old single doses - here as a placeholder
     ('Morning', 'Evening'),
     ('Morning', 'Noon', 'Evening'),
     ('Morning', 'Noon', 'Evening', 'Bedtime'),

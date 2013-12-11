@@ -28,7 +28,6 @@ class CHWPatientSchedule(object):
         Parameter:  datetime value
         Returns: array of pact_ids
         """
-        #tree.intersect(get_seconds(time_check)-1, get_seconds(time_check), lambda x: res.append(x.other))
         day_of_week = date_val.isoweekday() % 7
         if not self.intervals.has_key(day_of_week):
             return []
@@ -46,8 +45,6 @@ class CHWPatientSchedule(object):
         """
         Generate schedule object for a given username
         """
-
-        #cached_schedules = cache.get("%s_schedule" % (chw_username), None)
         cached_schedules = None
 
         if override_date == None:
