@@ -477,9 +477,10 @@ class FormBase(DocumentSchema):
         self.source = source
 
     def default_name(self):
+        app = self.get_app()
         return trans(
             self.name,
-            [self.get_app().default_language] + self.build_langs,
+            [app.default_language] + app.build_langs,
             include_lang=False
         )
 
