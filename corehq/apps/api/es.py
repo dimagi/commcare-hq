@@ -2,15 +2,18 @@ import logging
 import simplejson
 import six
 import copy
+
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator, classonlymethod
+from django.views.generic import View
+
+from no_exceptions.exceptions import Http400
+from dimagi.utils.logging import notify_exception
+
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.reports.filters.forms import FormsByApplicationFilter
-from corehq.elastic import get_es
-from django.views.generic import View
+from corehq.elastic import get_es, es_query, ES_URLS
 from corehq.pillows.base import restore_property_dict, VALUE_TAG
-from dimagi.utils.logging import notify_exception
-from no_exceptions.exceptions import Http400
 
 
 DEFAULT_SIZE = 10
@@ -261,7 +264,27 @@ class XFormES(ESView):
         return es_results
 
 
-class UserES(ESView):
+class UserESMixin(object):
+
+    def make_query(self):
+        fields = ['first_name', 'last_name', 'username', 'email', '_id']
+
+        # data passed without field filtering:
+        # u'status', u'domain', u'last_name', u'_rev', u'user_data', u'created_on',
+        # u'is_staff', u'base_doc', u'CURRENT_VERSION', u'phone_numbers',
+        # u'domain_membership', u'date_joined', u'first_name', u'eulas',
+        # u'email_opt_out', u'is_superuser', u'last_login', u'email', u'username',
+        # u'is_active', u'password', u'doc_type', u'_id', u'language',
+        # u'registering_device_id', u'announcements_seen', u'device_ids'
+
+        res = es_query(
+            es_url=ES_URLS['users'],
+            fields=fields,
+        )
+        return [u['fields'] for u in res['hits']['hits']]
+
+
+class UserES(UserESMixin, ESView):
     index = "hqusers"
 
     def validate_query(self, query):
