@@ -9,6 +9,7 @@ from dimagi.utils.decorators.memoized import memoized
 from custom.bihar.reports.display import MCHMotherDisplay, MCHChildDisplay
 from dimagi.utils.timezones import utils as tz_utils
 import pytz
+from custom.bihar.utils import get_all_owner_ids_from_group
 
 
 class MCHBaseReport(CustomProjectReport, CaseListReport):
@@ -28,7 +29,15 @@ class MCHBaseReport(CustomProjectReport, CaseListReport):
         filters = []
 
         if group_id:
-            filters.append({'term': {'owner_id': group_id}})
+            group = Group.get(group_id)
+            users_in_group = get_all_owner_ids_from_group(group)
+            if users_in_group:
+                or_stm = []
+                for user_id in users_in_group:
+                    or_stm.append({'term': {'owner_id': user_id}})
+                filters.append({"or": or_stm})
+            else:
+                filters.append({'term': {'owner_id': group_id}})
 
         return {'and': filters} if filters else {}
 
