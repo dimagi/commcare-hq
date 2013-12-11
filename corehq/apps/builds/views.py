@@ -11,7 +11,7 @@ from dimagi.utils.couch.database import get_db
 from corehq.apps.api.models import require_api_user
 from corehq.apps.domain.decorators import require_superuser
 
-from .models import CommCareBuild
+from .models import CommCareBuild, CommCareBuildConfig
 from .utils import get_all_versions
 
 
@@ -59,7 +59,7 @@ class EditMenuView(TemplateView):
 
     @method_decorator(require_superuser)
     def dispatch(self, *args, **kwargs):
-        self.doc = self.get_doc()
+        self.doc = CommCareBuildConfig.fetch()
         return super(EditMenuView, self).dispatch(*args, **kwargs)
 
     def get_doc(self):
