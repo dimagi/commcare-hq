@@ -94,7 +94,8 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
 class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Inventory')
     slug = StockStatusDataSource.slug
-    fields = ['corehq.apps.reports.fields.AsyncLocationField']
+    fields = ['corehq.apps.reports.fields.AsyncLocationField',
+              'corehq.apps.reports.fields.MultiSelectProductField']
     exportable = True
     emailable = True
 
@@ -116,12 +117,15 @@ class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     @property
     def product_data(self):
         if getattr(self, 'prod_data', None) is None:
-            config = {
-                'domain': self.domain,
-                'location_id': self.request.GET.get('location_id'),
-                'aggregate': True
-            }
-            self.prod_data = list(StockStatusDataSource(config).get_data())
+            self.prod_data = []
+            for product in self.request.GET.getlist('product'):
+                config = {
+                    'domain': self.domain,
+                    'location_id': self.request.GET.get('location_id'),
+                    'product_id': product,
+                    'aggregate': True
+                }
+                self.prod_data = self.prod_data + list(StockStatusDataSource(config).get_data())
         return self.prod_data
 
     @property

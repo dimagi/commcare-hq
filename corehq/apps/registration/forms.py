@@ -197,6 +197,7 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
         super(AdminInvitesUserForm, self).__init__(data=data, *args, **kwargs)
         if domain and domain.commtrack_enabled:
             self.fields['supply_point'] = forms.CharField(label='Supply Point:', required=False, widget=SupplyPointSelectWidget(domain=domain.name))
+            self.fields['program'] = forms.CharField(label="Program:", required=False)
         self.excluded_emails = excluded_emails or []
 
     def clean_email(self):

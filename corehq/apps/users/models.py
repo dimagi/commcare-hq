@@ -1654,6 +1654,7 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
     #do sync and create still work?
 
     location_id = StringProperty()
+    program_id = StringProperty()
 
     def sync_from_old_couch_user(self, old_couch_user):
         super(WebUser, self).sync_from_old_couch_user(old_couch_user)

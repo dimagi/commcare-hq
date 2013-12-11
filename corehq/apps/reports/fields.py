@@ -4,6 +4,7 @@ from django.template.loader import render_to_string
 import pytz
 import warnings
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.commtrack.models import Product, Program
 from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from corehq.apps.orgs.models import Organization
@@ -765,4 +766,19 @@ class CombinedSelectUsersField(ReportField):
             ctxt["sgf"]["checked"] = all_groups
 
         self.context.update(ctxt)
+
+class SelectProgramField(ReportSelectField):
+    slug = "program"
+    name = ugettext_noop("Program")
+    cssId = "select"
+    default_option = ['_all']
+    placeholder = 'Click to select product'
+
+    @property
+    def options(self):
+        user = WebUser.get_by_username(str(self.request.user))
+        programs = Program
+        opts = [dict(val=product.get_id, text=product.name) for product in self.products]
+        opts.insert(0, {'text': 'All', 'val': '_all'})
+        return opts
 
