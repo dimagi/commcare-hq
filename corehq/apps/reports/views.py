@@ -603,7 +603,7 @@ def send_test_scheduled_report(request, domain, scheduled_report_id):
 
 
 def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
-                                  email=True):
+                                  email=True, attach_excel=False):
     from django.http import HttpRequest
     
     request = HttpRequest()
@@ -618,17 +618,26 @@ def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
                                   notification.domain,
                                   notification.owner_id,
                                   couch_user,
-                                  email)
+                                  email, attach_excel=attach_excel)
 
-def _render_report_configs(request, configs, domain, owner_id, couch_user, email, notes=None):
+def _render_report_configs(request, configs, domain, owner_id, couch_user, email, notes=None, attach_excel=False):
     from dimagi.utils.web import get_url_base
 
     report_outputs = []
+    excel_attachments = []
+    format = Format.from_format(request.GET.get('format') or Format.XLS_2007)
     for config in configs:
+        content, excel_file = config.get_report_content(attach_excel=attach_excel)
+        if excel_file:
+            excel_attachments.append({
+                'title': config.full_name + "." + format.extension,
+                'file_obj': excel_file,
+                'mimetype': format.mimetype
+            })
         report_outputs.append({
             'title': config.full_name,
             'url': config.url,
-            'content': config.get_report_content()
+            'content': content
         })
 
     return render(request, "reports/report_email.html", {
@@ -641,7 +650,7 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
         "notes": notes,
         "startdate": config.start_date,
         "enddate": config.end_date,
-    })
+    }), excel_attachments
 
 @login_and_domain_required
 @permission_required("is_superuser")

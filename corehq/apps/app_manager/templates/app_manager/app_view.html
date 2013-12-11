@@ -254,10 +254,13 @@
         <div class="tab-pane" id="copy">
             <h3>{% trans "Copy Application" %}</h3>
             <div>
-                <form class="form form-inline" method="get" action="{% url "import_app" domain %}">
+                <form class="form form-inline" method="get" action="{% url "copy_app" domain %}">
                     <input type="hidden" name="app" value="{{ app.id }}"/>
-                    Copy this app to project: <input type="text" name="domain" />
-                    <button type="submit" class="btn btn-primary">Copy...</button>
+                    {% trans "Copy this app to project:" %} <input type="text" name="domain" />
+                    <br>
+                    {% trans "New name:" %} <input type="text" name="name" value="{{ app.name }}">
+                    <br>
+                    <button type="submit" class="btn btn-primary">{% trans "Copy..." %}</button>
                 </form>
             </div>
         </div>
