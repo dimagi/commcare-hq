@@ -136,7 +136,7 @@ def supply_point_to_json(supply_point):
         'agentName': supply_point.name,
         'active': not supply_point.closed,
     }
-    if supply_point.location.lineage[0]:
+    if len(supply_point.location.lineage) > 0:
         parent_facility_code = Location.get(supply_point.location.lineage[0]).external_id
         base['parentFacilityCode'] = parent_facility_code
 
@@ -184,7 +184,7 @@ def sync_requisition_from_openlmis(domain, requisition_id, openlmis_endpoint):
         else:
             for case in rec_cases:
                 before_status = case.requisition_status
-                if _apply_updates(case, lmis_requisition_details.to_requisition_case(case.product_id, case.get_id, case.get_rev)):
+                if _apply_updates(case, lmis_requisition_details.to_dict(case.product_id)):
                     after_status = case.requisition_status
                     case.save()
                     if before_status in ['INITIATED', 'SUBMITTED'] and after_status == 'AUTHORIZED':

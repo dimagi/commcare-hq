@@ -430,6 +430,19 @@ class RequisitionDetails(Requisition):
 
         return req_case
 
+    def to_dict(self, product_id):
+        dictionary = {
+            'product_id': product_id,
+            'program_id': self.program_id,
+            'order_id': self.order_id,
+            'agent_code': self.agent_code,
+            'order_status': self.order_status,
+            'emergency': self.emergency,
+            'start_date': self.period_start_date,
+            'end_date': self.period_end_date,
+            'supplyingFacilityCode': self.supplying_facility_code
+        }
+        return dictionary
 
 class RequisitionProductDetails(RequisitionProduct):
 
