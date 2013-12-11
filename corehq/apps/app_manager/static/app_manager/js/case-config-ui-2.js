@@ -27,25 +27,7 @@ var CaseConfig = (function () {
         self.caseType = params.caseType;
         self.reserved_words = params.reserved_words;
         self.moduleCaseTypes = params.moduleCaseTypes;
-        self.propertiesMap = {};
-
-        self.setPropertiesMap = function (propertiesMap) {
-            _(self.moduleCaseTypes).each(function (case_type) {
-                if (!_(propertiesMap).has(case_type)) {
-                    propertiesMap[case_type] = [];
-                }
-                propertiesMap[case_type].sort();
-            });
-            _(propertiesMap).each(function (properties, case_type) {
-                if (_(self.propertiesMap).has(case_type)) {
-                    self.propertiesMap[case_type](properties);
-                } else {
-                    self.propertiesMap[case_type] = ko.observableArray(properties);
-                }
-            });
-            self.propertiesMap = ko.mapping.fromJS(params.propertiesMap);
-        };
-        self.setPropertiesMap(params.propertiesMap);
+        self.propertiesMap = ko.mapping.fromJS(params.propertiesMap);
 
         self.saveButton = COMMCAREHQ.SaveButton.init({
             unsavedMessage: "You have unchanged case settings",
