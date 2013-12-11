@@ -50,12 +50,11 @@ def import_locations(domain, worksheets, task=None):
 
         data = list(worksheet)
 
-        for index, loc in enumerate(data):
+        for loc in data:
             yield import_location(domain, location_type, loc)['message']
             if task:
-                DownloadBase.set_progress(task, processed + index, total_rows)
-
-        processed += index
+                processed += 1
+                DownloadBase.set_progress(task, processed, total_rows)
 
 
 def import_location(domain, location_type, location_data):
