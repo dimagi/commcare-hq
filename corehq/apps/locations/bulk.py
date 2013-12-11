@@ -169,7 +169,7 @@ def submit_form(domain, parent, form_data, properties, existing, location_type):
             'message': message
         }
 
-
+# TODO i think the parent param will not be necessary once the TODO in LocationForm.__init__ is done
 def make_form(domain, parent, data, existing=None):
     """simulate a POST payload from the location create/edit page"""
     location = existing or Location(domain=domain, parent=parent)
