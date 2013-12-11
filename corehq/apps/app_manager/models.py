@@ -2446,6 +2446,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     return True
         return False
 
+    @memoized
+    def case_type_exists(self, case_type):
+        return case_type in [m.case_type for m in self.get_modules()]
+
     def has_media(self):
         return len(self.multimedia_map) > 0
 
