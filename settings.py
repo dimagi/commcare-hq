@@ -878,7 +878,7 @@ PILLOWTOPS = {
         'custom.trialconnect.smspillow.TCSMSPillow',
     ],
     'commtrack': [
-        'corehq.pillows.commtrack.ConsumptionRatePillow',
+        'corehq.pillows.commtrack.consumption_calc.ConsumptionRatePillow',
     ]
 }
 
