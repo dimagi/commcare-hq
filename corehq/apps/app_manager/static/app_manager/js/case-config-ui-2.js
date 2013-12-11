@@ -1,5 +1,7 @@
 /*globals $, COMMCAREHQ */
 
+var action_names = ["open_case", "update_case", "close_case", "case_preload"];
+
 var CaseConfig = (function () {
     "use strict";
 
@@ -101,6 +103,13 @@ var CaseConfig = (function () {
             _(self.caseConfigViewModel.subcases()).each(function (case_transaction) {
                 case_transaction.ensureBlankProperties();
             });
+        };
+
+        self.getQuestions = function (filter, excludeHidden, includeRepeat) {
+            return CC_UTILS.getQuestions(self.questions, filter, excludeHidden, includeRepeat);
+        };
+        self.getAnswers = function (condition) {
+            return CC_UTILS.getAnswers(self.questions, condition);
         };
 
         self.change = function () {
@@ -653,46 +662,6 @@ var CaseConfig = (function () {
         }
     };
 
-    var action_names = ["open_case", "update_case", "close_case", "case_preload"];
-    CaseConfig.prototype.getQuestions = function (filter, excludeHidden, includeRepeat) {
-        // filter can be "all", or any of "select1", "select", or "input" separated by spaces
-        var i, options = [],
-            q;
-        excludeHidden = excludeHidden || false;
-        includeRepeat = includeRepeat || false;
-        filter = filter.split(" ").concat(["trigger"]);
-        if (!excludeHidden) {
-            filter.push('hidden');
-        }
-        for (i = 0; i < this.questions.length; i += 1) {
-            q = this.questions[i];
-            if (filter[0] === "all" || filter.indexOf(q.tag) !== -1) {
-                if (includeRepeat || !q.repeat) {
-                    options.push(q);
-                }
-            }
-        }
-        return options;
-    };
-    CaseConfig.prototype.getAnswers = function (condition) {
-        var i, q, o, value = condition.question,
-            found = false,
-            options = [];
-        for (i = 0; i < this.questions.length; i += 1) {
-            q = this.questions[i];
-            if (q.value === value) {
-                found = true;
-                break;
-            }
-        }
-        if (found && q.options) {
-            for (i = 0; i < q.options.length; i += 1) {
-                o = q.options[i];
-                options.push(o);
-            }
-        }
-        return options;
-    };
     return {
         CaseConfig: CaseConfig
     };
