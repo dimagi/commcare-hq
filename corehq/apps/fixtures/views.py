@@ -18,7 +18,7 @@ from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 
 from corehq.apps.domain.decorators import login_or_digest
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem, _id_from_doc, FieldList, FixtureTypeField, FixtureItemField
-from corehq.apps.fixtures.exceptions import ExcelMalformatException
+from corehq.apps.fixtures.exceptions import ExcelMalformatException, FixtureAPIException
 from corehq.apps.groups.models import Group
 from corehq.apps.users.bulkupload import GroupMemoizer
 from corehq.apps.users.decorators import require_permission
@@ -453,9 +453,15 @@ class UploadItemLists(TemplateView):
 @require_POST
 @login_or_digest
 def upload_fixture_api(request, domain, **kwargs):
+    """
+        Use following curl-command to test.
+        > curl -v --digest http://127.0.0.1:8000/a/gsid/fixtures/fixapi/ -u user@domain.com:password 
+                -F "file-to-upload=@hqtest_fixtures.xlsx" 
+                -F "replace=true"
+    """
     response_codes = {"fail": 405, "warning": 402, "success": 200}
     error_messages = {
-        "invalid_post_req": "Invalid post request. Submit the form with field 'file-to-upload' to upload a fixture",
+        "invalid_post_req": "Invalid post request. Submit the form with field 'file-to-upload' and POST parameter 'replace'",
         "has_no_permission": "User {attr} doesn't have permission to upload fixtures",
         "invalid_file": "Error processing your file. Submit a valid (.xlsx) file",
         "has_no_sheet": "Workbook does not have a sheet called {attr}",
@@ -470,6 +476,11 @@ def upload_fixture_api(request, domain, **kwargs):
 
     try:
         upload_file = request.FILES["file-to-upload"]
+        replace = request.POST["replace"]
+        if replace.lower() == "true":
+            replace = True
+        elif replace.lower() == "false":
+            replace = False
     except Exception:
         return _return_response(response_codes["fail"], error_messages["invalid_post_req"])
 
@@ -483,12 +494,14 @@ def upload_fixture_api(request, domain, **kwargs):
         return _return_response(response_codes["fail"], error_messages["invalid_file"])
 
     try:
-        upload_resp = run_upload(request, domain, workbook) # error handle for other files
+        upload_resp = run_upload(request, domain, workbook, replace=replace) # error handle for other files
     except WorksheetNotFound as e:
         error_message = error_messages["has_no_sheet"].format(attr=e.title)
         return _return_response(response_codes["fail"], error_message)
     except ExcelMalformatException as e:
         notify_exception(request)
+        return _return_response(response_codes["fail"], str(e))
+    except FixtureAPIException as e:
         return _return_response(response_codes["fail"], str(e))
     except Exception as e:
         notify_exception(request)
@@ -517,7 +530,7 @@ def upload_fixture_api(request, domain, **kwargs):
     return HttpResponse(json.dumps(resp_json), mimetype="application/json")
 
 
-def run_upload(request, domain, workbook):
+def run_upload(request, domain, workbook, replace=False):
     return_val = {
         "unknown_groups": [], 
         "unknown_users": [], 
@@ -537,7 +550,8 @@ def run_upload(request, domain, workbook):
                             "'{property}' for the field '{field}' that's not defined in its 'types' definition. Re-check the formatting", 
         "invalid_field_with_property": "Fields with attributes should be numbered as 'field: {field} integer",
         "invalid_property": "Attribute should be written as '{field}: {prop} interger'",
-        "wrong_field_property_combos": "Number of values for field '{field}' and attribute '{prop}' should be same"
+        "wrong_field_property_combos": "Number of values for field '{field}' and attribute '{prop}' should be same",
+        "replace_with_UID": "Rows shouldn't contain UIDs while using replace option. Excel sheet '{tag}' contains UID in a row."
     }
 
     group_memoizer = GroupMemoizer(domain)
@@ -559,6 +573,8 @@ def run_upload(request, domain, workbook):
    
     number_of_fixtures = -1
     with CouchTransaction() as transaction:
+        if replace:
+            FixtureDataType.delete_fixtures_by_domain(domain, transaction)
         for number_of_fixtures, dt in enumerate(data_types):
             tag = _get_or_raise(dt, 'table_id')
             type_definition_fields = _get_or_raise(dt, 'field')
@@ -590,6 +606,10 @@ def run_upload(request, domain, workbook):
             )
             try:
                 if dt['UID']:
+                    if replace:
+                        raise FixtureAPIException(failure_messages["replace_with_UID"].format(
+                            tag="types"
+                        ))
                     data_type = FixtureDataType.get(dt['UID'])
                 else:
                     data_type = new_data_type
@@ -695,6 +715,10 @@ def run_upload(request, domain, workbook):
                 )
                 try:
                     if di['UID']:
+                        if replace:
+                            raise FixtureAPIException(failure_messages["replace_with_UID"].format(
+                                tag=tag
+                            ))
                         old_data_item = FixtureDataItem.get(di['UID'])
                     else:
                         old_data_item = new_data_item

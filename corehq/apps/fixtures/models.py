@@ -66,6 +66,10 @@ class FixtureDataType(Document):
         transaction.delete_all(FixtureOwnership.for_all_item_ids(item_ids, self.domain))
         transaction.delete(self)
 
+    @classmethod
+    def delete_fixtures_by_domain(cls, domain, transaction):
+        for type in FixtureDataType.by_domain(domain):
+            type.recursive_delete(transaction)
 
 class FixtureItemField(DocumentSchema):
     """
