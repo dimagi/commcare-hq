@@ -8,6 +8,8 @@ from corehq.apps.commtrack.const import REQUISITION_CASE_TYPE
 from corehq.apps.commtrack.models import RequisitionCase
 from custom.openlmis.exceptions import OpenLMISAPIException
 
+REQUISITION_APPROVED = "Requisition approved successfully"
+
 
 class RssMetadata(object):
 
@@ -216,7 +218,7 @@ class OpenLMISEndpoint(object):
     def _response(self, response):
         # todo: error handling and such
         res = response.json()
-        if res.get('success', False) or res == "Requisition approved successfully":
+        if res.get('success', False) or res == ("%s" % REQUISITION_APPROVED):
             return True
         elif res.get('requisitionId', False):
             return res
@@ -392,8 +394,8 @@ class RequisitionDetails(Requisition):
         agent_code = json_rep['agentCode']
         program_code = json_rep['programCode']
         emergency = json_rep['emergency']
-        period_start_date = json_rep['periodStartDate']
-        period_end_date = json_rep['periodEndDate']
+        period_start_date = json_rep['stringPeriodStartDate']
+        period_end_date = json_rep['stringPeriodEndDate']
         requisition_status = json_rep['requisitionStatus']
         order_id = json_rep.get('orderId', None)
         order_status = json_rep.get('orderStatus', None)
@@ -406,7 +408,7 @@ class RequisitionDetails(Requisition):
         return cls(id, agent_code, program_code, emergency, period_start_date, period_end_date, requisition_status,
                    products, supplying_facility_code, order_id, order_status)
 
-    def to_requisition_case(self, product_id):
+    def to_requisition_case(self, product_id, case_id=None, case_rev=None):
         req_case = RequisitionCase()
         req_case.type = REQUISITION_CASE_TYPE
         req_case.user_id = self.agent_code
@@ -420,6 +422,12 @@ class RequisitionDetails(Requisition):
         req_case.set_case_property("emergency", self.emergency)
         req_case.set_case_property("start_date", self.period_start_date)
         req_case.set_case_property("end_date", self.period_end_date)
+
+        if case_id:
+            req_case._id = case_id
+        if case_rev:
+            req_case._rev = case_rev
+
         return req_case
 
 
@@ -428,11 +436,12 @@ class RequisitionProductDetails(RequisitionProduct):
     def __init__(self,  code, beginning_balance,
                  quantity_received, quantity_dispensed=None, losses_and_adjustments=None, new_patient_count=None,
                  stock_in_hand=None, stock_out_days=None, quantity_requested=None, reason_for_requested_quantity=None, remarks=None,
-                 total_losses_and_adjustments=None, calculated_order_quantity=None, quantity_approved=None):
+                 skipped=None, total_losses_and_adjustments=None, calculated_order_quantity=None, quantity_approved=None):
 
         self.total_losses_and_adjustments = total_losses_and_adjustments
         self.calculated_order_quantity = calculated_order_quantity
         self.quantity_approved = quantity_approved
+        self.skipped = skipped
 
         super(RequisitionProductDetails, self).__init__(code=code, beginning_balance=beginning_balance, quantity_received=quantity_received, quantity_dispensed=quantity_dispensed,
                    losses_and_adjustments=losses_and_adjustments, new_patient_count=new_patient_count, stock_in_hand=stock_in_hand, stock_out_days=stock_out_days,
@@ -451,6 +460,7 @@ class RequisitionProductDetails(RequisitionProduct):
         quantity_requested = json_rep.get('quantityRequested', None)
         reason_for_requested_quantity =json_rep.get('reasonForRequestedQuantity', None)
         remarks = json_rep.get('remarks', None)
+        skipped = json_rep.get('skipped', None)
 
         total_losses_and_adjustments = json_rep.get('totalLossesAndAdjustments', None)
         calculated_order_quantity = json_rep.get('calculatedOrderQuantity', None)
@@ -459,4 +469,4 @@ class RequisitionProductDetails(RequisitionProduct):
         return cls(code=code, beginning_balance=beginning_balance,
                  quantity_received=quantity_received, quantity_dispensed=quantity_dispensed, losses_and_adjustments=losses_and_adjustments, new_patient_count=new_patient_count,
                  stock_in_hand=stock_in_hand, stock_out_days=stock_out_days, quantity_requested=quantity_requested, reason_for_requested_quantity=reason_for_requested_quantity, remarks=remarks,
-                 total_losses_and_adjustments=total_losses_and_adjustments, calculated_order_quantity=calculated_order_quantity, quantity_approved=quantity_approved)
+                 skipped=skipped, total_losses_and_adjustments=total_losses_and_adjustments, calculated_order_quantity=calculated_order_quantity, quantity_approved=quantity_approved)

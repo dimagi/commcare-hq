@@ -1,6 +1,5 @@
 import logging
 from django.dispatch import Signal
-from corehq.apps.commtrack import const
 from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.apps.commtrack.models import Program, SupplyPointCase, Product, RequisitionCase
 from corehq.apps.domain.models import Domain
@@ -9,6 +8,7 @@ from corehq.apps.users.models import CommCareUser
 from custom.openlmis.api import OpenLMISEndpoint
 from custom.openlmis.exceptions import BadParentException, OpenLMISAPIException
 from corehq.apps.commtrack import const
+from collections import defaultdict
 
 requisition_approved = Signal(providing_args=["requisitions"])
 requisition_receipt = Signal(providing_args=["requisitions"])
@@ -45,6 +45,7 @@ def get_supply_point(domain, facility_or_code):
         key=[domain, facility_code],
         reduce=False,
         include_docs=True,
+        limit=1
     ).first()
 
 
@@ -94,7 +95,6 @@ def get_program(domain, lmis_program):
 
 
 def sync_openlmis_program(domain, lmis_program):
-    logging.info(lmis_program)
     program = get_program(domain, lmis_program)
     if program is None:
         program = Program(domain=domain)
@@ -164,18 +164,16 @@ def sync_supply_point_to_openlmis(supply_point, openlmis_endpoint, create=True):
     else:
         return openlmis_endpoint.update_virtual_facility(supply_point.location.site_code, json_sp)
 
-
 def sync_requisition_from_openlmis(domain, requisition_id, openlmis_endpoint):
     cases = []
     send_notification = False
     lmis_requisition_details = openlmis_endpoint.get_requisition_details(requisition_id)
     if lmis_requisition_details:
-        rec_cases = [RequisitionCase.get(c['id']) for c in RequisitionCase.get_by_external_id(domain, str(lmis_requisition_details.id))]
-        rec_cases = [c for c in rec_cases if c.type == const.REQUISITION_CASE_TYPE]
+        rec_cases = [c for c in RequisitionCase.get_by_external_id(domain, str(lmis_requisition_details.id)) if c.type == const.REQUISITION_CASE_TYPE]
 
         if len(rec_cases) == 0:
-            #skipped_products = [product for product in lmis_requisition_details.products if product.ge['skipped'] == False]
-            for product in lmis_requisition_details.products:
+            products = [product for product in lmis_requisition_details.products if product.skipped == False]
+            for product in products:
                 pdt = Product.get_by_code(domain, product.code.lower())
                 if pdt:
                     case = lmis_requisition_details.to_requisition_case(pdt._id)
@@ -186,7 +184,7 @@ def sync_requisition_from_openlmis(domain, requisition_id, openlmis_endpoint):
         else:
             for case in rec_cases:
                 before_status = case.requisition_status
-                if _apply_updates(case, lmis_requisition_details.to_requisition_case(case.product_id)):
+                if _apply_updates(case, lmis_requisition_details.to_requisition_case(case.product_id, case.get_id, case.get_rev)):
                     after_status = case.requisition_status
                     case.save()
                     if before_status in ['INITIATED', 'SUBMITTED'] and after_status == 'AUTHORIZED':
@@ -202,17 +200,24 @@ def submit_requisition(requisition, openlmis_endpoint):
 
 
 def approve_requisition(requisition_cases, openlmis_endpoint):
-    products = []
-    approver = CommCareUser.get(requisition_cases[0].user_id)
-    for rec in requisition_cases:
-        product = Product.get(rec.product_id)
-        products.append({"productCode": product.code, "quantityApproved": rec.amount_approved})
+    groups = defaultdict( list )
+    for case in requisition_cases:
+        groups[case.external_id].append(case)
 
-    approve_data = {
-        "approverName": approver.human_friendly_name,
-        "products": products
-    }
-    return openlmis_endpoint.approve_requisition(approve_data, requisition_cases[0].external_id)
+    for group in groups.keys():
+        if(group):
+            cases = groups.get(group)
+            products = []
+            approver = CommCareUser.get(cases[0].user_id)
+            for rec in cases:
+                product = Product.get(rec.product_id)
+                products.append({"productCode": product.code, "quantityApproved": rec.amount_approved})
+
+            approve_data = {
+                "approverName": approver.human_friendly_name,
+                "products": products
+            }
+            openlmis_endpoint.approve_requisition(approve_data, group)
 
 
 def delivery_update(requisition_cases, openlmis_endpoint):
