@@ -486,13 +486,14 @@ class FormBase(DocumentSchema):
 
     @property
     def full_path_name(self):
+        app = self.get_app()
         module_name = trans(
             self.get_module().name,
-            [self.get_app().default_language] + self.build_langs,
+            [app.default_language] + app.build_langs,
             include_lang=False
         )
         return "%(app_name)s > %(module_name)s > %(form_name)s" % {
-            'app_name': self.get_app().name,
+            'app_name': app.name,
             'module_name': module_name,
             'form_name': self.default_name()
         }
