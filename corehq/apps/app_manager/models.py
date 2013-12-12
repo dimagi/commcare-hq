@@ -57,6 +57,7 @@ from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from .exceptions import (
     AppEditingError,
+    ConflictingCaseTypeError,
     RearrangeError,
     VersioningError,
     XFormError,
@@ -2405,6 +2406,13 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         self.modules = modules
 
     def rearrange_forms(self, to_module_id, from_module_id, i, j):
+        """
+        The case type of the two modules conflict,
+        ConflictingCaseTypeError is raised,
+        but the rearrangement (confusingly) goes through anyway.
+        This is intentional.
+
+        """
         forms = self.modules[to_module_id]['forms']
         try:
             forms.insert(i, forms.pop(j) if to_module_id == from_module_id
@@ -2413,7 +2421,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             raise RearrangeError()
         self.modules[to_module_id]['forms'] = forms
         if self.modules[to_module_id]['case_type'] != self.modules[from_module_id]['case_type']:
-            return 'case type conflict'
+            raise ConflictingCaseTypeError()
 
     def scrub_source(self, source):
         def change_unique_id(form):
@@ -2429,16 +2437,25 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 change_unique_id(source['modules'][m]['forms'][f])
 
     def copy_form(self, module_id, form_id, to_module_id):
+        """
+        The case type of the two modules conflict,
+        ConflictingCaseTypeError is raised,
+        but the copying (confusingly) goes through anyway.
+        This is intentional.
+
+        """
         form = self.get_module(module_id).get_form(form_id)
         copy_source = deepcopy(form.to_json())
         if copy_source.has_key('unique_id'):
             del copy_source['unique_id']
+        if not form.source:
+            raise BlankXFormError()
 
         copy_form = self.new_form_from_source(to_module_id, copy_source)
         save_xform(self, copy_form, form.source)
 
         if self.modules[module_id]['case_type'] != self.modules[to_module_id]['case_type']:
-            return 'case type conflict'
+            raise ConflictingCaseTypeError()
 
     @cached_property
     def has_case_management(self):
