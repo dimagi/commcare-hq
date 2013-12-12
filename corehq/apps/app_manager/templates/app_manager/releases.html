@@ -139,7 +139,7 @@
             <tbody data-bind="css: {hide: false}, template: {
                 foreach: savedApps,
                 afterAdd: function(elem) { $(elem).hide().fadeIn() },
-                beforeRemove: function(elem) { if (elem.nodeType == 1) $(elem).fadeOut(); }
+                beforeRemove: function(elem) { if (elem.nodeType === 1) { $(elem).fadeOut(); } }
             }" class="hide">
                 <tr class="build" data-bind="css: {
                     'build-released': is_released(),
