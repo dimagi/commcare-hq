@@ -77,12 +77,12 @@ class RestoreConfig(object):
         from corehq.apps.commtrack import const
         E = ElementMaker(namespace=const.COMMTRACK_REPORT_XMLNS)
         def mk_product(e):
-            def _(attr):
+            def _(attr, transform=lambda e: e):
                 val = e.get(attr)
-                return str(val) if val is not None else ''
+                return str(transform(val)) if val is not None else ''
             return E.product(
                 id=_('product_id'),
-                quantity=_('current_stock'),
+                quantity=_('current_stock', int),
                 consumption_rate=_('consumption'),
                 stock_category=_('category'),
                 stockout_since=_('stockout_since'),
