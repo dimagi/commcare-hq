@@ -135,8 +135,8 @@ class DateSpan(object):
             For pickling the DateSpan object.
         """
         return dict(
-            startdate=self.startdate.isoformat(),
-            enddate=self.enddate.isoformat(),
+            startdate=self.startdate.isoformat() if self.startdate else None,
+            enddate=self.enddate.isoformat() if self.enddate else None,
             format=self.format,
             inclusive=self.inclusive,
             is_default=self.is_default,
@@ -149,8 +149,8 @@ class DateSpan(object):
         """
         logging = get_task_logger(__name__) # logging is likely to happen within celery
         try:
-            self.startdate = dateutil.parser.parse(state.get('startdate'))
-            self.enddate = dateutil.parser.parse(state.get('enddate'))
+            self.startdate = dateutil.parser.parse(state.get('startdate')) if state.get('startdate') else None
+            self.enddate = dateutil.parser.parse(state.get('enddate')) if state.get('enddate') else None
         except Exception as e:
             logging.error("Could not unpack start and end dates for DateSpan. Error: %s" % e)
         self.format = state.get('format', DEFAULT_DATE_FORMAT)
