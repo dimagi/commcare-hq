@@ -15,6 +15,7 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.cache import cache_control
 from corehq import ApplicationsTab, toggles
 from corehq.apps.app_manager import commcare_settings
+from corehq.apps.app_manager.exceptions import RearrangeError
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from django.utils.http import urlencode as django_urlencode
@@ -1551,13 +1552,21 @@ def rearrange(req, domain, app_id, key):
     resp = {}
     module_id = None
 
-    if "forms" == key:
-        to_module_id = int(req.POST['to_module_id'])
-        from_module_id = int(req.POST['from_module_id'])
-        if app.rearrange_forms(to_module_id, from_module_id, i, j) == 'case type conflict':
-            messages.warning(req, CASE_TYPE_CONFLICT_MSG,  extra_tags="html")
-    elif "modules" == key:
-        app.rearrange_modules(i, j)
+    try:
+        if "forms" == key:
+            to_module_id = int(req.POST['to_module_id'])
+            from_module_id = int(req.POST['from_module_id'])
+            if app.rearrange_forms(to_module_id, from_module_id, i, j) == 'case type conflict':
+                messages.warning(req, CASE_TYPE_CONFLICT_MSG,  extra_tags="html")
+        elif "modules" == key:
+            app.rearrange_modules(i, j)
+    except RearrangeError:
+        messages.error(req, _(
+            'Oops. '
+            'Looks like you got out of sync with us. '
+            'The sidebar has been updated, so please try again.'
+        ))
+        return back_to_main(req, domain, app_id=app_id, module_id=module_id)
     app.save(resp)
     if ajax:
         return HttpResponse(json.dumps(resp))

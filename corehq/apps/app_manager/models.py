@@ -55,7 +55,7 @@ from corehq.apps.app_manager import fixtures, suite_xml, commcare_settings
 from corehq.apps.app_manager.util import split_path, save_xform, get_correct_app_class
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
-from .exceptions import AppError, VersioningError, XFormError, XFormValidationError
+from .exceptions import AppError, VersioningError, XFormError, XFormValidationError, RearrangeError
 
 
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
@@ -2396,7 +2396,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     def rearrange_modules(self, i, j):
         modules = self.modules
-        modules.insert(i, modules.pop(j))
+        try:
+            modules.insert(i, modules.pop(j))
+        except IndexError:
+            raise RearrangeError()
         self.modules = modules
 
     def rearrange_detail_columns(self, module_id, detail_type, i, j):
@@ -2408,7 +2411,11 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     def rearrange_forms(self, to_module_id, from_module_id, i, j):
         forms = self.modules[to_module_id]['forms']
-        forms.insert(i, forms.pop(j) if to_module_id == from_module_id else self.modules[from_module_id]['forms'].pop(j))
+        try:
+            forms.insert(i, forms.pop(j) if to_module_id == from_module_id
+                         else self.modules[from_module_id]['forms'].pop(j))
+        except IndexError:
+            raise RearrangeError()
         self.modules[to_module_id]['forms'] = forms
         if self.modules[to_module_id]['case_type'] != self.modules[from_module_id]['case_type']:
             return 'case type conflict'
