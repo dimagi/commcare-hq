@@ -282,11 +282,11 @@
                             {{ app.title }}
                         </a>
                         <small style="display: block;">{% trans "By" %}
-                            {% if app.organization %}
+                            {% ifequal app.publisher 'organization' %}
                                 {{ app.get_organization.title }}
                             {% else %}
-                                {{ app.author }}
-                            {% endif %}
+                                {{ app.author|default:app.name_of_publisher }}
+                            {% endifequal %}
                         </small>
                     </h3>
                     {% if app.project_type %}
