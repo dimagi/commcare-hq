@@ -46,7 +46,7 @@ def dummy_restore_xml(restore_id, user, sp, products):
                     <location_id>{location_id}</location_id>
                 </update>
             </case>
-            <balance entity-id="{balance_id}" date="{long_date}">
+            <balance entity-id="{sp_id}" date="{long_date}">
                 <product index="0" id="{product0}" quantity="0"/>
                 <product index="1" id="{product1}" quantity="0"/>
                 <product index="2" id="{product2}" quantity="0"/>
@@ -61,7 +61,6 @@ def dummy_restore_xml(restore_id, user, sp, products):
         date=date.today().isoformat(),
         long_date=long_date(),
         location_id=user.location,
-        balance_id=None,
         product0=products[0]._id,
         product1=products[1]._id,
         product2=products[2]._id,
