@@ -1,7 +1,6 @@
 from django.test import TestCase
 from couchexport.models import ExportSchema
 from datetime import datetime, timedelta
-import time
 from dimagi.utils.couch.database import get_safe_write_kwargs
 
 

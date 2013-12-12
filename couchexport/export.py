@@ -7,7 +7,7 @@ from dimagi.utils.couch.database import get_db, iter_docs
 from couchexport import writers
 from soil import DownloadBase
 from dimagi.utils.decorators.memoized import memoized
-from couchexport.util import get_schema_index_view_keys, clear_attachments
+from couchexport.util import get_schema_index_view_keys, default_cleanup
 from datetime import datetime
 
 class ExportConfiguration(object):
@@ -17,7 +17,7 @@ class ExportConfiguration(object):
     """
     
     def __init__(self, database, schema_index, previous_export=None, filter=None,
-                 disable_checkpoints=False, cleanup_fn=clear_attachments):
+                 disable_checkpoints=False, cleanup_fn=default_cleanup):
         self.database = database
         if len(schema_index) > 2:
             schema_index = schema_index[0:2]

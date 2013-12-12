@@ -1,7 +1,7 @@
 from couchdbkit.client import Database
 from django.conf import settings
 from couchexport.models import ExportSchema
-from dimagi.utils.couch.database import get_db
+
 
 def build_latest_schema(schema_index):
     """
@@ -29,8 +29,10 @@ def build_latest_schema(schema_index):
     updated_checkpoint = config.create_new_checkpoint()
     return updated_checkpoint
 
+
 class SchemaInferenceError(Exception):
     pass
+
 
 def get_kind(doc):
     if doc == "" or doc is None:
