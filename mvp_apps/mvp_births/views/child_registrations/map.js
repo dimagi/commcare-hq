@@ -5,9 +5,16 @@ function (doc) {
             indicators = get_indicators(doc),
             indicator_keys = new Array();
 
-        var reg_date = new Date(meta.timeEnd),
-            birth_weight = null,
+        var birth_weight = null,
             birth_weight_nan = false;
+
+        if (doc.dob || doc.dob_calc) {
+            var dob_date = doc.dob_calc || doc.dob;
+            reg_date = new Date(doc.dob_date);
+        }
+        else{
+            reg_date = new Date(meta.timeEnd);
+        }
 
         try {
             birth_weight = (indicators.weight_at_birth && indicators.weight_at_birth.value) ? parseFloat(indicators.weight_at_birth.value) : 0;

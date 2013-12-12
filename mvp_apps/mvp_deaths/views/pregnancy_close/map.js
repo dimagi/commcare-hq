@@ -6,6 +6,13 @@
             indicator_keys = new Array(),
             close_reason = "";
 
+        if(indicators.pregnancy_termination && indicators.pregnancy_termination.value)
+            report_date = new Date(indicators.pregnancy_termination.value);
+        }
+        else{
+            report_date = closed_date;   
+        }
+
         if (indicators.close_reason && indicators.close_reason.value) {
             close_reason = indicators.close_reason.value;
         }
@@ -22,6 +29,6 @@
             }
         }
 
-        emit_standard(doc, close_date, indicator_keys, []);
+        emit_standard(doc, report_date, indicator_keys, []);
     }
 }

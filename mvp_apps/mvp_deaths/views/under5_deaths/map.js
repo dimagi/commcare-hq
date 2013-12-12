@@ -8,6 +8,13 @@ function (doc) {
             close_reason = "",
             termination_reason = "";
 
+        if(indicators.date_of_death && indicators.date_of_death.value)
+            report_date = new Date(indicators.date_of_death.value);
+        }
+        else{
+            report_date = closed_date;   
+        }
+
         if (indicators.close_reason && indicators.close_reason.value) {
             close_reason = indicators.close_reason.value;
         }
@@ -45,6 +52,6 @@ function (doc) {
             indicator_keys.push("under5_death");
         }
         */
-        emit_standard(doc, closed_date, indicator_keys, []);
+        emit_standard(doc, report_date, indicator_keys, []);
     }
 }
