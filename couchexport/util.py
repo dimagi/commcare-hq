@@ -46,6 +46,19 @@ def clear_attachments(schema_or_doc):
     return schema_or_doc
 
 
+def clear_computed(schema_or_doc):
+    # todo: this is a hack that is coupled to commcare hq's use of the computed_
+    # property exploding this namespace. however a cleaner fix in CommCare HQ would
+    # be a larger effort, so it is done here.
+    if schema_or_doc and 'computed_' in schema_or_doc:
+        del schema_or_doc['computed_']
+    return schema_or_doc
+
+
+def default_cleanup(schema_or_doc):
+    return clear_attachments(clear_computed(schema_or_doc))
+
+
 class SerializableFunction(object):
     def __init__(self, function=None, **kwargs):
         self.functions = []
