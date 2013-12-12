@@ -119,6 +119,9 @@ class StringIOTemp(object):
             file.write(self.buffer.getvalue())
         return path
 
+def escape_quotes(s):
+    return s.replace(r'"', r'\"')
+
 def cache_file_to_be_served(tmp, checkpoint, download_id, format=None, filename=None, expiry=10*60*60):
     """
     tmp can be either either a path to a tempfile or a StringIO
@@ -131,11 +134,13 @@ def cache_file_to_be_served(tmp, checkpoint, download_id, format=None, filename=
         except Exception: 
             pass
 
+        escaped_filename = escape_quotes('%s.%s' % (filename, format.extension))
+
         tmp = Temp(tmp)
         payload = tmp.payload
         expose_download(payload, expiry,
                         mimetype=format.mimetype,
-                        content_disposition='attachment; filename=%s.%s' % (filename, format.extension),
+                        content_disposition='attachment; filename="%s"' % escaped_filename,
                         extras={'X-CommCareHQ-Export-Token': checkpoint.get_id},
                         download_id=download_id)
         
