@@ -1,7 +1,6 @@
 from couchdbkit.client import Database
 from django.conf import settings
 from couchexport.models import ExportSchema
-from dimagi.utils.couch.database import get_db
 
 def build_latest_schema(schema_index):
     """
