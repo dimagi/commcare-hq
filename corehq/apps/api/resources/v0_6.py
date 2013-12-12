@@ -16,6 +16,10 @@ from . import JsonResource, DomainSpecificResourceMixin
 class CommCareUserResource(UserESMixin, JsonResource, DomainSpecificResourceMixin):
     """
     A read-only user data resource based on elasticsearch.
+    Supported Params: limit offset q fields filter?
+    Use cases: detail by id, detail by username, list by query
+    list syntax:
+        fields = ["first_name", "last_name"] == ?fields=first_name&fields=last_name
     """
     # UserESMixin containst the logic for interacting with ES
     type = "user"
@@ -29,17 +33,19 @@ class CommCareUserResource(UserESMixin, JsonResource, DomainSpecificResourceMixi
         '''
         Takes a flat dict and returns an object
         '''
-        user['id'] = user.pop('_id')
+        if '_id' in user:
+            user['id'] = user.pop('_id')
         return namedtuple('user', user.keys())(**user)
 
     def obj_get(self, bundle, **kwargs):
-        domain = kwargs['domain']
-        pk = kwargs['pk']
-        try:
-            user = self.Meta.object_class.get_by_user_id(pk, domain)
-        except KeyError:
-            user = None
-        return user
+        "not implemented yet"
+        # domain = kwargs['domain']
+        # pk = kwargs['pk']
+        # try:
+            # user = self.Meta.object_class.get_by_user_id(pk, domain)
+        # except KeyError:
+            # user = None
+        # return user
 
     class Meta(CustomResourceMeta):
         list_allowed_methods = ['get']
@@ -49,7 +55,20 @@ class CommCareUserResource(UserESMixin, JsonResource, DomainSpecificResourceMixi
 
     def obj_get_list(self, bundle, **kwargs):
         print bundle.request.GET
-        return map(self.to_obj, self.make_query())
+        get = bundle.request.GET
+
+        params = bundle.request.GET
+        def param(p):
+            return params.get(p, None)
+        # import bpdb; bpdb.set_trace()
+        users = self.make_query(
+                q=param('q'),
+                fields=params.getlist('fields'),
+                size=param('limit'),
+                start_at=param('offset'),
+        )
+        print len(users)
+        return map(self.to_obj, users)
 
 
 

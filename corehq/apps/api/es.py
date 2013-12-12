@@ -265,22 +265,69 @@ class XFormES(ESView):
 
 
 class UserESMixin(object):
+    """
+    Usage:
 
-    def make_query(self):
-        fields = ['first_name', 'last_name', 'username', 'email', '_id']
+        from corehq.apps.api.es import UserESMixin
+        myobj = UserESMixin()
+        res = myobj.make_query(
+            q='sisko',
+            fields=[u'email', u'first_name'],
+            size=10,
+            start_at=None,
+        )
+    
+    You may also want to catch ESUserError.  This will be raised if an invalid
+    query is made - one that errors, or which includes disallowed fields.
+    """
+    allowed_fields = [
+        'status', 'domain', 'last_name', '_rev', 'user_data', 'created_on',
+        'is_staff', 'base_doc', 'CURRENT_VERSION', 'phone_numbers',
+        'domain_membership', 'date_joined', 'first_name', 'eulas',
+        'email_opt_out', 'is_superuser', 'last_login', 'email', 'username',
+        'is_active', 'doc_type', '_id', 'language', 'registering_device_id',
+        'announcements_seen', 'device_ids'
+    ]
+    # all available fields:
+    # u'status', u'domain', u'last_name', u'_rev', u'user_data', u'created_on',
+    # u'is_staff', u'base_doc', u'CURRENT_VERSION', u'phone_numbers',
+    # u'domain_membership', u'date_joined', u'first_name', u'eulas',
+    # u'email_opt_out', u'is_superuser', u'last_login', u'email', u'username',
+    # u'is_active', u'password', u'doc_type', u'_id', u'language',
+    # u'registering_device_id', u'announcements_seen', u'device_ids'
 
-        # data passed without field filtering:
-        # u'status', u'domain', u'last_name', u'_rev', u'user_data', u'created_on',
-        # u'is_staff', u'base_doc', u'CURRENT_VERSION', u'phone_numbers',
-        # u'domain_membership', u'date_joined', u'first_name', u'eulas',
-        # u'email_opt_out', u'is_superuser', u'last_login', u'email', u'username',
-        # u'is_active', u'password', u'doc_type', u'_id', u'language',
-        # u'registering_device_id', u'announcements_seen', u'device_ids'
+
+    def get_fields(self, fields):
+        if not fields:
+            return ['first_name', 'last_name', 'username', 'email', '_id']
+        for field in fields:
+            if field not in self.allowed_fields:
+                msg = "You cannot include %s in the results" % field
+                raise ESUserError(msg)
+        return fields
+
+    def make_query(self, q=None, fields=None, start_at=None, size=None):
+        fields = self.get_fields(fields)
+
+        query = {
+            'query': {
+                'query_string': {
+                    'query': q
+                }
+            }
+        } if q else {}
 
         res = es_query(
             es_url=ES_URLS['users'],
+            q=query,
             fields=fields,
+            start_at=start_at,
+            size=size,
         )
+        if 'error' in res:
+            msg = res['error']
+            print msg
+            raise ESUserError(msg)
         return [u['fields'] for u in res['hits']['hits']]
 
 
