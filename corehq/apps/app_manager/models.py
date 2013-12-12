@@ -477,9 +477,10 @@ class FormBase(DocumentSchema):
         self.source = source
 
     def default_name(self):
+        app = self.get_app()
         return trans(
             self.name,
-            [self.get_app().default_language] + self.build_langs,
+            [app.default_language] + app.build_langs,
             include_lang=False
         )
 
@@ -2444,6 +2445,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 if len(form.active_actions()) > 0:
                     return True
         return False
+
+    @memoized
+    def case_type_exists(self, case_type):
+        return case_type in [m.case_type for m in self.get_modules()]
 
     def has_media(self):
         return len(self.multimedia_map) > 0

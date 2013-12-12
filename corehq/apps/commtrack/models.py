@@ -89,7 +89,13 @@ class Program(Document):
         else:
             return [row["doc"] for row in Program.view(wrap_doc=False, **kwargs)]
 
-
+    @classmethod
+    def get_by_code(cls, domain, code):
+        result = cls.view("commtrack/program_by_code",
+                          key=[domain, code],
+                          include_docs=True,
+                          limit=1).first()
+        return result
 
 class Product(Document):
     """
@@ -956,8 +962,10 @@ class RequisitionCase(CommCareCase):
     @classmethod
     def get_by_external_id(cls, domain, external_id):
         return cls.view('hqcase/by_domain_external_id',
-                        key=[domain, external_id],
-                        inlude_docs=True)
+            key=[domain, external_id],
+            include_docs=True, reduce=False,
+            classes={'CommCareCase': RequisitionCase}
+        ).all()
 
     @classmethod
     def get_display_config(cls):

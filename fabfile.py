@@ -257,7 +257,7 @@ def production():
         # will remove hqdjango0 once we verify it works well on hqdb0
         'formsplayer': ['hqtouch0.internal.commcarehq.org', 'hqdb0.internal.commcarehq.org'],
         'lb': [],
-        'staticfiles': ['hqproxy0.internal.commcarehq.org', 'hqproxy1.internal.commcarehq.org'],
+        'staticfiles': ['hqproxy0.internal.commcarehq.org'],
         # having deploy here makes it so that
         # we don't get prompted for a host or run deploy too many times
         'deploy': ['hqdb0.internal.commcarehq.org'],
@@ -304,7 +304,7 @@ def staging():
 
         'formsplayer': ['hqdjango1-staging.internal.commcarehq.org'],
         'lb': [],
-        'staticfiles': ['hqproxy0.internal.commcarehq.org', 'hqproxy1.internal.commcarehq.org'],
+        'staticfiles': ['hqproxy0.internal.commcarehq.org'],
         'deploy': ['hqdb0-staging.internal.commcarehq.org'],
         # fab complains if this doesn't exist
         'django_monolith': [],
@@ -355,7 +355,7 @@ def preview():
 
         'formsplayer': ['hqdjango0-preview.internal.commcarehq.org'],
         'lb': [],
-        'staticfiles': ['hqproxy0.internal.commcarehq.org', 'hqproxy1.internal.commcarehq.org'],
+        'staticfiles': ['hqproxy0.internal.commcarehq.org'],
         'deploy': ['hqdb0-preview.internal.commcarehq.org'],
         'django_monolith': [],
     }
