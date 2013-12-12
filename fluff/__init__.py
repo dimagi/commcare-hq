@@ -624,6 +624,6 @@ class FluffPillow(PythonPillow):
         old_indicator, new_indicator = indicators
         new_indicator.save()
 
-        diff = new_indicator.diff(old_indicator)
+        diff = new_indicator.diff(None)  # pass in None for old_doc to force sending ALL indicators to ctable
         if diff:
             indicator_document_updated.send(sender=self, diff=diff)
