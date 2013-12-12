@@ -578,7 +578,6 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
                     data, doc, apply_transforms, self.global_transform_function
                 ))
 
-
     def get_export_components(self, previous_export_id=None, filter=None):
         from couchexport.export import ExportConfiguration
 
