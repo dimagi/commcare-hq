@@ -27,7 +27,6 @@ class FeatureType(object):
     CHOICES = (
         (USER, "Users"),
         (SMS, "SMS"),
-        (API, "API"),
     )
 
 
