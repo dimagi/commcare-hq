@@ -389,7 +389,7 @@ class PactAPI(DomainAPI):
         if self.method == "rm_schedule":
             if self.request.POST.has_key('rm_schedule'):
                 #hacky remove schedule method
-                pdoc.rm_schedule()
+                pdoc.rm_last_schedule()
                 pdoc.save()
                 resp.status_code = 204
                 return resp

@@ -179,7 +179,7 @@ class ScheduleTests(TestCase):
         self.assertEquals(schedules[0]['started'].isoformat()[0:10], datetime.utcnow().isoformat()[0:10])
 
 
-        test_patient.rm_schedule()
+        test_patient.rm_last_schedule()
         updated_schedules = test_patient.get_schedules()
 
         self.assertEqual(len(updated_schedules), 0)
@@ -225,7 +225,7 @@ class ScheduleTests(TestCase):
 
         ### remove tail
 
-        test_patient.rm_schedule()
+        test_patient.rm_last_schedule()
 
         removed_schedules = test_patient.get_schedules(raw_json=True)
         self.assertEquals(len(removed_schedules), len(WEEKLY_SCHEDULE_EXAMPLES))
