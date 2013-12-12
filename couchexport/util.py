@@ -12,6 +12,7 @@ def force_tag_to_list(export_tag):
     assert isinstance(export_tag, list)
     return export_tag
 
+
 def get_schema_index_view_keys(export_tag):
     """
     Get the view start and end keys to query the schema_index view
@@ -19,6 +20,7 @@ def get_schema_index_view_keys(export_tag):
     export_tag = force_tag_to_list(export_tag)
     return {'startkey': export_tag,
             'endkey': export_tag + [{}]}
+
 
 def intersect_functions(*functions):
     functions = [fn for fn in functions if fn]
@@ -37,10 +39,12 @@ def intersect_functions(*functions):
 # deprecated
 intersect_filters = intersect_functions
 
+
 def clear_attachments(schema_or_doc):
     if schema_or_doc and '_attachments' in schema_or_doc:
         del schema_or_doc['_attachments']
     return schema_or_doc
+
 
 class SerializableFunction(object):
     def __init__(self, function=None, **kwargs):
