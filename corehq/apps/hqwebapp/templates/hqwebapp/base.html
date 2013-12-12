@@ -250,11 +250,11 @@
                         <div class="control-group">
                             <div class="controls">
                                 <label class="checkbox">
-                                    <input data-bind="checked: enabled" name="enable" type="checkbox"> Enable Keyboard Shortcuts
+                                    <input data-bind="checked: $data.enabled" name="enable" type="checkbox"> Enable Keyboard Shortcuts
                                 </label>
                             </div>
                         </div>
-                        <div data-bind="visible: enabled" class="control-group">
+                        <div data-bind="visible: $data.enabled" class="control-group">
                             <label class="control-label" for="main-key">Choose Shortcut Key</label>
                             <div class="controls">
                                 <select name="main-key">
