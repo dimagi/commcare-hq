@@ -59,7 +59,7 @@ from dimagi.utils.web import json_response, json_request
 from corehq.apps.reports import util as report_utils
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
 from corehq.apps.app_manager.models import Application, get_app, DetailColumn, Form, FormActions,\
-    AppError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, \
+    AppEditingError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, \
     DeleteApplicationRecord, str_to_cls, validate_lang, SavedAppBuild, ParentSelect, Module, CareplanModule, CareplanForm, CareplanGoalForm, CareplanTaskForm
 from corehq.apps.app_manager.models import DETAIL_TYPES, import_app as import_app_util, SortElement
 from dimagi.utils.web import get_url_base
@@ -322,7 +322,7 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
             xform_questions = xform.get_questions(langs, include_triggers=True)
         except etree.XMLSyntaxError as e:
             form_errors.append("Syntax Error: %s" % e)
-        except AppError as e:
+        except AppEditingError as e:
             form_errors.append("Error in application: %s" % e)
         except XFormValidationError:
             xform_validation_errored = True

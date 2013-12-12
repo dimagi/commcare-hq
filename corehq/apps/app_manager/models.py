@@ -55,7 +55,13 @@ from corehq.apps.app_manager import fixtures, suite_xml, commcare_settings
 from corehq.apps.app_manager.util import split_path, save_xform, get_correct_app_class
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
-from .exceptions import AppError, VersioningError, XFormError, XFormValidationError, RearrangeError
+from .exceptions import (
+    AppEditingError,
+    RearrangeError,
+    VersioningError,
+    XFormError,
+    XFormValidationError,
+)
 
 
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
@@ -1801,7 +1807,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
                 i = setting['values'].index(value)
                 assert i != -1
                 name = _(setting['value_names'][i])
-                raise AppError((
+                raise AppEditingError((
                     '%s Text Input is not supported '
                     'in CommCare versions before %s.%s. '
                     '(You are using %s.%s)'
@@ -1861,7 +1867,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
         try:
             self.validate_jar_path()
             self.create_all_files()
-        except (AppError, XFormValidationError, XFormError) as e:
+        except (AppEditingError, XFormValidationError, XFormError) as e:
             errors.append({'type': 'error', 'message': unicode(e)})
         except Exception as e:
             if settings.DEBUG:
@@ -2382,7 +2388,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if old_lang == new_lang:
             return
         if new_lang in self.langs:
-            raise AppError("Language %s already exists!" % new_lang)
+            raise AppEditingError("Language %s already exists!" % new_lang)
         for i,lang in enumerate(self.langs):
             if lang == old_lang:
                 self.langs[i] = new_lang
@@ -2562,7 +2568,7 @@ class RemoteApp(ApplicationBase):
         try:
             content = urlopen(url).read()
         except Exception:
-            raise AppError('Unable to access resource url: "%s"' % url)
+            raise AppEditingError('Unable to access resource url: "%s"' % url)
 
         return location, content
 
@@ -2592,7 +2598,7 @@ class RemoteApp(ApplicationBase):
                 tree.find(path).text
             except (TypeError, AttributeError):
                 if strict:
-                    raise AppError("problem with file path reference!")
+                    raise AppEditingError("problem with file path reference!")
                 else:
                     return
             for loc_node in tree.findall(path):
@@ -2604,8 +2610,8 @@ class RemoteApp(ApplicationBase):
         add_file_from_path('features/users/logo')
         try:
             suites = add_file_from_path(self.SUITE_XPATH, strict=True)
-        except AppError:
-            raise AppError(ugettext('Problem loading suite file from profile file. Is your profile file correct?'))
+        except AppEditingError:
+            raise AppEditingError(ugettext('Problem loading suite file from profile file. Is your profile file correct?'))
 
         for suite in suites:
             suite_xml = _parse_xml(suite)

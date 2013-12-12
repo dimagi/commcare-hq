@@ -7,7 +7,7 @@ class VersioningError(AppManagerException):
     pass
 
 
-class AppError(AppManagerException):
+class AppEditingError(AppManagerException):
     pass
 
 
