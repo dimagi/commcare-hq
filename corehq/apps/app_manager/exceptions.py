@@ -23,6 +23,10 @@ class XFormError(AppManagerException):
     pass
 
 
+class BlankXFormError(XFormError):
+    pass
+
+
 class CaseError(XFormError):
     pass
 

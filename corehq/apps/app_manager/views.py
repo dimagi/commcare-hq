@@ -17,6 +17,7 @@ from corehq import ApplicationsTab, toggles
 from corehq.apps.app_manager import commcare_settings
 from corehq.apps.app_manager.exceptions import (
     AppManagerException,
+    BlankXFormError,
     ConflictingCaseTypeError,
     RearrangeError,
 )
@@ -946,7 +947,14 @@ def copy_form(req, domain, app_id, module_id, form_id):
         app.copy_form(int(module_id), int(form_id), to_module_id)
     except ConflictingCaseTypeError:
         messages.warning(req, CASE_TYPE_CONFLICT_MSG,  extra_tags="html")
-    app.save()
+        app.save()
+    except BlankXFormError:
+        # don't save!
+        messages.error(req, _('We could not copy this form, because it is blank.'
+                              'In order to copy this form, please add some questions first.'))
+    else:
+        app.save()
+
     return back_to_main(req, domain, app_id=app_id, module_id=module_id,
                         form_id=form_id)
 
