@@ -2389,11 +2389,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             module.rename_lang(old_lang, new_lang)
         _rename_key(self.translations, old_lang, new_lang)
 
-    def rearrange_langs(self, i, j):
-        langs = self.langs
-        langs.insert(i, langs.pop(j))
-        self.langs = langs
-
     def rearrange_modules(self, i, j):
         modules = self.modules
         try:
@@ -2401,13 +2396,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         except IndexError:
             raise RearrangeError()
         self.modules = modules
-
-    def rearrange_detail_columns(self, module_id, detail_type, i, j):
-        module = self.get_module(module_id)
-        detail = module['details'][DETAIL_TYPES.index(detail_type)]
-        columns = detail['columns']
-        columns.insert(i, columns.pop(j))
-        detail['columns'] = columns
 
     def rearrange_forms(self, to_module_id, from_module_id, i, j):
         forms = self.modules[to_module_id]['forms']
