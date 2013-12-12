@@ -71,3 +71,7 @@ class SuiteValidationError(SuiteError):
 
 class RearrangeError(AppManagerException):
     pass
+
+
+class BindNotFound(XFormError):
+    pass
