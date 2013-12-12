@@ -179,7 +179,7 @@ class ScheduleTests(TestCase):
         self.assertEquals(schedules[0]['started'].isoformat()[0:10], datetime.utcnow().isoformat()[0:10])
 
 
-        test_patient.rm_schedule()
+        test_patient.rm_last_schedule()
         updated_schedules = test_patient.get_schedules()
 
         self.assertEqual(len(updated_schedules), 0)
@@ -211,7 +211,7 @@ class ScheduleTests(TestCase):
 
         test_patient.set_schedule(CDotWeeklySchedule.wrap(NEW_SCHEDULE))
 
-        updated_schedules =  test_patient.get_schedules(raw_json=True)
+        updated_schedules = test_patient.get_schedules(raw_json=True)
         self.assertIsNone(updated_schedules[-1]['ended'])
         self.assertEquals(len(updated_schedules), len(WEEKLY_SCHEDULE_EXAMPLES)+1)
         #pdb.set_trace()
@@ -224,10 +224,12 @@ class ScheduleTests(TestCase):
         self.assertLess(updated_schedules[-2]['ended'], datetime.utcnow().isoformat())
 
         ### remove tail
+        test_patient.save()
+        loaded_patient = PactPatientCase.get(test_patient.get_id)
 
-        test_patient.rm_schedule()
+        loaded_patient.rm_last_schedule()
 
-        removed_schedules = test_patient.get_schedules(raw_json=True)
+        removed_schedules = loaded_patient.get_schedules(raw_json=True)
         self.assertEquals(len(removed_schedules), len(WEEKLY_SCHEDULE_EXAMPLES))
         self.assertIsNone(removed_schedules[-1]['ended'])
         self.assertEquals(removed_schedules[-1]['started'], '2011-02-25T14:05:32Z')

@@ -196,10 +196,7 @@ class PactPatientCase(CommCareCase):
 
 
     def get_schedules(self, raw_json=False, reversed=False):
-        if raw_json:
-            obj = self.to_json()
-        else:
-            obj = self
+        obj = self.to_json()
         computed = obj['computed_']
         if computed.has_key(PACT_SCHEDULES_NAMESPACE):
             ret = [x for x in computed[PACT_SCHEDULES_NAMESPACE]]
@@ -211,7 +208,7 @@ class PactPatientCase(CommCareCase):
         else:
             return []
 
-    def rm_schedule(self):
+    def rm_last_schedule(self):
         """
         Remove the tail from the schedule - does not save doc
         """
