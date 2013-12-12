@@ -11,6 +11,7 @@
 
     {% if app.application_version == '2.0' %}
         <script src="{% static 'app_manager/js/case-knockout-bindings.js' %}"></script>
+        <script src="{% static 'app_manager/js/case-config-utils.js' %}"></script>
         <script src="{% static 'app_manager/js/case-config-ui-2.js' %}"></script>
     {% else %}
         <script src="{% static 'app_manager/js/ejs.min.js' %}"></script>
