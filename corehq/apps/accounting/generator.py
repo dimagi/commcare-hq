@@ -1,5 +1,8 @@
 from __future__ import unicode_literals, absolute_import, print_function
+import calendar
+from decimal import Decimal
 import random
+import datetime
 
 from django.conf import settings
 
@@ -192,6 +195,13 @@ def generate_domain_subscription_from_date(date_start, billing_account, domain,
 def delete_all_subscriptions():
     Subscription.objects.all().delete()
     Subscriber.objects.all().delete()
+
+
+def get_start_date():
+    start_date = datetime.date.today()
+    (_, last_day) = calendar.monthrange(start_date.year, start_date.month)
+    # make sure that the start_date does not fall on the first or last day of the month:
+    return start_date.replace(day=min(max(2, start_date.day), last_day-1))
 
 
 def arbitrary_domain():
