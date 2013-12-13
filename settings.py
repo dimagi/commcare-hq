@@ -307,6 +307,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'casexml.apps.case',
     'casexml.apps.phone',
     'couchforms',
+    'couchexport',
     'ctable',
     'ctable_view',
     'dimagi.utils',
