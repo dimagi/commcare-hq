@@ -34,3 +34,19 @@ def deactivate_subscriptions(based_on_date=None):
         subscription.is_active = False
         subscription.save()
 
+
+@task
+def generate_invoices(based_on_date=None):
+    """
+    Generates all invoices for the past month.
+    """
+    today = based_on_date or datetime.date.today()
+    # todo handle CommCare Community invoices... need to fetch all domains rather than subscriptions
+    # and if no subscription found, use community
+    invoice_start, invoice_end = utils.get_previous_month_date_range(today)
+    invoiceable_subscriptions = Subscription.objects.filter(date_start__lt=invoice_end,
+                                                            date_end__gt=invoice_start).all()
+    for subscription in invoiceable_subscriptions:
+        invoice_factory = InvoiceFactory(subscription, invoice_start, invoice_end)
+        invoice_factory.create()
+
