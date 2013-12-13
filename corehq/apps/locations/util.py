@@ -198,8 +198,8 @@ def property_uniqueness(domain, loc, prop_name, val, scope='global'):
         return set(l._id for l in uniqueness_set if val == normalize(getattr(l, prop_name, None)))
 
 
-def get_custom_property_labels(domain, loc_type):
-    return [prop.label for prop in location_custom_properties(domain, loc_type)]
+def get_custom_property_names(domain, loc_type):
+    return [prop.name for prop in location_custom_properties(domain, loc_type)]
 
 
 def dump_locations(response, domain):
@@ -211,7 +211,7 @@ def dump_locations(response, domain):
     common_types = ['id', 'name', 'parent_id']
     writer.open(
         header_table=[
-            (loc_type, [common_types + get_custom_property_labels(domain, loc_type)])
+            (loc_type, [common_types + get_custom_property_names(domain, loc_type)])
             for loc_type in location_types
         ],
         file=file,
