@@ -33,7 +33,7 @@ from couchexport.tasks import rebuild_schemas
 from couchexport.util import SerializableFunction
 import couchforms.views as couchforms_views
 from couchforms.filters import instances
-from couchforms.models import XFormInstance
+from couchforms.models import XFormInstance, doc_types
 from couchforms.templatetags.xform_tags import render_form
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import wrapped_docs
@@ -817,10 +817,11 @@ def _get_form_or_404(id):
     except ResourceNotFound:
         raise Http404()
 
-    if xform_json.get('doc_type') not in ('XFormInstance',):
+    doc_type = doc_types().get(xform_json.get('doc_type'))
+    if not doc_type:
         raise Http404()
 
-    return XFormInstance.wrap(xform_json)
+    return doc_type.wrap(xform_json)
 
 
 @require_form_view_permission
