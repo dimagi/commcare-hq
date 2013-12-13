@@ -330,8 +330,9 @@ class LineItem(models.Model):
     invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT)
     feature_rate = models.ForeignKey(FeatureRate, on_delete=models.PROTECT, null=True)
     product_rate = models.ForeignKey(SoftwareProductRate, on_delete=models.PROTECT, null=True)
-    description = models.TextField()
+    base_description = models.TextField(blank=True, null=True)
     base_cost = models.DecimalField(default=Decimal('0.0'), max_digits=10, decimal_places=2)
+    unit_description = models.TextField(blank=True, null=True)
     unit_cost = models.DecimalField(default=Decimal('0.0'), max_digits=10, decimal_places=2)
     quantity = models.IntegerField(default=1)
 
