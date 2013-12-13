@@ -119,13 +119,17 @@ def unpack_commtrack(xform, config):
         'timestamp': xform.received_on,
     }
 
+    namespace = xform.form['@xmlns']
     def commtrack_nodes(data):
         for tag, nodes in data.iteritems():
             for node in (nodes if isinstance(nodes, collections.Sequence) else [nodes]):
                 if not hasattr(node, '__iter__'):
                     continue
-                if node.get('@xmlns', data['@xmlns']) == const.COMMTRACK_REPORT_XMLNS:
+                if node.get('@xmlns', namespace) == const.COMMTRACK_REPORT_XMLNS:
                     yield (tag, node)
+                else:
+                    for e in commtrack_nodes(node):
+                        yield e
     for elem in commtrack_nodes(xform.form):
         # FIXME deal with requisitions later
         tag, node = elem
