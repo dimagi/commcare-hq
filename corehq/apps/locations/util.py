@@ -208,7 +208,7 @@ def dump_locations(response, domain):
 
     location_types = defined_location_types(domain)
 
-    common_types = ['id', 'name', 'parent_id']
+    common_types = ['id', 'name', 'parent_id', 'latitude', 'longitude']
     writer.open(
         header_table=[
             (loc_type, [common_types + get_custom_property_names(domain, loc_type)])
@@ -224,7 +224,7 @@ def dump_locations(response, domain):
             parent_id = loc.parent._id if loc.parent else ''
             custom_prop_values = [loc[prop.name] or '' for prop in location_custom_properties(domain, loc.location_type)]
             tab_rows.append(
-                [loc._id, loc.name, parent_id] + custom_prop_values
+                [loc._id, loc.name, parent_id, loc.latitude or '', loc.longitude or ''] + custom_prop_values
             )
         writer.write([(loc_type, tab_rows)])
 
