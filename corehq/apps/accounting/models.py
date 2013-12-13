@@ -270,16 +270,14 @@ class Invoice(models.Model):
             return Decimal('0.0')
         return sum([credit.amount for credit in self.creditadjustment_set.all()])
 
-    @property
-    def total(self):
+    def get_total(self):
         """
         This will be inserted in the total field on the printed invoice.
         """
         return self.subtotal + self.applied_tax + self.applied_credit
 
     def update_balance(self):
-        self.balance = self.total
-        self.save()
+        self.balance = self.get_total()
 
     def calculate_credit_adjustments(self):
         """
