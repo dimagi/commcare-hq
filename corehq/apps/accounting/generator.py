@@ -87,15 +87,12 @@ def init_default_currency():
     return currency
 
 
-def arbitrary_web_user(save=True):
-    domain = generator.arbitrary_unique_name().lower()
-    username = generator.arbitrary_unique_name()
-
+def arbitrary_web_user(save=True, is_dimagi=False):
+    domain = data_gen.arbitrary_unique_name().lower()[:25]
+    username = "%s@%s.com" % (data_gen.arbitrary_username(), 'dimagi' if is_dimagi else 'gmail')
     web_user = WebUser.create(domain, username, 'test123')
-
     if save:
         web_user.save()
-
     return web_user
 
 
