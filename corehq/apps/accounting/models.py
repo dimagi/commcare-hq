@@ -315,6 +315,17 @@ class InvoicePdf(SafeSaveDocument):
         self.date_created = datetime.datetime.now()
 
 
+class LineItemManager(models.Manager):
+    def get_products(self):
+        return self.get_query_set().filter(feature_rate__exact=None)
+
+    def get_features(self):
+        return self.get_query_set().filter(product_rate__exact=None)
+
+    def get_feature_by_type(self, feature_type):
+        return self.get_query_set().filter(feature_rate__feature__feature_type=feature_type)
+
+
 class LineItem(models.Model):
     invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT)
     feature_rate = models.ForeignKey(FeatureRate, on_delete=models.PROTECT, null=True)
@@ -324,6 +335,7 @@ class LineItem(models.Model):
     unit_cost = models.DecimalField(default=Decimal('0.0'), max_digits=10, decimal_places=2)
     quantity = models.IntegerField(default=1)
 
+    objects = LineItemManager()
 
     @property
     def subtotal(self):
