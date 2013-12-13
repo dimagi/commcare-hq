@@ -14,7 +14,7 @@ class TestGatewayFee(TestCase):
             code=settings.DEFAULT_CURRENCY,
             name="Default Currency",
             symbol="$",
-            rate_to_usd=1.0
+            rate_to_default=1.0
         )
         self.available_backends = get_available_backends().values()
 

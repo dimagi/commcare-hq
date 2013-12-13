@@ -221,7 +221,7 @@ class SmsBillable(models.Model):
         billable.gateway_fee = SmsGatewayFee.get_by_criteria(
             backend_api_id, direction, backend_instance=backend_instance, country_code=country_code
         )
-        conversion_rate = billable.gateway_fee.currency.rate_to_usd
+        conversion_rate = billable.gateway_fee.currency.rate_to_default
         if conversion_rate != 0:
             # If the conversion rate is ever 0, something happened with the Currency API and we should
             # flag appropriately.
