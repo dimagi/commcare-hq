@@ -1,4 +1,6 @@
 import datetime
+from decimal import Decimal
+
 from couchdbkit.ext.django.schema import DateTimeProperty, StringProperty
 
 from django.conf import settings
@@ -128,7 +130,7 @@ class SoftwareProductRate(models.Model):
     Once created, ProductRates cannot be modified. Instead, a new ProductRate must be created.
     """
     product = models.ForeignKey(SoftwareProduct, on_delete=models.PROTECT)
-    monthly_fee = models.FloatField()
+    monthly_fee = models.DecimalField(default=Decimal('0.0'), max_digits=10, decimal_places=2)
     date_created = models.DateField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
 
@@ -156,9 +158,9 @@ class FeatureRate(models.Model):
     Once created, Feature Rates cannot be modified. Instead, a new Feature Rate must be created.
     """
     feature = models.ForeignKey(Feature, on_delete=models.PROTECT)
-    monthly_fee = models.FloatField(default=0.0)
+    monthly_fee = models.DecimalField(default=Decimal('0.0'), max_digits=10, decimal_places=2)
     monthly_limit = models.IntegerField(default=0)
-    per_excess_fee = models.FloatField(default=0.0)
+    per_excess_fee = models.DecimalField(default=Decimal('0.0'), max_digits=10, decimal_places=2)
     date_created = models.DateField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
 
@@ -238,8 +240,8 @@ class Invoice(models.Model):
     to CreditAdjustments.
     """
     subscription = models.ForeignKey(Subscription, on_delete=models.PROTECT)
-    tax_rate = models.FloatField(default=0.0)
-    balance = models.FloatField(default=0.0)
+    tax_rate = models.DecimalField(default=Decimal('0.0'), max_digits=10, decimal_places=4)
+    balance = models.DecimalField(default=Decimal('0.0'), max_digits=10, decimal_places=4)
     date_due = models.DateField(db_index=True)
     date_paid = models.DateField(blank=True)
     date_created = models.DateField(auto_now_add=True)
@@ -248,19 +250,14 @@ class Invoice(models.Model):
     date_end = models.DateField()
 
     @property
-    def credit_adjustments(self):
-        """
-        All CreditAdjustments that reference this Invoice as the adjuster.
-        """
-        return CreditAdjustment.objects.filter(invoice=self.id)
-
-    @property
     @memoized
     def subtotal(self):
         """
         This will be inserted in the subtotal field on the printed invoice.
         """
-        return self.lineitem_set.aggregate(models.Sum('total'))
+        if self.lineitem_set.count() == 0:
+            return Decimal('0.0')
+        return sum([line_item.total for line_item in self.lineitem_set.all()])
 
     @property
     def applied_tax(self):
@@ -268,7 +265,9 @@ class Invoice(models.Model):
 
     @property
     def applied_credit(self):
-        return sum([credit.amount for credit in self.credit_adjustments])
+        if self.creditadjustment_set.count() == 0:
+            return Decimal('0.0')
+        return sum([credit.amount for credit in self.creditadjustment_set.all()])
 
     @property
     def total(self):
@@ -322,19 +321,14 @@ class LineItem(models.Model):
     feature_rate = models.ForeignKey(FeatureRate, on_delete=models.PROTECT, null=True)
     product_rate = models.ForeignKey(SoftwareProductRate, on_delete=models.PROTECT, null=True)
     description = models.TextField()
-    unit_cost = models.FloatField(default=0.0)
+    base_cost = models.DecimalField(default=Decimal('0.0'), max_digits=10, decimal_places=2)
+    unit_cost = models.DecimalField(default=Decimal('0.0'), max_digits=10, decimal_places=2)
     quantity = models.IntegerField(default=1)
+
 
     @property
     def subtotal(self):
-        return self.unit_cost * self.quantity
-
-    @property
-    def credit_adjustments(self):
-        """
-        All CreditAdjustments that reference this LineItem as the adjuster.
-        """
-        return CreditAdjustment.objects.filter(line_item=self.id)
+        return self.base_cost + self.unit_cost * self.quantity
 
     @property
     @memoized
@@ -342,7 +336,9 @@ class LineItem(models.Model):
         """
         The total amount of credit applied specifically to this LineItem.
         """
-        return sum([credit.amount for credit in self.credit_adjustments])
+        if self.creditadjustment_set.count() == 0:
+            return Decimal('0.0')
+        return sum([credit.amount for credit in self.creditadjustment_set.all()])
 
     @property
     def total(self):
@@ -367,7 +363,7 @@ class CreditLine(models.Model):
     product_rates = models.ManyToManyField(SoftwareProductRate)
     feature_rates = models.ManyToManyField(FeatureRate)
     date_created = models.DateField(auto_now_add=True)
-    balance = models.FloatField(default=0.0)
+    balance = models.DecimalField(default=Decimal('0.0'), max_digits=10, decimal_places=4)
 
 
 class CreditAdjustment(models.Model):
@@ -378,7 +374,7 @@ class CreditAdjustment(models.Model):
     credit_line = models.ForeignKey(CreditLine, on_delete=models.PROTECT)
     reason = models.CharField(max_length=25, default=AdjustmentReason.MANUAL, choices=AdjustmentReason.CHOICES)
     note = models.TextField()
-    amount = models.FloatField(default=0.0)
+    amount = models.DecimalField(default=Decimal('0.0'), max_digits=10, decimal_places=4)
     line_item = models.ForeignKey(LineItem, on_delete=models.PROTECT, null=True)
     invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT, null=True)
     # todo payment_method = models.ForeignKey(PaymentMethod)
