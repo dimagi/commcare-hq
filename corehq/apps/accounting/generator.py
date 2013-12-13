@@ -1,9 +1,16 @@
 from __future__ import unicode_literals, absolute_import, print_function
 import random
 
-from dimagi.utils.data import generator
-from corehq.apps.accounting.models import *
-from corehq.apps.users.models import WebUser
+from django.conf import settings
+
+from dimagi.utils.dates import add_months
+from dimagi.utils.data import generator as data_gen
+
+from corehq.apps.accounting.models import (FeatureType, Currency, BillingAccount, FeatureRate, SoftwarePlanVersion,
+                                           SoftwarePlan, SoftwareProductRate, Subscription, Subscriber, SoftwareProduct,
+                                           Feature)
+from corehq.apps.domain.models import Domain
+from corehq.apps.users.models import WebUser, CommCareUser
 
 # don't actually use this for initializing new plans! the amounts have been changed to make it easier on testing:
 COMMCARE_PLANS = [
@@ -151,3 +158,39 @@ def arbitrary_subscribable_plan():
     subscribable_plans = [plan['name'] for plan in COMMCARE_PLANS if plan['name'] != "CommCare Community"]
     plan = SoftwarePlan.objects.get(name=random.choice(subscribable_plans))
     return plan.softwareplanversion_set.latest('date_created')
+
+
+def generate_domain_subscription_from_date(date_start, billing_account, domain,
+                                           num_months=None, is_immediately_active=False,
+                                           delay_invoicing_until=None, save=True):
+    # make sure the first month is never a full month (for testing)
+    date_start = date_start.replace(day=max(2, date_start.day))
+
+    subscription_length = num_months or random.randint(3, 25)
+    date_end_year, date_end_month = add_months(date_start.year, date_start.month, subscription_length)
+    date_end_last_day = calendar.monthrange(date_end_year, date_end_month)[1]
+
+    # make sure that the last month is never a full month (for testing)
+    date_end = datetime.date(date_end_year, date_end_month, min(date_end_last_day - 1, date_start.day + 1))
+
+    subscriber, _ = Subscriber.objects.get_or_create(domain=domain, organization=None)
+    subscription = Subscription(
+        account=billing_account,
+        plan=arbitrary_subscribable_plan(),
+        subscriber=subscriber,
+        salesforce_contract_id=data_gen.arbitrary_unique_name("SFC")[:80],
+        date_start=date_start,
+        date_end=date_end,
+        is_active=is_immediately_active,
+        date_delay_invoicing=delay_invoicing_until,
+    )
+    if save:
+        subscription.save()
+    return subscription, subscription_length
+
+
+def delete_all_subscriptions():
+    Subscription.objects.all().delete()
+    Subscriber.objects.all().delete()
+
+
