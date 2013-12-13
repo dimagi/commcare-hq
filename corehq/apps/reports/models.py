@@ -601,6 +601,8 @@ class FormExportSchema(HQExportSchema):
 
         order = []
         for question in questions:
+            if not question['value']:  # question probably belongs to a broken form
+                continue
             index_parts = question['value'].split('/')
             assert index_parts[0] == ''
             index_parts[1] = 'form'

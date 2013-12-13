@@ -1328,42 +1328,6 @@ def edit_commcare_profile(request, domain, app_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def edit_app_lang(req, domain, app_id):
-    """
-    DEPRECATED
-    Called when an existing language (such as 'zh') is changed (e.g. to 'zh-cn')
-    or when a language is to be added.
-
-    """
-    lang = req.POST['lang']
-    lang_id = int(req.POST.get('index', -1))
-    app = get_app(domain, app_id)
-    if lang_id == -1:
-        if lang in app.langs:
-            messages.error(req, "Language %s already exists" % lang)
-        else:
-            try:
-                validate_lang(lang)
-            except ValueError as e:
-                messages.error(req, unicode(e))
-            else:
-                app.langs.append(lang)
-                app.save()
-    else:
-        try:
-            app.rename_lang(app.langs[lang_id], lang)
-        except AppError as e:
-            messages.error(req, unicode(e))
-        except ValueError as e:
-            messages.error(req, unicode(e))
-        else:
-            app.save()
-
-    return back_to_main(req, domain, app_id=app_id)
-
-
-@no_conflict_require_POST
-@require_can_edit_apps
 def edit_app_langs(request, domain, app_id):
     """
     Called with post body:
