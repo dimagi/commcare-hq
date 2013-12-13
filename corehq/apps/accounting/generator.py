@@ -194,3 +194,44 @@ def delete_all_subscriptions():
     Subscriber.objects.all().delete()
 
 
+def arbitrary_domain():
+    domain = Domain(
+        name=data_gen.arbitrary_unique_name()[:20],
+        is_active=True,
+    )
+    domain.save()
+    return domain
+
+
+def arbitrary_commcare_users_for_domain(domain, num_users, is_active=True):
+    count = 0
+    for _ in range(0, num_users):
+        count += 1
+        username = data_gen.arbitrary_unique_name()[:80]
+        commcare_user = CommCareUser.create(domain, username, 'test123')
+        commcare_user.is_active = is_active
+        commcare_user.save()
+    return num_users
+
+
+def arbitrary_sms_billables_for_domain(domain, direction, message_month_date, num_sms):
+    from corehq.apps.smsbillables.models import SmsBillable, SmsGatewayFee, SmsUsageFee
+    from corehq.apps.smsbillables import generator as sms_gen
+
+    gateway_fee = SmsGatewayFee.create_new('MACH', direction, sms_gen.arbitrary_fee())
+    usage_fee = SmsUsageFee.create_new(direction, sms_gen.arbitrary_fee())
+
+    _, last_day_message = calendar.monthrange(message_month_date.year, message_month_date.month)
+
+    for _ in range(0, num_sms):
+        sms_billable = SmsBillable(
+            gateway_fee=gateway_fee,
+            usage_fee=usage_fee,
+            log_id=data_gen.arbitrary_unique_name()[:50],
+            phone_number=data_gen.random_phonenumber(),
+            domain=domain,
+            direction=direction,
+            date_sent=datetime.date(message_month_date.year, message_month_date.month,
+                                    random.randint(1, last_day_message)),
+        )
+        sms_billable.save()
