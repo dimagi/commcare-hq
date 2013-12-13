@@ -111,6 +111,11 @@ def billing_account(web_user_creator, web_user_contact, currency=None, save=True
     return billing_account
 
 
+def delete_all_accounts():
+    BillingAccount.objects.all().delete()
+    Currency.objects.all().delete()
+
+
 def instantiate_plans(plan_list=None):
     plan_list = plan_list or COMMCARE_PLANS
     for plan in plan_list:
