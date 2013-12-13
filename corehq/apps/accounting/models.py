@@ -227,8 +227,8 @@ class Subscription(models.Model):
     subscriber = models.ForeignKey(Subscriber, on_delete=models.PROTECT)
     salesforce_contract_id = models.CharField(blank=True, max_length=80)
     date_start = models.DateField()
-    date_end = models.DateField(blank=True)
-    date_delay_invoicing = models.DateField(blank=True)
+    date_end = models.DateField(blank=True, null=True)
+    date_delay_invoicing = models.DateField(blank=True, null=True)
     date_created = models.DateField(auto_now_add=True)
     is_active = models.BooleanField(default=False)
 
@@ -243,9 +243,9 @@ class Invoice(models.Model):
     tax_rate = models.DecimalField(default=Decimal('0.0'), max_digits=10, decimal_places=4)
     balance = models.DecimalField(default=Decimal('0.0'), max_digits=10, decimal_places=4)
     date_due = models.DateField(db_index=True)
-    date_paid = models.DateField(blank=True)
+    date_paid = models.DateField(blank=True, null=True)
     date_created = models.DateField(auto_now_add=True)
-    date_received = models.DateField(blank=True, db_index=True)
+    date_received = models.DateField(blank=True, db_index=True, null=True)
     date_start = models.DateField()
     date_end = models.DateField()
 
