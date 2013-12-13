@@ -5,15 +5,16 @@ from dimagi.utils.data import generator
 from corehq.apps.accounting.models import *
 from corehq.apps.users.models import WebUser
 
+# don't actually use this for initializing new plans! the amounts have been changed to make it easier on testing:
 COMMCARE_PLANS = [
     {
         'name': "CommCare Community",
-        'fee': 0.0,
+        'fee': Decimal('0.0'),
         'rates': [
             {
                 'name': "User Community",
-                'limit': 50,
-                'excess': 1.00,
+                'limit': 2,
+                'excess': Decimal('1.00'),
                 'type': FeatureType.USER,
             },
             {
@@ -24,51 +25,51 @@ COMMCARE_PLANS = [
     },
     {
         'name': "CommCare Standard",
-        'fee': 100.00,
+        'fee': Decimal('100.00'),
         'rates': [
             {
                 'name': "User Standard",
-                'limit': 100,
-                'excess': 1.00,
+                'limit': 4,
+                'excess': Decimal('1.00'),
                 'type': FeatureType.USER,
             },
             {
                 'name': "SMS Standard",
-                'limit': 250,
+                'limit': 10,
                 'type': FeatureType.SMS,
             },
         ],
     },
     {
         'name': "CommCare Pro",
-        'fee': 500.00,
+        'fee': Decimal('500.00'),
         'rates': [
             {
                 'name': "User Pro",
-                'limit': 500,
-                'excess': 1.00,
+                'limit': 6,
+                'excess': Decimal('1.00'),
                 'type': FeatureType.USER,
             },
             {
                 'name': "SMS Pro",
-                'limit': 1000,
+                'limit': 16,
                 'type': FeatureType.SMS,
             },
         ],
     },
     {
         'name': "CommCare Advanced",
-        'fee': 1000.00,
+        'fee': Decimal('1000.00'),
         'rates': [
             {
                 'name': "User Advanced",
-                'limit': 1000,
-                'excess': 1.00,
+                'limit': 8,
+                'excess': Decimal('1.00'),
                 'type': FeatureType.USER,
             },
             {
                 'name': "SMS Advanced",
-                'limit': 2000,
+                'limit': 20,
                 'type': FeatureType.SMS,
             },
         ],
