@@ -6,11 +6,12 @@ from couchdbkit.ext.django.schema import DateTimeProperty, StringProperty
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models
-from corehq.apps.accounting.exceptions import HQAccountingSetupError
 
 from django_prbac.models import Role
 from dimagi.utils.couch.database import SafeSaveDocument
 from dimagi.utils.decorators.memoized import memoized
+
+from corehq.apps.accounting.exceptions import HQAccountingSetupError
 
 
 class BillingAccountType(object):
