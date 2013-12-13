@@ -97,17 +97,14 @@ def arbitrary_web_user(save=True, is_dimagi=False):
 
 
 def billing_account(web_user_creator, web_user_contact, currency=None, save=True):
-    account_name = generator.arbitrary_unique_name(prefix="BA")[:40]
-
-    currency = currency or Currency.objects.get(code="USD")
-
+    account_name = data_gen.arbitrary_unique_name(prefix="BA")[:40]
+    currency = currency or Currency.objects.get(code=settings.DEFAULT_CURRENCY)
     billing_account = BillingAccount(
         name=account_name,
         created_by=web_user_creator.username,
         web_user_contact=web_user_contact.username,
         currency=currency,
     )
-
     if save:
         billing_account.save()
 
