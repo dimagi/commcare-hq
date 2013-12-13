@@ -31,7 +31,7 @@ def send_HTML_email(subject, recipient, html_content, text_content=None, cc=None
     from_header = {'From': email_from}  # From-header
     connection = get_connection()
     msg = EmailMultiAlternatives(subject, text_content, email_return_path, [recipient], headers=from_header, connection=connection, cc=cc)
-    for file in file_attachments:
+    for file in (file_attachments or []):
         if file:
             msg.attach(file["title"], file["file_obj"].getvalue(), file["mimetype"])
     msg.attach_alternative(html_content, "text/html")
