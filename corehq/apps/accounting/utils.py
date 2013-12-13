@@ -11,7 +11,6 @@ def get_previous_month_date_range(reference_date=None):
     date_start = datetime.date(last_month_year, last_month, 1)
     date_end = datetime.date(last_month_year, last_month, last_day)
 
-    print date_start, date_end
     return date_start, date_end
 
 
