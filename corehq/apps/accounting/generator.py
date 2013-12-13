@@ -77,8 +77,13 @@ COMMCARE_PLANS = [
 ]
 
 
-def currency_usd():
-    currency, _ = Currency.objects.get_or_create(code="USD", name="US Dollar")
+def init_default_currency():
+    currency, _ = Currency.objects.get_or_create(
+        code=settings.DEFAULT_CURRENCY,
+        name="Default Currency",
+        rate_to_default=Decimal('1.0'),
+        symbol=settings.DEFAULT_CURRENCY_SYMBOL,
+    )
     return currency
 
 
