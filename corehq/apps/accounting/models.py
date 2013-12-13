@@ -204,7 +204,7 @@ class SoftwarePlanVersion(models.Model):
     feature_rates = models.ManyToManyField(FeatureRate, blank=True)
     date_created = models.DateField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
-    role = models.ForeignKey(Role)
+    role = models.ForeignKey(Role, null=True)  # null=True will be removed once this and PRBAC are fully synced
 
 
 class Subscriber(models.Model):
