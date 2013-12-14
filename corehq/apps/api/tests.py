@@ -1184,3 +1184,30 @@ class TestUserES(BaseUserES, TestCase):
             self.es.make_query(
                 fields=['email', 'first_name', 'password'],
             )
+
+
+class TestUserAPI(BaseUserES, APIResourceTest):
+    resource = v0_6.CommCareUserResource
+    api_name = 'v0.6'
+
+    @property
+    def list_endpoint(self):
+        return reverse(
+            'api_dispatch_list',
+            kwargs={
+                'domain': self.domain.name,
+                'api_name': self.api_name,
+                'resource_name': self.resource.Meta.resource_name,
+            }
+        )
+
+    def query(self, **params):
+        self.client.login(username=self.username, password=self.password)
+        return self.client.get('%s?%s' % (self.list_endpoint, urlencode(params)))
+
+    def test_limit(self):
+        limit = 10
+        result = self.query(limit=limit)
+        self.assertEqual(result.status_code, 200)
+        users = simplejson.loads(result.content)['objects']
+        self.assertEquals(len(users), limit)
