@@ -288,14 +288,8 @@ class UserESMixin(object):
         'is_active', 'doc_type', '_id', 'language', 'registering_device_id',
         'announcements_seen', 'device_ids'
     ]
-    # all available fields:
-    # u'status', u'domain', u'last_name', u'_rev', u'user_data', u'created_on',
-    # u'is_staff', u'base_doc', u'CURRENT_VERSION', u'phone_numbers',
-    # u'domain_membership', u'date_joined', u'first_name', u'eulas',
-    # u'email_opt_out', u'is_superuser', u'last_login', u'email', u'username',
-    # u'is_active', u'password', u'doc_type', u'_id', u'language',
-    # u'registering_device_id', u'announcements_seen', u'device_ids'
-
+    # excluded fields:
+    # 'password',
 
     def get_fields(self, fields):
         if not fields:
@@ -322,7 +316,7 @@ class UserESMixin(object):
             q=query,
             fields=fields,
             start_at=start_at,
-            size=size,
+            size=size or 100,
         )
         if 'error' in res:
             msg = res['error']
