@@ -15,7 +15,7 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.cache import cache_control
 from corehq import ApplicationsTab, toggles
 from corehq.apps.app_manager import commcare_settings
-from corehq.apps.app_manager.exceptions import RearrangeError
+from corehq.apps.app_manager.exceptions import AppManagerException, RearrangeError
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from django.utils.http import urlencode as django_urlencode
@@ -1584,7 +1584,8 @@ def save_copy(req, domain, app_id):
         }),
     })
 
-def validate_form_for_build(request, domain, app_id, unique_form_id):
+
+def validate_form_for_build(request, domain, app_id, unique_form_id, ajax=True):
     app = get_app(domain, app_id)
     try:
         form = app.get_form(unique_form_id)
@@ -1593,12 +1594,11 @@ def validate_form_for_build(request, domain, app_id, unique_form_id):
         raise Http404()
     errors = form.validate_for_build()
     lang, langs = get_langs(request, app)
-    if "blank form" in [error.get('type') for error in errors]:
-        return json_response({
-            "error_html": render_to_string('app_manager/partials/create_form_prompt.html')
-        })
-    return json_response({
-        "error_html": render_to_string('app_manager/partials/build_errors.html', {
+
+    if ajax and "blank form" in [error.get('type') for error in errors]:
+        response_html = render_to_string('app_manager/partials/create_form_prompt.html')
+    else:
+        response_html = render_to_string('app_manager/partials/build_errors.html', {
             'app': app,
             'form': form,
             'build_errors': errors,
@@ -1606,9 +1606,16 @@ def validate_form_for_build(request, domain, app_id, unique_form_id):
             'domain': domain,
             'langs': langs,
             'lang': lang
-        }),
-    })
-    
+        })
+
+    if ajax:
+        return json_response({
+            'error_html': response_html,
+        })
+    else:
+        return HttpResponse(response_html)
+
+
 @no_conflict_require_POST
 @require_can_edit_apps
 def revert_to_copy(req, domain, app_id):
@@ -1809,6 +1816,7 @@ def download_app_strings(req, domain, app_id, lang):
         req.app.create_app_strings(lang)
     )
 
+
 @safe_download
 def download_xform(req, domain, app_id, module_id, form_id):
     """
@@ -1819,8 +1827,14 @@ def download_xform(req, domain, app_id, module_id, form_id):
         return HttpResponse(
             req.app.fetch_xform(module_id, form_id)
         )
-    except (IndexError, XFormValidationError):
+    except IndexError:
         raise Http404()
+    except AppManagerException:
+        unique_form_id = req.app.get_module(module_id).get_form(form_id).unique_id
+        response = validate_form_for_build(req, domain, app_id, unique_form_id, ajax=False)
+        response.status_code = 404
+        return response
+
 
 @safe_download
 def download_user_registration(req, domain, app_id):
