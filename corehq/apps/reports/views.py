@@ -456,7 +456,7 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
                                   domain,
                                   user_id, request.couch_user,
                                   True,
-                                  notes=form.cleaned_data['notes']).content
+                                  notes=form.cleaned_data['notes'])[0].content
 
     subject = form.cleaned_data['subject'] or _("Email report from CommCare HQ")
 
@@ -604,6 +604,11 @@ def send_test_scheduled_report(request, domain, scheduled_report_id):
 
 def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
                                   email=True, attach_excel=False):
+    """
+    This function somewhat confusingly returns a tuple of: (response, excel_files)
+    If attach_excel is false, excel_files will always be an empty list.
+    """
+    # todo: clean up this API?
     from django.http import HttpRequest
     
     request = HttpRequest()
@@ -613,7 +618,6 @@ def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
     request.couch_user.current_domain = domain
 
     notification = ReportNotification.get(scheduled_report_id)
-
     return _render_report_configs(request, notification.configs,
                                   notification.domain,
                                   notification.owner_id,
@@ -656,7 +660,8 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
 @permission_required("is_superuser")
 def view_scheduled_report(request, domain, scheduled_report_id):
     return get_scheduled_report_response(
-        request.couch_user, domain, scheduled_report_id, email=False)
+        request.couch_user, domain, scheduled_report_id, email=False
+    )[0]
 
 
 @require_case_view_permission
