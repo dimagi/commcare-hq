@@ -72,6 +72,19 @@ def arbitrary_fees_by_backend_instance(backend_ids):
     return fees
 
 
+def arbitrary_fees_by_all(backend_ids):
+    fees = {}
+    for direction in [INCOMING, OUTGOING]:
+        fees_by_backend = {}
+        for backend in get_available_backends().values():
+            fees_by_country = {}
+            for country in TEST_COUNTRY_CODES:
+                fees_by_country[country] = (backend_ids[backend.get_api_id()], arbitrary_fee())
+            fees_by_backend[backend.get_api_id()] = fees_by_country
+        fees[direction] = fees_by_backend
+    return fees
+
+
 def arbitrary_backend_ids():
     backend_ids = {}
     for backend in get_available_backends().values():
