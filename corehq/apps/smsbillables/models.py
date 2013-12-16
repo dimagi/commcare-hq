@@ -37,11 +37,18 @@ class SmsGatewayFeeCriteria(models.Model):
         if all_possible_criteria.count() == 0:
             return None
 
-        # todo: 1. try all parameters
-        # todo: 2. try backend_instance with country_code = None
-        # todo: 3. try country_code with backend_instance = None
-
-        # least specific
+        try:
+            return all_possible_criteria.get(country_code=country_code, backend_instance=backend_instance)
+        except ObjectDoesNotExist:
+            pass
+        try:
+            return all_possible_criteria.get(country_code=None, backend_instance=backend_instance)
+        except ObjectDoesNotExist:
+            pass
+        try:
+            return all_possible_criteria.get(country_code=country_code, backend_instance=None)
+        except ObjectDoesNotExist:
+            pass
         try:
             return all_possible_criteria.get(country_code=None, backend_instance=None)
         except ObjectDoesNotExist:
