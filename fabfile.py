@@ -274,7 +274,7 @@ def production():
     # Gets auto-populated by what_os()
     # if you don't know what it is or don't want to specify.
     env.host_os_map = None
-    env.roles = ['deploy']
+    env.roles = ['deploy']  # this line should be commented out when running bootstrap on a new machine
     env.es_endpoint = 'hqes0.internal.commcarehq.org'''
     env.flower_port = 5555
 
