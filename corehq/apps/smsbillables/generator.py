@@ -24,6 +24,8 @@ SMS_MESSAGE_CONTENT = [
 TEST_DOMAIN = "test"
 TEST_NUMBER = "16175005454"
 
+TEST_COUNTRY_CODES = [1, 20, 30, 220, 501]
+
 
 def arbitrary_message():
     return random.choice(SMS_MESSAGE_CONTENT)
@@ -33,12 +35,29 @@ def arbitrary_fee():
     return Decimal(str(round(random.uniform(0.0, 1.0), 4)))
 
 
+def arbitrary_phone_number():
+    return str(random.choice(TEST_COUNTRY_CODES)) + str(random.randint(10**9, 10**10 - 1))
+
+
 def arbitrary_fees_by_direction_and_backend():
     fees = {}
     for direction in [INCOMING, OUTGOING]:
         fees_by_backend = {}
         for backend in get_available_backends().values():
             fees_by_backend[backend.get_api_id()] = arbitrary_fee()
+        fees[direction] = fees_by_backend
+    return fees
+
+
+def arbitrary_fees_by_country():
+    fees = {}
+    for direction in [INCOMING, OUTGOING]:
+        fees_by_backend = {}
+        for backend in get_available_backends().values():
+            fees_by_country = {}
+            for country in TEST_COUNTRY_CODES:
+                fees_by_country[country] = arbitrary_fee()
+            fees_by_backend[backend.get_api_id()] = fees_by_country
         fees[direction] = fees_by_backend
     return fees
 
