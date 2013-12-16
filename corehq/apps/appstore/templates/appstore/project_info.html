@@ -268,10 +268,23 @@
                         {% if error_message %}
                             <span class="help-inline">{{ error_message }}</span>
                         {% endif %}
-                        <a class="btn btn-primary" data-form="new-project-form" data-toggle="modal" data-target="#licenseAgreement" href="#licenseAgreement">{% trans "Download As New Project" %}</a>
+                        <a class="btn btn-primary"
+                           data-form="new-project-form"
+                           data-toggle="modal"
+                           data-target="#licenseAgreement"
+                           href="#licenseAgreement"
+                           onclick="_gaq.push(['_trackEvent', 'Exchange', 'Download As New Project', '{{ project }}']);"
+                        >
+                            {% trans "Download As New Project" %}
+                        </a>
                         {% if display_import %}
                             {% trans "or" %}
-                            <a class="btn" id="import-app-button">{% trans "Download to Existing Project" %}</a>
+                            <a class="btn"
+                               id="import-app-button"
+                               onclick="_gaq.push(['_trackEvent', 'Exchange', 'Download to Existing Project', '{{ project }}']);"
+                            >
+                                {% trans "Download to Existing Project" %}
+                            </a>
                         {% endif %}
                     </div>
                     {% endif %}
