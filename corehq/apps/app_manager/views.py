@@ -533,11 +533,9 @@ def release_manager(request, domain, app_id, template='app_manager/releases.html
     context = get_apps_base_context(request, domain, app)
     context['sms_contacts'] = get_sms_autocomplete_context(request, domain)['sms_contacts']
 
-    saved_apps = []
-
     context.update({
         'release_manager': True,
-        'saved_apps': saved_apps,
+        'saved_apps': [],
         'latest_release': latest_release,
     })
     if not app.is_remote_app():
