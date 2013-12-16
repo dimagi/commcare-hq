@@ -1,4 +1,5 @@
 from corehq.apps.fixtures.views import UploadItemLists
+from corehq.apps.fixtures.dispatcher import FixtureInterfaceDispatcher
 from django.conf.urls.defaults import patterns, url
 
 urlpatterns = patterns('corehq.apps.fixtures.views',
@@ -12,4 +13,5 @@ urlpatterns = patterns('corehq.apps.fixtures.views',
     url(r'^item-lists/upload/$', UploadItemLists.as_view(), name='upload_fixtures'),
     url(r'^fixapi/', 'upload_fixture_api'),
     url(r'^item-lists/download/$', 'download_item_lists', name="download_fixtures"),
+    FixtureInterfaceDispatcher.url_pattern()
 )
