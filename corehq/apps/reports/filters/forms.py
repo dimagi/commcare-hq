@@ -451,18 +451,23 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
 
     @memoized
     def get_unknown_form_name(self, xmlns, app_id=None, none_if_not_found=False):
-        key = ["xmlns", self.domain, xmlns]
         if app_id is not None:
-            key[0] = "xmlns app"
-            key.append(app_id)
+            app = get_db().get(app_id)
+            for module in app['modules']:
+                for form in module['forms']:
+                    if form['xmlns'] == xmlns:
+                        return form['name'].values()[0]
 
-        results = cache_core.cached_view(get_db(),
-                                         'reports_forms/name_by_xmlns',
-                                         reduce=False,
-                                         startkey=key,
-                                         endkey=key + [{}],
-                                         limit=1,
-                                         cache_expire=60)
+        key = ["xmlns", self.domain, xmlns]
+        results = cache_core.cached_view(
+            get_db(),
+            'reports_forms/name_by_xmlns',
+            reduce=False,
+            startkey=key,
+            endkey=key + [{}],
+            limit=1,
+            cache_expire=60
+        )
 
         try:
             data = list(results)[0]

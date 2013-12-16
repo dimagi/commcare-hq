@@ -6,7 +6,6 @@ function(doc) {
             var form_name = doc.form['@name'];
             if (form_name) {
                 emit(["xmlns", doc.domain, doc.xmlns, form_name], form_name);
-                emit(["xmlns app", doc.domain, doc.xmlns, get_app_id(doc), form_name], form_name);
             }
         }
     }
