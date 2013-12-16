@@ -523,6 +523,8 @@ def paginate_releases(request, domain, app_id):
         limit=limit,
         wrapper=lambda x: SavedAppBuild.wrap(x['value']).to_saved_build_json(timezone),
     ).all()
+    for app in saved_apps:
+        app['include_media'] = toggle_enabled(toggles.APP_BUILDER_INCLUDE_MULTIMEDIA_ODK, request.user.username)
     return json_response(saved_apps)
 
 
@@ -533,11 +535,9 @@ def release_manager(request, domain, app_id, template='app_manager/releases.html
     context = get_apps_base_context(request, domain, app)
     context['sms_contacts'] = get_sms_autocomplete_context(request, domain)['sms_contacts']
 
-    saved_apps = []
-
     context.update({
         'release_manager': True,
-        'saved_apps': saved_apps,
+        'saved_apps': [],
         'latest_release': latest_release,
     })
     if not app.is_remote_app():
