@@ -523,6 +523,8 @@ def paginate_releases(request, domain, app_id):
         limit=limit,
         wrapper=lambda x: SavedAppBuild.wrap(x['value']).to_saved_build_json(timezone),
     ).all()
+    for app in saved_apps:
+        app['include_media'] = toggle_enabled(toggles.APP_BUILDER_INCLUDE_MULTIMEDIA_ODK, request.user.username)
     return json_response(saved_apps)
 
 
