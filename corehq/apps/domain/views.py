@@ -813,6 +813,7 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             'commcare_edition',
             'services',
             'initiative',
+            'workshop_region',
             'project_state',
             'area',
             'sub_area',
