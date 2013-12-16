@@ -22,7 +22,7 @@ from ..opm_tasks.models import OpmReportSnapshot
 from .beneficiary import Beneficiary
 from .incentive import Worker
 from .constants import *
-from .filters import BlockFilter, AWCFilter
+from .filters import BlockFilter, AWCFilter, CaseStatusFilter
 
 
 class BaseReport(MonthYearMixin, GenericTabularReport, CustomProjectReport):
@@ -135,8 +135,23 @@ class BeneficiaryPaymentReport(BaseReport):
     slug = 'beneficiary_payment_report'
     model = Beneficiary
 
+    @property
+    def fields(self):
+        return [CaseStatusFilter] + super(BeneficiaryPaymentReport, self).fields
+
     def get_rows(self, datespan):
-        return CommCareCase.get_all_cases(DOMAIN, include_docs=True)
+        cases = CommCareCase.get_all_cases(DOMAIN, include_docs=True)
+        return [case for case in cases if self.passes_filter(case)]
+
+    def passes_filter(self, case):
+        status = self.filter_data.get('case_status', None)
+        if status:
+            if status == 'open' and not case.closed:
+                return True
+            elif status == 'closed' and case.closed:
+                return True
+            return False
+        return True
 
 
 class IncentivePaymentReport(BaseReport):
