@@ -25,6 +25,9 @@ TEST_DOMAIN = "test"
 TEST_NUMBER = "16175005454"
 
 TEST_COUNTRY_CODES = [1, 20, 30, 220, 501]
+OTHER_COUNTRY_CODES = [31, 40, 245, 502]
+
+DIRECTIONS = [INCOMING, OUTGOING]
 
 
 def arbitrary_message():
@@ -35,13 +38,13 @@ def arbitrary_fee():
     return Decimal(str(round(random.uniform(0.0, 1.0), 4)))
 
 
-def arbitrary_phone_number():
-    return str(random.choice(TEST_COUNTRY_CODES)) + str(random.randint(10**9, 10**10 - 1))
+def arbitrary_phone_number(country_codes=TEST_COUNTRY_CODES):
+    return str(random.choice(country_codes)) + str(random.randint(10**9, 10**10 - 1))
 
 
 def arbitrary_fees_by_direction_and_backend():
     fees = {}
-    for direction in [INCOMING, OUTGOING]:
+    for direction in DIRECTIONS:
         fees_by_backend = {}
         for backend in get_available_backends().values():
             fees_by_backend[backend.get_api_id()] = arbitrary_fee()
@@ -51,7 +54,7 @@ def arbitrary_fees_by_direction_and_backend():
 
 def arbitrary_fees_by_country():
     fees = {}
-    for direction in [INCOMING, OUTGOING]:
+    for direction in DIRECTIONS:
         fees_by_backend = {}
         for backend in get_available_backends().values():
             fees_by_country = {}
@@ -64,7 +67,7 @@ def arbitrary_fees_by_country():
 
 def arbitrary_fees_by_backend_instance(backend_ids):
     fees = {}
-    for direction in [INCOMING, OUTGOING]:
+    for direction in DIRECTIONS:
         fees_by_backend = {}
         for backend in get_available_backends().values():
             fees_by_backend[backend.get_api_id()] = (backend_ids[backend.get_api_id()], arbitrary_fee())
@@ -74,7 +77,7 @@ def arbitrary_fees_by_backend_instance(backend_ids):
 
 def arbitrary_fees_by_all(backend_ids):
     fees = {}
-    for direction in [INCOMING, OUTGOING]:
+    for direction in DIRECTIONS:
         fees_by_backend = {}
         for backend in get_available_backends().values():
             fees_by_country = {}
@@ -92,12 +95,15 @@ def arbitrary_backend_ids():
     return backend_ids
 
 
-def arbitrary_messages_by_backend_and_direction(backend_ids, phone_number=None, domain=None):
+def arbitrary_messages_by_backend_and_direction(backend_ids,
+                                                phone_number=None,
+                                                domain=None,
+                                                directions=DIRECTIONS):
     phone_number = phone_number or TEST_NUMBER
     domain = domain or TEST_DOMAIN
     messages = []
     for api_id, instance_id in backend_ids.items():
-        for direction in [INCOMING, OUTGOING]:
+        for direction in directions:
             sms_log = SMSLog(
                 direction=direction,
                 phone_number=phone_number,
