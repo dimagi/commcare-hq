@@ -20,6 +20,8 @@ from corehq.apps.domain.decorators import login_or_digest
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem, _id_from_doc, FieldList, FixtureTypeField, FixtureItemField
 from corehq.apps.fixtures.exceptions import ExcelMalformatException, FixtureAPIException
 from corehq.apps.groups.models import Group
+from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
+from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.bulkupload import GroupMemoizer
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CommCareUser, Permissions
@@ -219,10 +221,26 @@ def view(request, domain, template='fixtures/view.html'):
         'domain': domain
     })
 
+def data_table(request, domain):
+    sheets = download_item_lists(request, domain, html_response=True)
+    sheets.pop("types")
+    selected_sheet = sheets.values()[0]
+    data_table = {
+        "headers": None,
+        "rows": None
+    }
+    headers = [DataTablesColumn(header) for header in selected_sheet["headers"]]
+    data_table["headers"] = DataTablesHeader(*headers)
+    data_table["rows"] = [[format_datatables_data(x or "--", "a") for x in row] for row in selected_sheet["rows"]]
+    return data_table
+
 DELETE_HEADER = "Delete(Y/N)"
-@require_can_edit_fixtures
-def download_item_lists(request, domain):
-    data_types_view = FixtureDataType.by_domain(domain)
+# @require_can_edit_fixtures
+def download_item_lists(request, domain, html_response=False):
+    if request.GET.get("table_id"):
+        data_types_view = [FixtureDataType.get(request.GET.get("table_id"))]
+    else:
+        data_types_view = FixtureDataType.by_domain(domain)
     # book-keeping data from view_results for repeated use
     data_types_book = []
     data_items_boook_by_type = {}
@@ -320,7 +338,7 @@ def download_item_lists(request, domain):
         if type_field_properties.has_key(data_type.tag):
             props = type_field_properties.get(data_type.tag)
             prop_vals.extend([props.get(key, "") for key in field_prop_headers])
-        row = tuple(common_vals + field_vals + prop_vals)
+        row = tuple(common_vals[2 if html_response else 0:] + field_vals + prop_vals)
         types_sheet["rows"].append(row)
 
     types_sheet["rows"] = tuple(types_sheet["rows"])
@@ -356,7 +374,7 @@ def download_item_lists(request, domain):
                     })
                 field_headers.extend(prop_headers)
         item_sheet["headers"] = tuple(
-            common_headers + field_headers + user_headers + group_headers
+            common_headers[2 if html_response else 0:] + field_headers + user_headers + group_headers
         )
         excel_sheets[data_type.tag] = item_sheet
         for item_row in data_items_boook_by_type[data_type.tag]:
@@ -375,15 +393,19 @@ def download_item_lists(request, domain):
                         for property in field.properties:
                             field_prop_vals.append(field_prop_combo.properties.get(property, None) or "")
                         field_prop_vals.append(field_prop_combo.field_value)
-                    padding_list_len = (max_field_prop_combos[field.field_name] - cur_combo_count)*(cur_prop_count)
+                    padding_list_len = (max_field_prop_combos[field.field_name] - cur_combo_count)*(cur_prop_count + 1)
                     field_prop_vals.extend(empty_padding_list(padding_list_len))
+                    # import pdb; pdb.set_trace();
                     field_vals.extend(field_prop_vals)
             row = tuple(
-                common_vals + field_vals + user_vals + group_vals
+                common_vals[2 if html_response else 0:] + field_vals + user_vals + group_vals
             )
             item_sheet["rows"].append(row)
         item_sheet["rows"] = tuple(item_sheet["rows"])
         excel_sheets[data_type.tag] = item_sheet
+
+    if html_response:
+        return excel_sheets
 
     header_groups = [("types", excel_sheets["types"]["headers"])]
     value_groups = [("types", excel_sheets["types"]["rows"])]
