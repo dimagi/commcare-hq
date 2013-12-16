@@ -25,10 +25,19 @@ class TestGatewayFee(TestCase):
         self.backend_ids = generator.arbitrary_backend_ids()
         self.message_logs = generator.arbitrary_messages_by_backend_and_direction(self.backend_ids)
 
-    def test_least_specific_fees(self):
+    def create_least_specific_gateway_fees(self):
         for direction, fees in self.least_specific_fees.items():
             for backend_api_id, amount in fees.items():
                 SmsGatewayFee.create_new(backend_api_id, direction, amount)
+
+    def create_country_code_gateway_fees(self):
+        for direction, backend in self.country_code_fees.items():
+            for backend_api_id, country in backend.items():
+                for country_code, amount in country.items():
+                    SmsGatewayFee.create_new(backend_api_id, direction, amount, country_code=country_code)
+
+    def test_least_specific_fees(self):
+        self.create_least_specific_gateway_fees()
 
         for msg_log in self.message_logs:
             billable = SmsBillable.create(msg_log)
@@ -39,13 +48,8 @@ class TestGatewayFee(TestCase):
             )
 
     def test_country_code_fees(self):
-        for direction, fees in self.least_specific_fees.items():
-            for backend_api_id, amount in fees.items():
-                SmsGatewayFee.create_new(backend_api_id, direction, amount)
-        for direction, backend in self.country_code_fees.items():
-            for backend_api_id, country in backend.items():
-                for country_code, amount in country.items():
-                    SmsGatewayFee.create_new(backend_api_id, direction, amount, country_code=country_code)
+        self.create_least_specific_gateway_fees()
+        self.create_country_code_gateway_fees()
 
         phone_numbers = [generator.arbitrary_phone_number() for i in range(10)]
         for phone_number in phone_numbers:
