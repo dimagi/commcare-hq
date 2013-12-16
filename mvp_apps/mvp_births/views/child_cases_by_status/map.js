@@ -1,6 +1,7 @@
 function (doc) {
     // !code util/mvp.js
-    if (isChildCase(doc)) {
+    if (isChildCase(doc)) ||
+        isPregnancyCloseForm(doc)) {
         var indicator_entries_open = {},
             indicator_entries_closed = {},
             indicators_dob = [];
