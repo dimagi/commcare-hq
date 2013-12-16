@@ -8,7 +8,6 @@ from corehq.apps.smsbillables import generator
 
 
 class TestGatewayFee(TestCase):
-
     def setUp(self):
         self.currency_usd, _ = Currency.objects.get_or_create(
             code=settings.DEFAULT_CURRENCY,
@@ -20,7 +19,7 @@ class TestGatewayFee(TestCase):
 
         self.least_specific_fees = generator.arbitrary_fees_by_direction_and_backend()
         self.instance_fees = generator.arbitrary_fees_by_direction_and_backend()
-        self.country_code_fees = generator.arbitrary_fees_by_direction_and_backend()
+        self.country_code_fees = generator.arbitrary_fees_by_country()
         self.most_specific_fees = generator.arbitrary_fees_by_direction_and_backend()
 
         self.backend_ids = generator.arbitrary_backend_ids()
@@ -40,8 +39,25 @@ class TestGatewayFee(TestCase):
             )
 
     def test_country_code_fees(self):
-        # todo
-        pass
+        for direction, backend in self.country_code_fees.items():
+            for backend_api_id, country in backend.items():
+                for country_code, amount in country.items():
+                    SmsGatewayFee.create_new(backend_api_id, direction, amount, country_code=country_code)
+
+        phone_numbers = [generator.arbitrary_phone_number() for i in range(10)]
+        for phone_number in phone_numbers:
+            messages = generator.arbitrary_messages_by_backend_and_direction(self.backend_ids,
+                                                                             phone_number=phone_number)
+            for msg_log in messages:
+                billable = SmsBillable.create(msg_log)
+                self.assertIsNotNone(billable)
+                self.assertEqual(
+                    billable.gateway_fee.amount,
+                    self.country_code_fees[billable.direction]
+                    [billable.gateway_fee.criteria.backend_api_id]
+                    [int(phone_number[:-10])]
+                )
+
 
     def test_instance_fees(self):
         # todo
