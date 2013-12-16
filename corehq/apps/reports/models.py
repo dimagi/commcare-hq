@@ -345,7 +345,7 @@ class ReportConfig(Document):
                 return _("The report used to create this scheduled report is no"
                          " longer available on CommCare HQ.  Please delete this"
                          " scheduled report and create a new one using an available"
-                         " report.")
+                         " report."), None
         except Exception:
             pass
 
@@ -369,7 +369,7 @@ class ReportConfig(Document):
             return json.loads(response.content)['report'], file_obj
         except Exception as e:
             notify_exception(None, "Error generating report")
-            return _("An error occurred while generating this report.")
+            return _("An error occurred while generating this report."), None
 
 
 class UnsupportedScheduledReportError(Exception):
@@ -503,7 +503,11 @@ class ReportNotification(Document):
 
         if self.all_recipient_emails:
             title = "Scheduled report from CommCare HQ"
-            body, excel_files = get_scheduled_report_response(self.owner, self.domain, self._id, attach_excel=self.attach_excel)
+            if hasattr(self, "attach_excel"):
+                attach_excel = self.attach_excel
+            else:
+                attach_excel = False
+            body, excel_files = get_scheduled_report_response(self.owner, self.domain, self._id, attach_excel=attach_excel)
             for email in self.all_recipient_emails:
                 send_HTML_email(title, email, body.content, email_from=settings.DEFAULT_FROM_EMAIL, file_attachments=excel_files)
 
