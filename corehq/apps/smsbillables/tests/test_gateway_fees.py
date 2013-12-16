@@ -39,6 +39,9 @@ class TestGatewayFee(TestCase):
             )
 
     def test_country_code_fees(self):
+        for direction, fees in self.least_specific_fees.items():
+            for backend_api_id, amount in fees.items():
+                SmsGatewayFee.create_new(backend_api_id, direction, amount)
         for direction, backend in self.country_code_fees.items():
             for backend_api_id, country in backend.items():
                 for country_code, amount in country.items():
