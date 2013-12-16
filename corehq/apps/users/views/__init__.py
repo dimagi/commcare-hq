@@ -520,7 +520,6 @@ class InviteWebUserView(BaseManageWebUserView):
             data["domain"] = self.domain
             invite = DomainInvitation(**data)
             invite.save()
-            print invite
             invite.send_activation_email()
             messages.success(request, "Invitation sent to %s" % invite.email)
             return HttpResponseRedirect(reverse(ListWebUsersView.urlname, args=[self.domain]))
