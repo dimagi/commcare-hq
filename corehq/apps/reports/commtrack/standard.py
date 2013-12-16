@@ -249,6 +249,10 @@ class RequisitionReport(CaseListReport):
     default_case_type = "commtrack-requisition"
 
 
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return super(RequisitionReport, cls).show_in_navigation() and user and user.is_previewer()
+
     @property
     @memoized
     def case_es(self):
