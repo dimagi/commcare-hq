@@ -42,6 +42,13 @@ def arbitrary_phone_number(country_codes=TEST_COUNTRY_CODES):
     return str(random.choice(country_codes)) + str(random.randint(10**9, 10**10 - 1))
 
 
+def arbitrary_fees_by_direction():
+    fees = {}
+    for direction in DIRECTIONS:
+        fees[direction] = arbitrary_fee()
+    return fees
+
+
 def arbitrary_fees_by_direction_and_backend():
     fees = {}
     for direction in DIRECTIONS:
