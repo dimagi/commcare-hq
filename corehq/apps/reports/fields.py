@@ -512,7 +512,7 @@ class AsyncLocationField(ReportField):
         context = {}
         
         from corehq.apps.commtrack.util import is_commtrack_location
-        if is_commtrack_location(user, domain):
+        if not selected_loc_id and selected_loc_id != '' and is_commtrack_location(user, domain):
             selected_loc_id = user.location_id
             if domain.location_restriction_for_users:
                 context.update({'restriction': domain.location_restriction_for_users})
@@ -772,9 +772,13 @@ class SelectProgramField(ReportSelectField):
     slug = "program"
     name = ugettext_noop("Program")
     cssId = "program_select"
+    default_option = 'All'
 
     def update_params(self):
-        self.programs = Program.get_by_domain(self.domain)
+        self.selected = self.request.GET.get('program')
+        user = WebUser.get_by_username(str(self.request.user))
+        if not self.selected and self.selected != '':
+            self.selected = user.program_id
+        self.programs = Program.by_domain(self.domain)
         opts = [dict(val=program.get_id, text=program.name) for program in self.programs]
-        opts.insert(0, {'text': 'All', 'val': '_all'})
         self.options = opts

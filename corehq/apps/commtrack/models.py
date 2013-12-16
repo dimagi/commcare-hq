@@ -71,10 +71,9 @@ class Program(Document):
     domain = StringProperty()
     name = StringProperty()
     code = StringProperty()
-    description = StringProperty()
 
     @classmethod
-    def get_by_domain(cls, domain, wrap=True):
+    def by_domain(cls, domain, wrap=True):
         """
         Gets all programs in a domain.
         """
@@ -118,16 +117,29 @@ class Product(Document):
         return result
 
     @classmethod
-    def by_domain(cls, domain, wrap=True):
+    def by_program_id(cls, domain, prog_id, wrap=True, **kwargs):
+        kwargs.update(dict(
+            view_name='commtrack/product_by_program_id',
+            startkey=[domain, prog_id],
+            endkey=[domain, {}],
+            include_docs=True
+        ))
+        if wrap:
+            return Product.view(**kwargs)
+        else:
+            return [row["doc"] for row in Product.view(wrap_doc=False, **kwargs)]
+
+    @classmethod
+    def by_domain(cls, domain, wrap=True, **kwargs):
         """
         Gets all products in a domain.
         """
-        kwargs = dict(
+        kwargs.update(dict(
             view_name='commtrack/products',
             startkey=[domain],
             endkey=[domain, {}],
             include_docs=True
-        )
+        ))
         if wrap:
             return Product.view(**kwargs)
         else:

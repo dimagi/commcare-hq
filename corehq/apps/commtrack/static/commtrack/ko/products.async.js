@@ -17,14 +17,14 @@ var CommtrackProductsViewModel = function (o) {
     });
     self.current_page = ko.observable(o.start_page);
     self.next_page = ko.computed(function () {
-        var page = self.current_page() + 1;
+        var page = parseInt(self.current_page()) + 1;
         if (page > self.max_page()) {
             return undefined;
         }
         return page;
     });
     self.previous_page = ko.computed(function () {
-        var page = self.current_page() - 1;
+        var page = parseInt(self.current_page()) - 1;
         if (page < 1) {
             return undefined;
         }
@@ -163,7 +163,7 @@ ko.bindingHandlers.isPrevNextDisabled = {
 
 ko.bindingHandlers.isPaginationActive = {
     update: function(element, valueAccessor, allBindingsAccessor) {
-        var current_page = valueAccessor()();
+        var current_page = parseInt(valueAccessor()());
         var current_item = parseInt(allBindingsAccessor()['text']);
         if (current_page === current_item) {
             $(element).parent().addClass('active');

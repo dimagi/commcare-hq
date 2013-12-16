@@ -44,6 +44,14 @@ class CommtrackDataSourceMixin(object):
         if prod_id:
             return Product.get(prod_id)
 
+    @property
+    @memoized
+    def program_id(self):
+        prog_id = self.config.get('program_id')
+        if prog_id != '':
+            return prog_id
+
+
 
 class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
     """
@@ -95,7 +103,8 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             startkey.append(self.active_product['_id'])
 
         product_cases = SPPCase.view('commtrack/product_cases', startkey=startkey, endkey=startkey + [{}], include_docs=True)
-
+        if self.program_id:
+            product_cases = filter(lambda c: Product.get(c.product).program_id == self.program_id, product_cases)
         if self.config.get('aggregate'):
             return self.aggregate_cases(product_cases, slugs)
         else:
@@ -197,7 +206,8 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                                      startkey=startkey,
                                      endkey=startkey + [{}],
                                      include_docs=True)
-
+        if self.program_id:
+            product_cases = filter(lambda c: Product.get(c.product).program_id == self.program_id, product_cases)
         def latest_case(cases):
             # getting last report date should probably be moved to a util function in a case wrapper class
             return max(cases, key=lambda c: getattr(c, 'last_reported', datetime(2000, 1, 1)).date())

@@ -48,6 +48,7 @@
                 {% if show_inactive %}{% trans 'Showing the Inactive Product List.' %}{% endif %}
             </p>
             {% endif %}
+         </div>
     </div>
 </header>
 
@@ -102,7 +103,7 @@
                         <th></th>
                         <th>{% trans "Product" %}</th>
                         <th>{% trans "Keyword" %}</th>
-                        <th>{% trans "Category" %}</th>
+                        <th>{% trans "Program" %}</th>
                         <th>{% trans "Description" %}</th>
                         <th>{% trans "Units" %}</th>
                     </tr>
@@ -113,7 +114,7 @@
 
                     <td><a data-bind="attr: {href: edit_url}, text: name"></a></td>
                     <td data-bind="text: code"></td>
-                    <td data-bind="text: category"></td>
+                    <td data-bind="text: program"></td>
                     <td data-bind="text: description"></td>
                     <td data-bind="text: unit"></td>
 
