@@ -37,11 +37,18 @@ class SmsGatewayFeeCriteria(models.Model):
         if all_possible_criteria.count() == 0:
             return None
 
-        # todo: 1. try all parameters
-        # todo: 2. try backend_instance with country_code = None
-        # todo: 3. try country_code with backend_instance = None
-
-        # least specific
+        try:
+            return all_possible_criteria.get(country_code=country_code, backend_instance=backend_instance)
+        except ObjectDoesNotExist:
+            pass
+        try:
+            return all_possible_criteria.get(country_code=None, backend_instance=backend_instance)
+        except ObjectDoesNotExist:
+            pass
+        try:
+            return all_possible_criteria.get(country_code=country_code, backend_instance=None)
+        except ObjectDoesNotExist:
+            pass
         try:
             return all_possible_criteria.get(country_code=None, backend_instance=None)
         except ObjectDoesNotExist:
@@ -221,7 +228,7 @@ class SmsBillable(models.Model):
         billable.gateway_fee = SmsGatewayFee.get_by_criteria(
             backend_api_id, direction, backend_instance=backend_instance, country_code=country_code
         )
-        conversion_rate = billable.gateway_fee.currency.rate_to_usd
+        conversion_rate = billable.gateway_fee.currency.rate_to_default
         if conversion_rate != 0:
             # If the conversion rate is ever 0, something happened with the Currency API and we should
             # flag appropriately.
