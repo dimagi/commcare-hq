@@ -181,11 +181,16 @@ class ApplicationBulkExportHelper(BulkExportHelper):
 
     def generate_bulk_files(self, export_tags, export_filter):
         self.bulk_files = []
-        for appid, indices in export_tags.items():
-            app_bulk_export = ApplicationBulkExport()
-            app_bulk_export.create(indices, export_filter)
-            app_bulk_export.export_id = appid
-            self.bulk_files.append(app_bulk_export)
+
+        # Sometimes this is None, but it should not crash.
+        export_tags = export_tags or {}
+
+        if export_tags:
+            for appid, indices in export_tags.items():
+                app_bulk_export = ApplicationBulkExport()
+                app_bulk_export.create(indices, export_filter)
+                app_bulk_export.export_id = appid
+                self.bulk_files.append(app_bulk_export)
 
 class CustomBulkExportHelper(BulkExportHelper):
 

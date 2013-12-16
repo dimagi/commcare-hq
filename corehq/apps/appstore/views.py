@@ -108,14 +108,10 @@ def project_info(request, domain, template="appstore/project_info.html"):
     images = set()
     audio = set()
 
-    pb_id = dom.cda.user_id
-    published_by = CouchUser.get_by_user_id(pb_id) if pb_id else {"full_name": "*Publisher's name*"}
-
     return render(request, template, {
         "project": dom,
         "applications": dom.full_applications(include_builds=False),
         "form": form,
-        "published_by": published_by,
         "copies": copies,
         "reviews": reviews,
         "average_rating": average_rating,
