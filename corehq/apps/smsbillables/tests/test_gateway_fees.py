@@ -118,8 +118,20 @@ class TestGatewayFee(TestCase):
                 )
 
     def test_no_matching_fee(self):
-        # todo
-        pass
+        self.create_least_specific_gateway_fees()
+        self.create_country_code_gateway_fees()
+        self.create_instance_gateway_fees()
+        self.create_most_specific_gateway_fees()
+
+        phone_numbers = [generator.arbitrary_phone_number() for i in range(10)]
+        for phone_number in phone_numbers:
+            messages = generator.arbitrary_messages_by_backend_and_direction(self.backend_ids,
+                                                                             phone_number=phone_number,
+                                                                             directions=['X', 'Y'])
+            for msg_log in messages:
+                billable = SmsBillable.create(msg_log)
+                self.assertIsNotNone(billable)
+                self.assertIsNone(billable.gateway_fee)
 
     def tearDown(self):
         SmsBillable.objects.all().delete()
