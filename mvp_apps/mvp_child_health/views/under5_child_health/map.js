@@ -30,7 +30,7 @@ function(doc) {
 
                 var danger_signs = [],
                     emergency_signs = [],
-                    valid_referrals = ['emergency', 'basic', 'convenient'];
+                    valid_referrals = ['emergency', 'basic', 'convenient', 'take_to_clinic'];
 
                 try {
                     danger_signs = get_danger_signs(indicators.immediate_danger_sign.value);
