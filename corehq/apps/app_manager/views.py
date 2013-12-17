@@ -15,7 +15,12 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.cache import cache_control
 from corehq import ApplicationsTab, toggles
 from corehq.apps.app_manager import commcare_settings
-from corehq.apps.app_manager.exceptions import AppManagerException, RearrangeError
+from corehq.apps.app_manager.exceptions import (
+    AppManagerException,
+    BlankXFormError,
+    ConflictingCaseTypeError,
+    RearrangeError,
+)
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from django.utils.http import urlencode as django_urlencode
@@ -59,7 +64,7 @@ from dimagi.utils.web import json_response, json_request
 from corehq.apps.reports import util as report_utils
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
 from corehq.apps.app_manager.models import Application, get_app, DetailColumn, Form, FormActions,\
-    AppError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, \
+    AppEditingError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, \
     DeleteApplicationRecord, str_to_cls, validate_lang, SavedAppBuild, ParentSelect, Module, CareplanModule, CareplanForm, CareplanGoalForm, CareplanTaskForm
 from corehq.apps.app_manager.models import DETAIL_TYPES, import_app as import_app_util, SortElement
 from dimagi.utils.web import get_url_base
@@ -322,7 +327,7 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
             xform_questions = xform.get_questions(langs, include_triggers=True)
         except etree.XMLSyntaxError as e:
             form_errors.append("Syntax Error: %s" % e)
-        except AppError as e:
+        except AppEditingError as e:
             form_errors.append("Error in application: %s" % e)
         except XFormValidationError:
             xform_validation_errored = True
@@ -938,9 +943,18 @@ def delete_form(req, domain, app_id, module_id, form_id):
 def copy_form(req, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
     to_module_id = int(req.POST['to_module_id'])
-    if app.copy_form(int(module_id), int(form_id), to_module_id) == 'case type conflict':
+    try:
+        app.copy_form(int(module_id), int(form_id), to_module_id)
+    except ConflictingCaseTypeError:
         messages.warning(req, CASE_TYPE_CONFLICT_MSG,  extra_tags="html")
-    app.save()
+        app.save()
+    except BlankXFormError:
+        # don't save!
+        messages.error(req, _('We could not copy this form, because it is blank.'
+                              'In order to copy this form, please add some questions first.'))
+    else:
+        app.save()
+
     return back_to_main(req, domain, app_id=app_id, module_id=module_id,
                         form_id=form_id)
 
@@ -1520,7 +1534,9 @@ def rearrange(req, domain, app_id, key):
         if "forms" == key:
             to_module_id = int(req.POST['to_module_id'])
             from_module_id = int(req.POST['from_module_id'])
-            if app.rearrange_forms(to_module_id, from_module_id, i, j) == 'case type conflict':
+            try:
+                app.rearrange_forms(to_module_id, from_module_id, i, j)
+            except ConflictingCaseTypeError:
                 messages.warning(req, CASE_TYPE_CONFLICT_MSG,  extra_tags="html")
         elif "modules" == key:
             app.rearrange_modules(i, j)
