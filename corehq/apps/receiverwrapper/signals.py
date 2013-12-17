@@ -7,7 +7,10 @@ import types
 from couchforms.signals import submission_error_received
 
 DOMAIN_RE = re.compile(r'^/a/(\S+)/receiver(/(.*))?/?$')
-APP_ID_RE = re.compile(r'^/a/\S+/receiver/(?:secure/)?(.*)/$')
+# app id has to be at least 10 characters long.
+# This indirectly keeps 'secure' itself from being interpreted as the app id
+APP_ID_RE = re.compile(r'^/a/\S+/receiver/(?:secure/)?(.{10,})/$')
+
 
 def scrub_meta(sender, xform):
     """
