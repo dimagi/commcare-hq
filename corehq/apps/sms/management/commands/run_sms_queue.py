@@ -51,7 +51,7 @@ class Command(BaseCommand):
         return "sms-queue"
 
     def get_enqueuing_timeout(self):
-        return 60
+        return settings.SMS_QUEUE_ENQUEUING_TIMEOUT
 
     def get_items_to_be_processed(self, utcnow):
         # We're just querying for ids here, so no need to limit

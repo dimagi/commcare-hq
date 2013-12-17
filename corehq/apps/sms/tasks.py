@@ -10,27 +10,14 @@ from corehq.apps.domain.models import Domain
 from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.couch.cache import cache_core
 
-# 5-minute lock timeout
-LOCK_TIMEOUT = 5
-
-# 5-minute wait to reprocess an unsuccessful attempt
-REPROCESS_INTERVAL = 5
-
-# Max number of attempts before giving up on processing an SMS
-MAX_PROCESSING_ATTEMPTS = 3
-
-# Number of minutes to wait before retrying SMS that was delayed because the
-# domain restricts sending SMS to certain days/times.
-DOMAIN_RESTRICTED_RETRY_INTERVAL = 15
-
 def set_error(msg):
     msg.error = True
     msg.save()
 
 def handle_unsuccessful_processing_attempt(msg):
     msg.num_processing_attempts += 1
-    if msg.num_processing_attempts < MAX_PROCESSING_ATTEMPTS:
-        delay_processing(msg, REPROCESS_INTERVAL)
+    if msg.num_processing_attempts < settings.SMS_QUEUE_MAX_PROCESSING_ATTEMPTS:
+        delay_processing(msg, settings.SMS_QUEUE_REPROCESS_INTERVAL)
     else:
         set_error(msg)
 
@@ -44,7 +31,7 @@ def delay_processing(msg, minutes):
     msg.save()
 
 def get_lock(client, key):
-    return client.lock(key, timeout=LOCK_TIMEOUT*60)
+    return client.lock(key, timeout=settings.SMS_QUEUE_PROCESSING_LOCK_TIMEOUT*60)
 
 def time_within_windows(domain_now, windows):
     weekday = domain_now.weekday()
@@ -74,7 +61,7 @@ def handle_domain_specific_delays(msg, domain_object, utcnow):
 
     if len(domain_object.restricted_sms_times) > 0:
         if time_within_windows(domain_now, domain_object.restricted_sms_times):
-            delay_processing(msg, DOMAIN_RESTRICTED_RETRY_INTERVAL)
+            delay_processing(msg, settings.SMS_QUEUE_DOMAIN_RESTRICTED_RETRY_INTERVAL)
             return True
 
     if len(domain_object.sms_conversation_times) > 0:
