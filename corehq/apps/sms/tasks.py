@@ -1,3 +1,4 @@
+import pytz
 from datetime import datetime, timedelta
 from celery.task import task
 from time import sleep
@@ -6,6 +7,7 @@ from corehq.apps.sms.models import SMSLog, OUTGOING, INCOMING
 from corehq.apps.sms.api import send_message_via_backend, process_incoming
 from django.conf import settings
 from corehq.apps.domain.models import Domain
+from dimagi.utils.timezones import utils as tz_utils
 
 from dimagi.utils.couch.cache import cache_core
 rcache = cache_core.get_redis_default_cache()
@@ -46,14 +48,14 @@ def delay_processing(msg, minutes):
 def get_lock(client, key):
     return client.lock(key, timeout=LOCK_TIMEOUT*60)
 
-def time_within_windows(utcnow, windows):
-    weekday = utcnow.weekday()
-    time = utcnow().time()
+def time_within_windows(domain_now, windows):
+    weekday = domain_now.weekday()
+    time = domain_now.time()
 
     for window in windows:
-        if (weekday == window.day and
-            time >= window.start_time and
-            time <= window.end_time):
+        if (window.day in [weekday, -1] and
+            (window.start_time is None or time >= window.start_time) and
+            (window.end_time is None or time <= window.end_time)):
             return True
 
     return False
@@ -69,13 +71,16 @@ def handle_domain_specific_delays(msg, domain_object, utcnow):
     if msg.direction != OUTGOING:
         return False
 
+    domain_now = tz_utils.adjust_datetime_to_timezone(utcnow, pytz.utc.zone,
+        domain_object.default_timezone)
+
     if len(domain_object.restricted_sms_times) > 0:
-        if time_within_windows(utcnow, domain_object.restricted_sms_times):
+        if time_within_windows(domain_now, domain_object.restricted_sms_times):
             delay_processing(msg, DOMAIN_RESTRICTED_RETRY_INTERVAL)
             return True
 
     if len(domain_object.sms_conversation_times) > 0:
-        if time_within_windows(utcnow, domain_object.sms_conversation_times):
+        if time_within_windows(domain_now, domain_object.sms_conversation_times):
             conversation_start_timestamp = utcnow - timedelta(minutes=sms_conversation_length)
             if SMSLog.inbound_entry_exists(msg.couch_recipient_doc_type,
                                            msg.couch_recipient,

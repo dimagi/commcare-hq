@@ -6,7 +6,7 @@ from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from couchdbkit.ext.django.schema import (Document, StringProperty, BooleanProperty, DateTimeProperty, IntegerProperty,
                                           DocumentSchema, SchemaProperty, DictProperty, ListProperty,
-                                          StringListProperty, SchemaListProperty)
+                                          StringListProperty, SchemaListProperty, TimeProperty)
 from django.core.cache import cache
 from django.utils.safestring import mark_safe
 from corehq.apps.appstore.models import Review, SnapshotMixin
@@ -203,10 +203,11 @@ LOGO_ATTACHMENT = 'logo.png'
 class DayTimeWindow(DocumentSchema):
     """
     Defines a window of time in a day of the week.
-    Day/time combinations should be in UTC.
+    Day/time combinations will be interpreted in the domain's timezone.
     """
-    # 0 - 6 is Monday - Sunday
+    # 0 - 6 is Monday - Sunday; -1 means it applies to all days
     day = IntegerProperty()
+    # For times, None means there's no lower/upper bound
     start_time = TimeProperty()
     end_time = TimeProperty()
 
