@@ -8,9 +8,7 @@ from corehq.apps.sms.api import send_message_via_backend, process_incoming
 from django.conf import settings
 from corehq.apps.domain.models import Domain
 from dimagi.utils.timezones import utils as tz_utils
-
 from dimagi.utils.couch.cache import cache_core
-rcache = cache_core.get_redis_default_cache()
 
 # 5-minute lock timeout
 LOCK_TIMEOUT = 5
@@ -109,6 +107,7 @@ def process_sms(message_id):
     """
     message_id - _id of an SMSLog entry
     """
+    rcache = cache_core.get_redis_default_cache()
     if not isinstance(rcache, RedisCache):
         return
     try:
@@ -117,6 +116,8 @@ def process_sms(message_id):
         return
 
     utcnow = datetime.utcnow()
+    # Prevent more than one task from processing this SMS, just in case
+    # the message got enqueued twice.
     message_lock = get_lock(client, "sms-queue-processing-%s" % message_id)
 
     if message_lock.acquire(blocking=False):
@@ -128,6 +129,7 @@ def process_sms(message_id):
             return
 
         if not msg.processed and msg.datetime_to_process < utcnow:
+            # Process SMS for a single recipient synchronously
             recipient_lock = get_lock(client, "sms-queue-recipient-%s" % msg.couch_recipient)
             recipient_lock.acquire(blocking=True)
 
