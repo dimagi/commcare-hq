@@ -6,7 +6,6 @@ from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
-import simplejson
 from corehq.apps.domain.models import Domain
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.logging import notify_exception
@@ -18,6 +17,11 @@ register = template.Library()
 @register.filter
 def JSON(obj):
     return mark_safe(json.dumps(obj, default=json_handler))
+
+@register.filter
+def to_javascript_string(obj):
+    # seriously: http://stackoverflow.com/a/1068548/8207
+    return mark_safe(JSON(obj).replace('</script>', '<" + "/script>'))
 
 @register.filter
 def BOOL(obj):

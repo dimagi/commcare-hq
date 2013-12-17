@@ -4,7 +4,6 @@ function SavedApp(o, r) {
     $.each(['comment_user_name', '_deleteState'], function (i, attr) {
         self[attr] = self[attr] || ko.observable();
     });
-    self.include_media = ko.observable(false);
 
     self.get_short_odk_url = ko.computed(function() {
         if (self.include_media()) {

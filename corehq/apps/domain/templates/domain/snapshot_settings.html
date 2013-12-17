@@ -58,7 +58,14 @@
         <tbody>
         {% for snapshot in snapshots %}
         <tr>
-            <td><a class="btn btn-primary" href="{% url "project_info" snapshot.name %}">View</a></td>
+            <td>
+                <a class="btn btn-primary"
+                   href="{% url "project_info" snapshot.name %}"
+                   onclick="_gaq.push(['_trackEvent', 'Exchange', 'View', '{{ snapshot.name }}']);"
+                >
+                    View
+                </a>
+            </td>
             <td>{{ snapshot.snapshot_time }}</td>
             <td>{{ snapshot.get_license_display }}</td>
             {% if snapshot.published %}
@@ -77,7 +84,16 @@
             {% else %}
             <td></td>
             <td>
-                <a class="btn btn-primary" data-action="{% url "domain_set_published" domain snapshot.name %}" data-toggle="modal" data-target="#contentDistributionAgreement" href="#contentDistributionAgreement">Publish</a> (only one snapshot can be published at a time)
+                <a class="btn btn-primary"
+                   data-action="{% url "domain_set_published" domain snapshot.name %}"
+                   data-toggle="modal"
+                   data-target="#contentDistributionAgreement"
+                   href="#contentDistributionAgreement"
+                   onclick="_gaq.push(['_trackEvent', 'Exchange', 'Publish Previous Version', '{{ snapshot.name }}']);"
+                >
+                    Publish
+                </a>
+                (only one snapshot can be published at a time)
             </td>
             {% endif %}
         </tr>

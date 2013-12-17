@@ -176,7 +176,8 @@
                         <div class="btn-group">
                             <a class="btn" data-bind="
                                 openModal: 'deploy-build-modal-template',
-                                css: {'btn-primary': !build_broken(), 'btn-danger': build_broken}
+                                css: {'btn-primary': !build_broken(), 'btn-danger': build_broken},
+                                click: function() { _gaq.push(['_trackEvent', 'App Manager', 'Deploy', '{{ app.id }}']); }
                             ">
                                 <span class="icon icon-exclamation-sign" data-bind="visible: build_broken"></span>
                                 {% trans "Deploy" %}

@@ -7,11 +7,23 @@ class VersioningError(AppManagerException):
     pass
 
 
-class AppError(AppManagerException):
+class AppEditingError(AppManagerException):
+    pass
+
+
+class RearrangeError(AppEditingError):
+    pass
+
+
+class ConflictingCaseTypeError(AppEditingError):
     pass
 
 
 class XFormError(AppManagerException):
+    pass
+
+
+class BlankXFormError(XFormError):
     pass
 
 
@@ -53,6 +65,10 @@ class XFormValidationError(XFormError):
         return message
 
 
+class BindNotFound(XFormError):
+    pass
+
+
 class SuiteError(AppManagerException):
     pass
 
@@ -66,12 +82,4 @@ class ParentModuleReferenceError(SuiteError):
 
 
 class SuiteValidationError(SuiteError):
-    pass
-
-
-class RearrangeError(AppManagerException):
-    pass
-
-
-class BindNotFound(XFormError):
     pass
