@@ -236,9 +236,10 @@ class SmsBillable(models.Model):
         if billable.gateway_fee is not None:
             conversion_rate = billable.gateway_fee.currency.rate_to_default
             if conversion_rate != 0:
-                # If the conversion rate is ever 0, something happened with the Currency API and we should
-                # flag appropriately.
                 billable.gateway_fee_conversion_rate = conversion_rate
+            else:
+                smsbillables_logging.error("Gateway fee conversion rate for currency %s is 0",
+                                           billable.gateway_fee.currency.code)
 
         # Fetch usage_fee todo
         domain = message_log.domain
