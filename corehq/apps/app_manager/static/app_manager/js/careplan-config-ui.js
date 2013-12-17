@@ -1,5 +1,6 @@
 
-var CareplanConfig = (function(){
+var CareplanConfig = (function () {
+    'use strict';
     var PropertyBase = {
         mapping: {
             include: ['key', 'path']
@@ -13,9 +14,9 @@ var CareplanConfig = (function(){
             });
 
             // for compatibility with templates
-            self.required = function() {
+            self.required = function () {
                 return false;
-            }
+            };
 
             return self;
         }
@@ -29,7 +30,8 @@ var CareplanConfig = (function(){
                 if (self.path()) {
                     if (transaction.propertyPathCounts()[self.path()] > 1) {
                         return "Question is being used twice.";
-                    } else if (transaction.preloadCounts()[self.path()] > 1){
+                    }
+                    if (transaction.preloadCounts()[self.path()] > 1) {
                         return "Two properties load to the same question";
                     }
                 }
@@ -44,7 +46,7 @@ var CareplanConfig = (function(){
                 return null;
             });
 
-            self.validate = ko.computed(function(){
+            self.validate = ko.computed(function () {
                 return self.validateProperty() || self.validateQuestion();
             });
             return self;
@@ -58,7 +60,7 @@ var CareplanConfig = (function(){
             self.defaultKey = ko.computed(function () {
                 var path = self.path() || '';
                 var value = path.split('/');
-                value = value[value.length-1];
+                value = value[value.length - 1];
                 return value;
             });
             self.repeat_context = function () {
@@ -75,11 +77,14 @@ var CareplanConfig = (function(){
                 if (self.path() || self.key()) {
                     if (transaction.propertyKeyCounts()[self.key()] > 1) {
                         return "Property updated by two questions";
-                    } else if (transaction.careplanConfig.reserved_words.indexOf(self.key()) !== -1) {
+                    }
+                    if (transaction.careplanConfig.reserved_words.indexOf(self.key()) !== -1) {
                         return '<strong>' + self.key() + '</strong> is a reserved word';
-                    } else if (self.repeat_context() && self.repeat_context() !== transaction.repeat_context()) {
-                        return 'Inside the wrong repeat!'
-                    } else if (self.key().indexOf('/') != -1) {
+                    }
+                    if (self.repeat_context() && self.repeat_context() !== transaction.repeat_context()) {
+                        return 'Inside the wrong repeat!';
+                    }
+                    if (self.key().indexOf('/') !== -1) {
                         return 'Updating properties in the parent case is not supported';
                     }
                 }
@@ -87,7 +92,7 @@ var CareplanConfig = (function(){
                 return null;
             });
 
-            self.validate = ko.computed(function(){
+            self.validate = ko.computed(function () {
                 return self.validateProperty() || self.validateQuestion();
             });
 
@@ -101,7 +106,7 @@ var CareplanConfig = (function(){
             self.defaultKey = ko.computed(function () {
                 var path = self.path() || '';
                 var value = path.split('/');
-                value = value[value.length-1];
+                value = value[value.length - 1];
                 return value;
             });
 
@@ -117,15 +122,16 @@ var CareplanConfig = (function(){
                 if (self.key()) {
                     if (transaction.careplanConfig.reserved_words.indexOf(self.key()) !== -1) {
                         return '<strong>' + self.key() + '</strong> is a reserved word';
-                    } else if (transaction.careplanConfig.mode === 'create' &&
-                        self.key().indexOf('/') == -1) {
+                    }
+                    if (transaction.careplanConfig.mode === 'create' &&
+                            self.key().indexOf('/') === -1) {
                         return 'Only parent properties can be loaded here.';
                     }
                 }
                 return null;
             });
 
-            self.validate = ko.computed(function(){
+            self.validate = ko.computed(function () {
                 return self.validateProperty() || self.validateQuestion();
             });
             return self;
@@ -146,16 +152,16 @@ var CareplanConfig = (function(){
                     }
                 },
                 case_properties: {
-                    create: function(options) {
+                    create: function (options) {
                         return CaseProperty.wrap(options.data, self);
                     }
                 },
                 case_preload: {
-                    create: function(options) {
+                    create: function (options) {
                         return CasePreload.wrap(options.data, self);
                     }
                 }
-            }
+            };
         },
         wrap: function (data, careplanConfig) {
             var self = {};
@@ -172,24 +178,24 @@ var CareplanConfig = (function(){
                 self.case_name = null;
             }
 
-            var count = function(itemLists, accessor) {
-                var count = {};
-                var update_count = function(p) {
+            var count = function (itemLists, accessor) {
+                var _count = {};
+                var update_count = function (p) {
                     var key = p[accessor]();
-                    if (!count.hasOwnProperty(key)) {
-                        count[key] = 0;
+                    if (!_count.hasOwnProperty(key)) {
+                        _count[key] = 0;
                     }
-                    return count[key] += 1;
+                    _count[key] += 1;
                 }
-                _(itemLists).each(function(list){
+                _(itemLists).each(function (list) {
                     _(list()).each(function (p) {
-                        return update_count(p);
+                        update_count(p);
                     });
                 });
-                return count;
-            }
+                return _count;
+            };
 
-            self.suggestedProperties = ko.computed(function() {
+            self.suggestedProperties = ko.computed(function () {
                 var properties = {
                     all: [],
                     preload: [],
@@ -200,14 +206,14 @@ var CareplanConfig = (function(){
                 if (_(propertiesMap).has(caseType)) {
                     properties.all = propertiesMap[caseType]();
                     if (self.careplanConfig.mode === 'create') {
-                        properties.preload = _.filter(properties.all, function(p) {
+                        properties.preload = _.filter(properties.all, function (p) {
                             return p.indexOf('/') != -1;
                         });
                     } else {
                         properties.preload = properties.all;
                     }
-                    properties.save = _.filter(properties.all, function(p) {
-                        return p.indexOf('/') == -1;
+                    properties.save = _.filter(properties.all, function (p) {
+                        return p.indexOf('/') === -1;
                     });
                 }
                 return properties;
@@ -217,7 +223,7 @@ var CareplanConfig = (function(){
                 return self.suggestedProperties().preload;
             });
 
-            self.suggestedSaveProperties = ko.computed(function() {
+            self.suggestedSaveProperties = ko.computed(function () {
                 return self.suggestedProperties().save;
             });
 
@@ -230,9 +236,9 @@ var CareplanConfig = (function(){
                 return count(updates, 'key');
             });
 
-            self.preloadCounts = ko.computed(function (){
+            self.preloadCounts = ko.computed(function () {
                 return count([self.fixedQuestions, self.case_preload], 'path');
-            })
+            });
 
             self.addProperty = function () {
                 var property = CaseProperty.wrap({
@@ -286,10 +292,10 @@ var CareplanConfig = (function(){
 
             // for compatibility with templates
             self.allow = {
-                repeats: function(){
+                repeats: function () {
                     return true;
                 }
-            }
+            };
 
             self.unwrap = function () {
                 CareplanTransaction.unwrap(self);
@@ -298,23 +304,23 @@ var CareplanConfig = (function(){
             return self;
         },
         unwrap: function (self) {
-            var unwrap = function(list, filter) {
+            var unwrap = function (list, filter) {
                 if (filter) {
-                    list = _.filter(list, function(p) {
+                    list = _.filter(list, function (p) {
                         return !p.isBlank();
                     });
                 }
                 return ko.mapping.toJS(list, PropertyBase.mapping);
-            }
+            };
             return {
                 fixedQuestions: unwrap(self.fixedQuestions()),
                 case_preload: unwrap(self.case_preload(), true),
                 case_properties: unwrap(self.case_properties(), true)
-            }
+            };
         }
     }
 
-    var Careplan = function(params){
+    var Careplan = function (params) {
         var self = this;
         self.mode = params.mode;
         self.caseType = params.caseType;
@@ -336,7 +342,7 @@ var CareplanConfig = (function(){
         _(self.questions).each(function (question) {
             questionMap[question.value] = question;
         });
-        self.get_repeat_context = function(path) {
+        self.get_repeat_context = function (path) {
             if (path && questionMap[path]) {
                 return questionMap[path].repeat;
             } else {
@@ -366,12 +372,12 @@ var CareplanConfig = (function(){
             }
         });
 
-        self.validate = ko.computed(function(){
-            var has_dups = function(list) {
-                 return _.find(_.values(list), function(count){
+        self.validate = ko.computed(function () {
+            var has_dups = function (list) {
+                 return _.find(_.values(list), function (count) {
                     return count > 1;
                 });
-            }
+            };
             var duplicate = has_dups(self.transaction.propertyPathCounts()) ||
                 has_dups(self.transaction.propertyKeyCounts()) ||
                 has_dups(self.transaction.preloadCounts());
@@ -395,7 +401,7 @@ var CareplanConfig = (function(){
                      .on('click', 'a', self.change);
             });
             self.transaction.ensureBlankProperties();
-        }
+        };
     };
 
     return {
