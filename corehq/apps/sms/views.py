@@ -881,9 +881,6 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
     def dispatch(self, request, *args, **kwargs):
         return super(DomainSmsGatewayListView, self).dispatch(request, *args, **kwargs)
 
-
-
-
 class SubscribeSMSView(BaseMessagingSectionView):
     template_name = "sms/subscribe_sms.html"
     urlname = 'subscribe_sms'
@@ -923,8 +920,6 @@ class SubscribeSMSView(BaseMessagingSectionView):
             return HttpResponseRedirect(reverse(SubscribeSMSView.urlname, args=[self.domain]))
         return self.get(request, *args, **kwargs)
 
-
-
 @domain_admin_required
 def sms_settings(request, domain):
     domain_obj = Domain.get_by_name(domain, strict=True)
@@ -960,31 +955,3 @@ def sms_settings(request, domain):
         "is_previewer" : is_previewer,
     }
     return render(request, "sms/settings.html", context)
-
-# @login_and_domain_required
-# def subscribe_sms(request, domain):
-#     commtrack_settings = Domain.get_by_name(domain).commtrack_settings
-#     if request.method == "POST":
-#         form = SubscribeSMSForm(request.POST)
-#         print form
-#         if form.is_valid():
-#             commtrack_settings['stock_out_facilities'] = form.cleaned_data("stock_out")
-#             commtrack_settings['stock_out_commodities'] = form.cleaned_data("stock_out")
-#             commtrack_settings['stock_out_rates'] = form.cleaned_data("stock_out")
-#             commtrack_settings['non_report'] = form.cleaned_data("non_reports")
-#             commtrack_settings.save()
-#             messages.success(request, _("Updated CommTrack settings"))
-#     else:
-#         print commtrack_settings
-#         initial = {
-#             'stock_out_facilities': commtrack_settings.__dict__.get('stock_out_facilities', False),
-#             'stock_out_commodities': commtrack_settings.__dict__.get('stock_out_commodities', False),
-#             'stock_out_rates': commtrack_settings.__dict__.get('stock_out_rates', False),
-#             'non_report': commtrack_settings.__dict__.get('non_reports', False),
-#         }
-#         form = SubscribeSMSForm(initial=initial)
-#     context = {
-#         "form": form,
-#         "domain": domain,
-#     }
-#     return render(request, "sms/subscribe_sms.html", context)
