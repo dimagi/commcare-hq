@@ -6,6 +6,7 @@
 {% block js %}{{ block.super }}
     <script src="{% static 'users/js/key_filters.js' %}"></script>
     <script src="{% static 'commtrack/ko/programs.async.js' %}"></script>
+    <script src="{% static 'commtrack/ko/utils.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -67,8 +68,8 @@
                 </thead>
                 <tbody data-bind="foreach: program_list">
                     <tr>
-                    <td><a data-bind="attr: {href: edit_url}, text: name"></a></td>
-                    <td data-bind="text: code"></td>
+                        <td><a data-bind="attr: {href: edit_url}, text: name"></a></td>
+                        <td data-bind="text: code"></td>
                     </tr>
                 </tbody>
             </table>

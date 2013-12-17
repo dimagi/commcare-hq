@@ -9,6 +9,7 @@
     <script src="{% static 'users/js/key_filters.js' %}"></script>
     <script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
     <script src="{% static 'commtrack/ko/programs.async.js' %}"></script>
+    <script src="{% static 'commtrack/ko/utils.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -79,11 +80,11 @@
                                 </tr>
                             </thead>
                             <tbody data-bind="foreach: products">
-                                <td data-bind="text: name"></td>
-                                <td data-bind="text: code"></td>
-                                <td data-bind="text: description"></td>
-                                <td data-bind="text: unit"></td>
-
+                                <tr>
+                                    <td data-bind="text: name"></td>
+                                    <td data-bind="text: code"></td>
+                                    <td data-bind="text: description"></td>
+                                    <td data-bind="text: unit"></td>
                                 </tr>
                             </tbody>
                         </table>

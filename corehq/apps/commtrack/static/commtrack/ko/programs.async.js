@@ -60,7 +60,6 @@ var CommtrackProgramEditModel = function (o) {
     self.next_page = ko.computed(function () {
         var page = parseInt(self.current_page()) + 1;
         if (page > self.max_page()) {
-            console.log(page + ' : ' + self.max_page());
             return undefined;
         }
         return page;
@@ -150,26 +149,3 @@ $.fn.asyncProductList = function (options) {
     });
 };
 
-ko.bindingHandlers.isPrevNextDisabled = {
-    update: function(element, valueAccessor) {
-        var value = valueAccessor()();
-        if (value === undefined) {
-            $(element).parent().addClass('disabled');
-        } else {
-            $(element).parent().removeClass('disabled');
-        }
-    }
-};
-
-ko.bindingHandlers.isPaginationActive = {
-    update: function(element, valueAccessor, allBindingsAccessor) {
-        var current_page = parseInt(valueAccessor()());
-        var current_item = parseInt(allBindingsAccessor()['text']);
-        console.log(current_page + ':' + current_item)
-        if (current_page === current_item) {
-            $(element).parent().addClass('active');
-        } else {
-            $(element).parent().removeClass('active');
-        }
-    }
-};

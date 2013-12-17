@@ -292,9 +292,9 @@ class CommtrackUserForm(forms.Form):
         super(CommtrackUserForm, self).__init__(*args, **kwargs)
         self.fields['supply_point'].widget = SupplyPointSelectWidget(domain=domain)
         programs = Program.by_domain(domain, wrap=False)
-        choises = list((prog['_id'], prog['name']) for prog in programs)
-        choises.insert(0, ('', ''))
-        self.fields['program_id'].choices = choises
+        choices = list((prog['_id'], prog['name']) for prog in programs)
+        choices.insert(0, ('', ''))
+        self.fields['program_id'].choices = choices
 
     def save(self, user):
         commtrack_user = CommTrackUser.wrap(user.to_json())

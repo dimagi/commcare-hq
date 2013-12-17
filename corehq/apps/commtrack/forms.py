@@ -152,13 +152,13 @@ class ProgramForm(forms.Form):
 
         other_programs = [p for p in Program.by_domain(self.program.domain) if p._id != self.program._id]
         if name in [p.name for p in other_programs]:
-            raise forms.ValidationError('name already in use')
+            raise forms.ValidationError(_('Name already in use'))
 
         return name
 
     def save(self, instance=None, commit=True):
         if self.errors:
-            raise ValueError('form does not validate')
+            raise ValueError(_('Form does not validate'))
 
         program = instance or self.program
 

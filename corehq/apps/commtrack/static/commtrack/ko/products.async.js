@@ -24,7 +24,7 @@ var CommtrackProductsViewModel = function (o) {
         return page;
     });
     self.previous_page = ko.computed(function () {
-        var page = parseInt(self.current_page()) - 1;
+        var page = self.current_page() - 1;
         if (page < 1) {
             return undefined;
         }
@@ -150,25 +150,3 @@ $.fn.asyncProductList = function (options) {
     });
 };
 
-ko.bindingHandlers.isPrevNextDisabled = {
-    update: function(element, valueAccessor) {
-        var value = valueAccessor()();
-        if (value === undefined) {
-            $(element).parent().addClass('disabled');
-        } else {
-            $(element).parent().removeClass('disabled');
-        }
-    }
-};
-
-ko.bindingHandlers.isPaginationActive = {
-    update: function(element, valueAccessor, allBindingsAccessor) {
-        var current_page = parseInt(valueAccessor()());
-        var current_item = parseInt(allBindingsAccessor()['text']);
-        if (current_page === current_item) {
-            $(element).parent().addClass('active');
-        } else {
-            $(element).parent().removeClass('active');
-        }
-    }
-};
