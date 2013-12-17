@@ -389,8 +389,10 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
 
     if isinstance(form, CareplanForm):
         context.update({
+            'mode': form.mode,
             'fixed_questions': form.get_fixed_questions(),
-            'custom_case_properties': form.custom_case_updates,
+            'custom_case_properties': [{'key': key, 'path': path} for key, path in form.custom_case_updates.items()],
+            'case_preload': [{'key': key, 'path': path} for key, path in form.case_preload.items()],
         })
         return "app_manager/form_view_careplan.html", context
     else:
@@ -1256,9 +1258,17 @@ def edit_form_actions(req, domain, app_id, module_id, form_id):
 def edit_careplan_form_actions(req, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
     form = app.get_module(module_id).get_form(form_id)
-    fixed_questions = json.loads(req.POST.get('fixed_questions'))
-    for question in fixed_questions:
+    transaction = json.loads(req.POST.get('transaction'))
+
+    for question in transaction['fixedQuestions']:
         setattr(form, question['name'], question['path'])
+
+    def to_dict(properties):
+        return dict((p['key'], p['path']) for p in properties)
+
+    form.custom_case_updates = to_dict(transaction['case_properties'])
+    form.case_preload = to_dict(transaction['case_preload'])
+
     response_json = {}
     app.save(response_json)
     return json_response(response_json)

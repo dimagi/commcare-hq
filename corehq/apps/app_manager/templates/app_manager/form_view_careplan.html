@@ -10,6 +10,7 @@
     <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
 
     <script src="{% static 'app_manager/js/case-knockout-bindings.js' %}"></script>
+    <script src="{% static 'app_manager/js/case-config-utils.js' %}"></script>
     <script src="{% static 'app_manager/js/careplan-config-ui.js' %}"></script>
     <script src="{% static 'cloudcare/js/util.js' %}"></script>
 {% endblock %}
@@ -23,13 +24,18 @@
             var form_empty = {% if form.source and xform_questions %}false{% else %}true{% endif %};
 
             var careplan = new CareplanConfig.Careplan({
-                home: $('#casexml_home'),
+                home: $('#case-config-ko'),
                 edit: edit,
+                mode: "{{ mode }}",
+                caseType: {{ form.get_case_type|JSON }},
                 questions: {{ xform_questions|JSON }},
                 fixedQuestions: {{ fixed_questions|JSON }},
-                customCaseUpdates: {{ custom_case_updates|JSON }},
+                customCaseUpdates: {{ custom_case_properties|JSON }},
+                case_preload: {{ case_preload|JSON }},
+                reserved_words: {{ case_reserved_words_json|JSON }},
                 caseType: {{ form.get_case_type|JSON }},
                 save_url: "{% url "corehq.apps.app_manager.views.edit_careplan_form_actions" app.domain app.id module.id nav_form.id %}",
+                moduleCaseTypes: {{ module_case_types|JSON }},
                 propertiesMap: {{ case_properties|JSON }}
             });
             careplan.init();
@@ -110,32 +116,7 @@
         {% else %}
             {% if form.source %}
                 <div class="casexml" id="casexml_home">
-                    <div data-bind="saveButton: saveButton, visible: edit, css: {disabled: validate}"></div>
-                    <table class="table table-condensed">
-                        <thead>
-                            <tr>
-                                <th>{% trans "Question" %}</th>
-                                <th>{% trans "Case Property" %}</th>
-                            </tr>
-                        </thead>
-
-                        <tbody data-bind="foreach: transaction.fixedQuestions">
-                            <tr class="control-group" data-bind="css: {error: validateQuestion}">
-                                <td data-bind="text: label">
-                                </td>
-                                <td>
-                                    <div>
-                                        <input class="input-xxlarge" type="hidden" data-bind="
-                                            questionsSelect: $root.questions,
-                                            value: path,
-                                            optionsCaption: ' '"
-                                        />
-                                    </div>
-                                    <p class="help-inline" data-bind="html: validateQuestion, visible: validateQuestion"></p>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    {% include 'app_manager/partials/case_config_careplan.html' %}
                 </div>
             {% else %}
                 <p class="alert alert-warning">
