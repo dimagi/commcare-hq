@@ -263,6 +263,12 @@ class CommtrackConfig(Document):
     consumption_config = SchemaProperty(ConsumptionConfig)
     stock_levels_config = SchemaProperty(StockLevelsConfig)
 
+    # configured on Subscribe Sms page
+    stock_out_facilities = BooleanProperty(default=False)
+    stock_out_commodities = BooleanProperty(default=False)
+    stock_out_rates = BooleanProperty(default=False)
+    non_report = BooleanProperty(default=False)
+
     @classmethod
     def for_domain(cls, domain):
         result = cls.view("commtrack/domain_config",
