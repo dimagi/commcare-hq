@@ -236,6 +236,12 @@ class OpenLMISConfig(DocumentSchema):
     def is_configured(self):
         return True if self.enabled and self.url and self.password and self.username else False
 
+class AlertConfig(DocumentSchema):
+    stock_out_facilities = BooleanProperty(default=False)
+    stock_out_commodities = BooleanProperty(default=False)
+    stock_out_rates = BooleanProperty(default=False)
+    non_report = BooleanProperty(default=False)
+
 
 class CommtrackConfig(Document):
 
@@ -264,10 +270,7 @@ class CommtrackConfig(Document):
     stock_levels_config = SchemaProperty(StockLevelsConfig)
 
     # configured on Subscribe Sms page
-    stock_out_facilities = BooleanProperty(default=False)
-    stock_out_commodities = BooleanProperty(default=False)
-    stock_out_rates = BooleanProperty(default=False)
-    non_report = BooleanProperty(default=False)
+    alert_config = SchemaProperty(AlertConfig)
 
     @classmethod
     def for_domain(cls, domain):

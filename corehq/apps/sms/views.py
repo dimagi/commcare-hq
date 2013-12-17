@@ -896,11 +896,12 @@ class SubscribeSMSView(BaseMessagingSectionView):
         if self.request.method == 'POST':
              return SubscribeSMSForm(self.request.POST)
 
+        alert_config = self.commtrack_settings.alert_config
         initial = {
-            'stock_out_facilities': self.commtrack_settings.stock_out_facilities,
-            'stock_out_commodities': self.commtrack_settings.stock_out_commodities,
-            'stock_out_rates': self.commtrack_settings.stock_out_rates,
-            'non_report': self.commtrack_settings.non_report,
+            'stock_out_facilities': alert_config.stock_out_facilities,
+            'stock_out_commodities': alert_config.stock_out_commodities,
+            'stock_out_rates': alert_config.stock_out_rates,
+            'non_report': alert_config.non_report,
         }
 
         return SubscribeSMSForm(initial=initial)
