@@ -115,10 +115,13 @@ def process_sms(message_id):
             message_lock.release()
             return
 
+        # Process inbound SMS from a single contact one at a time
+        recipient_block = msg.direction == INCOMING
         if not msg.processed and msg.datetime_to_process < utcnow:
-            # Process SMS for a single recipient synchronously
-            recipient_lock = get_lock(client, "sms-queue-recipient-%s" % msg.couch_recipient)
-            recipient_lock.acquire(blocking=True)
+            if recipient_block:
+                recipient_lock = get_lock(client, 
+                    "sms-queue-recipient-%s" % msg.couch_recipient)
+                recipient_lock.acquire(blocking=True)
 
             if msg.direction == OUTGOING:
                 handle_outgoing(msg)
@@ -127,6 +130,7 @@ def process_sms(message_id):
             else:
                 set_error(msg)
 
-            recipient_lock.release()
+            if recipient_block:
+                recipient_lock.release()
         message_lock.release()
 
