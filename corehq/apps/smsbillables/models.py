@@ -120,9 +120,10 @@ class SmsUsageFeeCriteria(models.Model):
         if all_possible_criteria.count() == 0:
             return None
 
-        # todo: 1. try all parameters
-
-        # least specific
+        try:
+            return all_possible_criteria.get(domain=domain)
+        except ObjectDoesNotExist:
+            pass
         try:
             return all_possible_criteria.get(domain=None)
         except ObjectDoesNotExist:
