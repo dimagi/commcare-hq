@@ -53,16 +53,19 @@ def scrub_meta(sender, xform):
                     found_old = True
 
     return found_old
-            
+
+
 def _get_domain(xform):
     matches = DOMAIN_RE.search(xform.path)
     if matches and len(matches.groups()):
         return normalize_domain_name(matches.groups()[0])
 
+
 def _get_app_id(xform):
     matches = APP_ID_RE.search(xform.path)
     if matches and len(matches.groups()) and matches.groups()[0]:
         return matches.groups()[0]
+
 
 def add_domain(sender, xform, **kwargs):
     domain = _get_domain(xform) or ""
@@ -70,10 +73,12 @@ def add_domain(sender, xform, **kwargs):
     xform.domain = domain
     return to_update
 
+
 def add_export_tag(sender, xform):
     if _get_domain(xform):
         xform['#export_tag'] = ["domain", "xmlns"]
         return True
+
 
 def add_app_id(sender, xform):
     app_id = _get_app_id(xform)
@@ -81,20 +86,24 @@ def add_app_id(sender, xform):
         xform['app_id'] = app_id
         return True
 
+
 def create_form_repeat_records(sender, xform, **kwargs):
     from corehq.apps.receiverwrapper.models import FormRepeater
     xform.domain = _get_domain(xform)
     create_repeat_records(FormRepeater, xform)
 
 
+
 def create_case_repeat_records(sender, case, **kwargs):
     from corehq.apps.receiverwrapper.models import CaseRepeater
     create_repeat_records(CaseRepeater, case)
+
 
 def create_short_form_repeat_records(sender, xform, **kwargs):
     from corehq.apps.receiverwrapper.models import ShortFormRepeater
     xform.domain = _get_domain(xform)
     create_repeat_records(ShortFormRepeater, xform)
+
 
 def create_repeat_records(repeater_cls, payload):
     domain = payload.domain
@@ -102,6 +111,7 @@ def create_repeat_records(repeater_cls, payload):
         repeaters = repeater_cls.by_domain(domain)
         for repeater in repeaters:
             repeater.register(payload)
+
 
 def form_processing(sender, xform, **kwargs):
     should_update = scrub_meta(sender, xform)
@@ -112,10 +122,12 @@ def form_processing(sender, xform, **kwargs):
     # so we don't have to save, though would need to here if that changes
     return should_update
 
+
 def error_processing(sender, xform, **kwargs):
     should_update = add_domain(sender, xform)
     should_update = add_app_id(sender, xform) or should_update
     return should_update
+
 
 form_received.connect(form_processing)
 submission_error_received.connect(error_processing)
