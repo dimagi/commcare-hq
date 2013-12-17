@@ -33,6 +33,10 @@ class ScheduledReportForm(forms.Form):
         label='Send to me',
         required=False)
 
+    attach_excel = forms.BooleanField(
+        label='Attach Excel Report',
+        required=False)
+
     recipient_emails = MultiEmailField(
         label='Other recipients',
         required=False)
@@ -55,6 +59,7 @@ class ScheduledReportForm(forms.Form):
 class EmailReportForm(forms.Form):
     subject = forms.CharField(required=False)
     send_to_owner = forms.BooleanField(required=False)
+    attach_excel = forms.BooleanField(required=False)
     recipient_emails = MultiEmailField(required=False)
     notes = forms.CharField(required=False)
 

@@ -342,7 +342,7 @@ class HOPECaseResource(CommCareCaseResource):
 
     # For the curious, the attribute='<exact thing I just typed>' is mandatory,
     # and refers to a property on the HOPECase object
-    all_anc_doses_given = fields.CharField(attribute='_HOPE_all_anc_doses_given', readonly=True, null=True)
+    all_anc_doses_given = CallableCharField(attribute=get_yesno('_HOPE_all_anc_doses_given'), readonly=True, null=True)
     all_dpt1_opv1_hb1_doses_given = CallableCharField(attribute=get_yesno('_HOPE_all_dpt1_opv1_hb1_doses_given'),
                                                      readonly=True, null=True)
     all_dpt2_opv2_hb2_doses_given = CallableCharField(attribute=get_yesno('_HOPE_all_dpt2_opv2_hb2_doses_given'),
@@ -368,7 +368,7 @@ class HOPECaseResource(CommCareCaseResource):
     number_of_visits = fields.IntegerField(attribute='_HOPE_number_of_visits', readonly=True, null=True)
     opv_1_indicator = fields.BooleanField(attribute='_HOPE_opv_1_indicator', readonly=True, null=True)
     registration_date = fields.CharField(attribute='_HOPE_registration_date', readonly=True, null=True)
-    tubal_ligation = fields.BooleanField(attribute='_HOPE_tubal_ligation', readonly=True, null=True)
+    tubal_ligation = CallableCharField(attribute=get_yesno('_HOPE_tubal_ligation'), readonly=True, null=True)
 
     def obj_get(self, bundle, **kwargs):
         return get_object_or_not_exist(HOPECase, kwargs['pk'], kwargs['domain'],

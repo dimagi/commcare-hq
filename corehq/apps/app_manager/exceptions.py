@@ -67,3 +67,11 @@ class ParentModuleReferenceError(SuiteError):
 
 class SuiteValidationError(SuiteError):
     pass
+
+
+class RearrangeError(AppManagerException):
+    pass
+
+
+class BindNotFound(XFormError):
+    pass

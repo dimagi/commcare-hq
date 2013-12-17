@@ -518,6 +518,8 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                            choices=tuple_of_copies(["basic", "plus", "full", "custom"]))
     initiative = forms.MultipleChoiceField(label=ugettext_noop("Initiative"), widget=forms.CheckboxSelectMultiple(),
                                            choices=tuple_of_copies(DATA_DICT["initiatives"], blank=False), required=False)
+    workshop_region = CharField(label=ugettext_noop("Workshop Region"), required=False,
+        help_text=ugettext_noop("e.g. US, LAC, SA, Sub-Saharan Africa, Southeast Asia, etc."))
     project_state = ChoiceField(label=ugettext_noop("Project State"), required=False,
                                 choices=tuple_of_copies(["POC", "transition", "at-scale"]))
     self_started = ChoiceField(label=ugettext_noop("Self Started?"), choices=tf_choices('Yes', 'No'), required=False)
@@ -535,6 +537,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
     project_manager = CharField(label=ugettext_noop("Project Manager's Email"), required=False)
 
     def save(self, domain):
+        kw = {"workshop_region": self.cleaned_data["workshop_region"]} if self.cleaned_data["workshop_region"] else {}
         domain.update_internal(sf_contract_id=self.cleaned_data['sf_contract_id'],
             sf_account_id=self.cleaned_data['sf_account_id'],
             commcare_edition=self.cleaned_data['commcare_edition'],
@@ -553,6 +556,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             platform=self.cleaned_data['platform'],
             project_manager=self.cleaned_data['project_manager'],
             phone_model=self.cleaned_data['phone_model'],
+            **kw
         )
 
 

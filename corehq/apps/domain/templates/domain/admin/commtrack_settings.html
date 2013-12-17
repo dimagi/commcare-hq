@@ -99,7 +99,7 @@ var other_sms_codes = {{ other_sms_codes|JSON }};
                     </tr>
                 </thead>
                 <tbody data-bind="foreach: loc_types">
-                    <tr data-bind="bind_element: null">
+                    <tr data-bind="bind_element: Object()">
                         <td class="control-group" data-bind="css: { 'error': name_error }">
                             <input class="loctype_name" data-bind="value: name" type="text" />
                             <div class="help-inline" data-bind="text: name_error"></div>

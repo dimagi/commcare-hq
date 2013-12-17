@@ -15,6 +15,7 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.cache import cache_control
 from corehq import ApplicationsTab, toggles
 from corehq.apps.app_manager import commcare_settings
+from corehq.apps.app_manager.exceptions import AppManagerException, RearrangeError
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from django.utils.http import urlencode as django_urlencode
@@ -226,6 +227,18 @@ def form_casexml(req, domain, form_unique_id):
 def app_source(req, domain, app_id):
     app = get_app(domain, app_id)
     return HttpResponse(app.export_json())
+
+@login_and_domain_required
+def copy_app_check_domain(req, domain):
+    app_id = req.GET.get('app')
+    name = req.GET.get('name')
+
+    app_copy = import_app_util(app_id, domain, name=name)
+    return back_to_main(req, app_copy.domain, app_id=app_copy._id)
+
+@login_and_domain_required
+def copy_app(req, domain):
+    return copy_app_check_domain(req, req.GET.get('domain'))
 
 @login_and_domain_required
 def import_app(req, domain, template="app_manager/import_app.html"):
@@ -510,6 +523,8 @@ def paginate_releases(request, domain, app_id):
         limit=limit,
         wrapper=lambda x: SavedAppBuild.wrap(x['value']).to_saved_build_json(timezone),
     ).all()
+    for app in saved_apps:
+        app['include_media'] = toggle_enabled(toggles.APP_BUILDER_INCLUDE_MULTIMEDIA_ODK, request.user.username)
     return json_response(saved_apps)
 
 
@@ -520,14 +535,10 @@ def release_manager(request, domain, app_id, template='app_manager/releases.html
     context = get_apps_base_context(request, domain, app)
     context['sms_contacts'] = get_sms_autocomplete_context(request, domain)['sms_contacts']
 
-    saved_apps = []
-
-    users_cannot_share = CommCareUser.cannot_share(domain)
     context.update({
         'release_manager': True,
-        'saved_apps': saved_apps,
+        'saved_apps': [],
         'latest_release': latest_release,
-        'users_cannot_share': users_cannot_share,
     })
     if not app.is_remote_app():
         # Multimedia is not supported for remote applications at this time.
@@ -1307,42 +1318,6 @@ def edit_commcare_profile(request, domain, app_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def edit_app_lang(req, domain, app_id):
-    """
-    DEPRECATED
-    Called when an existing language (such as 'zh') is changed (e.g. to 'zh-cn')
-    or when a language is to be added.
-
-    """
-    lang = req.POST['lang']
-    lang_id = int(req.POST.get('index', -1))
-    app = get_app(domain, app_id)
-    if lang_id == -1:
-        if lang in app.langs:
-            messages.error(req, "Language %s already exists" % lang)
-        else:
-            try:
-                validate_lang(lang)
-            except ValueError as e:
-                messages.error(req, unicode(e))
-            else:
-                app.langs.append(lang)
-                app.save()
-    else:
-        try:
-            app.rename_lang(app.langs[lang_id], lang)
-        except AppError as e:
-            messages.error(req, unicode(e))
-        except ValueError as e:
-            messages.error(req, unicode(e))
-        else:
-            app.save()
-
-    return back_to_main(req, domain, app_id=app_id)
-
-
-@no_conflict_require_POST
-@require_can_edit_apps
 def edit_app_langs(request, domain, app_id):
     """
     Called with post body:
@@ -1541,13 +1516,21 @@ def rearrange(req, domain, app_id, key):
     resp = {}
     module_id = None
 
-    if "forms" == key:
-        to_module_id = int(req.POST['to_module_id'])
-        from_module_id = int(req.POST['from_module_id'])
-        if app.rearrange_forms(to_module_id, from_module_id, i, j) == 'case type conflict':
-            messages.warning(req, CASE_TYPE_CONFLICT_MSG,  extra_tags="html")
-    elif "modules" == key:
-        app.rearrange_modules(i, j)
+    try:
+        if "forms" == key:
+            to_module_id = int(req.POST['to_module_id'])
+            from_module_id = int(req.POST['from_module_id'])
+            if app.rearrange_forms(to_module_id, from_module_id, i, j) == 'case type conflict':
+                messages.warning(req, CASE_TYPE_CONFLICT_MSG,  extra_tags="html")
+        elif "modules" == key:
+            app.rearrange_modules(i, j)
+    except RearrangeError:
+        messages.error(req, _(
+            'Oops. '
+            'Looks like you got out of sync with us. '
+            'The sidebar has been updated, so please try again.'
+        ))
+        return back_to_main(req, domain, app_id=app_id, module_id=module_id)
     app.save(resp)
     if ajax:
         return HttpResponse(json.dumps(resp))
@@ -1601,7 +1584,8 @@ def save_copy(req, domain, app_id):
         }),
     })
 
-def validate_form_for_build(request, domain, app_id, unique_form_id):
+
+def validate_form_for_build(request, domain, app_id, unique_form_id, ajax=True):
     app = get_app(domain, app_id)
     try:
         form = app.get_form(unique_form_id)
@@ -1610,12 +1594,11 @@ def validate_form_for_build(request, domain, app_id, unique_form_id):
         raise Http404()
     errors = form.validate_for_build()
     lang, langs = get_langs(request, app)
-    if "blank form" in [error.get('type') for error in errors]:
-        return json_response({
-            "error_html": render_to_string('app_manager/partials/create_form_prompt.html')
-        })
-    return json_response({
-        "error_html": render_to_string('app_manager/partials/build_errors.html', {
+
+    if ajax and "blank form" in [error.get('type') for error in errors]:
+        response_html = render_to_string('app_manager/partials/create_form_prompt.html')
+    else:
+        response_html = render_to_string('app_manager/partials/build_errors.html', {
             'app': app,
             'form': form,
             'build_errors': errors,
@@ -1623,9 +1606,16 @@ def validate_form_for_build(request, domain, app_id, unique_form_id):
             'domain': domain,
             'langs': langs,
             'lang': lang
-        }),
-    })
-    
+        })
+
+    if ajax:
+        return json_response({
+            'error_html': response_html,
+        })
+    else:
+        return HttpResponse(response_html)
+
+
 @no_conflict_require_POST
 @require_can_edit_apps
 def revert_to_copy(req, domain, app_id):
@@ -1826,6 +1816,7 @@ def download_app_strings(req, domain, app_id, lang):
         req.app.create_app_strings(lang)
     )
 
+
 @safe_download
 def download_xform(req, domain, app_id, module_id, form_id):
     """
@@ -1836,8 +1827,14 @@ def download_xform(req, domain, app_id, module_id, form_id):
         return HttpResponse(
             req.app.fetch_xform(module_id, form_id)
         )
-    except (IndexError, XFormValidationError):
+    except IndexError:
         raise Http404()
+    except AppManagerException:
+        unique_form_id = req.app.get_module(module_id).get_form(form_id).unique_id
+        response = validate_form_for_build(req, domain, app_id, unique_form_id, ajax=False)
+        response.status_code = 404
+        return response
+
 
 @safe_download
 def download_user_registration(req, domain, app_id):

@@ -1,9 +1,10 @@
 import csv
 from corehq.apps.locations.models import Location
 from corehq.apps.locations.forms import LocationForm
-from corehq.apps.locations.util import defined_location_types, allowed_child_types
+from corehq.apps.locations.util import defined_location_types, parent_child
 import itertools
 from soil import DownloadBase
+from couchdbkit.exceptions import ResourceNotFound
 
 class LocationCache(object):
     """
@@ -38,129 +39,140 @@ class LocationCache(object):
                 self._existing_by_type[key][location.name] = location
 
 
-def import_locations(domain, worksheet, update_existing=False, task=None):
-    fields = worksheet.headers
+def import_locations(domain, worksheets, task=None):
+    processed = 0
+    total_rows = sum(ws.worksheet.get_highest_row() for ws in worksheets)
 
-    data = list(worksheet)
+    for worksheet in worksheets:
+        location_type = worksheet.worksheet.title
+        if location_type not in defined_location_types(domain):
+            yield "location with type %s not found, this worksheet will not be imported" % location_type
 
-    hierarchy_fields = []
-    loc_types = defined_location_types(domain)
-    for field in fields:
-        if field in loc_types:
-            hierarchy_fields.append(field)
-        else:
-            break
-    property_fields = fields[len(hierarchy_fields):]
+        data = list(worksheet)
 
-    if not hierarchy_fields:
-        yield 'missing location hierarchy-related fields in left columns. aborting import'
-        return
+        for loc in data:
+            yield import_location(domain, location_type, loc)['message']
+            if task:
+                processed += 1
+                DownloadBase.set_progress(task, processed, total_rows)
 
-    loc_cache = LocationCache(domain)
-    for index, loc in enumerate(data):
-        if task:
-            DownloadBase.set_progress(task, index, len(data))
 
-        for m in import_location(domain, loc, hierarchy_fields, property_fields, update_existing, loc_cache):
-            yield m
+def import_location(domain, location_type, location_data):
+    data = dict(location_data)
 
-def import_location(domain, loc_row, hierarchy_fields, property_fields, update, loc_cache=None):
-    if loc_cache is None:
-        loc_cache = LocationCache(domain)
+    existing_id = data.pop('id', None)
 
-    def get_cell(field):
-        if loc_row[field]:
-            return loc_row[field].strip()
-        else:
-            return None
+    parent_id = data.pop('parent_id', None)
 
-    hierarchy = [(p, get_cell(p)) for p in hierarchy_fields]
-    properties = dict((p, get_cell(p)) for p in property_fields)
-    # backwards compatibility
-    if 'outlet_code' in property_fields:
-        properties['site_code'] = properties['outlet_code']
-        del properties['outlet_code']
-    terminal_type = hierarchy[-1][0]
+    form_data = {}
 
-    # create parent hierarchy if it does not exist
-    parent = None
-    for loc_type, loc_name in hierarchy:
-        row_name = '%s %s' % (parent.name, parent.location_type) if parent else '-root-'
+    parent_id_invalid = check_parent_id(parent_id, domain, location_type)
+    if parent_id_invalid:
+        return parent_id_invalid
 
-        # are we at the leaf loc?
-        is_terminal = (loc_type == terminal_type)
-
-        if not loc_name:
-            # name is empty; this level of hierarchy is skipped
-            if is_terminal and any(properties.values()):
-                yield 'warning: %s properties specified on row that won\'t create a %s! (%s)' % (terminal_type, terminal_type, row_name)
-            continue
-
-        def save(existing=None):
-            messages = []
-            error = False
-
-            data = {
-                'name': loc_name,
-                'location_type': loc_type,
-                'parent_id': parent._id if parent else None,
+    if existing_id:
+        existing = Location.get(existing_id)
+        if existing.location_type != location_type:
+            return {
+                'id': None,
+                'message': "Existing location type error, type of {0} is not {1}".format(
+                    existing.name, location_type
+                )
             }
-            if is_terminal:
-                data.update(((terminal_type, k), v) for k, v in properties.iteritems())
+        parent = existing.parent_id
+    else:
+        existing = None
+        parent = parent_id
 
-            form = make_form(domain, parent, data, existing)
-            form.strict = False # optimization hack to turn off strict validation
-            if form.is_valid():
-                child = form.save()
-                if existing:
-                    messages.append('updated %s %s' % (loc_type, loc_name))
-                else:
-                    loc_cache.add(child)
-                    messages.append('created %s %s' % (loc_type, loc_name))
-            else:
-                # TODO move this to LocationForm somehow
-                error = True
-                child = None
-                forms = filter(None, [form, form.sub_forms.get(loc_type)])
-                for k, v in itertools.chain(*(f.errors.iteritems() for f in forms)):
-                    if k != '__all__':
-                        messages.append('error in %s %s; %s: %s' % (loc_type, loc_name, k, v))
+    form_data['parent_id'] = parent
+    form_data['name'] = data.pop('name')
+    form_data['location_type'] = location_type
 
-            return child, messages, error
+    properties = {}
+    for k, v in data.iteritems():
+        properties[(location_type, k)] = v
 
-        child = loc_cache.get_by_name(loc_name, loc_type, parent)
-        if child:
-            if is_terminal:
-                if update:
-                    # (x or None) is to not distinguish between '' and None
-                    properties_changed = any((v or None) != (getattr(child, k, None) or None) for k, v in properties.iteritems())
-                    if properties_changed:
-                        _, messages, _ = save(child)
-                        for m in messages:
-                            yield m
+    return submit_form(
+        domain,
+        parent,
+        form_data,
+        properties,
+        existing,
+        location_type
+    )
 
-                    else:
-                        yield '%s %s unchanged; skipping...' % (loc_type, loc_name)
-                else:
-                    yield '%s %s exists; skipping...' % (loc_type, loc_name)
+
+def check_parent_id(parent_id, domain, location_type):
+    if parent_id:
+        try:
+            parent_obj = Location.get(parent_id)
+        except ResourceNotFound:
+            return {
+                'id': None,
+                'message': 'Parent with id {0} does not exist'.format(
+                    parent_id
+                )
+            }
+        parent_relationships = parent_child(domain)
+        if location_type not in parent_relationships[parent_obj.location_type]:
+            return {
+                'id': None,
+                'message': 'Invalid parent type of {0} for child type {1}'.format(
+                    parent_obj.location_type, location_type)
+            }
+
+def anything_to_update(existing, properties, form_data):
+    for prop, val in properties.iteritems():
+        if getattr(existing, prop[1], None) != val:
+            return True
+    for key, val in form_data.iteritems():
+        if getattr(existing, key, None) != val:
+            return True
+    return False
+
+def submit_form(domain, parent, form_data, properties, existing, location_type):
+    # don't save if there is nothing to save
+    if existing and not anything_to_update(existing, properties, form_data):
+        return {
+            'id': existing._id,
+            'message': 'no changes for %s %s' % (location_type, existing.name)
+        }
+
+    form_data.update(properties)
+
+    form = make_form(domain, parent, form_data, existing)
+    form.strict = False  # optimization hack to turn off strict validation
+    if form.is_valid():
+        loc = form.save()
+        if existing:
+            message = 'updated %s %s' % (location_type, loc.name)
         else:
-            if loc_type not in allowed_child_types(domain, parent):
-                yield 'error: %s %s cannot be child of %s' % (loc_type, loc_name, row_name)
-                return
+            message = 'created %s %s' % (location_type, loc.name)
 
-            child, messages, error = save()
-            for m in messages:
-                yield m
-            if error:
-                return
+        return {
+            'id': loc._id,
+            'message': message
+        }
+    else:
+        message = 'Form errors when submitting: '
+        # TODO move this to LocationForm somehow
+        forms = filter(None, [form, form.sub_forms.get(location_type)])
+        for k, v in itertools.chain(*(f.errors.iteritems() for f in forms)):
+            if k != '__all__':
+                message += '{0} {1}; {2}: {3}. '.format(
+                    location_type, form_data.get('name', 'unknown'), k, v[0]
+                )
 
-        parent = child
-
+        return {
+            'id': None,
+            'message': message
+        }
 
 # TODO i think the parent param will not be necessary once the TODO in LocationForm.__init__ is done
 def make_form(domain, parent, data, existing=None):
     """simulate a POST payload from the location create/edit page"""
     location = existing or Location(domain=domain, parent=parent)
+
     def make_payload(k, v):
         if hasattr(k, '__iter__'):
             prefix, propname = k
@@ -170,4 +182,3 @@ def make_form(domain, parent, data, existing=None):
         return ('%s-%s' % (prefix, propname), v)
     payload = dict(make_payload(k, v) for k, v in data.iteritems())
     return LocationForm(location, payload)
-

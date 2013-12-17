@@ -47,6 +47,7 @@
             $("#edit").hide();
             $('footer').addClass('fixed-footer');
 
+            var formSrc = {{ form.source|to_javascript_string }};
             formdesigner.launch({
                 rootElement: $("#formdesigner"),
                 staticPrefix: '/static/formdesigner/',
@@ -80,7 +81,7 @@
                     "meta/timeEnd"
                 ],
                 saveType: 'patch',
-                form: {{ form.source|JSON }},
+                form: formSrc,
                 langs: {{ app.langs|JSON }},
                 formName: "{{ form.name|trans:app.langs }}",
                 displayLanguage: {{ lang|JSON }}

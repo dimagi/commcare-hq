@@ -3,7 +3,7 @@ from casexml.apps.case.xml import V2_NAMESPACE
 from corehq.apps.app_manager.const import APP_V1
 from lxml import etree as ET
 from .xpath import CaseIDXPath, session_var, XPath, CaseTypeXpath
-from .exceptions import XFormError, CaseError, XFormValidationError
+from .exceptions import XFormError, CaseError, XFormValidationError, BindNotFound
 import formtranslate.api
 
 
@@ -577,6 +577,8 @@ class XForm(WrappedNode):
         elif 'bind' in node.attrib:
             bind_id = node.attrib['bind']
             bind = self.model_node.find('{f}bind[@id="%s"]' % bind_id)
+            if not bind.xml:
+                raise BindNotFound('No binding found for %s' % bind_id)
             path = bind.attrib['nodeset']
         elif node.tag_name == "group":
             path = ""
@@ -927,6 +929,8 @@ class XForm(WrappedNode):
                     repeat_contexts[subcase.repeat_context] += 1
 
             for i, subcase in enumerate(subcases):
+                if not form.get_app().case_type_exists(subcase.case_type):
+                    raise CaseError("Case type (%s) for form (%s) does not exist" % (subcase.case_type, form.default_name()))
                 if subcase.repeat_context:
                     base_path = '%s/' % subcase.repeat_context
                     parent_node = self.instance_node.find(

@@ -122,6 +122,7 @@ DOMAIN_FACETS = [
     "internal.commcare_edition",
     "internal.custom_eula",
     "internal.initiative.exact",
+    "internal.workshop_region.exact",
     "internal.project_state",
     "internal.self_started",
     "internal.services",
@@ -161,6 +162,7 @@ FACET_MAPPING = [
         {"facet": "deployment.country.exact", "name": "Country", "expanded": True },
         {"facet": "deployment.region.exact", "name": "Region", "expanded": False },
         {"facet": "deployment.city.exact", "name": "City", "expanded": False },
+        {"facet": "internal.workshop_region.exact", "name": "Workshop Region", "expanded": False },
     ]),
     ("Type", True, [
         {"facet": "internal.area.exact", "name": "Sector", "expanded": True },

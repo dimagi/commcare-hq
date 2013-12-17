@@ -4,6 +4,26 @@
 {% load hqstyle_tags %}
 {% load i18n %}
 
+{% block head %}{{ block.super }}
+    <style type="text/css">
+        #video-container {
+            position: relative;
+            padding-bottom: 56.25%; /* 16/9 ratio */
+            height: 0;
+            overflow: hidden;
+            margin-bottom: 1em;
+        }
+
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+{%  endblock %}
+
 {% block js-inline %}{{ block.super }}
     <script>
         function update_import_into_button() {
@@ -80,7 +100,7 @@
                     {{ project.get_organization.title }}
 {#                </a>#}
                 {% else %}
-                    {{ project.author|default:published_by.full_name }}
+                    {{ project.author|default:project.name_of_publisher|default:"*Publisher's name*" }}
                 {% endifequal %}
             </small>
         </h1>
@@ -101,8 +121,14 @@
 <dl class="dl-horizontal">
     {% if project.yt_id %}
         <dt>{% trans 'Video' %}</dt>
-        <dd>
-            <iframe width="420" height="315" src="http://www.youtube.com/embed/{{ project.yt_id }}" frameborder="0" allowfullscreen></iframe>
+        <dd id="video-container">
+            <iframe id="yt-video"
+                    src="https://www.youtube.com/embed/{{ project.yt_id }}"
+                    frameborder="0"
+                    height="100%"
+                    width="100%"
+                    webkitAllowFullScreen mozallowfullscreen allowFullScreen>
+            </iframe>
         </dd>
     {% endif %}
     <dt>{% trans 'Description' %}</dt>
@@ -124,8 +150,8 @@
     {% if request.couch_user.is_superuser %}
         <dt> {% trans 'Published by' %}</dt>
         <dd>
-            {% if published_by %}
-                {{ published_by.username }}
+            {% if project.published_by %}
+                {{ project.published_by.username }}
             {% else %}
                 No Data
             {% endif %}
@@ -242,10 +268,23 @@
                         {% if error_message %}
                             <span class="help-inline">{{ error_message }}</span>
                         {% endif %}
-                        <a class="btn btn-primary" data-form="new-project-form" data-toggle="modal" data-target="#licenseAgreement" href="#licenseAgreement">{% trans "Download As New Project" %}</a>
+                        <a class="btn btn-primary"
+                           data-form="new-project-form"
+                           data-toggle="modal"
+                           data-target="#licenseAgreement"
+                           href="#licenseAgreement"
+                           onclick="_gaq.push(['_trackEvent', 'Exchange', 'Download As New Project', '{{ project }}']);"
+                        >
+                            {% trans "Download As New Project" %}
+                        </a>
                         {% if display_import %}
                             {% trans "or" %}
-                            <a class="btn" id="import-app-button">{% trans "Download to Existing Project" %}</a>
+                            <a class="btn"
+                               id="import-app-button"
+                               onclick="_gaq.push(['_trackEvent', 'Exchange', 'Download to Existing Project', '{{ project }}']);"
+                            >
+                                {% trans "Download to Existing Project" %}
+                            </a>
                         {% endif %}
                     </div>
                     {% endif %}
