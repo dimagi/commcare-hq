@@ -17,18 +17,39 @@ class TestGatewayFee(TestCase):
         )
         self.available_backends = get_available_backends().values()
 
-        self.least_specific_fees = generator.arbitrary_fees_by_direction_and_backend()
-        self.instance_fees = generator.arbitrary_fees_by_direction_and_backend()
-        self.country_code_fees = generator.arbitrary_fees_by_country()
-        self.most_specific_fees = generator.arbitrary_fees_by_direction_and_backend()
-
         self.backend_ids = generator.arbitrary_backend_ids()
         self.message_logs = generator.arbitrary_messages_by_backend_and_direction(self.backend_ids)
 
-    def test_least_specific_fees(self):
+        self.least_specific_fees = generator.arbitrary_fees_by_direction_and_backend()
+        self.country_code_fees = generator.arbitrary_fees_by_country()
+        self.instance_fees = generator.arbitrary_fees_by_backend_instance(self.backend_ids)
+        self.most_specific_fees = generator.arbitrary_fees_by_all(self.backend_ids)
+
+    def create_least_specific_gateway_fees(self):
         for direction, fees in self.least_specific_fees.items():
             for backend_api_id, amount in fees.items():
                 SmsGatewayFee.create_new(backend_api_id, direction, amount)
+
+    def create_country_code_gateway_fees(self):
+        for direction, backend in self.country_code_fees.items():
+            for backend_api_id, country in backend.items():
+                for country_code, amount in country.items():
+                    SmsGatewayFee.create_new(backend_api_id, direction, amount, country_code=country_code)
+
+    def create_instance_gateway_fees(self):
+        for direction, backend in self.instance_fees.items():
+            for backend_api_id, (backend_instance, amount) in backend.items():
+                SmsGatewayFee.create_new(backend_api_id, direction, amount, backend_instance=backend_instance)
+
+    def create_most_specific_gateway_fees(self):
+        for direction, backend in self.most_specific_fees.items():
+            for backend_api_id, country in backend.items():
+                for country_code, (backend_instance, amount) in country.items():
+                    SmsGatewayFee.create_new(backend_api_id, direction, amount,
+                                             country_code=country_code, backend_instance=backend_instance)
+
+    def test_least_specific_fees(self):
+        self.create_least_specific_gateway_fees()
 
         for msg_log in self.message_logs:
             billable = SmsBillable.create(msg_log)
@@ -39,10 +60,8 @@ class TestGatewayFee(TestCase):
             )
 
     def test_country_code_fees(self):
-        for direction, backend in self.country_code_fees.items():
-            for backend_api_id, country in backend.items():
-                for country_code, amount in country.items():
-                    SmsGatewayFee.create_new(backend_api_id, direction, amount, country_code=country_code)
+        self.create_least_specific_gateway_fees()
+        self.create_country_code_gateway_fees()
 
         phone_numbers = [generator.arbitrary_phone_number() for i in range(10)]
         for phone_number in phone_numbers:
@@ -58,18 +77,61 @@ class TestGatewayFee(TestCase):
                     [int(phone_number[:-10])]
                 )
 
-
     def test_instance_fees(self):
-        # todo
-        pass
+        self.create_least_specific_gateway_fees()
+        self.create_country_code_gateway_fees()
+        self.create_instance_gateway_fees()
+
+        phone_numbers = [generator.arbitrary_phone_number() for i in range(10)]
+        for phone_number in phone_numbers:
+            messages = generator.arbitrary_messages_by_backend_and_direction(self.backend_ids,
+                                                                             phone_number=phone_number)
+            for msg_log in messages:
+                billable = SmsBillable.create(msg_log)
+                self.assertIsNotNone(billable)
+                self.assertEqual(
+                    billable.gateway_fee.amount,
+                    self.instance_fees[billable.direction]
+                    [billable.gateway_fee.criteria.backend_api_id]
+                    [1]
+                )
 
     def test_specific_fees(self):
-        # todo
-        pass
+        self.create_least_specific_gateway_fees()
+        self.create_country_code_gateway_fees()
+        self.create_instance_gateway_fees()
+        self.create_most_specific_gateway_fees()
+
+        phone_numbers = [generator.arbitrary_phone_number() for i in range(10)]
+        for phone_number in phone_numbers:
+            messages = generator.arbitrary_messages_by_backend_and_direction(self.backend_ids,
+                                                                             phone_number=phone_number)
+            for msg_log in messages:
+                billable = SmsBillable.create(msg_log)
+                self.assertIsNotNone(billable)
+                self.assertEqual(
+                    billable.gateway_fee.amount,
+                    self.most_specific_fees[billable.direction]
+                    [billable.gateway_fee.criteria.backend_api_id]
+                    [int(phone_number[:-10])]
+                    [1]
+                )
 
     def test_no_matching_fee(self):
-        # todo
-        pass
+        self.create_least_specific_gateway_fees()
+        self.create_country_code_gateway_fees()
+        self.create_instance_gateway_fees()
+        self.create_most_specific_gateway_fees()
+
+        phone_numbers = [generator.arbitrary_phone_number() for i in range(10)]
+        for phone_number in phone_numbers:
+            messages = generator.arbitrary_messages_by_backend_and_direction(self.backend_ids,
+                                                                             phone_number=phone_number,
+                                                                             directions=['X', 'Y'])
+            for msg_log in messages:
+                billable = SmsBillable.create(msg_log)
+                self.assertIsNotNone(billable)
+                self.assertIsNone(billable.gateway_fee)
 
     def tearDown(self):
         SmsBillable.objects.all().delete()
