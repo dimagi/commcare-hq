@@ -703,18 +703,18 @@ class SuiteGenerator(object):
             if form.case_type == CAREPLAN_GOAL:
                 if form.mode == 'create':
                     e.datums.append(SessionDatum(
-                        id='new_goal_id',
+                        id='case_id_goal',
                         function='uuid()'
                     ))
 
                     e.stack = Stack()
                     frame = CreateFrame(
-                        if_clause='{count} = 1'.format(count=CaseIDXPath(session_var('new_goal_id')).case().count())
+                        if_clause='{count} = 1'.format(count=CaseIDXPath(session_var('case_id_goal')).case().count())
                     )
                     frame.add_command(self.id_strings.menu(parent_module))
                     frame.add_datum(StackDatum(id='case_id', value=session_var('case_id')))
                     frame.add_command(self.id_strings.menu(module))
-                    frame.add_datum(StackDatum(id='case_id_goal', value=session_var('new_goal_id')))
+                    frame.add_datum(StackDatum(id='case_id_goal', value=session_var('case_id_goal')))
                     e.stack.add_frame(frame)
                 elif form.mode == 'update':
                     e.datums.append(session_datum('case_id_goal', CAREPLAN_GOAL, 'parent', 'case_id'))
