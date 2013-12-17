@@ -1,4 +1,5 @@
 import phonenumbers
+import logging
 from decimal import Decimal
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
@@ -7,6 +8,9 @@ from corehq.apps.accounting import models as accounting
 from corehq.apps.accounting.models import Currency
 from corehq.apps.sms.models import DIRECTION_CHOICES
 from corehq.apps.sms.util import clean_phone_number
+
+
+smsbillables_logging = logging.getLogger("smsbillables")
 
 
 class SmsGatewayFeeCriteria(models.Model):
@@ -241,6 +245,10 @@ class SmsBillable(models.Model):
         billable.usage_fee = SmsUsageFee.get_by_criteria(
             direction, domain=domain
         )
+
+        if billable.usage_fee is None:
+            smsbillables_logging.error("Did not find usage fee for direction %s and domain %s"
+                                       % (direction, domain))
 
         if api_response is not None:
             billable.api_response = api_response
