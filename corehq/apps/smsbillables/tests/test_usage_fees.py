@@ -55,7 +55,18 @@ class TestUsageFee(TestCase):
                     )
 
     def test_log_no_usage_fee(self):
-        raise NotImplementedError
+        self.apply_direction_fee()
+        self.apply_direction_and_domain_fee()
+
+        for direction, domain_fee in self.most_specific_fees.items():
+            for domain in domain_fee:
+                messages = generator.arbitrary_messages_by_backend_and_direction(generator.arbitrary_backend_ids(),
+                                                                                 domain=domain,
+                                                                                 directions=['X', 'Y'])
+                for message in messages:
+                    billable = SmsBillable.create(message)
+                    self.assertIsNotNone(billable)
+                    self.assertIsNone(billable.usage_fee)
 
     def tearDown(self):
         pass
