@@ -15,10 +15,16 @@ class TestUsageFee(TestCase):
         )
 
         self.least_specific_fees = generator.arbitrary_fees_by_direction()
+        self.most_specific_fees = generator.arbitrary_fees_by_direction_and_domain()
 
     def apply_direction_fee(self):
         for direction, amount in self.least_specific_fees.items():
             SmsUsageFee.create_new(direction, amount)
+
+    def apply_direction_and_domain_fee(self):
+        for direction, domain_fee in self.most_specific_fees.items():
+            for domain, amount in domain_fee.items():
+                SmsUsageFee.create_new(direction, amount, domain=domain)
 
     def test_only_direction(self):
         self.apply_direction_fee()
@@ -33,7 +39,20 @@ class TestUsageFee(TestCase):
             )
 
     def test_domain_and_direction(self):
-        raise NotImplementedError
+        self.apply_direction_fee()
+        self.apply_direction_and_domain_fee()
+
+        for direction, domain_fee in self.most_specific_fees.items():
+            for domain in domain_fee:
+                messages = generator.arbitrary_messages_by_backend_and_direction(generator.arbitrary_backend_ids(),
+                                                                                 domain=domain)
+                for message in messages:
+                    billable = SmsBillable.create(message)
+                    self.assertIsNotNone(billable)
+                    self.assertEqual(
+                        billable.usage_fee.amount,
+                        self.most_specific_fees[message.direction][domain]
+                    )
 
     def test_log_no_usage_fee(self):
         raise NotImplementedError

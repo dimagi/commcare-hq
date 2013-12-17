@@ -1,5 +1,6 @@
 import random
 import datetime
+import string
 from decimal import Decimal
 
 from dimagi.utils.data import generator as data_gen
@@ -42,10 +43,25 @@ def arbitrary_phone_number(country_codes=TEST_COUNTRY_CODES):
     return str(random.choice(country_codes)) + str(random.randint(10**9, 10**10 - 1))
 
 
+def arbitrary_domain(length=25):
+    return ''.join(random.choice(string.ascii_lowercase) for i in range(length))
+
+
 def arbitrary_fees_by_direction():
     fees = {}
     for direction in DIRECTIONS:
         fees[direction] = arbitrary_fee()
+    return fees
+
+
+def arbitrary_fees_by_direction_and_domain():
+    domains = [arbitrary_domain() for i in range(10)]
+    fees = {}
+    for direction in DIRECTIONS:
+        fees_by_domain = {}
+        for domain in domains:
+            fees_by_domain[domain] = arbitrary_fee()
+        fees[direction] = fees_by_domain
     return fees
 
 
