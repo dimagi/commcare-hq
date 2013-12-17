@@ -1746,7 +1746,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
     @absolute_url_property
     def post_url(self):
         if self.secure_submissions:
-            url_name = 'receiver_secure_post'
+            url_name = 'receiver_secure_post_with_app_id'
         else:
             url_name = 'receiver_post_with_app_id'
         return reverse(url_name, args=[self.domain, self.copy_of or self.get_id])
