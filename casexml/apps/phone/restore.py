@@ -90,6 +90,7 @@ class RestoreConfig(object):
         for supply_point, products in product_by_supply_point.iteritems():
             as_of = max(p['last_reported'] for p in products)
             as_of = 'T'.join(as_of.split()) + 'Z' # FIXME convert to iso properly
+            products.sort(key=lambda p: p['product_name'])
             yield E.balance(*(mk_product(e) for e in products), **{'entity-id': supply_point, 'date': as_of})
 
     def get_payload(self):
