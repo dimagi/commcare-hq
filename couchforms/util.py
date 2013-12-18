@@ -1,7 +1,7 @@
 import hashlib
 from django.conf import settings
-from django.http import HttpResponse, HttpResponseServerError, HttpResponseBadRequest, HttpResponseForbidden
-from django.utils.datastructures import MultiValueDictKeyError
+from django.http import HttpResponse, HttpResponseServerError, HttpResponseBadRequest, HttpResponseForbidden, HttpRequest
+from couchforms.const import MAGIC_PROPERTY, MULTIPART_FILENAME_ERROR
 from dimagi.utils.mixins import UnicodeMixIn
 import urllib
 try:
@@ -203,54 +203,15 @@ def _log_hard_failure(instance, attachments, error):
     return SubmissionErrorLog.from_instance(instance, message)
 
 
-MULTIPART_FILENAME_ERROR = object()
-MAGIC_PROPERTY = 'xml_submission_file'
-
-
-def extract_instance_from_request(request):
-    attachments = {}
-    if request.META['CONTENT_TYPE'].startswith('multipart/form-data'):
-        # it's an standard form submission (eg ODK)
-        # this does an assumption that ODK submissions submit using the form parameter xml_submission_file
-        # todo: this should be made more flexibly to handle differeing params for xform submission
-        try:
-            instance = request.FILES[MAGIC_PROPERTY].read()
-        except MultiValueDictKeyError:
-            instance = MULTIPART_FILENAME_ERROR
-        else:
-            for key, item in request.FILES.items():
-                if key != MAGIC_PROPERTY:
-                    attachments[key] = item
-    else:
-        #else, this is a raw post via a j2me client of xml (or touchforms)
-        #todo, multipart raw submissions need further parsing capacity.
-        instance = request.raw_post_data
-    return instance, attachments
-
-
 class SubmissionPost(object):
 
-    def __init__(self, request=None, instance=None, attachments=None,
+    def __init__(self, instance=None, attachments=None,
                  auth_context=None, path=None):
-        """
-        you can either pass in request or give explicit values for
-        instance and attachments (defaults to {})
-
-        (path is optional)
-        if you pass in all required values explicitly, request can be omitted
-
-        """
-        attachments = attachments or {}
-        assert request or None not in (path, instance, attachments)
+        assert instance and not isinstance(instance, HttpRequest), instance
+        self.instance = instance
+        self.attachments = attachments or {}
         self.auth_context = auth_context or DefaultAuthContext()
-
-        self.path = path or (request.path if request else None)
-        if instance:
-            self.instance = instance
-            self.attachments = attachments
-        else:
-            self.instance, self.attachments = \
-                extract_instance_from_request(request)
+        self.path = path
 
     def get_response(self):
         if not self.auth_context.is_valid():
