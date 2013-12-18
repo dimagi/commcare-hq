@@ -24,10 +24,11 @@ class CommCareUserResource(UserESMixin, JsonResource, DomainSpecificResourceMixi
     # UserESMixin containst the logic for interacting with ES
     type = "user"
     id = fields.CharField(attribute='id', readonly=True, unique=True)
+    email = fields.CharField(attribute='email')
     username = fields.CharField(attribute='username', unique=True)
     first_name = fields.CharField(attribute='first_name', null=True)
     last_name = fields.CharField(attribute='last_name', null=True)
-    email = fields.CharField(attribute='email')
+    phone_numbers = fields.ListField(attribute='phone_numbers', null=True)
 
     def to_obj(self, user):
         '''
@@ -54,21 +55,16 @@ class CommCareUserResource(UserESMixin, JsonResource, DomainSpecificResourceMixi
         resource_name = 'user'
 
     def obj_get_list(self, bundle, **kwargs):
-        print bundle.request.GET
-        get = bundle.request.GET
+        # TODO: return only the specified fields
+        # fields = params.getlist('fields')
 
         params = bundle.request.GET
-        def param(p):
-            return params.get(p, None)
-        # import bpdb; bpdb.set_trace()
+        param = lambda p: params.get(p, None)
         users = self.make_query(
+                domain=kwargs['domain'],
                 q=param('q'),
-                fields=params.getlist('fields'),
                 size=param('limit'),
                 start_at=param('offset'),
         )
-        print len(users)
         return map(self.to_obj, users)
-
-
 
