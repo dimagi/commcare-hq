@@ -17,6 +17,9 @@ from corehq.apps.commtrack.helpers import make_supply_point,\
 from corehq.apps.commtrack.models import Product
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_safe_write_kwargs
+from casexml.apps.phone.restore import generate_restore_payload
+from casexml.apps.phone.models import SyncLog
+from lxml import etree
 
 TEST_DOMAIN = 'commtrack-test'
 TEST_LOCATION_TYPE = 'location'
@@ -177,3 +180,11 @@ class CommTrackTest(TestCase):
             reduce=False,
             include_docs=True
         )
+
+
+def get_ota_balance_xml(user):
+    xml = generate_restore_payload(user.to_casexml_user(), version=V2)
+    [sync_log] = SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all()
+
+    balance_block = etree.fromstring(xml).find('{http://commtrack.org/stock_report}balance')
+    return etree.tostring(balance_block)
