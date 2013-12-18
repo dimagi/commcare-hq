@@ -1,3 +1,4 @@
+from dimagi.utils.couch.resource_conflict import retry_resource
 from django.contrib import messages
 from django.contrib.auth.forms import PasswordChangeForm
 from django.views.decorators.http import require_POST
@@ -189,6 +190,7 @@ class BaseProjectDataView(BaseDomainView):
 
 @require_POST
 @require_superuser
+@retry_resource(3)
 def keyboard_config(request):
     request.couch_user.keyboard_shortcuts["enabled"] = bool(request.POST.get('enable'))
     request.couch_user.keyboard_shortcuts["main_key"] = request.POST.get('main-key', 'option')
