@@ -39,15 +39,17 @@ def form_list(request):
         xml += '\t<form url="%(url)s">%(name)s</form>\n' % {"url": form.url, "name": form.name}
     xml += "</forms>"
     return HttpResponse(xml, mimetype="text/xml")
-    
 
-def extract_values_from_request(request):
+
+def get_received_on(request):
     received_on = request.META.get('HTTP_X_SUBMIT_TIME')
     if received_on:
-        received_on = string_to_datetime(received_on)
+        return string_to_datetime(received_on)
     else:
-        received_on = Ellipsis
+        return None
 
+
+def get_date_header(request):
     date_header = request.META.get('HTTP_DATE')
     if date_header:
         # comes in as:
@@ -65,42 +67,62 @@ def extract_values_from_request(request):
             date = date_header
         date_header = date
     else:
-        date_header = Ellipsis
-    return {
-        'submit_ip': get_ip(request),
-        'path': request.path,
-        'openrosa_headers': getattr(request, 'openrosa_headers', Ellipsis),
-        'last_sync_token': getattr(request, 'last_sync_token', Ellipsis),
-        'received_on': received_on,
-        'date_header': date_header,
-    }
+        date_header = None
+    return date_header
 
 
 class SubmissionPost(couchforms_util.SubmissionPost):
 
-    def __init__(self, request, auth_context=None):
-        self.location = get_location(request)
-        self.form_meta_values = extract_values_from_request(request)
-        super(SubmissionPost, self).__init__(request, auth_context)
+    def __init__(self, request=None, instance=None, attachments=None,
+                 auth_context=None, path=None,
+                 location=None, submit_ip=None, openrosa_headers=None,
+                 last_sync_token=None, received_on=None, date_header=None):
+        """
+        you can either pass in request or give explicit values for
+        instance and attachments (defaults to {})
 
-    def _attach_shared_props(self, doc, submit_ip, path, openrosa_headers,
-                             last_sync_token, received_on, date_header):
+        (all other values are optional and used for metadata)
+        if you pass in all required values explicitly, request can be omitted
+
+        """
+        self.location = location or \
+            get_location(request.is_secure() if request else None)
+
+        self.received_on = received_on or \
+            (get_received_on(request) if request else None)
+
+        self.date_header = date_header or \
+            (get_date_header(request) if request else None)
+
+        self.submit_ip = submit_ip or (get_ip(request) if request else None)
+
+        self.last_sync_token = last_sync_token or \
+            getattr(request, 'last_sync_token', None)
+
+        self.openrosa_headers = openrosa_headers or \
+            getattr(request, 'openrosa_headers', None)
+
+        super(SubmissionPost, self).__init__(request, auth_context=auth_context,
+                                             path=path, instance=instance,
+                                             attachments=attachments)
+
+    def _attach_shared_props(self, doc):
         # attaches shared properties of the request to the document.
         # used on forms and errors
-        doc['submit_ip'] = submit_ip
-        doc['path'] = path
+        doc['submit_ip'] = self.submit_ip
+        doc['path'] = self.path
 
-        if openrosa_headers is not Ellipsis:
-            doc['openrosa_headers'] = openrosa_headers
+        if self.openrosa_headers:
+            doc['openrosa_headers'] = self.openrosa_headers
 
-        if last_sync_token is not Ellipsis:
-            doc['last_sync_token'] = last_sync_token
+        if self.last_sync_token:
+            doc['last_sync_token'] = self.last_sync_token
 
-        if received_on is not Ellipsis:
-            doc.received_on = received_on
+        if self.received_on:
+            doc.received_on = self.received_on
 
-        if date_header is not Ellipsis:
-            doc['date_header'] = date_header
+        if self.date_header:
+            doc['date_header'] = self.date_header
 
         return doc
 
@@ -161,7 +183,7 @@ class SubmissionPost(couchforms_util.SubmissionPost):
     def get_success_response(self, doc):
         # get a fresh copy of the doc, in case other things modified it.
         instance = XFormInstance.get(doc.get_id)
-        self._attach_shared_props(instance, **self.form_meta_values)
+        self._attach_shared_props(instance)
         form_received.send(sender="receiver", xform=instance)
         instance.save()
 
@@ -179,7 +201,7 @@ class SubmissionPost(couchforms_util.SubmissionPost):
 
     def get_error_response(self, error_log):
         error_doc = SubmissionErrorLog.get(error_log.get_id)
-        self._attach_shared_props(error_doc, **self.form_meta_values)
+        self._attach_shared_props(error_doc)
         submission_error_received.send(sender="receiver", xform=error_doc)
         error_doc.save()
         return HttpResponseServerError(
@@ -194,10 +216,13 @@ def post(request):
     return SubmissionPost(request).get_response()
 
 
-def get_location(request):
+def get_location(is_secure=None):
     # this is necessary, because www.commcarehq.org always uses https,
     # but is behind a proxy that won't necessarily look like https
     if hasattr(settings, "OVERRIDE_LOCATION"):
         return settings.OVERRIDE_LOCATION
-    prefix = "https" if request.is_secure() else "http"
+    if is_secure is None:
+        prefix = getattr(settings, 'DEFAULT_PROTOCOL', 'http')
+    else:
+        prefix = "https" if is_secure else "http"
     return "%s://%s" % (prefix, Site.objects.get_current().domain)
