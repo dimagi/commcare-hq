@@ -139,6 +139,7 @@ class BeneficiaryPaymentReport(BaseReport):
     def fields(self):
         return [CaseStatusFilter] + super(BeneficiaryPaymentReport, self).fields
 
+    # TODO: Switch to ES.  Peformance aaah!
     def get_rows(self, datespan):
         cases = CommCareCase.get_all_cases(DOMAIN, include_docs=True)
         return [case for case in cases if self.passes_filter(case)]
