@@ -3,6 +3,7 @@ from django.test import TestCase
 
 from corehq.apps.smsbillables.models import *
 from corehq.apps.smsbillables import generator
+from corehq.apps.sms.models import SMSLog
 
 
 class TestUsageFee(TestCase):
@@ -69,4 +70,7 @@ class TestUsageFee(TestCase):
                     self.assertIsNone(billable.usage_fee)
 
     def tearDown(self):
-        pass
+        SmsBillable.objects.all().delete()
+        SmsUsageFee.objects.all().delete()
+        SmsUsageFeeCriteria.objects.all().delete()
+        self.currency_usd.delete()
