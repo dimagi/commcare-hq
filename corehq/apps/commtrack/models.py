@@ -765,7 +765,7 @@ class SupplyPointProductCase(CommCareCase):
 
     # can flesh this out more as needed
     product = StringProperty() # would be nice if this was product_id but is grandfathered in
-    current_stock = StringProperty()
+    current_stock = DecimalProperty()
     stocked_out_since = StringProperty()
 
     @memoized
