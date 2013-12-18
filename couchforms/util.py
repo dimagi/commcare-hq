@@ -202,48 +202,54 @@ def _log_hard_failure(instance, attachments, error):
 
     return SubmissionErrorLog.from_instance(instance, message)
 
+MULTIPART_FILENAME_ERROR = object()
+
 
 class SubmissionPost(object):
 
     magic_property = 'xml_submission_file'
 
     def __init__(self, request, auth_context=None):
-        self.request = request
+        self.path = request.path
         self.auth_context = auth_context or DefaultAuthContext()
-
-    def get_response(self):
-        if not self.auth_context.is_valid():
-            return self.get_failed_auth_response()
-        attachments = {}
-        if self.request.META['CONTENT_TYPE'].startswith('multipart/form-data'):
+        self.attachments = {}
+        if request.META['CONTENT_TYPE'].startswith('multipart/form-data'):
             # it's an standard form submission (eg ODK)
             # this does an assumption that ODK submissions submit using the form parameter xml_submission_file
             # todo: this should be made more flexibly to handle differeing params for xform submission
             try:
-                instance = self.request.FILES[self.magic_property].read()
+                self.instance = request.FILES[self.magic_property].read()
             except MultiValueDictKeyError:
-                return HttpResponseBadRequest((
-                    'If you use multipart/form-data, '
-                    'please name your file %s.\n'
-                    'You may also do a normal (non-multipart) post '
-                    'with the xml submission as the request body instead.'
-                ) % self.magic_property)
-            for key, item in self.request.FILES.items():
-                if key != self.magic_property:
-                    attachments[key] = item
+                self.instance = MULTIPART_FILENAME_ERROR
+            else:
+                for key, item in request.FILES.items():
+                    if key != self.magic_property:
+                        self.attachments[key] = item
         else:
             #else, this is a raw post via a j2me client of xml (or touchforms)
             #todo, multipart raw submissions need further parsing capacity.
-            instance = self.request.raw_post_data
+            self.instance = request.raw_post_data
+
+    def get_response(self):
+        if not self.auth_context.is_valid():
+            return self.get_failed_auth_response()
+
+        if self.instance is MULTIPART_FILENAME_ERROR:
+            return HttpResponseBadRequest((
+                'If you use multipart/form-data, '
+                'please name your file %s.\n'
+                'You may also do a normal (non-multipart) post '
+                'with the xml submission as the request body instead.'
+            ) % self.magic_property)
 
         try:
-            doc = post_xform_to_couch(instance, attachments=attachments,
+            doc = post_xform_to_couch(self.instance, attachments=self.attachments,
                                       auth_context=self.auth_context)
             return self.get_success_response(doc)
         except SubmissionError as e:
             logging.exception(
                 u"Problem receiving submission to %s. %s" % (
-                    self.request.path,
+                    self.path,
                     unicode(e),
                 )
             )
