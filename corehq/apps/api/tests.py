@@ -1179,14 +1179,12 @@ class BaseUserES(object):
 
         self.fake_user_es = FakeUserES()
         es.MOCK_USER_ES = self.fake_user_es
-        self.users = []
         self.make_users()
 
     def tearDown(self):
         self.admin_user.delete()
-        for user in self.users:
-            user.delete()
         self.domain.delete()
+        es.MOCK_USER_ES = None
 
     def make_users(self):
         users = [
