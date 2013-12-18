@@ -41,54 +41,68 @@ def form_list(request):
     return HttpResponse(xml, mimetype="text/xml")
     
 
+def extract_values_from_request(request):
+    received_on = request.META.get('HTTP_X_SUBMIT_TIME')
+    if received_on:
+        received_on = string_to_datetime(received_on)
+    else:
+        received_on = Ellipsis
+
+    date_header = request.META.get('HTTP_DATE')
+    if date_header:
+        # comes in as:
+        # Mon, 11 Apr 2011 18:24:43 GMT
+        # goes out as:
+        # 2011-04-11T18:24:43Z
+        try:
+            date = datetime.strptime(date_header, "%a, %d %b %Y %H:%M:%S GMT")
+            date = datetime.strftime(date, "%Y-%m-%dT%H:%M:%SZ")
+        except:
+            logging.error((
+                "Receiver app: incoming submission has a date header "
+                "that we can't parse: '%s'"
+            ) % date_header)
+            date = date_header
+        date_header = date
+    else:
+        date_header = Ellipsis
+    return {
+        'submit_ip': get_ip(request),
+        'path': request.path,
+        'openrosa_headers': getattr(request, 'openrosa_headers', Ellipsis),
+        'last_sync_token': getattr(request, 'last_sync_token', Ellipsis),
+        'received_on': received_on,
+        'date_header': date_header,
+    }
+
+
 class SubmissionPost(couchforms_util.SubmissionPost):
-    def _attach_shared_props(self, doc):
+
+    def __init__(self, request, auth_context=None):
+        self.location = get_location(request)
+        self.form_meta_values = extract_values_from_request(request)
+        super(SubmissionPost, self).__init__(request, auth_context)
+
+    def _attach_shared_props(self, doc, submit_ip, path, openrosa_headers,
+                             last_sync_token, received_on, date_header):
         # attaches shared properties of the request to the document.
         # used on forms and errors
-        doc['submit_ip'] = get_ip(self.request)
-        doc['path'] = self.request.path
+        doc['submit_ip'] = submit_ip
+        doc['path'] = path
 
-        # if you have OpenRosaMiddleware running the headers appear here
-        if hasattr(self.request, 'openrosa_headers'):
-            doc['openrosa_headers'] = self.request.openrosa_headers
+        if openrosa_headers is not Ellipsis:
+            doc['openrosa_headers'] = openrosa_headers
 
-        # if you have SyncTokenMiddleware running the headers appear here
-        if hasattr(self.request, 'last_sync_token'):
-            doc['last_sync_token'] = self.request.last_sync_token
+        if last_sync_token is not Ellipsis:
+            doc['last_sync_token'] = last_sync_token
 
-        # a hack allowing you to specify the submit time to use
-        # instead of the actual time receiver
-        # useful for migrating data
-        received_on = self.request.META.get('HTTP_X_SUBMIT_TIME')
-        date_header = self.request.META.get('HTTP_DATE')
-        if received_on:
-            doc.received_on = string_to_datetime(received_on)
-        if date_header:
-            # comes in as:
-            # Mon, 11 Apr 2011 18:24:43 GMT
-            # goes out as:
-            # 2011-04-11T18:24:43Z
-            try:
-                date = datetime.strptime(date_header, "%a, %d %b %Y %H:%M:%S GMT")
-                date = datetime.strftime(date, "%Y-%m-%dT%H:%M:%SZ")
-            except:
-                logging.error((
-                    "Receiver app: incoming submission has a date header "
-                    "that we can't parse: '%s'"
-                ) % date_header)
-                date = date_header
-            doc['date_header'] = date
+        if received_on is not Ellipsis:
+            doc.received_on = received_on
+
+        if date_header is not Ellipsis:
+            doc['date_header'] = date_header
 
         return doc
-
-    def default_actions(self, doc):
-        """These are always done"""
-        # fire signals
-        # We don't trap any exceptions here. This is by design, since
-        # nothing is supposed to be able to raise an exception here
-        self._attach_shared_props(doc)
-        form_received.send(sender="receiver", xform=doc)
-        doc.save()
 
     def success_actions_and_respond(self, doc):
         feedback = successful_form_received.send_robust(sender='receiver', xform=doc)
@@ -147,7 +161,9 @@ class SubmissionPost(couchforms_util.SubmissionPost):
     def get_success_response(self, doc):
         # get a fresh copy of the doc, in case other things modified it.
         instance = XFormInstance.get(doc.get_id)
-        self.default_actions(instance)
+        self._attach_shared_props(instance, **self.form_meta_values)
+        form_received.send(sender="receiver", xform=instance)
+        instance.save()
 
         if instance.doc_type == "XFormInstance":
             response = self.success_actions_and_respond(instance)
@@ -155,7 +171,7 @@ class SubmissionPost(couchforms_util.SubmissionPost):
             response = self.fail_actions_and_respond(instance)
 
         # this hack is required for ODK
-        response["Location"] = get_location(self.request)
+        response["Location"] = self.location
 
         # this is a magic thing that we add
         response['X-CommCareHQ-FormID'] = doc.get_id
@@ -163,7 +179,7 @@ class SubmissionPost(couchforms_util.SubmissionPost):
 
     def get_error_response(self, error_log):
         error_doc = SubmissionErrorLog.get(error_log.get_id)
-        self._attach_shared_props(error_doc)
+        self._attach_shared_props(error_doc, **self.form_meta_values)
         submission_error_received.send(sender="receiver", xform=error_doc)
         error_doc.save()
         return HttpResponseServerError(
