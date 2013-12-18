@@ -8,7 +8,7 @@ function (doc) {
             close_reason = "",
             termination_reason = "";
 
-        if(indicators.date_of_death && indicators.date_of_death.value)
+        if (indicators.date_of_death && indicators.date_of_death.value) {
             report_date = new Date(indicators.date_of_death.value);
         }
         else{
