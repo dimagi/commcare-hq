@@ -62,11 +62,9 @@ class SubmissionPost(couchforms.SubmissionPost):
         doc['submit_ip'] = self.submit_ip
         doc['path'] = self.path
 
-        if self.openrosa_headers:
-            doc['openrosa_headers'] = self.openrosa_headers
+        doc['openrosa_headers'] = self.openrosa_headers
 
-        if self.last_sync_token:
-            doc['last_sync_token'] = self.last_sync_token
+        doc['last_sync_token'] = self.last_sync_token
 
         if self.received_on:
             doc.received_on = self.received_on
