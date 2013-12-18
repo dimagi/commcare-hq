@@ -2,7 +2,6 @@ from corehq.apps.commtrack import const
 from corehq.apps.commtrack.models import SupplyPointProductCase
 from corehq.apps.commtrack.tests.util import CommTrackTest
 from datetime import datetime
-from corehq.apps.commtrack.stockreport import Requisition
 from corehq.apps.commtrack.const import RequisitionActions, RequisitionStatus
 from corehq.apps.commtrack.requisitions import create_requisition
 
@@ -10,6 +9,7 @@ class RequisitionTest(CommTrackTest):
     requisitions_enabled = True
 
     def testMakeRequisition(self):
+        from corehq.apps.commtrack.stockreport import Requisition
         config = self.domain.commtrack_settings
         for spp in self.spps.values():
             transaction = Requisition(
