@@ -202,33 +202,55 @@ def _log_hard_failure(instance, attachments, error):
 
     return SubmissionErrorLog.from_instance(instance, message)
 
+
 MULTIPART_FILENAME_ERROR = object()
+MAGIC_PROPERTY = 'xml_submission_file'
+
+
+def extract_instance_from_request(request):
+    attachments = {}
+    if request.META['CONTENT_TYPE'].startswith('multipart/form-data'):
+        # it's an standard form submission (eg ODK)
+        # this does an assumption that ODK submissions submit using the form parameter xml_submission_file
+        # todo: this should be made more flexibly to handle differeing params for xform submission
+        try:
+            instance = request.FILES[MAGIC_PROPERTY].read()
+        except MultiValueDictKeyError:
+            instance = MULTIPART_FILENAME_ERROR
+        else:
+            for key, item in request.FILES.items():
+                if key != MAGIC_PROPERTY:
+                    attachments[key] = item
+    else:
+        #else, this is a raw post via a j2me client of xml (or touchforms)
+        #todo, multipart raw submissions need further parsing capacity.
+        instance = request.raw_post_data
+    return instance, attachments
 
 
 class SubmissionPost(object):
 
-    magic_property = 'xml_submission_file'
+    def __init__(self, request=None, instance=None, attachments=None,
+                 auth_context=None, path=None):
+        """
+        you can either pass in request or give explicit values for
+        instance and attachments (defaults to {})
 
-    def __init__(self, request, auth_context=None):
-        self.path = request.path
+        (path is optional)
+        if you pass in all required values explicitly, request can be omitted
+
+        """
+        attachments = attachments or {}
+        assert request or None not in (path, instance, attachments)
         self.auth_context = auth_context or DefaultAuthContext()
-        self.attachments = {}
-        if request.META['CONTENT_TYPE'].startswith('multipart/form-data'):
-            # it's an standard form submission (eg ODK)
-            # this does an assumption that ODK submissions submit using the form parameter xml_submission_file
-            # todo: this should be made more flexibly to handle differeing params for xform submission
-            try:
-                self.instance = request.FILES[self.magic_property].read()
-            except MultiValueDictKeyError:
-                self.instance = MULTIPART_FILENAME_ERROR
-            else:
-                for key, item in request.FILES.items():
-                    if key != self.magic_property:
-                        self.attachments[key] = item
+
+        self.path = path or (request.path if request else None)
+        if instance:
+            self.instance = instance
+            self.attachments = attachments
         else:
-            #else, this is a raw post via a j2me client of xml (or touchforms)
-            #todo, multipart raw submissions need further parsing capacity.
-            self.instance = request.raw_post_data
+            self.instance, self.attachments = \
+                extract_instance_from_request(request)
 
     def get_response(self):
         if not self.auth_context.is_valid():
@@ -240,10 +262,11 @@ class SubmissionPost(object):
                 'please name your file %s.\n'
                 'You may also do a normal (non-multipart) post '
                 'with the xml submission as the request body instead.'
-            ) % self.magic_property)
+            ) % MAGIC_PROPERTY)
 
         try:
-            doc = post_xform_to_couch(self.instance, attachments=self.attachments,
+            doc = post_xform_to_couch(self.instance,
+                                      attachments=self.attachments,
                                       auth_context=self.auth_context)
             return self.get_success_response(doc)
         except SubmissionError as e:
