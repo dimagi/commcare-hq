@@ -191,7 +191,7 @@ class FormCustomExportHelper(CustomExportHelper):
         def generate_additional_columns():
             ret = []
             case_name_col = CustomColumn(slug='case_name', index='form.case.@case_id', display='info.case_name',
-                                     transform=CASENAME_TRANSFORM, show=True)
+                                     transform=CASENAME_TRANSFORM, show=True, selected=True)
             matches = filter(case_name_col.match, column_conf)
             if matches:
                 for match in matches:
@@ -240,7 +240,7 @@ class FormCustomExportHelper(CustomExportHelper):
 
 class CustomColumn(object):
 
-    def __init__(self, slug, index, display, transform, is_sensitive=False, tag=None, show=False):
+    def __init__(self, slug, index, display, transform, is_sensitive=False, tag=None, show=False, selected=False):
         self.slug = slug
         self.index = index
         self.display = display
@@ -248,6 +248,7 @@ class CustomColumn(object):
         self.is_sensitive = is_sensitive
         self.tag = tag
         self.show = show
+        self.selected = selected
 
     def match(self, col):
          return col['index'] == self.index and col['transform'] == self.transform
@@ -262,7 +263,7 @@ class CustomColumn(object):
         # to the existing export UI
         return {
             'index': self.index,
-            'selected': False,
+            'selected': self.selected,
             'display': self.display,
             'transform': self.transform,
             "is_sensitive": self.is_sensitive,
