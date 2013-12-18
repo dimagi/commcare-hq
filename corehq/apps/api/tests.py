@@ -21,6 +21,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater, ShortFormRepeater
 from corehq.apps.api.resources import v0_1, v0_4, v0_5, v0_6
 from corehq.apps.api.fields import ToManyDocumentsField, ToOneDocumentField, UseIfRequested, ToManyDictField
+from corehq.apps.api import es
 from corehq.apps.api.es import ESQuerySet, UserESMixin, ESUserError
 from django.conf import settings
 
@@ -1123,6 +1124,50 @@ class TestGroupResource(APIResourceTest):
         modified.delete()
 
 
+class TestUserES(TestCase):
+    "I'm spoofing the ES call anyways, so most of it isn't testable :("
+    def __init__(self, *args, **kwargs):
+        self.es = UserESMixin()
+        super(TestUserES, self).__init__(*args, **kwargs)
+
+    def setUp(self):
+        self.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
+        self.username = 'rudolph@qwerty.commcarehq.org'
+        self.password = '***'
+        self.admin_user = WebUser.create(self.domain.name, self.username, self.password)
+        self.admin_user.set_role(self.domain.name, 'admin')
+        self.admin_user.save()
+
+    def tearDown(self):
+        self.admin_user.delete()
+        self.domain.delete()
+
+    def test_query(self):
+        "just make sure it doesn't error"
+        users = self.es.make_query(q='stark')
+
+    def test_excluded_field(self):
+        with self.assertRaises(ESUserError):
+            self.es.make_query(
+                fields=['email', 'first_name', 'password'],
+            )
+
+
+class FakeUserES(object):
+    def __init__(self):
+        self.docs = []
+        self.queries = []
+
+    def add_doc(self, doc):
+        self.docs.append(doc)
+
+    def make_query(self, q=None, fields=None, domain=None, start_at=None, size=None):
+        self.queries.append(q)
+        start = int(start_at) if start_at else 0
+        end = min(len(self.docs), start + int(size)) if size else None
+        return self.docs[start:end]
+
+
 class BaseUserES(object):
     def setUp(self):
         self.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
@@ -1131,6 +1176,9 @@ class BaseUserES(object):
         self.admin_user = WebUser.create(self.domain.name, self.username, self.password)
         self.admin_user.set_role(self.domain.name, 'admin')
         self.admin_user.save()
+
+        self.fake_user_es = FakeUserES()
+        es.MOCK_USER_ES = self.fake_user_es
         self.users = []
         self.make_users()
 
@@ -1142,49 +1190,28 @@ class BaseUserES(object):
 
     def make_users(self):
         users = [
-            'robb_stark',
-            'jon_snow',
-            'brandon_stark',
-            'eddard_stark',
-            'catelyn_stark',
-            'tyrion_lannister',
-            'tywin_lannister',
-            'jamie_lannister',
-            'cersei_lannister',
+            ('Robb', 'Stark'),
+            ('Jon', 'Snow'),
+            ('Brandon', 'Stark'),
+            ('Eddard', 'Stark'),
+            ('Catelyn', 'Stark'),
+            ('Tyrion', 'Lannister'),
+            ('Tywin', 'Lannister'),
+            ('Jamie', 'Lannister'),
+            ('Cersei', 'Lannister'),
         ]
-        for name in users:
-            user = CommCareUser.create(self.domain.name, name, 'root')
-            user.save()
-            self.users.append(user)
-
-    def __init__(self, *args, **kwargs):
-        self.es = UserESMixin()
-        super(BaseUserES, self).__init__(*args, **kwargs)
-
-
-class TestUserES(BaseUserES, TestCase):
-    def test_query(self):
-        users = self.es.make_query(q='stark')
-        for u in users:
-            print u['username']
-        self.assertGreaterEqual(len(users), 4)
-
-    def test(self):
-        users = self.es.make_query(
-            q='snow',
-            # fields=[u'email', u'first_name'],
-        )
-        self.assertTrue(any(map(
-            lambda user: user['username'] == 'jon_snow',
-            users
-        )))
-
-    def test_excluded_field(self):
-        with self.assertRaises(ESUserError):
-            self.es.make_query(
-                fields=['email', 'first_name', 'password'],
-            )
-
+        for first, last in users:
+            username = '_'.join([first.lower(), last.lower()])
+            email = username + '@qwerty.commcarehq.org'
+            self.fake_user_es.add_doc({
+                'id': 'lskdjflskjflaj',
+                'email': email,
+                'username': username,
+                'first_name': first,
+                'last_name': last,
+                'phone_numbers': ['9042411080'],
+            })
+    
 
 class TestUserAPI(BaseUserES, APIResourceTest):
     resource = v0_6.CommCareUserResource
@@ -1205,9 +1232,18 @@ class TestUserAPI(BaseUserES, APIResourceTest):
         self.client.login(username=self.username, password=self.password)
         return self.client.get('%s?%s' % (self.list_endpoint, urlencode(params)))
 
-    def test_limit(self):
-        limit = 10
+    def test_paginate(self):
+        limit = 3
         result = self.query(limit=limit)
         self.assertEqual(result.status_code, 200)
         users = simplejson.loads(result.content)['objects']
         self.assertEquals(len(users), limit)
+
+        result = self.query(start_at=limit, limit=limit)
+        self.assertEqual(result.status_code, 200)
+        users = simplejson.loads(result.content)['objects']
+        self.assertEquals(len(users), limit)
+
+    def test_basic(self):
+        response = self.query()
+        self.assertEqual(response.status_code, 200)
