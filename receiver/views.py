@@ -1,19 +1,15 @@
-from datetime import datetime
 import logging
-from dimagi.utils.web import get_ip
 from django.http import HttpResponse, HttpResponseServerError
+import couchforms
 from couchforms.models import XFormInstance, SubmissionErrorLog
-from couchforms import util as couchforms_util
+import receiver
 from receiver.signals import successful_form_received, ReceiverResult, form_received
 from django.views.decorators.http import require_POST
-from django.contrib.sites.models import Site
 from django.views.decorators.csrf import csrf_exempt
 from receiver import xml
-from django.conf import settings
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 from dimagi.utils.couch.database import get_db
-from dimagi.utils.parsing import string_to_datetime
 from receiver.xml import ResponseNature
 from couchforms.signals import submission_error_received
 
@@ -41,68 +37,22 @@ def form_list(request):
     return HttpResponse(xml, mimetype="text/xml")
 
 
-def get_received_on(request):
-    received_on = request.META.get('HTTP_X_SUBMIT_TIME')
-    if received_on:
-        return string_to_datetime(received_on)
-    else:
-        return None
+class SubmissionPost(couchforms.SubmissionPost):
 
-
-def get_date_header(request):
-    date_header = request.META.get('HTTP_DATE')
-    if date_header:
-        # comes in as:
-        # Mon, 11 Apr 2011 18:24:43 GMT
-        # goes out as:
-        # 2011-04-11T18:24:43Z
-        try:
-            date = datetime.strptime(date_header, "%a, %d %b %Y %H:%M:%S GMT")
-            date = datetime.strftime(date, "%Y-%m-%dT%H:%M:%SZ")
-        except:
-            logging.error((
-                "Receiver app: incoming submission has a date header "
-                "that we can't parse: '%s'"
-            ) % date_header)
-            date = date_header
-        date_header = date
-    else:
-        date_header = None
-    return date_header
-
-
-class SubmissionPost(couchforms_util.SubmissionPost):
-
-    def __init__(self, request=None, instance=None, attachments=None,
+    def __init__(self, instance=None, attachments=None,
                  auth_context=None, path=None,
                  location=None, submit_ip=None, openrosa_headers=None,
                  last_sync_token=None, received_on=None, date_header=None):
-        """
-        you can either pass in request or give explicit values for
-        instance and attachments (defaults to {})
 
-        (all other values are optional and used for metadata)
-        if you pass in all required values explicitly, request can be omitted
+        # get_location has good default
+        self.location = location or receiver.get_location()
+        self.received_on = received_on
+        self.date_header = date_header
+        self.submit_ip = submit_ip
+        self.last_sync_token = last_sync_token
+        self.openrosa_headers = openrosa_headers
 
-        """
-        self.location = location or \
-            get_location(request.is_secure() if request else None)
-
-        self.received_on = received_on or \
-            (get_received_on(request) if request else None)
-
-        self.date_header = date_header or \
-            (get_date_header(request) if request else None)
-
-        self.submit_ip = submit_ip or (get_ip(request) if request else None)
-
-        self.last_sync_token = last_sync_token or \
-            getattr(request, 'last_sync_token', None)
-
-        self.openrosa_headers = openrosa_headers or \
-            getattr(request, 'openrosa_headers', None)
-
-        super(SubmissionPost, self).__init__(request, auth_context=auth_context,
+        super(SubmissionPost, self).__init__(auth_context=auth_context,
                                              path=path, instance=instance,
                                              attachments=attachments)
 
@@ -213,16 +163,15 @@ class SubmissionPost(couchforms_util.SubmissionPost):
 @csrf_exempt
 @require_POST
 def post(request):
-    return SubmissionPost(request).get_response()
-
-
-def get_location(is_secure=None):
-    # this is necessary, because www.commcarehq.org always uses https,
-    # but is behind a proxy that won't necessarily look like https
-    if hasattr(settings, "OVERRIDE_LOCATION"):
-        return settings.OVERRIDE_LOCATION
-    if is_secure is None:
-        prefix = getattr(settings, 'DEFAULT_PROTOCOL', 'http')
-    else:
-        prefix = "https" if is_secure else "http"
-    return "%s://%s" % (prefix, Site.objects.get_current().domain)
+    instance, attachments = receiver.get_instance_and_attachment(request)
+    return SubmissionPost(
+        instance=instance,
+        attachments=attachments,
+        location=receiver.get_location(request),
+        received_on=receiver.get_received_on(request),
+        date_header=receiver.get_date_header(request),
+        path=receiver.get_path(request),
+        submit_ip=receiver.get_submit_ip(request),
+        last_sync_token=receiver.get_last_sync_token(request),
+        openrosa_headers=receiver.get_openrosa_headers(request),
+    ).get_response()
