@@ -633,6 +633,11 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
+        'smsbillables': {
+            'handlers': ['file', 'sentry'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
     }
 }
 

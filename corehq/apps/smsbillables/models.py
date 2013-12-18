@@ -1,4 +1,5 @@
 import phonenumbers
+import logging
 from decimal import Decimal
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
@@ -7,6 +8,9 @@ from corehq.apps.accounting import models as accounting
 from corehq.apps.accounting.models import Currency
 from corehq.apps.sms.models import DIRECTION_CHOICES
 from corehq.apps.sms.util import clean_phone_number
+
+
+smsbillables_logging = logging.getLogger("smsbillables")
 
 
 class SmsGatewayFeeCriteria(models.Model):
@@ -120,9 +124,10 @@ class SmsUsageFeeCriteria(models.Model):
         if all_possible_criteria.count() == 0:
             return None
 
-        # todo: 1. try all parameters
-
-        # least specific
+        try:
+            return all_possible_criteria.get(domain=domain)
+        except ObjectDoesNotExist:
+            pass
         try:
             return all_possible_criteria.get(domain=None)
         except ObjectDoesNotExist:
@@ -231,15 +236,20 @@ class SmsBillable(models.Model):
         if billable.gateway_fee is not None:
             conversion_rate = billable.gateway_fee.currency.rate_to_default
             if conversion_rate != 0:
-                # If the conversion rate is ever 0, something happened with the Currency API and we should
-                # flag appropriately.
                 billable.gateway_fee_conversion_rate = conversion_rate
+            else:
+                smsbillables_logging.error("Gateway fee conversion rate for currency %s is 0",
+                                           billable.gateway_fee.currency.code)
 
         # Fetch usage_fee todo
         domain = message_log.domain
         billable.usage_fee = SmsUsageFee.get_by_criteria(
             direction, domain=domain
         )
+
+        if billable.usage_fee is None:
+            smsbillables_logging.error("Did not find usage fee for direction %s and domain %s"
+                                       % (direction, domain))
 
         if api_response is not None:
             billable.api_response = api_response
