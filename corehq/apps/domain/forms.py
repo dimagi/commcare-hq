@@ -104,7 +104,7 @@ class SnapshotApplicationForm(forms.Form):
         ]
 
 class SnapshotSettingsForm(SnapshotSettingsMixin):
-    title = CharField(label=ugettext_noop("Title"), required=True)
+    title = CharField(label=ugettext_noop("Title"), required=True, max_length=100)
     project_type = CharField(label=ugettext_noop("Project Category"), required=True,
         help_text=ugettext_noop("e.g. MCH, HIV, etc."))
     license = ChoiceField(label=ugettext_noop("License"), required=True, choices=LICENSES.items(),
@@ -114,7 +114,7 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
     description = CharField(label=ugettext_noop("Long Description"), required=False, widget=forms.Textarea,
         help_text=ugettext_noop("A high-level overview of your project as a whole"))
     short_description = CharField(label=ugettext_noop("Short Description"), required=False,
-        max_length=200, widget=forms.Textarea,
+        widget=forms.Textarea(attrs={'maxlength': 200}),
         help_text=ugettext_noop("A brief description of your project (max. 200 characters)"))
     share_multimedia = BooleanField(label=ugettext_noop("Share all multimedia?"), required=False,
         help_text=ugettext_noop("This will allow any user to see and use all multimedia in this project"))
