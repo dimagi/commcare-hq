@@ -274,8 +274,9 @@ class UserESMixin(object):
         res = myobj.make_query(
             q='sisko',
             fields=[u'email', u'first_name'],
-            size=10,
-            start_at=None,
+            domain='qwerty',
+            start_at=60,
+            size=20,
         )
     
     You may also want to catch ESUserError.  This will be raised if an invalid
@@ -302,12 +303,13 @@ class UserESMixin(object):
 
     def make_query(self,
             q=None, fields=None, domain=None, start_at=None, size=None):
+        "Pass a domain parameter to restrict results to that domain"
+
         # for testing
         if MOCK_USER_ES is not None:
             return MOCK_USER_ES.make_query(q=q, fields=fields, domain=domain,
                 start_at=start_at, size=size)
 
-        # TODO: if domain is provided, restrict results to that domain!
         fields = self.get_fields(fields)
 
         query = {
@@ -324,6 +326,7 @@ class UserESMixin(object):
             fields=fields,
             start_at=start_at,
             size=size or 100,
+            params={'domain.exact': domain} if domain else None,
         )
         if 'error' in res:
             msg = res['error']
