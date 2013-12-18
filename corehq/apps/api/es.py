@@ -281,26 +281,27 @@ class UserESMixin(object):
     query is made - one that errors, or which includes disallowed fields.
     """
     allowed_fields = [
-        'status', 'domain', 'last_name', '_rev', 'user_data', 'created_on',
-        'is_staff', 'base_doc', 'CURRENT_VERSION', 'phone_numbers',
-        'domain_membership', 'date_joined', 'first_name', 'eulas',
-        'email_opt_out', 'is_superuser', 'last_login', 'email', 'username',
-        'is_active', 'doc_type', '_id', 'language', 'registering_device_id',
-        'announcements_seen', 'device_ids'
+         '_id', 'email', 'username', 'first_name', 'last_name', 'phone_numbers',
     ]
     # excluded fields:
-    # 'password',
+    # 'status', '_rev', 'user_data', 'created_on', 'is_staff', 'base_doc',
+    # 'CURRENT_VERSION', 'date_joined', 'eulas', 'email_opt_out',
+    # 'is_superuser', 'last_login', 'is_active', 'doc_type', 'language',
+    # 'registering_device_id', 'password', 'announcements_seen', 'device_ids'
+    # 'domain', 'domain_membership',
 
     def get_fields(self, fields):
         if not fields:
-            return ['first_name', 'last_name', 'username', 'email', '_id']
+            return self.allowed_fields
         for field in fields:
             if field not in self.allowed_fields:
                 msg = "You cannot include %s in the results" % field
                 raise ESUserError(msg)
         return fields
 
-    def make_query(self, q=None, fields=None, start_at=None, size=None):
+    def make_query(self,
+            q=None, fields=None, domain=None, start_at=None, size=None):
+        # TODO: if domain is provided, restrict results to that domain!
         fields = self.get_fields(fields)
 
         query = {
@@ -320,7 +321,6 @@ class UserESMixin(object):
         )
         if 'error' in res:
             msg = res['error']
-            print msg
             raise ESUserError(msg)
         return [u['fields'] for u in res['hits']['hits']]
 
