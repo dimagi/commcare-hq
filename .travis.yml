@@ -5,6 +5,7 @@ python:
 install:
  - "sudo apt-get install libevent-dev"
  - "pip install -e ."
+ - "psql -c 'create database fluff_test' -U postgres"
  - "pip install coverage coveralls"
 script:
  - "coverage run setup.py test"
