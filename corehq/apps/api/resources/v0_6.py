@@ -13,6 +13,7 @@ from .v0_1 import UserResource, CustomResourceMeta
 from . import JsonResource, DomainSpecificResourceMixin
 
 
+
 class CommCareUserResource(UserESMixin, JsonResource, DomainSpecificResourceMixin):
     """
     A read-only user data resource based on elasticsearch.

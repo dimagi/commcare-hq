@@ -264,6 +264,7 @@ class XFormES(ESView):
         return es_results
 
 
+MOCK_USER_ES = None
 class UserESMixin(object):
     """
     Usage:
@@ -301,6 +302,11 @@ class UserESMixin(object):
 
     def make_query(self,
             q=None, fields=None, domain=None, start_at=None, size=None):
+        # for testing
+        if MOCK_USER_ES is not None:
+            return MOCK_USER_ES.make_query(q=q, fields=fields, domain=domain,
+                start_at=start_at, size=size)
+
         # TODO: if domain is provided, restrict results to that domain!
         fields = self.get_fields(fields)
 
