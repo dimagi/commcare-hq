@@ -113,7 +113,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                 if callable(attrib):
                     output[slug] = attrib(product)
                 else:
-                    output[slug] = getattr(product, attrib)
+                    output[slug] = getattr(product, attrib, '')
 
         for product in product_cases:
             out = {}

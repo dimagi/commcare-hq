@@ -1,6 +1,7 @@
 from datetime import datetime
+from decimal import Decimal
 from corehq.apps.commtrack.const import RequisitionStatus
-from corehq.apps.commtrack.models import RequisitionCase
+from corehq.apps.commtrack.models import RequisitionCase, SupplyPointProductCase
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack.tests.util import CommTrackTest
 from corehq.apps.commtrack.sms import handle, SMSError
@@ -24,12 +25,12 @@ class StockReportTest(CommTrackTest):
         self.assertTrue(handled)
         forms = list(self.get_commtrack_forms())
         self.assertEqual(1, len(forms))
-        self.assertEqual(self.sp.location_, forms[0].location_)
+        self.assertEqual(_get_location_from_sp(self.sp), _get_location_from_form(forms[0]))
 
         for code, amt in amounts.items():
-            spp = CommCareCase.get(self.spps[code]._id)
+            spp = SupplyPointProductCase.get(self.spps[code]._id)
             self.assertEqual(self.sp.location_, spp.location_)
-            self.assertEqual(str(amt), spp.current_stock)
+            self.assertEqual(Decimal(amt), spp.current_stock)
 
     def testStockReportFixed(self):
         self.assertEqual(0, len(self.get_commtrack_forms()))
@@ -46,12 +47,12 @@ class StockReportTest(CommTrackTest):
         self.assertTrue(handled)
         forms = list(self.get_commtrack_forms())
         self.assertEqual(1, len(forms))
-        self.assertEqual(self.sp.location_, forms[0].location_)
+        self.assertEqual(_get_location_from_sp(self.sp), _get_location_from_form(forms[0]))
 
         for code, amt in amounts.items():
-            spp = CommCareCase.get(self.spps[code]._id)
+            spp = SupplyPointProductCase.get(self.spps[code]._id)
             self.assertEqual(self.sp.location_, spp.location_)
-            self.assertEqual(str(amt), spp.current_stock)
+            self.assertEqual(Decimal(amt), spp.current_stock)
 
 
 class StockRequisitionTest(CommTrackTest):
@@ -202,3 +203,9 @@ class StockRequisitionTest(CommTrackTest):
 
         # should still be no open requisitions
         self.assertEqual(0, len(RequisitionCase.open_for_location(self.domain.name, self.loc._id)))
+
+def _get_location_from_form(form):
+    return form.form['location']
+
+def _get_location_from_sp(sp):
+    return sp.location_[-1]
