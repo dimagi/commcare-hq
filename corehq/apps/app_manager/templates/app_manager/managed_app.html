@@ -284,9 +284,11 @@
                                      <div class="controls">
                                          <select name="target_module_id" class="input">
                                              {% for module in app.get_modules %}
+                                                 {% if module.case_type %}
                                                  <option value="{{ module.id }}">
                                                      {{ module.name|html_trans:langs }}
                                                  </option>
+                                                 {% endif %}
                                              {% endfor %}
                                          </select>
                                      </div>

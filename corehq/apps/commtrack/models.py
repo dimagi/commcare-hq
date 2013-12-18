@@ -231,6 +231,12 @@ class OpenLMISConfig(DocumentSchema):
     def is_configured(self):
         return True if self.enabled and self.url and self.password and self.username else False
 
+class AlertConfig(DocumentSchema):
+    stock_out_facilities = BooleanProperty(default=False)
+    stock_out_commodities = BooleanProperty(default=False)
+    stock_out_rates = BooleanProperty(default=False)
+    non_report = BooleanProperty(default=False)
+
 
 class CommtrackConfig(Document):
 
@@ -264,6 +270,9 @@ class CommtrackConfig(Document):
     @multiaction_keyword.setter
     def multiaction_keyword(self, val):
         self.multiaction_keyword_ = val.lower() if val else None
+
+    # configured on Subscribe Sms page
+    alert_config = SchemaProperty(AlertConfig)
 
     @classmethod
     def for_domain(cls, domain):

@@ -135,7 +135,7 @@ that you have a 32bit version of Python installed.
 
     # To set up elasticsearch indexes, first run (and then kill once you see the
     "Starting pillow" lines):
-    ./manage.py run_ptop
+    ./manage.py run_ptop --all
     # This will do an initial run of the elasticsearch indexing process, but this will run as a
     # service later. This run at least creates the indices for the first time.
     
@@ -205,7 +205,7 @@ Then run the following separately:
     > manage.py celeryd --settings=settings
 
     # Keeps elasticsearch index in sync
-    ./manage.py run_ptop
+    ./manage.py run_ptop --all
 
     # run the Django server
     ./manage.py runserver

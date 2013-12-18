@@ -93,8 +93,10 @@ class MCHDisplay(CaseDisplay):
     def parse_date(self, date_string):
         if date_string != EMPTY_FIELD and date_string != '' and date_string is not None:
             try:
-                return self.report.date_to_json(CaseDisplay.parse_date(self, date_string))
+                return str(self.report.date_to_json(CaseDisplay.parse_date(self, date_string)))
             except AttributeError:
+                return _("Bad date format!")
+            except TypeError:
                 return _("Bad date format!")
         else:
             return EMPTY_FIELD
