@@ -11,7 +11,7 @@ from xml.dom.minidom import parseString
 from diff_match_patch import diff_match_patch
 from django.core.cache import cache
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, get_language
 from django.views.decorators.cache import cache_control
 from corehq import ApplicationsTab, toggles
 from corehq.apps.app_manager import commcare_settings
@@ -477,7 +477,8 @@ def _clear_app_cache(request, domain):
             None, # tab.org should be None for any non org page
             ApplicationsTab.view,
             is_active,
-            request.couch_user.get_id
+            request.couch_user.get_id,
+            get_language(),
         ])
         cache.delete(key)
 

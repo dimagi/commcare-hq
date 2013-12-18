@@ -9,6 +9,7 @@ from django.template.loader import render_to_string
 from django.shortcuts import render
 from django.contrib import messages
 from django.utils.translation import ugettext as _
+from corehq.apps.app_manager.views import _clear_app_cache
 
 from corehq.apps.appstore.forms import AddReviewForm
 from corehq.apps.appstore.models import Review
@@ -238,6 +239,7 @@ def import_app(request, domain):
 
         for app in from_project.full_applications(include_builds=False):
             new_doc = from_project.copy_component(app['doc_type'], app.get_id, to_project_name, user)
+        _clear_app_cache(request, to_project_name)
 
         from_project.downloads += 1
         from_project.save()
