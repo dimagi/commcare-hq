@@ -11,14 +11,15 @@ from dimagi.utils.data import generator as data_gen
 
 from corehq.apps.accounting.models import (FeatureType, Currency, BillingAccount, FeatureRate, SoftwarePlanVersion,
                                            SoftwarePlan, SoftwareProductRate, Subscription, Subscriber, SoftwareProduct,
-                                           Feature)
+                                           Feature, SoftwareProductType, DefaultProductPlan)
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser, CommCareUser
 
 # don't actually use this for initializing new plans! the amounts have been changed to make it easier on testing:
-COMMCARE_PLANS = [
+COMMUNITY_COMMCARE_PLANS = [
     {
         'name': "CommCare Community",
+        'product_type': SoftwareProductType.COMMCARE,
         'fee': Decimal('0.0'),
         'rates': [
             {
@@ -33,6 +34,43 @@ COMMCARE_PLANS = [
             },
         ],
     },
+    {
+        'name': "CommTrack Community",
+        'product_type': SoftwareProductType.COMMTRACK,
+        'fee': Decimal('0.0'),
+        'rates': [
+            {
+                'name': "User CommTrack Community",
+                'limit': 2,
+                'excess': Decimal('1.00'),
+                'type': FeatureType.USER,
+            },
+            {
+                'name': "SMS CommTrack Community",
+                'type': FeatureType.SMS,
+            },
+        ],
+    },
+    {
+        'name': "CommConnect Community",
+        'product_type': SoftwareProductType.COMMCONNECT,
+        'fee': Decimal('0.0'),
+        'rates': [
+            {
+                'name': "User CommConnect Community",
+                'limit': 2,
+                'excess': Decimal('1.00'),
+                'type': FeatureType.USER,
+            },
+            {
+                'name': "SMS CommConnect Community",
+                'type': FeatureType.SMS,
+            },
+        ],
+    },
+]
+
+SUBSCRIBABLE_COMMCARE_PLANS = [
     {
         'name': "CommCare Standard",
         'fee': Decimal('100.00'),
@@ -126,8 +164,8 @@ def delete_all_accounts():
     Currency.objects.all().delete()
 
 
-def instantiate_plans(plan_list=None):
-    plan_list = plan_list or COMMCARE_PLANS
+def _instantiate_plans_from_list(plan_list):
+    plans = []
     for plan in plan_list:
         software_plan, created = SoftwarePlan.objects.get_or_create(name=plan['name'])
         plan_version = SoftwarePlanVersion(plan=software_plan)
@@ -144,9 +182,25 @@ def instantiate_plans(plan_list=None):
                 )
             )
         plan_version.save()
+        plans.append(software_plan)
+    return plans
+
+
+def instantiate_subscribable_plans(plan_list=None):
+    _instantiate_plans_from_list(SUBSCRIBABLE_COMMCARE_PLANS)
+
+
+def instantiate_community_plans():
+    plans = _instantiate_plans_from_list(COMMUNITY_COMMCARE_PLANS)
+    for ind, plan in enumerate(plans):
+        DefaultProductPlan.objects.get_or_create(
+            product_type=COMMUNITY_COMMCARE_PLANS[ind]['product_type'],
+            plan=plan,
+        )
 
 
 def delete_all_plans():
+    DefaultProductPlan.objects.all().delete()
     SoftwarePlanVersion.objects.all().delete()
     SoftwarePlan.objects.all().delete()
 
@@ -158,7 +212,7 @@ def delete_all_plans():
 
 
 def arbitrary_subscribable_plan():
-    subscribable_plans = [plan['name'] for plan in COMMCARE_PLANS if plan['name'] != "CommCare Community"]
+    subscribable_plans = [plan['name'] for plan in SUBSCRIBABLE_COMMCARE_PLANS]
     plan = SoftwarePlan.objects.get(name=random.choice(subscribable_plans))
     return plan.softwareplanversion_set.latest('date_created')
 
