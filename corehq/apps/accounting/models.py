@@ -197,6 +197,16 @@ class SoftwarePlan(models.Model):
     )
 
 
+class DefaultProductPlan(models.Model):
+    """
+    This links a product type to its default SoftwarePlan (i.e. the Community Plan).
+    The latest SoftwarePlanVersion that's linked to this plan will be the one used to create a new subscription if
+    nothing is found for that domain.
+    """
+    product_type = models.CharField(max_length=25, choices=SoftwareProductType.CHOICES, unique=True)
+    plan = models.ForeignKey(SoftwarePlan, on_delete=models.PROTECT)
+
+
 class SoftwarePlanVersion(models.Model):
     """
     Links a plan to its rates and provides versioning information.
