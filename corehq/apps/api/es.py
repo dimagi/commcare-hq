@@ -330,11 +330,17 @@ class UserESMixin(object):
         )
         if 'error' in res:
             msg = res['error']
+            print msg
             raise ESUserError(msg)
         return [u['fields'] for u in res['hits']['hits']]
 
 
 class UserES(UserESMixin, ESView):
+    """
+    self.run_query accepts a structured elasticsearch query
+    self.make_query builds an es request for you based on the parameters
+    """
+
     index = "hqusers"
 
     def validate_query(self, query):
