@@ -1142,10 +1142,6 @@ class TestUserES(TestCase):
         self.admin_user.delete()
         self.domain.delete()
 
-    def test_query(self):
-        "just make sure it doesn't error"
-        users = self.es.make_query(q='stark')
-
     def test_excluded_field(self):
         with self.assertRaises(ESUserError):
             self.es.make_query(
