@@ -11,6 +11,7 @@ from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadReque
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from corehq.apps.api.models import require_api_user_permission, PERMISSION_POST_SMS
+from corehq.apps.commtrack.models import AlertConfig
 from corehq.apps.sms.api import (
     send_sms,
     incoming,
@@ -896,7 +897,10 @@ class SubscribeSMSView(BaseMessagingSectionView):
         if self.request.method == 'POST':
              return SubscribeSMSForm(self.request.POST)
 
-        alert_config = self.commtrack_settings.alert_config
+        if self.commtrack_settings and self.commtrack_settings.alert_config:
+            alert_config = self.commtrack_settings.alert_config
+        else:
+            alert_config = AlertConfig()
         initial = {
             'stock_out_facilities': alert_config.stock_out_facilities,
             'stock_out_commodities': alert_config.stock_out_commodities,
