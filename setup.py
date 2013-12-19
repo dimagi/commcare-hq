@@ -12,7 +12,7 @@ setup(
     install_requires = [
         "couchdbkit",
         "couchexport",
-        "couchforms>=1.0.0",
+        "couchforms>=2.0.0",
         "dimagi-utils>=1.0.0",
         "django",
         "lxml",
