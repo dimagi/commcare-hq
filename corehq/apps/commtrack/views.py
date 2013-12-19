@@ -73,7 +73,7 @@ class ProductListView(BaseCommTrackManageView):
     @property
     def page_context(self):
         return {
-            'product_list': {
+            'data_list': {
                 'page': self.page,
                 'limit': self.limit,
                 'total': self.total
@@ -111,7 +111,7 @@ class FetchProductListView(ProductListView):
         return HttpResponse(json.dumps({
             'success': True,
             'current_page': self.page,
-            'product_list': self.product_data,
+            'data_list': self.product_data,
         }), 'text/json')
 
 
@@ -355,7 +355,7 @@ class FetchProgramListView(ProgramListView):
     def get(self, request, *args, **kwargs):
         return HttpResponse(json.dumps({
             'success': True,
-            'program_list': self.program_data,
+            'data_list': self.program_data,
         }), 'text/json')
 
 
@@ -420,7 +420,7 @@ class EditProgramView(NewProgramView):
     def page_context(self):
         return {
             'program': self.program,
-            'products': {
+            'data_list': {
                 'page': self.page,
                 'limit': self.limit,
                 'total': self.total
@@ -471,5 +471,5 @@ class FetchProductForProgramListView(EditProgramView):
         return HttpResponse(json.dumps({
             'success': True,
             'current_page': self.page,
-            'products': self.product_data,
+            'data_list': self.product_data,
         }), 'text/json')
