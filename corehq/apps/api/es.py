@@ -330,7 +330,6 @@ class UserESMixin(object):
         )
         if 'error' in res:
             msg = res['error']
-            print msg
             raise ESUserError(msg)
         return [u['fields'] for u in res['hits']['hits']]
 
