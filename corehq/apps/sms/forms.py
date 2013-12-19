@@ -24,6 +24,15 @@ FORWARDING_CHOICES = (
     (FORWARD_BY_KEYWORD, ugettext_noop("All messages starting with a keyword")),
 )
 
+SMS_CONVERSATION_LENGTH_CHOICES = (
+    (5, 5),
+    (10, 10),
+    (15, 15),
+    (20, 20),
+    (25, 25),
+    (30, 30),
+)
+
 TIME_BEFORE = "BEFORE"
 TIME_AFTER = "AFTER"
 TIME_BETWEEN = "BETWEEN"
@@ -39,9 +48,13 @@ class SMSSettingsForm(Form):
     use_custom_chat_template = BooleanField(required=False)
     custom_chat_template = TrimmedCharField(required=False)
     use_restricted_sms_times = BooleanField(required=False)
-    restricted_sms_times_json = CharField()
+    restricted_sms_times_json = CharField(required=False)
     use_sms_conversation_times = BooleanField(required=False)
-    sms_conversation_times_json = CharField()
+    sms_conversation_times_json = CharField(required=False)
+    sms_conversation_length = ChoiceField(
+        choices=SMS_CONVERSATION_LENGTH_CHOICES,
+        required=False,
+    )
 
     def initialize_time_window_fields(self, initial, bool_field, json_field):
         time_window_json = [w.to_json() for w in initial]
@@ -52,6 +65,7 @@ class SMSSettingsForm(Form):
             self.initial[bool_field] = False
 
     def __init__(self, *args, **kwargs):
+        self._cchq_is_previewer = kwargs.pop("_cchq_is_previewer", False)
         super(SMSSettingsForm, self).__init__(*args, **kwargs)
         if "initial" in kwargs:
             self.initialize_time_window_fields(
@@ -64,6 +78,8 @@ class SMSSettingsForm(Form):
                 "use_sms_conversation_times",
                 "sms_conversation_times_json"
             )
+        if settings.SMS_QUEUE_ENABLED and self._cchq_is_previewer:
+            self.fields["sms_conversation_length"].required = True
 
     def _clean_dependent_field(self, bool_field, field):
         if self.cleaned_data.get(bool_field):
@@ -141,13 +157,13 @@ class SMSSettingsForm(Form):
         return result
 
     def clean_restricted_sms_times_json(self):
-        if self.cleaned_data.get("use_restricted_sms_times"):
+        if self.cleaned_data.get("use_restricted_sms_times", False):
             return self._clean_time_window_json("restricted_sms_times_json")
         else:
             return []
 
     def clean_sms_conversation_times_json(self):
-        if self.cleaned_data.get("use_sms_conversation_times"):
+        if self.cleaned_data.get("use_sms_conversation_times", False):
             return self._clean_time_window_json("sms_conversation_times_json")
         else:
             return []

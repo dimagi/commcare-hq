@@ -98,9 +98,9 @@
             "use_default_sms_response" : {{ form.use_default_sms_response.value|JSON }},
             "default_sms_response" : {{ form.default_sms_response.value|JSON }},
             "use_restricted_sms_times" : {{ form.use_restricted_sms_times.value|JSON }},
-            "restricted_sms_times" : {% autoescape off %}{{ form.restricted_sms_times_json.value }}{% endautoescape %},
+            "restricted_sms_times" : {% autoescape off %}{{ form.restricted_sms_times_json.value|default:"[]" }}{% endautoescape %},
             "use_sms_conversation_times" : {{ form.use_sms_conversation_times.value|JSON }},
-            "sms_conversation_times" : {% autoescape off %}{{ form.sms_conversation_times_json.value }}{% endautoescape %},
+            "sms_conversation_times" : {% autoescape off %}{{ form.sms_conversation_times_json.value|default:"[]" }}{% endautoescape %},
             "use_custom_case_username" : {{ form.use_custom_case_username.value|JSON }},
             "custom_case_username" : {{ form.custom_case_username.value|JSON }},
             "use_custom_message_count_threshold" : {{ form.use_custom_message_count_threshold.value|JSON }},
@@ -139,6 +139,7 @@
                     <td><textarea name="default_sms_response" data-bind="text: default_sms_response"></textarea></td>
                     <td>{{ form.default_sms_response.errors }}</td>
                 </tr>
+                {% if sms_queue_enabled %}
                 <tr>
                     <td>{% trans "Restrict Times to Send SMS" %}</td>
                     <td><input type="checkbox" name="use_restricted_sms_times" data-bind="checked: use_restricted_sms_times" /></td>
@@ -178,6 +179,7 @@
                     <td></td>
                     <td></td>
                 </tr>
+                {% endif %}
             </tbody>
         </table>
         {% if is_previewer %}
@@ -213,6 +215,12 @@
                     <td class="dependent_field">{% trans "Custom Chat Template" %}</td>
                     <td><input type="text" name="custom_chat_template" data-bind="value: custom_chat_template" /></td>
                     <td>{{ form.custom_chat_template.errors }}</td>
+                </tr>
+                {% if sms_queue_enabled %}
+                <tr>
+                    <td>{% trans "SMS Conversation Length" %}</td>
+                    <td>{{ form.sms_conversation_length }}</td>
+                    <td>{{ form.sms_conversation_length.errors }}</td>
                 </tr>
                 <tr>
                     <td>{% trans "Prevent automated messages from interfering with sms conversations" %}</td>
@@ -253,6 +261,7 @@
                     <td></td>
                     <td></td>
                 </tr>
+                {% endif %}
             </tbody>
         </table>
         {% endif %}

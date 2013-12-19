@@ -66,6 +66,7 @@ def handle_domain_specific_delays(msg, domain_object, utcnow):
 
     if len(domain_object.sms_conversation_times) > 0:
         if time_within_windows(domain_now, domain_object.sms_conversation_times):
+            sms_conversation_length = domain_obj.sms_conversation_length
             conversation_start_timestamp = utcnow - timedelta(minutes=sms_conversation_length)
             if SMSLog.inbound_entry_exists(msg.couch_recipient_doc_type,
                                            msg.couch_recipient,

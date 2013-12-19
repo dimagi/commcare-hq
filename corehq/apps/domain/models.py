@@ -271,7 +271,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     # considered.
     sms_conversation_times = SchemaListProperty(DayTimeWindow)
     # In minutes, see above.
-    sms_conversation_length = IntegerProperty()
+    sms_conversation_length = IntegerProperty(default=10)
 
     # exchange/domain copying stuff
     is_snapshot = BooleanProperty(default=False)
