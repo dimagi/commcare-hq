@@ -215,7 +215,6 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
         def fmt(pct):
             return '%.1f%%' % (100. * pct)
         def fmt_col(loc, col_type):
-            print status_counts[loc._id]
             return fmt(status_counts[loc._id].get(col_type, {'pct': 0.})['pct'])
         def _rows():
             for loc in locs:
