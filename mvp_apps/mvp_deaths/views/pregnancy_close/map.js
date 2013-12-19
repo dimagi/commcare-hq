@@ -3,13 +3,13 @@
     if (isPregnancyCloseForm(doc)) {
         var indicators = get_indicators(doc),
             close_date = new Date(doc.form.meta.timeEnd),
-            indicator_keys = new Array(),
-            close_reason = "";
+            indicator_keys = [],
+            close_reason = "",
+            report_date;
 
-        if(indicators.pregnancy_termination && indicators.pregnancy_termination.value)
+        if (indicators.pregnancy_termination && indicators.pregnancy_termination.value) {
             report_date = new Date(indicators.pregnancy_termination.value);
-        }
-        else{
+        } else {
             report_date = closed_date;   
         }
 
