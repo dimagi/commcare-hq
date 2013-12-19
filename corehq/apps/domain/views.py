@@ -211,7 +211,7 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
             ]:
                 initial[attr] = getattr(self.domain_object, attr)
             initial.update({
-                'is_test': json.dumps(self.domain_object.is_test),
+                'is_test': self.domain_object.is_test,
                 'call_center_enabled': self.domain_object.call_center_config.enabled,
                 'call_center_case_owner': self.domain_object.call_center_config.case_owner_id,
                 'call_center_case_type': self.domain_object.call_center_config.case_type,
