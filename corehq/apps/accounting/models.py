@@ -17,8 +17,5 @@ class Currency(models.Model):
 
     @classmethod
     def get_default(cls):
-        try:
-            return cls.objects.get(code=settings.DEFAULT_CURRENCY)
-        except ObjectDoesNotExist:
-            raise HQAccountingSetupError("You need initialize a default currency. Your current default is set to: %s"
-                                         % settings.DEFAULT_CURRENCY)
+        default, _ = Currency.objects.get_or_create(code=settings.DEFAULT_CURRENCY)
+        return default
