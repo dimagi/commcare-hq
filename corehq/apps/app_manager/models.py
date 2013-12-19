@@ -704,7 +704,7 @@ class Form(FormBase, IndexedSchema, NavMenuItemMediaMixin):
                         self.actions.open_case.is_active() or
                         self.actions.update_case.is_active() or
                         self.actions.close_case.is_active()):
-                    parent_types.add(module_case_type)
+                    parent_types.add((module_case_type, 'parent'))
         return parent_types, case_properties
 
 
@@ -939,6 +939,9 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
     def requires_case_details(self):
         return False
 
+    def get_case_types(self):
+        return set([self.case_type])
+
     def get_module_info(self):
         return {
             'id': self.id,
@@ -1123,6 +1126,7 @@ class Module(ModuleBase):
 class CareplanForm(FormBase, IndexedSchema, NavMenuItemMediaMixin):
     mode = StringProperty(required=True, choices=['create', 'update'])
     custom_case_updates = DictProperty()
+    case_preload = DictProperty()
 
     @classmethod
     def wrap(cls, data):
@@ -1164,9 +1168,9 @@ class CareplanForm(FormBase, IndexedSchema, NavMenuItemMediaMixin):
         case_properties = set()
         if case_type == self.case_type:
             if case_type == CAREPLAN_GOAL:
-                parent_types.add(module_case_type)
+                parent_types.add((module_case_type, 'parent'))
             elif case_type == CAREPLAN_TASK:
-                parent_types.add(CAREPLAN_GOAL)
+                parent_types.add((CAREPLAN_GOAL, 'goal'))
             case_properties.update(self.case_updates().keys())
 
         return parent_types, case_properties
@@ -1199,20 +1203,21 @@ class CareplanGoalForm(CareplanForm):
         return changes
 
     def get_fixed_questions(self):
-        def q(name, label):
+        def q(name, case_key, label):
             return {
                 'name': name,
+                'key': case_key,
                 'label': label,
                 'path': self[name]
             }
         questions = [
-            q('description_path', _('Description')),
-            q('date_followup_path', _('Followup date')),
+            q('description_path', 'description', _('Description')),
+            q('date_followup_path', 'date_followup', _('Followup date')),
         ]
         if self.mode == 'create':
-            return [q('name_path', _('Name'))] + questions
+            return [q('name_path', 'name', _('Name'))] + questions
         else:
-            return questions + [q('close_path', _('Close if'))]
+            return questions + [q('close_path', 'close', _('Close if'))]
 
 
 class CareplanTaskForm(CareplanForm):
@@ -1247,24 +1252,25 @@ class CareplanTaskForm(CareplanForm):
         return changes
 
     def get_fixed_questions(self):
-        def q(name, label):
+        def q(name, case_key, label):
             return {
                 'name': name,
+                'key': case_key,
                 'label': label,
                 'path': self[name]
             }
         questions = [
-            q('date_followup_path', _('Followup date')),
+            q('date_followup_path', 'date_followup', _('Followup date')),
         ]
         if self.mode == 'create':
             return [
-                q('name_path', _('Name')),
-                q('description_path', _('Description')),
+                q('name_path', 'name', _('Name')),
+                q('description_path', 'description', _('Description')),
             ] + questions
         else:
             return questions + [
-                q('latest_report_path', _('Latest report')),
-                q('close_path', _('Close if')),
+                q('latest_report_path', 'latest_report', _('Latest report')),
+                q('close_path', 'close', _('Close if')),
             ]
 
 
@@ -1332,6 +1338,9 @@ class CareplanModule(ModuleBase):
 
     def requires_case_details(self):
         return True
+
+    def get_case_types(self):
+        return set(f.case_type for f in self.forms)
 
     def get_form_by_type(self, case_type, mode):
         for form in self.forms:
@@ -1737,7 +1746,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
     @absolute_url_property
     def post_url(self):
         if self.secure_submissions:
-            url_name = 'receiver_secure_post'
+            url_name = 'receiver_secure_post_with_app_id'
         else:
             url_name = 'receiver_post_with_app_id'
         return reverse(url_name, args=[self.domain, self.copy_of or self.get_id])
