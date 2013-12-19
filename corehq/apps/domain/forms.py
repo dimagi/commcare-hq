@@ -345,7 +345,7 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
     call_center_case_type = CharField(
         label=_("Call Center Case Type"),
         required=False,
-        help_text=_("Enter the case type to be used for call center workers")
+        help_text=_("Enter the case type to be used for FLWs in call center apps")
     )
     restrict_superusers = BooleanField(
         label=_("Restrict Superuser Access"),
