@@ -108,11 +108,12 @@ class BillingAccount(models.Model):
         db_index=True,
         max_length=80,
         blank=True,
+        null=True,
         help_text="This is how we link to the salesforce account",
     )
     created_by = models.CharField(max_length=80)
     date_created = models.DateField(auto_now_add=True)
-    web_user_contact = models.CharField(max_length=80)
+    web_user_contact = models.CharField(max_length=80, null=True)
     currency = models.ForeignKey(Currency, on_delete=models.PROTECT)
     is_auto_invoiceable = models.BooleanField(default=False)
     account_type = models.CharField(
@@ -246,7 +247,7 @@ class Subscription(models.Model):
     account = models.ForeignKey(BillingAccount, on_delete=models.PROTECT)
     plan = models.ForeignKey(SoftwarePlanVersion, on_delete=models.PROTECT)
     subscriber = models.ForeignKey(Subscriber, on_delete=models.PROTECT)
-    salesforce_contract_id = models.CharField(blank=True, max_length=80)
+    salesforce_contract_id = models.CharField(blank=True, null=True, max_length=80)
     date_start = models.DateField()
     date_end = models.DateField(blank=True, null=True)
     date_delay_invoicing = models.DateField(blank=True, null=True)
