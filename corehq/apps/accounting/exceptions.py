@@ -4,3 +4,7 @@ class HQAccountingSetupError(Exception):
 
 class LineItemError(Exception):
     pass
+
+
+class InvoiceError(Exception):
+    pass
