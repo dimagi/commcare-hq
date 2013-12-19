@@ -324,6 +324,12 @@ class Suite(XmlObject):
     menus = NodeListField('menu', Menu)
 
     fixtures = NodeListField('fixture', Fixture)
+    descriptor = StringField('@descriptor')
+
+    def __init__(self, node=None, context=None, **kwargs):
+        super(Suite, self).__init__(node, context, **kwargs)
+        self.descriptor = u"Suite File"
+
 
 
 class IdStrings(object):
