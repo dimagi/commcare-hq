@@ -34,7 +34,7 @@ class TestSubscription(TestCase):
         self.dimagi_user = generator.arbitrary_web_user(is_dimagi=True)
         self.currency = generator.init_default_currency()
         self.account = generator.billing_account(self.dimagi_user, self.billing_contact)
-        generator.instantiate_plans()
+        generator.instantiate_subscribable_plans()
         self.subscription, self.subscription_length = generator.generate_domain_subscription_from_date(
             datetime.date.today(), self.account, 'test'
         )
