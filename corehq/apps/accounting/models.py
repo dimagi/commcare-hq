@@ -125,7 +125,7 @@ class SoftwareProduct(models.Model):
     Specifies a product name that can be included in a subscription. e.g. CommTrack Pro, CommCare Community, etc.
     """
     name = models.CharField(max_length=40, unique=True)
-    product_type = models.CharField(max_length=10, db_index=True, choices=SoftwareProductType.CHOICES)
+    product_type = models.CharField(max_length=25, db_index=True, choices=SoftwareProductType.CHOICES)
 
 
 class SoftwareProductRate(models.Model):
