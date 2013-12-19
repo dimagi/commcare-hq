@@ -184,7 +184,5 @@ class CommTrackTest(TestCase):
 
 def get_ota_balance_xml(user):
     xml = generate_restore_payload(user.to_casexml_user(), version=V2)
-    [sync_log] = SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all()
-
     balance_block = etree.fromstring(xml).find('{http://commtrack.org/stock_report}balance')
     return etree.tostring(balance_block)
