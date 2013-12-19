@@ -6,4 +6,4 @@ class Command(NoArgsCommand):
 
     def handle_noargs(self, **options):
         generator.currency_usd()
-        generator.instantiate_plans()
+        generator.instantiate_subscribable_plans()
