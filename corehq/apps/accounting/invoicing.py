@@ -51,6 +51,7 @@ class InvoiceFactory(object):
         self.generate_line_items(invoice)
         invoice.update_balance()
         if invoice.balance == Decimal('0.0'):
+            invoice.lineitem_set.all().delete()
             invoice.delete()
             return None
 
