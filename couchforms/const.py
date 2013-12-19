@@ -11,4 +11,6 @@ TAG_META = "meta"
 TAG_FORM = 'form'
 
 ATTACHMENT_NAME = "form.xml"
-    
+
+MULTIPART_FILENAME_ERROR = object()
+MAGIC_PROPERTY = 'xml_submission_file'
