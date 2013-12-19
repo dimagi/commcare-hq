@@ -3,16 +3,16 @@ function (doc) {
     if (isChildRegistrationForm(doc)) {
         var meta = doc.form.meta,
             indicators = get_indicators(doc),
-            indicator_keys = new Array();
+            indicator_keys = [];
 
         var birth_weight = null,
-            birth_weight_nan = false;
+            birth_weight_nan = false,
+            reg_date;
 
         if (doc.dob || doc.dob_calc) {
             var dob_date = doc.dob_calc || doc.dob;
-            reg_date = new Date(doc.dob_date);
-        }
-        else{
+            reg_date = new Date(dob_date);
+        } else {
             reg_date = new Date(meta.timeEnd);
         }
 

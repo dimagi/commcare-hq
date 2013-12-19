@@ -4,14 +4,14 @@ function (doc) {
         isPregnancyCloseForm(doc)) {
         var indicators = get_indicators(doc),
             closed_date = new Date(doc.form.meta.timeEnd),
-            indicator_keys = new Array(),
+            indicator_keys = [],
             close_reason = "",
-            termination_reason = "";
+            termination_reason = "",
+            report_date;
 
         if (indicators.date_of_death && indicators.date_of_death.value) {
             report_date = new Date(indicators.date_of_death.value);
-        }
-        else{
+        } else {
             report_date = closed_date;   
         }
 
