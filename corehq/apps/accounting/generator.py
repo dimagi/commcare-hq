@@ -270,6 +270,20 @@ def arbitrary_domain():
     return domain
 
 
+def arbitrary_domains_by_product_type():
+    domains = {}
+    for product_type, _ in SoftwareProductType.CHOICES:
+        domain = arbitrary_domain()
+        if product_type == SoftwareProductType.COMMTRACK:
+            domain.commtrack_enabled = True
+            domain.save()
+        if product_type == SoftwareProductType.COMMCONNECT:
+            domain.commconnect_enabled = True
+            domain.save()
+        domains[product_type] = domain
+    return domains
+
+
 def arbitrary_commcare_users_for_domain(domain, num_users, is_active=True):
     count = 0
     for _ in range(0, num_users):
