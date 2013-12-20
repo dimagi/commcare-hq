@@ -45,6 +45,11 @@ def render_case(case, options):
 
     # pop seen properties off of remaining case properties
     dynamic_data = dict(case.dynamic_case_properties())
+    # hack - as of commcare 2.0, external id is basically a dynamic property
+    # so also check and add it here
+    if case.external_id:
+        dynamic_data['external_id'] = case.external_id
+
     for section in display:
         for row in section['layout']:
             for item in row:
