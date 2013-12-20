@@ -2268,9 +2268,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             return suite_xml.SuiteGenerator(self).generate_suite()
 
     def create_media_suite(self):
-        return suite_xml.SuiteGenerator(self).generate_suite(
-            sections=['media_resources']
-        )
+        return suite_xml.SuiteGenerator(self).generate_suite(sections=['media_resources'], is_media=True)
 
     @classmethod
     def get_form_filename(cls, type=None, form=None, module=None):
