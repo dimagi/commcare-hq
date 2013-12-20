@@ -71,8 +71,8 @@ def balances_with_stockout(sp, products):
     )
 
 
-def balance_submission(products, user, sp):
-    return """
+def submission_wrap(products, user, sp, sp2, insides):
+    return ("""
         <?xml version="1.0" encoding="UTF-8"?>
         <data uiVersion="1" version="33" name="New Form">
             <products>{product0} {product1} {product2}</products>
@@ -87,14 +87,11 @@ def balance_submission(products, user, sp):
             </meta>
             <num_products>3</num_products>
             <cur_products>3</cur_products>
-            <balance entity-id="{sp_id}" date="{long_date}">
-                <product index="0" id="{product0}" quantity="35" />
-                <product index="1" id="{product1}" quantity="46" />
-                <product index="2" id="{product2}" quantity="25" />
-            </balance>
+            %s
         </data>
-    """.format(
+    """ % insides()).format(
         sp_id=sp._id,
+        sp2_id=sp2._id,
         product0=products[0]._id,
         product1=products[1]._id,
         product2=products[2]._id,
@@ -102,3 +99,66 @@ def balance_submission(products, user, sp):
         username=user.username,
         long_date=long_date() + 'Z',
     )
+
+
+def balance_submission():
+    return """
+        <balance entity-id="{sp_id}" date="{long_date}">
+            <product index="0" id="{product0}" quantity="35" />
+            <product index="1" id="{product1}" quantity="46" />
+            <product index="2" id="{product2}" quantity="25" />
+        </balance>
+    """
+
+
+def transfer_dest_only():
+    return """
+        <receipts>
+            <transfer dest="{sp_id}" date="{long_date}">
+                <product index="0" id="{product0}" quantity="38" />
+                <product index="1" id="{product1}" quantity="1" />
+                <product index="2" id="{product2}" quantity="1" />
+            </transfer>
+        </receipts>
+    """
+
+
+def transfer_source_only():
+    return """
+        <losses>
+            <transfer src="{sp_id}" date="{long_date}">
+                <product index="0" id="{product0}" quantity="4" />
+                <product index="1" id="{product1}" quantity="1" />
+                <product index="2" id="{product2}" quantity="1" />
+            </transfer>
+        </losses>
+    """
+
+
+def transfer_both():
+    # TODO Does this get wrapped in something? receipts?
+    return """
+        <transfer src="{sp_id}" dest="{sp2_id}" date="{long_date}">
+            <product index="0" id="{product0}" quantity="4" />
+            <product index="1" id="{product1}" quantity="1" />
+            <product index="2" id="{product2}" quantity="1" />
+        </transfer>
+    """
+
+
+def transfer_neither():
+    return """
+        <transfer date="{long_date}">
+            <product index="0" id="{product0}" quantity="4" />
+            <product index="1" id="{product1}" quantity="1" />
+            <product index="2" id="{product2}" quantity="1" />
+        </transfer>
+    """
+
+
+def balance_first():
+    return balance_submission() + transfer_dest_only()
+
+
+def transfer_first():
+    return transfer_dest_only() + balance_submission()
