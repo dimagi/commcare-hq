@@ -326,11 +326,6 @@ class Suite(XmlObject):
     fixtures = NodeListField('fixture', Fixture)
     descriptor = StringField('@descriptor')
 
-    def __init__(self, node=None, context=None, descriptor=u"Suite File", **kwargs):
-        super(Suite, self).__init__(node, context, **kwargs)
-        self.descriptor = descriptor
-
-
 
 class IdStrings(object):
 
@@ -865,7 +860,7 @@ class SuiteGenerator(object):
             'menus',
             'fixtures',
         )
-        kw = {} if not is_media else {"descriptor": u"Media Suite File"}
+        kw = {"descriptor": u"Suite File" if not is_media else u"Media Suite File"}
         suite = Suite(**kw)
         suite.version = self.app.version
 
