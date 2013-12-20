@@ -1,4 +1,9 @@
 from django.conf import settings
+settings.configure(DEBUG=True, SQL_REPORTING_DATABASE_URL="postgresql://postgres:postgres@localhost/fluff_test")
+
+import sqlalchemy
+from fluff.signals import create_update_indicator_table
+
 if not settings.configured:
     settings.configure(DEBUG=True)
 
@@ -62,11 +67,21 @@ class Indicators2(fluff.IndicatorDocument):
 
 
 class Test(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.engine = sqlalchemy.create_engine(settings.SQL_REPORTING_DATABASE_URL)
+
     def setUp(self):
         self.fakedb = FakeCouchDb()
         MockIndicators.set_db(self.fakedb)
         MockIndicatorsWithGetters.set_db(self.fakedb)
         MockDoc.set_db(self.fakedb)
+
+        create_update_indicator_table(MockIndicatorsSql, None)
+
+    def tearDown(self):
+        with self.engine.begin() as connection:
+            MockIndicatorsSql()._table.drop(connection, checkfirst=True)
 
     def test_calculator_base_classes(self):
         # Base0
@@ -117,14 +132,17 @@ class Test(TestCase):
 
     def test_indicator_calculation(self):
         actions = [dict(date="2012-09-23", x=2), dict(date="2012-09-24", x=3)]
-        self.fakedb.mock_docs["123"] = dict(actions=actions,
-                                            get_id="123",
-                                            domain="mock",
-                                            owner_id="test_owner")
+        doc = dict(
+            actions=actions,
+            get_id="123",
+            domain="mock",
+            owner_id="test_owner",
+            doc_type='MockDoc'
+        )
         for cls in [MockIndicators, MockIndicatorsWithGetters]:
             classname = cls.__name__
             pillow = cls.pillow()(chunk_size=0)
-            pillow.processor({'changes': [], 'id': '123', 'seq': 1})
+            pillow.processor({'changes': [], 'id': '123', 'seq': 1, 'doc': doc})
             indicator = self.fakedb.mock_docs.get("%s-123" % classname, None)
             self.assertIsNotNone(indicator)
             self.assertEqual(9, len(indicator))
@@ -143,12 +161,13 @@ class Test(TestCase):
             self.assertEqual({'date': None, 'value': 2, 'group_by': None}, indicator["value_week"]["null_value"][0])
 
             self.assertEqual(dict(date='2013-01-01', group_by=['abc', 'xyz'], value=3), indicator["value_week"]["group_list"][0])
-            self.assertEqual(dict(date='2013-01-01', group_by=['abc'], value=2), indicator["value_week"]["group_val"][0])
-            self.assertEqual(dict(date='2013-01-01', group_by=['abc'], value=1), indicator["value_week"]["group_no_val"][0])
+            self.assertEqual(dict(date='2013-01-01', group_by=['abc', '123'], value=2), indicator["value_week"]["group_val"][0])
+            self.assertEqual(dict(date='2013-01-01', group_by=['abc', '123'], value=1), indicator["value_week"]["group_no_val"][0])
 
 
     def test_calculator_calculate(self):
         calc = ValueCalculator(WEEK)
+        calc.fluff = MockIndicators
         values = calc.calculate(MockDoc.wrap(dict(actions=[dict(date="2012-09-23", x=2),
                                                            dict(date="2012-09-24", x=3)])))
         self.assertEquals(len(values.keys()), 8)
@@ -161,9 +180,9 @@ class Test(TestCase):
             dict(date=date(2012, 9, 24), value=1, group_by=None)])
         self.assertEquals(values['null'], [dict(date=None, value=1, group_by=None)])
         self.assertEquals(values['group_list'], [dict(date=date(2013, 1, 1), group_by=['abc', 'xyz'], value=3)])
-        self.assertEquals(values['group_val'], [dict(date=date(2013, 1, 1), group_by=['abc'], value=2)])
-        self.assertEquals(values['group_no_val'], [dict(date=date(2013, 1, 1), group_by=['abc'], value=1)])
-        self.assertEquals(values['group_null'], [dict(date=None, group_by=['abc'], value=1)])
+        self.assertEquals(values['group_val'], [dict(date=date(2013, 1, 1), group_by=['abc', '123'], value=2)])
+        self.assertEquals(values['group_no_val'], [dict(date=date(2013, 1, 1), group_by=['abc', '123'], value=1)])
+        self.assertEquals(values['group_null'], [dict(date=None, group_by=['abc', 'xyz'], value=1)])
 
     def test_calculator_get_result(self):
         key = ['a', 'b']
@@ -215,7 +234,7 @@ class Test(TestCase):
             )
             diff = doc.diff(None)
             self.maxDiff = None
-            expected = dict(domains=['test'],
+            expected = dict(domains=['mock'],
                             database=cls.Meta.app_label,
                             doc_type=classname,
                             group_values=['mock', '123'],
@@ -289,7 +308,7 @@ class Test(TestCase):
             diff = new.diff(current)
             self.assertIsNotNone(diff)
             self.maxDiff = None
-            expected = dict(domains=['test'],
+            expected = dict(domains=['mock'],
                             database=cls.Meta.app_label,
                             doc_type=cls.__name__,
                             group_values=['mock', '123'],
@@ -342,7 +361,7 @@ class Test(TestCase):
             diff = new.diff(current)
             self.assertIsNotNone(diff)
             self.maxDiff = None
-            expected = dict(domains=['test'],
+            expected = dict(domains=['mock'],
                             database=cls.Meta.app_label,
                             doc_type=cls.__name__,
                             group_values=['mock', '123'],
@@ -395,6 +414,60 @@ class Test(TestCase):
         num_field = fluff.FlatField(lambda case: 432123141)
         self.assertRaises(AssertionError, num_field.calculate, 'bar')
 
+    def test_save_to_sql(self):
+        actions = [dict(date="2012-09-23", x=2), dict(date="2012-09-24", x=3)]
+        doc = dict(
+            actions=actions,
+            get_id="123",
+            domain="mock",
+            owner_id="test_owner"
+        )
+        current = MockIndicatorsSql(_id='234')
+        current.calculate(MockDoc.wrap(doc))
+        current.save_to_sql(self.engine)
+        expected = [
+            (u'123', date(1, 1, 1), u'mock', u'test_owner', None, None, None, None, None, 2, None, 1),
+            (u'123', date(2013, 1, 1), u'abc', u'123', None, None, 2, None, 1, None, None, None),
+            (u'123', date(2012, 9, 24), u'mock', u'test_owner', 3, None, None, None, None, None, 1, None),
+            (u'123', date(2012, 9, 23), u'mock', u'test_owner', 2, None, None, None, None, None, 1, None),
+            (u'123', date(1, 1, 1), u'abc', u'xyz', None, None, None, 1, None, None, None, None),
+            (u'123', date(2013, 1, 1), u'abc', u'xyz', None, 3, None, None, None, None, None, None),
+        ]
+
+        with self.engine.begin() as connection:
+            rows = connection.execute(sqlalchemy.select([current._table]))
+            self.assertEqual(rows.rowcount, len(expected))
+            for row in rows:
+                self.assertIn(row, expected)
+
+    def test_save_to_sql_update(self):
+        self.test_save_to_sql()
+
+        actions = [dict(date="2012-09-23", x=5)]
+        doc = dict(
+            actions=actions,
+            get_id="123",
+            domain="mock",
+            owner_id="test_owner"
+        )
+        current = MockIndicatorsSql(_id='234')
+        current.calculate(MockDoc.wrap(doc))
+        current.save_to_sql(self.engine)
+        expected = [
+            (u'123', date(1, 1, 1), u'mock', u'test_owner', None, None, None, None, None, 2, None, 1),
+            (u'123', date(2013, 1, 1), u'abc', u'123', None, None, 2, None, 1, None, None, None),
+            (u'123', date(2012, 9, 24), u'mock', u'test_owner', 3, None, None, None, None, None, 1, None),
+            (u'123', date(2012, 9, 23), u'mock', u'test_owner', 5, None, None, None, None, None, 1, None),
+            (u'123', date(1, 1, 1), u'abc', u'xyz', None, None, None, 1, None, None, None, None),
+            (u'123', date(2013, 1, 1), u'abc', u'xyz', None, 3, None, None, None, None, None, None),
+        ]
+
+        with self.engine.begin() as connection:
+            rows = connection.execute(sqlalchemy.select([current._table]))
+            self.assertEqual(rows.rowcount, len(expected))
+            for row in rows:
+                self.assertIn(row, expected)
+
 
 class MockDoc(Document):
     _doc_type = "Mock"
@@ -425,15 +498,15 @@ class ValueCalculator(fluff.Calculator):
 
     @fluff.date_emitter
     def group_val(self, case):
-        yield dict(date=date(2013, 1, 1), value=2, group_by='abc')
+        yield dict(date=date(2013, 1, 1), value=2, group_by=['abc', '123'])
 
     @fluff.date_emitter
     def group_no_val(self, case):
-        yield dict(date=date(2013, 1, 1), group_by='abc')
+        yield dict(date=date(2013, 1, 1), group_by=['abc', '123'])
 
     @fluff.null_emitter
     def group_null(self, case):
-        yield dict(group_by='abc')
+        yield dict(group_by=['abc', 'xyz'])
 
 
 class MockIndicators(fluff.IndicatorDocument):
@@ -441,7 +514,7 @@ class MockIndicators(fluff.IndicatorDocument):
     document_class = MockDoc
     group_by = ('domain', 'owner_id')
     group_by_type_map = {'domain': fluff.TYPE_INTEGER}
-    domains = ('test',)
+    domains = ('mock',)
 
     value_week = ValueCalculator(window=WEEK)
 
@@ -457,7 +530,21 @@ class MockIndicatorsWithGetters(fluff.IndicatorDocument):
         fluff.AttributeGetter('owner_id', getter_function=lambda item: item['owner_id'])
     )
     group_by_type_map = {'domain': fluff.TYPE_INTEGER}
-    domains = ('test',)
+    domains = ('mock',)
+
+    value_week = ValueCalculator(window=WEEK)
+
+    class Meta:
+        app_label = 'Mock'
+
+
+class MockIndicatorsSql(fluff.IndicatorDocument):
+
+    document_class = MockDoc
+    group_by = ('domain', 'owner_id')
+    group_by_type_map = {'domain': fluff.TYPE_STRING}
+    domains = ('mock',)
+    save_direct_to_sql = True
 
     value_week = ValueCalculator(window=WEEK)
 

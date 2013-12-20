@@ -3,12 +3,14 @@ import logging
 from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django import schema
 import datetime
+import sqlalchemy
 from dimagi.utils.parsing import json_format_date
 from dimagi.utils.read_only import ReadOnlyObject
 from fluff import exceptions
 from pillowtop.listener import PythonPillow
 from .signals import indicator_document_updated
 import fluff.sync_couchdb
+import fluff.util
 
 
 REDUCE_TYPES = set(['sum', 'count', 'min', 'max', 'sumsqr'])
@@ -161,6 +163,9 @@ class Calculator(object):
                     list(fn(item))
                     if passes_filter else []
                 )
+                for val in values[slug]:
+                    if val['group_by'] and len(val['group_by']) != len(self.fluff.group_by):
+                        raise Exception("group_by returned by emitter is of different length to default group_by")
             except Exception:
                 logging.exception((
                     "Error in emitter %s > %s > %s: '%s'"
@@ -323,7 +328,11 @@ class IndicatorDocumentMeta(schema.DocumentMeta):
             calculator.fluff = cls
             calculator.slug = slug
         cls._calculators = calculators
-        cls._flat_fields = flat_fields 
+        cls._flat_fields = flat_fields
+
+        instance = cls()
+        if instance.save_direct_to_sql:
+            cls._table = util.get_indicator_model(name, instance)
         return cls
 
 
@@ -336,6 +345,7 @@ class IndicatorDocument(schema.Document):
     wrapper = None
     document_filter = None
     group_by = ()
+    save_direct_to_sql = None
 
     # Mapping of group_by field to type. Used to communicate expected type in fluff diffs.
     # See ALL_TYPES
@@ -358,6 +368,17 @@ class IndicatorDocument(schema.Document):
 
     def get_group_values(self):
         return [self[attr] for attr in self.get_group_names()]
+
+    def get_group_types(self):
+        group_by_type_map = self.group_by_type_map or {}
+        for gb in self.wrapped_group_by:
+            attrib = gb.attribute
+            if attrib not in group_by_type_map:
+                group_by_type_map[attrib] = TYPE_STRING
+            else:
+                assert group_by_type_map[attrib] in ALL_TYPES
+
+        return group_by_type_map
 
     @classmethod
     def get_now(cls):
@@ -437,20 +458,12 @@ class IndicatorDocument(schema.Document):
         if not diff_keys:
             return None
 
-        group_by_type_map = self.group_by_type_map or {}
-        for gb in self.wrapped_group_by:
-            attrib = gb.attribute
-            if attrib not in group_by_type_map:
-                group_by_type_map[attrib] = TYPE_STRING
-            else:
-                assert group_by_type_map[attrib] in ALL_TYPES
-
         diff = dict(domains=list(self.domains),
                     database=self.Meta.app_label,
                     doc_type=self._doc_type,
                     group_names=self.get_group_names(),
                     group_values=self.get_group_values(),
-                    group_type_map=group_by_type_map,
+                    group_type_map=self.get_group_types(),
                     indicator_changes=[],
                     all_indicators=[])
         indicator_changes = diff["indicator_changes"]
@@ -536,6 +549,56 @@ class IndicatorDocument(schema.Document):
         changed = set(o for o in intersect if left[o] != right[o])
         return added | removed | changed
 
+    def save_to_sql(self, engine):
+        diff = self.diff(None)
+
+        if not diff:
+            # empty indicator document
+            return
+
+        default_key = (self.id,) + tuple(diff['group_values'])
+        rows = {}
+
+        def set_row_val(rowkey, col_name, col_value):
+            row = rows.setdefault(rowkey, {})
+            row[col_name] = col_value
+
+        for change in diff['indicator_changes']:
+            name = '{0}_{1}'.format(change['calculator'], change['emitter'])
+            for value_dict in change['values']:
+                value = value_dict['value']
+                group_by = value_dict['group_by']
+                date = value_dict['date']
+                if group_by:
+                    key = (self.id,) + tuple(group_by) + (date,)
+                    set_row_val(key, name, value)
+                else:
+                    set_row_val(default_key + (date,), name, value)
+
+        types = self.get_group_types()
+        types['date'] = 'date'
+        names = ['doc_id'] + self.get_group_names() + ['date']
+        connection = engine.connect()
+        try:
+            for key, columns in rows.items():
+                key_columns = dict(zip(names, key))
+                for name, value in key_columns.items():
+                    if value is None:
+                        key_columns[name] = util.default_null_value_placeholder(types[name])
+                all_columns = dict(key_columns.items() + columns.items())
+                try:
+                    insert = self._table.insert().values(**all_columns)
+                    connection.execute(insert)
+                except sqlalchemy.exc.IntegrityError:
+                    if columns:
+                        update = self._table.update().values(**columns)
+                        for k, v in key_columns.items():
+                            update = update.where(self._table.c[k] == v)
+                        connection.execute(update)
+        except Exception:
+            connection.close()
+            raise
+
     @classmethod
     def pillow(cls):
         wrapper = cls.wrapper or cls.document_class
@@ -545,15 +608,15 @@ class IndicatorDocument(schema.Document):
             domains = ' '.join(cls.domains)
             extra_args['domains'] = domains
 
-        document_filter = cls.document_filter
         return type(FluffPillow)(cls.__name__ + 'Pillow', (FluffPillow,), {
             'extra_args': extra_args,
             'document_class': cls.document_class,
             'wrapper': wrapper,
             'indicator_class': cls,
-            'document_filter': document_filter,
+            'document_filter': cls.document_filter,
             'domains': cls.domains,
             'doc_type': doc_type,
+            'save_direct_to_sql': cls().save_direct_to_sql,
         })
 
     @classmethod
@@ -590,6 +653,17 @@ class FluffPillow(PythonPillow):
     indicator_class = IndicatorDocument
     domains = None
     doc_type = None
+    save_direct_to_sql = False
+
+    @classmethod
+    def get_sql_engine(cls):
+        engine = getattr(cls, '_engine', None)
+        if not engine:
+            import sqlalchemy
+            from django.conf import settings
+            engine = sqlalchemy.create_engine(settings.SQL_REPORTING_DATABASE_URL)
+            cls._engine = engine
+        return engine
 
     def python_filter(self, doc):
         assert self.domains
@@ -622,8 +696,11 @@ class FluffPillow(PythonPillow):
 
     def change_transport(self, indicators):
         old_indicator, new_indicator = indicators
-        new_indicator.save()
 
-        diff = new_indicator.diff(None)  # pass in None for old_doc to force sending ALL indicators to ctable
-        if diff:
-            indicator_document_updated.send(sender=self, diff=diff)
+        if self.save_direct_to_sql:
+            new_indicator.save_to_sql(self.get_sql_engine())
+        else:
+            new_indicator.save()
+            diff = new_indicator.diff(None)  # pass in None for old_doc to force sending ALL indicators to ctable
+            if diff:
+                indicator_document_updated.send(sender=self, diff=diff)

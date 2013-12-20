@@ -17,10 +17,13 @@ setup(
         'pillowtop>=0.1.4',
         'dimagi-utils>=1.0.2',
         'pytz',
+        'SQLAlchemy==0.8.2',
+        'alembic==0.6.0'
     ],
     tests_require=[
         'django',
         'unittest2',
-        'fakecouch>=0.0.3'
+        'fakecouch>=0.0.3',
+        'psycopg2>=2.4.1',
     ]
 )
