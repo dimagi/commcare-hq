@@ -1,3 +1,8 @@
+import uuid
+from datetime import datetime
+from dimagi.utils.parsing import json_format_datetime
+from casexml.apps.stock.const import TRANSACTION_TYPE_BALANCE
+from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack.tests.util import CommTrackTest, get_ota_balance_xml
 from casexml.apps.case.tests.util import check_xml_line_by_line
 from corehq.apps.commtrack.models import Product
@@ -5,11 +10,7 @@ from couchforms.util import post_xform_to_couch
 from casexml.apps.case.signals import process_cases
 from corehq.apps.commtrack.tests.util import make_loc, make_supply_point, make_supply_point_product
 from corehq.apps.commtrack.tests.data.balances import (
-    blank_balances,
     balances_with_adequate_values,
-    balances_with_overstock_values,
-    balances_with_stockout,
-    balance_submission,
     submission_wrap,
     balance_submission,
     transfer_dest_only,
@@ -24,62 +25,27 @@ from corehq.apps.commtrack.tests.data.balances import (
 class CommTrackOTATest(CommTrackTest):
     def test_ota_blank_balances(self):
         user = self.reporters['fixed']
-
-        check_xml_line_by_line(
-            self,
-            blank_balances(
-                self.sp,
-                Product.by_domain(self.domain.name).all(),
-            ),
-            get_ota_balance_xml(user),
-        )
+        self.assertFalse(get_ota_balance_xml(user))
 
     def test_ota_balances_with_adequate_values(self):
         user = self.reporters['fixed']
-
-        first_spp = self.spps[self.products.first().code]
-        first_spp.current_stock = 10
-        first_spp.save()
+        date = datetime.utcnow()
+        report = StockReport.objects.create(form_id=uuid.uuid4().hex, date=date, type=TRANSACTION_TYPE_BALANCE)
+        for product in self.products:
+            StockTransaction.objects.create(
+                report=report,
+                case_id=self.sp._id,
+                product_id=product._id,
+                stock_on_hand=10,
+                quantity=10,
+            )
 
         check_xml_line_by_line(
             self,
             balances_with_adequate_values(
                 self.sp,
-                Product.by_domain(self.domain.name).all(),
-            ),
-            get_ota_balance_xml(user),
-        )
-
-    def test_ota_balances_with_overstock_values(self):
-        user = self.reporters['fixed']
-
-        first_spp = self.spps[self.products.first().code]
-        first_spp.current_stock = 9001
-        first_spp.save()
-
-        check_xml_line_by_line(
-            self,
-            balances_with_overstock_values(
-                self.sp,
-                Product.by_domain(self.domain.name).all(),
-            ),
-            get_ota_balance_xml(user),
-        )
-
-    def test_ota_balances_stockout(self):
-        user = self.reporters['fixed']
-
-        first_spp = self.spps[self.products.first().code]
-        first_spp.current_stock = 10
-        first_spp.save()
-        first_spp.current_stock = 0
-        first_spp.save()
-
-        check_xml_line_by_line(
-            self,
-            balances_with_stockout(
-                self.sp,
-                Product.by_domain(self.domain.name).all(),
+                sorted(Product.by_domain(self.domain.name).all(), key=lambda p: p._id),
+                datestring=json_format_datetime(date)
             ),
             get_ota_balance_xml(user),
         )
