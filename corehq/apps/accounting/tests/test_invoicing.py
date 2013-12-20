@@ -323,7 +323,7 @@ class TestUserLineItem(BaseInvoiceTestCase):
         self.assertEqual(user_line_item.subtotal, num_to_charge * self.user_rate.per_excess_fee)
         self.assertEqual(user_line_item.total, num_to_charge * self.user_rate.per_excess_fee)
 
-    def test_community_over_limit(self):
+    def test_community_charges_over_limit(self):
         """
         For a domain under community (no subscription) with users over the community limit, make sure that:
         - base_description is None
