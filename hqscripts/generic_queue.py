@@ -22,6 +22,11 @@ class GenericEnqueuingOperation(BaseCommand):
         if self.use_queue():
             self.validate_args(**options)
             self.keep_fetching_items()
+        else:
+            # If we return right away, supervisor will keep trying to restart
+            # the service. So just loop and do nothing.
+            while True:
+                sleep(60)
 
     def keep_fetching_items(self):
         while True:

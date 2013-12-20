@@ -35,6 +35,7 @@ ROLES_PILLOWTOP = ['django_monolith', 'django_pillowtop']
 ROLES_DJANGO = ['django_monolith', 'django_app']
 ROLES_TOUCHFORMS = ['django_monolith', 'formsplayer']
 ROLES_STATIC = ['django_monolith', 'staticfiles']
+ROLES_SMS_QUEUE = ['django_monolith', 'sms_queue']
 ROLES_DB_ONLY = ['pg', 'django_monolith']
 
 if env.ssh_config_path and os.path.isfile(os.path.expanduser(env.ssh_config_path)):
@@ -65,6 +66,7 @@ env.roledefs = {
     'django_app': [],
     # for now combined with celery
     'django_pillowtop': [],
+    'sms_queue': [],
     # 'django_celery, 'django_app', and 'django_pillowtop' all in one
     # use this ONLY for single server config,
     # otherwise deploy() will run multiple times in parallel causing issues
@@ -177,6 +179,7 @@ def india():
         'pg': [],
         'rabbitmq': [],
         'django_celery': [],
+        'sms_queue': [],
         'django_app': [],
         'django_pillowtop': [],
         'formsplayer': [],
@@ -210,6 +213,7 @@ def zambia():
         'pg': [],
         'rabbitmq': [],
         'django_celery': [],
+        'sms_queue': [],
         'django_app': [],
         'django_pillowtop': [],
         'formsplayer': [],
@@ -246,6 +250,7 @@ def production():
         'pg': ['hqdb0.internal.commcarehq.org'],
         'rabbitmq': ['hqdb0.internal.commcarehq.org'],
         'django_celery': ['hqcelery0.internal.commcarehq.org'],
+        'sms_queue': ['hqcelery0.internal.commcarehq.org'],
         'django_app': [
             'hqdjango3.internal.commcarehq.org',
             'hqdjango4.internal.commcarehq.org',
@@ -299,6 +304,7 @@ def staging():
         'pg': ['hqdb0-staging.internal.commcarehq.org'],
         'rabbitmq': ['hqdb0-staging.internal.commcarehq.org'],
         'django_celery': ['hqdb0-staging.internal.commcarehq.org'],
+        'sms_queue': ['hqdb0-staging.internal.commcarehq.org'],
         'django_app': ['hqdjango0-staging.internal.commcarehq.org','hqdjango1-staging.internal.commcarehq.org'],
         'django_pillowtop': ['hqdb0-staging.internal.commcarehq.org'],
 
@@ -347,6 +353,7 @@ def preview():
         'pg': [],
         'rabbitmq': ['hqdb0-preview.internal.commcarehq.org'],
         'django_celery': ['hqdb0-preview.internal.commcarehq.org'],
+        'sms_queue': ['hqdb0-preview.internal.commcarehq.org'],
         'django_app': [
             'hqdjango0-preview.internal.commcarehq.org',
             'hqdjango1-preview.internal.commcarehq.org'
@@ -389,6 +396,7 @@ def development():
         'pg': [],
         'rabbitmq': [],
         'django_celery': [],
+        'sms_queue': [],
         'django_app': [],
         'django_pillowtop': [],
         'formsplayer': [],
@@ -962,6 +970,7 @@ def set_celery_supervisorconf():
     if env.environment not in ['staging', 'preview', 'realstaging']:
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_beat.conf')
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_periodic.conf')
+    _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_sms_queue.conf')
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_flower.conf')
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_couchdb_lucene.conf') #to be deprecated
 
@@ -986,6 +995,9 @@ def set_djangoapp_supervisorconf():
 def set_formsplayer_supervisorconf():
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_formsplayer.conf')
 
+@roles(*ROLES_SMS_QUEUE)
+def set_sms_queue_supervisorconf():
+    _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_sms_queue.conf')
 
 @task
 def set_supervisor_config():
@@ -995,6 +1007,7 @@ def set_supervisor_config():
     execute(set_djangoapp_supervisorconf)
     execute(set_formsplayer_supervisorconf)
     execute(set_pillowtop_supervisorconf)
+    execute(set_sms_queue_supervisorconf)
 
     # if needing tunneled ES setup, comment this back in
     # execute(set_elasticsearch_supervisorconf)
