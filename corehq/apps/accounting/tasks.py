@@ -49,7 +49,7 @@ def generate_invoices(based_on_date=None):
                                                             date_end__gt=invoice_start).all()
 
     def _create_invoice(sub):
-        invoice_factory = SubscriptionInvoiceFactory(invoice_start, invoice_end, subscription)
+        invoice_factory = SubscriptionInvoiceFactory(invoice_start, invoice_end, sub)
         invoice_factory.create()
 
     invoiced_orgs = []
