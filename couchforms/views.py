@@ -1,6 +1,7 @@
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.http import HttpResponse, Http404
+import couchforms
 from couchforms.models import XFormInstance
 from couchforms.util import SubmissionPost
 
@@ -16,7 +17,12 @@ def post(request):
     a different signature as play, only passing in the document
     (since we don't know what xform was being posted to)
     """
-    return SubmissionPost(request).get_response()
+    instance, attachments = couchforms.get_instance_and_attachment(request)
+    return SubmissionPost(
+        instance=instance,
+        attachments=attachments,
+        path=couchforms.get_path(request),
+    ).get_response()
 
 
 def download_form(request, instance_id):
