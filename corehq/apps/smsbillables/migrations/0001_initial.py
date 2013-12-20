@@ -49,7 +49,7 @@ class Migration(SchemaMigration):
         db.create_table('smsbillables_smsbillable', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('gateway_fee', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['smsbillables.SmsGatewayFee'], null=True)),
-            ('gateway_fee_conversion_rate', self.gf('django.db.models.fields.DecimalField')(default=1.0, null=True, max_digits=10, decimal_places=9)),
+            ('gateway_fee_conversion_rate', self.gf('django.db.models.fields.DecimalField')(default=1.0, null=True, max_digits=20, decimal_places=9)),
             ('usage_fee', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['smsbillables.SmsUsageFee'], null=True)),
             ('log_id', self.gf('django.db.models.fields.CharField')(max_length=50)),
             ('phone_number', self.gf('django.db.models.fields.CharField')(max_length=50)),
@@ -88,7 +88,7 @@ class Migration(SchemaMigration):
             'date_updated': ('django.db.models.fields.DateField', [], {'auto_now': 'True', 'blank': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '25', 'db_index': 'True'}),
-            'rate_to_default': ('django.db.models.fields.DecimalField', [], {'default': '1.0', 'max_digits': '10', 'decimal_places': '9'}),
+            'rate_to_default': ('django.db.models.fields.DecimalField', [], {'default': '1.0', 'max_digits': '20', 'decimal_places': '9'}),
             'symbol': ('django.db.models.fields.CharField', [], {'max_length': '10'})
         },
         'smsbillables.smsbillable': {
@@ -99,7 +99,7 @@ class Migration(SchemaMigration):
             'direction': ('django.db.models.fields.CharField', [], {'max_length': '10', 'db_index': 'True'}),
             'domain': ('django.db.models.fields.CharField', [], {'max_length': '25', 'db_index': 'True'}),
             'gateway_fee': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['smsbillables.SmsGatewayFee']", 'null': 'True'}),
-            'gateway_fee_conversion_rate': ('django.db.models.fields.DecimalField', [], {'default': '1.0', 'null': 'True', 'max_digits': '10', 'decimal_places': '9'}),
+            'gateway_fee_conversion_rate': ('django.db.models.fields.DecimalField', [], {'default': '1.0', 'null': 'True', 'max_digits': '20', 'decimal_places': '9'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'is_valid': ('django.db.models.fields.BooleanField', [], {'default': 'True', 'db_index': 'True'}),
             'log_id': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
