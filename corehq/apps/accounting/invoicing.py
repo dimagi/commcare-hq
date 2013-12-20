@@ -300,7 +300,6 @@ class UserLineItemFactory(FeatureLineItemFactory):
         total_users = 0
         for domain in self.subscribed_domains:
             total_users += CommCareUser.total_by_domain(domain, is_active=True)
-            total_users += CommCareUser.total_by_domain(domain, is_active=False)
         return total_users
 
     @property
