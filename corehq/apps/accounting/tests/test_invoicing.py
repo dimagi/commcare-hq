@@ -19,7 +19,8 @@ class BaseInvoiceTestCase(TestCase):
         self.account = generator.billing_account(self.dimagi_user, self.billing_contact)
         self.domain = generator.arbitrary_domain()
 
-        generator.instantiate_plans()
+        generator.instantiate_subscribable_plans()
+        generator.instantiate_community_plans()
         self.subscription, self.subscription_length = generator.generate_domain_subscription_from_date(
             generator.get_start_date(), self.account, self.domain.name, num_months=3,
         )
@@ -61,7 +62,7 @@ class TestInvoice(BaseInvoiceTestCase):
 
         num_feature_line_items = invoice.lineitem_set.get_features().count()
         self.assertEqual(num_feature_line_items, self.subscription.plan.feature_rates.count())
-
+        self.assertEqual(invoice.subscription, self.subscription)
         self.assertGreater(invoice.balance, Decimal('0.0'))
 
     def test_no_invoice_after_end(self):

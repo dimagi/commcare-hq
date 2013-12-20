@@ -1,38 +1,46 @@
 import calendar
 from decimal import Decimal
 import datetime
+from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import ProtectedError
 
 from django.utils.translation import ugettext as _
 from dimagi.utils.decorators.memoized import memoized
 
 from corehq import Domain
-from corehq.apps.accounting.exceptions import LineItemError
-from corehq.apps.accounting.models import LineItem, FeatureType, Invoice
+from corehq.apps.accounting.exceptions import LineItemError, InvoiceError
+from corehq.apps.accounting.models import LineItem, FeatureType, Invoice, SoftwareProductType, DefaultProductPlan, Subscriber, Subscription, BillingAccount, Currency, BillingAccountType
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.users.models import CommCareUser
+
+DEFAULT_DAYS_UNTIL_DUE = 10
 
 
 class InvoiceFactory(object):
     """
     This handles all the little details when generating an Invoice.
     """
+    subscription = None
 
-    def __init__(self, subscription, date_start, date_end):
+    def __init__(self, date_start, date_end):
         """
         The Invoice generated will always be for the month preceding the invoicing_date.
         For example, if today is July 5, 2014 then the invoice will be from
         June 1, 2014 to June 30, 2014
         """
-        self.subscription = subscription
-        self.date_start = self.subscription.date_start if self.subscription.date_start > date_start else date_start
-        self.date_end = self.subscription.date_end if self.subscription.date_end < date_end else date_end
+        self.date_start = date_start
+        self.date_end = date_end
 
     def create(self):
-        days_until_due = 10
+        if self.subscription is None:
+            raise InvoiceError("Cannot create an invoice without a subscription.")
+
+        days_until_due = DEFAULT_DAYS_UNTIL_DUE
         if self.subscription.date_delay_invoicing is not None:
             td = self.subscription.date_delay_invoicing - self.date_end
             days_until_due = max(days_until_due, td.days)
         date_due = self.date_end + datetime.timedelta(days_until_due)
+
         invoice = Invoice(
             subscription=self.subscription,
             date_start=self.date_start,
@@ -43,8 +51,10 @@ class InvoiceFactory(object):
         self.generate_line_items(invoice)
         invoice.update_balance()
         if invoice.balance == Decimal('0.0'):
+            invoice.lineitem_set.all().delete()
             invoice.delete()
             return None
+
         invoice.calculate_credit_adjustments()
         invoice.update_balance()
         # generate PDF
@@ -62,6 +72,84 @@ class InvoiceFactory(object):
             )
             feature_factory = feature_factory_class(self.subscription, feature_rate, invoice)
             feature_factory.create()
+
+
+class SubscriptionInvoiceFactory(InvoiceFactory):
+
+    def __init__(self, date_start, date_end, subscription):
+        super(SubscriptionInvoiceFactory, self).__init__(date_start, date_end)
+        self.subscription = subscription
+        self.date_start = self.subscription.date_start if self.subscription.date_start > date_start else date_start
+        self.date_end = self.subscription.date_end if self.subscription.date_end < date_end else date_end
+
+
+class CommunityInvoiceFactory(InvoiceFactory):
+
+    def __init__(self, date_start, date_end, domain):
+        super(CommunityInvoiceFactory, self).__init__(date_start, date_end)
+        self.domain = domain
+
+    @property
+    @memoized
+    def account(self):
+        """
+        First try to grab the account used for the last subscription.
+        If an account is not found, create it.
+        """
+        try:
+            last_subscription = Subscription.objects.filter(subscriber__domain=self.domain.name).latest('date_end')
+            return last_subscription.account
+        except ObjectDoesNotExist:
+            pass
+        account = BillingAccount(
+            name=self.domain.name,
+            created_by=self.__class__.__name__,
+            date_created=datetime.date.today(),
+            currency=Currency.get_default(),
+            account_type=BillingAccountType.INVOICE_GENERATED,
+        )
+        account.save()
+        return account
+
+    @property
+    def software_plan(self):
+        product_type = SoftwareProductType.get_type_by_domain(self.domain)
+        try:
+            default_product_plan = DefaultProductPlan.objects.get(product_type=product_type)
+            return default_product_plan.plan.softwareplanversion_set.latest('date_created')
+        except ObjectDoesNotExist:
+            raise InvoiceError("Could not find a default plan in place for product %s." % product_type)
+
+    @property
+    @memoized
+    def subscription(self):
+        """
+        If we're arriving here, it's because there wasn't a subscription for the period of this invoice,
+        so let's create one.
+        """
+        subscriber, _ = Subscriber.objects.get_or_create(domain=self.domain.name)
+        subscription = Subscription(
+            account=self.account,
+            subscriber=subscriber,
+            plan=self.software_plan,
+            date_start=self.date_start,
+            date_end=self.date_end,
+        )
+        subscription.save()
+        return subscription
+
+    def create(self):
+        invoice = super(CommunityInvoiceFactory, self).create()
+        if invoice is None:
+            # no charges were created, so delete the temporary subscription to the community plan for this
+            # invoicing period
+            self.subscription.delete()
+            try:
+                # delete the account too (is only successful if no other subscriptions reference it)
+                self.account.delete()
+            except ProtectedError:
+                pass
+        return invoice
 
 
 class LineItemFactory(object):
