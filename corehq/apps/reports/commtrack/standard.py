@@ -267,7 +267,7 @@ class RequisitionReport(CaseListReport):
                     _('Requisition Unique ID'),
                     _('Date Opened'),
                     _('Date Closed'),
-                    _('Lead Time'),
+                    _('Lead Time (Days)'),
                     _('Status'),
                 ]))
 
@@ -276,7 +276,8 @@ class RequisitionReport(CaseListReport):
         try:
             closed_date = datetime.strptime(closed_date, "%Y-%m-%dT%H:%M:%SZ")
             opened_date = datetime.strptime(opened_date, "%Y-%m-%dT%H:%M:%SZ")
-            return str(closed_date - opened_date)
+            days_rest_delta = (((closed_date - opened_date).seconds / 3600)*10)/24
+            return "%s.%s" % ((closed_date - opened_date).days, days_rest_delta)
         except TypeError:
             return _("---")
 
