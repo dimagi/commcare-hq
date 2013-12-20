@@ -323,7 +323,7 @@ class TestUserLineItem(BaseInvoiceTestCase):
         self.assertEqual(user_line_item.subtotal, num_to_charge * self.user_rate.per_excess_fee)
         self.assertEqual(user_line_item.total, num_to_charge * self.user_rate.per_excess_fee)
 
-    def test_community_charges_over_limit(self):
+    def test_community_over_limit(self):
         """
         For a domain under community (no subscription) with users over the community limit, make sure that:
         - base_description is None
@@ -333,9 +333,25 @@ class TestUserLineItem(BaseInvoiceTestCase):
         - quantity is equal to number of commcare users in that domain minus the monthly_limit on the user rate
         - total and subtotals are equal to number of extra users * per_excess_fee
         """
-        pass
-        # todo
+        domain = generator.arbitrary_domain()
+        num_active = generator.create_excess_community_users(domain)
 
+        tasks.generate_invoices()
+        subscriber = Subscriber.objects.get(domain=domain.name)
+        invoice = Invoice.objects.filter(subscription__subscriber=subscriber).get()
+        user_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.USER).get()
+
+        self.assertIsNone(user_line_item.base_description)
+        self.assertEqual(user_line_item.base_cost, Decimal('0.0'))
+
+        num_to_charge = num_active - generator.MAX_COMMUNITY_USERS
+        self.assertIsNotNone(user_line_item.unit_description)
+        self.assertEqual(user_line_item.quantity, num_to_charge)
+        self.assertEqual(user_line_item.unit_cost, self.user_rate.per_excess_fee)
+        self.assertEqual(user_line_item.subtotal, num_to_charge * self.user_rate.per_excess_fee)
+        self.assertEqual(user_line_item.total, num_to_charge * self.user_rate.per_excess_fee)
+
+        domain.delete()
 
 
 class TestSmsLineItem(BaseInvoiceTestCase):
