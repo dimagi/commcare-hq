@@ -487,6 +487,8 @@ ANALYTICS_IDS = {
     'PINGDOM_ID': ''
 }
 
+OPEN_EXCHANGE_RATES_ID = ''
+
 # for touchforms maps
 GMAPS_API_KEY = "changeme"
 
@@ -636,6 +638,11 @@ LOGGING = {
         'smsbillables': {
             'handlers': ['file', 'sentry'],
             'level': 'ERROR',
+            'propagate': False,
+        },
+        'currency_update': {
+            'handlers': ['file'],
+            'level': 'INFO',
             'propagate': False,
         },
     }
