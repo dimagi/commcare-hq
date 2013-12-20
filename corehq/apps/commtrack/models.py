@@ -3,9 +3,12 @@ from xml.etree import ElementTree
 import collections
 from couchdbkit.exceptions import ResourceNotFound
 from couchdbkit.ext.django.schema import *
+from django.db import transaction
 from django.utils.translation import ugettext as _
 from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V1, V2
+from casexml.apps.stock.models import StockReport as DbStockReport, StockTransaction as DbStockTransaction
 from corehq import Domain
 
 from corehq.apps.commtrack import const
@@ -15,7 +18,6 @@ from dimagi.utils.couch.loosechange import map_reduce
 from couchforms.models import XFormInstance
 from dimagi.utils import parsing as dateparse
 from datetime import datetime
-from casexml.apps.case.models import CommCareCase
 from copy import copy
 from django.dispatch import receiver
 from corehq.apps.locations.signals import location_created, location_edited
@@ -433,19 +435,45 @@ class NewStockReport(object):
     Intermediate class for dealing with stock XML
     """
     # todo: fix name, remove old stock report class
-    def __init__(self, tag, node, transactions):
+    def __init__(self, form, timestamp, tag, node, transactions):
+        self._form = form
+        self.form_id = form._id
+        self.timestamp = timestamp
         self.tag = tag
         self.node = node
         self.transactions = transactions
 
     @classmethod
-    def from_xml(cls, config, global_context, elem):
+    def from_xml(cls, form, config, elem):
         tag, node = elem
+        timestamp = node.get('@date', form.received_on)
         products = node['product']
         if not isinstance(products, collections.Sequence):
             products = [products]
-        transactions = [StockTransaction.from_xml(config, global_context, tag, node, prod_entry) for prod_entry in products]
-        return cls(tag, node, transactions)
+        transactions = [StockTransaction.from_xml(config, timestamp, tag, node, prod_entry)
+                        for prod_entry in products]
+
+        return cls(form, timestamp, tag, node, transactions)
+
+    @transaction.commit_on_success
+    def create_models(self):
+        report = DbStockReport.objects.create(form_id=self.form_id, date=self.timestamp, type=self.tag)
+        for txn in self.transactions:
+            db_txn = DbStockTransaction(
+                report=report,
+                case_id=txn.case_id,
+                product_id=txn.product_id,
+            )
+            previous_transaction = db_txn.get_previous_transaction()
+            if self.tag == 'balance':
+                db_txn.stock_on_hand = txn.quantity
+                db_txn.quantity = txn.quantity - (previous_transaction.stock_on_hand if previous_transaction else 0)
+            else:
+                assert self.tag == 'transfer'
+                db_txn.quantity = txn.quantity
+                db_txn.stock_on_hand = (previous_transaction.stock_on_hand if previous_transaction else 0) + txn.quantity
+
+            db_txn.save()
 
 
 class StockTransaction(Document):
@@ -526,9 +554,9 @@ class StockTransaction(Document):
 
     @classmethod
     # note: works on 'jsonified' xml as produced by couchforms
-    def from_xml(cls, config, global_context, action_tag, action_node, product_node):
+    def from_xml(cls, config, timestamp, action_tag, action_node, product_node):
         data = {
-            'timestamp': action_node.get('@date', global_context['timestamp']),
+            'timestamp': timestamp,
             'product_id': product_node.get('@id'),
             'quantity': float(product_node.get('@quantity')),
             # note: no location id

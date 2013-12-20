@@ -117,12 +117,8 @@ def product_subcases(supply_point):
     return DefaultDict(create_product_subcase, product_subcase_mapping)
 
 def unpack_commtrack(xform, config):
-
-    global_context = {
-        'timestamp': xform.received_on,
-    }
-
     namespace = xform.form['@xmlns']
+
     def commtrack_nodes(data):
         for tag, nodes in data.iteritems():
             for node in (nodes if isinstance(nodes, collections.Sequence) else [nodes]):
@@ -133,9 +129,10 @@ def unpack_commtrack(xform, config):
                 else:
                     for e in commtrack_nodes(node):
                         yield e
+
     for elem in commtrack_nodes(xform.form):
         # FIXME deal with requisitions later
-        yield NewStockReport.from_xml(config, global_context, elem)
+        yield NewStockReport.from_xml(xform, config, elem)
 
 
 def set_transactions(root, new_tx, E):
