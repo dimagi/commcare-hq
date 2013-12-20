@@ -4,37 +4,9 @@ import couchforms
 from couchforms.models import XFormInstance, SubmissionErrorLog
 import receiver
 from receiver.signals import successful_form_received, ReceiverResult, form_received
-from django.views.decorators.http import require_POST
-from django.views.decorators.csrf import csrf_exempt
 from receiver import xml
-from django.shortcuts import render_to_response
-from django.template.context import RequestContext
-from dimagi.utils.couch.database import get_db
 from receiver.xml import ResponseNature
 from couchforms.signals import submission_error_received
-
-
-def home(request):
-    forms = get_db().view('couchforms/by_xmlns', group=True, group_level=1)
-    forms = dict([(x['key'], x['value']) for x in forms])
-    return render_to_response("receiver/home.html", {"forms": forms}, RequestContext(request))
-    
-
-def form_list(request):
-    """
-    Serve forms for ODK. 
-    """
-    # based off: https://github.com/dimagi/data-hq/blob/moz/datahq/apps/receiver/views.py
-    # TODO: serve our forms here
-    # forms = get_db().view('exports_forms/by_xmlns', startkey=[domain], endkey=[domain, {}], group=True)
-    
-    # NOTE: THIS VIEW/METHOD DOES NOTHING CURRENTLY!!
-    xml = "<forms>\n"
-    forms = []
-    for form in forms:
-        xml += '\t<form url="%(url)s">%(name)s</form>\n' % {"url": form.url, "name": form.name}
-    xml += "</forms>"
-    return HttpResponse(xml, mimetype="text/xml")
 
 
 class SubmissionPost(couchforms.SubmissionPost):
@@ -156,20 +128,3 @@ class SubmissionPost(couchforms.SubmissionPost):
             xml.get_simple_response_xml(
                 message="The sever got itself into big trouble! Details: %s" % error_log.problem,
                 nature=ResponseNature.SUBMIT_ERROR))
-
-
-@csrf_exempt
-@require_POST
-def post(request):
-    instance, attachments = receiver.get_instance_and_attachment(request)
-    return SubmissionPost(
-        instance=instance,
-        attachments=attachments,
-        location=receiver.get_location(request),
-        received_on=receiver.get_received_on(request),
-        date_header=receiver.get_date_header(request),
-        path=receiver.get_path(request),
-        submit_ip=receiver.get_submit_ip(request),
-        last_sync_token=receiver.get_last_sync_token(request),
-        openrosa_headers=receiver.get_openrosa_headers(request),
-    ).get_response()
