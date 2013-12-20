@@ -16,6 +16,7 @@
 
 - id: build_spec
   name: "CommCare Version"
+  description: 'We frequently release new versions of CommCare Mobile. Use the latest version to take advantage of new features and bug fixes. Note that if you are using CommCare for Android you must also update your version of CommCare from the Google Play Store.'
   widget: build_spec
   # this depends on builds are available, and on application_version
   # values, value_names, and default are magically set elsewhere
