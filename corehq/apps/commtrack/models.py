@@ -1,5 +1,6 @@
 import uuid
 from xml.etree import ElementTree
+import collections
 from couchdbkit.exceptions import ResourceNotFound
 from couchdbkit.ext.django.schema import *
 from django.utils.translation import ugettext as _
@@ -425,6 +426,26 @@ class StockStatus(StringDataSchema):
         return [StockStatus.force_wrap(row["value"]) for row in _view_shared(
             'commtrack/current_stock_status', domain, location_id,
             skip=skip, limit=limit)]
+
+
+class NewStockReport(object):
+    """
+    Intermediate class for dealing with stock XML
+    """
+    # todo: fix name, remove old stock report class
+    def __init__(self, tag, node, transactions):
+        self.tag = tag
+        self.node = node
+        self.transactions = transactions
+
+    @classmethod
+    def from_xml(cls, config, global_context, elem):
+        tag, node = elem
+        products = node['product']
+        if not isinstance(products, collections.Sequence):
+            products = [products]
+        transactions = [StockTransaction.from_xml(config, global_context, tag, node, prod_entry) for prod_entry in products]
+        return cls(tag, node, transactions)
 
 
 class StockTransaction(Document):

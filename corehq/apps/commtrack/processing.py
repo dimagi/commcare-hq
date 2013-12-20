@@ -1,6 +1,6 @@
 import logging
 from dimagi.utils.logging import log_exception
-from corehq.apps.commtrack.models import CommtrackConfig, StockTransaction, SupplyPointCase
+from corehq.apps.commtrack.models import CommtrackConfig, StockTransaction, SupplyPointCase, NewStockReport
 from corehq.apps.commtrack import const
 import collections
 from dimagi.utils.couch.loosechange import map_reduce
@@ -29,7 +29,8 @@ def process_stock(sender, xform, config=None, **kwargs):
     domain = xform.domain
 
     config = CommtrackConfig.for_domain(domain)
-    transactions = list(unpack_commtrack(xform, config))
+    stock_reports = list(unpack_commtrack(xform, config))
+    transactions = [t for r in stock_reports for t in r.transactions]
     # omitted: normalize_transactions (used for bulk requisitions?)
     if not transactions:
         return
@@ -83,7 +84,8 @@ def process_stock(sender, xform, config=None, **kwargs):
 
 # TODO retire this with move to new data model
 def product_subcases(supply_point):
-    """given a supply point, return all the sub-cases for each product stocked at that supply point
+    """
+    given a supply point, return all the sub-cases for each product stocked at that supply point
     actually returns a mapping: product doc id => sub-case
     ACTUALLY returns a dict that will create non-existent product sub-cases on demand
     """
@@ -115,6 +117,7 @@ def product_subcases(supply_point):
     return DefaultDict(create_product_subcase, product_subcase_mapping)
 
 def unpack_commtrack(xform, config):
+
     global_context = {
         'timestamp': xform.received_on,
     }
@@ -132,12 +135,8 @@ def unpack_commtrack(xform, config):
                         yield e
     for elem in commtrack_nodes(xform.form):
         # FIXME deal with requisitions later
-        tag, node = elem
-        products = node['product']
-        if not isinstance(products, collections.Sequence):
-            products = [products]
-        for prod_entry in products:
-            yield StockTransaction.from_xml(config, global_context, tag, node, prod_entry)
+        yield NewStockReport.from_xml(config, global_context, elem)
+
 
 def set_transactions(root, new_tx, E):
     for tx in new_tx:
