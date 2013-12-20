@@ -2244,6 +2244,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             'ota_restore_url': self.ota_restore_url,
             'cc_user_domain': cc_user_domain(self.domain),
             'include_media_suite': with_media,
+            'descriptor': u"Profile File"
         }).decode('utf-8')
 
     @property
