@@ -6,6 +6,7 @@ from django.db import models
 
 from corehq.apps.accounting import models as accounting
 from corehq.apps.accounting.models import Currency
+from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES
 from corehq.apps.sms.models import DIRECTION_CHOICES
 from corehq.apps.sms.util import clean_phone_number
 
@@ -181,7 +182,8 @@ class SmsBillable(models.Model):
     the monthly Invoice.
     """
     gateway_fee = models.ForeignKey(SmsGatewayFee, null=True, on_delete=models.PROTECT)
-    gateway_fee_conversion_rate = models.DecimalField(default=1.0, null=True, max_digits=10, decimal_places=9)
+    gateway_fee_conversion_rate = models.DecimalField(default=1.0, null=True, max_digits=20,
+                                                      decimal_places=EXCHANGE_RATE_DECIMAL_PLACES)
     usage_fee = models.ForeignKey(SmsUsageFee, null=True, on_delete=models.PROTECT)
     log_id = models.CharField(max_length=50)
     phone_number = models.CharField(max_length=50)
