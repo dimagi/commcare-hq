@@ -160,6 +160,7 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
     commcare_edition = StringProperty(choices=["", "standard", "plus", "advanced"], default="")
     services = StringProperty(choices=["", "basic", "plus", "full", "custom"], default="")
     initiative = StringListProperty()
+    workshop_region = StringProperty()
     project_state = StringProperty(choices=["", "POC", "transition", "at-scale"], default="")
     self_started = BooleanProperty()
     area = StringProperty()

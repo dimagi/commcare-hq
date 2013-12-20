@@ -55,7 +55,15 @@ from corehq.apps.app_manager import fixtures, suite_xml, commcare_settings
 from corehq.apps.app_manager.util import split_path, save_xform, get_correct_app_class
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
-from .exceptions import AppError, VersioningError, XFormError, XFormValidationError, RearrangeError
+from .exceptions import (
+    AppEditingError,
+    BlankXFormError,
+    ConflictingCaseTypeError,
+    RearrangeError,
+    VersioningError,
+    XFormError,
+    XFormValidationError,
+)
 
 
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
@@ -696,7 +704,7 @@ class Form(FormBase, IndexedSchema, NavMenuItemMediaMixin):
                         self.actions.open_case.is_active() or
                         self.actions.update_case.is_active() or
                         self.actions.close_case.is_active()):
-                    parent_types.add(module_case_type)
+                    parent_types.add((module_case_type, 'parent'))
         return parent_types, case_properties
 
 
@@ -931,6 +939,9 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
     def requires_case_details(self):
         return False
 
+    def get_case_types(self):
+        return set([self.case_type])
+
     def get_module_info(self):
         return {
             'id': self.id,
@@ -1115,6 +1126,7 @@ class Module(ModuleBase):
 class CareplanForm(FormBase, IndexedSchema, NavMenuItemMediaMixin):
     mode = StringProperty(required=True, choices=['create', 'update'])
     custom_case_updates = DictProperty()
+    case_preload = DictProperty()
 
     @classmethod
     def wrap(cls, data):
@@ -1156,9 +1168,9 @@ class CareplanForm(FormBase, IndexedSchema, NavMenuItemMediaMixin):
         case_properties = set()
         if case_type == self.case_type:
             if case_type == CAREPLAN_GOAL:
-                parent_types.add(module_case_type)
+                parent_types.add((module_case_type, 'parent'))
             elif case_type == CAREPLAN_TASK:
-                parent_types.add(CAREPLAN_GOAL)
+                parent_types.add((CAREPLAN_GOAL, 'goal'))
             case_properties.update(self.case_updates().keys())
 
         return parent_types, case_properties
@@ -1191,20 +1203,21 @@ class CareplanGoalForm(CareplanForm):
         return changes
 
     def get_fixed_questions(self):
-        def q(name, label):
+        def q(name, case_key, label):
             return {
                 'name': name,
+                'key': case_key,
                 'label': label,
                 'path': self[name]
             }
         questions = [
-            q('description_path', _('Description')),
-            q('date_followup_path', _('Followup date')),
+            q('description_path', 'description', _('Description')),
+            q('date_followup_path', 'date_followup', _('Followup date')),
         ]
         if self.mode == 'create':
-            return [q('name_path', _('Name'))] + questions
+            return [q('name_path', 'name', _('Name'))] + questions
         else:
-            return questions + [q('close_path', _('Close if'))]
+            return questions + [q('close_path', 'close', _('Close if'))]
 
 
 class CareplanTaskForm(CareplanForm):
@@ -1239,24 +1252,25 @@ class CareplanTaskForm(CareplanForm):
         return changes
 
     def get_fixed_questions(self):
-        def q(name, label):
+        def q(name, case_key, label):
             return {
                 'name': name,
+                'key': case_key,
                 'label': label,
                 'path': self[name]
             }
         questions = [
-            q('date_followup_path', _('Followup date')),
+            q('date_followup_path', 'date_followup', _('Followup date')),
         ]
         if self.mode == 'create':
             return [
-                q('name_path', _('Name')),
-                q('description_path', _('Description')),
+                q('name_path', 'name', _('Name')),
+                q('description_path', 'description', _('Description')),
             ] + questions
         else:
             return questions + [
-                q('latest_report_path', _('Latest report')),
-                q('close_path', _('Close if')),
+                q('latest_report_path', 'latest_report', _('Latest report')),
+                q('close_path', 'close', _('Close if')),
             ]
 
 
@@ -1324,6 +1338,9 @@ class CareplanModule(ModuleBase):
 
     def requires_case_details(self):
         return True
+
+    def get_case_types(self):
+        return set(f.case_type for f in self.forms)
 
     def get_form_by_type(self, case_type, mode):
         for form in self.forms:
@@ -1729,7 +1746,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
     @absolute_url_property
     def post_url(self):
         if self.secure_submissions:
-            url_name = 'receiver_secure_post'
+            url_name = 'receiver_secure_post_with_app_id'
         else:
             url_name = 'receiver_post_with_app_id'
         return reverse(url_name, args=[self.domain, self.copy_of or self.get_id])
@@ -1801,7 +1818,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
                 i = setting['values'].index(value)
                 assert i != -1
                 name = _(setting['value_names'][i])
-                raise AppError((
+                raise AppEditingError((
                     '%s Text Input is not supported '
                     'in CommCare versions before %s.%s. '
                     '(You are using %s.%s)'
@@ -1861,7 +1878,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
         try:
             self.validate_jar_path()
             self.create_all_files()
-        except (AppError, XFormValidationError, XFormError) as e:
+        except (AppEditingError, XFormValidationError, XFormError) as e:
             errors.append({'type': 'error', 'message': unicode(e)})
         except Exception as e:
             if settings.DEBUG:
@@ -2382,7 +2399,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if old_lang == new_lang:
             return
         if new_lang in self.langs:
-            raise AppError("Language %s already exists!" % new_lang)
+            raise AppEditingError("Language %s already exists!" % new_lang)
         for i,lang in enumerate(self.langs):
             if lang == old_lang:
                 self.langs[i] = new_lang
@@ -2399,6 +2416,13 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         self.modules = modules
 
     def rearrange_forms(self, to_module_id, from_module_id, i, j):
+        """
+        The case type of the two modules conflict,
+        ConflictingCaseTypeError is raised,
+        but the rearrangement (confusingly) goes through anyway.
+        This is intentional.
+
+        """
         forms = self.modules[to_module_id]['forms']
         try:
             forms.insert(i, forms.pop(j) if to_module_id == from_module_id
@@ -2407,7 +2431,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             raise RearrangeError()
         self.modules[to_module_id]['forms'] = forms
         if self.modules[to_module_id]['case_type'] != self.modules[from_module_id]['case_type']:
-            return 'case type conflict'
+            raise ConflictingCaseTypeError()
 
     def scrub_source(self, source):
         def change_unique_id(form):
@@ -2423,16 +2447,25 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 change_unique_id(source['modules'][m]['forms'][f])
 
     def copy_form(self, module_id, form_id, to_module_id):
+        """
+        The case type of the two modules conflict,
+        ConflictingCaseTypeError is raised,
+        but the copying (confusingly) goes through anyway.
+        This is intentional.
+
+        """
         form = self.get_module(module_id).get_form(form_id)
         copy_source = deepcopy(form.to_json())
         if copy_source.has_key('unique_id'):
             del copy_source['unique_id']
+        if not form.source:
+            raise BlankXFormError()
 
         copy_form = self.new_form_from_source(to_module_id, copy_source)
         save_xform(self, copy_form, form.source)
 
         if self.modules[module_id]['case_type'] != self.modules[to_module_id]['case_type']:
-            return 'case type conflict'
+            raise ConflictingCaseTypeError()
 
     @cached_property
     def has_case_management(self):
@@ -2562,7 +2595,7 @@ class RemoteApp(ApplicationBase):
         try:
             content = urlopen(url).read()
         except Exception:
-            raise AppError('Unable to access resource url: "%s"' % url)
+            raise AppEditingError('Unable to access resource url: "%s"' % url)
 
         return location, content
 
@@ -2592,7 +2625,7 @@ class RemoteApp(ApplicationBase):
                 tree.find(path).text
             except (TypeError, AttributeError):
                 if strict:
-                    raise AppError("problem with file path reference!")
+                    raise AppEditingError("problem with file path reference!")
                 else:
                     return
             for loc_node in tree.findall(path):
@@ -2604,8 +2637,8 @@ class RemoteApp(ApplicationBase):
         add_file_from_path('features/users/logo')
         try:
             suites = add_file_from_path(self.SUITE_XPATH, strict=True)
-        except AppError:
-            raise AppError(ugettext('Problem loading suite file from profile file. Is your profile file correct?'))
+        except AppEditingError:
+            raise AppEditingError(ugettext('Problem loading suite file from profile file. Is your profile file correct?'))
 
         for suite in suites:
             suite_xml = _parse_xml(suite)

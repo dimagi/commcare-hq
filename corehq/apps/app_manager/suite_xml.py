@@ -367,7 +367,8 @@ class IdStrings(object):
         )
 
     def menu(self, module):
-        return u"m{module.id}".format(module=module)
+        put_in_root = getattr(module, 'put_in_root', False)
+        return 'root' if put_in_root else u"m{module.id}".format(module=module)
 
     def module_locale(self, module):
         return module.get_locale_id()
@@ -811,7 +812,7 @@ class SuiteGenerator(object):
                 yield update_menu
             else:
                 menu = Menu(
-                    id='root' if module.put_in_root else self.id_strings.menu(module),
+                    id=self.id_strings.menu(module),
                     locale_id=self.id_strings.module_locale(module),
                     media_image=module.media_image,
                     media_audio=module.media_audio,

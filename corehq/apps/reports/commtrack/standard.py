@@ -1,3 +1,4 @@
+from corehq.apps.api.es import CaseES
 from corehq.apps.commtrack.psi_hacks import is_psi_domain
 from corehq.apps.reports.commtrack.data_sources import StockStatusDataSource, ReportingStatusDataSource, is_timely
 from corehq.apps.reports.generic import GenericTabularReport
@@ -10,6 +11,8 @@ from datetime import datetime
 from corehq.apps.locations.models import Location
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop
+from corehq.apps.reports.standard.cases.basic import CaseListReport
+from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
 
 def _enabled_hack(domain):
     return not is_psi_domain(domain)
@@ -150,7 +153,8 @@ class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
 class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Reporting Rate')
     slug = 'reporting_rate'
-    fields = ['corehq.apps.reports.fields.AsyncLocationField']
+    fields = ['corehq.apps.reports.fields.AsyncLocationField',
+              'corehq.apps.reports.filters.dates.DatespanFilter']
     exportable = True
     emailable = True
 
@@ -175,9 +179,10 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
         config = {
             'domain': self.domain,
             'location_id': self.request.GET.get('location_id'),
+            'start_date': self.request.GET.get('startdate'),
+            'end_date': self.request.GET.get('enddate'),
         }
         statuses = list(ReportingStatusDataSource(config).get_data())
-
         def child_loc(path):
             root = self.active_location
             ix = path.index(root._id) if root else -1
@@ -196,6 +201,7 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
 
         def status_tally(statuses):
             total = len(statuses)
+
             return map_reduce(lambda s: [(s,)],
                               lambda v: {'count': len(v), 'pct': len(v) / float(total)},
                               data=statuses)
@@ -234,3 +240,77 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
     def charts(self):
         if 'location_id' in self.request.GET: # hack: only get data if we're loading an actual report
             return [PieChart(None, _('Current Reporting'), self.master_pie_chart_data())]
+
+
+class RequisitionReport(CaseListReport):
+    name = ugettext_noop('Requisition Report')
+    slug = 'requisition_report'
+    fields = ['corehq.apps.reports.fields.AsyncLocationField', 'corehq.apps.reports.fields.SelectOpenCloseField']
+    exportable = True
+    emailable = True
+    asynchronous = True
+    default_case_type = "commtrack-requisition"
+
+
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return super(RequisitionReport, cls).show_in_navigation() and user and user.is_previewer()
+
+    @property
+    @memoized
+    def case_es(self):
+        return CaseES(self.domain)
+
+    @property
+    def headers(self):
+        return DataTablesHeader(*(DataTablesColumn(text) for text in [
+                    _('Requisition Unique ID'),
+                    _('Date Opened'),
+                    _('Date Closed'),
+                    _('Lead Time'),
+                    _('Status'),
+                ]))
+
+    @classmethod
+    def lead_time(self, closed_date, opened_date):
+        try:
+            closed_date = datetime.strptime(closed_date, "%Y-%m-%dT%H:%M:%SZ")
+            opened_date = datetime.strptime(opened_date, "%Y-%m-%dT%H:%M:%SZ")
+            return str(closed_date - opened_date)
+        except TypeError:
+            return _("---")
+
+    @property
+    def case_filter(self):
+        closed = self.request.GET.get('is_open')
+        location_id = self.request.GET.get('location_id')
+        filters = []
+        or_stmt = []
+
+        if closed:
+            filters.append({'term': {'closed': True if closed == 'closed' else False}})
+
+        if location_id:
+            location = Location.get(location_id)
+            if len(location.children) > 0:
+                descedants_ids = [loc._id for loc in location.descendants]
+                for loc_id in descedants_ids:
+                    or_stmt.append({'term': {'location_': loc_id}})
+                or_stmt = {'or': or_stmt}
+                filters.append(or_stmt)
+            else:
+                filters.append({'term': {'location_': location_id}})
+
+        return {'and': filters} if filters else {}
+
+    @property
+    def rows(self):
+       for row in self.get_data():
+            display = CaseDisplay(self, row['_case'])
+            yield [
+                display.case_id,
+                display._dateprop('opened_on', iso=False),
+                display._dateprop('closed_on', iso=False),
+                self.lead_time(display.case['closed_on'], display.case['opened_on']),
+                display.case['requisition_status']
+            ]

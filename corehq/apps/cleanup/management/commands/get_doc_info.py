@@ -38,7 +38,8 @@ class Command(BaseCommand):
             doc = {}
         domain = doc.get('domain', None)
         if self.full:
-            print "{0:<40}{1}".format(id, domain)
+            doc_type = doc.get('doc_type', None)
+            print "{0},{1},{2}".format(id, domain, doc_type)
         elif domain and domain not in self.domains:
             self.domains.add(domain)
             print domain

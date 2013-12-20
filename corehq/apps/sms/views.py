@@ -11,6 +11,7 @@ from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadReque
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from corehq.apps.api.models import require_api_user_permission, PERMISSION_POST_SMS
+from corehq.apps.commtrack.models import AlertConfig
 from corehq.apps.sms.api import (
     send_sms,
     incoming,
@@ -26,7 +27,7 @@ from corehq.apps.users import models as user_models
 from corehq.apps.users.views.mobile.users import EditCommCareUserView
 from corehq.apps.sms.models import SMSLog, INCOMING, OUTGOING, ForwardingRule, CommConnectCase
 from corehq.apps.sms.mixin import MobileBackend, SMSBackend, BackendMapping, VerifiedNumber
-from corehq.apps.sms.forms import ForwardingRuleForm, BackendMapForm, InitiateAddSMSBackendForm, SMSSettingsForm
+from corehq.apps.sms.forms import ForwardingRuleForm, BackendMapForm, InitiateAddSMSBackendForm, SMSSettingsForm, SubscribeSMSForm
 from corehq.apps.sms.util import get_available_backends, get_contact
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest, domain_admin_required, require_superuser
@@ -117,7 +118,7 @@ def post(request, domain):
                  date = datetime.now(),
                  text = text)
     msg.save()
-    return HttpResponse('OK')     
+    return HttpResponse('OK')
 
 @require_api_user_permission(PERMISSION_POST_SMS)
 def sms_in(request):
@@ -359,7 +360,7 @@ def api_send_sms(request, domain):
 @require_superuser
 def list_forwarding_rules(request, domain):
     forwarding_rules = ForwardingRule.view("sms/forwarding_rule", key=[domain], include_docs=True).all()
-    
+
     context = {
         "domain" : domain,
         "forwarding_rules" : forwarding_rules,
@@ -374,7 +375,7 @@ def add_forwarding_rule(request, domain, forwarding_rule_id=None):
         forwarding_rule = ForwardingRule.get(forwarding_rule_id)
         if forwarding_rule.domain != domain:
             raise Http404
-    
+
     if request.method == "POST":
         form = ForwardingRuleForm(request.POST)
         if form.is_valid():
@@ -392,7 +393,7 @@ def add_forwarding_rule(request, domain, forwarding_rule_id=None):
             initial["keyword"] = forwarding_rule.keyword
             initial["backend_id"] = forwarding_rule.backend_id
         form = ForwardingRuleForm(initial=initial)
-    
+
     context = {
         "domain" : domain,
         "form" : form,
@@ -415,13 +416,13 @@ def _add_backend(request, backend_class_name, is_global, domain=None, backend_id
         raise Http404
     backend_classes = get_available_backends()
     backend_class = backend_classes[backend_class_name]
-    
+
     backend = None
     if backend_id is not None:
         backend = backend_class.get(backend_id)
         if not is_global and backend.domain != domain:
             raise Http404
-    
+
     ignored_fields = ["give_other_domains_access"]
     if request.method == "POST":
         form = backend_class.get_form_class()(request.POST)
@@ -881,6 +882,49 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
     def dispatch(self, request, *args, **kwargs):
         return super(DomainSmsGatewayListView, self).dispatch(request, *args, **kwargs)
 
+class SubscribeSMSView(BaseMessagingSectionView):
+    template_name = "sms/subscribe_sms.html"
+    urlname = 'subscribe_sms'
+    page_title = ugettext_noop("Subscribe SMS")
+
+    @property
+    def commtrack_settings(self):
+        return Domain.get_by_name(self.domain).commtrack_settings
+
+    @property
+    @memoized
+    def form(self):
+        if self.request.method == 'POST':
+             return SubscribeSMSForm(self.request.POST)
+
+        if self.commtrack_settings and self.commtrack_settings.alert_config:
+            alert_config = self.commtrack_settings.alert_config
+        else:
+            alert_config = AlertConfig()
+        initial = {
+            'stock_out_facilities': alert_config.stock_out_facilities,
+            'stock_out_commodities': alert_config.stock_out_commodities,
+            'stock_out_rates': alert_config.stock_out_rates,
+            'non_report': alert_config.non_report,
+        }
+
+        return SubscribeSMSForm(initial=initial)
+
+    @property
+    def page_context(self):
+        context = {
+            "form": self.form,
+            "domain": self.domain,
+        }
+        return context
+
+    def post(self, request, *args, **kwargs):
+        if self.form.is_valid():
+            self.form.save(self.commtrack_settings)
+            messages.success(request, _("Updated CommTrack settings."))
+            return HttpResponseRedirect(reverse(SubscribeSMSView.urlname, args=[self.domain]))
+        return self.get(request, *args, **kwargs)
+
 @domain_admin_required
 def sms_settings(request, domain):
     domain_obj = Domain.get_by_name(domain, strict=True)
@@ -916,4 +960,3 @@ def sms_settings(request, domain):
         "is_previewer" : is_previewer,
     }
     return render(request, "sms/settings.html", context)
-
