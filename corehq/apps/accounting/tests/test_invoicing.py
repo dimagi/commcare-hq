@@ -156,7 +156,7 @@ class TestProductLineItem(BaseInvoiceTestCase):
 
     def setUp(self):
         super(TestProductLineItem, self).setUp()
-        self.product_rate = self.subscription.plan.product_rates.all()[0]
+        self.product_rate = self.subscription.plan.product_rates.get()
         self.prorate = Decimal("%.2f" % round(self.product_rate.monthly_fee / 30, 2))
 
     def test_standard(self):
@@ -176,7 +176,7 @@ class TestProductLineItem(BaseInvoiceTestCase):
         product_line_items = invoice.lineitem_set.filter(feature_rate__exact=None)
         self.assertEqual(product_line_items.count(), 1)
 
-        product_line_item = product_line_items[:1].get()
+        product_line_item = product_line_items.get()
         self.assertIsNotNone(product_line_item.base_description)
         self.assertEqual(product_line_item.base_cost, self.product_rate.monthly_fee)
 
@@ -208,7 +208,7 @@ class TestProductLineItem(BaseInvoiceTestCase):
             product_line_items = invoice.lineitem_set.filter(feature_rate__exact=None)
             self.assertEqual(product_line_items.count(), 1)
 
-            product_line_item = invoice.lineitem_set.filter(feature_rate__exact=None)[:1].get()
+            product_line_item = product_line_items.get()
 
             self.assertGreater(product_line_item.quantity, 1)
             self.assertEqual(product_line_item.unit_cost, self.prorate)
@@ -263,7 +263,7 @@ class TestUserLineItem(BaseInvoiceTestCase):
 
         tasks.generate_invoices(invoice_date)
         invoice = self.subscription.invoice_set.latest('date_created')
-        user_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.USER)[:1].get()
+        user_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.USER).get()
 
         self.assertIsNone(user_line_item.base_description)
         self.assertEqual(user_line_item.base_cost, Decimal('0.0'))
@@ -296,7 +296,7 @@ class TestUserLineItem(BaseInvoiceTestCase):
 
         tasks.generate_invoices(invoice_date)
         invoice = self.subscription.invoice_set.latest('date_created')
-        user_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.USER)[:1].get()
+        user_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.USER).get()
 
         # there is no base cost
         self.assertIsNone(user_line_item.base_description)
@@ -337,7 +337,7 @@ class TestSmsLineItem(BaseInvoiceTestCase):
 
     def setUp(self):
         super(TestSmsLineItem, self).setUp()
-        self.sms_rate = self.subscription.plan.feature_rates.filter(feature__feature_type=FeatureType.SMS)[:1].get()
+        self.sms_rate = self.subscription.plan.feature_rates.filter(feature__feature_type=FeatureType.SMS).get()
 
     def test_under_limit(self):
         """
@@ -362,7 +362,7 @@ class TestSmsLineItem(BaseInvoiceTestCase):
 
         tasks.generate_invoices(invoice_date)
         invoice = self.subscription.invoice_set.latest('date_created')
-        sms_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.SMS)[:1].get()
+        sms_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.SMS).get()
 
         # there is no base cost
         self.assertIsNone(sms_line_item.base_description)
@@ -399,7 +399,7 @@ class TestSmsLineItem(BaseInvoiceTestCase):
 
         tasks.generate_invoices(invoice_date)
         invoice = self.subscription.invoice_set.latest('date_created')
-        sms_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.SMS)[:1].get()
+        sms_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.SMS).get()
 
         # there is no base cost
         self.assertIsNone(sms_line_item.base_description)
