@@ -1,5 +1,7 @@
 from decimal import Decimal
 import random
+import datetime
+from django.core.exceptions import ObjectDoesNotExist
 from django.test import TestCase
 
 from corehq.apps.sms.models import INCOMING, OUTGOING
@@ -7,7 +9,7 @@ from corehq.apps.smsbillables.models import (SmsGatewayFee, SmsGatewayFeeCriteri
                                              SmsBillable)
 from corehq.apps.users.models import WebUser, CommCareUser
 from corehq.apps.accounting import generator, tasks, utils
-from corehq.apps.accounting.models import Invoice, FeatureType, LineItem
+from corehq.apps.accounting.models import Invoice, FeatureType, LineItem, Subscription, Subscriber, DefaultProductPlan
 
 
 class BaseInvoiceTestCase(TestCase):
@@ -79,8 +81,72 @@ class TestInvoice(BaseInvoiceTestCase):
         No invoices should be generated for domains that are not on a subscription and do not
         have any per_excess charges on users or SMS messages
         """
-        pass
-        # todo
+        domain = generator.arbitrary_domain()
+        tasks.generate_invoices()
+        self.assertRaises(ObjectDoesNotExist,
+                          lambda: Invoice.objects.get(subscription__subscriber__domain=domain.name))
+        domain.delete()
+
+    def test_community_invoice(self):
+        """
+        For an unsubscribed domain with any charges over the community limit for the month of invoicing,
+        make sure that an invoice is generated in addition to a subscription for that month to
+        the community plan.
+        """
+        domain = generator.arbitrary_domain()
+        generator.create_excess_community_users(domain)
+
+        tasks.generate_invoices()
+        subscriber = Subscriber.objects.get(domain=domain.name)
+        invoices = Invoice.objects.filter(subscription__subscriber=subscriber)
+        self.assertEqual(invoices.count(), 1)
+        invoice = invoices.get()
+        self.assertEqual(invoice.subscription.subscriber.domain, domain.name)
+        self.assertEqual(invoice.subscription.date_start, invoice.date_start)
+        self.assertEqual(invoice.subscription.date_end, invoice.date_end)
+        domain.delete()
+
+    def test_use_prev_billing_account_for_community_invoice(self):
+        """
+        Make sure that if a billing account was already auto generated for a previous community invoice,
+        that a new one is not created.
+        """
+        domain = generator.arbitrary_domain()
+        generator.create_excess_community_users(domain)
+
+        second_invoicing_date = datetime.date.today()
+        second_invoice_start, second_invoice_end = utils.get_previous_month_date_range(second_invoicing_date)
+        first_invoicing_date = second_invoice_start - datetime.timedelta(days=random.randint(0, 365))
+
+        tasks.generate_invoices(first_invoicing_date)
+        tasks.generate_invoices(second_invoicing_date)
+        subscriber = Subscriber.objects.get(domain=domain.name)
+        invoices = Invoice.objects.filter(subscription__subscriber=subscriber)
+        self.assertEqual(invoices.count(), 2)
+        invoices = invoices.all()
+        self.assertNotEqual(invoices[0].subscription, invoices[1].subscription)
+        self.assertEqual(invoices[0].subscription.account, invoices[1].subscription.account)
+        for invoice in invoices:
+            self.assertEqual(invoice.subscription.subscriber.domain, domain.name)
+        domain.delete()
+
+    def test_product_plan_for_community_invoices(self):
+        """
+        Make sure that the different product domains get the different community plans by product type.
+        """
+        domains_by_product = generator.arbitrary_domains_by_product_type()
+        for domain in domains_by_product.values():
+            generator.create_excess_community_users(domain)
+
+        tasks.generate_invoices()
+        for product_type, domain in domains_by_product.items():
+            subscriber = Subscriber.objects.get(domain=domain.name)
+            self.assertEqual(subscriber.subscription_set.count(), 1)
+            subscription = subscriber.subscription_set.get()
+            self.assertEqual(subscription.invoice_set.count(), 1)
+            expected_community_plan = DefaultProductPlan.objects.get(product_type=product_type)
+            self.assertEqual(subscription.plan.plan, expected_community_plan.plan)
+            domain.delete()
 
 
 class TestProductLineItem(BaseInvoiceTestCase):
