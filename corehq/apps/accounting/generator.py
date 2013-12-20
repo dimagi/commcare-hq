@@ -15,7 +15,10 @@ from corehq.apps.accounting.models import (FeatureType, Currency, BillingAccount
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser, CommCareUser
 
-# don't actually use this for initializing new plans! the amounts have been changed to make it easier on testing:
+# don't actually use the plan lists below for initializing new plans! the amounts have been changed to make
+# it easier for testing:
+MAX_COMMUNITY_USERS = 2
+
 COMMUNITY_COMMCARE_PLANS = [
     {
         'name': "CommCare Community",
@@ -24,7 +27,7 @@ COMMUNITY_COMMCARE_PLANS = [
         'rates': [
             {
                 'name': "User Community",
-                'limit': 2,
+                'limit': MAX_COMMUNITY_USERS,
                 'excess': Decimal('1.00'),
                 'type': FeatureType.USER,
             },
@@ -41,7 +44,7 @@ COMMUNITY_COMMCARE_PLANS = [
         'rates': [
             {
                 'name': "User CommTrack Community",
-                'limit': 2,
+                'limit': MAX_COMMUNITY_USERS,
                 'excess': Decimal('1.00'),
                 'type': FeatureType.USER,
             },
@@ -58,7 +61,7 @@ COMMUNITY_COMMCARE_PLANS = [
         'rates': [
             {
                 'name': "User CommConnect Community",
-                'limit': 2,
+                'limit': MAX_COMMUNITY_USERS,
                 'excess': Decimal('1.00'),
                 'type': FeatureType.USER,
             },
