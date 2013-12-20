@@ -8,6 +8,7 @@ import logging
 from dimagi.utils.couch.database import get_db, get_safe_write_kwargs
 from casexml.apps.phone import xml
 from datetime import datetime
+from casexml.apps.stock import COMMTRACK_REPORT_XMLNS
 from casexml.apps.stock.models import StockTransaction
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from receiver.xml import get_response_element, get_simple_response_xml,\
@@ -58,8 +59,7 @@ class RestoreConfig(object):
         cases = [e.case for e in syncop.actual_cases_to_sync]
         supply_points = [c for c in cases if c.type == 'supply-point']
         from lxml.builder import ElementMaker
-        from corehq.apps.commtrack import const
-        E = ElementMaker(namespace=const.COMMTRACK_REPORT_XMLNS)
+        E = ElementMaker(namespace=COMMTRACK_REPORT_XMLNS)
 
         def transaction_to_xml(trans):
             return E.product(
