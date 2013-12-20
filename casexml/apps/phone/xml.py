@@ -64,7 +64,7 @@ def get_case_element(case, updates, version=V1):
         
         # custom properties
         generator.add_custom_properties(update_block)
-        if update_block.getchildren():
+        if list(update_block):
             root.append(update_block)
         
     if do_index:
