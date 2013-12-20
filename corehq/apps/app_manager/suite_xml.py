@@ -324,6 +324,7 @@ class Suite(XmlObject):
     menus = NodeListField('menu', Menu)
 
     fixtures = NodeListField('fixture', Fixture)
+    descriptor = StringField('@descriptor')
 
 
 class IdStrings(object):
@@ -849,7 +850,7 @@ class SuiteGenerator(object):
             f.set_content(groups)
             yield f
 
-    def generate_suite(self, sections=None):
+    def generate_suite(self, sections=None, is_media=False):
         sections = sections or (
             'xform_resources',
             'locale_resources',
@@ -858,7 +859,8 @@ class SuiteGenerator(object):
             'menus',
             'fixtures',
         )
-        suite = Suite()
+        kw = {"descriptor": u"Suite File" if not is_media else u"Media Suite File"}
+        suite = Suite(**kw)
         suite.version = self.app.version
 
         def add_to_suite(attr):
