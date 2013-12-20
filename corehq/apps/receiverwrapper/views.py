@@ -1,29 +1,51 @@
 from django.http import HttpResponseBadRequest
 from corehq.apps.domain.decorators import login_or_digest_ex
 from corehq.apps.receiverwrapper.auth import AuthContext
-import receiver.views
+import receiver
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
+
+
+def _process_form(request, domain, user_id, authenticated):
+    instance, attachments = receiver.get_instance_and_attachment(request)
+    return receiver.SubmissionPost(
+        instance=instance,
+        attachments=attachments,
+        auth_context=AuthContext(
+            domain=domain,
+            user_id=user_id,
+            authenticated=authenticated,
+        ),
+        location=receiver.get_location(request),
+        received_on=receiver.get_received_on(request),
+        date_header=receiver.get_date_header(request),
+        path=receiver.get_path(request),
+        submit_ip=receiver.get_submit_ip(request),
+        last_sync_token=receiver.get_last_sync_token(request),
+        openrosa_headers=receiver.get_openrosa_headers(request),
+    ).get_response()
 
 
 @csrf_exempt
 @require_POST
 def post(request, domain, app_id=None):
-    return receiver.views.SubmissionPost(request, auth_context=AuthContext(
+    return _process_form(
+        request=request,
         domain=domain,
         user_id=None,
         authenticated=False,
-    )).get_response()
+    )
 
 
 @login_or_digest_ex(allow_cc_users=True)
 def _secure_post_digest(request, domain, app_id=None):
     """only ever called from secure post"""
-    return receiver.views.SubmissionPost(request, auth_context=AuthContext(
+    return _process_form(
+        request=request,
         domain=domain,
         user_id=request.couch_user.get_id,
         authenticated=True,
-    )).get_response()
+    )
 
 
 @csrf_exempt

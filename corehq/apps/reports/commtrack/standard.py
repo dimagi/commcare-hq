@@ -153,7 +153,8 @@ class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
 class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Reporting Rate')
     slug = 'reporting_rate'
-    fields = ['corehq.apps.reports.fields.AsyncLocationField']
+    fields = ['corehq.apps.reports.fields.AsyncLocationField',
+              'corehq.apps.reports.filters.dates.DatespanFilter']
     exportable = True
     emailable = True
 
@@ -178,9 +179,10 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
         config = {
             'domain': self.domain,
             'location_id': self.request.GET.get('location_id'),
+            'start_date': self.request.GET.get('startdate'),
+            'end_date': self.request.GET.get('enddate'),
         }
         statuses = list(ReportingStatusDataSource(config).get_data())
-
         def child_loc(path):
             root = self.active_location
             ix = path.index(root._id) if root else -1
@@ -199,6 +201,7 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
 
         def status_tally(statuses):
             total = len(statuses)
+
             return map_reduce(lambda s: [(s,)],
                               lambda v: {'count': len(v), 'pct': len(v) / float(total)},
                               data=statuses)
@@ -264,7 +267,7 @@ class RequisitionReport(CaseListReport):
                     _('Requisition Unique ID'),
                     _('Date Opened'),
                     _('Date Closed'),
-                    _('Lead Time'),
+                    _('Lead Time (Days)'),
                     _('Status'),
                 ]))
 
@@ -273,7 +276,8 @@ class RequisitionReport(CaseListReport):
         try:
             closed_date = datetime.strptime(closed_date, "%Y-%m-%dT%H:%M:%SZ")
             opened_date = datetime.strptime(opened_date, "%Y-%m-%dT%H:%M:%SZ")
-            return str(closed_date - opened_date)
+            days_rest_delta = (((closed_date - opened_date).seconds / 3600)*10)/24
+            return "%s.%s" % ((closed_date - opened_date).days, days_rest_delta)
         except TypeError:
             return _("---")
 

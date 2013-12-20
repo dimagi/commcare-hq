@@ -581,11 +581,14 @@ class MessagingTab(UITab):
                 {'title': _("Reminders in Error"),
                  'url': reverse('reminders_in_error', args=[self.domain])},
             ]),
-            (_("CommTrack"), [
-                {'title': _("Subscribe to SMS Reports"),
-                 'url': reverse(SubscribeSMSView.urlname, args=[self.domain])},
-            ]),
         ]
+        if self.project.commtrack_enabled:
+            items.append(
+                (_("CommTrack"), [
+                    {'title': _("Subscribe to SMS Reports"),
+                    'url': reverse(SubscribeSMSView.urlname, args=[self.domain])},])
+            )
+
         if self.couch_user.is_previewer():
             items[0][1].append(
                 {'title': _('Chat'),
