@@ -1,12 +1,14 @@
 import hashlib
 from couchdbkit import ResourceConflict
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.exceptions import BadStateException, RestoreException
 from casexml.apps.phone.models import SyncLog, CaseState
 import logging
 from dimagi.utils.couch.database import get_db, get_safe_write_kwargs
 from casexml.apps.phone import xml
 from datetime import datetime
+from casexml.apps.stock.models import StockTransaction
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from receiver.xml import get_response_element, get_simple_response_xml,\
     ResponseNature
@@ -52,46 +54,27 @@ class RestoreConfig(object):
                                         actual=parsed_hash,
                                         case_ids=self.sync_log.get_footprint_of_cases_on_phone())
 
-    def get_commtrack_payload(self, syncop):
-        # uh-oh, cross-submodule circular reference
-        from corehq.apps.reports.commtrack.data_sources import StockStatusDataSource
-
+    def get_stock_payload(self, syncop):
         cases = [e.case for e in syncop.actual_cases_to_sync]
         supply_points = [c for c in cases if c.type == 'supply-point']
-        def product_entries():
-            for sp in supply_points:
-                location = sp.location_[-1]
-                # seems unavoidable to make a separate couch request per supply point
-                spps = StockStatusDataSource({
-                        'domain': sp.domain,
-                        'location_id': location,
-                    }).get_data()
-                for spp in spps:
-                    spp['supply_point'] = sp._id
-                    yield spp
-
-        from dimagi.utils.couch.loosechange import map_reduce
-        product_by_supply_point = map_reduce(lambda e: [(e['supply_point'],)], data=product_entries(), include_docs=True)
-
         from lxml.builder import ElementMaker
         from corehq.apps.commtrack import const
         E = ElementMaker(namespace=const.COMMTRACK_REPORT_XMLNS)
-        def mk_product(e):
-            def _(attr, transform=lambda e: e):
-                val = e.get(attr)
-                return str(transform(val)) if val is not None else ''
+
+        def transaction_to_xml(trans):
             return E.product(
-                id=_('product_id'),
-                quantity=_('current_stock', int),
-                consumption_rate=_('consumption'),
-                stock_category=_('category'),
-                stockout_since=_('stockout_since'),
+                id=trans.product_id,
+                quantity=str(int(trans.stock_on_hand)),
             )
-        for supply_point, products in product_by_supply_point.iteritems():
-            as_of = max(p['last_reported'] for p in products)
-            as_of = 'T'.join(as_of.split()) + 'Z' # FIXME convert to iso properly
-            products.sort(key=lambda p: p['product_name'])
-            yield E.balance(*(mk_product(e) for e in products), **{'entity-id': supply_point, 'date': as_of})
+        for supply_point in supply_points:
+            relevant_reports = StockTransaction.objects.filter(case_id=supply_point._id)
+            if relevant_reports:
+                product_ids = relevant_reports.values_list('product_id', flat=True).distinct()
+                products = [relevant_reports.filter(product_id=p).order_by('-report__date').select_related()[0] for p in product_ids]
+                as_of = json_format_datetime(max(p.report.date for p in products))
+                # todo: fix sorting for tests
+                # products.sort(key=lambda p: p['product_name'])
+                yield E.balance(*(transaction_to_xml(e) for e in products), **{'entity-id': supply_point._id, 'date': as_of})
 
     def get_payload(self):
         user = self.user
@@ -106,7 +89,7 @@ class RestoreConfig(object):
         sync_operation = user.get_case_updates(last_sync)
         case_xml_elements = [xml.get_case_element(op.case, op.required_updates, self.version)
                              for op in sync_operation.actual_cases_to_sync]
-        commtrack_elements = self.get_commtrack_payload(sync_operation)
+        commtrack_elements = self.get_stock_payload(sync_operation)
 
         last_seq = str(get_db().info()["update_seq"])
 
