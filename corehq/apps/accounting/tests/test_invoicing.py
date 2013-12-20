@@ -54,6 +54,7 @@ class TestInvoice(BaseInvoiceTestCase):
         invoice_date = utils.months_from_date(self.subscription.date_start, random.randint(2, self.subscription_length))
         tasks.generate_invoices(invoice_date)
         self.assertEqual(self.subscription.invoice_set.count(), 1)
+        self.assertEqual(self.subscription.subscriber.domain, self.domain.name)
 
         invoice = self.subscription.invoice_set.latest('date_created')
 
