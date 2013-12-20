@@ -62,7 +62,7 @@ class TestInvoice(BaseInvoiceTestCase):
 
         num_feature_line_items = invoice.lineitem_set.get_features().count()
         self.assertEqual(num_feature_line_items, self.subscription.plan.feature_rates.count())
-
+        self.assertEqual(invoice.subscription, self.subscription)
         self.assertGreater(invoice.balance, Decimal('0.0'))
 
     def test_no_invoice_after_end(self):
