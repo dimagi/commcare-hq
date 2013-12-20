@@ -8,7 +8,7 @@ import logging
 from dimagi.utils.couch.database import get_db, get_safe_write_kwargs
 from casexml.apps.phone import xml
 from datetime import datetime
-from casexml.apps.stock import COMMTRACK_REPORT_XMLNS
+from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from casexml.apps.stock.models import StockTransaction
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from receiver.xml import get_response_element, get_simple_response_xml,\
@@ -69,11 +69,9 @@ class RestoreConfig(object):
         for supply_point in supply_points:
             relevant_reports = StockTransaction.objects.filter(case_id=supply_point._id)
             if relevant_reports:
-                product_ids = relevant_reports.values_list('product_id', flat=True).distinct()
+                product_ids = sorted(relevant_reports.values_list('product_id', flat=True).distinct())
                 products = [relevant_reports.filter(product_id=p).order_by('-report__date').select_related()[0] for p in product_ids]
                 as_of = json_format_datetime(max(p.report.date for p in products))
-                # todo: fix sorting for tests
-                # products.sort(key=lambda p: p['product_name'])
                 yield E.balance(*(transaction_to_xml(e) for e in products), **{'entity-id': supply_point._id, 'date': as_of})
 
     def get_payload(self):
