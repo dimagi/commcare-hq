@@ -187,7 +187,7 @@ class TestUserLineItem(BaseInvoiceTestCase):
         """
         invoice_date = utils.months_from_date(self.subscription.date_start, random.randint(2, self.subscription_length))
 
-        num_users = lambda: random.randint(0, self.user_rate.monthly_limit / 2)
+        num_users = lambda: random.randint(0, self.user_rate.monthly_limit)
         num_active = num_users()
         generator.arbitrary_commcare_users_for_domain(self.domain.name, num_active)
 
@@ -235,7 +235,7 @@ class TestUserLineItem(BaseInvoiceTestCase):
         self.assertIsNone(user_line_item.base_description)
         self.assertEqual(user_line_item.base_cost, Decimal('0.0'))
 
-        num_to_charge = (num_active + num_inactive) - self.user_rate.monthly_limit
+        num_to_charge = num_active - self.user_rate.monthly_limit
         self.assertIsNotNone(user_line_item.unit_description)
         self.assertEqual(user_line_item.quantity, num_to_charge)
         self.assertEqual(user_line_item.unit_cost, self.user_rate.per_excess_fee)
