@@ -228,12 +228,28 @@ class TestProductLineItem(BaseInvoiceTestCase):
         make sure that the following is true:
         - base_description is None
         - unit_description is None
-        - unit_cost is equal to per excess fee
+        - unit_cost is equal to 0
         - quantity is equal to 0
-        - total and subtotals are 0.0
+        - total and subtotal are 0.0
         """
-        # todo
-        pass
+        domain = generator.arbitrary_domain()
+        generator.create_excess_community_users(domain)
+
+        tasks.generate_invoices()
+        subscriber = Subscriber.objects.get(domain=domain.name)
+        invoice = Invoice.objects.filter(subscription__subscriber=subscriber).get()
+
+        product_line_items = invoice.lineitem_set.filter(feature_rate__exact=None)
+        self.assertEqual(product_line_items.count(), 1)
+        product_line_item = product_line_items.get()
+        self.assertIsNotNone(product_line_item.base_description)
+        self.assertIsNone(product_line_item.unit_description)
+        self.assertEqual(product_line_item.unit_cost, Decimal('0.0'))
+        self.assertEqual(product_line_item.quantity, 1)
+        self.assertEqual(product_line_item.subtotal, Decimal('0.0'))
+        self.assertEqual(product_line_item.total, Decimal('0.0'))
+
+        domain.delete()
 
 
 class TestUserLineItem(BaseInvoiceTestCase):
