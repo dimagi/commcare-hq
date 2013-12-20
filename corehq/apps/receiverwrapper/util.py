@@ -1,4 +1,6 @@
 import re
+from corehq.apps.receiverwrapper.auth import AuthContext
+import receiver
 
 
 def get_submit_url(domain, app_id=None):
@@ -6,6 +8,22 @@ def get_submit_url(domain, app_id=None):
         return "/a/{domain}/receiver/{app_id}/".format(domain=domain, app_id=app_id)
     else:
         return "/a/{domain}/receiver/".format(domain=domain)
+
+
+def submit_form_locally(instance, domain, app_id=None, user_id=None,
+                        authenticated=False):
+    response = receiver.SubmissionPost(
+        app_id=app_id,
+        domain=domain,
+        instance=instance,
+        attachments={},
+        auth_context=AuthContext(
+            domain=domain,
+            user_id=user_id,
+            authenticated=authenticated,
+        )
+    ).get_response()
+    return response
 
 
 def get_meta_appversion_text(xform):
