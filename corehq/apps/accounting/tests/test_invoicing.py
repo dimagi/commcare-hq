@@ -289,8 +289,6 @@ class TestUserLineItem(BaseInvoiceTestCase):
         self.assertEqual(user_line_item.subtotal, Decimal('0.0'))
         self.assertEqual(user_line_item.total, Decimal('0.0'))
 
-        self._delete_users()
-
     def test_over_limit(self):
         """
         Make sure that the User rate produced:
@@ -325,8 +323,6 @@ class TestUserLineItem(BaseInvoiceTestCase):
         self.assertEqual(user_line_item.subtotal, num_to_charge * self.user_rate.per_excess_fee)
         self.assertEqual(user_line_item.total, num_to_charge * self.user_rate.per_excess_fee)
 
-        self._delete_users()
-
     def test_community_charges_over_limit(self):
         """
         For a domain under community (no subscription) with users over the community limit, make sure that:
@@ -340,13 +336,6 @@ class TestUserLineItem(BaseInvoiceTestCase):
         pass
         # todo
 
-    def _delete_users(self):
-        for user in WebUser.by_domain(self.domain.name):
-            user.delete()
-        for user in CommCareUser.by_domain(self.domain.name):
-            user.delete()
-        for user in CommCareUser.by_domain(self.domain.name, is_active=False):
-            user.delete()
 
 
 class TestSmsLineItem(BaseInvoiceTestCase):
