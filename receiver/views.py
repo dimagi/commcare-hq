@@ -3,8 +3,9 @@ from django.http import HttpResponse, HttpResponseServerError
 import couchforms
 from couchforms.models import XFormInstance, SubmissionErrorLog
 import receiver
-from receiver.signals import successful_form_received, ReceiverResult, form_received
+from receiver.signals import successful_form_received, ReceiverResult
 from receiver import xml
+from receiver.util import scrub_meta
 from receiver.xml import ResponseNature
 from couchforms.signals import submission_error_received
 
@@ -12,11 +13,13 @@ from couchforms.signals import submission_error_received
 class SubmissionPost(couchforms.SubmissionPost):
 
     def __init__(self, instance=None, attachments=None,
-                 auth_context=None, path=None,
+                 auth_context=None, domain=None, app_id=None, path=None,
                  location=None, submit_ip=None, openrosa_headers=None,
                  last_sync_token=None, received_on=None, date_header=None):
-
+        assert domain
         # get_location has good default
+        self.domain = domain
+        self.app_id = app_id
         self.location = location or receiver.get_location()
         self.received_on = received_on
         self.date_header = date_header
@@ -43,6 +46,10 @@ class SubmissionPost(couchforms.SubmissionPost):
 
         if self.date_header:
             doc['date_header'] = self.date_header
+
+        doc['domain'] = self.domain
+        doc['app_id'] = self.app_id
+        doc['#export_tag'] = ["domain", "xmlns"]
 
         return doc
 
@@ -104,7 +111,7 @@ class SubmissionPost(couchforms.SubmissionPost):
         # get a fresh copy of the doc, in case other things modified it.
         instance = XFormInstance.get(doc.get_id)
         self._attach_shared_props(instance)
-        form_received.send(sender="receiver", xform=instance)
+        scrub_meta(instance)
         instance.save()
 
         if instance.doc_type == "XFormInstance":
