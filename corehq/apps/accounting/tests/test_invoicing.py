@@ -445,7 +445,33 @@ class TestSmsLineItem(BaseInvoiceTestCase):
         - quantity is equal to 1
         - total and subtotals are greater than zero
         """
-        pass
+        domain = generator.arbitrary_domain()
+        invoice_date = datetime.date.today()
+        sms_date = utils.months_from_date(invoice_date, -1)
+
+        num_sms = random.randint(1, 5)
+        generator.arbitrary_sms_billables_for_domain(
+            domain.name, INCOMING, sms_date, num_sms
+        )
+
+        tasks.generate_invoices(invoice_date)
+        subscriber = Subscriber.objects.get(domain=domain.name)
+        invoice = Invoice.objects.filter(subscription__subscriber=subscriber).get()
+        sms_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.SMS).get()
+
+        # there is no base cost
+        self.assertIsNone(sms_line_item.base_description)
+        self.assertEqual(sms_line_item.base_cost, Decimal('0.0'))
+
+        self.assertEqual(sms_line_item.quantity, 1)
+        self.assertGreater(sms_line_item.unit_cost, Decimal('0.0'))
+        self.assertIsNotNone(sms_line_item.unit_description)
+
+        self.assertGreater(sms_line_item.subtotal, Decimal('0.0'))
+        self.assertGreater(sms_line_item.total, Decimal('0.0'))
+
+        self._delete_sms_billables()
+        domain.delete()
 
     def _delete_sms_billables(self):
         SmsBillable.objects.all().delete()
