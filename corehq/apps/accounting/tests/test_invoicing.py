@@ -7,9 +7,8 @@ from django.test import TestCase
 from corehq.apps.sms.models import INCOMING, OUTGOING
 from corehq.apps.smsbillables.models import (SmsGatewayFee, SmsGatewayFeeCriteria, SmsUsageFee, SmsUsageFeeCriteria,
                                              SmsBillable)
-from corehq.apps.users.models import WebUser, CommCareUser
 from corehq.apps.accounting import generator, tasks, utils
-from corehq.apps.accounting.models import Invoice, FeatureType, LineItem, Subscription, Subscriber, DefaultProductPlan
+from corehq.apps.accounting.models import Invoice, FeatureType, LineItem, Subscriber, DefaultProductPlan
 
 
 class BaseInvoiceTestCase(TestCase):
