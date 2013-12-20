@@ -272,7 +272,6 @@ class Invoice(models.Model):
     date_end = models.DateField()
 
     @property
-    @memoized
     def subtotal(self):
         """
         This will be inserted in the subtotal field on the printed invoice.
@@ -364,7 +363,6 @@ class LineItem(models.Model):
         return self.base_cost + self.unit_cost * self.quantity
 
     @property
-    @memoized
     def applied_credit(self):
         """
         The total amount of credit applied specifically to this LineItem.
