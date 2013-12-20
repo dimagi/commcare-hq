@@ -316,3 +316,9 @@ def arbitrary_sms_billables_for_domain(domain, direction, message_month_date, nu
                                     random.randint(1, last_day_message)),
         )
         sms_billable.save()
+
+
+def create_excess_community_users(domain):
+    num_active_users = random.randint(MAX_COMMUNITY_USERS + 1, MAX_COMMUNITY_USERS + 4)
+    arbitrary_commcare_users_for_domain(domain.name, num_active_users)
+    return num_active_users
