@@ -6,7 +6,7 @@ from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from couchdbkit.ext.django.schema import (Document, StringProperty, BooleanProperty, DateTimeProperty, IntegerProperty,
                                           DocumentSchema, SchemaProperty, DictProperty, ListProperty,
-                                          StringListProperty, SchemaListProperty, TimeProperty)
+                                          StringListProperty, SchemaListProperty, SchemaDictProperty, TimeProperty)
 from django.core.cache import cache
 from django.utils.safestring import mark_safe
 from corehq.apps.appstore.models import Review, SnapshotMixin
@@ -143,6 +143,12 @@ class CallCenterProperties(DocumentSchema):
     case_owner_id = StringProperty()
     case_type = StringProperty()
 
+class CareplanAppProperties(DocumentSchema):
+    name = StringProperty()
+    case_type = StringProperty()
+    goal_conf = DictProperty()
+    task_conf = DictProperty()
+
 class LicenseAgreement(DocumentSchema):
     signed = BooleanProperty(default=False)
     type = StringProperty()
@@ -242,6 +248,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     is_shared = BooleanProperty(default=False)
     commtrack_enabled = BooleanProperty(default=False)
     call_center_config = SchemaProperty(CallCenterProperties)
+    careplan_config = SchemaDictProperty(CareplanAppProperties)
     restrict_superusers = BooleanProperty(default=False)
     location_restriction_for_users = BooleanProperty(default=True)
 

@@ -494,15 +494,9 @@ class FormBase(DocumentSchema):
 
     @property
     def full_path_name(self):
-        app = self.get_app()
-        module_name = trans(
-            self.get_module().name,
-            [app.default_language] + app.build_langs,
-            include_lang=False
-        )
         return "%(app_name)s > %(module_name)s > %(form_name)s" % {
-            'app_name': app.name,
-            'module_name': module_name,
+            'app_name': self.get_app().name,
+            'module_name': self.get_module().default_name(),
             'form_name': self.default_name()
         }
 
@@ -950,6 +944,17 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
             'name': self.name,
         }
 
+    def get_app(self):
+        return self._parent
+
+    def default_name(self):
+        app = self.get_app()
+        return trans(
+            self.name,
+            [app.default_language] + app.build_langs,
+            include_lang=False
+        )
+
     def validate_detail_columns(self, columns):
         for column in columns:
             if column.format in ('enum', 'enum-image'):
@@ -1345,7 +1350,7 @@ class CareplanModule(ModuleBase):
         return set(f.case_type for f in self.forms)
 
     def get_form_by_type(self, case_type, mode):
-        for form in self.forms:
+        for form in self.get_forms():
             if form.case_type == case_type and form.mode == mode:
                 return form
 
