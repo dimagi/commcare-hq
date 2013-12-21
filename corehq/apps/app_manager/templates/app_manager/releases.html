@@ -139,7 +139,7 @@
             <tbody data-bind="css: {hide: false}, template: {
                 foreach: savedApps,
                 afterAdd: function(elem) { $(elem).hide().fadeIn() },
-                beforeRemove: function(elem) { $(elem).fadeOut() }
+                beforeRemove: function(elem) { if (elem.nodeType === 1) { $(elem).fadeOut(); } }
             }" class="hide">
                 <tr class="build" data-bind="css: {
                     'build-released': is_released(),
@@ -176,7 +176,8 @@
                         <div class="btn-group">
                             <a class="btn" data-bind="
                                 openModal: 'deploy-build-modal-template',
-                                css: {'btn-primary': !build_broken(), 'btn-danger': build_broken}
+                                css: {'btn-primary': !build_broken(), 'btn-danger': build_broken},
+                                click: function() { _gaq.push(['_trackEvent', 'App Manager', 'Deploy', '{{ app.id }}']); }
                             ">
                                 <span class="icon icon-exclamation-sign" data-bind="visible: build_broken"></span>
                                 {% trans "Deploy" %}

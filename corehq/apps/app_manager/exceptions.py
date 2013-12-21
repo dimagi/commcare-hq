@@ -7,11 +7,23 @@ class VersioningError(AppManagerException):
     pass
 
 
-class AppError(AppManagerException):
+class AppEditingError(AppManagerException):
+    pass
+
+
+class RearrangeError(AppEditingError):
+    pass
+
+
+class ConflictingCaseTypeError(AppEditingError):
     pass
 
 
 class XFormError(AppManagerException):
+    pass
+
+
+class BlankXFormError(XFormError):
     pass
 
 
@@ -51,6 +63,10 @@ class XFormValidationError(XFormError):
             message = '\n'.join(message_lines)
 
         return message
+
+
+class BindNotFound(XFormError):
+    pass
 
 
 class SuiteError(AppManagerException):

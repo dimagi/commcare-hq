@@ -46,3 +46,5 @@ class CommCareCaseResource(JsonResource, DomainSpecificResourceMixin):
     class Meta(CustomResourceMeta):
         object_class = CommCareCase    
         resource_name = 'case'
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']

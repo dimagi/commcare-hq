@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<suite version="13">
+<suite version="13" descriptor="Suite File">
   <xform>
     <resource descriptor="Form: (Module Patient) - Register patient" id="92a98005164cd9ab52878f95583158085ea9d15d" version="13">
       <location authority="local">./modules-0/forms-0.xml</location>
@@ -272,14 +272,14 @@
     <instance id="commcaresession" src="jr://instance/session"/>
     <session>
       <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='patient'][@status='open']" value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
-      <datum id="new_goal_id" function="uuid()"/>
+      <datum id="case_id_goal" function="uuid()"/>
     </session>
     <stack>
-      <create if="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/new_goal_id]) = 1">
+      <create if="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_goal][@status='open']) = 1">
         <command>m0</command>
         <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
         <command>m1</command>
-        <datum id="case_id_goal" value="instance('commcaresession')/session/data/new_goal_id"/>
+        <datum id="case_id_goal" value="instance('commcaresession')/session/data/case_id_goal"/>
       </create>
     </stack>
   </entry>
@@ -296,6 +296,14 @@
       <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='patient'][@status='open']" value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
       <datum id="case_id_goal" nodeset="instance('casedb')/casedb/case[@case_type='careplan_goal'][index/parent=instance('commcaresession')/session/data/case_id][@status='open']" value="./@case_id" detail-select="m1_careplan_goal_short" detail-confirm="m1_careplan_goal_long"/>
     </session>
+    <stack>
+      <create if="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_goal][@status='open']) = 1">
+        <command>m0</command>
+        <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
+        <command>m1</command>
+        <datum id="case_id_goal" value="instance('commcaresession')/session/data/case_id_goal"/>
+      </create>
+    </stack>
   </entry>
   <entry>
     <form>http://dev.commcarehq.org/careplan/task/create</form>
@@ -310,6 +318,14 @@
       <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='patient'][@status='open']" value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
       <datum id="case_id_goal" nodeset="instance('casedb')/casedb/case[@case_type='careplan_goal'][index/parent=instance('commcaresession')/session/data/case_id][@status='open']" value="./@case_id" detail-select="m1_careplan_goal_short" detail-confirm="m1_careplan_goal_long"/>
     </session>
+    <stack>
+      <create>
+        <command>m0</command>
+        <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
+        <command>m1</command>
+        <datum id="case_id_goal" value="instance('commcaresession')/session/data/case_id_goal"/>
+      </create>
+    </stack>
   </entry>
   <entry>
     <form>http://dev.commcarehq.org/careplan/task/update</form>
@@ -326,7 +342,7 @@
       <datum id="case_id_task" nodeset="instance('casedb')/casedb/case[@case_type='careplan_task'][index/goal=instance('commcaresession')/session/data/case_id_goal][@status='open']" value="./@case_id" detail-select="m1_careplan_task_short" detail-confirm="m1_careplan_task_long"/>
     </session>
     <stack>
-      <create if="count(instance('casedb')/casedb/case[@case_type='careplan_task'][index/goal=instance('commcaresession')/session/data/case_id_goal][@status='open']) >= 1">
+      <create if="count(instance('casedb')/casedb/case[@case_type='careplan_task'][index/goal=instance('commcaresession')/session/data/case_id_goal][@status='open']) &gt;= 1">
         <command>m0</command>
         <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
         <command>m1</command>

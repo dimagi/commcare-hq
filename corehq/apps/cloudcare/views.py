@@ -30,13 +30,22 @@ from corehq.apps.cloudcare.decorators import require_cloudcare_access
 import HTMLParser
 from django.contrib import messages
 from django.utils.translation import ugettext as _, ugettext_noop
+from corehq.apps.domain.decorators import require_privilege
 
 
 @require_cloudcare_access
 def default(request, domain):
     return HttpResponseRedirect(reverse('cloudcare_main', args=[domain, '']))
 
+def insufficient_privilege(request, domain, *args, **kwargs):
+    context = {
+        'domain': domain,
+    }
+
+    return render(request, "cloudcare/insufficient_privilege.html", context)
+
 @require_cloudcare_access
+@require_privilege('cloudcare', fallback_view=insufficient_privilege)
 def cloudcare_main(request, domain, urlPath):
     try:
         preview = string_to_boolean(request.REQUEST.get("preview", "false"))

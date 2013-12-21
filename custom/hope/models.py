@@ -209,7 +209,7 @@ class HOPECase(CommCareCase):
 
             try:
                 ifa_tablets_issued = int(ifa_tablets_issued)
-            except ValueError:
+            except (ValueError, TypeError):
                 ifa_tablets_issued = 0
 
             if ifa_tablets_issued > 0:
@@ -245,7 +245,7 @@ class HOPECase(CommCareCase):
             return 0
 
         return len([form for form in self.pnc_forms + self.ebf_forms
-                    if form.get_form.get('within_42') == 'yes'])
+                    if (form.get_form.get("meta")['timeEnd'].date() - add).days <= 42])
 
     @property
     def _HOPE_opv_1_indicator(self):

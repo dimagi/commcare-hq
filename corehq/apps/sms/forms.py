@@ -7,7 +7,7 @@ from django.forms.fields import *
 from crispy_forms import layout as crispy
 from django.utils.safestring import mark_safe
 from corehq.apps.hqwebapp.crispy import BootstrapMultiField
-from corehq.apps.sms.models import ForwardingRule, FORWARD_ALL, FORWARD_BY_KEYWORD
+from corehq.apps.sms.models import FORWARD_ALL, FORWARD_BY_KEYWORD
 from django.core.exceptions import ValidationError
 from corehq.apps.sms.mixin import SMSBackend
 from corehq.apps.reminders.forms import RecordListField
@@ -201,3 +201,18 @@ class InitiateAddSMSBackendForm(Form):
                 ),
             ),
         )
+
+class SubscribeSMSForm(Form):
+    stock_out_facilities = BooleanField(label=_("Receive stockout facilities SMS alert"), required=False, help_text=_("This will alert you with specific users/facilities that are stocked out of your commodities"))
+    stock_out_commodities = BooleanField(label=_("Receive stockout commodities SMS alert"), required=False, help_text=_("This will alert you with specific commodities that are stocked out by your users/facilities"))
+    stock_out_rates = BooleanField(label=_("Receive stockout SMS alert"), required=False, help_text=_("This will alert you with the percent of facilities that are stocked out of a specific commodity"))
+    non_report = BooleanField(label=_("Receive non-reporting SMS alert"), required=False, help_text=_("This alert highlight users/facilities which have not submitted their CommTrack stock report."))
+
+    def save(self, commtrack_settings):
+        alert_config = commtrack_settings.alert_config
+        alert_config.stock_out_facilities = self.cleaned_data.get("stock_out_facilities", False)
+        alert_config.stock_out_commodities = self.cleaned_data.get("stock_out_commodities", False)
+        alert_config.stock_out_rates = self.cleaned_data.get("stock_out_rates", False)
+        alert_config.non_report = self.cleaned_data.get("non_report", False)
+
+        commtrack_settings.save()
