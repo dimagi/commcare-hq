@@ -79,6 +79,9 @@ def process_stock(sender, xform, config=None, **kwargs):
                      headers={'HTTP_X_SUBMIT_TIME': submit_time},
                      hqsubmission=False)
 
+    # create the django models
+    for report in stock_reports:
+        report.create_models()
 
 
 
