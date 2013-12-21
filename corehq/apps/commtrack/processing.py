@@ -84,7 +84,6 @@ def process_stock(sender, xform, config=None, **kwargs):
         report.create_models()
 
 
-
 # TODO retire this with move to new data model
 def product_subcases(supply_point):
     """
@@ -94,9 +93,8 @@ def product_subcases(supply_point):
     """
     from helpers import make_supply_point_product
 
-    product_subcase_uuids = [ix.referenced_id for ix in supply_point.reverse_indices if ix.identifier == const.PARENT_CASE_REF]
-    product_subcases = CommCareCase.view('_all_docs', keys=product_subcase_uuids, include_docs=True)
-    product_subcase_mapping = dict((subcase.dynamic_properties().get('product'), subcase) for subcase in product_subcases)
+    product_subcases = supply_point.get_product_subcases()
+    product_subcase_mapping = dict((subcase.product, subcase) for subcase in product_subcases)
 
     def create_product_subcase(product_uuid):
         return make_supply_point_product(supply_point, product_uuid)
@@ -121,7 +119,6 @@ def product_subcases(supply_point):
 
 def unpack_commtrack(xform, config):
     namespace = xform.form['@xmlns']
-
     def commtrack_nodes(data):
         for tag, nodes in data.iteritems():
             for node in (nodes if isinstance(nodes, collections.Sequence) else [nodes]):

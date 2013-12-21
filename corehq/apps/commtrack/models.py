@@ -472,7 +472,6 @@ class NewStockReport(object):
                 assert self.tag == 'transfer'
                 db_txn.quantity = txn.quantity
                 db_txn.stock_on_hand = (previous_transaction.stock_on_hand if previous_transaction else 0) + txn.quantity
-
             db_txn.save()
 
 
@@ -733,6 +732,13 @@ class SupplyPointCase(CommCareCase):
         else:
             return self
 
+    def get_product_subcases(self):
+        product_subcase_uuids = [ix.referenced_id for ix in self.reverse_indices if ix.identifier == const.PARENT_CASE_REF]
+        return SupplyPointProductCase.view('_all_docs', keys=product_subcase_uuids, include_docs=True)
+
+    def get_product_subcase(self, product_id):
+        filtered = filter(lambda spp: spp.product == product_id, self.get_product_subcases())
+        return filtered[0] if filtered else None
 
     def to_full_dict(self):
         data = super(SupplyPointCase, self).to_full_dict()
