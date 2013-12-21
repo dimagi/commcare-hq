@@ -3,6 +3,7 @@ from xml.etree import ElementTree
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests import delete_all_cases, delete_all_xforms
 from casexml.apps.case.xml import V2
+from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack import const
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -138,6 +139,8 @@ class CommTrackTest(TestCase):
         # might as well clean house before doing anything
         delete_all_xforms()
         delete_all_cases()
+        StockReport.objects.all().delete()
+        StockTransaction.objects.all().delete()
 
         self.backend = test.bootstrap(TEST_BACKEND, to_console=True)
         self.domain = bootstrap_domain(requisitions_enabled=self.requisitions_enabled)
