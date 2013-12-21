@@ -26,6 +26,7 @@ def balances_with_adequate_values(sp, products, datestring=None):
 
 
 def submission_wrap(products, user, sp, sp2, insides):
+    insides = insides() if callable(insides) else insides
     return ("""<?xml version="1.0" encoding="UTF-8"?>
         <data uiVersion="1" version="33" name="New Form" xmlns="http://commtrack.org/test_form_submission">
             <products>{product0} {product1} {product2}</products>
@@ -42,7 +43,7 @@ def submission_wrap(products, user, sp, sp2, insides):
             <cur_products>3</cur_products>
             %s
         </data>
-    """ % insides()).format(
+    """ % insides).format(
         sp_id=sp._id,
         sp2_id=sp2._id,
         product0=products[0]._id,
@@ -54,49 +55,48 @@ def submission_wrap(products, user, sp, sp2, insides):
     )
 
 
-def balance_submission():
+def _products_xml(product_amount_tuples):
+    return ''.join([
+        '<ns0:product index="{i}" id="{id}" quantity="{quantity}" />'.format(
+            i=i, id=p, quantity=amt,
+        ) for i, (p, amt) in enumerate(product_amount_tuples)
+    ])
+
+def balance_submission(product_amounts):
     return """
         <ns0:balance xmlns:ns0="http://commtrack.org/stock_report" date="{long_date}" entity-id="{sp_id}">
-            <ns0:product index="0" id="{product0}" quantity="35" />
-            <ns0:product index="1" id="{product1}" quantity="46" />
-            <ns0:product index="2" id="{product2}" quantity="25" />
+            %(product_block)s
         </ns0:balance>
-    """
+    """ % {'product_block': _products_xml(product_amounts)}
 
 
-def transfer_dest_only():
+def transfer_dest_only(product_amounts):
     return """
         <receipts>
-            <transfer dest="{sp_id}" date="{long_date}">
-                <product index="0" id="{product0}" quantity="38" />
-                <product index="1" id="{product1}" quantity="1" />
-                <product index="2" id="{product2}" quantity="1" />
-            </transfer>
+            <ns0:transfer xmlns:ns0="http://commtrack.org/stock_report" dest="{sp_id}" date="{long_date}">
+                %(product_block)s
+            </ns0:transfer>
         </receipts>
-    """
+    """ % {'product_block': _products_xml(product_amounts)}
 
 
-def transfer_source_only():
+def transfer_source_only(product_amounts):
     return """
         <losses>
-            <transfer src="{sp_id}" date="{long_date}">
-                <product index="0" id="{product0}" quantity="4" />
-                <product index="1" id="{product1}" quantity="1" />
-                <product index="2" id="{product2}" quantity="1" />
-            </transfer>
+            <ns0:transfer xmlns:ns0="http://commtrack.org/stock_report" src="{sp_id}" date="{long_date}">
+                %(product_block)s
+            </ns0:transfer>
         </losses>
-    """
+    """ % {'product_block': _products_xml(product_amounts)}
 
 
-def transfer_both():
+def transfer_both(product_amounts):
     # TODO Does this get wrapped in something? receipts?
     return """
-        <transfer src="{sp_id}" dest="{sp2_id}" date="{long_date}">
-            <product index="0" id="{product0}" quantity="4" />
-            <product index="1" id="{product1}" quantity="1" />
-            <product index="2" id="{product2}" quantity="1" />
-        </transfer>
-    """
+        <ns0:transfer xmlns:ns0="http://commtrack.org/stock_report" src="{sp_id}" dest="{sp2_id}" date="{long_date}">
+            %(product_block)s
+        </ns0:transfer>
+    """ % {'product_block': _products_xml(product_amounts)}
 
 
 def transfer_neither():
@@ -109,9 +109,8 @@ def transfer_neither():
     """
 
 
-def balance_first():
-    return balance_submission() + transfer_dest_only()
+def balance_first(balance_amounts, transfer_amounts):
+    return '%s%s' % (balance_submission(balance_amounts), transfer_dest_only(transfer_amounts))
 
-
-def transfer_first():
-    return transfer_dest_only() + balance_submission()
+def transfer_first(transfer_amounts, balance_amounts):
+    return '%s%s' % (transfer_dest_only(transfer_amounts), balance_submission(balance_amounts))
