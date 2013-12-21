@@ -27,8 +27,7 @@ def balances_with_adequate_values(sp, products, datestring=None):
 
 
 def submission_wrap(products, user, sp, sp2, insides):
-    return ("""
-        <?xml version="1.0" encoding="UTF-8"?>
+    return ("""<?xml version="1.0" encoding="UTF-8"?>
         <data uiVersion="1" version="33" name="New Form">
             <products>{product0} {product1} {product2}</products>
             <meta>
