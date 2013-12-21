@@ -595,9 +595,8 @@ class IndicatorDocument(schema.Document):
                         for k, v in key_columns.items():
                             update = update.where(self._table.c[k] == v)
                         connection.execute(update)
-        except Exception:
+        finally:
             connection.close()
-            raise
 
     @classmethod
     def pillow(cls):
