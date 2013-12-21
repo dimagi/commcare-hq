@@ -160,7 +160,6 @@ class CommTrackTest(TestCase):
         self.group.save()
         self.sp.owner_id = self.group._id
         self.sp.save()
-
         self.products = Product.by_domain(self.domain.name)
         self.assertEqual(3, len(self.products))
         self.spps = {}

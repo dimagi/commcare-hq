@@ -1,15 +1,14 @@
-from datetime import date, datetime
+from datetime import datetime
+from dimagi.utils.parsing import json_format_datetime
 
 
 def long_date():
-    return '' # TODO delete this line when date is on the balance node
-    today = date.today()
-    return datetime(today.year, today.month, today.day).isoformat()
+    return json_format_datetime(datetime.utcnow())
 
 
 def balances_with_adequate_values(sp, products, datestring=None):
     if datestring is None:
-        datestring = long_date() + 'Z'
+        datestring = long_date()
 
     return """
         <ns0:balance xmlns:ns0="http://commtrack.org/stock_report" xmlns="http://openrosa.org/http/response" date="{long_date}" entity-id="{sp_id}">
@@ -28,7 +27,7 @@ def balances_with_adequate_values(sp, products, datestring=None):
 
 def submission_wrap(products, user, sp, sp2, insides):
     return ("""<?xml version="1.0" encoding="UTF-8"?>
-        <data uiVersion="1" version="33" name="New Form">
+        <data uiVersion="1" version="33" name="New Form" xmlns="http://commtrack.org/test_form_submission">
             <products>{product0} {product1} {product2}</products>
             <meta>
                 <deviceID>351746051189879</deviceID>
@@ -57,11 +56,11 @@ def submission_wrap(products, user, sp, sp2, insides):
 
 def balance_submission():
     return """
-        <balance entity-id="{sp_id}" date="{long_date}">
-            <product index="0" id="{product0}" quantity="35" />
-            <product index="1" id="{product1}" quantity="46" />
-            <product index="2" id="{product2}" quantity="25" />
-        </balance>
+        <ns0:balance xmlns:ns0="http://commtrack.org/stock_report" date="{long_date}" entity-id="{sp_id}">
+            <ns0:product index="0" id="{product0}" quantity="35" />
+            <ns0:product index="1" id="{product1}" quantity="46" />
+            <ns0:product index="2" id="{product2}" quantity="25" />
+        </ns0:balance>
     """
 
 

@@ -6,6 +6,7 @@ from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack.tests.util import CommTrackTest, get_ota_balance_xml
 from casexml.apps.case.tests.util import check_xml_line_by_line
 from corehq.apps.commtrack.models import Product
+from corehq.apps.receiverwrapper import submit_form_locally
 from couchforms.util import post_xform_to_couch
 from casexml.apps.case.signals import process_cases
 from corehq.apps.commtrack.tests.util import make_loc, make_supply_point, make_supply_point_product
@@ -45,7 +46,7 @@ class CommTrackOTATest(CommTrackTest):
             balances_with_adequate_values(
                 self.sp,
                 sorted(Product.by_domain(self.domain.name).all(), key=lambda p: p._id),
-                datestring=json_format_datetime(date)
+                datestring=json_format_datetime(date),
             ),
             get_ota_balance_xml(user),
         )
@@ -54,17 +55,17 @@ class CommTrackSubmissionTest(CommTrackTest):
     def submit_xml_form(self, xml_method):
         from casexml.apps.case import settings
         settings.CASEXML_FORCE_DOMAIN_CHECK = False
-        test = post_xform_to_couch(
-            submission_wrap(
-                Product.by_domain(self.domain.name).all(),
-                self.reporters['fixed'],
-                self.sp,
-                self.sp2,
-                xml_method,
-            )
+        instance = submission_wrap(
+            Product.by_domain(self.domain.name).all(),
+            self.reporters['fixed'],
+            self.sp,
+            self.sp2,
+            xml_method,
         )
-        test.domain = self.domain.name
-        process_cases(sender="user.username", xform=test)
+        submit_form_locally(
+            instance=instance,
+            domain=self.domain.name,
+        )
 
     def check_product_stock(self, expected, spp=None):
         spp = spp or self.first_spp
