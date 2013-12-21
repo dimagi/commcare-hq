@@ -5,7 +5,7 @@ from casexml.apps.stock.const import TRANSACTION_TYPE_BALANCE
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack.tests.util import CommTrackTest, get_ota_balance_xml
 from casexml.apps.case.tests.util import check_xml_line_by_line
-from corehq.apps.commtrack.models import Product
+from corehq.apps.commtrack.models import Product, SupplyPointProductCase
 from corehq.apps.receiverwrapper import submit_form_locally
 from couchforms.util import post_xform_to_couch
 from casexml.apps.case.signals import process_cases
@@ -67,9 +67,16 @@ class CommTrackSubmissionTest(CommTrackTest):
             domain=self.domain.name,
         )
 
-    def check_product_stock(self, expected, spp=None):
-        spp = spp or self.first_spp
+    def check_product_stock(self, expected, spp=None, check_stock=True):
+        # check the case
+        id = spp._id if spp is not None else self.first_spp._id
+        spp = SupplyPointProductCase.get(id)
         self.assertEqual(spp.current_stock, expected)
+        if check_stock:
+            # and the django model
+            latest_trans = StockTransaction.objects.filter(case_id=spp.get_supply_point_case_id(),
+                                                           product_id=spp.product).order_by('-report__date')[0]
+            self.assertEqual(expected, latest_trans.stock_on_hand)
 
     def setUp(self):
         super(CommTrackSubmissionTest, self).setUp()
@@ -84,8 +91,8 @@ class CommTrackSubmissionTest(CommTrackTest):
         self.second_spp.save()
 
         # make sure we are starting from an expected state
-        self.check_product_stock(10)
-        self.check_product_stock(10, self.second_spp)
+        self.check_product_stock(10, self.first_spp, check_stock=False)
+        self.check_product_stock(10, self.second_spp, check_stock=False)
 
     def test_balance_submit(self):
         self.submit_xml_form(balance_submission)
