@@ -3,48 +3,23 @@ from django.http import HttpResponse, HttpResponseServerError
 import couchforms
 from couchforms.models import XFormInstance, SubmissionErrorLog
 import receiver
-from receiver.signals import successful_form_received, ReceiverResult, form_received
-from django.views.decorators.http import require_POST
-from django.views.decorators.csrf import csrf_exempt
+from receiver.signals import successful_form_received, ReceiverResult
 from receiver import xml
-from django.shortcuts import render_to_response
-from django.template.context import RequestContext
-from dimagi.utils.couch.database import get_db
+from receiver.util import scrub_meta
 from receiver.xml import ResponseNature
 from couchforms.signals import submission_error_received
-
-
-def home(request):
-    forms = get_db().view('couchforms/by_xmlns', group=True, group_level=1)
-    forms = dict([(x['key'], x['value']) for x in forms])
-    return render_to_response("receiver/home.html", {"forms": forms}, RequestContext(request))
-    
-
-def form_list(request):
-    """
-    Serve forms for ODK. 
-    """
-    # based off: https://github.com/dimagi/data-hq/blob/moz/datahq/apps/receiver/views.py
-    # TODO: serve our forms here
-    # forms = get_db().view('exports_forms/by_xmlns', startkey=[domain], endkey=[domain, {}], group=True)
-    
-    # NOTE: THIS VIEW/METHOD DOES NOTHING CURRENTLY!!
-    xml = "<forms>\n"
-    forms = []
-    for form in forms:
-        xml += '\t<form url="%(url)s">%(name)s</form>\n' % {"url": form.url, "name": form.name}
-    xml += "</forms>"
-    return HttpResponse(xml, mimetype="text/xml")
 
 
 class SubmissionPost(couchforms.SubmissionPost):
 
     def __init__(self, instance=None, attachments=None,
-                 auth_context=None, path=None,
+                 auth_context=None, domain=None, app_id=None, path=None,
                  location=None, submit_ip=None, openrosa_headers=None,
                  last_sync_token=None, received_on=None, date_header=None):
-
+        assert domain
         # get_location has good default
+        self.domain = domain
+        self.app_id = app_id
         self.location = location or receiver.get_location()
         self.received_on = received_on
         self.date_header = date_header
@@ -71,6 +46,10 @@ class SubmissionPost(couchforms.SubmissionPost):
 
         if self.date_header:
             doc['date_header'] = self.date_header
+
+        doc['domain'] = self.domain
+        doc['app_id'] = self.app_id
+        doc['#export_tag'] = ["domain", "xmlns"]
 
         return doc
 
@@ -132,7 +111,7 @@ class SubmissionPost(couchforms.SubmissionPost):
         # get a fresh copy of the doc, in case other things modified it.
         instance = XFormInstance.get(doc.get_id)
         self._attach_shared_props(instance)
-        form_received.send(sender="receiver", xform=instance)
+        scrub_meta(instance)
         instance.save()
 
         if instance.doc_type == "XFormInstance":
@@ -156,20 +135,3 @@ class SubmissionPost(couchforms.SubmissionPost):
             xml.get_simple_response_xml(
                 message="The sever got itself into big trouble! Details: %s" % error_log.problem,
                 nature=ResponseNature.SUBMIT_ERROR))
-
-
-@csrf_exempt
-@require_POST
-def post(request):
-    instance, attachments = receiver.get_instance_and_attachment(request)
-    return SubmissionPost(
-        instance=instance,
-        attachments=attachments,
-        location=receiver.get_location(request),
-        received_on=receiver.get_received_on(request),
-        date_header=receiver.get_date_header(request),
-        path=receiver.get_path(request),
-        submit_ip=receiver.get_submit_ip(request),
-        last_sync_token=receiver.get_last_sync_token(request),
-        openrosa_headers=receiver.get_openrosa_headers(request),
-    ).get_response()
