@@ -1,9 +1,11 @@
 import hashlib
-from django.conf import settings
+from couchdbkit import ResourceConflict
+import datetime
 from django.http import HttpResponse, HttpResponseServerError, HttpResponseBadRequest, HttpResponseForbidden, HttpRequest
+import couchforms
 from couchforms.const import MAGIC_PROPERTY, MULTIPART_FILENAME_ERROR
 from dimagi.utils.mixins import UnicodeMixIn
-import urllib
+
 try:
     import simplejson
 except ImportError:
@@ -12,15 +14,12 @@ except ImportError:
 from couchforms.models import XFormInstance, XFormDuplicate, XFormError, XFormDeprecated,\
     SubmissionErrorLog, DefaultAuthContext
 import logging
-from couchdbkit.resource import RequestFailed
-from couchforms.exceptions import CouchFormException
 from couchforms.signals import xform_saved
 from dimagi.utils.couch import uid
-from dimagi.utils.couch.database import get_safe_write_kwargs
 import re
-from dimagi.utils.post import post_authenticated_data, post_unauthenticated_data
 from restkit.errors import ResourceNotFound
 from lxml import etree
+import xml2json
 
 class SubmissionError(Exception, UnicodeMixIn):
     """
@@ -35,20 +34,63 @@ class SubmissionError(Exception, UnicodeMixIn):
     def __str__(self):
         return str(self.error_log)
 
-def post_from_settings(instance, extras=None):
-    extras = extras or {}
-    # HACK: for cloudant force update all nodes at once
-    # to prevent 412 race condition
-    extras.update(get_safe_write_kwargs())
 
-    url = settings.XFORMS_POST_URL if not extras else "%s?%s" % \
-        (settings.XFORMS_POST_URL, urllib.urlencode(extras))
-    if settings.COUCH_USERNAME:
-        return post_authenticated_data(instance, url, 
-                                       settings.COUCH_USERNAME, 
-                                       settings.COUCH_PASSWORD)
+def _extract_meta_instance_id(form):
+    """Takes form json (as returned by xml2json)"""
+    if form.get('Meta'):
+        # bhoma, 0.9 commcare
+        meta = form['Meta']
+    elif form.get('meta'):
+        # commcare 1.0
+        meta = form['meta']
     else:
-        return post_unauthenticated_data(instance, url)
+        return None
+
+    if meta.get('uid'):
+        # bhoma
+        return meta['uid']
+    elif meta.get('instanceID'):
+        # commcare 0.9, commcare 1.0
+        return meta['instanceID']
+    else:
+        return None
+
+
+def create_xform_from_xml(xml_string, _id=None):
+    """
+    create and save an XFormInstance from an xform payload (xml_string)
+    optionally set the doc _id to a predefined value (_id)
+    return doc _id of the created doc
+
+    If xml_string is bad xml
+      - raise couchforms.XMLSyntaxError
+      - do not save form
+
+    """
+
+    try:
+        name, json_form = xml2json.xml2json(xml_string)
+    except xml2json.XMLSyntaxError as e:
+        raise couchforms.XMLSyntaxError(u'Invalid XML: %s' % e)
+
+    json_form['#type'] = name
+    xform = XFormInstance(
+        _attachments={
+            "form.xml": {
+                "content_type": "text/xml",
+                "data": xml_string,
+            },
+        },
+        form=json_form,
+        xmlns=json_form.get('@xmlns'),
+        received_on=datetime.datetime.utcnow(),
+        **{'#export_tag': 'xmlns'}
+    )
+    _id = _id or _extract_meta_instance_id(json_form)
+    if _id:
+        xform._id = _id
+    xform.save()
+    return xform.get_id
 
 
 def post_xform_to_couch(instance, attachments=None, auth_context=None):
@@ -70,83 +112,63 @@ def _post_xform_to_couch(instance, attachments=None):
     """
     attachments = attachments or {}
     try:
-        response, errors = post_from_settings(instance)
-        if not _has_errors(response, errors):
-            doc_id = response
-            try:
-                xform = XFormInstance.get(doc_id)
-                for key, value in attachments.items():
-                    xform.put_attachment(
-                        value,
-                        name=key,
-                        content_type=value.content_type,
-                        content_length=value.size
-                    )
-
-                # fire signals
-                # We don't trap any exceptions here. This is by design.
-                # If something fails (e.g. case processing), we quarantine the
-                # form into an error location.
-                xform_saved.send(sender="couchforms", xform=xform)
-                return xform
-            except Exception, e:
-                logging.error("Problem with form %s" % doc_id)
-                logging.exception(e)
-                # "rollback" by changing the doc_type to XFormError
-                try:
-                    bad = XFormError.get(doc_id)
-                    bad.problem = unicode(e)
-                    bad.save()
-                    return bad
-                except ResourceNotFound:
-                    # no biggie, the failure must have been in getting it back
-                    pass
-                raise
-        else:
-            raise CouchFormException(
-                "Problem POSTing form to couch! errors/response: "
-                "%s/%s" % (errors, response)
-            )
-    except RequestFailed, e:
-        if e.status_int == 409:
-            # this is an update conflict, i.e. the uid in the form was the same.
-            return _handle_id_conflict(instance, attachments)
-        else:
+        # todo: pretty sure nested try/except can be cleaned up
+        try:
+            doc_id = create_xform_from_xml(instance)
+        except couchforms.XMLSyntaxError as e:
             doc = _log_hard_failure(instance, attachments, e)
             raise SubmissionError(doc)
+        try:
+            xform = XFormInstance.get(doc_id)
+            for key, value in attachments.items():
+                xform.put_attachment(
+                    value,
+                    name=key,
+                    content_type=value.content_type,
+                    content_length=value.size
+                )
+
+            # fire signals
+            # We don't trap any exceptions here. This is by design.
+            # If something fails (e.g. case processing), we quarantine the
+            # form into an error location.
+            xform_saved.send(sender="couchforms", xform=xform)
+            return xform
+        except Exception, e:
+            logging.error("Problem with form %s" % doc_id)
+            logging.exception(e)
+            # "rollback" by changing the doc_type to XFormError
+            try:
+                bad = XFormError.get(doc_id)
+                bad.problem = unicode(e)
+                bad.save()
+                return bad
+            except ResourceNotFound:
+                # no biggie, the failure must have been in getting it back
+                pass
+            raise
+    except ResourceConflict:
+        # this is an update conflict, i.e. the uid in the form was the same.
+        return _handle_id_conflict(instance, attachments)
 
 
 def _has_errors(response, errors):
     return errors or "error" in response
-    
-    
+
+
+def _extract_id_from_raw_xml(xml):
+    # the code this is replacing didn't deal with the error either
+    # presumably because it's already been run once by the time it gets here
+    _, json_form = xml2json.xml2json(xml)
+    return _extract_meta_instance_id(json_form) or ''
+
+
 def _handle_id_conflict(instance, attachments):
     """
     For id conflicts, we check if the files contain exactly the same content,
     If they do, we just log this as a dupe. If they don't, we deprecate the 
     previous form and overwrite it with the new form's contents.
     """
-    def _extract_id_from_raw_xml(xml):
-        
-        # this is the standard openrosa way of doing things
-        parsed = etree.XML(xml)
-        meta_ns = "http://openrosa.org/jr/xforms"
-        val = parsed.find("{%(ns)s}meta/{%(ns)s}instanceID" % \
-                          {"ns": meta_ns})
-        if val is not None and val.text:
-            return val.text
-        
-        # if we get here search more creatively for some of the older
-        # formats
-        _PATTERNS = (r"<instanceID>([\w-]+)</instanceID>",
-                     r"<uid>([\w-]+)</uid>",
-                     r"<uuid>([\w-]+)</uuid>")
-        for pattern in _PATTERNS:
-            if re.search(pattern, xml): 
-                return re.search(pattern, xml).groups()[0]
-        
-        logging.error("Unable to find conflicting matched uid in form: %s" % xml)
-        return ""
     
     conflict_id = _extract_id_from_raw_xml(instance)
     
@@ -175,18 +197,16 @@ def _handle_id_conflict(instance, attachments):
     else:
         # follow standard dupe handling
         new_doc_id = uid.new()
-        response, errors = post_from_settings(instance, {"uid": new_doc_id})
-        if not _has_errors(response, errors):
-            # create duplicate doc
-            # get and save the duplicate to ensure the doc types are set correctly
-            # so that it doesn't show up in our reports
-            dupe = XFormDuplicate.get(response)
-            dupe.problem = "Form is a duplicate of another! (%s)" % conflict_id
-            dupe.save()
-            return dupe
-        else:
-            # how badly do we care about this?
-            raise CouchFormException("Problem POSTing form to couch! errors/response: %s/%s" % (errors, response))
+        new_form_id = create_xform_from_xml(instance, _id=new_doc_id)
+
+        # create duplicate doc
+        # get and save the duplicate to ensure the doc types are set correctly
+        # so that it doesn't show up in our reports
+        dupe = XFormDuplicate.get(new_form_id)
+        dupe.problem = "Form is a duplicate of another! (%s)" % conflict_id
+        dupe.save()
+        return dupe
+
 
 def _log_hard_failure(instance, attachments, error):
     """
