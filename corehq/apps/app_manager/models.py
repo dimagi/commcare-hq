@@ -2244,6 +2244,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             'ota_restore_url': self.ota_restore_url,
             'cc_user_domain': cc_user_domain(self.domain),
             'include_media_suite': with_media,
+            'descriptor': u"Profile File"
         }).decode('utf-8')
 
     @property
@@ -2267,9 +2268,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             return suite_xml.SuiteGenerator(self).generate_suite()
 
     def create_media_suite(self):
-        return suite_xml.SuiteGenerator(self).generate_suite(
-            sections=['media_resources']
-        )
+        return suite_xml.SuiteGenerator(self).generate_suite(sections=['media_resources'], is_media=True)
 
     @classmethod
     def get_form_filename(cls, type=None, form=None, module=None):
