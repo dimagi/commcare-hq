@@ -4,13 +4,12 @@ from django.dispatch.dispatcher import Signal
 
 from corehq import Domain
 from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK
-from corehq.apps.domain.models import CareplanAppProperties
 from receiver.signals import successful_form_received, Certainty, ReceiverResult
 from receiver.xml import ResponseNature
 from receiver import xml
 
 from corehq.middleware import OPENROSA_ACCEPT_LANGUAGE
-from corehq.apps.app_manager.models import Application, get_app, CareplanModule
+from corehq.apps.app_manager.models import Application, get_app, CareplanModule, CareplanConfig, CareplanAppProperties
 from corehq.apps.app_manager.success_message import SuccessMessage
 
 
@@ -56,41 +55,50 @@ def create_app_structure_repeat_records(sender, application, **kwargs):
 
 def update_project_careplan_config(sender, application, **kwargs):
     app_id = application.get_id
-    domain = application.domain
+    domain_name = application.domain
+    config = CareplanConfig.for_domain(domain_name)
+
+    def careplan_removed():
+        if config and app_id in config.app_configs:
+            del config.app_configs[app_id]
+            config.save()
+
+            if not config.app_configs:
+                domain = Domain.get_by_name(domain_name)
+                domain.has_careplan = False
+                domain.save()
+
     if application.doc_type == 'Application-Deleted':
         if application.has_careplan_module:
-            domain = Domain.get_by_name(domain)
-            if app_id in domain.careplan_config:
-                del domain.careplan_config[app_id]
-                domain.save()
+            careplan_removed()
     elif application.has_careplan_module:
+        config = config or CareplanConfig(domain=domain_name)
+        app_props = config.app_configs.get(app_id, CareplanAppProperties())
         for module in application.get_modules():
             if isinstance(module, CareplanModule):
-                domain = Domain.get_by_name(domain)
-                props = domain.careplan_config.get(app_id, CareplanAppProperties())
-                props.name = module.default_name()
-                props.case_type = module.case_type
-                props.goal_conf = {
+                app_props.name = module.default_name()
+                app_props.case_type = module.case_type
+                app_props.goal_conf = {
                     "edit_module_id": module.id,
                     "edit_form_id": module.get_form_by_type(CAREPLAN_GOAL, 'update').id,
                     "create_module_id": module.id,
                     "create_form_id": module.get_form_by_type(CAREPLAN_GOAL, 'create').id,
                 }
-                props.task_conf = {
+                app_props.task_conf = {
                     "edit_module_id": module.id,
                     "edit_form_id": module.get_form_by_type(CAREPLAN_TASK, 'update').id,
                     "create_module_id": module.id,
                     "create_form_id": module.get_form_by_type(CAREPLAN_TASK, 'create').id,
                 }
-                domain.careplan_config[app_id] = props
-                domain.save()
                 break
-    else:
-        domain = Domain.get_by_name(domain)
-        if app_id in domain.careplan_config:
-            del domain.careplan_config[app_id]
+        config.app_configs[app_id] = app_props
+        config.save()
+        domain = Domain.get_by_name(domain_name)
+        if not domain.has_careplan:
+            domain.has_careplan = True
             domain.save()
-
+    else:
+        careplan_removed()
 
 
 successful_form_received.connect(get_custom_response_message)

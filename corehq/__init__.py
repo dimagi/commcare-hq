@@ -57,9 +57,12 @@ def REPORTS(project):
             commtrack_maps.ReportingStatusMapReport,
         )))
 
-    if project.careplan_config:
-        cp_reports = tuple(make_careplan_reports(project.careplan_config))
-        reports.insert(0, (_("Care Plans"), cp_reports))
+    if project.has_careplan:
+        from corehq.apps.app_manager.models import CareplanConfig
+        config = CareplanConfig.for_domain(project.name)
+        if config:
+            cp_reports = tuple(make_careplan_reports(config))
+            reports.insert(0, (_("Care Plans"), cp_reports))
 
     messaging_reports = (
         sms.MessagesReport,

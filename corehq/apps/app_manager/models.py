@@ -35,6 +35,7 @@ from corehq.apps.app_manager.const import APP_V1, APP_V2, CAREPLAN_TASK, CAREPLA
 from corehq.apps.app_manager.xpath import dot_interpolate
 from corehq.apps.builds import get_default_build_spec
 from corehq.util.hash_compat import make_password
+from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.lazy_attachment_doc import LazyAttachmentDoc
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.decorators.memoized import memoized
@@ -2834,6 +2835,35 @@ class DeleteFormRecord(DeleteRecord):
         forms.insert(self.form_id, self.form)
         app.modules[self.module_id].forms = forms
         app.save()
+
+
+class CareplanAppProperties(DocumentSchema):
+    name = StringProperty()
+    case_type = StringProperty()
+    goal_conf = DictProperty()
+    task_conf = DictProperty()
+
+
+class CareplanConfig(Document):
+    domain = StringProperty()
+    app_configs = SchemaDictProperty(CareplanAppProperties)
+
+    @classmethod
+    def for_domain(cls, domain):
+        res = cache_core.cached_view(
+            cls.get_db(),
+            "domain/docs",
+            key=[domain, 'CareplanConfig', None],
+            reduce=False,
+            include_docs=True,
+            wrapper=cls.wrap)
+
+        if len(res) > 0:
+            result = res[0]
+        else:
+            result = None
+
+        return result
 
 FormBase.get_command_id = lambda self: "m{module.id}-f{form.id}".format(module=self.get_module(), form=self)
 FormBase.get_locale_id = lambda self: "forms.m{module.id}f{form.id}".format(module=self.get_module(), form=self)
