@@ -32,7 +32,7 @@ class OpmCaseFluff(fluff.IndicatorDocument):
 
     document_class = CommCareCase
     domains = ('opm',)
-    group_by = ('domain', )
+    group_by = ('domain', 'user_id')
 
     name = flat_field(lambda case: case.name)
     husband_name = case_property('husband_name')
@@ -73,7 +73,10 @@ class OpmFormFluff(fluff.IndicatorDocument):
     document_class = XFormInstance
 
     domains = ('opm',)
-    # group_by = ('domain', )
+    group_by = (
+        'domain',
+        fluff.AttributeGetter('case_id', lambda form: form.form['case']['@case_id']),
+    )
 
     name = flat_field(lambda form: form.name)
 
