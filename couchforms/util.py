@@ -19,6 +19,7 @@ from dimagi.utils.couch import uid
 import re
 from restkit.errors import ResourceNotFound
 from lxml import etree
+import xml2json
 
 class SubmissionError(Exception, UnicodeMixIn):
     """
@@ -66,7 +67,6 @@ def create_xform_from_xml(xml_string, _id=None):
       - do not save form
 
     """
-    import xml2json
 
     try:
         name, json_form = xml2json.xml2json(xml_string)
@@ -154,35 +154,21 @@ def _post_xform_to_couch(instance, attachments=None):
 
 def _has_errors(response, errors):
     return errors or "error" in response
-    
-    
+
+
+def _extract_id_from_raw_xml(xml):
+    # the code this is replacing didn't deal with the error either
+    # presumably because it's already been run once by the time it gets here
+    _, json_form = xml2json.xml2json(xml)
+    return _extract_meta_instance_id(json_form) or ''
+
+
 def _handle_id_conflict(instance, attachments):
     """
     For id conflicts, we check if the files contain exactly the same content,
     If they do, we just log this as a dupe. If they don't, we deprecate the 
     previous form and overwrite it with the new form's contents.
     """
-    def _extract_id_from_raw_xml(xml):
-        
-        # this is the standard openrosa way of doing things
-        parsed = etree.XML(xml)
-        meta_ns = "http://openrosa.org/jr/xforms"
-        val = parsed.find("{%(ns)s}meta/{%(ns)s}instanceID" % \
-                          {"ns": meta_ns})
-        if val is not None and val.text:
-            return val.text
-        
-        # if we get here search more creatively for some of the older
-        # formats
-        _PATTERNS = (r"<instanceID>([\w-]+)</instanceID>",
-                     r"<uid>([\w-]+)</uid>",
-                     r"<uuid>([\w-]+)</uuid>")
-        for pattern in _PATTERNS:
-            if re.search(pattern, xml): 
-                return re.search(pattern, xml).groups()[0]
-        
-        logging.error("Unable to find conflicting matched uid in form: %s" % xml)
-        return ""
     
     conflict_id = _extract_id_from_raw_xml(instance)
     
