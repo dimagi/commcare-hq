@@ -1,4 +1,5 @@
 import pytz
+import logging
 from datetime import datetime, timedelta
 from celery.task import task
 from time import sleep
@@ -78,7 +79,9 @@ def handle_domain_specific_delays(msg, domain_object, utcnow):
     return False
 
 def handle_outgoing(msg):
-    if send_message_via_backend(msg):
+    def onerror():
+        logging.exception("Exception while processing SMS %s" % msg._id)
+    if send_message_via_backend(msg, onerror=onerror):
         handle_successful_processing_attempt(msg)
     else:
         handle_unsuccessful_processing_attempt(msg)
@@ -88,6 +91,7 @@ def handle_incoming(msg):
         process_incoming(msg)
         handle_successful_processing_attempt(msg)
     except:
+        logging.exception("Exception while processing SMS %s" % msg._id)
         handle_unsuccessful_processing_attempt(msg)
 
 @task(queue="sms_queue")

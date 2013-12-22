@@ -177,6 +177,8 @@ class MessageLog(SafeSaveDocument, UnicodeMixIn):
 
 class SMSLog(MessageLog):
     text = StringProperty()
+    # This is the unique message id that the gateway uses to track this
+    # message, if applicable.
     backend_message_id = StringProperty()
     
     @property

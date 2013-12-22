@@ -80,7 +80,7 @@ def send_sms_to_verified_number(verified_number, text, **kwargs):
         direction = OUTGOING,
         date = datetime.utcnow(),
         domain = verified_number.domain,
-        backend_id = backend._id if backend else None,
+        backend_id = backend._id,
         text = text
     )
     add_msg_tags(msg, **kwargs)
@@ -263,22 +263,24 @@ def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None,
         msg.processed = True
         msg.save()
         process_incoming(msg, delay=delay)
+    return msg
 
 def process_incoming(msg, delay=True):
     v = VerifiedNumber.by_phone(msg.phone_number, include_pending=True)
-    if msg.domain_scope:
-        # only process messages for phones known to be associated with this domain
-        if v is None or v.domain != domain_scope:
-            raise DomainScopeValidationError(
-                'Attempted to simulate incoming sms from phone number not ' \
-                'verified with this domain'
-            )
 
     if v is not None and v.verified:
         msg.couch_recipient_doc_type = v.owner_doc_type
         msg.couch_recipient = v.owner_id
         msg.domain = v.domain
         msg.save()
+
+    if msg.domain_scope:
+        # only process messages for phones known to be associated with this domain
+        if v is None or v.domain != msg.domain_scope:
+            raise DomainScopeValidationError(
+                'Attempted to simulate incoming sms from phone number not ' \
+                'verified with this domain'
+            )
 
     create_billable_for_sms(msg, msg.backend_api, delay=delay)
     

@@ -48,7 +48,7 @@ class VerifiedNumber(Document):
         if self.backend_id is not None and isinstance(self.backend_id, basestring) and self.backend_id.strip() != "":
             return MobileBackend.load_by_name(self.domain, self.backend_id)
         else:
-            return None
+            return MobileBackend.auto_load(clean_phone_number(self.phone_number), self.domain)
 
     @property
     def ivr_backend(self):
