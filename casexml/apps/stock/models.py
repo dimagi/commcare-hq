@@ -1,11 +1,10 @@
-from datetime import datetime
 from django.db import models
 
 
 class StockReport(models.Model):
     form_id = models.CharField(max_length=100, db_index=True)
     date = models.DateTimeField(db_index=True)
-    type = models.CharField(max_length=10)  # currently "balance" or "transfer"
+    type = models.CharField(max_length=20)  # currently "balance" or "transfer"
 
     # todo: there are properties like these that could be really useful for queries
     # and reports - should decide which ones we want to add if any.
@@ -22,14 +21,17 @@ class StockTransaction(models.Model):
     # for now, a supply point or requisition case
     case_id = models.CharField(max_length=100, db_index=True)
     product_id = models.CharField(max_length=100, db_index=True)
+    # todo we should be more explicit about what belongs in this field
+    type = models.CharField(max_length=20)  # i.e. 'loss' or 'receipt'
 
     # often one of these two will be derived based on the other one
     quantity = models.FloatField(null=True)
     stock_on_hand = models.FloatField()
 
-    def __repr__(self):
-        return 'stock transfer of {quantity} to {soh} (case: {case}, product: {product})'.format(
-            quantity=self.quantity, soh=self.stock_on_hand, case=self.case_id, product=self.product_id,
+    def __unicode__(self):
+        return '{type} of {quantity} to {soh} (case: {case}, product: {product})'.format(
+            type=self.type, quantity=self.quantity, soh=self.stock_on_hand,
+            case=self.case_id, product=self.product_id,
         )
 
     def get_previous_transaction(self):
