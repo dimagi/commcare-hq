@@ -450,8 +450,9 @@ class NewStockReport(object):
         products = node['product']
         if not isinstance(products, collections.Sequence):
             products = [products]
-        transactions = [StockTransaction.from_xml(config, timestamp, tag, node, prod_entry)
-                        for prod_entry in products]
+        transactions = [t for prod_entry in products for t in
+                        StockTransaction.from_xml(config, timestamp, tag, node, prod_entry)]
+
 
         return cls(form, timestamp, tag, node, transactions)
 
@@ -567,34 +568,33 @@ class StockTransaction(Document):
     @classmethod
     # note: works on 'jsonified' xml as produced by couchforms
     def from_xml(cls, config, timestamp, action_tag, action_node, product_node):
-        data = {
-            'timestamp': timestamp,
-            'product_id': product_node.get('@id'),
-            'quantity': float(product_node.get('@quantity')),
-            # note: no location id
-        }
+        action_type = action_node.get('@type')
+        subaction = action_type
+        quantity = float(product_node.get('@quantity'))
+        def _txn(action, case_id):
+            data = {
+                'timestamp': timestamp,
+                'product_id': product_node.get('@id'),
+                'quantity': quantity,
+                'action': action,
+                'case_id': case_id,
+                'subaction': subaction if subaction and subaction != action else None
+                # note: no location id
+            }
+            return cls(config=config, **data)
+
         if action_tag == 'balance':
-            data.update({
-                    'action': const.StockActions.STOCKONHAND if data['quantity'] > 0 else const.StockActions.STOCKOUT,
-                    'case_id': action_node['@entity-id'],
-                })
+            yield _txn(
+                action=const.StockActions.STOCKONHAND if quantity > 0 else const.StockActions.STOCKOUT,
+                case_id=action_node['@entity-id'],
+            )
         elif action_tag == 'transfer':
             src, dst = [action_node.get('@%s' % k) for k in ('src', 'dest')]
-            action_type = action_node.get('@type')
+            assert src or dst
             if src is not None:
-                action = const.StockActions.CONSUMPTION
-                here, other = src, dst
-            else:
-                action = const.StockActions.RECEIPTS
-                here, other = dst, src
-            there = action_type
-            assert other is None  # todo: this would be a requisiton use case; we'd have to create multiple transactions
-            data.update({
-                    'action': action,
-                    'subaction': there if there != action else None,
-                    'case_id': here,
-                })
-        return cls(config=config, **data)
+                yield _txn(action=const.StockActions.CONSUMPTION, case_id=src)
+            if dst is not None:
+                yield _txn(action=const.StockActions.RECEIPTS, case_id=dst)
 
     def to_xml(self, E=None, **kwargs):
         if not E:
@@ -612,7 +612,7 @@ class StockTransaction(Document):
         if tx_type == 'balance':
             attr['entity-id'] = self.case_id
         elif tx_type == 'transfer':
-            here, there = ('dest', 'src') if self.action == StockActions.RECEIPTS else ('src', 'dest') 
+            here, there = ('dest', 'src') if self.action == StockActions.RECEIPTS else ('src', 'dest')
             attr[here] = self.case_id
             # no 'there' for now
             if self.subaction:
@@ -672,7 +672,7 @@ class SupplyPointCase(CommCareCase):
 
     # TODO move location_ property from CommCareCase
 
-    class Meta: 
+    class Meta:
         # This is necessary otherwise syncdb will confuse this app with casexml
         app_label = "commtrack"
 
@@ -834,7 +834,7 @@ class SupplyPointProductCase(CommCareCase):
     See
     https://confluence.dimagi.com/display/ctinternal/Data+Model+Documentation
     """
-    class Meta: 
+    class Meta:
         # This is necessary otherwise syncdb will confuse this app with casexml
         app_label = "commtrack"
 
@@ -955,7 +955,7 @@ class SupplyPointProductCase(CommCareCase):
 
         data['supply_point_name'] = self.get_supply_point_case()['name']
         data['product_name'] = self.get_product()['name']
-        
+
         #data['emergency_level'] = None
         #data['max_level'] = None
 
@@ -1040,7 +1040,7 @@ class RequisitionCase(CommCareCase):
     A wrapper around CommCareCases to get more built in functionality
     specific to requisitions.
     """
-    class Meta: 
+    class Meta:
         # This is necessary otherwise syncdb will confuse this app with casexml
         app_label = "commtrack"
 
@@ -1198,7 +1198,7 @@ class RequisitionCase(CommCareCase):
             },
             {
                 "layout": [
-                    [ 
+                    [
                         {
                             "name": _("Amount Requested"),
                             "expr": "amount_requested",
