@@ -118,6 +118,8 @@ def product_subcases(supply_point):
     return DefaultDict(create_product_subcase, product_subcase_mapping)
 
 def unpack_commtrack(xform, config):
+    # todo: I think this function has to be rewritten to work off the
+    # raw XML of the doc in order to preserve ordering
     namespace = xform.form['@xmlns']
     def commtrack_nodes(data):
         for tag, nodes in data.iteritems():
@@ -131,7 +133,6 @@ def unpack_commtrack(xform, config):
                         yield e
 
     for elem in commtrack_nodes(xform.form):
-        # FIXME deal with requisitions later
         yield NewStockReport.from_xml(xform, config, elem)
 
 
