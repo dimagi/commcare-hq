@@ -257,7 +257,7 @@ def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None,
     )
     if settings.SMS_QUEUE_ENABLED:
         msg.processed = False
-        msg.datetime_to_process = msg.date
+        msg.datetime_to_process = datetime.utcnow()
         msg.save()
     else:
         msg.processed = True
