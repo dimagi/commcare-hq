@@ -239,3 +239,6 @@ def submit_mapping_case_block(user, index):
 
 def location_map_case_id(user):
     return 'user-owner-mapping-' + user._id
+
+def is_commtrack_location(user, domain):
+    return True if user and user.location_id and domain.commtrack_enabled else False

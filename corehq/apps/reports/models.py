@@ -10,7 +10,7 @@ from corehq.apps.app_manager.models import get_app
 from corehq.apps.app_manager.util import ParentCasePropertyBuilder
 from corehq.apps.reports.display import xmlns_to_name
 from couchdbkit.ext.django.schema import *
-from corehq.apps.reports.exportfilters import form_matches_users
+from corehq.apps.reports.exportfilters import form_matches_users, is_commconnect_form
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
 from couchexport.models import SavedExportSchema, GroupExportConfiguration
 from couchexport.transforms import couch_to_excel_datetime, identity
@@ -335,7 +335,7 @@ class ReportConfig(Document):
         except CouchUser.AccountTypeError:
             return CommCareUser.get_by_user_id(self.owner_id)
 
-    def get_report_content(self):
+    def get_report_content(self, attach_excel=False):
         """
         Get the report's HTML content as rendered by the static view format.
 
@@ -345,7 +345,7 @@ class ReportConfig(Document):
                 return _("The report used to create this scheduled report is no"
                          " longer available on CommCare HQ.  Please delete this"
                          " scheduled report and create a new one using an available"
-                         " report.")
+                         " report."), None
         except Exception:
             pass
 
@@ -361,10 +361,15 @@ class ReportConfig(Document):
         try:
             response = self._dispatcher.dispatch(request, render_as='email',
                 **self.view_kwargs)
-            return json.loads(response.content)['report']
-        except Exception:
+            if attach_excel is True:
+                file_obj = self._dispatcher.dispatch(request, render_as='excel',
+                **self.view_kwargs)
+            else:
+                file_obj = None
+            return json.loads(response.content)['report'], file_obj
+        except Exception as e:
             notify_exception(None, "Error generating report")
-            return _("An error occurred while generating this report.")
+            return _("An error occurred while generating this report."), None
 
 
 class UnsupportedScheduledReportError(Exception):
@@ -378,6 +383,7 @@ class ReportNotification(Document):
     recipient_emails = StringListProperty()
     config_ids = StringListProperty()
     send_to_owner = BooleanProperty()
+    attach_excel = BooleanProperty()
 
     hour = IntegerProperty(default=8)
     day = IntegerProperty(default=1)
@@ -497,9 +503,13 @@ class ReportNotification(Document):
 
         if self.all_recipient_emails:
             title = "Scheduled report from CommCare HQ"
-            body = get_scheduled_report_response(self.owner, self.domain, self._id).content
+            if hasattr(self, "attach_excel"):
+                attach_excel = self.attach_excel
+            else:
+                attach_excel = False
+            body, excel_files = get_scheduled_report_response(self.owner, self.domain, self._id, attach_excel=attach_excel)
             for email in self.all_recipient_emails:
-                send_HTML_email(title, email, body, email_from=settings.DEFAULT_FROM_EMAIL)
+                send_HTML_email(title, email, body.content, email_from=settings.DEFAULT_FROM_EMAIL, file_attachments=excel_files)
 
 
 class AppNotFound(Exception):
@@ -561,7 +571,12 @@ class FormExportSchema(HQExportSchema):
     def filter(self):
         user_ids = set(CouchUser.ids_by_domain(self.domain))
         user_ids.update(CouchUser.ids_by_domain(self.domain, is_active=False))
-        f = SerializableFunction(form_matches_users, users=user_ids)
+
+        def _top_level_filter(form):
+            # careful, closures used
+            return form_matches_users(form, user_ids) or is_commconnect_form(form)
+
+        f = SerializableFunction(_top_level_filter)
         if self.app_id is not None:
             f.add(reports.util.app_export_filter, app_id=self.app_id)
         if not self.include_errors:
@@ -595,6 +610,8 @@ class FormExportSchema(HQExportSchema):
 
         order = []
         for question in questions:
+            if not question['value']:  # question probably belongs to a broken form
+                continue
             index_parts = question['value'].split('/')
             assert index_parts[0] == ''
             index_parts[1] = 'form'

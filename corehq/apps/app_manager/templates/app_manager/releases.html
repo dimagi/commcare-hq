@@ -32,7 +32,6 @@
             currentVersion: '{% url "corehq.apps.app_manager.views.current_app_version" domain app.id %}',
         };
         var o = {
-            users_cannot_share: {{ users_cannot_share|JSON }},
             urls: urls,
             currentAppVersion: {% if app.version %}{{ app.version }}{% else %}-1{% endif %},
             recipient_contacts: {{ sms_contacts|JSON }}
@@ -140,7 +139,7 @@
             <tbody data-bind="css: {hide: false}, template: {
                 foreach: savedApps,
                 afterAdd: function(elem) { $(elem).hide().fadeIn() },
-                beforeRemove: function(elem) { $(elem).fadeOut() }
+                beforeRemove: function(elem) { if (elem.nodeType === 1) { $(elem).fadeOut(); } }
             }" class="hide">
                 <tr class="build" data-bind="css: {
                     'build-released': is_released(),
@@ -177,7 +176,8 @@
                         <div class="btn-group">
                             <a class="btn" data-bind="
                                 openModal: 'deploy-build-modal-template',
-                                css: {'btn-primary': !build_broken(), 'btn-danger': build_broken}
+                                css: {'btn-primary': !build_broken(), 'btn-danger': build_broken},
+                                click: function() { _gaq.push(['_trackEvent', 'App Manager', 'Deploy', '{{ app.id }}']); }
                             ">
                                 <span class="icon icon-exclamation-sign" data-bind="visible: build_broken"></span>
                                 {% trans "Deploy" %}
@@ -259,27 +259,7 @@
                 <h3>{% trans "Deploying version" %} <span data-bind="text: version"></span></h3>
             </div>
             <div class="modal-body">
-                <div data-bind="visible: case_sharing() && $root.users_cannot_share.length">
-                    <p>
-                        <span class="label label-important">{% trans "Warning!" %}</span>
-                        {% blocktrans %}
-                        The following users cannot use this case sharing app because they have either more or less than one group.
-                        To fix this, please 
-                        {% endblocktrans %}
-                        <a href="{% url "commcare_users" domain %}?cannot_share=true&more_columns=true">{% trans "edit their group settings" %}</a>
-                        {% trans "so that they all belong to exactly one group." %}
-                    </p>
-                    <ul data-bind="foreach: $root.users_cannot_share">
-                        <li data-bind="text: username"></li>
-                    </ul>
-                    <p>
-                        <a href="{% url "commcare_users" domain %}?cannot_share=true&more_columns=true" class="btn">{% trans "Edit mobile users" %}</a>
-                        <a class="btn" data-bind="click: function () {return $root.deployAnyway[id()](true);}">{% trans "Deploy anyway" %}</a>
-                    </p>
-                </div>
-                <div class="accordion" data-bind="bootstrapCollapse: true,
-                    visible: $root.deployAnyway[id()]() || !(case_sharing() && $root.users_cannot_share.length)
-                ">
+                <div class="accordion" data-bind="bootstrapCollapse: true">
                     <div class="accordion-group">
                         <div class="accordion-heading">
                             <a class="accordion-toggle" data-bind="attr: {href: $root.url('emulator', id)}">

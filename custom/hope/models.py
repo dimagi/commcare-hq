@@ -1,4 +1,5 @@
 from datetime import datetime
+from couchdbkit import ResourceNotFound
 
 import dateutil.parser
 from dateutil.relativedelta import relativedelta
@@ -6,6 +7,7 @@ from dateutil.relativedelta import relativedelta
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.users.models import CommCareUser
+
 
 class HOPECase(CommCareCase):
     '''
@@ -79,9 +81,11 @@ class HOPECase(CommCareCase):
     @memoized
     def user(self):
         user_id = self.user_id
-
         if user_id:
-            return CommCareUser.get(user_id)
+            try:
+                return CommCareUser.get(user_id)
+            except ResourceNotFound:
+                return None
         else:
             return None
 
@@ -158,10 +162,10 @@ class HOPECase(CommCareCase):
             birth_place = self.get_case_property('birth_place').strip()
             if birth_place == 'home':
                 return 'home'
-            elif birth_place == ',':
-                return 'institutional'
-            else:
+            elif birth_place == '':
                 return None
+            else:
+                return 'institutional'
 
     @property
     def _HOPE_dpt_1_indicator(self):
@@ -205,7 +209,7 @@ class HOPECase(CommCareCase):
 
             try:
                 ifa_tablets_issued = int(ifa_tablets_issued)
-            except ValueError:
+            except (ValueError, TypeError):
                 ifa_tablets_issued = 0
 
             if ifa_tablets_issued > 0:
@@ -241,7 +245,7 @@ class HOPECase(CommCareCase):
             return 0
 
         return len([form for form in self.pnc_forms + self.ebf_forms
-                    if form.get_form.get('within_42') == 'yes'])
+                    if (form.get_form.get("meta")['timeEnd'].date() - add).days <= 42])
 
     @property
     def _HOPE_opv_1_indicator(self):

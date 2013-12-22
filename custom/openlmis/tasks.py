@@ -16,7 +16,7 @@ def check_requisition_updates():
             requisitions = endpoint.get_all_requisition_statuses()
             for requisition in requisitions:
                 cases, send_notification = sync_requisition_from_openlmis(project.name, requisition.requisition_id, endpoint)
-                if send_notification:
+                if cases and send_notification:
                     send_notifications(xform=None, cases=cases)
 
 @task

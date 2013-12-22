@@ -105,6 +105,7 @@ MIDDLEWARE_CLASSES = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'corehq.middleware.OpenRosaMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
+    'corehq.apps.domain.middleware.CCHQPRBACMiddleware',
     'casexml.apps.phone.middleware.SyncTokenMiddleware',
     'auditcare.middleware.AuditMiddleware',
     'no_exceptions.middleware.NoExceptionsMiddleware',
@@ -306,6 +307,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'casexml.apps.case',
     'casexml.apps.phone',
     'couchforms',
+    'couchexport',
     'ctable',
     'ctable_view',
     'dimagi.utils',
@@ -692,9 +694,6 @@ _dynamic_db_settings = get_dynamic_db_settings(COUCH_SERVER_ROOT, COUCH_USERNAME
 COUCH_SERVER = _dynamic_db_settings["COUCH_SERVER"]
 COUCH_DATABASE = _dynamic_db_settings["COUCH_DATABASE"]
 
-# other urls that depend on the server
-XFORMS_POST_URL = _dynamic_db_settings["XFORMS_POST_URL"]
-
 COUCHDB_APPS = [
     'adm',
     'announcements',
@@ -971,7 +970,7 @@ DOMAIN_MODULE_MAP = {
     'hsph-dev': 'hsph',
     'hsph-betterbirth-pilot-2': 'hsph',
     'mc-inscale': 'custom.reports.mc',
-    'mikesproject': 'custom.penn_state',
+    'psu-legacy-together': 'custom.penn_state',
     'mvp-potou': 'mvp',
     'mvp-sauri': 'mvp',
     'mvp-bonsaaso': 'mvp',

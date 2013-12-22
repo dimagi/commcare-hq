@@ -112,13 +112,12 @@ def raise_events(xform, cases):
         created = any(filter(lambda update: update.id == sp._id and update.creates_case(), case_updates))
         supply_point_modified.send(sender=None, supply_point=sp, created=created)
     requisition_cases = [RequisitionCase.wrap(c._doc) for c in cases if c.type == const.REQUISITION_CASE_TYPE]
-    if requisition_cases and requisition_cases[0].requisition_status is RequisitionStatus.APPROVED:
+    if requisition_cases and requisition_cases[0].requisition_status == RequisitionStatus.APPROVED:
         requisition_approved.send(sender=None, requisitions=requisition_cases)
-    if requisition_cases and requisition_cases[0].requisition_status is RequisitionStatus.RECEIVED:
+    if requisition_cases and requisition_cases[0].requisition_status == RequisitionStatus.RECEIVED:
         requisition_receipt.send(sender=None, requisitions=requisition_cases)
 
-    requisition_cases = [RequisitionCase.wrap(c._doc) for c in cases if c.type == const.REQUISITION_CASE_TYPE]
-    if requisition_cases:
+    if requisition_cases and requisition_cases[0].requisition_status == RequisitionStatus.REQUESTED:
         requisition_modified.send(sender=None, cases=requisition_cases)
 
 def commtrack_processing(sender, xform, cases, **kwargs):

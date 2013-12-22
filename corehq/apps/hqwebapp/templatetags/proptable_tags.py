@@ -81,11 +81,11 @@ def to_html(key, val, level=0, datetime_fmt="%b %d, %Y %H:%M %Z",
         The hack allows strftime to be used to support directives such as '%b'.
         """
         if isinstance(val, datetime.datetime):
-            safe_val = datetime.datetime(1900, val.month, val.day, hour=val.hour,
+            safe_val = datetime.datetime(2012, val.month, val.day, hour=val.hour,
                                          minute=val.minute, second=val.second,
                                          microsecond=val.microsecond, tzinfo=val.tzinfo)
         else:
-            safe_val = datetime.date(1900, val.month, val.day)
+            safe_val = datetime.date(2012, val.month, val.day)
         return safe_val.strftime(fmt.replace("%Y", str(val.year)))
 
 

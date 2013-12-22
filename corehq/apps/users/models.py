@@ -647,6 +647,12 @@ class EulaMixin(DocumentSchema):
         return current_eula
 
 
+class KeyboardShortcutsConfig(DocumentSchema):
+    enabled = BooleanProperty(False)
+    main_key = StringProperty(choices=["ctrl", "option", "command", "alt", "shift", "control"])
+    main_keycode = IntegerProperty()
+
+
 class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMixin):
     """
     A user (for web and commcare)
@@ -663,6 +669,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     language = StringProperty()
     email_opt_out = BooleanProperty(default=False)
     announcements_seen = ListProperty()
+    keyboard_shortcuts = SchemaProperty(KeyboardShortcutsConfig)
 
     _user = None
     _user_checked = False

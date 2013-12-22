@@ -195,7 +195,7 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
             domain = Domain.get_by_name(kwargs['domain'])
             del kwargs['domain']
         super(AdminInvitesUserForm, self).__init__(data=data, *args, **kwargs)
-        if domain and not domain.location_restriction_for_users:
+        if domain and domain.commtrack_enabled:
             self.fields['supply_point'] = forms.CharField(label='Supply Point:', required=False, widget=SupplyPointSelectWidget(domain=domain.name))
         self.excluded_emails = excluded_emails or []
 

@@ -33,7 +33,7 @@ from couchexport.tasks import rebuild_schemas
 from couchexport.util import SerializableFunction
 import couchforms.views as couchforms_views
 from couchforms.filters import instances
-from couchforms.models import XFormInstance
+from couchforms.models import XFormInstance, doc_types
 from couchforms.templatetags.xform_tags import render_form
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import wrapped_docs
@@ -456,7 +456,7 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
                                   domain,
                                   user_id, request.couch_user,
                                   True,
-                                  notes=form.cleaned_data['notes']).content
+                                  notes=form.cleaned_data['notes'])[0].content
 
     subject = form.cleaned_data['subject'] or _("Email report from CommCare HQ")
 
@@ -603,7 +603,12 @@ def send_test_scheduled_report(request, domain, scheduled_report_id):
 
 
 def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
-                                  email=True):
+                                  email=True, attach_excel=False):
+    """
+    This function somewhat confusingly returns a tuple of: (response, excel_files)
+    If attach_excel is false, excel_files will always be an empty list.
+    """
+    # todo: clean up this API?
     from django.http import HttpRequest
     
     request = HttpRequest()
@@ -613,22 +618,30 @@ def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
     request.couch_user.current_domain = domain
 
     notification = ReportNotification.get(scheduled_report_id)
-
     return _render_report_configs(request, notification.configs,
                                   notification.domain,
                                   notification.owner_id,
                                   couch_user,
-                                  email)
+                                  email, attach_excel=attach_excel)
 
-def _render_report_configs(request, configs, domain, owner_id, couch_user, email, notes=None):
+def _render_report_configs(request, configs, domain, owner_id, couch_user, email, notes=None, attach_excel=False):
     from dimagi.utils.web import get_url_base
 
     report_outputs = []
+    excel_attachments = []
+    format = Format.from_format(request.GET.get('format') or Format.XLS_2007)
     for config in configs:
+        content, excel_file = config.get_report_content(attach_excel=attach_excel)
+        if excel_file:
+            excel_attachments.append({
+                'title': config.full_name + "." + format.extension,
+                'file_obj': excel_file,
+                'mimetype': format.mimetype
+            })
         report_outputs.append({
             'title': config.full_name,
             'url': config.url,
-            'content': config.get_report_content()
+            'content': content
         })
 
     return render(request, "reports/report_email.html", {
@@ -641,13 +654,14 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
         "notes": notes,
         "startdate": config.start_date,
         "enddate": config.end_date,
-    })
+    }), excel_attachments
 
 @login_and_domain_required
 @permission_required("is_superuser")
 def view_scheduled_report(request, domain, scheduled_report_id):
     return get_scheduled_report_response(
-        request.couch_user, domain, scheduled_report_id, email=False)
+        request.couch_user, domain, scheduled_report_id, email=False
+    )[0]
 
 
 @require_case_view_permission
@@ -808,10 +822,11 @@ def _get_form_or_404(id):
     except ResourceNotFound:
         raise Http404()
 
-    if xform_json.get('doc_type') not in ('XFormInstance',):
+    doc_type = doc_types().get(xform_json.get('doc_type'))
+    if not doc_type:
         raise Http404()
 
-    return XFormInstance.wrap(xform_json)
+    return doc_type.wrap(xform_json)
 
 
 @require_form_view_permission

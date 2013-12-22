@@ -2533,7 +2533,6 @@ msgid "Close"
 msgstr ""
 
 #: corehq/apps/domain/calculations.py:190 custom/bihar/reports/display.py:344
-#, fuzzy
 msgid "yes"
 msgstr "हॉ"
 
@@ -10098,7 +10097,6 @@ msgstr ""
 #: custom/apps/crs_reports/reports.py:103
 #: custom/bihar/reports/mch_reports.py:67
 #: custom/bihar/reports/mch_reports.py:249
-#, fuzzy
 msgid "CHW Name"
 msgstr "नाम"
 
@@ -10404,12 +10402,10 @@ msgstr ""
 "मे रुची दिखायी है"
 
 #: custom/bihar/calculations/mortality.py:54
-#, fuzzy
 msgid "Maternal mortality"
 msgstr "मृत्यु"
 
 #: custom/bihar/calculations/mortality.py:83
-#, fuzzy
 msgid "Infant mortality"
 msgstr "मृत्यु"
 
@@ -10482,9 +10478,8 @@ msgid "Unknown user"
 msgstr "अनजान उपयोगकर्ता"
 
 #: custom/bihar/reports/display.py:207 custom/bihar/reports/display.py:577
-#, fuzzy
 msgid "Bad date format!"
-msgstr "गृह भ्रमण की जानकारी"
+msgstr "गलत तारीख स्वरूप"
 
 #: custom/bihar/reports/due_list.py:24
 msgid "ANC"
@@ -10532,33 +10527,28 @@ msgid "Care Due"
 msgstr "देखभाल बाकी"
 
 #: custom/bihar/reports/due_list.py:123
-#, fuzzy
 msgid "Vaccination Name"
-msgstr "टीम का नाम"
+msgstr "टीके का नाम"
 
 #: custom/bihar/reports/due_list.py:138
 msgid "# Due"
 msgstr "# बाकी"
 
 #: custom/bihar/reports/due_list.py:151
-#, fuzzy
 msgid "Vaccination Client List"
 msgstr "लाभार्थी सूचि चुनिए"
 
 #: custom/bihar/reports/due_list.py:157
-#, fuzzy
 msgid "Mother"
-msgstr "मात्र मृत्यु"
+msgstr "माँ"
 
 #: custom/bihar/reports/due_list.py:157
-#, fuzzy
 msgid "Husband"
 msgstr "पति का नाम"
 
 #: custom/bihar/reports/due_list.py:157
-#, fuzzy
 msgid "Child"
-msgstr "कुल लाभार्थी"
+msgstr "बच्चा"
 
 #: custom/bihar/reports/due_list.py:283
 msgid "Care Due Today"
@@ -10578,17 +10568,14 @@ msgstr "देखभाल तीन दिन में"
 
 #: custom/bihar/reports/mch_reports.py:69
 #: custom/bihar/reports/mch_reports.py:251
-#, fuzzy
 msgid "Beneficiary Information"
 msgstr "लाभार्थी के पहचान हेतु आवश्यक जानकारी"
 
 #: custom/bihar/reports/mch_reports.py:70
-#, fuzzy
 msgid "Mother Name"
-msgstr "नाम "
+msgstr "नाम"
 
 #: custom/bihar/reports/mch_reports.py:71
-#, fuzzy
 msgid "Husband Name"
 msgstr "पति का नाम"
 
@@ -10607,15 +10594,13 @@ msgstr "पहचान संख्या"
 
 #: custom/bihar/reports/mch_reports.py:75
 #: custom/bihar/reports/mch_reports.py:258
-#, fuzzy
 msgid "Mobile number"
-msgstr "किसका दूरभाष/ मो. सं०(अपना/ पडोसी/ रिश्तेदार/ आशा/ एएनएम) लिखें"
+msgstr "दूरभाष/मोबाइल सं०(अपना/ पडोसी/ रिश्तेदार/ आशा/ एएनएम) लिखें"
 
 #: custom/bihar/reports/mch_reports.py:76
 #: custom/bihar/reports/mch_reports.py:259
-#, fuzzy
 msgid "Whose Mobile Number"
-msgstr "दूरभाष/ मोबाइल सं० "
+msgstr "किसकी दूरभाष /मोबाइल सं० "
 
 #: custom/bihar/reports/mch_reports.py:77
 msgid "Mother DOB / AGE"
@@ -10632,13 +10617,11 @@ msgstr "जाति (अनुसूचित जाति/ जनजाति 
 
 #: custom/bihar/reports/mch_reports.py:81
 #: custom/bihar/reports/mch_reports.py:264
-#, fuzzy
 msgid "Provider Information"
 msgstr "सेवा प्रदाता का विवरण"
 
 #: custom/bihar/reports/mch_reports.py:82
 #: custom/bihar/reports/mch_reports.py:265
-#, fuzzy
 msgid "ASHA Name"
 msgstr "संबंधित आशा का नाम"
 
@@ -10654,7 +10637,6 @@ msgstr "आँगनवाड़ी केन्द्र का कोड, स�
 
 #: custom/bihar/reports/mch_reports.py:85
 #: custom/bihar/reports/mch_reports.py:268
-#, fuzzy
 msgid "AWW name"
 msgstr "आँगनवाड़ी सेविका का नाम"
 
@@ -10766,7 +10748,6 @@ msgid "Anemia"
 msgstr "एनिमिया (Normal/Moderate <11 /Severe <7)"
 
 #: custom/bihar/reports/mch_reports.py:116
-#, fuzzy
 msgid "Any complications"
 msgstr "कोई जटिल परिस्थिति (Hypertensive / Diabetics /APH /Malaria /None)"
 
@@ -10775,12 +10756,10 @@ msgid "RTI /STI <yes/no>"
 msgstr "प्रजनन /यौन संचालित रोग का संक्रमण RTI/ STI"
 
 #: custom/bihar/reports/mch_reports.py:119
-#, fuzzy
 msgid "Pregnancy Outcome"
 msgstr "गर्भावस्था का परिणाम"
 
 #: custom/bihar/reports/mch_reports.py:120
-#, fuzzy
 msgid "Date of delivery"
 msgstr "प्रसव की तिथि"
 
@@ -10789,12 +10768,10 @@ msgid "Place of delivery (home - SBA/Non-SBA) (Hospital - public/private)"
 msgstr "प्रसव का स्थान (घर में- SBA/Non-SBA द्वाराए संस्था में- सरकारी/गैर सरकारी)"
 
 #: custom/bihar/reports/mch_reports.py:123
-#, fuzzy
 msgid "Nature of delivery"
 msgstr "प्रसव का प्रकार (Normal/CS/Instrumental)"
 
 #: custom/bihar/reports/mch_reports.py:124
-#, fuzzy
 msgid "Complications"
 msgstr "प्रसव के दौरान कोई अन्य जटिलता Complication"
 
@@ -10807,12 +10784,10 @@ msgid "Received date of JSY benefits"
 msgstr "जननी एवं बाल सुरक्षा योजना की सुविधाओं का भुगतान की तिथि"
 
 #: custom/bihar/reports/mch_reports.py:127
-#, fuzzy
 msgid "Abortion type"
-msgstr "यदि गर्भपात हो तो "
+msgstr "गर्भपात का प्रकार "
 
 #: custom/bihar/reports/mch_reports.py:129
-#, fuzzy
 msgid "Post Delivery Details"
 msgstr "प्रसव के बाद की जानकारी"
 
@@ -10839,9 +10814,8 @@ msgid "Infant outcome number code"
 msgstr "परिणाम संख्या Outcome Numbers (0/1/2/3/4/5)  0=Still Birth"
 
 #: custom/bihar/reports/mch_reports.py:137
-#, fuzzy
 msgid "Child 1 Details"
-msgstr "नवजात शिशु की जानकारी 1"
+msgstr "नवजात शिशु 1 की जानकारी"
 
 #: custom/bihar/reports/mch_reports.py:138
 #: custom/bihar/reports/mch_reports.py:144
@@ -10865,37 +10839,30 @@ msgid "Breastfed within an hour?"
 msgstr "जन्म के 1 घन्टे में माँ का दूध पिलाया गया (हाँ/नहीं)"
 
 #: custom/bihar/reports/mch_reports.py:143
-#, fuzzy
 msgid "Child 2 Details"
-msgstr "नवजात शिशु की जानकारी 2"
+msgstr "नवजात शिशु 2 की जानकारी"
 
 #: custom/bihar/reports/mch_reports.py:149
-#, fuzzy
 msgid "Child 3 Details"
-msgstr "नवजात शिशु की जानकारी 3"
+msgstr "नवजात शिशु 3 की जानकारी"
 
 #: custom/bihar/reports/mch_reports.py:155
-#, fuzzy
 msgid "Child 4 Details"
-msgstr "नवजात शिशु की जानकारी 4"
+msgstr "नवजात शिशु 4 की जानकारी "
 
 #: custom/bihar/reports/mch_reports.py:160
-#, fuzzy
 msgid "Migrate status "
 msgstr "Migrate  Status (out/in)"
 
 #: custom/bihar/reports/mch_reports.py:252
-#, fuzzy
 msgid "Child Name"
 msgstr "बच्चे का नाम "
 
 #: custom/bihar/reports/mch_reports.py:253
-#, fuzzy
 msgid "Father and Mother Name"
 msgstr "माता एवं पिता का नाम"
 
 #: custom/bihar/reports/mch_reports.py:254
-#, fuzzy
 msgid "Mother's MCTS ID"
 msgstr "माता की पहचान संख्या "
 
@@ -10912,7 +10879,6 @@ msgid "Place of delivery (home - SBA/Non-SBA) (Hospital -  public/private)"
 msgstr "प्रसव का स्थान (घर में, सरकारी/ गैर सरकारी स्वास्थ्य संसथान में)"
 
 #: custom/bihar/reports/mch_reports.py:271
-#, fuzzy
 msgid "At Birth"
 msgstr "जन्म के समय"
 
@@ -11030,7 +10996,6 @@ msgstr "ऑगनवाड़ी केंद्र संख्या"
 
 #: custom/bihar/reports/supervisor.py:206
 #: custom/bihar/reports/indicators/reports.py:60
-#, fuzzy
 msgid "Subcentre"
 msgstr "सब-सेंटर चुनिए"
 
@@ -11078,7 +11043,6 @@ msgid "EDD Calculator"
 msgstr "ईड़ीड़ी केलकुलेटर"
 
 #: custom/bihar/reports/supervisor.py:397
-#, fuzzy
 msgid "Enter LMP (DD-MM-YYYY)"
 msgstr "अंतिम मासिक धर्म की तारीख भरें"
 
@@ -11122,7 +11086,7 @@ msgstr "वज़न कम है"
 
 #: custom/bihar/reports/supervisor.py:459
 msgid "no awcc"
-msgstr ""
+msgstr "कोई ऑगनवाड़ी केन्द्र नहीं "
 
 #: custom/bihar/reports/indicators/clientlistdisplay.py:80
 #: custom/bihar/reports/indicators/clientlistdisplay.py:98

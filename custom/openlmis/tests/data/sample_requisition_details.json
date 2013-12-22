@@ -5,8 +5,8 @@
         "programCode":"HIV",
         "agentCode":"F10",
         "emergency":false,
-        "periodStartDate":1358274600000,
-        "periodEndDate":1359570599000,
+        "stringPeriodStartDate":1358274600000,
+        "stringPeriodEndDate":1359570599000,
         "products":
             [
                 {

@@ -73,6 +73,13 @@ class Program(Document):
     code = StringProperty()
     description = StringProperty()
 
+    @classmethod
+    def get_by_code(cls, domain, code):
+        result = cls.view("commtrack/program_by_code",
+                          key=[domain, code],
+                          include_docs=True,
+                          limit=1).first()
+        return result
 
 class Product(Document):
     """
@@ -225,6 +232,16 @@ class OpenLMISConfig(DocumentSchema):
 
     using_requisitions = BooleanProperty(default=False) # whether openlmis handles our requisitions for us
 
+    @property
+    def is_configured(self):
+        return True if self.enabled and self.url and self.password and self.username else False
+
+class AlertConfig(DocumentSchema):
+    stock_out_facilities = BooleanProperty(default=False)
+    stock_out_commodities = BooleanProperty(default=False)
+    stock_out_rates = BooleanProperty(default=False)
+    non_report = BooleanProperty(default=False)
+
 
 class CommtrackConfig(Document):
 
@@ -251,6 +268,9 @@ class CommtrackConfig(Document):
     use_auto_consumption = BooleanProperty(default=False)
     consumption_config = SchemaProperty(ConsumptionConfig)
     stock_levels_config = SchemaProperty(StockLevelsConfig)
+
+    # configured on Subscribe Sms page
+    alert_config = SchemaProperty(AlertConfig)
 
     @classmethod
     def for_domain(cls, domain):
@@ -935,8 +955,10 @@ class RequisitionCase(CommCareCase):
     @classmethod
     def get_by_external_id(cls, domain, external_id):
         return cls.view('hqcase/by_domain_external_id',
-                        key=[domain, external_id],
-                        inlude_docs=True)
+            key=[domain, external_id],
+            include_docs=True, reduce=False,
+            classes={'CommCareCase': RequisitionCase}
+        ).all()
 
     @classmethod
     def get_display_config(cls):

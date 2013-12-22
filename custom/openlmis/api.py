@@ -4,8 +4,11 @@ import feedparser
 import time
 import requests
 from requests.auth import HTTPBasicAuth
+from corehq.apps.commtrack.const import REQUISITION_CASE_TYPE
 from corehq.apps.commtrack.models import RequisitionCase
 from custom.openlmis.exceptions import OpenLMISAPIException
+
+REQUISITION_APPROVED = "Requisition approved successfully"
 
 
 class RssMetadata(object):
@@ -181,16 +184,15 @@ class OpenLMISEndpoint(object):
         # feeds
         self._feed_uri = self._urlcombine(self.base_uri, '/feeds')
         self.facility_master_feed_uri = self._urlcombine(self._feed_uri, '/facilities')
-        self.facility_program_feed_uri = self._urlcombine(self._feed_uri, '/programSupported')
-        self.program_catalog_feed_uri = self._urlcombine(self._feed_uri, '/programCatalogChanges')
+        self.facility_program_feed_uri = self._urlcombine(self._feed_uri, '/programs-supported')
+        self.program_catalog_feed_uri = self._urlcombine(self._feed_uri, '/program-catalog-changes')
         self.requisition_status_feed_uri = self._urlcombine(self._feed_uri, '/requisition-status')
 
         # rest apis
         self._rest_uri = self._urlcombine(self.base_uri, '/rest-api')
-        self.create_virtual_facility_url = self._urlcombine(self._rest_uri, '/agent.json')
-        self.update_virtual_facility_base_url = self._urlcombine(self._rest_uri, '/agent')
-        self.program_product_url = self._urlcombine(self._rest_uri, '/programProducts.json')
-        self.submit_requisition_url = self._urlcombine(self._rest_uri, '/submitRequisition') #todo waiting for update document, added some url for testing
+        self.create_virtual_facility_url = self._urlcombine(self._rest_uri, '/agents.json')
+        self.update_virtual_facility_base_url = self._urlcombine(self._rest_uri, '/agents')
+        self.program_product_url = self._urlcombine(self._rest_uri, '/program-products.json')
         self.requisition_details_url = self._urlcombine(self._rest_uri, '/requisitions')
         self.confirm_delivery_base_url = self._urlcombine(self._rest_uri, '/orders')
 
@@ -216,8 +218,10 @@ class OpenLMISEndpoint(object):
     def _response(self, response):
         # todo: error handling and such
         res = response.json()
-        if res.get('Success', False):
+        if res.get('success', False) or res == ("%s" % REQUISITION_APPROVED):
             return True
+        elif res.get('requisitionId', False):
+            return res
         else:
             raise OpenLMISAPIException(res['error'])
 
@@ -243,7 +247,10 @@ class OpenLMISEndpoint(object):
     def get_requisition_details(self, id):
         response = requests.get(self.update_requisition_details_url(id), auth=self._auth())
 
-        return RequisitionDetails.from_json(response.json())
+        if response.json().get('requisition'):
+            return RequisitionDetails.from_json(response.json())
+        else:
+            return None
 
 
     def create_virtual_facility(self, facility_data):
@@ -270,7 +277,7 @@ class OpenLMISEndpoint(object):
         return self._response(response)
 
     def submit_requisition(self, requisition_data):
-        response = requests.post(self.submit_requisition_url,
+        response = requests.post(self.requisition_details_url,
                                  data=json.dumps(requisition_data),
                                  headers={'content-type': 'application/json'},
                                  auth=self._auth())
@@ -291,7 +298,7 @@ class OpenLMISEndpoint(object):
 
     def approve_requisition(self, approve_requisition, requisition_id):
         response = requests.put(self.approve_requisition_url(requisition_id),
-                                data=approve_requisition,
+                                data=json.dumps(approve_requisition),
                                 headers={'content-type': 'application/json'},
                                 auth=self._auth())
         return self._response(response)
@@ -387,8 +394,8 @@ class RequisitionDetails(Requisition):
         agent_code = json_rep['agentCode']
         program_code = json_rep['programCode']
         emergency = json_rep['emergency']
-        period_start_date = json_rep['periodStartDate']
-        period_end_date = json_rep['periodEndDate']
+        period_start_date = json_rep['stringPeriodStartDate']
+        period_end_date = json_rep['stringPeriodEndDate']
         requisition_status = json_rep['requisitionStatus']
         order_id = json_rep.get('orderId', None)
         order_status = json_rep.get('orderStatus', None)
@@ -401,8 +408,9 @@ class RequisitionDetails(Requisition):
         return cls(id, agent_code, program_code, emergency, period_start_date, period_end_date, requisition_status,
                    products, supplying_facility_code, order_id, order_status)
 
-    def to_requisition_case(self, product_id):
+    def to_requisition_case(self, product_id, case_id=None, case_rev=None):
         req_case = RequisitionCase()
+        req_case.type = REQUISITION_CASE_TYPE
         req_case.user_id = self.agent_code
         req_case.set_case_property("program_id", self.program_id)
         req_case.set_case_property("period_id", self.period_id)
@@ -413,20 +421,40 @@ class RequisitionDetails(Requisition):
         req_case.set_case_property("order_status", self.order_status)
         req_case.set_case_property("emergency", self.emergency)
         req_case.set_case_property("start_date", self.period_start_date)
-        req_case.set_case_peoperty("end_date", self.period_end_date)
+        req_case.set_case_property("end_date", self.period_end_date)
+
+        if case_id:
+            req_case._id = case_id
+        if case_rev:
+            req_case._rev = case_rev
+
         return req_case
 
+    def to_dict(self, product_id):
+        dictionary = {
+            'product_id': product_id,
+            'program_id': self.program_id,
+            'order_id': self.order_id,
+            'agent_code': self.agent_code,
+            'order_status': self.order_status,
+            'emergency': self.emergency,
+            'start_date': self.period_start_date,
+            'end_date': self.period_end_date,
+            'supplyingFacilityCode': self.supplying_facility_code
+        }
+        return dictionary
 
 class RequisitionProductDetails(RequisitionProduct):
 
     def __init__(self,  code, beginning_balance,
                  quantity_received, quantity_dispensed=None, losses_and_adjustments=None, new_patient_count=None,
                  stock_in_hand=None, stock_out_days=None, quantity_requested=None, reason_for_requested_quantity=None, remarks=None,
-                 total_losses_and_adjustments=None, calculated_order_quantity=None, quantity_approved=None):
+                 skipped=None, total_losses_and_adjustments=None, calculated_order_quantity=None, quantity_approved=None):
 
         self.total_losses_and_adjustments = total_losses_and_adjustments
         self.calculated_order_quantity = calculated_order_quantity
         self.quantity_approved = quantity_approved
+        self.skipped = skipped
 
         super(RequisitionProductDetails, self).__init__(code=code, beginning_balance=beginning_balance, quantity_received=quantity_received, quantity_dispensed=quantity_dispensed,
                    losses_and_adjustments=losses_and_adjustments, new_patient_count=new_patient_count, stock_in_hand=stock_in_hand, stock_out_days=stock_out_days,
@@ -445,6 +473,7 @@ class RequisitionProductDetails(RequisitionProduct):
         quantity_requested = json_rep.get('quantityRequested', None)
         reason_for_requested_quantity =json_rep.get('reasonForRequestedQuantity', None)
         remarks = json_rep.get('remarks', None)
+        skipped = json_rep.get('skipped', None)
 
         total_losses_and_adjustments = json_rep.get('totalLossesAndAdjustments', None)
         calculated_order_quantity = json_rep.get('calculatedOrderQuantity', None)
@@ -453,4 +482,4 @@ class RequisitionProductDetails(RequisitionProduct):
         return cls(code=code, beginning_balance=beginning_balance,
                  quantity_received=quantity_received, quantity_dispensed=quantity_dispensed, losses_and_adjustments=losses_and_adjustments, new_patient_count=new_patient_count,
                  stock_in_hand=stock_in_hand, stock_out_days=stock_out_days, quantity_requested=quantity_requested, reason_for_requested_quantity=reason_for_requested_quantity, remarks=remarks,
-                 total_losses_and_adjustments=total_losses_and_adjustments, calculated_order_quantity=calculated_order_quantity, quantity_approved=quantity_approved)
+                 skipped=skipped, total_losses_and_adjustments=total_losses_and_adjustments, calculated_order_quantity=calculated_order_quantity, quantity_approved=quantity_approved)

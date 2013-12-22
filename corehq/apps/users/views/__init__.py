@@ -304,7 +304,7 @@ class EditMyAccountDomainView(BaseFullEditUserView):
     @property
     def page_context(self):
         context = {}
-        if self.request.project.commtrack_enabled and not self.request.project.location_restriction_for_users:
+        if self.request.project.commtrack_enabled:
             context.update({
                 'update_form': self.localization_form,
             })
