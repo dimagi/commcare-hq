@@ -465,13 +465,14 @@ class NewStockReport(object):
                 product_id=txn.product_id,
             )
             previous_transaction = db_txn.get_previous_transaction()
+            db_txn.type = txn.action
             if self.tag == 'balance':
                 db_txn.stock_on_hand = txn.quantity
                 db_txn.quantity = txn.quantity - (previous_transaction.stock_on_hand if previous_transaction else 0)
             else:
                 assert self.tag == 'transfer'
-                db_txn.quantity = txn.quantity
-                db_txn.stock_on_hand = (previous_transaction.stock_on_hand if previous_transaction else 0) + txn.quantity
+                db_txn.quantity = txn.relative_quantity
+                db_txn.stock_on_hand = (previous_transaction.stock_on_hand if previous_transaction else 0) + db_txn.quantity
             db_txn.save()
 
 
@@ -479,6 +480,7 @@ class StockTransaction(Document):
     """
     wrapper/helper for transactions
     """
+    # todo: why is this a Document?
     domain = StringProperty()
     timestamp = DateTimeProperty()
     location_id = StringProperty() # location record id
@@ -544,6 +546,17 @@ class StockTransaction(Document):
 
         super(StockTransaction, self).__init__(**kwargs)
 
+    @property
+    def relative_quantity(self):
+        """
+        Gets the quantity of this transaction as a positive or negative number
+        depending on the action/context
+        """
+        if self.action == const.StockActions.CONSUMPTION:
+            return -self.quantity
+        else:
+            return self.quantity
+
     def action_config(self, commtrack_config):
         action = CommtrackActionConfig(action=self.action, subaction=self.subaction)
         for a in commtrack_config.all_actions:
@@ -568,7 +581,6 @@ class StockTransaction(Document):
         elif action_tag == 'transfer':
             src, dst = [action_node.get('@%s' % k) for k in ('src', 'dest')]
             action_type = action_node.get('@type')
-
             if src is not None:
                 action = const.StockActions.CONSUMPTION
                 here, other = src, dst
@@ -576,8 +588,7 @@ class StockTransaction(Document):
                 action = const.StockActions.RECEIPTS
                 here, other = dst, src
             there = action_type
-            assert other is None # this would be a requisiton use case; we'd have to create multiple transactions
-
+            assert other is None  # todo: this would be a requisiton use case; we'd have to create multiple transactions
             data.update({
                     'action': action,
                     'subaction': there if there != action else None,
