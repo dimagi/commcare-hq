@@ -128,6 +128,8 @@ def queue_outgoing_sms(msg, onerror=lambda: None):
             msg.processed = False
             msg.datetime_to_process = msg.date
             msg.save()
+            from corehq.apps.sms.management.commands.run_sms_queue import SMSEnqueuingOperation
+            SMSEnqueuingOperation().enqueue_directly(msg)
             return True
         except:
             onerror()
@@ -259,6 +261,8 @@ def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None,
         msg.processed = False
         msg.datetime_to_process = datetime.utcnow()
         msg.save()
+        from corehq.apps.sms.management.commands.run_sms_queue import SMSEnqueuingOperation
+        SMSEnqueuingOperation().enqueue_directly(msg)
     else:
         msg.processed = True
         msg.save()

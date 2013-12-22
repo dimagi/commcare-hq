@@ -6,7 +6,7 @@ from corehq.apps.sms.models import SMSLog
 from corehq.apps.sms.tasks import process_sms
 from hqscripts.generic_queue import GenericEnqueuingOperation
 
-class Command(GenericEnqueuingOperation):
+class SMSEnqueuingOperation(GenericEnqueuingOperation):
     args = ""
     help = "Runs the SMS Queue"
 
@@ -29,6 +29,22 @@ class Command(GenericEnqueuingOperation):
     def use_queue(self):
         return settings.SMS_QUEUE_ENABLED
 
-    def enqueue(self, _id):
+    def enqueue_item(self, _id):
         process_sms.delay(_id)
+
+    def enqueue_directly(self, msg):
+        """
+        This method is used to try to send an SMSLog entry directly to the
+        celery queue, without waiting for it to be enqueued by the handle()
+        thread.
+        """
+        try:
+            self.enqueue(msg._id, json_format_datetime(msg.datetime_to_process))
+        except:
+            # If anything goes wrong here, no problem, the handle() thread will
+            # pick it up later and enqueue.
+            pass
+
+class Command(SMSEnqueuingOperation):
+    pass
 

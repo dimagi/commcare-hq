@@ -45,17 +45,21 @@ class GenericEnqueuingOperation(BaseCommand):
         utcnow = datetime.utcnow()
         entries = self.get_items_to_be_processed(utcnow)
         for entry in entries:
-            queue_name = self.get_queue_name()
-            entry_id = entry["id"]
-            process_datetime = entry["key"]
-            enqueuing_lock = self.get_enqueuing_lock(client,
-                "%s-enqueuing-%s-%s" % (queue_name, entry_id, process_datetime))
-            if enqueuing_lock.acquire(blocking=False):
-                try:
-                    self.enqueue(entry_id)
-                except:
-                    # We couldn't enqueue, so release the lock
-                    enqueuing_lock.release()
+            item_id = entry["id"]
+            process_datetime_str = entry["key"]
+            self.enqueue(item_id, process_datetime_str, redis_client=client)
+
+    def enqueue(self, item_id, process_datetime_str, redis_client=None):
+        client = redis_client or self.get_redis_client()
+        queue_name = self.get_queue_name()
+        enqueuing_lock = self.get_enqueuing_lock(client,
+            "%s-enqueuing-%s-%s" % (queue_name, item_id, process_datetime_str))
+        if enqueuing_lock.acquire(blocking=False):
+            try:
+                self.enqueue_item(item_id)
+            except:
+                # We couldn't enqueue, so release the lock
+                enqueuing_lock.release()
 
     def get_redis_client(self):
         rcache = cache_core.get_redis_default_cache()
@@ -93,7 +97,7 @@ class GenericEnqueuingOperation(BaseCommand):
             call. Retrieve all items to be processed before this timestamp."""
         raise NotImplementedError("This method must be implemented.")
 
-    def enqueue(self, _id):
+    def enqueue_item(self, _id):
         """This method should enqueue the item.
         _id - The couch document _id of the item that is being referenced."""
         raise NotImplementedError("This method must be implemented.")
