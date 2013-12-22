@@ -67,8 +67,8 @@ class GenericEnqueuingOperation(BaseCommand):
             raise RedisClientError("Could not get redis connection.")
         return client
 
-    def get_enqueuing_lock(client, key):
-        lock_timeout = self.get_enqueuing_timeout()
+    def get_enqueuing_lock(self, client, key):
+        lock_timeout = self.get_enqueuing_timeout() * 60
         return client.lock(key, timeout=lock_timeout)
 
     def get_queue_name(self):

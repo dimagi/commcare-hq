@@ -54,9 +54,6 @@ def handle_domain_specific_delays(msg, domain_object, utcnow):
 
     Returns True if a delay was made, False if not.
     """
-    if msg.direction != OUTGOING:
-        return False
-
     domain_now = tz_utils.adjust_datetime_to_timezone(utcnow, pytz.utc.zone,
         domain_object.default_timezone)
 
@@ -115,10 +112,11 @@ def process_sms(message_id):
     if message_lock.acquire(blocking=False):
         msg = SMSLog.get(message_id)
 
-        domain_object = Domain.get_by_name(msg.domain, strict=True)
-        if handle_domain_specific_delays(msg, domain_object):
-            message_lock.release()
-            return
+        if msg.direction == OUTGOING:
+            domain_object = Domain.get_by_name(msg.domain, strict=True)
+            if handle_domain_specific_delays(msg, domain_object, utcnow):
+                message_lock.release()
+                return
 
         # Process inbound SMS from a single contact one at a time
         recipient_block = msg.direction == INCOMING
