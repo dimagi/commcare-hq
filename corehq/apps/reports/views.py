@@ -836,7 +836,7 @@ def form_data(request, domain, instance_id):
     context = _get_form_context(request, domain, instance_id)
 
     try:
-        form_name = context['instance'].get_form["@name"]
+        form_name = context['instance'].form["@name"]
     except KeyError:
         form_name = "Untitled Form"
    

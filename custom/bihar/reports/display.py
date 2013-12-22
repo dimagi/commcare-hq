@@ -112,7 +112,7 @@ class MCHMotherDisplay(MCHDisplay):
         jsy_money = None
 
         for form in forms:
-            form_dict = form.get_form
+            form_dict = form.form
             form_xmlns = form_dict["@xmlns"]
 
             if NEW in form_xmlns:
@@ -451,7 +451,7 @@ class MCHChildDisplay(MCHDisplay):
                     setattr(self, "_mobile_number_whose", number)
 
                 for form in forms:
-                    form_dict = form.get_form
+                    form_dict = form.form
                     form_xmlns = form_dict["@xmlns"]
 
                     if NEW in form_xmlns:
