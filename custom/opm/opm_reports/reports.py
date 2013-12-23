@@ -67,6 +67,10 @@ class BaseReport(MonthYearMixin, GenericTabularReport, CustomProjectReport):
     @property
     @memoized
     def snapshot(self):
+        # Don't load snapshot if filtering by current case status,
+        # instead, calculate again.
+        if self.filter_data.get('case_status', False):
+            return None
         return OpmReportSnapshot.from_view(self)
 
     @property
