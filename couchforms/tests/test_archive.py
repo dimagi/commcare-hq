@@ -1,7 +1,8 @@
 from datetime import datetime, timedelta
 from django.test import TestCase
-from couchforms.models import XFormInstance, get, XFormArchived
+from couchforms.models import XFormInstance, XFormArchived
 from couchforms.signals import xform_archived, xform_unarchived
+from couchforms import fetch_and_wrap_form
 
 
 class TestFormArchiving(TestCase):
@@ -15,7 +16,7 @@ class TestFormArchiving(TestCase):
         lower_bound = datetime.utcnow() - timedelta(seconds=1)
         form.archive(user='mr. librarian')
         upper_bound = datetime.utcnow() + timedelta(seconds=1)
-        form = get(form._id)
+        form = fetch_and_wrap_form(form._id)
         self.assertEqual('XFormArchived', form.doc_type)
         self.assertTrue(isinstance(form, XFormArchived))
 
@@ -27,7 +28,7 @@ class TestFormArchiving(TestCase):
         lower_bound = datetime.utcnow() - timedelta(seconds=1)
         form.unarchive(user='mr. researcher')
         upper_bound = datetime.utcnow() + timedelta(seconds=1)
-        form = get(form._id)
+        form = fetch_and_wrap_form(form._id)
         self.assertEqual('XFormInstance', form.doc_type)
         self.assertTrue(isinstance(form, XFormInstance))
 

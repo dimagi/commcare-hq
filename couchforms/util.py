@@ -12,7 +12,7 @@ except ImportError:
     from django.utils import simplejson
 
 from couchforms.models import XFormInstance, XFormDuplicate, XFormError, XFormDeprecated,\
-    SubmissionErrorLog, DefaultAuthContext
+    SubmissionErrorLog, DefaultAuthContext, doc_types
 import logging
 from couchforms.signals import xform_saved
 from dimagi.utils.couch import uid
@@ -270,3 +270,14 @@ class SubmissionPost(object):
 
     def get_error_response(self, error_log):
         return HttpResponseServerError("FAIL")
+
+
+def fetch_and_wrap_form(doc_id):
+    # This logic is independent of couchforms; when it moves elsewhere,
+    # please use the most appropriate alternative to get a DB handle.
+
+    db = XFormInstance.get_db()
+    doc = db.get(doc_id)
+    if doc['doc_type'] in doc_types():
+        return doc_types()[doc['doc_type']].wrap(doc)
+    raise ResourceNotFound(doc_id)

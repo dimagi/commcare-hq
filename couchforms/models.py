@@ -34,17 +34,6 @@ def doc_types():
     }
 
 
-def get(doc_id):
-    # This logic is independent of couchforms; when it moves elsewhere, 
-    # please use the most appropriate alternative to get a DB handle.
-    
-    db = XFormInstance.get_db()
-    doc = db.get(doc_id)
-    if doc['doc_type'] in doc_types():
-        return doc_types()[doc['doc_type']].wrap(doc)
-    raise ResourceNotFound(doc_id)
-
-
 class Metadata(DocumentSchema):
     """
     Metadata of an xform, from a meta block structured like:
