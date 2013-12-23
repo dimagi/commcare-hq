@@ -142,7 +142,7 @@ class BeneficiaryPaymentReport(BaseReport):
 
     @property
     def fields(self):
-        return [SelectOpenCloseFilter] + super(BeneficiaryPaymentReport, self).fields
+        return super(BeneficiaryPaymentReport, self).fields + [SelectOpenCloseFilter]
 
     # TODO: Switch to ES.  Peformance aaah!
     def get_rows(self, datespan):
