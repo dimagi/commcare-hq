@@ -363,9 +363,9 @@ class HVFollowUpStatusSummaryReport(HVFollowUpStatusReport):
                         if visited_date:
                             visited_date = dateutil.parser.parse(visited_date)
                             hv_form = XFormInstance.get(item.get('followupFormId'))
-                            if not isinstance(hv_form.get_form['meta'].get('timeEnd'), str):
-                                time_start = datetime.datetime.replace(hv_form.get_form['meta'].get('timeStart'), tzinfo=pytz.utc)
-                                time_end = datetime.datetime.replace(hv_form.get_form['meta'].get('timeEnd'), tzinfo=pytz.utc)
+                            if not isinstance(hv_form.form['meta'].get('timeEnd'), str):
+                                time_start = datetime.datetime.replace(hv_form.form['meta'].get('timeStart'), tzinfo=pytz.utc)
+                                time_end = datetime.datetime.replace(hv_form.form['meta'].get('timeEnd'), tzinfo=pytz.utc)
                                 total_time = time_end - time_start
                                 total_time = "%d:%d" % (round(total_time.seconds/60),
                                                         total_time.seconds-round(total_time.seconds/60))
