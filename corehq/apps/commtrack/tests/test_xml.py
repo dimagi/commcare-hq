@@ -69,9 +69,9 @@ class CommTrackSubmissionTest(CommTrackTest):
 
     def check_product_stock(self, supply_point, product_id, expected_soh, expected_qty):
         # check the case
-        # supply_point = SupplyPointCase.wrap(supply_point.to_json())
-        spp = supply_point.get_product_subcase(product_id)
-        self.assertEqual(expected_soh, spp.current_stock)
+        # spp = supply_point.get_product_subcase(product_id)
+        # self.assertEqual(expected_soh, spp.current_stock)
+
         # and the django model
         latest_trans = StockTransaction.latest(supply_point._id, product_id)
         self.assertEqual(expected_soh, latest_trans.stock_on_hand)
