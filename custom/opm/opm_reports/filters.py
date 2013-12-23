@@ -22,13 +22,3 @@ class AWCFilter(BaseMultipleOptionFilter):
     @property
     def options(self):
         return [(awc, awc) for awc in get_user_data_set()['awcs']]
-
-
-class CaseStatusFilter(BaseSingleOptionFilter):
-    slug = "case_status"
-    label = "Case Status"
-    default_text = "Show only..."
-
-    @property
-    def options(self):
-        return [("open", 'Open'), ("closed", 'Closed')]
