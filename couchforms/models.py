@@ -93,13 +93,7 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin):
     received_on = DateTimeProperty()
     partial_submission = BooleanProperty(default=False) # Used to tag forms that were forcefully submitted without a touchforms session completing normally
     history = SchemaListProperty(XFormOperation)
-    
-    @property
-    def get_form(self):
-        """public getter for the xform's form instance, it's redundant with 
-        _form but wrapping that access gives future audit capabilities"""
-        return self._form
-    
+    form = DictProperty()
 
     @classmethod
     def get(cls, docid, rev=None, db=None, dynamic_properties=True):
@@ -138,28 +132,24 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin):
         return (cls(doc) for doc in docs)
 
     @property
-    def _form(self):
-        return self[const.TAG_FORM]
-
-    @property
     def type(self):
-        return self._form.get(const.TAG_TYPE, "")
+        return self.form.get(const.TAG_TYPE, "")
         
     @property
     def name(self):
-        return self._form.get(const.TAG_NAME, "")
+        return self.form.get(const.TAG_NAME, "")
 
     @property
     def version(self):
-        return self._form.get(const.TAG_VERSION, "")
+        return self.form.get(const.TAG_VERSION, "")
         
     @property
     def uiversion(self):
-        return self._form.get(const.TAG_UIVERSION, "")
+        return self.form.get(const.TAG_UIVERSION, "")
     
     @property
     def metadata(self):
-        if (const.TAG_META) in self._form:
+        if (const.TAG_META) in self.form:
             def _clean(meta_block):
                 # couchdbkit chokes on dates that aren't actually dates
                 # so check their validity before passing them up
@@ -363,10 +353,6 @@ class SubmissionErrorLog(XFormError):
     here. 
     """
     md5 = StringProperty()
-    
-    # this is here as a bit of an annoying hack so that __unicode__ works
-    # when called from the base class
-    form = DictProperty()
         
     def __unicode__(self):
         return "Doc id: %s, Error %s" % (self.get_id, self.problem) 
