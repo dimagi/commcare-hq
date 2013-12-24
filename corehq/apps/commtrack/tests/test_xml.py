@@ -5,10 +5,8 @@ from casexml.apps.stock.const import TRANSACTION_TYPE_BALANCE
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack.tests.util import CommTrackTest, get_ota_balance_xml
 from casexml.apps.case.tests.util import check_xml_line_by_line
-from corehq.apps.commtrack.models import Product, SupplyPointProductCase, SupplyPointCase
+from corehq.apps.commtrack.models import Product
 from corehq.apps.receiverwrapper import submit_form_locally
-from couchforms.util import post_xform_to_couch
-from casexml.apps.case.signals import process_cases
 from corehq.apps.commtrack.tests.util import make_loc, make_supply_point, make_supply_point_product
 from corehq.apps.commtrack.tests.data.balances import (
     balances_with_adequate_values,
