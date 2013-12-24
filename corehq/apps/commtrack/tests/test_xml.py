@@ -67,8 +67,8 @@ class CommTrackSubmissionTest(CommTrackTest):
 
     def check_product_stock(self, supply_point, product_id, expected_soh, expected_qty):
         # check the case
-        # spp = supply_point.get_product_subcase(product_id)
-        # self.assertEqual(expected_soh, spp.current_stock)
+        spp = supply_point.get_product_subcase(product_id)
+        self.assertEqual(expected_soh, spp.current_stock)
 
         # and the django model
         latest_trans = StockTransaction.latest(supply_point._id, product_id)
@@ -96,8 +96,6 @@ class CommTrackSubmissionTest(CommTrackTest):
             self.check_product_stock(self.sp, product, amt, amt)
 
     def test_transfer_source_only(self):
-        # this test correctly fails due to a bug in the code
-        # first set balance of everything to 100
         initial = float(100)
         initial_amounts = [(p._id, initial) for p in self.products]
         self.submit_xml_form(balance_submission(initial_amounts))

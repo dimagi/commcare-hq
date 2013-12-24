@@ -489,7 +489,7 @@ class StockTransaction(Document):
     product_id = StringProperty()
     action = StringProperty()
     subaction = StringProperty()
-    quantity = FloatProperty()
+    quantity = DecimalProperty()
     processing_order = IntegerProperty()
 
     """
@@ -839,7 +839,7 @@ class SupplyPointProductCase(CommCareCase):
         app_label = "commtrack"
 
     # can flesh this out more as needed
-    product = StringProperty() # would be nice if this was product_id but is grandfathered in
+    product = StringProperty()  # would be nice if this was product_id but is grandfathered in
     current_stock = DecimalProperty()
     stocked_out_since = StringProperty()
 

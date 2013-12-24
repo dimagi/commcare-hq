@@ -1,6 +1,7 @@
+from decimal import Decimal
 import logging
 from dimagi.utils.decorators.log_exception import log_exception
-from corehq.apps.commtrack.models import CommtrackConfig, StockTransaction, SupplyPointCase, NewStockReport
+from corehq.apps.commtrack.models import CommtrackConfig, StockTransaction, SupplyPointCase, NewStockReport, SupplyPointProductCase
 from corehq.apps.commtrack import const
 import collections
 from dimagi.utils.couch.loosechange import map_reduce
@@ -190,11 +191,11 @@ class LegacyStockTransaction(StockTransaction):
 
 class StockState(object):
     def __init__(self, case, reported_on):
+        assert isinstance(case, SupplyPointProductCase)
         self.case = case
         self.last_reported = reported_on
-        props = case.dynamic_properties()
-        self.current_stock = int(props.get('current_stock') or 0)  # int
-        self.stocked_out_since = props.get('stocked_out_since')  # date
+        self.current_stock = case.current_stock if case.current_stock is not None else Decimal(0.0)
+        self.stocked_out_since = case.stocked_out_since
 
     def update(self, action_type, value):
         """given the current stock state for a product at a location, update
@@ -221,6 +222,8 @@ class StockState(object):
                 self.stocked_out_since = date.today()
 
         else:
+            # annoying float/decimal conversion issues
+            value = Decimal(value)
             if action_type == const.StockActions.STOCKONHAND:
                 if self.current_stock != value:
                     reconciliation_transaction = mk_reconciliation(value - self.current_stock)
@@ -234,8 +237,8 @@ class StockState(object):
             if self.current_stock > 0:
                 self.stocked_out_since = None
             else:
-                self.current_stock = 0 # handle if negative
-                if not self.stocked_out_since: # handle if stocked out date already set
+                self.current_stock = 0  # handle if negative
+                if not self.stocked_out_since:  # handle if stocked out date already set
                     self.stocked_out_since = date.today()
 
         return reconciliation_transaction
