@@ -21,10 +21,11 @@ logger = logging.getLogger('commtrack.incoming')
 
 COMMTRACK_LEGACY_REPORT_XMLNS = 'http://commtrack.org/legacy/stock_report'
 
-# FIXME this decorator is causing me bizarre import issues
 @log_exception()
 def process_stock(sender, xform, config=None, **kwargs):
-    """process the commtrack xml constructs in an incoming submission"""
+    """
+    process the commtrack xml constructs in an incoming submission
+    """
     domain = xform.domain
 
     config = CommtrackConfig.for_domain(domain)
