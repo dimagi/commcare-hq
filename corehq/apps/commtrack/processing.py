@@ -1,5 +1,5 @@
 import logging
-from dimagi.utils.logging import log_exception
+from dimagi.utils.decorators.log_exception import log_exception
 from corehq.apps.commtrack.models import CommtrackConfig, StockTransaction, SupplyPointCase, NewStockReport
 from corehq.apps.commtrack import const
 import collections
@@ -23,7 +23,7 @@ logger = logging.getLogger('commtrack.incoming')
 COMMTRACK_LEGACY_REPORT_XMLNS = 'http://commtrack.org/legacy/stock_report'
 
 # FIXME this decorator is causing me bizarre import issues
-#@log_exception()
+@log_exception()
 def process_stock(sender, xform, config=None, **kwargs):
     """process the commtrack xml constructs in an incoming submission"""
     domain = xform.domain
