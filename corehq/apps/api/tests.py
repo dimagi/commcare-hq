@@ -19,7 +19,7 @@ from corehq.pillows.case import CasePillow
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.domain.models import Domain
 from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater, ShortFormRepeater
-from corehq.apps.api.resources import v0_1, v0_4, v0_5, v0_6
+from corehq.apps.api.resources import v0_1, v0_4, v0_5
 from corehq.apps.api.fields import ToManyDocumentsField, ToOneDocumentField, UseIfRequested, ToManyDictField
 from corehq.apps.api import es
 from corehq.apps.api.es import ESQuerySet, UserESMixin, ESUserError
@@ -1207,9 +1207,9 @@ class BaseUserES(object):
             })
     
 
-class TestUserAPI(BaseUserES, APIResourceTest):
-    resource = v0_6.CommCareUserResource
-    api_name = 'v0.6'
+class TestBulkUserAPI(BaseUserES, APIResourceTest):
+    resource = v0_5.BulkUserResource
+    api_name = 'v0.5'
 
     @property
     def list_endpoint(self):
