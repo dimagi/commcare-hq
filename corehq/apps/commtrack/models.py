@@ -147,6 +147,20 @@ class CommtrackActionConfig(DocumentSchema):
     _keyword = StringProperty() # sms code
     caption = StringProperty() # display title
 
+    @classmethod
+    def wrap(cls, data):
+        if 'action_type' in data:
+            data['action'] = data['action_type']
+            del data['action_type']
+
+        if 'name' in data:
+            if data['name'] == 'lost':
+                data['subaction'] = 'loss'
+
+            del data['name']
+
+        return super(CommtrackActionConfig, cls).wrap(data)
+
     def __repr__(self):
         return '{action} ({subaction}): {caption} ({_keyword})'.format(**self._doc)
 
