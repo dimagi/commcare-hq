@@ -25,8 +25,8 @@ class StockTransaction(models.Model):
     type = models.CharField(max_length=20)  # i.e. 'loss' or 'receipt'
 
     # often one of these two will be derived based on the other one
-    quantity = models.FloatField(null=True)
-    stock_on_hand = models.FloatField()
+    quantity = models.DecimalField(null=True, max_digits=20, decimal_places=5)
+    stock_on_hand = models.DecimalField(max_digits=20, decimal_places=5)
 
     def __unicode__(self):
         return '{type} of {quantity} to {soh} (case: {case}, product: {product})'.format(
