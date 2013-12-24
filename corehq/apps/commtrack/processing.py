@@ -9,10 +9,9 @@ from casexml.apps.case.models import CommCareCaseAction
 from casexml.apps.case.xml.parser import AbstractAction
 
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2
 from xml import etree as legacy_etree
-from datetime import datetime, date
+from datetime import date
 from lxml import etree
 from corehq.apps.receiverwrapper.util import get_submit_url
 from receiver.util import spoof_submission
@@ -141,7 +140,8 @@ def set_transactions(root, new_tx, E):
         root.append(tx.to_legacy_xml(E))
 
 def process_product_transactions(user_id, timestamp, case, txs):
-    """process all the transactions from a stock report for an individual
+    """
+    process all the transactions from a stock report for an individual
     product. we have to apply them in bulk because each one may update
     the case state that the next one works off of. therefore we have to
     keep track of the updated case state ourselves
