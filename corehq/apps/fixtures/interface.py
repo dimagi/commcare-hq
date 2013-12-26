@@ -62,7 +62,28 @@ class FixtureEditInterface(FixtureInterface):
     name = ugettext_noop("Manage Table Data")
     slug = "edit_lookup_tables"
 
-    report_template_path = 'reports/async/tabular.html'
+    base_template = "fixtures/fixtures_base.html"
+    report_template_path = 'fixtures/manage_tables.html'
 
     asynchronous = False
     ajax_pagination = True
+    user_datatables = False
+
+    @property
+    def report_context(self):
+        context = super(FixtureInterface, self).report_context
+        context.update(types=self.data_types)
+        return context
+
+    @property
+    def data_types(self):
+        fdts = list(FixtureDataType.by_domain(self.domain))
+        return fdts
+
+    # @property
+    # def default_option(self):
+    #     return self.field_opts[-1].tag
+
+    # def update_params(self):
+    #     self.selected = self.request.GET.get(self.slug, '')
+    #     self.options = [{'val': _id_from_doc(f), 'text': f.tag} for f in [fo for fo in self.field_opts if fo != self.selected]]
