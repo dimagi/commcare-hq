@@ -5,7 +5,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests import delete_all_xforms, delete_all_cases
 from couchforms.models import XFormInstance
 from couchforms.util import post_xform_to_couch
-from casexml.apps.case.signals import process_cases
+from casexml.apps.case import process_cases
 
 
 class MultiCaseTest(TestCase):
@@ -21,7 +21,7 @@ class MultiCaseTest(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
         form = post_xform_to_couch(xml_data)
-        process_cases(sender="testharness", xform=form)
+        process_cases(form)
         cases = self._get_cases()
         self.assertEqual(4, len(cases))
         self._check_ids(form, cases)
@@ -32,7 +32,7 @@ class MultiCaseTest(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
         form = post_xform_to_couch(xml_data)
-        process_cases(sender="testharness", xform=form)
+        process_cases(form)
         cases = self._get_cases()
         self.assertEqual(4, len(cases))
         self._check_ids(form, cases)
@@ -45,7 +45,7 @@ class MultiCaseTest(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
         form = post_xform_to_couch(xml_data)
-        process_cases(sender="testharness", xform=form)
+        process_cases(form)
         cases = self._get_cases()
         self.assertEqual(3, len(cases))
         self._check_ids(form, cases)

@@ -9,7 +9,7 @@ import lxml
 from django.core.files.uploadedfile import UploadedFile
 
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.signals import process_cases
+from casexml.apps.case import process_cases
 from casexml.apps.case.xml import V2
 from couchforms.models import XFormInstance
 from couchforms.util import post_xform_to_couch
@@ -89,7 +89,7 @@ class BaseCaseMultimediaTest(TestCase):
         form = post_xform_to_couch(xml_data, dict_attachments)
         form.domain = TEST_DOMAIN
         self.assertEqual(len(dict_attachments.keys()), len(form.attachments))
-        process_cases(sender="testharness", xform=form)
+        process_cases(form)
 
 
     def _submit_and_verify(self, doc_id, xml_data, dict_attachments):

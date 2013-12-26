@@ -4,7 +4,7 @@ import time
 from couchforms.util import post_xform_to_couch
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import check_xml_line_by_line, delete_all_cases, delete_all_sync_logs
-from casexml.apps.case.signals import process_cases
+from casexml.apps.case import process_cases
 from datetime import datetime, date
 from casexml.apps.phone.models import User, SyncLog
 from casexml.apps.phone import xml, views
@@ -49,7 +49,7 @@ class OtaRestoreTest(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
         form = post_xform_to_couch(xml_data)
-        process_cases(sender="testharness", xform=form)
+        process_cases(form)
         user = dummy_user()
 
         # implicit length assertion
@@ -99,14 +99,14 @@ class OtaRestoreTest(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
         form = post_xform_to_couch(xml_data)
-        process_cases(sender="testharness", xform=form)
+        process_cases(form)
         [newcase] = CommCareCase.view("case/by_user", reduce=False, include_docs=True).all()
         self.assertEqual(0, len(newcase.referrals))
         file_path = os.path.join(os.path.dirname(__file__), "data", "case_refer.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
         form = post_xform_to_couch(xml_data)
-        process_cases(sender="testharness", xform=form)
+        process_cases(form)
         [updated_case] = CommCareCase.view("case/by_user", reduce=False, include_docs=True).all()
         self.assertEqual(1, len(updated_case.referrals))
         response = views.xml_for_case(HttpRequest(), updated_case.get_id)
@@ -271,7 +271,7 @@ class OtaRestoreTest(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
         form = post_xform_to_couch(xml_data)
-        process_cases(sender="testharness", xform=form)
+        process_cases(form)
 
         time.sleep(1)
         restore_payload = generate_restore_payload(dummy_user())
@@ -296,7 +296,7 @@ class OtaRestoreTest(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
         form = post_xform_to_couch(xml_data)
-        process_cases(sender="testharness", xform=form)
+        process_cases(form)
         
         time.sleep(1)
         sync_restore_payload = generate_restore_payload(dummy_user(), latest_log.get_id)
@@ -314,7 +314,7 @@ class OtaRestoreTest(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
         form = post_xform_to_couch(xml_data)
-        process_cases(sender="testharness", xform=form)
+        process_cases(form)
         
         [newcase] = CommCareCase.view("case/by_user", reduce=False, include_docs=True).all()
         self.assertTrue(isinstance(newcase.adate, dict))

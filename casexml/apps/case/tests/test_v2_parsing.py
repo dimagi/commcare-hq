@@ -3,7 +3,7 @@ import os
 from casexml.apps.case.models import CommCareCase
 from couchforms.util import post_xform_to_couch
 from casexml.apps.case.tests.util import check_xml_line_by_line, CaseBlock, delete_all_cases
-from casexml.apps.case.signals import process_cases
+from casexml.apps.case import process_cases
 from datetime import datetime
 from casexml.apps.phone import views as phone_views
 from django.http import HttpRequest
@@ -27,7 +27,7 @@ class Version2CaseParsingTest(TestCase):
             xml_data = f.read()
         
         form = post_xform_to_couch(xml_data)
-        process_cases(sender="testharness", xform=form)
+        process_cases(form)
         case = CommCareCase.get("foo-case-id")
         self.assertFalse(case.closed)
         self.assertEqual("bar-user-id", case.user_id)
@@ -49,7 +49,7 @@ class Version2CaseParsingTest(TestCase):
             xml_data = f.read()
         
         form = post_xform_to_couch(xml_data)
-        process_cases(sender="testharness", xform=form)
+        process_cases(form)
         case = CommCareCase.get("foo-case-id")
         self.assertFalse(case.closed)
         self.assertEqual("bar-user-id", case.user_id)
@@ -68,7 +68,7 @@ class Version2CaseParsingTest(TestCase):
             xml_data = f.read()
         
         form = post_xform_to_couch(xml_data)
-        process_cases(sender="testharness", xform=form)
+        process_cases(form)
         case = CommCareCase.get("foo-case-id")
         self.assertTrue(case.closed)
         self.assertEqual("bar-user-id", case.closed_by)
@@ -79,7 +79,7 @@ class Version2CaseParsingTest(TestCase):
             xml_data = f.read()
         
         form = post_xform_to_couch(xml_data)
-        process_cases(sender="testharness", xform=form)
+        process_cases(form)
         case = CommCareCase.get("14cc2770-2d1c-49c2-b252-22d6ecce385a")
         self.assertFalse(case.closed)
         self.assertEqual("d5ce3a980b5b69e793445ec0e3b2138e", case.user_id)
@@ -105,7 +105,7 @@ class Version2CaseParsingTest(TestCase):
             xml_data = f.read()
 
         form = post_xform_to_couch(xml_data)
-        process_cases(sender="testharness", xform=form)
+        process_cases(form)
         case = CommCareCase.get("foo-case-id")
         self.assertEqual(2, len(case.indices))
         self.assertTrue(case.has_index("foo_ref"))

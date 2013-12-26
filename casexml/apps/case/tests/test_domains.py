@@ -2,7 +2,7 @@ from django.test import TestCase
 from casexml.apps.case import settings
 from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.signals import process_cases
+from casexml.apps.case import process_cases
 from couchforms.util import post_xform_to_couch
 
 ALICE_XML = """<?xml version='1.0' ?>
@@ -81,14 +81,14 @@ class DomainTest(TestCase):
     def testCantPwnCase(self):
         form = post_xform_to_couch(ALICE_XML)
         form.domain = ALICE_DOMAIN
-        (case,) = process_cases(sender="testharness", xform=form)
+        (case,) = process_cases(form)
         case_id = case.case_id
         form = post_xform_to_couch(EVE_XML)
         form.domain = EVE_DOMAIN
         with self.assertRaises(IllegalCaseId):
-            process_cases(sender="testharness", xform=form)
+            process_cases(form)
         self.assertFalse(hasattr(CommCareCase.get(case_id), 'plan_to_buy_gun'))
         form = post_xform_to_couch(ALICE_UPDATE_XML)
         form.domain = ALICE_DOMAIN
-        process_cases(sender="testharness", xform=form)
+        process_cases(form)
         self.assertEqual(CommCareCase.get(case_id).plan_to_buy_gun, 'no')

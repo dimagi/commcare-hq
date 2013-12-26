@@ -13,7 +13,7 @@ from casexml.apps.phone.models import SyncLog
 from couchforms.util import post_xform_to_couch
 from couchforms.models import XFormInstance
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.signals import process_cases
+from casexml.apps.case import process_cases
 from casexml.apps.phone.restore import RestoreConfig
 from casexml.apps.case.util import post_case_blocks
 
@@ -31,14 +31,14 @@ def bootstrap_case_from_xml(test_class, filename, case_id_override=None,
     doc = XFormInstance.get(doc_id)
     if domain:
         doc.domain = domain
-    process_cases(sender="testharness", xform=doc)
+    process_cases(doc)
     case = CommCareCase.get(case_id)
     test_class.assertTrue(starttime <= case.server_modified_on)
     test_class.assertTrue(datetime.utcnow() >= case.server_modified_on)
     test_class.assertEqual(case_id, case.case_id)
     return case
-            
-        
+
+
 def replace_ids_and_post(xml_data, case_id_override=None, referral_id_override=None):
     # from our test forms, replace the UIDs so we don't get id conflicts
     uid, case_id, ref_id = (uuid.uuid4().hex for i in range(3))

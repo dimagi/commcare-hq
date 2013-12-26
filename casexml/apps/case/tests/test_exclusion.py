@@ -4,7 +4,7 @@ from casexml.apps.case import settings
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import delete_all_cases
 from couchforms.util import post_xform_to_couch
-from casexml.apps.case.signals import process_cases
+from casexml.apps.case import process_cases
 
 class CaseExclusionTest(TestCase):
     """
@@ -24,7 +24,7 @@ class CaseExclusionTest(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
         form = post_xform_to_couch(xml_data)
-        process_cases(sender="testharness", xform=form)
+        process_cases(form)
         self.assertEqual(0, len(CommCareCase.view("case/by_user", include_docs=True, reduce=False).all()))
         
     def testNestedExclusion(self):
@@ -36,7 +36,7 @@ class CaseExclusionTest(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
         form = post_xform_to_couch(xml_data)
-        process_cases(sender="testharness", xform=form)
+        process_cases(form)
         self.assertEqual(1, len(CommCareCase.view("case/by_user", include_docs=True, reduce=False).all()))
         case = CommCareCase.get("case_in_form")
         self.assertEqual("form case", case.name)

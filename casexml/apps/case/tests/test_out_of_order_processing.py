@@ -2,7 +2,7 @@ import os
 from casexml.apps.case import settings
 from django.test import TestCase
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.signals import process_cases
+from casexml.apps.case import process_cases
 from casexml.apps.case.tests.util import post_util as real_post_util, delete_all_cases
 from couchforms.util import post_xform_to_couch
 
@@ -30,8 +30,8 @@ class OutOfOrderCaseTest(TestCase):
         [create, update] = forms
 
         # process out of order
-        process_cases(sender="testharness", xform=update)
-        process_cases(sender="testharness", xform=create)
+        process_cases(update)
+        process_cases(create)
 
         case = CommCareCase.get('30bc51f6-3247-4966-b4ae-994f572e85fe')
         self.assertEqual('from the update form', case.pupdate)
