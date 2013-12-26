@@ -12,29 +12,24 @@
 {% endblock %}
 
 {% block reportcontent %}
-{% block pretable %}
-    {% if not report.needs_filters %}
-    <h4 class="media-heading">{{ report.report_title }}
-        {% for subtitle in report.report_subtitles %}
-        <br/><small>{{ subtitle }}</small>
-        {% endfor %}
-    </h4>
-    {% endif %}
-    {% if charts %}
-    <div class="row">
-        {% for chart in charts %}
-        <div id='chart_{{ report.slug }}_{{ forloop.counter }}' class="span{{ chart_span }} hide">
-            {% if chart.title %}<h4 style="text-align: center;">{{ chart.title }}</h4>{% endif %}
-            <svg style='height: {{ chart.height }}px'> </svg>
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-{% endblock %}
 {% block reporttable %}
-{% if report.needs_filters %}
-    {% include 'reports/standard/partials/description.html' %}
-{% else %}
+<form>
+    {% for field in report_filters %}
+        <fieldset id="fieldset_{{ field.slug }}">
+            <div id="group_{{ field.slug }}" class="control-group">
+                {{ field.field|safe }}
+            </div>
+        </fieldset>
+    {% endfor %}
+                            {% block report_filter_actions %}
+                            <button type="submit" class="btn disabled"
+                                    data-loading-text="Generating Report..."
+                                    data-standard-text="Apply">
+                                Apply
+                            </button>
+                            {% endblock %}
+    </select>
+</form>
     <table id="report_table_{{ report.slug }}" class="table table-striped datatable" {% if pagination.filter %} data-filter="true"{% endif %}>
         <thead>
         {%  if report_table.headers.complex %}
@@ -96,7 +91,6 @@
 
         {% endif %}
     </table>
-{% endif %}
 {% endblock %}
 {% block posttable %}{% endblock %}
 {% endblock %}
