@@ -110,28 +110,24 @@ def bootstrap_commtrack_settings_if_necessary(domain, requisitions_enabled=False
             enabled=True,
             actions=[
                 CommtrackActionConfig(
-                    action_type=RequisitionActions.REQUEST,
+                    action='request',
                     keyword='req',
                     caption='Request',
-                    name='request',
                 ),
                 CommtrackActionConfig(
-                    action_type=RequisitionActions.APPROVAL,
+                    action='approved',
                     keyword='approve',
                     caption='Approved',
-                    name='approved',
                 ),
                 CommtrackActionConfig(
-                    action_type=RequisitionActions.PACK,
+                    action='packed',
                     keyword='pack',
                     caption='Packed',
-                    name='packed',
                 ),
                 CommtrackActionConfig(
-                    action_type=RequisitionActions.RECEIPTS,
+                    action='req_received',
                     keyword='rec',
                     caption='Requisition Receipts',
-                    name='req_received',
                 ),
             ],
         )

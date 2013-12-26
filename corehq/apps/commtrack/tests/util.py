@@ -78,8 +78,8 @@ def bootstrap_domain(domain_name=TEST_DOMAIN, requisitions_enabled=False):
     # a default config and a location
     domain_obj = create_domain(domain_name)
     domain_obj.commtrack_enabled = True
-    domain_obj.save(**get_safe_write_kwargs())
     bootstrap_commtrack_settings_if_necessary(domain_obj, requisitions_enabled)
+    domain_obj.save(**get_safe_write_kwargs())
 
     return domain_obj
 
