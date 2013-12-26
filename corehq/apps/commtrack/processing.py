@@ -1,6 +1,7 @@
+from decimal import Decimal
 import logging
-from dimagi.utils.logging import log_exception
-from corehq.apps.commtrack.models import CommtrackConfig, StockTransaction, SupplyPointCase
+from dimagi.utils.decorators.log_exception import log_exception
+from corehq.apps.commtrack.models import CommtrackConfig, StockTransaction, SupplyPointCase, NewStockReport, SupplyPointProductCase
 from corehq.apps.commtrack import const
 import collections
 from dimagi.utils.couch.loosechange import map_reduce
@@ -9,10 +10,9 @@ from casexml.apps.case.models import CommCareCaseAction
 from casexml.apps.case.xml.parser import AbstractAction
 
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2
 from xml import etree as legacy_etree
-from datetime import datetime, date
+from datetime import date
 from lxml import etree
 from corehq.apps.receiverwrapper.util import get_submit_url
 from receiver.util import spoof_submission
@@ -22,14 +22,16 @@ logger = logging.getLogger('commtrack.incoming')
 
 COMMTRACK_LEGACY_REPORT_XMLNS = 'http://commtrack.org/legacy/stock_report'
 
-# FIXME this decorator is causing me bizarre import issues
-#@log_exception()
+@log_exception()
 def process_stock(sender, xform, config=None, **kwargs):
-    """process the commtrack xml constructs in an incoming submission"""
+    """
+    process the commtrack xml constructs in an incoming submission
+    """
     domain = xform.domain
 
     config = CommtrackConfig.for_domain(domain)
-    transactions = list(unpack_commtrack(xform, config))
+    stock_reports = list(unpack_commtrack(xform, config))
+    transactions = [t for r in stock_reports for t in r.transactions]
     # omitted: normalize_transactions (used for bulk requisitions?)
     if not transactions:
         return
@@ -78,20 +80,22 @@ def process_stock(sender, xform, config=None, **kwargs):
                      headers={'HTTP_X_SUBMIT_TIME': submit_time},
                      hqsubmission=False)
 
-
+    # create the django models
+    for report in stock_reports:
+        report.create_models()
 
 
 # TODO retire this with move to new data model
 def product_subcases(supply_point):
-    """given a supply point, return all the sub-cases for each product stocked at that supply point
+    """
+    given a supply point, return all the sub-cases for each product stocked at that supply point
     actually returns a mapping: product doc id => sub-case
     ACTUALLY returns a dict that will create non-existent product sub-cases on demand
     """
     from helpers import make_supply_point_product
 
-    product_subcase_uuids = [ix.referenced_id for ix in supply_point.reverse_indices if ix.identifier == const.PARENT_CASE_REF]
-    product_subcases = CommCareCase.view('_all_docs', keys=product_subcase_uuids, include_docs=True)
-    product_subcase_mapping = dict((subcase.dynamic_properties().get('product'), subcase) for subcase in product_subcases)
+    product_subcases = supply_point.get_product_subcases()
+    product_subcase_mapping = dict((subcase.product, subcase) for subcase in product_subcases)
 
     def create_product_subcase(product_uuid):
         return make_supply_point_product(supply_point, product_uuid)
@@ -115,10 +119,8 @@ def product_subcases(supply_point):
     return DefaultDict(create_product_subcase, product_subcase_mapping)
 
 def unpack_commtrack(xform, config):
-    global_context = {
-        'timestamp': xform.received_on,
-    }
-
+    # todo: I think this function has to be rewritten to work off the
+    # raw XML of the doc in order to preserve ordering
     namespace = xform.form['@xmlns']
     def commtrack_nodes(data):
         for tag, nodes in data.iteritems():
@@ -130,21 +132,18 @@ def unpack_commtrack(xform, config):
                 else:
                     for e in commtrack_nodes(node):
                         yield e
+
     for elem in commtrack_nodes(xform.form):
-        # FIXME deal with requisitions later
-        tag, node = elem
-        products = node['product']
-        if not isinstance(products, collections.Sequence):
-            products = [products]
-        for prod_entry in products:
-            yield StockTransaction.from_xml(config, global_context, tag, node, prod_entry)
+        yield NewStockReport.from_xml(xform, config, elem)
+
 
 def set_transactions(root, new_tx, E):
     for tx in new_tx:
         root.append(tx.to_legacy_xml(E))
 
 def process_product_transactions(user_id, timestamp, case, txs):
-    """process all the transactions from a stock report for an individual
+    """
+    process all the transactions from a stock report for an individual
     product. we have to apply them in bulk because each one may update
     the case state that the next one works off of. therefore we have to
     keep track of the updated case state ourselves
@@ -192,11 +191,11 @@ class LegacyStockTransaction(StockTransaction):
 
 class StockState(object):
     def __init__(self, case, reported_on):
+        assert isinstance(case, SupplyPointProductCase)
         self.case = case
         self.last_reported = reported_on
-        props = case.dynamic_properties()
-        self.current_stock = int(props.get('current_stock') or 0)  # int
-        self.stocked_out_since = props.get('stocked_out_since')  # date
+        self.current_stock = case.current_stock if case.current_stock is not None else Decimal(0.0)
+        self.stocked_out_since = case.stocked_out_since
 
     def update(self, action_type, value):
         """given the current stock state for a product at a location, update
@@ -223,6 +222,8 @@ class StockState(object):
                 self.stocked_out_since = date.today()
 
         else:
+            # annoying float/decimal conversion issues
+            value = Decimal(value)
             if action_type == const.StockActions.STOCKONHAND:
                 if self.current_stock != value:
                     reconciliation_transaction = mk_reconciliation(value - self.current_stock)
@@ -236,8 +237,8 @@ class StockState(object):
             if self.current_stock > 0:
                 self.stocked_out_since = None
             else:
-                self.current_stock = 0 # handle if negative
-                if not self.stocked_out_since: # handle if stocked out date already set
+                self.current_stock = 0  # handle if negative
+                if not self.stocked_out_since:  # handle if stocked out date already set
                     self.stocked_out_since = date.today()
 
         return reconciliation_transaction

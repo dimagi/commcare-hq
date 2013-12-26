@@ -1,70 +1,24 @@
-from datetime import date, datetime
+from datetime import datetime
+from dimagi.utils.parsing import json_format_datetime
 
 
 def long_date():
-    return '' # TODO delete this line when date is on the balance node
-    today = date.today()
-    return datetime(today.year, today.month, today.day).isoformat()
+    return json_format_datetime(datetime.utcnow())
 
 
-def blank_balances(sp, products):
+def balances_with_adequate_values(sp, products, datestring=None):
+    if datestring is None:
+        datestring = long_date()
+
     return """
         <ns0:balance xmlns:ns0="http://commtrack.org/stock_report" xmlns="http://openrosa.org/http/response" date="{long_date}" entity-id="{sp_id}">
-            <ns0:product consumption_rate="10.0" id="{product0}" quantity="" stock_category="nodata" stockout_since=""/>
-            <ns0:product consumption_rate="10.0" id="{product1}" quantity="" stock_category="nodata" stockout_since=""/>
-            <ns0:product consumption_rate="10.0" id="{product2}" quantity="" stock_category="nodata" stockout_since=""/>
+            <ns0:product id="{product0}" quantity="10" />
+            <ns0:product id="{product1}" quantity="10" />
+            <ns0:product id="{product2}" quantity="10" />
         </ns0:balance>
     """.format(
         sp_id=sp._id,
-        long_date=long_date() + 'Z',
-        product0=products[0]._id,
-        product1=products[1]._id,
-        product2=products[2]._id,
-    )
-
-
-def balances_with_adequate_values(sp, products):
-    return """
-        <ns0:balance xmlns:ns0="http://commtrack.org/stock_report" xmlns="http://openrosa.org/http/response" date="{long_date}" entity-id="{sp_id}">
-            <ns0:product consumption_rate="10.0" id="{product0}" quantity="10" stock_category="adequate" stockout_since=""/>
-            <ns0:product consumption_rate="10.0" id="{product1}" quantity="" stock_category="nodata" stockout_since=""/>
-            <ns0:product consumption_rate="10.0" id="{product2}" quantity="" stock_category="nodata" stockout_since=""/>
-        </ns0:balance>
-    """.format(
-        sp_id=sp._id,
-        long_date=long_date() + 'Z',
-        product0=products[0]._id,
-        product1=products[1]._id,
-        product2=products[2]._id,
-    )
-
-
-def balances_with_overstock_values(sp, products):
-    return """
-        <ns0:balance xmlns:ns0="http://commtrack.org/stock_report" xmlns="http://openrosa.org/http/response" date="{long_date}" entity-id="{sp_id}">
-            <ns0:product consumption_rate="10.0" id="{product0}" quantity="9001" stock_category="overstock" stockout_since=""/>
-            <ns0:product consumption_rate="10.0" id="{product1}" quantity="" stock_category="nodata" stockout_since=""/>
-            <ns0:product consumption_rate="10.0" id="{product2}" quantity="" stock_category="nodata" stockout_since=""/>
-        </ns0:balance>
-    """.format(
-        sp_id=sp._id,
-        long_date=long_date() + 'Z',
-        product0=products[0]._id,
-        product1=products[1]._id,
-        product2=products[2]._id,
-    )
-
-
-def balances_with_stockout(sp, products):
-    return """
-        <ns0:balance xmlns:ns0="http://commtrack.org/stock_report" xmlns="http://openrosa.org/http/response" date="{long_date}" entity-id="{sp_id}">
-            <ns0:product consumption_rate="10.0" id="{product0}" quantity="0" stock_category="stockout" stockout_since="{long_date}"/>
-            <ns0:product consumption_rate="10.0" id="{product1}" quantity="" stock_category="nodata" stockout_since=""/>
-            <ns0:product consumption_rate="10.0" id="{product2}" quantity="" stock_category="nodata" stockout_since=""/>
-        </ns0:balance>
-    """.format(
-        sp_id=sp._id,
-        long_date=long_date() + 'Z',
+        long_date=datestring,
         product0=products[0]._id,
         product1=products[1]._id,
         product2=products[2]._id,
@@ -72,9 +26,9 @@ def balances_with_stockout(sp, products):
 
 
 def submission_wrap(products, user, sp, sp2, insides):
-    return ("""
-        <?xml version="1.0" encoding="UTF-8"?>
-        <data uiVersion="1" version="33" name="New Form">
+    insides = insides() if callable(insides) else insides
+    return ("""<?xml version="1.0" encoding="UTF-8"?>
+        <data uiVersion="1" version="33" name="New Form" xmlns="http://commtrack.org/test_form_submission">
             <products>{product0} {product1} {product2}</products>
             <meta>
                 <deviceID>351746051189879</deviceID>
@@ -89,7 +43,7 @@ def submission_wrap(products, user, sp, sp2, insides):
             <cur_products>3</cur_products>
             %s
         </data>
-    """ % insides()).format(
+    """ % insides).format(
         sp_id=sp._id,
         sp2_id=sp2._id,
         product0=products[0]._id,
@@ -101,49 +55,48 @@ def submission_wrap(products, user, sp, sp2, insides):
     )
 
 
-def balance_submission():
+def _products_xml(product_amount_tuples):
+    return ''.join([
+        '<ns0:product index="{i}" id="{id}" quantity="{quantity}" />'.format(
+            i=i, id=p, quantity=amt,
+        ) for i, (p, amt) in enumerate(product_amount_tuples)
+    ])
+
+def balance_submission(product_amounts):
     return """
-        <balance entity-id="{sp_id}" date="{long_date}">
-            <product index="0" id="{product0}" quantity="35" />
-            <product index="1" id="{product1}" quantity="46" />
-            <product index="2" id="{product2}" quantity="25" />
-        </balance>
-    """
+        <ns0:balance xmlns:ns0="http://commtrack.org/stock_report" date="{long_date}" entity-id="{sp_id}">
+            %(product_block)s
+        </ns0:balance>
+    """ % {'product_block': _products_xml(product_amounts)}
 
 
-def transfer_dest_only():
+def transfer_dest_only(product_amounts):
     return """
         <receipts>
-            <transfer dest="{sp_id}" date="{long_date}">
-                <product index="0" id="{product0}" quantity="38" />
-                <product index="1" id="{product1}" quantity="1" />
-                <product index="2" id="{product2}" quantity="1" />
-            </transfer>
+            <ns0:transfer xmlns:ns0="http://commtrack.org/stock_report" dest="{sp_id}" date="{long_date}">
+                %(product_block)s
+            </ns0:transfer>
         </receipts>
-    """
+    """ % {'product_block': _products_xml(product_amounts)}
 
 
-def transfer_source_only():
+def transfer_source_only(product_amounts):
     return """
         <losses>
-            <transfer src="{sp_id}" date="{long_date}">
-                <product index="0" id="{product0}" quantity="4" />
-                <product index="1" id="{product1}" quantity="1" />
-                <product index="2" id="{product2}" quantity="1" />
-            </transfer>
+            <ns0:transfer xmlns:ns0="http://commtrack.org/stock_report" src="{sp_id}" date="{long_date}">
+                %(product_block)s
+            </ns0:transfer>
         </losses>
-    """
+    """ % {'product_block': _products_xml(product_amounts)}
 
 
-def transfer_both():
+def transfer_both(product_amounts):
     # TODO Does this get wrapped in something? receipts?
     return """
-        <transfer src="{sp_id}" dest="{sp2_id}" date="{long_date}">
-            <product index="0" id="{product0}" quantity="4" />
-            <product index="1" id="{product1}" quantity="1" />
-            <product index="2" id="{product2}" quantity="1" />
-        </transfer>
-    """
+        <ns0:transfer xmlns:ns0="http://commtrack.org/stock_report" src="{sp_id}" dest="{sp2_id}" date="{long_date}">
+            %(product_block)s
+        </ns0:transfer>
+    """ % {'product_block': _products_xml(product_amounts)}
 
 
 def transfer_neither():
@@ -156,9 +109,8 @@ def transfer_neither():
     """
 
 
-def balance_first():
-    return balance_submission() + transfer_dest_only()
+def balance_first(balance_amounts, transfer_amounts):
+    return '%s%s' % (balance_submission(balance_amounts), transfer_dest_only(transfer_amounts))
 
-
-def transfer_first():
-    return transfer_dest_only() + balance_submission()
+def transfer_first(transfer_amounts, balance_amounts):
+    return '%s%s' % (transfer_dest_only(transfer_amounts), balance_submission(balance_amounts))

@@ -1,5 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
+from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack.const import RequisitionStatus
 from corehq.apps.commtrack.models import RequisitionCase, SupplyPointProductCase
 from casexml.apps.case.models import CommCareCase
@@ -11,7 +12,6 @@ class StockReportTest(CommTrackTest):
 
     def testStockReportRoaming(self):
         self.assertEqual(0, len(self.get_commtrack_forms()))
-
         amounts = {
             'pp': 10,
             'pq': 20,
@@ -31,6 +31,21 @@ class StockReportTest(CommTrackTest):
             spp = SupplyPointProductCase.get(self.spps[code]._id)
             self.assertEqual(self.sp.location_, spp.location_)
             self.assertEqual(Decimal(amt), spp.current_stock)
+
+        # todo: right now this make one report per balance when really they should all be in the same one
+        self.assertEqual(3, StockReport.objects.count())
+        for report in StockReport.objects.all():
+            self.assertEqual(forms[0]._id, report.form_id)
+            self.assertEqual('balance', report.type)
+            self.assertEqual(1, report.stocktransaction_set.count())
+
+        for code, amt in amounts.items():
+            [product] = filter(lambda p: p.code_ == code, self.products)
+            trans = StockTransaction.objects.get(product_id=product._id)
+            self.assertEqual(self.sp._id, trans.case_id)
+            self.assertEqual(amt, trans.quantity)
+            self.assertEqual(amt, trans.stock_on_hand)
+
 
     def testStockReportFixed(self):
         self.assertEqual(0, len(self.get_commtrack_forms()))
