@@ -1,5 +1,6 @@
 from xml.etree import ElementTree
 from casexml.apps.case.tests.util import check_xml_line_by_line
+from casexml.apps.case.xml import V2
 from corehq.apps.fixtures import fixturegenerators
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType, FixtureOwnership
 from corehq.apps.users.models import CommCareUser
@@ -69,7 +70,7 @@ class FixtureDataTest(TestCase):
         self.assertItemsEqual([self.data_item.get_id], FixtureDataItem.by_user(self.user, wrap=False))
         self.assertItemsEqual([self.user.get_id], self.data_item.get_all_users(wrap=False))
 
-        fixture, = fixturegenerators.item_lists(self.user)
+        fixture, = fixturegenerators.item_lists(self.user, version=V2, last_sync=None)
 
         check_xml_line_by_line(self, """
         <fixture id="item-list:contact" user_id="%s">
