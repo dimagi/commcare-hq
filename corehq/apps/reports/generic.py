@@ -20,7 +20,7 @@ from couchexport.shortcuts import export_response
 from dimagi.utils.couch.pagination import DatatablesParams
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.modules import to_function
-from dimagi.utils.web import json_request
+from dimagi.utils.web import json_request, json_response
 from dimagi.utils.parsing import string_to_boolean
 from corehq.apps.reports.cache import CacheableRequestMixIn, request_cache
 
@@ -596,7 +596,7 @@ class GenericReportView(CacheableRequestMixIn):
             Intention: Not to be overridden in general.
             Renders the json version for the report, if available.
         """
-        return HttpResponse(json.dumps(self.json_dict), content_type="application/json")
+        return json_response(self.json_dict)
 
     @property
     @request_cache("export")

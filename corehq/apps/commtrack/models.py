@@ -7,8 +7,8 @@ from django.db import transaction
 from django.utils.translation import ugettext as _
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.xml import V1, V2
 from casexml.apps.stock.models import StockReport as DbStockReport, StockTransaction as DbStockTransaction
+from casexml.apps.case.xml import V2
 from corehq import Domain
 
 from corehq.apps.commtrack import const
@@ -115,7 +115,7 @@ class Product(Document):
             return [row["doc"] for row in Product.view(wrap_doc=False, **kwargs)]
 
 
-def product_fixture_generator(user, version=V1, last_sync=None):
+def product_fixture_generator(user, version, last_sync):
     if not Domain.get_by_name(user.domain).commtrack_enabled:
         return []
     root = ElementTree.Element('fixture',
