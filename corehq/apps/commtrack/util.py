@@ -1,15 +1,14 @@
 from xml.etree import ElementTree
 from dimagi.utils.couch.database import get_db
-from corehq.apps.commtrack.models import CommtrackConfig, CommtrackActionConfig, LocationType, RequisitionActions, CommtrackRequisitionConfig, Product, SupplyPointCase
+from casexml.apps.case.models import CommCareCase
+from corehq.apps.commtrack import const
+from corehq.apps.commtrack.models import CommtrackConfig, CommtrackActionConfig, LocationType, RequisitionActions, CommtrackRequisitionConfig, Product, SupplyPointCase, SupplyPointProductCase, RequisitionCase
 from corehq.apps.locations.models import Location
 import itertools
 from datetime import datetime, date, timedelta
 from calendar import monthrange
 import math
 import bisect
-from lxml.builder import ElementMaker
-from corehq.apps.commtrack import const
-from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 from corehq.apps.hqcase.utils import submit_case_blocks
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
@@ -220,7 +219,7 @@ def submit_mapping_case_block(user, index):
     else:
         caseblock = CaseBlock(
             create=True,
-            case_type=USER_LOCATION_OWNER_MAP_TYPE,
+            case_type=const.USER_LOCATION_OWNER_MAP_TYPE,
             case_id=location_map_case_id(user),
             version=V2,
             owner_id=user._id,
@@ -238,5 +237,18 @@ def submit_mapping_case_block(user, index):
 def location_map_case_id(user):
     return 'user-owner-mapping-' + user._id
 
+
 def is_commtrack_location(user, domain):
     return True if user and user.location_id and domain.commtrack_enabled else False
+
+
+def get_case_wrapper(data):
+    return {
+        const.SUPPLY_POINT_CASE_TYPE: SupplyPointCase,
+        const.SUPPLY_POINT_PRODUCT_CASE_TYPE: SupplyPointProductCase,
+        const.REQUISITION_CASE_TYPE: RequisitionCase
+    }.get(data.get('type'), CommCareCase)
+
+
+def wrap_commtrack_case(case_json):
+    return get_case_wrapper(case_json).wrap(case_json)

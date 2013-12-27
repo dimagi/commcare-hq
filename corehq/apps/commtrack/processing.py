@@ -5,8 +5,9 @@ from corehq.apps.commtrack.models import CommtrackConfig, StockTransaction, Supp
 from corehq.apps.commtrack import const
 import collections
 from dimagi.utils.couch.loosechange import map_reduce
+from corehq.apps.commtrack.util import wrap_commtrack_case
 from corehq.apps.commtrack.xmlutil import XML
-from casexml.apps.case.models import CommCareCaseAction
+from casexml.apps.case.models import CommCareCaseAction, CommCareCase
 from casexml.apps.case.xml.parser import AbstractAction
 
 from casexml.apps.case.mock import CaseBlock
@@ -30,55 +31,62 @@ def process_stock(sender, xform, config=None, **kwargs):
     domain = xform.domain
 
     config = CommtrackConfig.for_domain(domain)
+
+    # these are the raw stock report objects from the xml
     stock_reports = list(unpack_commtrack(xform, config))
+    # flattened transaction list spanning all stock reports in the form
     transactions = [t for r in stock_reports for t in r.transactions]
     # omitted: normalize_transactions (used for bulk requisitions?)
+
     if not transactions:
         return
 
+    # transactions grouped by case/product id
     grouped_tx = map_reduce(lambda tx: [((tx.case_id, tx.product_id),)],
                             lambda v: sorted(v, key=lambda tx: (tx.timestamp, tx.processing_order)),
                             data=transactions,
                             include_docs=True)
 
-    supply_point_cases = SupplyPointCase.view('_all_docs',
-                                              keys=list(set(k[0] for k in grouped_tx)),
-                                              include_docs=True)
-    supply_point_product_subcases = dict((sp._id, product_subcases(sp)) for sp in supply_point_cases)
-
+    # list of cases that had stock reports in the form, properly wrapped by case type
+    relevant_cases = [wrap_commtrack_case(result['doc']) for result in
+                      CommCareCase.get_db().view('_all_docs',
+                                                 keys=list(set(k[0] for k in grouped_tx)),
+                                                 include_docs=True)]
     user_id = xform.form['meta']['userID']
     submit_time = xform['received_on']
 
-    # touch the supply point cases
-    for spc in supply_point_cases:
+    # touch every case for proper ota restore logic syncing to be preserved
+    # todo: confirm this is necessary
+    for case in relevant_cases:
         case_action = CommCareCaseAction.from_parsed_action(submit_time, user_id, xform, AbstractAction('commtrack'))
-        spc.actions.append(case_action)
-        spc.save()
+        case.actions.append(case_action)
+        case.save()
 
-    post_processed_transactions = []
-    E = XML(ns=COMMTRACK_LEGACY_REPORT_XMLNS)
-    root = E.commtrack_data()
-    for (supply_point_id, product_id), txs in grouped_tx.iteritems():
-        subcase = supply_point_product_subcases[supply_point_id][product_id]
+    # supply point cases have to be handled differently because of the use of product subcases
+    supply_point_cases = filter(lambda case: isinstance(case, SupplyPointCase), relevant_cases)
+    if supply_point_cases:
+        def _do_legacy_xml_submission():
+            supply_point_product_subcases = dict((sp._id, product_subcases(sp)) for sp in supply_point_cases)
+            post_processed_transactions = []
+            E = XML(ns=COMMTRACK_LEGACY_REPORT_XMLNS)
+            root = E.commtrack_data()
+            for (case_id, product_id), txs in grouped_tx.iteritems():
+                if case_id in supply_point_product_subcases:
+                    subcase = supply_point_product_subcases[case_id][product_id]
+                    case_block, reconciliations = process_product_transactions(user_id, submit_time, subcase, txs)
+                    root.append(case_block)
+                    post_processed_transactions.extend(reconciliations)
 
-        case_block, reconciliations = process_product_transactions(user_id, submit_time, subcase, txs)
-        root.append(case_block)
-        post_processed_transactions.extend(reconciliations)
+            post_processed_transactions.extend(map(lambda tx: LegacyStockTransaction.convert(tx, supply_point_product_subcases), transactions))
+            set_transactions(root, post_processed_transactions, E)
 
-        #req_txs = requisition_transactions.get(product_id, [])
-        #if req_txs and config.requisitions_enabled:
-        #    req = RequisitionState.from_transactions(user_id, product_case, req_txs)
-        #    case_block = etree.fromstring(req.to_xml())
-        #    root.append(case_block)
+            submission = etree.tostring(root, encoding='utf-8', pretty_print=True)
+            logger.debug(submission)
+            spoof_submission(get_submit_url(domain), submission,
+                             headers={'HTTP_X_SUBMIT_TIME': submit_time},
+                             hqsubmission=False)
 
-    post_processed_transactions.extend(map(lambda tx: LegacyStockTransaction.convert(tx, supply_point_product_subcases), transactions))
-    set_transactions(root, post_processed_transactions, E)
-
-    submission = etree.tostring(root, encoding='utf-8', pretty_print=True)
-    logger.debug(submission)
-    spoof_submission(get_submit_url(domain), submission,
-                     headers={'HTTP_X_SUBMIT_TIME': submit_time},
-                     hqsubmission=False)
+        _do_legacy_xml_submission()
 
     # create the django models
     for report in stock_reports:
