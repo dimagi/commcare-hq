@@ -31,17 +31,23 @@ def process_stock(sender, xform, config=None, **kwargs):
     domain = xform.domain
 
     config = CommtrackConfig.for_domain(domain)
+
+    # these are the raw stock report objects from the xml
     stock_reports = list(unpack_commtrack(xform, config))
+    # flattened transaction list spanning all stock reports in the form
     transactions = [t for r in stock_reports for t in r.transactions]
     # omitted: normalize_transactions (used for bulk requisitions?)
+
     if not transactions:
         return
 
+    # transactions grouped by case/product id
     grouped_tx = map_reduce(lambda tx: [((tx.case_id, tx.product_id),)],
                             lambda v: sorted(v, key=lambda tx: (tx.timestamp, tx.processing_order)),
                             data=transactions,
                             include_docs=True)
 
+    # list of cases that had stock reports in the form, properly wrapped by case type
     relevant_cases = [wrap_commtrack_case(result['doc']) for result in
                       CommCareCase.get_db().view('_all_docs',
                                                  keys=list(set(k[0] for k in grouped_tx)),
