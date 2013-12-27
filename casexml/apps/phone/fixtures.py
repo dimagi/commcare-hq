@@ -23,7 +23,7 @@ class FixtureGenerator(object):
     
     The function should return an empty list if there are no fixtures
     """
-    
+
     def __init__(self):
         self._generator_funcs = []
         if hasattr(settings, "FIXTURE_GENERATORS"):
@@ -31,15 +31,15 @@ class FixtureGenerator(object):
                 func = to_function(func_path)
                 if func:
                     self._generator_funcs.append(func)
-        
-    def get_fixtures(self, user, version=V1, last_sync=None):
+
+    def get_fixtures(self, user, version, last_sync=None):
         """
         Gets all fixtures associated with an OTA restore operation
         """
         if version == V1: 
-            return [] # V1 phones will never use or want fixtures
-        return itertools.chain(*[func(user, version, last_sync) \
+            return []  # V1 phones will never use or want fixtures
+        return itertools.chain(*[func(user, version, last_sync)
                                  for func in self._generator_funcs])
-        
-        
+
+
 generator = FixtureGenerator()
