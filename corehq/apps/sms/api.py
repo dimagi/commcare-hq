@@ -259,8 +259,8 @@ def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None,
 
             try:
                 was_handled = handler(v, text, msg=msg)
-            except:
-                logging.exception('unhandled error in sms handler %s for message [%s]' % (h, text))
+            except Exception, e:
+                logging.exception('unhandled error in sms handler %s for message [%s]: %s' % (h, text, e))
                 was_handled = False
 
             if was_handled:
