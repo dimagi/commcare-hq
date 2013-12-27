@@ -1050,11 +1050,7 @@ class RequisitionCase(CommCareCase):
         # This is necessary otherwise syncdb will confuse this app with casexml
         app_label = "commtrack"
 
-    # supply_point = StringProperty() # todo, if desired
     requisition_status = StringProperty()
-
-    # NOTE: this is redundant with the supply point product case and is an optimization
-    product_id = StringProperty()
 
     # this second field is added for auditing purposes
     # the status can change, but once set - this one will not
@@ -1119,12 +1115,6 @@ class RequisitionCase(CommCareCase):
 
     def sms_format(self):
         return '%s:%s' % (self.get_product().code, self.get_default_value())
-
-    def get_next_action(self):
-        req_config = CommtrackConfig.for_domain(self.domain).requisition_config
-        return req_config.get_next_action(
-            RequisitionStatus.to_action_type(self.requisition_status)
-        )
 
     @classmethod
     def open_for_location(cls, domain, location_id):
