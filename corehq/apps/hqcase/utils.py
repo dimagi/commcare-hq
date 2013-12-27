@@ -39,7 +39,7 @@ def submit_case_blocks(case_blocks, domain, username="system", user_id="",
 
 
 def get_case_wrapper(data):
-    from corehq.apps.commtrack.models import get_case_wrapper as commtrack_wrapper
+    from corehq.apps.commtrack.util import get_case_wrapper as commtrack_wrapper
     def pact_wrapper(data):
         if data['domain'] == 'pact' and data['type'] == 'cc_path_client':
             from pact.models import PactPatientCase

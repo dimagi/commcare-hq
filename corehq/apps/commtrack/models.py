@@ -670,14 +670,6 @@ def _get_single_index(case, identifier, type, wrapper=None):
     return None
 
 
-def get_case_wrapper(data):
-    return {
-        const.SUPPLY_POINT_CASE_TYPE: SupplyPointCase,
-#        const.SUPPLY_POINT_PRODUCT_CASE_TYPE: SupplyPointProductCase,
-        const.REQUISITION_CASE_TYPE: RequisitionCase
-    }.get(data.get('type'))
-
-
 class SupplyPointCase(CommCareCase):
     """
     A wrapper around CommCareCases to get more built in functionality

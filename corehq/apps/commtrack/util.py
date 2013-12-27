@@ -242,11 +242,13 @@ def is_commtrack_location(user, domain):
     return True if user and user.location_id and domain.commtrack_enabled else False
 
 
-def wrap_commtrack_case(case_json):
-    case_type_dict = {
+def get_case_wrapper(data):
+    return {
         const.SUPPLY_POINT_CASE_TYPE: SupplyPointCase,
         const.SUPPLY_POINT_PRODUCT_CASE_TYPE: SupplyPointProductCase,
-        const.REQUISITION_CASE_TYPE: RequisitionCase,  # todo: we may kill this model
-    }
-    case_type = case_json['type']
-    return case_type_dict.get(case_type, CommCareCase).wrap(case_json)
+        const.REQUISITION_CASE_TYPE: RequisitionCase
+    }.get(data.get('type'), CommCareCase)
+
+
+def wrap_commtrack_case(case_json):
+    return get_case_wrapper(case_json).wrap(case_json)
