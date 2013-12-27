@@ -659,6 +659,23 @@ class StockTransaction(Document):
         return '{action} ({subaction}): {quantity} (loc: {location_id}, product: {product_id})'.format(**self._doc)
 
 
+class RequisitionTransaction(StockTransaction):
+    @property
+    def category(self):
+        return 'requisition'
+
+    def to_xml(self, E=None, **kwargs):
+        if not E:
+            E = XML()
+
+        return E.requisition(
+            E.product(self.product_id),
+            E.product_entry(self.case_id),
+            E.value(str(self.quantity)),
+            E.action(self.action)
+        )
+
+
 def _get_single_index(case, identifier, type, wrapper=None):
     matching = filter(lambda i: i.identifier == identifier, case.indices)
     if matching:

@@ -10,7 +10,7 @@ from dimagi.utils.parsing import json_format_datetime
 from datetime import datetime
 from corehq.apps.commtrack.util import get_supply_point
 from corehq.apps.commtrack.xmlutil import XML, _
-from corehq.apps.commtrack.models import Product, CommtrackConfig, StockTransaction, CommTrackUser
+from corehq.apps.commtrack.models import Product, CommtrackConfig, StockTransaction, CommTrackUser, RequisitionTransaction
 from corehq.apps.receiverwrapper.util import get_submit_url
 from receiver.util import spoof_submission
 
@@ -103,7 +103,7 @@ class StockReportParser(object):
             if action.action in [RequisitionActions.APPROVAL, RequisitionActions.PACK]:
                 _tx = self.requisition_bulk_action(action, args)
             else:
-                _tx = self.single_action_transactions(action, args, self.transaction_factory(Requisition))
+                _tx = self.single_action_transactions(action, args, self.transaction_factory(RequisitionTransaction))
 
         # multiple action stock report
         elif self.C.multiaction_enabled and action_keyword == self.C.multiaction_keyword:
