@@ -3,6 +3,7 @@ from django.utils.decorators import method_decorator
 from dimagi.utils.couch.database import iter_docs
 from django.views.decorators.cache import cache_page
 from casexml.apps.case.models import CommCareCase
+from corehq import toggles
 from corehq.apps.app_manager.suite_xml import SuiteGenerator
 from corehq.apps.cloudcare.models import CaseSpec, ApplicationAccess
 from corehq.apps.cloudcare.touchforms_api import DELEGATION_STUB_CASE_TYPE
@@ -20,7 +21,8 @@ from corehq.apps.cloudcare.api import look_up_app_json, get_cloudcare_apps, get_
     api_closed_to_status, CaseAPIResult, CASE_STATUS_OPEN, get_app_json
 from dimagi.utils.parsing import string_to_boolean
 from django.conf import settings
-from corehq.apps.cloudcare import touchforms_api 
+from corehq.apps.cloudcare import touchforms_api
+from toggle import toggle_enabled
 from touchforms.formplayer.api import DjangoAuth
 from django.core.urlresolvers import reverse
 from casexml.apps.phone.fixtures import generator
@@ -134,7 +136,8 @@ def cloudcare_main(request, domain, urlPath):
        "apps": apps,
        "apps_raw": apps,
        "preview": preview,
-       "maps_api_key": settings.GMAPS_API_KEY
+       "maps_api_key": settings.GMAPS_API_KEY,
+       'offline_enabled': toggle_enabled(toggles.OFFLINE_CLOUDCARE, request.user.username),
     }
     context.update(_url_context())
     return render(request, "cloudcare/cloudcare_home.html", context)
