@@ -37,16 +37,26 @@ class FixtureTest(CommTrackTest, XmlTest):
             product_program_id = self._random_string(20)
             product_cost = float('%g' % random.uniform(1, 100))
 
-            product_str = '<product id="%s">' % product_id
-            product_str += '<name>%s</name>' % product_name
-            product_str += '<unit>%s</unit>' % product_unit
-            product_str += '<code>%s</code>' % product_code
-            product_str += '<description>%s</description>' % product_description
-            product_str += '<category>%s</category>' % product_category
-            product_str += '<program_id>%s</program_id>' % product_program_id
-            product_str += '<cost>%g</cost>' % product_cost
-            product_str += '</product>'
-            products += product_str
+            products += '''
+                <product id="{id}">
+                    <name>{name}</name>
+                    <unit>{unit}</unit>
+                    <code>{code}</code>
+                    <description>{description}</description>
+                    <category>{category}</category>
+                    <program_id>{program_id}</program_id>
+                    <cost>{cost}</cost>
+                </product>
+            '''.format(
+                id=product_id,
+                name=product_name,
+                unit=product_unit,
+                code=product_code,
+                description=product_description,
+                category=product_category,
+                program_id=product_program_id,
+                cost=product_cost
+            )
 
             product.name = product_name
             product.unit = product_unit
@@ -57,9 +67,10 @@ class FixtureTest(CommTrackTest, XmlTest):
             product.cost = product_cost
             product.save()
         fixture = product_fixture_generator(user)
-        self.assertXmlEqual(('<fixture id="commtrack:products" user_id="%s">'
-                                + '<products>'
-                                + products
-                                + '</products>'
-                                + '</fixture>') % user_id,
+
+        self.assertXmlEqual('''<fixture id="commtrack:products" user_id="{user_id}">
+                                    <products>
+                                        {products}
+                                    </products>
+                                </fixture>'''.format(user_id=user_id, products=products),
                             ElementTree.tostring(fixture[0]))
