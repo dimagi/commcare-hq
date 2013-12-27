@@ -9,7 +9,7 @@ from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
 from couchforms.util import post_xform_to_couch
-from casexml.apps.case.signals import process_cases
+from casexml.apps.case import process_cases
 
 class CaseBugTest(TestCase):
     """
@@ -30,7 +30,7 @@ class CaseBugTest(TestCase):
             xml_data = f.read()
         form = post_xform_to_couch(xml_data)
         try:
-            process_cases(sender="testharness", xform=form)
+            process_cases(form)
             self.fail("Previous statement should have raised an exception")
         except Exception:
             pass
@@ -46,7 +46,7 @@ class CaseBugTest(TestCase):
             xml_data = f.read()
         form = post_xform_to_couch(xml_data)
         # before the bug was fixed this call failed
-        process_cases(sender="testharness", xform=form)
+        process_cases(form)
         
         
     def testEmptyCaseId(self):
@@ -59,7 +59,7 @@ class CaseBugTest(TestCase):
             xml_data = f.read()
         form = post_xform_to_couch(xml_data)
         try:
-            process_cases(sender="testharness", xform=form)
+            process_cases(form)
             self.fail("Empty Id should crash")
         except:
             pass
@@ -85,7 +85,7 @@ class CaseBugTest(TestCase):
                 xml_data = xml_data.format(**format_args)
                 form = post_xform_to_couch(xml_data)
                 # before the bug was fixed this call failed
-                process_cases(sender="testharness", xform=form)
+                process_cases(form)
                 case = CommCareCase.get(case_id)
                 self.assertEqual(format_args['user_id'], case.user_id)
                 self.assertEqual(format_args['case_name'], case.name)
@@ -125,7 +125,7 @@ class CaseBugTest(TestCase):
             xml_data = f.read()
         form = post_xform_to_couch(xml_data)
         # before the bug was fixed this call failed
-        process_cases(sender="testharness", xform=form)
+        process_cases(form)
         case = CommCareCase.get(form.xpath("form/case/@case_id"))
         # make sure the property is there, but empty
         self.assertEqual("", case.foo)
@@ -135,7 +135,7 @@ class CaseBugTest(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
         form = post_xform_to_couch(xml_data)
-        process_cases(sender="testharness", xform=form)
+        process_cases(form)
         case = CommCareCase.get(form.xpath("form/case/@case_id"))
         # make sure the property takes the last defined value
         self.assertEqual("2", case.bar)
@@ -150,7 +150,7 @@ class CaseBugTest(TestCase):
             xml_data = f.read()
         form = post_xform_to_couch(xml_data)
         # before the bug was fixed this call failed
-        process_cases(sender="testharness", xform=form)
+        process_cases(form)
         case = CommCareCase.get(form.xpath("form/comunidad/case/@case_id"))
         self.assertEqual('1630005', case.community_code)
         self.assertEqual('SantaMariaCahabon', case.district_name)
@@ -171,7 +171,7 @@ class CaseBugTest(TestCase):
             xml_data = f.read()
         form = post_xform_to_couch(xml_data)
         # before the bug was fixed this call failed
-        process_cases(sender="testharness", xform=form)
+        process_cases(form)
         self.assertEqual(11, len(CommCareCase.view("case/by_user", reduce=False).all()))
 
     def testSubmitToDeletedCase(self):

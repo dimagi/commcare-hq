@@ -3,7 +3,7 @@ import os
 from casexml.apps.case import settings
 from casexml.apps.case.models import CommCareCase
 from couchforms.util import post_xform_to_couch
-from casexml.apps.case.signals import process_cases
+from casexml.apps.case import process_cases
 from django.core.files.uploadedfile import UploadedFile
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 import hashlib
@@ -40,7 +40,7 @@ class CaseAttachmentTest(TestCase):
                              hashlib.md5(attachment.read()).hexdigest())
             
         
-        process_cases(sender="testharness", xform=form)
+        process_cases(form)
         case = CommCareCase.get(form.xpath("form/case/case_id"))
         self.assertEqual(1, len(case.attachments))
         self.assertEqual(form.get_id, case.attachments[0][0])
@@ -67,7 +67,7 @@ class CaseAttachmentTest(TestCase):
                              hashlib.md5(attachment.read()).hexdigest())
             
         
-        process_cases(sender="testharness", xform=form)
+        process_cases(form)
         case = CommCareCase.get(form.xpath("form/case/case_id"))
         self.assertEqual(2, len(case.attachments))
         self.assertEqual(form.get_id, case.attachments[1][0])

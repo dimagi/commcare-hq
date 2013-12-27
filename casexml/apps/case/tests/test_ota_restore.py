@@ -2,7 +2,7 @@ from django.test import TestCase
 import os
 from casexml.apps.case import settings
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.signals import process_cases
+from casexml.apps.case import process_cases
 from casexml.apps.case.tests import delete_all_cases
 from couchforms.util import post_xform_to_couch
 
@@ -18,7 +18,7 @@ class TestOTARestore(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
         form = post_xform_to_couch(xml_data)
-        process_cases(sender="testharness", xform=form)
+        process_cases(form)
         self.assertEqual(4, len(CommCareCase.view("case/by_user", reduce=False).all()))
         
     def testMixed(self):
@@ -27,5 +27,5 @@ class TestOTARestore(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
         form = post_xform_to_couch(xml_data)
-        process_cases(sender="testharness", xform=form)
+        process_cases(form)
         self.assertEqual(4, len(CommCareCase.view("case/by_user", reduce=False).all()))

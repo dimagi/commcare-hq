@@ -1,9 +1,7 @@
-"""
-Work on cases based on XForms. In our world XForms are special couch documents.
-"""
 import logging
 
 from couchdbkit.resource import ResourceNotFound
+from casexml.apps.case.signals import cases_received
 from couchforms.models import XFormInstance
 from dimagi.utils.chunked import chunked
 from casexml.apps.case.exceptions import IllegalCaseId, NoDomainProvided
@@ -13,6 +11,87 @@ from dimagi.utils.couch.database import iter_docs
 from casexml.apps.case import const
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml.parser import case_update_from_block
+from casexml.apps.phone.models import SyncLog
+from dimagi.utils.logging import notify_exception
+
+
+def process_cases(xform, config=None):
+    """
+    Creates or updates case objects which live outside of the form.
+
+    If reconcile is true it will perform an additional step of
+    reconciling the case update history after the case is processed.
+    """
+
+    config = config or CaseProcessingConfig()
+    cases = get_or_update_cases(xform).values()
+
+    if config.reconcile:
+        for c in cases:
+            c.reconcile_actions(rebuild=True)
+
+    # attach domain and export tag if domain is there
+    if hasattr(xform, "domain"):
+        domain = xform.domain
+
+        def attach_extras(case):
+            case.domain = domain
+            if domain:
+                assert hasattr(case, 'type')
+                case['#export_tag'] = ["domain", "type"]
+            return case
+
+        cases = [attach_extras(case) for case in cases]
+
+    # handle updating the sync records for apps that use sync mode
+
+    last_sync_token = getattr(xform, 'last_sync_token', None)
+    if last_sync_token:
+        relevant_log = SyncLog.get(last_sync_token)
+        # in reconciliation mode, things can be unexpected
+        relevant_log.strict = config.strict_asserts
+        from casexml.apps.case.util import update_sync_log_with_checks
+        update_sync_log_with_checks(relevant_log, xform, cases,
+                                    case_id_blacklist=config.case_id_blacklist)
+
+        if config.reconcile:
+            relevant_log.reconcile_cases()
+            relevant_log.save()
+
+    try:
+        cases_received.send(sender=None, xform=xform, cases=cases)
+    except Exception as e:
+        # don't let the exceptions in signals prevent standard case processing
+        notify_exception(
+            None,
+            'something went wrong sending the cases_received signal '
+            'for form %s: %s' % (xform._id, e)
+        )
+
+    # set flags for indicator pillows and save
+    xform.initial_processing_complete = True
+
+    # if there are pillows or other _changes listeners competing to update
+    # this form, override them. this will create a new entry in the feed
+    # that they can re-pick up on
+    xform.save(force_update=True)
+    for case in cases:
+        case.force_save()
+    return cases
+
+
+class CaseProcessingConfig(object):
+    def __init__(self, reconcile=False, strict_asserts=True, case_id_blacklist=None):
+        self.reconcile = reconcile
+        self.strict_asserts = strict_asserts
+        self.case_id_blacklist = case_id_blacklist or []
+
+    def __repr__(self):
+        return 'reconcile: {reconcile}, strict: {strict}, ids: {ids}'.format(
+            reconcile=self.reconcile,
+            strict=self.strict_asserts,
+            ids=", ".join(self.case_id_blacklist)
+        )
 
 
 class CaseDbCache(object):
@@ -75,7 +154,6 @@ class CaseDbCache(object):
         for raw_case in  _iter_raw_cases(case_ids):
             case = CommCareCase.wrap(raw_case)
             self.set(case._id, case)
-
 
 
 def get_and_check_xform_domain(xform):

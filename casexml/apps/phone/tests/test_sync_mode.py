@@ -6,7 +6,7 @@ from casexml.apps.phone.xml import SYNC_XMLNS
 from couchforms.util import post_xform_to_couch
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import check_user_has_case, delete_all_sync_logs, delete_all_xforms, delete_all_cases
-from casexml.apps.case.signals import process_cases
+from casexml.apps.case import process_cases
 from casexml.apps.phone.models import SyncLog, User
 from casexml.apps.phone.restore import generate_restore_payload, RestoreConfig
 from dimagi.utils.parsing import json_format_datetime
@@ -59,7 +59,7 @@ class SyncBaseTest(TestCase):
         
         # set last sync token on the form before saving
         form.last_sync_token = token_id
-        process_cases(sender="testharness", xform=form)
+        process_cases(form)
         return form
     
     def _postFakeWithSyncToken(self, caseblock, token_id):

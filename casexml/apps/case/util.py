@@ -4,11 +4,11 @@ import uuid
 from xml.etree import ElementTree
 from couchdbkit.schema.properties import LazyDict
 from django.template.loader import render_to_string
-from casexml.apps.case.signals import process_cases, CaseProcessingConfig
 from casexml.apps.phone.models import SyncLogAssertionError, SyncLog
 from couchforms.models import XFormInstance
 from couchforms.util import post_xform_to_couch
 from dimagi.utils.parsing import json_format_datetime
+
 
 def get_close_case_xml(time, case_id, uid=None):
     if not uid:
@@ -16,11 +16,13 @@ def get_close_case_xml(time, case_id, uid=None):
     time = json_format_datetime(time)
     return render_to_string("case/data/close.xml", locals())
 
+
 def get_close_referral_xml(time, case_id, referral_id, referral_type, uid=None):
     if not uid:
         uid = uuid.uuid4().hex
     time = json_format_datetime(time)
     return render_to_string("case/data/close_referral.xml", locals())
+
 
 def couchable_property(prop):
     """
@@ -31,6 +33,7 @@ def couchable_property(prop):
         return dict(prop)
     return prop
 
+
 def post_case_blocks(case_blocks, form_extras=None):
     """
     Post case blocks.
@@ -38,6 +41,8 @@ def post_case_blocks(case_blocks, form_extras=None):
     Extras is used to add runtime attributes to the form before
     sending it off to the case (current use case is sync-token pairing)
     """
+    from casexml.apps.case import process_cases
+
     if form_extras is None:
         form_extras = {}
     form = ElementTree.Element("data")
@@ -49,7 +54,7 @@ def post_case_blocks(case_blocks, form_extras=None):
     xform = post_xform_to_couch(ElementTree.tostring(form))
     for k, v in form_extras.items():
         setattr(xform, k, v)
-    process_cases(sender="testharness", xform=xform)
+    process_cases(xform=xform)
     return xform
 
 
@@ -60,12 +65,14 @@ def reprocess_form_cases(form, config=None):
     correctly inject the update into the case history if the form was NOT
     successfully processed.
     """
-    process_cases(None, form, config)
+    from casexml.apps.case import process_cases
+    process_cases(form, config)
     # mark cleaned up now that we've reprocessed it
     if form.doc_type != 'XFormInstance':
         form = XFormInstance.get(form._id)
         form.doc_type = 'XFormInstance'
         form.save()
+
 
 def get_case_xform_ids(case_id):
     results = XFormInstance.get_db().view('case/form_case_index',
@@ -74,7 +81,9 @@ def get_case_xform_ids(case_id):
                                           endkey=[case_id, {}])
     return list(set([row['key'][1] for row in results]))
 
+
 def update_sync_log_with_checks(sync_log, xform, cases, case_id_blacklist=None):
+    from casexml.apps.case.xform import CaseProcessingConfig
     case_id_blacklist = case_id_blacklist or []
     try:
         sync_log.update_phone_lists(xform, cases)
