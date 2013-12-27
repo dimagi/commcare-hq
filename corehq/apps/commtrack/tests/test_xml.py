@@ -3,9 +3,11 @@ from datetime import datetime
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.stock.const import TRANSACTION_TYPE_BALANCE
 from casexml.apps.stock.models import StockReport, StockTransaction
+from corehq.apps.commtrack import const
 from corehq.apps.commtrack.tests.util import CommTrackTest, get_ota_balance_xml
 from casexml.apps.case.tests.util import check_xml_line_by_line
 from corehq.apps.commtrack.models import Product
+from corehq.apps.hqcase.utils import get_cases_in_domain
 from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.apps.commtrack.tests.util import make_loc, make_supply_point, make_supply_point_product
 from corehq.apps.commtrack.tests.data.balances import (
@@ -18,7 +20,7 @@ from corehq.apps.commtrack.tests.data.balances import (
     transfer_neither,
     balance_first,
     transfer_first,
-)
+    create_requisition)
 
 
 class CommTrackOTATest(CommTrackTest):
@@ -65,15 +67,18 @@ class CommTrackSubmissionTest(CommTrackTest):
             domain=self.domain.name,
         )
 
+    def check_stock_models(self, case, product_id, expected_soh, expected_qty):
+        latest_trans = StockTransaction.latest(case._id, product_id)
+        self.assertEqual(expected_soh, latest_trans.stock_on_hand)
+        self.assertEqual(expected_qty, latest_trans.quantity)
+
     def check_product_stock(self, supply_point, product_id, expected_soh, expected_qty):
         # check the case
         spp = supply_point.get_product_subcase(product_id)
         self.assertEqual(expected_soh, spp.current_stock)
 
         # and the django model
-        latest_trans = StockTransaction.latest(supply_point._id, product_id)
-        self.assertEqual(expected_soh, latest_trans.stock_on_hand)
-        self.assertEqual(expected_qty, latest_trans.quantity)
+        self.check_stock_models(supply_point, product_id, expected_soh, expected_qty)
 
     def setUp(self):
         super(CommTrackSubmissionTest, self).setUp()
@@ -82,6 +87,9 @@ class CommTrackSubmissionTest(CommTrackTest):
         loc2 = make_loc('loc1')
         self.sp2 = make_supply_point(self.domain.name, loc2)
         self.second_spp = make_supply_point_product(self.sp2, self.products[0]._id)
+
+
+class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
 
     def test_balance_submit(self):
         amounts = [(p._id, float(i*10)) for i, p in enumerate(self.products)]
@@ -144,3 +152,19 @@ class CommTrackSubmissionTest(CommTrackTest):
         self.submit_xml_form(transfer_first(transfers, balance_amounts))
         for product, amt in transfers:
             self.check_product_stock(self.sp, product, final, initial + amt - final)
+
+
+class CommTrackRequisitionTest(CommTrackSubmissionTest):
+
+    def test_create_requisition(self):
+        amounts = [(p._id, 50.0 + float(i*10)) for i, p in enumerate(self.products)]
+        self.submit_xml_form(create_requisition(amounts))
+        req_cases = list(get_cases_in_domain(self.domain.name, type=const.REQUISITION_CASE_TYPE))
+        self.assertEqual(1, len(req_cases))
+        req = req_cases[0]
+        [index] = req.indices
+        self.assertEqual(const.SUPPLY_POINT_CASE_TYPE, index.referenced_type)
+        self.assertEqual(self.sp._id, index.referenced_id)
+        self.assertEqual('parent_id', index.identifier)
+        for product, amt in amounts:
+            self.check_stock_models(req, product, amt, amt)

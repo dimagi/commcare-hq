@@ -1,5 +1,10 @@
 from datetime import datetime
+import uuid
+from xml.etree import ElementTree
 from dimagi.utils.parsing import json_format_datetime
+from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.xml import V2
+from corehq.apps.commtrack import const
 
 
 def long_date():
@@ -37,7 +42,7 @@ def submission_wrap(products, user, sp, sp2, insides):
                 <username>{username}</username>
                 <userID>{user_id}</userID>
                 <instanceID>398c9e36-b645-4b68-81b6-6957a2d3cf90</instanceID>
-                <appVersion>CommCare ODK, version "2.10.1"(28262). App v33. CommCare Version 2.10. Build 28262, built on: November-28-2013</appVersion>
+                <appVersion>CommTrack Unit tests</appVersion>
             </meta>
             <num_products>3</num_products>
             <cur_products>3</cur_products>
@@ -107,6 +112,24 @@ def transfer_neither():
             <product index="2" id="{product2}" quantity="1" />
         </transfer>
     """
+
+
+def create_requisition(product_amounts):
+    req_id = uuid.uuid4().hex
+    req_case_block = ElementTree.tostring(CaseBlock(
+        req_id,
+        version=V2,
+        create=True,
+        case_type=const.REQUISITION_CASE_TYPE,
+        case_name='Some requisition',
+        index={'parent_id': (const.SUPPLY_POINT_CASE_TYPE, '{sp_id}')},
+    ).as_xml())
+    return """
+        %(case_block)s
+        <ns0:balance xmlns:ns0="http://commtrack.org/stock_report" date="{long_date}" entity-id="%(req_id)s">
+            %(product_block)s
+        </ns0:balance>
+    """ % {'req_id': req_id, 'case_block': req_case_block, 'product_block': _products_xml(product_amounts)}
 
 
 def balance_first(balance_amounts, transfer_amounts):
