@@ -74,6 +74,8 @@ class ParentCasePropertyBuilder(object):
         # so compute them once
 
         forms_info = []
+        if self.app.doc_type == 'RemoteApp':
+            return forms_info
         for module in self.app.get_modules():
             for form in module.get_forms():
                 forms_info.append((module.case_type, form))
