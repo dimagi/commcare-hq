@@ -2,6 +2,7 @@ import random
 import string
 from xml.etree import ElementTree
 
+from casexml.apps.case.xml import V1
 from corehq.apps.app_manager.tests import XmlTest
 from corehq.apps.commtrack.models import Product, product_fixture_generator
 from corehq.apps.commtrack.tests import CommTrackTest
@@ -66,7 +67,7 @@ class FixtureTest(CommTrackTest, XmlTest):
             product.program_id = product_program_id
             product.cost = product_cost
             product.save()
-        fixture = product_fixture_generator(user)
+        fixture = product_fixture_generator(user, V1, None)
 
         self.assertXmlEqual('''<fixture id="commtrack:products" user_id="{user_id}">
                                     <products>
