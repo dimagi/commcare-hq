@@ -235,10 +235,13 @@ def data_table(request, domain):
     return data_table
 
 DELETE_HEADER = "Delete(Y/N)"
-# @require_can_edit_fixtures
+@require_can_edit_fixtures
 def download_item_lists(request, domain, html_response=False):
-    if request.GET.get("table_id"):
-        data_types_view = [FixtureDataType.get(request.GET.get("table_id"))]
+    """
+        Is used to serve excel_download and html_view for view_lookup_tables
+    """
+    if request.GET.getlist("table_id"):
+        data_types_view = [FixtureDataType.get(id) for id in request.GET.getlist("table_id")]
     else:
         data_types_view = FixtureDataType.by_domain(domain)
     # book-keeping data from view_results for repeated use
@@ -434,7 +437,13 @@ class UploadItemLists(TemplateView):
         """View's dispatch method automatically calls this"""
 
         def error_redirect():
-            return HttpResponseRedirect(reverse('upload_fixtures', args=[self.domain]))
+            return HttpResponseRedirect(reverse("fixture_interface_dispatcher", args=[], kwargs={'domain': self.domain, 'report_slug': 'edit_lookup_tables'}))
+
+        try:
+            replace = request.POST["replace"]
+            replace = True
+        except KeyError:
+            replace = False
 
         try:
             workbook = WorkbookJSONReader(request.file)
@@ -446,7 +455,7 @@ class UploadItemLists(TemplateView):
             return error_redirect()
 
         try:
-            upload_result = run_upload(request, self.domain, workbook)
+            upload_result = run_upload(request, self.domain, workbook, replace=replace)
             if upload_result["unknown_groups"]:
                 for group_name in upload_result["unknown_groups"]:
                     messages.error(request, _("Unknown group: '%(name)s'") % {'name': group_name})
@@ -459,13 +468,16 @@ class UploadItemLists(TemplateView):
         except ExcelMalformatException as e:
             messages.error(request, _("Uploaded excel file has following formatting-problems: '%(e)s'") % {'e': e})
             return error_redirect()
+        except FixtureAPIException as e:
+            messages.error(request, _(str(e)))
+            return error_redirect()
         except Exception as e:
             notify_exception(request)
             messages.error(request, _("Fixture upload failed for some reason and we have noted this failure. "
                                       "Please make sure the excel file is correctly formatted and try again."))
             return error_redirect()
 
-        return HttpResponseRedirect(reverse('fixture_view', args=[self.domain]))
+        return HttpResponseRedirect(reverse("fixture_interface_dispatcher", args=[], kwargs={'domain': self.domain, 'report_slug': 'edit_lookup_tables'}))
 
     @method_decorator(require_can_edit_fixtures)
     def dispatch(self, request, domain, *args, **kwargs):
