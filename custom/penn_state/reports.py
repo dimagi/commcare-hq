@@ -1,4 +1,4 @@
-import datetime
+import datetime, copy
 
 from django.views.generic import TemplateView
 from django.http import HttpResponse
@@ -7,6 +7,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from no_exceptions.exceptions import Http403, Http404
 
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.groups.models import Group
 from corehq.apps.reports.standard import CustomProjectReport
 from dimagi.utils.couch.database import get_db
 
@@ -59,13 +60,56 @@ class LegacyMixin(object):
         }
 
 
-class LegacyReportView(LegacyMixin, CustomProjectReport):
+class LegacyAdminReport(object):
+    @property
+    def is_admin_report(self):
+        return not self.request.GET.get('user') and \
+            self.request.couch_user.is_domain_admin(DOMAIN)
+
+    def aggregate_totals(self, weeks):
+        sites = copy.deepcopy(weeks)
+        week_sites = [site.pop() for site in sites if site]
+        if not week_sites:
+            return []
+        return self.aggregate_totals(sites) + [[
+            week_sites[0][0],
+            sum([site[1] for site in week_sites])
+        ]]
+
+    @property
+    def admin_report_context(self):
+        reports = []
+        for group in Group.by_domain(DOMAIN):
+            reports.append(LegacyWeeklyReport.by_site(group))
+        def aggregate(attr):
+            return map(sum, zip(
+                *[getattr(r, attr) for r in reports]
+            ))
+        strategy = aggregate('site_strategy')
+        game = aggregate('site_game')
+        weekly = self.aggregate_totals([r.weekly_totals for r in reports])
+        return {
+            'strategy': self.context_for(
+                strategy, 'peace'),
+            'game': self.context_for(
+                game, 'smiley'),
+            'weekly': weekly,
+        }
+
+
+class LegacyReportView(LegacyAdminReport, LegacyMixin, CustomProjectReport):
     name = "Legacy Report"
     slug = "legacy"
     description = "Legacy Report for Pennsylvania State University"
-    base_template = "penn_state/smiley_report.html"
     asynchronous = False
     _user = None
+
+    @property
+    def base_template(self):
+        if self.is_admin_report:
+            return "penn_state/smiley_admin_report.html"
+        else:
+            return "penn_state/smiley_report.html"
 
     @property
     def user(self):
@@ -86,6 +130,9 @@ class LegacyReportView(LegacyMixin, CustomProjectReport):
 
     @property
     def report_context(self):
+        if self.is_admin_report:
+            return self.admin_report_context
+
         self.report_id = self.request.GET.get('r_id', None)
 
         def get_individual(field):
