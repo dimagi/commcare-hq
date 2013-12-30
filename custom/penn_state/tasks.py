@@ -62,7 +62,7 @@ class Site(object):
         except (LookupError, AttributeError):
             weekly_totals = []
         weekly_totals.append([
-            self.week[0].strftime('%b %d'),
+            self.week[0].strftime(DATE_FORMAT),
             sum([d for d in self.individual[username]['strategy'] if d>0])
         ])
         self.individual[username]['weekly_totals'] = weekly_totals
