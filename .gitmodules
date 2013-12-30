@@ -109,3 +109,6 @@
 [submodule "submodules/xml2json"]
 	path = submodules/xml2json
 	url = git://github.com/dimagi/xml2json.git
+[submodule "submodules/couchpulse"]
+	path = submodules/couchpulse
+	url = https://github.com/dannyroberts/couchpulse

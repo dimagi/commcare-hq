@@ -1,0 +1,80 @@
+{% extends "hqadmin/hqadmin_base_report.html" %}
+{% block report-title %}Couch Pulse{% endblock %}
+{% block js-inline %}
+<script>
+    $(function () {
+        $('.params-toggle').click(function (e) {
+            $(this).next().toggle();
+            e.preventDefault();
+        }).each(function () {
+            $(this).next().hide();
+        });
+    });
+</script>
+{% endblock %}
+{% block reportcontent %}
+
+    <form class="form-inline" action=".">
+
+        <label>Days</label>
+        <input type="text" class="input-mini" name="days" value="{{ days }}"/>
+
+        <label>Time threshold (ms)</label>
+        <input type="text" class="input-mini" name="ms" value="{{ ms }}">
+
+        <label>Size threshold (kb)</label>
+        <input type="text" class="input-mini" name="kb" value="{{ kb }}">
+
+        <label>Search path</label>
+        <input type="text" class="input-mini" name="q" value="{{ q }}">
+
+        <label>Limit</label>
+        <input type="text" class="input-mini" name="limit" value="{{ limit }}">
+
+        <label>Aggregate</label>
+        <input type="checkbox" class="input-mini" name="agg" value="true" {% if agg %}checked="true"{% endif %}>
+
+        <button type="submit" class="btn btn-primary">Filter</button>
+        <p>(Only one of Aggregate or Limit will be used.)</p>
+    </form>
+
+    <table class="table table-condensed">
+        <tr>
+            <th></th>
+            <th></th>
+            <th>URL</th>
+            <th>Params</th>
+            <th>Request Size</th>
+            <th>Request Time (sorting)</th>
+            <th>Streaming Time</th>
+            <th>Response Size</th>
+        </tr>
+        {% for row in rows %}
+        <tr>
+            <td>{{ row.timestamp }}{{ row.count }}</td>
+            <td>{{ row.method }}</td>
+            <td>{{ row.path }}</td>
+            <td>
+
+
+                {% if row.params %}
+                <a href="#" class="params-toggle">Toggle</a>
+                <div>
+                <dl>
+                    {% for key, value in row.params.items %}
+                    <dt>{{ key }}</dt>
+                    <dd>{{ value }}</dd>
+                    {% endfor %}
+                </dl>
+                {% endif %}
+                </div>
+            </td>
+            <td>{% if row.req_size %}{{ row.req_size }} KB{% endif %}</td>
+            <td>{{ row.req_time }} ms</td>
+            <td>{% if row.res_time %}{{ row.res_time }} ms{% endif %}</td>
+            <td>{% if row.res_size %}{{ row.res_size }} KB{% endif %}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+{% endblock %}

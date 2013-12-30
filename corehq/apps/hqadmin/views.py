@@ -864,3 +864,62 @@ def stats_data(request):
 
     stats_data = get_stats_data(domain_info, histo_type, request.datespan, interval=interval)
     return json_response(stats_data)
+
+
+@require_superuser
+def couchpulse_stats(request):
+    from couchpulse import querystats
+    has_values = request.GET.get('days')
+    if has_values:
+        try:
+            days = int(request.GET.get('days'))
+            max_ms = int(request.GET.get('ms'))
+            max_kb = int(request.GET.get('kb'))
+            search = request.GET.get('q', '')
+            limit = int(request.GET.get('limit'))
+            agg = request.GET.get('agg') == 'true'
+        except Exception as e:
+            return HttpResponseBadRequest(e)
+    else:
+        days = 7
+        max_ms = 500
+        max_kb = 1000
+        search = ''
+        limit = 50
+        agg = False
+
+    if search:
+        like = '%{search}%'.format(search=search.strip('%'))
+    else:
+        like = None
+
+    result = querystats.recent_flagged_queries(
+        since_time=datetime.utcnow() - timedelta(days=days),
+        max_time=max_ms / 1000.,
+        max_size=max_kb * 1024,
+        like=like,
+        limit=limit,
+        aggregate=agg,
+    )
+
+    def get_rows(query_result):
+        for row in query_result:
+            row['path'] = '/' + '/'.join(row['path'].split('/')[3:])
+
+            for attr in ('req_time', 'res_time'):
+                if row[attr]:
+                    row[attr] = int(row[attr] * 1000)
+            for attr in ('req_size', 'res_size'):
+                if row[attr]:
+                    row[attr] = int(row[attr] / 1024)
+            yield row
+    context = {
+        'rows': list(get_rows(result)),
+        'days': days,
+        'ms': max_ms,
+        'kb': max_kb,
+        'q': search,
+        'limit': limit,
+        'agg': agg,
+    }
+    return render(request, 'hqadmin/couchpulse_stats.html', context)
