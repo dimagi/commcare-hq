@@ -303,6 +303,27 @@ class CommTrackSetupTab(UITab):
         ]
         items.append([_("Products"), products_section])
 
+
+        # circular import
+        from corehq.apps.commtrack.views import ProgramListView, NewProgramView, EditProgramView
+        programs_section = [
+            {
+                'title': ProgramListView.page_title,
+                'url': reverse(ProgramListView.urlname, args=[self.domain]),
+                'subpages': [
+                    {
+                        'title': NewProgramView.page_title,
+                        'urlname': NewProgramView.urlname,
+                    },
+                    {
+                        'title': EditProgramView.page_title,
+                        'urlname': EditProgramView.urlname,
+                    },
+                ]
+            },
+        ]
+        items.append([_("Programs"), programs_section])
+
         # circular import
         from corehq.apps.locations.views import (LocationsListView, NewLocationView, EditLocationView,
                                                  FacilitySyncView, LocationImportView)
