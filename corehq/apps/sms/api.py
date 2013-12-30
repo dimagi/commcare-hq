@@ -1,10 +1,12 @@
 import logging
 from django.conf import settings
+from celery.task import task
 
 from dimagi.utils.modules import to_function
 from corehq.apps.sms.util import clean_phone_number, create_billable_for_sms, format_message_list, clean_text
 from corehq.apps.sms.models import SMSLog, OUTGOING, INCOMING, ForwardingRule, FORWARD_ALL, FORWARD_BY_KEYWORD, WORKFLOW_KEYWORD
 from corehq.apps.sms.mixin import MobileBackend, VerifiedNumber
+from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.domain.models import Domain
 from datetime import datetime
 
@@ -116,6 +118,12 @@ def send_sms_with_backend_name(domain, phone_number, text, backend_name, **kwarg
         logging.exception("Exception while sending SMS to %s with backend name %s from domain %s" % (phone_number, backend_name, domain))
     return send_message_via_backend(msg, MobileBackend.load_by_name(domain, backend_name), onerror=onerror)
 
+
+@task
+def store_billable(msg):
+    SmsBillable.create(msg)
+
+
 def send_message_via_backend(msg, backend=None, onerror=lambda: None):
     """send sms using a specific backend
 
@@ -147,6 +155,7 @@ def send_message_via_backend(msg, backend=None, onerror=lambda: None):
         except Exception:
             pass
         msg.save()
+        store_billable.delay(msg)
         return True
     except Exception:
         onerror()
@@ -246,6 +255,7 @@ def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None,
         msg.couch_recipient             = v.owner_id
         msg.domain                      = v.domain
     msg.save()
+    store_billable.delay(msg)
 
     create_billable_for_sms(msg, backend_api, delay=delay)
     
