@@ -12,6 +12,11 @@
 <script type="text/javascript" src="{% static 'hqmedia/yui/3.9.1/yui/yui-min.js' %}"></script>
 <script type="text/javascript" src="{% static 'hqmedia/js/hqmedia.upload_controller.js' %}"></script>
 {% endblock %}
+{% block js-inline %}
+    <script>
+        var FixtureDownloadUrl = "{% url "download_fixtures" domain%}" +"?";
+    </script>
+{% endblock %}
 
 {% block main_column %}
 <header>
@@ -98,7 +103,7 @@
             </h4>
             <p>
                 {% blocktrans %}
-                    Create new tables or update existing ones by uploading a new or existing Excel file. Follow these instructions for setting up your excel file.
+                    Create new tables or update existing ones by uploading a new or existing Excel file. Follow these instructions (UPDATE LINK to WIKI) for setting up your excel file.
                 {% endblocktrans %}
             </p>
         </div>
