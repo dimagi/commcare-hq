@@ -45,11 +45,7 @@
     <div>
         <a href="{{ report.slug }}/to_pdf" >{% trans "Print to PDF" %}</a>
     </div>
+    {% include "crs_reports/partials/mothers_form_reports_template.html"  %}
 
-    {% if report.slug == "hbnc_mother_report" %}
-        {% include "crs_reports/partials/mothers_form_reports_template.html"  %}
-    {% else %}
-        {% include "crs_reports/partials/baby_form_reports_template.html"  %}
-    {% endif %}
 </div>
 {% endblock %}

@@ -17,14 +17,10 @@ from dimagi.utils.timezones import utils as tz_utils
 def visit_completion_counter(case):
     counter = 0
 
-    if case["type"] == "baby":
-        for i in range(1, 8):
-            if "baby_case_pp_%s_done" % i in case and case["baby_case_pp_%s_done" % i].upper() == "YES":
-                counter += 1
-    elif case["type"] == "pregnant_mother":
-        for i in range(1, 8):
-            if "case_pp_%s_done" % i in case and case["case_pp_%s_done" % i].upper() == "YES":
-                counter += 1
+    for i in range(1, 8):
+        if "case_pp_%s_done" % i in case and case["case_pp_%s_done" % i].upper() == "YES":
+            counter += 1
+
     return counter
 
 
@@ -181,35 +177,4 @@ class HBNCMotherReport(BaseHNBCReport):
     @property
     def user_filter(self):
         return super(HBNCMotherReport, self).user_filter
-
-
-class HBNCInfantReport(BaseHNBCReport):
-    name = ugettext_noop('Infant HBNC Form')
-    slug = 'hbnc_infant_report'
-    report_template_name = 'baby_form_reports_template'
-    default_case_type = 'baby'
-
-    @property
-    def case_filter(self):
-        filters = BaseHNBCReport.base_filters(self)
-
-        status = self.request_params.get('PNC_status', '')
-
-        or_stmt = []
-
-        if status:
-            if status == 'On Time':
-                for i in range(1, 8):
-                    filters.append({'term': {'baby_case_pp_%s_done.#value' % i: 'yes'}})
-            else:
-                for i in range(1, 8):
-                    or_stmt.append( {"not": {'term': {'baby_case_pp_%s_done.#value' % i: 'yes'}}})
-                or_stmt = {'or': or_stmt}
-                filters.append(or_stmt)
-
-        return {'and': filters} if filters else {}
-
-    @property
-    def user_filter(self):
-        return super(HBNCInfantReport, self).user_filter
 
