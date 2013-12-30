@@ -1,5 +1,7 @@
+from couchdbkit import ResourceNotFound
 from django.utils.translation import ugettext_noop
 from django.utils import html
+from casexml.apps.case.models import CommCareCase
 from django.core.urlresolvers import reverse, NoReverseMatch
 import pytz
 from django.utils.translation import ugettext as _
@@ -61,6 +63,15 @@ class HNBCReportDisplay(CaseDisplay):
         except NoReverseMatch:
             return "%s (bad ID format)" % case_name
 
+    @property
+    def baby_name(self):
+        case = CommCareCase.get(self.case['_id'])
+
+        baby_case = [c for c in case.get_subcases().all() if c.type == 'baby']
+        if baby_case:
+            return baby_case[0].name
+        else:
+            return '---'
 
     @property
     def pnc_status(self):
@@ -74,8 +85,7 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
     fields = ['custom.apps.crs_reports.fields.SelectBlockField',
               'custom.apps.crs_reports.fields.SelectSubCenterField', # Todo: Currently there is no data about it in case
               'custom.apps.crs_reports.fields.SelectASHAField',
-              'custom.apps.crs_reports.fields.SelectPNCStatusField',
-              'corehq.apps.reports.standard.cases.filters.CaseSearchFilter']
+              'custom.apps.crs_reports.fields.SelectPNCStatusField']
 
     ajax_pagination = True
     include_inactive = True
@@ -94,8 +104,8 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
     @property
     def headers(self):
         headers = DataTablesHeader(
-            DataTablesColumn(_("Case Type"), prop_name="type.exact"),
-            DataTablesColumn(_("Case Name"), prop_name="name.exact"),
+            DataTablesColumn(_("Mother Name"), prop_name="name.exact"),
+            DataTablesColumn(_("Baby Name"), sortable=False),
             DataTablesColumn(_("CHW Name"), prop_name="owner_display", sortable=False),
             DataTablesColumn(_("Date of Delivery"),  prop_name="date_birth"),
             DataTablesColumn(_("PNC Visit Completion"), sortable=False),
@@ -111,8 +121,8 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
 
         for disp in case_displays:
             yield [
-                disp.case_type,
                 disp.case_link,
+                disp.baby_name,
                 disp.owner_display,
                 disp.dob,
                 disp.visit_completion,

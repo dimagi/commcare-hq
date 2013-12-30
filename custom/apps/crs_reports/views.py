@@ -24,10 +24,7 @@ def crs_details_report(request, domain, case_id, report_slug):
 @login_and_domain_required
 @require_GET
 def render_to_pdf(request, domain, case_id, report_slug):
-    if report_slug == "hbnc_mother_report":
-        template = get_template("crs_reports/partials/mothers_form_reports_template.html")
-    else:
-        template = get_template("crs_reports/partials/baby_form_reports_template.html")
+    template = get_template("crs_reports/partials/mothers_form_reports_template.html")
 
     context_dict = get_dict_to_report(domain, case_id, report_slug)
     context = Context(context_dict)
