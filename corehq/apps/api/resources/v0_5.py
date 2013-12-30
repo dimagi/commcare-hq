@@ -5,6 +5,7 @@ from django.core.urlresolvers import reverse
 from tastypie import fields
 from tastypie.bundle import Bundle
 from tastypie.exceptions import BadRequest
+from tastypie.validation import Validation
 
 from corehq.apps.groups.models import Group
 from corehq.apps.sms.util import strip_plus
@@ -46,9 +47,24 @@ class BulkUserResource(UserESMixin, JsonResource, DomainSpecificResourceMixin):
         object_class = object
         resource_name = 'bulk-user'
 
+    def dehydrate(self, bundle):
+        fields = bundle.request.GET.getlist('fields')
+        data = {}
+        if not fields:
+            return bundle
+        for field in fields:
+            data[field] = bundle.data[field]
+        bundle.data = data
+        return bundle
+
     def obj_get_list(self, bundle, **kwargs):
-        # TODO: return only the specified fields
-        # fields = params.getlist('fields')
+        request_fields = bundle.request.GET.getlist('fields')
+        for field in request_fields:
+            if not (
+                hasattr(BulkUserResource(), field) and \
+                isinstance(getattr(BulkUserResource(), field), fields.ApiField)
+            ):
+                raise BadRequest('{0} is not a valid field'.format(field))
 
         params = bundle.request.GET
         param = lambda p: params.get(p, None)
