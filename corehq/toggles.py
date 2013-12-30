@@ -5,3 +5,4 @@ APP_BUILDER_INCLUDE_MULTIMEDIA_ODK = 'include-multimedia-odk'
 
 PRBAC_DEMO = 'prbacdemo'
 
+OFFLINE_CLOUDCARE = 'offline-cloudcare'

@@ -39,14 +39,7 @@ class WomenRegistered(fluff.Calculator):
                     children = form.form.get('live_birth_amount')
                     if children:
                         total += int(children)
-            yield { 
-                'date': None,
-                'value': total,
-                'group_by': [
-                    case.domain,
-                    case.user_id,
-                ],
-            }
+            yield [None, total]
 
 
 class ServiceForms(fluff.Calculator):

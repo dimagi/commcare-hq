@@ -43,7 +43,7 @@ def get_questions_with_answers(forms, domain, report_slug):
     for question in questions:
         question['answers'] = []
     for form in forms:
-        form_dict = form.get_form
+        form_dict = form.form
         for question in questions:
             if question['case_property'] in form_dict:
                 question['answers'].append(form_dict[question['case_property']])

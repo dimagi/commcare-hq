@@ -1,4 +1,7 @@
 import re
+from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
+from couchforms.models import DefaultAuthContext
+import receiver
 
 
 def get_submit_url(domain, app_id=None):
@@ -6,6 +9,22 @@ def get_submit_url(domain, app_id=None):
         return "/a/{domain}/receiver/{app_id}/".format(domain=domain, app_id=app_id)
     else:
         return "/a/{domain}/receiver/".format(domain=domain)
+
+
+def submit_form_locally(instance, domain):
+    response = receiver.SubmissionPost(
+        app_id=None,
+        domain=domain,
+        instance=instance,
+        attachments={},
+        # intentionally leave these unauth'd for now
+        auth_context=DefaultAuthContext()
+    ).get_response()
+    if not 200 <= response.status_code < 300:
+        raise LocalSubmissionError('Error submitting (status code %s): %s' % (
+            response.status_code,
+            response.content,
+        ))
 
 
 def get_meta_appversion_text(xform):

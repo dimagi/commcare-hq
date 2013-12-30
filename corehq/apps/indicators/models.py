@@ -715,7 +715,7 @@ class FormDataAliasIndicatorDefinition(FormIndicatorDefinition):
     _admin_crud_class = FormAliasIndicatorAdminCRUDManager
 
     def get_value(self, doc):
-        form_data = doc.get_form
+        form_data = doc.form
         return self.get_from_form(form_data, self.question_id)
 
     @classmethod
@@ -741,7 +741,7 @@ class CaseDataInFormIndicatorDefinition(FormIndicatorDefinition):
         return None
 
     def _get_related_case(self, xform):
-        form_data = xform.get_form
+        form_data = xform.form
         related_case_id = form_data.get('case', {}).get('@case_id')
         if related_case_id:
             try:
@@ -821,7 +821,7 @@ class FormDataInCaseIndicatorDefinition(CaseIndicatorDefinition, FormDataIndicat
         forms = self.get_related_forms(doc)
         for form in forms:
             if isinstance(form, XFormInstance):
-                form_data = form.get_form
+                form_data = form.form
                 existing_value[form.get_id] = {
                     'value': self.get_from_form(form_data, self.question_id),
                     'timeEnd': self.get_from_form(form_data, 'meta.timeEnd'),

@@ -670,9 +670,6 @@ _dynamic_db_settings = get_dynamic_db_settings(COUCH_SERVER_ROOT, COUCH_USERNAME
 COUCH_SERVER = _dynamic_db_settings["COUCH_SERVER"]
 COUCH_DATABASE = _dynamic_db_settings["COUCH_DATABASE"]
 
-# other urls that depend on the server
-XFORMS_POST_URL = _dynamic_db_settings["XFORMS_POST_URL"]
-
 COUCHDB_APPS = [
     'adm',
     'announcements',

@@ -324,6 +324,7 @@ class Suite(XmlObject):
     menus = NodeListField('menu', Menu)
 
     fixtures = NodeListField('fixture', Fixture)
+    descriptor = StringField('@descriptor')
 
 
 class IdStrings(object):
@@ -702,43 +703,42 @@ class SuiteGenerator(object):
                 )
 
             if form.case_type == CAREPLAN_GOAL:
-                if form.mode == 'create':
-                    e.datums.append(SessionDatum(
-                        id='new_goal_id',
-                        function='uuid()'
-                    ))
+                e.stack = Stack()
+                open_goal = CaseIDXPath(session_var('case_id_goal')).case().select('@status', 'open')
+                frame = CreateFrame(
+                    if_clause='{count} = 1'.format(count=open_goal.count())
+                )
+                frame.add_command(self.id_strings.menu(parent_module))
+                frame.add_datum(StackDatum(id='case_id', value=session_var('case_id')))
+                frame.add_command(self.id_strings.menu(module))
+                frame.add_datum(StackDatum(id='case_id_goal', value=session_var('case_id_goal')))
+                e.stack.add_frame(frame)
 
-                    e.stack = Stack()
-                    frame = CreateFrame(
-                        if_clause='{count} = 1'.format(count=CaseIDXPath(session_var('new_goal_id')).case().count())
-                    )
-                    frame.add_command(self.id_strings.menu(parent_module))
-                    frame.add_datum(StackDatum(id='case_id', value=session_var('case_id')))
-                    frame.add_command(self.id_strings.menu(module))
-                    frame.add_datum(StackDatum(id='case_id_goal', value=session_var('new_goal_id')))
-                    e.stack.add_frame(frame)
+                if form.mode == 'create':
+                    e.datums.append(SessionDatum(id='case_id_goal', function='uuid()'))
                 elif form.mode == 'update':
                     e.datums.append(session_datum('case_id_goal', CAREPLAN_GOAL, 'parent', 'case_id'))
             elif form.case_type == CAREPLAN_TASK:
+                e.stack = Stack()
+                frame = CreateFrame()
+                frame.add_command(self.id_strings.menu(parent_module))
+                frame.add_datum(StackDatum(id='case_id', value=session_var('case_id')))
+                frame.add_command(self.id_strings.menu(module))
+                frame.add_datum(StackDatum(id='case_id_goal', value=session_var('case_id_goal')))
+                e.stack.add_frame(frame)
+
                 if form.mode == 'create':
                     e.datums.append(session_datum('case_id_goal', CAREPLAN_GOAL, 'parent', 'case_id'))
                 elif form.mode == 'update':
                     e.datums.append(session_datum('case_id_goal', CAREPLAN_GOAL, 'parent', 'case_id'))
                     e.datums.append(session_datum('case_id_task', CAREPLAN_TASK, 'goal', 'case_id_goal'))
 
-                    e.stack = Stack()
                     count = CaseTypeXpath(CAREPLAN_TASK).case().select(
                         'index/goal', session_var('case_id_goal'), quote=False
                     ).select('@status', 'open').count()
-                    frame = CreateFrame(
-                        if_clause='{count} >= 1'.format(count=count)
-                    )
-                    frame.add_command(self.id_strings.menu(parent_module))
-                    frame.add_datum(StackDatum(id='case_id', value=session_var('case_id')))
-                    frame.add_command(self.id_strings.menu(module))
-                    frame.add_datum(StackDatum(id='case_id_goal', value=session_var('case_id_goal')))
+                    frame.if_clause = '{count} >= 1'.format(count=count)
+
                     frame.add_command(self.id_strings.form_command(module.get_form_by_type(CAREPLAN_TASK, 'update')))
-                    e.stack.add_frame(frame)
 
         def case_sharing_requires_assertion(form):
             actions = form.active_actions()
@@ -850,7 +850,7 @@ class SuiteGenerator(object):
             f.set_content(groups)
             yield f
 
-    def generate_suite(self, sections=None):
+    def generate_suite(self, sections=None, is_media=False):
         sections = sections or (
             'xform_resources',
             'locale_resources',
@@ -859,7 +859,8 @@ class SuiteGenerator(object):
             'menus',
             'fixtures',
         )
-        suite = Suite()
+        kw = {"descriptor": u"Suite File" if not is_media else u"Media Suite File"}
+        suite = Suite(**kw)
         suite.version = self.app.version
 
         def add_to_suite(attr):
