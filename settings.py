@@ -172,6 +172,8 @@ HQ_APPS = (
     'casexml.apps.phone',
     'corehq.apps.cleanup',
     'corehq.apps.cloudcare',
+    'corehq.apps.smsbillables',
+    'corehq.apps.accounting',
     'corehq.apps.appstore',
     'corehq.apps.domain',
     'corehq.apps.domainsync',
@@ -487,6 +489,8 @@ ANALYTICS_IDS = {
     'PINGDOM_ID': ''
 }
 
+OPEN_EXCHANGE_RATES_ID = ''
+
 # for touchforms maps
 GMAPS_API_KEY = "changeme"
 
@@ -630,6 +634,16 @@ LOGGING = {
         },
         'pillowtop_eval': {
             'handlers': ['sentry'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'smsbillables': {
+            'handlers': ['file', 'sentry'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'currency_update': {
+            'handlers': ['file'],
             'level': 'INFO',
             'propagate': False,
         },
