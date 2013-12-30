@@ -314,12 +314,11 @@ $(function () {
 
         self.downloadExcels = function(element, event) {
             var tables = []
-            var dUrl = "http://127.0.0.1:8000/a/hqtest/fixtures/edit_lookup_tables/download/" + "?";
             for (var i in self.selectedTables()) {
                 tables.push(self.selectedTables()[i]);
-                dUrl = dUrl + "table_id="+self.selectedTables()[i]+"&";
+                FixtureDownloadUrl = FixtureDownloadUrl + "table_id="+self.selectedTables()[i]+"&";
             }
-            window.location.replace(dUrl);
+            window.location.replace(FixtureDownloadUrl);
         };
 
         self.addDataType = function () {
