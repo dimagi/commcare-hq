@@ -46,7 +46,7 @@ def get_questions_with_answers(forms, domain, report_slug):
         for question in section['questions']:
             question['answers'] = []
         for form in forms:
-            form_dict = form.get_form
+            form_dict = form.form
             for question in section['questions']:
                 if question['case_property'] in form_dict:
                     question['answers'].append(form_dict[question['case_property']])
@@ -58,17 +58,6 @@ def get_questions_with_answers(forms, domain, report_slug):
                 for i in range(len(question['answers']), count):
                     question['answers'].append('')
     return sections
-        form_dict = form.form
-        for question in questions:
-            if question['case_property'] in form_dict:
-                question['answers'].append(form_dict[question['case_property']])
-    for question in questions:
-        if 'answers' not in question:
-                question['answers'] = []
-        if len(question['answers']) < 7:
-            for i in range(len(question['answers']), 7):
-                question['answers'].append('')
-    return questions
 
 
 def get_dict_to_report(domain, case_id, report_slug):
