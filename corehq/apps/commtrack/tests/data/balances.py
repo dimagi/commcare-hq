@@ -114,7 +114,7 @@ def transfer_neither():
     """
 
 
-def create_requisition(product_amounts):
+def create_requisition_xml(product_amounts):
     req_id = uuid.uuid4().hex
     req_case_block = ElementTree.tostring(CaseBlock(
         req_id,

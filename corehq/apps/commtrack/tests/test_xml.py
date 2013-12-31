@@ -20,7 +20,8 @@ from corehq.apps.commtrack.tests.data.balances import (
     transfer_neither,
     balance_first,
     transfer_first,
-    create_requisition)
+    create_requisition_xml
+)
 
 
 class CommTrackOTATest(CommTrackTest):
@@ -158,7 +159,7 @@ class CommTrackRequisitionTest(CommTrackSubmissionTest):
 
     def test_create_requisition(self):
         amounts = [(p._id, 50.0 + float(i*10)) for i, p in enumerate(self.products)]
-        self.submit_xml_form(create_requisition(amounts))
+        self.submit_xml_form(create_requisition_xml(amounts))
         req_cases = list(get_cases_in_domain(self.domain.name, type=const.REQUISITION_CASE_TYPE))
         self.assertEqual(1, len(req_cases))
         req = req_cases[0]
