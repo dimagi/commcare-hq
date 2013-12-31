@@ -87,7 +87,7 @@ class Currency(models.Model):
 
     @classmethod
     def get_default(cls):
-        default, _ = Currency.objects.get_or_create(code=settings.DEFAULT_CURRENCY)
+        default, _ = cls.objects.get_or_create(code=settings.DEFAULT_CURRENCY)
         return default
 
 
