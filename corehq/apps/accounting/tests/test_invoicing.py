@@ -12,6 +12,7 @@ from corehq.apps.accounting.models import Invoice, FeatureType, LineItem, Subscr
 
 
 class BaseInvoiceTestCase(TestCase):
+    min_subscription_length = 3
 
     def setUp(self):
         self.billing_contact = generator.arbitrary_web_user()
@@ -23,7 +24,7 @@ class BaseInvoiceTestCase(TestCase):
         generator.instantiate_subscribable_plans()
         generator.instantiate_community_plans()
         self.subscription, self.subscription_length = generator.generate_domain_subscription_from_date(
-            generator.get_start_date(), self.account, self.domain.name, num_months=3,
+            generator.get_start_date(), self.account, self.domain.name, min_num_months=self.min_subscription_length,
         )
 
     def tearDown(self):
