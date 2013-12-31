@@ -65,7 +65,7 @@ class TestInvoice(BaseInvoiceTestCase):
         num_feature_line_items = invoice.lineitem_set.get_features().count()
         self.assertEqual(num_feature_line_items, self.subscription.plan.feature_rates.count())
         self.assertEqual(invoice.subscription, self.subscription)
-        self.assertGreater(invoice.balance, Decimal('0.0'))
+        self.assertGreater(invoice.balance, Decimal('0.0000'))
 
     def test_no_invoice_after_end(self):
         """
@@ -180,7 +180,7 @@ class TestProductLineItem(BaseInvoiceTestCase):
         self.assertEqual(product_line_item.base_cost, self.product_rate.monthly_fee)
 
         self.assertIsNone(product_line_item.unit_description)
-        self.assertEqual(product_line_item.unit_cost, Decimal('0.0'))
+        self.assertEqual(product_line_item.unit_cost, Decimal('0.0000'))
         self.assertEqual(product_line_item.quantity, 1)
 
         self.assertEqual(product_line_item.subtotal, self.product_rate.monthly_fee)
@@ -213,7 +213,7 @@ class TestProductLineItem(BaseInvoiceTestCase):
             self.assertEqual(product_line_item.unit_cost, self.prorate)
             self.assertIsNotNone(product_line_item.unit_description)
 
-            self.assertEqual(product_line_item.base_cost, Decimal('0.0'))
+            self.assertEqual(product_line_item.base_cost, Decimal('0.0000'))
             self.assertIsNone(product_line_item.base_description)
 
             self.assertEqual(product_line_item.subtotal, product_line_item.unit_cost * product_line_item.quantity)
@@ -243,10 +243,10 @@ class TestProductLineItem(BaseInvoiceTestCase):
         product_line_item = product_line_items.get()
         self.assertIsNotNone(product_line_item.base_description)
         self.assertIsNone(product_line_item.unit_description)
-        self.assertEqual(product_line_item.unit_cost, Decimal('0.0'))
+        self.assertEqual(product_line_item.unit_cost, Decimal('0.0000'))
         self.assertEqual(product_line_item.quantity, 1)
-        self.assertEqual(product_line_item.subtotal, Decimal('0.0'))
-        self.assertEqual(product_line_item.total, Decimal('0.0'))
+        self.assertEqual(product_line_item.subtotal, Decimal('0.0000'))
+        self.assertEqual(product_line_item.total, Decimal('0.0000'))
 
         domain.delete()
 
@@ -281,12 +281,12 @@ class TestUserLineItem(BaseInvoiceTestCase):
         user_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.USER).get()
 
         self.assertIsNone(user_line_item.base_description)
-        self.assertEqual(user_line_item.base_cost, Decimal('0.0'))
+        self.assertEqual(user_line_item.base_cost, Decimal('0.0000'))
         self.assertIsNone(user_line_item.unit_description)
         self.assertEqual(user_line_item.quantity, 0)
         self.assertEqual(user_line_item.unit_cost, self.user_rate.per_excess_fee)
-        self.assertEqual(user_line_item.subtotal, Decimal('0.0'))
-        self.assertEqual(user_line_item.total, Decimal('0.0'))
+        self.assertEqual(user_line_item.subtotal, Decimal('0.0000'))
+        self.assertEqual(user_line_item.total, Decimal('0.0000'))
 
     def test_over_limit(self):
         """
@@ -313,7 +313,7 @@ class TestUserLineItem(BaseInvoiceTestCase):
 
         # there is no base cost
         self.assertIsNone(user_line_item.base_description)
-        self.assertEqual(user_line_item.base_cost, Decimal('0.0'))
+        self.assertEqual(user_line_item.base_cost, Decimal('0.0000'))
 
         num_to_charge = num_active - self.user_rate.monthly_limit
         self.assertIsNotNone(user_line_item.unit_description)
@@ -341,7 +341,7 @@ class TestUserLineItem(BaseInvoiceTestCase):
         user_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.USER).get()
 
         self.assertIsNone(user_line_item.base_description)
-        self.assertEqual(user_line_item.base_cost, Decimal('0.0'))
+        self.assertEqual(user_line_item.base_cost, Decimal('0.0000'))
 
         num_to_charge = num_active - generator.MAX_COMMUNITY_USERS
         self.assertIsNotNone(user_line_item.unit_description)
@@ -385,13 +385,13 @@ class TestSmsLineItem(BaseInvoiceTestCase):
 
         # there is no base cost
         self.assertIsNone(sms_line_item.base_description)
-        self.assertEqual(sms_line_item.base_cost, Decimal('0.0'))
+        self.assertEqual(sms_line_item.base_cost, Decimal('0.0000'))
 
         self.assertEqual(sms_line_item.quantity, 1)
-        self.assertEqual(sms_line_item.unit_cost, Decimal('0.0'))
+        self.assertEqual(sms_line_item.unit_cost, Decimal('0.0000'))
         self.assertIsNotNone(sms_line_item.unit_description)
-        self.assertEqual(sms_line_item.subtotal, Decimal('0.0'))
-        self.assertEqual(sms_line_item.total, Decimal('0.0'))
+        self.assertEqual(sms_line_item.subtotal, Decimal('0.0000'))
+        self.assertEqual(sms_line_item.total, Decimal('0.0000'))
 
         self._delete_sms_billables()
 
@@ -422,14 +422,14 @@ class TestSmsLineItem(BaseInvoiceTestCase):
 
         # there is no base cost
         self.assertIsNone(sms_line_item.base_description)
-        self.assertEqual(sms_line_item.base_cost, Decimal('0.0'))
+        self.assertEqual(sms_line_item.base_cost, Decimal('0.0000'))
 
         self.assertEqual(sms_line_item.quantity, 1)
-        self.assertGreater(sms_line_item.unit_cost, Decimal('0.0'))
+        self.assertGreater(sms_line_item.unit_cost, Decimal('0.0000'))
         self.assertIsNotNone(sms_line_item.unit_description)
 
-        self.assertGreater(sms_line_item.subtotal, Decimal('0.0'))
-        self.assertGreater(sms_line_item.total, Decimal('0.0'))
+        self.assertGreater(sms_line_item.subtotal, Decimal('0.0000'))
+        self.assertGreater(sms_line_item.total, Decimal('0.0000'))
 
         self._delete_sms_billables()
 
@@ -459,14 +459,14 @@ class TestSmsLineItem(BaseInvoiceTestCase):
 
         # there is no base cost
         self.assertIsNone(sms_line_item.base_description)
-        self.assertEqual(sms_line_item.base_cost, Decimal('0.0'))
+        self.assertEqual(sms_line_item.base_cost, Decimal('0.0000'))
 
         self.assertEqual(sms_line_item.quantity, 1)
-        self.assertGreater(sms_line_item.unit_cost, Decimal('0.0'))
+        self.assertGreater(sms_line_item.unit_cost, Decimal('0.0000'))
         self.assertIsNotNone(sms_line_item.unit_description)
 
-        self.assertGreater(sms_line_item.subtotal, Decimal('0.0'))
-        self.assertGreater(sms_line_item.total, Decimal('0.0'))
+        self.assertGreater(sms_line_item.subtotal, Decimal('0.0000'))
+        self.assertGreater(sms_line_item.total, Decimal('0.0000'))
 
         self._delete_sms_billables()
         domain.delete()
