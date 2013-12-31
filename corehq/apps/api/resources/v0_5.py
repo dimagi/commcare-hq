@@ -19,10 +19,7 @@ from . import JsonResource, DomainSpecificResourceMixin
 class BulkUserResource(UserESMixin, JsonResource, DomainSpecificResourceMixin):
     """
     A read-only user data resource based on elasticsearch.
-    Supported Params: limit offset q fields filter?
-    Use cases: detail by id, detail by username, list by query
-    list syntax:
-        fields = ["first_name", "last_name"] == ?fields=first_name&fields=last_name
+    Supported Params: limit offset q fields
     """
     # UserESMixin containst the logic for interacting with ES
     type = "bulk-user"
