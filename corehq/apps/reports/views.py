@@ -412,7 +412,7 @@ def add_config(request, domain=None):
         if field in POST:
             setattr(config, field, POST[field])
 
-    if POST.get('days'):  # remove start and end date if the date range is "last xx days"
+    if POST.get('days') or date_range == 'lastmonth':  # remove start and end date if the date range is "last xx days"
         if "start_date" in config:
             delattr(config, "start_date")
         if "end_date" in config:

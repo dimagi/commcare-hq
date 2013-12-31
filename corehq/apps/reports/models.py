@@ -127,7 +127,7 @@ class TempCommCareUser(CommCareUser):
         app_label = 'reports'
 
 
-DATE_RANGE_CHOICES = ['last7', 'last30', 'lastn', 'since', 'range']
+DATE_RANGE_CHOICES = ['last7', 'last30', 'lastn', 'lastmonth', 'since', 'range']
 
 
 class ReportConfig(Document):
@@ -228,6 +228,7 @@ class ReportConfig(Document):
             return {}
 
         import datetime
+        from dateutil.relativedelta import relativedelta
         today = datetime.date.today()
 
         if date_range == 'since':
@@ -236,6 +237,9 @@ class ReportConfig(Document):
         elif date_range == 'range':
             start_date = self.start_date
             end_date = self.end_date
+        elif date_range == 'lastmonth':
+            end_date = today
+            start_date = today - relativedelta(months=1) + timedelta(days=1)  # add one day to handle inclusiveness
         else:
             end_date = today
 
@@ -317,7 +321,9 @@ class ReportConfig(Document):
 
     @property
     def date_description(self):
-        if self.days and not self.start_date:
+        if self.date_range == 'lastmonth':
+            return "Last Month"
+        elif self.days and not self.start_date:
             day = 'day' if self.days == 1 else 'days'
             return "Last %d %s" % (self.days, day)
         elif self.end_date:
