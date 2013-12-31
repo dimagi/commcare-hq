@@ -1,0 +1,23 @@
+{% extends 'hqwebapp/two_column.html' %}
+{% load url from future %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load timezone_tags %}
+
+{% block title %}{% trans "Accounting" %}{% endblock %}
+
+{% block head %}{{ block.super }}
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+<script>
+</script>
+{% endblock %}
+
+
+
+{% block main_column %}
+    <div>
+        Hello world!
+    </div>
+{% endblock %}
