@@ -65,11 +65,15 @@ class AdjustmentReason(object):
     DIRECT_PAYMENT = "DIRECT_PAYMENT"
     SALESFORCE = "SALESFORCE"
     INVOICE = "INVOICE"
+    LINE_ITEM = "LINE_ITEM"
+    TRANSFER = "TRANSFER"
     MANUAL = "MANUAL"
     CHOICES = (
         (MANUAL, "manual"),
         (SALESFORCE, "via Salesforce"),
         (INVOICE, "invoice generated"),
+        (LINE_ITEM, "line item generated"),
+        (TRANSFER, "transfer from another credit line"),
         (DIRECT_PAYMENT, "payment from client received"),
     )
 
