@@ -10,7 +10,6 @@ from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES
 
 from django_prbac.models import Role
 from dimagi.utils.couch.database import SafeSaveDocument
-from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.accounting.exceptions import CreditLineError, LineItemError, InvoiceError
 
