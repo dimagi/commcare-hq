@@ -386,9 +386,9 @@ class CreditLine(models.Model):
     a specific subscription, or specific rates in that subscription.
     """
     account = models.ForeignKey(BillingAccount, on_delete=models.PROTECT)
-    subscription = models.ForeignKey(Subscription, on_delete=models.PROTECT, null=True)
-    product_rates = models.ManyToManyField(SoftwareProductRate)
-    feature_rates = models.ManyToManyField(FeatureRate)
+    subscription = models.ForeignKey(Subscription, on_delete=models.PROTECT, null=True, blank=True)
+    product_rate = models.ForeignKey(SoftwareProductRate, on_delete=models.PROTECT, null=True, blank=True)
+    feature_rate = models.ForeignKey(FeatureRate, on_delete=models.PROTECT, null=True, blank=True)
     date_created = models.DateField(auto_now_add=True)
     balance = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
 
