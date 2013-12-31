@@ -185,7 +185,6 @@ HQ_APPS = (
     'corehq.apps.cloudcare',
     'corehq.apps.smsbillables',
     'corehq.apps.accounting',
-    'corehq.apps.smsbillables',
     'corehq.apps.appstore',
     'corehq.apps.domain',
     'corehq.apps.domainsync',
