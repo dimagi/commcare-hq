@@ -394,7 +394,7 @@ def add_config(request, domain=None):
         POST['days'] = 30
     elif POST.get('days'):
         POST['days'] = int(POST['days'])
-  
+
     exclude_filters = ['startdate', 'enddate']
     for field in exclude_filters:
         POST['filters'].pop(field, None)
@@ -411,7 +411,13 @@ def add_config(request, domain=None):
     for field in config.properties().keys():
         if field in POST:
             setattr(config, field, POST[field])
-    
+
+    if POST.get('days'):  # remove start and end date if the date range is "last xx days"
+        if "start_date" in config:
+            delattr(config, "start_date")
+        if "end_date" in config:
+            delattr(config, "end_date")
+
     config.save()
 
     touch_saved_reports_views(request.couch_user, domain)
