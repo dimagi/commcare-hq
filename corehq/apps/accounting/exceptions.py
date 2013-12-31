@@ -8,3 +8,7 @@ class LineItemError(Exception):
 
 class InvoiceError(Exception):
     pass
+
+
+class CreditLineError(Exception):
+    pass
