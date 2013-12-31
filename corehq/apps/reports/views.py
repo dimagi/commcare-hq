@@ -644,6 +644,8 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
             'content': content
         })
 
+    date_range = config.get_date_range()
+
     return render(request, "reports/report_email.html", {
         "reports": report_outputs,
         "domain": domain,
@@ -652,8 +654,8 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
         "owner_name": couch_user.full_name or couch_user.get_email(),
         "email": email,
         "notes": notes,
-        "startdate": config.start_date,
-        "enddate": config.end_date,
+        "startdate": date_range["startdate"],
+        "enddate": date_range["enddate"],
     }), excel_attachments
 
 @login_and_domain_required
