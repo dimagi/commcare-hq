@@ -221,12 +221,12 @@ def arbitrary_subscribable_plan():
 
 
 def generate_domain_subscription_from_date(date_start, billing_account, domain,
-                                           num_months=None, is_immediately_active=False,
+                                           min_num_months=None, is_immediately_active=False,
                                            delay_invoicing_until=None, save=True):
     # make sure the first month is never a full month (for testing)
     date_start = date_start.replace(day=max(2, date_start.day))
 
-    subscription_length = num_months or random.randint(3, 25)
+    subscription_length = random.randint(min_num_months or 3, 25)
     date_end_year, date_end_month = add_months(date_start.year, date_start.month, subscription_length)
     date_end_last_day = calendar.monthrange(date_end_year, date_end_month)[1]
 
