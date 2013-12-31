@@ -8,7 +8,7 @@ from corehq.apps.sms.models import INCOMING, OUTGOING
 from corehq.apps.smsbillables.models import (SmsGatewayFee, SmsGatewayFeeCriteria, SmsUsageFee, SmsUsageFeeCriteria,
                                              SmsBillable)
 from corehq.apps.accounting import generator, tasks, utils
-from corehq.apps.accounting.models import Invoice, FeatureType, LineItem, Subscriber, DefaultProductPlan
+from corehq.apps.accounting.models import Invoice, FeatureType, LineItem, Subscriber, DefaultProductPlan, CreditAdjustment, CreditLine
 
 
 class BaseInvoiceTestCase(TestCase):
@@ -31,6 +31,9 @@ class BaseInvoiceTestCase(TestCase):
         self.billing_contact.delete()
         self.dimagi_user.delete()
         self.domain.delete()
+
+        CreditAdjustment.objects.all().delete()
+        CreditLine.objects.all().delete()
 
         LineItem.objects.all().delete()
         Invoice.objects.all().delete()
