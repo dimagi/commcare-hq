@@ -56,6 +56,21 @@ def _extract_meta_instance_id(form):
         return None
 
 
+def convert_xform_to_json(xml_string):
+    """
+    takes xform payload as xml_string and returns the equivalent json
+    i.e. the json that will show up as xform.form
+
+    """
+
+    try:
+        name, json_form = xml2json.xml2json(xml_string)
+    except xml2json.XMLSyntaxError as e:
+        raise couchforms.XMLSyntaxError(u'Invalid XML: %s' % e)
+    json_form['#type'] = name
+    return json_form
+
+
 def create_xform_from_xml(xml_string, _id=None):
     """
     create and save an XFormInstance from an xform payload (xml_string)
@@ -68,12 +83,8 @@ def create_xform_from_xml(xml_string, _id=None):
 
     """
 
-    try:
-        name, json_form = xml2json.xml2json(xml_string)
-    except xml2json.XMLSyntaxError as e:
-        raise couchforms.XMLSyntaxError(u'Invalid XML: %s' % e)
+    json_form = convert_xform_to_json(xml_string)
 
-    json_form['#type'] = name
     xform = XFormInstance(
         _attachments={
             "form.xml": {
