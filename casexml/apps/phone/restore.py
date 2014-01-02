@@ -57,7 +57,6 @@ class RestoreConfig(object):
 
     def get_stock_payload(self, syncop):
         cases = [e.case for e in syncop.actual_cases_to_sync]
-        supply_points = [c for c in cases if c.type == 'supply-point']
         from lxml.builder import ElementMaker
         E = ElementMaker(namespace=COMMTRACK_REPORT_XMLNS)
 
@@ -66,7 +65,7 @@ class RestoreConfig(object):
                 id=trans.product_id,
                 quantity=str(int(trans.stock_on_hand)),
             )
-        for supply_point in supply_points:
+        for commtrack_case in cases:
             relevant_reports = StockTransaction.objects.filter(case_id=supply_point._id)
             if relevant_reports:
                 product_ids = sorted(relevant_reports.values_list('product_id', flat=True).distinct())
