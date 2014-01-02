@@ -6,6 +6,8 @@ import datetime
 
 from django.conf import settings
 
+from django_prbac import arbitrary as role_gen
+
 from dimagi.utils.dates import add_months
 from dimagi.utils.data import generator as data_gen
 
@@ -171,7 +173,10 @@ def _instantiate_plans_from_list(plan_list):
     plans = []
     for plan in plan_list:
         software_plan, created = SoftwarePlan.objects.get_or_create(name=plan['name'])
-        plan_version = SoftwarePlanVersion(plan=software_plan)
+        plan_version = SoftwarePlanVersion(
+            plan=software_plan,
+            role=role_gen.arbitrary_role(),
+        )
         plan_version.save()
         plan_version.product_rates.add(SoftwareProductRate.new_rate(plan['name'], plan['fee']))
         for rate in plan['rates']:
@@ -189,7 +194,7 @@ def _instantiate_plans_from_list(plan_list):
     return plans
 
 
-def instantiate_subscribable_plans(plan_list=None):
+def instantiate_subscribable_plans():
     _instantiate_plans_from_list(SUBSCRIBABLE_COMMCARE_PLANS)
 
 
