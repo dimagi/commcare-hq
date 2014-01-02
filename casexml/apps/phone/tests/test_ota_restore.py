@@ -42,7 +42,7 @@ class OtaRestoreTest(TestCase):
         restore_payload = generate_restore_payload(dummy_user())
         # implicit length assertion
         [sync_log] = SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all()
-        check_xml_line_by_line(self, dummy_restore_xml(sync_log.get_id), restore_payload)
+        check_xml_line_by_line(self, dummy_restore_xml(sync_log.get_id, items=3), restore_payload)
 
     def testUserRestoreWithCase(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "create_short.xml")
@@ -90,7 +90,7 @@ class OtaRestoreTest(TestCase):
         restore_payload = generate_restore_payload(dummy_user())
         # implicit length assertion
         [sync_log] = SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all()
-        check_xml_line_by_line(self, dummy_restore_xml(sync_log.get_id, expected_case_block), 
+        check_xml_line_by_line(self, dummy_restore_xml(sync_log.get_id, expected_case_block, items=4),
                                restore_payload)
         
     def testWithReferrals(self):
@@ -277,7 +277,7 @@ class OtaRestoreTest(TestCase):
         restore_payload = generate_restore_payload(dummy_user())
         # implicit length assertion
         [sync_log] = SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all()
-        check_xml_line_by_line(self, dummy_restore_xml(sync_log.get_id, const.CREATE_SHORT),
+        check_xml_line_by_line(self, dummy_restore_xml(sync_log.get_id, const.CREATE_SHORT, items=4),
                                restore_payload)
 
         time.sleep(1)
@@ -287,7 +287,7 @@ class OtaRestoreTest(TestCase):
                         if log.get_id != sync_log.get_id]
 
         # should no longer have a case block in the restore XML
-        check_xml_line_by_line(self, dummy_restore_xml(latest_log.get_id),
+        check_xml_line_by_line(self, dummy_restore_xml(latest_log.get_id, items=3),
                                sync_restore_payload)
 
         # apply an update
@@ -305,7 +305,7 @@ class OtaRestoreTest(TestCase):
                              if log.get_id != sync_log.get_id and log.get_id != latest_log.get_id]
         
         # case block should come back
-        check_xml_line_by_line(self, dummy_restore_xml(even_latest_log.get_id, const.UPDATE_SHORT), 
+        check_xml_line_by_line(self, dummy_restore_xml(even_latest_log.get_id, const.UPDATE_SHORT, items=4),
                                sync_restore_payload)
         
         
