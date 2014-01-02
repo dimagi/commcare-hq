@@ -47,14 +47,14 @@ def import_locations(domain, worksheets, task=None):
         location_type = worksheet.worksheet.title
         if location_type not in defined_location_types(domain):
             yield "location with type %s not found, this worksheet will not be imported" % location_type
+        else:
+            data = list(worksheet)
 
-        data = list(worksheet)
-
-        for loc in data:
-            yield import_location(domain, location_type, loc)['message']
-            if task:
-                processed += 1
-                DownloadBase.set_progress(task, processed, total_rows)
+            for loc in data:
+                yield import_location(domain, location_type, loc)['message']
+                if task:
+                    processed += 1
+                    DownloadBase.set_progress(task, processed, total_rows)
 
 
 def import_location(domain, location_type, location_data):
