@@ -174,13 +174,13 @@ def get_or_update_cases(xform):
     returning a dictionary mapping the case ids affected to the
     couch case document objects
     """
-    case_blocks = extract_case_blocks(xform)
+    case_updates = get_case_updates(xform)
 
     domain = get_and_check_xform_domain(xform)
 
     case_db = CaseDbCache(domain=domain)
-    for case_block in case_blocks:
-        case_doc = _get_or_update_model(case_block, xform, case_db)
+    for case_update in case_updates:
+        case_doc = _get_or_update_model(case_update, xform, case_db)
         if case_doc:
             # todo: legacy behavior, should remove after new case processing
             # is fully enabled.
@@ -207,13 +207,12 @@ def get_or_update_cases(xform):
     return case_db.cache
 
 
-def _get_or_update_model(case_block, xform, case_db):
+def _get_or_update_model(case_update, xform, case_db):
     """
     Gets or updates an existing case, based on a block of data in a 
     submitted form.  Doesn't save anything.
     """
     
-    case_update = case_update_from_block(case_block)
     case = case_db.get(case_update.id)
     
     if case is None:
@@ -237,7 +236,11 @@ def has_case_id(case_block):
 def extract_case_blocks(doc):
     """
     Extract all case blocks from a document, returning an array of dictionaries
-    with the data in each case. 
+    with the data in each case.
+
+    The json returned is not normalized for casexml version;
+    for that get_case_updates is better.
+
     """
 
     if isinstance(doc, XFormInstance):
