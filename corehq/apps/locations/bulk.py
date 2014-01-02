@@ -71,7 +71,15 @@ def import_location(domain, location_type, location_data):
         return parent_id_invalid
 
     if existing_id:
-        existing = Location.get(existing_id)
+        try:
+            existing = Location.get(existing_id)
+        except ResourceNotFound:
+            return {
+                'id': None,
+                'message': "Location with id {0} was not found".format(
+                    existing_id
+                )
+            }
         if existing.location_type != location_type:
             return {
                 'id': None,
