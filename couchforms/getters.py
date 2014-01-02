@@ -9,6 +9,10 @@ def get_path(request):
 
 
 def get_instance_and_attachment(request):
+    try:
+        return request._instance_and_attachment
+    except AttributeError:
+        pass
     attachments = {}
     if request.META['CONTENT_TYPE'].startswith('multipart/form-data'):
         # it's an standard form submission (eg ODK)
@@ -26,4 +30,5 @@ def get_instance_and_attachment(request):
         #else, this is a raw post via a j2me client of xml (or touchforms)
         #todo, multipart raw submissions need further parsing capacity.
         instance = request.raw_post_data
+    request._instance_and_attachment = (instance, attachments)
     return instance, attachments
