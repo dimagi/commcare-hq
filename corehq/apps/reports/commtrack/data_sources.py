@@ -19,7 +19,7 @@ def reporting_status(case, start_date, end_date):
     last_reported = getattr(case, 'last_reported', None)
     if last_reported and last_reported.date() < start_date:
         return 'ontime'
-    elif last_reported and start_date <= last_reported <= end_date:
+    elif last_reported and start_date <= last_reported.date() <= end_date:
         return 'late'
     else:
         return 'nonreporting'
