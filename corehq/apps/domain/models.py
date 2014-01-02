@@ -158,7 +158,7 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
     sf_contract_id = StringProperty()
     sf_account_id = StringProperty()
     commcare_edition = StringProperty(
-        choices=['', "community", "standard", "pro", "advanced", "enterprise"],
+        choices=['', "plus", "community", "standard", "pro", "advanced", "enterprise"],
         default="community"
     )
     services = StringProperty(choices=["", "basic", "plus", "full", "custom"], default="")
