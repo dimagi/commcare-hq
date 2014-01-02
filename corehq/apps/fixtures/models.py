@@ -135,7 +135,7 @@ class FixtureDataItem(Document):
         is_of_new_type = False
         fields_dict = {}        
         for field in obj['fields']:
-            if type(obj['fields'][field]) != str:
+            if obj['fields'][field] is not None and type(obj['fields'][field]) != str:
                 is_of_new_type = True
                 break
             fields_dict[field] = {
