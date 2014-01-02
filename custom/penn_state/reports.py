@@ -80,14 +80,26 @@ class LegacyAdminReport(object):
     def admin_report_context(self):
         reports = []
         for group in Group.by_domain(DOMAIN):
-            reports.append(LegacyWeeklyReport.by_site(group))
+            if group._id in GROUPS:
+                report = LegacyWeeklyReport.by_site(group)
+                if report:
+                    reports.append(report)
         def aggregate(attr):
-            return map(sum, zip(
+            def _sum(ds):
+                if not filter(lambda d: d>=0, ds):
+                    return -1
+                return sum(filter(lambda d: d>0, ds))
+            return map(_sum, zip(
                 *[getattr(r, attr) for r in reports]
             ))
-        strategy = aggregate('site_strategy')
-        game = aggregate('site_game')
-        weekly = self.aggregate_totals([r.weekly_totals for r in reports])
+        if reports:
+            strategy = aggregate('site_strategy')
+            game = aggregate('site_game')
+            weekly = self.aggregate_totals([r.weekly_totals for r in reports])
+        else:
+            strategy = [-1]*5
+            game = [-1]*5
+            weekly = []
         return {
             'strategy': self.context_for(
                 strategy, 'peace'),
