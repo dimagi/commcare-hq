@@ -6,3 +6,4 @@ from .test_consumption import *
 from .test_wrapping import *
 from .test_locations import *
 from .test_xml import *
+from .test_fixture import *
