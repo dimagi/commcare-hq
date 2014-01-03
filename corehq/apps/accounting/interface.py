@@ -60,4 +60,4 @@ class AccountingInterface(BaseCRUDAdminInterface):
     document_class = HQAnnouncement
     form_class = HQAnnouncementForm
 
-    #crud_item_type = "Global Announcement"
+    crud_item_type = "Billing Account"
