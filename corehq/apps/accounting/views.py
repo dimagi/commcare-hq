@@ -19,8 +19,10 @@ def accounting_default(request):
 
 @require_superuser
 def manage_billing_account(request, account_id):
+    template = 'manage_account.html'
+    account = BillingAccount.objects.get(id=account_id)
     parent_link = '<a href="%s">%s<a>' % (AccountingInterface.get_url(), AccountingInterface.name)
     return render(request,
-                  'manage_account.html',
-                  dict(account_name=BillingAccount.objects.get(id=account_id).name,
+                  template,
+                  dict(account=account,
                        parent_link=parent_link))

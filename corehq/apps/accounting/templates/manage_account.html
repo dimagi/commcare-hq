@@ -1,6 +1,8 @@
-{% extends "hqbilling/base_template.html" %}
+{% extends 'reports/standard/base_template.html' %}
 {% load url from future %}
 {% load hq_shared_tags %}
+
+{% block title %}Manage Billing Account{% endblock %}
 
 {% block page-title %}
 <ul class="breadcrumb">
@@ -20,7 +22,11 @@
 {% endblock %}
 
 {% block main_column %}
-hello world
+    <div>
+        <div>Date Created: {{ account.date_created }}</div>
+        <div>Account Type: {{ account.account_type }}</div>
+        <div>Current Account Balance: {{ account.balance }}</div>
+    </div>
 {% endblock %}
 
 {% block modals %} {{ block.super }}
