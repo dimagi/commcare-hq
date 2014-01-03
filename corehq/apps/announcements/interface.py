@@ -26,12 +26,14 @@ class AccountingInterface2(BaseCRUDAdminInterface):
     @property
     def headers(self):
         return DataTablesHeader(
-            DataTablesColumn("Title"),
-            DataTablesColumn("Summary"),
-            #DataTablesColumn("Date Created"),
-            #DataTablesColumn("Valid Until"),
-            #DataTablesColumn("Show to new users?"),
-            #DataTablesColumn("Edit"),
+            DataTablesColumn("Client/Account Name"),
+            DataTablesColumn("Billing Contact Name (Email)"),
+            DataTablesColumn("Plan Credit"),
+            DataTablesColumn("SMS Credit"),
+            DataTablesColumn("Users Credit"),
+            DataTablesColumn("Account Balance"),
+            DataTablesColumn("Active Subscriptions"),
+            DataTablesColumn("Edit"),
         )
 
     @property
