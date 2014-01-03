@@ -86,29 +86,32 @@ class SubscriptionInterface(BaseCRUDAdminInterface):
     @property
     def headers(self):
         return DataTablesHeader(
-            DataTablesColumn("Client/Account Name"),
-            DataTablesColumn("Billing Contact Name (Email)"),
-            DataTablesColumn("Plan Credit"),
-            DataTablesColumn("SMS Credit"),
-            DataTablesColumn("Users Credit"),
-            DataTablesColumn("Account Balance"),
-            DataTablesColumn("Active Subscriptions"),
+            DataTablesColumn("Software Plan"),
+            DataTablesColumn("Product"),
+            DataTablesColumn("Client Name"),
+            DataTablesColumn("Project Space"),
+            DataTablesColumn("Start Date"),
+            DataTablesColumn("End Date"),
+            DataTablesColumn("Active Status"),
+            DataTablesColumn("Show Default Plans Only"),
+            DataTablesColumn("Plan Visibility"),
             DataTablesColumn("Edit"),
         )
 
     @property
     def rows(self):
         rows = []
-        for account in BillingAccount.objects.all():
-            rows.append([account.name,
-                         account.web_user_contact,
-                         3,
-                         4,
-                         5,
-                         account.balance,
-                         Subscription.objects.filter(account=account,
-                                                     is_active=True).count(),
-                         mark_safe('<a href="./%d" class="btn"></i>Edit</a>' % account.id)])
+        for subscription in Subscription.objects.all():
+            rows.append([subscription.plan.plan.name,
+                         "product",
+                         subscription.account.name,
+                         subscription.subscriber.domain,
+                         subscription.date_start,
+                         subscription.date_end,
+                         subscription.is_active,
+                         "checkbox",
+                         subscription.plan.plan.visibility,
+                         mark_safe('<a href="./%d" class="btn"></i>Edit</a>' % subscription.id)])
         return rows
 
     #######
