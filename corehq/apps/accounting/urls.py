@@ -1,5 +1,5 @@
 from django.conf.urls.defaults import *
-from corehq import AccountingInterface2, AccountingAdminInterfaceDispatcher
+from corehq import AccountingAdminInterfaceDispatcher
 
 
 urlpatterns = patterns('corehq.apps.accounting.views',

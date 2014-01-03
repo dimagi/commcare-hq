@@ -1,8 +1,7 @@
-from django.core.urlresolvers import reverse
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 from django.shortcuts import render
-from corehq import AccountingInterface2
-from corehq.apps.accounting.models import BillingAccount, Currency
+from corehq import AccountingInterface
+from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.domain.decorators import require_superuser
 
 
@@ -14,4 +13,4 @@ def view_billing_accounts(request):
 
 @require_superuser
 def accounting_default(request):
-    return HttpResponseRedirect(AccountingInterface2.get_url())
+    return HttpResponseRedirect(AccountingInterface.get_url())
