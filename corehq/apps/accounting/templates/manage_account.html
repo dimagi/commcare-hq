@@ -1,6 +1,7 @@
 {% extends 'reports/standard/base_template.html' %}
 {% load url from future %}
 {% load hq_shared_tags %}
+{% load crispy_forms_tags %}
 
 {% block title %}Manage Billing Account{% endblock %}
 
@@ -22,7 +23,11 @@
 {% endblock %}
 
 {% block main_column %}
-    <div>
+    <div class="form-block">
+        {% crispy form %}
+    </div>
+
+    <div class="form-block">
         <div>Date Created: {{ account.date_created }}</div>
         <div>Account Type: {{ account.account_type }}</div>
         <div>Current Account Balance: {{ account.balance }}</div>

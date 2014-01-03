@@ -1,6 +1,7 @@
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from corehq import AccountingInterface
+from corehq.apps.accounting.forms import BillingAccountForm
 from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.domain.decorators import require_superuser
 
@@ -25,4 +26,5 @@ def manage_billing_account(request, account_id):
     return render(request,
                   template,
                   dict(account=account,
+                       form=BillingAccountForm(),
                        parent_link=parent_link))
