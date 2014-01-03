@@ -318,6 +318,7 @@ $(function () {
                 tables.push(self.selectedTables()[i]);
                 FixtureDownloadUrl = FixtureDownloadUrl + "table_id="+self.selectedTables()[i]+"&";
             }
+            if (tables.length > 0)
             window.location.replace(FixtureDownloadUrl);
         };
 
