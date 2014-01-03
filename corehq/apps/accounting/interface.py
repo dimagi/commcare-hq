@@ -1,5 +1,5 @@
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
-from corehq.apps.accounting.models import BillingAccount
+from corehq.apps.accounting.models import BillingAccount, Subscription
 from corehq.apps.announcements.forms import HQAnnouncementForm
 from corehq.apps.announcements.models import HQAnnouncement
 from corehq.apps.crud.interface import BaseCRUDAdminInterface
@@ -47,7 +47,8 @@ class AccountingInterface(BaseCRUDAdminInterface):
                          4,
                          5,
                          account.balance,
-                         7,
+                         Subscription.objects.filter(account=account,
+                                                     is_active=True).count(),
                          'edit button!'])
         return rows
 
