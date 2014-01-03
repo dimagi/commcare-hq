@@ -1,3 +1,4 @@
+from django.utils.safestring import mark_safe
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.accounting.models import BillingAccount, Subscription
 from corehq.apps.announcements.forms import HQAnnouncementForm
@@ -49,7 +50,7 @@ class AccountingInterface(BaseCRUDAdminInterface):
                          account.balance,
                          Subscription.objects.filter(account=account,
                                                      is_active=True).count(),
-                         'edit #%d' % account.id])
+                         mark_safe('<a href="./%d" class="btn"></i>Edit</a>' % account.id)])
         return rows
 
     #######
