@@ -11,6 +11,7 @@ from django.core.management.base import BaseCommand
 from django.core.mail import mail_admins
 
 # External imports
+from corehq import privileges
 from django_prbac.models import Grant, Role
 
 logger = logging.getLogger(__name__)
@@ -89,28 +90,22 @@ class Command(BaseCommand):
                 )
 
     BOOTSTRAP_PRIVILEGES = [
-        Role(slug='multimedia', name='Multimedia Support', description=''),
-        Role(slug='app_builder', name='CommCare Application Builder', description=''),
-        Role(slug='commcare_exchange', name='CommCare Exchange', description=''),
-        Role(slug='api_access', name='API Access', description=''),
-        Role(slug='lookup_tables', name='Lookup Tables', description=''),
-        Role(slug='cloudcare', name='Web-based Applications (CloudCare)', description=''),
-        Role(slug='custom_branding', name='Custom Branding', description=''),
-        Role(slug='data_export', name='Data Export', description=''),
-        Role(slug='standard_reports', name='Standard Reports', description=''),
-        Role(slug='cross_project_reports', name='Cross-Project Reports', description=''),
-        Role(slug='custom_reports', name='Custom Reports', description=''),
-        Role(slug='active_data_management', name='Active Data Management', description=''),
-        Role(slug='outbound_messaging', name='Outbound Messaging', description=''),
-        Role(slug='rules_engine', name='Rules Engine', description=''),
-        Role(slug='android_sms_gateway', name='Android-based SMS Gateway', description=''),
-        Role(slug='sms_data_collection', name='SMS Data Collection', description=''),
-        Role(slug='inbound_sms', name='Inbound SMS (where available)', description=''),
-        Role(slug='user_groups', name='User Groups', description=''),
-        Role(slug='role_based_access', name='Role-based Access', description=''),
-        Role(slug='bulk_user_management', name='Bulk User Management', description=''),
-        Role(slug='deidentified_data', name='De-identified Data', description=''),
-        Role(slug='hipaa_compliance_assurance', name='HIPAA Compliance Assurance', description=''),
+        Role(slug=privileges.API_ACCESS, name='API Access', description=''),
+        Role(slug=privileges.LOOKUP_TABLES, name='Lookup Tables', description=''),
+        Role(slug=privileges.CLOUDCARE, name='Web-based Applications (CloudCare)', description=''),
+        Role(slug=privileges.CUSTOM_BRANDING, name='Custom Branding', description=''),
+        Role(slug=privileges.ACTIVE_DATA_MANAGEMENT, name='Active Data Management', description=''),
+        Role(slug=privileges.CROSS_PROJECT_REPORTS, name='Cross-Project Reports', description=''),
+        Role(slug=privileges.CUSTOM_REPORTS, name='Custom Reports', description=''),
+        Role(slug=privileges.ROLE_BASED_ACCESS, name='Role-based Access', description=''),
+        Role(slug=privileges.OUTBOUND_MESSAGING, name='Outbound Messaging', description=''),
+        Role(slug=privileges.RULES_ENGINE, name='Rules Engine', description=''),
+        Role(slug=privileges.ANDROID_SMS_GATEWAY, name='Android-based SMS Gateway', description=''),
+        Role(slug=privileges.SMS_DATA_COLLECTION, name='SMS Data Collection', description=''),
+        Role(slug=privileges.INBOUND_SMS, name='Inbound SMS (where available)', description=''),
+        Role(slug=privileges.BULK_CASE_AND_USER_MANAGEMENT, name='Bulk Case and User Management', description=''),
+        Role(slug=privileges.DEIDENTIFIED_DATA, name='De-identified Data', description=''),
+        Role(slug=privileges.HIPAA_COMPLIANCE_ASSURANCE, name='HIPAA Compliance Assurance', description=''),
     ]
 
     BOOTSTRAP_PLANS = [
@@ -122,37 +117,31 @@ class Command(BaseCommand):
     ]
 
     community_plan_features = [
-        'multimedia',
-        'app_builder',
-        'commcare_exchange',
-        'data_export',
-        'standard_reports',
-        'user_groups',
     ]
 
     standard_plan_features = community_plan_features + [
-        'api_access',
-        'lookup_tables',
-        'cross_project_reports',
-        'outbound_messaging',
-        'rules_engine',
-        'android_sms_gateway',
-        'role_based_access',
-        'bulk_user_management',
+        privileges.API_ACCESS,
+        privileges.LOOKUP_TABLES,
+        privileges.CROSS_PROJECT_REPORTS,
+        privileges.OUTBOUND_MESSAGING,
+        privileges.RULES_ENGINE,
+        privileges.ANDROID_SMS_GATEWAY,
+        privileges.ROLE_BASED_ACCESS,
+        privileges.BULK_CASE_AND_USER_MANAGEMENT,
     ]
 
     pro_plan_features = standard_plan_features + [
-        'cloudcare',
-        'custom_reports',
-        'sms_data_collection',
-        'inbound_sms',
-        'hipaa_compliance_assurance',
-        'deidentified_data',
+        privileges.CLOUDCARE,
+        privileges.CUSTOM_REPORTS,
+        privileges.SMS_DATA_COLLECTION,
+        privileges.INBOUND_SMS,
+        privileges.HIPAA_COMPLIANCE_ASSURANCE,
+        privileges.DEIDENTIFIED_DATA,
     ]
 
     advanced_plan_features = pro_plan_features + [
-        'custom_branding',
-        'active_data_management',
+        privileges.CUSTOM_BRANDING,
+        privileges.ACTIVE_DATA_MANAGEMENT,
     ]
 
     enterprise_plan_features = advanced_plan_features + []
