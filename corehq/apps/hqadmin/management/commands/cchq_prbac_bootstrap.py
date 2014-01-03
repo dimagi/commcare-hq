@@ -23,11 +23,19 @@ class Command(BaseCommand):
                     help='Do not actually modify the database, just verbosely log what happen'),
         make_option('--verbose', action='store_true',  default=False,
                     help='Enable debug output'),
+        make_option('--fresh-start', action='store_true',  default=False,
+                    help='We changed the core v0 plans, wipe all existing plans and start over. USE CAUTION.'),
     )
 
-    def handle(self, dry_run=False, verbose=False, *args, **options):
+    def handle(self, dry_run=False, verbose=False, fresh_start=False, *args, **options):
         if verbose:
             logger.setLevel(logging.DEBUG)
+
+        if fresh_start:
+            confirm_fresh_start = input("Are you sure you want to delete all Roles and start over? You can't do this"
+                                        " if accounting is already set up. Type 'yes' to continue.")
+            if confirm_fresh_start == 'yes':
+                self.flush_roles()
 
         for role in self.BOOTSTRAP_PRIVILEGES + self.BOOTSTRAP_PLANS:
             self.ensure_role(role, dry_run=dry_run)
@@ -35,6 +43,10 @@ class Command(BaseCommand):
         for (plan_role_slug, privs) in self.BOOTSTRAP_GRANTS.items():
             for priv_role_slug in privs:
                 self.ensure_grant(plan_role_slug, priv_role_slug, dry_run=dry_run)
+
+    def flush_roles(self):
+        logger.info('Flushing ALL Roles...')
+        Role.objects.all().delete()
 
     def ensure_role(self, role, dry_run=False):
         """
