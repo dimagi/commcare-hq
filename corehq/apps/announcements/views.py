@@ -103,8 +103,12 @@ class TemplatedEmailer(FormView):
         self.cc = form.cleaned_data['cc']
 
         self.emails = []
-        for context in form.cleaned_data['context']:
-            self.emails.append(self.make_email(context))
+        if not form.cleaned_data['context']:
+            self.emails.append(self.make_email({}))
+        else:
+            for context in form.cleaned_data['context']:
+                self.emails.append(self.make_email(context))
+
         if self.request.POST.get('send', None):
             return self.send_emails(form)
         return self.render_to_response(self.get_context_data(
