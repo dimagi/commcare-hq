@@ -182,12 +182,19 @@ INDICATOR_ADMIN_INTERFACES = (
 
 from corehq.apps.announcements.interface import (
     ManageGlobalHQAnnouncementsInterface,
-    ManageReportAnnouncementsInterface)
+    ManageReportAnnouncementsInterface,
+    AccountingInterface2)
 
 ANNOUNCEMENTS_ADMIN_INTERFACES = (
     (_("Manage Announcements"), (
         ManageGlobalHQAnnouncementsInterface,
-        ManageReportAnnouncementsInterface
+        ManageReportAnnouncementsInterface,
+    )),
+)
+
+ACCOUNTING_ADMIN_INTERFACES = (
+    (_("Manage Announcements"), (
+        AccountingInterface2,
     )),
 )
 
