@@ -193,12 +193,14 @@ ANNOUNCEMENTS_ADMIN_INTERFACES = (
 )
 
 from corehq.apps.accounting.interface import (
-    AccountingInterface
+    AccountingInterface,
+    SubscriptionInterface,
 )
 
 ACCOUNTING_ADMIN_INTERFACES = (
     (_("Manage Announcements"), (
         AccountingInterface,
+        SubscriptionInterface,
     )),
 )
 
