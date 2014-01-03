@@ -49,7 +49,7 @@ class AccountingInterface(BaseCRUDAdminInterface):
                          account.balance,
                          Subscription.objects.filter(account=account,
                                                      is_active=True).count(),
-                         'edit button!'])
+                         'edit #%d' % account.id])
         return rows
 
     #######
