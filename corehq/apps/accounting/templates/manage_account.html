@@ -1,0 +1,28 @@
+{% extends "hqbilling/base_template.html" %}
+{% load url from future %}
+{% load hq_shared_tags %}
+
+{% block page-title %}
+<ul class="breadcrumb">
+    <li>
+        <a href="{% url 'accounting_default' %}"><strong>Accounting</strong></a> <span class="divider">&gt;</span>
+    </li>
+    <li>
+        {{ parent_link|safe }} <span class="divider">&gt;</span>
+    </li>
+    <li class="active">
+        <a href="#">{{ view_title }} <small>{{ billing_range }}</small></a>
+    </li>
+    <li>
+        <a href="">Manage Billing Account <small>{{ account_name }}</small></a>
+    </li>
+</ul>
+{% endblock %}
+
+{% block main_column %}
+hello world
+{% endblock %}
+
+{% block modals %} {{ block.super }}
+
+{% endblock %}
