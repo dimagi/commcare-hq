@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
 from django.http import HttpResponseRedirect, HttpResponse
 from django.template import Context, Template
+from django.utils.decorators import method_decorator
 from django.views.generic import FormView
 
 from corehq.apps.announcements.models import HQAnnouncement
@@ -76,6 +77,10 @@ class EmailForm(forms.Form):
 class TemplatedEmailer(FormView):
     template_name = 'announcements/emailer.html'
     form_class = EmailForm
+
+    @method_decorator(require_superuser)
+    def dispatch(self, *args, **kwargs):
+        return super(TemplatedEmailer, self).dispatch(*args, **kwargs)
 
     def make_email(self, context):
         to = context.get('to', self.to)
