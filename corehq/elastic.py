@@ -189,7 +189,7 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
     return ret_data
 
 
-def es_get(index, domain=None, q=None, fields=None, start_at=None, size=None):
+def es_get(index, domain=None, q=None, doc_type=None, fields=None, start_at=None, size=None):
     """
     This is a flat wrapper for es_query.
     """
@@ -199,14 +199,20 @@ def es_get(index, domain=None, q=None, fields=None, start_at=None, size=None):
         raise IndexError(msg)
     query = {
         'query': {
-            'query_string': {
-                'query': q
+            'fuzzy_like_this': {
+                'like_text': q
             }
         }
     } if q else {}
+
+    params = {}
+    if domain:
+        params['domain.exact'] = domain
+    if doc_type:
+        params['doc_type'] = doc_type
     res = es_query(
         es_url=ES_URLS[index],
-        params={'domain.exact': domain} if domain else None,
+        params=params,
         q=query,
         fields=fields,
         start_at=start_at,
