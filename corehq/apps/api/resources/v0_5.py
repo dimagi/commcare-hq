@@ -10,18 +10,19 @@ from tastypie.validation import Validation
 from corehq.apps.groups.models import Group
 from corehq.apps.sms.util import strip_plus
 from corehq.apps.users.models import CommCareUser, WebUser, CouchUser
+from corehq.elastic import es_wrapper
 
-from ..es import UserESMixin
 from . import v0_1, v0_4
 from . import JsonResource, DomainSpecificResourceMixin
 
 
-class BulkUserResource(UserESMixin, JsonResource, DomainSpecificResourceMixin):
+MOCK_BULK_USER_ES = None
+
+class BulkUserResource(JsonResource, DomainSpecificResourceMixin):
     """
     A read-only user data resource based on elasticsearch.
     Supported Params: limit offset q fields
     """
-    # UserESMixin containst the logic for interacting with ES
     type = "bulk-user"
     id = fields.CharField(attribute='id', readonly=True, unique=True)
     email = fields.CharField(attribute='email')
@@ -57,17 +58,20 @@ class BulkUserResource(UserESMixin, JsonResource, DomainSpecificResourceMixin):
     def obj_get_list(self, bundle, **kwargs):
         request_fields = bundle.request.GET.getlist('fields')
         for field in request_fields:
-            if not (
-                hasattr(BulkUserResource(), field) and \
-                isinstance(getattr(BulkUserResource(), field), fields.ApiField)
-            ):
+            if field not in self.fields:
                 raise BadRequest('{0} is not a valid field'.format(field))
 
         params = bundle.request.GET
         param = lambda p: params.get(p, None)
-        users = self.make_query(
+        fields = self.fields.keys()
+        fields.remove('id')
+        fields.append('_id')
+        fn = MOCK_BULK_USER_ES or es_wrapper
+        users = fn(
+                'users',
                 domain=kwargs['domain'],
                 q=param('q'),
+                fields=fields,
                 size=param('limit'),
                 start_at=param('offset'),
         )
