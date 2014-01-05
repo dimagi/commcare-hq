@@ -189,7 +189,7 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
     return ret_data
 
 
-def es_get(index, domain=None, q=None, doc_type=None, fields=None, start_at=None, size=None):
+def es_wrapper(index, domain=None, q=None, doc_type=None, fields=None, start_at=None, size=None):
     """
     This is a flat wrapper for es_query.
     """

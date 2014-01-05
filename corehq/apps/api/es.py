@@ -264,80 +264,9 @@ class XFormES(ESView):
         return es_results
 
 
-MOCK_USER_ES = None
-class UserESMixin(object):
-    """
-    Usage:
-
-        from corehq.apps.api.es import UserESMixin
-        myobj = UserESMixin()
-        res = myobj.make_query(
-            q='sisko',
-            fields=[u'email', u'first_name'],
-            domain='qwerty',
-            start_at=60,
-            size=20,
-        )
-    
-    You may also want to catch ESUserError.  This will be raised if an invalid
-    query is made - one that errors, or which includes disallowed fields.
-    """
-    allowed_fields = [
-         '_id', 'email', 'username', 'first_name', 'last_name', 'phone_numbers',
-    ]
-    # excluded fields:
-    # 'status', '_rev', 'user_data', 'created_on', 'is_staff', 'base_doc',
-    # 'CURRENT_VERSION', 'date_joined', 'eulas', 'email_opt_out',
-    # 'is_superuser', 'last_login', 'is_active', 'doc_type', 'language',
-    # 'registering_device_id', 'password', 'announcements_seen', 'device_ids'
-    # 'domain', 'domain_membership',
-
-    def get_fields(self, fields):
-        if not fields:
-            return self.allowed_fields
-        for field in fields:
-            if field not in self.allowed_fields:
-                msg = "You cannot include %s in the results" % field
-                raise ESUserError(msg)
-        return fields
-
-    def make_query(self,
-            q=None, fields=None, domain=None, start_at=None, size=None):
-        "Pass a domain parameter to restrict results to that domain"
-
-        # for testing
-        if MOCK_USER_ES is not None:
-            return MOCK_USER_ES.make_query(q=q, fields=fields, domain=domain,
-                start_at=start_at, size=size)
-
-        fields = self.get_fields(fields)
-
-        query = {
-            'query': {
-                'query_string': {
-                    'query': q
-                }
-            }
-        } if q else {}
-
-        res = es_query(
-            es_url=ES_URLS['users'],
-            q=query,
-            fields=fields,
-            start_at=start_at,
-            size=size or 100,
-            params={'domain.exact': domain} if domain else None,
-        )
-        if 'error' in res:
-            msg = res['error']
-            raise ESUserError(msg)
-        return [u['fields'] for u in res['hits']['hits']]
-
-
-class UserES(UserESMixin, ESView):
+class UserES(ESView):
     """
     self.run_query accepts a structured elasticsearch query
-    self.make_query builds an es request for you based on the parameters
     """
 
     index = "hqusers"

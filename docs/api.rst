@@ -3,8 +3,8 @@ API
 .. TODO: describe lucene syntax for ES resources
     Add other resources
 
-Bulk User Resource:
-~~~~~~~~~~~~~~~~~~~
+Bulk User Resource
+~~~~~~~~~~~~~~~~~~
 | Resource name: ``bulk_user``
 | First version available: ``v0.5``
 
@@ -22,7 +22,7 @@ Currently the default fields returned are::
 Supported Parameters:
 .....................
 
- * ``q`` - Lucene-formatted query string
+ * ``q`` - query string
  * ``limit`` - maximum number of results returned
  * ``offset`` - Use with ``limit`` to paginate results
  * ``fields`` - restrict the fields returned to a specified set
@@ -35,4 +35,7 @@ This will return the first and last names and usernames for users matching the q
 
 | Additional notes:
 | It is simple to add more fields if there arises a significant use case.
-| Potential future plans: Support filtering in addition to querying.  Add an order_by option
+| Potential future plans:
+    Support filtering in addition to querying.
+    Support different types of querying.
+    Add an order_by option
