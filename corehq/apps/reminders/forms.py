@@ -1915,14 +1915,12 @@ class RecordListField(Field):
     help_text = None
     
     # When initialized, expects to be passed kwarg input_name, which is the first dot-separated name of all related records in the html form
-    
-    def __init__(self, required=True, label="", initial=[], widget=None, help_text="", *args, **kwargs):
-        self.required = required
-        self.label = label
-        self.initial = initial
-        self.widget = RecordListWidget(attrs={"input_name" : kwargs["input_name"]})
-        self.help_text = help_text
-    
+
+    def __init__(self, *args, **kwargs):
+        input_name = kwargs.pop('input_name')
+        kwargs['widget'] = RecordListWidget(attrs={"input_name" : input_name})
+        super(RecordListField, self).__init__(*args, **kwargs)
+
     def clean(self, value):
         return value
 

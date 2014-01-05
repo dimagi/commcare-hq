@@ -105,6 +105,7 @@ MIDDLEWARE_CLASSES = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'corehq.middleware.OpenRosaMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
+    'corehq.apps.domain.middleware.CCHQPRBACMiddleware',
     'casexml.apps.phone.middleware.SyncTokenMiddleware',
     'auditcare.middleware.AuditMiddleware',
     'no_exceptions.middleware.NoExceptionsMiddleware',
@@ -171,6 +172,8 @@ HQ_APPS = (
     'casexml.apps.phone',
     'corehq.apps.cleanup',
     'corehq.apps.cloudcare',
+    'corehq.apps.smsbillables',
+    'corehq.apps.accounting',
     'corehq.apps.appstore',
     'corehq.apps.domain',
     'corehq.apps.domainsync',
@@ -306,6 +309,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'casexml.apps.case',
     'casexml.apps.phone',
     'couchforms',
+    'couchexport',
     'ctable',
     'ctable_view',
     'dimagi.utils',
@@ -485,6 +489,8 @@ ANALYTICS_IDS = {
     'PINGDOM_ID': ''
 }
 
+OPEN_EXCHANGE_RATES_ID = ''
+
 # for touchforms maps
 GMAPS_API_KEY = "changeme"
 
@@ -631,6 +637,16 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
+        'smsbillables': {
+            'handlers': ['file', 'sentry'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'currency_update': {
+            'handlers': ['file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
     }
 }
 
@@ -667,9 +683,6 @@ _dynamic_db_settings = get_dynamic_db_settings(COUCH_SERVER_ROOT, COUCH_USERNAME
 # create local server and database configs
 COUCH_SERVER = _dynamic_db_settings["COUCH_SERVER"]
 COUCH_DATABASE = _dynamic_db_settings["COUCH_DATABASE"]
-
-# other urls that depend on the server
-XFORMS_POST_URL = _dynamic_db_settings["XFORMS_POST_URL"]
 
 COUCHDB_APPS = [
     'adm',

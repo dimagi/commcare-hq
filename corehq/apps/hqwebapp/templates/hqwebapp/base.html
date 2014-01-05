@@ -28,10 +28,14 @@
     
         {% block page_imports %}
         {% endblock %}
-        {% if GOOGLE_ANALYTICS_ID %}
         <script type="text/javascript">
             var _gaq = _gaq || [];
+        </script>
+
+        {% if GOOGLE_ANALYTICS_ID %}
+        <script type="text/javascript">
             _gaq.push(['_setAccount', '{{ GOOGLE_ANALYTICS_ID }}']);
+            _gaq.push(['_setDomainName', 'none']);
             _gaq.push(['_trackPageview']);
             {% if domain %}_gaq.push(['_setCustomVar', 1, 'domain', '{{ domain }}', 3]);{% endif %}
             {% if request.user.is_authenticated %}_gaq.push(['_setCustomVar', 1, 'uuid', '{{ request.user.id }}', 3]);{% endif %}
@@ -250,11 +254,11 @@
                         <div class="control-group">
                             <div class="controls">
                                 <label class="checkbox">
-                                    <input data-bind="checked: enabled" name="enable" type="checkbox"> Enable Keyboard Shortcuts
+                                    <input data-bind="checked: $data.enabled" name="enable" type="checkbox"> Enable Keyboard Shortcuts
                                 </label>
                             </div>
                         </div>
-                        <div data-bind="visible: enabled" class="control-group">
+                        <div data-bind="visible: $data.enabled" class="control-group">
                             <label class="control-label" for="main-key">Choose Shortcut Key</label>
                             <div class="controls">
                                 <select name="main-key">
@@ -336,7 +340,7 @@
 
             var KEYBOARD_SHORTCUTS = [
                 {
-                    shortcut: "option+`, ctrl+`, command+`",
+                    shortcut: "option+space, ctrl+space, command+space",
                     handler: configure_keyboard_shortcuts,
                     desc: "Open Keyboard Configuration"
                 }

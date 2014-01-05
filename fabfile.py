@@ -37,6 +37,8 @@ ROLES_TOUCHFORMS = ['django_monolith', 'formsplayer']
 ROLES_STATIC = ['django_monolith', 'staticfiles']
 ROLES_DB_ONLY = ['pg', 'django_monolith']
 
+PROD_PROXIES = ['hqproxy0.internal.commcarehq.org', 'hqproxy2.internal.commcarehq.org']
+
 if env.ssh_config_path and os.path.isfile(os.path.expanduser(env.ssh_config_path)):
     env.use_ssh_config = True
 
@@ -257,7 +259,7 @@ def production():
         # will remove hqdjango0 once we verify it works well on hqdb0
         'formsplayer': ['hqtouch0.internal.commcarehq.org', 'hqdb0.internal.commcarehq.org'],
         'lb': [],
-        'staticfiles': ['hqproxy0.internal.commcarehq.org', 'hqproxy1.internal.commcarehq.org'],
+        'staticfiles': PROD_PROXIES,
         # having deploy here makes it so that
         # we don't get prompted for a host or run deploy too many times
         'deploy': ['hqdb0.internal.commcarehq.org'],
@@ -272,7 +274,7 @@ def production():
     # Gets auto-populated by what_os()
     # if you don't know what it is or don't want to specify.
     env.host_os_map = None
-    env.roles = ['deploy']
+    env.roles = ['deploy']  # this line should be commented out when running bootstrap on a new machine
     env.es_endpoint = 'hqes0.internal.commcarehq.org'''
     env.flower_port = 5555
 
@@ -304,7 +306,7 @@ def staging():
 
         'formsplayer': ['hqdjango1-staging.internal.commcarehq.org'],
         'lb': [],
-        'staticfiles': ['hqproxy0.internal.commcarehq.org', 'hqproxy1.internal.commcarehq.org'],
+        'staticfiles': PROD_PROXIES,
         'deploy': ['hqdb0-staging.internal.commcarehq.org'],
         # fab complains if this doesn't exist
         'django_monolith': [],
@@ -355,7 +357,7 @@ def preview():
 
         'formsplayer': ['hqdjango0-preview.internal.commcarehq.org'],
         'lb': [],
-        'staticfiles': ['hqproxy0.internal.commcarehq.org', 'hqproxy1.internal.commcarehq.org'],
+        'staticfiles': PROD_PROXIES,
         'deploy': ['hqdb0-preview.internal.commcarehq.org'],
         'django_monolith': [],
     }

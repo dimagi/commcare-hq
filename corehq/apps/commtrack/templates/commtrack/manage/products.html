@@ -5,7 +5,7 @@
 
 {% block js %}{{ block.super }}
     <script src="{% static 'users/js/key_filters.js' %}"></script>
-    <script src="{% static 'commtrack/ko/products.async.js' %}"></script>
+    <script src="{% static 'commtrack/ko/products_and_programs.async.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -25,10 +25,10 @@
                     return help_text[$(this).attr('data-help-key')];
                 }
             });
-            $('#product-list').asyncProductList({
-                total: {{ product_list.total }},
-                start_page: {{ product_list.page }},
-                limit: {{ product_list.limit }},
+            $('#product-list').asyncProgramProductList({
+                total: {{ data_list.total }},
+                start_page: {{ data_list.page }},
+                limit: {{ data_list.limit }},
                 show_inactive: {{ show_inactive|yesno:"true,false" }},
                 list_url: '{% url "commtrack_product_fetch" domain %}'
             });
@@ -48,6 +48,7 @@
                 {% if show_inactive %}{% trans 'Showing the Inactive Product List.' %}{% endif %}
             </p>
             {% endif %}
+         </div>
     </div>
 </header>
 
@@ -71,7 +72,7 @@
     </div>
 
     <div class="hide hide-until-load">
-    <div class="row-fluid" data-bind="visible: product_list().length">
+    <div class="row-fluid" data-bind="visible: data_list().length">
         <div class="span4">
             <div class="form-inline" style="margin: 1.6em 0;">
                 <label for="pagination-limit">{% trans 'Show' %}</label>
@@ -89,31 +90,31 @@
 
     <div class="row-fluid">
         <div class="span12">
-            <div id="user-list-notification" data-bind="visible: !product_list().length" class="alert alert-info">
+            <div id="user-list-notification" data-bind="visible: !data_list().length" class="alert alert-info">
                 {% if show_inactive %}
                     {% blocktrans %}There are no inactive products for this project.{% endblocktrans %}
                 {% else %}
                     {% blocktrans %}There are no products for this project yet.{% endblocktrans %}
                 {% endif %}
             </div>
-            <table data-bind="visible: product_list().length" class="table table-striped table-bordered" style="margin-bottom:0">
+            <table data-bind="visible: data_list().length" class="table table-striped table-bordered" style="margin-bottom:0">
                 <thead>
                     <tr>
                         <th></th>
                         <th>{% trans "Product" %}</th>
                         <th>{% trans "Keyword" %}</th>
-                        <th>{% trans "Category" %}</th>
+                        <th>{% trans "Program" %}</th>
                         <th>{% trans "Description" %}</th>
                         <th>{% trans "Units" %}</th>
                     </tr>
                 </thead>
-                <tbody data-bind="foreach: product_list">
+                <tbody data-bind="foreach: data_list">
                     <tr>
                         <td data-bind="text: $parent.get_user_index($index)"></td>
 
                     <td><a data-bind="attr: {href: edit_url}, text: name"></a></td>
                     <td data-bind="text: code"></td>
-                    <td data-bind="text: category"></td>
+                    <td data-bind="text: program"></td>
                     <td data-bind="text: description"></td>
                     <td data-bind="text: unit"></td>
 
