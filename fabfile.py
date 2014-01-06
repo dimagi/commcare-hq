@@ -991,6 +991,7 @@ def set_pillowtop_supervisorconf():
         # just rely on what's on staging
         _rebuild_supervisor_conf_file('make_supervisor_pillowtop_conf', 'supervisor_pillowtop.conf')
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_kafka.conf')
+    _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_couchpulse_consumer.conf')
 
 
 @roles(*ROLES_DJANGO)
