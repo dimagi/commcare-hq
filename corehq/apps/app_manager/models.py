@@ -734,6 +734,7 @@ class DetailColumn(IndexedSchema):
             'model': 'case',
             'field': 'sex',
             'format': 'enum',
+            'xpath': '.',
             'enum': [
                 {'key': 'm', 'value': {'en': 'Male', 'por': 'Macho'},
                 {'key': 'f', 'value': {'en': 'Female', 'por': 'Fêmea'},
@@ -750,6 +751,7 @@ class DetailColumn(IndexedSchema):
 
     late_flag = IntegerProperty(default=30)
     advanced = StringProperty(default="")
+    calc_xpath = StringProperty(default=".")
     filter_xpath = StringProperty(default="")
     time_ago_interval = FloatProperty(default=365.25)
 
