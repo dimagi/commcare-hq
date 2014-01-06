@@ -36,7 +36,7 @@ class ManageBillingAccountView(TemplateView):
     template_name = 'manage_account.html'
 
     def get_context_data(self):
-        account = BillingAccount.objects.get(id=2)
+        account = BillingAccount.objects.get(id=self.args[0])
         return dict(account=account,
                     form=BillingAccountForm(account),
                     parent_link='<a href="%s">%s<a>' % (AccountingInterface.get_url(), AccountingInterface.name),
