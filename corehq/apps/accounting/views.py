@@ -1,5 +1,6 @@
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
+from django.views.generic import TemplateView
 from corehq import AccountingInterface
 from corehq.apps.accounting.forms import BillingAccountForm
 from corehq.apps.accounting.models import BillingAccount
@@ -28,3 +29,15 @@ def manage_billing_account(request, account_id):
                   dict(account=account,
                        form=BillingAccountForm(account),
                        parent_link=parent_link))
+
+
+# make sure to require superuser
+class ManageBillingAccountView(TemplateView):
+    template_name = 'manage_account.html'
+
+    def get_context_data(self):
+        account = BillingAccount.objects.get(id=2)
+        return dict(account=account,
+                    form=BillingAccountForm(account),
+                    parent_link='<a href="%s">%s<a>' % (AccountingInterface.get_url(), AccountingInterface.name),
+                    )
