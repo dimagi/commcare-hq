@@ -14,6 +14,7 @@ DATABASES = {
 
 ### Reporting database
 SQL_REPORTING_DATABASE_URL = "postgresql://username:****@localhost:5432/commcarehq_reporting"
+COUCHPULSE_DATABASE_URL = "postgresql://username:****@localhost:5432/couchpulse"
 
 ####### Couch Config ######
 COUCH_HTTPS = False # recommended production value is True if enabling https
