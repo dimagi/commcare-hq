@@ -41,3 +41,6 @@ class ManageBillingAccountView(TemplateView):
                     form=BillingAccountForm(account),
                     parent_link='<a href="%s">%s<a>' % (AccountingInterface.get_url(), AccountingInterface.name),
                     )
+
+    def post(self, request, *args, **kwargs):
+        pass
