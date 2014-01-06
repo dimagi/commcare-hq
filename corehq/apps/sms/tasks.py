@@ -11,8 +11,13 @@ from corehq.apps.domain.models import Domain
 from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.couch.cache import cache_core
 
-def set_error(msg):
+ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS = "TOO_MANY_UNSUCCESSFUL_ATTEMPTS"
+ERROR_MESSAGE_IS_STALE = "MESSAGE_IS_STALE"
+ERROR_INVALID_DIRECTION = "INVALID_DIRECTION"
+
+def set_error(msg, system_error_message=None):
     msg.error = True
+    msg.system_error_message = system_error_message
     msg.save()
 
 def handle_unsuccessful_processing_attempt(msg):
@@ -20,7 +25,7 @@ def handle_unsuccessful_processing_attempt(msg):
     if msg.num_processing_attempts < settings.SMS_QUEUE_MAX_PROCESSING_ATTEMPTS:
         delay_processing(msg, settings.SMS_QUEUE_REPROCESS_INTERVAL)
     else:
-        set_error(msg)
+        set_error(msg, ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS)
 
 def handle_successful_processing_attempt(msg):
     msg.num_processing_attempts += 1
@@ -75,6 +80,14 @@ def handle_domain_specific_delays(msg, domain_object, utcnow):
 
     return False
 
+def message_is_stale(msg, utcnow):
+    oldset_allowable_datetime = \
+        utcnow - timedelta(hours=settings.SMS_QUEUE_STALE_MESSAGE_DURATION)
+    if isinstance(msg.date, datetime):
+        return msg.date < oldest_allowable_datetime
+    else:
+        return True
+
 def handle_outgoing(msg):
     def onerror():
         logging.exception("Exception while processing SMS %s" % msg._id)
@@ -96,6 +109,9 @@ def process_sms(message_id):
     """
     message_id - _id of an SMSLog entry
     """
+    # Note that Redis error/exception notifications go out from the
+    # run_sms_queue command, so no need to send them out here
+    # otherwise we'd get too many emails.
     rcache = cache_core.get_redis_default_cache()
     if not isinstance(rcache, RedisCache):
         return
@@ -111,6 +127,11 @@ def process_sms(message_id):
 
     if message_lock.acquire(blocking=False):
         msg = SMSLog.get(message_id)
+
+        if message_is_stale(msg, utcnow):
+            set_error(msg, ERROR_MESSAGE_IS_STALE)
+            message_lock.release()
+            return
 
         if msg.direction == OUTGOING:
             domain_object = Domain.get_by_name(msg.domain, strict=True)
@@ -131,7 +152,7 @@ def process_sms(message_id):
             elif msg.direction == INCOMING:
                 handle_incoming(msg)
             else:
-                set_error(msg)
+                set_error(msg, ERROR_INVALID_DIRECTION)
 
             if recipient_block:
                 recipient_lock.release()

@@ -484,6 +484,10 @@ SMS_QUEUE_MAX_PROCESSING_ATTEMPTS = 3
 # domain restricts sending SMS to certain days/times.
 SMS_QUEUE_DOMAIN_RESTRICTED_RETRY_INTERVAL = 15
 
+# The number of hours to wait before counting a message as stale. Stale
+# messages will not be processed.
+SMS_QUEUE_STALE_MESSAGE_DURATION = 7 * 24
+
 #auditcare parameters
 AUDIT_MODEL_SAVE = [
     'corehq.apps.app_manager.Application',

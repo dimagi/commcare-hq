@@ -46,6 +46,7 @@ class MessageLog(SafeSaveDocument, UnicodeMixIn):
     datetime_to_process = DateTimeProperty()
     num_processing_attempts = IntegerProperty(default=0)
     error = BooleanProperty(default=False)
+    system_error_message = StringProperty()
     # If the message was simulated from a domain, this is the domain
     domain_scope = StringProperty()
 
@@ -207,7 +208,7 @@ class CallLog(MessageLog):
     duration = IntegerProperty() # Length of the call in seconds
     gateway_session_id = StringProperty() # This is the session id returned from the backend
     xforms_session_id = StringProperty()
-    error_message = StringProperty()
+    error_message = StringProperty() # Error message from the gateway, if any
     submit_partial_form = BooleanProperty(default=False) # True to submit a partial form on hangup if it's not completed yet
     include_case_side_effects = BooleanProperty(default=False)
     max_question_retries = IntegerProperty() # Max number of times to retry a question with an invalid response before hanging up
