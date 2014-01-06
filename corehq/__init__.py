@@ -198,7 +198,7 @@ from corehq.apps.accounting.interface import (
 )
 
 ACCOUNTING_ADMIN_INTERFACES = (
-    (_("Manage Announcements"), (
+    (_("Accounting Admin"), (
         AccountingInterface,
         SubscriptionInterface,
     )),
