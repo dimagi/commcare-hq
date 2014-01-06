@@ -128,12 +128,20 @@ def queue_outgoing_sms(msg, onerror=lambda: None):
             msg.processed = False
             msg.datetime_to_process = msg.date
             msg.save()
-            from corehq.apps.sms.management.commands.run_sms_queue import SMSEnqueuingOperation
-            SMSEnqueuingOperation().enqueue_directly(msg)
-            return True
         except:
             onerror()
             return False
+
+        try:
+            from corehq.apps.sms.management.commands.run_sms_queue import SMSEnqueuingOperation
+            SMSEnqueuingOperation().enqueue_directly(msg)
+        except:
+            # If this direct enqueue fails, no problem, it will get picked up
+            # shortly. But we should still return True because the message will
+            # get sent eventually.
+            pass
+
+        return True
     else:
         msg.processed = True
         return send_message_via_backend(msg, onerror=onerror)
