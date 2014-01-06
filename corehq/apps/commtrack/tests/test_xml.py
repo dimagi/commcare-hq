@@ -20,7 +20,8 @@ from corehq.apps.commtrack.tests.data.balances import (
     transfer_neither,
     balance_first,
     transfer_first,
-    create_requisition_xml
+    create_requisition_xml,
+    create_fulfillment_xml
 )
 
 
@@ -157,7 +158,7 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
 
 class CommTrackRequisitionTest(CommTrackSubmissionTest):
 
-    def test_create_requisition(self):
+    def test_create_and_fulfill_requisition(self):
         amounts = [(p._id, 50.0 + float(i*10)) for i, p in enumerate(self.products)]
         self.submit_xml_form(create_requisition_xml(amounts))
         req_cases = list(get_cases_in_domain(self.domain.name, type=const.REQUISITION_CASE_TYPE))
@@ -169,3 +170,11 @@ class CommTrackRequisitionTest(CommTrackSubmissionTest):
         self.assertEqual('parent_id', index.identifier)
         for product, amt in amounts:
             self.check_stock_models(req, product, amt, amt)
+
+        self.submit_xml_form(create_fulfillment_xml(req, amounts))
+
+        for product, amt in amounts:
+            self.check_stock_models(req, product, 0, -amt)
+
+        for product, amt in amounts:
+            self.check_product_stock(self.sp, product, amt, amt)
