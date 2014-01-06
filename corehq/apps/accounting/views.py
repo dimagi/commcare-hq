@@ -3,7 +3,7 @@ from django.shortcuts import render
 from django.views.generic import TemplateView
 from corehq import AccountingInterface
 from corehq.apps.accounting.forms import BillingAccountForm
-from corehq.apps.accounting.models import BillingAccount
+from corehq.apps.accounting.models import BillingAccount, Currency
 from corehq.apps.domain.decorators import require_superuser
 
 
@@ -43,4 +43,9 @@ class ManageBillingAccountView(TemplateView):
                     )
 
     def post(self, request, *args, **kwargs):
-        pass
+        account = BillingAccount.objects.get(id=self.args[0])
+        account.name = self.request.POST['client_name']
+        account.salesforce_account_id = self.request.POST['salesforce_account_id']
+        account.currency, _ = Currency.objects.get_or_create(code=self.request.POST['currency'])
+        account.save()
+        return self.get(request, *args, **kwargs)
