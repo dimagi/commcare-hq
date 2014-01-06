@@ -26,5 +26,5 @@ def manage_billing_account(request, account_id):
     return render(request,
                   template,
                   dict(account=account,
-                       form=BillingAccountForm(),
+                       form=BillingAccountForm(account),
                        parent_link=parent_link))
