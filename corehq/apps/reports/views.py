@@ -104,6 +104,7 @@ def saved_reports(request, domain, template="reports/reports_home.html"):
         return hasattr(rn, "_id") and rn._id and (not hasattr(rn, 'report_slug') or rn.report_slug != 'admin_domains')
 
     scheduled_reports = [rn for rn in ReportNotification.by_domain_and_owner(domain, user._id) if _is_valid(rn)]
+    scheduled_reports = sorted(scheduled_reports, key=lambda rn: rn.configs[0].name)
 
     context = dict(
         couch_user=request.couch_user,
