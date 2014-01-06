@@ -50,7 +50,7 @@ class AccountingInterface(BaseCRUDAdminInterface):
                          account.balance,
                          Subscription.objects.filter(account=account,
                                                      is_active=True).count(),
-                         mark_safe('<a href="./%d" class="btn"></i>Edit</a>' % account.id)])
+                         mark_safe('<a href="./%d" class="btn">Edit</a>' % account.id)])
         return rows
 
     #######
