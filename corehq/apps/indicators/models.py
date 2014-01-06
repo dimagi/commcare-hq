@@ -100,7 +100,8 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
             namespace=namespace,
             domain=domain,
             slug=slug,
-            reverse=True
+            reverse=True,
+            **kwargs
         )
 
         existing_indicator = cls.view(
