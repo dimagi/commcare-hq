@@ -20,7 +20,8 @@ def _enabled_hack(domain):
 class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Stock Status by Product')
     slug = 'current_stock_status'
-    fields = ['corehq.apps.reports.fields.AsyncLocationField']
+    fields = ['corehq.apps.reports.fields.AsyncLocationField',
+              'corehq.apps.reports.fields.SelectProgramField']
     exportable = True
     emailable = True
 
@@ -46,7 +47,8 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     def get_prod_data(self):
         startkey = [self.domain, self.active_location._id if self.active_location else None]
         product_cases = SPPCase.view('commtrack/product_cases', startkey=startkey, endkey=startkey + [{}], include_docs=True)
-
+        if self.program_id:
+            product_cases = filter(lambda c: Product.get(c.product).program_id == self.program_id, product_cases)
         cases_by_product = map_reduce(lambda c: [(c.product,)], data=product_cases, include_docs=True)
         products = Product.view('_all_docs', keys=cases_by_product.keys(), include_docs=True)
 
@@ -97,7 +99,8 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
 class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Inventory')
     slug = StockStatusDataSource.slug
-    fields = ['corehq.apps.reports.fields.AsyncLocationField']
+    fields = ['corehq.apps.reports.fields.AsyncLocationField',
+              'corehq.apps.reports.fields.SelectProgramField']
     exportable = True
     emailable = True
 
@@ -119,12 +122,14 @@ class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     @property
     def product_data(self):
         if getattr(self, 'prod_data', None) is None:
+            self.prod_data = []
             config = {
                 'domain': self.domain,
                 'location_id': self.request.GET.get('location_id'),
+                'program_id': self.request.GET.get('program'),
                 'aggregate': True
             }
-            self.prod_data = list(StockStatusDataSource(config).get_data())
+            self.prod_data = self.prod_data + list(StockStatusDataSource(config).get_data())
         return self.prod_data
 
     @property
@@ -154,7 +159,8 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Reporting Rate')
     slug = 'reporting_rate'
     fields = ['corehq.apps.reports.fields.AsyncLocationField',
-              'corehq.apps.reports.filters.dates.DatespanFilter']
+              'corehq.apps.reports.fields.SelectProgramField',
+              'corehq.apps.reports.filters.dates.DatespanFilter',]
     exportable = True
     emailable = True
 
@@ -179,6 +185,7 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
         config = {
             'domain': self.domain,
             'location_id': self.request.GET.get('location_id'),
+            'program_id': self.request.GET.get('program'),
             'start_date': self.request.GET.get('startdate'),
             'end_date': self.request.GET.get('enddate'),
         }

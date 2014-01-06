@@ -22,7 +22,7 @@ class UserLocMapTest(CommTrackTest):
         self.ct_user = CommTrackUser.wrap(self.user.to_json())
 
         self.loc = make_loc('secondloc')
-        self.sp = make_supply_point(self.domain, self.loc)
+        self.sp = make_supply_point(self.domain.name, self.loc)
         self.cache = LocationCache()
         self.mapping = UserLocMapping(self.user.username, self.user.domain, self.cache)
 

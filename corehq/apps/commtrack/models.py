@@ -4,7 +4,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from couchdbkit.ext.django.schema import *
 from django.utils.translation import ugettext as _
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.xml import V1, V2
+from casexml.apps.case.xml import V2
 from corehq import Domain
 
 from corehq.apps.commtrack import const
@@ -71,7 +71,22 @@ class Program(Document):
     domain = StringProperty()
     name = StringProperty()
     code = StringProperty()
-    description = StringProperty()
+
+    @classmethod
+    def by_domain(cls, domain, wrap=True):
+        """
+        Gets all programs in a domain.
+        """
+        kwargs = dict(
+            view_name='commtrack/programs',
+            startkey=[domain],
+            endkey=[domain, {}],
+            include_docs=True
+        )
+        if wrap:
+            return Program.view(**kwargs)
+        else:
+            return [row["doc"] for row in Program.view(wrap_doc=False, **kwargs)]
 
     @classmethod
     def get_by_code(cls, domain, code):
@@ -102,23 +117,36 @@ class Product(Document):
         return result
 
     @classmethod
-    def by_domain(cls, domain, wrap=True):
+    def by_program_id(cls, domain, prog_id, wrap=True, **kwargs):
+        kwargs.update(dict(
+            view_name='commtrack/product_by_program_id',
+            startkey=[domain, prog_id],
+            endkey=[domain, {}],
+            include_docs=True
+        ))
+        if wrap:
+            return Product.view(**kwargs)
+        else:
+            return [row["doc"] for row in Product.view(wrap_doc=False, **kwargs)]
+
+    @classmethod
+    def by_domain(cls, domain, wrap=True, **kwargs):
         """
         Gets all products in a domain.
         """
-        kwargs = dict(
+        kwargs.update(dict(
             view_name='commtrack/products',
             startkey=[domain],
             endkey=[domain, {}],
             include_docs=True
-        )
+        ))
         if wrap:
             return Product.view(**kwargs)
         else:
             return [row["doc"] for row in Product.view(wrap_doc=False, **kwargs)]
 
 
-def product_fixture_generator(user, version=V1, last_sync=None):
+def product_fixture_generator(user, version, last_sync):
     if not Domain.get_by_name(user.domain).commtrack_enabled:
         return []
     root = ElementTree.Element('fixture',

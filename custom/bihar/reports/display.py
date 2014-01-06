@@ -5,7 +5,7 @@ from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
 from casexml.apps.case.models import CommCareCase
 from django.utils.translation import ugettext as _
 import logging
-from custom.bihar.calculations.utils.xmlns import BP, NEW, MTB_ABORT, DELIVERY, REGISTRATION
+from custom.bihar.calculations.utils.xmlns import BP, NEW, MTB_ABORT, DELIVERY, REGISTRATION, PNC
 from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.users.models import CommCareUser, CouchUser
 
@@ -112,21 +112,31 @@ class MCHMotherDisplay(MCHDisplay):
         jsy_money = None
 
         for form in forms:
-            form_dict = form.get_form
+            form_dict = form.form
             form_xmlns = form_dict["@xmlns"]
 
             if NEW in form_xmlns:
                 setattr(self, "_caste", get_property(form_dict, "caste"))
             elif DELIVERY in form_xmlns:
-                setattr(self, "_home_sba_assist", get_property(form_dict, "home_sba_assist"))
+                if get_property(form_dict, "where_born") != 'home':
+                    setattr(self, "_home_sba_assist", get_property(form_dict, "where_born"))
+                else:
+                    setattr(self, "_home_sba_assist", get_property(form_dict, "home_sba_assist"))
+
                 setattr(self, "_delivery_nature", get_property(form_dict, "delivery_nature"))
                 setattr(self, "_discharge_date", get_property(form_dict, "discharge_date"))
                 setattr(self, "_jsy_money_date", get_property(form_dict, "jsy_money_date"))
                 setattr(self, "_delivery_complications", get_property(form_dict, "delivery_complications"))
-                setattr(self, "_family_planning_type", get_property(form_dict, "family_planing_type"))
-                setattr(self, "_all_pnc_on_time", get_property(form_dict, "all_pnc_on_time"))
+                setattr(self, "_family_planning_type", get_property(form_dict, "family_planning_type"))
+
                 jsy_money = get_property(form_dict, "jsy_money")
                 children_count = int(get_property(form_dict, "cast_num_children", 0))
+
+                if children_count == 0:
+                    setattr(self, "_num_children", 'still_birth')
+                else:
+                    setattr(self, "_num_children", children_count)
+
                 child_list = []
                 if children_count == 1 and "child_info" in form_dict:
                     child_list.append(form_dict["child_info"])
@@ -141,9 +151,11 @@ class MCHMotherDisplay(MCHDisplay):
                     setattr(self, "_breastfed_hour_%s" % (idx+1), get_property(child, "breastfed_hour"))
                     if case_child:
                         setattr(self, "_case_name_%s" % (idx+1), get_property(case_child, "name"))
-                        setattr(self, " _gender_%s" % (idx+1), get_property(case_child, "gender"))
+                        setattr(self, "_gender_%s" % (idx+1), get_property(case_child, "gender"))
             elif REGISTRATION in form_xmlns:
                 jsy_beneficiary = get_property(form_dict, "jsy_beneficiary")
+            elif PNC in form_xmlns:
+                setattr(self, "_all_pnc_on_time", get_property(form_dict['case']['update'], "all_pnc_on_time"))
 
             elif BP in form_xmlns:
                 if "bp1" in form_dict:
@@ -152,14 +164,21 @@ class MCHMotherDisplay(MCHDisplay):
                         if "anc%s" % i in bp:
                             anc = bp["anc%s" % i]
                             if "anc%s_blood_pressure" % i in anc:
+                                if anc["anc%s_blood_pressure" % i] == 'high_bloodpressure':
+                                    anc["anc%s_blood_pressure" % i] = 'high'
+
                                 setattr(self, "_blood_pressure_%s" % i, anc["anc%s_blood_pressure" % i])
                             if "anc%s_weight" % i in anc:
                                 setattr(self, "_weight_%s" % i, str(anc["anc%s_weight" % i]))
                             if "anc%s_hemoglobin" % i in anc and i == 1:
                                 setattr(self, "_hemoglobin", anc["anc%s_hemoglobin" % i])
-                setattr(self, "_anemia", get_property(form_dict, "anemia"))
+                    setattr(self, "_anemia", get_property(bp, "anaemia"))
+
+                if "bp2" in form_dict:
+                    bp = form_dict["bp2"]
+                    setattr(self, "_rti_sti", get_property(bp, "rti_sti"))
+
                 setattr(self, "_complications", get_property(form_dict, "bp_complications"))
-                setattr(self, "_rti_sti", get_property(form_dict, "rti_sti"))
             elif MTB_ABORT in form_xmlns:
                 setattr(self, "_abortion_type", get_property(form_dict, "abortion_type"))
 
@@ -248,7 +267,7 @@ class MCHMotherDisplay(MCHDisplay):
 
     @property
     def tt_booster(self):
-        return self.parse_date(get_property(self.case, "tt_booster"))
+        return self.parse_date(get_property(self.case, "tt_booster_date"))
 
     @property
     def ifa_tablets(self):
@@ -276,11 +295,11 @@ class MCHMotherDisplay(MCHDisplay):
 
     @property
     def discharge_date(self):
-        return getattr(self, "_discharge_date", EMPTY_FIELD)
+        return self.parse_date(str(getattr(self, "_discharge_date", EMPTY_FIELD)))
 
     @property
     def jsy_money_date(self):
-        return getattr(self, "_jsy_money_date", EMPTY_FIELD)
+        return self.parse_date(str(getattr(self, "_jsy_money_date", EMPTY_FIELD)))
 
     @property
     def delivery_complications(self):
@@ -451,13 +470,16 @@ class MCHChildDisplay(MCHDisplay):
                     setattr(self, "_mobile_number_whose", number)
 
                 for form in forms:
-                    form_dict = form.get_form
+                    form_dict = form.form
                     form_xmlns = form_dict["@xmlns"]
 
                     if NEW in form_xmlns:
                         setattr(self, "_caste", get_property(form_dict, "caste"))
                     elif DELIVERY in form_xmlns:
-                        setattr(self, "_home_sba_assist", get_property(form_dict, "home_sba_assist"))
+                        if get_property(form_dict, "where_born") != 'home':
+                            setattr(self, "_home_sba_assist", get_property(form_dict, "where_born"))
+                        else:
+                            setattr(self, "_home_sba_assist", get_property(form_dict, "home_sba_assist"))
 
             except ResourceNotFound:
                 logging.error("ResourceNotFound: " + case_dict["indices"][0]["referenced_id"])

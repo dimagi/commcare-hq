@@ -3,7 +3,7 @@ from django.utils.translation import ugettext_noop, ugettext as _
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Fieldset, ButtonHolder, Submit
 
-from corehq.apps.commtrack.models import Product
+from corehq.apps.commtrack.models import Product, Program
 from corehq.apps.commtrack.util import all_sms_codes
 
 
@@ -24,13 +24,16 @@ class ProductForm(forms.Form):
     name = forms.CharField(max_length=100)
     code = forms.CharField(label='SMS Code', max_length=10)
     description = forms.CharField(max_length=500, required=False)
-    category = forms.CharField(max_length=100, required=False)
+    program_id = forms.ChoiceField(label="Program", choices=(), required=True)
     cost = CurrencyField(max_digits=8, decimal_places=2, required=False)
 
     def __init__(self, product, *args, **kwargs):
         self.product = product
         kwargs['initial'] = self.product._doc
         super(ProductForm, self).__init__(*args, **kwargs)
+        programs = Program.by_domain(self.product.domain, wrap=False)
+        self.fields['program_id'].choices = tuple((prog['_id'], prog['name']) for prog in programs)
+
 
     def clean_name(self):
         name = self.cleaned_data['name']
@@ -67,7 +70,7 @@ class ProductForm(forms.Form):
 
         product = instance or self.product
 
-        for field in ('name', 'code', 'category', 'description', 'cost'):
+        for field in ('name', 'code', 'program_id', 'description', 'cost'):
             setattr(product, field, self.cleaned_data[field])
 
         if commit:
@@ -135,3 +138,33 @@ class AdvancedSettingsForm(forms.Form):
         )
 
         forms.Form.__init__(self, *args, **kwargs)
+
+class ProgramForm(forms.Form):
+    name = forms.CharField(max_length=100)
+
+    def __init__(self, program, *args, **kwargs):
+        self.program = program
+        kwargs['initial'] = self.program._doc
+        super(ProgramForm, self).__init__(*args, **kwargs)
+
+    def clean_name(self):
+        name = self.cleaned_data['name']
+
+        other_programs = [p for p in Program.by_domain(self.program.domain) if p._id != self.program._id]
+        if name in [p.name for p in other_programs]:
+            raise forms.ValidationError(_('Name already in use'))
+
+        return name
+
+    def save(self, instance=None, commit=True):
+        if self.errors:
+            raise ValueError(_('Form does not validate'))
+
+        program = instance or self.program
+
+        setattr(program, 'name', self.cleaned_data['name'])
+
+        if commit:
+            program.save()
+
+        return program

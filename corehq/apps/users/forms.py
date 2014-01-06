@@ -13,7 +13,7 @@ from corehq.apps.locations.models import Location
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.app_manager.models import validate_lang
-from corehq.apps.commtrack.models import CommTrackUser
+from corehq.apps.commtrack.models import CommTrackUser, Program
 import re
 
 
@@ -282,6 +282,7 @@ class SupplyPointSelectWidget(forms.Widget):
 
 class CommtrackUserForm(forms.Form):
     supply_point = forms.CharField(label='Supply Point:', required=False)
+    program_id = forms.ChoiceField(label="Program", choices=(), required=False)
 
     def __init__(self, *args, **kwargs):
         domain = None
@@ -290,6 +291,10 @@ class CommtrackUserForm(forms.Form):
             del kwargs['domain']
         super(CommtrackUserForm, self).__init__(*args, **kwargs)
         self.fields['supply_point'].widget = SupplyPointSelectWidget(domain=domain)
+        programs = Program.by_domain(domain, wrap=False)
+        choices = list((prog['_id'], prog['name']) for prog in programs)
+        choices.insert(0, ('', ''))
+        self.fields['program_id'].choices = choices
 
     def save(self, user):
         commtrack_user = CommTrackUser.wrap(user.to_json())

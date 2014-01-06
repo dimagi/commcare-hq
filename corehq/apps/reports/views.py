@@ -394,7 +394,7 @@ def add_config(request, domain=None):
         POST['days'] = 30
     elif POST.get('days'):
         POST['days'] = int(POST['days'])
-  
+
     exclude_filters = ['startdate', 'enddate']
     for field in exclude_filters:
         POST['filters'].pop(field, None)
@@ -411,7 +411,13 @@ def add_config(request, domain=None):
     for field in config.properties().keys():
         if field in POST:
             setattr(config, field, POST[field])
-    
+
+    if POST.get('days') or date_range == 'lastmonth':  # remove start and end date if the date range is "last xx days"
+        if "start_date" in config:
+            delattr(config, "start_date")
+        if "end_date" in config:
+            delattr(config, "end_date")
+
     config.save()
 
     touch_saved_reports_views(request.couch_user, domain)
@@ -644,6 +650,8 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
             'content': content
         })
 
+    date_range = config.get_date_range()
+
     return render(request, "reports/report_email.html", {
         "reports": report_outputs,
         "domain": domain,
@@ -652,8 +660,8 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
         "owner_name": couch_user.full_name or couch_user.get_email(),
         "email": email,
         "notes": notes,
-        "startdate": config.start_date,
-        "enddate": config.end_date,
+        "startdate": date_range["startdate"] if date_range else "",
+        "enddate": date_range["enddate"] if date_range else "",
     }), excel_attachments
 
 @login_and_domain_required
@@ -836,7 +844,7 @@ def form_data(request, domain, instance_id):
     context = _get_form_context(request, domain, instance_id)
 
     try:
-        form_name = context['instance'].get_form["@name"]
+        form_name = context['instance'].form["@name"]
     except KeyError:
         form_name = "Untitled Form"
    
