@@ -659,7 +659,7 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
         "DNS_name": get_url_base(),
         "owner_name": couch_user.full_name or couch_user.get_email(),
         "email": email,
-        "notes": notes,
+        "notes": notes or getattr(config, "description", ""),
         "startdate": date_range["startdate"] if date_range else "",
         "enddate": date_range["enddate"] if date_range else "",
     }), excel_attachments
