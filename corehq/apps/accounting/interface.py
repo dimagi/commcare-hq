@@ -86,15 +86,16 @@ class SubscriptionInterface(BaseCRUDAdminInterface):
     @property
     def headers(self):
         return DataTablesHeader(
-            DataTablesColumn("Software Plan"),
-            DataTablesColumn("Product"),
-            DataTablesColumn("Client Name"),
             DataTablesColumn("Project Space"),
+            DataTablesColumn("Client Name"),
+            DataTablesColumn("Version"),
+            DataTablesColumn("Description"),
+            DataTablesColumn("Account Name"),
             DataTablesColumn("Start Date"),
             DataTablesColumn("End Date"),
             DataTablesColumn("Active Status"),
-            DataTablesColumn("Show Default Plans Only"),
-            DataTablesColumn("Plan Visibility"),
+            DataTablesColumn("Visibility"),
+            DataTablesColumn("Is Default for Product?"),
             DataTablesColumn("Edit"),
         )
 
@@ -102,16 +103,18 @@ class SubscriptionInterface(BaseCRUDAdminInterface):
     def rows(self):
         rows = []
         for subscription in Subscription.objects.all():
-            rows.append([subscription.plan.plan.name,
-                         "product",
+            rows.append([subscription.subscriber.domain,
                          subscription.account.name,
-                         subscription.subscriber.domain,
+                         subscription.plan.plan.name,
+                         subscription.plan.plan.description,
+                         mark_safe('<a href="../accounts/%d">%s</a>'
+                                   % (subscription.account.id, subscription.account.name)),
                          subscription.date_start,
                          subscription.date_end,
                          subscription.is_active,
-                         "checkbox",
                          subscription.plan.plan.visibility,
-                         mark_safe('<a href="./%d" class="btn"></i>Edit</a>' % subscription.id)])
+                         "MISSING VALUE",
+                         mark_safe('<a href="./%d" class="btn">Edit</a>' % subscription.id)])
         return rows
 
     #######
