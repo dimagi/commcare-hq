@@ -18,9 +18,9 @@ def dummy_user_xml():
         </user_data>
     </Registration>"""
     
-def dummy_restore_xml(restore_id, case_xml="", items=0):
+def dummy_restore_xml(restore_id, case_xml=""):
         return """
-<OpenRosaResponse xmlns="http://openrosa.org/http/response" items="%(items)s">
+<OpenRosaResponse xmlns="http://openrosa.org/http/response">
     <message nature="ota_restore_success">Successfully restored account mclovin!</message>
     <Sync xmlns="http://commcarehq.org/sync">
         <restore_id>%(restore_id)s</restore_id> 
@@ -28,7 +28,6 @@ def dummy_restore_xml(restore_id, case_xml="", items=0):
     %(user_xml)s
     %(case_xml)s
 </OpenRosaResponse>""" % {"restore_id": restore_id,
-                          "items": items,
                           "user_xml": dummy_user_xml(),
                           "case_xml": case_xml}
     
