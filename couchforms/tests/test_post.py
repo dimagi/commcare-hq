@@ -24,6 +24,10 @@ class PostTest(TestCase):
             if any_id_ok:
                 result['_id'] = xform_json['_id']
             self.assertDictEqual(xform_json, result)
+        except Exception:
+            # to help when bootstrapping a new test case
+            print json.dumps(xform_json)
+            raise
         finally:
             xform.delete()
 
@@ -50,3 +54,6 @@ class PostTest(TestCase):
 
     def test_namespaces(self):
         self._test('namespaces', any_id_ok=True)
+
+    def test_unicode(self):
+        self._test('unicode', any_id_ok=True)
