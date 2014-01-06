@@ -1,5 +1,5 @@
 import hashlib
-from couchdbkit import ResourceConflict
+from couchdbkit import ResourceConflict, resource
 import datetime
 from django.http import HttpResponse, HttpResponseServerError, HttpResponseBadRequest, HttpResponseForbidden, HttpRequest
 import couchforms
@@ -86,12 +86,12 @@ def create_xform_from_xml(xml_string, _id=None):
     json_form = convert_xform_to_json(xml_string)
 
     xform = XFormInstance(
-        _attachments={
+        _attachments=resource.encode_attachments({
             "form.xml": {
                 "content_type": "text/xml",
                 "data": xml_string,
             },
-        },
+        }),
         form=json_form,
         xmlns=json_form.get('@xmlns'),
         received_on=datetime.datetime.utcnow(),
@@ -100,7 +100,7 @@ def create_xform_from_xml(xml_string, _id=None):
     _id = _id or _extract_meta_instance_id(json_form)
     if _id:
         xform._id = _id
-    xform.save()
+    xform.save(encode_attachments=False)
     return xform.get_id
 
 
