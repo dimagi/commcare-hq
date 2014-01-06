@@ -28,12 +28,6 @@
             {% crispy form %}
         </form>
     </div>
-
-    <div class="form-block">
-        <div>Date Created: {{ account.date_created }}</div>
-        <div>Account Type: {{ account.account_type }}</div>
-        <div>Current Account Balance: {{ account.balance }}</div>
-    </div>
 {% endblock %}
 
 {% block modals %} {{ block.super }}

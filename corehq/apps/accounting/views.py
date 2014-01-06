@@ -1,9 +1,10 @@
+import datetime
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.views.generic import TemplateView
 from corehq import AccountingInterface, SubscriptionInterface
-from corehq.apps.accounting.forms import BillingAccountForm
-from corehq.apps.accounting.models import BillingAccount, Currency
+from corehq.apps.accounting.forms import BillingAccountForm, SubscriptionForm
+from corehq.apps.accounting.models import BillingAccount, Currency, Subscription
 from corehq.apps.domain.decorators import require_superuser
 
 
@@ -57,8 +58,22 @@ class EditSubscriptionView(TemplateView):
     template_name = 'edit_subscription.html'
 
     def get_context_data(self):
-        account = BillingAccount.objects.get(id=self.args[0])
-        return dict(account=account,
-                    form=BillingAccountForm(account),
+        subscription = Subscription.objects.get(id=self.args[0])
+        return dict(form=SubscriptionForm(subscription),
                     parent_link='<a href="%s">%s<a>' % (SubscriptionInterface.get_url(), SubscriptionInterface.name),
                     )
+
+    def post(self, request, *args, **kwargs):
+        # TODO validate data
+        subscription = Subscription.objects.get(id=self.args[0])
+        subscription.date_start = datetime.datetime(int(self.request.POST['start_date_year']),
+                                                    int(self.request.POST['start_date_month']),
+                                                    int(self.request.POST['start_date_day']))
+        subscription.date_end = datetime.datetime(int(self.request.POST['end_date_year']),
+                                                  int(self.request.POST['end_date_month']),
+                                                  int(self.request.POST['end_date_day']))
+        subscription.date_delay_invoicing = datetime.datetime(int(self.request.POST['delay_invoice_until_year']),
+                                                              int(self.request.POST['delay_invoice_until_month']),
+                                                              int(self.request.POST['delay_invoice_until_day']))
+        subscription.save()
+        return self.get(request, *args, **kwargs)
