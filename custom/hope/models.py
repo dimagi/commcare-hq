@@ -73,7 +73,7 @@ class HOPECase(CommCareCase):
     @property
     def _HOPE_admission_date(self):
         if self.delivery_forms:
-            return self.delivery_forms[0].get_form.get('adm_date')
+            return self.delivery_forms[0].form.get('adm_date')
         else:
             return None
 
@@ -121,7 +121,7 @@ class HOPECase(CommCareCase):
 
     @property
     def _HOPE_area_indicator(self):
-        return self.registration_form.get_form.get('area_indicator') if self.registration_form else None
+        return self.registration_form.form.get('area_indicator') if self.registration_form else None
 
     @property
     def _HOPE_asha_id(self):
@@ -150,7 +150,7 @@ class HOPECase(CommCareCase):
         if not add:
             return None
         elif self.delivery_forms:
-            return self.delivery_forms[-1].get_form.get('delivery_nature')
+            return self.delivery_forms[-1].form.get('delivery_nature')
         else:
             return None
 
@@ -175,7 +175,7 @@ class HOPECase(CommCareCase):
     @property
     def _HOPE_education(self):
         if self.registration_form:
-            return self.registration_form.get_form.get('education')
+            return self.registration_form.form.get('education')
         else:
             return None
 
@@ -183,7 +183,7 @@ class HOPECase(CommCareCase):
     def _HOPE_existing_child_count(self):
         reg_form = self.registration_form
 
-        num_girls = reg_form.get_form.get('num_girls', 0) if reg_form else 0
+        num_girls = reg_form.form.get('num_girls', 0) if reg_form else 0
         num_boys = self.get_case_property('num_boys') or 0
 
         # The form fields are strings; the coercion to int is deliberately
@@ -205,7 +205,7 @@ class HOPECase(CommCareCase):
         ifa_issue_forms = []
 
         for form in self.bp_forms:
-            ifa_tablets_issued = form.get_form.get('bp1', {}).get('ifa_tablets_issued')
+            ifa_tablets_issued = form.form.get('bp1', {}).get('ifa_tablets_issued')
 
             try:
                 ifa_tablets_issued = int(ifa_tablets_issued)
@@ -245,7 +245,7 @@ class HOPECase(CommCareCase):
             return 0
 
         return len([form for form in self.pnc_forms + self.ebf_forms
-                    if (form.get_form.get("meta")['timeEnd'].date() - add).days <= 42])
+                    if (form.form.get("meta")['timeEnd'].date() - add).days <= 42])
 
     @property
     def _HOPE_opv_1_indicator(self):
@@ -254,14 +254,14 @@ class HOPECase(CommCareCase):
     @property
     def _HOPE_registration_date(self):
         if self.delivery_forms:
-            return  self.delivery_forms[-1].get_form.get('registration_date')
+            return  self.delivery_forms[-1].form.get('registration_date')
         else:
             return None
 
     @property
     def _HOPE_time_of_birth(self):
         if self.delivery_forms:
-            return self.delivery_forms[0].get_form.get('time_of_birth')
+            return self.delivery_forms[0].form.get('time_of_birth')
         else:
             return None
 

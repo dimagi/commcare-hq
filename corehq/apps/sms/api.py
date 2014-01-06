@@ -1,10 +1,12 @@
 import logging
 from django.conf import settings
+from celery.task import task
 
 from dimagi.utils.modules import to_function
 from corehq.apps.sms.util import clean_phone_number, create_billable_for_sms, format_message_list, clean_text
 from corehq.apps.sms.models import SMSLog, OUTGOING, INCOMING, ForwardingRule, FORWARD_ALL, FORWARD_BY_KEYWORD, WORKFLOW_KEYWORD
 from corehq.apps.sms.mixin import MobileBackend, VerifiedNumber
+from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.domain.models import Domain
 from datetime import datetime
 
@@ -146,6 +148,12 @@ def queue_outgoing_sms(msg, onerror=lambda: None):
         msg.processed = True
         return send_message_via_backend(msg, onerror=onerror)
 
+
+@task
+def store_billable(msg):
+    SmsBillable.create(msg)
+
+
 def send_message_via_backend(msg, backend=None, onerror=lambda: None):
     """send sms using a specific backend
 
@@ -179,6 +187,7 @@ def send_message_via_backend(msg, backend=None, onerror=lambda: None):
         except Exception:
             pass
         msg.save()
+        store_billable.delay(msg)
         return True
     except Exception:
         onerror()
@@ -293,9 +302,9 @@ def process_incoming(msg, delay=True):
                 'Attempted to simulate incoming sms from phone number not ' \
                 'verified with this domain'
             )
-
+    store_billable.delay(msg)
     create_billable_for_sms(msg, msg.backend_api, delay=delay)
-    
+
     if v is not None and v.verified:
         for h in settings.SMS_HANDLERS:
             try:
@@ -306,8 +315,8 @@ def process_incoming(msg, delay=True):
 
             try:
                 was_handled = handler(v, msg.text, msg=msg)
-            except:
-                logging.exception('unhandled error in sms handler %s for message [%s]' % (h, msg._id))
+            except Exception, e:
+                logging.exception('unhandled error in sms handler %s for message [%s]: %s' % (h, msg._id, e))
                 was_handled = False
 
             if was_handled:

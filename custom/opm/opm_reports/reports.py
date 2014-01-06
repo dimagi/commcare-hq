@@ -11,6 +11,7 @@ import datetime
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin 
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
+from corehq.apps.reports.filters.select import SelectOpenCloseFilter
 from corehq.apps.users.models import CommCareUser, CommCareCase
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
@@ -67,6 +68,10 @@ class BaseReport(MonthYearMixin, GenericTabularReport, CustomProjectReport):
     @property
     @memoized
     def snapshot(self):
+        # Don't load snapshot if filtering by current case status,
+        # instead, calculate again.
+        if self.filter_data.get('is_open', False):
+            return None
         return OpmReportSnapshot.from_view(self)
 
     @property
@@ -135,8 +140,24 @@ class BeneficiaryPaymentReport(BaseReport):
     slug = 'beneficiary_payment_report'
     model = Beneficiary
 
+    @property
+    def fields(self):
+        return super(BeneficiaryPaymentReport, self).fields + [SelectOpenCloseFilter]
+
+    # TODO: Switch to ES.  Peformance aaah!
     def get_rows(self, datespan):
-        return CommCareCase.get_all_cases(DOMAIN, include_docs=True)
+        cases = CommCareCase.get_all_cases(DOMAIN, include_docs=True)
+        return [case for case in cases if self.passes_filter(case)]
+
+    def passes_filter(self, case):
+        status = self.filter_data.get('is_open', None)
+        if status:
+            if status == 'open' and not case.closed:
+                return True
+            elif status == 'closed' and case.closed:
+                return True
+            return False
+        return True
 
 
 class IncentivePaymentReport(BaseReport):

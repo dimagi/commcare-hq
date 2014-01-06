@@ -19,7 +19,7 @@ def reporting_status(case, start_date, end_date):
     last_reported = getattr(case, 'last_reported', None)
     if last_reported and last_reported.date() < start_date:
         return 'ontime'
-    elif last_reported and start_date <= last_reported <= end_date:
+    elif last_reported and start_date <= last_reported.date() <= end_date:
         return 'late'
     else:
         return 'nonreporting'
@@ -46,6 +46,14 @@ class CommtrackDataSourceMixin(object):
             return Product.get(prod_id)
 
     @property
+    @memoized
+    def program_id(self):
+        prog_id = self.config.get('program_id')
+        if prog_id != '':
+            return prog_id
+
+
+    @property
     def start_date(self):
         date = self.config.get('start_date')
         if date:
@@ -56,6 +64,7 @@ class CommtrackDataSourceMixin(object):
         date = self.config.get('end_date')
         if date:
             return datetime.strptime(date, '%Y-%m-%d').date()
+
 
 class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
     """
@@ -107,7 +116,8 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             startkey.append(self.active_product['_id'])
 
         product_cases = SPPCase.view('commtrack/product_cases', startkey=startkey, endkey=startkey + [{}], include_docs=True)
-
+        if self.program_id:
+            product_cases = filter(lambda c: Product.get(c.product).program_id == self.program_id, product_cases)
         if self.config.get('aggregate'):
             return self.aggregate_cases(product_cases, slugs)
         else:
@@ -209,7 +219,8 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                                      startkey=startkey,
                                      endkey=startkey + [{}],
                                      include_docs=True)
-
+        if self.program_id:
+            product_cases = filter(lambda c: Product.get(c.product).program_id == self.program_id, product_cases)
         def latest_case(cases):
             # getting last report date should probably be moved to a util function in a case wrapper class
             return max(cases, key=lambda c: getattr(c, 'last_reported', datetime(2000, 1, 1)).date())

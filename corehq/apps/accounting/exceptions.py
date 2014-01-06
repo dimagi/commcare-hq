@@ -1,0 +1,2 @@
+class HQAccountingSetupError(Exception):
+    pass

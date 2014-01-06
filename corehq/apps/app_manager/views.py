@@ -243,7 +243,7 @@ def copy_app_check_domain(req, domain):
 
 @login_and_domain_required
 def copy_app(req, domain):
-    return copy_app_check_domain(req, req.GET.get('domain'))
+    return copy_app_check_domain(req, req.GET.get('domain', ''))
 
 @login_and_domain_required
 def import_app(req, domain, template="app_manager/import_app.html"):
