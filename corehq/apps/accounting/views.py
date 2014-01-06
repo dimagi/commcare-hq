@@ -31,7 +31,7 @@ def manage_billing_account(request, account_id):
                        parent_link=parent_link))
 
 
-# make sure to require superuser
+# TODO make sure to require superuser
 class ManageBillingAccountView(TemplateView):
     template_name = 'manage_account.html'
 
@@ -43,9 +43,11 @@ class ManageBillingAccountView(TemplateView):
                     )
 
     def post(self, request, *args, **kwargs):
+        # TODO validate data
         account = BillingAccount.objects.get(id=self.args[0])
         account.name = self.request.POST['client_name']
         account.salesforce_account_id = self.request.POST['salesforce_account_id']
         account.currency, _ = Currency.objects.get_or_create(code=self.request.POST['currency'])
+        # TODO save answer to "Save invoices automatically?"
         account.save()
         return self.get(request, *args, **kwargs)
