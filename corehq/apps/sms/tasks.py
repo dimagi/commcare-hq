@@ -141,7 +141,10 @@ def process_sms(message_id):
 
         # Process inbound SMS from a single contact one at a time
         recipient_block = msg.direction == INCOMING
-        if not msg.processed and msg.datetime_to_process < utcnow:
+        if (isinstance(msg.processed, bool)
+            and not msg.processed
+            and not msg.error
+            and msg.datetime_to_process < utcnow):
             if recipient_block:
                 recipient_lock = get_lock(client, 
                     "sms-queue-recipient-%s" % msg.couch_recipient)
