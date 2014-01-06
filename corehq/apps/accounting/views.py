@@ -1,7 +1,7 @@
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.views.generic import TemplateView
-from corehq import AccountingInterface
+from corehq import AccountingInterface, SubscriptionInterface
 from corehq.apps.accounting.forms import BillingAccountForm
 from corehq.apps.accounting.models import BillingAccount, Currency
 from corehq.apps.domain.decorators import require_superuser
@@ -51,3 +51,14 @@ class ManageBillingAccountView(TemplateView):
         # TODO save answer to "Save invoices automatically?"
         account.save()
         return self.get(request, *args, **kwargs)
+
+
+class EditSubscriptionView(TemplateView):
+    template_name = 'edit_subscription.html'
+
+    def get_context_data(self):
+        account = BillingAccount.objects.get(id=self.args[0])
+        return dict(account=account,
+                    form=BillingAccountForm(account),
+                    parent_link='<a href="%s">%s<a>' % (SubscriptionInterface.get_url(), SubscriptionInterface.name),
+                    )
