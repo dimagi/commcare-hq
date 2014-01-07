@@ -26,12 +26,12 @@ class BillingAccountType(object):
 
 
 class FeatureType(object):
-    USER = "USER"
+    USER = "User"
     SMS = "SMS"
     API = "API"
     CHOICES = (
-        (USER, "Users"),
-        (SMS, "SMS"),
+        (USER, USER),
+        (SMS, SMS),
     )
 
 
@@ -40,9 +40,9 @@ class SoftwareProductType(object):
     COMMTRACK = "CommTrack"
     COMMCONNECT = "CommConnect"
     CHOICES = (
-        (COMMCARE, "CommCare"),
-        (COMMTRACK, "CommTrack"),
-        (COMMCONNECT, "CommConnect"),
+        (COMMCARE, COMMCARE),
+        (COMMTRACK, COMMTRACK),
+        (COMMCONNECT, COMMCONNECT),
     )
 
     @classmethod
