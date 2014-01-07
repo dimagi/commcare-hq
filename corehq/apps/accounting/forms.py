@@ -33,7 +33,7 @@ class BillingAccountForm(forms.Form):
                     'autosend_invoices',
                 ),
                 ButtonHolder(
-                    Submit('submit', 'Create Mobile Worker') #TODO fix
+                    Submit('submit', 'Update Account')
                 )
             )
         )
