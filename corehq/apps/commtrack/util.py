@@ -128,22 +128,22 @@ def bootstrap_commtrack_settings_if_necessary(domain, requisitions_enabled=False
             enabled=True,
             actions=[
                 CommtrackActionConfig(
-                    action='request',
+                    action=RequisitionActions.REQUEST,
                     keyword='req',
                     caption='Request',
                 ),
                 CommtrackActionConfig(
-                    action='approved',
+                    action=RequisitionActions.APPROVAL,
                     keyword='approve',
                     caption='Approved',
                 ),
                 CommtrackActionConfig(
-                    action='packed',
+                    action=RequisitionActions.PACK,
                     keyword='pack',
                     caption='Packed',
                 ),
                 CommtrackActionConfig(
-                    action='req_received',
+                    action=RequisitionActions.RECEIPTS,
                     keyword='rec',
                     caption='Requisition Receipts',
                 ),
