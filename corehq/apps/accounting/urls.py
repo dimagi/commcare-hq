@@ -1,7 +1,7 @@
 from django.conf.urls.defaults import *
 from corehq import AccountingAdminInterfaceDispatcher
 from corehq.apps.accounting.dispatcher import SubscriptionAdminInterfaceDispatcher
-from corehq.apps.accounting.views import ManageBillingAccountView, EditSubscriptionView, NewBillingAccountView
+from corehq.apps.accounting.views import ManageBillingAccountView, EditSubscriptionView, NewBillingAccountView, ManageAccountSubscriptions
 
 
 urlpatterns = patterns('corehq.apps.accounting.views',
@@ -9,6 +9,7 @@ urlpatterns = patterns('corehq.apps.accounting.views',
     url(r'^accounting_default/$', 'accounting_default', name='accounting_default'),
     url(r'^accounts/(\d+)/', ManageBillingAccountView.as_view(), name='manage_billing_account'),
     url(r'^accounts/new/', NewBillingAccountView.as_view()),
+    url(r'^accounts/manage_subscriptions/', ManageAccountSubscriptions.as_view(), name='manage_account_subscriptions'),
     url(r'^subscriptions/(\d+)/', EditSubscriptionView.as_view()),
     url(AccountingAdminInterfaceDispatcher.pattern(), AccountingAdminInterfaceDispatcher.as_view(),
         name=AccountingAdminInterfaceDispatcher.name()),

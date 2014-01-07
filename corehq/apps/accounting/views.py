@@ -79,6 +79,14 @@ class ManageBillingAccountView(TemplateView):
         return self.get(request, *args, **kwargs)
 
 
+class ManageAccountSubscriptions(TemplateView):
+    template_name = 'manage_account_subscriptions.html'
+
+    def get_context_data(self):
+        return dict(parent_link='<a href="%s">%s<a>' % (AccountingInterface.get_url(), AccountingInterface.name),
+                    subscription_list=Subscription.objects.all())
+
+
 class EditSubscriptionView(TemplateView):
     template_name = 'edit_subscription.html'
 
