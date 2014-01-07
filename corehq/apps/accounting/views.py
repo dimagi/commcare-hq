@@ -1,4 +1,5 @@
 import datetime
+from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.views.generic import TemplateView
@@ -30,6 +31,26 @@ def manage_billing_account(request, account_id):
                   dict(account=account,
                        form=BillingAccountForm(account),
                        parent_link=parent_link))
+
+
+class NewBillingAccountView(TemplateView):
+    template_name = 'new_account.html'
+
+    def get_context_data(self):
+        return dict(form=BillingAccountForm(None),
+                    parent_link='<a href="%s">%s<a>' % (AccountingInterface.get_url(), AccountingInterface.name),
+                    )
+
+    def post(self, request, *args, **kwargs):
+        # TODO validate data
+        name = self.request.POST['client_name']
+        salesforce_account_id = self.request.POST['salesforce_account_id']
+        currency, _ = Currency.objects.get_or_create(code=self.request.POST['currency'])
+        account = BillingAccount(name=name,
+                                 salesforce_account_id=salesforce_account_id,
+                                 currency=currency)
+        account.save()
+        return HttpResponseRedirect(reverse('manage_billing_account', args=(account.id,)))
 
 
 # TODO make sure to require superuser
