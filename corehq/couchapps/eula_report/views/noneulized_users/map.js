@@ -1,5 +1,5 @@
 function (doc) {
-    if (doc.base_doc === "CouchUser" && (!doc.hasOwnProperty("eula") || !doc.eula.signed)) {
+    if (doc.base_doc === "CouchUser") {
         var EULA_VERSION = "2.0"; // hardcoding this isn't the best idea but I can't think of a better way
         if (doc.hasOwnProperty("eulas")) {
             for (var i = 0; i < doc.eulas.length; i++) {
