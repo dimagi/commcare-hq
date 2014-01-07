@@ -1,4 +1,3 @@
-
 LOOKUP_TABLES = 'lookup_tables'
 API_ACCESS = 'api_access'
 
@@ -12,11 +11,10 @@ CUSTOM_REPORTS = 'custom_reports'
 
 ROLE_BASED_ACCESS = 'role_based_access'
 
-OUTBOUND_MESSAGING = 'outbound_messaging'
-RULES_ENGINE = 'rules_engine'
-ANDROID_SMS_GATEWAY = 'android_sms_gateway'
+OUTBOUND_SMS = 'outbound_sms'
+REMINDERS_FRAMEWORK = 'reminders_framework'
+CUSTOM_SMS_GATEWAY = 'custom_sms_gateway'
 INBOUND_SMS = 'inbound_sms'
-SMS_DATA_COLLECTION = 'sms_data_collection'
 
 BULK_CASE_AND_USER_MANAGEMENT = 'bulk_case_and_user_management'
 
