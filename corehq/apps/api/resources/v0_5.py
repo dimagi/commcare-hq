@@ -147,14 +147,16 @@ class GroupResource(v0_4.GroupResource):
             raise ImmediateHttpResponse(response=http.HttpMethodNotAllowed())
 
         bundles_seen = []
-
+        status = http.HttpAccepted
         for data in deserialized[collection_name]:
 
             data = self.alter_deserialized_detail_data(request, data)
             bundle = self.build_bundle(data=dict_strip_unicode_keys(data), request=request)
             try:
+
                 self.obj_create(bundle=bundle, **self.remove_api_resource_names(kwargs))
             except Exception as ex:
+                status = http.HttpBadRequest
                 bundle.data['_id'] = ex.message
             bundles_seen.append(bundle)
 
@@ -162,7 +164,7 @@ class GroupResource(v0_4.GroupResource):
             return http.HttpAccepted()
         else:
             to_be_serialized = [bundle.data['_id'] for bundle in bundles_seen]
-            return self.create_response(request, to_be_serialized, response_class=http.HttpAccepted)
+            return self.create_response(request, to_be_serialized, response_class=status)
 
     def _update(self, bundle):
         should_save = False
