@@ -81,7 +81,7 @@ def handle_domain_specific_delays(msg, domain_object, utcnow):
     return False
 
 def message_is_stale(msg, utcnow):
-    oldset_allowable_datetime = \
+    oldest_allowable_datetime = \
         utcnow - timedelta(hours=settings.SMS_QUEUE_STALE_MESSAGE_DURATION)
     if isinstance(msg.date, datetime):
         return msg.date < oldest_allowable_datetime

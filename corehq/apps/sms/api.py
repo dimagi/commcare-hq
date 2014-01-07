@@ -124,6 +124,15 @@ def send_sms_with_backend_name(domain, phone_number, text, backend_name, **kwarg
         logging.exception("Exception while sending SMS to %s with backend name %s from domain %s" % (phone_number, backend_name, domain))
     return queue_outgoing_sms(msg, onerror=onerror)
 
+def enqueue_directly(msg):
+    try:
+        from corehq.apps.sms.management.commands.run_sms_queue import SMSEnqueuingOperation
+        SMSEnqueuingOperation().enqueue_directly(msg)
+    except:
+        # If this direct enqueue fails, no problem, it will get picked up
+        # shortly.
+        pass
+
 def queue_outgoing_sms(msg, onerror=lambda: None):
     if settings.SMS_QUEUE_ENABLED:
         try:
@@ -134,15 +143,7 @@ def queue_outgoing_sms(msg, onerror=lambda: None):
             onerror()
             return False
 
-        try:
-            from corehq.apps.sms.management.commands.run_sms_queue import SMSEnqueuingOperation
-            SMSEnqueuingOperation().enqueue_directly(msg)
-        except:
-            # If this direct enqueue fails, no problem, it will get picked up
-            # shortly. But we should still return True because the message will
-            # get sent eventually.
-            pass
-
+        enqueue_directly(msg)
         return True
     else:
         msg.processed = True
@@ -278,8 +279,7 @@ def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None,
         msg.processed = False
         msg.datetime_to_process = datetime.utcnow()
         msg.save()
-        from corehq.apps.sms.management.commands.run_sms_queue import SMSEnqueuingOperation
-        SMSEnqueuingOperation().enqueue_directly(msg)
+        enqueue_directly(msg)
     else:
         msg.processed = True
         msg.save()
