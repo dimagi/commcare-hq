@@ -29,7 +29,7 @@ openpyxl==1.5.6
 Pillow==2.0.0
 phonenumbers==5.1b1
 poster==0.8.1
-psycopg2==2.4.1
+psycopg2==2.5.2
 http://files.dimagi.com/pygooglechart-0.3.0.tar.gz
 python-dateutil==1.5
 python-magic==0.4.2
