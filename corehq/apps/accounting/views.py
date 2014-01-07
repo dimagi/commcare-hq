@@ -7,6 +7,7 @@ from corehq import AccountingInterface, SubscriptionInterface
 from corehq.apps.accounting.forms import BillingAccountForm, SubscriptionForm
 from corehq.apps.accounting.models import BillingAccount, Currency, Subscription
 from corehq.apps.domain.decorators import require_superuser
+from corehq.apps.users.models import WebUser
 
 
 @require_superuser
@@ -46,9 +47,11 @@ class NewBillingAccountView(TemplateView):
         name = self.request.POST['client_name']
         salesforce_account_id = self.request.POST['salesforce_account_id']
         currency, _ = Currency.objects.get_or_create(code=self.request.POST['currency'])
+        web_user_contact = self.request.POST['web_user_contact']
         account = BillingAccount(name=name,
                                  salesforce_account_id=salesforce_account_id,
-                                 currency=currency)
+                                 currency=currency,
+                                 web_user_contact=web_user_contact)
         account.save()
         return HttpResponseRedirect(reverse('manage_billing_account', args=(account.id,)))
 
@@ -70,6 +73,7 @@ class ManageBillingAccountView(TemplateView):
         account.name = self.request.POST['client_name']
         account.salesforce_account_id = self.request.POST['salesforce_account_id']
         account.currency, _ = Currency.objects.get_or_create(code=self.request.POST['currency'])
+        account.web_user_contact = self.request.POST['web_user_contact']
         # TODO save answer to "Save invoices automatically?"
         account.save()
         return self.get(request, *args, **kwargs)
