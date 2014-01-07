@@ -55,14 +55,15 @@ class SubscriptionForm(forms.Form):
 
     def __init__(self, subscription, *args, **kwargs):
         super(SubscriptionForm, self).__init__(*args, **kwargs)
-        self.fields['start_date'].initial = subscription.date_start
-        self.fields['end_date'].initial = subscription.date_end
-        self.fields['delay_invoice_until'].initial = subscription.date_delay_invoicing
+        if subscription is not None:
+            self.fields['start_date'].initial = subscription.date_start
+            self.fields['end_date'].initial = subscription.date_end
+            self.fields['delay_invoice_until'].initial = subscription.date_delay_invoicing
         self.helper = FormHelper()
         self.helper.layout = Layout(
             FormActions(
                 Fieldset(
-                'Edit Subscription',
+                '%s Subscription' % ('Edit' if subscription is not None else 'New'),
                     'start_date',
                     'end_date',
                     'delay_invoice_until',
