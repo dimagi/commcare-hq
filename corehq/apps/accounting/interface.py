@@ -55,7 +55,7 @@ class AccountingInterface(BaseCRUDAdminInterface):
 
     #######
 
-    name = "View Billing Accounts"
+    name = "Billing Accounts"
     description = "description of view billing accounts"
     slug = "accounts"
 
@@ -119,7 +119,7 @@ class SubscriptionInterface(BaseCRUDAdminInterface):
 
     #######
 
-    name = "View Subscriptions"
+    name = "Subscriptions"
     description = "description of view subscriptions"
     slug = "subscriptions"
 

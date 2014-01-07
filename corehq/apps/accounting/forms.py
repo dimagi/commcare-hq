@@ -15,10 +15,11 @@ class BillingAccountForm(forms.Form):
     autosend_invoices = forms.BooleanField(label="Send invoices automatically")
 
     def __init__(self, account, *args, **kwargs):
-        kwargs['initial'] = {'client_name': account.name,
-                             'salesforce_account_id': account.salesforce_account_id,
-                             'currency': account.currency.code,
-                             }
+        if account is not None:
+            kwargs['initial'] = {'client_name': account.name,
+                                 'salesforce_account_id': account.salesforce_account_id,
+                                 'currency': account.currency.code,
+                                 }
         super(BillingAccountForm, self).__init__(*args, **kwargs)
         self.fields['currency'].choices =\
             [(cur.code, cur.code) for cur in Currency.objects.order_by('code')]
@@ -26,14 +27,14 @@ class BillingAccountForm(forms.Form):
         self.helper.layout = Layout(
             FormActions(
                 Fieldset(
-                'Manage Billing Account',
+                '%s Billing Account' % ('Manage' if account is not None else 'New'),
                     'client_name',
                     'salesforce_account_id',
                     'currency',
                     'autosend_invoices',
                 ),
                 ButtonHolder(
-                    Submit('submit', 'Update Account')
+                    Submit('submit', 'Update Account' if account is not None else 'Add New Account')
                 )
             )
         )
