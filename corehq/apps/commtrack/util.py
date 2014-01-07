@@ -128,28 +128,24 @@ def bootstrap_commtrack_settings_if_necessary(domain, requisitions_enabled=False
             enabled=True,
             actions=[
                 CommtrackActionConfig(
-                    action_type=RequisitionActions.REQUEST,
+                    action=RequisitionActions.REQUEST,
                     keyword='req',
                     caption='Request',
-                    name='request',
                 ),
                 CommtrackActionConfig(
-                    action_type=RequisitionActions.APPROVAL,
+                    action=RequisitionActions.APPROVAL,
                     keyword='approve',
                     caption='Approved',
-                    name='approved',
                 ),
                 CommtrackActionConfig(
-                    action_type=RequisitionActions.PACK,
+                    action=RequisitionActions.PACK,
                     keyword='pack',
                     caption='Packed',
-                    name='packed',
                 ),
                 CommtrackActionConfig(
-                    action_type=RequisitionActions.RECEIPTS,
+                    action=RequisitionActions.RECEIPTS,
                     keyword='rec',
                     caption='Requisition Receipts',
-                    name='req_received',
                 ),
             ],
         )
@@ -266,7 +262,7 @@ def get_case_wrapper(data):
     return {
         const.SUPPLY_POINT_CASE_TYPE: SupplyPointCase,
         const.SUPPLY_POINT_PRODUCT_CASE_TYPE: SupplyPointProductCase,
-        const.REQUISITION_CASE_TYPE: RequisitionCase
+        const.REQUISITION_CASE_TYPE: RequisitionCase,
     }.get(data.get('type'), CommCareCase)
 
 

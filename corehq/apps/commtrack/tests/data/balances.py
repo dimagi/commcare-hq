@@ -114,7 +114,7 @@ def transfer_neither():
     """
 
 
-def create_requisition(product_amounts):
+def create_requisition_xml(product_amounts):
     req_id = uuid.uuid4().hex
     req_case_block = ElementTree.tostring(CaseBlock(
         req_id,
@@ -131,6 +131,29 @@ def create_requisition(product_amounts):
         </ns0:balance>
     """ % {'req_id': req_id, 'case_block': req_case_block, 'product_block': _products_xml(product_amounts)}
 
+
+def create_fulfillment_xml(original_requisition, product_amounts):
+    req_id = original_requisition._id
+    req_case_block = ElementTree.tostring(CaseBlock(
+        req_id,
+        version=V2,
+        create=True,
+        case_type=const.FULFILLMENT_CASE_TYPE,
+        case_name='Some requisition',
+        index={'parent_id': (const.REQUISITION_CASE_TYPE, req_id)},
+    ).as_xml())
+    return """
+        {case_block}
+        <ns0:transfer xmlns:ns0="http://commtrack.org/stock_report" dest="{dest_id}" date="{long_date}" src="{req_id}">
+            {product_block}
+        </ns0:transfer>
+    """.format(
+        req_id=req_id,
+        case_block=req_case_block,
+        product_block=_products_xml(product_amounts),
+        dest_id=original_requisition.indices[0].referenced_id,
+        long_date=long_date()
+    )
 
 def balance_first(balance_amounts, transfer_amounts):
     return '%s%s' % (balance_submission(balance_amounts), transfer_dest_only(transfer_amounts))

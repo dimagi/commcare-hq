@@ -77,7 +77,9 @@ def process_stock(sender, xform, config=None, **kwargs):
                     root.append(case_block)
                     post_processed_transactions.extend(reconciliations)
 
-            post_processed_transactions.extend(map(lambda tx: LegacyStockTransaction.convert(tx, supply_point_product_subcases), transactions))
+            supply_point_ids = supply_point_product_subcases.keys()
+            supply_point_transactions = filter(lambda tx: tx.case_id in supply_point_ids, transactions)
+            post_processed_transactions.extend(map(lambda tx: LegacyStockTransaction.convert(tx, supply_point_product_subcases), supply_point_transactions))
             set_transactions(root, post_processed_transactions, E)
 
             submission = etree.tostring(root, encoding='utf-8', pretty_print=True)
