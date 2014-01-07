@@ -2,15 +2,18 @@ import logging
 import simplejson
 import six
 import copy
+
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator, classonlymethod
+from django.views.generic import View
+
+from no_exceptions.exceptions import Http400
+from dimagi.utils.logging import notify_exception
+
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.reports.filters.forms import FormsByApplicationFilter
-from corehq.elastic import get_es
-from django.views.generic import View
+from corehq.elastic import get_es, es_query, ES_URLS
 from corehq.pillows.base import restore_property_dict, VALUE_TAG
-from dimagi.utils.logging import notify_exception
-from no_exceptions.exceptions import Http400
 
 
 DEFAULT_SIZE = 10
@@ -262,6 +265,10 @@ class XFormES(ESView):
 
 
 class UserES(ESView):
+    """
+    self.run_query accepts a structured elasticsearch query
+    """
+
     index = "hqusers"
 
     def validate_query(self, query):

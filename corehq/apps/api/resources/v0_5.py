@@ -1,9 +1,81 @@
+from collections import namedtuple
+
 from django.core.urlresolvers import reverse
+
+from tastypie import fields
 from tastypie.bundle import Bundle
-from corehq.apps.api.resources import v0_1, v0_4
+from tastypie.exceptions import BadRequest
+from tastypie.validation import Validation
+
 from corehq.apps.groups.models import Group
 from corehq.apps.sms.util import strip_plus
 from corehq.apps.users.models import CommCareUser, WebUser, CouchUser
+from corehq.elastic import es_wrapper
+
+from . import v0_1, v0_4
+from . import JsonResource, DomainSpecificResourceMixin
+
+
+MOCK_BULK_USER_ES = None
+
+class BulkUserResource(JsonResource, DomainSpecificResourceMixin):
+    """
+    A read-only user data resource based on elasticsearch.
+    Supported Params: limit offset q fields
+    """
+    type = "bulk-user"
+    id = fields.CharField(attribute='id', readonly=True, unique=True)
+    email = fields.CharField(attribute='email')
+    username = fields.CharField(attribute='username', unique=True)
+    first_name = fields.CharField(attribute='first_name', null=True)
+    last_name = fields.CharField(attribute='last_name', null=True)
+    phone_numbers = fields.ListField(attribute='phone_numbers', null=True)
+
+    def to_obj(self, user):
+        '''
+        Takes a flat dict and returns an object
+        '''
+        if '_id' in user:
+            user['id'] = user.pop('_id')
+        return namedtuple('user', user.keys())(**user)
+
+    class Meta(v0_1.CustomResourceMeta):
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
+        object_class = object
+        resource_name = 'bulk-user'
+
+    def dehydrate(self, bundle):
+        fields = bundle.request.GET.getlist('fields')
+        data = {}
+        if not fields:
+            return bundle
+        for field in fields:
+            data[field] = bundle.data[field]
+        bundle.data = data
+        return bundle
+
+    def obj_get_list(self, bundle, **kwargs):
+        request_fields = bundle.request.GET.getlist('fields')
+        for field in request_fields:
+            if field not in self.fields:
+                raise BadRequest('{0} is not a valid field'.format(field))
+
+        params = bundle.request.GET
+        param = lambda p: params.get(p, None)
+        fields = self.fields.keys()
+        fields.remove('id')
+        fields.append('_id')
+        fn = MOCK_BULK_USER_ES or es_wrapper
+        users = fn(
+                'users',
+                domain=kwargs['domain'],
+                q=param('q'),
+                fields=fields,
+                size=param('limit'),
+                start_at=param('offset'),
+        )
+        return map(self.to_obj, users)
 
 
 class CommCareUserResource(v0_1.CommCareUserResource):
