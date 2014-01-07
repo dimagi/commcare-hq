@@ -132,7 +132,7 @@ def sortkey(child, type_info=None):
 def get_session_data(case, current_case, type_info):
     # this logic should ideally be implemented in subclasses of
     # CommCareCase
-    if type_info and case.domain == 'pact':
+    if type_info:
         attr = type_info[case.type]['case_id_attr']
         return {
             attr: case._id,
@@ -244,7 +244,7 @@ def render_case_hierarchy(case, options):
     timezone = options.get('timezone', pytz.utc)
     columns = options.get('columns') or case.related_cases_columns
     show_view_buttons = options.get('show_view_buttons', True)
-    type_info = case.related_type_info
+    type_info = options.get('related_type_info', case.related_type_info)
 
     case_list = get_flat_descendant_case_list(
             case, get_case_url, type_info=type_info)
