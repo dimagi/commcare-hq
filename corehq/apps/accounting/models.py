@@ -157,7 +157,7 @@ class SoftwareProductRate(models.Model):
     Once created, ProductRates cannot be modified. Instead, a new ProductRate must be created.
     """
     product = models.ForeignKey(SoftwareProduct, on_delete=models.PROTECT)
-    monthly_fee = models.DecimalField(default=Decimal('0.0'), max_digits=10, decimal_places=2)
+    monthly_fee = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2)
     date_created = models.DateField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
 
@@ -188,9 +188,9 @@ class FeatureRate(models.Model):
     Once created, Feature Rates cannot be modified. Instead, a new Feature Rate must be created.
     """
     feature = models.ForeignKey(Feature, on_delete=models.PROTECT)
-    monthly_fee = models.DecimalField(default=Decimal('0.0'), max_digits=10, decimal_places=2)
+    monthly_fee = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2)
     monthly_limit = models.IntegerField(default=0)
-    per_excess_fee = models.DecimalField(default=Decimal('0.0'), max_digits=10, decimal_places=2)
+    per_excess_fee = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2)
     date_created = models.DateField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
 
