@@ -1022,6 +1022,10 @@ pre code {
 code {
   color: #333333;
 }
+.bitly {
+  font-family: monospace;
+  font-size: 13px;
+}
 form {
   margin: 0 0 18px;
 }
