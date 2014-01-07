@@ -104,6 +104,7 @@ def saved_reports(request, domain, template="reports/reports_home.html"):
         return hasattr(rn, "_id") and rn._id and (not hasattr(rn, 'report_slug') or rn.report_slug != 'admin_domains')
 
     scheduled_reports = [rn for rn in ReportNotification.by_domain_and_owner(domain, user._id) if _is_valid(rn)]
+    scheduled_reports = sorted(scheduled_reports, key=lambda rn: rn.configs[0].name)
 
     context = dict(
         couch_user=request.couch_user,
@@ -659,7 +660,7 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
         "DNS_name": get_url_base(),
         "owner_name": couch_user.full_name or couch_user.get_email(),
         "email": email,
-        "notes": notes,
+        "notes": notes or getattr(config, "description", ""),
         "startdate": date_range["startdate"] if date_range else "",
         "enddate": date_range["enddate"] if date_range else "",
     }), excel_attachments

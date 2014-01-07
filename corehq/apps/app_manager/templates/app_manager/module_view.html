@@ -11,6 +11,7 @@
     <script src="{% static 'hqwebapp/js/key-value-mapping.js' %}"></script>
     <script>
     window.FEATURE_enable_enum_image = {{ request.couch_user.is_previewer|BOOL }};
+    window.FEATURE_enable_calc_xpaths = {{ request.couch_user.is_previewer|BOOL }};
     </script>
     <script src="{% static 'app_manager/js/detail-screen-config.js' %}"></script>
 {% endblock %}
