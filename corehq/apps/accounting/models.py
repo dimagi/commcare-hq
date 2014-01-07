@@ -54,6 +54,21 @@ class SoftwareProductType(object):
         return cls.COMMCARE
 
 
+class SoftwarePlanEdition(object):
+    COMMUNITY = "Community"
+    STANDARD = "Standard"
+    PRO = "Pro"
+    ADVANCED = "Advanced"
+    ENTERPRISE = "Enterprise"
+    CHOICES = (
+        (COMMUNITY, COMMUNITY),
+        (STANDARD, STANDARD),
+        (PRO, PRO),
+        (ADVANCED, ADVANCED),
+        (ENTERPRISE, ENTERPRISE),
+    )
+
+
 class SoftwarePlanVisibility(object):
     PUBLIC = "PUBLIC"
     INTERNAL = "INTERNAL"
@@ -197,7 +212,13 @@ class SoftwarePlan(models.Model):
     link the Software Plan to a set of permissions roles.
     """
     name = models.CharField(max_length=80, unique=True)
-    description = models.TextField()
+    description = models.TextField(blank=True,
+                                   help_text="If the visibility is INTERNAL, this description field will be used.")
+    edition = models.CharField(
+        max_length=25,
+        default=SoftwarePlanEdition.ENTERPRISE,
+        choices=SoftwarePlanEdition.CHOICES,
+    )
     visibility = models.CharField(
         max_length=10,
         default=SoftwarePlanVisibility.INTERNAL,
