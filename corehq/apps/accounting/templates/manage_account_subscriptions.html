@@ -34,6 +34,15 @@
 
 
 {% block main_column %}
+
+    <div>
+        <a href="{% url 'new_subscription' account.id %}" class="btn btn-primary" data-toggle="modal" style="margin-left:2px">
+            <i class="icon-white icon-plus">
+                Add New Subscription
+            </i>
+        </a>
+    </div>
+
     <div>
         <table class="table table-striped table-bordered">
             <thead>

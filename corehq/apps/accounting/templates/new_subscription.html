@@ -3,7 +3,7 @@
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
-{% block title %}Manage Billing Account{% endblock %}
+{% block title %}New Subscription{% endblock %}
 
 {% block page-title %}
 <ul class="breadcrumb">
@@ -17,7 +17,7 @@
         <a href="#">{{ view_title }} <small>{{ billing_range }}</small></a>
     </li>
     <li>
-        <a href="">Manage Billing Account <small>{{ account_name }}</small></a>
+        <a href="">New Subscription <small>{{ account_name }}</small></a>
     </li>
 </ul>
 {% endblock %}
@@ -27,16 +27,6 @@
         <form class="form form-horizontal" method="post">
             {% crispy form %}
         </form>
-    </div>
-
-    <div>
-        <a href="{% url 'manage_account_subscriptions' account.id %}">Manage Account Subscriptions</a>
-    </div>
-
-    <div class="form-block">
-        <div>Date Created: {{ account.date_created }}</div>
-        <div>Account Type: {{ account.account_type }}</div>
-        <div>Current Account Balance: {{ account.balance }}</div>
     </div>
 {% endblock %}
 
