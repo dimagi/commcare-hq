@@ -14,6 +14,16 @@ class BillingAccountForm(forms.Form):
     salesforce_account_id = forms.CharField(label="Salesforce ID")
     currency = forms.ChoiceField(label="Currency")
 
+    # todo - collect web user(s)
+    company_name = forms.CharField(label='Company Name')
+    phone_number = forms.CharField(label='Phone Number')
+    address_line_1 = forms.CharField(label='Address Line 1')
+    address_line_2 = forms.CharField(label='Address Line 2')
+    city = forms.CharField()
+    region = forms.CharField(label="State/Province/Region")
+    postal_code = forms.CharField(label="Postal Code")
+    country = forms.CharField()
+
     def __init__(self, account, *args, **kwargs):
         if account is not None:
             kwargs['initial'] = {'name': account.name,
@@ -27,10 +37,21 @@ class BillingAccountForm(forms.Form):
         self.helper.layout = Layout(
             FormActions(
                 Fieldset(
-                'Account',
+                'Basic Information',
                     'name',
                     'salesforce_account_id',
                     'currency',
+                ),
+                Fieldset(
+                'Contact Information',
+                    'company_name',
+                    'phone_number',
+                    'address_line_1',
+                    'address_line_2',
+                    'city',
+                    'region',
+                    'postal_code',
+                    'country',
                 ),
                 ButtonHolder(
                     Submit('submit', 'Update Account' if account is not None else 'Add New Account')
