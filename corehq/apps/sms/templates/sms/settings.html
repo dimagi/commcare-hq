@@ -18,22 +18,89 @@
 
 {% block js-inline %}{{ block.super }}
 <script>
+    function DayTimeWindow(day, start_time, end_time) {
+        var self = this;
+        self.day = ko.observable(day);
+        self.start_time = ko.observable(start_time);
+        self.end_time = ko.observable(end_time);
+        
+        self.time_input_relationship_initial = function() {
+            if(self.start_time() === null) {
+                return "BEFORE";
+            } else if(self.end_time() === null) {
+                return "AFTER";
+            } else {
+                return "BETWEEN";
+            }
+        }
+        
+        self.time_input_relationship_change = function() {
+            if(self.time_input_relationship() == "BEFORE") {
+                self.start_time(null);
+            } else if(self.time_input_relationship() == "AFTER") {
+                self.end_time(null);
+            }
+        }
+        
+        self.time_input_relationship = ko.observable(self.time_input_relationship_initial());
+    }
+    function populate_daytimewindow_observable_array(src, dest) {
+        for(var i = 0; i < src.length; i++) {
+            var entry = src[i];
+            dest.push(new DayTimeWindow(entry.day, entry.start_time, entry.end_time));
+        }
+    }
     function SettingsViewModel(initial_values) {
         var self = this;
         self.use_default_sms_response = ko.observable(initial_values.use_default_sms_response);
         self.default_sms_response = ko.observable(initial_values.default_sms_response);
+        self.use_restricted_sms_times = ko.observable(initial_values.use_restricted_sms_times);
+        self.restricted_sms_times = ko.observableArray();
+        populate_daytimewindow_observable_array(initial_values.restricted_sms_times, self.restricted_sms_times);
+        
+        self.use_sms_conversation_times = ko.observable(initial_values.use_sms_conversation_times);
+        self.sms_conversation_times = ko.observableArray();
+        populate_daytimewindow_observable_array(initial_values.sms_conversation_times, self.sms_conversation_times);
+        
         self.use_custom_case_username = ko.observable(initial_values.use_custom_case_username);
         self.custom_case_username = ko.observable(initial_values.custom_case_username);
         self.use_custom_message_count_threshold = ko.observable(initial_values.use_custom_message_count_threshold);
         self.custom_message_count_threshold = ko.observable(initial_values.custom_message_count_threshold);
         self.use_custom_chat_template = ko.observable(initial_values.use_custom_chat_template);
         self.custom_chat_template = ko.observable(initial_values.custom_chat_template);
+        
+        self.add_restricted_sms_time = function() {
+            self.restricted_sms_times.push(new DayTimeWindow(-1, null, null));
+        }
+        
+        self.add_sms_conversation_time = function() {
+            self.sms_conversation_times.push(new DayTimeWindow(-1, null, null));
+        }
+        
+        self.remove_restricted_sms_time = function() {
+            self.restricted_sms_times.remove(this);
+        }
+        
+        self.remove_sms_conversation_time = function() {
+            self.sms_conversation_times.remove(this);
+        }
+        
+        self.restricted_sms_times_json = ko.computed(function() {
+            return ko.toJSON(self.restricted_sms_times());
+        });
+        
+        self.sms_conversation_times_json = ko.computed(function() {
+            return ko.toJSON(self.sms_conversation_times());
+        });
     }
-    
     $(function(){
         svm = SettingsViewModel({
             "use_default_sms_response" : {{ form.use_default_sms_response.value|JSON }},
             "default_sms_response" : {{ form.default_sms_response.value|JSON }},
+            "use_restricted_sms_times" : {{ form.use_restricted_sms_times.value|JSON }},
+            "restricted_sms_times" : {% autoescape off %}{{ form.restricted_sms_times_json.value|default:"[]" }}{% endautoescape %},
+            "use_sms_conversation_times" : {{ form.use_sms_conversation_times.value|JSON }},
+            "sms_conversation_times" : {% autoescape off %}{{ form.sms_conversation_times_json.value|default:"[]" }}{% endautoescape %},
             "use_custom_case_username" : {{ form.use_custom_case_username.value|JSON }},
             "custom_case_username" : {{ form.custom_case_username.value|JSON }},
             "use_custom_message_count_threshold" : {{ form.use_custom_message_count_threshold.value|JSON }},
@@ -72,6 +139,47 @@
                     <td><textarea name="default_sms_response" data-bind="text: default_sms_response"></textarea></td>
                     <td>{{ form.default_sms_response.errors }}</td>
                 </tr>
+                {% if sms_queue_enabled %}
+                <tr>
+                    <td>{% trans "Restrict Times to Send SMS" %}</td>
+                    <td><input type="checkbox" name="use_restricted_sms_times" data-bind="checked: use_restricted_sms_times" /></td>
+                    <td>{{ form.use_restricted_sms_times.errors }}</td>
+                </tr>
+                <tr data-bind="visible: use_restricted_sms_times">
+                    <td class="dependent_field">
+                        <div data-bind="foreach: restricted_sms_times">
+                            <div>
+                                <select data-bind="value: day" class="input-small">
+                                    <option value="-1">{% trans "Each day" %}</option>
+                                    <option value="0">{% trans "Monday" %}</option>
+                                    <option value="1">{% trans "Tuesday" %}</option>
+                                    <option value="2">{% trans "Wednesday" %}</option>
+                                    <option value="3">{% trans "Thursday" %}</option>
+                                    <option value="4">{% trans "Friday" %}</option>
+                                    <option value="5">{% trans "Saturday" %}</option>
+                                    <option value="6">{% trans "Sunday" %}</option>
+                                </select>
+                                <select class="input-small" data-bind="value: time_input_relationship, event: {change: time_input_relationship_change}">
+                                    <option value="BEFORE">{% trans "Before" %}</option>
+                                    <option value="BETWEEN">{% trans "Between" %}</option>
+                                    <option value="AFTER">{% trans "After" %}</option>
+                                </select>
+                                <input class="input-mini" type="text" data-bind="value: start_time, visible: time_input_relationship() != 'BEFORE'" />
+                                <span data-bind="visible: time_input_relationship() == 'BETWEEN'">{% trans "and" %}</span>
+                                <input class="input-mini" type="text" data-bind="value: end_time, visible: time_input_relationship() != 'AFTER'" />
+                                <span class="btn btn-danger" data-bind="click: remove_restricted_sms_time"><i class="icon icon-white icon-remove"></i> {% trans "Remove" %}</span>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="btn btn-success" data-bind="click: add_restricted_sms_time"><i class="icon icon-white icon-plus"></i> {% trans "Add" %}</span>
+                            <input type="hidden" name="restricted_sms_times_json" data-bind="value: restricted_sms_times_json" />
+                        </div>
+                        <div>{{ form.restricted_sms_times_json.errors }}</div>
+                    </td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                {% endif %}
             </tbody>
         </table>
         {% if is_previewer %}
@@ -108,6 +216,52 @@
                     <td><input type="text" name="custom_chat_template" data-bind="value: custom_chat_template" /></td>
                     <td>{{ form.custom_chat_template.errors }}</td>
                 </tr>
+                {% if sms_queue_enabled %}
+                <tr>
+                    <td>{% trans "SMS Conversation Length" %}</td>
+                    <td>{{ form.sms_conversation_length }}</td>
+                    <td>{{ form.sms_conversation_length.errors }}</td>
+                </tr>
+                <tr>
+                    <td>{% trans "Prevent automated messages from interfering with sms conversations" %}</td>
+                    <td><input type="checkbox" name="use_sms_conversation_times" data-bind="checked: use_sms_conversation_times" /></td>
+                    <td>{{ form.use_sms_conversation_times.errors }}</td>
+                </tr>
+                <tr data-bind="visible: use_sms_conversation_times">
+                    <td class="dependent_field">
+                        <div data-bind="foreach: sms_conversation_times">
+                            <div>
+                                <select data-bind="value: day" class="input-small">
+                                    <option value="-1">{% trans "Each day" %}</option>
+                                    <option value="0">{% trans "Monday" %}</option>
+                                    <option value="1">{% trans "Tuesday" %}</option>
+                                    <option value="2">{% trans "Wednesday" %}</option>
+                                    <option value="3">{% trans "Thursday" %}</option>
+                                    <option value="4">{% trans "Friday" %}</option>
+                                    <option value="5">{% trans "Saturday" %}</option>
+                                    <option value="6">{% trans "Sunday" %}</option>
+                                </select>
+                                <select class="input-small" data-bind="value: time_input_relationship, event: {change: time_input_relationship_change}">
+                                    <option value="BEFORE">{% trans "Before" %}</option>
+                                    <option value="BETWEEN">{% trans "Between" %}</option>
+                                    <option value="AFTER">{% trans "After" %}</option>
+                                </select>
+                                <input class="input-mini" type="text" data-bind="value: start_time, visible: time_input_relationship() != 'BEFORE'" />
+                                <span data-bind="visible: time_input_relationship() == 'BETWEEN'">{% trans "and" %}</span>
+                                <input class="input-mini" type="text" data-bind="value: end_time, visible: time_input_relationship() != 'AFTER'" />
+                                <span class="btn btn-danger" data-bind="click: remove_sms_conversation_time"><i class="icon icon-white icon-remove"></i> {% trans "Remove" %}</span>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="btn btn-success" data-bind="click: add_sms_conversation_time"><i class="icon icon-white icon-plus"></i> {% trans "Add" %}</span>
+                            <input type="hidden" name="sms_conversation_times_json" data-bind="value: sms_conversation_times_json" />
+                        </div>
+                        <div>{{ form.sms_conversation_times_json.errors }}</div>
+                    </td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                {% endif %}
             </tbody>
         </table>
         {% endif %}
