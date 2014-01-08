@@ -426,6 +426,32 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin):
     description = ugettext_noop("Statistics on time spent on a particular form.")
     is_cacheable = True
 
+    def get_user_link(self, user):
+        from corehq.apps.reports.standard.inspect import SubmitHistory
+
+        user_link_template = '<a href="%(link)s?individual=%(user_id)s&' \
+                             'form_unknown=%(form_unknown)s&' \
+                             'form_unknown_xmlns=%(form_unknown_xmlns)s&' \
+                             'form_status=%(form_status)s&' \
+                             'form_app_id=%(form_app_id)s&' \
+                             'form_module=%(form_module)s&' \
+                             'form_xmlns=%(form_xmlns)s&' \
+                             'startdate=%(startdate)s&' \
+                             'enddate=%(enddate)s">%(username)s</a>'
+        user_link = user_link_template % {"link": "%s%s" % (get_url_base(),
+                                                            SubmitHistory.get_url(domain=self.domain)),
+                                          "user_id": user.get('user_id'),
+                                          "form_unknown": self.request.GET.get("form_unknown", ''),
+                                          "form_unknown_xmlns": self.request.GET.get("form_unknown_xmlns", ''),
+                                          "form_status": self.request.GET.get("form_status", ''),
+                                          "form_app_id": self.request.GET.get("form_app_id", ''),
+                                          "form_module": self.request.GET.get("form_module", ''),
+                                          "form_xmlns": self.request.GET.get("form_xmlns", ''),
+                                          "startdate": self.request.GET.get("startdate", ''),
+                                          "enddate": self.request.GET.get("enddate", ''),
+                                          "username": user.get('username_in_report')}
+        return self.table_cell(user.get('raw_username'), user_link)
+
     @property
     @memoized
     def selected_xmlns(self):

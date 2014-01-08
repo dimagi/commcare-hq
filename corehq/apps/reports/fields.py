@@ -746,7 +746,6 @@ class CombinedSelectUsersField(ReportField):
                 ctxt["smwf"]["select"]["selected"] = filter(lambda s: s != '_all', ctxt["smwf"]["select"]["selected"])
             ctxt["smwf"]["select"]["options"] = ctxt["smwf"]["select"]["options"][1:]
 
-
         if self.show_group_field:
             self.select_group_field.update_context()
             ctxt["sgf"] = self.select_group_field.context
@@ -758,10 +757,13 @@ class CombinedSelectUsersField(ReportField):
                 ctxt["sgf"]["select"]["selected"] = filter(lambda s: s != '_all', ctxt["sgf"]["select"]["selected"])
             ctxt["sgf"]["select"]["options"] = ctxt["sgf"]["select"]["options"][1:]
 
-
-        if self.show_mobile_worker_field:
-            ctxt["smwf"]["checked"] = all_mws or (not ctxt["smwf"]["select"]["selected"] and not (
-                self.show_group_field and (ctxt["sgf"]["select"]["selected"] or all_groups)))
+        if self.request.GET.get('individual', None):
+            ctxt["smwf"]["select"]["selected"] = [self.request.GET.get('individual')]
+            ctxt["smwf"]["checked"] = False
+        else:
+            if self.show_mobile_worker_field:
+                ctxt["smwf"]["checked"] = all_mws or (not ctxt["smwf"]["select"]["selected"] and not (
+                    self.show_group_field and (ctxt["sgf"]["select"]["selected"] or all_groups)))
 
         if self.show_group_field:
             ctxt["sgf"]["checked"] = all_groups
