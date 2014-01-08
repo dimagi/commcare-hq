@@ -197,27 +197,43 @@ def es_wrapper(index, domain=None, q=None, doc_type=None, fields=None, start_at=
         msg = "%s is not a valid ES index.  Available options are: %s" % (
             index, ', '.join(ES_URLS.keys()))
         raise IndexError(msg)
-    query = {
-        'query': {
-            'fuzzy_like_this': {
-                'like_text': q
-            }
-        }
-    } if q else {}
 
-    params = {}
+    # query components
+    match_all = {"match_all": {}}
+    fuzzy_query = {"fuzzy_like_this": {"like_text": q}}
+    doc_type_filter = {"term": {"doc_type": doc_type}}
+    domain_filter = {"or": [
+        {"term": {"domain.exact": domain}},
+        {"term": {"domain_memberships.domain.exact": domain}},
+    ]}
+
+    # actual query
+    query = {"query": {
+        "filtered": {
+            "filter": {"and": []},
+            "query": fuzzy_query if q else match_all
+        }
+    }}
+
+    # add filters
+    filters = query["query"]["filtered"]["filter"]["and"]
     if domain:
-        params['domain.exact'] = domain
+        filters.append(domain_filter)
     if doc_type:
-        params['doc_type'] = doc_type
+        filters.append(doc_type_filter)
+    if not doc_type and not domain:
+        filters.append(match_all)
+
+    # make query
     res = es_query(
         es_url=ES_URLS[index],
-        params=params,
         q=query,
         fields=fields,
         start_at=start_at,
         size=size,
     )
+
+    # parse results
     if 'error' in res:
         msg = res['error']
         raise ESError(msg)
