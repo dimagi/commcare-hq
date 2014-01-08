@@ -32,18 +32,16 @@ class AccountingInterface(BaseCRUDAdminInterface):
             DataTablesColumn("Salesforce Account ID"),
             DataTablesColumn("Date Created"),
             DataTablesColumn("Account Type"),
-            DataTablesColumn("Edit"),
         )
 
     @property
     def rows(self):
         rows = []
         for account in BillingAccount.objects.all():
-            rows.append([account.name,
+            rows.append([mark_safe('<a href="./%d">%s</a>' % (account.id, account.name)),
                          account.salesforce_account_id,
                          account.date_created,
-                         account.account_type,
-                         mark_safe('<a href="./%d" class="btn">Edit</a>' % account.id)])
+                         account.account_type])
         return rows
 
     #######
