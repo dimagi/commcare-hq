@@ -5,6 +5,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import ProtectedError
 
 from django.utils.translation import ugettext as _
+from corehq.apps.accounting.utils import assure_domain_instance
 from dimagi.utils.decorators.memoized import memoized
 
 from corehq import Domain
@@ -87,7 +88,7 @@ class CommunityInvoiceFactory(InvoiceFactory):
 
     def __init__(self, date_start, date_end, domain):
         super(CommunityInvoiceFactory, self).__init__(date_start, date_end)
-        self.domain = domain
+        self.domain = assure_domain_instance(domain)
 
     @property
     @memoized
