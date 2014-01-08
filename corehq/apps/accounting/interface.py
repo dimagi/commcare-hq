@@ -28,13 +28,10 @@ class AccountingInterface(BaseCRUDAdminInterface):
     @property
     def headers(self):
         return DataTablesHeader(
-            DataTablesColumn("Client/Account Name"),
-            DataTablesColumn("Billing Contact Name (Email)"),
-            DataTablesColumn("Plan Credit"),
-            DataTablesColumn("SMS Credit"),
-            DataTablesColumn("Users Credit"),
-            DataTablesColumn("Account Balance"),
-            DataTablesColumn("Active Subscriptions"),
+            DataTablesColumn("Name"),
+            DataTablesColumn("Salesforce Account ID"),
+            DataTablesColumn("Date Created"),
+            DataTablesColumn("Account Type"),
             DataTablesColumn("Edit"),
         )
 
@@ -43,13 +40,9 @@ class AccountingInterface(BaseCRUDAdminInterface):
         rows = []
         for account in BillingAccount.objects.all():
             rows.append([account.name,
-                         account.web_user_contact,
-                         3,
-                         4,
-                         5,
-                         account.balance,
-                         Subscription.objects.filter(account=account,
-                                                     is_active=True).count(),
+                         account.salesforce_account_id,
+                         account.date_created,
+                         account.account_type,
                          mark_safe('<a href="./%d" class="btn">Edit</a>' % account.id)])
         return rows
 
