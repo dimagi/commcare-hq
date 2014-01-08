@@ -26,12 +26,12 @@ class BillingAccountType(object):
 
 
 class FeatureType(object):
-    USER = "USER"
+    USER = "User"
     SMS = "SMS"
     API = "API"
     CHOICES = (
-        (USER, "Users"),
-        (SMS, "SMS"),
+        (USER, USER),
+        (SMS, SMS),
     )
 
 
@@ -40,9 +40,9 @@ class SoftwareProductType(object):
     COMMTRACK = "CommTrack"
     COMMCONNECT = "CommConnect"
     CHOICES = (
-        (COMMCARE, "CommCare"),
-        (COMMTRACK, "CommTrack"),
-        (COMMCONNECT, "CommConnect"),
+        (COMMCARE, COMMCARE),
+        (COMMTRACK, COMMTRACK),
+        (COMMCONNECT, COMMCONNECT),
     )
 
     @classmethod
@@ -52,6 +52,21 @@ class SoftwareProductType(object):
         if domain.commconnect_enabled:
             return cls.COMMCONNECT
         return cls.COMMCARE
+
+
+class SoftwarePlanEdition(object):
+    COMMUNITY = "Community"
+    STANDARD = "Standard"
+    PRO = "Pro"
+    ADVANCED = "Advanced"
+    ENTERPRISE = "Enterprise"
+    CHOICES = (
+        (COMMUNITY, COMMUNITY),
+        (STANDARD, STANDARD),
+        (PRO, PRO),
+        (ADVANCED, ADVANCED),
+        (ENTERPRISE, ENTERPRISE),
+    )
 
 
 class SoftwarePlanVisibility(object):
@@ -132,6 +147,9 @@ class SoftwareProduct(models.Model):
     name = models.CharField(max_length=40, unique=True)
     product_type = models.CharField(max_length=25, db_index=True, choices=SoftwareProductType.CHOICES)
 
+    def __str__(self):
+        return "Software Product '%s' of type '%s'" % (self.name, self.product_type)
+
 
 class SoftwareProductRate(models.Model):
     """
@@ -139,7 +157,7 @@ class SoftwareProductRate(models.Model):
     Once created, ProductRates cannot be modified. Instead, a new ProductRate must be created.
     """
     product = models.ForeignKey(SoftwareProduct, on_delete=models.PROTECT)
-    monthly_fee = models.DecimalField(default=Decimal('0.0'), max_digits=10, decimal_places=2)
+    monthly_fee = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2)
     date_created = models.DateField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
 
@@ -160,6 +178,9 @@ class Feature(models.Model):
     name = models.CharField(max_length=40, unique=True)
     feature_type = models.CharField(max_length=10, db_index=True, choices=FeatureType.CHOICES)
 
+    def __str__(self):
+        return "Feature '%s' of type '%s'" % (self.name, self.feature_type)
+
 
 class FeatureRate(models.Model):
     """
@@ -167,11 +188,16 @@ class FeatureRate(models.Model):
     Once created, Feature Rates cannot be modified. Instead, a new Feature Rate must be created.
     """
     feature = models.ForeignKey(Feature, on_delete=models.PROTECT)
-    monthly_fee = models.DecimalField(default=Decimal('0.0'), max_digits=10, decimal_places=2)
+    monthly_fee = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2)
     monthly_limit = models.IntegerField(default=0)
-    per_excess_fee = models.DecimalField(default=Decimal('0.0'), max_digits=10, decimal_places=2)
+    per_excess_fee = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2)
     date_created = models.DateField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return 'Feature Rate: $%s /month, $%s /excess, limit: %d' % (
+            self.monthly_fee, self.per_excess_fee, self.monthly_limit
+        )
 
     @classmethod
     def new_rate(cls, feature_name, feature_type,
@@ -197,7 +223,13 @@ class SoftwarePlan(models.Model):
     link the Software Plan to a set of permissions roles.
     """
     name = models.CharField(max_length=80, unique=True)
-    description = models.TextField()
+    description = models.TextField(blank=True,
+                                   help_text="If the visibility is INTERNAL, this description field will be used.")
+    edition = models.CharField(
+        max_length=25,
+        default=SoftwarePlanEdition.ENTERPRISE,
+        choices=SoftwarePlanEdition.CHOICES,
+    )
     visibility = models.CharField(
         max_length=10,
         default=SoftwarePlanVisibility.INTERNAL,
@@ -227,6 +259,9 @@ class SoftwarePlanVersion(models.Model):
     date_created = models.DateField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
     role = models.ForeignKey(Role)
+
+    def __str__(self):
+        return "Software Plan Version For Plan '%s' with Role '%s'" % (self.plan.name, self.role.slug)
 
 
 class Subscriber(models.Model):
