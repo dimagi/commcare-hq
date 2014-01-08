@@ -1,5 +1,6 @@
 import datetime
 from decimal import Decimal
+import logging
 
 from couchdbkit.ext.django.schema import DateTimeProperty, StringProperty
 
@@ -12,6 +13,8 @@ from django_prbac.models import Role
 from dimagi.utils.couch.database import SafeSaveDocument
 
 from corehq.apps.accounting.exceptions import CreditLineError, LineItemError, InvoiceError
+
+global_logger = logging.getLogger(__name__)
 
 
 class BillingAccountType(object):
