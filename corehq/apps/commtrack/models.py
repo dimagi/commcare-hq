@@ -17,6 +17,7 @@ from corehq.apps.users.models import CommCareUser
 from dimagi.utils.couch.loosechange import map_reduce
 from couchforms.models import XFormInstance
 from dimagi.utils import parsing as dateparse
+from dimagi.utils.dates import force_to_date
 from datetime import datetime
 from copy import copy
 from django.dispatch import receiver
@@ -981,7 +982,6 @@ class SupplyPointProductCase(CommCareCase):
 
     def get_last_reported_date(self):
         last_reported = getattr(self, 'last_reported', None)
-        from dimagi.utils.dates import force_to_date
         return force_to_date(last_reported)
 
     def to_full_dict(self):
