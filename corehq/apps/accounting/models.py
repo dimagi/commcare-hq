@@ -276,6 +276,11 @@ class SoftwarePlan(models.Model):
         choices=SoftwarePlanVisibility.CHOICES,
     )
 
+    @classmethod
+    def get_latest_version(cls, **kwargs):
+        plan = cls.objects.get(**kwargs)
+        return plan.softwareplanversion_set.latest('date_created')
+
 
 class DefaultProductPlan(models.Model):
     """
