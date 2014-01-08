@@ -1,5 +1,6 @@
 import calendar
 import datetime
+from corehq import Domain
 from dimagi.utils.dates import add_months
 
 
@@ -20,3 +21,9 @@ def get_previous_month_date_range(reference_date=None):
 def months_from_date(reference_date, months_from_date):
     year, month = add_months(reference_date.year, reference_date.month, months_from_date)
     return datetime.date(year, month, 1)
+
+
+def assure_domain_instance(domain):
+    if not isinstance(domain, Domain):
+        domain = Domain.get_by_name(domain)
+    return domain
