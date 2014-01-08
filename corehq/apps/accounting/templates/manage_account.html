@@ -2,6 +2,7 @@
 {% load url from future %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
+{% load i18n %}
 
 {% block title %}Manage Billing Account{% endblock %}
 
@@ -23,21 +24,29 @@
 {% endblock %}
 
 {% block main_column %}
-    <div class="form-block">
-        <form class="form form-horizontal" method="post">
-            {% crispy form %}
-        </form>
+
+    <ul class="nav nav-tabs" id="user-settings-tabs">
+        <li><a href="#account" data-toggle="tab">{% trans "Account" %}</a></li>
+        <li><a href="#subscriptions" data-toggle="tab">{% trans "Subscriptions" %}</a></li>
+        <li><a href="#credits" data-toggle="tab">{% trans "Credits" %}</a></li>
+    </ul>
+
+    <div class="tab-content">
+        <div class="tab-pane active" id="account">
+            <form class="form form-horizontal" method="post">
+                {% crispy form %}
+            </form>
+        </div>
+
+        <div class="tab-pane" id="subscriptions">
+            <a href="{% url 'manage_account_subscriptions' account.id %}">Manage Account Subscriptions</a>
+        </div>
+
+        <div class="tab-pane" id="credits">
+            Credits go here
+        </div>
     </div>
 
-    <div>
-        <a href="{% url 'manage_account_subscriptions' account.id %}">Manage Account Subscriptions</a>
-    </div>
-
-    <div class="form-block">
-        <div>Date Created: {{ account.date_created }}</div>
-        <div>Account Type: {{ account.account_type }}</div>
-        <div>Current Account Balance: {{ account.balance }}</div>
-    </div>
 {% endblock %}
 
 {% block modals %} {{ block.super }}
