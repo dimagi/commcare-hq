@@ -979,6 +979,11 @@ class SupplyPointProductCase(CommCareCase):
             thresholds=self.stock_thresholds
         )
 
+    def get_last_reported_date(self):
+        last_reported = getattr(self, 'last_reported', None)
+        from dimagi.utils.dates import force_to_date
+        return force_to_date(last_reported)
+
     def to_full_dict(self):
         def roundif(k, digits):
             return round(k, digits) if k is not None else None
