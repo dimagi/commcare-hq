@@ -12,6 +12,7 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'casexml.apps.case',
     'casexml.apps.phone',
+    'casexml.apps.stock',
     'couchdbkit.ext.django',
     'couchforms',
     'django.contrib.contenttypes',
