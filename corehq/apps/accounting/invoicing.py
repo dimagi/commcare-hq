@@ -96,19 +96,7 @@ class CommunityInvoiceFactory(InvoiceFactory):
         First try to grab the account used for the last subscription.
         If an account is not found, create it.
         """
-        try:
-            last_subscription = Subscription.objects.filter(subscriber__domain=self.domain.name).latest('date_end')
-            return last_subscription.account
-        except ObjectDoesNotExist:
-            pass
-        account = BillingAccount(
-            name=self.domain.name,
-            created_by=self.__class__.__name__,
-            date_created=datetime.date.today(),
-            currency=Currency.get_default(),
-            account_type=BillingAccountType.INVOICE_GENERATED,
-        )
-        account.save()
+        account, _ = BillingAccount.get_or_create_account_by_domain(self.domain.name, self.__class__.__name__)
         return account
 
     @property

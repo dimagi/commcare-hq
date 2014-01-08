@@ -143,6 +143,27 @@ class BillingAccount(models.Model):
         # todo compute
         return 0.0
 
+    @classmethod
+    def get_or_create_account_by_domain(cls, domain, created_by=None):
+        """
+        First try to grab the account used for the last subscription.
+        If an account is not found, create it.
+        """
+        try:
+            last_subscription = Subscription.objects.filter(subscriber__domain=domain).latest('date_end')
+            return last_subscription.account, False
+        except ObjectDoesNotExist:
+            pass
+        account = BillingAccount(
+            name=domain,
+            created_by=created_by,
+            date_created=datetime.date.today(),
+            currency=Currency.get_default(),
+            account_type=BillingAccountType.INVOICE_GENERATED,
+        )
+        account.save()
+        return account, True
+
 
 class BillingContactInfo(models.Model):
     account = models.OneToOneField(BillingAccount, primary_key=True, null=False)
