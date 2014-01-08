@@ -333,6 +333,14 @@ class Filter(HideShortColumn):
         return dot_interpolate(self.column.filter_xpath, self.xpath)
 
 
+@register_format_type('calculate')
+class Calculate(FormattedDetailColumn):
+
+    @property
+    def xpath_function(self):
+        return dot_interpolate(self.column.calc_xpath, self.xpath)
+
+
 @register_format_type('address')
 class Address(HideShortColumn):
     template_form = 'address'

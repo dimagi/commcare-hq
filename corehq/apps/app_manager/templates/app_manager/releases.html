@@ -61,24 +61,15 @@
     .nowrap {
         white-space: nowrap;
     }
-    .star, .pending {
+    .pending {
         width: 20px;
         height: 20px;
         background-repeat: no-repeat;
     }
-    .star.star-true {
-        background-image: url("{% static 'app_manager/img/star-filled.svg' %}");
-    }
-    .star.star-false {
-        background-image: url("{% static 'app_manager/img/star-empty.svg' %}");
-    }
-    .pending, .star-pending {
+    .pending {
         background-image: url("{% static 'hqwebapp/img/ajax-loader.gif' %}");
         background-size: 80%;
         background-position: center;
-    }
-    .star.star-error:after {
-        content: "Error";
     }
 </style>
 {% endblock %}
@@ -315,7 +306,7 @@
                                             Install by typing the following URL
                                             into the application install screen:
                                         {% endblocktrans %}
-                                        <code><a data-bind="
+                                        <code class="bitly"><a data-bind="
                                             attr: {href: get_short_odk_url()},
                                             text: get_short_odk_url()
                                         "></a></code>
@@ -367,7 +358,7 @@
                                                         <label>{% trans "Send to:" %}</label>
                                                         <input type="text" name="recipients" data-bind="multiTypeahead: $root.recipients" value=""/>
                                                         <br />
-                                                        <textarea name="message" data-bind="text: 'Update to CommCare: ' +
+                                                        <textarea class="bitly" name="message" data-bind="text: 'Update to CommCare: ' +
                                                             $parent.sms_url($index()) + ' (&quot;' + $parent.short_name() + '&quot; v. ' + $parent.version() + ')'"></textarea>
                                                         <br />
                                                         <input type="submit" class="btn" value="Send"/>
