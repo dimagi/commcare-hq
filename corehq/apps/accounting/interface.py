@@ -1,3 +1,4 @@
+from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher, SubscriptionAdminInterfaceDispatcher
 from corehq.apps.accounting.models import BillingAccount, Subscription
@@ -77,35 +78,32 @@ class SubscriptionInterface(BaseCRUDAdminInterface):
     @property
     def headers(self):
         return DataTablesHeader(
-            DataTablesColumn("Project Space"),
-            DataTablesColumn("Client Name"),
-            DataTablesColumn("Version"),
-            DataTablesColumn("Description"),
-            DataTablesColumn("Account Name"),
+            DataTablesColumn("Action"),
+            DataTablesColumn("Subscriber"),
+            DataTablesColumn("Account"),
+            DataTablesColumn("Plan"),
+            DataTablesColumn("Active"),
+            DataTablesColumn("Salesforce Contract ID"),
             DataTablesColumn("Start Date"),
             DataTablesColumn("End Date"),
-            DataTablesColumn("Active Status"),
-            DataTablesColumn("Visibility"),
-            DataTablesColumn("Is Default for Product?"),
-            DataTablesColumn("Edit"),
         )
 
     @property
     def rows(self):
+        from corehq.apps.accounting.views import ManageBillingAccountView
         rows = []
         for subscription in Subscription.objects.all():
-            rows.append([subscription.subscriber.domain,
-                         subscription.account.name,
+            rows.append([mark_safe('<a href="./%d" class="btn">Edit</a>' % subscription.id),
+                         subscription.subscriber.domain,
+                         mark_safe('<a href="%s">%s</a>'
+                                   % (reverse(ManageBillingAccountView.name, args=(subscription.account.id,)),
+                                      subscription.account.name)),
                          subscription.plan.plan.name,
-                         subscription.plan.plan.description,
-                         mark_safe('<a href="../accounts/%d">%s</a>'
-                                   % (subscription.account.id, subscription.account.name)),
-                         subscription.date_start,
-                         subscription.date_end,
                          subscription.is_active,
-                         subscription.plan.plan.visibility,
-                         "MISSING VALUE",
-                         mark_safe('<a href="./%d" class="btn">Edit</a>' % subscription.id)])
+                         subscription.salesforce_contract_id,
+                         subscription.date_start,
+                         subscription.date_end])
+
         return rows
 
     #######
