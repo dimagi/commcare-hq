@@ -1,4 +1,4 @@
-class HQAccountingSetupError(Exception):
+class AccountingError(Exception):
     pass
 
 
