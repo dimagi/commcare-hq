@@ -129,7 +129,6 @@ class GroupResource(v0_4.GroupResource):
     class Meta(v0_4.GroupResource.Meta):
         detail_allowed_methods = ['get', 'put', 'delete']
         list_allowed_methods = ['get', 'post', 'patch']
-        always_return_data = True
 
     def patch_list(self, request=None, **kwargs):
         """
@@ -155,16 +154,13 @@ class GroupResource(v0_4.GroupResource):
             try:
 
                 self.obj_create(bundle=bundle, **self.remove_api_resource_names(kwargs))
-            except Exception as ex:
+            except AssertionError as ex:
                 status = http.HttpBadRequest
                 bundle.data['_id'] = ex.message
             bundles_seen.append(bundle)
 
-        if not self._meta.always_return_data:
-            return http.HttpAccepted()
-        else:
-            to_be_serialized = [bundle.data['_id'] for bundle in bundles_seen]
-            return self.create_response(request, to_be_serialized, response_class=status)
+        to_be_serialized = [bundle.data['_id'] for bundle in bundles_seen]
+        return self.create_response(request, to_be_serialized, response_class=status)
 
     def _update(self, bundle):
         should_save = False
@@ -209,7 +205,7 @@ class GroupResource(v0_4.GroupResource):
             for user in bundle.obj.users:
                 CommCareUser.get(user).set_groups([bundle.obj._id])
         else:
-            raise Exception("A group with name %s already exists" % bundle.data.get("name"))
+            raise AssertionError("A group with name %s already exists" % bundle.data.get("name"))
         return bundle
 
     def obj_update(self, bundle, **kwargs):
