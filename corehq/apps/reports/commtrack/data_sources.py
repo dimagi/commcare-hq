@@ -16,10 +16,10 @@ def is_timely(case, limit=0):
     return num_periods_late(case, REPORTING_PERIOD, *REPORTING_PERIOD_ARGS) <= limit
 
 def reporting_status(case, start_date, end_date):
-    last_reported = getattr(case, 'last_reported', None)
-    if last_reported and last_reported.date() < start_date:
+    last_reported = case.get_last_reported_date()
+    if last_reported and last_reported < start_date:
         return 'ontime'
-    elif last_reported and start_date <= last_reported.date() <= end_date:
+    elif last_reported and start_date <= last_reported <= end_date:
         return 'late'
     else:
         return 'nonreporting'
@@ -229,7 +229,7 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             product_cases = filter(lambda c: Product.get(c.product).program_id == self.program_id, product_cases)
         def latest_case(cases):
             # getting last report date should probably be moved to a util function in a case wrapper class
-            return max(cases, key=lambda c: getattr(c, 'last_reported', '2000-01-01'))
+            return max(cases, key=lambda c: c.get_last_reported_date() or datetime(2000, 1, 1).date())
         cases_by_site = map_reduce(lambda c: [(tuple(c.location_),)],
                                    lambda v: reporting_status(latest_case(v), self.start_date, self.end_date),
                                    data=product_cases, include_docs=True)
