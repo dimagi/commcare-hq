@@ -1,4 +1,4 @@
-USER_INDEX="hqusers_55adf53b5021867f35c6649ad589e493"
+USER_INDEX="hqusers_dd94ypavd8b15to146900m727gqh4b5q"
 USER_MAPPING={'_all': {'analyzer': 'standard'},
  '_meta': {'comment': 'Ethan made on 2013-01-08',
            'created': None},
