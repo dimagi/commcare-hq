@@ -54,10 +54,11 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         domain = args[0] if len(args) == 1 else None
         since = dparser.parse(options["since"], fuzzy=True) if options.get("since") else None
-        filename = options.get("filename") or ("case_integrity" + "_%s" % domain if domain else "")
+        filename = options.get("filename") or ("case_integrity" + ("_%s" % domain if domain else ""))
         if not filename.endswith(".csv"):
             filename = "%s.csv" % filename
         rebuild, verbose = options.get("rebuild"), options.get("verbose")
+        print "writing to file: %s" % filename
 
         with open(filename, 'wb+') as csvfile:
             csv_writer = csv.writer(csvfile, delimiter=' ',
