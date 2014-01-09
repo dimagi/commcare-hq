@@ -12,7 +12,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.fixtures.models import FixtureDataItem
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import submit_case_blocks, get_cases_in_domain
-
+from dimagi.utils.decorators.memoized import memoized
 
 DOMAINS = ["hsph-dev", "hsph-betterbirth"]
 PAST_N_DAYS = 21
@@ -23,9 +23,12 @@ OWNER_FIELD_MAPPINGS = {
         "cati": "cati_assignment",
         "fida": "field_follow_up_assignment"
     }
-INDEXED_FIXTURES = {domain: FixtureDataItem.get_indexed_items(domain, "site", "site_id") for domain in DOMAINS}
-
 INDEXED_GROUPS = {domain: {} for domain in DOMAINS}
+
+
+@memoized
+def indexed_fixtures():
+    return {domain: FixtureDataItem.get_indexed_items(domain, "site", "site_id") for domain in DOMAINS}
 
 
 def update_groups_index(domain):
@@ -36,6 +39,7 @@ def update_groups_index(domain):
 
 
 def get_owner_username(domain, owner_type, site_id):
+    INDEXED_FIXTURES = indexed_fixtures()
     if not owner_type:
         return ''
     field_name = OWNER_FIELD_MAPPINGS[owner_type]
