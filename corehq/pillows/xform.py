@@ -1,16 +1,8 @@
 import copy
-from casexml.apps.case.xform import extract_case_blocks
-from corehq.pillows.case import UNKNOWN_DOMAIN, UNKNOWN_TYPE
-from corehq.pillows.core import DATE_FORMATS_ARR
+from casexml.apps.case.xform import extract_case_blocks, get_case_ids_from_form
 from corehq.pillows.mappings.xform_mapping import XFORM_MAPPING, XFORM_INDEX
-from dimagi.utils.decorators.memoized import memoized
 from .base import HQPillow
-from pillowtop.listener import AliasedElasticPillow
-import hashlib
-import simplejson
 from couchforms.models import XFormInstance
-from django.conf import settings
-from dimagi.utils.modules import to_function
 
 
 UNKNOWN_VERSION = 'XXX'
@@ -62,6 +54,8 @@ class XFormPillow(HQPillow):
                 for object_key in ['index', 'attachment', 'create', 'update']:
                     if object_key in case_dict and not isinstance(case_dict[object_key], dict):
                         case_dict[object_key] = None
+
+            doc_ret["__retrieved_case_ids"] = list(get_case_ids_from_form(doc_dict))
             return doc_ret
 
 

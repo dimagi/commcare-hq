@@ -11,7 +11,7 @@ def forms_with_cases(domain=None, since=None):
     q = {"filter": {"and": [{"bool": {
             "must_not": {
                "missing": {
-                    "field": "form.case.@case_id",
+                    "field": "__retrieved_case_ids",
                     "existence": True,
                     "null_value": True}}}}]}}
     params={"domain.exact": domain} if domain else {}
@@ -19,7 +19,7 @@ def forms_with_cases(domain=None, since=None):
         q["filter"]["and"][0]["bool"]["must"] = {
             "range": {
                 "received_on": {"from": since.strftime("%Y-%m-%d")}}}
-    return stream_es_query(params=params, q=q, es_url=ES_URLS["forms"], fields=["form.case.@case_id"])
+    return stream_es_query(params=params, q=q, es_url=ES_URLS["forms"], fields=["__retrieved_case_ids"])
 
 def check_case_for_form_updates(form_id, case_id):
     print "checking case (%s) for form (%s)" % (case_id, form_id)
@@ -51,8 +51,8 @@ class Command(BaseCommand):
         rebuild = options.get("rebuild")
 
         for form in forms_with_cases(domain, since):
-            form_id, case_ids = form["_id"], form["fields"]["form.case.@case_id"]
-            case_ids = [case_ids] if isinstance(case_ids, basestring) else case_id
+            form_id, case_ids = form["_id"], form["fields"]["__retrieved_case_ids"]
+            case_ids = [case_ids] if isinstance(case_ids, basestring) else case_ids
             for case_id in case_ids:
                 validation = check_case_for_form_updates(form_id, case_id)
                 if not validation["valid"]:
