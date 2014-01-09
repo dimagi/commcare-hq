@@ -462,6 +462,34 @@ MACH_CONFIG = {"username": "Dimagi",
                "password": "changeme",
                "service_profile": "changeme"}
 
+""" SMS Queue Settings"""
+
+# Setting this to False will make the system process outgoing and incoming SMS
+# immediately rather than use the queue.
+SMS_QUEUE_ENABLED = False
+
+# If an SMS still has not been processed in this number of minutes, enqueue it
+# again.
+SMS_QUEUE_ENQUEUING_TIMEOUT = 60
+
+# Number of minutes a celery task will alot for itself (via lock timeout)
+SMS_QUEUE_PROCESSING_LOCK_TIMEOUT = 5
+
+# Number of minutes to wait before retrying an unsuccessful processing attempt
+# for a single SMS
+SMS_QUEUE_REPROCESS_INTERVAL = 5
+
+# Max number of processing attempts before giving up on processing the SMS
+SMS_QUEUE_MAX_PROCESSING_ATTEMPTS = 3
+
+# Number of minutes to wait before retrying SMS that was delayed because the
+# domain restricts sending SMS to certain days/times.
+SMS_QUEUE_DOMAIN_RESTRICTED_RETRY_INTERVAL = 15
+
+# The number of hours to wait before counting a message as stale. Stale
+# messages will not be processed.
+SMS_QUEUE_STALE_MESSAGE_DURATION = 7 * 24
+
 #auditcare parameters
 AUDIT_MODEL_SAVE = [
     'corehq.apps.app_manager.Application',

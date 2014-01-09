@@ -11,8 +11,9 @@ from corehq.apps.users.models import CommCareUser, CommCareCase
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.modules import to_function
 
+from custom.opm.opm_tasks.tasks import save_report
 from custom.opm.opm_tasks.models import OpmReportSnapshot
-from ..constants import DOMAIN
+from ..constants import *
 from ..beneficiary import Beneficiary
 from ..reports import (BeneficiaryPaymentReport, IncentivePaymentReport,
     get_report)
@@ -32,8 +33,7 @@ class OPMTestBase(object):
         print "loading test data"
         with open(test_data_location) as f:
             docs = json.loads(f.read())
-        for i, doc in enumerate(docs):
-            print i, doc.get('_id', '')
+        for doc in docs:
             self.db.save_doc(doc)
 
     def reindex_fluff(self, pillow):
@@ -120,3 +120,51 @@ class TestIncentive(OPMTestBase, TestCase):
 
 class TestBeneficiary(OPMTestBase, TestCase):
     ReportClass = BeneficiaryPaymentReport
+
+
+# class TestBuildOPM(OPMTestBase, TestCase):
+    # """
+    # uncomment this class to rebuild test json
+    # """
+    # def load_test_data(self):
+        # with open(test_data_location) as f:
+            # docs = json.loads(f.read())
+
+        # self.out_docs = []
+        # self.validate_docs(docs)
+        
+        # for doc in self.out_docs:
+            # self.db.save_doc(doc)
+
+    # def validate_docs(self, docs):
+        # for doc in docs:
+            # if doc['doc_type'] == 'OpmReportSnapshot':
+                # continue
+            # if doc['doc_type'] == "CommCareCase":
+                # pass
+            # elif doc['doc_type'] == "XFormInstance":
+                # if doc['xmlns'] not in [
+                    # PREG_REG_XMLNS,
+                    # BIRTH_PREP_XMLNS,
+                    # DELIVERY_XMLNS,
+                    # CHILD_FOLLOWUP_XMLNS,
+                    # CFU1_XMLNS,
+                    # CFU2_XMLNS,
+                    # CFU3_XMLNS,
+                # ]:
+                    # print "removing bad form"
+                    # continue
+            # self.out_docs.append(doc)
+
+    # def test_all_results(self):
+        # month, year = test_month_year
+        # incentive_report = save_report(IncentivePaymentReport, month, year)
+        # beneficiary_report = save_report(BeneficiaryPaymentReport, month, year)
+        # print "*"*40
+        # print "writing! output"
+        # print "bp report is %s rows" % len(beneficiary_report.rows)
+        # print "*"*40
+        # self.out_docs.append(incentive_report.to_json())
+        # self.out_docs.append(beneficiary_report.to_json())
+        # with open('opm_test_docs.json', 'w') as f:
+            # f.write(json.dumps(self.out_docs, indent=2))

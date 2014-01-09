@@ -151,8 +151,9 @@ def validate_date(value):
 
 def validate_time(value):
     time_regex = re.compile("^\d{1,2}:\d\d(:\d\d){0,1}$")
-    if time_regex.match(value) is None:
+    if not isinstance(value, basestring) or time_regex.match(value) is None:
         raise ValidationError("Times must be in hh:mm format.")
+    return parse(value).time()
 
 def validate_form_unique_id(form_unique_id, domain):
     try:

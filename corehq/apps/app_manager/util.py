@@ -24,6 +24,15 @@ def split_path(path):
 
 
 def save_xform(app, form, xml):
+    def change_xmlns(xform, replacing):
+        data = xform.data_node.render()
+        xmlns = "http://openrosa.org/formdesigner/%s" % form.get_unique_id()
+        data = data.replace(replacing, xmlns, 1)
+        xform.instance_node.remove(xform.data_node.xml)
+        xform.instance_node.append(parse_xml(data))
+        xml = xform.render()
+        return xform, xml
+
     try:
         xform = XForm(xml)
     except XFormError:
@@ -34,13 +43,13 @@ def save_xform(app, form, xml):
             if form == duplicate:
                 continue
             else:
-                data = xform.data_node.render()
-                xmlns = "http://openrosa.org/formdesigner/%s" % form.get_unique_id()
-                data = data.replace(xform.data_node.tag_xmlns, xmlns, 1)
-                xform.instance_node.remove(xform.data_node.xml)
-                xform.instance_node.append(parse_xml(data))
-                xml = xform.render()
+                xform, xml = change_xmlns(xform, xform.data_node.tag_xmlns)
                 break
+
+        GENERIC_XMLNS = "http://www.w3.org/2002/xforms"
+        if not xform.data_node.tag_xmlns or xform.data_node.tag_xmlns == GENERIC_XMLNS:  #no xmlns
+            xform, xml = change_xmlns(xform, GENERIC_XMLNS)
+
     form.source = xml
 
 CASE_TYPE_REGEX = r'^[\w-]+$'
