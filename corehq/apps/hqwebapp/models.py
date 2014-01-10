@@ -1082,6 +1082,7 @@ class AdminTab(UITab):
             format_submenu_context(mark_for_escaping(_("Commands")), url=reverse("management_commands")),
 #            format_submenu_context(mark_for_escaping("HQ Announcements"),
 #                url=reverse("default_announcement_admin")),
+            format_submenu_context(AccountingTab.title, url=reverse('accounting_default')),
         ]
         try:
             submenu_context.append(format_submenu_context(mark_for_escaping(_("Billing")),
