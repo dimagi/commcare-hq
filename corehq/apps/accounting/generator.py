@@ -13,7 +13,7 @@ from dimagi.utils.data import generator as data_gen
 
 from corehq.apps.accounting.models import (FeatureType, Currency, BillingAccount, FeatureRate, SoftwarePlanVersion,
                                            SoftwarePlan, SoftwareProductRate, Subscription, Subscriber, SoftwareProduct,
-                                           Feature, SoftwareProductType, DefaultProductPlan)
+                                           Feature, SoftwareProductType, DefaultProductPlan, BillingAccountAdmin)
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser, CommCareUser
 
@@ -155,10 +155,12 @@ def billing_account(web_user_creator, web_user_contact, currency=None, save=True
     billing_account = BillingAccount(
         name=account_name,
         created_by=web_user_creator.username,
-        web_user_contact=web_user_contact.username,
         currency=currency,
     )
     if save:
+        billing_account.save()
+        billing_account.billing_admins =\
+            [BillingAccountAdmin.objects.get_or_create(web_user=web_user_contact.username)[0]]
         billing_account.save()
 
     return billing_account
