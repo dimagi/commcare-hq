@@ -39,7 +39,46 @@
         </div>
 
         <div class="tab-pane" id="subscriptions">
-            <a href="{% url 'manage_account_subscriptions' account.id %}">Manage Account Subscriptions</a>
+            <div>
+                <a href="{% url 'new_subscription' account.id %}" class="btn btn-primary" data-toggle="modal" style="margin-left:2px">
+                    <i class="icon-white icon-plus">
+                        Add New Subscription
+                    </i>
+                </a>
+            </div>
+
+            <div>
+                <table class="table table-striped table-bordered">
+                    <thead>
+                        <tr>
+                            <th>{% trans "Project Space" %}</th>
+                            <th>{% trans "Software Plan" %}</th>
+                            <th>{% trans "Start Date" %}</th>
+                            <th>{% trans "End Date" %}</th>
+                            <th>{% trans "Currently Active" %}</th>
+                            <th>{% trans "Last Invoice" %}</th>
+                            <th>{% trans "Delay Invoicing Until" %}</th>
+                            <th>{% trans "Creditable Line Items" %}</th>
+                            <th>{% trans "Edit" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody data-bind="foreach: subscription_list">
+                        {% for subscription in subscription_list %}
+                            <tr>
+                                <td>{{ subscription.subscriber.domain }}</td>
+                                <td>{{ subscription.plan.plan.name }}</td>
+                                <td>{{ subscription.date_start }}</td>
+                                <td>{{ subscription.date_end }}</td>
+                                <td>{{ subscription.is_active }}</td>
+                                <td>DATA MISSING</td>
+                                <td>{{ subscription.date_delay_invoicing }}</td>
+                                <td></td>
+                                <td><a href="../../subscriptions/{{ subscription.id }}" class="btn">Edit</a></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <div class="tab-pane" id="credits">
