@@ -129,7 +129,7 @@ class BillingAccount(models.Model):
     )
     created_by = models.CharField(max_length=80)
     date_created = models.DateField(auto_now_add=True)
-    web_user_contact = models.CharField(max_length=80, null=True)
+    billing_admins = models.ManyToManyField(BillingAccountAdmin, null=True)
     currency = models.ForeignKey(Currency, on_delete=models.PROTECT)
     is_auto_invoiceable = models.BooleanField(default=False)
     account_type = models.CharField(
