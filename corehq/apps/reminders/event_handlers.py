@@ -89,6 +89,10 @@ def fire_sms_event(reminder, handler, recipients, verified_numbers, workflow=Non
                         raise_error(reminder, ERROR_FINDING_CUSTOM_CONTENT_HANDLER)
                         return False
                     message = content_handler(reminder, handler, recipient)
+                    # If the content handler returns None or empty string,
+                    # don't send anything
+                    if not message:
+                        return True
                 else:
                     raise_error(reminder, ERROR_INVALID_CUSTOM_CONTENT_HANDLER)
                     return False

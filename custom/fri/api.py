@@ -2,7 +2,7 @@ import random
 import re
 import pytz
 from dateutil.parser import parse
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, time
 from casexml.apps.case.models import CommCareCase
 from custom.fri.models import (
     PROFILE_A,
@@ -16,6 +16,21 @@ from custom.fri.models import (
     FRIRandomizedMessage,
 )
 from corehq.apps.reports import util as report_utils
+from redis_cache.cache import RedisCache
+from dimagi.utils.couch.cache import cache_core
+from dimagi.utils.timezones import utils as tz_utils
+from corehq.apps.domain.models import Domain
+
+# (day, time, length in minutes) where day = Monday 0, Sunday 6
+WINDOWS = (
+    (0, time(12, 0), 480),
+    (1, time(12, 0), 480),
+    (2, time(12, 0), 780),
+    (3, time(12, 0), 780),
+    (4, time(12, 0), 840),
+    (5, time(15, 30), 630),
+    (6, time(15, 30), 510),
+)
 
 def letters_only(text):
     return re.sub(r"[^a-zA-Z]", "", text).upper()
@@ -115,8 +130,61 @@ def randomize_messages(case):
         randomized_message.save()
         order += 1
 
+def get_redis_client():
+    rcache = cache_core.get_redis_default_cache()
+    if not isinstance(rcache, RedisCache):
+        raise Exception("Could not get redis client. Is redis down?")
+    return rcache.raw_client
+
+def already_randomized(case):
+    any_message = FRIRandomizedMessage.view(
+        "fri/randomized_message",
+        startkey=[case.domain, case._id],
+        endkey=[case.domain, case._id, {}],
+        include_docs=True
+    ).first()
+    return any_message is not None
+
 def get_randomized_message(case, order):
-    return FRIRandomizedMessage.view("fri/randomized_message", key=[case.domain, case._id, order], include_docs=True).one()
+    if order >= 0 and order <= 279:
+        client = get_redis_client()
+        lock = client.lock("fri-randomization-%s" % case._id, timeout=300)
+
+        lock.acquire(blocking=True)
+        if not already_randomized(case):
+            randomize_messages(case)
+        lock.release()
+
+        message = FRIRandomizedMessage.view(
+            "fri/randomized_message",
+            key=[case.domain, case._id, order],
+            include_docs=True
+        ).one()
+        return message
+    else:
+        return None
+
+def get_message_offset(case):
+    previous_sunday = parse(case.get_case_property("previous_sunday"))
+    registration_date = parse(case.get_case_property("registration_date"))
+    delta = registration_date - previous_sunday
+    return delta.days
+
+def get_num_missed_windows(case):
+    domain_obj = Domain.get_by_name(case.domain, strict=True)
+    opened_timestamp = tz_utils.adjust_datetime_to_timezone(
+        case.opened_on,
+        pytz.utc.zone,
+        domain_object.default_timezone
+    )
+    day_of_week = opened_timestamp.weekday()
+    time_of_day = opened_timestamp.time()
+
+    window_num = 0
+    for window in WINDOWS:
+        window_interval = (window[2] - 60) / 5
+        for i in range(5):
+            pass
 
 def custom_content_handler(reminder, handler, recipient):
     """
@@ -125,10 +193,11 @@ def custom_content_handler(reminder, handler, recipient):
     """
     case = reminder.case
     order = ((reminder.schedule_iteration_num - 1) * 35) + reminder.current_event_sequence_num
+    order -= get_message_offset(case)
     randomized_message = get_randomized_message(case, order)
-    if randomized_message is None:
-        randomize_messages(case)
-        randomized_message = get_randomized_message(case, order)
-    message = FRIMessageBankMessage.get(randomized_message.message_bank_message_id)
-    return message.message
+    if randomized_message:
+        message = FRIMessageBankMessage.get(randomized_message.message_bank_message_id)
+        return message.message
+    else:
+        return None
 
