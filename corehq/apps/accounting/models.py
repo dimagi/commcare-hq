@@ -111,6 +111,10 @@ class Currency(models.Model):
         return default
 
 
+class BillingAccountAdmin(models.Model):
+    web_user = models.CharField(max_length=80, unique=True, db_index=True)
+
+
 class BillingAccount(models.Model):
     """
     The key model that links a Subscription to its financial source and methods of payment.
@@ -138,6 +142,21 @@ class BillingAccount(models.Model):
     def balance(self):
         # todo compute
         return 0.0
+
+
+class BillingContactInfo(models.Model):
+    account = models.OneToOneField(BillingAccount, primary_key=True, null=False)
+    first_name = models.CharField(null=True)
+    last_name = models.CharField(null=True)
+    emails = models.CharField(null=True)
+    phone_number = models.CharField(null=True)
+    company_name = models.CharField(null=True)
+    first_line = models.CharField(null=False)
+    second_line = models.CharField(null=True)
+    city = models.CharField(null=False)
+    state_province_region = models.CharField(null=False)
+    postal_code = models.CharField(null=False)
+    country = models.CharField(null=False)
 
 
 class SoftwareProduct(models.Model):
