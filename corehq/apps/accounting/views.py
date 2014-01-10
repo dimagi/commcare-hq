@@ -67,6 +67,7 @@ class ManageBillingAccountView(TemplateView):
         return dict(account=account,
                     form=BillingAccountForm(account),
                     parent_link='<a href="%s">%s<a>' % (AccountingInterface.get_url(), AccountingInterface.name),
+                    subscription_list=Subscription.objects.filter(account=account),
                     )
 
     def post(self, request, *args, **kwargs):
@@ -81,17 +82,6 @@ class ManageBillingAccountView(TemplateView):
         return self.get(request, *args, **kwargs)
 
 
-class ManageAccountSubscriptions(TemplateView):
-    template_name = 'manage_account_subscriptions.html'
-    name = 'manage_account_subscriptions'
-
-    def get_context_data(self):
-        account = BillingAccount.objects.get(id=self.args[0])
-        return dict(account=account,
-                    parent_link='<a href="%s">%s<a>' % (AccountingInterface.get_url(), AccountingInterface.name),
-                    subscription_list=Subscription.objects.filter(account=account))
-
-
 class NewSubscriptionView(TemplateView):
     template_name = 'new_subscription.html'
     name = 'new_subscription'
@@ -101,6 +91,7 @@ class NewSubscriptionView(TemplateView):
                     parent_link='<a href="%s">%s<a>' % (AccountingInterface.get_url(), AccountingInterface.name))
 
     def post(self, request, *args, **kwargs):
+        account_id = self.args[0]
         date_start = datetime.datetime(int(self.request.POST['start_date_year']),
                                        int(self.request.POST['start_date_month']),
                                        int(self.request.POST['start_date_day']))
@@ -110,14 +101,14 @@ class NewSubscriptionView(TemplateView):
         date_delay_invoicing = datetime.datetime(int(self.request.POST['delay_invoice_until_year']),
                                                  int(self.request.POST['delay_invoice_until_month']),
                                                  int(self.request.POST['delay_invoice_until_day']))
-        subscription = Subscription(account=BillingAccount.objects.get(id=self.args[0]),
+        subscription = Subscription(account=BillingAccount.objects.get(id=account_id),
                                     date_start=date_start,
                                     date_end=date_end,
                                     date_delay_invoicing=date_delay_invoicing,
                                     plan=SoftwarePlanVersion.objects.all()[0],# TODO set
                                     subscriber=Subscriber.objects.all()[0])# TODO set
         subscription.save()
-        return HttpResponseRedirect(reverse('manage_account_subscriptions', args=(self.args[0],)))
+        return HttpResponseRedirect(reverse(ManageBillingAccountView.name, args=(account_id,)))
 
 
 class EditSubscriptionView(TemplateView):
