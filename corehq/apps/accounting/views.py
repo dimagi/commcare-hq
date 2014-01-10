@@ -36,6 +36,7 @@ def manage_billing_account(request, account_id):
 
 class NewBillingAccountView(TemplateView):
     template_name = 'new_account.html'
+    name = 'new_billing_account'
 
     def get_context_data(self):
         return dict(form=BillingAccountForm(None),
@@ -59,6 +60,7 @@ class NewBillingAccountView(TemplateView):
 # TODO make sure to require superuser
 class ManageBillingAccountView(TemplateView):
     template_name = 'manage_account.html'
+    name = 'manage_billing_account'
 
     def get_context_data(self):
         account = BillingAccount.objects.get(id=self.args[0])
@@ -81,6 +83,7 @@ class ManageBillingAccountView(TemplateView):
 
 class ManageAccountSubscriptions(TemplateView):
     template_name = 'manage_account_subscriptions.html'
+    name = 'manage_account_subscriptions'
 
     def get_context_data(self):
         account = BillingAccount.objects.get(id=self.args[0])
@@ -119,6 +122,7 @@ class NewSubscriptionView(TemplateView):
 
 class EditSubscriptionView(TemplateView):
     template_name = 'edit_subscription.html'
+    name = 'edit_subscription'
 
     def get_context_data(self):
         subscription = Subscription.objects.get(id=self.args[0])
