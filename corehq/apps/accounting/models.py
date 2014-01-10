@@ -543,6 +543,7 @@ class CreditAdjustment(models.Model):
     invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT, null=True)
     # todo payment_method = models.ForeignKey(PaymentMethod)
     date_created = models.DateField(auto_now_add=True)
+    web_user = models.CharField(max_length=80, null=True)
 
     def clean(self):
         """
