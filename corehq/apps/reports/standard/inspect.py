@@ -1,11 +1,9 @@
 from couchdbkit.exceptions import ResourceNotFound
-from dimagi.utils.decorators.memoized import memoized
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
 from jsonobject import DateTimeProperty
-from corehq.apps.groups.models import Group
 
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
