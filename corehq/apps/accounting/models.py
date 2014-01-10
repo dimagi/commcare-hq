@@ -146,17 +146,17 @@ class BillingAccount(models.Model):
 
 class BillingContactInfo(models.Model):
     account = models.OneToOneField(BillingAccount, primary_key=True, null=False)
-    first_name = models.CharField(null=True)
-    last_name = models.CharField(null=True)
-    emails = models.CharField(null=True)
-    phone_number = models.CharField(null=True)
-    company_name = models.CharField(null=True)
-    first_line = models.CharField(null=False)
-    second_line = models.CharField(null=True)
-    city = models.CharField(null=False)
-    state_province_region = models.CharField(null=False)
-    postal_code = models.CharField(null=False)
-    country = models.CharField(null=False)
+    first_name = models.CharField(max_length=50, null=True)
+    last_name = models.CharField(max_length=50, null=True)
+    emails = models.CharField(max_length=200, null=True)
+    phone_number = models.CharField(max_length=20, null=True)
+    company_name = models.CharField(max_length=50, null=True)
+    first_line = models.CharField(max_length=50, null=False)
+    second_line = models.CharField(max_length=50, null=True)
+    city = models.CharField(max_length=50, null=False)
+    state_province_region = models.CharField(max_length=50, null=False)
+    postal_code = models.CharField(max_length=20, null=False)
+    country = models.CharField(max_length=50, null=False)
 
 
 class SoftwareProduct(models.Model):
