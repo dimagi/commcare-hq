@@ -164,9 +164,15 @@ def get_randomized_message(case, order):
     else:
         return None
 
+def get_date(case, prop):
+    value = case.get_case_property(prop)
+    if not isinstance(value, date):
+        value = parse(value).date()
+    return value
+
 def get_message_offset(case):
-    previous_sunday = parse(case.get_case_property("previous_sunday"))
-    registration_date = parse(case.get_case_property("registration_date"))
+    previous_sunday = get_date(case, "previous_sunday")
+    registration_date = get_date(case, "registration_date")
     delta = registration_date - previous_sunday
     return delta.days * 5
 
@@ -178,7 +184,7 @@ def get_num_missed_windows(case):
     opened_timestamp = tz_utils.adjust_datetime_to_timezone(
         case.opened_on,
         pytz.utc.zone,
-        domain_object.default_timezone
+        domain_obj.default_timezone
     )
     day_of_week = opened_timestamp.weekday()
     time_of_day = opened_timestamp.time()
@@ -207,11 +213,14 @@ def custom_content_handler(reminder, handler, recipient, catch_up=False):
     the next message to send.
     """
     case = reminder.case
-    order = get_message_number(reminder) - get_message_offset(case)
+    if catch_up:
+        order = reminder.current_event_sequence_num
+    else:
+        order = get_message_number(reminder) - get_message_offset(case)
 
     num_missed_windows = get_num_missed_windows(case)
-    if (((not catchup) and (order < num_missed_windows)) or
-        catchup and (order >= num_missed_windows)):
+    if (((not catch_up) and (order < num_missed_windows)) or
+        catch_up and (order >= num_missed_windows)):
         return None
 
     randomized_message = get_randomized_message(case, order)
