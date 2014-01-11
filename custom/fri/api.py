@@ -21,15 +21,15 @@ from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.timezones import utils as tz_utils
 from corehq.apps.domain.models import Domain
 
-# (day, time, length in minutes) where day = Monday 0, Sunday 6
+# (time, length in minutes), indexed by day, where Monday=0, Sunday=6
 WINDOWS = (
-    (0, time(12, 0), 480),
-    (1, time(12, 0), 480),
-    (2, time(12, 0), 780),
-    (3, time(12, 0), 780),
-    (4, time(12, 0), 840),
-    (5, time(15, 30), 630),
-    (6, time(15, 30), 510),
+    (time(12, 0), 480),
+    (time(12, 0), 480),
+    (time(12, 0), 780),
+    (time(12, 0), 780),
+    (time(12, 0), 840),
+    (time(15, 30), 630),
+    (time(15, 30), 510),
 )
 
 def letters_only(text):
@@ -168,9 +168,12 @@ def get_message_offset(case):
     previous_sunday = parse(case.get_case_property("previous_sunday"))
     registration_date = parse(case.get_case_property("registration_date"))
     delta = registration_date - previous_sunday
-    return delta.days
+    return delta.days * 5
 
 def get_num_missed_windows(case):
+    """
+    Get the number of reminder events that were missed on registration day.
+    """
     domain_obj = Domain.get_by_name(case.domain, strict=True)
     opened_timestamp = tz_utils.adjust_datetime_to_timezone(
         case.opened_on,
@@ -180,24 +183,47 @@ def get_num_missed_windows(case):
     day_of_week = opened_timestamp.weekday()
     time_of_day = opened_timestamp.time()
 
-    window_num = 0
-    for window in WINDOWS:
-        window_interval = (window[2] - 60) / 5
-        for i in range(5):
-            pass
+    # In order to use timedelta, we need a datetime
+    current_time = datetime.combine(date(2000, 1, 1), time_of_day)
+    window_time = datetime.combine(date(2000, 1, 1), WINDOWS[day_of_week][0])
 
-def custom_content_handler(reminder, handler, recipient):
+    if current_time < window_time:
+        return 0
+
+    window_interval = (WINDOWS[day_of_week][1] - 60) / 5
+    for i in range(1, 5):
+        window_time += timedelta(minutes=window_interval)
+        if current_time < window_time:
+            return i
+
+    return 5
+
+def get_message_number(reminder):
+    return ((reminder.schedule_iteration_num - 1) * 35) + reminder.current_event_sequence_num
+
+def custom_content_handler(reminder, handler, recipient, catch_up=False):
     """
     This method is invoked from the reminder event-handling thread to retrieve
     the next message to send.
     """
     case = reminder.case
-    order = ((reminder.schedule_iteration_num - 1) * 35) + reminder.current_event_sequence_num
-    order -= get_message_offset(case)
+    order = get_message_number(reminder) - get_message_offset(case)
+
+    num_missed_windows = get_num_missed_windows(case)
+    if (((not catchup) and (order < num_missed_windows)) or
+        catchup and (order >= num_missed_windows)):
+        return None
+
     randomized_message = get_randomized_message(case, order)
     if randomized_message:
         message = FRIMessageBankMessage.get(randomized_message.message_bank_message_id)
         return message.message
     else:
         return None
+
+def catchup_custom_content_handler(reminder, handler, recipient):
+    """
+    Used to send content that was missed to due registering late in the day.
+    """
+    return custom_content_handler(reminder, handler, recipient, catch_up=True)
 
