@@ -49,6 +49,8 @@ class MessageLog(SafeSaveDocument, UnicodeMixIn):
     system_error_message = StringProperty()
     # If the message was simulated from a domain, this is the domain
     domain_scope = StringProperty()
+    queued_timestamp = DateTimeProperty()
+    processed_timestamp = DateTimeProperty()
 
     def __unicode__(self):
         to_from = (self.direction == INCOMING) and "from" or "to"

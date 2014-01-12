@@ -139,6 +139,7 @@ def queue_outgoing_sms(msg, onerror=lambda: None):
         try:
             msg.processed = False
             msg.datetime_to_process = msg.date
+            msg.queued_timestamp = datetime.utcnow()
             msg.save()
         except:
             onerror()
@@ -279,6 +280,7 @@ def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None,
     if settings.SMS_QUEUE_ENABLED:
         msg.processed = False
         msg.datetime_to_process = datetime.utcnow()
+        msg.queued_timestamp = msg.datetime_to_process
         msg.save()
         enqueue_directly(msg)
     else:
