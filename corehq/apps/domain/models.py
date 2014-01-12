@@ -6,7 +6,7 @@ from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from couchdbkit.ext.django.schema import (Document, StringProperty, BooleanProperty, DateTimeProperty, IntegerProperty,
                                           DocumentSchema, SchemaProperty, DictProperty, ListProperty,
-                                          StringListProperty, SchemaListProperty)
+                                          StringListProperty, SchemaListProperty, TimeProperty)
 from django.core.cache import cache
 from django.utils.safestring import mark_safe
 from corehq.apps.appstore.models import Review, SnapshotMixin
@@ -157,9 +157,13 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
     """
     sf_contract_id = StringProperty()
     sf_account_id = StringProperty()
-    commcare_edition = StringProperty(choices=["", "standard", "plus", "advanced"], default="")
+    commcare_edition = StringProperty(
+        choices=['', "plus", "community", "standard", "pro", "advanced", "enterprise"],
+        default="community"
+    )
     services = StringProperty(choices=["", "basic", "plus", "full", "custom"], default="")
     initiative = StringListProperty()
+    workshop_region = StringProperty()
     project_state = StringProperty(choices=["", "POC", "transition", "at-scale"], default="")
     self_started = BooleanProperty()
     area = StringProperty()
@@ -200,6 +204,16 @@ class DynamicReportSet(DocumentSchema):
 
 LOGO_ATTACHMENT = 'logo.png'
 
+class DayTimeWindow(DocumentSchema):
+    """
+    Defines a window of time in a day of the week.
+    Day/time combinations will be interpreted in the domain's timezone.
+    """
+    # 0 - 6 is Monday - Sunday; -1 means it applies to all days
+    day = IntegerProperty()
+    # For times, None means there's no lower/upper bound
+    start_time = TimeProperty()
+    end_time = TimeProperty()
 
 class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     """Domain is the highest level collection of people/stuff
@@ -247,6 +261,21 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     chat_message_count_threshold = IntegerProperty()
     custom_chat_template = StringProperty() # See settings.CUSTOM_CHAT_TEMPLATES
     custom_case_username = StringProperty() # Case property to use when showing the case's name in a chat window
+    # If empty, sms can be sent at any time. Otherwise, only send during
+    # these windows of time. SMS_QUEUE_ENABLED must be True in localsettings
+    # for this be considered.
+    restricted_sms_times = SchemaListProperty(DayTimeWindow)
+    # If empty, this is ignored. Otherwise, the framework will make sure
+    # that during these days/times, no automated outbound sms will be sent
+    # to someone if they have sent in an sms within sms_conversation_length
+    # minutes. Outbound sms sent from a user in a chat window, however, will
+    # still be sent. This is meant to prevent chat conversations from being
+    # interrupted by automated sms reminders.
+    # SMS_QUEUE_ENABLED must be True in localsettings for this to be
+    # considered.
+    sms_conversation_times = SchemaListProperty(DayTimeWindow)
+    # In minutes, see above.
+    sms_conversation_length = IntegerProperty(default=10)
 
     # exchange/domain copying stuff
     is_snapshot = BooleanProperty(default=False)
@@ -954,6 +983,17 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         if self.is_snapshot:
             self.full_downloads = self.copied_from.total_downloads
         return self.full_downloads
+
+    @property
+    @memoized
+    def published_by(self):
+        from corehq.apps.users.models import CouchUser
+        pb_id = self.cda.user_id
+        return CouchUser.get_by_user_id(pb_id) if pb_id else None
+
+    @property
+    def name_of_publisher(self):
+        return self.published_by.human_friendly_name if self.published_by else ""
 
 class DomainCounter(Document):
     domain = StringProperty()

@@ -46,6 +46,7 @@ def REPORTS(project):
             commtrack_reports.ReportingRatesReport,
             commtrack_reports.CurrentStockStatusReport,
             commtrack_reports.AggregateStockStatusReport,
+            commtrack_reports.RequisitionReport,
             psi_prototype.VisitReport,
             psi_prototype.SalesAndConsumptionReport,
             psi_prototype.CumulativeSalesAndConsumptionReport,

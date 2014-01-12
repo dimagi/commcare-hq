@@ -225,8 +225,3 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
         'errors': errors,
         'num_chunks': num_chunks,
     }
-
-def submit_case_block(caseblock, domain, username, user_id):
-    """ Convert a CaseBlock object to xml and submit for creation/update """
-    casexml = ElementTree.tostring(caseblock.as_xml(format_datetime=json_format_datetime))
-    submit_case_blocks(casexml, domain, username, user_id)

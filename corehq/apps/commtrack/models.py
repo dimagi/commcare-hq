@@ -4,7 +4,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from couchdbkit.ext.django.schema import *
 from django.utils.translation import ugettext as _
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.xml import V1, V2
+from casexml.apps.case.xml import V2
 from corehq import Domain
 
 from corehq.apps.commtrack import const
@@ -71,8 +71,30 @@ class Program(Document):
     domain = StringProperty()
     name = StringProperty()
     code = StringProperty()
-    description = StringProperty()
 
+    @classmethod
+    def by_domain(cls, domain, wrap=True):
+        """
+        Gets all programs in a domain.
+        """
+        kwargs = dict(
+            view_name='commtrack/programs',
+            startkey=[domain],
+            endkey=[domain, {}],
+            include_docs=True
+        )
+        if wrap:
+            return Program.view(**kwargs)
+        else:
+            return [row["doc"] for row in Program.view(wrap_doc=False, **kwargs)]
+
+    @classmethod
+    def get_by_code(cls, domain, code):
+        result = cls.view("commtrack/program_by_code",
+                          key=[domain, code],
+                          include_docs=True,
+                          limit=1).first()
+        return result
 
 class Product(Document):
     """
@@ -95,23 +117,36 @@ class Product(Document):
         return result
 
     @classmethod
-    def by_domain(cls, domain, wrap=True):
+    def by_program_id(cls, domain, prog_id, wrap=True, **kwargs):
+        kwargs.update(dict(
+            view_name='commtrack/product_by_program_id',
+            startkey=[domain, prog_id],
+            endkey=[domain, {}],
+            include_docs=True
+        ))
+        if wrap:
+            return Product.view(**kwargs)
+        else:
+            return [row["doc"] for row in Product.view(wrap_doc=False, **kwargs)]
+
+    @classmethod
+    def by_domain(cls, domain, wrap=True, **kwargs):
         """
         Gets all products in a domain.
         """
-        kwargs = dict(
+        kwargs.update(dict(
             view_name='commtrack/products',
             startkey=[domain],
             endkey=[domain, {}],
             include_docs=True
-        )
+        ))
         if wrap:
             return Product.view(**kwargs)
         else:
             return [row["doc"] for row in Product.view(wrap_doc=False, **kwargs)]
 
 
-def product_fixture_generator(user, version=V1, last_sync=None):
+def product_fixture_generator(user, version, last_sync):
     if not Domain.get_by_name(user.domain).commtrack_enabled:
         return []
     root = ElementTree.Element('fixture',
@@ -225,6 +260,16 @@ class OpenLMISConfig(DocumentSchema):
 
     using_requisitions = BooleanProperty(default=False) # whether openlmis handles our requisitions for us
 
+    @property
+    def is_configured(self):
+        return True if self.enabled and self.url and self.password and self.username else False
+
+class AlertConfig(DocumentSchema):
+    stock_out_facilities = BooleanProperty(default=False)
+    stock_out_commodities = BooleanProperty(default=False)
+    stock_out_rates = BooleanProperty(default=False)
+    non_report = BooleanProperty(default=False)
+
 
 class CommtrackConfig(Document):
 
@@ -251,6 +296,9 @@ class CommtrackConfig(Document):
     use_auto_consumption = BooleanProperty(default=False)
     consumption_config = SchemaProperty(ConsumptionConfig)
     stock_levels_config = SchemaProperty(StockLevelsConfig)
+
+    # configured on Subscribe Sms page
+    alert_config = SchemaProperty(AlertConfig)
 
     @classmethod
     def for_domain(cls, domain):
@@ -935,8 +983,10 @@ class RequisitionCase(CommCareCase):
     @classmethod
     def get_by_external_id(cls, domain, external_id):
         return cls.view('hqcase/by_domain_external_id',
-                        key=[domain, external_id],
-                        inlude_docs=True)
+            key=[domain, external_id],
+            include_docs=True, reduce=False,
+            classes={'CommCareCase': RequisitionCase}
+        ).all()
 
     @classmethod
     def get_display_config(cls):

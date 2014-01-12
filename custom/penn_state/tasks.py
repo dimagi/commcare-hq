@@ -11,12 +11,27 @@ from .models import LegacyWeeklyReport
 from .constants import *
 
 
+def get_m_to_f(date):
+    """
+    Returns a list whose elements are the dates of Monday - Friday
+    for the most recent week to end prior to ``date``
+    """
+    iso = date.isoweekday()
+    days_prior = iso - 5 if iso >= 5 else iso + 2
+    friday = date - datetime.timedelta(days=days_prior)
+    return [friday - datetime.timedelta(days=days)
+            for days in range(4, -1, -1)]
+
+
+all_days = 'monday tuesday wednesday thursday friday'
+
 class Site(object):
-    def __init__(self, group, date):
+    def __init__(self, group, date, on):
         self.name = group.name
-        self.week = self.get_m_to_f(date)
-        self.strategy = [0] * 5
-        self.game = [0] * 5
+        self.week = get_m_to_f(date)
+        self.on = on
+        self.strategy = self.schedule
+        self.game = self.schedule
         self.individual = {}
         self.emails = []
         self.last_week = LegacyWeeklyReport.by_site(group,
@@ -31,16 +46,13 @@ class Site(object):
             [self.week[0].strftime('%b %d'), sum([d for d in self.strategy if d>0])]
         )
 
-    def get_m_to_f(self, date):
-        """
-        Returns a list whose elements are the dates of Monday - Friday
-        for the most recent week to end prior to ``date``
-        """
-        iso = date.isoweekday()
-        days_prior = iso - 5 if iso >= 5 else iso + 2
-        friday = date - datetime.timedelta(days=days_prior)
-        return [friday - datetime.timedelta(days=days)
-                for days in range(4, -1, -1)]
+    @property
+    def schedule(self):
+        days = all_days.split(' ')
+        schedule = []
+        for d in days:
+            schedule.append(0 if d in self.on else -1)
+        return schedule
 
     def process_user(self, user):
         username = user.raw_username
@@ -48,8 +60,8 @@ class Site(object):
         if username not in self.individual:
             self.emails.append(user.email)
             self.individual[username] = {
-                'strategy': [0] * 5,
-                'game': [0] * 5,
+                'strategy': self.schedule,
+                'game': self.schedule,
             }
         # process this week's forms
         for form in XFormInstance.get_forms_by_user(
@@ -62,7 +74,7 @@ class Site(object):
         except (LookupError, AttributeError):
             weekly_totals = []
         weekly_totals.append([
-            self.week[0].strftime('%b %d'),
+            self.week[0].strftime(DATE_FORMAT),
             sum([d for d in self.individual[username]['strategy'] if d>0])
         ])
         self.individual[username]['weekly_totals'] = weekly_totals
@@ -94,6 +106,19 @@ class Site(object):
         self.game[day] += games
 
 
+def get_days_on(date):
+    week = get_m_to_f(date)
+    week = [week[0] - datetime.timedelta(days=1)] + week
+    for form in XFormInstance.view(
+        'couchforms/by_xmlns',
+        key=WEEKLY_SCHEDULE_XMLNS,
+        reduce=False,
+        include_docs=True,
+    ):
+        if form.received_on.date() in week:
+            return form.form
+
+
 def save_report(date=None):
     """
     Save report for the most recent calendar week
@@ -101,20 +126,24 @@ def save_report(date=None):
     if date is None:
         date = datetime.date.today()
 
+    days_on = get_days_on(date)
     for group in Group.by_domain(DOMAIN):
-        site = Site(group, date)
-        report = LegacyWeeklyReport(
-            domain=DOMAIN,
-            site=site.name,
-            week_end_date=site.week[-1] + datetime.timedelta(days=1),
-            site_strategy=site.strategy,
-            site_game=site.game,
-            individual=site.individual,
-            weekly_totals=site.weekly_totals,
-        )
-        report.save()
-        msg = "Saving legacy group %s to doc %s" % (group.name, report._id)
-        logging.info(msg)
+        if group._id in GROUPS:
+            s_id = GROUPS[group._id]['schedule_id']
+            on = days_on.get(s_id, all_days) if days_on else all_days
+            site = Site(group, date, on)
+            report = LegacyWeeklyReport(
+                domain=DOMAIN,
+                site=site.name,
+                week_end_date=site.week[-1] + datetime.timedelta(days=1),
+                site_strategy=site.strategy,
+                site_game=site.game,
+                individual=site.individual,
+                weekly_totals=site.weekly_totals,
+            )
+            report.save()
+            msg = "Saving legacy group %s to doc %s" % (group.name, report._id)
+            logging.info(msg)
 
 
 @periodic_task(

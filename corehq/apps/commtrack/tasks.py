@@ -8,15 +8,15 @@ from dimagi.utils.excel import WorkbookJSONReader
 
 
 @task
-def import_locations_async(domain, file_ref_id, update_existing=False):
+def import_locations_async(domain, file_ref_id):
     task = import_locations_async
 
     DownloadBase.set_progress(task, 0, 100)
     download_ref = DownloadBase.get(file_ref_id)
     workbook = WorkbookJSONReader(download_ref.get_filename())
-    worksheet = workbook.get_worksheet()
+    worksheets = workbook.worksheets
 
-    results = list(import_locations(domain, worksheet, update_existing, task))
+    results = list(import_locations(domain, worksheets, task))
 
     DownloadBase.set_progress(task, 100, 100)
 

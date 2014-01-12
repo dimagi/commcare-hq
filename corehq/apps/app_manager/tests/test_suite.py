@@ -12,16 +12,18 @@ import difflib
 from doctest import Example
 from lxml.doctestcompare import LXMLOutputChecker
 
+def assertXmlEqual(want, got):
+    checker = LXMLOutputChecker()
+    if not checker.check_output(want, got, 0):
+        message = checker.output_difference(Example("", want), got, 0)
+        for line in difflib.unified_diff(want.splitlines(1), got.splitlines(1), fromfile='want.xml', tofile='got.xml'):
+            print line
+        raise AssertionError(message)
 
 class XmlTest(TestCase):
 
     def assertXmlEqual(self, want, got):
-        checker = LXMLOutputChecker()
-        if not checker.check_output(want, got, 0):
-            message = checker.output_difference(Example("", want), got, 0)
-            for line in difflib.unified_diff(want.splitlines(1), got.splitlines(1), fromfile='want.xml', tofile='got.xml'):
-                print line
-            raise AssertionError(message)
+        return assertXmlEqual(want, got)
 # end snippet
 
 
