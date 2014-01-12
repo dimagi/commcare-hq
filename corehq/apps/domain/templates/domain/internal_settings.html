@@ -33,11 +33,26 @@
              $subarea.append($opt);
         });
     }
+
+    function update_workshop_region() {
+        var $wr = $wr || $('#id_workshop_region').parent().parent();
+        var $workshop_initiative = $workshop_initiative || $('[name="initiative"][value="Workshop"]');
+        if ($workshop_initiative.is(":checked")) {
+            $wr.show();
+        } else {
+            $wr.hide();
+        }
+    }
     $(function() {
         update_subareas();
+        update_workshop_region();
         $('[name="area"]').change(function() {
             update_subareas();
-        })
+        });
+        $('[name="initiative"]').change(function() {
+            update_workshop_region();
+        });
+
     });
     </script>
 {% endblock %}

@@ -21,7 +21,7 @@ def sync_user_cases(commcare_user):
     # language or phone_number can be null and will break
     # case submission
     fields = {
-        'name': commcare_user.name,
+        'name': commcare_user.name or commcare_user.raw_username,
         'email': commcare_user.email,
         'language': commcare_user.language or '',
         'phone_number': commcare_user.phone_number or ''
@@ -61,7 +61,7 @@ def sync_user_cases(commcare_user):
         )
 
     casexml = ElementTree.tostring(caseblock.as_xml())
-    submit_case_blocks(casexml, domain, commcare_user.username, commcare_user._id)
+    submit_case_blocks(casexml, domain.name, commcare_user.username, commcare_user._id)
 
 
 def bootstrap_callcenter(domain):

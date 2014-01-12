@@ -65,6 +65,16 @@
         Backbone.history.start({pushState: true, root: urlRoot});
 
         set_pin(30, $('#cloudcare-main'), $('#loading'));
+
+        function enableOffline() {
+            $('#debug-opts').show();
+            $('#use-offline').attr('checked', 'checked');
+        }
+        var offlineEnabled = {{ offline_enabled|JSON }};
+        if (offlineEnabled) {
+            enableOffline();
+        }
+
     }());
 
 </script>
@@ -78,16 +88,6 @@
 
         <!-- keep this well-hidden for now -->
         <nav id="debug-opts" style="display: none;">
-          <script>
-function enableOffline() {
-    $('#debug-opts').show();
-    $('#use-offline').attr('checked', 'checked');
-}
-if (window.location.href.indexOf('offline=true') != -1) {
-    // doesn't work?
-    enableOffline();
-}
-          </script>
           <ul class="nav nav-list">
             <li>
               <label class="checkbox">

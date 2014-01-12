@@ -1,4 +1,8 @@
+# Standard Library imports
 from functools import wraps
+import logging
+
+# Django imports
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
@@ -7,11 +11,20 @@ from django.http import HttpResponseRedirect, Http404, HttpResponseForbidden
 from django.utils.http import urlquote
 from django.utils.translation import ugettext as _
 
-########################################################################################################
+# External imports
+from django_digest.decorators import httpdigest
+from django_prbac.models import Role
+import toggle.shortcuts
+
+# CCHQ imports
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.users.models import CouchUser, PublicUser
-from django_digest.decorators import httpdigest
+from corehq import toggles
+
+########################################################################################################
+
+logger = logging.getLogger(__name__)
 
 REDIRECT_FIELD_NAME = 'next'
 
@@ -183,3 +196,46 @@ def require_previewer(view_func):
     return shim
 
 cls_require_previewer = cls_to_view(additional_decorator=require_previewer)
+
+
+def require_privilege(privilege_slug, fallback_view=None):
+    """
+    Decorator to restrict access to a view to those granted a particular
+    PRBAC privilege. Currently active only for users with the 'prbacdemo'
+    feature flag.
+    """
+
+    if fallback_view is None:
+        def fallback_view(request, *args, **kwargs):
+            return HttpResponseForbidden(_('You do not have adequate privileges for this view'))
+
+    def decorator(view_func):
+
+        @wraps(view_func)
+        def wrapped_view(request, *args, **kwargs):
+
+            # Skip this for non-demo users
+            if not hasattr(request, 'user') or not toggle.shortcuts.toggle_enabled(toggles.PRBAC_DEMO, request.user.username):
+                return view_func(request, *args, **kwargs)
+
+            # Warn and deny permission if the privilege does not exist.
+            privileges = Role.objects.filter(slug=privilege_slug)
+            if privileges.count() == 0:
+                logger.warn('require_privilege invoked with nonexistent role %s', privilege_slug)
+                return fallback_view(request, *args, **kwargs)
+
+            privilege = privileges.get()
+
+            if not hasattr(request, 'role'):
+                logger.debug('require_privilege invoked with no role on request object')
+                return fallback_view(request, *args, **kwargs)
+            elif not request.role.has_privilege(privilege):
+                return fallback_view(request, *args, **kwargs)
+            else:
+                # Huzzah!
+                return view_func(request, *args, **kwargs)
+
+        return wrapped_view
+
+    return decorator
+

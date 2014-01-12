@@ -647,6 +647,12 @@ class EulaMixin(DocumentSchema):
         return current_eula
 
 
+class KeyboardShortcutsConfig(DocumentSchema):
+    enabled = BooleanProperty(False)
+    main_key = StringProperty(choices=["ctrl", "option", "command", "alt", "shift", "control"])
+    main_keycode = IntegerProperty()
+
+
 class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMixin):
     """
     A user (for web and commcare)
@@ -663,6 +669,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     language = StringProperty()
     email_opt_out = BooleanProperty(default=False)
     announcements_seen = ListProperty()
+    keyboard_shortcuts = SchemaProperty(KeyboardShortcutsConfig)
 
     _user = None
     _user_checked = False
@@ -735,6 +742,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     @property
     def human_friendly_name(self):
         return self.full_name if self.full_name else self.username
+
+    @property
+    def name_in_filters(self):
+        return "%s <%s>" % (self.full_name, self.username) if self.full_name else self.username
 
     formatted_name = full_name
     name = full_name
@@ -1647,6 +1658,7 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
     #do sync and create still work?
 
     location_id = StringProperty()
+    program_id = StringProperty()
 
     def sync_from_old_couch_user(self, old_couch_user):
         super(WebUser, self).sync_from_old_couch_user(old_couch_user)

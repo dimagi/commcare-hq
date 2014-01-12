@@ -12,7 +12,8 @@ hard_coded_indicators = 'homevisit'
 hard_coded_group_filter = lambda group: bool((group.metadata or {}).get('awc-code', False))
 hard_coded_fixture_id = 'indicators:bihar-supervisor'
 
-def generator(user, *args, **kwargs):
+
+def generator(user, version, last_sync):
     # todo: this appears in the beginning of all fixture generators. should fix
     if isinstance(user, CommCareUser):
         pass

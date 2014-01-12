@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<suite>
+<suite descriptor="Suite File">
   <xform>
     <resource descriptor="Form: (Module Untitled Module) - Untitled Form" id="efa7a665e14c32b0b4c322067a6c0a08228630c3">
       <location authority="local">./modules-0/forms-0.xml</location>
