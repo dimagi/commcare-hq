@@ -181,6 +181,9 @@ class SMSLog(MessageLog):
     # This is the unique message id that the gateway uses to track this
     # message, if applicable.
     backend_message_id = StringProperty()
+    # True if this was an inbound message that was an
+    # invalid response to a survey question
+    invalid_survey_response = BooleanProperty(default=False)
     
     @property
     def outbound_backend(self):

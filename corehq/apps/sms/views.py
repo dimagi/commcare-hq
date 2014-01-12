@@ -735,6 +735,17 @@ def api_history(request, domain):
     data.sort(key=lambda x : x.date)
     username_map = {}
     for sms in data:
+        # Don't show outgoing SMS that haven't been processed yet
+        if sms.direction == OUTGOING and not sms.processed:
+            continue
+        # Filter SMS that are tied to surveys if necessary
+        if ((domain_obj.filter_surveys_from_chat and 
+             sms.xforms_session_couch_id)
+            and not
+            (domain_obj.show_invalid_survey_responses_in_chat and
+             sms.direction == INCOMING and
+             sms.invalid_survey_response)):
+            continue
         if sms.direction == INCOMING:
             if doc.doc_type == "CommCareCase" and domain_obj.custom_case_username:
                 sender = doc.get_case_property(domain_obj.custom_case_username)
