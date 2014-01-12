@@ -1,5 +1,7 @@
+from dimagi.utils.couch.resource_conflict import retry_resource
 from django.contrib import messages
 from django.contrib.auth.forms import PasswordChangeForm
+from django.views.decorators.http import require_POST
 import langcodes
 
 from django.http import HttpResponseRedirect
@@ -184,3 +186,13 @@ class BaseProjectDataView(BaseDomainView):
     @property
     def section_url(self):
         return reverse('data_interfaces_default', args=[self.domain])
+
+
+@require_POST
+@require_superuser
+@retry_resource(3)
+def keyboard_config(request):
+    request.couch_user.keyboard_shortcuts["enabled"] = bool(request.POST.get('enable'))
+    request.couch_user.keyboard_shortcuts["main_key"] = request.POST.get('main-key', 'option')
+    request.couch_user.save()
+    return HttpResponseRedirect(request.GET.get('next'))

@@ -1,0 +1,10 @@
+{% extends "cloudcare/base.html" %}
+{% load url from future %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% block main_column %}
+    <div>
+      {% trans "Sorry! Your domain subscription does not include CloudCare. Please do upgrade." %}
+    </div>
+{% endblock %}

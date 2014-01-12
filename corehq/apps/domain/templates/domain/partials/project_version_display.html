@@ -16,7 +16,14 @@
         <dt><h4>Most Recent Version</h4></dt>
         <dd>
             <form method="get" action="{% url "domain_create_snapshot" domain %}">
-                <a class="btn btn-primary" data-action="{% url "domain_set_published" domain version.name %}" data-toggle="modal" data-target="#contentDistributionAgreement" href="#contentDistributionAgreement">Publish</a>
+                <a class="btn btn-primary"
+                   data-action="{% url "domain_set_published" domain version.name %}"
+                   data-toggle="modal" data-target="#contentDistributionAgreement"
+                   href="#contentDistributionAgreement"
+                   onclick="_gaq.push(['_trackEvent', 'Exchange', 'Publish Most Recent', '{{ version.name }}']);"
+                >
+                    Publish
+                </a>
                 <button type="submit" class="btn btn-primary">Edit</button>
             </form>
         </dd>
@@ -28,5 +35,11 @@
     <dd>{{ version.get_license_display }}</dd>
     <dt>{% trans 'Status' %}</dt>
     <dd>{% if version.is_approved %}Approved{% else %}Not yet approved{% endif %}</dd>
-    <dd><a href="{% url "project_info" version.name %}">View on exchange</a></dd>
+    <dd>
+        <a href="{% url "project_info" version.name %}"
+           onclick="_gaq.push(['_trackEvent', 'Exchange', 'View on exchange', '{{ version.name }}']);"
+        >
+            View on exchange
+        </a>
+    </dd>
 </dl>
