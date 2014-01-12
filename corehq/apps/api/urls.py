@@ -63,9 +63,10 @@ API_LIST = (
         v0_5.CommCareUserResource,
         v0_5.WebUserResource,
         v0_5.GroupResource,
+        v0_5.BulkUserResource,
         FixtureResource,
         ReportResource,
-    ))
+    )),
 )
 
 # eventually these will have to version too but this works for now

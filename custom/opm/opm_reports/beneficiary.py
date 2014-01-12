@@ -2,6 +2,7 @@
 Fluff calculators that pertain to specific cases/beneficiaries (mothers)
 These are used in the Incentive Payment Report
 """
+import re
 from datetime import datetime, date, timedelta
 
 from couchdbkit.exceptions import ResourceNotFound
@@ -57,13 +58,18 @@ class Beneficiary(object):
         def fluff_attr(attr):
             return getattr(self.fluff_doc, attr, '')
 
+        account = fluff_attr('account_number')
+        self.account_number = str(account) if account else ''
+        # fake cases will have accounts beginning with 111
+        if re.match(r'^111', self.account_number):
+            raise InvalidRow
+
         self.name = fluff_attr('name')
         self.husband_name = fluff_attr('husband_name')
         self.awc_name = fluff_attr('awc_name')
         self.bank_name = fluff_attr('bank_name')
         self.bank_branch_name = fluff_attr('bank_branch_name')
         self.bank_branch_code = fluff_attr('bank_branch_code')
-        self.account_number = fluff_attr('account_number')
         self.block = fluff_attr('block')
         self.village = fluff_attr('village')
 

@@ -43,6 +43,16 @@
     </script>
     <script>
         $(function () {
+            $('#save_restrict_option').click(function() {
+                var post_url = '{% url "location_restriction_for_users" domain %}';
+                $(this).text('Saving ...');
+                $.post(post_url,
+                    {restrict_users: $('#restrict_users')[0].checked},
+                    function(data, status) {
+                        $('#save_restrict_option').text('Saved');
+                })
+            }),
+
             $('.resend-invite').click(function () {
                 var post_url = '{% url "reinvite_web_user" domain %}';
                 var doc_id = this.getAttribute('data-invite');
@@ -77,6 +87,15 @@
     </div>
 
     {% include 'domain/partials/user_list.html' with users=web_users remove_included=1 %}
+
+    {% if domain_object.commtrack_enabled %}
+        <label class="checkbox">
+            <input id="restrict_users" type="checkbox" name="restrict_users" value="True" {% if domain_object.location_restriction_for_users %}checked{% endif %}>
+            {% trans "Restrict Web User access based on location" %}
+            <button class="btn btn-success btn-small" id="save_restrict_option">Save</button>
+        </label>
+
+    {% endif %}
 
     {% if invitations %}
     <h2>Pending Invitations</h2>

@@ -303,6 +303,27 @@ class CommTrackSetupTab(UITab):
         ]
         items.append([_("Products"), products_section])
 
+
+        # circular import
+        from corehq.apps.commtrack.views import ProgramListView, NewProgramView, EditProgramView
+        programs_section = [
+            {
+                'title': ProgramListView.page_title,
+                'url': reverse(ProgramListView.urlname, args=[self.domain]),
+                'subpages': [
+                    {
+                        'title': NewProgramView.page_title,
+                        'urlname': NewProgramView.urlname,
+                    },
+                    {
+                        'title': EditProgramView.page_title,
+                        'urlname': EditProgramView.urlname,
+                    },
+                ]
+            },
+        ]
+        items.append([_("Programs"), programs_section])
+
         # circular import
         from corehq.apps.locations.views import (LocationsListView, NewLocationView, EditLocationView,
                                                  FacilitySyncView, LocationImportView)
@@ -527,6 +548,8 @@ class MessagingTab(UITab):
             new_reminder_urlname = 'add_complex_reminder_schedule'
             keyword_list_url = reverse('manage_keywords', args=[self.domain])
 
+        from corehq.apps.sms.views import SubscribeSMSView
+
         items = [
             (_("Messages"), [
                 {'title': _('Compose SMS Message'),
@@ -578,8 +601,15 @@ class MessagingTab(UITab):
                  #'url': ...},
                 {'title': _("Reminders in Error"),
                  'url': reverse('reminders_in_error', args=[self.domain])},
-            ])
+            ]),
         ]
+        if self.project.commtrack_enabled:
+            items.append(
+                (_("CommTrack"), [
+                    {'title': _("Subscribe to SMS Reports"),
+                    'url': reverse(SubscribeSMSView.urlname, args=[self.domain])},])
+            )
+
         if self.couch_user.is_previewer():
             items[0][1].append(
                 {'title': _('Chat'),

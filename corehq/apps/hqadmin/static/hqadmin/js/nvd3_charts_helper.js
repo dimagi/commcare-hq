@@ -111,10 +111,10 @@ function trim_data(data) {
         var reverse_index = get_first(anarr);
         return reverse_index > -1 ? arr.length - reverse_index : -1;
     }
-    var gt_zero = function (n) {return n > 0};
+    var gte_zero = function (n) {return n >= 0};
 
-    var firsts = _.filter(_.map(data, function(d) { return get_first(d.values); }), gt_zero);
-    var lasts = _.filter(_.map(data, function(d) { return get_last(d.values); }), gt_zero);
+    var firsts = _.filter(_.map(data, function(d) { return get_first(d.values); }), gte_zero);
+    var lasts = _.filter(_.map(data, function(d) { return get_last(d.values); }), gte_zero);
     var first = firsts.length > 0 ? Math.min.apply(null, firsts) : 0;
     var last = lasts.length > 0 ? Math.max.apply(null, lasts) : data[0].values.length;
 

@@ -15,6 +15,7 @@ function LocationSelectViewModel(hierarchy, default_caption, auto_drill, loc_fil
   this.auto_drill = (auto_drill == null ? true : auto_drill);
   this.loc_filter = loc_filter || function(loc) { return true; };
 
+
   this.root = ko.observable();
   this.selected_path = ko.observableArray();
 
@@ -66,8 +67,8 @@ function LocationSelectViewModel(hierarchy, default_caption, auto_drill, loc_fil
   }
 
   // load location hierarchy and set initial path
-  this.load = function(locs, selected) {
-    this.root(new LocationModel({name: '_root', children: locs}, this));
+  this.load = function(locs, selected, restriction) {
+    this.root(new LocationModel({name: '_root', children: locs, 'restriction': restriction}, this));
     this.path_push(this.root());
 
     if (selected) {
@@ -90,6 +91,7 @@ function LocationModel(data, root, depth) {
   this.name = ko.observable();
   this.type = ko.observable();
   this.uuid = ko.observable();
+  this.location_restriction = ko.observable();
   this.children = ko.observableArray();
   this.depth = depth || 0;
   this.children_loaded = false;
@@ -139,7 +141,11 @@ function LocationModel(data, root, depth) {
     this.name(data.name);
     this.type(data.location_type);
     this.uuid(data.uuid);
+    this.location_restriction(data.restriction);
     if (data.children != null) {
+        $.map(data.children, function(e) {
+            e.restriction = data.restriction
+        });
       this.set_children(data.children);
     }
   }
