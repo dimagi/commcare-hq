@@ -256,8 +256,6 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     @property
     def options(self):
         user_type_opts = [("t__%s" % (i+1), "[%s]" % name) for i, name in enumerate(HQUserType.human_readable[1:])]
-        user_opts = [("u__%s" % u.get_id, "%s [user]" % u.human_friendly_name) for u in util.user_list(self.domain)]
+        user_opts = [("u__%s" % u.get_id, "%s [user]" % u.name_in_filters) for u in util.user_list(self.domain)]
         group_opts = [("g__%s" % g.get_id, "%s [group]" % g.name) for g in Group.get_reporting_groups(self.domain)]
         return [("_all_mobile_workers", _("[All mobile workers]"))] + user_type_opts + user_opts + group_opts
-
-
