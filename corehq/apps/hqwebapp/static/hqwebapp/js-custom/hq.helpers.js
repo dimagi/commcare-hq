@@ -35,17 +35,27 @@ $(function() {
     });
 });
 
+var oldHide = $.fn.popover.Constructor.prototype.hide;
+
+$.fn.popover.Constructor.prototype.hide = function() {
+    if (this.options.trigger === "hover" && this.tip().is(":hover")) {
+        var that = this;
+        setTimeout(function() {
+            return that.hide.call(that, arguments);
+        }, that.options.delay.hide);
+        return;
+    }
+    oldHide.call(this, arguments);
+};
+
 $.fn.hqHelp = function () {
     var self = this;
     self.each(function(i) {
         var $helpElem = $($(self).get(i));
-        $helpElem.find('i').popover();
-        $helpElem.click(function () {
-            if ($helpElem.find('i').attr('data-trigger') != 'hover') {
-                $(this).toggleClass('on');
-            }
-            if ($(this).hasClass('no-click')) {
-                return false;
+        $helpElem.find('i').popover({
+            html: true,
+            content: function() {
+                return $('#popover_content_wrapper').html();
             }
         })
     });
@@ -59,4 +69,6 @@ $.showMessage = function (message, level) {
     $notice.append($closeIcon);
     $notice.append(message);
     $(".hq-page-header-container").prepend($notice);
-}
+};
+
+

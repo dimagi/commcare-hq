@@ -6,6 +6,7 @@ import dateutil.parser
 from django.utils.http import urlencode
 from django.test import TestCase
 from django.core.urlresolvers import reverse
+from tastypie.exceptions import BadRequest
 from tastypie.resources import Resource
 from tastypie import fields
 from corehq.apps.groups.models import Group
@@ -21,7 +22,8 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater, ShortFormRepeater
 from corehq.apps.api.resources import v0_1, v0_4, v0_5
 from corehq.apps.api.fields import ToManyDocumentsField, ToOneDocumentField, UseIfRequested, ToManyDictField
-from corehq.apps.api.es import ESQuerySet
+from corehq.apps.api import es
+from corehq.apps.api.es import ESQuerySet, ESUserError
 from django.conf import settings
 
 class FakeXFormES(object):
@@ -61,9 +63,10 @@ class APIResourceTest(TestCase):
     def setUp(self):
         self.maxDiff = None
         self.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
-        self.list_endpoint = reverse('api_dispatch_list', kwargs=dict(domain=self.domain.name,
-                                                                      api_name=self.api_name,
-                                                                      resource_name=self.resource.Meta.resource_name))
+        self.list_endpoint = reverse('api_dispatch_list',
+                kwargs=dict(domain=self.domain.name,
+                            api_name=self.api_name,
+                            resource_name=self.resource.Meta.resource_name))
         self.username = 'rudolph@qwerty.commcarehq.org'
         self.password = '***'
         self.user = WebUser.create(self.domain.name, self.username, self.password)
@@ -1120,3 +1123,103 @@ class TestGroupResource(APIResourceTest):
         self.assertTrue(modified.case_sharing)
         self.assertEqual(modified.metadata["localization"], "Ghana")
         modified.delete()
+
+
+class FakeUserES(object):
+    def __init__(self):
+        self.docs = []
+        self.queries = []
+
+    def add_doc(self, doc):
+        self.docs.append(doc)
+
+    def make_query(self, q=None, fields=None, domain=None, start_at=None, size=None):
+        self.queries.append(q)
+        start = int(start_at) if start_at else 0
+        end = min(len(self.docs), start + int(size)) if size else None
+        return self.docs[start:end]
+
+
+class TestBulkUserAPI(APIResourceTest):
+    resource = v0_5.BulkUserResource
+    api_name = 'v0.5'
+
+    def setUp(self):
+        self.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
+        self.username = 'rudolph@qwerty.commcarehq.org'
+        self.password = '***'
+        self.admin_user = WebUser.create(self.domain.name, self.username, self.password)
+        self.admin_user.set_role(self.domain.name, 'admin')
+        self.admin_user.save()
+
+        self.fake_user_es = FakeUserES()
+        v0_5.MOCK_BULK_USER_ES = self.mock_es_wrapper
+        self.make_users()
+
+    def tearDown(self):
+        self.admin_user.delete()
+        self.domain.delete()
+        v0_5.MOCK_BULK_USER_ES = None
+
+    def make_users(self):
+        users = [
+            ('Robb', 'Stark'),
+            ('Jon', 'Snow'),
+            ('Brandon', 'Stark'),
+            ('Eddard', 'Stark'),
+            ('Catelyn', 'Stark'),
+            ('Tyrion', 'Lannister'),
+            ('Tywin', 'Lannister'),
+            ('Jamie', 'Lannister'),
+            ('Cersei', 'Lannister'),
+        ]
+        for first, last in users:
+            username = '_'.join([first.lower(), last.lower()])
+            email = username + '@qwerty.commcarehq.org'
+            self.fake_user_es.add_doc({
+                'id': 'lskdjflskjflaj',
+                'email': email,
+                'username': username,
+                'first_name': first,
+                'last_name': last,
+                'phone_numbers': ['9042411080'],
+            })
+
+    def mock_es_wrapper(self, *args, **kwargs):
+        return self.fake_user_es.make_query(**kwargs)
+
+    @property
+    def list_endpoint(self):
+        return reverse(
+            'api_dispatch_list',
+            kwargs={
+                'domain': self.domain.name,
+                'api_name': self.api_name,
+                'resource_name': self.resource.Meta.resource_name,
+            }
+        )
+
+    def test_excluded_field(self):
+        result = self.query(fields=['email', 'first_name', 'password'])
+        self.assertEqual(result.status_code, 400)
+
+    def query(self, **params):
+        self.client.login(username=self.username, password=self.password)
+        url = '%s?%s' % (self.list_endpoint, urlencode(params, doseq=True))
+        return self.client.get(url)
+
+    def test_paginate(self):
+        limit = 3
+        result = self.query(limit=limit)
+        self.assertEqual(result.status_code, 200)
+        users = simplejson.loads(result.content)['objects']
+        self.assertEquals(len(users), limit)
+
+        result = self.query(start_at=limit, limit=limit)
+        self.assertEqual(result.status_code, 200)
+        users = simplejson.loads(result.content)['objects']
+        self.assertEquals(len(users), limit)
+
+    def test_basic(self):
+        response = self.query()
+        self.assertEqual(response.status_code, 200)

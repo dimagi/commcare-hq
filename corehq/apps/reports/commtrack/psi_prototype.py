@@ -66,6 +66,13 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
 
     @property
     @memoized
+    def program_id(self):
+        prog_id = self.request_params.get('program')
+        if prog_id != '':
+            return prog_id
+
+    @property
+    @memoized
     def outlet_type_filter(self):
         categories = supply_point_type_categories(self.domain)
         selected = self.request.GET.getlist('outlet_type')

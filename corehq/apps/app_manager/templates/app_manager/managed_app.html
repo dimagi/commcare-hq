@@ -227,7 +227,9 @@
                                         </a>
                                         {% if edit %}
                                             <div class="edit-form-pencil pull-right">
-                                                <a href="{% url "form_source" domain app.id module.id form.id %}">
+                                                <a href="{% url "form_source" domain app.id module.id form.id %}" onclick="
+                                                    _gaq.push(['_trackEvent', 'App Builder', 'Open Form', 'Edit Pen']);
+                                                ">
                                                     <i class="icon-pencil" {% ifequal form selected_form %}style="color: white"{% endifequal %}"></i>
                                                 </a>
                                             </div>
@@ -282,9 +284,11 @@
                                      <div class="controls">
                                          <select name="target_module_id" class="input">
                                              {% for module in app.get_modules %}
+                                                 {% if module.case_type %}
                                                  <option value="{{ module.id }}">
                                                      {{ module.name|html_trans:langs }}
                                                  </option>
+                                                 {% endif %}
                                              {% endfor %}
                                          </select>
                                      </div>

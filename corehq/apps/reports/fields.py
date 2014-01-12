@@ -4,6 +4,7 @@ from django.template.loader import render_to_string
 import pytz
 import warnings
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.commtrack.models import Product, Program
 from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from corehq.apps.orgs.models import Organization
@@ -22,6 +23,7 @@ from django.utils.translation import ugettext as _
 from corehq.apps.reports.cache import CacheableRequestMixIn, request_cache
 from django.core.urlresolvers import reverse
 import uuid
+from corehq.apps.users.models import WebUser
 
 """
     Note: Fields is being phased out in favor of filters.
@@ -504,15 +506,27 @@ class AsyncLocationField(ReportField):
                                                         'resource_name': 'location', 
                                                         'api_name': 'v0.3'})
         selected_loc_id = self.request.GET.get('location_id')
+        user = WebUser.get_by_username(str(self.request.user))
+        domain = Domain.get_by_name(self.domain)
 
-        return {
+        context = {}
+        
+        from corehq.apps.commtrack.util import is_commtrack_location
+        if is_commtrack_location(user, domain):
+            selected_loc_id = user.location_id
+            if domain.location_restriction_for_users:
+                context.update({'restriction': domain.location_restriction_for_users})
+
+        context.update({
             'api_root': api_root,
             'control_name': self.name,
             'control_slug': self.slug,
             'loc_id': selected_loc_id,
             'locations': json.dumps(load_locs_json(self.domain, selected_loc_id)),
             'hierarchy': location_hierarchy_config(self.domain),
-        }
+        })
+
+        return context
 
 class AsyncDrillableField(BaseReportFilter):
     # todo: add documentation
@@ -754,3 +768,17 @@ class CombinedSelectUsersField(ReportField):
 
         self.context.update(ctxt)
 
+class SelectProgramField(ReportSelectField):
+    slug = "program"
+    name = ugettext_noop("Program")
+    cssId = "program_select"
+    default_option = 'All'
+
+    def update_params(self):
+        self.selected = self.request.GET.get('program')
+        user = WebUser.get_by_username(str(self.request.user))
+        if not self.selected and self.selected != '':
+            self.selected = user.program_id
+        self.programs = Program.by_domain(self.domain)
+        opts = [dict(val=program.get_id, text=program.name) for program in self.programs]
+        self.options = opts

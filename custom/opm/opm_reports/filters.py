@@ -1,4 +1,5 @@
-from corehq.apps.reports.filters.base import BaseMultipleOptionFilter
+from corehq.apps.reports.filters.base import (
+    BaseMultipleOptionFilter, BaseSingleOptionFilter)
 
 from .constants import get_user_data_set
 

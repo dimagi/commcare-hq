@@ -153,6 +153,8 @@ var DetailScreenConfig = (function () {
             this.original['enum'] = this.original['enum'] || [];
             this.original.late_flag = this.original.late_flag || 30;
             this.original.filter_xpath = this.original.filter_xpath || "";
+            this.original.calc_xpath = this.original.calc_xpath || ".";
+
             this.original.time_ago_interval = this.original.time_ago_interval || DetailScreenConfig.TIME_AGO.year;
 
             this.screen = screen;
@@ -205,6 +207,10 @@ var DetailScreenConfig = (function () {
             this.filter_xpath_extra = uiElement.input().val(this.original.filter_xpath.toString());
             this.filter_xpath_extra.ui.prepend($('<div/>').text(DetailScreenConfig.message.FILTER_XPATH_EXTRA_LABEL));
 
+            this.calc_xpath_extra = uiElement.input().val(this.original.calc_xpath.toString());
+            this.calc_xpath_extra.ui.prepend($('<div/>').text(DetailScreenConfig.message.CALC_XPATH_EXTRA_LABEL));
+
+
             this.time_ago_extra = uiElement.select([
                 {label: DetailScreenConfig.message.TIME_AGO_INTERVAL.YEARS, value: DetailScreenConfig.TIME_AGO.year},
                 {label: DetailScreenConfig.message.TIME_AGO_INTERVAL.MONTHS, value: DetailScreenConfig.TIME_AGO.month},
@@ -226,6 +232,7 @@ var DetailScreenConfig = (function () {
                 'enum_extra',
                 'late_flag_extra',
                 'filter_xpath_extra',
+                'calc_xpath_extra',
                 'time_ago_extra'
             ];
 
@@ -243,6 +250,7 @@ var DetailScreenConfig = (function () {
                     that.enum_extra.ui.detach();
                     that.late_flag_extra.ui.detach();
                     that.filter_xpath_extra.ui.detach();
+                    that.calc_xpath_extra.ui.detach();
                     that.time_ago_extra.ui.detach();
 
                     if (this.val() === "enum" || this.val() === "enum-image") {
@@ -259,6 +267,13 @@ var DetailScreenConfig = (function () {
                         var input = that.filter_xpath_extra.ui.find('input');
                         input.change(function() {
                             that.filter_xpath_extra.value = input.val();
+                            fireChange();
+                        });
+                    } else if (this.val() === 'calculate') {
+                        that.format.ui.parent().append(that.calc_xpath_extra.ui);
+                        var input = that.calc_xpath_extra.ui.find('input');
+                        input.change(function() {
+                            that.calc_xpath_extra.value = input.val();
                             fireChange();
                         });
                     } else if (this.val() === 'time-ago') {
@@ -308,6 +323,7 @@ var DetailScreenConfig = (function () {
                 column.late_flag = parseInt(this.late_flag_extra.val(), 10);
                 column.time_ago_interval = parseFloat(this.time_ago_extra.val());
                 column.filter_xpath = this.filter_xpath_extra.val();
+                column.calc_xpath = this.calc_xpath_extra.val();
                 if (!keepShortLong) {
                     delete column.includeInShort;
                     delete column.includeInLong;
@@ -364,6 +380,7 @@ var DetailScreenConfig = (function () {
                 column.enum_extra.setEdit(that.edit);
                 column.late_flag_extra.setEdit(that.edit);
                 column.filter_xpath_extra.setEdit(that.edit);
+                column.calc_xpath_extra.setEdit(that.edit);
                 column.time_ago_extra.setEdit(that.edit);
                 column.setGrip(true);
                 column.on('change', fireChange);
@@ -380,6 +397,7 @@ var DetailScreenConfig = (function () {
                 column.enum_extra.setEdit(false);
                 column.late_flag_extra.setEdit(false);
                 column.filter_xpath_extra.setEdit(false);
+                column.calc_xpath_extra.setEdit(false);
                 column.time_ago_extra.setEdit(false);
                 column.setGrip(false);
                 return column;
@@ -803,6 +821,8 @@ var DetailScreenConfig = (function () {
         FILTER_XPATH_EXTRA_LABEL: '',
         INVISIBLE_FORMAT: 'Search Only',
         ADDRESS_FORMAT: 'Address (Android/CloudCare)',
+        CALC_XPATH_FORMAT: 'Calculate (Advanced)',
+        CALC_XPATH_EXTRA_LABEL: '',
 
         ADD_COLUMN: 'Add to list',
         COPY_COLUMN: 'Duplicate',
@@ -833,6 +853,12 @@ var DetailScreenConfig = (function () {
     if (window.FEATURE_enable_enum_image) {
         DetailScreenConfig.MENU_OPTIONS.push(
             {value: "enum-image", label: DetailScreenConfig.message.ENUM_IMAGE_FORMAT + ' (Preview!)'}
+        );
+    }
+
+    if (window.FEATURE_enable_calc_xpaths) {
+        DetailScreenConfig.MENU_OPTIONS.push(
+            {value: "calculate", label: DetailScreenConfig.message.CALC_XPATH_FORMAT + ' (Preview!)'}
         );
     }
     return DetailScreenConfig;
