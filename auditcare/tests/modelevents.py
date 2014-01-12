@@ -1,14 +1,14 @@
-import pdb
 import unittest
 import time
+from django.test import Client
 from auditcare.inspect import history_for_doc
 from auditcare.utils import _thread_locals
 from django.contrib.auth.models import User
 from auditcare.models import AuditEvent, ModelActionAudit
 from auditcare.tests.testutils import delete_all
-from django_digest.test import Client
 
-class modelEventTestCaseo(unittest.TestCase):
+
+class ModelEventTestCase(unittest.TestCase):
     def setUp(self):
         if hasattr(_thread_locals, 'user'):
             delattr(_thread_locals, 'user')
