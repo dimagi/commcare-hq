@@ -38,6 +38,8 @@ ROLES_STATIC = ['django_monolith', 'staticfiles']
 ROLES_SMS_QUEUE = ['django_monolith', 'sms_queue']
 ROLES_DB_ONLY = ['pg', 'django_monolith']
 
+SMS_QUEUE_ENVIRONMENTS = ['production', 'staging']
+
 PROD_PROXIES = ['hqproxy0.internal.commcarehq.org', 'hqproxy2.internal.commcarehq.org']
 
 if env.ssh_config_path and os.path.isfile(os.path.expanduser(env.ssh_config_path)):
@@ -972,7 +974,8 @@ def set_celery_supervisorconf():
     if env.environment not in ['staging', 'preview', 'realstaging']:
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_beat.conf')
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_periodic.conf')
-    _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_sms_queue.conf')
+    if env.environment in SMS_QUEUE_ENVIRONMENTS:
+        _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_sms_queue.conf')
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_flower.conf')
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_couchdb_lucene.conf') #to be deprecated
 
@@ -999,7 +1002,8 @@ def set_formsplayer_supervisorconf():
 
 @roles(*ROLES_SMS_QUEUE)
 def set_sms_queue_supervisorconf():
-    _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_sms_queue.conf')
+    if env.environment in SMS_QUEUE_ENVIRONMENTS:
+        _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_sms_queue.conf')
 
 @task
 def set_supervisor_config():
