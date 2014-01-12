@@ -140,6 +140,8 @@ class MessageLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabul
         abbreviate_phone_number = (self.domain in abbreviated_phone_number_domains)
         
         for message in data:
+            if message.direction == OUTGOING and not message.processed:
+                continue
             recipient_id = message.couch_recipient
             if recipient_id in [None, ""]:
                 username = "-"
