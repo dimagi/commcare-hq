@@ -1,9 +1,9 @@
-var CommtrackProductsViewModel = function (o) {
+var CommtrackProductsProgramsViewModel = function (o) {
     'use strict';
     var self = this;
     self.initial_load = ko.observable(false);
 
-    self.product_list = ko.observableArray();
+    self.data_list = ko.observableArray();
     self.archive_action_users = ko.observableArray(); // what is this?
 
     self.show_inactive = o.show_inactive;
@@ -17,7 +17,7 @@ var CommtrackProductsViewModel = function (o) {
     });
     self.current_page = ko.observable(o.start_page);
     self.next_page = ko.computed(function () {
-        var page = self.current_page() + 1;
+        var page = parseInt(self.current_page()) + 1;
         if (page > self.max_page()) {
             return undefined;
         }
@@ -73,7 +73,7 @@ var CommtrackProductsViewModel = function (o) {
                     self.initial_load(true);
                     $('.hide-until-load').fadeIn();
                     $('#user-list-notification').text('Sorry, there was an problem contacting the server ' +
-                        'to fetch the product list. Please, try again in a little bit.');
+                        'to fetch the data. Please, try again in a little bit.');
                 },
                 success: reloadList
             });
@@ -104,7 +104,7 @@ var CommtrackProductsViewModel = function (o) {
                     $('.hide-until-load').fadeIn();
                 }
                 self.current_page(data.current_page);
-                self.product_list(data.product_list);
+                self.data_list(data.data_list);
                 //self.archive_action_users([]);
             }
         },
@@ -142,13 +142,14 @@ var CommtrackProductsViewModel = function (o) {
         };
 };
 
-$.fn.asyncProductList = function (options) {
+$.fn.asyncProgramProductList = function (options) {
     this.each(function(i, v) {
-        var viewModel = new CommtrackProductsViewModel(options);
+        var viewModel = new CommtrackProductsProgramsViewModel(options);
         ko.applyBindings(viewModel, $(this).get(i));
         viewModel.init();
     });
 };
+
 
 ko.bindingHandlers.isPrevNextDisabled = {
     update: function(element, valueAccessor) {
@@ -163,7 +164,7 @@ ko.bindingHandlers.isPrevNextDisabled = {
 
 ko.bindingHandlers.isPaginationActive = {
     update: function(element, valueAccessor, allBindingsAccessor) {
-        var current_page = valueAccessor()();
+        var current_page = parseInt(valueAccessor()());
         var current_item = parseInt(allBindingsAccessor()['text']);
         if (current_page === current_item) {
             $(element).parent().addClass('active');

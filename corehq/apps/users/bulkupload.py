@@ -162,7 +162,7 @@ def create_or_update_locations(domain, location_specs, log):
     location_cache = LocationCache()
     users = {}
     for row in location_specs:
-        username = row.get('username')
+        username = normalize_username(row.get('username'), domain)
         location_code = row.get('location-sms-code')
         if username in users:
             user_mapping = users[username]
@@ -362,7 +362,7 @@ def get_location_rows(domain):
         locations = user.locations
         for location in locations:
             mappings.append([
-                user.username,
+                user.raw_username,
                 location.site_code,
                 location.name
             ])
