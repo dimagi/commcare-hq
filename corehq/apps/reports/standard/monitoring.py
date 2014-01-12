@@ -58,30 +58,7 @@ class MultiFormDrilldownMixin(object):
     @property
     @memoized
     def all_relevant_forms(self):
-        selected_forms = FormsByApplicationFilter.get_value(self.request, self.domain)
-        if self.request.GET.get('%s_unknown' % FormsByApplicationFilter.slug) == 'yes':
-            return selected_forms
-
-        # filter this result by submissions within this time frame
-        key = make_form_couch_key(self.domain, by_submission_time=getattr(self, 'by_submission_time', True))
-        data = get_db().view('reports_forms/all_forms',
-            reduce=False,
-            startkey=key+[self.datespan.startdate_param_utc],
-            endkey=key+[self.datespan.enddate_param_utc],
-        ).all()
-
-        all_submitted_forms = set([FormsByApplicationFilter.make_xmlns_app_key(d['value']['xmlns'], d['value']['app_id'])
-                                   for d in data])
-        relevant_forms = all_submitted_forms.intersection(set(selected_forms.keys()))
-
-        all_submitted_xmlns = [d['value']['xmlns'] for d in data]
-        fuzzy_xmlns = set([k for k in selected_forms.keys()
-                           if (FormsByApplicationFilter.fuzzy_slug in k and
-                               FormsByApplicationFilter.split_xmlns_app_key(k, only_xmlns=True) in all_submitted_xmlns)])
-
-
-        relevant_forms = relevant_forms.union(fuzzy_xmlns)
-        return dict([(k, selected_forms[k]) for k in relevant_forms])
+        return FormsByApplicationFilter.get_value(self.request, self.domain)
 
 
 class CompletionOrSubmissionTimeMixin(object):
@@ -745,10 +722,10 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
         chart.add_data(d)
 
         # mapping between numbers 0..6 and its day of the week label
-        day_names = "Sun Mon Tue Wed Thu Fri Sat".split(" ")
+        day_names = "Mon Tue Wed Thu Fri Sat Sun".split(" ")
         # the order, bottom-to-top, in which the days should appear
         # i.e. Sun, Sat, Fri, Thu, etc
-        days = (0, 6, 5, 4, 3, 2, 1)
+        days = (6, 5, 4, 3, 2, 1, 0)
 
         sizes=[]
         for d in days:

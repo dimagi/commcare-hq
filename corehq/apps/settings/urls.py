@@ -14,6 +14,7 @@ urlpatterns = patterns(
     url(r'^settings/$', MyAccountSettingsView.as_view(), name=MyAccountSettingsView.urlname),
     url(r'^projects/$', MyProjectsList.as_view(), name=MyProjectsList.urlname),
     url(r'^password/$', ChangeMyPasswordView.as_view(), name=ChangeMyPasswordView.urlname),
+    url(r'^keyboard_shortcuts_config/$', 'keyboard_config', name="keyboard_config"),
 )
 
 domain_specific = patterns('',

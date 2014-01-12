@@ -11,6 +11,7 @@
 
     {% if app.application_version == '2.0' %}
         <script src="{% static 'app_manager/js/case-knockout-bindings.js' %}"></script>
+        <script src="{% static 'app_manager/js/case-config-utils.js' %}"></script>
         <script src="{% static 'app_manager/js/case-config-ui-2.js' %}"></script>
     {% else %}
         <script src="{% static 'app_manager/js/ejs.min.js' %}"></script>
@@ -222,6 +223,7 @@
         });
     </script>
 {% endblock %}
+
 {% block head %}
     {{ block.super }}
     <link href="{% static 'hqwebapp/js/lib/select2/select2.css' %}" rel="stylesheet"/>
@@ -325,7 +327,9 @@
 
     {% if edit %}
     <div class="btn-group">
-        <a href="./source/" class="btn btn-primary">
+        <a href="./source/" class="btn btn-primary" onclick="
+            _gaq.push(['_trackEvent', 'App Builder', 'Open Form', 'Edit Label']);
+        ">
             <i class="icon-pencil"></i>
             {% trans "Edit" %}
         </a>

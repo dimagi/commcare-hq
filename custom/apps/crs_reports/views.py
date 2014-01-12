@@ -6,7 +6,6 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.reports.dispatcher import QuestionTemplateDispatcher
 from corehq.apps.reports.views import require_case_view_permission
 from casexml.apps.case.templatetags.case_tags import case_inline_display
-from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser
 from django.template.loader import get_template
 from django.template import Context
@@ -25,10 +24,7 @@ def crs_details_report(request, domain, case_id, report_slug):
 @login_and_domain_required
 @require_GET
 def render_to_pdf(request, domain, case_id, report_slug):
-    if report_slug == "hbnc_mother_report":
-        template = get_template("crs_reports/partials/mothers_form_reports_template.html")
-    else:
-        template = get_template("crs_reports/partials/baby_form_reports_template.html")
+    template = get_template("crs_reports/partials/mothers_form_reports_template.html")
 
     context_dict = get_dict_to_report(domain, case_id, report_slug)
     context = Context(context_dict)
@@ -39,21 +35,26 @@ def render_to_pdf(request, domain, case_id, report_slug):
 
 
 def get_questions_with_answers(forms, domain, report_slug):
-    questions = QuestionTemplateDispatcher().get_question_templates(domain, report_slug)
-    for question in questions:
-        question['answers'] = []
-    for form in forms:
-        form_dict = form.get_form
-        for question in questions:
-            if question['case_property'] in form_dict:
-                question['answers'].append(form_dict[question['case_property']])
-    for question in questions:
-        if 'answers' not in question:
-                question['answers'] = []
-        if len(question['answers']) < 7:
-            for i in range(len(question['answers']), 7):
-                question['answers'].append('')
-    return questions
+    sections = QuestionTemplateDispatcher().get_question_templates(domain, report_slug)
+    for section in sections:
+        count = 7
+        if section['questions'][0]['case_property'] == 'section_d':
+            count = 8
+        for question in section['questions']:
+            question['answers'] = []
+        for form in forms:
+            form_dict = form.form
+            for question in section['questions']:
+                if question['case_property'] in form_dict:
+                    question['answers'].append(form_dict[question['case_property']])
+        for question in section['questions']:
+
+            if 'answers' not in question:
+                    question['answers'] = []
+            if len(question['answers']) < count:
+                for i in range(len(question['answers']), count):
+                    question['answers'].append('')
+    return sections
 
 
 def get_dict_to_report(domain, case_id, report_slug):
@@ -62,23 +63,18 @@ def get_dict_to_report(domain, case_id, report_slug):
     except ResourceNotFound:
         case = None
 
-    try:
-        owner_name = CommCareUser.get_by_user_id(case.owner_id, domain).full_name
-    except Exception:
-        owner_name = None
-
-    try:
-        owning_group = Group.get(case.owner_id)
-        sub_center = owning_group.display_name if owning_group.domain == domain else ''
-    except Exception:
-        sub_center = None
+    baby_case = [c for c in case.get_subcases().all() if c.type == 'baby']
+    if baby_case:
+        forms = case.get_forms() + baby_case[0].get_forms()
+    else:
+        forms = case.get_forms()
 
     try:
         user = CommCareUser.get_by_user_id(case.user_id, domain)
     except Exception:
         user = None
 
-    questions = get_questions_with_answers(case.get_forms(), domain, report_slug)
+    sections = get_questions_with_answers(forms, domain, report_slug)
 
     return {
         "domain": domain,
@@ -88,9 +84,7 @@ def get_dict_to_report(domain, case_id, report_slug):
             slug=report_slug,
             is_async=False,
         ),
-        "owner_name": owner_name,
         "user": user,
-        "sub_center": sub_center,
         "case": case,
-        "questions": questions
+        "sections": sections
     }

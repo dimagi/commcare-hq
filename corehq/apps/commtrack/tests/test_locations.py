@@ -37,7 +37,7 @@ class LocationsTest(CommTrackTest):
         user = self.reporters['fixed']
 
         loc = make_loc('secondloc')
-        sp = make_supply_point(self.domain, loc)
+        sp = make_supply_point(self.domain.name, loc)
         user.add_location(loc)
 
         self.check_supply_point(user, sp._id)
@@ -49,7 +49,7 @@ class LocationsTest(CommTrackTest):
 
         # can't test with the original since the user already owns it
         loc = make_loc('secondloc')
-        sp = make_supply_point(self.domain, loc)
+        sp = make_supply_point(self.domain.name, loc)
         user.add_location(loc)
 
         self.check_supply_point(user, sp._id)
@@ -64,7 +64,7 @@ class LocationsTest(CommTrackTest):
 
         # can't test with the original since the user already owns it
         loc = make_loc('secondloc')
-        make_supply_point(self.domain, loc)
+        make_supply_point(self.domain.name, loc)
 
         with patch('corehq.apps.commtrack.models.CommTrackUser.submit_location_block') as submit_blocks:
             user.remove_location(loc)
@@ -81,10 +81,10 @@ class LocationsTest(CommTrackTest):
         user = self.reporters['fixed']
 
         loc1 = make_loc('secondloc')
-        sp1 = make_supply_point(self.domain, loc1)
+        sp1 = make_supply_point(self.domain.name, loc1)
 
         loc2 = make_loc('thirdloc')
-        sp2 = make_supply_point(self.domain, loc2)
+        sp2 = make_supply_point(self.domain.name, loc2)
 
         user.set_locations([loc1, loc2])
 
@@ -103,7 +103,7 @@ class LocationsTest(CommTrackTest):
         user = self.reporters['fixed']
 
         loc1 = make_loc('secondloc')
-        make_supply_point(self.domain, loc1)
+        make_supply_point(self.domain.name, loc1)
 
         with patch('corehq.apps.commtrack.models.CommTrackUser.submit_location_block') as submit_blocks:
             user.set_locations([loc1])
@@ -115,10 +115,10 @@ class LocationsTest(CommTrackTest):
         user.clear_locations()
 
         loc1 = make_loc('secondloc')
-        make_supply_point(self.domain, loc1)
+        make_supply_point(self.domain.name, loc1)
 
         loc2 = make_loc('thirdloc')
-        make_supply_point(self.domain, loc2)
+        make_supply_point(self.domain.name, loc2)
 
         user.add_location(loc1)
         user.add_location(loc2)
@@ -139,7 +139,7 @@ class LocationsTest(CommTrackTest):
         )
 
         loc = make_loc('someloc')
-        make_supply_point(self.domain, loc)
+        make_supply_point(self.domain.name, loc)
 
         user.commtrack_location = loc._id
         ct_user = CommTrackUser.wrap(user.to_json())
