@@ -18,10 +18,10 @@ def get_dynamic_db_settings(server_root, username, password, dbname, installed_a
     http_method = "https" if use_https else "http"
     server_url = get_server_url(http_method, server_root, username, password)
     database = "%(server)s/%(database)s" % {"server": server_url, "database": dbname}
-    posturl = "http://%s/%s/_design/couchforms/_update/xform/" % (server_root, dbname)
-    return {"COUCH_SERVER":  server_url,
-            "COUCH_DATABASE": database,
-            "XFORMS_POST_URL": posturl }
+    return {
+        "COUCH_SERVER":  server_url,
+        "COUCH_DATABASE": database,
+    }
             
 
 def get_commit_id():

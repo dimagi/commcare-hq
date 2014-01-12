@@ -76,7 +76,7 @@
 
             <bind calculate="/data/meta/timeEnd" nodeset="/data/task_repeat/case/@date_modified" type="xsd:dateTime"/>
 			<bind calculate="/data/meta/userID" nodeset="/data/task_repeat/case/@user_id"/>
-            <bind calculate="instance('commcaresession')/session/data/new_task_id" nodeset="/data/task_repeat/case/@case_id"/>
+            <bind calculate="uuid()" nodeset="/data/task_repeat/case/@case_id"/>
 
 			<bind calculate="../../../name" nodeset="/data/task_repeat/case/create/case_name"/>
 			<bind calculate="instance('casedb')/casedb/case[@case_id=/data/parent_case_id]/@owner_id" nodeset="/data/task_repeat/case/create/owner_id"/>

@@ -3,7 +3,7 @@ from casexml.apps.case.xml import V2_NAMESPACE
 from corehq.apps.app_manager.const import APP_V1
 from lxml import etree as ET
 from .xpath import CaseIDXPath, session_var, XPath, CaseTypeXpath
-from .exceptions import XFormError, CaseError, XFormValidationError
+from .exceptions import XFormError, CaseError, XFormValidationError, BindNotFound
 import formtranslate.api
 
 
@@ -577,6 +577,8 @@ class XForm(WrappedNode):
         elif 'bind' in node.attrib:
             bind_id = node.attrib['bind']
             bind = self.model_node.find('{f}bind[@id="%s"]' % bind_id)
+            if not bind.xml:
+                raise BindNotFound('No binding found for %s' % bind_id)
             path = bind.attrib['nodeset']
         elif node.tag_name == "group":
             path = ""
@@ -927,6 +929,8 @@ class XForm(WrappedNode):
                     repeat_contexts[subcase.repeat_context] += 1
 
             for i, subcase in enumerate(subcases):
+                if not form.get_app().case_type_exists(subcase.case_type):
+                    raise CaseError("Case type (%s) for form (%s) does not exist" % (subcase.case_type, form.default_name()))
                 if subcase.repeat_context:
                     base_path = '%s/' % subcase.repeat_context
                     parent_node = self.instance_node.find(
@@ -1270,8 +1274,32 @@ class XForm(WrappedNode):
 
     def add_care_plan(self, form):
         from const import CAREPLAN_GOAL, CAREPLAN_TASK
+        from corehq.apps.app_manager.util import split_path
         self.add_meta_2()
         self.add_instance('casedb', src='jr://instance/casedb')
+
+        for property, nodeset in form.case_preload.items():
+            parent_path, property = split_path(property)
+            property_xpath = {
+                'name': 'case_name',
+                'owner_id': '@owner_id'
+            }.get(property, property)
+
+            id_xpath = {
+                'parent': CaseIDXPath(session_var('case_id')),
+                'goal': CaseIDXPath(session_var('case_id_goal'))
+            }.get(parent_path.split('/')[-1])
+
+            if id_xpath:
+                self.add_setvalue(
+                    ref=nodeset,
+                    value=id_xpath.case().property(property_xpath),
+                )
+            else:
+                raise CaseError("Unknown parent reference '{ref}' for case type '{type}'".format(
+                    ref=parent_path,
+                    type=form.get_case_type())
+                )
 
         def add_parent_case_id(case_block, case_path=''):
             parent_case_id = _make_elem('parent_case_id')
@@ -1295,7 +1323,7 @@ class XForm(WrappedNode):
                     case_name=form.name_path,
                     case_type=form.case_type,
                     autoset_owner_id=False,
-                    case_id=session_var('new_goal_id')
+                    case_id=session_var('case_id_goal')
                 )
 
                 case_block.add_update_block(form.case_updates())
@@ -1362,7 +1390,6 @@ class XForm(WrappedNode):
                     case_type=CAREPLAN_TASK,
                     autoset_owner_id=False,
                     delay_case_id=True,
-                    case_id=session_var('new_task_id'),
                     make_relative=True
                 )
 

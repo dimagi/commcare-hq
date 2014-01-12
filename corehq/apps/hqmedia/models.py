@@ -552,7 +552,8 @@ class HQMediaMixin(Document):
             If not, then that item is removed from the multimedia map.
         """
         map_changed = False
-        for path in self.multimedia_map.keys():
+        paths = self.multimedia_map.keys() if self.multimedia_map else []
+        for path in paths:
             if path not in self.all_media_paths:
                 map_changed = True
                 del self.multimedia_map[path]

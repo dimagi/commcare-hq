@@ -1,5 +1,6 @@
 import functools
 import json
+import itertools
 from corehq.apps.app_manager.xform import XForm, XFormError, parse_xml
 import re
 from dimagi.utils.decorators.memoized import memoized
@@ -23,6 +24,15 @@ def split_path(path):
 
 
 def save_xform(app, form, xml):
+    def change_xmlns(xform, replacing):
+        data = xform.data_node.render()
+        xmlns = "http://openrosa.org/formdesigner/%s" % form.get_unique_id()
+        data = data.replace(replacing, xmlns, 1)
+        xform.instance_node.remove(xform.data_node.xml)
+        xform.instance_node.append(parse_xml(data))
+        xml = xform.render()
+        return xform, xml
+
     try:
         xform = XForm(xml)
     except XFormError:
@@ -33,13 +43,13 @@ def save_xform(app, form, xml):
             if form == duplicate:
                 continue
             else:
-                data = xform.data_node.render()
-                xmlns = "http://openrosa.org/formdesigner/%s" % form.get_unique_id()
-                data = data.replace(xform.data_node.tag_xmlns, xmlns, 1)
-                xform.instance_node.remove(xform.data_node.xml)
-                xform.instance_node.append(parse_xml(data))
-                xml = xform.render()
+                xform, xml = change_xmlns(xform, xform.data_node.tag_xmlns)
                 break
+
+        GENERIC_XMLNS = "http://www.w3.org/2002/xforms"
+        if not xform.data_node.tag_xmlns or xform.data_node.tag_xmlns == GENERIC_XMLNS:  #no xmlns
+            xform, xml = change_xmlns(xform, GENERIC_XMLNS)
+
     form.source = xml
 
 CASE_TYPE_REGEX = r'^[\w-]+$'
@@ -73,6 +83,8 @@ class ParentCasePropertyBuilder(object):
         # so compute them once
 
         forms_info = []
+        if self.app.doc_type == 'RemoteApp':
+            return forms_info
         for module in self.app.get_modules():
             for form in module.get_forms():
                 forms_info.append((module.case_type, form))
@@ -91,7 +103,7 @@ class ParentCasePropertyBuilder(object):
     def get_parent_types(self, case_type):
         parent_types, _ = \
             self.get_parent_types_and_contributed_properties(case_type)
-        return parent_types
+        return set(p[0] for p in parent_types)
 
     @memoized
     def get_properties(self, case_type, already_visited=()):
@@ -112,8 +124,8 @@ class ParentCasePropertyBuilder(object):
             self.get_parent_types_and_contributed_properties(case_type)
         case_properties.update(contributed_properties)
         for parent_type in parent_types:
-            for property in get_properties_recursive(parent_type):
-                case_properties.add('parent/%s' % property)
+            for property in get_properties_recursive(parent_type[0]):
+                case_properties.add('%s/%s' % (parent_type[1], property))
 
         return case_properties
 
@@ -133,7 +145,7 @@ def get_case_properties(app, case_types, defaults=()):
 def get_all_case_properties(app):
     return get_case_properties(
         app,
-        set(m.case_type for m in app.modules),
+        set(itertools.chain.from_iterable(m.get_case_types() for m in app.modules)),
         defaults=('name',)
     )
 
