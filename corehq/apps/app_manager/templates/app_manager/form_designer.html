@@ -183,9 +183,14 @@
                 desc: "Save form"
             },
             {
-                shortcut: nav_key + "+q",
+                shortcut: nav_key + "+[",
                 handler: question_tree_navigator.activate,
-                desc: "Select question from question tree"
+                desc: "Navigate the question tree."
+            },
+            {
+                shortcut: nav_key + "+]",
+                handler: handle_properties_shortcut,
+                desc: "Change focus to question properties"
             },
             {
                 shortcut: nav_key + "+d",
@@ -196,11 +201,6 @@
                 shortcut: nav_key + "+t",
                 handler: tools_navigator.activate,
                 desc: "Access tools menu"
-            },
-            {
-                shortcut: nav_key + "+w",
-                handler: handle_properties_shortcut,
-                desc: "Change focus to question properties"
             },
             {
                 shortcut: nav_key + "+c",
