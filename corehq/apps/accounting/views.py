@@ -35,7 +35,7 @@ def manage_billing_account(request, account_id):
 
 
 class NewBillingAccountView(TemplateView):
-    template_name = 'new_account.html'
+    template_name = 'manage_account.html'
     name = 'new_billing_account'
 
     def get_context_data(self):

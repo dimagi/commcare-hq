@@ -4,7 +4,7 @@
 {% load crispy_forms_tags %}
 {% load i18n %}
 
-{% block title %}Manage Billing Account{% endblock %}
+{% block title %}{% if account %}Manage{% else %}New{% endif %} Billing Account{% endblock %}
 
 {% block page-title %}
 <ul class="breadcrumb">
@@ -18,18 +18,20 @@
         <a href="#">{{ view_title }} <small>{{ billing_range }}</small></a>
     </li>
     <li>
-        <a href="">Manage Billing Account <small>{{ account.name }}</small></a>
+        <a href="">{% if account %}Manage{% else %}New{% endif %} Billing Account <small>{{ account.name }}</small></a>
     </li>
 </ul>
 {% endblock %}
 
 {% block main_column %}
 
+    {% if account %}
     <ul class="nav nav-tabs" id="user-settings-tabs">
         <li><a href="#account" data-toggle="tab">{% trans "Account" %}</a></li>
         <li><a href="#subscriptions" data-toggle="tab">{% trans "Subscriptions" %}</a></li>
         <li><a href="#credits" data-toggle="tab">{% trans "Credits" %}</a></li>
     </ul>
+    {% endif %}
 
     <div class="tab-content">
         <div class="tab-pane active" id="account">
@@ -38,6 +40,7 @@
             </form>
         </div>
 
+        {% if account %}
         <div class="tab-pane" id="subscriptions">
             {% include 'account_subscriptions.html' %}
         </div>
@@ -45,6 +48,8 @@
         <div class="tab-pane" id="credits">
             Credits go here
         </div>
+        {% endif %}
+
     </div>
 
 {% endblock %}
