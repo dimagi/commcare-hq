@@ -66,12 +66,14 @@ class RestoreConfig(object):
                 quantity=str(int(trans.stock_on_hand)),
             )
         for commtrack_case in cases:
-            relevant_reports = StockTransaction.objects.filter(case_id=commtrack_case._id)
-            if relevant_reports:
+            relevant_stocks = StockTransaction.objects.filter(case_id=commtrack_case._id).values_list('stock_id', flat=True).distinct()
+            for stock_id in relevant_stocks:
+                relevant_reports = StockTransaction.objects.filter(case_id=commtrack_case._id, stock_id=stock_id)
                 product_ids = sorted(relevant_reports.values_list('product_id', flat=True).distinct())
                 products = [relevant_reports.filter(product_id=p).order_by('-report__date').select_related()[0] for p in product_ids]
                 as_of = json_format_datetime(max(p.report.date for p in products))
-                yield E.balance(*(transaction_to_xml(e) for e in products), **{'entity-id': commtrack_case._id, 'date': as_of})
+                yield E.balance(*(transaction_to_xml(e) for e in products),
+                                **{'entity-id': commtrack_case._id, 'date': as_of, 'stock-id': stock_id})
 
     def get_payload(self):
         user = self.user
