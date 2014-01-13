@@ -1,4 +1,4 @@
-from datetime import datetime
+import datetime
 from crispy_forms.bootstrap import FormActions
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import ButtonHolder, Fieldset, Layout, Submit, Field
@@ -85,17 +85,34 @@ class SubscriptionForm(forms.Form):
 
     def __init__(self, subscription, *args, **kwargs):
         super(SubscriptionForm, self).__init__(*args, **kwargs)
+
+        css_class = dict(css_class='date-picker')
+        disabled = dict(disabled='disabled')
+
+        start_date_kwargs = dict(**css_class)
+        end_date_kwargs = dict(**css_class)
+        delay_invoice_until_kwargs = dict(**css_class)
+
         if subscription is not None:
             self.fields['start_date'].initial = subscription.date_start
             self.fields['end_date'].initial = subscription.date_end
             self.fields['delay_invoice_until'].initial = subscription.date_delay_invoicing
+            if subscription.date_start is not None \
+                and subscription.date_start <= datetime.date.today():
+                start_date_kwargs.update(disabled)
+            if subscription.date_end is not None \
+                and subscription.date_end <= datetime.date.today():
+                end_date_kwargs.update(disabled)
+            if subscription.date_delay_invoicing is not None \
+                and subscription.date_delay_invoicing <= datetime.date.today():
+                delay_invoice_until_kwargs.update(disabled)
         self.helper = FormHelper()
         self.helper.layout = Layout(
             Fieldset(
             '%s Subscription' % ('Edit' if subscription is not None else 'New'),
-                Field('start_date', css_class="date-picker"),
-                Field('end_date', css_class="date-picker"),
-                Field('delay_invoice_until', css_class="date-picker"),
+                Field('start_date', **start_date_kwargs),
+                Field('end_date', **end_date_kwargs),
+                Field('delay_invoice_until', **delay_invoice_until_kwargs),
             ),
             FormActions(
                 ButtonHolder(
