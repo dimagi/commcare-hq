@@ -14,7 +14,7 @@ class BillingAccountForm(forms.Form):
     salesforce_account_id = forms.CharField(label="Salesforce ID")
     currency = forms.ChoiceField(label="Currency")
 
-    # todo - collect web user(s)
+    billing_account_admins = forms.CharField()
     first_name = forms.CharField(label='First Name')
     last_name = forms.CharField(label='Last Name')
     company_name = forms.CharField(label='Company Name')
@@ -32,6 +32,8 @@ class BillingAccountForm(forms.Form):
             kwargs['initial'] = {'name': account.name,
                                  'salesforce_account_id': account.salesforce_account_id,
                                  'currency': account.currency.code,
+                                 'billing_account_admins':
+                                     ', '.join([admin.web_user for admin in account.billing_admins.all()]),
                                  'first_name': contact_info.first_name,
                                  'last_name': contact_info.last_name,
                                  'company_name': contact_info.company_name,
@@ -57,6 +59,7 @@ class BillingAccountForm(forms.Form):
                 ),
                 Fieldset(
                 'Contact Information',
+                    'billing_account_admins',
                     'first_name',
                     'last_name',
                     'company_name',

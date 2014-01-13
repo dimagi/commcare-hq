@@ -5,7 +5,7 @@ from django.shortcuts import render
 from django.views.generic import TemplateView
 from corehq import AccountingInterface, SubscriptionInterface
 from corehq.apps.accounting.forms import BillingAccountForm, SubscriptionForm
-from corehq.apps.accounting.models import BillingAccount, Currency, Subscription, SoftwarePlanVersion, Subscriber, BillingContactInfo
+from corehq.apps.accounting.models import *
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.users.models import WebUser
 
@@ -74,6 +74,10 @@ class ManageBillingAccountView(TemplateView):
         account.name = self.request.POST['name']
         account.salesforce_account_id = self.request.POST['salesforce_account_id']
         account.currency, _ = Currency.objects.get_or_create(code=self.request.POST['currency'])
+        for web_user_email in self.request.POST['billing_account_admins'].split(','):
+            if WebUser.get_by_username(web_user_email.strip()) is not None:
+                admin, _ = BillingAccountAdmin.objects.get_or_create(web_user=web_user_email)
+                account.billing_admins.add(admin)
         account.save()
 
         contact_info, _ = BillingContactInfo.objects.get_or_create(account=account)
