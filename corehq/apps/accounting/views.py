@@ -11,27 +11,8 @@ from corehq.apps.users.models import WebUser
 
 
 @require_superuser
-def view_billing_accounts(request):
-    return render(request, "view_billing_accounts.html",
-                  {'account_list': BillingAccount.objects.filter(),
-                   })
-
-
-@require_superuser
 def accounting_default(request):
     return HttpResponseRedirect(AccountingInterface.get_url())
-
-
-@require_superuser
-def manage_billing_account(request, account_id):
-    template = 'manage_account.html'
-    account = BillingAccount.objects.get(id=account_id)
-    parent_link = '<a href="%s">%s<a>' % (AccountingInterface.get_url(), AccountingInterface.name)
-    return render(request,
-                  template,
-                  dict(account=account,
-                       form=BillingAccountForm(account),
-                       parent_link=parent_link))
 
 
 class NewBillingAccountView(TemplateView):
