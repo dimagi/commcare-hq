@@ -1,18 +1,17 @@
 import datetime
 from decimal import Decimal
 import logging
-
 from couchdbkit.ext.django.schema import DateTimeProperty, StringProperty
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models
-from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES
 
 from django_prbac.models import Role
 from dimagi.utils.couch.database import SafeSaveDocument
 
-from corehq.apps.accounting.exceptions import CreditLineError, LineItemError, InvoiceError
+from corehq.apps.accounting.exceptions import CreditLineError, AccountingError
+from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES, assure_domain_instance
 
 global_logger = logging.getLogger(__name__)
 
