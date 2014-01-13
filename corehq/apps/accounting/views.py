@@ -97,7 +97,7 @@ class ManageBillingAccountView(TemplateView):
 
 
 class NewSubscriptionView(TemplateView):
-    template_name = 'new_subscription.html'
+    template_name = 'edit_subscription.html'
     name = 'new_subscription'
 
     def get_context_data(self):
@@ -133,6 +133,7 @@ class EditSubscriptionView(TemplateView):
         subscription = Subscription.objects.get(id=self.args[0])
         return dict(form=SubscriptionForm(subscription),
                     parent_link='<a href="%s">%s<a>' % (SubscriptionInterface.get_url(), SubscriptionInterface.name),
+                    subscription=subscription
                     )
 
     def post(self, request, *args, **kwargs):
