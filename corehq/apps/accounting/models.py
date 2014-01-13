@@ -293,6 +293,16 @@ class DefaultProductPlan(models.Model):
     product_type = models.CharField(max_length=25, choices=SoftwareProductType.CHOICES, unique=True)
     plan = models.ForeignKey(SoftwarePlan, on_delete=models.PROTECT)
 
+    @classmethod
+    def get_default_plan_by_domain(cls, domain):
+        domain = assure_domain_instance(domain)
+        product_type = SoftwareProductType.get_type_by_domain(domain)
+        try:
+            default_product_plan = DefaultProductPlan.objects.get(product_type=product_type)
+            return default_product_plan.plan.softwareplanversion_set.latest('date_created')
+        except DefaultProductPlan.DoesNotExist:
+            raise AccountingError("No default product plan was set up, did you forget to bootstrap plans?")
+
 
 class SoftwarePlanVersion(models.Model):
     """
