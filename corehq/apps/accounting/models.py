@@ -321,12 +321,28 @@ class SoftwarePlanVersion(models.Model):
         return "Software Plan Version For Plan '%s' with Role '%s'" % (self.plan.name, self.role.slug)
 
 
+class SubscriberManager(models.Manager):
+
+    def safe_get(self, *args, **kwargs):
+        try:
+            return self.get(*args, **kwargs)
+        except Subscriber.DoesNotExist:
+            return None
+
+
 class Subscriber(models.Model):
     """
     The objects that can be subscribed to a Subscription.
     """
     domain = models.CharField(max_length=25, null=True, db_index=True)
     organization = models.CharField(max_length=25, null=True, db_index=True)
+
+    objects = SubscriberManager()
+
+    def __str__(self):
+        if self.organization:
+            return "ORGANIZATION %s" % self.organization
+        return "DOMAIN %s" % self.domain
 
 
 class Subscription(models.Model):
@@ -342,6 +358,36 @@ class Subscription(models.Model):
     date_delay_invoicing = models.DateField(blank=True, null=True)
     date_created = models.DateField(auto_now_add=True)
     is_active = models.BooleanField(default=False)
+
+    @classmethod
+    def _get_plan_by_subscriber(cls, subscriber):
+        try:
+            active_subscriptions = cls.objects.filter(subscriber=subscriber, is_active=True)
+            if active_subscriptions.count() > 1:
+                global_logger.error("There seem to be multiple ACTIVE subscriptions for the subscriber %s. "
+                                    "Odd, right? The latest one by date_created was used, but consider this an "
+                                    "issue." % subscriber)
+            current_subscription = active_subscriptions.latest('date_created')
+            return current_subscription.plan
+        except Subscription.DoesNotExist:
+            global_logger.error("A Subscriber object exists without a Subscription for the domain '%s'. "
+                                "This seems strange." % subscriber)
+        return None
+
+    @classmethod
+    def get_subscribed_plan_by_organization(cls, organization):
+        subscriber = Subscriber.objects.safe_get(organization=organization, domain=None)
+        return cls._get_plan_by_subscriber(subscriber) if subscriber else None
+
+    @classmethod
+    def get_subscribed_plan_by_domain(cls, domain):
+        domain = assure_domain_instance(domain)
+        subscriber = Subscriber.objects.safe_get(domain=domain.name, organization=None)
+        subscription = (cls._get_plan_by_subscriber(subscriber) if subscriber
+                        else cls.get_subscribed_plan_by_organization(domain.organization))
+        if subscription is None:
+            return DefaultProductPlan.get_default_plan_by_domain(domain)
+        return subscription
 
 
 class Invoice(models.Model):
