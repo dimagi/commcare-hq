@@ -50,27 +50,27 @@ class BillingAccountForm(forms.Form):
             [(cur.code, cur.code) for cur in Currency.objects.order_by('code')]
         self.helper = FormHelper()
         self.helper.layout = Layout(
+            Fieldset(
+            'Basic Information',
+                'name',
+                'salesforce_account_id',
+                'currency',
+            ),
+            Fieldset(
+            'Contact Information',
+                'billing_account_admins',
+                'first_name',
+                'last_name',
+                'company_name',
+                'phone_number',
+                'address_line_1',
+                'address_line_2',
+                'city',
+                'region',
+                'postal_code',
+                'country',
+            ) if account is not None else None,
             FormActions(
-                Fieldset(
-                'Basic Information',
-                    'name',
-                    'salesforce_account_id',
-                    'currency',
-                ),
-                Fieldset(
-                'Contact Information',
-                    'billing_account_admins',
-                    'first_name',
-                    'last_name',
-                    'company_name',
-                    'phone_number',
-                    'address_line_1',
-                    'address_line_2',
-                    'city',
-                    'region',
-                    'postal_code',
-                    'country',
-                ) if account is not None else None,
                 ButtonHolder(
                     Submit('submit', 'Update Account' if account is not None else 'Add New Account')
                 )
@@ -93,14 +93,14 @@ class SubscriptionForm(forms.Form):
             self.fields['delay_invoice_until'].initial = subscription.date_delay_invoicing
         self.helper = FormHelper()
         self.helper.layout = Layout(
+            Fieldset(
+            '%s Subscription' % ('Edit' if subscription is not None else 'New'),
+                'start_date',
+                'end_date',
+                'delay_invoice_until',
+                'note',
+            ),
             FormActions(
-                Fieldset(
-                '%s Subscription' % ('Edit' if subscription is not None else 'New'),
-                    'start_date',
-                    'end_date',
-                    'delay_invoice_until',
-                    'note',
-                ),
                 ButtonHolder(
                     Submit('submit', 'Submit')
                 )
