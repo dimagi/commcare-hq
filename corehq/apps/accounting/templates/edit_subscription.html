@@ -2,6 +2,7 @@
 {% load url from future %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
+{% load i18n %}
 
 {% block title %}{% if subscription %}Edit{% else %}New{% endif %} Subscription{% endblock %}
 
@@ -23,11 +24,35 @@
 {% endblock %}
 
 {% block main_column %}
-    <div class="form-block">
-        <form class="form form-horizontal" method="post">
-            {% crispy form %}
-        </form>
+
+    {% if subscription %}
+    <ul class="nav nav-tabs" id="user-settings-tabs">
+        <li><a href="#subscription" data-toggle="tab">{% trans "Subscription" %}</a></li>
+        <li><a href="#credits" data-toggle="tab">{% trans "Credits" %}</a></li>
+        <li><a href="#actions" data-toggle="tab">{% trans "Permanent Actions" %}</a></li>
+    </ul>
+    {% endif %}
+
+    <div class="tab-content">
+
+        <div class="tab-pane active" id="subscription">
+            <form class="form form-horizontal" method="post">
+                {% crispy form %}
+            </form>
+        </div>
+
+        {% if subscription %}
+        <div class="tab-pane" id="credits">
+            Credits here
+        </div>
+
+        <div class="tab-pane" id="actions">
+            Actions here
+        </div>
+        {% endif %}
+
     </div>
+
 {% endblock %}
 
 {% block modals %} {{ block.super }}
