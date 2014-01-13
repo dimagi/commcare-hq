@@ -55,6 +55,8 @@ class SMSSettingsForm(Form):
         choices=SMS_CONVERSATION_LENGTH_CHOICES,
         required=False,
     )
+    filter_surveys_from_chat = BooleanField(required=False)
+    show_invalid_survey_responses_in_chat = BooleanField(required=False)
 
     def initialize_time_window_fields(self, initial, bool_field, json_field):
         time_window_json = [w.to_json() for w in initial]
@@ -167,6 +169,13 @@ class SMSSettingsForm(Form):
             return self._clean_time_window_json("sms_conversation_times_json")
         else:
             return []
+
+    def clean_show_invalid_survey_responses_in_chat(self):
+        value = self.cleaned_data.get("show_invalid_survey_responses_in_chat", False)
+        if self.cleaned_data.get("filter_surveys_from_chat", False):
+            return value
+        else:
+            return False
 
 class ForwardingRuleForm(Form):
     forward_type = ChoiceField(choices=FORWARDING_CHOICES)
