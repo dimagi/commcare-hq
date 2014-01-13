@@ -77,6 +77,12 @@ class ManageBillingAccountView(TemplateView):
         return self.get(request, *args, **kwargs)
 
 
+def datestring_to_date(datestring):
+    if datestring is None or datestring == '':
+        return None
+    return datetime.date(*tuple([int(i) for i in datestring.split('-')]))
+
+
 class NewSubscriptionView(TemplateView):
     template_name = 'edit_subscription.html'
     name = 'new_subscription'
@@ -87,15 +93,9 @@ class NewSubscriptionView(TemplateView):
 
     def post(self, request, *args, **kwargs):
         account_id = self.args[0]
-        date_start = datetime.datetime(int(self.request.POST['start_date_year']),
-                                       int(self.request.POST['start_date_month']),
-                                       int(self.request.POST['start_date_day']))
-        date_end = datetime.datetime(int(self.request.POST['end_date_year']),
-                                     int(self.request.POST['end_date_month']),
-                                     int(self.request.POST['end_date_day']))
-        date_delay_invoicing = datetime.datetime(int(self.request.POST['delay_invoice_until_year']),
-                                                 int(self.request.POST['delay_invoice_until_month']),
-                                                 int(self.request.POST['delay_invoice_until_day']))
+        date_start = datestring_to_date(self.request.POST.get('start_date'))
+        date_end = datestring_to_date(self.request.POST.get('end_date'))
+        date_delay_invoicing = datestring_to_date(self.request.POST.get('delay_invoice_until'))
         subscription = Subscription(account=BillingAccount.objects.get(id=account_id),
                                     date_start=date_start,
                                     date_end=date_end,
@@ -120,14 +120,11 @@ class EditSubscriptionView(TemplateView):
     def post(self, request, *args, **kwargs):
         # TODO validate data
         subscription = Subscription.objects.get(id=self.args[0])
-        subscription.date_start = datetime.datetime(int(self.request.POST['start_date_year']),
-                                                    int(self.request.POST['start_date_month']),
-                                                    int(self.request.POST['start_date_day']))
-        subscription.date_end = datetime.datetime(int(self.request.POST['end_date_year']),
-                                                  int(self.request.POST['end_date_month']),
-                                                  int(self.request.POST['end_date_day']))
-        subscription.date_delay_invoicing = datetime.datetime(int(self.request.POST['delay_invoice_until_year']),
-                                                              int(self.request.POST['delay_invoice_until_month']),
-                                                              int(self.request.POST['delay_invoice_until_day']))
+        subscription.date_start = \
+            datestring_to_date(self.request.POST.get('start_date')) or subscription.date_start
+        subscription.date_end = \
+            datestring_to_date(self.request.POST.get('end_date')) or subscription.date_end
+        subscription.date_delay_invoicing = \
+            datestring_to_date(self.request.POST.get('delay_invoice_until')) or subscription.date_delay_invoicing
         subscription.save()
         return self.get(request, *args, **kwargs)
