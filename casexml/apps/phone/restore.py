@@ -66,7 +66,7 @@ class RestoreConfig(object):
                 quantity=str(int(trans.stock_on_hand)),
             )
         for commtrack_case in cases:
-            relevant_stocks = StockTransaction.objects.filter(case_id=commtrack_case._id).values_list('stock_id', flat=True).distinct()
+            relevant_stocks = sorted(StockTransaction.objects.filter(case_id=commtrack_case._id).values_list('stock_id', flat=True).distinct())
             for stock_id in relevant_stocks:
                 relevant_reports = StockTransaction.objects.filter(case_id=commtrack_case._id, stock_id=stock_id)
                 product_ids = sorted(relevant_reports.values_list('product_id', flat=True).distinct())
