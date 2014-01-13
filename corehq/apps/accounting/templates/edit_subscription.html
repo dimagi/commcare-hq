@@ -4,6 +4,15 @@
 {% load crispy_forms_tags %}
 {% load i18n %}
 
+{% block js %} {{ block.super }}
+ <script>
+    // TODO - is there a more modular way to do this?
+    $( "#id_start_date" ).datepicker({ dateFormat: "yy-mm-dd" });
+    $( "#id_end_date" ).datepicker({ dateFormat: "yy-mm-dd" });
+    $( "#id_delay_invoice_until" ).datepicker({ dateFormat: "yy-mm-dd" });
+</script>
+{% endblock %}
+
 {% block title %}{% if subscription %}Edit{% else %}New{% endif %} Subscription{% endblock %}
 
 {% block page-title %}
