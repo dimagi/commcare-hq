@@ -78,7 +78,6 @@ class SubscriptionInterface(BaseCRUDAdminInterface):
     @property
     def headers(self):
         return DataTablesHeader(
-            DataTablesColumn("Action"),
             DataTablesColumn("Subscriber"),
             DataTablesColumn("Account"),
             DataTablesColumn("Plan"),
@@ -86,6 +85,7 @@ class SubscriptionInterface(BaseCRUDAdminInterface):
             DataTablesColumn("Salesforce Contract ID"),
             DataTablesColumn("Start Date"),
             DataTablesColumn("End Date"),
+            DataTablesColumn("Action"),
         )
 
     @property
@@ -93,8 +93,7 @@ class SubscriptionInterface(BaseCRUDAdminInterface):
         from corehq.apps.accounting.views import ManageBillingAccountView
         rows = []
         for subscription in Subscription.objects.all():
-            rows.append([mark_safe('<a href="./%d" class="btn">Edit</a>' % subscription.id),
-                         subscription.subscriber.domain,
+            rows.append([subscription.subscriber.domain,
                          mark_safe('<a href="%s">%s</a>'
                                    % (reverse(ManageBillingAccountView.name, args=(subscription.account.id,)),
                                       subscription.account.name)),
@@ -102,7 +101,8 @@ class SubscriptionInterface(BaseCRUDAdminInterface):
                          subscription.is_active,
                          subscription.salesforce_contract_id,
                          subscription.date_start,
-                         subscription.date_end])
+                         subscription.date_end,
+                         mark_safe('<a href="./%d" class="btn">Edit</a>' % subscription.id)])
 
         return rows
 
