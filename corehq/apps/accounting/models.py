@@ -79,6 +79,7 @@ class SoftwarePlanVisibility(object):
         (INTERNAL, "Dimagi must create subscription"),
     )
 
+
 class AdjustmentReason(object):
     DIRECT_PAYMENT = "DIRECT_PAYMENT"
     SALESFORCE = "SALESFORCE"
