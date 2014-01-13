@@ -3,7 +3,7 @@
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
-{% block title %}Edit Subscription{% endblock %}
+{% block title %}{% if subscription %}Edit{% else %}New{% endif %} Subscription{% endblock %}
 
 {% block page-title %}
 <ul class="breadcrumb">
@@ -17,7 +17,7 @@
         <a href="#">{{ view_title }} <small>{{ billing_range }}</small></a>
     </li>
     <li>
-        <a href="">Edit Subscription <small>{{ account_name }}</small></a>
+        <a href="">{% if subscription %}Edit{% else %}New{% endif %} Subscription <small>{{ account_name }}</small></a>
     </li>
 </ul>
 {% endblock %}
