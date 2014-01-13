@@ -5,7 +5,7 @@ from crispy_forms.layout import ButtonHolder, Fieldset, Layout, Submit
 from django import forms
 from django.forms.extras.widgets import SelectDateWidget
 
-from corehq.apps.accounting.models import Currency
+from corehq.apps.accounting.models import Currency, BillingContactInfo
 from corehq.apps.users.models import WebUser
 
 
@@ -15,6 +15,8 @@ class BillingAccountForm(forms.Form):
     currency = forms.ChoiceField(label="Currency")
 
     # todo - collect web user(s)
+    first_name = forms.CharField(label='First Name')
+    last_name = forms.CharField(label='Last Name')
     company_name = forms.CharField(label='Company Name')
     phone_number = forms.CharField(label='Phone Number')
     address_line_1 = forms.CharField(label='Address Line 1')
@@ -26,9 +28,20 @@ class BillingAccountForm(forms.Form):
 
     def __init__(self, account, *args, **kwargs):
         if account is not None:
+            contact_info, _ = BillingContactInfo.objects.get_or_create(account=account)
             kwargs['initial'] = {'name': account.name,
                                  'salesforce_account_id': account.salesforce_account_id,
                                  'currency': account.currency.code,
+                                 'first_name': contact_info.first_name,
+                                 'last_name': contact_info.last_name,
+                                 'company_name': contact_info.company_name,
+                                 'phone_number': contact_info.phone_number,
+                                 'address_line_1': contact_info.first_line,
+                                 'address_line_2': contact_info.second_line,
+                                 'city': contact_info.city,
+                                 'region': contact_info.state_province_region,
+                                 'postal_code': contact_info.postal_code,
+                                 'country': contact_info.country,
                                  }
         super(BillingAccountForm, self).__init__(*args, **kwargs)
         self.fields['currency'].choices =\
@@ -44,6 +57,8 @@ class BillingAccountForm(forms.Form):
                 ),
                 Fieldset(
                 'Contact Information',
+                    'first_name',
+                    'last_name',
                     'company_name',
                     'phone_number',
                     'address_line_1',

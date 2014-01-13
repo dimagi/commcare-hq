@@ -5,7 +5,7 @@ from django.shortcuts import render
 from django.views.generic import TemplateView
 from corehq import AccountingInterface, SubscriptionInterface
 from corehq.apps.accounting.forms import BillingAccountForm, SubscriptionForm
-from corehq.apps.accounting.models import BillingAccount, Currency, Subscription, SoftwarePlanVersion, Subscriber
+from corehq.apps.accounting.models import BillingAccount, Currency, Subscription, SoftwarePlanVersion, Subscriber, BillingContactInfo
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.users.models import WebUser
 
@@ -45,14 +45,12 @@ class NewBillingAccountView(TemplateView):
 
     def post(self, request, *args, **kwargs):
         # TODO validate data
-        name = self.request.POST['client_name']
+        name = self.request.POST['name']
         salesforce_account_id = self.request.POST['salesforce_account_id']
         currency, _ = Currency.objects.get_or_create(code=self.request.POST['currency'])
-        web_user_contact = self.request.POST['web_user_contact']
         account = BillingAccount(name=name,
                                  salesforce_account_id=salesforce_account_id,
-                                 currency=currency,
-                                 web_user_contact=web_user_contact)
+                                 currency=currency)
         account.save()
         return HttpResponseRedirect(reverse('manage_billing_account', args=(account.id,)))
 
@@ -73,12 +71,24 @@ class ManageBillingAccountView(TemplateView):
     def post(self, request, *args, **kwargs):
         # TODO validate data
         account = BillingAccount.objects.get(id=self.args[0])
-        account.name = self.request.POST['client_name']
+        account.name = self.request.POST['name']
         account.salesforce_account_id = self.request.POST['salesforce_account_id']
         account.currency, _ = Currency.objects.get_or_create(code=self.request.POST['currency'])
-        account.web_user_contact = self.request.POST['web_user_contact']
-        # TODO save answer to "Save invoices automatically?"
         account.save()
+
+        contact_info, _ = BillingContactInfo.objects.get_or_create(account=account)
+        contact_info.first_name = self.request.POST['first_name']
+        contact_info.last_name = self.request.POST['last_name']
+        contact_info.company_name = self.request.POST['company_name']
+        contact_info.phone_number = self.request.POST['phone_number']
+        contact_info.first_line = self.request.POST['address_line_1']
+        contact_info.second_line = self.request.POST['address_line_2']
+        contact_info.city = self.request.POST['city']
+        contact_info.state_province_region = self.request.POST['region']
+        contact_info.postal_code = self.request.POST['postal_code']
+        contact_info.country = self.request.POST['country']
+        contact_info.save()
+
         return self.get(request, *args, **kwargs)
 
 
