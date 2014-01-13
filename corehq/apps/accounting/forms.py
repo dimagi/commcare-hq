@@ -67,7 +67,7 @@ class BillingAccountForm(forms.Form):
                     'region',
                     'postal_code',
                     'country',
-                ),
+                ) if account is not None else None,
                 ButtonHolder(
                     Submit('submit', 'Update Account' if account is not None else 'Add New Account')
                 )
