@@ -200,7 +200,7 @@ Your knockout code in `form.person.js`:
         self.first_name = ko.observable(initial.first_name);
         self.last_name = ko.observable(initial.last_name);
 
-        self.petObjects = ko.observableArray(initial.pets);
+        self.petObjects = ko.observableArray();
         self.pets = ko.computed(function () {
             return JSON.stringify(_.map(self.petObjects(), function (pet) {
                 return pet.asJSON();
@@ -208,7 +208,10 @@ Your knockout code in `form.person.js`:
         });
 
         self.init = function () {
-            // initialize things here
+            var pets = $.parseJSON(initial.pets || '[]');
+            self.petObjects(_.map(pets, function (initial_data) {
+                return new Pet(initial_data);
+            }));
         };
 
     };
