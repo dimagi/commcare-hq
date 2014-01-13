@@ -1,7 +1,7 @@
 from datetime import datetime
 from crispy_forms.bootstrap import FormActions
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import ButtonHolder, Fieldset, Layout, Submit
+from crispy_forms.layout import ButtonHolder, Fieldset, Layout, Submit, Field
 from django import forms
 from django.forms.extras.widgets import SelectDateWidget
 
@@ -79,9 +79,9 @@ class BillingAccountForm(forms.Form):
 
 
 class SubscriptionForm(forms.Form):
-    start_date = forms.DateField(label="Start Date", widget=SelectDateWidget())
-    end_date = forms.DateField(label="End Date", widget=SelectDateWidget())
-    delay_invoice_until = forms.DateField(label="Delay Invoice Until", widget=SelectDateWidget())
+    start_date = forms.DateField(label="Start Date", widget=forms.DateInput())
+    end_date = forms.DateField(label="End Date", widget=forms.DateInput())
+    delay_invoice_until = forms.DateField(label="Delay Invoice Until", widget=forms.DateInput())
     #line_items = forms.SelectMultiple(choices=(('a', 'b')))
     note = forms.CharField(required=False)
 
@@ -95,9 +95,9 @@ class SubscriptionForm(forms.Form):
         self.helper.layout = Layout(
             Fieldset(
             '%s Subscription' % ('Edit' if subscription is not None else 'New'),
-                'start_date',
-                'end_date',
-                'delay_invoice_until',
+                Field('start_date', css_class="date-picker"),
+                Field('end_date', css_class="date-picker"),
+                Field('delay_invoice_until', css_class="date-picker"),
                 'note',
             ),
             FormActions(
