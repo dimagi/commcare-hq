@@ -30,25 +30,26 @@ class CommTrackOTATest(CommTrackTest):
         user = self.reporters['fixed']
         self.assertFalse(get_ota_balance_xml(user))
 
-    def test_ota_balances_with_adequate_values(self):
+    def test_ota_basic(self):
         user = self.reporters['fixed']
         date = datetime.utcnow()
         report = StockReport.objects.create(form_id=uuid.uuid4().hex, date=date, type=TRANSACTION_TYPE_BALANCE)
-        for product in self.products:
+        amounts = [(p._id, i*10) for i, p in enumerate(self.products)]
+        for product_id, amount in amounts:
             StockTransaction.objects.create(
                 report=report,
                 stock_id='stock',
                 case_id=self.sp._id,
-                product_id=product._id,
-                stock_on_hand=10,
-                quantity=10,
+                product_id=product_id,
+                stock_on_hand=amount,
+                quantity=amount,
             )
 
         check_xml_line_by_line(
             self,
             balances_with_adequate_values(
                 self.sp,
-                sorted(Product.by_domain(self.domain.name).all(), key=lambda p: p._id),
+                amounts,
                 datestring=json_format_datetime(date),
             ),
             get_ota_balance_xml(user),

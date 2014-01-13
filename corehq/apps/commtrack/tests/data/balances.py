@@ -11,22 +11,15 @@ def long_date():
     return json_format_datetime(datetime.utcnow())
 
 
-def balances_with_adequate_values(sp, products, datestring=None):
-    if datestring is None:
-        datestring = long_date()
-
+def balances_with_adequate_values(sp, product_amounts, datestring):
     return """
         <ns0:balance xmlns:ns0="http://commtrack.org/stock_report" xmlns="http://openrosa.org/http/response" date="{long_date}" entity-id="{sp_id}" stock-id="stock">
-            <ns0:product id="{product0}" quantity="10" />
-            <ns0:product id="{product1}" quantity="10" />
-            <ns0:product id="{product2}" quantity="10" />
+            {product_block}
         </ns0:balance>
     """.format(
         sp_id=sp._id,
         long_date=datestring,
-        product0=products[0]._id,
-        product1=products[1]._id,
-        product2=products[2]._id,
+        product_block=_products_xml(product_amounts),
     )
 
 
