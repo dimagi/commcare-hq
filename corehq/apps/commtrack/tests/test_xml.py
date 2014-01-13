@@ -37,6 +37,7 @@ class CommTrackOTATest(CommTrackTest):
         for product in self.products:
             StockTransaction.objects.create(
                 report=report,
+                stock_id='stock',
                 case_id=self.sp._id,
                 product_id=product._id,
                 stock_on_hand=10,
@@ -69,18 +70,19 @@ class CommTrackSubmissionTest(CommTrackTest):
             domain=self.domain.name,
         )
 
-    def check_stock_models(self, case, product_id, expected_soh, expected_qty):
-        latest_trans = StockTransaction.latest(case._id, product_id)
+    def check_stock_models(self, case, product_id, expected_soh, expected_qty, stock_id):
+        latest_trans = StockTransaction.latest(case._id, stock_id, product_id)
+        self.assertEqual(stock_id, latest_trans.stock_id)
         self.assertEqual(expected_soh, latest_trans.stock_on_hand)
         self.assertEqual(expected_qty, latest_trans.quantity)
 
-    def check_product_stock(self, supply_point, product_id, expected_soh, expected_qty):
+    def check_product_stock(self, supply_point, product_id, expected_soh, expected_qty, stock_id='stock'):
         # check the case
         spp = supply_point.get_product_subcase(product_id)
         self.assertEqual(expected_soh, spp.current_stock)
 
         # and the django model
-        self.check_stock_models(supply_point, product_id, expected_soh, expected_qty)
+        self.check_stock_models(supply_point, product_id, expected_soh, expected_qty, stock_id)
 
     def setUp(self):
         super(CommTrackSubmissionTest, self).setUp()

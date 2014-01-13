@@ -16,7 +16,7 @@ def balances_with_adequate_values(sp, products, datestring=None):
         datestring = long_date()
 
     return """
-        <ns0:balance xmlns:ns0="http://commtrack.org/stock_report" xmlns="http://openrosa.org/http/response" date="{long_date}" entity-id="{sp_id}">
+        <ns0:balance xmlns:ns0="http://commtrack.org/stock_report" xmlns="http://openrosa.org/http/response" date="{long_date}" entity-id="{sp_id}" stock-id="stock">
             <ns0:product id="{product0}" quantity="10" />
             <ns0:product id="{product1}" quantity="10" />
             <ns0:product id="{product2}" quantity="10" />
@@ -69,7 +69,7 @@ def _products_xml(product_amount_tuples):
 
 def balance_submission(product_amounts):
     return """
-        <ns0:balance xmlns:ns0="http://commtrack.org/stock_report" date="{long_date}" entity-id="{sp_id}">
+        <ns0:balance xmlns:ns0="http://commtrack.org/stock_report" date="{long_date}" entity-id="{sp_id}" stock-id="stock">
             %(product_block)s
         </ns0:balance>
     """ % {'product_block': _products_xml(product_amounts)}
@@ -78,7 +78,7 @@ def balance_submission(product_amounts):
 def transfer_dest_only(product_amounts):
     return """
         <receipts>
-            <ns0:transfer xmlns:ns0="http://commtrack.org/stock_report" dest="{sp_id}" date="{long_date}">
+            <ns0:transfer xmlns:ns0="http://commtrack.org/stock_report" dest="{sp_id}" date="{long_date}" stock-id="stock">
                 %(product_block)s
             </ns0:transfer>
         </receipts>
@@ -88,7 +88,7 @@ def transfer_dest_only(product_amounts):
 def transfer_source_only(product_amounts):
     return """
         <losses>
-            <ns0:transfer xmlns:ns0="http://commtrack.org/stock_report" src="{sp_id}" date="{long_date}">
+            <ns0:transfer xmlns:ns0="http://commtrack.org/stock_report" src="{sp_id}" date="{long_date}" stock-id="stock">
                 %(product_block)s
             </ns0:transfer>
         </losses>
@@ -98,7 +98,7 @@ def transfer_source_only(product_amounts):
 def transfer_both(product_amounts):
     # TODO Does this get wrapped in something? receipts?
     return """
-        <ns0:transfer xmlns:ns0="http://commtrack.org/stock_report" src="{sp_id}" dest="{sp2_id}" date="{long_date}">
+        <ns0:transfer xmlns:ns0="http://commtrack.org/stock_report" src="{sp_id}" dest="{sp2_id}" date="{long_date}" stock-id="stock">
             %(product_block)s
         </ns0:transfer>
     """ % {'product_block': _products_xml(product_amounts)}
@@ -126,7 +126,7 @@ def create_requisition_xml(product_amounts):
     ).as_xml())
     return """
         %(case_block)s
-        <ns0:balance xmlns:ns0="http://commtrack.org/stock_report" date="{long_date}" entity-id="%(req_id)s">
+        <ns0:balance xmlns:ns0="http://commtrack.org/stock_report" date="{long_date}" entity-id="%(req_id)s" stock-id="stock">
             %(product_block)s
         </ns0:balance>
     """ % {'req_id': req_id, 'case_block': req_case_block, 'product_block': _products_xml(product_amounts)}
@@ -144,7 +144,7 @@ def create_fulfillment_xml(original_requisition, product_amounts):
     ).as_xml())
     return """
         {case_block}
-        <ns0:transfer xmlns:ns0="http://commtrack.org/stock_report" dest="{dest_id}" date="{long_date}" src="{req_id}">
+        <ns0:transfer xmlns:ns0="http://commtrack.org/stock_report" dest="{dest_id}" date="{long_date}" src="{req_id}" stock-id="stock">
             {product_block}
         </ns0:transfer>
     """.format(
