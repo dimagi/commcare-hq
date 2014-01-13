@@ -15,6 +15,7 @@ from django.utils.translation import ugettext_noop as _
 
 def REPORTS(project):
     from corehq.apps.reports.standard.cases.basic import CaseListReport
+    from corehq.apps.reports.standard.cases.careplan import make_careplan_reports
     from corehq.apps.reports.standard.maps import DemoMapReport, DemoMapReport2, DemoMapCaseList
 
     reports = [
@@ -55,6 +56,13 @@ def REPORTS(project):
             commtrack_maps.StockStatusMapReport,
             commtrack_maps.ReportingStatusMapReport,
         )))
+
+    if project.has_careplan:
+        from corehq.apps.app_manager.models import CareplanConfig
+        config = CareplanConfig.for_domain(project.name)
+        if config:
+            cp_reports = tuple(make_careplan_reports(config))
+            reports.insert(0, (_("Care Plans"), cp_reports))
 
     messaging_reports = (
         sms.MessagesReport,
