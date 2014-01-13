@@ -62,9 +62,9 @@ def submission_wrap(products, user, sp, sp2, insides):
 
 def _products_xml(product_amount_tuples):
     return ''.join([
-        '<ns0:product index="{i}" id="{id}" quantity="{quantity}" />'.format(
-            i=i, id=p, quantity=amt,
-        ) for i, (p, amt) in enumerate(product_amount_tuples)
+        '<ns0:product id="{id}" quantity="{quantity}" />'.format(
+            id=p, quantity=amt,
+        ) for p, amt in product_amount_tuples
     ])
 
 def balance_submission(product_amounts):
