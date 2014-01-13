@@ -82,8 +82,6 @@ class SubscriptionForm(forms.Form):
     start_date = forms.DateField(label="Start Date", widget=forms.DateInput())
     end_date = forms.DateField(label="End Date", widget=forms.DateInput())
     delay_invoice_until = forms.DateField(label="Delay Invoice Until", widget=forms.DateInput())
-    #line_items = forms.SelectMultiple(choices=(('a', 'b')))
-    note = forms.CharField(required=False)
 
     def __init__(self, subscription, *args, **kwargs):
         super(SubscriptionForm, self).__init__(*args, **kwargs)
@@ -98,7 +96,6 @@ class SubscriptionForm(forms.Form):
                 Field('start_date', css_class="date-picker"),
                 Field('end_date', css_class="date-picker"),
                 Field('delay_invoice_until', css_class="date-picker"),
-                'note',
             ),
             FormActions(
                 ButtonHolder(
