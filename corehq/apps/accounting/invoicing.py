@@ -102,12 +102,7 @@ class CommunityInvoiceFactory(InvoiceFactory):
 
     @property
     def software_plan(self):
-        product_type = SoftwareProductType.get_type_by_domain(self.domain)
-        try:
-            default_product_plan = DefaultProductPlan.objects.get(product_type=product_type)
-            return default_product_plan.plan.softwareplanversion_set.latest('date_created')
-        except ObjectDoesNotExist:
-            raise InvoiceError("Could not find a default plan in place for product %s." % product_type)
+        return DefaultProductPlan.get_default_plan_by_domain(self.domain)
 
     @property
     @memoized
