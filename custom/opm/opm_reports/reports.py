@@ -7,17 +7,22 @@ this more general and subclass for montly reports , but I'm holding off on
 that until we actually have another use case for it.
 """
 import datetime
+from sqlagg.columns import SimpleColumn, SumColumn
+from corehq.apps.reports.filters.dates import DatespanFilter
 
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin 
+from corehq.apps.reports.sqlreport import SummingSqlTabularReport, DatabaseColumn
+from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin, DatespanMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 from corehq.apps.reports.filters.select import SelectOpenCloseFilter
+from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.users.models import CommCareUser, CommCareCase
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.dates import DateSpan
 
 from couchdbkit.exceptions import ResourceNotFound
+from custom.opm.opm_reports.health_status import HealthStatus
 
 from ..opm_tasks.models import OpmReportSnapshot
 from .beneficiary import Beneficiary
@@ -26,7 +31,7 @@ from .constants import *
 from .filters import BlockFilter, AWCFilter
 
 
-class BaseReport(MonthYearMixin, GenericTabularReport, CustomProjectReport):
+class BaseReport(MonthYearMixin, SummingSqlTabularReport, CustomProjectReport):
     """
     Report parent class.  Children must provide a get_rows() method that
     returns a list of the raw data that forms the basis of each row.
@@ -36,6 +41,8 @@ class BaseReport(MonthYearMixin, GenericTabularReport, CustomProjectReport):
     method_map that is a list of (method_name, "Verbose Title") tuples
     that define the columns in the report.
     """
+    ajax_pagination = True
+    asynchronous = True
     name = None
     slug = None
     model = None
@@ -228,3 +235,18 @@ def get_report(ReportClass, month=None, year=None):
             return {}
 
     return Report()
+
+class HealthStatusReport(BaseReport, DatespanMixin):
+
+    name = "Health Status Report"
+    slug = "health_status_report"
+    model = HealthStatus
+    ajax_pagination = True
+    asynchronous = True
+
+    @property
+    def fields(self):
+        return [BlockFilter, AWCFilter, SelectOpenCloseFilter, DatespanFilter]
+
+    def get_rows(self):
+        return []
