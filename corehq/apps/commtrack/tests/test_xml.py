@@ -6,7 +6,6 @@ from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.tests.util import CommTrackTest, get_ota_balance_xml
 from casexml.apps.case.tests.util import check_xml_line_by_line
-from corehq.apps.commtrack.models import Product
 from corehq.apps.hqcase.utils import get_cases_in_domain
 from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.apps.commtrack.tests.util import make_loc, make_supply_point, make_supply_point_product
@@ -17,7 +16,6 @@ from corehq.apps.commtrack.tests.data.balances import (
     transfer_dest_only,
     transfer_source_only,
     transfer_both,
-    transfer_neither,
     balance_first,
     transfer_first,
     create_requisition_xml,
@@ -161,11 +159,6 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         for product, amt in transfers:
             self.check_product_stock(self.sp, product, initial-amt, -amt)
             self.check_product_stock(self.sp2, product, amt, amt)
-
-    def test_transfer_neither(self):
-        # TODO this one should error
-        # self.submit_xml_form(transfer_neither)
-        pass
 
     def test_balance_first_doc_order(self):
         initial = float(100)
