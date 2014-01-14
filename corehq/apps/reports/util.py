@@ -214,7 +214,7 @@ def app_export_filter(doc, app_id):
     if app_id:
         return (doc['app_id'] == app_id) if doc.has_key('app_id') else False
     elif app_id == '':
-        return not doc.has_key('app_id')
+        return (not doc['app_id']) if doc.has_key('app_id') else True
     else:
         return True
 
