@@ -32,9 +32,9 @@ class StockTransaction(models.Model):
     stock_on_hand = models.DecimalField(max_digits=20, decimal_places=5)
 
     def __unicode__(self):
-        return '{type} of {quantity} to {soh} (case: {case}, product: {product})'.format(
+        return '{type} of {quantity} to {soh} (case: {case}, product: {product}, stock id: {stock_id})'.format(
             type=self.type, quantity=self.quantity, soh=self.stock_on_hand,
-            case=self.case_id, product=self.product_id,
+            case=self.case_id, product=self.product_id, stock_id=self.stock_id,
         )
 
     def get_previous_transaction(self):
@@ -51,4 +51,5 @@ class StockTransaction(models.Model):
 
     @classmethod
     def _peer_qs(self, case_id, stock_id, product_id):
-        return StockTransaction.objects.filter(case_id=case_id, product_id=product_id).order_by('-report__date')
+        return StockTransaction.objects.filter(
+            case_id=case_id, product_id=product_id, stock_id=stock_id).order_by('-report__date')
