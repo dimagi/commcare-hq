@@ -4,7 +4,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.views.generic import TemplateView
 from corehq import AccountingInterface, SubscriptionInterface
-from corehq.apps.accounting.forms import BillingAccountForm, SubscriptionForm
+from corehq.apps.accounting.forms import BillingAccountForm, SubscriptionForm, CreditForm
 from corehq.apps.accounting.models import *
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.users.models import WebUser
@@ -44,6 +44,8 @@ class ManageBillingAccountView(TemplateView):
     def get_context_data(self):
         account = BillingAccount.objects.get(id=self.args[0])
         return dict(account=account,
+                    credit_form=CreditForm(True),
+                    credit_list=None,
                     form=BillingAccountForm(account),
                     parent_link='<a href="%s">%s<a>' % (AccountingInterface.get_url(), AccountingInterface.name),
                     subscription_list=Subscription.objects.filter(account=account),
@@ -51,28 +53,31 @@ class ManageBillingAccountView(TemplateView):
 
     def post(self, request, *args, **kwargs):
         # TODO validate data
-        account = BillingAccount.objects.get(id=self.args[0])
-        account.name = self.request.POST['name']
-        account.salesforce_account_id = self.request.POST['salesforce_account_id']
-        account.currency, _ = Currency.objects.get_or_create(code=self.request.POST['currency'])
-        for web_user_email in self.request.POST['billing_account_admins'].split(','):
-            if WebUser.get_by_username(web_user_email.strip()) is not None:
-                admin, _ = BillingAccountAdmin.objects.get_or_create(web_user=web_user_email)
-                account.billing_admins.add(admin)
-        account.save()
+        if 'set_subscription' in self.request.POST:
+            account = BillingAccount.objects.get(id=self.args[0])
+            account.name = self.request.POST['name']
+            account.salesforce_account_id = self.request.POST['salesforce_account_id']
+            account.currency, _ = Currency.objects.get_or_create(code=self.request.POST['currency'])
+            for web_user_email in self.request.POST['billing_account_admins'].split(','):
+                if WebUser.get_by_username(web_user_email.strip()) is not None:
+                    admin, _ = BillingAccountAdmin.objects.get_or_create(web_user=web_user_email)
+                    account.billing_admins.add(admin)
+            account.save()
 
-        contact_info, _ = BillingContactInfo.objects.get_or_create(account=account)
-        contact_info.first_name = self.request.POST['first_name']
-        contact_info.last_name = self.request.POST['last_name']
-        contact_info.company_name = self.request.POST['company_name']
-        contact_info.phone_number = self.request.POST['phone_number']
-        contact_info.first_line = self.request.POST['address_line_1']
-        contact_info.second_line = self.request.POST['address_line_2']
-        contact_info.city = self.request.POST['city']
-        contact_info.state_province_region = self.request.POST['region']
-        contact_info.postal_code = self.request.POST['postal_code']
-        contact_info.country = self.request.POST['country']
-        contact_info.save()
+            contact_info, _ = BillingContactInfo.objects.get_or_create(account=account)
+            contact_info.first_name = self.request.POST['first_name']
+            contact_info.last_name = self.request.POST['last_name']
+            contact_info.company_name = self.request.POST['company_name']
+            contact_info.phone_number = self.request.POST['phone_number']
+            contact_info.first_line = self.request.POST['address_line_1']
+            contact_info.second_line = self.request.POST['address_line_2']
+            contact_info.city = self.request.POST['city']
+            contact_info.state_province_region = self.request.POST['region']
+            contact_info.postal_code = self.request.POST['postal_code']
+            contact_info.country = self.request.POST['country']
+            contact_info.save()
+        elif 'adjust_credit' in self.request.POST:
+            print 'hello'
 
         return self.get(request, *args, **kwargs)
 

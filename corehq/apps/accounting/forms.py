@@ -1,12 +1,10 @@
 import datetime
 from crispy_forms.bootstrap import FormActions
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import ButtonHolder, Fieldset, Layout, Submit, Field
+from crispy_forms.layout import *
 from django import forms
-from django.forms.extras.widgets import SelectDateWidget
 
-from corehq.apps.accounting.models import Currency, BillingContactInfo
-from corehq.apps.users.models import WebUser
+from corehq.apps.accounting.models import Currency, BillingContactInfo, SoftwareProductRate, Feature
 
 
 class BillingAccountForm(forms.Form):
@@ -116,7 +114,42 @@ class SubscriptionForm(forms.Form):
             ),
             FormActions(
                 ButtonHolder(
-                    Submit('submit', 'Submit')
+                    Submit('set_subscription', 'Submit')
+                )
+            )
+        )
+
+
+class CreditForm(forms.Form):
+    amount = forms.DecimalField()
+    note = forms.CharField()
+    rate_type = forms.ChoiceField(choices=(('Any', 'Any'),
+                                           ('Product', 'Product'),
+                                           ('Feature', 'Feature')))
+    product = forms.ChoiceField(choices=tuple(
+        [(product_rate.product.name, product_rate.product.name)
+         for product_rate in SoftwareProductRate.objects.all()]
+    ))
+    rate = forms.ChoiceField(choices=tuple(
+        [(feature.name, feature.name)
+         for feature in Feature.objects.all()]
+    ))
+
+    def __init__(self, is_account, *args, **kwargs):
+        super(CreditForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            Fieldset(
+            'Adjust %s Credit' % 'Account Level' if is_account else 'Subscription Level',
+                'amount',
+                Div('note', data_bind="visible: false"),
+                'rate_type',
+                'product',
+                'rate',
+            ),
+            FormActions(
+                ButtonHolder(
+                    Submit('adjust_credit', 'Submit')
                 )
             )
         )
