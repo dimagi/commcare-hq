@@ -265,7 +265,7 @@ ko.bindingHandlers.starred = {
         $element.addClass('icon');
 
         var unselected = 'icon-star-empty';
-        var selected = 'icon-star icon-large';
+        var selected = 'icon-star icon-large released';
         var pending = 'icon-refresh';
         var error = 'icon-ban-circle';
 
