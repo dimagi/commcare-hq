@@ -1,3 +1,4 @@
+import random
 import uuid
 from datetime import datetime
 from dimagi.utils.parsing import json_format_datetime
@@ -110,8 +111,9 @@ class CommTrackSubmissionTest(CommTrackTest):
 
     def check_product_stock(self, supply_point, product_id, expected_soh, expected_qty, stock_id='stock'):
         # check the case
-        spp = supply_point.get_product_subcase(product_id)
-        self.assertEqual(expected_soh, spp.current_stock)
+        if stock_id == 'stock':
+            spp = supply_point.get_product_subcase(product_id)
+            self.assertEqual(expected_soh, spp.current_stock)
 
         # and the django model
         self.check_stock_models(supply_point, product_id, expected_soh, expected_qty, stock_id)
@@ -132,6 +134,19 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         self.submit_xml_form(balance_submission(amounts))
         for product, amt in amounts:
             self.check_product_stock(self.sp, product, amt, amt)
+
+    def test_balance_submit_multiple_stocks(self):
+        def _random_amounts():
+            return [(p._id, float(random.randint(0, 100))) for i, p in enumerate(self.products)]
+
+        stock_ids = ('stock', 'losses', 'consumption')
+        stock_amounts = [(id, _random_amounts()) for id in stock_ids]
+        for stock_id, amounts in stock_amounts:
+            self.submit_xml_form(balance_submission(amounts, stock_id=stock_id))
+
+        for stock_id, amounts in stock_amounts:
+            for product, amt in amounts:
+                self.check_product_stock(self.sp, product, amt, amt, stock_id)
 
     def test_transfer_dest_only(self):
         amounts = [(p._id, float(i*10)) for i, p in enumerate(self.products)]

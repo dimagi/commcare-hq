@@ -61,12 +61,12 @@ def _products_xml(product_amount_tuples):
         ) for p, amt in product_amount_tuples
     ])
 
-def balance_submission(product_amounts):
+def balance_submission(product_amounts, stock_id='stock'):
     return """
-        <ns0:balance xmlns:ns0="http://commtrack.org/stock_report" date="{long_date}" entity-id="{sp_id}" stock-id="stock">
+        <ns0:balance xmlns:ns0="http://commtrack.org/stock_report" date="{long_date}" entity-id="{sp_id}" stock-id="%(stock_id)s">
             %(product_block)s
         </ns0:balance>
-    """ % {'product_block': _products_xml(product_amounts)}
+    """ % {'product_block': _products_xml(product_amounts), 'stock_id': stock_id}
 
 
 def transfer_dest_only(product_amounts):
