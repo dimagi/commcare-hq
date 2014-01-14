@@ -132,7 +132,7 @@ def sortkey(child, type_info=None):
 def get_session_data(case, current_case, type_info):
     # this logic should ideally be implemented in subclasses of
     # CommCareCase
-    if type_info:
+    if type_info and case.type in type_info:
         attr = type_info[case.type]['case_id_attr']
         return {
             attr: case._id,
