@@ -11,7 +11,7 @@ from corehq.apps.hqcase.utils import get_cases_in_domain
 from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.apps.commtrack.tests.util import make_loc, make_supply_point, make_supply_point_product
 from corehq.apps.commtrack.tests.data.balances import (
-    balances_with_adequate_values,
+    balance_ota_block,
     submission_wrap,
     balance_submission,
     transfer_dest_only,
@@ -47,13 +47,46 @@ class CommTrackOTATest(CommTrackTest):
 
         check_xml_line_by_line(
             self,
-            balances_with_adequate_values(
+            balance_ota_block(
                 self.sp,
+                'stock',
                 amounts,
                 datestring=json_format_datetime(date),
             ),
-            get_ota_balance_xml(user),
+            get_ota_balance_xml(user)[0],
         )
+
+    def test_ota_multiple_stocks(self):
+        user = self.reporters['fixed']
+        date = datetime.utcnow()
+        report = StockReport.objects.create(form_id=uuid.uuid4().hex, date=date, type=TRANSACTION_TYPE_BALANCE)
+        amounts = [(p._id, i*10) for i, p in enumerate(self.products)]
+
+        stock_ids = sorted(('stock', 'losses', 'consumption'))
+        for stock_id in stock_ids:
+            for product_id, amount in amounts:
+                StockTransaction.objects.create(
+                    report=report,
+                    stock_id=stock_id,
+                    case_id=self.sp._id,
+                    product_id=product_id,
+                    stock_on_hand=amount,
+                    quantity=amount,
+                )
+
+        balance_blocks = get_ota_balance_xml(user)
+        self.assertEqual(3, len(balance_blocks))
+        for i, stock_id in enumerate(stock_ids):
+            check_xml_line_by_line(
+                self,
+                balance_ota_block(
+                    self.sp,
+                    stock_id,
+                    amounts,
+                    datestring=json_format_datetime(date),
+                ),
+                balance_blocks[i],
+            )
 
 class CommTrackSubmissionTest(CommTrackTest):
     def submit_xml_form(self, xml_method):
