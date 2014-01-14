@@ -506,6 +506,7 @@ class NewStockReport(object):
             db_txn = DbStockTransaction(
                 report=report,
                 case_id=txn.case_id,
+                stock_id=txn.stock_id,
                 product_id=txn.product_id,
             )
             previous_transaction = db_txn.get_previous_transaction()
@@ -527,8 +528,9 @@ class StockTransaction(Document):
     # todo: why is this a Document?
     domain = StringProperty()
     timestamp = DateTimeProperty()
-    location_id = StringProperty() # location record id
-    case_id = StringProperty() # supply point case id
+    location_id = StringProperty()  # location record id
+    case_id = StringProperty()
+    stock_id = StringProperty()
     product_id = StringProperty()
     action = StringProperty()
     subaction = StringProperty()
@@ -614,30 +616,35 @@ class StockTransaction(Document):
         action_type = action_node.get('@type')
         subaction = action_type
         quantity = float(product_node.get('@quantity'))
-        def _txn(action, case_id):
+        def _txn(action, case_id, stock_id):
             data = {
                 'timestamp': timestamp,
                 'product_id': product_node.get('@id'),
                 'quantity': quantity,
                 'action': action,
                 'case_id': case_id,
+                'stock_id': stock_id,
                 'subaction': subaction if subaction and subaction != action else None
                 # note: no location id
             }
             return cls(config=config, **data)
 
+        DEFAULT_STOCK_ID = 'stock'
         if action_tag == 'balance':
             yield _txn(
                 action=const.StockActions.STOCKONHAND if quantity > 0 else const.StockActions.STOCKOUT,
                 case_id=action_node['@entity-id'],
+                stock_id=action_node.get('@stock-id', DEFAULT_STOCK_ID),
             )
         elif action_tag == 'transfer':
             src, dst = [action_node.get('@%s' % k) for k in ('src', 'dest')]
             assert src or dst
             if src is not None:
-                yield _txn(action=const.StockActions.CONSUMPTION, case_id=src)
+                yield _txn(action=const.StockActions.CONSUMPTION, case_id=src,
+                           stock_id=action_node.get('@stock-id', DEFAULT_STOCK_ID))
             if dst is not None:
-                yield _txn(action=const.StockActions.RECEIPTS, case_id=dst)
+                yield _txn(action=const.StockActions.RECEIPTS, case_id=dst,
+                           stock_id=action_node.get('@stock-id', DEFAULT_STOCK_ID))
 
     def to_xml(self, E=None, **kwargs):
         if not E:

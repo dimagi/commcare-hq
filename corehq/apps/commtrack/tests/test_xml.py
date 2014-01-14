@@ -1,3 +1,4 @@
+import random
 import uuid
 from datetime import datetime
 from dimagi.utils.parsing import json_format_datetime
@@ -6,18 +7,16 @@ from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.tests.util import CommTrackTest, get_ota_balance_xml
 from casexml.apps.case.tests.util import check_xml_line_by_line
-from corehq.apps.commtrack.models import Product
 from corehq.apps.hqcase.utils import get_cases_in_domain
 from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.apps.commtrack.tests.util import make_loc, make_supply_point, make_supply_point_product
 from corehq.apps.commtrack.tests.data.balances import (
-    balances_with_adequate_values,
+    balance_ota_block,
     submission_wrap,
     balance_submission,
     transfer_dest_only,
     transfer_source_only,
     transfer_both,
-    transfer_neither,
     balance_first,
     transfer_first,
     create_requisition_xml,
@@ -30,28 +29,63 @@ class CommTrackOTATest(CommTrackTest):
         user = self.reporters['fixed']
         self.assertFalse(get_ota_balance_xml(user))
 
-    def test_ota_balances_with_adequate_values(self):
+    def test_ota_basic(self):
         user = self.reporters['fixed']
         date = datetime.utcnow()
         report = StockReport.objects.create(form_id=uuid.uuid4().hex, date=date, type=TRANSACTION_TYPE_BALANCE)
-        for product in self.products:
+        amounts = [(p._id, i*10) for i, p in enumerate(self.products)]
+        for product_id, amount in amounts:
             StockTransaction.objects.create(
                 report=report,
+                stock_id='stock',
                 case_id=self.sp._id,
-                product_id=product._id,
-                stock_on_hand=10,
-                quantity=10,
+                product_id=product_id,
+                stock_on_hand=amount,
+                quantity=amount,
             )
 
         check_xml_line_by_line(
             self,
-            balances_with_adequate_values(
+            balance_ota_block(
                 self.sp,
-                sorted(Product.by_domain(self.domain.name).all(), key=lambda p: p._id),
+                'stock',
+                amounts,
                 datestring=json_format_datetime(date),
             ),
-            get_ota_balance_xml(user),
+            get_ota_balance_xml(user)[0],
         )
+
+    def test_ota_multiple_stocks(self):
+        user = self.reporters['fixed']
+        date = datetime.utcnow()
+        report = StockReport.objects.create(form_id=uuid.uuid4().hex, date=date, type=TRANSACTION_TYPE_BALANCE)
+        amounts = [(p._id, i*10) for i, p in enumerate(self.products)]
+
+        stock_ids = sorted(('stock', 'losses', 'consumption'))
+        for stock_id in stock_ids:
+            for product_id, amount in amounts:
+                StockTransaction.objects.create(
+                    report=report,
+                    stock_id=stock_id,
+                    case_id=self.sp._id,
+                    product_id=product_id,
+                    stock_on_hand=amount,
+                    quantity=amount,
+                )
+
+        balance_blocks = get_ota_balance_xml(user)
+        self.assertEqual(3, len(balance_blocks))
+        for i, stock_id in enumerate(stock_ids):
+            check_xml_line_by_line(
+                self,
+                balance_ota_block(
+                    self.sp,
+                    stock_id,
+                    amounts,
+                    datestring=json_format_datetime(date),
+                ),
+                balance_blocks[i],
+            )
 
 class CommTrackSubmissionTest(CommTrackTest):
     def submit_xml_form(self, xml_method):
@@ -69,18 +103,20 @@ class CommTrackSubmissionTest(CommTrackTest):
             domain=self.domain.name,
         )
 
-    def check_stock_models(self, case, product_id, expected_soh, expected_qty):
-        latest_trans = StockTransaction.latest(case._id, product_id)
+    def check_stock_models(self, case, product_id, expected_soh, expected_qty, stock_id):
+        latest_trans = StockTransaction.latest(case._id, stock_id, product_id)
+        self.assertEqual(stock_id, latest_trans.stock_id)
         self.assertEqual(expected_soh, latest_trans.stock_on_hand)
         self.assertEqual(expected_qty, latest_trans.quantity)
 
-    def check_product_stock(self, supply_point, product_id, expected_soh, expected_qty):
+    def check_product_stock(self, supply_point, product_id, expected_soh, expected_qty, stock_id='stock'):
         # check the case
-        spp = supply_point.get_product_subcase(product_id)
-        self.assertEqual(expected_soh, spp.current_stock)
+        if stock_id == 'stock':
+            spp = supply_point.get_product_subcase(product_id)
+            self.assertEqual(expected_soh, spp.current_stock)
 
         # and the django model
-        self.check_stock_models(supply_point, product_id, expected_soh, expected_qty)
+        self.check_stock_models(supply_point, product_id, expected_soh, expected_qty, stock_id)
 
     def setUp(self):
         super(CommTrackSubmissionTest, self).setUp()
@@ -98,6 +134,19 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         self.submit_xml_form(balance_submission(amounts))
         for product, amt in amounts:
             self.check_product_stock(self.sp, product, amt, amt)
+
+    def test_balance_submit_multiple_stocks(self):
+        def _random_amounts():
+            return [(p._id, float(random.randint(0, 100))) for i, p in enumerate(self.products)]
+
+        stock_ids = ('stock', 'losses', 'consumption')
+        stock_amounts = [(id, _random_amounts()) for id in stock_ids]
+        for stock_id, amounts in stock_amounts:
+            self.submit_xml_form(balance_submission(amounts, stock_id=stock_id))
+
+        for stock_id, amounts in stock_amounts:
+            for product, amt in amounts:
+                self.check_product_stock(self.sp, product, amt, amt, stock_id)
 
     def test_transfer_dest_only(self):
         amounts = [(p._id, float(i*10)) for i, p in enumerate(self.products)]
@@ -125,11 +174,6 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         for product, amt in transfers:
             self.check_product_stock(self.sp, product, initial-amt, -amt)
             self.check_product_stock(self.sp2, product, amt, amt)
-
-    def test_transfer_neither(self):
-        # TODO this one should error
-        # self.submit_xml_form(transfer_neither)
-        pass
 
     def test_balance_first_doc_order(self):
         initial = float(100)

@@ -62,6 +62,9 @@ def process_stock(sender, xform, config=None, **kwargs):
         case.actions.append(case_action)
         case.save()
 
+    def _is_stockonhand_txn(txn):
+        return txn.stock_id == 'stock'
+
     # supply point cases have to be handled differently because of the use of product subcases
     supply_point_cases = filter(lambda case: isinstance(case, SupplyPointCase), relevant_cases)
     if supply_point_cases:
@@ -70,7 +73,10 @@ def process_stock(sender, xform, config=None, **kwargs):
             post_processed_transactions = []
             E = XML(ns=COMMTRACK_LEGACY_REPORT_XMLNS)
             root = E.commtrack_data()
+
             for (case_id, product_id), txs in grouped_tx.iteritems():
+                # filter out non-stockonhand transactions first
+                txs = filter(_is_stockonhand_txn, txs)
                 if case_id in supply_point_product_subcases:
                     subcase = supply_point_product_subcases[case_id][product_id]
                     case_block, reconciliations = process_product_transactions(user_id, submit_time, subcase, txs)
@@ -78,15 +84,17 @@ def process_stock(sender, xform, config=None, **kwargs):
                     post_processed_transactions.extend(reconciliations)
 
             supply_point_ids = supply_point_product_subcases.keys()
-            supply_point_transactions = filter(lambda tx: tx.case_id in supply_point_ids, transactions)
+            supply_point_transactions = filter(lambda tx: _is_stockonhand_txn(tx) and tx.case_id in supply_point_ids, transactions)
             post_processed_transactions.extend(map(lambda tx: LegacyStockTransaction.convert(tx, supply_point_product_subcases), supply_point_transactions))
-            set_transactions(root, post_processed_transactions, E)
 
-            submission = etree.tostring(root, encoding='utf-8', pretty_print=True)
-            logger.debug(submission)
-            spoof_submission(get_submit_url(domain), submission,
-                             headers={'HTTP_X_SUBMIT_TIME': submit_time},
-                             hqsubmission=False)
+            # only bother with submission if there were any actual transactions
+            if post_processed_transactions:
+                set_transactions(root, post_processed_transactions, E)
+                submission = etree.tostring(root, encoding='utf-8', pretty_print=True)
+                logger.debug(submission)
+                spoof_submission(get_submit_url(domain), submission,
+                                 headers={'HTTP_X_SUBMIT_TIME': submit_time},
+                                 hqsubmission=False)
 
         _do_legacy_xml_submission()
 
