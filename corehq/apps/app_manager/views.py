@@ -697,6 +697,8 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         'show_care_plan': (v2_app
                            and not (app and app.has_careplan_module)
                            and toggle_enabled(toggles.APP_BUILDER_CAREPLAN, req.user.username)),
+        'show_commtrack': (v2_app
+                           and toggle_enabled(toggles.APP_BUILDER_COMMTRACK, req.user.username)),
         'module': module,
         'form': form,
     })
@@ -815,6 +817,7 @@ def new_app(req, domain):
 
     return back_to_main(req, domain, app_id=app_id)
 
+
 @no_conflict_require_POST
 @require_can_edit_apps
 def new_module(req, domain, app_id):
@@ -831,19 +834,15 @@ def new_module(req, domain, app_id):
         response = back_to_main(req, domain, app_id=app_id, module_id=module_id)
         response.set_cookie('suppress_build_errors', 'yes')
         return response
-    elif module_type == 'careplan':
-        validations = [
-            (lambda a: a.application_version == APP_V1,
-             _('Please upgrade you app to > 2.0 in order to add a Careplan module')),
-            (lambda a: app.has_careplan_module,
-             _('This application already has a Careplan module'))
-        ]
+    elif module_type in MODULE_TYPE_MAP:
+        fn = MODULE_TYPE_MAP[module_type][FN]
+        validations = MODULE_TYPE_MAP[module_type][VALIDATIONS]
         error = next((v[1] for v in validations if v[0](app)), None)
         if error:
             messages.warning(req, error)
             return back_to_main(req, domain, app_id=app.id)
         else:
-            return _new_careplan_module(req, domain, app, name, lang)
+            return fn(req, domain, app, name, lang)
     else:
         logger.error('Unexpected module type for new module: "%s"' % module_type)
         return back_to_main(req, domain, app_id=app_id)
@@ -861,7 +860,14 @@ def _new_careplan_module(req, domain, app, name, lang):
     app.save()
     response = back_to_main(req, domain, app_id=app.id, module_id=module.id)
     response.set_cookie('suppress_build_errors', 'yes')
-    messages.warning(req, 'Care Plan modules are a work in progress!')
+    messages.info(req, _('Caution: Care Plan modules are a labs feature'))
+    return response
+
+
+def _new_commtrack_module(req, domain, app, name, lang):
+    response = back_to_main(req, domain, app_id=app.id)
+    response.set_cookie('suppress_build_errors', 'yes')
+    messages.info(req, _('Caution: CommTrack modules are a labs feature'))
     return response
 
 
@@ -2155,3 +2161,26 @@ def upload_translations(request, domain, app_id):
         messages.success(request, _("UI Translations Updated!"))
 
     return HttpResponseRedirect(reverse('app_languages', args=[domain, app_id]))
+
+
+common_module_validations = [
+    (lambda app: app.application_version == APP_V1,
+     _('Please upgrade you app to > 2.0 in order to add a Careplan module'))
+]
+
+
+FN = 'fn'
+VALIDATIONS = 'validations'
+MODULE_TYPE_MAP = {
+    'careplan': {
+        FN: _new_careplan_module,
+        VALIDATIONS: common_module_validations + [
+            (lambda app: app.has_careplan_module,
+             _('This application already has a Careplan module'))
+        ]
+    },
+    'commtrack': {
+        FN: _new_commtrack_module,
+        VALIDATIONS: common_module_validations
+    }
+}
