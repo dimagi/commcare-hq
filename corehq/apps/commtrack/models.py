@@ -477,26 +477,23 @@ class NewStockReport(object):
     Intermediate class for dealing with stock XML
     """
     # todo: fix name, remove old stock report class
-    def __init__(self, form, timestamp, tag, node, transactions):
+    def __init__(self, form, timestamp, tag, transactions):
         self._form = form
         self.form_id = form._id
         self.timestamp = timestamp
         self.tag = tag
-        self.node = node
         self.transactions = transactions
 
     @classmethod
     def from_xml(cls, form, config, elem):
-        tag, node = elem
-        timestamp = node.get('@date', form.received_on)
-        products = node['product']
-        if not isinstance(products, collections.Sequence):
-            products = [products]
+        tag = elem.tag
+        tag = tag[tag.find('}')+1:] # strip out ns
+        timestamp = elem.attrib.get('date', form.received_on)
+        products = elem.findall('./{%s}product' % const.COMMTRACK_REPORT_XMLNS)
         transactions = [t for prod_entry in products for t in
-                        StockTransaction.from_xml(config, timestamp, tag, node, prod_entry)]
+                        StockTransaction.from_xml(config, timestamp, tag, elem, prod_entry)]
 
-
-        return cls(form, timestamp, tag, node, transactions)
+        return cls(form, timestamp, tag, transactions)
 
     @transaction.commit_on_success
     def create_models(self):
@@ -608,15 +605,14 @@ class StockTransaction(Document):
         return None
 
     @classmethod
-    # note: works on 'jsonified' xml as produced by couchforms
     def from_xml(cls, config, timestamp, action_tag, action_node, product_node):
-        action_type = action_node.get('@type')
+        action_type = action_node.attrib.get('type')
         subaction = action_type
-        quantity = float(product_node.get('@quantity'))
+        quantity = float(product_node.attrib.get('quantity'))
         def _txn(action, case_id):
             data = {
                 'timestamp': timestamp,
-                'product_id': product_node.get('@id'),
+                'product_id': product_node.attrib.get('id'),
                 'quantity': quantity,
                 'action': action,
                 'case_id': case_id,
@@ -628,10 +624,10 @@ class StockTransaction(Document):
         if action_tag == 'balance':
             yield _txn(
                 action=const.StockActions.STOCKONHAND if quantity > 0 else const.StockActions.STOCKOUT,
-                case_id=action_node['@entity-id'],
+                case_id=action_node.attrib['entity-id'],
             )
         elif action_tag == 'transfer':
-            src, dst = [action_node.get('@%s' % k) for k in ('src', 'dest')]
+            src, dst = [action_node.attrib.get(k) for k in ('src', 'dest')]
             assert src or dst
             if src is not None:
                 yield _txn(action=const.StockActions.CONSUMPTION, case_id=src)

@@ -43,7 +43,7 @@ def process_stock(sender, xform, config=None, **kwargs):
 
     # transactions grouped by case/product id
     grouped_tx = map_reduce(lambda tx: [((tx.case_id, tx.product_id),)],
-                            lambda v: sorted(v, key=lambda tx: (tx.timestamp, tx.processing_order)),
+                            lambda v: sorted(v, key=lambda tx: tx.timestamp),
                             data=transactions,
                             include_docs=True)
 
@@ -127,21 +127,17 @@ def product_subcases(supply_point):
     return DefaultDict(create_product_subcase, product_subcase_mapping)
 
 def unpack_commtrack(xform, config):
-    # todo: I think this function has to be rewritten to work off the
-    # raw XML of the doc in order to preserve ordering
-    namespace = xform.form['@xmlns']
-    def commtrack_nodes(data):
-        for tag, nodes in data.iteritems():
-            for node in (nodes if isinstance(nodes, collections.Sequence) else [nodes]):
-                if not hasattr(node, '__iter__'):
-                    continue
-                if node.get('@xmlns', namespace) == const.COMMTRACK_REPORT_XMLNS:
-                    yield (tag, node)
-                else:
-                    for e in commtrack_nodes(node):
-                        yield e
+    xml = etree.fromstring(xform.get_xml())
 
-    for elem in commtrack_nodes(xform.form):
+    def commtrack_nodes(node):
+        for child in node:
+            if child.tag.startswith('{%s}' % const.COMMTRACK_REPORT_XMLNS):
+                yield child
+            else:
+                for e in commtrack_nodes(child):
+                    yield e
+
+    for elem in commtrack_nodes(xml):
         yield NewStockReport.from_xml(xform, config, elem)
 
 
