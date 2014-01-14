@@ -73,7 +73,7 @@ class RestoreConfig(object):
                 products = [relevant_reports.filter(product_id=p).order_by('-report__date').select_related()[0] for p in product_ids]
                 as_of = json_format_datetime(max(p.report.date for p in products))
                 yield E.balance(*(transaction_to_xml(e) for e in products),
-                                **{'entity-id': commtrack_case._id, 'date': as_of, 'stock-id': stock_id})
+                                **{'entity-id': commtrack_case._id, 'date': as_of, 'section-id': stock_id})
 
     def get_payload(self):
         user = self.user
