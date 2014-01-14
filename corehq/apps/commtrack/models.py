@@ -634,17 +634,17 @@ class StockTransaction(Document):
             yield _txn(
                 action=const.StockActions.STOCKONHAND if quantity > 0 else const.StockActions.STOCKOUT,
                 case_id=action_node['@entity-id'],
-                stock_id=action_node.get('@stock-id', DEFAULT_STOCK_ID),
+                stock_id=action_node.get('@section-id', DEFAULT_STOCK_ID),
             )
         elif action_tag == 'transfer':
             src, dst = [action_node.get('@%s' % k) for k in ('src', 'dest')]
             assert src or dst
             if src is not None:
                 yield _txn(action=const.StockActions.CONSUMPTION, case_id=src,
-                           stock_id=action_node.get('@stock-id', DEFAULT_STOCK_ID))
+                           stock_id=action_node.get('@section-id', DEFAULT_STOCK_ID))
             if dst is not None:
                 yield _txn(action=const.StockActions.RECEIPTS, case_id=dst,
-                           stock_id=action_node.get('@stock-id', DEFAULT_STOCK_ID))
+                           stock_id=action_node.get('@section-id', DEFAULT_STOCK_ID))
 
     def to_xml(self, E=None, **kwargs):
         if not E:
