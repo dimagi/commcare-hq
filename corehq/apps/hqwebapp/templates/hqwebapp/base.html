@@ -250,7 +250,7 @@
                     <h4>{% trans "Keyboard Shortcuts Configuration" %}</h4>
                 </div>
                 <div class="modal-body">
-                    <form id="keyboard-shortcuts-config-form" class="form-horizontal" method="POST" action="{% url "keyboard_config" %}?next={{ request.get_full_path|urlencode }}">
+                    <form id="keyboard-shortcuts-config-form" method="POST" action="{% url "keyboard_config" %}?next={{ request.get_full_path|urlencode }}">
                         <div class="control-group">
                             <div class="controls">
                                 <label class="checkbox">
@@ -273,6 +273,7 @@
                             <div class="controls"><button class="btn btn-primary" type="submit">Update</button></div>
                         </div>
                     </form>
+                    <hr />
                     <div>
                         {% trans "For more information visit: " %}
                         <a href="https://help.commcarehq.org/display/commcarepublic/CommCareHQ+Keyboard+Shortcuts">{% trans "CommCare HQ Keyboard Shortcuts Wiki" %}</a>
