@@ -245,10 +245,12 @@
                                     <form action="{% url "corehq.apps.app_manager.views.new_form" domain app.id module.id %}?edit={{ edit|BOOL }}"
                                           method="post" style="display: none">
                                     </form>
+                                    {% if module.doc_type == 'Module' %}
                                     <a class="submit_on_click" href="#">
                                         <i class="icon-plus icon-blue"></i>
                                         <span class="muted">{% trans "Form" %}</span>
                                     </a>
+                                    {% endif %}
                                 </li>
                             {% endif %}
                         </ul>

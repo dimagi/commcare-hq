@@ -264,19 +264,24 @@ ko.bindingHandlers.starred = {
         value = value + '';
         $element.addClass('icon');
 
-        var suffix = 'icon-ban-circle';
+        var unselected = 'icon-star-empty';
+        var selected = 'icon-star icon-large released';
+        var pending = 'icon-refresh';
+        var error = 'icon-ban-circle';
+
+        var suffix = error;
         if(value === 'false') {
-            suffix = 'icon-star-empty';
+            suffix = unselected;
         } else if(value === 'true') {
-            suffix = 'icon-star';
+            suffix = selected;
         } else if(value === 'pending') {
-            suffix = 'icon-refresh';
+            suffix = pending;
         }
 
-        $element.removeClass('icon-star-empty');
-        $element.removeClass('icon-star');
-        $element.removeClass('icon-refresh');
-        $element.removeClass('icon-ban-circle');
+        $element.removeClass(unselected);
+        $element.removeClass(selected);
+        $element.removeClass(pending);
+        $element.removeClass(error);
         $element.addClass(suffix);
     }
 };
