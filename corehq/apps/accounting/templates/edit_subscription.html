@@ -56,7 +56,9 @@
         </div>
 
         <div class="tab-pane" id="actions">
-            Actions here
+            <form class="form form-horizontal" method="post">
+                {% crispy cancel_form %}
+            </form>
         </div>
         {% endif %}
 

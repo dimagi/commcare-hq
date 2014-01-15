@@ -171,3 +171,14 @@ class CreditForm(forms.Form):
             for feature_rate in feature_rate_set.all():
                 features.add(feature_rate.feature)
         return [(feature.id, feature.name) for feature in features]
+
+class CancelForm(forms.Form):
+
+    def __init__(self, *args, **kwargs):
+        super(CancelForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            ButtonHolder(
+                Submit('cancel_subscription', 'CANCEL SUBSCRIPTION')
+            )
+        )

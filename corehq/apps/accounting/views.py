@@ -4,7 +4,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.views.generic import TemplateView
 from corehq import AccountingInterface, SubscriptionInterface
-from corehq.apps.accounting.forms import BillingAccountForm, SubscriptionForm, CreditForm
+from corehq.apps.accounting.forms import *
 from corehq.apps.accounting.models import *
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.users.models import WebUser
@@ -125,7 +125,8 @@ class EditSubscriptionView(TemplateView):
 
     def get_context_data(self):
         subscription = Subscription.objects.get(id=self.args[0])
-        return dict(credit_form=CreditForm(subscription.id, False),
+        return dict(cancel_form=CancelForm(),
+                    credit_form=CreditForm(subscription.id, False),
                     credit_list=None,
                     form=SubscriptionForm(subscription),
                     parent_link='<a href="%s">%s<a>' % (SubscriptionInterface.get_url(), SubscriptionInterface.name),
@@ -145,4 +146,6 @@ class EditSubscriptionView(TemplateView):
             subscription.save()
         elif 'adjust_credit' in self.request.POST:
             print 'submitted credit adjustment'
+        elif 'cancel_subscription' in self.request.POST:
+            print 'canceling'
         return self.get(request, *args, **kwargs)
