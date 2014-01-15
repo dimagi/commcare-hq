@@ -37,7 +37,7 @@ class CommTrackOTATest(CommTrackTest):
         for product_id, amount in amounts:
             StockTransaction.objects.create(
                 report=report,
-                stock_id='stock',
+                section_id='stock',
                 case_id=self.sp._id,
                 product_id=product_id,
                 stock_on_hand=amount,
@@ -61,12 +61,12 @@ class CommTrackOTATest(CommTrackTest):
         report = StockReport.objects.create(form_id=uuid.uuid4().hex, date=date, type=TRANSACTION_TYPE_BALANCE)
         amounts = [(p._id, i*10) for i, p in enumerate(self.products)]
 
-        stock_ids = sorted(('stock', 'losses', 'consumption'))
-        for stock_id in stock_ids:
+        section_ids = sorted(('stock', 'losses', 'consumption'))
+        for section_id in section_ids:
             for product_id, amount in amounts:
                 StockTransaction.objects.create(
                     report=report,
-                    stock_id=stock_id,
+                    section_id=section_id,
                     case_id=self.sp._id,
                     product_id=product_id,
                     stock_on_hand=amount,
@@ -75,12 +75,12 @@ class CommTrackOTATest(CommTrackTest):
 
         balance_blocks = get_ota_balance_xml(user)
         self.assertEqual(3, len(balance_blocks))
-        for i, stock_id in enumerate(stock_ids):
+        for i, section_id in enumerate(section_ids):
             check_xml_line_by_line(
                 self,
                 balance_ota_block(
                     self.sp,
-                    stock_id,
+                    section_id,
                     amounts,
                     datestring=json_format_datetime(date),
                 ),
@@ -103,20 +103,20 @@ class CommTrackSubmissionTest(CommTrackTest):
             domain=self.domain.name,
         )
 
-    def check_stock_models(self, case, product_id, expected_soh, expected_qty, stock_id):
-        latest_trans = StockTransaction.latest(case._id, stock_id, product_id)
-        self.assertEqual(stock_id, latest_trans.stock_id)
+    def check_stock_models(self, case, product_id, expected_soh, expected_qty, section_id):
+        latest_trans = StockTransaction.latest(case._id, section_id, product_id)
+        self.assertEqual(section_id, latest_trans.section_id)
         self.assertEqual(expected_soh, latest_trans.stock_on_hand)
         self.assertEqual(expected_qty, latest_trans.quantity)
 
-    def check_product_stock(self, supply_point, product_id, expected_soh, expected_qty, stock_id='stock'):
+    def check_product_stock(self, supply_point, product_id, expected_soh, expected_qty, section_id='stock'):
         # check the case
-        if stock_id == 'stock':
+        if section_id == 'stock':
             spp = supply_point.get_product_subcase(product_id)
             self.assertEqual(expected_soh, spp.current_stock)
 
         # and the django model
-        self.check_stock_models(supply_point, product_id, expected_soh, expected_qty, stock_id)
+        self.check_stock_models(supply_point, product_id, expected_soh, expected_qty, section_id)
 
     def setUp(self):
         super(CommTrackSubmissionTest, self).setUp()
@@ -139,14 +139,14 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         def _random_amounts():
             return [(p._id, float(random.randint(0, 100))) for i, p in enumerate(self.products)]
 
-        stock_ids = ('stock', 'losses', 'consumption')
-        stock_amounts = [(id, _random_amounts()) for id in stock_ids]
-        for stock_id, amounts in stock_amounts:
-            self.submit_xml_form(balance_submission(amounts, stock_id=stock_id))
+        section_ids = ('stock', 'losses', 'consumption')
+        stock_amounts = [(id, _random_amounts()) for id in section_ids]
+        for section_id, amounts in stock_amounts:
+            self.submit_xml_form(balance_submission(amounts, section_id=section_id))
 
-        for stock_id, amounts in stock_amounts:
+        for section_id, amounts in stock_amounts:
             for product, amt in amounts:
-                self.check_product_stock(self.sp, product, amt, amt, stock_id)
+                self.check_product_stock(self.sp, product, amt, amt, section_id)
 
     def test_transfer_dest_only(self):
         amounts = [(p._id, float(i*10)) for i, p in enumerate(self.products)]

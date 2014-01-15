@@ -11,14 +11,14 @@ def long_date():
     return json_format_datetime(datetime.utcnow())
 
 
-def balance_ota_block(sp, stock_id, product_amounts, datestring):
+def balance_ota_block(sp, section_id, product_amounts, datestring):
     return """
-        <ns0:balance xmlns:ns0="http://commtrack.org/stock_report" xmlns="http://openrosa.org/http/response" date="{long_date}" entity-id="{sp_id}" section-id="{stock_id}">
+        <ns0:balance xmlns:ns0="http://commtrack.org/stock_report" xmlns="http://openrosa.org/http/response" date="{long_date}" entity-id="{sp_id}" section-id="{section_id}">
             {product_block}
         </ns0:balance>
     """.format(
         sp_id=sp._id,
-        stock_id=stock_id,
+        section_id=section_id,
         long_date=datestring,
         product_block=_products_xml(product_amounts),
     )
@@ -61,12 +61,12 @@ def _products_xml(product_amount_tuples):
         ) for p, amt in product_amount_tuples
     ])
 
-def balance_submission(product_amounts, stock_id='stock'):
+def balance_submission(product_amounts, section_id='stock'):
     return """
-        <ns0:balance xmlns:ns0="http://commtrack.org/stock_report" date="{long_date}" entity-id="{sp_id}" section-id="%(stock_id)s">
+        <ns0:balance xmlns:ns0="http://commtrack.org/stock_report" date="{long_date}" entity-id="{sp_id}" section-id="%(section_id)s">
             %(product_block)s
         </ns0:balance>
-    """ % {'product_block': _products_xml(product_amounts), 'stock_id': stock_id}
+    """ % {'product_block': _products_xml(product_amounts), 'section_id': section_id}
 
 
 def transfer_dest_only(product_amounts):

@@ -63,7 +63,7 @@ def process_stock(sender, xform, config=None, **kwargs):
         case.save()
 
     def _is_stockonhand_txn(txn):
-        return txn.stock_id == 'stock'
+        return txn.section_id == 'stock'
 
     # supply point cases have to be handled differently because of the use of product subcases
     supply_point_cases = filter(lambda case: isinstance(case, SupplyPointCase), relevant_cases)
