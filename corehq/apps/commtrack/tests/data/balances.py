@@ -98,16 +98,6 @@ def transfer_both(product_amounts):
     """ % {'product_block': _products_xml(product_amounts)}
 
 
-def transfer_neither():
-    return """
-        <transfer date="{long_date}">
-            <product index="0" id="{product0}" quantity="4" />
-            <product index="1" id="{product1}" quantity="1" />
-            <product index="2" id="{product2}" quantity="1" />
-        </transfer>
-    """
-
-
 def create_requisition_xml(product_amounts):
     req_id = uuid.uuid4().hex
     req_case_block = ElementTree.tostring(CaseBlock(
