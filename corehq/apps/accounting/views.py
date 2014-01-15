@@ -130,12 +130,15 @@ class EditSubscriptionView(TemplateView):
 
     def post(self, request, *args, **kwargs):
         # TODO validate data
-        subscription = Subscription.objects.get(id=self.args[0])
-        subscription.date_start = \
-            datestring_to_date(self.request.POST.get('start_date')) or subscription.date_start
-        subscription.date_end = \
-            datestring_to_date(self.request.POST.get('end_date')) or subscription.date_end
-        subscription.date_delay_invoicing = \
-            datestring_to_date(self.request.POST.get('delay_invoice_until')) or subscription.date_delay_invoicing
-        subscription.save()
+        if 'set_subscription' in self.request.POST:
+            subscription = Subscription.objects.get(id=self.args[0])
+            subscription.date_start = \
+                datestring_to_date(self.request.POST.get('start_date')) or subscription.date_start
+            subscription.date_end = \
+                datestring_to_date(self.request.POST.get('end_date')) or subscription.date_end
+            subscription.date_delay_invoicing = \
+                datestring_to_date(self.request.POST.get('delay_invoice_until')) or subscription.date_delay_invoicing
+            subscription.save()
+        elif 'adjust_credit' in self.request.POST:
+            print 'submitted credit adjustment'
         return self.get(request, *args, **kwargs)
