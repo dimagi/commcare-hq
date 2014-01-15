@@ -1,10 +1,10 @@
-from django.db.models.signals import  post_save
+from django.db.models.signals import post_save
 from couchdbkit.ext.django.schema import Document
 from django.db import models
 from django.contrib.auth.models import User
 import logging
-from django.core import serializers
-import json
+from django.forms import model_to_dict
+import jsonobject
 
 import settings
 try:
@@ -17,7 +17,17 @@ from django.dispatch import Signal
 user_login_failed = Signal(providing_args=['request', 'username'])
 
 
-json_serializer = serializers.get_serializer("json")()
+def model_to_json(instance):
+    """
+    converts a django model into json in the format used by jsonobject
+
+    """
+
+    class DummyObject(jsonobject.JsonObject):
+        pass
+
+    return DummyObject(**model_to_dict(instance)).to_json()
+
 
 def django_audit_save(sender, instance, created, **kwargs):
     """
@@ -25,8 +35,7 @@ def django_audit_save(sender, instance, created, **kwargs):
     """
     usr = get_current_user()
 
-    # a silly wrap the instance in an array to serialize it, then pull it out of the array to get the json data standalone
-    instance_json = json.loads(json_serializer.serialize([instance], ensure_ascii=False))[0]['fields']
+    instance_json = model_to_json(instance)
 
     #really stupid sanity check for unit tests when threadlocals doesn't update and user model data is updated.
     if usr != None:
