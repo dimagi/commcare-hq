@@ -104,14 +104,19 @@ class AdvancedSettingsForm(forms.Form):
     def clean(self):
         cleaned_data = super(AdvancedSettingsForm, self).clean()
 
-        if (cleaned_data.get('use_auto_consumption') and
-            not (all(cleaned_data.get(f) for f in (
+        if cleaned_data.get('use_auto_consumption'):
+            consumption_keys = [
                 'consumption_min_transactions',
                 'consumption_min_window',
-                'consumption_optimal_window')))):
-            self._errors['use_auto_consumption'] = self.error_class([_(
-                "You must use automatic consumption calculation or " +
-                " specify a value for all consumption settings.")])
+                'consumption_optimal_window'
+            ]
+
+            for key in consumption_keys:
+                if not cleaned_data.get(key):
+                    self._errors[key] = self.error_class([_(
+                        "You must use automatic consumption calculation or " +
+                        " specify a value for all consumption settings."
+                    )])
 
         return cleaned_data
 
