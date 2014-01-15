@@ -61,7 +61,7 @@ class RestoreConfig(object):
         E = ElementMaker(namespace=COMMTRACK_REPORT_XMLNS)
 
         def transaction_to_xml(trans):
-            return E.product(
+            return E.entry(
                 id=trans.product_id,
                 quantity=str(int(trans.stock_on_hand)),
             )
