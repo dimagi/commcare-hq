@@ -750,6 +750,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
     num_avg_intervals = 3 # how many duration intervals we go back to calculate averages
     need_group_ids = True
     is_cacheable = True
+    _users_to_iterate = None
 
     fields = [
         'corehq.apps.reports.fields.MultiSelectGroupField',
@@ -802,14 +803,22 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
 
     @property
     def users_to_iterate(self):
-        if '_all' in self.group_ids:
-            from corehq.apps.groups.models import Group
-            ret = [util._report_user_dict(u) for u in list(CommCareUser.by_domain(self.domain))]
-            for r in ret:
-                r["group_ids"] = Group.by_user(r["user_id"], False)
-            return ret
-        else:
-            return self.combined_users
+        if not self._users_to_iterate:
+            if '_all' in self.group_ids:
+                from corehq.apps.groups.models import Group
+                groups = [(g._id, set(g.users)) for g in Group.by_domain(self.domain)]
+                def process_user(u):
+                    user = util._report_user_dict(u)
+                    user['group_ids'] = [
+                        g_id for g_id, g_users in groups
+                        if user['user_id'] in g_users
+                    ]
+                    return user
+                fields = ['_id', 'username', 'first_name', 'last_name', 'email']
+                self._users_to_iterate = map(process_user, CommCareUser.es_fakes(self.domain, fields=fields))
+            else:
+                self._users_to_iterate = self.combined_users
+        return self._users_to_iterate
 
     def es_form_submissions(self, datespan=None, dict_only=False):
         datespan = datespan or self.datespan
