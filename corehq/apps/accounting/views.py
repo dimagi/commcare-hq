@@ -144,6 +144,7 @@ class EditSubscriptionView(TemplateView):
         return self.get(request, *args, **kwargs)
 
     def set_subscription(self):
+        #TODO - allow user to remove dates that haven't already passed
         subscription = Subscription.objects.get(id=self.args[0])
         subscription.date_start = \
             datestring_to_date(self.request.POST.get('start_date')) or subscription.date_start
