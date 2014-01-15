@@ -35,6 +35,7 @@ from corehq.apps.app_manager.const import APP_V1, APP_V2, CAREPLAN_TASK, CAREPLA
 from corehq.apps.app_manager.xpath import dot_interpolate
 from corehq.apps.builds import get_default_build_spec
 from corehq.util.hash_compat import make_password
+from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.lazy_attachment_doc import LazyAttachmentDoc
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.decorators.memoized import memoized
@@ -494,15 +495,9 @@ class FormBase(DocumentSchema):
 
     @property
     def full_path_name(self):
-        app = self.get_app()
-        module_name = trans(
-            self.get_module().name,
-            [app.default_language] + app.build_langs,
-            include_lang=False
-        )
         return "%(app_name)s > %(module_name)s > %(form_name)s" % {
-            'app_name': app.name,
-            'module_name': module_name,
+            'app_name': self.get_app().name,
+            'module_name': self.get_module().default_name(),
             'form_name': self.default_name()
         }
 
@@ -734,6 +729,7 @@ class DetailColumn(IndexedSchema):
             'model': 'case',
             'field': 'sex',
             'format': 'enum',
+            'xpath': '.',
             'enum': [
                 {'key': 'm', 'value': {'en': 'Male', 'por': 'Macho'},
                 {'key': 'f', 'value': {'en': 'Female', 'por': 'Fêmea'},
@@ -750,6 +746,7 @@ class DetailColumn(IndexedSchema):
 
     late_flag = IntegerProperty(default=30)
     advanced = StringProperty(default="")
+    calc_xpath = StringProperty(default=".")
     filter_xpath = StringProperty(default="")
     time_ago_interval = FloatProperty(default=365.25)
 
@@ -947,6 +944,17 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
             'id': self.id,
             'name': self.name,
         }
+
+    def get_app(self):
+        return self._parent
+
+    def default_name(self):
+        app = self.get_app()
+        return trans(
+            self.name,
+            [app.default_language] + app.build_langs,
+            include_lang=False
+        )
 
     def validate_detail_columns(self, columns):
         for column in columns:
@@ -1343,7 +1351,7 @@ class CareplanModule(ModuleBase):
         return set(f.case_type for f in self.forms)
 
     def get_form_by_type(self, case_type, mode):
-        for form in self.forms:
+        for form in self.get_forms():
             if form.case_type == case_type and form.mode == mode:
                 return form
 
@@ -2827,6 +2835,35 @@ class DeleteFormRecord(DeleteRecord):
         forms.insert(self.form_id, self.form)
         app.modules[self.module_id].forms = forms
         app.save()
+
+
+class CareplanAppProperties(DocumentSchema):
+    name = StringProperty()
+    case_type = StringProperty()
+    goal_conf = DictProperty()
+    task_conf = DictProperty()
+
+
+class CareplanConfig(Document):
+    domain = StringProperty()
+    app_configs = SchemaDictProperty(CareplanAppProperties)
+
+    @classmethod
+    def for_domain(cls, domain):
+        res = cache_core.cached_view(
+            cls.get_db(),
+            "domain/docs",
+            key=[domain, 'CareplanConfig', None],
+            reduce=False,
+            include_docs=True,
+            wrapper=cls.wrap)
+
+        if len(res) > 0:
+            result = res[0]
+        else:
+            result = None
+
+        return result
 
 FormBase.get_command_id = lambda self: "m{module.id}-f{form.id}".format(module=self.get_module(), form=self)
 FormBase.get_locale_id = lambda self: "forms.m{module.id}f{form.id}".format(module=self.get_module(), form=self)

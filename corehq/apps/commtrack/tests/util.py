@@ -78,8 +78,8 @@ def bootstrap_domain(domain_name=TEST_DOMAIN, requisitions_enabled=False):
     # a default config and a location
     domain_obj = create_domain(domain_name)
     domain_obj.commtrack_enabled = True
-    domain_obj.save(**get_safe_write_kwargs())
     bootstrap_commtrack_settings_if_necessary(domain_obj, requisitions_enabled)
+    domain_obj.save(**get_safe_write_kwargs())
 
     return domain_obj
 
@@ -183,10 +183,9 @@ class CommTrackTest(TestCase):
             include_docs=True
         )
 
-
 def get_ota_balance_xml(user):
     xml = generate_restore_payload(user.to_casexml_user(), version=V2)
-    balance_block = etree.fromstring(xml).find('{http://commtrack.org/stock_report}balance')
-    if balance_block is not None:
-        return etree.tostring(balance_block)
-    return ''
+    balance_blocks = etree.fromstring(xml).findall('{http://commtrack.org/stock_report}balance')
+    if balance_blocks:
+        return [etree.tostring(bb) for bb in balance_blocks]
+    return []

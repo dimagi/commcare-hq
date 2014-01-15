@@ -17,6 +17,7 @@ from corehq.apps.users.models import CommCareUser
 from dimagi.utils.couch.loosechange import map_reduce
 from couchforms.models import XFormInstance
 from dimagi.utils import parsing as dateparse
+from dimagi.utils.dates import force_to_date
 from datetime import datetime
 from copy import copy
 from django.dispatch import receiver
@@ -489,7 +490,7 @@ class NewStockReport(object):
         tag = elem.tag
         tag = tag[tag.find('}')+1:] # strip out ns
         timestamp = elem.attrib.get('date', form.received_on)
-        products = elem.findall('./{%s}product' % const.COMMTRACK_REPORT_XMLNS)
+        products = elem.findall('./{%s}entry' % const.COMMTRACK_REPORT_XMLNS)
         transactions = [t for prod_entry in products for t in
                         StockTransaction.from_xml(config, timestamp, tag, elem, prod_entry)]
 
@@ -502,6 +503,7 @@ class NewStockReport(object):
             db_txn = DbStockTransaction(
                 report=report,
                 case_id=txn.case_id,
+                section_id=txn.section_id,
                 product_id=txn.product_id,
             )
             previous_transaction = db_txn.get_previous_transaction()
@@ -523,8 +525,9 @@ class StockTransaction(Document):
     # todo: why is this a Document?
     domain = StringProperty()
     timestamp = DateTimeProperty()
-    location_id = StringProperty() # location record id
-    case_id = StringProperty() # supply point case id
+    location_id = StringProperty()  # location record id
+    case_id = StringProperty()
+    section_id = StringProperty()
     product_id = StringProperty()
     action = StringProperty()
     subaction = StringProperty()
@@ -609,30 +612,35 @@ class StockTransaction(Document):
         action_type = action_node.attrib.get('type')
         subaction = action_type
         quantity = float(product_node.attrib.get('quantity'))
-        def _txn(action, case_id):
+        def _txn(action, case_id, section_id):
             data = {
                 'timestamp': timestamp,
                 'product_id': product_node.attrib.get('id'),
                 'quantity': quantity,
                 'action': action,
                 'case_id': case_id,
+                'section_id': section_id,
                 'subaction': subaction if subaction and subaction != action else None
                 # note: no location id
             }
             return cls(config=config, **data)
 
+        DEFAULT_SECTION_ID = 'stock'
         if action_tag == 'balance':
             yield _txn(
                 action=const.StockActions.STOCKONHAND if quantity > 0 else const.StockActions.STOCKOUT,
                 case_id=action_node.attrib['entity-id'],
+                section_id=action_node.attrib.get('section-id', DEFAULT_SECTION_ID),
             )
         elif action_tag == 'transfer':
             src, dst = [action_node.attrib.get(k) for k in ('src', 'dest')]
             assert src or dst
             if src is not None:
-                yield _txn(action=const.StockActions.CONSUMPTION, case_id=src)
+                yield _txn(action=const.StockActions.CONSUMPTION, case_id=src,
+                           section_id=action_node.attrib.get('section-id', DEFAULT_SECTION_ID))
             if dst is not None:
-                yield _txn(action=const.StockActions.RECEIPTS, case_id=dst)
+                yield _txn(action=const.StockActions.RECEIPTS, case_id=dst,
+                           section_id=action_node.attrib.get('section-id', DEFAULT_SECTION_ID))
 
     def to_xml(self, E=None, **kwargs):
         if not E:
@@ -975,6 +983,10 @@ class SupplyPointProductCase(CommCareCase):
             thresholds=self.stock_thresholds
         )
 
+    def get_last_reported_date(self):
+        last_reported = getattr(self, 'last_reported', None)
+        return force_to_date(last_reported)
+
     def to_full_dict(self):
         def roundif(k, digits):
             return round(k, digits) if k is not None else None
@@ -1077,9 +1089,6 @@ class RequisitionCase(CommCareCase):
     # supply_point = StringProperty() # todo, if desired
     requisition_status = StringProperty()
 
-    # NOTE: this is redundant with the supply point product case and is an optimization
-    product_id = StringProperty()
-
     # this second field is added for auditing purposes
     # the status can change, but once set - this one will not
     requested_on = DateTimeProperty()
@@ -1092,57 +1101,19 @@ class RequisitionCase(CommCareCase):
     packed_by = StringProperty()
     received_by = StringProperty()
 
-    # NOTE: should these be strings or ints or decimals?
-    amount_requested = StringProperty()
-    # these two fields are unnecessary with no ability to
-    # approve partial resupplies in the current system, but is
-    # left in the models for possible use down the road
-    amount_approved = StringProperty()
-    amount_packed = StringProperty()
-    amount_received = StringProperty()
-
     @memoized
     def get_location(self):
         if self.location_:
             return Location.get(self.location_[-1])
 
     @memoized
-    def get_supply_point_case(self):
-        product_case = self.get_product_case()
-        if product_case:
-            return product_case.get_supply_point_case()
-        return None
-
-    @memoized
-    def get_product(self):
-        return Product.get(self.product_id)
-
-    @memoized
-    def get_product_case(self):
-        return _get_single_index(self, const.PARENT_CASE_REF,
-                                 const.SUPPLY_POINT_PRODUCT_CASE_TYPE,
-                                 wrapper=SupplyPointProductCase)
-
-    def get_product_case_id(self):
-        return _get_single_index(self, const.PARENT_CASE_REF,
-                                 const.SUPPLY_POINT_PRODUCT_CASE_TYPE)
-
-    @memoized
     def get_requester(self):
         return CommCareUser.get(self.requested_by)
 
-
-    def get_default_value(self):
-        """get how much the default is. this is dependent on state."""
-        property_map = {
-            RequisitionStatus.REQUESTED: 'amount_requested',
-            RequisitionStatus.APPROVED: 'amount_approved',
-            RequisitionStatus.PACKED: 'amount_packed',
-        }
-        return getattr(self, property_map.get(self.requisition_status, 'amount_requested'))
-
     def sms_format(self):
-        return '%s:%s' % (self.get_product().code, self.get_default_value())
+        # TODO needs fixed
+        # return '%s:%s' % (self.get_product().code, self.get_default_value())
+        raise NotImplementedError()
 
     def get_next_action(self):
         req_config = CommtrackConfig.for_domain(self.domain).requisition_config
@@ -1163,29 +1134,17 @@ class RequisitionCase(CommCareCase):
         )
         return [r['id'] for r in results]
 
-
-    @classmethod
-    def open_for_product_case(cls, domain, location, product_case_id):
-        """
-        For a given product case, return the IDs of all open requisitions at that location.
-        """
-        startkey = [domain, location, 'open', product_case_id]
-        results = cls.get_db().view('commtrack/requisitions',
-            endkey=startkey, # yes this is confusing, but i blame couch's descending=true rules
-            startkey=startkey + [{}],
-            descending=True,
-            reduce=False,
-        )
-        return [r['id'] for r in results]
-
     def to_full_dict(self):
-        data = super(RequisitionCase, self).to_full_dict()
-        sp = self.get_supply_point_case()
-        product = self.get_product_case()
-        data['supply_point_name'] = sp['name'] if sp else ''
-        data['product_name'] = product['name'] if product else ''
-        data['balance'] = self.get_default_value()
-        return data
+        # TODO verify if this needs fixed or just deleted
+        raise NotImplementedError()
+
+        #data = super(RequisitionCase, self).to_full_dict()
+        #sp = self.get_supply_point_case()
+        #product = self.get_product_case()
+        #data['supply_point_name'] = sp['name'] if sp else ''
+        #data['product_name'] = product['name'] if product else ''
+        #data['balance'] = self.get_default_value()
+        #return data
 
     @classmethod
     def get_by_external_id(cls, domain, external_id):

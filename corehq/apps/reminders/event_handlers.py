@@ -89,6 +89,10 @@ def fire_sms_event(reminder, handler, recipients, verified_numbers, workflow=Non
                         raise_error(reminder, ERROR_FINDING_CUSTOM_CONTENT_HANDLER)
                         return False
                     message = content_handler(reminder, handler, recipient)
+                    # If the content handler returns None or empty string,
+                    # don't send anything
+                    if not message:
+                        return True
                 else:
                     raise_error(reminder, ERROR_INVALID_CUSTOM_CONTENT_HANDLER)
                     return False
@@ -162,7 +166,7 @@ def fire_sms_callback_event(reminder, handler, recipients, verified_numbers):
                                                       limit=1).one()
             
             # NOTE: If last_fired is None, it means that the reminder fired for the first time on a timeout interval
-            if reminder.last_fired is not None and CallLog.inbound_call_exists(recipients[0].doc_type, recipients[0].get_id, reminder.last_fired):
+            if reminder.last_fired is not None and CallLog.inbound_entry_exists(recipients[0].doc_type, recipients[0].get_id, reminder.last_fired):
                 reminder.skip_remaining_timeouts = True
                 if event is not None:
                     event.status = CALLBACK_RECEIVED

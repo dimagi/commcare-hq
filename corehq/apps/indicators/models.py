@@ -50,14 +50,15 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
 
     def __str__(self):
         return "\n\n%(class_name)s - Modified %(last_modified)s\n %(slug)s, domain: %(domain)s," \
-            " version: %(version)s, namespace: %(namespace)s." % {
+            " version: %(version)s, namespace: %(namespace)s. ID: %(indicator_id)s." % {
                 'class_name': self.__class__.__name__,
                 'slug': self.slug,
                 'domain': self.domain,
                 'version': self.version,
                 'namespace': self.namespace,
-                'last_modified': (self.last_modified.strftime('%M %B %Y at %H:%M')
-                                  if self.last_modified else "Ages Ago")
+                'last_modified': (self.last_modified.strftime('%m %B %Y at %H:%M')
+                                  if self.last_modified else "Ages Ago"),
+                'indicator_id': self._id,
             }
 
     @classmethod
@@ -99,7 +100,8 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
             namespace=namespace,
             domain=domain,
             slug=slug,
-            reverse=True
+            reverse=True,
+            **kwargs
         )
 
         existing_indicator = cls.view(

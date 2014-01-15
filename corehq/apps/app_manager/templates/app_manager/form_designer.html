@@ -180,32 +180,32 @@
             {
                 shortcut: nav_key + "+s",
                 handler: KS.gen_click_fn("#settings-save-btn .btn, #fd-save-button .btn"),
-                desc: "Save form"
+                desc: "Save Form"
             },
             {
-                shortcut: nav_key + "+q",
+                shortcut: nav_key + "+[",
                 handler: question_tree_navigator.activate,
-                desc: "Select question from question tree"
+                desc: "Navigate the Question Tree"
+            },
+            {
+                shortcut: nav_key + "+]",
+                handler: handle_properties_shortcut,
+                desc: "Change Focus to Question Properties"
             },
             {
                 shortcut: nav_key + "+d",
                 handler: change_question_navigator.activate,
-                desc: "Change current question"
+                desc: "Change Current Question"
             },
             {
                 shortcut: nav_key + "+t",
                 handler: tools_navigator.activate,
-                desc: "Access tools menu"
-            },
-            {
-                shortcut: nav_key + "+w",
-                handler: handle_properties_shortcut,
-                desc: "Change focus to question properties"
+                desc: "Access Tools Menu"
             },
             {
                 shortcut: nav_key + "+c",
                 handler: KS.gen_click_fn("#fd-button-copy"),
-                desc: "Make copy of selected node"
+                desc: "Make Copy of Selected Node"
             }
         ]);
     </script>
