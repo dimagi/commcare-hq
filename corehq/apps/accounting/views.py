@@ -44,7 +44,7 @@ class ManageBillingAccountView(TemplateView):
     def get_context_data(self):
         account = BillingAccount.objects.get(id=self.args[0])
         return dict(account=account,
-                    credit_form=CreditForm(True),
+                    credit_form=CreditForm(self.args[0], True),
                     credit_list=None,
                     form=BillingAccountForm(account),
                     parent_link='<a href="%s">%s<a>' % (AccountingInterface.get_url(), AccountingInterface.name),
@@ -77,7 +77,11 @@ class ManageBillingAccountView(TemplateView):
             contact_info.country = self.request.POST['country']
             contact_info.save()
         elif 'adjust_credit' in self.request.POST:
-            print 'hello'
+            account = BillingAccount.objects.get(id=self.args[0])
+            credit_line = CreditLine.objects.get_or_create(account=account)
+            credit_line.adjust_credit_balance(self.request.POST['amount'],
+                                              note=self.request.POST['note'],
+                                              )
 
         return self.get(request, *args, **kwargs)
 
