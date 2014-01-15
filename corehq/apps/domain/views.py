@@ -1057,7 +1057,7 @@ class AdvancedCommTrackSettingsView(BaseCommTrackAdminView):
                     setattr(self.commtrack_settings.stock_levels_config, field,
                             data['stock_' + field])
 
-            consumption_fields = ('min_periods', 'min_window', 'window')
+            consumption_fields = ('min_transactions', 'min_window', 'optimal_window')
             for field in consumption_fields:
                 if data.get('consumption_' + field):
                     setattr(self.commtrack_settings.consumption_config, field,
