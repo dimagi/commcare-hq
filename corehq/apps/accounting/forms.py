@@ -129,10 +129,10 @@ class CreditForm(forms.Form):
     product = forms.ChoiceField()
     feature = forms.ChoiceField(label="Rate")
 
-    def __init__(self, account_id, is_account, *args, **kwargs):
+    def __init__(self, id, is_account, *args, **kwargs):
         super(CreditForm, self).__init__(*args, **kwargs)
-        self.fields['product'].choices = self.get_product_choices(account_id)
-        self.fields['feature'].choices = self.get_feature_choices(account_id)
+        self.fields['product'].choices = self.get_product_choices(id, is_account)
+        self.fields['feature'].choices = self.get_feature_choices(id, is_account)
         self.helper = FormHelper()
         self.helper.layout = Layout(
             Fieldset(
@@ -150,11 +150,12 @@ class CreditForm(forms.Form):
             )
         )
 
-    def get_subscriptions(self, account_id):
-        return Subscription.objects.filter(account=BillingAccount.objects.get(id=account_id))
+    def get_subscriptions(self, id, is_account):
+        return Subscription.objects.filter(account=BillingAccount.objects.get(id=id))\
+            if is_account else [Subscription.objects.get(id=id)]
 
-    def get_product_choices(self, account_id):
-        subscriptions = self.get_subscriptions(account_id)
+    def get_product_choices(self, id, is_account):
+        subscriptions = self.get_subscriptions(id, is_account)
         product_rate_sets = [sub.plan.product_rates for sub in subscriptions]
         products = set()
         for product_rate_set in product_rate_sets:
@@ -162,8 +163,8 @@ class CreditForm(forms.Form):
                 products.add(product_rate.product)
         return [(product.id, product.name) for product in products]
 
-    def get_feature_choices(self, account_id):
-        subscriptions = self.get_subscriptions(account_id)
+    def get_feature_choices(self, id, is_account):
+        subscriptions = self.get_subscriptions(id, is_account)
         feature_rate_sets = [sub.plan.feature_rates for sub in subscriptions]
         features = set()
         for feature_rate_set in feature_rate_sets:
