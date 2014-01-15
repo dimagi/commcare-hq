@@ -82,7 +82,16 @@ class ManageBillingAccountView(TemplateView):
             contact_info.save()
         elif 'adjust_credit' in self.request.POST:
             account = BillingAccount.objects.get(id=self.args[0])
-            credit_line, _ = CreditLine.objects.get_or_create(account=account)
+            if self.request.POST['rate_type'] == 'Product':
+                credit_line, _ =\
+                    CreditLine.objects.get_or_create(account=account,
+                        product_rate=SoftwareProductRate.objects.get(id=self.request.POST['product']))
+            elif self.request.POST['rate_type'] == 'Feature':
+                credit_line, _ =\
+                    CreditLine.objects.get_or_create(account=account,
+                        feature_rate=FeatureRate.objects.get(id=self.request.POST['feature']))
+            else:
+                credit_line, _ = CreditLine.objects.get_or_create(account=account)
             credit_line.adjust_credit_balance(Decimal(self.request.POST['amount']),
                                               note=self.request.POST['note'],
                                               )
