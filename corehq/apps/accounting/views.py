@@ -45,7 +45,7 @@ class ManageBillingAccountView(TemplateView):
         account = BillingAccount.objects.get(id=self.args[0])
         return dict(account=account,
                     credit_form=CreditForm(account.id, True),
-                    credit_list=None,
+                    credit_list=CreditLine.objects.filter(account=account),
                     form=BillingAccountForm(account),
                     parent_link='<a href="%s">%s<a>' % (AccountingInterface.get_url(), AccountingInterface.name),
                     subscription_list=[(sub,
@@ -82,8 +82,8 @@ class ManageBillingAccountView(TemplateView):
             contact_info.save()
         elif 'adjust_credit' in self.request.POST:
             account = BillingAccount.objects.get(id=self.args[0])
-            credit_line = CreditLine.objects.get_or_create(account=account)
-            credit_line.adjust_credit_balance(self.request.POST['amount'],
+            credit_line, _ = CreditLine.objects.get_or_create(account=account)
+            credit_line.adjust_credit_balance(Decimal(self.request.POST['amount']),
                                               note=self.request.POST['note'],
                                               )
 
