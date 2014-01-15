@@ -4,7 +4,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import *
 from django import forms
 
-from corehq.apps.accounting.models import Currency, BillingContactInfo, SoftwareProductRate, Feature
+from corehq.apps.accounting.models import *
 
 
 class BillingAccountForm(forms.Form):
@@ -126,17 +126,13 @@ class CreditForm(forms.Form):
     rate_type = forms.ChoiceField(choices=(('Any', 'Any'),
                                            ('Product', 'Product'),
                                            ('Feature', 'Feature')))
-    product = forms.ChoiceField(choices=tuple(
-        [(product_rate.product.name, product_rate.product.name)
-         for product_rate in SoftwareProductRate.objects.all()]
-    ))
-    rate = forms.ChoiceField(choices=tuple(
-        [(feature.name, feature.name)
-         for feature in Feature.objects.all()]
-    ))
+    product = forms.ChoiceField()
+    feature = forms.ChoiceField(label="Rate")
 
-    def __init__(self, is_account, *args, **kwargs):
+    def __init__(self, account_id, is_account, *args, **kwargs):
         super(CreditForm, self).__init__(*args, **kwargs)
+        self.fields['product'].choices = self.get_product_choices(account_id)
+        self.fields['feature'].choices = self.get_feature_choices(account_id)
         self.helper = FormHelper()
         self.helper.layout = Layout(
             Fieldset(
@@ -145,7 +141,7 @@ class CreditForm(forms.Form):
                 Div('note', data_bind="visible: false"),
                 'rate_type',
                 'product',
-                'rate',
+                'feature',
             ),
             FormActions(
                 ButtonHolder(
@@ -153,3 +149,24 @@ class CreditForm(forms.Form):
                 )
             )
         )
+
+    def get_subscriptions(self, account_id):
+        return Subscription.objects.filter(account=BillingAccount.objects.get(id=account_id))
+
+    def get_product_choices(self, account_id):
+        subscriptions = self.get_subscriptions(account_id)
+        product_rate_sets = [sub.plan.product_rates for sub in subscriptions]
+        products = set()
+        for product_rate_set in product_rate_sets:
+            for product_rate in product_rate_set.all():
+                products.add(product_rate.product)
+        return [(product.id, product.name) for product in products]
+
+    def get_feature_choices(self, account_id):
+        subscriptions = self.get_subscriptions(account_id)
+        feature_rate_sets = [sub.plan.feature_rates for sub in subscriptions]
+        features = set()
+        for feature_rate_set in feature_rate_sets:
+            for feature_rate in feature_rate_set.all():
+                features.add(feature_rate.feature)
+        return [(feature.id, feature.name) for feature in features]
