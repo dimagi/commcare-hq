@@ -18,10 +18,28 @@
             {% for credit in credit_list %}
                 <tr>
                     {% if account %}
-                    <td>{{ credit.subscription }}</td>
+                    <td>
+                        {% if credit.subscription %}
+                        {{ credit.subscription }}
+                        {% else %}
+                        --
+                        {% endif %}
+                    </td>
                     {% endif %}
-                    <td>{{ credit.product_rate }}</td>
-                    <td>{{ credit.feature_rate }}</td>
+                    <td>
+                        {% if credit.product_rate.product.name %}
+                        {{ credit.product_rate.product.name }}
+                        {% else %}
+                        --
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if credit.feature_rate.feature.name %}
+                        {{ credit.feature_rate.feature.name }}
+                        {% else %}
+                        --
+                        {% endif %}
+                    </td>
                     <td>{{ credit.balance }}</td>
                 </tr>
             {% endfor %}
