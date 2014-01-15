@@ -158,4 +158,9 @@ class EditSubscriptionView(TemplateView):
         print 'submitted credit adjustment'
 
     def cancel_subscription(self):
-        print 'canceling'
+        subscription = Subscription.objects.get(id=self.args[0])
+        if subscription.date_start > datetime.date.today():
+            subscription.date_start = datetime.date.today()
+        subscription.date_end = datetime.date.today()
+        subscription.is_active = False
+        subscription.save()
