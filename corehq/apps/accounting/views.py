@@ -48,7 +48,11 @@ class ManageBillingAccountView(TemplateView):
                     credit_list=None,
                     form=BillingAccountForm(account),
                     parent_link='<a href="%s">%s<a>' % (AccountingInterface.get_url(), AccountingInterface.name),
-                    subscription_list=Subscription.objects.filter(account=account),
+                    subscription_list=[(sub,
+                                        Invoice.objects.filter(subscription=sub).latest('date_due').date_due # TODO - check query
+                                            if len(Invoice.objects.filter(subscription=sub)) != 0 else 'None on record',
+                                        'ADD LINE ITEMS')
+                                       for sub in Subscription.objects.filter(account=account)],
                     )
 
     def post(self, request, *args, **kwargs):
