@@ -447,9 +447,6 @@ class FormBase(DocumentSchema):
     def get_app(self):
         return self._app
 
-    def get_case_type(self):
-        return self._parent.case_type
-
     def get_version(self):
         return self.version if self.version else self.get_app().version
 
@@ -501,6 +498,18 @@ class FormBase(DocumentSchema):
             'form_name': self.default_name()
         }
 
+
+class IndexedFormBase(FormBase, IndexedSchema):
+    def get_app(self):
+        return self._parent._parent
+
+    def get_module(self):
+        return self._parent
+
+    def get_case_type(self):
+        return self._parent.case_type
+
+
 class JRResourceProperty(StringProperty):
 
     def validate(self, value, required=True):
@@ -516,7 +525,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
     media_audio = JRResourceProperty(required=False)
 
 
-class Form(FormBase, IndexedSchema, NavMenuItemMediaMixin):
+class Form(IndexedFormBase, NavMenuItemMediaMixin):
     form_type = 'module_form'
 
     form_filter = StringProperty()
@@ -526,12 +535,6 @@ class Form(FormBase, IndexedSchema, NavMenuItemMediaMixin):
     def add_stuff_to_xform(self, xform):
         super(Form, self).add_stuff_to_xform(xform)
         xform.add_case_and_meta(self)
-
-    def get_app(self):
-        return self._parent._parent
-
-    def get_module(self):
-        return self._parent
 
     def all_other_forms_require_a_case(self):
         m = self.get_module()
@@ -1131,7 +1134,7 @@ class Module(ModuleBase):
             }
 
 
-class CareplanForm(FormBase, IndexedSchema, NavMenuItemMediaMixin):
+class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):
     mode = StringProperty(required=True, choices=['create', 'update'])
     custom_case_updates = DictProperty()
     case_preload = DictProperty()
@@ -1152,12 +1155,6 @@ class CareplanForm(FormBase, IndexedSchema, NavMenuItemMediaMixin):
     def add_stuff_to_xform(self, xform):
         super(CareplanForm, self).add_stuff_to_xform(xform)
         xform.add_care_plan(self)
-
-    def get_app(self):
-        return self._parent._parent
-
-    def get_module(self):
-        return self._parent
 
     def get_case_updates(self, case_type):
         if case_type == self.case_type:
