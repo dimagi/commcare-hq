@@ -56,7 +56,7 @@ def submission_wrap(products, user, sp, sp2, insides):
 
 def _products_xml(product_amount_tuples):
     return ''.join([
-        '<ns0:product id="{id}" quantity="{quantity}" />'.format(
+        '<ns0:entry id="{id}" quantity="{quantity}" />'.format(
             id=p, quantity=amt,
         ) for p, amt in product_amount_tuples
     ])

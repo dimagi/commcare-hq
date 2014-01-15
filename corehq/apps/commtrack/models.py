@@ -490,7 +490,8 @@ class NewStockReport(object):
     def from_xml(cls, form, config, elem):
         tag, node = elem
         timestamp = node.get('@date', form.received_on)
-        products = node['product']
+        # todo: this needs to support the grouped format as well
+        products = node['entry']
         if not isinstance(products, collections.Sequence):
             products = [products]
         transactions = [t for prod_entry in products for t in
