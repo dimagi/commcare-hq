@@ -44,7 +44,7 @@ class ManageBillingAccountView(TemplateView):
     def get_context_data(self):
         account = BillingAccount.objects.get(id=self.args[0])
         return dict(account=account,
-                    credit_form=CreditForm(self.args[0], True),
+                    credit_form=CreditForm(account.id, True),
                     credit_list=None,
                     form=BillingAccountForm(account),
                     parent_link='<a href="%s">%s<a>' % (AccountingInterface.get_url(), AccountingInterface.name),
@@ -121,7 +121,9 @@ class EditSubscriptionView(TemplateView):
 
     def get_context_data(self):
         subscription = Subscription.objects.get(id=self.args[0])
-        return dict(form=SubscriptionForm(subscription),
+        return dict(credit_form=CreditForm(subscription.id, False),
+                    credit_list=None,
+                    form=SubscriptionForm(subscription),
                     parent_link='<a href="%s">%s<a>' % (SubscriptionInterface.get_url(), SubscriptionInterface.name),
                     subscription=subscription
                     )
