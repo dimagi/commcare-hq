@@ -147,30 +147,39 @@ class NewSubscriptionView(TemplateView):
     template_name = 'edit_subscription.html'
     name = 'new_subscription'
 
+    @property
+    @memoized
+    def subscription_form(self):
+        if self.request.method == 'POST':
+            return SubscriptionForm(None, self.request.POST)
+        return SubscriptionForm(None)
+
     def get_context_data(self):
-        return dict(form=SubscriptionForm(None),
+        return dict(form=self.subscription_form,
                     parent_link='<a href="%s">%s<a>' % (AccountingInterface.get_url(), AccountingInterface.name))
 
     def post(self, request, *args, **kwargs):
-        account_id = self.args[0]
-        account = BillingAccount.objects.get(id=account_id)
-        subscription_form = SubscriptionForm(None, request.POST)
-        subscription_form.is_valid()
-        date_start = subscription_form.cleaned_data['start_date']
-        date_end = subscription_form.cleaned_data['end_date']
-        date_delay_invoicing = subscription_form.cleaned_data['delay_invoice_until']
-        plan_id = subscription_form.cleaned_data['plan']
-        domain = subscription_form.cleaned_data['domain']
-        subscription = Subscription(account=account,
-                                    date_start=date_start,
-                                    date_end=date_end,
-                                    date_delay_invoicing=date_delay_invoicing,
-                                    plan=SoftwarePlanVersion.objects.get(id=plan_id),
-                                    salesforce_contract_id=account.salesforce_account_id,
-                                    subscriber=Subscriber.objects.get_or_create(domain=domain,
-                                                                                organization=None)[0])
-        subscription.save()
-        return HttpResponseRedirect(reverse(ManageBillingAccountView.name, args=(account_id,)))
+        if self.subscription_form.is_valid():
+            account_id = self.args[0]
+            account = BillingAccount.objects.get(id=account_id)
+            subscription_form = SubscriptionForm(None, request.POST)
+            subscription_form.is_valid()
+            date_start = subscription_form.cleaned_data['start_date']
+            date_end = subscription_form.cleaned_data['end_date']
+            date_delay_invoicing = subscription_form.cleaned_data['delay_invoice_until']
+            plan_id = subscription_form.cleaned_data['plan']
+            domain = subscription_form.cleaned_data['domain']
+            subscription = Subscription(account=account,
+                                        date_start=date_start,
+                                        date_end=date_end,
+                                        date_delay_invoicing=date_delay_invoicing,
+                                        plan=SoftwarePlanVersion.objects.get(id=plan_id),
+                                        salesforce_contract_id=account.salesforce_account_id,
+                                        subscriber=Subscriber.objects.get_or_create(domain=domain,
+                                                                                    organization=None)[0])
+            subscription.save()
+            return HttpResponseRedirect(reverse(ManageBillingAccountView.name, args=(account_id,)))
+        return self.get(request, *args, **kwargs)
 
 
 class EditSubscriptionView(TemplateView):
