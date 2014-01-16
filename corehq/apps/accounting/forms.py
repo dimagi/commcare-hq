@@ -83,6 +83,7 @@ class SubscriptionForm(forms.Form):
     start_date = forms.DateField(label="Start Date", widget=forms.DateInput())
     end_date = forms.DateField(label="End Date", widget=forms.DateInput())
     delay_invoice_until = forms.DateField(label="Delay Invoice Until", widget=forms.DateInput())
+    plan = forms.ChoiceField()
 
     def __init__(self, subscription, *args, **kwargs):
         super(SubscriptionForm, self).__init__(*args, **kwargs)
@@ -107,6 +108,8 @@ class SubscriptionForm(forms.Form):
             if subscription.date_delay_invoicing is not None \
                 and subscription.date_delay_invoicing <= datetime.date.today():
                 delay_invoice_until_kwargs.update(disabled)
+        else:
+            self.fields['plan'].choices = [(plan.id, str(plan)) for plan in SoftwarePlanVersion.objects.all()]
         self.helper = FormHelper()
         self.helper.layout = Layout(
             Fieldset(
@@ -114,6 +117,7 @@ class SubscriptionForm(forms.Form):
                 Field('start_date', **start_date_kwargs),
                 Field('end_date', **end_date_kwargs),
                 Field('delay_invoice_until', **delay_invoice_until_kwargs),
+                'plan' if subscription is None else None,
             ),
             FormActions(
                 ButtonHolder(
