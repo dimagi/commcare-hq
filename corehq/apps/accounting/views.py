@@ -131,11 +131,13 @@ class NewSubscriptionView(TemplateView):
     def post(self, request, *args, **kwargs):
         account_id = self.args[0]
         account = BillingAccount.objects.get(id=account_id)
-        date_start = datestring_to_date(self.request.POST.get('start_date'))
-        date_end = datestring_to_date(self.request.POST.get('end_date'))
-        date_delay_invoicing = datestring_to_date(self.request.POST.get('delay_invoice_until'))
-        plan_id = request.POST.get('plan')
-        domain = request.POST.get('domain')
+        subscription_form = SubscriptionForm(None, request.POST)
+        subscription_form.is_valid()
+        date_start = subscription_form.cleaned_data['start_date']
+        date_end = subscription_form.cleaned_data['end_date']
+        date_delay_invoicing = subscription_form.cleaned_data['delay_invoice_until']
+        plan_id = subscription_form.cleaned_data['plan']
+        domain = subscription_form.cleaned_data['domain']
         subscription = Subscription(account=account,
                                     date_start=date_start,
                                     date_end=date_end,
