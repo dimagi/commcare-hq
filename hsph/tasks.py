@@ -23,8 +23,7 @@ OWNER_FIELD_MAPPINGS = {
         "cati": "cati_assignment",
         "fida": "field_follow_up_assignment"
     }
-INDEXED_GROUPS = {domain: {} for domain in DOMAINS}
-
+INDEXED_GROUPS = dict((domain, {}) for domain in DOMAINS)
 
 @memoized
 def indexed_fixtures():
