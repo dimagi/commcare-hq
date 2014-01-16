@@ -266,7 +266,7 @@ ko.bindingHandlers.starred = {
 
         var unselected = 'icon-star-empty';
         var selected = 'icon-star icon-large released';
-        var pending = 'icon-refresh';
+        var pending = 'icon-refresh icon-spin';
         var error = 'icon-ban-circle';
 
         var suffix = error;
