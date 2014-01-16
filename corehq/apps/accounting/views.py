@@ -36,9 +36,17 @@ class NewBillingAccountView(TemplateView):
         return HttpResponseRedirect(reverse('manage_billing_account', args=(account.id,)))
 
 
-def adjust_credit(request, account_id):
-    account = BillingAccount.objects.get(id=account_id)
-    credit_line_kwargs = dict(account=account)
+def adjust_credit(request, account_id=None, subscription_id=None):
+    if account_id is not None:
+        account = BillingAccount.objects.get(id=account_id)
+        credit_line_kwargs = dict(account=account,
+                                  subscription=None)
+    elif subscription_id is not None:
+        subscription = Subscription.objects.get(id=subscription_id)
+        credit_line_kwargs = dict(account=subscription.account,
+                                  subscription=subscription)
+    else:
+        raise ValidationError('invalid credit adjustment')
     if request.POST['rate_type'] == 'Product':
         credit_line_kwargs.update(product_rate=SoftwareProductRate.objects.get(id=request.POST['product']))
     elif request.POST['rate_type'] == 'Feature':
@@ -97,7 +105,7 @@ class ManageBillingAccountView(TemplateView):
             contact_info.country = self.request.POST['country']
             contact_info.save()
         elif 'adjust_credit' in self.request.POST:
-            adjust_credit(request, self.args[0])
+            adjust_credit(request, account_id=self.args[0])
 
         return self.get(request, *args, **kwargs)
 
@@ -150,7 +158,7 @@ class EditSubscriptionView(TemplateView):
         if 'set_subscription' in self.request.POST:
             self.set_subscription()
         elif 'adjust_credit' in self.request.POST:
-            self.adjust_credit()
+            adjust_credit(request, subscription_id=self.args[0])
         elif 'cancel_subscription' in self.request.POST:
             self.cancel_subscription()
         return self.get(request, *args, **kwargs)
@@ -165,9 +173,6 @@ class EditSubscriptionView(TemplateView):
         subscription.date_delay_invoicing = \
             datestring_to_date(self.request.POST.get('delay_invoice_until')) or subscription.date_delay_invoicing
         subscription.save()
-
-    def adjust_credit(self):
-        print 'submitted credit adjustment'
 
     def cancel_subscription(self):
         subscription = Subscription.objects.get(id=self.args[0])
