@@ -95,11 +95,16 @@ class SubscriptionForm(forms.Form):
         start_date_kwargs = dict(**css_class)
         end_date_kwargs = dict(**css_class)
         delay_invoice_until_kwargs = dict(**css_class)
+        plan_kwargs = dict()
+        domain_kwargs = dict()
 
+        self.fields['plan'].choices = [(plan.id, str(plan)) for plan in SoftwarePlanVersion.objects.all()]
         if subscription is not None:
             self.fields['start_date'].initial = subscription.date_start
             self.fields['end_date'].initial = subscription.date_end
             self.fields['delay_invoice_until'].initial = subscription.date_delay_invoicing
+            self.fields['plan'].initial = subscription.plan.id
+            self.fields['domain'].initial = subscription.subscriber.domain
             if subscription.date_start is not None \
                 and subscription.date_start <= datetime.date.today():
                 start_date_kwargs.update(disabled)
@@ -109,8 +114,8 @@ class SubscriptionForm(forms.Form):
             if subscription.date_delay_invoicing is not None \
                 and subscription.date_delay_invoicing <= datetime.date.today():
                 delay_invoice_until_kwargs.update(disabled)
-        else:
-            self.fields['plan'].choices = [(plan.id, str(plan)) for plan in SoftwarePlanVersion.objects.all()]
+            plan_kwargs.update(disabled)
+            domain_kwargs.update(disabled)
         self.helper = FormHelper()
         self.helper.layout = Layout(
             Fieldset(
@@ -118,8 +123,8 @@ class SubscriptionForm(forms.Form):
                 Field('start_date', **start_date_kwargs),
                 Field('end_date', **end_date_kwargs),
                 Field('delay_invoice_until', **delay_invoice_until_kwargs),
-                'plan' if subscription is None else None,
-                'domain' if subscription is None else None,
+                Field('plan', **plan_kwargs),
+                Field('domain', **domain_kwargs),
             ),
             FormActions(
                 ButtonHolder(
