@@ -868,7 +868,7 @@ def stats_data(request):
 
 @require_superuser
 def couchpulse_stats(request):
-    from couchpulse import querystats
+    from couchpulse import querystats, settings
     has_values = request.GET.get('days')
     if has_values:
         try:
@@ -882,8 +882,8 @@ def couchpulse_stats(request):
             return HttpResponseBadRequest(e)
     else:
         days = 7
-        max_ms = 500
-        max_kb = 1000
+        max_ms = int(settings.TIME_THRESHOLD * 1000)
+        max_kb = int(settings.SIZE_THRESHOLD / 1000)
         search = ''
         limit = 50
         agg = False

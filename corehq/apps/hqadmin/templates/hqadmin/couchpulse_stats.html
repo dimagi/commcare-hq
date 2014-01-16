@@ -9,6 +9,18 @@
         }).each(function () {
             $(this).next().hide();
         });
+        $('.traceback-toggle').click(function (e) {
+            $(this).next().toggle();
+            e.preventDefault();
+        }).each(function () {
+            $(this).css({
+                'position': 'relative',
+            }).next().css({
+                position: 'absolute',
+                right: '0px',
+                zIndex: 1000
+            }).hide();
+        });
     });
 </script>
 {% endblock %}
@@ -44,6 +56,7 @@
             <th></th>
             <th>URL</th>
             <th>Params</th>
+            <th>Traceback</th>
             <th>Request Size</th>
             <th>Request Time (sorting)</th>
             <th>Streaming Time</th>
@@ -55,8 +68,6 @@
             <td>{{ row.method }}</td>
             <td>{{ row.path }}</td>
             <td>
-
-
                 {% if row.params %}
                 <a href="#" class="params-toggle">Toggle</a>
                 <div>
@@ -66,8 +77,16 @@
                     <dd>{{ value }}</dd>
                     {% endfor %}
                 </dl>
-                {% endif %}
                 </div>
+                {% endif %}
+            </td>
+            <td>
+                {% if row.traceback %}
+                <a href="#" class="traceback-toggle">Toggle</a>
+                <div>
+                    <pre>{{ row.traceback }}</pre>
+                </div>
+                {% endif %}
             </td>
             <td>{% if row.req_size %}{{ row.req_size }} KB{% endif %}</td>
             <td>{{ row.req_time }} ms</td>
