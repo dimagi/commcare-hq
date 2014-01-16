@@ -37,6 +37,8 @@ class NewBillingAccountView(TemplateView):
 
 
 def adjust_credit(request, account_id=None, subscription_id=None):
+    credit_form = CreditForm(account_id or subscription_id, account_id is not None, request.POST)
+    credit_form.is_valid()
     if account_id is not None:
         account = BillingAccount.objects.get(id=account_id)
         credit_line_kwargs = dict(account=account,
@@ -47,16 +49,18 @@ def adjust_credit(request, account_id=None, subscription_id=None):
                                   subscription=subscription)
     else:
         raise ValidationError('invalid credit adjustment')
-    if request.POST['rate_type'] == 'Product':
-        credit_line_kwargs.update(product_rate=SoftwareProductRate.objects.get(id=request.POST['product']))
-    elif request.POST['rate_type'] == 'Feature':
-        credit_line_kwargs.update(feature_rate=FeatureRate.objects.get(id=request.POST['feature']))
+    if credit_form.cleaned_data['rate_type'] == 'Product':
+        credit_line_kwargs.update(
+            product_rate=SoftwareProductRate.objects.get(id=credit_form.cleaned_data['product']))
+    elif credit_form.cleaned_data['rate_type'] == 'Feature':
+        credit_line_kwargs.update(
+            feature_rate=FeatureRate.objects.get(id=credit_form.cleaned_data['feature']))
     else:
         credit_line_kwargs.update(feature_rate=None,
                                   product_rate=None)
     credit_line, _ = CreditLine.objects.get_or_create(**credit_line_kwargs)
-    credit_line.adjust_credit_balance(Decimal(request.POST['amount']),
-                                      note=request.POST['note'],
+    credit_line.adjust_credit_balance(credit_form.cleaned_data['amount'],
+                                      note=credit_form.cleaned_data['note'],
                                       )
 
 

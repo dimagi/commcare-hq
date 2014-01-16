@@ -145,8 +145,9 @@ class CreditForm(forms.Form):
 
     def __init__(self, id, is_account, *args, **kwargs):
         super(CreditForm, self).__init__(*args, **kwargs)
-        self.fields['product'].choices = self.get_product_choices(id, is_account)
-        self.fields['feature'].choices = self.get_feature_choices(id, is_account)
+        if not kwargs:
+            self.fields['product'].choices = self.get_product_choices(id, is_account)
+            self.fields['feature'].choices = self.get_feature_choices(id, is_account)
         self.helper = FormHelper()
         self.helper.layout = Layout(
             Fieldset(
