@@ -47,6 +47,12 @@ class BillingAccountForm(forms.Form):
             kwargs['initial'] = {'currency': Currency.get_default().code,
                                  }
         super(BillingAccountForm, self).__init__(*args, **kwargs)
+        if account is None:
+            self.fields['address_line_1'].required = False
+            self.fields['city'].required = False
+            self.fields['region'].required = False
+            self.fields['postal_code'].required = False
+            self.fields['country'].required = False
         self.fields['currency'].choices =\
             [(cur.code, cur.code) for cur in Currency.objects.order_by('code')]
         self.helper = FormHelper()
