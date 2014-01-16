@@ -20,7 +20,7 @@
                     {% if account %}
                     <td>
                         {% if credit.subscription %}
-                        {{ credit.subscription }}
+                        Subscription to {{ credit.subscription.subscriber.domain }}
                         {% else %}
                         --
                         {% endif %}

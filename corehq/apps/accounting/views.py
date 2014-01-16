@@ -147,7 +147,7 @@ class EditSubscriptionView(TemplateView):
         subscription = Subscription.objects.get(id=self.args[0])
         return dict(cancel_form=CancelForm(),
                     credit_form=CreditForm(subscription.id, False),
-                    credit_list=None,
+                    credit_list=CreditLine.objects.filter(subscription=subscription),
                     form=SubscriptionForm(subscription),
                     parent_link='<a href="%s">%s<a>' % (SubscriptionInterface.get_url(), SubscriptionInterface.name),
                     subscription=subscription
