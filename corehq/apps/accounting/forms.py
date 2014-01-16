@@ -9,16 +9,16 @@ from corehq.apps.accounting.models import *
 
 class BillingAccountForm(forms.Form):
     name = forms.CharField(label="Name")
-    salesforce_account_id = forms.CharField(label="Salesforce ID")
+    salesforce_account_id = forms.CharField(label="Salesforce ID", required=False)
     currency = forms.ChoiceField(label="Currency")
 
-    billing_account_admins = forms.CharField()
-    first_name = forms.CharField(label='First Name')
-    last_name = forms.CharField(label='Last Name')
-    company_name = forms.CharField(label='Company Name')
-    phone_number = forms.CharField(label='Phone Number')
+    billing_account_admins = forms.CharField(label='Billing Account Admins',required=False)
+    first_name = forms.CharField(label='First Name', required=False)
+    last_name = forms.CharField(label='Last Name', required=False)
+    company_name = forms.CharField(label='Company Name', required=False)
+    phone_number = forms.CharField(label='Phone Number', required=False)
     address_line_1 = forms.CharField(label='Address Line 1')
-    address_line_2 = forms.CharField(label='Address Line 2')
+    address_line_2 = forms.CharField(label='Address Line 2', required=False)
     city = forms.CharField()
     region = forms.CharField(label="State/Province/Region")
     postal_code = forms.CharField(label="Postal Code")
@@ -81,8 +81,8 @@ class BillingAccountForm(forms.Form):
 
 class SubscriptionForm(forms.Form):
     start_date = forms.DateField(label="Start Date", widget=forms.DateInput())
-    end_date = forms.DateField(label="End Date", widget=forms.DateInput())
-    delay_invoice_until = forms.DateField(label="Delay Invoice Until", widget=forms.DateInput())
+    end_date = forms.DateField(label="End Date", widget=forms.DateInput(), required=False)
+    delay_invoice_until = forms.DateField(label="Delay Invoice Until", widget=forms.DateInput(), required=False)
     plan = forms.ChoiceField()
     domain = forms.CharField(max_length=25)
 
@@ -136,7 +136,7 @@ class SubscriptionForm(forms.Form):
 
 class CreditForm(forms.Form):
     amount = forms.DecimalField()
-    note = forms.CharField()
+    note = forms.CharField(required=False)
     rate_type = forms.ChoiceField(choices=(('Any', 'Any'),
                                            ('Product', 'Product'),
                                            ('Feature', 'Feature')))
