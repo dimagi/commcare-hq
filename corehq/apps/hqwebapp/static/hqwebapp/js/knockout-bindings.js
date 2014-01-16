@@ -262,7 +262,7 @@ ko.bindingHandlers.starred = {
         var value = ko.utils.unwrapObservable(valueAccessor()),
             $element = $(element);
         value = value + '';
-        $element.addClass('icon');
+        $element.addClass('icon pointer');
 
         var unselected = 'icon-star-empty';
         var selected = 'icon-star icon-large released';
