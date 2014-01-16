@@ -28,6 +28,9 @@ def block_type(form):
 def case_date_group(form):
     return form.received_on
 
+def case_date(case):
+    return case.opened_on
+
 class BirthPreparedness(fluff.Calculator):
     """
     Birth Preparedness Form
@@ -55,6 +58,80 @@ class BirthPreparedness(fluff.Calculator):
                     window = "soft_%s" % window
                 if form.form.get(window) == '1':
                     yield case_date_group(form)
+
+months = (('4', '1'), ('5', '2'), ('6', '3'), ('7', '4'), ('8', '5'), ('9', '6'),)
+
+def is_equals_one(form, prop1, prop2, s=0, e=6):
+        check = True
+        for (k, v) in months[s:e]:
+            p1 = prop1 % k
+            p2 = prop2 % v
+            if p1 not in form.form:
+                check = False
+            else:
+                if p2 not in form[p1]:
+                    check = False
+                else:
+                    if form.form[p1][p2] != '1':
+                        check = False
+        return check
+
+class VhndMonthly(fluff.Calculator):
+
+    @fluff.date_emitter
+    def total(self, case):
+        is_vhnd = False
+        for form in case.get_forms():
+            if form.xmlns == VHND_XMLNS:
+                is_vhnd = is_equals_one(form, "pregnancy_month_%s", "attendance_vhnd_%s")
+            if form.xmlns in [CFU1_XMLNS, CFU2_XMLNS, CFU3_XMLNS]:
+                if form.form['child_1']['child1_attendance_vhnd'] == 1:
+                    is_vhnd = True
+        if is_vhnd:
+            yield case_date(case)
+
+
+class IfaTablets(fluff.Calculator):
+
+    @fluff.date_emitter
+    def total(self, case):
+        is_ifa_tablets = False
+        for form in case.get_forms():
+            if form.xmlns == VHND_XMLNS:
+                is_ifa_tablets = is_equals_one(form, "pregnancy_month_%s", "ifa_receive_%s", 3, 6)
+        if is_ifa_tablets:
+            yield case_date(case)
+
+
+class Lactating(fluff.Calculator):
+
+    @fluff.date_emitter
+    def total(self, case):
+        for form in case.get_forms():
+            if form.xmlns == DELIVERY_XMLNS:
+                if form.form.get('mother_preg_outcome') == '1':
+                    yield case_date(case)
+
+
+class Lmp(fluff.Calculator):
+
+    @fluff.date_emitter
+    def total(self, case):
+        for form in case.get_forms():
+            if form.xmlns == PREG_REG_XMLNS:
+                if 'lmp' in form.form and form.form.get('lmp'):
+                    yield case_date(case)
+
+
+class LiveChildren(fluff.Calculator):
+
+    @fluff.date_emitter
+    def total(self, case):
+        for form in case.get_forms():
+            if form.xmlns == DELIVERY_XMLNS:
+                if 'live_birth_amount' in form.form and form.form.get('live_birth_amount'):
+                    yield case_date(case)
+
 
 
 class Delivery(fluff.Calculator):
