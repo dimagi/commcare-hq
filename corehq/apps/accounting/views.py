@@ -126,16 +126,18 @@ class NewSubscriptionView(TemplateView):
 
     def post(self, request, *args, **kwargs):
         account_id = self.args[0]
+        account = BillingAccount.objects.get(id=account_id)
         date_start = datestring_to_date(self.request.POST.get('start_date'))
         date_end = datestring_to_date(self.request.POST.get('end_date'))
         date_delay_invoicing = datestring_to_date(self.request.POST.get('delay_invoice_until'))
         plan_id = request.POST.get('plan')
         domain = request.POST.get('domain')
-        subscription = Subscription(account=BillingAccount.objects.get(id=account_id),
+        subscription = Subscription(account=account,
                                     date_start=date_start,
                                     date_end=date_end,
                                     date_delay_invoicing=date_delay_invoicing,
                                     plan=SoftwarePlanVersion.objects.get(id=plan_id),
+                                    salesforce_contract_id=account.salesforce_account_id,
                                     subscriber=Subscriber.objects.get_or_create(domain=domain,
                                                                                 organization=None)[0])
         subscription.save()
