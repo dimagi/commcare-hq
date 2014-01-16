@@ -1,15 +1,18 @@
+from tastypie import http
+from tastypie.exceptions import BadRequest, ImmediateHttpResponse
+from tastypie.resources import convert_post_to_patch
+from tastypie.utils import dict_strip_unicode_keys
+
 from collections import namedtuple
 
 from django.core.urlresolvers import reverse
 
 from tastypie import fields
 from tastypie.bundle import Bundle
-from tastypie.exceptions import BadRequest
-from tastypie.validation import Validation
 
 from corehq.apps.groups.models import Group
 from corehq.apps.sms.util import strip_plus
-from corehq.apps.users.models import CommCareUser, WebUser, CouchUser
+from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.elastic import es_wrapper
 
 from . import v0_1, v0_4
@@ -194,7 +197,39 @@ class GroupResource(v0_4.GroupResource):
 
     class Meta(v0_4.GroupResource.Meta):
         detail_allowed_methods = ['get', 'put', 'delete']
-        list_allowed_methods = ['get', 'post']
+        list_allowed_methods = ['get', 'post', 'patch']
+
+    def patch_list(self, request=None, **kwargs):
+        """
+        Exactly copied from https://github.com/toastdriven/django-tastypie/blob/v0.9.14/tastypie/resources.py#L1466
+        (BSD licensed) and modified to pass the kwargs to `obj_create` and support only create method
+        """
+        request = convert_post_to_patch(request)
+        deserialized = self.deserialize(request, request.raw_post_data, format=request.META.get('CONTENT_TYPE', 'application/json'))
+
+        collection_name = self._meta.collection_name
+        if collection_name not in deserialized:
+            raise BadRequest("Invalid data sent: missing '%s'" % collection_name)
+
+        if len(deserialized[collection_name]) and 'put' not in self._meta.detail_allowed_methods:
+            raise ImmediateHttpResponse(response=http.HttpMethodNotAllowed())
+
+        bundles_seen = []
+        status = http.HttpAccepted
+        for data in deserialized[collection_name]:
+
+            data = self.alter_deserialized_detail_data(request, data)
+            bundle = self.build_bundle(data=dict_strip_unicode_keys(data), request=request)
+            try:
+
+                self.obj_create(bundle=bundle, **self.remove_api_resource_names(kwargs))
+            except AssertionError as ex:
+                status = http.HttpBadRequest
+                bundle.data['_id'] = ex.message
+            bundles_seen.append(bundle)
+
+        to_be_serialized = [bundle.data['_id'] for bundle in bundles_seen]
+        return self.create_response(request, to_be_serialized, response_class=status)
 
     def _update(self, bundle):
         should_save = False
@@ -239,7 +274,7 @@ class GroupResource(v0_4.GroupResource):
             for user in bundle.obj.users:
                 CommCareUser.get(user).set_groups([bundle.obj._id])
         else:
-            raise Exception("A group with this name already exists")
+            raise AssertionError("A group with name %s already exists" % bundle.data.get("name"))
         return bundle
 
     def obj_update(self, bundle, **kwargs):

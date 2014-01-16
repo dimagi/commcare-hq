@@ -54,7 +54,8 @@ class ESView(View):
     http_method_names = ['get', 'post', 'head', ]
 
     def __init__(self, domain):
-        self.domain=domain.lower()
+        super(ESView, self).__init__()
+        self.domain = domain.lower()
         self.es = get_es()
 
     def head(self, *args, **kwargs):
@@ -172,24 +173,24 @@ class ESView(View):
             query['filter']['and'].append({"term": {k: v}})
         return query
 
-    def get(self, *args, **kwargs):
+    def get(self, request, *args, **kwargs):
         """
         Very basic querying based upon GET parameters.
         todo: apply GET params as lucene query_string params to base_query
         """
-        size = self.request.GET.get('size', DEFAULT_SIZE)
-        start = self.request.GET.get('start', 0)
+        size = request.GET.get('size', DEFAULT_SIZE)
+        start = request.GET.get('start', 0)
         query_results = self.run_query(self.base_query(start=start, size=size))
         query_output = simplejson.dumps(query_results, indent=self.indent)
         response = HttpResponse(query_output, content_type="application/json")
         return response
 
-    def post(self, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         """
         More powerful ES querying using POST params.
         """
         try:
-            raw_post = self.request.raw_post_data
+            raw_post = request.raw_post_data
             raw_query = simplejson.loads(raw_post)
         except Exception, ex:
             content_response = dict(message="Error parsing query request", exception=ex.message)

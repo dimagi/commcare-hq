@@ -11,7 +11,8 @@ from corehq.apps.domain.models import Domain
 from datetime import datetime
 
 from corehq.apps.smsforms.models import XFormsSession
-from corehq.apps.smsforms.app import _get_responses, start_session
+from corehq.apps.smsforms.app import _get_responses, start_session, \
+    _responses_to_text
 from corehq.apps.app_manager.models import Form
 from corehq.apps.sms.util import register_sms_contact, strip_plus
 from corehq.apps.reminders.util import create_immediate_reminder
@@ -138,6 +139,7 @@ def queue_outgoing_sms(msg, onerror=lambda: None):
         try:
             msg.processed = False
             msg.datetime_to_process = msg.date
+            msg.queued_timestamp = datetime.utcnow()
             msg.save()
         except:
             onerror()
@@ -278,6 +280,7 @@ def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None,
     if settings.SMS_QUEUE_ENABLED:
         msg.processed = False
         msg.datetime_to_process = datetime.utcnow()
+        msg.queued_timestamp = msg.datetime_to_process
         msg.save()
         enqueue_directly(msg)
     else:
@@ -704,6 +707,16 @@ def sms_keyword_handler(v, text, msg=None):
         # No keywords matched, so pass the message onto the next handler
         return False
 
+def has_invalid_response(responses):
+    for r in responses:
+        if r.status == "validation-error":
+            return True
+    return False
+
+def mark_as_invalid_response(msg):
+    msg.invalid_survey_response = True
+    msg.save()
+
 def form_session_handler(v, text, msg=None):
     """
     The form session handler will use the inbound text to answer the next question
@@ -736,13 +749,19 @@ def form_session_handler(v, text, msg=None):
             resp = current_question(session.session_id)
             event = resp.event
             valid, text, error_msg = validate_answer(event, text)
-            
+
             if valid:
-                responses = _get_responses(v.domain, v.owner_id, text)
-                if len(responses) > 0:
-                    response_text = format_message_list(responses)
+                responses = _get_responses(v.domain, v.owner_id, text, yield_responses=True)
+                if has_invalid_response(responses):
+                    if msg:
+                        mark_as_invalid_response(msg)
+                text_responses = _responses_to_text(responses)
+                if len(text_responses) > 0:
+                    response_text = format_message_list(text_responses)
                     send_sms_to_verified_number(v, response_text, workflow=session.workflow, reminder_id=session.reminder_id, xforms_session_couch_id=session._id)
             else:
+                if msg:
+                    mark_as_invalid_response(msg)
                 send_sms_to_verified_number(v, error_msg + event.text_prompt, workflow=session.workflow, reminder_id=session.reminder_id, xforms_session_couch_id=session._id)
         except Exception:
             # Catch any touchforms errors
