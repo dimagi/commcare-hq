@@ -16,6 +16,7 @@ class XFormPillow(HQPillow):
     es_alias = "xforms"
     es_type = "xform"
     es_index = XFORM_INDEX
+    include_docs = False
 
     #for simplicity, the handlers are managed on the domain level
     handler_domain_map = {}
