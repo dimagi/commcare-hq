@@ -369,26 +369,32 @@ class Subscription(models.Model):
                                     "Odd, right? The latest one by date_created was used, but consider this an "
                                     "issue." % subscriber)
             current_subscription = active_subscriptions.latest('date_created')
-            return current_subscription.plan
+            return current_subscription.plan, current_subscription
         except Subscription.DoesNotExist:
             global_logger.error("A Subscriber object exists without a Subscription for the domain '%s'. "
                                 "This seems strange." % subscriber)
-        return None
+        return None, None
 
     @classmethod
     def get_subscribed_plan_by_organization(cls, organization):
+        """
+        Returns SoftwarePlanVersion, Subscription for the given organization.
+        """
         subscriber = Subscriber.objects.safe_get(organization=organization, domain=None)
-        return cls._get_plan_by_subscriber(subscriber) if subscriber else None
+        return cls._get_plan_by_subscriber(subscriber) if subscriber else None, None
 
     @classmethod
     def get_subscribed_plan_by_domain(cls, domain):
+        """
+        Returns SoftwarePlanVersion, Subscription for the given domain.
+        """
         domain = assure_domain_instance(domain)
         subscriber = Subscriber.objects.safe_get(domain=domain.name, organization=None)
-        subscription = (cls._get_plan_by_subscriber(subscriber) if subscriber
-                        else cls.get_subscribed_plan_by_organization(domain.organization))
-        if subscription is None:
-            return DefaultProductPlan.get_default_plan_by_domain(domain)
-        return subscription
+        plan_version, subscription = (cls._get_plan_by_subscriber(subscriber) if subscriber
+                                      else cls.get_subscribed_plan_by_organization(domain.organization))
+        if plan_version is None:
+            plan_version =  DefaultProductPlan.get_default_plan_by_domain(domain)
+        return plan_version, subscription
 
 
 class Invoice(models.Model):
@@ -564,19 +570,24 @@ class CreditLine(models.Model):
 
     @classmethod
     def get_credits_for_line_item(cls, line_item):
-        credits_available = cls.objects.filter(
-            models.Q(subscription=line_item.invoice.subscription) |
-            models.Q(account=line_item.invoice.subscription.account, subscription__exact=None)
+        return cls.get_credits_by_subscription_and_features(
+            line_item.invoice.subscription,
+            product_rate=line_item.product_rate,
+            feature_rate=line_item.feature_rate
         )
-        return credits_available.filter(product_rate=line_item.product_rate, feature_rate=line_item.feature_rate).all()
 
     @classmethod
     def get_credits_for_invoice(cls, invoice):
-        credits_available = cls.objects.filter(
-            models.Q(subscription=invoice.subscription) |
-            models.Q(account=invoice.subscription.account, subscription__exact=None)
-        ).filter(product_rate__exact=None, feature_rate__exact=None)
-        return credits_available.all()
+        return cls.get_credits_by_subscription_and_features(invoice.subscription)
+
+    @classmethod
+    def get_credits_by_subscription_and_features(cls, subscription, feature_rate=None, product_rate=None):
+        return cls.objects.filter(
+            models.Q(subscription=subscription) |
+            models.Q(account=subscription.account, subscription__exact=None)
+        ).filter(
+            product_rate__exact=product_rate, feature_rate__exact=feature_rate
+        ).all()
 
     @classmethod
     def add_account_credit(cls, amount, account, note=None):
