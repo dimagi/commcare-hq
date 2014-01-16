@@ -16,7 +16,11 @@
 			<p class="icon-caption">{{ amount }}</p>
 		{% else %}
 			<img src="{% static "penn_state/img/the_bird.png" %}"/>
-			<p>Remember to use your PAX kernels!</p>
+			{% if report.icon == "smiley"  %}
+				<p>Remember to play the GBG game!</p>
+			{% else %}
+				<p>Remember to use your PAX kernels!</p>
+			{% endif %}
 		{% endif %}{% endif %}
 	</div>
 	{% endfor %}

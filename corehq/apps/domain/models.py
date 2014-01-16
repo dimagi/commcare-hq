@@ -277,6 +277,13 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     sms_conversation_times = SchemaListProperty(DayTimeWindow)
     # In minutes, see above.
     sms_conversation_length = IntegerProperty(default=10)
+    # Set to True to prevent survey questions and answers form being seen in
+    # SMS chat windows.
+    filter_surveys_from_chat = BooleanProperty(default=False)
+    # The below option only matters if filter_surveys_from_chat = True.
+    # If set to True, invalid survey responses will still be shown in the chat
+    # window, while questions and valid responses will be filtered out.
+    show_invalid_survey_responses_in_chat = BooleanProperty(default=False)
 
     # exchange/domain copying stuff
     is_snapshot = BooleanProperty(default=False)

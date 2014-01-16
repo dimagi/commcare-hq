@@ -113,6 +113,17 @@ MIDDLEWARE_CLASSES = [
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
 
+PASSWORD_HASHERS = (
+    # this is the default list with SHA1 moved to the front
+    'django.contrib.auth.hashers.SHA1PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
+    'django.contrib.auth.hashers.BCryptPasswordHasher',
+    'django.contrib.auth.hashers.MD5PasswordHasher',
+    'django.contrib.auth.hashers.UnsaltedMD5PasswordHasher',
+    'django.contrib.auth.hashers.CryptPasswordHasher',
+)
+
 ROOT_URLCONF = "urls"
 
 TEMPLATE_CONTEXT_PROCESSORS = [
@@ -863,6 +874,7 @@ SMS_LOADED_BACKENDS = [
 # If the function is not in here, it will not be called.
 ALLOWED_CUSTOM_CONTENT_HANDLERS = {
     "FRI_SMS_CONTENT" : "custom.fri.api.custom_content_handler",
+    "FRI_SMS_CATCHUP_CONTENT" : "custom.fri.api.catchup_custom_content_handler",
 }
 
 # These are custom templates which can wrap default the sms/chat.html template

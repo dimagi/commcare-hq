@@ -161,6 +161,27 @@ class FormAction(DocumentSchema):
     def is_active(self):
         return self.condition.type in ('if', 'always')
 
+    @classmethod
+    def get_action_paths(cls, action):
+        action_properties = action.properties()
+        if action.condition.type == 'if':
+            yield action.condition.question
+        if 'name_path' in action_properties and action.name_path:
+            yield action.name_path
+        if 'case_name' in action_properties:
+            yield action.case_name
+        if 'external_id' in action_properties and action.external_id:
+            yield action.external_id
+        if 'update' in action_properties:
+            for _, path in action.update.items():
+                yield path
+        if 'case_properties' in action_properties:
+            for _, path in action.case_properties.items():
+                yield path
+        if 'preload' in action_properties:
+            for path, _ in action.preload.items():
+                yield path
+
 
 class UpdateCaseAction(FormAction):
 
@@ -447,9 +468,6 @@ class FormBase(DocumentSchema):
     def get_app(self):
         return self._app
 
-    def get_case_type(self):
-        return self._parent.case_type
-
     def get_version(self):
         return self.version if self.version else self.get_app().version
 
@@ -501,6 +519,56 @@ class FormBase(DocumentSchema):
             'form_name': self.default_name()
         }
 
+
+class IndexedFormBase(FormBase, IndexedSchema):
+    def get_app(self):
+        return self._parent._parent
+
+    def get_module(self):
+        return self._parent
+
+    def get_case_type(self):
+        return self._parent.case_type
+
+    def check_case_properties(self, all_names=None, subcase_names=None):
+        all_names = all_names or []
+        subcase_names = subcase_names or []
+        errors = []
+
+        # reserved_words are hard-coded in three different places!
+        # Here, case-config-ui-*.js, and module_view.html
+        reserved_words = load_case_reserved_words()
+        for key in all_names:
+            # this regex is also copied in propertyList.ejs
+            if not re.match(r'^[a-zA-Z][\w_-]*(/[a-zA-Z][\w_-]*)*$', key):
+                errors.append({'type': 'update_case word illegal', 'word': key})
+            _, key = split_path(key)
+            if key in reserved_words:
+                errors.append({'type': 'update_case uses reserved word', 'word': key})
+
+        # no parent properties for subcase
+        for key in subcase_names:
+            if not re.match(r'^[a-zA-Z][\w_-]*$', key):
+                errors.append({'type': 'update_case word illegal', 'word': key})
+
+        return errors
+
+    def check_paths(self, paths):
+        errors = []
+        try:
+            valid_paths = set([question['value'] for question in self.get_questions(langs=[])])
+        except XFormError as e:
+            errors.append({'type': 'invalid xml', 'message': unicode(e)})
+        else:
+            unique_paths = set()
+            unique_paths.update(paths)
+            for path in unique_paths:
+                if path not in valid_paths:
+                    errors.append({'type': 'path error', 'path': path})
+
+        return errors
+
+
 class JRResourceProperty(StringProperty):
 
     def validate(self, value, required=True):
@@ -516,7 +584,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
     media_audio = JRResourceProperty(required=False)
 
 
-class Form(FormBase, IndexedSchema, NavMenuItemMediaMixin):
+class Form(IndexedFormBase, NavMenuItemMediaMixin):
     form_type = 'module_form'
 
     form_filter = StringProperty()
@@ -526,12 +594,6 @@ class Form(FormBase, IndexedSchema, NavMenuItemMediaMixin):
     def add_stuff_to_xform(self, xform):
         super(Form, self).add_stuff_to_xform(xform)
         xform.add_case_and_meta(self)
-
-    def get_app(self):
-        return self._parent._parent
-
-    def get_module(self):
-        return self._parent
 
     def all_other_forms_require_a_case(self):
         m = self.get_module()
@@ -579,65 +641,34 @@ class Form(FormBase, IndexedSchema, NavMenuItemMediaMixin):
 
     def check_actions(self):
         errors = []
-        # reserved_words are hard-coded in three different places!
-        # Here, case-config-ui-*.js, and module_view.html
-        reserved_words = load_case_reserved_words()
-        for key in self.actions.all_property_names():
-            # this regex is also copied in propertyList.ejs
-            if not re.match(r'^[a-zA-Z][\w_-]*(/[a-zA-Z][\w_-]*)*$', key):
-                errors.append({'type': 'update_case word illegal', 'word': key})
-            _, key = split_path(key)
-            if key in reserved_words:
-                errors.append({'type': 'update_case uses reserved word', 'word': key})
 
+        subcase_names = set()
         for subcase_action in self.actions.subcases:
             if not subcase_action.case_type:
                 errors.append({'type': 'subcase has no case type'})
-            # no parent properties for subcase
-            for key in subcase_action.case_properties:
-                if not re.match(r'^[a-zA-Z][\w_-]*$', key):
-                    errors.append({'type': 'update_case word illegal', 'word': key})
+
+            subcase_names.update(subcase_action.case_properties)
 
         if self.requires == 'none' and self.actions.open_case.is_active() \
                 and not self.actions.open_case.name_path:
             errors.append({'type': 'case_name required'})
 
-        try:
-            valid_paths = set([question['value'] for question in self.get_questions(langs=[])])
-        except XFormError as e:
-            errors.append({'type': 'invalid xml', 'message': unicode(e)})
-        else:
-            paths = set()
+        errors.extend(self.check_case_properties(
+            all_names=self.actions.all_property_names(),
+            subcase_names=subcase_names
+        ))
 
-            def generate_paths():
-                for _, action in self.active_actions().items():
-                    if isinstance(action, list):
-                        actions = action
-                    else:
-                        actions = [action]
-                    for action in actions:
-                        action_properties = action.properties()
-                        if action.condition.type == 'if':
-                            yield action.condition.question
-                        if 'name_path' in action_properties and action.name_path:
-                            yield action.name_path
-                        if 'case_name' in action_properties:
-                            yield action.case_name
-                        if 'external_id' in action_properties and action.external_id:
-                            yield action.external_id
-                        if 'update' in action_properties:
-                            for _, path in action.update.items():
-                                yield path
-                        if 'case_properties' in action_properties:
-                            for _, path in action.case_properties.items():
-                                yield path
-                        if 'preload' in action_properties:
-                            for path, _ in action.preload.items():
-                                yield path
-            paths.update(generate_paths())
-            for path in paths:
-                if path not in valid_paths:
-                    errors.append({'type': 'path error', 'path': path})
+        def generate_paths():
+            for action in self.active_actions().values():
+                if isinstance(action, list):
+                    actions = action
+                else:
+                    actions = [action]
+                for action in actions:
+                    for path in FormAction.get_action_paths(action):
+                        yield path
+
+        errors.extend(self.check_paths(generate_paths()))
 
         return errors
 
@@ -1131,7 +1162,7 @@ class Module(ModuleBase):
             }
 
 
-class CareplanForm(FormBase, IndexedSchema, NavMenuItemMediaMixin):
+class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):
     mode = StringProperty(required=True, choices=['create', 'update'])
     custom_case_updates = DictProperty()
     case_preload = DictProperty()
@@ -1152,12 +1183,6 @@ class CareplanForm(FormBase, IndexedSchema, NavMenuItemMediaMixin):
     def add_stuff_to_xform(self, xform):
         super(CareplanForm, self).add_stuff_to_xform(xform)
         xform.add_care_plan(self)
-
-    def get_app(self):
-        return self._parent._parent
-
-    def get_module(self):
-        return self._parent
 
     def get_case_updates(self, case_type):
         if case_type == self.case_type:

@@ -98,7 +98,7 @@ class Site(object):
         self.strategy[day] += strategies
         self.individual[username]['strategy'][day] += strategies
 
-        games = int(get_or_None(form.form, 'game_questions', 'how_many_games') or 0)
+        games = int(get_or_None(form.form, 'pax_games', 'game_questions', 'how_many_games') or 0)
         secret_game = get_or_None(form.form, 'game_questions', 'secret_game')
         games += 1 if secret_game == "yes" else 0
 
