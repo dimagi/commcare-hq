@@ -43,6 +43,9 @@ class BillingAccountForm(forms.Form):
                                  'postal_code': contact_info.postal_code,
                                  'country': contact_info.country,
                                  }
+        else:
+            kwargs['initial'] = {'currency': Currency.get_default().code,
+                                 }
         super(BillingAccountForm, self).__init__(*args, **kwargs)
         self.fields['currency'].choices =\
             [(cur.code, cur.code) for cur in Currency.objects.order_by('code')]
