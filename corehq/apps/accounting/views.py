@@ -38,16 +38,15 @@ class NewBillingAccountView(TemplateView):
 
 def adjust_credit(request, account_id):
     account = BillingAccount.objects.get(id=account_id)
+    credit_line_kwargs = dict(account=account)
     if request.POST['rate_type'] == 'Product':
-        credit_line, _ =\
-            CreditLine.objects.get_or_create(account=account,
-                product_rate=SoftwareProductRate.objects.get(id=request.POST['product']))
+        credit_line_kwargs.update(product_rate=SoftwareProductRate.objects.get(id=request.POST['product']))
     elif request.POST['rate_type'] == 'Feature':
-        credit_line, _ =\
-            CreditLine.objects.get_or_create(account=account,
-                feature_rate=FeatureRate.objects.get(id=request.POST['feature']))
+        credit_line_kwargs.update(feature_rate=FeatureRate.objects.get(id=request.POST['feature']))
     else:
-        credit_line, _ = CreditLine.objects.get_or_create(account=account)
+        credit_line_kwargs.update(feature_rate=None,
+                                  product_rate=None)
+    credit_line, _ = CreditLine.objects.get_or_create(**credit_line_kwargs)
     credit_line.adjust_credit_balance(Decimal(request.POST['amount']),
                                       note=request.POST['note'],
                                       )
