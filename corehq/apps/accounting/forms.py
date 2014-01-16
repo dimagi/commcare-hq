@@ -84,6 +84,7 @@ class SubscriptionForm(forms.Form):
     end_date = forms.DateField(label="End Date", widget=forms.DateInput())
     delay_invoice_until = forms.DateField(label="Delay Invoice Until", widget=forms.DateInput())
     plan = forms.ChoiceField()
+    domain = forms.CharField(max_length=25)
 
     def __init__(self, subscription, *args, **kwargs):
         super(SubscriptionForm, self).__init__(*args, **kwargs)
@@ -118,6 +119,7 @@ class SubscriptionForm(forms.Form):
                 Field('end_date', **end_date_kwargs),
                 Field('delay_invoice_until', **delay_invoice_until_kwargs),
                 'plan' if subscription is None else None,
+                'domain' if subscription is None else None,
             ),
             FormActions(
                 ButtonHolder(

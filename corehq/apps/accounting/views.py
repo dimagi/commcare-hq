@@ -130,12 +130,14 @@ class NewSubscriptionView(TemplateView):
         date_end = datestring_to_date(self.request.POST.get('end_date'))
         date_delay_invoicing = datestring_to_date(self.request.POST.get('delay_invoice_until'))
         plan_id = request.POST.get('plan')
+        domain = request.POST.get('domain')
         subscription = Subscription(account=BillingAccount.objects.get(id=account_id),
                                     date_start=date_start,
                                     date_end=date_end,
                                     date_delay_invoicing=date_delay_invoicing,
                                     plan=SoftwarePlanVersion.objects.get(id=plan_id),
-                                    subscriber=Subscriber.objects.all()[0])# TODO set
+                                    subscriber=Subscriber.objects.get_or_create(domain=domain,
+                                                                                organization=None)[0])
         subscription.save()
         return HttpResponseRedirect(reverse(ManageBillingAccountView.name, args=(account_id,)))
 
