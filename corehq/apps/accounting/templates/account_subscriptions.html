@@ -20,12 +20,11 @@
                 <th>{% trans "Currently Active" %}</th>
                 <th>{% trans "Last Invoice" %}</th>
                 <th>{% trans "Delay Invoicing Until" %}</th>
-                <th>{% trans "Creditable Line Items" %}</th>
                 <th>{% trans "Edit" %}</th>
             </tr>
         </thead>
         <tbody data-bind="foreach: subscription_list">
-            {% for subscription, invoice, line_items in subscription_list %}
+            {% for subscription, invoice in subscription_list %}
                 <tr>
                     <td>{{ subscription.subscriber.domain }}</td>
                     <td>{{ subscription.plan.plan.name }}</td>
@@ -34,7 +33,6 @@
                     <td>{{ subscription.is_active }}</td>
                     <td>{{ invoice }}</td>
                     <td>{{ subscription.date_delay_invoicing }}</td>
-                    <td>{{ line_items }}</td>
                     <td><a href="../../subscriptions/{{ subscription.id }}" class="btn">Edit</a></td>
                 </tr>
             {% endfor %}
