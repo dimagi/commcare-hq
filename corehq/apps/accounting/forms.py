@@ -73,7 +73,7 @@ class BillingAccountForm(forms.Form):
             ) if account is not None else None,
             FormActions(
                 ButtonHolder(
-                    Submit('submit', 'Update Account' if account is not None else 'Add New Account')
+                    Submit('account', 'Update Account' if account is not None else 'Add New Account')
                 )
             )
         )
