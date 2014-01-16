@@ -4,6 +4,7 @@ from django.utils.safestring import mark_safe, mark_for_escaping
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop, ugettext_lazy
+from corehq import toggles
 from corehq.apps.domain.utils import get_adm_enabled_domains
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
@@ -18,6 +19,7 @@ from corehq.apps.adm.dispatcher import (ADMAdminInterfaceDispatcher,
 from hqbilling.dispatcher import BillingInterfaceDispatcher
 from corehq.apps.announcements.dispatcher import (
     HQAnnouncementAdminInterfaceDispatcher)
+import toggle
 
 
 def format_submenu_context(title, url=None, html=None,
@@ -826,7 +828,18 @@ class ProjectSettingsTab(UITab):
         items.append((_('Project Information'), project_info))
 
         if user_is_admin:
-            from corehq.apps.domain.views import BasicCommTrackSettingsView, AdvancedCommTrackSettingsView
+            from corehq.apps.domain.views import (
+                BasicCommTrackSettingsView,
+                AdvancedCommTrackSettingsView,
+                DomainSubscriptionView,
+            )
+
+            subscription = [
+                {
+                    'title': DomainSubscriptionView.page_title,
+                    'url': reverse(DomainSubscriptionView.urlname, args=[self.domain])
+                },
+            ]
 
             if self.project.commtrack_enabled:
                 commtrack_settings = [
@@ -869,7 +882,8 @@ class ProjectSettingsTab(UITab):
                  ]}
             ])
             items.append((_('Project Administration'), administration))
-
+            if toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, self.couch_user.username):
+                items.append((_('Subscription'), subscription))
 
         if self.couch_user.is_superuser:
             from corehq.apps.domain.views import EditInternalDomainInfoView, EditInternalCalculationsView
