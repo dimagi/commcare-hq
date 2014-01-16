@@ -75,7 +75,7 @@ class ManageBillingAccountView(TemplateView):
                     subscription_list=[(sub,
                                         Invoice.objects.filter(subscription=sub).latest('date_due').date_due # TODO - check query
                                             if len(Invoice.objects.filter(subscription=sub)) != 0 else 'None on record',
-                                        'ADD LINE ITEMS')
+                                        )
                                        for sub in Subscription.objects.filter(account=account)],
                     )
 
