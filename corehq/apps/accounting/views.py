@@ -37,9 +37,7 @@ class NewBillingAccountView(TemplateView):
         return HttpResponseRedirect(reverse('manage_billing_account', args=(account.id,)))
 
 
-def adjust_credit(request, account_id=None, subscription_id=None):
-    credit_form = CreditForm(account_id or subscription_id, account_id is not None, request.POST)
-    credit_form.is_valid()
+def adjust_credit(credit_form, account_id=None, subscription_id=None):
     if account_id is not None:
         account = BillingAccount.objects.get(id=account_id)
         credit_line_kwargs = dict(account=account,
@@ -74,14 +72,22 @@ class ManageBillingAccountView(TemplateView):
     @memoized
     def account_form(self):
         account = BillingAccount.objects.get(id=self.args[0])
-        if self.request.method == 'POST':
+        if self.request.method == 'POST' and 'account' in self.request.POST:
             return BillingAccountForm(account, self.request.POST)
         return BillingAccountForm(account)
+
+    @property
+    @memoized
+    def credit_form(self):
+        account = BillingAccount.objects.get(id=self.args[0])
+        if self.request.method == 'POST' and 'adjust_credit' in self.request.POST:
+            return CreditForm(account.id, True, self.request.POST)
+        return CreditForm(account.id, True)
 
     def get_context_data(self):
         account = BillingAccount.objects.get(id=self.args[0])
         return dict(account=account,
-                    credit_form=CreditForm(account.id, True),
+                    credit_form=self.credit_form,
                     credit_list=CreditLine.objects.filter(account=account),
                     form=self.account_form,
                     parent_link='<a href="%s">%s<a>' % (AccountingInterface.get_url(), AccountingInterface.name),
@@ -93,7 +99,6 @@ class ManageBillingAccountView(TemplateView):
                     )
 
     def post(self, request, *args, **kwargs):
-        # TODO validate data
         if 'account' in self.request.POST and self.account_form.is_valid():
             account = BillingAccount.objects.get(id=self.args[0])
             account.name = self.account_form.cleaned_data['name']
@@ -117,8 +122,8 @@ class ManageBillingAccountView(TemplateView):
             contact_info.postal_code = self.account_form.cleaned_data['postal_code']
             contact_info.country = self.account_form.cleaned_data['country']
             contact_info.save()
-        elif 'adjust_credit' in self.request.POST:
-            adjust_credit(request, account_id=self.args[0])
+        elif 'adjust_credit' in self.request.POST and self.credit_form.is_valid():
+            adjust_credit(self.credit_form, account_id=self.args[0])
 
         return self.get(request, *args, **kwargs)
 
