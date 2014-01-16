@@ -56,7 +56,7 @@ class AccountingInterface(BaseCRUDAdminInterface):
     #######
 
     name = "Billing Accounts"
-    description = "description of view billing accounts"
+    description = "List of all billing accounts"
     slug = "accounts"
 
     document_class = HQAnnouncement
@@ -125,7 +125,7 @@ class SubscriptionInterface(BaseCRUDAdminInterface):
     #######
 
     name = "Subscriptions"
-    description = "description of view subscriptions"
+    description = "List of all subscriptions"
     slug = "subscriptions"
 
     document_class = HQAnnouncement
