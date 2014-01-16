@@ -80,18 +80,14 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
             def any_in(a, b):
                 return any(i in b for i in a)
 
-            if self.mobile_worker_ids:
+            if self.request.GET.get('all_mws', 'off') != 'on' or any_in(
+                    [str(HQUserType.DEMO_USER), str(HQUserType.ADMIN), str(HQUserType.UNKNOWN)],
+                    self.request.GET.getlist('ufilter')):
                 q["filter"]["and"].append(
-                        {"terms": {"form.meta.userID": [self.mobile_worker_ids[0]]}})
+                    {"terms": {"form.meta.userID": filter(None, self.combined_user_ids)}})
             else:
-                if self.request.GET.get('all_mws', 'off') != 'on' or any_in(
-                        [str(HQUserType.DEMO_USER), str(HQUserType.ADMIN), str(HQUserType.UNKNOWN)],
-                        self.request.GET.getlist('ufilter')):
-                    q["filter"]["and"].append(
-                        {"terms": {"form.meta.userID": filter(None, self.combined_user_ids)}})
-                else:
-                    ids = filter(None, [user['user_id'] for user in self.get_admins_and_demo_users()])
-                    q["filter"]["and"].append({"not": {"terms": {"form.meta.userID": ids}}})
+                ids = filter(None, [user['user_id'] for user in self.get_admins_and_demo_users()])
+                q["filter"]["and"].append({"not": {"terms": {"form.meta.userID": ids}}})
 
             q["sort"] = self.get_sorting_block() if self.get_sorting_block() else [{"form.meta.timeEnd" : {"order": "desc"}}]
             self.es_response = es_query(params={"domain.exact": self.domain}, q=q, es_url=XFORM_INDEX + '/xform/_search',
