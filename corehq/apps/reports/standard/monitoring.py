@@ -429,7 +429,7 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin):
     def get_user_link(self, user):
 
         params = {
-            'individual': user.get('user_id'),
+            'select_mw': user.get('user_id'),
             "form_unknown": self.request.GET.get("form_unknown", ''),
             "form_unknown_xmlns": self.request.GET.get("form_unknown_xmlns", ''),
             "form_status": self.request.GET.get("form_status", ''),

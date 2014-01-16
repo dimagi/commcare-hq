@@ -80,9 +80,9 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
             def any_in(a, b):
                 return any(i in b for i in a)
 
-            if self.individual:
+            if self.mobile_worker_ids:
                 q["filter"]["and"].append(
-                        {"terms": {"form.meta.userID": [self.individual]}})
+                        {"terms": {"form.meta.userID": [self.mobile_worker_ids[0]]}})
             else:
                 if self.request.GET.get('all_mws', 'off') != 'on' or any_in(
                         [str(HQUserType.DEMO_USER), str(HQUserType.ADMIN), str(HQUserType.UNKNOWN)],
