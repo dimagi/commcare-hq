@@ -45,6 +45,14 @@ class AccountingInterface(BaseCRUDAdminInterface):
                          account.account_type])
         return rows
 
+    @property
+    def report_context(self):
+        context = super(AccountingInterface, self).report_context
+        context.update(
+            hideButton=True,
+        )
+        return context
+
     #######
 
     name = "Billing Accounts"
@@ -105,6 +113,14 @@ class SubscriptionInterface(BaseCRUDAdminInterface):
                          mark_safe('<a href="./%d" class="btn">Edit</a>' % subscription.id)])
 
         return rows
+
+    @property
+    def report_context(self):
+        context = super(SubscriptionInterface, self).report_context
+        context.update(
+            hideButton=True,
+        )
+        return context
 
     #######
 
