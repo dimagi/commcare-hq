@@ -36,6 +36,23 @@ class NewBillingAccountView(TemplateView):
         return HttpResponseRedirect(reverse('manage_billing_account', args=(account.id,)))
 
 
+def adjust_credit(request, account_id):
+    account = BillingAccount.objects.get(id=account_id)
+    if request.POST['rate_type'] == 'Product':
+        credit_line, _ =\
+            CreditLine.objects.get_or_create(account=account,
+                product_rate=SoftwareProductRate.objects.get(id=request.POST['product']))
+    elif request.POST['rate_type'] == 'Feature':
+        credit_line, _ =\
+            CreditLine.objects.get_or_create(account=account,
+                feature_rate=FeatureRate.objects.get(id=request.POST['feature']))
+    else:
+        credit_line, _ = CreditLine.objects.get_or_create(account=account)
+    credit_line.adjust_credit_balance(Decimal(request.POST['amount']),
+                                      note=request.POST['note'],
+                                      )
+
+
 # TODO make sure to require superuser
 class ManageBillingAccountView(TemplateView):
     template_name = 'manage_account.html'
@@ -81,20 +98,7 @@ class ManageBillingAccountView(TemplateView):
             contact_info.country = self.request.POST['country']
             contact_info.save()
         elif 'adjust_credit' in self.request.POST:
-            account = BillingAccount.objects.get(id=self.args[0])
-            if self.request.POST['rate_type'] == 'Product':
-                credit_line, _ =\
-                    CreditLine.objects.get_or_create(account=account,
-                        product_rate=SoftwareProductRate.objects.get(id=self.request.POST['product']))
-            elif self.request.POST['rate_type'] == 'Feature':
-                credit_line, _ =\
-                    CreditLine.objects.get_or_create(account=account,
-                        feature_rate=FeatureRate.objects.get(id=self.request.POST['feature']))
-            else:
-                credit_line, _ = CreditLine.objects.get_or_create(account=account)
-            credit_line.adjust_credit_balance(Decimal(self.request.POST['amount']),
-                                              note=self.request.POST['note'],
-                                              )
+            adjust_credit(request, self.args[0])
 
         return self.get(request, *args, **kwargs)
 
