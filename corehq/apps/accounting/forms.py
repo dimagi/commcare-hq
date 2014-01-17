@@ -164,10 +164,10 @@ class CreditForm(forms.Form):
             Fieldset(
             'Adjust %s Credit' % 'Account Level' if is_account else 'Subscription Level',
                 'amount',
-                Div('note', data_bind="visible: false"),
-                'rate_type',
-                'product',
-                'feature',
+                'note',
+                Field('rate_type', data_bind="value: rateType"),
+                Div('product', data_bind="visible: showProduct"),
+                Div('feature', data_bind="visible: showFeature"),
             ),
             FormActions(
                 ButtonHolder(
@@ -197,6 +197,7 @@ class CreditForm(forms.Form):
             for feature_rate in feature_rate_set.all():
                 features.add(feature_rate.feature)
         return [(feature.id, feature.name) for feature in features]
+
 
 class CancelForm(forms.Form):
 
