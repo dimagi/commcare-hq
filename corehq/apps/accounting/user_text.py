@@ -49,6 +49,7 @@ def get_feature_name(feature_type, product):
         FeatureType.SMS: _("Monthly SMS"),
     }[feature_type]
 
+
 class PricingTableCategories(object):
     CORE = 'core'
     MOBILE = 'mobile'
@@ -59,7 +60,7 @@ class PricingTableCategories(object):
     SUPPORT = 'support'
 
     @classmethod
-    def get_wiki_link(cls, category):
+    def get_wiki_url(cls, category):
         return {
             cls.MOBILE: _("https://wiki.commcarehq.org/display/commcarepublic/CommCare+Plan+Details#CommCarePlanDetails-Mobile"),
             cls.WEB: _("https://wiki.commcarehq.org/display/commcarepublic/CommCare+Plan+Details#CommCarePlanDetails-Web"),
@@ -90,7 +91,6 @@ class PricingTableCategories(object):
         f = PricingTableFeatures
         return {
             cls.CORE: (
-                f.SOFTWARE_PLANS,
                 f.PRICING,
                 f.MOBILE_LIMIT,
             ),
@@ -240,7 +240,7 @@ class PricingTableFeatures(object):
     def get_columns(cls, feature):
         return {
             cls.SOFTWARE_PLANS: (Edition.COMMUNITY, Edition.STANDARD, Edition.PRO, Edition.ADVANCED, Edition.ENTERPRISE),
-            cls.PRICING: (_("Free"), _("$100 /month"), _("$500 /month"), _("$1,000 /month"), _('(<a href="http://www.dimagi.com/collaborate/contact-us/">Contact Us</a>')),
+            cls.PRICING: (_("Free"), _("$100 /month"), _("$500 /month"), _("$1,000 /month"), _('(<a href="http://www.dimagi.com/collaborate/contact-us/">Contact Us</a>)')),
             cls.MOBILE_LIMIT: (_("50"), _("100"), _("500"), _("1,000"), _("Unlimited / Discounted Pricing")),
             cls.JAVA_AND_ANDROID: (True, True, True, True, True),
             cls.MULTIMEDIA_SUPPORT: (True, True, True, True, True),
@@ -299,21 +299,43 @@ class PricingTable(object):
         ),
     }
 
+    FOOTER = (
+        ugettext_noop("*Local taxes and other country-specific fees not included. Dimagi provides pro-bono software "
+                      "plans on a needs basis. To learn more about this opportunity or see if your program qualifies, "
+                      "please contact information@dimagi.com."),
+        ugettext_noop("**Additional incoming and outgoing messages will be charged on a per-message fee, which "
+                      "depends on the telecommunications provider and country. Plaese note that this does not apply "
+                      "to the unlimited messages option, which falls under the category below."),
+        ugettext_noop("***For plans with unlimited incoming and outgoing messages, Dimagi charges an additional "
+                      "$.01 (US) per message on all incoming and outgoing messages."),
+    )
+
     @classmethod
     def get_table_by_product(cls, product):
         ensure_product(product)
         categories = cls.STRUCTURE_BY_PRODUCT[product]
-        table = []
+        editions = PricingTableFeatures.get_columns(PricingTableFeatures.SOFTWARE_PLANS)
+        edition_data = [(edition.lower(), DESC_BY_EDITION[edition]) for edition in editions]
+        table_sections = []
         for category in categories:
             features = PricingTableCategories.get_features(category)
             feature_rows = []
             for feature in features:
                 feature_rows.append({
                     'title': PricingTableFeatures.get_title(feature, product),
-                    'columns': PricingTableFeatures.get_columns(feature),
+                    'columns': [(editions[ind].lower(), col) for ind, col in
+                                enumerate(PricingTableFeatures.get_columns(feature))],
                 })
-            table.append({
+            table_sections.append({
                 'title': PricingTableCategories.get_title(category, product),
+                'url': PricingTableCategories.get_wiki_url(category),
                 'features': feature_rows,
-                'is_core': category == PricingTableCategories.CORE,
+                'category': category,
             })
+        table = {
+            'editions': edition_data,
+            'title': PricingTableFeatures.get_title(PricingTableFeatures.SOFTWARE_PLANS, product),
+            'sections': table_sections,
+            'footer': cls.FOOTER,
+        }
+        return table
