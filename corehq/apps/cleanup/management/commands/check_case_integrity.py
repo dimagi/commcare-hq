@@ -1,3 +1,4 @@
+from collections import defaultdict
 from optparse import make_option
 from couchdbkit import ResourceNotFound
 from django.core.management.base import BaseCommand
@@ -6,34 +7,60 @@ from casexml.apps.case.models import CommCareCase
 from corehq.elastic import stream_es_query, ES_URLS
 import dateutil.parser as dparser
 import csv
+from dimagi.utils.chunked import chunked
 
 
-def forms_with_cases(domain=None, since=None):
+def forms_with_cases(domain=None, since=None, chunksize=500):
     q = {"filter": {"and": [{"bool": {
             "must_not": {
                "missing": {
                     "field": "__retrieved_case_ids",
                     "existence": True,
                     "null_value": True}}}}]}}
+    q["sort"] = [{"domain.exact" : {"order": "asc"}}]
     params={"domain.exact": domain} if domain else {}
     if since:
         q["filter"]["and"][0]["bool"]["must"] = {
             "range": {
                 "received_on": {"from": since.strftime("%Y-%m-%d")}}}
-    return stream_es_query(params=params, q=q, es_url=ES_URLS["forms"], fields=["__retrieved_case_ids", "domain"])
+    return stream_es_query(params=params, q=q, es_url=ES_URLS["forms"], fields=["__retrieved_case_ids", "domain"], chunksize=chunksize)
 
-def check_case_for_form_updates(form_id, case_id, verbose=False):
-    if verbose:
-        print "checking case (%s) for form (%s)" % (case_id, form_id)
-    ret, error, case = False, "", None
-    try:
-        case = CommCareCase.get(case_id)
-        ret = case.form_in_actions(form_id)
-        if not ret:
-            error = "action_missing"
-    except ResourceNotFound:
-        error = "nonexistent_case"
-    return {"valid": ret, "error": error, "case": case}
+def case_ids_by_xform_id(xform_ids):
+    ret = defaultdict(list)
+    for res in CommCareCase.get_db().view('case/by_xform_id', keys=xform_ids, reduce=False):
+        ret[res["key"]].append(res["id"])
+    return dict(ret)
+
+def iter_forms_with_cases(domain, since, chunksize=500):
+    for form_list in chunked(forms_with_cases(domain, since), chunksize):
+        case_ids = []
+        for form in form_list:
+            f_case_ids = form["fields"]["__retrieved_case_ids"]
+            f_case_ids = [f_case_ids] if isinstance(f_case_ids, basestring) else f_case_ids
+            case_ids.extend(f_case_ids)
+
+        case_id_mapping = case_ids_by_xform_id([f["_id"] for f in form_list])
+        for form in form_list:
+            form_id, f_case_ids, f_domain = form["_id"], form["fields"]["__retrieved_case_ids"], form["fields"]["domain"]
+            for case_id in f_case_ids:
+                yield form_id, case_id, case_id in case_id_mapping.get(form_id, []), f_domain
+
+def handle_problematic_data(datalist_tup, csv_writer, verbose=False, rebuild=False):
+    case_mapping = dict((c["_id"], bool(c)) for c in (CommCareCase.bulk_get_lite([d[1] for d in datalist_tup], wrap=False)))
+    for domain, case_id, form_id in datalist_tup:
+        error = "action_missing" if case_mapping.get(case_id) else "nonexistent_case"
+        csv_writer.writerow([domain, case_id, form_id, error])
+        if verbose and error == "nonexistent_case":
+            print "Case (%s) from form (%s) does not exist" % (case_id, form_id)
+        elif verbose and error == "action_missing":
+            print "Case (%s) missing action for form (%s)" % (case_id, form_id)
+        if rebuild:
+            if verbose:
+                print "rebuilding case (%s) from scratch" % case_id
+            try:
+                rebuild_case(case_id)
+            except Exception as e:
+                print "Case Rebuild Failure: %s" % e
 
 
 class Command(BaseCommand):
@@ -44,9 +71,11 @@ class Command(BaseCommand):
         make_option('-s', '--since',
             help="Begin check at this date."),
         make_option('-f', '--filename',
-            help="Begin check at this date."),
+            help="Save output to this file."),
         make_option('-r', '--rebuild', action="store_true",
             help="Rebuild cases that were found to be corrupt"),
+        make_option('-c', '--chunk',
+            help="Set the chunk size"),
         make_option('--verbose', action="store_true",
             help="Verbose"),
         )
@@ -55,31 +84,23 @@ class Command(BaseCommand):
         domain = args[0] if len(args) == 1 else None
         since = dparser.parse(options["since"], fuzzy=True) if options.get("since") else None
         filename = options.get("filename") or ("case_integrity" + ("_%s" % domain if domain else ""))
+        chunksize = options.get("chunk") or 500
         if not filename.endswith(".csv"):
             filename = "%s.csv" % filename
         rebuild, verbose = options.get("rebuild"), options.get("verbose")
         print "writing to file: %s" % filename
 
         with open(filename, 'wb+') as csvfile:
-            csv_writer = csv.writer(csvfile, delimiter=' ',
+            csv_writer = csv.writer(csvfile, delimiter=',',
                                     quotechar='|', quoting=csv.QUOTE_MINIMAL)
             csv_writer.writerow(['Domain', 'Case ID', 'Form ID', 'Error'])
 
-            for form in forms_with_cases(domain, since):
-                form_id, case_ids, f_domain = form["_id"], form["fields"]["__retrieved_case_ids"], form["fields"]["domain"]
-                case_ids = [case_ids] if isinstance(case_ids, basestring) else case_ids
-                for case_id in case_ids:
-                    validation = check_case_for_form_updates(form_id, case_id, verbose)
-                    if not validation["valid"]:
-                        csv_writer.writerow([f_domain, case_id, form_id, validation["error"]])
-                        if verbose and validation["error"] == "nonexistent_case":
-                            print "Case (%s) from form (%s) does not exist" % (case_id, form_id)
-                        elif verbose and validation["error"] == "action_missing":
-                            print "Case (%s) missing action for form (%s)" % (case_id, form_id)
-                        if rebuild:
-                            if verbose:
-                                print "rebuilding case (%s) from scratch" % case_id
-                            try:
-                                rebuild_case(validation["case"] or case_id)
-                            except Exception as e:
-                                print "Case Rebuild Failure: %s" % e
+            problematic = []
+            for form_id, case_id, action_exists, f_domain in iter_forms_with_cases(domain, since, chunksize):
+                if not action_exists:
+                    problematic.append((f_domain, case_id, form_id))
+
+                if len(problematic) > chunksize:
+                    handle_problematic_data(problematic, csv_writer, verbose=verbose, rebuild=rebuild)
+                    problematic = []
+            handle_problematic_data(problematic, csv_writer, verbose=verbose, rebuild=rebuild)
