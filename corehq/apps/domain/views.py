@@ -8,7 +8,10 @@ from django.contrib.sites.models import Site
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
+
 from corehq import toggles
+from toggle.decorators import require_toggle
+
 from corehq.apps.accounting.models import Subscription, CreditLine, SoftwarePlanVisibility, SoftwareProductType
 from corehq.apps.accounting.usage import FeatureUsage
 from corehq.apps.accounting.user_text import DESC_BY_EDITION, get_feature_name
@@ -21,7 +24,7 @@ from django.shortcuts import redirect, render
 from corehq.apps.domain.calculations import CALCS, CALC_FNS, CALC_ORDER, dom_calc
 
 from corehq.apps.domain.decorators import (domain_admin_required,
-    login_required, require_superuser, login_and_domain_required, require_toggle)
+    login_required, require_superuser, login_and_domain_required)
 from corehq.apps.domain.forms import DomainGlobalSettingsForm,\
     DomainMetadataForm, SnapshotSettingsForm, SnapshotApplicationForm, DomainDeploymentForm, DomainInternalForm
 from corehq.apps.domain.models import Domain, LICENSES
@@ -48,6 +51,8 @@ from django.utils.translation import ugettext as _, ugettext_noop
 
 # Domain not required here - we could be selecting it for the first time. See notes domain.decorators
 # about why we need this custom login_required decorator
+
+
 @login_required
 def select(request, domain_select_template='domain/select.html'):
 
