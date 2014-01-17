@@ -56,7 +56,7 @@ def adjust_credit(credit_form, account_id=None, subscription_id=None):
         credit_line_kwargs = dict(account=subscription.account,
                                   subscription=subscription)
     else:
-        raise ValidationError('invalid credit adjustment')
+        raise ValueError('invalid credit adjustment')
     if credit_form.cleaned_data['rate_type'] == 'Product':
         credit_line_kwargs.update(
             product_rate=SoftwareProductRate.objects.get(id=credit_form.cleaned_data['product']))
@@ -199,10 +199,23 @@ class EditSubscriptionView(TemplateView):
             return self.subscription_form
         return SubscriptionForm(subscription)
 
+    @property
+    @memoized
+    def credit_form(self):
+        subscription = Subscription.objects.get(id=self.args[0])
+        if self.request.method == 'POST':
+            return CreditForm(subscription.id, False, self.request.POST)
+        return CreditForm(subscription.id, False)
+
+    def get_appropriate_credit_form(self, subscription):
+        if (not self.credit_form.is_bound) or (not self.credit_form.is_valid()):
+            return self.credit_form
+        return CreditForm(subscription.id, False)
+
     def get_context_data(self):
         subscription = Subscription.objects.get(id=self.args[0])
         return dict(cancel_form=CancelForm(),
-                    credit_form=CreditForm(subscription.id, False),
+                    credit_form=self.get_appropriate_credit_form(subscription),
                     credit_list=CreditLine.objects.filter(subscription=subscription),
                     form=self.get_appropriate_subscription_form(subscription),
                     parent_link='<a href="%s">%s<a>' % (SubscriptionInterface.get_url(), SubscriptionInterface.name),
@@ -213,8 +226,8 @@ class EditSubscriptionView(TemplateView):
         # TODO validate data
         if 'set_subscription' in self.request.POST and self.subscription_form.is_valid():
             self.set_subscription()
-        elif 'adjust_credit' in self.request.POST:
-            adjust_credit(request, subscription_id=self.args[0])
+        elif 'adjust_credit' in self.request.POST and self.credit_form.is_valid():
+            adjust_credit(self.credit_form, subscription_id=self.args[0])
         elif 'cancel_subscription' in self.request.POST:
             self.cancel_subscription()
         return self.get(request, *args, **kwargs)
