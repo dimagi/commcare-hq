@@ -114,6 +114,7 @@ class SubscriptionForm(forms.Form):
             if subscription.date_start is not None \
                 and subscription.date_start <= datetime.date.today():
                 start_date_kwargs.update(disabled)
+                self.fields['start_date'].required = False
             if subscription.date_end is not None \
                 and subscription.date_end <= datetime.date.today():
                 end_date_kwargs.update(disabled)
@@ -121,7 +122,9 @@ class SubscriptionForm(forms.Form):
                 and subscription.date_delay_invoicing <= datetime.date.today():
                 delay_invoice_until_kwargs.update(disabled)
             plan_kwargs.update(disabled)
+            self.fields['plan'].required = False
             domain_kwargs.update(disabled)
+            self.fields['domain'].required = False
         self.helper = FormHelper()
         self.helper.layout = Layout(
             Fieldset(
