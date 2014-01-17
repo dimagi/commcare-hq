@@ -192,9 +192,14 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
     return ret_data
 
 
-def es_wrapper(index, domain=None, q=None, doc_type=None, fields=None, start_at=None, size=None):
+def es_wrapper(index, domain=None, q=None, doc_type=None, fields=None,
+        start_at=None, size=None, sort_by=None, order=None):
     """
     This is a flat wrapper for es_query.
+    
+    To sort, specify the path to the relevant field
+    and the order ("asc" or "desc")
+    eg: sort_by=form.meta.timeStart, order="asc"
     """
     if index not in ES_URLS:
         msg = "%s is not a valid ES index.  Available options are: %s" % (
@@ -226,6 +231,10 @@ def es_wrapper(index, domain=None, q=None, doc_type=None, fields=None, start_at=
         filters.append(doc_type_filter)
     if not doc_type and not domain:
         filters.append(match_all)
+    if sort_by:
+        assert(order in ["asc", "desc"]),\
+            'To sort, you must specify the order as "asc" or "desc"'
+        query["sort"] = [{sort_by: {"order": order}}]
 
     # make query
     res = es_query(

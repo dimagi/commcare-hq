@@ -31,13 +31,17 @@ from django.utils.translation import ugettext_noop
 class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
     exportable = True
 
-    def get_user_link(self, user):
+    def get_raw_user_link(self, user):
         from corehq.apps.reports.standard.cases.basic import CaseListReport
         user_link_template = '<a href="%(link)s?individual=%(user_id)s">%(username)s</a>'
         user_link = user_link_template % {"link": "%s%s" % (get_url_base(),
                                                             CaseListReport.get_url(domain=self.domain)),
                                           "user_id": user.get('user_id'),
                                           "username": user.get('username_in_report')}
+        return user_link
+
+    def get_user_link(self, user):
+        user_link = self.get_raw_user_link(user)
         return self.table_cell(user.get('raw_username'), user_link)
 
     @property
@@ -355,6 +359,7 @@ class DailyFormStatsReport(ElasticProjectInspectionReport, WorkerMonitoringRepor
     ajax_pagination = True
     emailable = True
     is_cacheable = False
+    # default_sort = 
 
     @property
     @memoized
@@ -392,15 +397,15 @@ class DailyFormStatsReport(ElasticProjectInspectionReport, WorkerMonitoringRepor
             simplified=True
         )
 
-    def get_row_from_id(self, user_id):
+    def get_row_from_user(self, user):
         date_field = ("received_on" if self.by_submission_time
             else "form.meta.timeStart")
         facets = {"date": {"date_histogram": {
             "field": date_field,
             "interval": "day"
         }}}
-        gte = self.datespan.startdate_param.strftime("%Y-%m-%d")
-        lte = self.datespan.enddate_param.strftime("%Y-%m-%d")
+        gte = self.datespan.startdate_param
+        lte = self.datespan.enddate_param
         query = {"filter": {"range": {
                     date_field: {
                         "gte": gte,
@@ -408,13 +413,13 @@ class DailyFormStatsReport(ElasticProjectInspectionReport, WorkerMonitoringRepor
                 }}}
         res = es_query(
             q=query,
-            params={'xform.form.meta.userID': user_id},
+            params={'xform.form.meta.userID': user.get('user_id')},
             facets=facets,
             es_url=ES_URLS["forms"],
             size=0,
             fields=None,
         )
-        assert('error' not in res), "Bad ES query for of form: %s" % user_id
+        assert('error' not in res), "Bad ES query for of form: %s" % user.get('user_id')
         def parse(entry):
             date = datetime.datetime.fromtimestamp(entry['time']/1000)
             return (date.strftime(DATE_FORMAT), entry['count'])
@@ -423,20 +428,43 @@ class DailyFormStatsReport(ElasticProjectInspectionReport, WorkerMonitoringRepor
             counts_by_date.get(date.strftime(DATE_FORMAT), 0)
             for date in self.dates
         ]
-        return ['Ethan'] + date_cols + [sum(date_cols)]
+        return [self.get_raw_user_link(user)] + date_cols + [sum(date_cols)]
+
+    def users_by_username(self, order):
+        # TODO: convert this and util._report_user_dict to use just a user dict
+        return map(
+            util._report_user_dict,
+            CommCareUser.es_fakes(self.domain, order=order,
+                start_at=self.pagination.start, size=self.pagination.count)
+        )
+
+    def users_by_date(self, order):
+        return self.users_by_username(order)
+
+    def users_by_total(self, order):
+        return self.users_by_username(order)
+
+    @property
+    def column_count(self):
+        return len(self.dates) + 2
 
     @property
     def rows(self):
-        self.submission_completion = "submission" if self.by_submission_time else "completion"
-        ids = ['88772488c46f885f1f07aa8b785aa010'] * self.pagination.count
-        rows = [self.get_row_from_id(id) for id in ids]
+        sort_col = self.request_params.get('iSortCol_0', 0)
+        totals_col = self.column_count - 1
+        if sort_col == totals_col:
+            user_fn = self.users_by_total
+        elif 0 < sort_col < totals_col:
+            user_fn = self.users_by_date
+        else:
+            user_fn = self.users_by_username
+        users = user_fn(self.request_params.get('sSortDir_0'))
+        rows = [self.get_row_from_user(user) for user in users]
         return rows
 
     @property
     def old_rows(self):
         # not in use
-        from pprint import pprint
-        pprint(self.request.GET.dict())
         key = make_form_couch_key(self.domain, by_submission_time=self.by_submission_time)
         startkey = key + [
             self.datespan.startdate_param_utc
