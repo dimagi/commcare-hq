@@ -18,6 +18,7 @@
                 <th>{% trans "Start Date" %}</th>
                 <th>{% trans "End Date" %}</th>
                 <th>{% trans "Currently Active" %}</th>
+                <th>{% trans "Salesforce Contract ID" %}</th>
                 <th>{% trans "Last Invoice" %}</th>
                 <th>{% trans "Delay Invoicing Until" %}</th>
                 <th>{% trans "Edit" %}</th>
@@ -31,6 +32,7 @@
                     <td>{{ subscription.date_start }}</td>
                     <td>{{ subscription.date_end }}</td>
                     <td>{{ subscription.is_active }}</td>
+                    <td>{{ subscription.salesforce_contract_id }}</td>
                     <td>{{ invoice }}</td>
                     <td>{{ subscription.date_delay_invoicing }}</td>
                     <td><a href="../../subscriptions/{{ subscription.id }}" class="btn">Edit</a></td>
