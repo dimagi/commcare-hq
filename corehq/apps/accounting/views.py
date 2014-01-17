@@ -186,19 +186,32 @@ class EditSubscriptionView(TemplateView):
     template_name = 'edit_subscription.html'
     name = 'edit_subscription'
 
+    @property
+    @memoized
+    def subscription_form(self):
+        subscription = Subscription.objects.get(id=self.args[0])
+        if self.request.method == 'POST':
+            return SubscriptionForm(subscription, self.request.POST)
+        return SubscriptionForm(subscription)
+
+    def get_appropriate_subscription_form(self, subscription):
+        if (not self.subscription_form.is_bound) or (not self.subscription_form.is_valid()):
+            return self.subscription_form
+        return SubscriptionForm(subscription)
+
     def get_context_data(self):
         subscription = Subscription.objects.get(id=self.args[0])
         return dict(cancel_form=CancelForm(),
                     credit_form=CreditForm(subscription.id, False),
                     credit_list=CreditLine.objects.filter(subscription=subscription),
-                    form=SubscriptionForm(subscription),
+                    form=self.get_appropriate_subscription_form(subscription),
                     parent_link='<a href="%s">%s<a>' % (SubscriptionInterface.get_url(), SubscriptionInterface.name),
                     subscription=subscription
                     )
 
     def post(self, request, *args, **kwargs):
         # TODO validate data
-        if 'set_subscription' in self.request.POST:
+        if 'set_subscription' in self.request.POST and self.subscription_form.is_valid():
             self.set_subscription()
         elif 'adjust_credit' in self.request.POST:
             adjust_credit(request, subscription_id=self.args[0])
@@ -207,14 +220,14 @@ class EditSubscriptionView(TemplateView):
         return self.get(request, *args, **kwargs)
 
     def set_subscription(self):
-        #TODO - allow user to remove dates that haven't already passed
         subscription = Subscription.objects.get(id=self.args[0])
-        subscription.date_start = \
-            datestring_to_date(self.request.POST.get('start_date')) or subscription.date_start
-        subscription.date_end = \
-            datestring_to_date(self.request.POST.get('end_date')) or subscription.date_end
-        subscription.date_delay_invoicing = \
-            datestring_to_date(self.request.POST.get('delay_invoice_until')) or subscription.date_delay_invoicing
+        if self.subscription_form.fields['start_date'].required:
+            subscription.date_start = self.subscription_form.cleaned_data['start_date']
+        if subscription.date_end is None or subscription.date_end > datetime.date.today():
+            subscription.date_end = self.subscription_form.cleaned_data['end_date']
+        if subscription.date_delay_invoicing is None \
+            or subscription.date_delay_invoicing > datetime.date.today():
+            subscription.date_delay_invoicing = self.subscription_form.cleaned_data['delay_invoice_until']
         subscription.save()
 
     def cancel_subscription(self):
