@@ -589,6 +589,8 @@ def release_build(request, domain, app_id, saved_app_id):
         raise Http404
     saved_app.is_released = is_released
     saved_app.save(increment_version=False)
+    from corehq.apps.app_manager.signals import app_post_release
+    app_post_release.send(Application, application=saved_app)
     if ajax:
         return json_response({'is_released': is_released})
     else:
