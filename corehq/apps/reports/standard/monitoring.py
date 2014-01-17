@@ -12,10 +12,10 @@ from corehq.apps.reports.standard import ProjectReportParametersMixin, \
     DatespanMixin, ProjectReport, DATE_FORMAT
 from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, FormsByApplicationFilter, SingleFormByApplicationFilter
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType, DataTablesColumnGroup
-from corehq.apps.reports.generic import GenericTabularReport
+from corehq.apps.reports.generic import GenericTabularReport, ElasticProjectInspectionReport
 from corehq.apps.reports.util import make_form_couch_key, friendly_timedelta, format_datatables_data
 from corehq.apps.users.models import CommCareUser
-from corehq.elastic import es_query, ADD_TO_ES_FILTER
+from corehq.elastic import es_query, ES_URLS, ADD_TO_ES_FILTER
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from dimagi.utils.couch.database import get_db
@@ -340,7 +340,8 @@ class SubmissionsByFormReport(WorkerMonitoringReportTableBase, MultiFormDrilldow
         return data['value'] if data else 0
 
 
-class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissionTimeMixin, DatespanMixin):
+class DailyFormStatsReport(ElasticProjectInspectionReport, WorkerMonitoringReportTableBase,
+        CompletionOrSubmissionTimeMixin, DatespanMixin):
     slug = "daily_form_stats"
     name = ugettext_noop("Daily Form Activity")
 
@@ -351,11 +352,9 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
 
     description = ugettext_noop("Number of submissions per day.")
 
-    fix_left_col = True
+    ajax_pagination = True
     emailable = True
-    is_cacheable = True
-
-    # todo: get mike to handle deleted reports gracefully
+    is_cacheable = False
 
     @property
     @memoized
@@ -374,26 +373,127 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
         return headers
 
     @property
+    def total_records(self):
+        return 200
+
+    @property
+    def users(self):
+        if self.filter_group_name and not (self.group_id or self.individual):
+            group = Group.by_name(self.domain, self.filter_group_name)
+        else:
+            group = self.group
+
+        user_ids = [self.individual]
+
+        return self.get_all_users_by_domain(
+            group=group,
+            user_ids=tuple(user_ids),
+            user_filter=tuple(self.user_filter),
+            simplified=True
+        )
+
+    def get_row_from_id(self, user_id):
+        date_field = ("received_on" if self.by_submission_time
+            else "form.meta.timeStart")
+        facets = {"date": {"date_histogram": {
+            "field": date_field,
+            "interval": "day"
+        }}}
+        gte = self.datespan.startdate_param.strftime("%Y-%m-%d")
+        lte = self.datespan.enddate_param.strftime("%Y-%m-%d")
+        query = {"filter": {"range": {
+                    date_field: {
+                        "gte": gte,
+                        "lte": lte}
+                }}}
+        res = es_query(
+            q=query,
+            params={'xform.form.meta.userID': user_id},
+            facets=facets,
+            es_url=ES_URLS["forms"],
+            size=0,
+            fields=None,
+        )
+        assert('error' not in res), "Bad ES query for of form: %s" % user_id
+        def parse(entry):
+            date = datetime.datetime.fromtimestamp(entry['time']/1000)
+            return (date.strftime(DATE_FORMAT), entry['count'])
+        counts_by_date = dict(map(parse, res['facets']['date']['entries']))
+        date_cols = [
+            counts_by_date.get(date.strftime(DATE_FORMAT), 0)
+            for date in self.dates
+        ]
+        return ['Ethan'] + date_cols + [sum(date_cols)]
+
+    @property
     def rows(self):
+        self.submission_completion = "submission" if self.by_submission_time else "completion"
+        ids = ['88772488c46f885f1f07aa8b785aa010'] * self.pagination.count
+        rows = [self.get_row_from_id(id) for id in ids]
+        return rows
+
+    @property
+    def old_rows(self):
+        # not in use
+        from pprint import pprint
+        pprint(self.request.GET.dict())
         key = make_form_couch_key(self.domain, by_submission_time=self.by_submission_time)
+        startkey = key + [
+            self.datespan.startdate_param_utc
+            if self.by_submission_time
+            else self.datespan.startdate_param
+        ]
+        endkey = key + [
+            self.datespan.enddate_param_utc
+            if self.by_submission_time
+            else self.datespan.enddate_param
+        ]
+        # GET ALL FORMS
         results = get_db().view("reports_forms/all_forms",
             reduce=False,
-            startkey=key+[self.datespan.startdate_param_utc if self.by_submission_time else self.datespan.startdate_param],
-            endkey=key+[self.datespan.enddate_param_utc if self.by_submission_time else self.datespan.enddate_param]
+            startkey=startkey,
+            endkey=endkey,
+            # limit=self.pagination.count,
+            # skip=self.pagination.start,
         ).all()
+        # list of:
+        # {'id': '8063dff5-460b-46f2-b4d0-5871abfd97d4',
+        # 'key': ['completion', 'mikesproject', '2012-12-06T16:14:10Z'],
+        # 'value': {'app_id': 'fe8481a39c3738749e6a4766fca99efd',
+                # 'completion_time': '2012-12-06T16:14:10Z',
+                # 'duration': 18000,
+                # 'start_time': '2012-12-06T16:13:52Z',
+                # 'submission_time': '2012-12-06T21:14:12Z',
+                # 'time': '2012-12-06T21:14:12Z',
+                # 'user_id': 'QUZLAXSRQ6RXY1CSNQKWWRE4H',
+                # 'username': 'admin',
+                # 'xmlns': 'http://openrosa.org/formdesigner/3A7CC07C-551C-4651-AB1A-D60BE3017485'}}
 
+        # {01231: user, 94938: user}
         user_map = dict([(user.get('user_id'), i) for (i, user) in enumerate(self.users)])
+        # {date_string: number}
         date_map = dict([(date.strftime(DATE_FORMAT), i+1) for (i,date) in enumerate(self.dates)])
-        rows = [[0]*(2+len(date_map)) for _tmp in range(len(self.users))]
-        total_row = [0]*(2+len(date_map))
 
+        # rows = [[0]*(2+len(date_map)) for _tmp in range(len(self.users))]
+        # total_row = [0]*(2+len(date_map))
+
+        column_count = 2+len(date_map)
+        total_row = [0]*column_count
+        # rows = [[0]*column_count]*self.pagination.count
+        rows = [[0]*(2+len(date_map)) for _tmp in range(len(self.users))]
+
+        # FOR EACH FORM
         for result in results:
+            # GET FORM DATE
             _tmp, _domain, date = result['key']
             date = dateutil.parser.parse(date)
             tz_offset = self.timezone.localize(self.datespan.enddate).strftime("%z")
             date = date + datetime.timedelta(hours=int(tz_offset[0:3]), minutes=int(tz_offset[0]+tz_offset[3:5]))
             date = date.isoformat()
+
             val = result['value']
+
+            # MATCH UP USERS WITH FORMS
             user_id = val.get("user_id")
             if user_id in self.user_ids:
                 date_key = date_map.get(date[0:10], None)
@@ -401,9 +501,14 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
                     rows[user_map[user_id]][date_key] += 1
 
         for i, user in enumerate(self.users):
+            # link to user page
             rows[i][0] = self.get_user_link(user)
+
+            # add row total
             total = sum(rows[i][1:-1])
             rows[i][-1] = total
+
+            # Add row to total row
             total_row[1:-1] = [total_row[ind+1]+val for ind, val in enumerate(rows[i][1:-1])]
             total_row[-1] += total
 
@@ -412,7 +517,7 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
 
         for row in rows:
             row[1:] = [self.table_cell(val) for val in row[1:]]
-        return rows
+        return [[d['html'] for d in row] for row in rows]
 
 
 class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin):
