@@ -28,8 +28,10 @@ def block_type(form):
 def case_date_group(form):
     return form.received_on
 
+
 def case_date(case):
     return case.opened_on
+
 
 class BirthPreparedness(fluff.Calculator):
     """
@@ -59,22 +61,36 @@ class BirthPreparedness(fluff.Calculator):
                 if form.form.get(window) == '1':
                     yield case_date_group(form)
 
+
 months = (('4', '1'), ('5', '2'), ('6', '3'), ('7', '4'), ('8', '5'), ('9', '6'),)
 
-def is_equals_one(form, prop1, prop2, s=0, e=6):
-        check = True
-        for (k, v) in months[s:e]:
-            p1 = prop1 % k
-            p2 = prop2 % v
-            if p1 not in form.form:
-                check = False
-            else:
-                if p2 not in form[p1]:
-                    check = False
-                else:
-                    if form.form[p1][p2] != '1':
-                        check = False
-        return check
+
+def is_equals(form, prop1, prop2, start=0, end=6, count=0):
+    c = 0
+    check = False
+    for (k, v) in months[start:end]:
+        p1 = prop1 % k
+        p2 = prop2 % v
+        if p1 in form.form and p2 in form.form[p1] and form.form[p1][p2] == '1':
+            c += 1
+            check = True
+    return check if c > count else False
+
+
+def num_of_children(form, prop1, prop2, num_in_condition, children):
+    c = 0
+    for num in children:
+        p1 = prop1 % str(num)
+        p2 = prop2 % str(num)
+        if num_in_condition == 'exist':
+            if p1 in form.form and p2 in form.form[p1] and form.form[p1][p2]:
+                c += 1
+        else:
+
+            if p1 in form.form and p2 in form.form[p1] and int(form.form[p1][p2]) > num_in_condition:
+                c += 1
+    return c
+
 
 class VhndMonthly(fluff.Calculator):
 
@@ -83,12 +99,95 @@ class VhndMonthly(fluff.Calculator):
         is_vhnd = False
         for form in case.get_forms():
             if form.xmlns == VHND_XMLNS:
-                is_vhnd = is_equals_one(form, "pregnancy_month_%s", "attendance_vhnd_%s")
-            if form.xmlns in [CFU1_XMLNS, CFU2_XMLNS, CFU3_XMLNS]:
+                is_vhnd = is_equals(form, "pregnancy_month_%s", "attendance_vhnd_%s")
+            elif form.xmlns in [CFU1_XMLNS, CFU2_XMLNS, CFU3_XMLNS]:
                 if form.form['child_1']['child1_attendance_vhnd'] == 1:
                     is_vhnd = True
         if is_vhnd:
             yield case_date(case)
+
+
+def check_status(form, status):
+        if 'interpret_grade' in form and form['interpret_grade'].upper() == status:
+            status = True
+        elif 'interpret_grade_2' in form and form['interpret_grade_2'].upper() == status:
+            status = True
+        elif 'interpret_grade_3' in form and form['interpret_grade_3'].upper() == status:
+            status = True
+        return status
+
+
+class Status(fluff.Calculator):
+
+    def __init__(self, status, *args, **kwargs):
+        self.status = status
+        super(Status, self).__init__(*args, **kwargs)
+
+    @fluff.date_emitter
+    def total(self, case):
+        is_status = False
+        for form in case.get_forms():
+            if form.xmlns in [CFU1_XMLNS, CFU2_XMLNS, CFU3_XMLNS]:
+                is_status = check_status(form, is_status)
+
+        if False:
+            yield case_date(case)
+
+
+class Weight(fluff.Calculator):
+
+    def __init__(self, count=0, *args, **kwargs):
+        self.count = count
+        super(Weight, self).__init__(*args, **kwargs)
+
+    @fluff.date_emitter
+    def total(self, case):
+        weight = False
+        for form in case.get_forms():
+            if form.xmlns == VHND_XMLNS:
+                weight = is_equals(form, "pregnancy_month_%s", "mother_weight_%s", count=self.count)
+        if weight:
+            yield case_date(case)
+
+
+class BreastFed(fluff.Calculator):
+
+    @fluff.date_emitter
+    def total(self, case):
+        helpful_obj = {
+            CFU1_XMLNS: 1,
+            CFU2_XMLNS: 2,
+            CFU3_XMLNS: 3
+        }
+        birth_amount = None
+        for form in case.get_forms():
+            if form.xmlns == DELIVERY_XMLNS and 'live_birth_amount' in form:
+                birth_amount = form['live_birth_amount']
+        if birth_amount:
+            for form in case.get_forms():
+                if form.xmlns in [CFU1_XMLNS, CFU2_XMLNS, CFU3_XMLNS] and helpful_obj[form.xmlns] <= birth_amount:
+                    yield {
+                        'date': case_date(case),
+                        'value': num_of_children(form, 'child_%s', 'child1_child_excbreastfed', 0, range(1, (birth_amount + 1)))
+                    }
+
+
+class ChildrenInfo(fluff.Calculator):
+
+    def __init__(self, prop, num_in_condition=0, *args, **kwargs):
+        self.num_in_condition = num_in_condition
+        self.prop1 = 'child_%s'
+        self.prop2 = prop
+        super(ChildrenInfo, self).__init__(*args, **kwargs)
+
+    @fluff.date_emitter
+    def total(self, case):
+        for form in case.get_forms():
+            if form.xmlns in [CFU1_XMLNS, CFU2_XMLNS, CFU3_XMLNS]:
+                yield {
+                    'date': case_date(case),
+                    'value': num_of_children(form, self.prop1, self.prop2, self.num_in_condition, [1, 2, 3])
+                }
 
 
 class IfaTablets(fluff.Calculator):
@@ -98,7 +197,7 @@ class IfaTablets(fluff.Calculator):
         is_ifa_tablets = False
         for form in case.get_forms():
             if form.xmlns == VHND_XMLNS:
-                is_ifa_tablets = is_equals_one(form, "pregnancy_month_%s", "ifa_receive_%s", 3, 6)
+                is_ifa_tablets = is_equals(form, "pregnancy_month_%s", "ifa_receive_%s", start=3, end=6)
         if is_ifa_tablets:
             yield case_date(case)
 
@@ -133,7 +232,6 @@ class LiveChildren(fluff.Calculator):
                     yield case_date(case)
 
 
-
 class Delivery(fluff.Calculator):
     """
     Delivery Form
@@ -155,7 +253,7 @@ def account_number_from_form(form):
     case = get_case(form)
     return case.get_case_property("bank_account_number")
 
-       
+
 class ChildFollowup(fluff.Calculator):
     """
     Child Followup Form
@@ -174,8 +272,8 @@ class ChildFollowup(fluff.Calculator):
         if form.xmlns == CHILD_FOLLOWUP_XMLNS:
             followed_up = False
             for prop in [
-                'window%d_child%d' % (window, child)
-                for window in range(3, 15) for child in range(1, 4)
+                        'window%d_child%d' % (window, child)
+                        for window in range(3, 15) for child in range(1, 4)
             ]:
                 if form.form.get(prop):# == '1':
                     followed_up = True
@@ -211,8 +309,8 @@ class ChildSpacing(fluff.Calculator):
         if not dates:
             return 0
         latest = sorted(dates).pop()
-        two_year = latest + datetime.timedelta(365*2)
-        three_year = latest + datetime.timedelta(365*3)
+        two_year = latest + datetime.timedelta(365 * 2)
+        three_year = latest + datetime.timedelta(365 * 3)
         FIXTURES = get_fixture_data()
         if self.in_range(two_year):
             return FIXTURES['two_year_spacing']
@@ -231,8 +329,10 @@ class ChildSpacing(fluff.Calculator):
             endkey=shared_key + [{}],
             **q_args
         ).all()
+
         def convert_date(date_str):
             return datetime.date(*[int(d) for d in date_str.split('-')])
+
         dates = [convert_date(delivery['key'][-1]) for delivery in query]
         return self.get_cash_amt(dates)
 
