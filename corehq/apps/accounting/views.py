@@ -17,10 +17,31 @@ def accounting_default(request):
     return HttpResponseRedirect(AccountingInterface.get_url())
 
 
-class NewBillingAccountView(BaseSectionPageView):
+class AccountingSectionView(BaseSectionPageView):
     template_name = 'accounting/accounts.html'
-    name = 'new_billing_account'
     section_name = 'Accounting'
+    name = ''
+
+    @property
+    def section_url(self):
+        return reverse('accounting_default')
+
+    @property
+    def page_context(self):
+        return {}
+
+
+class BillingAccountsSectionView(AccountingSectionView):
+    @property
+    def parent_pages(self):
+        return [{
+            'title': AccountingInterface.name,
+            'url': AccountingInterface.get_url(),
+        }]
+
+
+class NewBillingAccountView(BillingAccountsSectionView):
+    name = 'new_billing_account'
 
     @property
     @memoized
@@ -36,27 +57,12 @@ class NewBillingAccountView(BaseSectionPageView):
         return context
 
     @property
-    def page_context(self):
-        return {}
-
-    @property
     def page_name(self):
         return 'New Billing Account'
 
     @property
     def page_url(self):
         return reverse(self.name)
-
-    @property
-    def parent_pages(self):
-        return [{
-            'title': AccountingInterface.name,
-            'url': AccountingInterface.get_url(),
-        }]
-
-    @property
-    def section_url(self):
-        return reverse('accounting_default')
 
     def post(self, request, *args, **kwargs):
         if self.account_form.is_valid():
@@ -99,10 +105,8 @@ def adjust_credit(credit_form, account_id=None, subscription_id=None):
 
 
 # TODO make sure to require superuser
-class ManageBillingAccountView(BaseSectionPageView):
-    template_name = 'accounting/accounts.html'
+class ManageBillingAccountView(BillingAccountsSectionView):
     name = 'manage_billing_account'
-    section_name = 'Accounting'
 
     @property
     @memoized
@@ -145,27 +149,12 @@ class ManageBillingAccountView(BaseSectionPageView):
         return context
 
     @property
-    def page_context(self):
-        return {}
-
-    @property
     def page_name(self):
         return 'Manage Billing Account'
 
     @property
     def page_url(self):
         return reverse(self.name, args=(self.args[0],))
-
-    @property
-    def parent_pages(self):
-        return [{
-            'title': AccountingInterface.name,
-            'url': AccountingInterface.get_url(),
-        }]
-
-    @property
-    def section_url(self):
-        return reverse('accounting_default')
 
     def post(self, request, *args, **kwargs):
         if 'account' in self.request.POST and self.account_form.is_valid():
