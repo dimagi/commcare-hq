@@ -27,7 +27,7 @@ INDEXED_GROUPS = dict((domain, {}) for domain in DOMAINS)
 
 @memoized
 def indexed_fixtures():
-    return {domain: FixtureDataItem.get_indexed_items(domain, "site", "site_id") for domain in DOMAINS}
+    return dict((domain, FixtureDataItem.get_indexed_items(domain, "site", "site_id")) for domain in DOMAINS)
 
 
 def update_groups_index(domain):
