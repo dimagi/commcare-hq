@@ -1,4 +1,5 @@
 import datetime
+from decimal import Decimal
 import logging
 from couchdbkit import ResourceNotFound
 import dateutil
@@ -7,7 +8,14 @@ from django.contrib.sites.models import Site
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
-from corehq import ProjectSettingsTab
+
+from corehq import toggles
+from toggle.decorators import require_toggle
+
+from corehq.apps.accounting.models import Subscription, CreditLine, SoftwarePlanVisibility, SoftwareProductType
+from corehq.apps.accounting.usage import FeatureUsage
+from corehq.apps.accounting.user_text import DESC_BY_EDITION, get_feature_name
+from corehq.apps.hqwebapp.models import ProjectSettingsTab
 from corehq.apps import receiverwrapper
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, Http404
@@ -43,6 +51,8 @@ from django.utils.translation import ugettext as _, ugettext_noop
 
 # Domain not required here - we could be selecting it for the first time. See notes domain.decorators
 # about why we need this custom login_required decorator
+
+
 @login_required
 def select(request, domain_select_template='domain/select.html'):
 
@@ -378,6 +388,96 @@ def logo(request, domain):
         raise Http404()
 
     return HttpResponse(logo[0], mimetype=logo[1])
+
+
+class DomainSubscriptionView(BaseProjectSettingsView):
+    urlname = 'domain_subscription_view'
+    template_name = 'domain/current_subscription.html'
+    page_title = ugettext_noop("Current Subscription")
+
+    @method_decorator(require_toggle(toggles.ACCOUNTING_PREVIEW))
+    def dispatch(self, request, *args, **kwargs):
+        return super(DomainSubscriptionView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def plan(self):
+        plan_version, subscription = Subscription.get_subscribed_plan_by_domain(self.domain_object)
+        products = self.get_product_summary(plan_version, subscription)
+        info = {
+            'products': products,
+            'is_multiproduct': len(products) > 1,
+            'features': self.get_feature_summary(plan_version, subscription),
+            'subscription_credit': None,
+            'css_class': "label-plan %s" % plan_version.plan.edition.lower(),
+        }
+        info.update(self.get_plan_description(plan_version))
+        if subscription is not None:
+            subscription_credits = CreditLine.get_credits_by_subscription_and_features(subscription)
+            info['subscription_credit'] = self._fmt_credit(self._credit_grand_total(subscription_credits))
+        return info
+
+    @property
+    @memoized
+    def product(self):
+        return SoftwareProductType.get_type_by_domain(self.domain_object)
+
+    def get_plan_description(self, plan_version):
+        if plan_version.plan.visibility == SoftwarePlanVisibility.PUBLIC:
+            try:
+                return DESC_BY_EDITION[plan_version.plan.edition]
+            except KeyError:
+                pass
+        return {
+            'name': plan_version.plan.name,
+            'description': plan_version.plan.description,
+        }
+
+    def _fmt_credit(self, credit_amount=None):
+        if credit_amount is None:
+            return "--"
+        return _("USD %s") % credit_amount
+
+    def _credit_grand_total(self, credit_lines):
+        return sum([c.balance for c in credit_lines]) if credit_lines else Decimal('0.00')
+
+    def get_product_summary(self, plan_version, subscription):
+        product_summary = []
+        for product_rate in plan_version.product_rates.all():
+            product_info = {
+                'name': product_rate.product.product_type,
+                'monthly_fee': _("USD %s /month") % product_rate.monthly_fee,
+                'credit': None,
+            }
+            if subscription is not None:
+                credit_lines = CreditLine.get_credits_by_subscription_and_features(
+                    subscription, product_rate=product_rate)
+                product_info['credit'] = self._fmt_credit(self._credit_grand_total(credit_lines))
+            product_summary.append(product_info)
+        return product_summary
+
+    def get_feature_summary(self, plan_version, subscription):
+        feature_summary = []
+        for feature_rate in plan_version.feature_rates.all():
+            usage = FeatureUsage(feature_rate, self.domain).get_usage()
+            feature_info = {
+                'name': get_feature_name(feature_rate.feature.feature_type, self.product),
+                'usage': usage,
+                'remaining': feature_rate.monthly_limit - usage,
+                'credit': self._fmt_credit(),
+            }
+            if subscription is not None:
+                credit_lines = CreditLine.get_credits_by_subscription_and_features(
+                    subscription, feature_rate=feature_rate
+                )
+                feature_info['credit'] = self._fmt_credit(self._credit_grand_total(credit_lines))
+            feature_summary.append(feature_info)
+        return feature_summary
+
+    @property
+    def page_context(self):
+        return {
+            'plan': self.plan,
+        }
 
 
 class ExchangeSnapshotsView(BaseAdminProjectSettingsView):
