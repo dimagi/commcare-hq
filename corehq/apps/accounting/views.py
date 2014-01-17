@@ -222,7 +222,6 @@ class EditSubscriptionView(TemplateView):
                     )
 
     def post(self, request, *args, **kwargs):
-        # TODO validate data
         if 'set_subscription' in self.request.POST and self.subscription_form.is_valid():
             self.set_subscription()
         elif 'adjust_credit' in self.request.POST and self.credit_form.is_valid():
