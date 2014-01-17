@@ -22,6 +22,12 @@ DESC_BY_EDITION = {
         'description': ugettext_noop("For projects with a large group (up to 500) of mobile users that want to "
                                      "build in comprehensive SMS workflows and have increased reporting needs.")
     },
+    Edition.ENTERPRISE: {
+        'name': ugettext_noop("Enterprise"),
+        'description': ugettext_noop("For projects scaling regionally or country wide (1,001+ people) that require "
+                                     "the full CommCare feature set. Your organization will receive discounted "
+                                     "pricing and dedicated enterprise-level support from Dimagi.")
+    }
 }
 
 
