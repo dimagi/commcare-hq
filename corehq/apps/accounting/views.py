@@ -142,12 +142,6 @@ class ManageBillingAccountView(TemplateView):
         return self.get(request, *args, **kwargs)
 
 
-def datestring_to_date(datestring):
-    if datestring is None or datestring == '':
-        return None
-    return datetime.date(*tuple([int(i) for i in datestring.split('-')]))
-
-
 class NewSubscriptionView(TemplateView):
     template_name = 'edit_subscription.html'
     name = 'new_subscription'
