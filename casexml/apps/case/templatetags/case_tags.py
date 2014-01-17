@@ -167,6 +167,8 @@ def process_case_hierarchy(case_output, get_case_url, type_info):
         if 'description_property' in data:
             data['description'] = getattr(
                     case, data['description_property'], None)
+        if 'edit_session_data' in data:
+            data['session_data'].update(data['edit_session_data'])
         data.update(common_data)
 
         case.edit_data = data
@@ -181,6 +183,9 @@ def process_case_hierarchy(case_output, get_case_url, type_info):
                 },
                 "parent_node_id": case.case_id,
             })
+
+            if 'create_session_data' in child_data:
+                child_data['session_data'].update(child_data['create_session_data'])
             case.add_child_data = child_data
 
     process_output(case_output)
