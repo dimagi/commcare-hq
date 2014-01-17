@@ -1,0 +1,65 @@
+{% extends "settings/base_template.html" %}
+{% load hqstyle_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block js %}{{ block.super }}
+    <script type="text/javascript" src="{% static 'accounting/ko/accounting.pricing_table.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+    <script>
+        var pricingTable = new PricingTable({{ pricing_table|JSON }});
+        ko.applyBindings(pricingTable, $('#pricing-table').get(0));
+        pricingTable.init();
+    </script>
+{% endblock %}
+
+{% block main_column %}
+<div class="row">
+    <div class="span12">
+        <article id="pricing-table" >
+            <table class="table-pricing">
+                <thead>
+                    <tr>
+                        <td></td>
+                        <th class="th-feature"><h1 data-bind="text: title"></h1></th>
+                        <!-- ko foreach: editions -->
+                        <th data-bind="attr: {class: 'edition ' + slug()}">
+                            <div class="thead-edition" data-bind="attr: {'data-title': description}">
+                                <span data-bind="text: name"></span>
+                                <i class="icon-info-sign corner-icon"></i>
+                            </div>
+                        </th>
+                        <!-- /ko -->
+                    </tr>
+                </thead>
+                <!-- ko foreach: sections -->
+                <tbody data-bind="foreach: features, attr: { class: tbody_css }">
+                    <tr>
+                        <!-- ko if: $index() == 0 && $parent.show_header() -->
+                        <th class="th-feature-section" data-bind="attr: {rowspan: $parent.features().length}">
+                            <h2>
+                                <a data-bind="text: $parent.title, attr: {href: $parent.url}"></a>
+                            </h2>
+                        </th>
+                        <!-- /ko -->
+                        <!-- ko ifnot: $parent.show_header -->
+                        <td></td>
+                        <!-- /ko -->
+                        <th class="th-feature" data-bind="html: title"></th>
+                        <!-- ko foreach: columns -->
+                        <td data-bind="html: content_html,
+                            attr: {class: 'td-edition td-edition-' + edition()}"></td>
+                        <!-- /ko -->
+                    </tr>
+                </tbody>
+                <!-- /ko -->
+            </table>
+            <ul data-bind="foreach: footer">
+                <li data-bind="text: $data"></li>
+            </ul>
+        </article>
+    </div>
+</div>
+{% endblock %}
