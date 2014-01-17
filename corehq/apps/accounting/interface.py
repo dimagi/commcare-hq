@@ -10,7 +10,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 
 class AccountingInterface(BaseCRUDAdminInterface):
     section_name = "Accounting"
-    base_template = 'view_template.html'
+    base_template = 'accounting/add_account_button.html'
     dispatcher = AccountingAdminInterfaceDispatcher
 
     crud_form_update_url = "/accounting/form/"
