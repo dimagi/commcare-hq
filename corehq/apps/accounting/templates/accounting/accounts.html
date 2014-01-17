@@ -1,27 +1,8 @@
-{% extends 'reports/standard/base_template.html' %}
+{% extends 'hqwebapp/base_section.html' %}
 {% load url from future %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 {% load i18n %}
-
-{% block title %}{% if account %}Manage{% else %}New{% endif %} Billing Account{% endblock %}
-
-{% block page-title %}
-<ul class="breadcrumb">
-    <li>
-        <a href="{% url 'accounting_default' %}"><strong>Accounting</strong></a> <span class="divider">&gt;</span>
-    </li>
-    <li>
-        {{ parent_link|safe }} <span class="divider">&gt;</span>
-    </li>
-    <li class="active">
-        <a href="#">{{ view_title }} <small>{{ billing_range }}</small></a>
-    </li>
-    <li>
-        <a href="">{% if account %}Manage{% else %}New{% endif %} Billing Account <small>{{ account.name }}</small></a>
-    </li>
-</ul>
-{% endblock %}
 
 {% block js %}{{ block.super }}
     <script src="{% static 'accounting/js/credits-tab.js' %}"></script>

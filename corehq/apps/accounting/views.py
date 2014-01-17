@@ -7,6 +7,7 @@ from corehq import AccountingInterface, SubscriptionInterface
 from corehq.apps.accounting.forms import *
 from corehq.apps.accounting.models import *
 from corehq.apps.domain.decorators import require_superuser
+from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.users.models import WebUser
 from dimagi.utils.decorators.memoized import memoized
 
@@ -16,9 +17,10 @@ def accounting_default(request):
     return HttpResponseRedirect(AccountingInterface.get_url())
 
 
-class NewBillingAccountView(TemplateView):
+class NewBillingAccountView(BaseSectionPageView):
     template_name = 'accounting/accounts.html'
     name = 'new_billing_account'
+    section_name = AccountingInterface.name
 
     @property
     @memoized
@@ -27,10 +29,34 @@ class NewBillingAccountView(TemplateView):
             return BillingAccountForm(None, self.request.POST)
         return BillingAccountForm(None)
 
-    def get_context_data(self):
-        return dict(form=self.account_form,
-                    parent_link='<a href="%s">%s<a>' % (AccountingInterface.get_url(), AccountingInterface.name),
-                    )
+    @property
+    def main_context(self):
+        context = super(NewBillingAccountView, self).main_context
+        context.update(dict(form=self.account_form))
+        return context
+
+    @property
+    def page_context(self):
+        return {}
+
+    @property
+    def page_name(self):
+        return 'New Billing Account'
+
+    @property
+    def page_url(self):
+        return reverse(self.name)
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': AccountingInterface.name,
+            'url': AccountingInterface.get_url(),
+        }]
+
+    @property
+    def section_url(self):
+        return reverse('accounting_default')
 
     def post(self, request, *args, **kwargs):
         if self.account_form.is_valid():
