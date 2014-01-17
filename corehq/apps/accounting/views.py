@@ -93,10 +93,15 @@ class ManageBillingAccountView(TemplateView):
             return CreditForm(account.id, True, self.request.POST)
         return CreditForm(account.id, True)
 
+    def get_appropriate_credit_form(self, account):
+        if (not self.credit_form.is_bound) or (not self.credit_form.is_valid()):
+            return self.credit_form
+        return CreditForm(account.id, True)
+
     def get_context_data(self):
         account = BillingAccount.objects.get(id=self.args[0])
         return dict(account=account,
-                    credit_form=self.credit_form,
+                    credit_form=self.get_appropriate_credit_form(account),
                     credit_list=CreditLine.objects.filter(account=account),
                     form=self.account_form,
                     parent_link='<a href="%s">%s<a>' % (AccountingInterface.get_url(), AccountingInterface.name),
