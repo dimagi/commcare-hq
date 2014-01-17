@@ -161,8 +161,11 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
 
     if facets:
         q["facets"] = q.get("facets", {})
-        for facet in facets:
-            q["facets"][facet] = {"terms": {"field": facet, "size": facet_size or SIZE_LIMIT}}
+        if isinstance(facets, list):
+            for facet in facets:
+                q["facets"][facet] = {"terms": {"field": facet, "size": facet_size or SIZE_LIMIT}}
+        elif isinstance(facets, dict):
+            q["facets"].update(facets)
 
     if filter["and"]:
         query = q.pop("query", {})
