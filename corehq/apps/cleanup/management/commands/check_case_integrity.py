@@ -46,7 +46,8 @@ def iter_forms_with_cases(domain, since, chunksize=500):
                 yield form_id, case_id, case_id in case_id_mapping.get(form_id, []), f_domain
 
 def handle_problematic_data(datalist_tup, csv_writer, verbose=False, rebuild=False):
-    case_mapping = dict((c["_id"], bool(c)) for c in (CommCareCase.bulk_get_lite([d[1] for d in datalist_tup], wrap=False)))
+    case_data = CommCareCase.get_db().view('_all_docs', keys=[d[1] for d in datalist_tup])
+    case_mapping = dict((c["id"], True) for c in case_data if 'id' in c)
     for domain, case_id, form_id in datalist_tup:
         error = "action_missing" if case_mapping.get(case_id) else "nonexistent_case"
         csv_writer.writerow([domain, case_id, form_id, error])
