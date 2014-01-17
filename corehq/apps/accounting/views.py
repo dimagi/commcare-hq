@@ -18,7 +18,6 @@ def accounting_default(request):
 
 
 class AccountingSectionView(BaseSectionPageView):
-    template_name = 'accounting/accounts.html'
     section_name = 'Accounting'
     name = ''
 
@@ -32,11 +31,24 @@ class AccountingSectionView(BaseSectionPageView):
 
 
 class BillingAccountsSectionView(AccountingSectionView):
+    template_name = 'accounting/accounts.html'
+
     @property
     def parent_pages(self):
         return [{
             'title': AccountingInterface.name,
             'url': AccountingInterface.get_url(),
+        }]
+
+
+class SubscriptionSectionView(AccountingSectionView):
+    template_name = 'accounting/subscriptions.html'
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': SubscriptionInterface.name,
+            'url': SubscriptionInterface.get_url(),
         }]
 
 
@@ -186,8 +198,7 @@ class ManageBillingAccountView(BillingAccountsSectionView):
         return self.get(request, *args, **kwargs)
 
 
-class NewSubscriptionView(TemplateView):
-    template_name = 'accounting/subscriptions.html'
+class NewSubscriptionView(SubscriptionSectionView):
     name = 'new_subscription'
 
     @property
@@ -197,9 +208,19 @@ class NewSubscriptionView(TemplateView):
             return SubscriptionForm(None, self.request.POST)
         return SubscriptionForm(None)
 
-    def get_context_data(self):
-        return dict(form=self.subscription_form,
-                    parent_link='<a href="%s">%s<a>' % (AccountingInterface.get_url(), AccountingInterface.name))
+    @property
+    def main_context(self):
+        context = super(NewSubscriptionView, self).main_context
+        context.update(dict(form=self.subscription_form))
+        return context
+
+    @property
+    def page_name(self):
+        return 'New Subscription'
+
+    @property
+    def page_url(self):
+        return reverse(self.name, args=(self.args[0],))
 
     def post(self, request, *args, **kwargs):
         if self.subscription_form.is_valid():
@@ -225,8 +246,7 @@ class NewSubscriptionView(TemplateView):
         return self.get(request, *args, **kwargs)
 
 
-class EditSubscriptionView(TemplateView):
-    template_name = 'accounting/subscriptions.html'
+class EditSubscriptionView(SubscriptionSectionView):
     name = 'edit_subscription'
 
     @property
@@ -255,7 +275,7 @@ class EditSubscriptionView(TemplateView):
             return self.credit_form
         return CreditForm(subscription.id, False)
 
-    def get_context_data(self):
+    def data(self):
         subscription = Subscription.objects.get(id=self.args[0])
         return dict(cancel_form=CancelForm(),
                     credit_form=self.get_appropriate_credit_form(subscription),
@@ -264,6 +284,20 @@ class EditSubscriptionView(TemplateView):
                     parent_link='<a href="%s">%s<a>' % (SubscriptionInterface.get_url(), SubscriptionInterface.name),
                     subscription=subscription
                     )
+
+    @property
+    def main_context(self):
+        context = super(EditSubscriptionView, self).main_context
+        context.update(self.data())
+        return context
+
+    @property
+    def page_name(self):
+        return 'Edit Subscription'
+
+    @property
+    def page_url(self):
+        return reverse(self.name, args=(self.args[0],))
 
     def post(self, request, *args, **kwargs):
         if 'set_subscription' in self.request.POST and self.subscription_form.is_valid():
