@@ -91,6 +91,7 @@ class SubscriptionForm(forms.Form):
     delay_invoice_until = forms.DateField(label="Delay Invoice Until", widget=forms.DateInput(), required=False)
     plan = forms.ChoiceField()
     domain = forms.CharField(max_length=25)
+    salesforce_contract_id = forms.CharField(label="Salesforce Contract ID", max_length=80, required=False)
 
     def __init__(self, subscription, *args, **kwargs):
         super(SubscriptionForm, self).__init__(*args, **kwargs)
@@ -134,6 +135,7 @@ class SubscriptionForm(forms.Form):
                 Field('delay_invoice_until', **delay_invoice_until_kwargs),
                 Field('plan', **plan_kwargs),
                 Field('domain', **domain_kwargs),
+                'salesforce_contract_id',
             ),
             FormActions(
                 ButtonHolder(
