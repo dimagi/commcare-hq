@@ -12,7 +12,7 @@ from receiver.xml import get_response_element, get_simple_response_xml,\
     ResponseNature
 from casexml.apps.case.xml import check_version, V1
 from casexml.apps.phone.fixtures import generator
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from casexml.apps.phone.checksum import CaseStateHash
 
 
@@ -31,7 +31,15 @@ class RestoreConfig(object):
     @property
     @memoized
     def sync_log(self):
-        return SyncLog.get(self.restore_id) if self.restore_id else None
+        if self.restore_id:
+            sync_log = SyncLog.get(self.restore_id)
+            if sync_log.user_id == self.user.user_id \
+                    and sync_log.doc_type == 'SyncLog':
+                return sync_log
+            else:
+                raise Http404()
+        else:
+            return None
 
     def validate(self):
         # runs validation checks, raises exceptions if anything is amiss
