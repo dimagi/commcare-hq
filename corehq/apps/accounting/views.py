@@ -17,7 +17,7 @@ def accounting_default(request):
 
 
 class NewBillingAccountView(TemplateView):
-    template_name = 'manage_account.html'
+    template_name = 'accounting/accounts.html'
     name = 'new_billing_account'
 
     @property
@@ -74,7 +74,7 @@ def adjust_credit(credit_form, account_id=None, subscription_id=None):
 
 # TODO make sure to require superuser
 class ManageBillingAccountView(TemplateView):
-    template_name = 'manage_account.html'
+    template_name = 'accounting/accounts.html'
     name = 'manage_billing_account'
 
     @property
@@ -143,7 +143,7 @@ class ManageBillingAccountView(TemplateView):
 
 
 class NewSubscriptionView(TemplateView):
-    template_name = 'edit_subscription.html'
+    template_name = 'accounting/subscriptions.html'
     name = 'new_subscription'
 
     @property
@@ -182,7 +182,7 @@ class NewSubscriptionView(TemplateView):
 
 
 class EditSubscriptionView(TemplateView):
-    template_name = 'edit_subscription.html'
+    template_name = 'accounting/subscriptions.html'
     name = 'edit_subscription'
 
     @property
