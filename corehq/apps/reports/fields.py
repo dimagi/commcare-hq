@@ -757,10 +757,9 @@ class CombinedSelectUsersField(ReportField):
                 ctxt["sgf"]["select"]["selected"] = filter(lambda s: s != '_all', ctxt["sgf"]["select"]["selected"])
             ctxt["sgf"]["select"]["options"] = ctxt["sgf"]["select"]["options"][1:]
 
-        else:
-            if self.show_mobile_worker_field:
-                ctxt["smwf"]["checked"] = all_mws or (not ctxt["smwf"]["select"]["selected"] and not (
-                    self.show_group_field and (ctxt["sgf"]["select"]["selected"] or all_groups)))
+        if self.show_mobile_worker_field:
+            ctxt["smwf"]["checked"] = all_mws or (not ctxt["smwf"]["select"]["selected"] and not (
+                self.show_group_field and (ctxt["sgf"]["select"]["selected"] or all_groups)))
 
         if self.show_group_field:
             ctxt["sgf"]["checked"] = all_groups
