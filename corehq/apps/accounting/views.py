@@ -179,7 +179,7 @@ class NewSubscriptionView(TemplateView):
                                         date_end=date_end,
                                         date_delay_invoicing=date_delay_invoicing,
                                         plan=SoftwarePlanVersion.objects.get(id=plan_id),
-                                        salesforce_contract_id=account.salesforce_account_id,
+                                        salesforce_contract_id=subscription_form.cleaned_data['salesforce_contract_id'],
                                         subscriber=Subscriber.objects.get_or_create(domain=domain,
                                                                                     organization=None)[0])
             subscription.save()
