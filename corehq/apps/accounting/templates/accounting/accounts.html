@@ -6,20 +6,21 @@
 
 {% block js %}{{ block.super }}
     <script src="{% static 'accounting/js/credits-tab.js' %}"></script>
+    <script src="{% static 'accounting/js/stay-on-tab.js' %}"></script>
 {% endblock %}
 
 {% block main_column %}
 
     {% if account %}
     <ul class="nav nav-tabs" id="user-settings-tabs">
-        <li class="active"><a href="#account" data-toggle="tab">{% trans "Account" %}</a></li>
+        <li><a href="#account" data-toggle="tab">{% trans "Account" %}</a></li>
         <li><a href="#subscriptions" data-toggle="tab">{% trans "Subscriptions" %}</a></li>
         <li><a href="#credits" data-toggle="tab">{% trans "Credits" %}</a></li>
     </ul>
     {% endif %}
 
     <div class="tab-content">
-        <div class="tab-pane active" id="account">
+        <div class="tab-pane" id="account">
             <form class="form form-horizontal" method="post">
                 {% crispy form %}
             </form>
