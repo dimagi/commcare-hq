@@ -17,16 +17,16 @@
         <li><a href="#subscriptions" data-toggle="tab">{% trans "Subscriptions" %}</a></li>
         <li><a href="#credits" data-toggle="tab">{% trans "Credits" %}</a></li>
     </ul>
-    {% endif %}
 
     <div class="tab-content">
         <div class="tab-pane" id="account">
+    {% endif %}
             <form class="form form-horizontal" method="post">
                 {% crispy form %}
             </form>
+    {% if account %}
         </div>
 
-        {% if account %}
         <div class="tab-pane" id="subscriptions">
             {% include 'accounting/subscriptions_tab.html' %}
         </div>
@@ -34,7 +34,7 @@
         <div class="tab-pane" id="credits">
             {% include 'accounting/credits_tab.html' %}
         </div>
-        {% endif %}
+    {% endif %}
 
     </div>
 
