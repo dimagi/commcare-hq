@@ -16,7 +16,7 @@ def span_days(start, end):
     return span.days + span.seconds / 86400.
 
 
-def compute_consumption(transactions, window_start, get_base_action, params=None):
+def compute_consumption_from_transactions(transactions, window_start, get_base_action, params=None):
     params = params or {}
 
     class ConsumptionPeriod(object):
