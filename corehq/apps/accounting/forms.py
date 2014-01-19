@@ -204,8 +204,10 @@ class CancelForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super(CancelForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
+        cancel_subscription_button = Button('cancel_subscription', 'CANCEL SUBSCRIPTION', css_class="btn-danger")
+        cancel_subscription_button.input_type = 'submit'
         self.helper.layout = Layout(
             ButtonHolder(
-                Submit('cancel_subscription', 'CANCEL SUBSCRIPTION')
+                cancel_subscription_button
             )
         )
