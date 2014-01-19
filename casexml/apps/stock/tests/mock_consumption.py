@@ -6,7 +6,8 @@ import collections
 to_ts = dateparse.json_format_datetime
 
 MockTransaction = collections.namedtuple('MockTransaction', ['action', 'value', 'received_on'])
-mock_transaction = collections.namedtuple('tx', ['action', 'value', 'age'])
+def mock_transaction(action, value, age):
+    return MockTransaction(action, value, ago(age))
 
 now = datetime.utcnow()
 def ago(days):
@@ -16,7 +17,7 @@ def ago(days):
 # note that you must add inferred consumption transactions manually to txdata
 def mock_consumption(txdata, window, params={}):
     return compute_consumption_from_transactions(
-        [MockTransaction(tx.action, tx.value, ago(tx.age)) for tx in txdata],
+        txdata,
         ago(window),
         lambda action: action,
         params,
