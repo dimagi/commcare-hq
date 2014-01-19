@@ -30,17 +30,17 @@
         <li><a href="#credits" data-toggle="tab">{% trans "Credits" %}</a></li>
         <li><a href="#actions" data-toggle="tab">{% trans "Permanent Actions" %}</a></li>
     </ul>
-    {% endif %}
 
     <div class="tab-content">
 
         <div class="tab-pane" id="subscription">
+    {% endif %}
             <form class="form form-horizontal" method="post">
                 {% crispy form %}
             </form>
+    {% if subscription %}
         </div>
 
-        {% if subscription %}
         <div class="tab-pane" id="credits">
             {% include 'accounting/credits_tab.html' %}
         </div>
@@ -50,7 +50,7 @@
                 {% crispy cancel_form %}
             </form>
         </div>
-        {% endif %}
+    {% endif %}
 
     </div>
 
