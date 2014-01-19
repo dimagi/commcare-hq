@@ -253,7 +253,7 @@ class EditSubscriptionView(SubscriptionSectionView):
     @memoized
     def subscription_form(self):
         subscription = Subscription.objects.get(id=self.args[0])
-        if self.request.method == 'POST':
+        if self.request.method == 'POST' and 'set_subscription' in self.request.POST:
             return SubscriptionForm(subscription, self.request.POST)
         return SubscriptionForm(subscription)
 
@@ -266,7 +266,7 @@ class EditSubscriptionView(SubscriptionSectionView):
     @memoized
     def credit_form(self):
         subscription = Subscription.objects.get(id=self.args[0])
-        if self.request.method == 'POST':
+        if self.request.method == 'POST' and 'adjust_credit' in self.request.POST:
             return CreditForm(subscription.id, False, self.request.POST)
         return CreditForm(subscription.id, False)
 
