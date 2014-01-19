@@ -1,5 +1,8 @@
+import collections
 from dimagi.utils import parsing as dateparse
 from datetime import datetime
+from casexml.apps.stock import const
+from casexml.apps.stock.models import StockTransaction
 
 
 def from_ts(dt): #damn this is ugly
@@ -15,6 +18,29 @@ def span_days(start, end):
     span = end - start
     return span.days + span.seconds / 86400.
 
+
+def expand_transactions(case_id, product_id, window_end):
+    """
+    Given a case/product pair, expand transactions by adding the inferred ones
+    """
+    # todo: get rid of this middle layer once the consumption calc has
+    # been updated to deal with the regular transaction objects
+    SimpleTransaction = collections.namedtuple('SimpleTransaction', ['action', 'value', 'received_on'])
+    def _soh_to_consumption_tx(soh_tx):
+        assert soh_tx.report.type == const.TRANSACTION_TYPE_BALANCE
+        assert soh_tx.quantity == soh_tx.stock_on_hand
+        return SimpleTransaction(
+            action='stockonhand',
+            value=soh_tx.stock_on_hand,
+            received_on=soh_tx.report.date,
+        )
+
+    # todo: beginning of window date filtering
+    db_transactions = StockTransaction.objects.filter(
+        case_id=case_id, product_id=product_id, report__date__lte=window_end
+    ).order_by('report__date')
+    for db_tx in db_transactions:
+        yield _soh_to_consumption_tx(db_tx)
 
 def compute_consumption_from_transactions(transactions, window_start, get_base_action, params=None):
     params = params or {}
