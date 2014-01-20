@@ -1,5 +1,6 @@
 from django.test import TestCase
-from casexml.apps.stock.tests.mock_consumption import mock_consumption as consumption, mock_transaction as _tx
+from casexml.apps.stock.consumption import ConsumptionConfiguration, compute_consumption_from_transactions
+from casexml.apps.stock.tests.mock_consumption import mock_consumption as consumption, mock_transaction as _tx, now
 
 
 class ConsumptionCalcTest(TestCase):
@@ -92,15 +93,15 @@ class ConsumptionCalcTest(TestCase):
     def test_thresholds(self):
         tx = [
             _tx('stockonhand', 25, 15),
-            
+
             _tx('consumption', 4, 12),
             _tx('receipts', 12, 12),
             _tx('stockonhand', 33, 12),
-            
+
             _tx('consumption', 30, 7),
             _tx('receipts', 3, 7),
             _tx('stockonhand', 6, 7),
-            
+
             _tx('consumption', 10, 0),
             _tx('receipts', 14, 0),
             _tx('stockonhand', 10, 0),
@@ -109,3 +110,15 @@ class ConsumptionCalcTest(TestCase):
         self.assertAlmostEqual(consumption(tx, 60, {'min_periods': 3}), 44/15.)
         self.assertEqual(consumption(tx, 60, {'min_window': 16}), None)
         self.assertAlmostEqual(consumption(tx, 60, {'min_window': 15}), 44/15.)
+
+    def test_defaults(self):
+        tx = [
+            _tx('stockonhand', 25, 15),
+            _tx('stockonhand', 10, 10),
+
+        ]
+        self.assertEqual(consumption(tx, 60, {'min_periods': 4}), None)
+        self.assertEqual(
+            compute_consumption_from_transactions(tx, now, ConsumptionConfiguration(min_periods=4), lambda: 10.),
+            10.
+        )
