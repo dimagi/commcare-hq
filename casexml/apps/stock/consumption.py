@@ -1,4 +1,5 @@
 import collections
+import math
 from dimagi.utils import parsing as dateparse
 from datetime import datetime, timedelta
 from casexml.apps.stock import const
@@ -26,59 +27,40 @@ def compute_consumption(case_id, product_id, window_end, configuration=None):
 
     window_start = window_end - timedelta(days=CONSUMPTION_WINDOW)
     overshoot_start = window_start - timedelta(days=WINDOW_OVERSHOOT)
-    transactions = expand_transactions(case_id, product_id, overshoot_start, window_end)
+    transactions = get_transactions(case_id, product_id, overshoot_start, window_end)
     return compute_consumption_from_transactions(transactions, window_start, lambda action: action, configuration)
 
 
-def expand_transactions(case_id, product_id, window_start, window_end):
+def get_transactions(case_id, product_id, window_start, window_end):
     """
-    Given a case/product pair, expand transactions by adding the inferred ones
+    Given a case/product pair, get transactions in a format ready for consumption calc
     """
     # todo: get rid of this middle layer once the consumption calc has
     # been updated to deal with the regular transaction objects
     SimpleTransaction = collections.namedtuple('SimpleTransaction', ['action', 'value', 'received_on'])
 
     def _to_consumption_tx(txn):
-        if txn.report.type == const.REPORT_TYPE_BALANCE:
-            assert txn.type == const.TRANSACTION_TYPE_STOCKONHAND
+        if txn.type == const.TRANSACTION_TYPE_STOCKONHAND:
             value = txn.stock_on_hand
-        elif txn.report.type == const.REPORT_TYPE_TRANSFER:
+        else:
             assert txn.type in (const.TRANSACTION_TYPE_RECEIPTS, const.TRANSACTION_TYPE_CONSUMPTION)
-            value = txn.quantity
+            value = math.fabs(txn.quantity)
         return SimpleTransaction(
             action=txn.type,
             value=value,
             received_on=txn.report.date,
         )
 
-    def _reconciliation_tx(current, previous):
-        # currently we only infer consumption
-        if previous is not None:
-            if current.type == const.TRANSACTION_TYPE_STOCKONHAND:
-                if current.quantity:
-                    assert current.stock_on_hand == previous.stock_on_hand + current.quantity
-                    if current.quantity < 0:
-                        # infer consumption but not receipts
-                        return SimpleTransaction(
-                            action=const.TRANSACTION_TYPE_CONSUMPTION,
-                            value=-current.quantity,
-                            received_on=current.report.date,
-                        )
-
     # todo: beginning of window date filtering
     db_transactions = StockTransaction.objects.filter(
         case_id=case_id, product_id=product_id,
         report__date__gt=window_start,
         report__date__lte=window_end,
-    ).order_by('report__date')
+    ).order_by('report__date', 'pk')
 
-    prev_txn = None
     for db_tx in db_transactions:
-        reconciliation = _reconciliation_tx(db_tx, prev_txn)
-        if reconciliation:
-            yield reconciliation
         yield _to_consumption_tx(db_tx)
-        prev_txn = db_tx
+
 
 def compute_consumption_from_transactions(transactions, window_start, get_base_action, params=None):
     params = params or {}

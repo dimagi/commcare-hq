@@ -1,4 +1,7 @@
 from django.db import models
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
+from casexml.apps.stock import const
 
 
 class StockReport(models.Model):
@@ -25,9 +28,10 @@ class StockTransaction(models.Model):
     case_id = models.CharField(max_length=100, db_index=True)
     product_id = models.CharField(max_length=100, db_index=True)
 
-    # todo we should be more explicit about what belongs in this field
     # currently supported/expected: 'stockonhand', 'receipts', 'consumption'
-    type = models.CharField(max_length=20)  # i.e. 'loss' or 'receipt'
+    type = models.CharField(max_length=20)
+    # e.g. 'loss', 'transfer', 'inferred'
+    subtype = models.CharField(max_length=20, null=True, blank=True)
 
     # often one of these two will be derived based on the other one
     quantity = models.DecimalField(null=True, max_digits=20, decimal_places=5)
@@ -55,3 +59,23 @@ class StockTransaction(models.Model):
     def _peer_qs(self, case_id, section_id, product_id):
         return StockTransaction.objects.filter(
             case_id=case_id, product_id=product_id, section_id=section_id).order_by('-report__date')
+
+
+@receiver(pre_save, sender=StockTransaction)
+def create_reconciliation_transaction(sender, instance, *args, **kwargs):
+    creating = instance.pk is None
+    if creating and instance.type == const.TRANSACTION_TYPE_STOCKONHAND:
+        previous_transaction = instance.get_previous_transaction()
+        # only soh reports that have changed the stock create inferred transactions
+        if previous_transaction and previous_transaction.stock_on_hand != instance.stock_on_hand:
+            amt = instance.stock_on_hand - previous_transaction.stock_on_hand
+            StockTransaction.objects.create(
+                report=instance.report,
+                case_id=instance.case_id,
+                section_id=instance.section_id,
+                product_id=instance.product_id,
+                type=const.TRANSACTION_TYPE_CONSUMPTION if amt < 0 else const.TRANSACTION_TYPE_RECEIPTS,
+                quantity=amt,
+                stock_on_hand=instance.stock_on_hand,
+                subtype=const.TRANSACTION_SUBTYPE_INFERRED,
+            )
