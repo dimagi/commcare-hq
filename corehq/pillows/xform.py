@@ -65,7 +65,7 @@ class XFormPillow(HQPillow):
             for case_dict in case_blocks:
                 for date_modified_key in ['date_modified', '@date_modified']:
                     if not is_valid_date(case_dict.get(date_modified_key, None)):
-                        case_dict.pop(date_modified_key)
+                        case_dict.pop(date_modified_key, None)
 
                 # convert all mapped dict properties to nulls if they are empty strings
                 for object_key in ['index', 'attachment', 'create', 'update']:
