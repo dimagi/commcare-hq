@@ -227,14 +227,14 @@
                 <div class="modal hide fade" id="eulaModal">
                     <div class="modal-header">
                         <a class="close" data-dismiss="modal">&times;</a>
-                        <h4>CommCare HQ End User License Agreement</h4>
+                        <h4>{% trans "CommCare HQ End User License Agreement" %}</h4>
                     </div>
                     <div class="modal-body" style="max-height: 20em;">
-                        Loading Terms of Service...
+                        {% trans "Loading Terms of Service..." %}
                     </div>
                     <div class="modal-footer">
                         <div style="text-align: left; line-height: 2em;">
-                            To continue using Commcare HQ, please agree to our new End User License Agreement
+                            {% trans "To continue using Commcare HQ, please agree to our new End User License Agreement" %}
                         </div>
                         <form id="eula-agree" action="{% url "agree_to_eula" %}" method="POST">
                             <input name="next" type="hidden" value="{{ request.path }}" />
@@ -247,19 +247,19 @@
             <div class="modal hide fade" id="keyboard-shortcuts-config">
                 <div class="modal-header">
                     <a class="close" data-dismiss="modal">&times;</a>
-                    <h4><label class="label label-warning">Experimental</label> Keyboard Shortcuts Configuration</h4>
+                    <h4>{% trans "Keyboard Shortcuts Configuration" %}</h4>
                 </div>
                 <div class="modal-body">
-                    <form id="keyboard-shortcuts-config-form" class="form-horizontal" method="POST" action="{% url "keyboard_config" %}?next={{ request.get_full_path|urlencode }}">
+                    <form id="keyboard-shortcuts-config-form" method="POST" action="{% url "keyboard_config" %}?next={{ request.get_full_path|urlencode }}">
                         <div class="control-group">
                             <div class="controls">
                                 <label class="checkbox">
-                                    <input data-bind="checked: $data.enabled" name="enable" type="checkbox"> Enable Keyboard Shortcuts
+                                    <input data-bind="checked: $data.enabled" name="enable" type="checkbox"> {% trans "Enable Keyboard Shortcuts" %}
                                 </label>
                             </div>
                         </div>
                         <div data-bind="visible: $data.enabled" class="control-group">
-                            <label class="control-label" for="main-key">Choose Shortcut Key</label>
+                            <label class="control-label" for="main-key">{% trans "Choose Shortcut Key" %}</label>
                             <div class="controls">
                                 <select name="main-key">
                                     <option value="option" {% if request.couch_user.keyboard_shortcuts.main_key == 'option' %} selected{% endif %}>option / alt</option>
@@ -274,12 +274,17 @@
                         </div>
                     </form>
                     <hr />
+                    <div>
+                        {% trans "For more information visit: " %}
+                        <a href="https://help.commcarehq.org/display/commcarepublic/CommCareHQ+Keyboard+Shortcuts">{% trans "CommCare HQ Keyboard Shortcuts Wiki" %}</a>
+                    </div>
+                    <hr />
                     <ul class="unstyled" id="keyboard-shortcuts-lookup"></ul>
-                    <strong>While navigating menus or the sidebar:</strong>
+                    <strong>{% trans "While navigating menus or the sidebar" %}:</strong>
                     <ul class="unstyled">
-                        <li>Move up: <code>{{ request.couch_user.keyboard_shortcuts.main_key }}+k</code> or <code>{{ request.couch_user.keyboard_shortcuts.main_key }}+up</code></li>
-                        <li>Move down: <code>{{ request.couch_user.keyboard_shortcuts.main_key }}+j</code> or <code>{{ request.couch_user.keyboard_shortcuts.main_key }}+down</code></li>
-                        <li>Do action (e.g. browsing to a page): <code>{{ request.couch_user.keyboard_shortcuts.main_key }}+enter</code> or <code>{{ request.couch_user.keyboard_shortcuts.main_key }}+spacebar</code></li>
+                        <li>{% trans "Move up" %}: <code>{{ request.couch_user.keyboard_shortcuts.main_key|default:"*shortcut key*" }}+k</code> {% trans "or" %} <code>{{ request.couch_user.keyboard_shortcuts.main_key|default:"*shortcut key*" }}+up</code></li>
+                        <li>{% trans "Move down" %}: <code>{{ request.couch_user.keyboard_shortcuts.main_key|default:"*shortcut key*" }}+j</code> {% trans "or" %} <code>{{ request.couch_user.keyboard_shortcuts.main_key|default:"*shortcut key*" }}+down</code></li>
+                        <li>{% trans "Do action (e.g. browsing to a page)" %}: <code>{{ request.couch_user.keyboard_shortcuts.main_key|default:"*shortcut key*" }}+enter</code> {% trans "or" %} <code>{{ request.couch_user.keyboard_shortcuts.main_key|default:"*shortcut key*" }}+spacebar</code></li>
                     </ul>
                 </div>
             </div>
@@ -323,7 +328,6 @@
                 </script>
             {% endif %}
 
-        {% if request.couch_user.is_superuser %}
         <script>
             var KS = {
                 gen_click_fn: function(selector) {
@@ -360,7 +364,6 @@
                 ko.applyBindings(new KBConfigFormModel(), $('#keyboard-shortcuts-config-form').get(0));
             });
         </script>
-        {% endif %}
 
         {% if request.couch_user.keyboard_shortcuts.enabled %}
         <script>
@@ -448,24 +451,26 @@
                 {
                     shortcut: nav_key + "+a",
                     handler: apps_menu_navigator.activate,
-                    desc: "Access applications menu"
-                },
-                {
-                    shortcut: nav_key + "+o",
-                    handler: admin_menu_navigator.activate,
-                    desc: "Access admin menu"
+                    desc: "Access Applications Menu"
                 },
                 {
                     shortcut: nav_key + "+p",
                     handler: projects_menu_navigator.activate,
-                    desc: "Access projects menu"
+                    desc: "Access Projects Menu"
                 },
                 {
                     shortcut: nav_key + "+u",
                     handler: user_menu_navigator.activate,
-                    desc: "Access user menu"
+                    desc: "Access Web User Settings Menu"
                 }
             ]);
+            {% if request.couch_user.is_superuser %}
+                KEYBOARD_SHORTCUTS.push({
+                    shortcut: nav_key + "+o",
+                    handler: admin_menu_navigator.activate,
+                    desc: "Access Admin Menu"
+                });
+            {% endif %}
         </script>
         {% block keyboard_shortcuts %}
         {% endblock %}

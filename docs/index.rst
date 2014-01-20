@@ -19,9 +19,11 @@ Welcome to CommCareHQ's documentation!
 
    deploy
    reporting
+   api
    maps
    ui_helpers
    class_views
+   forms
    management_commands
    commtrack
    cloudcare

@@ -36,7 +36,13 @@
     {% if published_snapshot %}
         {% include 'domain/partials/project_version_display.html' with version=published_snapshot published=1 %}
     {% else %}
-    <h3>This project has not been published</h3>
+        <h3 style="display: inline">This project has not been published</h3>
+        <span class="hq-help-template"
+                  data-content={% blocktrans %}
+                          "Share your applications with the world by publishing them to the CommCare Exchange.
+                          For more information about the CommCare Exchange visit the CommCare Exchange Wiki <a href='https://wiki.commcarehq.org/display/commcarepublic/CommCare+Exchange'>[link]</a>"
+                    {% endblocktrans %}
+        ></span>
         {% if snapshots %}
             {% include 'domain/partials/project_version_display.html' with version=snapshots.0 published=0 %}
         {% endif %}

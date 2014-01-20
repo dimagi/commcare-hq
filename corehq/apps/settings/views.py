@@ -189,7 +189,6 @@ class BaseProjectDataView(BaseDomainView):
 
 
 @require_POST
-@require_superuser
 @retry_resource(3)
 def keyboard_config(request):
     request.couch_user.keyboard_shortcuts["enabled"] = bool(request.POST.get('enable'))

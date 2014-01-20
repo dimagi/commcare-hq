@@ -3,11 +3,19 @@ from casexml.apps.case.xform import extract_case_blocks, get_case_ids_from_form
 from corehq.pillows.mappings.xform_mapping import XFORM_MAPPING, XFORM_INDEX
 from .base import HQPillow
 from couchforms.models import XFormInstance
+from dateutil import parser
 
 
 UNKNOWN_VERSION = 'XXX'
 UNKNOWN_UIVERSION = 'XXX'
 
+def is_valid_date(txt):
+    try:
+        if txt and parser.parse(txt):
+            return True
+    except Exception:
+        pass
+    return False
 
 class XFormPillow(HQPillow):
     document_class = XFormInstance
@@ -36,9 +44,9 @@ class XFormPillow(HQPillow):
             doc_ret = copy.deepcopy(doc_dict)
 
             if 'meta' in doc_ret['form']:
-                if doc_ret['form']['meta'].get('timeEnd', None) == "":
+                if not is_valid_date(doc_ret['form']['meta'].get('timeEnd', None)):
                     doc_ret['form']['meta']['timeEnd'] = None
-                if doc_ret['form']['meta'].get('timeStart', None) == "":
+                if not is_valid_date(doc_ret['form']['meta'].get('timeStart', None)):
                     doc_ret['form']['meta']['timeStart'] = None
 
                 # Some docs have their @xmlns and #text here
@@ -48,8 +56,8 @@ class XFormPillow(HQPillow):
             case_blocks = extract_case_blocks(doc_ret)
             for case_dict in case_blocks:
                 for date_modified_key in ['date_modified', '@date_modified']:
-                    if case_dict.get(date_modified_key, None) == "":
-                        case_dict[date_modified_key] = None
+                    if not is_valid_date(case_dict.get(date_modified_key, None)):
+                        case_dict.pop(date_modified_key)
 
                 # convert all mapped dict properties to nulls if they are empty strings
                 for object_key in ['index', 'attachment', 'create', 'update']:

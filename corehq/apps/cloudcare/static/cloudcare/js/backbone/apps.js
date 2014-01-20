@@ -186,7 +186,7 @@ cloudCare.Module = LocalizableModel.extend({
                 return form;
             });
             // task-list
-            if (self.get('task_list').show) {
+            if (self.get('task_list') && self.get('task_list').show) {
                 form = new cloudCare.Form({
                     name: self.get('task_list').label,
                     index: 'task-list',

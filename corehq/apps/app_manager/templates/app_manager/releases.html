@@ -71,6 +71,13 @@
         background-size: 80%;
         background-position: center;
     }
+    .pointer {
+        cursor: pointer;
+    }
+    .released {
+        color: #ffff00;
+        text-shadow: 1px 0px #ffa500, -1px 0px #ffa500, 0px 1px #ffa500, 0px -1px #ffa500;
+    }
 </style>
 {% endblock %}
 {% block form-view %}
@@ -306,7 +313,7 @@
                                             Install by typing the following URL
                                             into the application install screen:
                                         {% endblocktrans %}
-                                        <code><a data-bind="
+                                        <code class="bitly"><a data-bind="
                                             attr: {href: get_short_odk_url()},
                                             text: get_short_odk_url()
                                         "></a></code>
@@ -358,7 +365,7 @@
                                                         <label>{% trans "Send to:" %}</label>
                                                         <input type="text" name="recipients" data-bind="multiTypeahead: $root.recipients" value=""/>
                                                         <br />
-                                                        <textarea name="message" data-bind="text: 'Update to CommCare: ' +
+                                                        <textarea class="bitly" name="message" data-bind="text: 'Update to CommCare: ' +
                                                             $parent.sms_url($index()) + ' (&quot;' + $parent.short_name() + '&quot; v. ' + $parent.version() + ')'"></textarea>
                                                         <br />
                                                         <input type="submit" class="btn" value="Send"/>
