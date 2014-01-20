@@ -7,20 +7,26 @@ from casexml.apps.stock.models import StockTransaction
 
 
 class ConsumptionConfiguration(object):
+    DEFAULT_MIN_PERIODS = 2
+    DEFAULT_MIN_WINDOW = 10
+    DEFAULT_MAX_WINDOW = 60
 
-    def __init__(self, min_periods=2, min_window=10, max_window=60):
+    def __init__(self, min_periods=None, min_window=None, max_window=None):
+        def _default_if_none(value, default):
+            return value if value is not None else default
+
         # the minimum number of consumption periods to include in a calculation
         # periods are intervals between stock reports
-        self.min_periods = min_periods
+        self.min_periods = _default_if_none(min_periods, self.DEFAULT_MIN_PERIODS)
 
         # the minimum total time of consumption data to include (in days)
         # consumption should resort to static defaults if less than this
         # amount of data is available
-        self.min_window = min_window
+        self.min_window = _default_if_none(min_window, self.DEFAULT_MIN_WINDOW)
 
         # the maximum time to look backwards for consumption data (in days)
         # data before this period will not be included in the calculation
-        self.max_window = max_window
+        self.max_window = _default_if_none(max_window, self.DEFAULT_MAX_WINDOW)
 
     @classmethod
     def test_config(cls):
