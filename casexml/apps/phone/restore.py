@@ -22,14 +22,14 @@ from casexml.apps.phone.checksum import CaseStateHash
 
 class StockSettings(object):
 
-    def __init__(self, section_to_consumption_types=None):
+    def __init__(self, section_to_consumption_types=None, consumption_config=None):
         """
         section_to_consumption_types should be a dict of stock section-ids to corresponding
         consumption section-ids. any stock sections not found in the dict will not have
         any consumption data set in the restore
         """
         self.section_to_consumption_types = section_to_consumption_types or {}
-
+        self.consumption_config = consumption_config
 
 class RestoreConfig(object):
     """
@@ -85,7 +85,8 @@ class RestoreConfig(object):
 
         def consumption_entry(case_id, product_id, section_id):
             # todo, config
-            consumption_value = compute_consumption(case_id, product_id, datetime.utcnow(), section_id)
+            consumption_value = compute_consumption(case_id, product_id, datetime.utcnow(), section_id,
+                                                    self.stock_settings.consumption_config)
             if consumption_value is not None:
                 return entry_xml(product_id, consumption_value)
 
@@ -101,7 +102,9 @@ class RestoreConfig(object):
 
                 if section_id in self.stock_settings.section_to_consumption_types:
                     yield E.balance(
-                        *[consumption_entry(commtrack_case._id, p, section_id) for p in product_ids],
+                        *filter(lambda e: e is not None,
+                                [consumption_entry(commtrack_case._id, p, section_id)
+                                 for p in product_ids]),
                         **{'entity-id': commtrack_case._id, 'date': as_of,
                            'section-id': self.stock_settings.section_to_consumption_types[section_id]}
                     )
