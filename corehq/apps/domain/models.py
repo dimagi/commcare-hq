@@ -940,6 +940,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             return None
 
     @property
+    @memoized
     def commtrack_settings(self):
         # this import causes some dependency issues so lives in here
         from corehq.apps.commtrack.models import CommtrackConfig
