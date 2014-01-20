@@ -229,8 +229,12 @@ class SmsBillable(models.Model):
         # Fetch gateway_fee
         backend_api_id = message_log.backend_api
         backend_instance = message_log.backend_id
-        parsed_number = phonenumbers.parse(phone_number)
-        country_code = parsed_number.country_code
+        try:
+            parsed_number = phonenumbers.parse(phone_number)
+        except phonenumbers.NumberParseException:
+            country_code = None
+        else:
+            country_code = parsed_number.country_code
 
         billable.gateway_fee = SmsGatewayFee.get_by_criteria(
             backend_api_id, direction, backend_instance=backend_instance, country_code=country_code
