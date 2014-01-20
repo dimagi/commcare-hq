@@ -1,9 +1,3 @@
-import datetime
-from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect
-from django.utils.decorators import method_decorator
-from django.shortcuts import render
-from django.views.generic import TemplateView
 from corehq import AccountingInterface, SubscriptionInterface
 from corehq.apps.accounting.forms import *
 from corehq.apps.accounting.models import *
@@ -11,6 +5,9 @@ from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.users.models import WebUser
 from dimagi.utils.decorators.memoized import memoized
+from django.core.urlresolvers import reverse
+from django.http import HttpResponseRedirect
+from django.utils.decorators import method_decorator
 
 
 @require_superuser
@@ -71,7 +68,7 @@ class NewBillingAccountView(BillingAccountsSectionView):
     @property
     def main_context(self):
         context = super(NewBillingAccountView, self).main_context
-        context.update(dict(form=self.account_form))
+        context.update({'form': self.account_form})
         return context
 
     @property
@@ -99,12 +96,14 @@ class NewBillingAccountView(BillingAccountsSectionView):
 def adjust_credit(credit_form, account_id=None, subscription_id=None):
     if account_id is not None:
         account = BillingAccount.objects.get(id=account_id)
-        credit_line_kwargs = dict(account=account,
-                                  subscription=None)
+        credit_line_kwargs = {'account': account,
+                              'subscription': None
+                              }
     elif subscription_id is not None:
         subscription = Subscription.objects.get(id=subscription_id)
-        credit_line_kwargs = dict(account=subscription.account,
-                                  subscription=subscription)
+        credit_line_kwargs = {'account': subscription.account,
+                              'subscription': subscription
+                              }
     else:
         raise ValueError('invalid credit adjustment')
     if credit_form.cleaned_data['rate_type'] == 'Product':
@@ -122,7 +121,6 @@ def adjust_credit(credit_form, account_id=None, subscription_id=None):
                                       )
 
 
-# TODO make sure to require superuser
 class ManageBillingAccountView(BillingAccountsSectionView):
     name = 'manage_billing_account'
 
@@ -149,16 +147,15 @@ class ManageBillingAccountView(BillingAccountsSectionView):
 
     def data(self):
         account = BillingAccount.objects.get(id=self.args[0])
-        return dict(account=account,
-                    credit_form=self.get_appropriate_credit_form(account),
-                    credit_list=CreditLine.objects.filter(account=account),
-                    form=self.account_form,
-                    subscription_list=[(sub,
-                                        Invoice.objects.filter(subscription=sub).latest('date_due').date_due # TODO - check query
-                                            if len(Invoice.objects.filter(subscription=sub)) != 0 else 'None on record',
-                                        )
-                                       for sub in Subscription.objects.filter(account=account)],
-                    )
+        return {'account': account,
+                'credit_form': self.get_appropriate_credit_form(account),
+                'credit_list': CreditLine.objects.filter(account=account),
+                'form': self.account_form,
+                'subscription_list': [(sub,
+                                       Invoice.objects.filter(subscription=sub).latest('date_due').date_due # TODO - check query
+                                        if len(Invoice.objects.filter(subscription=sub)) != 0 else 'None on record',
+                                       ) for sub in Subscription.objects.filter(account=account)],
+                }
 
     @property
     def main_context(self):
@@ -283,14 +280,14 @@ class EditSubscriptionView(SubscriptionSectionView):
 
     def data(self):
         subscription = Subscription.objects.get(id=self.args[0])
-        return dict(cancel_form=CancelForm(),
-                    credit_form=self.get_appropriate_credit_form(subscription),
-                    credit_list=CreditLine.objects.filter(subscription=subscription),
-                    form=self.get_appropriate_subscription_form(subscription),
-                    parent_link='<a href="%s">%s<a>' % (SubscriptionInterface.get_url(), SubscriptionInterface.name),
-                    subscription=subscription,
-                    subscription_canceled=self.subscription_canceled if hasattr(self, 'subscription_canceled') else False
-                    )
+        return {'cancel_form': CancelForm(),
+                'credit_form': self.get_appropriate_credit_form(subscription),
+                'credit_list': CreditLine.objects.filter(subscription=subscription),
+                'form': self.get_appropriate_subscription_form(subscription),
+                'parent_link': '<a href="%s">%s<a>' % (SubscriptionInterface.get_url(), SubscriptionInterface.name),
+                'subscription': subscription,
+                'subscription_canceled': self.subscription_canceled if hasattr(self, 'subscription_canceled') else False
+                }
 
     @property
     def main_context(self):
