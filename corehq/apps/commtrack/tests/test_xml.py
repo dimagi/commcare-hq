@@ -135,6 +135,16 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         for product, amt in amounts:
             self.check_product_stock(self.sp, product, amt, amt)
 
+    def test_balance_consumption(self):
+        initial = float(100)
+        initial_amounts = [(p._id, initial) for p in self.products]
+        self.submit_xml_form(balance_submission(initial_amounts))
+
+        final_amounts = [(p._id, float(50 - 10*i)) for i, p in enumerate(self.products)]
+        self.submit_xml_form(balance_submission(final_amounts))
+        for product, amt in final_amounts:
+            self.check_product_stock(self.sp, product, amt, amt - initial)
+
     def test_balance_submit_multiple_stocks(self):
         def _random_amounts():
             return [(p._id, float(random.randint(0, 100))) for i, p in enumerate(self.products)]
