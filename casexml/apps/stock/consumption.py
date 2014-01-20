@@ -6,7 +6,24 @@ from casexml.apps.stock import const
 from casexml.apps.stock.models import StockTransaction
 
 
-def from_ts(dt): #damn this is ugly
+class ConsumptionConfiguration(object):
+
+    def __init__(self, min_periods=2, min_window=10, max_window=60):
+        # the minimum number of consumption periods to include in a calculation
+        # periods are intervals between stock reports
+        self.min_periods = min_periods
+
+        # the minimum total time of consumption data to include (in days)
+        # consumption should resort to static defaults if less than this
+        # amount of data is available
+        self.min_window = min_window
+
+        # the maximum time to look backwards for consumption data (in days)
+        # data before this period will not be included in the calculation
+        self.max_window = max_window
+
+
+def from_ts(dt):  # damn this is ugly
     if isinstance(dt, datetime):
         return dt
     if len(dt) > 20 and dt.endswith('Z'): # deal with invalid timestamps (where are these coming from?)
@@ -22,13 +39,9 @@ def span_days(start, end):
 
 def compute_consumption(case_id, product_id, window_end, section_id=const.SECTION_TYPE_STOCK,
                         configuration=None):
-    # TODO should be in config
-    CONSUMPTION_WINDOW = 60 # days
-    WINDOW_OVERSHOOT = 15 # days
-
-    window_start = window_end - timedelta(days=CONSUMPTION_WINDOW)
-    overshoot_start = window_start - timedelta(days=WINDOW_OVERSHOOT)
-    transactions = get_transactions(case_id, product_id, section_id, overshoot_start, window_end)
+    configuration = configuration or ConsumptionConfiguration()
+    window_start = window_end - timedelta(days=configuration.max_window)
+    transactions = get_transactions(case_id, product_id, section_id, window_start, window_end)
     return compute_consumption_from_transactions(transactions, window_start, configuration)
 
 
@@ -60,12 +73,21 @@ def get_transactions(case_id, product_id, section_id, window_start, window_end):
         section_id=section_id,
     ).order_by('report__date', 'pk')
 
+    first = True
     for db_tx in db_transactions:
+        # for the very first transaction, include the previous one if there as well
+        # to capture the data on the edge of the window
+        if first:
+            previous = db_tx.get_previous_transaction()
+            if previous:
+                yield _to_consumption_tx(db_tx)
+            first = False
+
         yield _to_consumption_tx(db_tx)
 
 
-def compute_consumption_from_transactions(transactions, window_start, params=None):
-    params = params or {}
+def compute_consumption_from_transactions(transactions, window_start, configuration=None):
+    configuration = configuration or ConsumptionConfiguration()
 
     class ConsumptionPeriod(object):
         def __init__(self, tx):
@@ -125,7 +147,7 @@ def compute_consumption_from_transactions(transactions, window_start, params=Non
     total_length = sum(period.normalized_length for period in periods)
 
     # check minimum statistical significance thresholds
-    if len(periods) < params.get('min_periods', 0) or total_length < params.get('min_window', 0):
+    if len(periods) < configuration.min_periods or total_length < configuration.min_window:
         return None
 
     return total_consumption / float(total_length) if total_length else None
