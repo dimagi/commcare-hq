@@ -56,7 +56,7 @@ class TransactionExpansionTest(ConsumptionCaseTestBase):
         self._stock_report(10, 0)
         expected = [
             _tx('stockonhand', 25, 5),
-            _tx('consumption', 15, 5),
+            _tx('consumption', 15, 0),
             _tx('stockonhand', 10, 0),
         ]
         self.assertTransactionListsEqual(expected, self._expand_transactions())

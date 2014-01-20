@@ -51,6 +51,20 @@ def expand_transactions(case_id, product_id, window_start, window_end):
             received_on=txn.report.date,
         )
 
+    def _reconciliation_tx(current, previous):
+        # currently we only infer consumption
+        if previous is not None:
+            if current.type == const.TRANSACTION_TYPE_STOCKONHAND:
+                if current.quantity:
+                    assert current.stock_on_hand == previous.stock_on_hand + current.quantity
+                    if current.quantity < 0:
+                        # infer consumption but not receipts
+                        return SimpleTransaction(
+                            action=const.TRANSACTION_TYPE_CONSUMPTION,
+                            value=-current.quantity,
+                            received_on=current.report.date,
+                        )
+
     # todo: beginning of window date filtering
     db_transactions = StockTransaction.objects.filter(
         case_id=case_id, product_id=product_id,
@@ -58,9 +72,13 @@ def expand_transactions(case_id, product_id, window_start, window_end):
         report__date__lte=window_end,
     ).order_by('report__date')
 
-    # todo: include inferred transactions
+    prev_txn = None
     for db_tx in db_transactions:
+        reconciliation = _reconciliation_tx(db_tx, prev_txn)
+        if reconciliation:
+            yield reconciliation
         yield _to_consumption_tx(db_tx)
+        prev_txn = db_tx
 
 def compute_consumption_from_transactions(transactions, window_start, get_base_action, params=None):
     params = params or {}
