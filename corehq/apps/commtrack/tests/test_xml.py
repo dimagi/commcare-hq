@@ -181,7 +181,7 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         transfers = [(p._id, float(50 - 10*i)) for i, p in enumerate(self.products)]
         self.submit_xml_form(balance_first(balance_amounts, transfers))
         for product, amt in transfers:
-            self.check_product_stock(self.sp, product, initial+amt, amt)
+            self.check_product_stock(self.sp, product, initial + amt, amt)
 
 
     def test_transfer_first_doc_order(self):
@@ -197,7 +197,7 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         balance_amounts = [(p._id, final) for p in self.products]
         self.submit_xml_form(transfer_first(transfers, balance_amounts))
         for product, amt in transfers:
-            self.check_product_stock(self.sp, product, final, initial + amt - final)
+            self.check_product_stock(self.sp, product, final, final - (initial + amt))
 
 
 class CommTrackRequisitionTest(CommTrackSubmissionTest):
