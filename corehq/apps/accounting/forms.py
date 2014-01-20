@@ -1,5 +1,6 @@
 from corehq import Domain
 from corehq.apps.accounting.models import *
+from corehq.apps.users.models import WebUser
 from crispy_forms.bootstrap import FormActions
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import *
@@ -82,6 +83,17 @@ class BillingAccountForm(forms.Form):
                 )
             )
         )
+
+    def clean_billing_account_admins(self):
+        billing_account_admins = self.cleaned_data['billing_account_admins']
+        invalid_emails = []
+        for email in billing_account_admins.split(','):
+            email_no_whitespace = email.strip()
+            if WebUser.get_by_username(email_no_whitespace) is None:
+                invalid_emails.append("'%s'" % email_no_whitespace)
+        if len(invalid_emails) != 0:
+            raise ValidationError("Invalid emails: %s" % ', '.join(invalid_emails))
+        return billing_account_admins
 
 
 class SubscriptionForm(forms.Form):
