@@ -283,6 +283,9 @@ class AlertConfig(DocumentSchema):
     stock_out_rates = BooleanProperty(default=False)
     non_report = BooleanProperty(default=False)
 
+class StockRestoreConfig(DocumentSchema):
+
+    section_to_consumption_types = DictProperty()
 
 class CommtrackConfig(Document):
 
@@ -308,6 +311,7 @@ class CommtrackConfig(Document):
     use_auto_consumption = BooleanProperty(default=False)
     consumption_config = SchemaProperty(ConsumptionConfig)
     stock_levels_config = SchemaProperty(StockLevelsConfig)
+    ota_restore_config = SchemaProperty(StockRestoreConfig)
 
     @property
     def multiaction_keyword(self):
@@ -339,6 +343,13 @@ class CommtrackConfig(Document):
         if self.requisitions_enabled:
             actions += [_action(a, 'req') for a in self.requisition_config.actions]
         return dict((a.keyword, a) for a in actions).get(keyword)
+
+    def get_ota_restore_settings(self):
+        # for some reason it doesn't like this import
+        from casexml.apps.phone.restore import StockSettings
+        if self.ota_restore_config:
+            return StockSettings(section_to_consumption_types=self.ota_restore_config.section_to_consumption_types)
+        return StockSettings()
 
     """
     @property
