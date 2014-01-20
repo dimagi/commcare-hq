@@ -10676,7 +10676,6 @@ msgstr ""
 "                            pour le projet auquel ils sont liés."
 
 #: corehq/apps/users/templates/users/mobile/users_list.html:94
-#, fuzzy
 msgid "Show Archived Mobile Workers"
 msgstr "Visualiser les travailleurs mobiles archivés"
 
