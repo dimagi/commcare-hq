@@ -105,7 +105,7 @@ def compute_consumption_from_transactions(transactions, window_start, get_base_a
 
         @property
         def normalized_consumption(self):
-            return self.consumption * self.normalized_length / self.length
+            return float(self.consumption) * self.normalized_length / self.length
 
     def split_periods(transactions):
         period = None
