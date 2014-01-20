@@ -46,13 +46,6 @@ class BillingAccountsSectionView(AccountingSectionView):
 class SubscriptionSectionView(AccountingSectionView):
     template_name = 'accounting/subscriptions.html'
 
-    @property
-    def parent_pages(self):
-        return [{
-            'title': SubscriptionInterface.name,
-            'url': SubscriptionInterface.get_url(),
-        }]
-
 
 class NewBillingAccountView(BillingAccountsSectionView):
     name = 'new_billing_account'
@@ -223,6 +216,13 @@ class NewSubscriptionView(SubscriptionSectionView):
     def page_url(self):
         return reverse(self.name, args=(self.args[0],))
 
+    @property
+    def parent_pages(self):
+        return [{
+            'title': AccountingInterface.name,
+            'url': AccountingInterface.get_url(),
+        }]
+
     def post(self, request, *args, **kwargs):
         if self.subscription_form.is_valid():
             account_id = self.args[0]
@@ -300,6 +300,13 @@ class EditSubscriptionView(SubscriptionSectionView):
     @property
     def page_url(self):
         return reverse(self.name, args=(self.args[0],))
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': SubscriptionInterface.name,
+            'url': SubscriptionInterface.get_url(),
+        }]
 
     def post(self, request, *args, **kwargs):
         if 'set_subscription' in self.request.POST and self.subscription_form.is_valid():
