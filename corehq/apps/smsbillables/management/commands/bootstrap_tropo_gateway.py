@@ -23,4 +23,7 @@ class Command(LabelCommand):
                                          country_code=int(data[2]))
         rates_csv.close()
 
+        # Fee for invalid phonenumber
+        SmsGatewayFee.create_new(TropoBackend.get_api_id(), OUTGOING, 0.01, country_code=None)
+
         print "Updated Tropo gateway fees."
