@@ -139,7 +139,7 @@ class SubscriptionForm(forms.Form):
             ),
             FormActions(
                 ButtonHolder(
-                    Submit('set_subscription', 'Submit')
+                    Submit('set_subscription', 'Update Subscription')
                 )
             )
         )
@@ -170,7 +170,7 @@ class CreditForm(forms.Form):
         self.helper = FormHelper()
         self.helper.layout = Layout(
             Fieldset(
-            'Adjust %s Credit' % 'Account Level' if is_account else 'Subscription Level',
+            'Adjust %s Level Credit' % ('Account' if is_account else 'Subscription'),
                 'amount',
                 'note',
                 Field('rate_type', data_bind="value: rateType"),
@@ -179,7 +179,7 @@ class CreditForm(forms.Form):
             ),
             FormActions(
                 ButtonHolder(
-                    Submit('adjust_credit', 'Submit')
+                    Submit('adjust_credit', 'Update Credit')
                 )
             )
         )
