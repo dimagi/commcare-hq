@@ -655,6 +655,7 @@ class StockTransaction(Document):
         if self.timestamp:
             attr['date'] = dateparse.json_format_datetime(self.timestamp)
 
+        attr['section-id'] = 'stock'
         if tx_type == 'balance':
             attr['entity-id'] = self.case_id
         elif tx_type == 'transfer':
@@ -665,7 +666,7 @@ class StockTransaction(Document):
                 attr['type'] = self.subaction
 
         return getattr(E, tx_type)(
-            E.product(
+            E.entry(
                 id=self.product_id,
                 quantity=str(self.quantity if self.action != StockActions.STOCKOUT else 0),
             ),
