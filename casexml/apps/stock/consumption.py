@@ -29,7 +29,7 @@ def compute_consumption(case_id, product_id, window_end, section_id=const.SECTIO
     window_start = window_end - timedelta(days=CONSUMPTION_WINDOW)
     overshoot_start = window_start - timedelta(days=WINDOW_OVERSHOOT)
     transactions = get_transactions(case_id, product_id, section_id, overshoot_start, window_end)
-    return compute_consumption_from_transactions(transactions, window_start, lambda action: action, configuration)
+    return compute_consumption_from_transactions(transactions, window_start, configuration)
 
 
 def get_transactions(case_id, product_id, section_id, window_start, window_end):
@@ -64,7 +64,7 @@ def get_transactions(case_id, product_id, section_id, window_start, window_end):
         yield _to_consumption_tx(db_tx)
 
 
-def compute_consumption_from_transactions(transactions, window_start, get_base_action, params=None):
+def compute_consumption_from_transactions(transactions, window_start, params=None):
     params = params or {}
 
     class ConsumptionPeriod(object):
@@ -94,7 +94,7 @@ def compute_consumption_from_transactions(transactions, window_start, get_base_a
     def split_periods(transactions):
         period = None
         for tx in transactions:
-            base_action_type = get_base_action(tx.action)
+            base_action_type = tx.action
             is_stockout = (
                 base_action_type == 'stockout' or
                 (base_action_type == 'stockonhand' and tx.value == 0) or
