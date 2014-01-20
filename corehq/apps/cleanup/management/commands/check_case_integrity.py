@@ -36,7 +36,6 @@ def iter_forms_with_cases(domain, since, chunksize=500):
         case_ids = []
         for form in form_list:
             f_case_ids = form["fields"]["__retrieved_case_ids"]
-            f_case_ids = [f_case_ids] if isinstance(f_case_ids, basestring) else f_case_ids
             case_ids.extend(f_case_ids)
 
         case_id_mapping = case_ids_by_xform_id([f["_id"] for f in form_list])
@@ -47,9 +46,9 @@ def iter_forms_with_cases(domain, since, chunksize=500):
 
 def handle_problematic_data(datalist_tup, csv_writer, verbose=False, rebuild=False):
     case_data = CommCareCase.get_db().view('_all_docs', keys=[d[1] for d in datalist_tup])
-    case_mapping = dict((c["id"], True) for c in case_data if 'id' in c)
+    cases = set([c["id"] for c in case_data if 'id' in c])
     for domain, case_id, form_id in datalist_tup:
-        error = "action_missing" if case_mapping.get(case_id) else "nonexistent_case"
+        error = "action_missing" if case_id in cases else "nonexistent_case"
         csv_writer.writerow([domain, case_id, form_id, error])
         if verbose and error == "nonexistent_case":
             print "Case (%s) from form (%s) does not exist" % (case_id, form_id)
