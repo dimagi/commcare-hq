@@ -7,6 +7,7 @@ from django.utils.translation import ugettext as _
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.stock import const as stockconst
+from casexml.apps.stock.consumption import ConsumptionConfiguration
 from casexml.apps.stock.models import StockReport as DbStockReport, StockTransaction as DbStockTransaction
 from casexml.apps.case.xml import V2
 from corehq import Domain
@@ -254,6 +255,12 @@ class ConsumptionConfig(DocumentSchema):
     min_window = IntegerProperty(default=10)
     optimal_window = IntegerProperty()
 
+    def to_stock_consumption_model(self):
+        return ConsumptionConfiguration(
+            min_periods=self.min_transactions,
+            min_window=self.min_window,
+            max_window=self.optimal_window,
+        )
 
 class StockLevelsConfig(DocumentSchema):
     emergency_level = DecimalProperty(default=0.5)  # in months
@@ -347,9 +354,11 @@ class CommtrackConfig(Document):
     def get_ota_restore_settings(self):
         # for some reason it doesn't like this import
         from casexml.apps.phone.restore import StockSettings
-        if self.ota_restore_config:
-            return StockSettings(section_to_consumption_types=self.ota_restore_config.section_to_consumption_types)
-        return StockSettings()
+        return StockSettings(
+            section_to_consumption_types=self.ota_restore_config.section_to_consumption_types,
+            consumption_config=self.consumption_config.to_stock_consumption_model()
+        )
+
 
     """
     @property
