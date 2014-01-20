@@ -20,15 +20,16 @@ class ConsumptionRatePillow(BasicPillow):
         touched_products = set(tx['product_entry'] for tx in txs)
 
         for case_id in touched_products:
-            case = SupplyPointProductCase.get(case_id)
-            rate = compute_consumption(case_id, case.product,
-                                       from_ts(doc_dict['received_on']))
             try:
-                set_computed(case, 'consumption_rate', rate)
-                case.save()
+                case = SupplyPointProductCase.get(case_id)
             except ResourceNotFound:
                 # maybe the case was deleted. for now we don't care about this
                 pillow_logging.info('skipping commtrack update for deleted case %s' % case_id)
+            else:
+                rate = compute_consumption(case_id, case.product,
+                                           from_ts(doc_dict['received_on']))
+                set_computed(case, 'consumption_rate', rate)
+                case.save()
 
 # TODO: biyeun might have better framework code for doing this
 def set_computed(case, key, val):
