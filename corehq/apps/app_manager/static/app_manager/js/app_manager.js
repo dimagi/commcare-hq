@@ -227,8 +227,10 @@
             }
         });
 
-        $('.new-module').on('click', function(e){
+        $('.new-module').on('click', function (e) {
             e.preventDefault();
+            var dataType = $(this).data('type');
+            $('#new-module-type').val(dataType);
             var form = $('#new-module-form');
             if (!form.data('clicked')) {
                 form.data('clicked', 'true');

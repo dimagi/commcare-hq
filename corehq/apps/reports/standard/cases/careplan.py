@@ -1,3 +1,4 @@
+import uuid
 from django.utils.translation import ugettext_noop, ugettext as _
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.reports.generic import GenericReportView
@@ -134,6 +135,9 @@ class CareplanReport(ProjectReport, GenericReportView, ProjectReportParametersMi
             "case_id_attr": "case_id_goal",
             "child_type": "careplan_task",
             "description_property": "description",
+            "create_session_data": {
+                "case_id_goal": str(uuid.uuid4())
+            },
         }
         goal_conf.update(self.config.goal_conf)
         task_conf = {

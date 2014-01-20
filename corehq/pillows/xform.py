@@ -1,21 +1,21 @@
 import copy
-from casexml.apps.case.xform import extract_case_blocks
-from corehq.pillows.case import UNKNOWN_DOMAIN, UNKNOWN_TYPE
-from corehq.pillows.core import DATE_FORMATS_ARR
+from casexml.apps.case.xform import extract_case_blocks, get_case_ids_from_form
 from corehq.pillows.mappings.xform_mapping import XFORM_MAPPING, XFORM_INDEX
-from dimagi.utils.decorators.memoized import memoized
 from .base import HQPillow
-from pillowtop.listener import AliasedElasticPillow
-import hashlib
-import simplejson
 from couchforms.models import XFormInstance
-from django.conf import settings
-from dimagi.utils.modules import to_function
+from dateutil import parser
 
 
 UNKNOWN_VERSION = 'XXX'
 UNKNOWN_UIVERSION = 'XXX'
 
+def is_valid_date(txt):
+    try:
+        if txt and parser.parse(txt):
+            return True
+    except Exception:
+        pass
+    return False
 
 class XFormPillow(HQPillow):
     document_class = XFormInstance
@@ -24,6 +24,7 @@ class XFormPillow(HQPillow):
     es_alias = "xforms"
     es_type = "xform"
     es_index = XFORM_INDEX
+    include_docs = False
 
     #for simplicity, the handlers are managed on the domain level
     handler_domain_map = {}
@@ -43,9 +44,9 @@ class XFormPillow(HQPillow):
             doc_ret = copy.deepcopy(doc_dict)
 
             if 'meta' in doc_ret['form']:
-                if doc_ret['form']['meta'].get('timeEnd', None) == "":
+                if not is_valid_date(doc_ret['form']['meta'].get('timeEnd', None)):
                     doc_ret['form']['meta']['timeEnd'] = None
-                if doc_ret['form']['meta'].get('timeStart', None) == "":
+                if not is_valid_date(doc_ret['form']['meta'].get('timeStart', None)):
                     doc_ret['form']['meta']['timeStart'] = None
 
                 # Some docs have their @xmlns and #text here
@@ -55,13 +56,18 @@ class XFormPillow(HQPillow):
             case_blocks = extract_case_blocks(doc_ret)
             for case_dict in case_blocks:
                 for date_modified_key in ['date_modified', '@date_modified']:
-                    if case_dict.get(date_modified_key, None) == "":
-                        case_dict[date_modified_key] = None
+                    if not is_valid_date(case_dict.get(date_modified_key, None)):
+                        if case_dict.get(date_modified_key) == '':
+                            case_dict[date_modified_key] = None
+                        else:
+                            case_dict.pop(date_modified_key, None)
 
                 # convert all mapped dict properties to nulls if they are empty strings
                 for object_key in ['index', 'attachment', 'create', 'update']:
                     if object_key in case_dict and not isinstance(case_dict[object_key], dict):
                         case_dict[object_key] = None
+
+            doc_ret["__retrieved_case_ids"] = list(get_case_ids_from_form(doc_dict))
             return doc_ret
 
 
