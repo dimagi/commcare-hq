@@ -24,6 +24,7 @@ class StockTransaction(models.Model):
     # for now, a supply point or requisition case
     case_id = models.CharField(max_length=100, db_index=True)
     product_id = models.CharField(max_length=100, db_index=True)
+
     # todo we should be more explicit about what belongs in this field
     # currently supported/expected: 'stockonhand', 'receipts', 'consumption'
     type = models.CharField(max_length=20)  # i.e. 'loss' or 'receipt'

@@ -37,13 +37,18 @@ def expand_transactions(case_id, product_id, window_start, window_end):
     # todo: get rid of this middle layer once the consumption calc has
     # been updated to deal with the regular transaction objects
     SimpleTransaction = collections.namedtuple('SimpleTransaction', ['action', 'value', 'received_on'])
-    def _soh_to_consumption_tx(soh_tx):
-        assert soh_tx.report.type == const.TRANSACTION_TYPE_BALANCE
-        assert soh_tx.quantity == soh_tx.stock_on_hand
+
+    def _to_consumption_tx(txn):
+        if txn.report.type == const.REPORT_TYPE_BALANCE:
+            assert txn.type == const.TRANSACTION_TYPE_STOCKONHAND
+            value = txn.stock_on_hand
+        elif txn.report.type == const.REPORT_TYPE_TRANSFER:
+            assert txn.type in (const.TRANSACTION_TYPE_RECEIPTS, const.TRANSACTION_TYPE_CONSUMPTION)
+            value = txn.quantity
         return SimpleTransaction(
-            action='stockonhand',
-            value=soh_tx.stock_on_hand,
-            received_on=soh_tx.report.date,
+            action=txn.type,
+            value=value,
+            received_on=txn.report.date,
         )
 
     # todo: beginning of window date filtering
@@ -52,8 +57,10 @@ def expand_transactions(case_id, product_id, window_start, window_end):
         report__date__gt=window_start,
         report__date__lte=window_end,
     ).order_by('report__date')
+
+    # todo: include inferred transactions
     for db_tx in db_transactions:
-        yield _soh_to_consumption_tx(db_tx)
+        yield _to_consumption_tx(db_tx)
 
 def compute_consumption_from_transactions(transactions, window_start, get_base_action, params=None):
     params = params or {}

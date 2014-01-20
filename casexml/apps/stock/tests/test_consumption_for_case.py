@@ -14,6 +14,7 @@ class ConsumptionCaseTestBase(TestCase):
         self.case_id = uuid.uuid4()
         self.product_id = uuid.uuid4()
         self._stock_report = functools.partial(_stock_report, self.case_id, self.product_id)
+        self._receipt_report = functools.partial(_receipt_report, self.case_id, self.product_id)
         self._compute_consumption = functools.partial(compute_consumption, self.case_id, self.product_id, now)
 
     def _expand_transactions(self):
@@ -39,6 +40,17 @@ class TransactionExpansionTest(ConsumptionCaseTestBase):
         ]
         self.assertTransactionListsEqual(expected, self._expand_transactions())
 
+    def testNoConsumptionWithReceipts(self):
+        self._stock_report(25, 5)
+        self._receipt_report(10, 3)
+        self._stock_report(35, 0)
+        expected = [
+            _tx('stockonhand', 25, 5),
+            _tx('receipts', 10, 3),
+            _tx('stockonhand', 35, 0),
+        ]
+        self.assertTransactionListsEqual(expected, self._expand_transactions())
+
     def testSimpleConsumption(self):
         self._stock_report(25, 5)
         self._stock_report(10, 0)
@@ -61,12 +73,31 @@ class ConsumptionCaseTest(ConsumptionCaseTestBase):
 
 def _stock_report(case_id, product_id, amount, days_ago):
     report = StockReport.objects.create(form_id=uuid.uuid4().hex, date=ago(days_ago),
-                                        type=const.TRANSACTION_TYPE_BALANCE)
-    StockTransaction.objects.create(
+                                        type=const.REPORT_TYPE_BALANCE)
+    txn = StockTransaction(
         report=report,
-        section_id='stock',
+        section_id=const.SECTION_TYPE_STOCK,
+        type=const.TRANSACTION_TYPE_STOCKONHAND,
         case_id=case_id,
         product_id=product_id,
         stock_on_hand=amount,
+    )
+    previous_transaction = txn.get_previous_transaction()
+    txn.quantity = txn.stock_on_hand - (previous_transaction.stock_on_hand if previous_transaction else 0)
+    txn.save()
+
+
+def _receipt_report(case_id, product_id, amount, days_ago):
+    report = StockReport.objects.create(form_id=uuid.uuid4().hex, date=ago(days_ago),
+                                        type=const.REPORT_TYPE_TRANSFER)
+    txn = StockTransaction(
+        report=report,
+        section_id=const.SECTION_TYPE_STOCK,
+        type=const.TRANSACTION_TYPE_RECEIPTS,
+        case_id=case_id,
+        product_id=product_id,
         quantity=amount,
     )
+    previous_transaction = txn.get_previous_transaction()
+    txn.stock_on_hand = (previous_transaction.stock_on_hand if previous_transaction else 0) + txn.quantity
+    txn.save()
