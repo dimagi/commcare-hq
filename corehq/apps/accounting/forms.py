@@ -1,10 +1,8 @@
-import datetime
+from corehq.apps.accounting.models import *
 from crispy_forms.bootstrap import FormActions
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import *
 from django import forms
-
-from corehq.apps.accounting.models import *
 
 
 class BillingAccountForm(forms.Form):
@@ -96,8 +94,8 @@ class SubscriptionForm(forms.Form):
     def __init__(self, subscription, *args, **kwargs):
         super(SubscriptionForm, self).__init__(*args, **kwargs)
 
-        css_class = dict(css_class='date-picker')
-        disabled = dict(disabled='disabled')
+        css_class = {'css_class': 'date-picker'}
+        disabled = {'disabled': 'disabled'}
 
         start_date_kwargs = dict(**css_class)
         end_date_kwargs = dict(**css_class)
