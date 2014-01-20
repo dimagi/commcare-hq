@@ -1,8 +1,9 @@
 {% extends "reports/base_template.html" %}
+{% load url from future %}
 
 
 {% block main_column %}
-    <a href="./new/" class="btn btn-primary" data-toggle="modal" style="margin-left:2px">
+    <a href="{% url 'new_billing_account' %}" class="btn btn-primary" data-toggle="modal" style="margin-left:2px">
         <i class="icon-white icon-plus">
             Add New Billing Account
         </i>
