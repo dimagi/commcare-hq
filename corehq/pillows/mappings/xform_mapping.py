@@ -1,6 +1,6 @@
 from corehq.pillows.core import DATE_FORMATS_STRING, DATE_FORMATS_ARR
 
-XFORM_INDEX="xforms_9ec79af5c678ye12p129dd5b2a992a4f"
+XFORM_INDEX="xforms_6oo89af5c6785e9uj39rdd5b8g2gg83i"
 
 
 XFORM_MAPPING = {
@@ -46,6 +46,7 @@ XFORM_MAPPING = {
             'dynamic': False,
             'type': 'object'
         },
+        '__retrieved_case_ids': {'index': 'not_analyzed', 'type': 'string'},
         'form': {
             'dynamic': False,
             'properties': {
