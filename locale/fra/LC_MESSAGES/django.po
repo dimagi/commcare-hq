@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommTrack\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-01-18 09:56-0500\n"
+"POT-Creation-Date: 2014-01-20 15:13+0000\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -2060,6 +2060,10 @@ msgstr "Groupe"
 msgid "}You have no groups"
 msgstr "}Vous ne disposez d'aucun groupe."
 
+#: corehq/apps/cloudcare/templates/cloudcare/config.html:174
+msgid "Here's what this means"
+msgstr ""
+
 #: corehq/apps/cloudcare/templates/cloudcare/config.html:179
 msgid ""
 "Mobile workers in group\n"
@@ -2444,7 +2448,7 @@ msgstr "Mot-clé"
 
 #: corehq/apps/commtrack/templates/commtrack/manage/products.html:106
 #: corehq/apps/commtrack/templates/commtrack/manage/programs.html:62
-#: corehq/apps/reports/fields.py:773
+#: corehq/apps/reports/fields.py:774
 msgid "Program"
 msgstr ""
 
@@ -3891,7 +3895,7 @@ msgid "to choose a Creative Commons license."
 msgstr "pour choisir une licence Creative Commons."
 
 #: corehq/apps/domain/templates/domain/partials/user_list.html:6
-#: corehq/apps/hqwebapp/forms.py:9 corehq/apps/users/forms.py:105
+#: corehq/apps/hqwebapp/forms.py:9 corehq/apps/users/forms.py:108
 #: corehq/apps/users/templates/users/web_users.html:105
 msgid "E-mail"
 msgstr "Courriel"
@@ -6751,7 +6755,7 @@ msgstr ""
 msgid "Create Password"
 msgstr "Modifier mot de passe"
 
-#: corehq/apps/registration/forms.py:34 corehq/apps/users/forms.py:121
+#: corehq/apps/registration/forms.py:34 corehq/apps/users/forms.py:132
 msgid "Opt out of emails about new features and other CommCare updates."
 msgstr ""
 "Se désabonner à l'envoi de courrier électronique concernant les nouvelles "
@@ -7730,12 +7734,12 @@ msgstr "Seulement %s travailleurs mobiles"
 msgid "Date Range"
 msgstr "Plage de dates"
 
-#: corehq/apps/reports/fields.py:689
+#: corehq/apps/reports/fields.py:690
 #: corehq/apps/reports/filters/devicelog.py:67
 msgid "Filter Logs by Username"
 msgstr "Filtrer les journaux par nom d'utilisateur"
 
-#: corehq/apps/reports/fields.py:694
+#: corehq/apps/reports/fields.py:695
 #: corehq/apps/reports/filters/devicelog.py:73
 msgid "Filter Logs by Device"
 msgstr "Filtrer les journaux par appareil"
@@ -10262,20 +10266,20 @@ msgstr ""
 "Impossible d'ajouter au groupe '%s' (essayez de l'ajouter à votre feuille de "
 "calcul)"
 
-#: corehq/apps/users/forms.py:38
+#: corehq/apps/users/forms.py:41
 msgid "Please enter a valid two or three digit language code."
 msgstr ""
 "Veuillez saisir un code de langue valide composé de deux ou trois caractères"
 
-#: corehq/apps/users/forms.py:103
+#: corehq/apps/users/forms.py:106
 msgid "First Name"
 msgstr "Prénom"
 
-#: corehq/apps/users/forms.py:104
+#: corehq/apps/users/forms.py:107
 msgid "Last Name"
 msgstr "Nom"
 
-#: corehq/apps/users/forms.py:107
+#: corehq/apps/users/forms.py:115
 msgid ""
 "<i class=\"icon-info-sign\"></i> Becomes default language seen in CloudCare "
 "and reports (if applicable). Supported languages for reports are en, fr "
@@ -10285,12 +10289,12 @@ msgstr ""
 "et les rapports (s'il y a lieu). Les langues prises en charge pour les "
 "rapports sont en, fr (partiel), et hin (partiel)."
 
-#: corehq/apps/users/forms.py:208
+#: corehq/apps/users/forms.py:219
 #, python-format
 msgid "%s is an invalid phone number."
 msgstr "%s n'est pas un numéro de téléphone valide."
 
-#: corehq/apps/users/forms.py:250
+#: corehq/apps/users/forms.py:261
 msgid "Username contains invalid characters."
 msgstr "Le nom d'utilisateur comporte des caractères no valides."
 
