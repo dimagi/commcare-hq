@@ -1,6 +1,7 @@
 import datetime
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
+from django.utils.decorators import method_decorator
 from django.shortcuts import render
 from django.views.generic import TemplateView
 from corehq import AccountingInterface, SubscriptionInterface
@@ -28,6 +29,11 @@ class AccountingSectionView(BaseSectionPageView):
     @property
     def page_context(self):
         return {}
+
+    @method_decorator(require_superuser)
+    def dispatch(self, request, *args, **kwargs):
+        return super(AccountingSectionView, self).dispatch(request, *args, **kwargs)
+
 
 
 class BillingAccountsSectionView(AccountingSectionView):
