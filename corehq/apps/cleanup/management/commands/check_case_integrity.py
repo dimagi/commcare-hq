@@ -7,8 +7,10 @@ from casexml.apps.case.models import CommCareCase
 from corehq.elastic import stream_es_query, ES_URLS
 import dateutil.parser as dparser
 import csv
+import logging
 from dimagi.utils.chunked import chunked
 
+logger = logging.getLogger(__name__)
 
 def forms_with_cases(domain=None, since=None, chunksize=500):
     q = {"filter": {"and": [{"bool": {
@@ -51,16 +53,16 @@ def handle_problematic_data(datalist_tup, csv_writer, verbose=False, rebuild=Fal
         error = "action_missing" if case_id in cases else "nonexistent_case"
         csv_writer.writerow([domain, case_id, form_id, error])
         if verbose and error == "nonexistent_case":
-            print "Case (%s) from form (%s) does not exist" % (case_id, form_id)
+            logger.info("Case (%s) from form (%s) does not exist" % (case_id, form_id))
         elif verbose and error == "action_missing":
-            print "Case (%s) missing action for form (%s)" % (case_id, form_id)
+            logger.info("Case (%s) missing action for form (%s)" % (case_id, form_id))
         if rebuild:
             if verbose:
-                print "rebuilding case (%s) from scratch" % case_id
+                logger.info("rebuilding case (%s) from scratch" % case_id)
             try:
                 rebuild_case(case_id)
             except Exception as e:
-                print "Case Rebuild Failure: %s" % e
+                logger.info("Case Rebuild Failure: %s" % e)
 
 
 class Command(BaseCommand):
@@ -88,7 +90,7 @@ class Command(BaseCommand):
         if not filename.endswith(".csv"):
             filename = "%s.csv" % filename
         rebuild, verbose = options.get("rebuild"), options.get("verbose")
-        print "writing to file: %s" % filename
+        logger.info("writing to file: %s" % filename)
 
         with open(filename, 'wb+') as csvfile:
             csv_writer = csv.writer(csvfile, delimiter=',',
