@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommTrack\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-01-20 15:13+0000\n"
+"POT-Creation-Date: 2014-01-21 02:58+0000\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -1666,7 +1666,6 @@ msgid "Previous"
 msgstr "Précédent"
 
 #: corehq/apps/appstore/templates/appstore/appstore_base.html:331
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/pagination.html:36
 #: corehq/apps/reports/templates/reports/filters/drilldown_options.html:24
 msgid "Next"
 msgstr "Suivant"
@@ -2173,6 +2172,11 @@ msgstr "Niveaux d'inventaire"
 msgid "Consumption Settings"
 msgstr "Paramètres de consommation"
 
+#: corehq/apps/commtrack/forms.py:136
+#, fuzzy
+msgid "Submit"
+msgstr "Soumettre le temps"
+
 #: corehq/apps/commtrack/forms.py:155
 #, fuzzy
 msgid "Name already in use"
@@ -2643,6 +2647,7 @@ msgstr "Gérer le groupe \"%s\""
 #: corehq/apps/reports/standard/sms.py:116
 #: corehq/apps/twilio/templates/twilio/backend.html:20
 #: corehq/apps/users/templates/users/partial/basic_info_form.html:105
+#: submodules/payments/hqbilling/forms.py:76
 msgid "Phone Number"
 msgstr "Numéro de téléphone"
 
@@ -3250,10 +3255,11 @@ msgstr ""
 "les dossiers qui s'inscrivent eux-mêmes via sms."
 
 #: corehq/apps/domain/forms.py:486 corehq/apps/locations/util.py:72
+#: submodules/payments/hqbilling/forms.py:70
 msgid "City"
 msgstr "Ville"
 
-#: corehq/apps/domain/forms.py:487
+#: corehq/apps/domain/forms.py:487 submodules/payments/hqbilling/forms.py:73
 msgid "Country"
 msgstr "Pays"
 
@@ -3526,6 +3532,11 @@ msgstr "Publier maintenant"
 #: corehq/apps/domain/templates/domain/internal_calculations.html:45
 msgid "Load EVERYTHING"
 msgstr "Charger TOUT"
+
+#: corehq/apps/domain/templates/domain/internal_calculations.html:53
+#, fuzzy
+msgid "Load Property"
+msgstr "Propriétés de chargement"
 
 #: corehq/apps/domain/templates/domain/internal_settings.html:11
 msgid "Update Project Information"
@@ -3895,7 +3906,7 @@ msgid "to choose a Creative Commons license."
 msgstr "pour choisir une licence Creative Commons."
 
 #: corehq/apps/domain/templates/domain/partials/user_list.html:6
-#: corehq/apps/hqwebapp/forms.py:9 corehq/apps/users/forms.py:108
+#: corehq/apps/hqwebapp/forms.py:9 corehq/apps/users/forms.py:109
 #: corehq/apps/users/templates/users/web_users.html:105
 msgid "E-mail"
 msgstr "Courriel"
@@ -5948,6 +5959,15 @@ msgstr "Mes paramètres de compte"
 msgid "Sign Out"
 msgstr "Déconnexion"
 
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/time-notice.html:4
+msgid "The current date and time is"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/time-notice.html:7
+#, fuzzy
+msgid "All dates are in"
+msgstr "Toutes les dates sont en heure UTC"
+
 #: corehq/apps/hqwebapp/templates/hqwebapp/proptable/dl_property_table.html:52
 #: corehq/apps/reports/standard/cases/data_sources.py:218
 msgid "No data"
@@ -6755,7 +6775,7 @@ msgstr ""
 msgid "Create Password"
 msgstr "Modifier mot de passe"
 
-#: corehq/apps/registration/forms.py:34 corehq/apps/users/forms.py:132
+#: corehq/apps/registration/forms.py:34 corehq/apps/users/forms.py:133
 msgid "Opt out of emails about new features and other CommCare updates."
 msgstr ""
 "Se désabonner à l'envoi de courrier électronique concernant les nouvelles "
@@ -9678,41 +9698,41 @@ msgstr "Le préfixe est spécifié deux fois :"
 msgid "Create Another Connection"
 msgstr "Créer une autre connexion"
 
-#: corehq/apps/sms/forms.py:318
+#: corehq/apps/sms/forms.py:319
 msgid "Receive stockout facilities SMS alert"
 msgstr ""
 
-#: corehq/apps/sms/forms.py:318
+#: corehq/apps/sms/forms.py:321
 msgid ""
 "This will alert you with specific users/facilities that are stocked out of "
 "your commodities"
 msgstr ""
 
-#: corehq/apps/sms/forms.py:319
+#: corehq/apps/sms/forms.py:324
 msgid "Receive stockout commodities SMS alert"
 msgstr ""
 
-#: corehq/apps/sms/forms.py:319
+#: corehq/apps/sms/forms.py:326
 msgid ""
 "This will alert you with specific commodities that are stocked out by your "
 "users/facilities"
 msgstr ""
 
-#: corehq/apps/sms/forms.py:320
+#: corehq/apps/sms/forms.py:329
 msgid "Receive stockout SMS alert"
 msgstr ""
 
-#: corehq/apps/sms/forms.py:320
+#: corehq/apps/sms/forms.py:331
 msgid ""
 "This will alert you with the percent of facilities that are stocked out of a "
 "specific commodity"
 msgstr ""
 
-#: corehq/apps/sms/forms.py:321
+#: corehq/apps/sms/forms.py:334
 msgid "Receive non-reporting SMS alert"
 msgstr ""
 
-#: corehq/apps/sms/forms.py:321
+#: corehq/apps/sms/forms.py:336
 msgid ""
 "This alert highlight users/facilities which have not submitted their "
 "CommTrack stock report."
@@ -9938,6 +9958,10 @@ msgstr "Tapez un nom d'utilisateur, nom de groupe ou 'envoyer à tous'"
 #: corehq/apps/sms/templates/sms/message_tester.html:10
 msgid "Message:"
 msgstr "Message :"
+
+#: corehq/apps/sms/templates/sms/compose.html:63
+msgid "0 characters (160 max)"
+msgstr ""
 
 #: corehq/apps/sms/templates/sms/compose.html:68
 #: corehq/apps/sms/templates/sms/message_tester.html:19
@@ -10266,20 +10290,20 @@ msgstr ""
 "Impossible d'ajouter au groupe '%s' (essayez de l'ajouter à votre feuille de "
 "calcul)"
 
-#: corehq/apps/users/forms.py:41
+#: corehq/apps/users/forms.py:42
 msgid "Please enter a valid two or three digit language code."
 msgstr ""
 "Veuillez saisir un code de langue valide composé de deux ou trois caractères"
 
-#: corehq/apps/users/forms.py:106
+#: corehq/apps/users/forms.py:107
 msgid "First Name"
 msgstr "Prénom"
 
-#: corehq/apps/users/forms.py:107
+#: corehq/apps/users/forms.py:108
 msgid "Last Name"
 msgstr "Nom"
 
-#: corehq/apps/users/forms.py:115
+#: corehq/apps/users/forms.py:116
 msgid ""
 "<i class=\"icon-info-sign\"></i> Becomes default language seen in CloudCare "
 "and reports (if applicable). Supported languages for reports are en, fr "
@@ -10289,12 +10313,12 @@ msgstr ""
 "et les rapports (s'il y a lieu). Les langues prises en charge pour les "
 "rapports sont en, fr (partiel), et hin (partiel)."
 
-#: corehq/apps/users/forms.py:219
+#: corehq/apps/users/forms.py:220
 #, python-format
 msgid "%s is an invalid phone number."
 msgstr "%s n'est pas un numéro de téléphone valide."
 
-#: corehq/apps/users/forms.py:261
+#: corehq/apps/users/forms.py:262
 msgid "Username contains invalid characters."
 msgstr "Le nom d'utilisateur comporte des caractères no valides."
 
@@ -13994,6 +14018,28 @@ msgstr "Sélectionnez un domaine..."
 #: submodules/payments/hqbilling/filters.py:58
 msgid "Any Direction"
 msgstr "Toute direction"
+
+#: submodules/payments/hqbilling/forms.py:68
+#, fuzzy
+msgid "Company Name"
+msgstr "Nom de dossier"
+
+#: submodules/payments/hqbilling/forms.py:71
+msgid "State/Province"
+msgstr ""
+
+#: submodules/payments/hqbilling/forms.py:72
+#, fuzzy
+msgid "Postal Code"
+msgstr "Total de dossiers"
+
+#: submodules/payments/hqbilling/forms.py:102
+msgid "Currency Code (ex: USD)"
+msgstr ""
+
+#: submodules/payments/hqbilling/forms.py:106
+msgid "Symbol for currency (ex: $)"
+msgstr ""
 
 #: submodules/payments/hqbilling/views.py:159
 #, python-format
