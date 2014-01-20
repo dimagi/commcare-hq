@@ -1,5 +1,6 @@
 import hashlib
 from couchdbkit import ResourceConflict
+from casexml.apps.stock.consumption import compute_consumption
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.exceptions import BadStateException, RestoreException
@@ -18,12 +19,24 @@ from casexml.apps.phone.fixtures import generator
 from django.http import HttpResponse, Http404
 from casexml.apps.phone.checksum import CaseStateHash
 
+
+class StockSettings(object):
+
+    def __init__(self, section_to_consumption_types=None):
+        """
+        section_to_consumption_types should be a dict of stock section-ids to corresponding
+        consumption section-ids. any stock sections not found in the dict will not have
+        any consumption data set in the restore
+        """
+        self.section_to_consumption_types = section_to_consumption_types or {}
+
+
 class RestoreConfig(object):
     """
     A collection of attributes associated with an OTA restore
     """
     def __init__(self, user, restore_id="", version=V1, state_hash="",
-                 caching_enabled=False, items=False):
+                 caching_enabled=False, items=False, stock_settings=None):
         self.user = user
         self.restore_id = restore_id
         self.version = version
@@ -31,6 +44,7 @@ class RestoreConfig(object):
         self.caching_enabled = caching_enabled
         self.cache = get_redis_default_cache()
         self.items = items
+        self.stock_settings = stock_settings or StockSettings()
 
     @property
     @memoized
@@ -60,20 +74,37 @@ class RestoreConfig(object):
         from lxml.builder import ElementMaker
         E = ElementMaker(namespace=COMMTRACK_REPORT_XMLNS)
 
-        def transaction_to_xml(trans):
+        def entry_xml(id, quantity):
             return E.entry(
-                id=trans.product_id,
-                quantity=str(int(trans.stock_on_hand)),
+                id=id,
+                quantity=str(int(quantity)),
             )
+
+        def transaction_to_xml(trans):
+            return entry_xml(trans.product_id, trans.stock_on_hand)
+
+        def consumption_entry(case_id, product_id, section_id):
+            # todo, config
+            consumption_value = compute_consumption(case_id, product_id, datetime.utcnow(), section_id)
+            if consumption_value is not None:
+                return entry_xml(product_id, consumption_value)
+
         for commtrack_case in cases:
             relevant_sections = sorted(StockTransaction.objects.filter(case_id=commtrack_case._id).values_list('section_id', flat=True).distinct())
             for section_id in relevant_sections:
                 relevant_reports = StockTransaction.objects.filter(case_id=commtrack_case._id, section_id=section_id)
                 product_ids = sorted(relevant_reports.values_list('product_id', flat=True).distinct())
-                products = [relevant_reports.filter(product_id=p).order_by('-report__date').select_related()[0] for p in product_ids]
-                as_of = json_format_datetime(max(p.report.date for p in products))
-                yield E.balance(*(transaction_to_xml(e) for e in products),
+                transactions = [relevant_reports.filter(product_id=p).order_by('-report__date').select_related()[0] for p in product_ids]
+                as_of = json_format_datetime(max(txn.report.date for txn in transactions))
+                yield E.balance(*(transaction_to_xml(e) for e in transactions),
                                 **{'entity-id': commtrack_case._id, 'date': as_of, 'section-id': section_id})
+
+                if section_id in self.stock_settings.section_to_consumption_types:
+                    yield E.balance(
+                        *[consumption_entry(commtrack_case._id, p, section_id) for p in product_ids],
+                        **{'entity-id': commtrack_case._id, 'date': as_of,
+                           'section-id': self.stock_settings.section_to_consumption_types[section_id]}
+                    )
 
     def get_payload(self):
         user = self.user

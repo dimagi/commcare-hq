@@ -20,18 +20,19 @@ def span_days(start, end):
     return span.days + span.seconds / 86400.
 
 
-def compute_consumption(case_id, product_id, window_end, configuration=None):
+def compute_consumption(case_id, product_id, window_end, section_id=const.SECTION_TYPE_STOCK,
+                        configuration=None):
     # TODO should be in config
     CONSUMPTION_WINDOW = 60 # days
     WINDOW_OVERSHOOT = 15 # days
 
     window_start = window_end - timedelta(days=CONSUMPTION_WINDOW)
     overshoot_start = window_start - timedelta(days=WINDOW_OVERSHOOT)
-    transactions = get_transactions(case_id, product_id, overshoot_start, window_end)
+    transactions = get_transactions(case_id, product_id, section_id, overshoot_start, window_end)
     return compute_consumption_from_transactions(transactions, window_start, lambda action: action, configuration)
 
 
-def get_transactions(case_id, product_id, window_start, window_end):
+def get_transactions(case_id, product_id, section_id, window_start, window_end):
     """
     Given a case/product pair, get transactions in a format ready for consumption calc
     """
@@ -56,6 +57,7 @@ def get_transactions(case_id, product_id, window_start, window_end):
         case_id=case_id, product_id=product_id,
         report__date__gt=window_start,
         report__date__lte=window_end,
+        section_id=section_id,
     ).order_by('report__date', 'pk')
 
     for db_tx in db_transactions:
