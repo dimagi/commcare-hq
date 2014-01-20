@@ -17,7 +17,7 @@ from corehq.apps.users.models import CommCareUser
 from dimagi.utils.couch.loosechange import map_reduce
 from couchforms.models import XFormInstance
 from dimagi.utils import parsing as dateparse
-from dimagi.utils.dates import force_to_date
+from dimagi.utils.dates import force_to_date, force_to_datetime
 from datetime import datetime
 from copy import copy
 from django.dispatch import receiver
@@ -489,7 +489,7 @@ class NewStockReport(object):
     def from_xml(cls, form, config, elem):
         tag = elem.tag
         tag = tag[tag.find('}')+1:] # strip out ns
-        timestamp = elem.attrib.get('date', form.received_on)
+        timestamp = force_to_datetime(elem.attrib.get('date', form.received_on))
         products = elem.findall('./{%s}entry' % const.COMMTRACK_REPORT_XMLNS)
         transactions = [t for prod_entry in products for t in
                         StockTransaction.from_xml(config, timestamp, tag, elem, prod_entry)]
