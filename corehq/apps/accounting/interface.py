@@ -17,14 +17,6 @@ class AccountingInterface(BaseCRUDAdminInterface):
 
     def validate_document_class(self):
         return True
-        #if self.document_class is None or not issubclass(self.document_class, HQAnnouncement):
-        #    raise NotImplementedError("document_class must be an HQAnnouncement")
-
-    """
-    @property
-    def default_report_url(self):
-        return reverse("default_announcement_admin")
-    """
 
     @property
     def headers(self):
@@ -53,8 +45,6 @@ class AccountingInterface(BaseCRUDAdminInterface):
         )
         return context
 
-    #######
-
     name = "Billing Accounts"
     description = "List of all billing accounts"
     slug = "accounts"
@@ -74,14 +64,6 @@ class SubscriptionInterface(BaseCRUDAdminInterface):
 
     def validate_document_class(self):
         return True
-        #if self.document_class is None or not issubclass(self.document_class, HQAnnouncement):
-        #    raise NotImplementedError("document_class must be an HQAnnouncement")
-
-    """
-    @property
-    def default_report_url(self):
-        return reverse("default_announcement_admin")
-    """
 
     @property
     def headers(self):
@@ -121,8 +103,6 @@ class SubscriptionInterface(BaseCRUDAdminInterface):
             hideButton=True,
         )
         return context
-
-    #######
 
     name = "Subscriptions"
     description = "List of all subscriptions"
