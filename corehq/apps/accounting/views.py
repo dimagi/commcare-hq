@@ -282,7 +282,8 @@ class EditSubscriptionView(SubscriptionSectionView):
                     credit_list=CreditLine.objects.filter(subscription=subscription),
                     form=self.get_appropriate_subscription_form(subscription),
                     parent_link='<a href="%s">%s<a>' % (SubscriptionInterface.get_url(), SubscriptionInterface.name),
-                    subscription=subscription
+                    subscription=subscription,
+                    subscription_canceled=self.subscription_canceled if hasattr(self, 'subscription_canceled') else False
                     )
 
     @property
@@ -326,3 +327,4 @@ class EditSubscriptionView(SubscriptionSectionView):
         subscription.date_end = datetime.date.today()
         subscription.is_active = False
         subscription.save()
+        self.subscription_canceled = True

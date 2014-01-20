@@ -49,6 +49,9 @@
             <form class="form form-horizontal" method="post">
                 {% crispy cancel_form %}
             </form>
+            {% if subscription_canceled %}
+                Subscription has been canceled.
+            {% endif %}
         </div>
     {% endif %}
 
