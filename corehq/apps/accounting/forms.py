@@ -151,7 +151,8 @@ class SubscriptionForm(forms.Form):
             ),
             FormActions(
                 ButtonHolder(
-                    Submit('set_subscription', 'Update Subscription')
+                    Submit('set_subscription',
+                           '%s Subscription' % ('Update' if subscription is not None else 'Create'))
                 )
             )
         )
