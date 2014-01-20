@@ -3,7 +3,6 @@ from corehq.apps.accounting.forms import *
 from corehq.apps.accounting.models import *
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.hqwebapp.views import BaseSectionPageView
-from corehq.apps.users.models import WebUser
 from dimagi.utils.decorators.memoized import memoized
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
@@ -178,9 +177,8 @@ class ManageBillingAccountView(BillingAccountsSectionView):
             account.salesforce_account_id = self.account_form.cleaned_data['salesforce_account_id']
             account.currency, _ = Currency.objects.get_or_create(code=self.request.POST['currency'])
             for web_user_email in self.account_form.cleaned_data['billing_account_admins'].split(','):
-                if WebUser.get_by_username(web_user_email.strip()) is not None:
-                    admin, _ = BillingAccountAdmin.objects.get_or_create(web_user=web_user_email)
-                    account.billing_admins.add(admin)
+                admin, _ = BillingAccountAdmin.objects.get_or_create(web_user=web_user_email)
+                account.billing_admins.add(admin)
             account.save()
 
             contact_info, _ = BillingContactInfo.objects.get_or_create(account=account)
