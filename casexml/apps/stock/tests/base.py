@@ -15,7 +15,7 @@ class StockTestBase(TestCase):
         self.product_id = uuid.uuid4()
         self._stock_report = functools.partial(_stock_report, self.case_id, self.product_id)
         self._receipt_report = functools.partial(_receipt_report, self.case_id, self.product_id)
-        self._test_config = ConsumptionConfiguration(min_periods=0, min_window=0, max_window=60)
+        self._test_config = ConsumptionConfiguration.test_config()
         self._compute_consumption = functools.partial(compute_consumption, self.case_id,
                                                       self.product_id, now, configuration=self._test_config)
 

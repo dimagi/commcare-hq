@@ -22,6 +22,10 @@ class ConsumptionConfiguration(object):
         # data before this period will not be included in the calculation
         self.max_window = max_window
 
+    @classmethod
+    def test_config(cls):
+        return ConsumptionConfiguration(0, 0, 60)
+
 
 def from_ts(dt):  # damn this is ugly
     if isinstance(dt, datetime):
