@@ -1,12 +1,12 @@
 import uuid
 from xml.etree import ElementTree
-import collections
 from couchdbkit.exceptions import ResourceNotFound
 from couchdbkit.ext.django.schema import *
 from django.db import transaction
 from django.utils.translation import ugettext as _
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.stock import const as stockconst
 from casexml.apps.stock.models import StockReport as DbStockReport, StockTransaction as DbStockTransaction
 from casexml.apps.case.xml import V2
 from corehq import Domain
@@ -498,6 +498,7 @@ class NewStockReport(object):
 
     @transaction.commit_on_success
     def create_models(self):
+        # todo: this function should probably move to somewhere in casexml.apps.stock
         report = DbStockReport.objects.create(form_id=self.form_id, date=self.timestamp, type=self.tag)
         for txn in self.transactions:
             db_txn = DbStockTransaction(
@@ -508,9 +509,10 @@ class NewStockReport(object):
             )
             previous_transaction = db_txn.get_previous_transaction()
             db_txn.type = txn.action
+            db_txn.subtype = txn.subaction
             if self.tag == 'balance':
                 db_txn.stock_on_hand = txn.quantity
-                db_txn.quantity = txn.quantity - (previous_transaction.stock_on_hand if previous_transaction else 0)
+                db_txn.quantity = 0
             else:
                 assert self.tag == 'transfer'
                 db_txn.quantity = txn.relative_quantity
@@ -569,7 +571,7 @@ class StockTransaction(Document):
             }
         def _inferred(val):
             return {
-                'subaction': const.INFERRED_TRANSACTION,
+                'subaction': stockconst.TRANSACTION_SUBTYPE_INFERRED,
             }
         def _config(val):
             ret = {

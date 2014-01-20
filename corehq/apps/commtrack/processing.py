@@ -1,9 +1,9 @@
 from decimal import Decimal
 import logging
+from casexml.apps.stock.const import TRANSACTION_SUBTYPE_INFERRED
 from dimagi.utils.decorators.log_exception import log_exception
 from corehq.apps.commtrack.models import CommtrackConfig, StockTransaction, SupplyPointCase, NewStockReport, SupplyPointProductCase
 from corehq.apps.commtrack import const
-import collections
 from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.commtrack.util import wrap_commtrack_case
 from corehq.apps.commtrack.xmlutil import XML
@@ -184,7 +184,7 @@ class LegacyStockTransaction(StockTransaction):
 
     def to_legacy_xml(self, E):
         attr = {}
-        if self.subaction == const.INFERRED_TRANSACTION:
+        if self.subaction == TRANSACTION_SUBTYPE_INFERRED:
             attr['inferred'] = 'true'
         if self.processing_order is not None:
             attr['order'] = str(self.processing_order + 1)
@@ -192,7 +192,7 @@ class LegacyStockTransaction(StockTransaction):
         return E.transaction(
             E.product(self.product_id),
             E.product_entry(self.product_subcase),
-            E.action((self.subaction if self.subaction != const.INFERRED_TRANSACTION else None) or self.action),
+            E.action((self.subaction if self.subaction != TRANSACTION_SUBTYPE_INFERRED else None) or self.action),
             E.value(str(self.quantity)),
             **attr
         )
@@ -212,7 +212,8 @@ class StockState(object):
         self.stocked_out_since = case.stocked_out_since
 
     def update(self, action_type, value):
-        """given the current stock state for a product at a location, update
+        """
+        given the current stock state for a product at a location, update
         with the incoming datapoint
         
         fancy business logic to reconcile stock reports lives HERE
