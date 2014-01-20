@@ -321,6 +321,7 @@ class EditSubscriptionView(SubscriptionSectionView):
         if subscription.date_delay_invoicing is None \
             or subscription.date_delay_invoicing > datetime.date.today():
             subscription.date_delay_invoicing = self.subscription_form.cleaned_data['delay_invoice_until']
+        subscription.salesforce_contract_id = self.subscription_form.cleaned_data['salesforce_contract_id']
         subscription.save()
 
     def cancel_subscription(self):

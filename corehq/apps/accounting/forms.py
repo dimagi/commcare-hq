@@ -111,6 +111,7 @@ class SubscriptionForm(forms.Form):
             self.fields['delay_invoice_until'].initial = subscription.date_delay_invoicing
             self.fields['plan'].initial = subscription.plan.id
             self.fields['domain'].initial = subscription.subscriber.domain
+            self.fields['salesforce_contract_id'].initial = subscription.salesforce_contract_id
             if subscription.date_start is not None \
                 and subscription.date_start <= datetime.date.today():
                 start_date_kwargs.update(disabled)
@@ -145,9 +146,10 @@ class SubscriptionForm(forms.Form):
 
     def clean_domain(self):
         domain_name = self.cleaned_data['domain']
-        domain = Domain.get_by_name(domain_name)
-        if domain is None:
-            raise forms.ValidationError("A valid project space is required.")
+        if self.fields['domain'].required:
+            domain = Domain.get_by_name(domain_name)
+            if domain is None:
+                raise forms.ValidationError("A valid project space is required.")
         return domain_name
 
 
