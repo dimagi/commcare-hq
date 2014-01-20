@@ -58,7 +58,7 @@ class StockTransaction(models.Model):
     @classmethod
     def _peer_qs(self, case_id, section_id, product_id):
         return StockTransaction.objects.filter(
-            case_id=case_id, product_id=product_id, section_id=section_id).order_by('-report__date')
+            case_id=case_id, product_id=product_id, section_id=section_id).order_by('-report__date', '-pk')
 
 
 @receiver(pre_save, sender=StockTransaction)
