@@ -117,7 +117,8 @@ CONCEPT_XFORM =  {
        "HTTP_X_OPENROSA_VERSION": "1.0"
    },
    "history": [
-   ]
+   ],
+   "__retrieved_case_ids": ["test_case_123345"],
 }
 
 
