@@ -58,6 +58,17 @@ class SalesforceContractIDFilter(BaseSingleOptionFilter):
                              for subscription in Subscription.objects.all()])
 
 
+class ActiveStatusFilter(BaseSingleOptionFilter):
+    slug = 'active_status'
+    label = _('Active Status')
+    default_text = _("All")
+    active = 'Active'
+    inactive = 'Inactive'
+    options = [(active, active),
+               (inactive, inactive),
+               ]
+
+
 class DateCreatedFilter(DatespanFilter):
     label = _("Date Created")
 
@@ -133,6 +144,7 @@ class SubscriptionInterface(BaseCRUDAdminInterface):
 
     fields = ['corehq.apps.accounting.interface.SubscriberFilter',
               'corehq.apps.accounting.interface.SalesforceContractIDFilter',
+              'corehq.apps.accounting.interface.ActiveStatusFilter',
               ]
     hide_filters = False
 
@@ -160,7 +172,9 @@ class SubscriptionInterface(BaseCRUDAdminInterface):
             if (SubscriberFilter.get_value(self.request, self.domain) is None
                 or SubscriberFilter.get_value(self.request, self.domain) == subscription.subscriber.domain) \
                 and (SalesforceContractIDFilter.get_value(self.request, self.domain) is None
-                    or SalesforceContractIDFilter.get_value(self.request, self.domain) == subscription.salesforce_contract_id):
+                    or SalesforceContractIDFilter.get_value(self.request, self.domain) == subscription.salesforce_contract_id) \
+                and (ActiveStatusFilter.get_value(self.request, self.domain) is None
+                    or (ActiveStatusFilter.get_value(self.request, self.domain) == ActiveStatusFilter.active) == subscription.is_active):
                 rows.append([subscription.subscriber.domain,
                              mark_safe('<a href="%s">%s</a>'
                                        % (reverse(ManageBillingAccountView.name, args=(subscription.account.id,)),
