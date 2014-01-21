@@ -1,17 +1,26 @@
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher, SubscriptionAdminInterfaceDispatcher
-from corehq.apps.accounting.models import BillingAccount, Subscription
+from corehq.apps.accounting.models import BillingAccount, Subscription, BillingAccountType
 from corehq.apps.announcements.forms import HQAnnouncementForm
 from corehq.apps.announcements.models import HQAnnouncement
 from corehq.apps.crud.interface import BaseCRUDAdminInterface
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
+from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.standard import DatespanMixin
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
+from django.utils.translation import ugettext_noop as _
+
+
+class AccountTypeFilter(BaseSingleOptionFilter):
+    slug = 'account_type'
+    label = _("Account Type")
+    default_text = _("All")
+    options = BillingAccountType.CHOICES
 
 
 class DateCreatedFilter(DatespanFilter):
-    label = "Date Created"
+    label = _("Date Created")
 
 
 class AccountingInterface(BaseCRUDAdminInterface, DatespanMixin):
@@ -21,7 +30,9 @@ class AccountingInterface(BaseCRUDAdminInterface, DatespanMixin):
 
     crud_form_update_url = "/accounting/form/"
 
-    fields = ['corehq.apps.accounting.interface.DateCreatedFilter',]
+    fields = ['corehq.apps.accounting.interface.AccountTypeFilter',
+              'corehq.apps.accounting.interface.DateCreatedFilter',
+              ]
     hide_filters = False
 
     def validate_document_class(self):
@@ -41,7 +52,9 @@ class AccountingInterface(BaseCRUDAdminInterface, DatespanMixin):
         rows = []
         for account in BillingAccount.objects.all():
             if self.datespan.startdate.date() <= account.date_created \
-                and self.datespan.enddate.date() >= account.date_created:
+                and self.datespan.enddate.date() >= account.date_created \
+                and (AccountTypeFilter.get_value(self.request, self.domain) is None
+                     or AccountTypeFilter.get_value(self.request, self.domain) == account.account_type):
                 rows.append([mark_safe('<a href="./%d">%s</a>' % (account.id, account.name)),
                              account.salesforce_account_id,
                              account.date_created,
