@@ -306,7 +306,7 @@ class SelectApplicationField(ReportSelectField):
             include_docs=True).all()
         available_apps = [dict(val=app['value']['_id'],
                                 text=_("%(name)s [up to build %(version)s]") % {
-                                    'name': app['value']['name'], 
+                                    'name': app['value']['name'],
                                     'version': app['value']['version']})
                           for app in apps_for_domain]
         self.selected = self.request.GET.get(self.slug,'')
@@ -503,7 +503,7 @@ class AsyncLocationField(ReportField):
 
     def _get_custom_context(self):
         api_root = reverse('api_dispatch_list', kwargs={'domain': self.domain,
-                                                        'resource_name': 'location', 
+                                                        'resource_name': 'location',
                                                         'api_name': 'v0.3'})
         selected_loc_id = self.request.GET.get('location_id')
         user = WebUser.get_by_username(str(self.request.user))
@@ -749,7 +749,6 @@ class CombinedSelectUsersField(ReportField):
                 ctxt["smwf"]["select"]["selected"] = filter(lambda s: s != '_all', ctxt["smwf"]["select"]["selected"])
             ctxt["smwf"]["select"]["options"] = ctxt["smwf"]["select"]["options"][1:]
 
-
         if self.show_group_field:
             self.select_group_field.update_context()
             ctxt["sgf"] = self.select_group_field.context
@@ -760,7 +759,6 @@ class CombinedSelectUsersField(ReportField):
             else: # remove the _all selection
                 ctxt["sgf"]["select"]["selected"] = filter(lambda s: s != '_all', ctxt["sgf"]["select"]["selected"])
             ctxt["sgf"]["select"]["options"] = ctxt["sgf"]["select"]["options"][1:]
-
 
         if self.show_mobile_worker_field:
             ctxt["smwf"]["checked"] = all_mws or (not ctxt["smwf"]["select"]["selected"] and not (

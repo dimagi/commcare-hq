@@ -21,6 +21,7 @@ from corehq.apps.app_manager.exceptions import (
     ConflictingCaseTypeError,
     RearrangeError,
 )
+from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from django.utils.http import urlencode as django_urlencode
@@ -234,16 +235,18 @@ def app_source(req, domain, app_id):
     return HttpResponse(app.export_json())
 
 @login_and_domain_required
-def copy_app_check_domain(req, domain):
-    app_id = req.GET.get('app')
-    name = req.GET.get('name')
-
+def copy_app_check_domain(req, domain, name, app_id):
     app_copy = import_app_util(app_id, domain, name=name)
     return back_to_main(req, app_copy.domain, app_id=app_copy._id)
 
 @login_and_domain_required
 def copy_app(req, domain):
-    return copy_app_check_domain(req, req.GET.get('domain', ''))
+    app_id = req.POST.get('app')
+    form = CopyApplicationForm(app_id, req.POST)
+    if form.is_valid():
+        return copy_app_check_domain(req, form.cleaned_data['domain'], form.cleaned_data['name'], app_id)
+    else:
+        return view_generic(req, domain, app_id=app_id, copy_app_form=form)
 
 @login_and_domain_required
 def import_app(req, domain, template="app_manager/import_app.html"):
@@ -638,7 +641,7 @@ def get_module_view_context_and_template(app, module):
 
 
 @retry_resource(3)
-def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user_registration=False):
+def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user_registration=False, copy_app_form=None):
     """
     This is the main view for the app. All other views redirect to here.
 
@@ -726,6 +729,12 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         'error':error,
         'app': app,
     })
+
+    # Pass form for Copy Application to template:
+    context.update({
+        'copy_app_form': copy_app_form if copy_app_form is not None else CopyApplicationForm(app_id)
+    })
+
     response = render(req, template, context)
     response.set_cookie('lang', _encode_if_unicode(context['lang']))
     return response

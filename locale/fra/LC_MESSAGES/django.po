@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommTrack\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-01-18 09:56-0500\n"
+"POT-Creation-Date: 2014-01-21 18:13+0000\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -812,6 +812,7 @@ msgstr "Créer un nouveau projet"
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_case_groups.html:49
 #: corehq/apps/domain/templates/domain/orgs_settings.html:76
 #: corehq/apps/export/templates/export/customize_export.html:545
+#: corehq/apps/groups/templates/groups/group_members.html:108
 #: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:56
 #: corehq/apps/hqwebapp/templates/hqwebapp/base.html:218
 #: corehq/apps/hqwebapp/templates/hqwebapp/base.html:219
@@ -1590,6 +1591,31 @@ msgstr ""
 "CommCare Sense ou en mode de sélection numérique. (Pour les Android, cela "
 "fonctionnera en tout temps.)"
 
+#: corehq/apps/appstore/views.py:27
+#: corehq/apps/appstore/templates/appstore/project_info.html:142
+#: corehq/apps/reports/fields.py:329 corehq/apps/reports/filters/select.py:40
+msgid "Category"
+msgstr "Catégorie"
+
+#: corehq/apps/appstore/views.py:30
+#: corehq/apps/appstore/templates/appstore/media_files.html:34
+#: corehq/apps/appstore/templates/appstore/project_info.html:172
+#: corehq/apps/domain/forms.py:110
+#: corehq/apps/domain/templates/domain/admin/media_manager.html:36
+#: corehq/apps/domain/templates/domain/partials/project_version_display.html:34
+#: corehq/apps/hqmedia/templates/hqmedia/partials/hqm_upload_form.html:16
+#: corehq/apps/reports/fields.py:344 corehq/apps/reports/filters/select.py:30
+msgid "License"
+msgstr "Licence"
+
+#: corehq/apps/appstore/views.py:41
+#: corehq/apps/appstore/templates/appstore/media_files.html:38
+#: corehq/apps/hqmedia/templates/hqmedia/partials/hqm_upload_form.html:29
+#: staticfiles/formdesigner/templates/main.html:166
+#: submodules/formdesigner/templates/main.html:162
+msgid "Author"
+msgstr "Auteur"
+
 #: corehq/apps/appstore/views.py:237
 msgid "You don't belong to that project"
 msgstr "Vous n'appartenez pas à ce projet"
@@ -1675,21 +1701,6 @@ msgstr "Suivant"
 msgid "Multimedia Files"
 msgstr "Fichiers multimédia"
 
-#: corehq/apps/appstore/templates/appstore/media_files.html:34
-#: corehq/apps/appstore/templates/appstore/project_info.html:172
-#: corehq/apps/domain/forms.py:110
-#: corehq/apps/domain/templates/domain/admin/media_manager.html:36
-#: corehq/apps/domain/templates/domain/partials/project_version_display.html:34
-#: corehq/apps/hqmedia/templates/hqmedia/partials/hqm_upload_form.html:16
-#: corehq/apps/reports/fields.py:344 corehq/apps/reports/filters/select.py:30
-msgid "License"
-msgstr "Licence"
-
-#: corehq/apps/appstore/templates/appstore/media_files.html:38
-#: corehq/apps/hqmedia/templates/hqmedia/partials/hqm_upload_form.html:29
-msgid "Author"
-msgstr "Auteur"
-
 #: corehq/apps/appstore/templates/appstore/media_files.html:42
 #: corehq/apps/domain/views.py:752 corehq/apps/reports/fields.py:317
 #: corehq/apps/reports/filters/select.py:54
@@ -1699,6 +1710,8 @@ msgstr "Organisation"
 
 #: corehq/apps/appstore/templates/appstore/media_files.html:46
 #: corehq/apps/hqmedia/templates/hqmedia/partials/hqm_upload_form.html:35
+#: staticfiles/formdesigner/templates/main.html:175
+#: submodules/formdesigner/templates/main.html:171
 msgid "Attribution Notes"
 msgstr "Notes d'attribution"
 
@@ -1730,11 +1743,6 @@ msgstr "Vidéo"
 #: corehq/apps/reports/standard/monitoring.py:1020
 msgid "None"
 msgstr "Aucun"
-
-#: corehq/apps/appstore/templates/appstore/project_info.html:142
-#: corehq/apps/reports/fields.py:329 corehq/apps/reports/filters/select.py:40
-msgid "Category"
-msgstr "Catégorie"
 
 #: corehq/apps/appstore/templates/appstore/project_info.html:151
 msgid "Published by"
@@ -2060,6 +2068,10 @@ msgstr "Groupe"
 msgid "}You have no groups"
 msgstr "}Vous ne disposez d'aucun groupe."
 
+#: corehq/apps/cloudcare/templates/cloudcare/config.html:174
+msgid "Here's what this means"
+msgstr ""
+
 #: corehq/apps/cloudcare/templates/cloudcare/config.html:179
 msgid ""
 "Mobile workers in group\n"
@@ -2168,6 +2180,11 @@ msgstr "Niveaux d'inventaire"
 #: corehq/apps/commtrack/forms.py:129
 msgid "Consumption Settings"
 msgstr "Paramètres de consommation"
+
+#: corehq/apps/commtrack/forms.py:136
+#, fuzzy
+msgid "Submit"
+msgstr "Soumettre le temps"
 
 #: corehq/apps/commtrack/forms.py:155
 #, fuzzy
@@ -2444,7 +2461,7 @@ msgstr "Mot-clé"
 
 #: corehq/apps/commtrack/templates/commtrack/manage/products.html:106
 #: corehq/apps/commtrack/templates/commtrack/manage/programs.html:62
-#: corehq/apps/reports/fields.py:773
+#: corehq/apps/reports/fields.py:774
 msgid "Program"
 msgstr ""
 
@@ -2485,10 +2502,13 @@ msgstr "Il n'y a encore aucun produit pour ce projet."
 
 #: corehq/apps/data_interfaces/forms.py:12
 #: corehq/apps/data_interfaces/views.py:89
+#: corehq/apps/groups/templates/groups/all_groups.html:56
+#: corehq/apps/groups/templates/groups/group_members.html:81
 msgid "Group Name"
 msgstr "Nom de groupe"
 
 #: corehq/apps/data_interfaces/forms.py:22
+#: corehq/apps/groups/templates/groups/all_groups.html:57
 msgid "Create Group"
 msgstr "Créer un groupe"
 
@@ -2639,6 +2659,7 @@ msgstr "Gérer le groupe \"%s\""
 #: corehq/apps/reports/standard/sms.py:116
 #: corehq/apps/twilio/templates/twilio/backend.html:20
 #: corehq/apps/users/templates/users/partial/basic_info_form.html:105
+#: submodules/payments/hqbilling/forms.py:76
 msgid "Phone Number"
 msgstr "Numéro de téléphone"
 
@@ -2888,6 +2909,7 @@ msgstr "Transfert de dossier"
 #: corehq/apps/registration/templates/registration/org_request.html:71
 #: corehq/apps/registration/templates/registration/partials/eula_modal.html:11
 #: corehq/apps/reports/templates/reports/partials/export_download_modal.html:15
+#: staticfiles/formdesigner/templates/main.html:186
 #: submodules/ctable-src/ctable_view/templates/ctable/delete_sql_mapping_dialog.html:22
 #: submodules/ctable-src/ctable_view/templates/ctable/test_mapping.html:227
 #: submodules/ctable-src/ctable_view/templates/ctable/test_mapping.html:271
@@ -3246,10 +3268,11 @@ msgstr ""
 "les dossiers qui s'inscrivent eux-mêmes via sms."
 
 #: corehq/apps/domain/forms.py:486 corehq/apps/locations/util.py:72
+#: submodules/payments/hqbilling/forms.py:70
 msgid "City"
 msgstr "Ville"
 
-#: corehq/apps/domain/forms.py:487
+#: corehq/apps/domain/forms.py:487 submodules/payments/hqbilling/forms.py:73
 msgid "Country"
 msgstr "Pays"
 
@@ -3522,6 +3545,11 @@ msgstr "Publier maintenant"
 #: corehq/apps/domain/templates/domain/internal_calculations.html:45
 msgid "Load EVERYTHING"
 msgstr "Charger TOUT"
+
+#: corehq/apps/domain/templates/domain/internal_calculations.html:53
+#, fuzzy
+msgid "Load Property"
+msgstr "Propriétés de chargement"
 
 #: corehq/apps/domain/templates/domain/internal_settings.html:11
 msgid "Update Project Information"
@@ -3891,7 +3919,7 @@ msgid "to choose a Creative Commons license."
 msgstr "pour choisir une licence Creative Commons."
 
 #: corehq/apps/domain/templates/domain/partials/user_list.html:6
-#: corehq/apps/hqwebapp/forms.py:9 corehq/apps/users/forms.py:105
+#: corehq/apps/hqwebapp/forms.py:9 corehq/apps/users/forms.py:109
 #: corehq/apps/users/templates/users/web_users.html:105
 msgid "E-mail"
 msgstr "Courriel"
@@ -4456,6 +4484,16 @@ msgstr ""
 "Formulaire non valide. Il se peut qu'un utilisateur ait été supprimé pendant "
 "que vous visualisiez cette page. Veuillez essayer à nouveau."
 
+#: corehq/apps/groups/templates/groups/all_groups.html:27
+#, fuzzy
+msgid "Select a group:"
+msgstr "Sélectionner un module"
+
+#: corehq/apps/groups/templates/groups/all_groups.html:29
+#, fuzzy
+msgid "Create your first group:"
+msgstr "Créer un groupe"
+
 #: corehq/apps/groups/templates/groups/group_members.html:26
 msgid "Group Information"
 msgstr "Information de groupe"
@@ -4465,15 +4503,78 @@ msgstr "Information de groupe"
 msgid "Group membership has changed."
 msgstr "L'adhésion au groupe a été modifiée."
 
-#: corehq/apps/groups/templates/groups/group_members.html:113
+#: corehq/apps/groups/templates/groups/group_members.html:59
+#, fuzzy
+msgid "Edit Settings"
+msgstr "Exporter les paramètres"
+
+#: corehq/apps/groups/templates/groups/group_members.html:62
+#, fuzzy, python-format
+msgid ""
+"\n"
+"                        <i class=\"icon icon-white icon-remove\"></i> Delete "
+"Group \"%(group_name)s\"\n"
+"                    "
+msgstr ""
+"\n"
+"                            Instantané de %(snap_name)s"
+
+#: corehq/apps/groups/templates/groups/group_members.html:73
+#, fuzzy, python-format
+msgid ""
+"\n"
+"                        Edit Settings for Group \"%(group_name)s\"\n"
+"                    "
+msgstr ""
+"\n"
+"                            Instantané de %(snap_name)s"
+
+#: corehq/apps/groups/templates/groups/group_members.html:87
+#: corehq/apps/users/templates/users/mobile/users_list.html:186
+msgid "Case Sharing"
+msgstr "Partage de dossiers"
+
+#: corehq/apps/groups/templates/groups/group_members.html:90
+#: corehq/apps/groups/templates/groups/group_members.html:100
+#, fuzzy
+msgid "On"
+msgstr "Seulement"
+
+#: corehq/apps/groups/templates/groups/group_members.html:91
+#: corehq/apps/groups/templates/groups/group_members.html:101
+msgid "Off"
+msgstr ""
+
+#: corehq/apps/groups/templates/groups/group_members.html:93
+msgid ""
+"Whether users within this group will share cases with other members of this "
+"group"
+msgstr ""
+
+#: corehq/apps/groups/templates/groups/group_members.html:97
+#, fuzzy
+msgid "Reporting"
+msgstr "Rapport"
+
+#: corehq/apps/groups/templates/groups/group_members.html:103
+msgid ""
+"Whether this group's name will appear in the group filter list for reports"
+msgstr ""
+
+#: corehq/apps/groups/templates/groups/group_members.html:109
+#, fuzzy
+msgid "Save changes"
+msgstr "Modifications de dossier"
+
+#: corehq/apps/groups/templates/groups/group_members.html:121
 msgid "Edit Group Membership"
 msgstr "Modifier l'adhésion au groupe"
 
-#: corehq/apps/groups/templates/groups/group_members.html:117
+#: corehq/apps/groups/templates/groups/group_members.html:125
 msgid "Group Data"
 msgstr "Données de groupe"
 
-#: corehq/apps/groups/templates/groups/group_members.html:120
+#: corehq/apps/groups/templates/groups/group_members.html:128
 #: corehq/apps/settings/templates/settings/edit_my_account.html:30
 #: corehq/apps/users/templates/users/edit_commcare_user.html:171
 #: corehq/apps/users/templates/users/partial/basic_info_form.html:18
@@ -4872,6 +4973,7 @@ msgstr "Sélectionner des fichiers"
 
 #: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:40
 #: corehq/apps/hqmedia/templates/hqmedia/references.html:154
+#: staticfiles/formdesigner/templates/main.html:187
 msgid "Begin Upload"
 msgstr "Démarrer le téléversement"
 
@@ -4984,6 +5086,7 @@ msgid "Select New"
 msgstr "Sélectionner un élément nouveau"
 
 #: corehq/apps/hqmedia/templates/hqmedia/references.html:134
+#: submodules/formdesigner/templates/main.html:124
 msgid "Select File"
 msgstr "Sélectionner un fichier"
 
@@ -5158,16 +5261,19 @@ msgstr "Retirer de la file d'attente"
 
 #: corehq/apps/hqmedia/templates/hqmedia/uploader/queue_multi.html:32
 #: corehq/apps/hqmedia/templates/hqmedia/uploader/queue_single.html:20
+#: staticfiles/formdesigner/templates/main.html:211
 msgid "Cancel Upload"
 msgstr "Annuler le téléversement"
 
 #: corehq/apps/hqmedia/templates/hqmedia/uploader/queue_single.html:11
+#: staticfiles/formdesigner/templates/main.html:202
 msgid "Ready to upload. Click <strong>Begin Upload</strong> below to start."
 msgstr ""
 "Prêt à téléverser. Cliquez sur <strong>Démarrer le téléversement</strong> ci-"
 "dessous pour démarrer."
 
 #: corehq/apps/hqmedia/templates/hqmedia/uploader/queue_single.html:17
+#: staticfiles/formdesigner/templates/main.html:208
 msgid "Select another file"
 msgstr "Sélectionner un autre fichier"
 
@@ -5211,6 +5317,7 @@ msgid "Project Reports"
 msgstr "Rapports de projets"
 
 #: corehq/apps/hqwebapp/models.py:216
+#: submodules/formdesigner/templates/main.html:7
 msgid "Tools"
 msgstr "Outils"
 
@@ -5943,6 +6050,15 @@ msgstr "Mes paramètres de compte"
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/global_navigation_bar.html:88
 msgid "Sign Out"
 msgstr "Déconnexion"
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/time-notice.html:4
+msgid "The current date and time is"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/time-notice.html:7
+#, fuzzy
+msgid "All dates are in"
+msgstr "Toutes les dates sont en heure UTC"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/proptable/dl_property_table.html:52
 #: corehq/apps/reports/standard/cases/data_sources.py:218
@@ -6751,7 +6867,7 @@ msgstr ""
 msgid "Create Password"
 msgstr "Modifier mot de passe"
 
-#: corehq/apps/registration/forms.py:34 corehq/apps/users/forms.py:121
+#: corehq/apps/registration/forms.py:34 corehq/apps/users/forms.py:133
 msgid "Opt out of emails about new features and other CommCare updates."
 msgstr ""
 "Se désabonner à l'envoi de courrier électronique concernant les nouvelles "
@@ -6777,10 +6893,20 @@ msgstr ""
 "                                Nous vous prions de nous excuser.\n"
 "                            "
 
+#: corehq/apps/registration/forms.py:136
+#, fuzzy
+msgid "Project Name:"
+msgstr "Nom de projet"
+
 #: corehq/apps/registration/forms.py:137
 #, fuzzy
 msgid "Project name cannot contain spaces."
 msgstr "Le nom ne doit contenir aucun espace."
+
+#: corehq/apps/registration/forms.py:141
+#, fuzzy
+msgid "Time Zone:"
+msgstr "Mon fuseau horaire"
 
 #: corehq/apps/registration/forms.py:211
 msgid ""
@@ -7730,12 +7856,12 @@ msgstr "Seulement %s travailleurs mobiles"
 msgid "Date Range"
 msgstr "Plage de dates"
 
-#: corehq/apps/reports/fields.py:689
+#: corehq/apps/reports/fields.py:690
 #: corehq/apps/reports/filters/devicelog.py:67
 msgid "Filter Logs by Username"
 msgstr "Filtrer les journaux par nom d'utilisateur"
 
-#: corehq/apps/reports/fields.py:694
+#: corehq/apps/reports/fields.py:695
 #: corehq/apps/reports/filters/devicelog.py:73
 msgid "Filter Logs by Device"
 msgstr "Filtrer les journaux par appareil"
@@ -8356,6 +8482,11 @@ msgstr "Exporter les formulaires"
 #: corehq/apps/reports/standard/export.py:226
 msgid "Export Cases"
 msgstr "Exporter les dossiers"
+
+#: corehq/apps/reports/standard/export.py:276
+#, fuzzy
+msgid "De-Identified Export"
+msgstr "Désidentifier"
 
 #: corehq/apps/reports/standard/inspect.py:36
 msgid "Submit History"
@@ -9674,41 +9805,41 @@ msgstr "Le préfixe est spécifié deux fois :"
 msgid "Create Another Connection"
 msgstr "Créer une autre connexion"
 
-#: corehq/apps/sms/forms.py:318
+#: corehq/apps/sms/forms.py:319
 msgid "Receive stockout facilities SMS alert"
 msgstr ""
 
-#: corehq/apps/sms/forms.py:318
+#: corehq/apps/sms/forms.py:321
 msgid ""
 "This will alert you with specific users/facilities that are stocked out of "
 "your commodities"
 msgstr ""
 
-#: corehq/apps/sms/forms.py:319
+#: corehq/apps/sms/forms.py:324
 msgid "Receive stockout commodities SMS alert"
 msgstr ""
 
-#: corehq/apps/sms/forms.py:319
+#: corehq/apps/sms/forms.py:326
 msgid ""
 "This will alert you with specific commodities that are stocked out by your "
 "users/facilities"
 msgstr ""
 
-#: corehq/apps/sms/forms.py:320
+#: corehq/apps/sms/forms.py:329
 msgid "Receive stockout SMS alert"
 msgstr ""
 
-#: corehq/apps/sms/forms.py:320
+#: corehq/apps/sms/forms.py:331
 msgid ""
 "This will alert you with the percent of facilities that are stocked out of a "
 "specific commodity"
 msgstr ""
 
-#: corehq/apps/sms/forms.py:321
+#: corehq/apps/sms/forms.py:334
 msgid "Receive non-reporting SMS alert"
 msgstr ""
 
-#: corehq/apps/sms/forms.py:321
+#: corehq/apps/sms/forms.py:336
 msgid ""
 "This alert highlight users/facilities which have not submitted their "
 "CommTrack stock report."
@@ -9934,6 +10065,10 @@ msgstr "Tapez un nom d'utilisateur, nom de groupe ou 'envoyer à tous'"
 #: corehq/apps/sms/templates/sms/message_tester.html:10
 msgid "Message:"
 msgstr "Message :"
+
+#: corehq/apps/sms/templates/sms/compose.html:63
+msgid "0 characters (160 max)"
+msgstr ""
 
 #: corehq/apps/sms/templates/sms/compose.html:68
 #: corehq/apps/sms/templates/sms/message_tester.html:19
@@ -10262,20 +10397,20 @@ msgstr ""
 "Impossible d'ajouter au groupe '%s' (essayez de l'ajouter à votre feuille de "
 "calcul)"
 
-#: corehq/apps/users/forms.py:38
+#: corehq/apps/users/forms.py:42
 msgid "Please enter a valid two or three digit language code."
 msgstr ""
 "Veuillez saisir un code de langue valide composé de deux ou trois caractères"
 
-#: corehq/apps/users/forms.py:103
+#: corehq/apps/users/forms.py:107
 msgid "First Name"
 msgstr "Prénom"
 
-#: corehq/apps/users/forms.py:104
+#: corehq/apps/users/forms.py:108
 msgid "Last Name"
 msgstr "Nom"
 
-#: corehq/apps/users/forms.py:107
+#: corehq/apps/users/forms.py:116
 msgid ""
 "<i class=\"icon-info-sign\"></i> Becomes default language seen in CloudCare "
 "and reports (if applicable). Supported languages for reports are en, fr "
@@ -10285,12 +10420,12 @@ msgstr ""
 "et les rapports (s'il y a lieu). Les langues prises en charge pour les "
 "rapports sont en, fr (partiel), et hin (partiel)."
 
-#: corehq/apps/users/forms.py:208
+#: corehq/apps/users/forms.py:220
 #, python-format
 msgid "%s is an invalid phone number."
 msgstr "%s n'est pas un numéro de téléphone valide."
 
-#: corehq/apps/users/forms.py:250
+#: corehq/apps/users/forms.py:262
 msgid "Username contains invalid characters."
 msgstr "Le nom d'utilisateur comporte des caractères no valides."
 
@@ -10730,10 +10865,6 @@ msgstr "Date d'inscription"
 #: submodules/pact-src/pact/templates/pact/chw/pact_chw_profile_info.html:12
 msgid "Phone"
 msgstr "Téléphone"
-
-#: corehq/apps/users/templates/users/mobile/users_list.html:186
-msgid "Case Sharing"
-msgstr "Partage de dossiers"
 
 #: corehq/apps/users/templates/users/mobile/users_list.html:194
 #: corehq/apps/users/views/mobile/users.py:381
@@ -13061,6 +13192,99 @@ msgstr ""
 "                    Gérer les travailleurs mobiles <small>pour CommCare "
 "Mobile et"
 
+#: staticfiles/formdesigner/templates/main.html:11
+#, fuzzy
+msgid "Edit Bulk Translations"
+msgstr "Mettre à jour les traductions"
+
+#: staticfiles/formdesigner/templates/main.html:12
+#, fuzzy
+msgid "Export Form Contents"
+msgstr "Exporter les formulaires"
+
+#: staticfiles/formdesigner/templates/main.html:13
+msgid "Edit Source XML"
+msgstr ""
+
+#: staticfiles/formdesigner/templates/main.html:14
+#: submodules/couchforms-src/couchforms/templates/form/partials/single_form.html:64
+msgid "Form Properties"
+msgstr "Propriétés de formulaire"
+
+#: staticfiles/formdesigner/templates/main.html:25
+#: submodules/formdesigner/templates/main.html:21
+#, fuzzy
+msgid "Question Tree"
+msgstr "Question"
+
+#: staticfiles/formdesigner/templates/main.html:30
+#: submodules/formdesigner/templates/main.html:26
+msgid "Expand All"
+msgstr ""
+
+#: staticfiles/formdesigner/templates/main.html:31
+#: submodules/formdesigner/templates/main.html:27
+msgid "Collapse All"
+msgstr ""
+
+#: staticfiles/formdesigner/templates/main.html:41
+#: submodules/formdesigner/templates/main.html:37
+#, fuzzy
+msgid "Question Properties"
+msgstr "Propriétés d'inscription d'utilisateur"
+
+#: staticfiles/formdesigner/templates/main.html:48
+#: submodules/formdesigner/templates/main.html:44
+msgid "Expression Editor"
+msgstr ""
+
+#: staticfiles/formdesigner/templates/main.html:55
+#, fuzzy
+msgid "Welcome to your new form!"
+msgstr "En savoir davantage sur CommCare HQ"
+
+#: staticfiles/formdesigner/templates/main.html:56
+#: submodules/formdesigner/templates/main.html:52
+#, fuzzy
+msgid "Please add a question to get started."
+msgstr "Veuillez ajouter au moins un contact."
+
+#: staticfiles/formdesigner/templates/main.html:156
+#: submodules/formdesigner/templates/main.html:152
+msgid "Creative Commons Attribution, Non-Commercial"
+msgstr ""
+
+#: staticfiles/formdesigner/templates/main.html:157
+#: submodules/formdesigner/templates/main.html:153
+msgid "Creative Commons Attribution, No Derivatives"
+msgstr ""
+
+#: staticfiles/formdesigner/templates/main.html:158
+#: submodules/formdesigner/templates/main.html:154
+#, fuzzy
+msgid "Creative Commons Attribution"
+msgstr "Utiliser le site Web de Creative Commons"
+
+#: staticfiles/formdesigner/templates/main.html:159
+#: submodules/formdesigner/templates/main.html:155
+msgid "Creative Commons Attribution, Non-Commercial, and Share Alike"
+msgstr ""
+
+#: staticfiles/formdesigner/templates/main.html:160
+#: submodules/formdesigner/templates/main.html:156
+msgid "Creative Commons Attribution, Non-Commercial, and No Derivatives"
+msgstr ""
+
+#: staticfiles/formdesigner/templates/main.html:161
+#: submodules/formdesigner/templates/main.html:157
+msgid "Creative Commons Attribution, Share Alike"
+msgstr ""
+
+#: staticfiles/formdesigner/templates/main.html:205
+#, fuzzy
+msgid "There were errors."
+msgstr "Des erreurs sont survenues"
+
 #: submodules/a5288-reports/a5288/reports.py:16
 msgid "Missed Callbacks"
 msgstr "Rappels manqués"
@@ -13272,10 +13496,6 @@ msgid ""
 "        Submitted as %(user)s\n"
 "        "
 msgstr "            Un message vient tout juste d'être envoyé à %(username)s."
-
-#: submodules/couchforms-src/couchforms/templates/form/partials/single_form.html:64
-msgid "Form Properties"
-msgstr "Propriétés de formulaire"
 
 #: submodules/couchforms-src/couchforms/templates/form/partials/single_form.html:70
 msgid "Case Changes"
@@ -13734,6 +13954,11 @@ msgstr ""
 msgid "Processed"
 msgstr "Traité"
 
+#: submodules/formdesigner/templates/main.html:167
+#, fuzzy
+msgid "Enter the name of the author."
+msgstr "Entrez le nom de l'auteur"
+
 #: submodules/hqstyle-src/hqstyle/templates/hqstyle/forms/basic_fieldset.html:15
 msgid "REQUIRED"
 msgstr ""
@@ -13990,6 +14215,28 @@ msgstr "Sélectionnez un domaine..."
 #: submodules/payments/hqbilling/filters.py:58
 msgid "Any Direction"
 msgstr "Toute direction"
+
+#: submodules/payments/hqbilling/forms.py:68
+#, fuzzy
+msgid "Company Name"
+msgstr "Nom de dossier"
+
+#: submodules/payments/hqbilling/forms.py:71
+msgid "State/Province"
+msgstr ""
+
+#: submodules/payments/hqbilling/forms.py:72
+#, fuzzy
+msgid "Postal Code"
+msgstr "Total de dossiers"
+
+#: submodules/payments/hqbilling/forms.py:102
+msgid "Currency Code (ex: USD)"
+msgstr ""
+
+#: submodules/payments/hqbilling/forms.py:106
+msgid "Symbol for currency (ex: $)"
+msgstr ""
 
 #: submodules/payments/hqbilling/views.py:159
 #, python-format
