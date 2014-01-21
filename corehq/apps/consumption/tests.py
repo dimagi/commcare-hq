@@ -1,5 +1,6 @@
 from django.test import TestCase
-from .models import DefaultConsumption, get_default_consumption, TYPE_DOMAIN, TYPE_PRODUCT, TYPE_SUPPLY_POINT_TYPE, TYPE_SUPPLY_POINT
+from corehq.apps.consumption.shortcuts import get_default_consumption
+from .models import DefaultConsumption, TYPE_DOMAIN, TYPE_PRODUCT, TYPE_SUPPLY_POINT_TYPE, TYPE_SUPPLY_POINT
 
 domain = 'consumption-test'
 product_id = 'test-product'

@@ -11,9 +11,8 @@ from casexml.apps.stock.consumption import ConsumptionConfiguration
 from casexml.apps.stock.models import StockReport as DbStockReport, StockTransaction as DbStockTransaction
 from casexml.apps.case.xml import V2
 from corehq import Domain
-
 from corehq.apps.commtrack import const
-from corehq.apps.consumption.models import get_default_consumption
+from corehq.apps.consumption.shortcuts import get_default_consumption
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.couch.loosechange import map_reduce
