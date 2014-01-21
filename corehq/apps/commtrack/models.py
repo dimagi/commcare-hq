@@ -13,6 +13,7 @@ from casexml.apps.case.xml import V2
 from corehq import Domain
 
 from corehq.apps.commtrack import const
+from corehq.apps.consumption.models import get_default_consumption
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.couch.loosechange import map_reduce
@@ -254,13 +255,8 @@ class ConsumptionConfig(DocumentSchema):
     min_transactions = IntegerProperty(default=2)
     min_window = IntegerProperty(default=10)
     optimal_window = IntegerProperty()
+    use_supply_point_type_default_consumption = BooleanProperty(default=False)
 
-    def to_stock_consumption_model(self):
-        return ConsumptionConfiguration(
-            min_periods=self.min_transactions,
-            min_window=self.min_window,
-            max_window=self.optimal_window,
-        )
 
 class StockLevelsConfig(DocumentSchema):
     emergency_level = DecimalProperty(default=0.5)  # in months
@@ -351,12 +347,32 @@ class CommtrackConfig(Document):
             actions += [_action(a, 'req') for a in self.requisition_config.actions]
         return dict((a.keyword, a) for a in actions).get(keyword)
 
+    def get_consumption_config(self):
+        def _default_consumption_function(case_id, product_id):
+            # note: for now as an optimization hack, per-supply point type is not supported
+            # unless explicitly configured, because it will require looking up the case
+            facility_type = None
+            if self.consumption_config.use_supply_point_type_default_consumption:
+                try:
+                    supply_point = SupplyPointCase.get(case_id)
+                    facility_type = supply_point.location.location_type
+                except ResourceNotFound:
+                    pass
+            return get_default_consumption(self.domain, product_id, facility_type, case_id)
+
+        return ConsumptionConfiguration(
+            min_periods=self.consumption_config.min_transactions,
+            min_window=self.consumption_config.min_window,
+            max_window=self.consumption_config.optimal_window,
+            default_consumption_function=_default_consumption_function,
+        )
+
     def get_ota_restore_settings(self):
         # for some reason it doesn't like this import
         from casexml.apps.phone.restore import StockSettings
         return StockSettings(
             section_to_consumption_types=self.ota_restore_config.section_to_consumption_types,
-            consumption_config=self.consumption_config.to_stock_consumption_model()
+            consumption_config=self.get_consumption_config(),
         )
 
 
