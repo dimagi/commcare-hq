@@ -7,11 +7,13 @@ this more general and subclass for montly reports , but I'm holding off on
 that until we actually have another use case for it.
 """
 import datetime
+from sqlagg.base import BaseColumn
 from sqlagg.columns import SimpleColumn, SumColumn
+from corehq.apps.api.es import ReportCaseES, CaseES
 from corehq.apps.reports.filters.dates import DatespanFilter
 
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.sqlreport import SummingSqlTabularReport, DatabaseColumn
+from corehq.apps.reports.sqlreport import SummingSqlTabularReport, DatabaseColumn, SqlTabularReport, SqlData
 from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin, DatespanMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 from corehq.apps.reports.filters.select import SelectOpenCloseFilter
@@ -29,6 +31,101 @@ from .beneficiary import Beneficiary
 from .incentive import Worker
 from .constants import *
 from .filters import BlockFilter, AWCFilter
+
+
+class OpmCaseSqlData(SqlData):
+
+    table_name = "fluff_OpmCaseFluff"
+
+    def __init__(self, domain, user_id, datespan):
+        self.domain = domain
+        self.user_id = user_id
+        self.datespan = datespan
+
+    @property
+    def filter_values(self):
+
+        return dict(
+            domain=self.domain,
+            user_id=self.user_id,
+            startdate=self.datespan.startdate_param_utc,
+            enddate=self.datespan.enddate_param_utc
+        )
+
+    @property
+    def group_by(self):
+        return ['user_id']
+
+    @property
+    def filters(self):
+        filters = [
+            "domain = :domain",
+            "user_id = :user_id",
+        ]
+
+        return filters
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn("User ID", SimpleColumn("user_id")),
+            DatabaseColumn("Women registered", SumColumn("women_registered_total")),
+            DatabaseColumn("Children registered", SumColumn("children_registered_total"))
+        ]
+
+    @property
+    def data(self):
+        if self.user_id in super(OpmCaseSqlData, self).data:
+            return super(OpmCaseSqlData, self).data[self.user_id]
+        else:
+            return None
+
+
+class OpmFormSqlData(SqlData):
+
+    table_name = "fluff_OpmFormFluff"
+
+    def __init__(self, domain, case_id, datespan):
+        self.domain = domain
+        self.case_id = case_id
+        self.datespan = datespan
+
+    @property
+    def filter_values(self):
+
+        return dict(
+            domain=self.domain,
+            case_id=self.case_id,
+            startdate=self.datespan.startdate_param_utc,
+            enddate=self.datespan.enddate_param_utc
+        )
+
+    @property
+    def group_by(self):
+        return ['case_id']
+
+    @property
+    def filters(self):
+        filters = [
+            "domain = :domain",
+            "case_id = :case_id",
+        ]
+
+        return filters
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn("Case ID", SimpleColumn("case_id"))
+        ]
+
+    @property
+    def data(self):
+        if self.case_id in super(OpmFormSqlData, self).data:
+            return super(OpmFormSqlData, self).data[self.case_id]
+        else:
+            return None
+
 
 
 class BaseReport(MonthYearMixin, SummingSqlTabularReport, CustomProjectReport):
@@ -118,7 +215,7 @@ class BaseReport(MonthYearMixin, SummingSqlTabularReport, CustomProjectReport):
         rows = []
         for row in self.get_rows(self.datespan):
             try:
-                rows.append(self.model(row, self))
+                rows.append(self.get_row_data(row))
             except InvalidRow:
                 pass
         return rows
@@ -151,7 +248,7 @@ class BeneficiaryPaymentReport(BaseReport):
     def fields(self):
         return super(BeneficiaryPaymentReport, self).fields + [SelectOpenCloseFilter]
 
-    # TODO: Switch to ES.  Peformance aaah!
+    # TODO: Switch to ES. Peformance aaah!
     def get_rows(self, datespan):
         cases = CommCareCase.get_all_cases(DOMAIN, include_docs=True)
         return [case for case in cases if self.passes_filter(case)]
@@ -171,6 +268,7 @@ class IncentivePaymentReport(BaseReport):
     name = "Incentive Payment Report"
     slug = 'incentive_payment_report'
     model = Worker
+    table_name = "opm_OpmCaseFluff"
 
     @property
     @memoized
@@ -190,6 +288,10 @@ class IncentivePaymentReport(BaseReport):
 
     def get_rows(self, datespan):
         return CommCareUser.by_domain(DOMAIN)
+
+    def get_row_data(self, row):
+        case_sql_data = OpmCaseSqlData(self.domain, row._id, self.datespan)
+        return self.model(row, self, case_sql_data)
 
 
 def last_if_none(month, year):

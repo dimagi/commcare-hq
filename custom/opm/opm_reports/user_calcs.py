@@ -27,10 +27,21 @@ class WomenRegistered(fluff.Calculator):
     """
     "No. of women registered under BCSP"
 
+    Value represents the number of women delivered by that case
+    """
+    @fluff.date_emitter
+    def total(self, case):
+        if case.type == "Pregnancy":
+            yield case.opened_on
+
+class ChildrenRegistered(fluff.Calculator):
+    """
+    "No. of children registered under BCSP"
+
     Value represents the number of children delivered by that case
     """
 
-    @fluff.null_emitter
+    @fluff.date_emitter
     def total(self, case):
         if case.type == "Pregnancy":
             total = 0
@@ -39,7 +50,7 @@ class WomenRegistered(fluff.Calculator):
                     children = form.form.get('live_birth_amount')
                     if children:
                         total += int(children)
-            yield [None, total]
+            yield { 'date': case.opened_on, 'value': total }
 
 
 class ServiceForms(fluff.Calculator):
@@ -52,7 +63,7 @@ class ServiceForms(fluff.Calculator):
     @fluff.date_emitter
     def total(self, form):
         if form.xmlns == VHND_XMLNS:
-            yield user_date_group(form) 
+            yield user_date_group(form)
 
 
 class GrowthMonitoring(fluff.Calculator):
@@ -78,7 +89,7 @@ class GrowthMonitoring(fluff.Calculator):
                     except:
                         pass
             if total:
-                yield { 
+                yield {
                     'date': form.received_on,
                     'value': total,
                     'group_by': [

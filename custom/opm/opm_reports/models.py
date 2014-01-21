@@ -27,6 +27,7 @@ class OpmCaseFluff(fluff.IndicatorDocument):
     document_class = CommCareCase
     domains = ('opm',)
     group_by = ('domain', 'user_id')
+    save_direct_to_sql = True
 
     name = flat_field(lambda case: case.name)
     husband_name = case_property('husband_name')
@@ -40,6 +41,7 @@ class OpmCaseFluff(fluff.IndicatorDocument):
 
     # Okay, I lied, there's one aggregated field:
     women_registered = user_calcs.WomenRegistered()
+    children_registered = user_calcs.ChildrenRegistered()
 
 
 class OpmUserFluff(fluff.IndicatorDocument):
@@ -71,6 +73,7 @@ class OpmFormFluff(fluff.IndicatorDocument):
         'domain',
         fluff.AttributeGetter('case_id', lambda form: form.form['case']['@case_id']),
     )
+    save_direct_to_sql = True
 
     name = flat_field(lambda form: form.name)
 

@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
 from collections import defaultdict
@@ -968,6 +969,7 @@ ES_CASE_FULL_INDEX_DOMAINS = [
     'commtrack-public-demo',
     'uth-rhd-test',
     'crs-remind',
+    'opm',
 ]
 
 #Custom fully indexed domains for ReportXForm index/pillowtop --

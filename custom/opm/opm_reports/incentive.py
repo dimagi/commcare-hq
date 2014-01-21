@@ -29,7 +29,7 @@ class Worker(object):
         ('last_month_total', "Amount of AWW incentive paid last month"),
     ]
 
-    def __init__(self, worker, report):
+    def __init__(self, worker, report, case_sql_data=None, form_sql_data=None):
 
         # make sure worker passes the filters
         report.filter(
@@ -61,29 +61,24 @@ class Worker(object):
                 reduce=reduce,
             )['total']
 
-        self.women_registered = len(OpmCaseFluff.get_result(
-            'women_registered',
-            [DOMAIN, worker._id],
-            report.date_range,
-            reduce=False,
-        )['total'])
-        self.children_registered = OpmCaseFluff.get_result(
-            'women_registered',
-            [DOMAIN, worker._id],
-            report.date_range,
-        )['total']
-        self.service_forms_count = 'yes' if get_result('service_forms') else 'no'
-
-        self.growth_monitoring_count = get_result('growth_monitoring')
-
-        FIXTURES = get_fixture_data()
-        self.service_forms_cash = FIXTURES['service_form_submitted'] \
-                if self.service_forms_count == 'yes' else 0
-        self.growth_monitoring_cash = self.growth_monitoring_count * FIXTURES['child_growth_monitored']
-        self.month_total = self.service_forms_cash + self.growth_monitoring_cash
-        if report.last_month_totals is not None:
-            self.last_month_total = report.last_month_totals.get(
-                self.account_number, 0)
+        if case_sql_data and case_sql_data.data:
+            self.women_registered = str(case_sql_data.data.get('women_registered_total', None))
+            self.children_registered = str(case_sql_data.data.get('children_registered_total', None))
         else:
-            self.last_month_total = 0
+            self.women_registered = None
+            self.children_registered = None
+        #self.service_forms_count = 'yes' if get_result('service_forms') else 'no'
+        #
+        #self.growth_monitoring_count = get_result('growth_monitoring')
+        #
+        #FIXTURES = get_fixture_data()
+        #self.service_forms_cash = FIXTURES['service_form_submitted'] \
+        #        if self.service_forms_count == 'yes' else 0
+        #self.growth_monitoring_cash = self.growth_monitoring_count * FIXTURES['child_growth_monitored']
+        #self.month_total = self.service_forms_cash + self.growth_monitoring_cash
+        #if report.last_month_totals is not None:
+        #    self.last_month_total = report.last_month_totals.get(
+        #        self.account_number, 0)
+        #else:
+        #    self.last_month_total = 0
 
