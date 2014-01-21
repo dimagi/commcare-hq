@@ -193,7 +193,7 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
 
 
 def es_wrapper(index, domain=None, q=None, doc_type=None, fields=None,
-        start_at=None, size=None, sort_by=None, order=None):
+        start_at=None, size=None, sort_by=None, order=None, return_count=False):
     """
     This is a flat wrapper for es_query.
     
@@ -250,8 +250,14 @@ def es_wrapper(index, domain=None, q=None, doc_type=None, fields=None,
         msg = res['error']
         raise ESError(msg)
     if fields is not None:
-        return [r['fields'] for r in res['hits']['hits']]
-    return [r['_source'] for r in res['hits']['hits']]
+        hits = [r['fields'] for r in res['hits']['hits']]
+    else:
+        hits = [r['_source'] for r in res['hits']['hits']]
+
+    if return_count:
+        total = res['hits']['total']
+        return total, hits
+    return hits
 
 
 def stream_es_query(chunksize=100, **kwargs):
