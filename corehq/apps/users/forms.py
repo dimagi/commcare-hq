@@ -18,7 +18,7 @@ import re
 
 # required to translate inside of a mark_safe tag
 from django.utils.functional import lazy
-from django.utils import six  # Python 3 compatibility
+import six  # Python 3 compatibility
 mark_safe_lazy = lazy(mark_safe, six.text_type)
 
 def wrapped_language_validation(value):
