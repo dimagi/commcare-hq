@@ -65,7 +65,7 @@ class TestSubscription(TestCase):
 
     def test_deletions(self):
         self.assertRaises(models.ProtectedError, self.account.delete)
-        self.assertRaises(models.ProtectedError, self.subscription.plan.delete)
+        self.assertRaises(models.ProtectedError, self.subscription.plan_version.delete)
         self.assertRaises(models.ProtectedError, self.subscription.subscriber.delete)
 
     def tearDown(self):

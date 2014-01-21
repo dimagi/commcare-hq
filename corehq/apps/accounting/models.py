@@ -351,7 +351,7 @@ class Subscription(models.Model):
     Links a Subscriber to a SoftwarePlan and BillingAccount, necessary for invoicing.
     """
     account = models.ForeignKey(BillingAccount, on_delete=models.PROTECT)
-    plan = models.ForeignKey(SoftwarePlanVersion, on_delete=models.PROTECT)
+    plan_version = models.ForeignKey(SoftwarePlanVersion, on_delete=models.PROTECT)
     subscriber = models.ForeignKey(Subscriber, on_delete=models.PROTECT)
     salesforce_contract_id = models.CharField(blank=True, null=True, max_length=80)
     date_start = models.DateField()
@@ -369,7 +369,7 @@ class Subscription(models.Model):
                                     "Odd, right? The latest one by date_created was used, but consider this an "
                                     "issue." % subscriber)
             current_subscription = active_subscriptions.latest('date_created')
-            return current_subscription.plan, current_subscription
+            return current_subscription.plan_version, current_subscription
         except Subscription.DoesNotExist:
             global_logger.error("A Subscriber object exists without a Subscription for the domain '%s'. "
                                 "This seems strange." % subscriber)

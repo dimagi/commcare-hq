@@ -10,8 +10,8 @@ class TestCreditLines(BaseInvoiceTestCase):
 
     def setUp(self):
         super(TestCreditLines, self).setUp()
-        self.product_rate = self.subscription.plan.product_rates.get()
-        self.user_rate = self.subscription.plan.feature_rates.filter(feature__feature_type=FeatureType.USER)[:1].get()
+        self.product_rate = self.subscription.plan_version.product_rates.get()
+        self.user_rate = self.subscription.plan_version.feature_rates.filter(feature__feature_type=FeatureType.USER)[:1].get()
         num_active = random.randint(self.user_rate.monthly_limit + 1, self.user_rate.monthly_limit + 2)
         generator.arbitrary_commcare_users_for_domain(self.domain.name, num_active)
         num_excess = num_active - self.user_rate.monthly_limit
@@ -46,7 +46,7 @@ class TestCreditLines(BaseInvoiceTestCase):
         self._clean_credits()
 
     def _generate_users_fee_to_credit_against(self):
-        user_rate = self.subscription.plan.feature_rates.filter(feature__feature_type=FeatureType.USER)[:1].get()
+        user_rate = self.subscription.plan_version.feature_rates.filter(feature__feature_type=FeatureType.USER)[:1].get()
         num_active = random.randint(user_rate.monthly_limit + 1, user_rate.monthly_limit + 2)
         generator.arbitrary_commcare_users_for_domain(self.domain.name, num_active)
         num_excess = num_active - user_rate.monthly_limit
