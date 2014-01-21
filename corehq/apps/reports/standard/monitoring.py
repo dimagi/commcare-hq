@@ -15,7 +15,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, D
 from corehq.apps.reports.generic import GenericTabularReport, ElasticProjectInspectionReport
 from corehq.apps.reports.util import make_form_couch_key, friendly_timedelta, format_datatables_data
 from corehq.apps.users.models import CommCareUser
-from corehq.elastic import es_query, ES_URLS, ADD_TO_ES_FILTER
+from corehq.elastic import es_query, ES_URLS, ADD_TO_ES_FILTER, es_wrapper
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from dimagi.utils.couch.database import get_db
@@ -378,10 +378,6 @@ class DailyFormStatsReport(ElasticProjectInspectionReport, WorkerMonitoringRepor
         return headers
 
     @property
-    def total_records(self):
-        return 200
-
-    @property
     def users(self):
         if self.filter_group_name and not (self.group_id or self.individual):
             group = Group.by_name(self.domain, self.filter_group_name)
@@ -397,17 +393,27 @@ class DailyFormStatsReport(ElasticProjectInspectionReport, WorkerMonitoringRepor
             simplified=True
         )
 
-    def get_row_from_user(self, user):
-        date_field = ("received_on" if self.by_submission_time
+    @property
+    def date_field(self):
+        return ("received_on" if self.by_submission_time
             else "form.meta.timeStart")
+
+    def get_row_from_user(self, user):
+        """
+        Assemble a list whose first element is the username,
+        then the number of forms filled out per day for the datespan,
+        and finally the total forms filled out in the datespan.
+        """
         facets = {"date": {"date_histogram": {
-            "field": date_field,
+            "field": self.date_field,
             "interval": "day"
         }}}
         gte = self.datespan.startdate_param
         lte = self.datespan.enddate_param
+        # TODO: delete this line
+        # gte = datetime.datetime(2010, 1, 1).strftime('%Y-%m-%d')
         query = {"filter": {"range": {
-                    date_field: {
+                    self.date_field: {
                         "gte": gte,
                         "lte": lte}
                 }}}
@@ -419,7 +425,8 @@ class DailyFormStatsReport(ElasticProjectInspectionReport, WorkerMonitoringRepor
             size=0,
             fields=None,
         )
-        assert('error' not in res), "Bad ES query for of form: %s" % user.get('user_id')
+        assert('error' not in res), "Bad ES query for user %s: %s" % (
+            user.get('user_id'), res['error'])
         def parse(entry):
             date = datetime.datetime.fromtimestamp(entry['time']/1000)
             return (date.strftime(DATE_FORMAT), entry['count'])
@@ -428,7 +435,16 @@ class DailyFormStatsReport(ElasticProjectInspectionReport, WorkerMonitoringRepor
             counts_by_date.get(date.strftime(DATE_FORMAT), 0)
             for date in self.dates
         ]
+        # TODO: delete these two lines:
+        # total = sum([entry['count'] for entry in res['facets']['date']['entries']])
+        # return [self.get_raw_user_link(user)] + date_cols + [total]
         return [self.get_raw_user_link(user)] + date_cols + [sum(date_cols)]
+
+    @property
+    def total_records(self):
+        count, _ = es_wrapper('users', self.domain, size=0,
+            doc_type="CommCareUser", return_count=True)
+        return count
 
     def users_by_username(self, order):
         # TODO: convert this and util._report_user_dict to use just a user dict
@@ -438,11 +454,54 @@ class DailyFormStatsReport(ElasticProjectInspectionReport, WorkerMonitoringRepor
                 start_at=self.pagination.start, size=self.pagination.count)
         )
 
-    def users_by_date(self, order):
-        return self.users_by_username(order)
+    def users_by_range(self, start, end, order):
+        # TODO: delete this line
+        # start = datetime.datetime(2010, 1, 1)
+        query = {"filter": {"range": {
+                    self.date_field: {
+                        "gte": start.strftime('%Y-%m-%d'),
+                        "lte": end.strftime('%Y-%m-%d')}
+                }}}
+        uid_param = 'xform.form.meta.userID'
+        res = es_query(
+            q=query,
+            params={'domain.exact': self.domain},
+            facets=[uid_param],
+            es_url=ES_URLS["forms"],
+            size=0,
+        )
+        assert('error' not in res), "Bad ES query for user %s" % user.get('user_id')
+        total = res['facets'][uid_param]['total']
+        count_dict = dict((user['term'], user['count'])
+                for user in res['facets'][uid_param]['terms'])
+        return self.users_sorted_by_count(count_dict, order)
 
-    def users_by_total(self, order):
-        return self.users_by_username(order)
+    def users_sorted_by_count(self, count_dict, order):
+        # Split users_by_username into those in count_dict and those not.
+        # Sort the former by count and return 
+        all_users = map(
+            util._report_user_dict,
+            CommCareUser.es_fakes(self.domain, order=order)
+        )
+        users_with_forms = []
+        users_without_forms = []
+        for user in all_users:
+            u_id = user['user_id']
+            if u_id in count_dict:
+                users_with_forms.append((count_dict[u_id], user))
+            else:
+                users_without_forms.append(user)
+        if order == "asc":
+            users_with_forms.sort()
+            sorted_users = users_without_forms
+            sorted_users += map(lambda u: u[1], users_with_forms)
+        else:
+            users_with_forms.sort(reverse=True)
+            sorted_users = map(lambda u: u[1], users_with_forms)
+            sorted_users += users_without_forms
+        start = self.pagination.start
+        end = min(len(sorted_users), start+self.pagination.count)
+        return sorted_users[start:end]
 
     @property
     def column_count(self):
@@ -450,15 +509,19 @@ class DailyFormStatsReport(ElasticProjectInspectionReport, WorkerMonitoringRepor
 
     @property
     def rows(self):
-        sort_col = self.request_params.get('iSortCol_0', 0)
+        self.sort_col = self.request_params.get('iSortCol_0', 0)
         totals_col = self.column_count - 1
-        if sort_col == totals_col:
-            user_fn = self.users_by_total
-        elif 0 < sort_col < totals_col:
-            user_fn = self.users_by_date
+        order = self.request_params.get('sSortDir_0')
+        if self.sort_col == totals_col:
+            start = self.dates[0]
+            end = self.dates[-1] + datetime.timedelta(days=1)
+            users = self.users_by_range(start, end, order)
+        elif 0 < self.sort_col < totals_col:
+            start = self.dates[self.sort_col-1]
+            end = start + datetime.timedelta(days=1)
+            users = self.users_by_range(start, end, order)
         else:
-            user_fn = self.users_by_username
-        users = user_fn(self.request_params.get('sSortDir_0'))
+            users = self.users_by_username(order)
         rows = [self.get_row_from_user(user) for user in users]
         return rows
 
