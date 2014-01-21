@@ -4,16 +4,20 @@ from corehq.apps.announcements.forms import HQAnnouncementForm
 from corehq.apps.announcements.models import HQAnnouncement
 from corehq.apps.crud.interface import BaseCRUDAdminInterface
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
+from corehq.apps.reports.standard import DatespanMixin
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 
 
-class AccountingInterface(BaseCRUDAdminInterface):
+class AccountingInterface(BaseCRUDAdminInterface, DatespanMixin):
     section_name = "Accounting"
     base_template = 'accounting/add_account_button.html'
     dispatcher = AccountingAdminInterfaceDispatcher
 
     crud_form_update_url = "/accounting/form/"
+
+    fields = ['corehq.apps.reports.filters.dates.DatespanFilter',]
+    hide_filters = False
 
     def validate_document_class(self):
         return True
