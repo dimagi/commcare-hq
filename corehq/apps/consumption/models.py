@@ -20,8 +20,20 @@ class DefaultConsumption(Document):
 
     @classmethod
     def get_domain_default(cls, domain):
+        return cls._by_index_key([domain, None, None, None])
+
+    @classmethod
+    def get_product_default(cls, domain, product_id):
+        return cls._by_index_key([domain, product_id, None, None])
+
+    @classmethod
+    def get_supply_point_default(cls, domain, product_id, supply_point_id):
+        return cls._by_index_key([domain, product_id, {}, supply_point_id])
+
+    @classmethod
+    def _by_index_key(cls, key):
         return cls.view('consumption/consumption_index',
-            key=[domain, None, None, None],
+            key=key,
             reduce=False,
             include_docs=True,
         ).one()
