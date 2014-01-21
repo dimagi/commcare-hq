@@ -63,11 +63,11 @@ class InvoiceFactory(object):
         return invoice
 
     def generate_line_items(self, invoice):
-        for product_rate in self.subscription.plan.product_rates.all():
+        for product_rate in self.subscription.plan_version.product_rates.all():
             product_factory = ProductLineItemFactory(self.subscription, product_rate, invoice)
             product_factory.create()
 
-        for feature_rate in self.subscription.plan.feature_rates.all():
+        for feature_rate in self.subscription.plan_version.feature_rates.all():
             feature_factory_class = FeatureLineItemFactory.get_factory_by_feature_type(
                 feature_rate.feature.feature_type
             )
@@ -101,7 +101,7 @@ class CommunityInvoiceFactory(InvoiceFactory):
         return account
 
     @property
-    def software_plan(self):
+    def software_plan_version(self):
         return DefaultProductPlan.get_default_plan_by_domain(self.domain)
 
     @property
@@ -115,7 +115,7 @@ class CommunityInvoiceFactory(InvoiceFactory):
         subscription = Subscription(
             account=self.account,
             subscriber=subscriber,
-            plan=self.software_plan,
+            plan_version=self.software_plan_version,
             date_start=self.date_start,
             date_end=self.date_end,
         )
