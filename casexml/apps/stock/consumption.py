@@ -1,17 +1,21 @@
 import collections
+import functools
 import math
 from dimagi.utils import parsing as dateparse
 from datetime import datetime, timedelta
 from casexml.apps.stock import const
 from casexml.apps.stock.models import StockTransaction
 
+DEFAULT_CONSUMPTION_FUNCTION = lambda case_id, product_id: None
 
 class ConsumptionConfiguration(object):
     DEFAULT_MIN_PERIODS = 2
     DEFAULT_MIN_WINDOW = 10
     DEFAULT_MAX_WINDOW = 60
 
-    def __init__(self, min_periods=None, min_window=None, max_window=None):
+
+    def __init__(self, min_periods=None, min_window=None, max_window=None,
+                 default_consumption_function=None):
         def _default_if_none(value, default):
             return value if value is not None else default
 
@@ -28,10 +32,8 @@ class ConsumptionConfiguration(object):
         # data before this period will not be included in the calculation
         self.max_window = _default_if_none(max_window, self.DEFAULT_MAX_WINDOW)
 
-    def get_default_consumption(self, case_id, product_id):
-        # this is intended to be overridden if you want to specify more (any)
-        # default consumption logic
-        return None
+        self.default_consumption_function = _default_if_none(default_consumption_function,
+                                                             DEFAULT_CONSUMPTION_FUNCTION)
 
     @classmethod
     def test_config(cls):
@@ -60,9 +62,7 @@ def compute_consumption(case_id, product_id, window_end, section_id=const.SECTIO
 
     # this is annoying but necessary unless we want to force case and product to be part
     # of the consumption-by-transaction api
-    def get_default_value():
-        return configuration.get_default_consumption(case_id, product_id)
-
+    get_default_value = functools.partial(configuration.default_consumption_function, case_id, product_id)
     return compute_consumption_from_transactions(
         transactions, window_start, configuration, get_default_value
     )

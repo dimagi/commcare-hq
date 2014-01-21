@@ -27,12 +27,8 @@ class ConsumptionCaseTest(StockTestBase):
 
         self.assertEqual(None, compute_consumption(self.case_id, self.product_id,
                                                    now, configuration=ConsumptionConfiguration(min_periods=4)))
-
-        class _DefaultToTen(ConsumptionConfiguration):
-            def get_default_consumption(self, case_id, product_id):
-                return 10.
-
-        self.assertAlmostEqual(10., compute_consumption(self.case_id, self.product_id,
-                                                        now, configuration=_DefaultToTen(min_periods=4)))
-
-
+        _ten = lambda case_id, product_id: 10
+        self.assertAlmostEqual(10., compute_consumption(self.case_id, self.product_id, now,
+                                                        configuration=ConsumptionConfiguration(
+                                                            min_periods=4,
+                                                            default_consumption_function=_ten)))
