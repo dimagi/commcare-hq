@@ -92,8 +92,14 @@ def num_of_children(form, prop1, prop2, num_in_condition, children):
     return c
 
 
-class VhndMonthly(fluff.Calculator):
+class MotherRegistered(fluff.Calculator):
+    @fluff.date_emitter
+    def total(self, case):
+        if case.type.upper() == "PREGNANCY" and getattr(case, 'bank_account_number', None) is not None:
+            yield case_date(case)
 
+
+class VhndMonthly(fluff.Calculator):
     @fluff.date_emitter
     def total(self, case):
         is_vhnd = False
@@ -108,17 +114,16 @@ class VhndMonthly(fluff.Calculator):
 
 
 def check_status(form, status):
-        if 'interpret_grade' in form and form['interpret_grade'].upper() == status:
-            status = True
-        elif 'interpret_grade_2' in form and form['interpret_grade_2'].upper() == status:
-            status = True
-        elif 'interpret_grade_3' in form and form['interpret_grade_3'].upper() == status:
-            status = True
-        return status
+    if 'interpret_grade' in form and form['interpret_grade'].upper() == status:
+        status = True
+    elif 'interpret_grade_2' in form and form['interpret_grade_2'].upper() == status:
+        status = True
+    elif 'interpret_grade_3' in form and form['interpret_grade_3'].upper() == status:
+        status = True
+    return status
 
 
 class Status(fluff.Calculator):
-
     def __init__(self, status, *args, **kwargs):
         self.status = status
         super(Status, self).__init__(*args, **kwargs)
@@ -135,7 +140,6 @@ class Status(fluff.Calculator):
 
 
 class Weight(fluff.Calculator):
-
     def __init__(self, count=0, *args, **kwargs):
         self.count = count
         super(Weight, self).__init__(*args, **kwargs)
@@ -151,7 +155,6 @@ class Weight(fluff.Calculator):
 
 
 class BreastFed(fluff.Calculator):
-
     @fluff.date_emitter
     def total(self, case):
         helpful_obj = {
@@ -168,12 +171,12 @@ class BreastFed(fluff.Calculator):
                 if form.xmlns in [CFU1_XMLNS, CFU2_XMLNS, CFU3_XMLNS] and helpful_obj[form.xmlns] <= birth_amount:
                     yield {
                         'date': case_date(case),
-                        'value': num_of_children(form, 'child_%s', 'child1_child_excbreastfed', 0, range(1, (birth_amount + 1)))
+                        'value': num_of_children(form, 'child_%s', 'child1_child_excbreastfed', 0,
+                                                 range(1, (birth_amount + 1)))
                     }
 
 
 class ChildrenInfo(fluff.Calculator):
-
     def __init__(self, prop, num_in_condition=0, *args, **kwargs):
         self.num_in_condition = num_in_condition
         self.prop1 = 'child_%s'
@@ -191,7 +194,6 @@ class ChildrenInfo(fluff.Calculator):
 
 
 class IfaTablets(fluff.Calculator):
-
     @fluff.date_emitter
     def total(self, case):
         is_ifa_tablets = False
@@ -203,7 +205,6 @@ class IfaTablets(fluff.Calculator):
 
 
 class Lactating(fluff.Calculator):
-
     @fluff.date_emitter
     def total(self, case):
         for form in case.get_forms():
@@ -213,7 +214,6 @@ class Lactating(fluff.Calculator):
 
 
 class Lmp(fluff.Calculator):
-
     @fluff.date_emitter
     def total(self, case):
         for form in case.get_forms():
@@ -223,7 +223,6 @@ class Lmp(fluff.Calculator):
 
 
 class LiveChildren(fluff.Calculator):
-
     @fluff.date_emitter
     def total(self, case):
         for form in case.get_forms():

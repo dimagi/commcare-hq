@@ -104,10 +104,11 @@ class OpmHealthStatusFluff(fluff.IndicatorDocument):
 
     name = flat_field(lambda case: case.name)
     awc_name = case_property('awc_name')
-    account_number = case_property('bank_account_number')
+    # account_number = case_property('bank_account_number')
     block = case_property('block_name')
 
     #aggregated field
+    registered_mother = case_calcs.MotherRegistered()
     lmp = case_calcs.Lmp()
     lactating = case_calcs.Lactating()
     children = case_calcs.LiveChildren()
