@@ -35,10 +35,12 @@ class AccountingInterface(BaseCRUDAdminInterface, DatespanMixin):
     def rows(self):
         rows = []
         for account in BillingAccount.objects.all():
-            rows.append([mark_safe('<a href="./%d">%s</a>' % (account.id, account.name)),
-                         account.salesforce_account_id,
-                         account.date_created,
-                         account.account_type])
+            if self.datespan.startdate.date() <= account.date_created \
+                and self.datespan.enddate.date() >= account.date_created:
+                rows.append([mark_safe('<a href="./%d">%s</a>' % (account.id, account.name)),
+                             account.salesforce_account_id,
+                             account.date_created,
+                             account.account_type])
         return rows
 
     @property
