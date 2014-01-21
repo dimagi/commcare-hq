@@ -24,6 +24,7 @@ def format_percent(value, percent):
         color = 'green'
     return "<span style='display: block; text-align:center; color:%s;'>%d<hr style='border-color: black;'> %d%%</span>" % (color, value, percent)
 
+
 def normal_format(value):
     return "<span style='display: block; text-align:center;'>%d<hr style='border-color: black;'></span>" % value
 

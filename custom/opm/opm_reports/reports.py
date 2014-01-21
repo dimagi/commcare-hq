@@ -203,8 +203,6 @@ class BaseReport(MonthYearMixin, SqlTabularReport, CustomProjectReport):
     method_map that is a list of (method_name, "Verbose Title") tuples
     that define the columns in the report.
     """
-    # ajax_pagination = True
-    # asynchronous = True
     name = None
     slug = None
     model = None

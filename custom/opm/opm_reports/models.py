@@ -92,21 +92,10 @@ class OpmFormFluff(fluff.IndicatorDocument):
 
 class OpmHealthStatusFluff(fluff.IndicatorDocument):
 
-    def case_property(property):
-        """
-        returns a flat field with a callable looking for `property` on the case
-        """
-        return flat_field(lambda case: case.get_case_property(property))
-
     document_class = CommCareCase
     domains = ('opm',)
     group_by = ('domain', 'user_id')
     save_direct_to_sql = True
-
-    name = flat_field(lambda case: case.name)
-    awc_name = case_property('awc_name')
-    # account_number = case_property('bank_account_number')
-    block = case_property('block_name')
 
     #aggregated field
     beneficiaries_registered = case_calcs.MotherRegistered()
