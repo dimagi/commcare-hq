@@ -108,7 +108,8 @@ class AppStringsBase(object):
 
         if 'case_sharing.exactly_one_group' not in messages:
             messages['case_sharing.exactly_one_group'] = \
-                u'Your phone is not set up properly for case sharing. Please contact your supervisor.'
+                (u'The case sharing settings for your user are incorrect. '
+                 u'This user must be in exactly one case sharing group. Please contact your supervisor.')
 
         return commcare_translations.dumps(messages).encode('utf-8')
 
