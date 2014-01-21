@@ -56,49 +56,57 @@
     <div class="span12">
         <h2>Group "{{ group.name }}" {% if group.case_sharing %} (Case Sharing){% endif %}</h2>
         <div class="btn-toolbar">
-            <a href="#editGroupSettings" class="btn" data-toggle="modal"><i class="icon icon-pencil"></i> Edit Settings</a>
+            <a href="#editGroupSettings" class="btn" data-toggle="modal"><i class="icon icon-pencil"></i> {% trans "Edit Settings" %}</a>
             <form name="delete_group" style="margin-right: 45px;" class="pull-right" action="{% url "delete_group" domain group.get_id %}" method="post">
-                <button class="btn btn-danger" type="submit"><i class="icon icon-white icon-remove"></i> Delete Group "{{ group.name }}"</button>
+                <button class="btn btn-danger" type="submit">
+                    {% blocktrans with group.name as group_name %}
+                        <i class="icon icon-white icon-remove"></i> Delete Group "{{group_name}}"
+                    {% endblocktrans %}
+                </button>
             </form>
         </div>
 
         <div class="modal hide fade" id="editGroupSettings">
             <div class="modal-header">
                 <a class="close" data-dismiss="modal">×</a>
-                <h3>Edit Settings for Group "{{ group.name }}"</h3>
+                <h3>
+                    {% blocktrans with group.name as group_name %}
+                        Edit Settings for Group "{{ group_name }}"
+                    {% endblocktrans %}
+                </h3>
             </div>
             <form class="form form-horizontal" method="post" action="{% url "edit_group" domain group.get_id %}">
                 <div class="modal-body">
                     <div class="control-group">
-                        <label class="control-label" for="group-name-input">Group Name</label>
+                        <label class="control-label" for="group-name-input">{% trans "Group Name" %}</label>
                         <div class="controls">
                             <input type="text" value="{{ group.name }}" name="name" id="group-name-input" />
                         </div>
                     </div>
                     <div class="control-group">
-                        <label class="control-label" for="group-case-sharing-input">Case Sharing</label>
+                        <label class="control-label" for="group-case-sharing-input">{% trans "Case Sharing" %}</label>
                         <div class="controls">
                             <select class="input-small" name="case_sharing" id="group-case-sharing-input" data-value="{{ group.case_sharing|BOOL }}">
-                                <option value="true">On</option>
-                                <option value="false">Off</option>
+                                <option value="true">{% trans "On" %}</option>
+                                <option value="false">{% trans "Off" %}</option>
                             </select>
-                            <p class="help-block">Whether users within this group will share cases with other members of this group</p>
+                            <p class="help-block">{% trans "Whether users within this group will share cases with other members of this group" %}</p>
                         </div>
                     </div>
                     <div class="control-group">
-                        <label class="control-label" for="group-reporting-input">Reporting</label>
+                        <label class="control-label" for="group-reporting-input">{% trans "Reporting" %}</label>
                         <div class="controls">
                             <select class="input-small" name="reporting" id="group-reporting-input" data-value="{{ group.reporting|BOOL }}">
-                                <option value="true">On</option>
-                                <option value="false">Off</option>
+                                <option value="true">{% trans "On" %}</option>
+                                <option value="false">{% trans "Off" %}</option>
                             </select>
-                            <p class="help-block">Whether this group's name will appear in the group filter list for reports</p>
+                            <p class="help-block">{% trans "Whether this group's name will appear in the group filter list for reports" %}</p>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <a href="#" class="btn" data-dismiss="modal">Cancel</a>
-                    <button type="submit" class="btn btn-primary">Save changes</button>
+                    <a href="#" class="btn" data-dismiss="modal">{% trans "Cancel" %}</a>
+                    <button type="submit" class="btn btn-primary">{% trans "Save changes" %}</button>
                 </div>
             </form>
         </div>
