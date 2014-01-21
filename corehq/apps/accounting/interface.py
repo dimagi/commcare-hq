@@ -26,20 +26,28 @@ class NameFilter(BaseSingleOptionFilter):
     options = [(account.name, account.name) for account in BillingAccount.objects.all()]
 
 
-def remove_blank(list_input):
-    for _ in list_input:
-        if _[1] == '':
-            list_input.remove(_)
-    return list_input
+def clean_options(options):
+    cleaned_options = []
+    for option in options:
+        if option[1] is not None and option[1].strip() != '':
+           cleaned_options.append(option)
+    return sorted([_ for _ in set(cleaned_options)])
 
 
 class SalesforceAccountIDFilter(BaseSingleOptionFilter):
     slug = 'salesforce_account_id'
     label = _("Salesforce Account ID")
     default_text = _("All")
-    options = remove_blank([_ for _ in set([(account.salesforce_account_id,
-                                             account.salesforce_account_id.strip() if account.salesforce_account_id is not None else '')
-                                            for account in BillingAccount.objects.all()])])
+    options = clean_options([(account.salesforce_account_id, account.salesforce_account_id)
+                             for account in BillingAccount.objects.all()])
+
+
+class SubscriberFilter(BaseSingleOptionFilter):
+    slug = 'subscriber'
+    label = _('Subscriber')
+    default_text = _("All")
+    options = clean_options([(subscription.subscriber.domain, subscription.subscriber.domain)
+                             for subscription in Subscription.objects.all()])
 
 
 class DateCreatedFilter(DatespanFilter):
@@ -115,6 +123,10 @@ class SubscriptionInterface(BaseCRUDAdminInterface):
 
     crud_form_update_url = "/accounting/form/"
 
+    fields = ['corehq.apps.accounting.interface.SubscriberFilter',
+              ]
+    hide_filters = False
+
     def validate_document_class(self):
         return True
 
@@ -136,16 +148,18 @@ class SubscriptionInterface(BaseCRUDAdminInterface):
         from corehq.apps.accounting.views import ManageBillingAccountView
         rows = []
         for subscription in Subscription.objects.all():
-            rows.append([subscription.subscriber.domain,
-                         mark_safe('<a href="%s">%s</a>'
-                                   % (reverse(ManageBillingAccountView.name, args=(subscription.account.id,)),
-                                      subscription.account.name)),
-                         subscription.plan.plan.name,
-                         subscription.is_active,
-                         subscription.salesforce_contract_id,
-                         subscription.date_start,
-                         subscription.date_end,
-                         mark_safe('<a href="./%d" class="btn">Edit</a>' % subscription.id)])
+            if (SubscriberFilter.get_value(self.request, self.domain) is None
+                or SubscriberFilter.get_value(self.request, self.domain) == subscription.subscriber.domain):
+                rows.append([subscription.subscriber.domain,
+                             mark_safe('<a href="%s">%s</a>'
+                                       % (reverse(ManageBillingAccountView.name, args=(subscription.account.id,)),
+                                          subscription.account.name)),
+                             subscription.plan.plan.name,
+                             subscription.is_active,
+                             subscription.salesforce_contract_id,
+                             subscription.date_start,
+                             subscription.date_end,
+                             mark_safe('<a href="./%d" class="btn">Edit</a>' % subscription.id)])
 
         return rows
 
