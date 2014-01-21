@@ -19,6 +19,29 @@ class AccountTypeFilter(BaseSingleOptionFilter):
     options = BillingAccountType.CHOICES
 
 
+class NameFilter(BaseSingleOptionFilter):
+    slug = 'name'
+    label = _("Name")
+    default_text = _("All")
+    options = [(account.name, account.name) for account in BillingAccount.objects.all()]
+
+
+def remove_blank(list_input):
+    for _ in list_input:
+        if _[1] == '':
+            list_input.remove(_)
+    return list_input
+
+
+class SalesforceAccountIDFilter(BaseSingleOptionFilter):
+    slug = 'salesforce_account_id'
+    label = _("Salesforce Account ID")
+    default_text = _("All")
+    options = remove_blank([_ for _ in set([(account.salesforce_account_id,
+                                             account.salesforce_account_id.strip() if account.salesforce_account_id is not None else '')
+                                            for account in BillingAccount.objects.all()])])
+
+
 class DateCreatedFilter(DatespanFilter):
     label = _("Date Created")
 
@@ -30,8 +53,10 @@ class AccountingInterface(BaseCRUDAdminInterface, DatespanMixin):
 
     crud_form_update_url = "/accounting/form/"
 
-    fields = ['corehq.apps.accounting.interface.AccountTypeFilter',
-              'corehq.apps.accounting.interface.DateCreatedFilter',
+    fields = ['corehq.apps.accounting.interface.DateCreatedFilter',
+              'corehq.apps.accounting.interface.NameFilter',
+              'corehq.apps.accounting.interface.SalesforceAccountIDFilter',
+              'corehq.apps.accounting.interface.AccountTypeFilter',
               ]
     hide_filters = False
 
@@ -53,6 +78,10 @@ class AccountingInterface(BaseCRUDAdminInterface, DatespanMixin):
         for account in BillingAccount.objects.all():
             if self.datespan.startdate.date() <= account.date_created \
                 and self.datespan.enddate.date() >= account.date_created \
+                and (NameFilter.get_value(self.request, self.domain) is None
+                     or NameFilter.get_value(self.request, self.domain) == account.name) \
+                and (SalesforceAccountIDFilter.get_value(self.request, self.domain) is None
+                     or SalesforceAccountIDFilter.get_value(self.request, self.domain) == account.salesforce_account_id) \
                 and (AccountTypeFilter.get_value(self.request, self.domain) is None
                      or AccountTypeFilter.get_value(self.request, self.domain) == account.account_type):
                 rows.append([mark_safe('<a href="./%d">%s</a>' % (account.id, account.name)),
