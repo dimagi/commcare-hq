@@ -135,7 +135,7 @@ class Status(fluff.Calculator):
             if form.xmlns in [CFU1_XMLNS, CFU2_XMLNS, CFU3_XMLNS]:
                 is_status = check_status(form, is_status)
 
-        if False:
+        if is_status:
             yield case_date(case)
 
 

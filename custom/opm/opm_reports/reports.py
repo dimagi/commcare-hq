@@ -7,19 +7,16 @@ this more general and subclass for montly reports , but I'm holding off on
 that until we actually have another use case for it.
 """
 import datetime
-from sqlagg.base import BaseColumn
-from couchdbkit import ResourceNotFound
 from sqlagg.columns import SimpleColumn, SumColumn
-from corehq.apps.api.es import ReportCaseES, CaseES
+from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.dates import DatespanFilter
 
-from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.sqlreport import SummingSqlTabularReport, DatabaseColumn, SqlTabularReport, SqlData
-from corehq.apps.reports.sqlreport import SqlTabularReport, DatabaseColumn
+from corehq.apps.reports.sqlreport import SqlTabularReport, DatabaseColumn, SqlData, AggregateColumn
 from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin, DatespanMixin
 from corehq.apps.reports.filters.select import SelectOpenCloseFilter
 from corehq.apps.users.models import CommCareCase
 from dimagi.utils.dates import DateSpan
+from custom.opm.opm_reports.health_status import HealthStatus
 
 from ..opm_tasks.models import OpmReportSnapshot
 from .beneficiary import Beneficiary
@@ -121,6 +118,79 @@ class OpmFormSqlData(SqlData):
         else:
             return None
 
+class OpmHealthStatusSqlData(SqlData):
+
+    table_name = 'fluff_OpmHealthStatusFluff'
+
+    def __init__(self, domain, user_id, datespan):
+        self.domain = domain
+        self.user_id = user_id
+        self.datespan = datespan
+
+    @property
+    def filter_values(self):
+        return dict(
+            domain=self.domain,
+            user_id=self.user_id,
+            startdate=self.datespan.startdate_param_utc,
+            enddate=self.datespan.enddate_param_utc
+        )
+
+    @property
+    def group_by(self):
+        return ['user_id']
+
+    @property
+    def filters(self):
+        filters = [
+            "domain = :domain",
+            "user_id = :user_id",
+            "date between :startdate and :enddate"
+        ]
+
+        return filters
+
+
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn('# of Beneficiaries Registered', SumColumn('beneficiaries_registered_total')),
+            DatabaseColumn('# of Pregnant Women Registered', SumColumn('lmp_total')),
+            DatabaseColumn('# of Lactating Mothers Registered', SumColumn('lactating_total')),
+            DatabaseColumn('# of Children Between 0 and 3 Years of Age Registered', SumColumn('children_total')),
+            DatabaseColumn('# of Beneficiaries Attending VHND Monthly', SumColumn('vhnd_monthly_total')),
+            DatabaseColumn('# of Pregnant Women Who Have Received at least 30 IFA Tablets', SumColumn('ifa_tablets_total')),
+            DatabaseColumn('# of Pregnant Women Whose Weight Gain Was Monitored At Least Once', SumColumn('weight_once_total')),
+            DatabaseColumn('# of Pregnant Women Whose Weight Gain Was Monitored Twice', SumColumn('weight_twice_total')),
+            DatabaseColumn('# of Children Whose Weight Was Monitored at Birth', SumColumn('children_monitored_at_birth_total')),
+            DatabaseColumn('# of Children Whose Birth Was Registered', SumColumn('children_registered_total')),
+            DatabaseColumn('# of Children Who Have Attended At Least 1 Growth Monitoring Session', SumColumn('growth_monitoring_session_1_total')),
+            DatabaseColumn('# of Children Who Have Attended At Least 2 Growth Monitoring Sessions', SumColumn('growth_monitoring_session_2_total')),
+            DatabaseColumn('# of Children Who Have Attended At Least 3 Growth Monitoring Sessions', SumColumn('growth_monitoring_session_3_total')),
+            DatabaseColumn('# of Children Who Have Attended At Least 4 Growth Monitoring Sessions', SumColumn('growth_monitoring_session_4_total')),
+            DatabaseColumn('# of Children Who Have Attended At Least 5 Growth Monitoring Sessions', SumColumn('growth_monitoring_session_5_total')),
+            DatabaseColumn('# of Children Who Have Attended At Least 6 Growth Monitoring Sessions', SumColumn('growth_monitoring_session_6_total')),
+            DatabaseColumn('# of Children Who Have Attended At Least 7 Growth Monitoring Sessions', SumColumn('growth_monitoring_session_7_total')),
+            DatabaseColumn('# of Children Who Have Attended At Least 8 Growth Monitoring Sessions', SumColumn('growth_monitoring_session_8_total')),
+            DatabaseColumn('# of Children Who Have Attended At Least 9 Growth Monitoring Sessions', SumColumn('growth_monitoring_session_9_total')),
+            DatabaseColumn('# of Children Who Have Attended At Least 10 Growth Monitoring Sessions', SumColumn('growth_monitoring_session_10_total')),
+            DatabaseColumn('# of Children Who Have Attended At Least 11 Growth Monitoring Sessions', SumColumn('growth_monitoring_session_11_total')),
+            DatabaseColumn('# of Children Who Have Attended At Least 12 Growth Monitoring Sessions', SumColumn('growth_monitoring_session_12_total')),
+            DatabaseColumn('# of Children Whose Nutritional Status is Normal', SumColumn('nutritional_status_normal_total')),
+            DatabaseColumn('# of Children Whose Nutritional Status is "MAM"', SumColumn('nutritional_status_mam_total')),
+            DatabaseColumn('# of Children Whose Nutritional Status is "SAM"', SumColumn('nutritional_status_sam_total')),
+            DatabaseColumn('# of Children Who Have Received ORS and Zinc Treatment if He/She Contracts Diarrhea', SumColumn('treated_total')),
+            DatabaseColumn('# of Lactating Mothers Who Reported to Have Exclusively Breastfed Their Children for First 6 Months', SumColumn('excbreastfed_total')),
+            DatabaseColumn('# of Children Who Received Measles Vaccine', SumColumn('measlesvacc_total')),
+        ]
+
+    @property
+    def data(self):
+        if self.user_id in super(OpmHealthStatusSqlData, self).data:
+            return super(OpmHealthStatusSqlData, self).data[self.user_id]
+        else:
+            return None
 
 
 class BaseReport(MonthYearMixin, SqlTabularReport, CustomProjectReport):
@@ -133,8 +203,8 @@ class BaseReport(MonthYearMixin, SqlTabularReport, CustomProjectReport):
     method_map that is a list of (method_name, "Verbose Title") tuples
     that define the columns in the report.
     """
-    ajax_pagination = True
-    asynchronous = True
+    # ajax_pagination = True
+    # asynchronous = True
     name = None
     slug = None
     model = None
@@ -173,6 +243,16 @@ class BaseReport(MonthYearMixin, SqlTabularReport, CustomProjectReport):
             return None
         return OpmReportSnapshot.from_view(self)
 
+
+    @property
+    def headers(self):
+        if self.snapshot is not None:
+            return DataTablesHeader(*[
+                DataTablesColumn(header) for header in self.snapshot.headers
+            ])
+        return DataTablesHeader(*[
+            DataTablesColumn(header) for method, header in self.model.method_map
+        ])
 
     @property
     def rows(self):
@@ -254,7 +334,6 @@ class IncentivePaymentReport(BaseReport):
     name = "Incentive Payment Report"
     slug = 'incentive_payment_report'
     model = Worker
-    table_name = "opm_OpmCaseFluff"
 
     @property
     @memoized
@@ -324,71 +403,26 @@ def get_report(ReportClass, month=None, year=None):
 
     return Report()
 
-class HealthStatusReport(SqlTabularReport, CustomProjectReport, DatespanMixin):
+class HealthStatusReport(DatespanMixin, BaseReport):
 
     name = "Health Status Report"
     slug = "health_status_report"
-    table_name = 'opm_OpmHealthStatusFluff'
+    model = HealthStatus
 
-    def username(self, key):
-        try:
-            return CommCareUser.get_by_user_id(key).full_name
-        except (ResourceNotFound, AttributeError):
-            return "Invalid User"
-
-    def to_string(self, key):
-        return str(key)
+    def passes_filter(self, case):
+        if case.type.upper() == "PREGNANCY":
+            return True
+        else:
+            return False
 
     @property
     def fields(self):
         return [BlockFilter, AWCFilter, SelectOpenCloseFilter, DatespanFilter]
 
-    @property
-    def group_by(self):
-        return ['user_id']
+    def get_rows(self, dataspan):
+        return CommCareUser.by_domain(DOMAIN)
 
-    @property
-    def filter_values(self):
-        return dict(
-            domain=self.domain
-        )
+    def get_row_data(self, row):
+        sql_data = OpmHealthStatusSqlData(self.domain, row._id, self.datespan)
+        return self.model(row, self, sql_data.data)
 
-    @property
-    def filters(self):
-        base_filters = ["domain = :domain"]
-        return base_filters
-
-
-    @property
-    def columns(self):
-        return [
-            # DatabaseColumn("AWC", SimpleColumn("user_id"), format_fn=self.username),
-            DatabaseColumn('# of Beneficiaries Registered', SumColumn('registered_mother_total')),
-            DatabaseColumn('# of Pregnant Women Registered', SumColumn('lmp_total'), format_fn=self.to_string),
-            DatabaseColumn('# of Lactating Mothers Registered', SumColumn('lactating_total'), format_fn=self.to_string),
-            DatabaseColumn('# of Children Between 0 and 3 Years of Age Registered', SumColumn('children_total'), format_fn=self.to_string),
-            DatabaseColumn('# of Beneficiaries Attending VHND Monthly', SumColumn('vhnd_monthly_total')),
-            DatabaseColumn('# of Pregnant Women Who Have Received at least 30 IFA Tablets', SumColumn('ifa_tablets_total'), format_fn=self.to_string),
-            DatabaseColumn('# of Pregnant Women Whose Weight Gain Was Monitored At Least Once', SumColumn('weight_once_total'), format_fn=self.to_string),
-            DatabaseColumn('# of Pregnant Women Whose Weight Gain Was Monitored Twice', SumColumn('weight_twice_total'), format_fn=self.to_string),
-            DatabaseColumn('# of Children Whose Weight Was Monitored at Birth', SumColumn('children_monitored_at_birth_total'), format_fn=self.to_string),
-            DatabaseColumn('# of Children Whose Birth Was Registered', SumColumn('children_registered_total'), format_fn=self.to_string),
-            DatabaseColumn('# of Children Who Have Attended At Least 1 Growth Monitoring Session', SumColumn('growth_monitoring_session_1_total'), format_fn=self.to_string),
-            DatabaseColumn('# of Children Who Have Attended At Least 2 Growth Monitoring Sessions', SumColumn('growth_monitoring_session_2_total'), format_fn=self.to_string),
-            DatabaseColumn('# of Children Who Have Attended At Least 3 Growth Monitoring Sessions', SumColumn('growth_monitoring_session_3_total'), format_fn=self.to_string),
-            DatabaseColumn('# of Children Who Have Attended At Least 4 Growth Monitoring Sessions', SumColumn('growth_monitoring_session_4_total'), format_fn=self.to_string),
-            DatabaseColumn('# of Children Who Have Attended At Least 5 Growth Monitoring Sessions', SumColumn('growth_monitoring_session_5_total'), format_fn=self.to_string),
-            DatabaseColumn('# of Children Who Have Attended At Least 6 Growth Monitoring Sessions', SumColumn('growth_monitoring_session_6_total'), format_fn=self.to_string),
-            DatabaseColumn('# of Children Who Have Attended At Least 7 Growth Monitoring Sessions', SumColumn('growth_monitoring_session_7_total'), format_fn=self.to_string),
-            DatabaseColumn('# of Children Who Have Attended At Least 8 Growth Monitoring Sessions', SumColumn('growth_monitoring_session_8_total'), format_fn=self.to_string),
-            DatabaseColumn('# of Children Who Have Attended At Least 9 Growth Monitoring Sessions', SumColumn('growth_monitoring_session_9_total'), format_fn=self.to_string),
-            DatabaseColumn('# of Children Who Have Attended At Least 10 Growth Monitoring Sessions', SumColumn('growth_monitoring_session_10_total'), format_fn=self.to_string),
-            DatabaseColumn('# of Children Who Have Attended At Least 11 Growth Monitoring Sessions', SumColumn('growth_monitoring_session_11_total'), format_fn=self.to_string),
-            DatabaseColumn('# of Children Who Have Attended At Least 12 Growth Monitoring Sessions', SumColumn('growth_monitoring_session_12_total'), format_fn=self.to_string),
-            DatabaseColumn('# of Children Whose Nutritional Status is Normal', SumColumn('nutritional_status_normal_total'), format_fn=self.to_string),
-            DatabaseColumn('# of Children Whose Nutritional Status is "MAM"', SumColumn('nutritional_status_mam_total'), format_fn=self.to_string),
-            DatabaseColumn('# of Children Whose Nutritional Status is "SAM"', SumColumn('nutritional_status_sam_total'), format_fn=self.to_string),
-            DatabaseColumn('# of Children Who Have Received ORS and Zinc Treatment if He/She Contracts Diarrhea', SumColumn('treated_total'), format_fn=self.to_string),
-            DatabaseColumn('# of Lactating Mothers Who Reported to Have Exclusively Breastfed Their Children for First 6 Months', SumColumn('excbreastfed_total'), format_fn=self.to_string),
-            DatabaseColumn('# of Children Who Received Measles Vaccine', SumColumn('measlesvacc_total'), format_fn=self.to_string),
-        ]

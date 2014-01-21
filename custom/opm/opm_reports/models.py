@@ -101,6 +101,7 @@ class OpmHealthStatusFluff(fluff.IndicatorDocument):
     document_class = CommCareCase
     domains = ('opm',)
     group_by = ('domain', 'user_id')
+    save_direct_to_sql = True
 
     name = flat_field(lambda case: case.name)
     awc_name = case_property('awc_name')
@@ -108,7 +109,7 @@ class OpmHealthStatusFluff(fluff.IndicatorDocument):
     block = case_property('block_name')
 
     #aggregated field
-    registered_mother = case_calcs.MotherRegistered()
+    beneficiaries_registered = case_calcs.MotherRegistered()
     lmp = case_calcs.Lmp()
     lactating = case_calcs.Lactating()
     children = case_calcs.LiveChildren()
