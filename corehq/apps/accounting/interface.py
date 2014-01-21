@@ -4,9 +4,14 @@ from corehq.apps.announcements.forms import HQAnnouncementForm
 from corehq.apps.announcements.models import HQAnnouncement
 from corehq.apps.crud.interface import BaseCRUDAdminInterface
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
+from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.standard import DatespanMixin
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
+
+
+class DateCreatedFilter(DatespanFilter):
+    label = "Date Created"
 
 
 class AccountingInterface(BaseCRUDAdminInterface, DatespanMixin):
@@ -16,7 +21,7 @@ class AccountingInterface(BaseCRUDAdminInterface, DatespanMixin):
 
     crud_form_update_url = "/accounting/form/"
 
-    fields = ['corehq.apps.reports.filters.dates.DatespanFilter',]
+    fields = ['corehq.apps.accounting.interface.DateCreatedFilter',]
     hide_filters = False
 
     def validate_document_class(self):
