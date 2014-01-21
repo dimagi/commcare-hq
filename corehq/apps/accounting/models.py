@@ -80,7 +80,7 @@ class SoftwarePlanVisibility(object):
     )
 
 
-class AdjustmentReason(object):
+class CreditAdjustmentReason(object):
     DIRECT_PAYMENT = "DIRECT_PAYMENT"
     SALESFORCE = "SALESFORCE"
     INVOICE = "INVOICE"
@@ -351,7 +351,7 @@ class Subscription(models.Model):
     Links a Subscriber to a SoftwarePlan and BillingAccount, necessary for invoicing.
     """
     account = models.ForeignKey(BillingAccount, on_delete=models.PROTECT)
-    plan = models.ForeignKey(SoftwarePlanVersion, on_delete=models.PROTECT)
+    plan_version = models.ForeignKey(SoftwarePlanVersion, on_delete=models.PROTECT)
     subscriber = models.ForeignKey(Subscriber, on_delete=models.PROTECT)
     salesforce_contract_id = models.CharField(blank=True, null=True, max_length=80)
     date_start = models.DateField()
@@ -369,7 +369,7 @@ class Subscription(models.Model):
                                     "Odd, right? The latest one by date_created was used, but consider this an "
                                     "issue." % subscriber)
             current_subscription = active_subscriptions.latest('date_created')
-            return current_subscription.plan, current_subscription
+            return current_subscription.plan_version, current_subscription
         except Subscription.DoesNotExist:
             global_logger.error("A Subscriber object exists without a Subscription for the domain '%s'. "
                                 "This seems strange." % subscriber)
@@ -546,14 +546,14 @@ class CreditLine(models.Model):
     balance = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
 
     def adjust_credit_balance(self, amount, is_new=False, note=None, line_item=None, invoice=None):
-        reason = AdjustmentReason.MANUAL
+        reason = CreditAdjustmentReason.MANUAL
         note = note or ""
         if line_item is not None and invoice is not None:
             raise CreditLineError("You may only have an invoice OR a line item making this adjustment.")
         if line_item is not None:
-            reason = AdjustmentReason.LINE_ITEM
+            reason = CreditAdjustmentReason.LINE_ITEM
         if invoice is not None:
-            reason = AdjustmentReason.INVOICE
+            reason = CreditAdjustmentReason.INVOICE
         if is_new:
             note = "Initialization of credit line. %s" % note
         credit_adjustment = CreditAdjustment(
@@ -651,7 +651,8 @@ class CreditAdjustment(models.Model):
     current balance of the associated CreditLine.
     """
     credit_line = models.ForeignKey(CreditLine, on_delete=models.PROTECT)
-    reason = models.CharField(max_length=25, default=AdjustmentReason.MANUAL, choices=AdjustmentReason.CHOICES)
+    reason = models.CharField(max_length=25, default=CreditAdjustmentReason.MANUAL,
+                              choices=CreditAdjustmentReason.CHOICES)
     note = models.TextField()
     amount = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
     line_item = models.ForeignKey(LineItem, on_delete=models.PROTECT, null=True)

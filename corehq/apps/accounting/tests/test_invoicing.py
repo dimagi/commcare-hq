@@ -64,10 +64,10 @@ class TestInvoice(BaseInvoiceTestCase):
         invoice = self.subscription.invoice_set.latest('date_created')
 
         num_product_line_items = invoice.lineitem_set.get_products().count()
-        self.assertEqual(num_product_line_items, self.subscription.plan.product_rates.count())
+        self.assertEqual(num_product_line_items, self.subscription.plan_version.product_rates.count())
 
         num_feature_line_items = invoice.lineitem_set.get_features().count()
-        self.assertEqual(num_feature_line_items, self.subscription.plan.feature_rates.count())
+        self.assertEqual(num_feature_line_items, self.subscription.plan_version.feature_rates.count())
         self.assertEqual(invoice.subscription, self.subscription)
         self.assertGreater(invoice.balance, Decimal('0.0000'))
 
@@ -148,7 +148,7 @@ class TestInvoice(BaseInvoiceTestCase):
             subscription = subscriber.subscription_set.get()
             self.assertEqual(subscription.invoice_set.count(), 1)
             expected_community_plan = DefaultProductPlan.objects.get(product_type=product_type)
-            self.assertEqual(subscription.plan.plan, expected_community_plan.plan)
+            self.assertEqual(subscription.plan_version.plan, expected_community_plan.plan)
             domain.delete()
 
 
@@ -159,7 +159,7 @@ class TestProductLineItem(BaseInvoiceTestCase):
 
     def setUp(self):
         super(TestProductLineItem, self).setUp()
-        self.product_rate = self.subscription.plan.product_rates.get()
+        self.product_rate = self.subscription.plan_version.product_rates.get()
         self.prorate = Decimal("%.2f" % round(self.product_rate.monthly_fee / 30, 2))
 
     def test_standard(self):
@@ -259,7 +259,7 @@ class TestUserLineItem(BaseInvoiceTestCase):
 
     def setUp(self):
         super(TestUserLineItem, self).setUp()
-        self.user_rate = self.subscription.plan.feature_rates.filter(feature__feature_type=FeatureType.USER)[:1].get()
+        self.user_rate = self.subscription.plan_version.feature_rates.filter(feature__feature_type=FeatureType.USER)[:1].get()
 
     def test_under_limit(self):
         """
@@ -360,7 +360,7 @@ class TestSmsLineItem(BaseInvoiceTestCase):
 
     def setUp(self):
         super(TestSmsLineItem, self).setUp()
-        self.sms_rate = self.subscription.plan.feature_rates.filter(feature__feature_type=FeatureType.SMS).get()
+        self.sms_rate = self.subscription.plan_version.feature_rates.filter(feature__feature_type=FeatureType.SMS).get()
 
     def test_under_limit(self):
         """

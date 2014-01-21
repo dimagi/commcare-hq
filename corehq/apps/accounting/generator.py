@@ -243,7 +243,7 @@ def generate_domain_subscription_from_date(date_start, billing_account, domain,
     subscriber, _ = Subscriber.objects.get_or_create(domain=domain, organization=None)
     subscription = Subscription(
         account=billing_account,
-        plan=arbitrary_subscribable_plan(),
+        plan_version=arbitrary_subscribable_plan(),
         subscriber=subscriber,
         salesforce_contract_id=data_gen.arbitrary_unique_name("SFC")[:80],
         date_start=date_start,
