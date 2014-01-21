@@ -1,3 +1,4 @@
+import datetime
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher, SubscriptionAdminInterfaceDispatcher
 from corehq.apps.accounting.models import BillingAccount, Subscription, BillingAccountType
 from corehq.apps.announcements.forms import HQAnnouncementForm
@@ -69,8 +70,50 @@ class ActiveStatusFilter(BaseSingleOptionFilter):
                ]
 
 
-class DateCreatedFilter(DatespanFilter):
+class MultiDatespanFilter(DatespanFilter):
+    @classmethod
+    def get_date_str(cls, request, date_type):
+        return request.GET.get('%s_%s' % (cls.slug, date_type))
+
+    @classmethod
+    def get_date(cls, request, date_type):
+        date_str = cls.get_date_str(request, date_type)
+        if date_str is not None:
+            return datetime.datetime.strptime(date_str, "%Y-%m-%d")
+        else:
+            return None
+
+    @classmethod
+    def get_start_date(cls, request):
+        return cls.get_date(request, 'startdate')
+
+    @classmethod
+    def get_end_date(cls, request):
+        return cls.get_date(request, 'enddate')
+
+    @property
+    def datespan(self):
+        datespan = super(MultiDatespanFilter, self).datespan
+        if self.get_start_date(self.request) is not None:
+            datespan.startdate = self.get_start_date(self.request)
+        if self.get_end_date(self.request) is not None:
+            datespan.enddate = self.get_end_date(self.request)
+        return datespan
+
+
+class DateCreatedFilter(MultiDatespanFilter):
+    slug = 'date_created'
     label = _("Date Created")
+
+
+class StartDateFilter(MultiDatespanFilter):
+    slug = 'start_date'
+    label = _("Start Date")
+
+
+class EndDateFilter(MultiDatespanFilter):
+    slug = 'end_date'
+    label = _("End Date")
 
 
 class AccountingInterface(BaseCRUDAdminInterface, DatespanMixin):
@@ -142,7 +185,10 @@ class SubscriptionInterface(BaseCRUDAdminInterface):
 
     crud_form_update_url = "/accounting/form/"
 
-    fields = ['corehq.apps.accounting.interface.SubscriberFilter',
+    fields = ['corehq.apps.accounting.interface.StartDateFilter',
+              'corehq.apps.accounting.interface.EndDateFilter',
+              'corehq.apps.accounting.interface.DateCreatedFilter',
+              'corehq.apps.accounting.interface.SubscriberFilter',
               'corehq.apps.accounting.interface.SalesforceContractIDFilter',
               'corehq.apps.accounting.interface.ActiveStatusFilter',
               ]
@@ -169,8 +215,16 @@ class SubscriptionInterface(BaseCRUDAdminInterface):
         from corehq.apps.accounting.views import ManageBillingAccountView
         rows = []
         for subscription in Subscription.objects.all():
-            if (SubscriberFilter.get_value(self.request, self.domain) is None
-                or SubscriberFilter.get_value(self.request, self.domain) == subscription.subscriber.domain) \
+            if (subscription.date_start is None
+                    or (StartDateFilter.get_start_date(self.request).date() <= subscription.date_start
+                        and StartDateFilter.get_end_date(self.request).date() >= subscription.date_start)) \
+                and (subscription.date_end is None
+                        or (EndDateFilter.get_start_date(self.request).date() <= subscription.date_end
+                            and EndDateFilter.get_end_date(self.request).date() >= subscription.date_end)) \
+                and (DateCreatedFilter.get_start_date(self.request).date() <= subscription.date_created
+                    and DateCreatedFilter.get_end_date(self.request).date() >= subscription.date_created) \
+                and (SubscriberFilter.get_value(self.request, self.domain) is None
+                    or SubscriberFilter.get_value(self.request, self.domain) == subscription.subscriber.domain) \
                 and (SalesforceContractIDFilter.get_value(self.request, self.domain) is None
                     or SalesforceContractIDFilter.get_value(self.request, self.domain) == subscription.salesforce_contract_id) \
                 and (ActiveStatusFilter.get_value(self.request, self.domain) is None
