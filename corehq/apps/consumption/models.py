@@ -19,10 +19,10 @@ class DefaultConsumption(Document):
     default_consumption = DecimalProperty()
 
 
-def get_default_consumption(domain, product_id, case_type, case_id):
+def get_default_consumption(domain, product_id, location_type, case_id):
     keys = [
         [domain, product_id, {}, case_id],
-        [domain, product_id, case_type, None],
+        [domain, product_id, location_type, None],
         [domain, product_id, None, None],
         [domain, None, None, None],
     ]
