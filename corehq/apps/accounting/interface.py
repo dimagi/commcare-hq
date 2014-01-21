@@ -50,6 +50,14 @@ class SubscriberFilter(BaseSingleOptionFilter):
                              for subscription in Subscription.objects.all()])
 
 
+class SalesforceContractIDFilter(BaseSingleOptionFilter):
+    slug = 'salesforce_contract_id'
+    label = _('Salesforce Contract ID')
+    default_text = _("All")
+    options = clean_options([(subscription.salesforce_contract_id, subscription.salesforce_contract_id)
+                             for subscription in Subscription.objects.all()])
+
+
 class DateCreatedFilter(DatespanFilter):
     label = _("Date Created")
 
@@ -124,6 +132,7 @@ class SubscriptionInterface(BaseCRUDAdminInterface):
     crud_form_update_url = "/accounting/form/"
 
     fields = ['corehq.apps.accounting.interface.SubscriberFilter',
+              'corehq.apps.accounting.interface.SalesforceContractIDFilter',
               ]
     hide_filters = False
 
@@ -149,7 +158,9 @@ class SubscriptionInterface(BaseCRUDAdminInterface):
         rows = []
         for subscription in Subscription.objects.all():
             if (SubscriberFilter.get_value(self.request, self.domain) is None
-                or SubscriberFilter.get_value(self.request, self.domain) == subscription.subscriber.domain):
+                or SubscriberFilter.get_value(self.request, self.domain) == subscription.subscriber.domain) \
+                and (SalesforceContractIDFilter.get_value(self.request, self.domain) is None
+                    or SalesforceContractIDFilter.get_value(self.request, self.domain) == subscription.salesforce_contract_id):
                 rows.append([subscription.subscriber.domain,
                              mark_safe('<a href="%s">%s</a>'
                                        % (reverse(ManageBillingAccountView.name, args=(subscription.account.id,)),
