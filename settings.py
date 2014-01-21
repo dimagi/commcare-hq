@@ -196,6 +196,7 @@ HQ_APPS = (
     'corehq.apps.hqmedia',
     'corehq.apps.locations',
     'corehq.apps.commtrack',
+    'corehq.apps.consumption',
     'couchforms',
     'couchexport',
     'couchlog',
@@ -738,6 +739,7 @@ COUCHDB_APPS = [
     'cleanup',
     'cloudcare',
     'commtrack',
+    'consumption',
     'couch',
     # This is necessary for abstract classes in dimagi.utils.couch.undo; otherwise breaks tests
     'couchdbkit_aggregate',
