@@ -2,7 +2,7 @@ from collections import defaultdict
 import json
 import logging
 
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.http import Http404
 
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
@@ -223,7 +223,7 @@ class ExcelExportReport(FormExportReportBase):
 
 
 class CaseExportReport(ExportReport):
-    name = ugettext_noop("Export Cases")
+    name = ugettext_lazy("Export Cases")
     slug = "case_export"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField']
@@ -273,7 +273,7 @@ class CaseExportReport(ExportReport):
 
 class DeidExportReport(FormExportReportBase):
     slug = 'deid_export'
-    name = ugettext_noop("De-Identified Export")
+    name = ugettext_lazy("De-Identified Export")
     report_template_path = 'reports/reportdata/form_deid_export.html'
 
     @classmethod
