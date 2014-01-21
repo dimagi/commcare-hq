@@ -38,7 +38,7 @@ import json
 from dimagi.utils.post import simple_post
 import cStringIO
 from PIL import Image
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 
 
 # Domain not required here - we could be selecting it for the first time. See notes domain.decorators
@@ -1023,7 +1023,7 @@ class BasicCommTrackSettingsView(BaseCommTrackAdminView):
 
 class AdvancedCommTrackSettingsView(BaseCommTrackAdminView):
     urlname = 'commtrack_settings_advanced'
-    page_title = ugettext_noop("Advanced CommTrack Settings")
+    page_title = ugettext_lazy("Advanced CommTrack Settings")
     template_name = 'domain/admin/commtrack_settings_advanced.html'
 
     @property

@@ -122,7 +122,7 @@ from corehq.apps.data_interfaces.interfaces import CaseReassignmentInterface
 from corehq.apps.importer.base import ImportCases
 
 DATA_INTERFACES = (
-    (_("Export Data"), (
+    (ugettext_lazy("Export Data"), (
         export.ExcelExportReport,
         export.CaseExportReport,
         export.DeidExportReport,
@@ -130,7 +130,7 @@ DATA_INTERFACES = (
 )
 
 EDIT_DATA_INTERFACES = (
-    (_('Edit Data'), (
+    (ugettext_lazy('Edit Data'), (
         CaseReassignmentInterface,
         ImportCases
     )),
