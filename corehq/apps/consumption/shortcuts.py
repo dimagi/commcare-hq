@@ -1,5 +1,5 @@
 from decimal import Decimal
-from corehq.apps.consumption.models import DefaultConsumption
+from corehq.apps.consumption.models import DefaultConsumption, TYPE_DOMAIN
 
 
 def get_default_consumption(domain, product_id, location_type, case_id):
@@ -16,3 +16,16 @@ def get_default_consumption(domain, product_id, location_type, case_id):
     results = results.one()
     return Decimal(results['value']) if results else None
 
+
+def set_default_consumption_for_domain(domain, amount):
+    default = DefaultConsumption.get_domain_default(domain)
+    if default and default.default_consumption == amount:
+        return default
+    elif default:
+        default.default_consumption = amount
+        default.save()
+        return default
+    else:
+        default = DefaultConsumption(domain=domain, default_consumption=amount, type=TYPE_DOMAIN)
+        default.save()
+        return default
