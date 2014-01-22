@@ -240,7 +240,7 @@ class PricingTableFeatures(object):
     def get_columns(cls, feature):
         return {
             cls.SOFTWARE_PLANS: (Edition.COMMUNITY, Edition.STANDARD, Edition.PRO, Edition.ADVANCED, Edition.ENTERPRISE),
-            cls.PRICING: (_("Free"), _("$100 /month"), _("$500 /month"), _("$1,000 /month"), _('(<a href="http://www.dimagi.com/collaborate/contact-us/">Contact Us</a>)')),
+            cls.PRICING: (_("Free"), _("$100 /month"), _("$500 /month"), _("$1,000 /month"), _('(<a href="http://www.dimagi.com/collaborate/contact-us/" target="_blank">Contact Us</a>)')),
             cls.MOBILE_LIMIT: (_("50"), _("100"), _("500"), _("1,000"), _("Unlimited / Discounted Pricing")),
             cls.JAVA_AND_ANDROID: (True, True, True, True, True),
             cls.MULTIMEDIA_SUPPORT: (True, True, True, True, True),
@@ -298,7 +298,6 @@ class PricingTable(object):
             PricingTableCategories.SUPPORT,
         ),
     }
-
     FOOTER = (
         ugettext_noop("*Local taxes and other country-specific fees not included. Dimagi provides pro-bono software "
                       "plans on a needs basis. To learn more about this opportunity or see if your program qualifies, "
@@ -309,6 +308,7 @@ class PricingTable(object):
         ugettext_noop("***For plans with unlimited incoming and outgoing messages, Dimagi charges an additional "
                       "$.01 (US) per message on all incoming and outgoing messages."),
     )
+    VISIT_WIKI_TEXT = ugettext_noop("Visit the wiki to learn more.")
 
     @classmethod
     def get_table_by_product(cls, product):
@@ -336,6 +336,7 @@ class PricingTable(object):
             'editions': edition_data,
             'title': PricingTableFeatures.get_title(PricingTableFeatures.SOFTWARE_PLANS, product),
             'sections': table_sections,
+            'visit_wiki_text': cls.VISIT_WIKI_TEXT,
             'footer': cls.FOOTER,
         }
         return table
