@@ -41,10 +41,6 @@ class BillingAccountsSectionView(AccountingSectionView):
         }]
 
 
-class SubscriptionSectionView(AccountingSectionView):
-    template_name = 'accounting/subscriptions.html'
-
-
 class NewBillingAccountView(BillingAccountsSectionView):
     name = 'new_billing_account'
     template_name = 'accounting/accounts_base.html'
@@ -194,8 +190,9 @@ class ManageBillingAccountView(BillingAccountsSectionView):
         return self.get(request, *args, **kwargs)
 
 
-class NewSubscriptionView(SubscriptionSectionView):
+class NewSubscriptionView(AccountingSectionView):
     name = 'new_subscription'
+    template_name = 'accounting/subscriptions_base.html'
 
     @property
     @memoized
@@ -249,8 +246,9 @@ class NewSubscriptionView(SubscriptionSectionView):
         return self.get(request, *args, **kwargs)
 
 
-class EditSubscriptionView(SubscriptionSectionView):
+class EditSubscriptionView(AccountingSectionView):
     name = 'edit_subscription'
+    template_name = 'accounting/subscriptions.html'
 
     @property
     @memoized
