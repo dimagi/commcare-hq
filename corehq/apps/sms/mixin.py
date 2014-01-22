@@ -309,14 +309,18 @@ def apply_leniency(contact_phone_number):
     The documentation says that contact_phone_number should be
     in international format and consist of only digits. However,
     we can apply some leniency to avoid common mistakes.
+    Returns None if an unsupported data type is passed in.
     """
     from corehq.apps.sms.util import strip_plus
-    if isinstance(contact_phone_number, (int, long, float, Decimal)):
+    # Decimal preserves trailing zeroes, so it's ok 
+    if isinstance(contact_phone_number, (int, long, Decimal)):
         contact_phone_number = str(contact_phone_number)
     if isinstance(contact_phone_number, basestring):
         chars = re.compile(r"(\s|-|\.)+")
         contact_phone_number = chars.sub("", contact_phone_number)
         contact_phone_number = strip_plus(contact_phone_number)
+    else:
+        contact_phone_number = None
     return contact_phone_number
 
 class CommCareMobileContactMixin(object):
@@ -372,7 +376,7 @@ class CommCareMobileContactMixin(object):
         return  void
         raises  InvalidFormatException if the phone number format is invalid
         """
-        if not phone_number_re.match(phone_number):
+        if (not phone_number) or (not phone_number_re.match(phone_number)):
             raise InvalidFormatException("Phone number format must consist of only digits.")
 
     def verify_unique_number(self, phone_number):
