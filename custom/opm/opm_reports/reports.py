@@ -7,6 +7,7 @@ this more general and subclass for montly reports , but I'm holding off on
 that until we actually have another use case for it.
 """
 import datetime
+from couchdbkit.exceptions import ResourceNotFound
 from sqlagg.columns import SimpleColumn, SumColumn
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.dates import DatespanFilter
@@ -53,6 +54,7 @@ class OpmCaseSqlData(SqlData):
         filters = [
             "domain = :domain",
             "user_id = :user_id",
+            "date between :startdate and :enddate"
         ]
 
         return filters
@@ -100,19 +102,29 @@ class OpmFormSqlData(SqlData):
     def filters(self):
         filters = [
             "domain = :domain",
-            "case_id = :case_id",
+            "date between :startdate and :enddate"
         ]
-
+        if self.case_id:
+            filters.append("case_id = :case_id")
         return filters
 
     @property
     def columns(self):
         return [
-            DatabaseColumn("Case ID", SimpleColumn("case_id"))
+            DatabaseColumn("Case ID", SimpleColumn("case_id")),
+            DatabaseColumn("Bp1 Cash Total", SumColumn("bp1_cash_total")),
+            DatabaseColumn("Bp2 Cash Total", SumColumn("bp2_cash_total")),
+            DatabaseColumn("Child Followup Total", SumColumn("child_followup_total")),
+            DatabaseColumn("Child Spacing Deliveries", SumColumn("child_spacing_deliveries")),
+            DatabaseColumn("Delivery Total", SumColumn("delivery_total")),
+            DatabaseColumn("Growth Monitoring Total", SumColumn("growth_monitoring_total")),
+            DatabaseColumn("Service Forms Total", SumColumn("service_forms_total")),
         ]
 
     @property
     def data(self):
+        if self.case_id is None:
+            return super(OpmFormSqlData, self).data
         if self.case_id in super(OpmFormSqlData, self).data:
             return super(OpmFormSqlData, self).data[self.case_id]
         else:
@@ -149,7 +161,6 @@ class OpmHealthStatusSqlData(SqlData):
         ]
 
         return filters
-
 
 
     @property
@@ -191,7 +202,6 @@ class OpmHealthStatusSqlData(SqlData):
             return super(OpmHealthStatusSqlData, self).data[self.user_id]
         else:
             return None
-
 
 class BaseReport(MonthYearMixin, SqlTabularReport, CustomProjectReport):
     """
@@ -314,7 +324,14 @@ class BeneficiaryPaymentReport(BaseReport):
 
     # TODO: Switch to ES. Peformance aaah!
     def get_rows(self, datespan):
-        cases = CommCareCase.get_all_cases(DOMAIN, include_docs=True)
+        cases = []
+        self.form_sql_data = OpmFormSqlData(domain=self.domain, case_id=None, datespan=self.datespan)
+        for case_id in self.form_sql_data.data.keys():
+            try:
+                cases.append(CommCareCase.get(case_id))
+            except ResourceNotFound:
+                pass
+
         return [case for case in cases if self.passes_filter(case)]
 
     def passes_filter(self, case):
@@ -326,6 +343,9 @@ class BeneficiaryPaymentReport(BaseReport):
                 return True
             return False
         return True
+
+    def get_row_data(self, row):
+        return self.model(row, self, self.form_sql_data.data.__getitem__(row._id))
 
 
 class IncentivePaymentReport(BaseReport):
@@ -354,7 +374,8 @@ class IncentivePaymentReport(BaseReport):
 
     def get_row_data(self, row):
         case_sql_data = OpmCaseSqlData(self.domain, row._id, self.datespan)
-        return self.model(row, self, case_sql_data)
+        form_sql_data = OpmFormSqlData(self.domain, row._id, self.datespan)
+        return self.model(row, self, case_sql_data.data, form_sql_data.data)
 
 
 def last_if_none(month, year):

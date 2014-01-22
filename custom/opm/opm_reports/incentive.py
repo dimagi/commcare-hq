@@ -3,13 +3,9 @@ Field definitions for the Incentive Payment Report.
 Takes a CommCareUser and points to the appropriate fluff indicators
 for each field.
 """
-import datetime
-
-from couchdbkit.exceptions import ResourceNotFound
 
 from ..opm_tasks.models import OpmReportSnapshot
 from .constants import *
-from .models import OpmCaseFluff, OpmUserFluff, OpmFormFluff
 
 class Worker(object):
     method_map = [
@@ -38,47 +34,37 @@ class Worker(object):
             [('awc', 'awcs'), ('block', 'blocks')]
         )
 
-        try:
-            self.fluff_doc = OpmUserFluff.get("%s-%s" %
-                (OpmUserFluff._doc_type, worker._id))
-        except ResourceNotFound:
-            raise InvalidRow
+        def user_data(property):
+            return worker.user_data.get(property)
 
-        def fluff_attr(attr):
-            return getattr(self.fluff_doc, attr, '')
+        self.name = worker.name
+        self.awc_name = user_data('awc')
+        self.bank_name = user_data('bank_name')
+        self.account_number = user_data('account_number')
+        self.block = user_data('block')
 
-        self.name = fluff_attr('name')
-        self.awc_name = fluff_attr('awc_name')
-        self.bank_name = fluff_attr('bank_name')
-        self.account_number = fluff_attr('account_number')
-        self.block = fluff_attr('block')
-
-        def get_result(calculator, reduce=True):
-            return OpmFormFluff.get_result(
-                calculator,
-                [DOMAIN, worker._id],
-                report.date_range,
-                reduce=reduce,
-            )['total']
-
-        if case_sql_data and case_sql_data.data:
-            self.women_registered = str(case_sql_data.data.get('women_registered_total', None))
-            self.children_registered = str(case_sql_data.data.get('children_registered_total', None))
+        if case_sql_data:
+            self.women_registered = str(case_sql_data.get('women_registered_total', None))
+            self.children_registered = str(case_sql_data.get('children_registered_total', None))
         else:
             self.women_registered = None
             self.children_registered = None
-        #self.service_forms_count = 'yes' if get_result('service_forms') else 'no'
-        #
-        #self.growth_monitoring_count = get_result('growth_monitoring')
-        #
-        #FIXTURES = get_fixture_data()
-        #self.service_forms_cash = FIXTURES['service_form_submitted'] \
-        #        if self.service_forms_count == 'yes' else 0
-        #self.growth_monitoring_cash = self.growth_monitoring_count * FIXTURES['child_growth_monitored']
-        #self.month_total = self.service_forms_cash + self.growth_monitoring_cash
-        #if report.last_month_totals is not None:
-        #    self.last_month_total = report.last_month_totals.get(
-        #        self.account_number, 0)
-        #else:
-        #    self.last_month_total = 0
+
+        if form_sql_data:
+            self.service_forms_count = 'yes' if form_sql_data.get('service_forms_total') else 'no'
+            self.growth_monitoring_count = int(0 if form_sql_data.get('growth_monitoring_total') is None else form_sql_data.get('growth_monitoring_total'))
+        else:
+            self.service_forms_count = 'no'
+            self.growth_monitoring_count = 0
+
+        FIXTURES = get_fixture_data()
+        self.service_forms_cash = FIXTURES['service_form_submitted'] \
+                if self.service_forms_count == 'yes' else 0
+        self.growth_monitoring_cash = self.growth_monitoring_count * FIXTURES['child_growth_monitored']
+        self.month_total = self.service_forms_cash + self.growth_monitoring_cash
+        if report.last_month_totals is not None:
+            self.last_month_total = report.last_month_totals.get(
+                self.account_number, 0)
+        else:
+            self.last_month_total = 0
 

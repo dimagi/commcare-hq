@@ -37,7 +37,7 @@ class Beneficiary(object):
         ('total', "Amount to be paid to beneficiary"),
     ]
 
-    def __init__(self, case, report):
+    def __init__(self, case, report, sql_form_data=None):
 
         # make sure beneficiary passes the filters
         report.filter(
@@ -49,46 +49,45 @@ class Beneficiary(object):
         if case.closed and case.closed_on <= report.datespan.startdate_utc:
             raise InvalidRow
 
-        try:
-            self.fluff_doc = OpmCaseFluff.get("%s-%s" %
-                (OpmCaseFluff._doc_type, case._id))
-        except ResourceNotFound:
-            raise InvalidRow
+        def case_data(property):
+            return case.get_case_property(property)
 
-        def fluff_attr(attr):
-            return getattr(self.fluff_doc, attr, '')
-
-        account = fluff_attr('account_number')
+        account = case_data('bank_account_number')
         self.account_number = str(account) if account else ''
         # fake cases will have accounts beginning with 111
         if re.match(r'^111', self.account_number):
             raise InvalidRow
 
-        self.name = fluff_attr('name')
-        self.husband_name = fluff_attr('husband_name')
-        self.awc_name = fluff_attr('awc_name')
-        self.bank_name = fluff_attr('bank_name')
-        self.bank_branch_name = fluff_attr('bank_branch_name')
-        self.bank_branch_code = fluff_attr('bank_branch_code')
-        self.block = fluff_attr('block')
-        self.village = fluff_attr('village')
+        self.name = case_data('name')
+        self.husband_name = case_data('husband_name')
+        self.awc_name = case_data('awc_name')
+        self.bank_name = case_data('bank_name')
+        self.bank_branch_name = case_data('bank_branch_name')
+        self.bank_branch_code = case_data('bank_branch_code')
+        self.block = case_data('block_name')
+        self.village = case_data('village_name')
 
-        def get_result(calculator):
-            return OpmFormFluff.get_result(
-                calculator,
-                [DOMAIN, case._id],
-                report.date_range,
-            )['total']
+        def get_sql_property(property):
+            property = int(0 if sql_form_data.get(property) is None else sql_form_data.get(property))
+            return property
 
-        FIXTURES = get_fixture_data() 
-        self.bp1_cash = (FIXTURES['window_completed']
-                            if get_result('bp1_cash') else 0)
-        self.bp2_cash = (FIXTURES['window_completed']
-                            if get_result('bp2_cash') else 0)
-        self.delivery_cash = get_result('delivery') * FIXTURES['delivery_lump_sums']
-        self.child_cash = (FIXTURES['window_completed'] 
-                            if get_result('child_followup') else 0)
-        self.spacing_cash = OpmFormFluff.get_result('child_spacing',
-            [DOMAIN, self.account_number], date_range=report.date_range)
-        self.total = sum([self.bp1_cash, self.bp2_cash,
-            self.delivery_cash, self.child_cash, self.spacing_cash])
+        if sql_form_data:
+            FIXTURES = get_fixture_data()
+            self.bp1_cash = (FIXTURES['window_completed']
+                                if get_sql_property('bp1_cash_total') else 0)
+            self.bp2_cash = (FIXTURES['window_completed']
+                                if get_sql_property('bp2_cash_total') else 0)
+            self.delivery_cash = get_sql_property('delivery_total') * FIXTURES['delivery_lump_sums']
+            self.child_cash = (FIXTURES['window_completed']
+                                if get_sql_property('child_followup_total') else 0)
+            self.spacing_cash = get_sql_property('child_spacing_deliveries')
+
+            self.total = sum([self.bp1_cash, self.bp2_cash,
+                self.delivery_cash, self.child_cash, self.spacing_cash])
+        else:
+            self.bp1_cash = None
+            self.bp2_cash = None
+            self.delivery_cash = None
+            self.child_cash = None
+            self.spacing_cash = None
+            self.total = None
