@@ -54,8 +54,8 @@ class NewBillingAccountView(BillingAccountsSectionView):
         return context
 
     @property
-    def page_name(self):
-        return 'New Billing Account'
+    def page_title(self):
+        return "New Billing Account"
 
     @property
     def page_url(self):
@@ -151,8 +151,8 @@ class ManageBillingAccountView(BillingAccountsSectionView):
         return context
 
     @property
-    def page_name(self):
-        return 'Manage Billing Account'
+    def page_title(self):
+        return "Manage Billing Account"
 
     @property
     def page_url(self):
@@ -205,7 +205,7 @@ class NewSubscriptionView(AccountingSectionView):
         return context
 
     @property
-    def page_name(self):
+    def page_title(self):
         return 'New Subscription'
 
     @property
@@ -291,7 +291,7 @@ class EditSubscriptionView(AccountingSectionView):
         return context
 
     @property
-    def page_name(self):
+    def page_title(self):
         return 'Edit Subscription'
 
     @property
