@@ -27,7 +27,7 @@ function isCARECase(doc) {
 }
 
 function isCAREWomanCase(doc) {
-    return isCARECase(doc) && doc.type === 'Woman'
+    return isCARECase(doc) && doc.type === 'Woman';
 }
 
 function isRC_Enregistrement(doc) {
