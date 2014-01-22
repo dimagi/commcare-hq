@@ -6,14 +6,14 @@
     <input type="text"
            id="{{ css_id }}_startdate"
            name="{% ifnotequal slug 'datespan' %}{{ slug }}_{% endifnotequal %}startdate"
-           class="date-picker input-small"
+           class="{% if use_daterange %}date-range{% else %}date-picker{% endif %} input-small"
            value="{{ datespan.startdate|date:"Y-m-d" }}">
 
     <label for="{{ css_id }}_enddate" class="sub-label">{% trans 'To' %}</label>
     <input type="text"
            id="{{ css_id }}_enddate"
            name="{% ifnotequal slug 'datespan' %}{{ slug }}_{% endifnotequal %}enddate"
-           class="date-picker input-small"
+           class="{% if use_daterange %}date-range{% else %}date-picker{% endif %} input-small"
            value="{{ datespan.enddate|date:"Y-m-d" }}">
 
     <span class="helptext help-inline" style="margin-left: 1.5em;">

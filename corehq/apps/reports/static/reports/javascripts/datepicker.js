@@ -35,3 +35,14 @@ $(function() {
         shiftDates(7);
     });
 });
+
+$(function() {
+    $('.date-range').datepicker({
+        changeMonth: true,
+        changeYear: true,
+        showButtonPanel: true,
+        dateFormat: 'yy-mm-dd',
+        maxDate: null,
+        numberOfMonths: 1
+    });
+});

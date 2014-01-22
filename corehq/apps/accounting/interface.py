@@ -6,8 +6,7 @@ from corehq.apps.announcements.models import HQAnnouncement
 from corehq.apps.crud.interface import BaseCRUDAdminInterface
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
-from corehq.apps.reports.filters.dates import DatespanFilter
-from corehq.apps.reports.standard import DatespanMixin
+from corehq.apps.reports.filters.dates import DaterangeFilter
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop as _
@@ -70,7 +69,7 @@ class ActiveStatusFilter(BaseSingleOptionFilter):
                ]
 
 
-class MultiDatespanFilter(DatespanFilter):
+class MultiDaterangeFilter(DaterangeFilter):
     @classmethod
     def get_date_str(cls, request, date_type):
         return request.GET.get('%s_%s' % (cls.slug, date_type))
@@ -93,7 +92,7 @@ class MultiDatespanFilter(DatespanFilter):
 
     @property
     def datespan(self):
-        datespan = super(MultiDatespanFilter, self).datespan
+        datespan = super(MultiDaterangeFilter, self).datespan
         if self.get_start_date(self.request) is not None:
             datespan.startdate = self.get_start_date(self.request)
         if self.get_end_date(self.request) is not None:
@@ -101,17 +100,17 @@ class MultiDatespanFilter(DatespanFilter):
         return datespan
 
 
-class DateCreatedFilter(MultiDatespanFilter):
+class DateCreatedFilter(MultiDaterangeFilter):
     slug = 'date_created'
     label = _("Date Created")
 
 
-class StartDateFilter(MultiDatespanFilter):
+class StartDateFilter(MultiDaterangeFilter):
     slug = 'start_date'
     label = _("Start Date")
 
 
-class EndDateFilter(MultiDatespanFilter):
+class EndDateFilter(MultiDaterangeFilter):
     slug = 'end_date'
     label = _("End Date")
 
@@ -233,7 +232,7 @@ class SubscriptionInterface(BaseCRUDAdminInterface):
                              mark_safe('<a href="%s">%s</a>'
                                        % (reverse(ManageBillingAccountView.name, args=(subscription.account.id,)),
                                           subscription.account.name)),
-                             subscription.plan.plan.name,
+                             subscription.plan_version.plan.name,
                              subscription.is_active,
                              subscription.salesforce_contract_id,
                              subscription.date_start,
