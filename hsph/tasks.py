@@ -83,6 +83,8 @@ def new_update_case_properties():
             curr_assignment = get_none_or_value(case, "current_assignment")
             next_assignment = get_none_or_value(case, "next_assignment")
             site_id = case.site_id
+            fida_group = get_group_id(domain, "fida", site_id)
+            cati_owner_username = get_owner_username(domain, "cati", site_id)
 
             ## Assignment Directly from Registration ##
             # Assign Cases to Call Center
@@ -101,11 +103,11 @@ def new_update_case_properties():
                 })
             # Assign Cases Directly To Field
             elif (case.date_admission >= past_42_date) and (case.date_admission < past_21_date) and (not curr_assignment) and (not next_assignment):
-                if not get_group_id(domain, "fida", site_id):
+                if not fida_group:
                     continue
                 update = {
                     "current_assignment": "fida",
-                    "owner_id": get_group_id(domain, "fida", site_id)                        
+                    "owner_id": fida_group,                   
                     "cati_status": 'skipped',
                 }
                 cases_to_modify.append(
@@ -133,13 +135,13 @@ def new_update_case_properties():
             ## Assignment from Call Center ##
             # Assign Cases to Field (manually by call center)
             elif (case.date_admission >= past_42_date) and next_assignment == "fida":
-                if not get_owner_username(domain, "cati", site_id) or not get_group_id(domain, "fida", site_id):
+                if not cati_owner_username or not fida_group:
                     continue
                 update = {
-                    "last_cati_user": get_owner_username(domain, "cati", site_id),
+                    "last_cati_user": cati_owner_username,
                     "current_assignment": "fida",
                     "next_assignment": '',
-                    "owner_id": get_group_id(domain, "fida", site_id)
+                    "owner_id": fida_group,
                     "cati_status": 'manually_assigned_to_field'
                 }
                 cases_to_modify.append(
@@ -151,15 +153,15 @@ def new_update_case_properties():
                 )
             # Assign cases to field (automatically)
             elif (case.date_admission >= past_42_date) and (case.date_admission < past_21_date) and (curr_assignment == "cati" or curr_assignment == "cati_tl"):
-                if not get_owner_username(domain, "cati", site_id) or not get_group_id(domain, "fida", site_id):
+                if not cati_owner_username or not fida_group:
                     continue
                 update = {
                     "last_cati_assignment": curr_assignment,
-                    "last_cati_user": get_owner_username(domain, "cati", site_id),
-                    "cati_status": 'timed_out'
+                    "last_cati_user": cati_owner_username,
+                    "cati_status": 'timed_out',
                     "current_assignment": "fida",
                     "next_assignment": '',
-                    "owner_id": get_group_id(domain, "fida", site_id)                        
+                    "owner_id": fida_group                        
                 }
                 cases_to_modify.append(
                     {
@@ -170,13 +172,13 @@ def new_update_case_properties():
                 )
             # Assign Cases to Lost to Follow Up
             elif case.date_admission < past_42_date and (curr_assignment == "cati" or curr_assignment == "cati_tl"):
-                if not get_owner_username(domain, curr_assignment, site_id) or not get_owner_username(domain, "cati", site_id):
+                if not get_owner_username(domain, curr_assignment, site_id) or not cati_owner_username:
                     continue
                 update = {
                     "last_cati_assignment": curr_assignment,
-                    "last_cati_user": get_owner_username(domain, "cati", site_id),
+                    "last_cati_user": cati_owner_username,
                     "last_user": get_owner_username(domain, curr_assignment, site_id),
-                    "cati_status": 'timed_out'
+                    "cati_status": 'timed_out',
                     "last_assignment": curr_assignment,
                     "current_assignment": '',
                     "closed_status": "timed_out_lost_to_follow_up",
@@ -200,7 +202,7 @@ def new_update_case_properties():
                     "last_assignment": curr_assignment,
                     "current_assignment": '',
                     "closed_status": "timed_out_lost_to_follow_up",
-                    "next_assignment": ''
+                    "next_assignment": '',
                 }
                 cases_to_modify.append(
                     {
