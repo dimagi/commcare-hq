@@ -1005,18 +1005,9 @@ class BillingTab(UITab):
 
 class AccountingTab(UITab):
     title = ugettext_noop("Accounting")
-    view = "accounting_default"#"corehq.apps.accounting.views.accounting_default"#
+    view = "accounting_default"
     dispatcher = AccountingAdminInterfaceDispatcher
-    '''
-    @property
-    def sidebar_items(self):
-        return [
-            (_('Accounting'), [
-                {'title': _('View Billing Accounts'),
-                 'url': reverse('view_billing_accounts'),},
-            ]),
-        ]
-    '''
+
     @property
     def is_viewable(self):
         return self.couch_user and self.couch_user.is_superuser
