@@ -66,7 +66,7 @@ from corehq.apps.reports import util as report_utils
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
 from corehq.apps.app_manager.models import Application, get_app, DetailColumn, Form, FormActions,\
     AppEditingError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, \
-    DeleteApplicationRecord, str_to_cls, validate_lang, SavedAppBuild, ParentSelect, Module, CareplanModule, CareplanForm, CareplanGoalForm, CareplanTaskForm
+    DeleteApplicationRecord, str_to_cls, validate_lang, SavedAppBuild, ParentSelect, Module, CareplanModule, CareplanForm, CareplanGoalForm, CareplanTaskForm, CommTrackModule, CommTrackForm
 from corehq.apps.app_manager.models import DETAIL_TYPES, import_app as import_app_util, SortElement
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST
@@ -631,6 +631,14 @@ def get_module_view_context_and_template(app, module):
             "goal_sortElements": json.dumps(get_sort_elements(module.goal_details.short)),
             "task_sortElements": json.dumps(get_sort_elements(module.task_details.short)),
         }
+    elif isinstance(module, CommTrackModule):
+        case_type = module.case_type
+        return "app_manager/module_view_commtrack.html", {
+            'case_properties': sorted(builder.get_properties(case_type)),
+            'product_properties': ('name', 'product:quantity'),
+            'case_sortElements': json.dumps(get_sort_elements(module.case_details.short)),
+            'product_sortElements': json.dumps(get_sort_elements(module.product_details.short)),
+        }
     else:
         case_type = module.case_type
         return "app_manager/module_view.html", {
@@ -874,7 +882,16 @@ def _new_careplan_module(req, domain, app, name, lang):
 
 
 def _new_commtrack_module(req, domain, app, name, lang):
-    response = back_to_main(req, domain, app_id=app.id)
+    module = app.add_module(CommTrackModule.new_module(name, lang))
+    module_id = module.id
+    form = CommTrackForm(
+        name={lang if lang else "en": name if name else "Untitled Form"},
+    )
+    module.forms.append(form)
+    form = module.get_form(-1)
+    form.source = ''
+    app.save()
+    response = back_to_main(req, domain, app_id=app.id, module_id=module_id)
     response.set_cookie('suppress_build_errors', 'yes')
     messages.info(req, _('Caution: CommTrack modules are a labs feature'))
     return response
@@ -1083,7 +1100,10 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
     elif detail_type == CAREPLAN_TASK:
         detail = module.task_details
     else:
-        return HttpResponseBadRequest("Unknown detail type '%s'" % detail_type)
+        try:
+            detail = getattr(module, '{0}_details'.format(detail_type))
+        except AttributeError:
+            return HttpResponseBadRequest("Unknown detail type '%s'" % detail_type)
 
     detail.short.columns = map(DetailColumn.wrap, screens['short'])
     detail.long.columns = map(DetailColumn.wrap, screens['long'])
@@ -1096,7 +1116,8 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
         item.direction = sort_element['direction']
         detail.short.sort_elements.append(item)
 
-    module.parent_select = ParentSelect.wrap(parent_select)
+    if parent_select:
+        module.parent_select = ParentSelect.wrap(parent_select)
     resp = {}
     app.save(resp)
     return json_response(resp)

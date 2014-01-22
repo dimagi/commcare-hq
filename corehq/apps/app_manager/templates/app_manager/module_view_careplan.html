@@ -39,10 +39,7 @@
                 lang: {{ lang|JSON }},
                 langs: {{ app.langs|JSON }},
                 edit: {{ edit|JSON }},
-                saveUrl: "{% url "edit_module_detail_screens" domain app.id module.id %}",
-                applicationVersion: {{ app.application_version|JSON }},
-                parentModules: {{ parent_modules|JSON }},
-                parentSelect: {{ module.parent_select|JSON }}
+                saveUrl: "{% url "edit_module_detail_screens" domain app.id module.id %}"
             });
 
             {% if goal_sortElements %}
@@ -67,10 +64,7 @@
                 lang: {{ lang|JSON }},
                 langs: {{ app.langs|JSON }},
                 edit: {{ edit|JSON }},
-                saveUrl: "{% url "edit_module_detail_screens" domain app.id module.id %}",
-                applicationVersion: {{ app.application_version|JSON }},
-                parentModules: {{ parent_modules|JSON }},
-                parentSelect: {{ module.parent_select|JSON }}
+                saveUrl: "{% url "edit_module_detail_screens" domain app.id module.id %}"
             });
 
             {% if task_sortElements %}
