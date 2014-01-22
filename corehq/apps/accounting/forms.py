@@ -12,7 +12,7 @@ class BillingAccountForm(forms.Form):
     salesforce_account_id = forms.CharField(label="Salesforce ID", required=False)
     currency = forms.ChoiceField(label="Currency")
 
-    billing_account_admins = forms.CharField(label='Billing Account Admins',required=False)
+    billing_account_admins = forms.CharField(label='Billing Account Admins', required=False)
     first_name = forms.CharField(label='First Name', required=False)
     last_name = forms.CharField(label='Last Name', required=False)
     company_name = forms.CharField(label='Company Name', required=False)
@@ -27,25 +27,27 @@ class BillingAccountForm(forms.Form):
     def __init__(self, account, *args, **kwargs):
         if account is not None:
             contact_info, _ = BillingContactInfo.objects.get_or_create(account=account)
-            kwargs['initial'] = {'name': account.name,
-                                 'salesforce_account_id': account.salesforce_account_id,
-                                 'currency': account.currency.code,
-                                 'billing_account_admins':
-                                     ', '.join([admin.web_user for admin in account.billing_admins.all()]),
-                                 'first_name': contact_info.first_name,
-                                 'last_name': contact_info.last_name,
-                                 'company_name': contact_info.company_name,
-                                 'phone_number': contact_info.phone_number,
-                                 'address_line_1': contact_info.first_line,
-                                 'address_line_2': contact_info.second_line,
-                                 'city': contact_info.city,
-                                 'region': contact_info.state_province_region,
-                                 'postal_code': contact_info.postal_code,
-                                 'country': contact_info.country,
-                                 }
+            kwargs['initial'] = {
+                'name': account.name,
+                'salesforce_account_id': account.salesforce_account_id,
+                'currency': account.currency.code,
+                'billing_account_admins':
+                ', '.join([admin.web_user for admin in account.billing_admins.all()]),
+                'first_name': contact_info.first_name,
+                'last_name': contact_info.last_name,
+                'company_name': contact_info.company_name,
+                'phone_number': contact_info.phone_number,
+                'address_line_1': contact_info.first_line,
+                'address_line_2': contact_info.second_line,
+                'city': contact_info.city,
+                'region': contact_info.state_province_region,
+                'postal_code': contact_info.postal_code,
+                'country': contact_info.country,
+            }
         else:
-            kwargs['initial'] = {'currency': Currency.get_default().code,
-                                 }
+            kwargs['initial'] = {
+                'currency': Currency.get_default().code,
+            }
         super(BillingAccountForm, self).__init__(*args, **kwargs)
         if account is None:
             self.fields['address_line_1'].required = False
@@ -126,15 +128,15 @@ class SubscriptionForm(forms.Form):
             self.fields['plan_version'].initial = subscription.plan_version.id
             self.fields['domain'].initial = subscription.subscriber.domain
             self.fields['salesforce_contract_id'].initial = subscription.salesforce_contract_id
-            if subscription.date_start is not None \
-                and subscription.date_start <= datetime.date.today():
+            if (subscription.date_start is not None
+                and subscription.date_start <= datetime.date.today()):
                 start_date_kwargs.update(disabled)
                 self.fields['start_date'].required = False
-            if subscription.date_end is not None \
-                and subscription.date_end <= datetime.date.today():
+            if (subscription.date_end is not None
+                and subscription.date_end <= datetime.date.today()):
                 end_date_kwargs.update(disabled)
-            if subscription.date_delay_invoicing is not None \
-                and subscription.date_delay_invoicing <= datetime.date.today():
+            if (subscription.date_delay_invoicing is not None
+                and subscription.date_delay_invoicing <= datetime.date.today()):
                 delay_invoice_until_kwargs.update(disabled)
             plan_kwargs.update(disabled)
             self.fields['plan_version'].required = False
@@ -171,9 +173,11 @@ class SubscriptionForm(forms.Form):
 class CreditForm(forms.Form):
     amount = forms.DecimalField()
     note = forms.CharField(required=False)
-    rate_type = forms.ChoiceField(choices=(('Any', 'Any'),
-                                           ('Product', 'Product'),
-                                           ('Feature', 'Feature')))
+    rate_type = forms.ChoiceField(choices=(
+        ('Any', 'Any'),
+        ('Product', 'Product'),
+        ('Feature', 'Feature'),
+    ))
     product = forms.ChoiceField()
     feature = forms.ChoiceField(label="Rate")
 
