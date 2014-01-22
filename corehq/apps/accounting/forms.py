@@ -101,7 +101,7 @@ class SubscriptionForm(forms.Form):
     start_date = forms.DateField(label="Start Date", widget=forms.DateInput())
     end_date = forms.DateField(label="End Date", widget=forms.DateInput(), required=False)
     delay_invoice_until = forms.DateField(label="Delay Invoice Until", widget=forms.DateInput(), required=False)
-    plan = forms.ChoiceField()
+    plan_version = forms.ChoiceField(label="Plan Version")
     domain = forms.CharField(max_length=25)
     salesforce_contract_id = forms.CharField(label="Salesforce Contract ID", max_length=80, required=False)
 
@@ -117,12 +117,13 @@ class SubscriptionForm(forms.Form):
         plan_kwargs = dict()
         domain_kwargs = dict()
 
-        self.fields['plan'].choices = [(plan.id, str(plan)) for plan in SoftwarePlanVersion.objects.all()]
+        self.fields['plan_version'].choices = [(plan_version.id, str(plan_version))
+                                               for plan_version in SoftwarePlanVersion.objects.all()]
         if subscription is not None:
             self.fields['start_date'].initial = subscription.date_start
             self.fields['end_date'].initial = subscription.date_end
             self.fields['delay_invoice_until'].initial = subscription.date_delay_invoicing
-            self.fields['plan'].initial = subscription.plan.id
+            self.fields['plan_version'].initial = subscription.plan_version.id
             self.fields['domain'].initial = subscription.subscriber.domain
             self.fields['salesforce_contract_id'].initial = subscription.salesforce_contract_id
             if subscription.date_start is not None \
@@ -136,7 +137,7 @@ class SubscriptionForm(forms.Form):
                 and subscription.date_delay_invoicing <= datetime.date.today():
                 delay_invoice_until_kwargs.update(disabled)
             plan_kwargs.update(disabled)
-            self.fields['plan'].required = False
+            self.fields['plan_version'].required = False
             domain_kwargs.update(disabled)
             self.fields['domain'].required = False
         self.helper = FormHelper()
@@ -146,7 +147,7 @@ class SubscriptionForm(forms.Form):
                 Field('start_date', **start_date_kwargs),
                 Field('end_date', **end_date_kwargs),
                 Field('delay_invoice_until', **delay_invoice_until_kwargs),
-                Field('plan', **plan_kwargs),
+                Field('plan_version', **plan_kwargs),
                 Field('domain', **domain_kwargs),
                 'salesforce_contract_id',
             ),
@@ -204,7 +205,7 @@ class CreditForm(forms.Form):
 
     def get_product_choices(self, id, is_account):
         subscriptions = self.get_subscriptions(id, is_account)
-        product_rate_sets = [sub.plan.product_rates for sub in subscriptions]
+        product_rate_sets = [sub.plan_version.product_rates for sub in subscriptions]
         products = set()
         for product_rate_set in product_rate_sets:
             for product_rate in product_rate_set.all():
@@ -213,7 +214,7 @@ class CreditForm(forms.Form):
 
     def get_feature_choices(self, id, is_account):
         subscriptions = self.get_subscriptions(id, is_account)
-        feature_rate_sets = [sub.plan.feature_rates for sub in subscriptions]
+        feature_rate_sets = [sub.plan_version.feature_rates for sub in subscriptions]
         features = set()
         for feature_rate_set in feature_rate_sets:
             for feature_rate in feature_rate_set.all():

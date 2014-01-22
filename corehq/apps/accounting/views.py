@@ -232,13 +232,13 @@ class NewSubscriptionView(SubscriptionSectionView):
             date_start = subscription_form.cleaned_data['start_date']
             date_end = subscription_form.cleaned_data['end_date']
             date_delay_invoicing = subscription_form.cleaned_data['delay_invoice_until']
-            plan_id = subscription_form.cleaned_data['plan']
+            plan_version_id = subscription_form.cleaned_data['plan_version']
             domain = subscription_form.cleaned_data['domain']
             subscription = Subscription(account=account,
                                         date_start=date_start,
                                         date_end=date_end,
                                         date_delay_invoicing=date_delay_invoicing,
-                                        plan=SoftwarePlanVersion.objects.get(id=plan_id),
+                                        plan_version=SoftwarePlanVersion.objects.get(id=plan_version_id),
                                         salesforce_contract_id=subscription_form.cleaned_data['salesforce_contract_id'],
                                         subscriber=Subscriber.objects.get_or_create(domain=domain,
                                                                                     organization=None)[0])
