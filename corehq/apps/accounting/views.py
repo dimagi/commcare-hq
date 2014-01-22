@@ -69,14 +69,13 @@ class NewBillingAccountView(BillingAccountsSectionView):
             return self.get(request, *args, **kwargs)
 
 
-def adjust_credit(credit_form, account=None, subscription_id=None):
+def adjust_credit(credit_form, account=None, subscription=None):
     if account is not None:
         credit_line_kwargs = {
             'account': account,
             'subscription': None
         }
-    elif subscription_id is not None:
-        subscription = Subscription.objects.get(id=subscription_id)
+    elif subscription is not None:
         credit_line_kwargs = {
             'account': subscription.account,
             'subscription': subscription
@@ -197,23 +196,7 @@ class NewSubscriptionView(AccountingSectionView):
     def post(self, request, *args, **kwargs):
         if self.subscription_form.is_valid():
             account_id = self.args[0]
-            account = BillingAccount.objects.get(id=account_id)
-            subscription_form = SubscriptionForm(None, request.POST)
-            subscription_form.is_valid()
-            date_start = subscription_form.cleaned_data['start_date']
-            date_end = subscription_form.cleaned_data['end_date']
-            date_delay_invoicing = subscription_form.cleaned_data['delay_invoice_until']
-            plan_version_id = subscription_form.cleaned_data['plan_version']
-            domain = subscription_form.cleaned_data['domain']
-            subscription = Subscription(account=account,
-                                        date_start=date_start,
-                                        date_end=date_end,
-                                        date_delay_invoicing=date_delay_invoicing,
-                                        plan_version=SoftwarePlanVersion.objects.get(id=plan_version_id),
-                                        salesforce_contract_id=subscription_form.cleaned_data['salesforce_contract_id'],
-                                        subscriber=Subscriber.objects.get_or_create(domain=domain,
-                                                                                    organization=None)[0])
-            subscription.save()
+            self.subscription_form.create_subscription(account_id)
             return HttpResponseRedirect(reverse(ManageBillingAccountView.urlname, args=(account_id,)))
         return self.get(request, *args, **kwargs)
 
@@ -224,11 +207,20 @@ class EditSubscriptionView(AccountingSectionView):
 
     @property
     @memoized
+    def subscription_id(self):
+        return self.args[0]
+
+    @property
+    @memoized
+    def subscription(self):
+        return Subscription.objects.get(id=self.subscription_id)
+
+    @property
+    @memoized
     def subscription_form(self):
-        subscription = Subscription.objects.get(id=self.args[0])
         if self.request.method == 'POST' and 'set_subscription' in self.request.POST:
-            return SubscriptionForm(subscription, self.request.POST)
-        return SubscriptionForm(subscription)
+            return SubscriptionForm(self.subscription, self.request.POST)
+        return SubscriptionForm(self.subscription)
 
     def get_appropriate_subscription_form(self, subscription):
         if (not self.subscription_form.is_bound) or (not self.subscription_form.is_valid()):
@@ -238,10 +230,9 @@ class EditSubscriptionView(AccountingSectionView):
     @property
     @memoized
     def credit_form(self):
-        subscription = Subscription.objects.get(id=self.args[0])
         if self.request.method == 'POST' and 'adjust_credit' in self.request.POST:
-            return CreditForm(subscription.id, False, self.request.POST)
-        return CreditForm(subscription.id, False)
+            return CreditForm(self.subscription_id, False, self.request.POST)
+        return CreditForm(self.subscription_id, False)
 
     def get_appropriate_credit_form(self, subscription):
         if (not self.credit_form.is_bound) or (not self.credit_form.is_valid()):
@@ -249,13 +240,12 @@ class EditSubscriptionView(AccountingSectionView):
         return CreditForm(subscription.id, False)
 
     def data(self):
-        subscription = Subscription.objects.get(id=self.args[0])
         return {'cancel_form': CancelForm(),
-                'credit_form': self.get_appropriate_credit_form(subscription),
-                'credit_list': CreditLine.objects.filter(subscription=subscription),
-                'form': self.get_appropriate_subscription_form(subscription),
+                'credit_form': self.get_appropriate_credit_form(self.subscription),
+                'credit_list': CreditLine.objects.filter(subscription=self.subscription),
+                'form': self.get_appropriate_subscription_form(self.subscription),
                 'parent_link': '<a href="%s">%s<a>' % (SubscriptionInterface.get_url(), SubscriptionInterface.name),
-                'subscription': subscription,
+                'subscription': self.subscription,
                 'subscription_canceled': self.subscription_canceled if hasattr(self, 'subscription_canceled') else False
                 }
 
@@ -282,30 +272,17 @@ class EditSubscriptionView(AccountingSectionView):
 
     def post(self, request, *args, **kwargs):
         if 'set_subscription' in self.request.POST and self.subscription_form.is_valid():
-            self.set_subscription()
+            self.subscription_form.update_subscription(self.subscription)
         elif 'adjust_credit' in self.request.POST and self.credit_form.is_valid():
-            adjust_credit(self.credit_form, subscription_id=self.args[0])
+            adjust_credit(self.credit_form, subscription=self.subscription)
         elif 'cancel_subscription' in self.request.POST:
             self.cancel_subscription()
         return self.get(request, *args, **kwargs)
 
-    def set_subscription(self):
-        subscription = Subscription.objects.get(id=self.args[0])
-        if self.subscription_form.fields['start_date'].required:
-            subscription.date_start = self.subscription_form.cleaned_data['start_date']
-        if subscription.date_end is None or subscription.date_end > datetime.date.today():
-            subscription.date_end = self.subscription_form.cleaned_data['end_date']
-        if subscription.date_delay_invoicing is None \
-            or subscription.date_delay_invoicing > datetime.date.today():
-            subscription.date_delay_invoicing = self.subscription_form.cleaned_data['delay_invoice_until']
-        subscription.salesforce_contract_id = self.subscription_form.cleaned_data['salesforce_contract_id']
-        subscription.save()
-
     def cancel_subscription(self):
-        subscription = Subscription.objects.get(id=self.args[0])
-        if subscription.date_start > datetime.date.today():
-            subscription.date_start = datetime.date.today()
-        subscription.date_end = datetime.date.today()
-        subscription.is_active = False
-        subscription.save()
+        if self.subscription.date_start > datetime.date.today():
+            self.subscription.date_start = datetime.date.today()
+        self.subscription.date_end = datetime.date.today()
+        self.subscription.is_active = False
+        self.subscription.save()
         self.subscription_canceled = True
