@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommTrack\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-01-21 21:46+0000\n"
+"POT-Creation-Date: 2014-01-22 16:19+0000\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -2947,7 +2947,7 @@ msgstr "Description longue"
 msgid "A high-level overview of your project as a whole"
 msgstr "Un aperçu de haut niveau de votre projet dans son ensemble"
 
-#: corehq/apps/domain/forms.py:116
+#: corehq/apps/domain/forms.py:116 corehq/apps/hqwebapp/templates/500.html:48
 #: corehq/apps/hqwebapp/templates/hqwebapp/base.html:184
 msgid "Short Description"
 msgstr "Description brève"
@@ -5797,6 +5797,78 @@ msgstr "L'identifiant de l'élément n'a pas été transmis au serveur."
 msgid "We've redirected you to the %s matching your query"
 msgstr "Nous vous avons redirigé vers le %s correspondant à votre requête"
 
+#: corehq/apps/hqwebapp/templates/500.html:6
+#, fuzzy
+msgid "500 Error"
+msgstr "Erreur"
+
+#: corehq/apps/hqwebapp/templates/500.html:12
+msgid "This is Danny, one of our best developers."
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/500.html:13
+msgid ""
+"Danny is pretty sad that you had to encounter this issue. He's making sure "
+"it gets fixed as soon as possible."
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/500.html:21
+msgid ""
+"Sorry, something unexpected just went wrong, and we're very sorry about it."
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/500.html:26
+msgid "Sad Danny is Sad"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/500.html:27
+msgid ""
+"This problem has been logged and we're already hard at work figuring out the "
+"issue."
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/500.html:42
+#, fuzzy
+msgid ""
+"\n"
+"                            Report an Issue <small>Help us get this problem "
+"fixed faster.</small>\n"
+"                        "
+msgstr ""
+"\n"
+"                                Ceci n'est pas une valeur permise pour ce "
+"champ"
+
+#: corehq/apps/hqwebapp/templates/500.html:46
+msgid ""
+"We would appreciate it a lot if you could provide us with any additional "
+"info about what happened before you encountered this problem."
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/500.html:51
+#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:187
+msgid ""
+"Please summarize the issue in one sentence&mdash;the message field below "
+"should contain more detail."
+msgstr ""
+"Veuillez résumer le problème en une phrase&mdash;le champ de message ci-"
+"dessous doit contenir davantage de détails."
+
+#: corehq/apps/hqwebapp/templates/500.html:55
+#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:191
+msgid "Full Description"
+msgstr "Description complète"
+
+#: corehq/apps/hqwebapp/templates/500.html:58
+#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:194
+msgid "Please try to include as much information as possible."
+msgstr "Veuillez tenter d'inclure le plus d'informations possible."
+
+#: corehq/apps/hqwebapp/templates/500.html:65
+#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:215
+msgid "Submit Report"
+msgstr "Soumettre le rapport."
+
 #: corehq/apps/hqwebapp/templates/hqwebapp/base.html:101
 msgid "This is a snapshot of "
 msgstr "Voici un instantané de "
@@ -5850,22 +5922,6 @@ msgstr "Paramètres de confidentialité"
 msgid "Report an Issue with CommCare HQ"
 msgstr "Signaler un problème avec CommCare HQ"
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:187
-msgid ""
-"Please summarize the issue in one sentence&mdash;the message field below "
-"should contain more detail."
-msgstr ""
-"Veuillez résumer le problème en une phrase&mdash;le champ de message ci-"
-"dessous doit contenir davantage de détails."
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:191
-msgid "Full Description"
-msgstr "Description complète"
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:194
-msgid "Please try to include as much information as possible."
-msgstr "Veuillez tenter d'inclure le plus d'informations possible."
-
 #: corehq/apps/hqwebapp/templates/hqwebapp/base.html:198
 msgid "Other recipients (optional)"
 msgstr ""
@@ -5887,10 +5943,6 @@ msgstr "Soumission de rapport en cours..."
 #: corehq/apps/hqwebapp/templates/hqwebapp/base.html:214
 msgid "Report Submitted, Close Window"
 msgstr "Rapport soumis, fermer la fenêtre"
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:215
-msgid "Submit Report"
-msgstr "Soumettre le rapport."
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/base.html:230
 #: corehq/apps/registration/templates/registration/partials/eula_modal.html:5
