@@ -2911,7 +2911,7 @@ def get_app(domain, app_id, wrap_cls=None, latest=False):
 
         if original_app.get('copy_of'):
             parent_app_id = original_app.get('copy_of')
-            min_version = original_app['version']
+            min_version = original_app['version'] if original_app.get('is_released') else -1
         else:
             parent_app_id = original_app['_id']
             min_version = -1
@@ -3035,6 +3035,7 @@ class DeleteFormRecord(DeleteRecord):
 
 class CareplanAppProperties(DocumentSchema):
     name = StringProperty()
+    latest_release = StringProperty()
     case_type = StringProperty()
     goal_conf = DictProperty()
     task_conf = DictProperty()
