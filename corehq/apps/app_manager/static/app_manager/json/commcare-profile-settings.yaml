@@ -250,3 +250,12 @@
   contingent_default: [{"condition": "{features.sense}='true'", "value": "no"}]
   values_txt: "This will show or hide the 'Incomplete' button on the CommCare ODK home screen. Turning this off will prevent users from saving incomplete forms."
   since: "2.11"
+  
+- name: "Resize Images"
+  description: "Choose whether and how to resize images on your question screens"
+  id: "cc-resize-images"
+  values: ["full", "width", "none"]
+  value_names: ["Full Resize", "Horizontal Resize","None"]
+  default: "none"
+  values_txt: "This will determine how images you select for your questions will be resized to fit the screen. Horizontal will stretch/compress the image to fit perfectly horizontally while scaling to height to maintain the aspect ratio. Full Resize will try to be clever and find the ideal vertical/horizontal scaling for the screen."
+  since: "2.11"
