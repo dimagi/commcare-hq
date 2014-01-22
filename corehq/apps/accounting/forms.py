@@ -98,6 +98,16 @@ class BillingAccountForm(forms.Form):
                 raise ValidationError("Invalid emails: %s" % ', '.join(invalid_emails))
         return billing_account_admins
 
+    def create_account(self):
+        name = self.cleaned_data['name']
+        salesforce_account_id = self.cleaned_data['salesforce_account_id']
+        currency, _ = Currency.objects.get_or_create(code=self.cleaned_data['currency'])
+        account = BillingAccount(name=name,
+                                 salesforce_account_id=salesforce_account_id,
+                                 currency=currency)
+        account.save()
+        return account
+
 
 class SubscriptionForm(forms.Form):
     start_date = forms.DateField(label="Start Date", widget=forms.DateInput())

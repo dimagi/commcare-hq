@@ -63,13 +63,7 @@ class NewBillingAccountView(BillingAccountsSectionView):
 
     def post(self, request, *args, **kwargs):
         if self.account_form.is_valid():
-            name = self.account_form.cleaned_data['name']
-            salesforce_account_id = self.account_form.cleaned_data['salesforce_account_id']
-            currency, _ = Currency.objects.get_or_create(code=self.account_form.cleaned_data['currency'])
-            account = BillingAccount(name=name,
-                                     salesforce_account_id=salesforce_account_id,
-                                     currency=currency)
-            account.save()
+            account = self.account_form.create_account()
             return HttpResponseRedirect(reverse('manage_billing_account', args=(account.id,)))
         else:
             return self.get(request, *args, **kwargs)
