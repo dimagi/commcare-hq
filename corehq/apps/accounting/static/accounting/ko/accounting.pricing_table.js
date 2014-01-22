@@ -14,8 +14,15 @@ var PricingTable = function (pricing_table) {
         return self.editions().length + 2;
     });
 
-    self.init = function () {
+    self.visit_wiki_text = ko.observable(pricing_table.visit_wiki_text);
 
+    self.selected_edition = ko.observable();
+
+    self.init = function () {
+        $('.edition-heading').tooltip();
+        $('.col-edition').click(function () {
+            self.selected_edition($(this).data('edition'));
+        });
     };
     console.log(self.sections());
 };
@@ -27,6 +34,9 @@ var PricingTableEdition = function (data) {
     self.slug = ko.observable(data[0]);
     self.name = ko.observable(data[1].name);
     self.description = ko.observable(data[1].description);
+    self.col_css = ko.computed(function () {
+       return 'col-edition col-edition-' + self.slug();
+    });
 };
 
 var PricingTableSection = function (section) {
@@ -43,7 +53,7 @@ var PricingTableSection = function (section) {
     }));
 
     self.tbody_css = ko.computed(function () {
-        return (self.show_header()) ? 'feature-section' : '';
+        return (self.show_header()) ? 'tbody-feature-details' : '';
     });
 };
 
@@ -72,4 +82,10 @@ var PricingTableColumn = function (data) {
         return self.content();
     });
 
+    self.col_css = ko.computed(function () {
+        return 'col-edition col-edition-' + self.edition();
+    });
+
 };
+
+
