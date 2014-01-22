@@ -10,6 +10,7 @@ from corehq.apps.reports.filters.dates import DaterangeFilter
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop as _
+from dimagi.utils.dates import DateSpan
 
 
 class AccountTypeFilter(BaseSingleOptionFilter):
@@ -92,7 +93,7 @@ class MultiDaterangeFilter(DaterangeFilter):
 
     @property
     def datespan(self):
-        datespan = super(MultiDaterangeFilter, self).datespan
+        datespan = DateSpan.since(self.default_days, format="%Y-%m-%d", timezone=self.timezone)
         if self.get_start_date(self.request) is not None:
             datespan.startdate = self.get_start_date(self.request)
         if self.get_end_date(self.request) is not None:
