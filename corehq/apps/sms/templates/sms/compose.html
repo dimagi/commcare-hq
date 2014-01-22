@@ -41,7 +41,6 @@
 {% endblock %}
 
 {% block main_column %}
-    {% include "hqwebapp/partials/time-notice.html" %}
     <form class="form form-horizontal" action="{% url "corehq.apps.sms.views.send_to_recipients" domain %}" method="post">
         <fieldset>
             <legend>{% trans "Send SMS Message" %}</legend>
