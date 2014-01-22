@@ -1,5 +1,6 @@
 from collections import defaultdict
 import re
+from decimal import Decimal
 from couchdbkit.ext.django.schema import *
 from couchdbkit.exceptions import MultipleResultsFound
 from dimagi.utils.couch.undo import DELETED_SUFFIX
@@ -8,6 +9,7 @@ from django.conf import settings
 from dimagi.utils.couch.database import get_safe_write_kwargs
 from dimagi.utils.modules import try_import
 from corehq.apps.domain.models import Domain
+from corehq.apps.sms.util import strip_plus
 
 phone_number_re = re.compile("^\d+$")
 
@@ -148,9 +150,6 @@ class VerifiedNumber(Document):
                           include_docs=True,
                           reduce=False).all()
         return result
-
-def strip_plus(phone_number):
-    return phone_number[1:] if phone_number.startswith('+') else phone_number
 
 def add_plus(phone_number):
     return ('+' + phone_number) if not phone_number.startswith('+') else phone_number
@@ -305,6 +304,20 @@ class BackendMapping(Document):
     prefix = StringProperty()
     backend_id = StringProperty() # Couch Document id of a MobileBackend
 
+def apply_leniency(contact_phone_number):
+    """
+    The documentation says that contact_phone_number should be
+    in international format and consist of only digits. However,
+    we can apply some leniency to avoid common mistakes.
+    """
+    if isinstance(contact_phone_number, (int, long, float, Decimal)):
+        contact_phone_number = str(contact_phone_number)
+    if isinstance(contact_phone_number, basestring):
+        chars = re.compile(r"(\s|-|\.)+")
+        contact_phone_number = chars.sub("", contact_phone_number)
+        contact_phone_number = strip_plus(contact_phone_number)
+    return contact_phone_number
+
 class CommCareMobileContactMixin(object):
     """
     Defines a mixin to manage a mobile contact's information. This mixin must be used with
@@ -384,7 +397,7 @@ class CommCareMobileContactMixin(object):
         raises  InvalidFormatException if the phone number format is invalid
         raises  PhoneNumberInUseException if the phone number is already in use by another contact
         """
-        phone_number = strip_plus(phone_number)
+        phone_number = apply_leniency(phone_number)
         self.verify_unique_number(phone_number)
         if only_one_number_allowed:
             v = self.get_verified_number()
