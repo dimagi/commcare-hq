@@ -69,9 +69,8 @@ class NewBillingAccountView(BillingAccountsSectionView):
             return self.get(request, *args, **kwargs)
 
 
-def adjust_credit(credit_form, account_id=None, subscription_id=None):
-    if account_id is not None:
-        account = BillingAccount.objects.get(id=account_id)
+def adjust_credit(credit_form, account=None, subscription_id=None):
+    if account is not None:
         credit_line_kwargs = {
             'account': account,
             'subscription': None
@@ -105,19 +104,22 @@ class ManageBillingAccountView(BillingAccountsSectionView):
 
     @property
     @memoized
+    def account(self):
+        return BillingAccount.objects.get(id=self.args[0])
+
+    @property
+    @memoized
     def account_form(self):
-        account = BillingAccount.objects.get(id=self.args[0])
         if self.request.method == 'POST' and 'account' in self.request.POST:
-            return BillingAccountForm(account, self.request.POST)
-        return BillingAccountForm(account)
+            return BillingAccountForm(self.account, self.request.POST)
+        return BillingAccountForm(self.account)
 
     @property
     @memoized
     def credit_form(self):
-        account = BillingAccount.objects.get(id=self.args[0])
         if self.request.method == 'POST' and 'adjust_credit' in self.request.POST:
-            return CreditForm(account.id, True, self.request.POST)
-        return CreditForm(account.id, True)
+            return CreditForm(self.account.id, True, self.request.POST)
+        return CreditForm(self.account.id, True)
 
     def get_appropriate_credit_form(self, account):
         if (not self.credit_form.is_bound) or (not self.credit_form.is_valid()):
@@ -125,16 +127,15 @@ class ManageBillingAccountView(BillingAccountsSectionView):
         return CreditForm(account.id, True)
 
     def data(self):
-        account = BillingAccount.objects.get(id=self.args[0])
         return {
-            'account': account,
-            'credit_form': self.get_appropriate_credit_form(account),
-            'credit_list': CreditLine.objects.filter(account=account),
+            'account': self.account,
+            'credit_form': self.get_appropriate_credit_form(self.account),
+            'credit_list': CreditLine.objects.filter(account=self.account),
             'form': self.account_form,
             'subscription_list': [
                 (sub, Invoice.objects.filter(subscription=sub).latest('date_due').date_due # TODO - check query
                       if len(Invoice.objects.filter(subscription=sub)) != 0 else 'None on record',
-                ) for sub in Subscription.objects.filter(account=account)
+                ) for sub in Subscription.objects.filter(account=self.account)
             ],
         }
 
@@ -154,29 +155,9 @@ class ManageBillingAccountView(BillingAccountsSectionView):
 
     def post(self, request, *args, **kwargs):
         if 'account' in self.request.POST and self.account_form.is_valid():
-            account = BillingAccount.objects.get(id=self.args[0])
-            account.name = self.account_form.cleaned_data['name']
-            account.salesforce_account_id = self.account_form.cleaned_data['salesforce_account_id']
-            account.currency, _ = Currency.objects.get_or_create(code=self.request.POST['currency'])
-            for web_user_email in self.account_form.cleaned_data['billing_account_admins'].split(','):
-                admin, _ = BillingAccountAdmin.objects.get_or_create(web_user=web_user_email)
-                account.billing_admins.add(admin)
-            account.save()
-
-            contact_info, _ = BillingContactInfo.objects.get_or_create(account=account)
-            contact_info.first_name = self.account_form.cleaned_data['first_name']
-            contact_info.last_name = self.account_form.cleaned_data['last_name']
-            contact_info.company_name = self.account_form.cleaned_data['company_name']
-            contact_info.phone_number = self.account_form.cleaned_data['phone_number']
-            contact_info.first_line = self.account_form.cleaned_data['address_line_1']
-            contact_info.second_line = self.account_form.cleaned_data['address_line_2']
-            contact_info.city = self.account_form.cleaned_data['city']
-            contact_info.state_province_region = self.account_form.cleaned_data['region']
-            contact_info.postal_code = self.account_form.cleaned_data['postal_code']
-            contact_info.country = self.account_form.cleaned_data['country']
-            contact_info.save()
+            self.account_form.update_account_and_contacts(self.account)
         elif 'adjust_credit' in self.request.POST and self.credit_form.is_valid():
-            adjust_credit(self.credit_form, account_id=self.args[0])
+            adjust_credit(self.credit_form, account=self.account)
 
         return self.get(request, *args, **kwargs)
 
