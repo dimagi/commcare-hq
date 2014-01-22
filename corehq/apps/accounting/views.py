@@ -33,8 +33,6 @@ class AccountingSectionView(BaseSectionPageView):
 
 
 class BillingAccountsSectionView(AccountingSectionView):
-    template_name = 'accounting/accounts.html'
-
     @property
     def parent_pages(self):
         return [{
@@ -49,6 +47,7 @@ class SubscriptionSectionView(AccountingSectionView):
 
 class NewBillingAccountView(BillingAccountsSectionView):
     name = 'new_billing_account'
+    template_name = 'accounting/accounts_base.html'
 
     @property
     @memoized
@@ -115,6 +114,7 @@ def adjust_credit(credit_form, account_id=None, subscription_id=None):
 
 class ManageBillingAccountView(BillingAccountsSectionView):
     name = 'manage_billing_account'
+    template_name = 'accounting/accounts.html'
 
     @property
     @memoized
@@ -139,15 +139,17 @@ class ManageBillingAccountView(BillingAccountsSectionView):
 
     def data(self):
         account = BillingAccount.objects.get(id=self.args[0])
-        return {'account': account,
-                'credit_form': self.get_appropriate_credit_form(account),
-                'credit_list': CreditLine.objects.filter(account=account),
-                'form': self.account_form,
-                'subscription_list': [(sub,
-                                       Invoice.objects.filter(subscription=sub).latest('date_due').date_due # TODO - check query
-                                        if len(Invoice.objects.filter(subscription=sub)) != 0 else 'None on record',
-                                       ) for sub in Subscription.objects.filter(account=account)],
-                }
+        return {
+            'account': account,
+            'credit_form': self.get_appropriate_credit_form(account),
+            'credit_list': CreditLine.objects.filter(account=account),
+            'form': self.account_form,
+            'subscription_list': [
+                (sub, Invoice.objects.filter(subscription=sub).latest('date_due').date_due # TODO - check query
+                      if len(Invoice.objects.filter(subscription=sub)) != 0 else 'None on record',
+                ) for sub in Subscription.objects.filter(account=account)
+            ],
+        }
 
     @property
     def main_context(self):
