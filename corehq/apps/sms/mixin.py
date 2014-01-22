@@ -344,9 +344,8 @@ class CommCareMobileContactMixin(object):
         raise NotImplementedError("Subclasses of CommCareMobileContactMixin must implement method get_language_code().")
 
     def get_verified_numbers(self, include_pending=False):
-        v = VerifiedNumber.view("sms/verified_number_by_doc_type_id",
-            startkey=[self.doc_type, self._id],
-            endkey=[self.doc_type, self._id],
+        v = VerifiedNumber.view("sms/verified_number_by_owner_id",
+            key=self._id,
             include_docs=True
         )
         v = filter(lambda c: c.verified or include_pending, v)
