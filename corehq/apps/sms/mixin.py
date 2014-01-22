@@ -9,7 +9,6 @@ from django.conf import settings
 from dimagi.utils.couch.database import get_safe_write_kwargs
 from dimagi.utils.modules import try_import
 from corehq.apps.domain.models import Domain
-from corehq.apps.sms.util import strip_plus
 
 phone_number_re = re.compile("^\d+$")
 
@@ -137,6 +136,7 @@ class VerifiedNumber(Document):
         # We use .one() here because the framework prevents duplicates
         # from being entered when a contact saves a number.
         # See CommCareMobileContactMixin.save_verified_number()
+        from corehq.apps.sms.util import strip_plus
         v = cls.view(view_name,
                      key=strip_plus(phone_number),
                      include_docs=True).one()
@@ -310,6 +310,7 @@ def apply_leniency(contact_phone_number):
     in international format and consist of only digits. However,
     we can apply some leniency to avoid common mistakes.
     """
+    from corehq.apps.sms.util import strip_plus
     if isinstance(contact_phone_number, (int, long, float, Decimal)):
         contact_phone_number = str(contact_phone_number)
     if isinstance(contact_phone_number, basestring):
@@ -353,6 +354,7 @@ class CommCareMobileContactMixin(object):
 
         return  the VerifiedNumber entry
         """
+        from corehq.apps.sms.util import strip_plus
         verified = self.get_verified_numbers(True)
         if not phone:
             # for backwards compatibility with code that assumes only one verified phone #
