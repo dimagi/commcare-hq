@@ -3,7 +3,8 @@ from StringIO import StringIO
 from datetime import datetime
 from corehq.apps.commtrack.models import *
 from corehq.apps.commtrack.stockreport import StockTransaction
-from corehq.apps.sms.mixin import VerifiedNumber, strip_plus
+from corehq.apps.sms.mixin import VerifiedNumber
+from corehq.apps.sms.util import strip_plus
 from corehq.apps.users.models import CouchUser
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.loosechange import map_reduce
