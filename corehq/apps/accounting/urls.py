@@ -1,6 +1,5 @@
 from django.conf.urls.defaults import *
 from corehq import AccountingAdminInterfaceDispatcher
-from corehq.apps.accounting.dispatcher import SubscriptionAdminInterfaceDispatcher
 from corehq.apps.accounting.views import *
 
 
@@ -12,6 +11,4 @@ urlpatterns = patterns('corehq.apps.accounting.views',
     url(r'^accounts/new_subscription/(\d+)/', NewSubscriptionView.as_view(), name=NewSubscriptionView.name),
     url(AccountingAdminInterfaceDispatcher.pattern(), AccountingAdminInterfaceDispatcher.as_view(),
         name=AccountingAdminInterfaceDispatcher.name()),
-    url(SubscriptionAdminInterfaceDispatcher.pattern(), SubscriptionAdminInterfaceDispatcher.as_view(),
-        name=SubscriptionAdminInterfaceDispatcher.name()),
 )
