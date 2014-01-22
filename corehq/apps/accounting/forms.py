@@ -108,6 +108,28 @@ class BillingAccountForm(forms.Form):
         account.save()
         return account
 
+    def update_account_and_contacts(self, account):
+        account.name = self.cleaned_data['name']
+        account.salesforce_account_id = self.cleaned_data['salesforce_account_id']
+        account.currency, _ = Currency.objects.get_or_create(code=self.cleaned_data['currency'])
+        for web_user_email in self.cleaned_data['billing_account_admins'].split(','):
+            admin, _ = BillingAccountAdmin.objects.get_or_create(web_user=web_user_email)
+            account.billing_admins.add(admin)
+        account.save()
+
+        contact_info, _ = BillingContactInfo.objects.get_or_create(account=account)
+        contact_info.first_name = self.cleaned_data['first_name']
+        contact_info.last_name = self.cleaned_data['last_name']
+        contact_info.company_name = self.cleaned_data['company_name']
+        contact_info.phone_number = self.cleaned_data['phone_number']
+        contact_info.first_line = self.cleaned_data['address_line_1']
+        contact_info.second_line = self.cleaned_data['address_line_2']
+        contact_info.city = self.cleaned_data['city']
+        contact_info.state_province_region = self.cleaned_data['region']
+        contact_info.postal_code = self.cleaned_data['postal_code']
+        contact_info.country = self.cleaned_data['country']
+        contact_info.save()
+
 
 class SubscriptionForm(forms.Form):
     start_date = forms.DateField(label="Start Date", widget=forms.DateInput())
