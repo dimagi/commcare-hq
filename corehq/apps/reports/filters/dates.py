@@ -32,3 +32,11 @@ class DatespanFilter(BaseReportFilter):
         }
 
 
+class DaterangeFilter(DatespanFilter):
+    @property
+    def filter_context(self):
+        context = super(DaterangeFilter, self).filter_context
+        context.update({
+            'use_daterange': True,
+        })
+        return context
