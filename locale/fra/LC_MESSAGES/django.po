@@ -2622,6 +2622,7 @@ msgstr "Gérer le groupe \"%s\""
 #: corehq/apps/reports/standard/sms.py:116
 #: corehq/apps/twilio/templates/twilio/backend.html:20
 #: corehq/apps/users/templates/users/partial/basic_info_form.html:105
+#: submodules/payments/hqbilling/forms.py:76
 msgid "Phone Number"
 msgstr "Numéro de téléphone"
 
@@ -3232,10 +3233,11 @@ msgstr ""
 "les dossiers qui s'inscrivent eux-mêmes via sms."
 
 #: corehq/apps/domain/forms.py:486 corehq/apps/locations/util.py:72
+#: submodules/payments/hqbilling/forms.py:70
 msgid "City"
 msgstr "Ville"
 
-#: corehq/apps/domain/forms.py:487
+#: corehq/apps/domain/forms.py:487 submodules/payments/hqbilling/forms.py:73
 msgid "Country"
 msgstr "Pays"
 
@@ -14262,6 +14264,28 @@ msgstr "Sélectionnez un domaine..."
 msgid "Any Direction"
 msgstr "Toute direction"
 
+#: submodules/payments/hqbilling/forms.py:68
+#, fuzzy
+msgid "Company Name"
+msgstr "Nom de dossier"
+
+#: submodules/payments/hqbilling/forms.py:71
+msgid "State/Province"
+msgstr ""
+
+#: submodules/payments/hqbilling/forms.py:72
+#, fuzzy
+msgid "Postal Code"
+msgstr "Total de dossiers"
+
+#: submodules/payments/hqbilling/forms.py:102
+msgid "Currency Code (ex: USD)"
+msgstr ""
+
+#: submodules/payments/hqbilling/forms.py:106
+msgid "Symbol for currency (ex: $)"
+msgstr ""
+
 #: submodules/payments/hqbilling/views.py:159
 #, python-format
 msgid "The billing information for project %s was successfully updated!"
@@ -14324,14 +14348,6 @@ msgstr "Détails de journal d'appareil"
 
 #~ msgid "userID"
 #~ msgstr "Identifiant"
-
-#, fuzzy
-#~ msgid "Company Name"
-#~ msgstr "Nom de dossier"
-
-#, fuzzy
-#~ msgid "Postal Code"
-#~ msgstr "Total de dossiers"
 
 #~ msgid "Select a Module Type"
 #~ msgstr "Sélectionnez un type de module"
