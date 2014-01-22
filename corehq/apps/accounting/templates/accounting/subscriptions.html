@@ -1,30 +1,8 @@
-{% extends 'hqwebapp/base_section.html' %}
-{% load url from future %}
-{% load hq_shared_tags %}
+{% extends 'accounting/subscriptions_base.html' %}
 {% load crispy_forms_tags %}
 {% load i18n %}
 
-{% block head %} {{ block.super }}
-    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
-{% endblock %}
-
-{% block js %} {{ block.super }}
-    <script src="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/jquery-ui-1.8.17.custom.datepicker.min.js' %}"></script>
-    <script src="{% static 'accounting/js/credits-tab.js' %}"></script>
-    <script src="{% static 'accounting/js/stay-on-tab.js' %}"></script>
-{% endblock %}
-
-{% block js-inline %} {{ block.super }}
- <script>
-    $( "#id_start_date" ).datepicker({ dateFormat: "yy-mm-dd" });
-    $( "#id_end_date" ).datepicker({ dateFormat: "yy-mm-dd" });
-    $( "#id_delay_invoice_until" ).datepicker({ dateFormat: "yy-mm-dd" });
-</script>
-{% endblock %}
-
 {% block main_column %}
-
-    {% if subscription %}
     <ul class="nav nav-tabs" id="user-settings-tabs">
         <li><a href="#subscription" data-toggle="tab">{% trans "Subscription" %}</a></li>
         <li><a href="#credits" data-toggle="tab">{% trans "Credits" %}</a></li>
@@ -32,13 +10,8 @@
     </ul>
 
     <div class="tab-content">
-
         <div class="tab-pane" id="subscription">
-    {% endif %}
-            <form class="form form-horizontal" method="post">
-                {% crispy form %}
-            </form>
-    {% if subscription %}
+            {{ block.super }}
         </div>
 
         <div class="tab-pane" id="credits">
@@ -53,12 +26,5 @@
                 Subscription has been canceled.
             {% endif %}
         </div>
-    {% endif %}
-
     </div>
-
-{% endblock %}
-
-{% block modals %} {{ block.super }}
-
 {% endblock %}
