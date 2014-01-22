@@ -55,6 +55,7 @@
     - properties.cc-days-form-retain # Days to Retain for Review
     - properties.cc-show-saved
     - properties.cc-show-incomplete
+    - properties.cc-resize-images
 
 - title: 'Advanced'
   id: app-settings-advanced
