@@ -1,5 +1,5 @@
 import datetime
-from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher, SubscriptionAdminInterfaceDispatcher
+from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.accounting.models import BillingAccount, Subscription, BillingAccountType
 from corehq.apps.announcements.forms import HQAnnouncementForm
 from corehq.apps.announcements.models import HQAnnouncement
@@ -181,7 +181,7 @@ class AccountingInterface(BaseCRUDAdminInterface):
 class SubscriptionInterface(BaseCRUDAdminInterface):
     section_name = "Accounting"
     base_template = 'reports/base_template.html'
-    dispatcher = SubscriptionAdminInterfaceDispatcher
+    dispatcher = AccountingAdminInterfaceDispatcher
 
     crud_form_update_url = "/accounting/form/"
 
