@@ -201,6 +201,35 @@ class SubscriptionForm(forms.Form):
                 raise forms.ValidationError("A valid project space is required.")
         return domain_name
 
+    def create_subscription(self, account_id):
+        account = BillingAccount.objects.get(id=account_id)
+        date_start = self.cleaned_data['start_date']
+        date_end = self.cleaned_data['end_date']
+        date_delay_invoicing = self.cleaned_data['delay_invoice_until']
+        plan_version_id = self.cleaned_data['plan_version']
+        domain = self.cleaned_data['domain']
+        subscription = Subscription(account=account,
+                                    date_start=date_start,
+                                    date_end=date_end,
+                                    date_delay_invoicing=date_delay_invoicing,
+                                    plan_version=SoftwarePlanVersion.objects.get(id=plan_version_id),
+                                    salesforce_contract_id=self.cleaned_data['salesforce_contract_id'],
+                                    subscriber=Subscriber.objects.get_or_create(domain=domain,
+                                                                                organization=None)[0])
+        subscription.save()
+        return subscription
+
+    def update_subscription(self, subscription):
+        if self.fields['start_date'].required:
+            subscription.date_start = self.cleaned_data['start_date']
+        if subscription.date_end is None or subscription.date_end > datetime.date.today():
+            subscription.date_end = self.cleaned_data['end_date']
+        if (subscription.date_delay_invoicing is None
+            or subscription.date_delay_invoicing > datetime.date.today()):
+            subscription.date_delay_invoicing = self.cleaned_data['delay_invoice_until']
+        subscription.salesforce_contract_id = self.cleaned_data['salesforce_contract_id']
+        subscription.save()
+
 
 class CreditForm(forms.Form):
     amount = forms.DecimalField()
