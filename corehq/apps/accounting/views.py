@@ -16,15 +16,10 @@ def accounting_default(request):
 
 class AccountingSectionView(BaseSectionPageView):
     section_name = 'Accounting'
-    name = ''
 
     @property
     def section_url(self):
         return reverse('accounting_default')
-
-    @property
-    def page_context(self):
-        return {}
 
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
@@ -42,8 +37,8 @@ class BillingAccountsSectionView(AccountingSectionView):
 
 
 class NewBillingAccountView(BillingAccountsSectionView):
-    name = 'new_billing_account'
     template_name = 'accounting/accounts_base.html'
+    urlname = 'new_billing_account'
 
     @property
     @memoized
@@ -53,7 +48,7 @@ class NewBillingAccountView(BillingAccountsSectionView):
         return BillingAccountForm(None)
 
     @property
-    def main_context(self):
+    def page_context(self):
         context = super(NewBillingAccountView, self).main_context
         context.update({'form': self.account_form})
         return context
@@ -64,7 +59,7 @@ class NewBillingAccountView(BillingAccountsSectionView):
 
     @property
     def page_url(self):
-        return reverse(self.name)
+        return reverse(self.urlname)
 
     def post(self, request, *args, **kwargs):
         if self.account_form.is_valid():
@@ -83,14 +78,16 @@ class NewBillingAccountView(BillingAccountsSectionView):
 def adjust_credit(credit_form, account_id=None, subscription_id=None):
     if account_id is not None:
         account = BillingAccount.objects.get(id=account_id)
-        credit_line_kwargs = {'account': account,
-                              'subscription': None
-                              }
+        credit_line_kwargs = {
+            'account': account,
+            'subscription': None
+        }
     elif subscription_id is not None:
         subscription = Subscription.objects.get(id=subscription_id)
-        credit_line_kwargs = {'account': subscription.account,
-                              'subscription': subscription
-                              }
+        credit_line_kwargs = {
+            'account': subscription.account,
+            'subscription': subscription
+        }
     else:
         raise ValueError('invalid credit adjustment')
     if credit_form.cleaned_data['rate_type'] == 'Product':
@@ -109,8 +106,8 @@ def adjust_credit(credit_form, account_id=None, subscription_id=None):
 
 
 class ManageBillingAccountView(BillingAccountsSectionView):
-    name = 'manage_billing_account'
     template_name = 'accounting/accounts.html'
+    urlname = 'manage_billing_account'
 
     @property
     @memoized
@@ -148,7 +145,7 @@ class ManageBillingAccountView(BillingAccountsSectionView):
         }
 
     @property
-    def main_context(self):
+    def page_context(self):
         context = super(ManageBillingAccountView, self).main_context
         context.update(self.data())
         return context
@@ -159,7 +156,7 @@ class ManageBillingAccountView(BillingAccountsSectionView):
 
     @property
     def page_url(self):
-        return reverse(self.name, args=(self.args[0],))
+        return reverse(self.urlname, args=(self.args[0],))
 
     def post(self, request, *args, **kwargs):
         if 'account' in self.request.POST and self.account_form.is_valid():
@@ -191,8 +188,8 @@ class ManageBillingAccountView(BillingAccountsSectionView):
 
 
 class NewSubscriptionView(AccountingSectionView):
-    name = 'new_subscription'
     template_name = 'accounting/subscriptions_base.html'
+    urlname = 'new_subscription'
 
     @property
     @memoized
@@ -202,7 +199,7 @@ class NewSubscriptionView(AccountingSectionView):
         return SubscriptionForm(None)
 
     @property
-    def main_context(self):
+    def page_context(self):
         context = super(NewSubscriptionView, self).main_context
         context.update(dict(form=self.subscription_form))
         return context
@@ -213,7 +210,7 @@ class NewSubscriptionView(AccountingSectionView):
 
     @property
     def page_url(self):
-        return reverse(self.name, args=(self.args[0],))
+        return reverse(self.urlname, args=(self.args[0],))
 
     @property
     def parent_pages(self):
@@ -242,13 +239,13 @@ class NewSubscriptionView(AccountingSectionView):
                                         subscriber=Subscriber.objects.get_or_create(domain=domain,
                                                                                     organization=None)[0])
             subscription.save()
-            return HttpResponseRedirect(reverse(ManageBillingAccountView.name, args=(account_id,)))
+            return HttpResponseRedirect(reverse(ManageBillingAccountView.urlname, args=(account_id,)))
         return self.get(request, *args, **kwargs)
 
 
 class EditSubscriptionView(AccountingSectionView):
-    name = 'edit_subscription'
     template_name = 'accounting/subscriptions.html'
+    urlname = 'edit_subscription'
 
     @property
     @memoized
@@ -288,7 +285,7 @@ class EditSubscriptionView(AccountingSectionView):
                 }
 
     @property
-    def main_context(self):
+    def page_context(self):
         context = super(EditSubscriptionView, self).main_context
         context.update(self.data())
         return context
@@ -299,7 +296,7 @@ class EditSubscriptionView(AccountingSectionView):
 
     @property
     def page_url(self):
-        return reverse(self.name, args=(self.args[0],))
+        return reverse(self.urlname, args=(self.args[0],))
 
     @property
     def parent_pages(self):

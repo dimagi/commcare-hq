@@ -124,7 +124,7 @@ class SubscriptionInterface(BaseCRUDAdminInterface):
                     or (ActiveStatusFilter.get_value(self.request, self.domain) == ActiveStatusFilter.active) == subscription.is_active):
                 rows.append([subscription.subscriber.domain,
                              mark_safe('<a href="%s">%s</a>'
-                                       % (reverse(ManageBillingAccountView.name, args=(subscription.account.id,)),
+                                       % (reverse(ManageBillingAccountView.urlname, args=(subscription.account.id,)),
                                           subscription.account.name)),
                              subscription.plan_version.plan.name,
                              subscription.is_active,
