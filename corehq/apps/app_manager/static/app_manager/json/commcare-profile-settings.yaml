@@ -230,3 +230,23 @@
   contingent_default: [{"condition": "{features.sense}='true'", "value": "Yes"}]
   values_txt: "This value will set whether the login screen uses customizable icons for login and demo mode options or uses the standard buttons with labels."
   since: "2.8"
+  
+- name: "Saved Forms"
+  description: "Choose whether or not to display the 'Saved' button on the ODK home screen"
+  id: "cc-show-saved"
+  values: ["yes", "no"]
+  value_names: ["Enable", "Disable"]
+  default: "yes"
+  contingent_default: [{"condition": "{features.sense}='true'", "value": "no"}]
+  values_txt: "This will show or hide the 'Saved' button on the CommCare ODK home screen. Turning this off will prevent users from saving forms locally."
+  since: "2.11"
+  
+- name: "Incomplete Forms"
+  description: "Choose whether or not to display the 'Incomplete' button on the ODK home screen"
+  id: "cc-show-incomplete"
+  values: ["yes", "no"]
+  value_names: ["Enable", "Disable"]
+  default: "yes"
+  contingent_default: [{"condition": "{features.sense}='true'", "value": "no"}]
+  values_txt: "This will show or hide the 'Incomplete' button on the CommCare ODK home screen. Turning this off will prevent users from saving incomplete forms."
+  since: "2.11"
