@@ -53,6 +53,8 @@
   collapse: true
   settings:
     - properties.cc-days-form-retain # Days to Retain for Review
+    - properties.cc-show-saved
+    - properties.cc-show-incomplete
 
 - title: 'Advanced'
   id: app-settings-advanced
