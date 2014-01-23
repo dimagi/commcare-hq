@@ -26,6 +26,8 @@ def format_percent(value, percent):
 
 
 def normal_format(value):
+    if not value:
+        value = 0
     return "<span style='display: block; text-align:center;'>%d<hr style='border-color: black;'></span>" % value
 
 
@@ -81,7 +83,6 @@ class HealthStatus(object):
             ben = sql_data.get('beneficiaries_registered_total', 0)
             child_num = sql_data.get('children_total', 0)
             mother_num = sql_data.get('lactating_total', 0)
-
             self.beneficiaries_registered = normal_format(ben)
             self.pregnant_women = format_percent(sql_data.get('lmp_total', 0), calc_percentage(sql_data.get('lmp_total', 0), ben))
             self.mother = format_percent(mother_num, calc_percentage(mother_num, ben))

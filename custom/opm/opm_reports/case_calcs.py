@@ -86,7 +86,6 @@ def num_of_children(form, prop1, prop2, num_in_condition, children):
             if p1 in form.form and p2 in form.form[p1] and form.form[p1][p2]:
                 c += 1
         else:
-
             if p1 in form.form and p2 in form.form[p1] and int(form.form[p1][p2]) > num_in_condition:
                 c += 1
     return c
@@ -114,13 +113,10 @@ class VhndMonthly(fluff.Calculator):
 
 
 def check_status(form, status):
-    if 'interpret_grade' in form and form['interpret_grade'].upper() == status:
-        status = True
-    elif 'interpret_grade_2' in form and form['interpret_grade_2'].upper() == status:
-        status = True
-    elif 'interpret_grade_3' in form and form['interpret_grade_3'].upper() == status:
-        status = True
-    return status
+    for prop in ['interpret_grade', 'interpret_grade_2', 'interpret_grade_3']:
+        if prop in form.form and form.form[prop].upper() == status:
+            return True
+    return False
 
 
 class Status(fluff.Calculator):
@@ -133,7 +129,7 @@ class Status(fluff.Calculator):
         is_status = False
         for form in case.get_forms():
             if form.xmlns in [CFU1_XMLNS, CFU2_XMLNS, CFU3_XMLNS]:
-                is_status = check_status(form, is_status)
+                is_status = check_status(form, self.status)
 
         if is_status:
             yield case_date(case)
@@ -157,22 +153,17 @@ class Weight(fluff.Calculator):
 class BreastFed(fluff.Calculator):
     @fluff.date_emitter
     def total(self, case):
-        helpful_obj = {
-            CFU1_XMLNS: 1,
-            CFU2_XMLNS: 2,
-            CFU3_XMLNS: 3
-        }
         birth_amount = None
         for form in case.get_forms():
-            if form.xmlns == DELIVERY_XMLNS and 'live_birth_amount' in form:
-                birth_amount = form['live_birth_amount']
+            if form.xmlns == DELIVERY_XMLNS and 'live_birth_amount' in form.form:
+                birth_amount = form.form['live_birth_amount']
         if birth_amount:
             for form in case.get_forms():
-                if form.xmlns in [CFU1_XMLNS, CFU2_XMLNS, CFU3_XMLNS] and helpful_obj[form.xmlns] <= birth_amount:
+                if form.xmlns == CFU1_XMLNS:
                     yield {
                         'date': case_date(case),
-                        'value': num_of_children(form, 'child_%s', 'child1_child_excbreastfed', 0,
-                                                 range(1, (birth_amount + 1)))
+                        'value': num_of_children(form, 'child_%s', 'child%s_child_excbreastfed', 0,
+                                                 range(1, (int(birth_amount) + 1)))
                     }
 
 
@@ -198,8 +189,8 @@ class IfaTablets(fluff.Calculator):
     def total(self, case):
         is_ifa_tablets = False
         for form in case.get_forms():
-            if form.xmlns == VHND_XMLNS:
-                is_ifa_tablets = is_equals(form, "pregnancy_month_%s", "ifa_receive_%s", start=3, end=6)
+            if form.xmlns == BIRTH_PREP_XMLNS:
+                is_ifa_tablets = is_equals(form, "pregnancy_month_%s", "ifa_receive_%s", start=0, end=3)
         if is_ifa_tablets:
             yield case_date(case)
 
@@ -228,7 +219,10 @@ class LiveChildren(fluff.Calculator):
         for form in case.get_forms():
             if form.xmlns == DELIVERY_XMLNS:
                 if 'live_birth_amount' in form.form and form.form.get('live_birth_amount'):
-                    yield case_date(case)
+                    yield {
+                        'date': case_date(case),
+                        'value': form.form.get('live_birth_amount')
+                    }
 
 
 class Delivery(fluff.Calculator):

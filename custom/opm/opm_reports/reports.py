@@ -325,7 +325,7 @@ class BeneficiaryPaymentReport(BaseReport):
     # TODO: Switch to ES. Peformance aaah!
     def get_rows(self, datespan):
         cases = []
-        self.form_sql_data = OpmFormSqlData(domain=self.domain, case_id=None, datespan=self.datespan)
+        self.form_sql_data = OpmFormSqlData(domain=DOMAIN, case_id=None, datespan=self.datespan)
         for case_id in self.form_sql_data.data.keys():
             try:
                 cases.append(CommCareCase.get(case_id))
@@ -373,8 +373,8 @@ class IncentivePaymentReport(BaseReport):
         return CommCareUser.by_domain(DOMAIN)
 
     def get_row_data(self, row):
-        case_sql_data = OpmCaseSqlData(self.domain, row._id, self.datespan)
-        form_sql_data = OpmFormSqlData(self.domain, row._id, self.datespan)
+        case_sql_data = OpmCaseSqlData(DOMAIN, row._id, self.datespan)
+        form_sql_data = OpmFormSqlData(DOMAIN, row._id, self.datespan)
         return self.model(row, self, case_sql_data.data, form_sql_data.data)
 
 
@@ -442,6 +442,6 @@ class HealthStatusReport(DatespanMixin, BaseReport):
         return CommCareUser.by_domain(DOMAIN)
 
     def get_row_data(self, row):
-        sql_data = OpmHealthStatusSqlData(self.domain, row._id, self.datespan)
+        sql_data = OpmHealthStatusSqlData(DOMAIN, row._id, self.datespan)
         return self.model(row, self, sql_data.data)
 
