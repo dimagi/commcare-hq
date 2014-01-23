@@ -25,7 +25,8 @@ def forms_with_cases(domain=None, since=None, chunksize=500):
         q["filter"]["and"][0]["bool"]["must"] = {
             "range": {
                 "received_on": {"from": since.strftime("%Y-%m-%d")}}}
-    return stream_es_query(params=params, q=q, es_url=ES_URLS["forms"], fields=["__retrieved_case_ids", "domain"], chunksize=chunksize)
+    return stream_es_query(params=params, q=q, es_url=ES_URLS["forms"],
+                           fields=["__retrieved_case_ids", "domain", "received_on"], chunksize=chunksize)
 
 def case_ids_by_xform_id(xform_ids):
     ret = defaultdict(list)
@@ -38,20 +39,21 @@ def iter_forms_with_cases(domain, since, chunksize=500):
         case_ids = []
         for form in form_list:
             f_case_ids = form["fields"]["__retrieved_case_ids"]
+            received_on = form["fields"]["received_on"]
             case_ids.extend(f_case_ids)
 
         case_id_mapping = case_ids_by_xform_id([f["_id"] for f in form_list])
         for form in form_list:
             form_id, f_case_ids, f_domain = form["_id"], form["fields"]["__retrieved_case_ids"], form["fields"]["domain"]
             for case_id in f_case_ids:
-                yield form_id, case_id, case_id in case_id_mapping.get(form_id, []), f_domain
+                yield form_id, received_on, case_id, case_id in case_id_mapping.get(form_id, []), f_domain
 
 def handle_problematic_data(datalist_tup, csv_writer, verbose=False, rebuild=False):
     case_data = CommCareCase.get_db().view('_all_docs', keys=[d[1] for d in datalist_tup])
     cases = set([c["id"] for c in case_data if 'id' in c])
-    for domain, case_id, form_id in datalist_tup:
+    for domain, case_id, form_id, received_on in datalist_tup:
         error = "action_missing" if case_id in cases else "nonexistent_case"
-        csv_writer.writerow([domain, case_id, form_id, error])
+        csv_writer.writerow([domain, case_id, form_id, received_on, error])
         if verbose and error == "nonexistent_case":
             logger.info("Case (%s) from form (%s) does not exist" % (case_id, form_id))
         elif verbose and error == "action_missing":
@@ -95,12 +97,12 @@ class Command(BaseCommand):
         with open(filename, 'wb+') as csvfile:
             csv_writer = csv.writer(csvfile, delimiter=',',
                                     quotechar='|', quoting=csv.QUOTE_MINIMAL)
-            csv_writer.writerow(['Domain', 'Case ID', 'Form ID', 'Error'])
+            csv_writer.writerow(['Domain', 'Case ID', 'Form ID', 'Form Recieved On', 'Error'])
 
             problematic = []
-            for form_id, case_id, action_exists, f_domain in iter_forms_with_cases(domain, since, chunksize):
+            for form_id, received_on, case_id, action_exists, f_domain in iter_forms_with_cases(domain, since, chunksize):
                 if not action_exists:
-                    problematic.append((f_domain, case_id, form_id))
+                    problematic.append((f_domain, case_id, form_id, received_on))
 
                 if len(problematic) > chunksize:
                     handle_problematic_data(problematic, csv_writer, verbose=verbose, rebuild=rebuild)
