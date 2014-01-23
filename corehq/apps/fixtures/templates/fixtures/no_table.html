@@ -1,0 +1,42 @@
+{% extends 'fixtures/fixtures_base.html' %}
+{% load hq_shared_tags %}
+{% load report_tags %}
+{% load i18n %}
+
+{% block js %}{{ block.super }}
+    {% if charts %}
+    <link href="{% static 'hqwebapp/js/lib/nvd3/nv.d3.css' %}" rel="stylesheet">
+    <script src="{% static 'hqwebapp/js/lib/nvd3/lib/d3.v2.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/nvd3/nv.d3.min.js' %}"></script>
+    {% endif %}
+{% endblock %}
+
+{% block reportcontent %}
+<header>
+    <div class="row-fluid">
+        <div class="span8">
+            <h2>
+                {% blocktrans %}
+                    Lookup Tables <small>for CommCare Mobile and
+                    CommCare HQ Reports</small>
+                {% endblocktrans %}
+            </h2>
+            <p>
+                {% blocktrans %}
+                    Lookup Tables are used in applications and reports to provide data that is not directly stored in the application and may change over time.
+                {% endblocktrans %}
+            </p>
+            <p>
+                {% blocktrans %}
+                    Currently you have not uploaded any tables. Go to <strong>Manage Table Data</strong> to upload tables.
+                {% endblocktrans %}
+            </p>
+            <p class="help-block">
+            <i class="icon icon-info-sign"></i>
+            For more info see the <a href='https://wiki.commcarehq.org/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers#CreateandManageCommCareMobileWorkers-C.SearchforMobileWorkers' target='_blank'>UPDATE LINK</a> help page
+        </p>
+        </div>
+    </div>
+</header>
+
+{% endblock %}
