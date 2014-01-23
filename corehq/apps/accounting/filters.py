@@ -1,7 +1,6 @@
 import datetime
 from corehq.apps.accounting.models import BillingAccount, BillingAccountType, Subscription
-from corehq.apps.reports.filters.base import BaseSingleOptionFilter
-from corehq.apps.reports.filters.dates import DatespanFilter
+from corehq.apps.reports.filters.base import BaseReportFilter, BaseSingleOptionFilter
 from dimagi.utils.dates import DateSpan
 from django.utils.translation import ugettext_noop as _
 
@@ -64,17 +63,25 @@ class ActiveStatusFilter(BaseSingleOptionFilter):
     ]
 
 
-class DaterangeFilter(DatespanFilter):
+class DateRangeFilter(BaseReportFilter):
+    template = 'reports/filters/daterange.html'
+    default_days = 7
+
+    @property
+    def datepicker_config(self):
+        return {
+            'changeMonth': True,
+            'changeYear': True,
+            'dateFormat': 'yy-mm-dd',
+        }
+
     @property
     def filter_context(self):
-        context = super(DaterangeFilter, self).filter_context
-        context.update({
-            'use_daterange': True,
-        })
-        return context
+        return {
+            'datepicker_config': self.datepicker_config,
+            'datespan': self.datespan,
+        }
 
-
-class MultiDaterangeFilter(DaterangeFilter):
     @classmethod
     def get_date_str(cls, request, date_type):
         return request.GET.get('%s_%s' % (cls.slug, date_type))
@@ -105,16 +112,16 @@ class MultiDaterangeFilter(DaterangeFilter):
         return datespan
 
 
-class DateCreatedFilter(MultiDaterangeFilter):
+class DateCreatedFilter(DateRangeFilter):
     slug = 'date_created'
     label = _("Date Created")
 
 
-class StartDateFilter(MultiDaterangeFilter):
+class StartDateFilter(DateRangeFilter):
     slug = 'start_date'
     label = _("Start Date")
 
 
-class EndDateFilter(MultiDaterangeFilter):
+class EndDateFilter(DateRangeFilter):
     slug = 'end_date'
     label = _("End Date")
