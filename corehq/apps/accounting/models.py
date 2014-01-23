@@ -641,8 +641,6 @@ class CreditLine(models.Model):
     def _validate_add_amount(amount):
         if not isinstance(amount, Decimal):
             raise ValueError("Amount must be a Decimal.")
-        if amount < Decimal('0.0000'):
-            raise CreditLineError("You can only add a positive dollar amount to a credit line.")
 
 
 class CreditAdjustment(models.Model):
