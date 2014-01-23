@@ -6,6 +6,7 @@ var CRUDAdminControl = function(options) {
     self.formSubmitPath = options.formSubmitPath;
     self.formType = options.formType;
     self.formSubmitURL = self.formSubmitPath+self.formType+'/';
+    self.hideButton = options.hideButton;
     self.newFormSubmitURL = self.formSubmitURL+'new/';
     self.updateFormSubmitURL = self.formSubmitURL+'update/';
     self.overrideNewFormType = null;
@@ -50,7 +51,9 @@ var CRUDAdminControl = function(options) {
 
     self.init = function () {
         $(function() {
-            $('#reportFiltersAccordion .accordion-actions').append(self.actionButton);
+            if(!self.hideButton) {
+                $('#reportFiltersAccordion .accordion-actions').append(self.actionButton);
+            }
             self.addItemModal = $('#crud_add_modal');
             self.updateItemModal = $('#crud_update_modal');
 
