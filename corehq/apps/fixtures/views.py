@@ -227,7 +227,7 @@ def data_table(request, domain):
     if not sheets:
         return {
             "headers": DataTablesHeader(DataTablesColumn("No lookup Tables Uploaded")),
-            "rows": [["Click here to upload tables"]]
+            "rows": []
         }
     selected_sheet = sheets.values()[0]
     data_table = {

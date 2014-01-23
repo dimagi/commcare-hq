@@ -49,6 +49,14 @@ class FixtureViewInterface(GenericTabularReport, FixtureInterface):
     ajax_pagination = False
 
     @property
+    def report_context(self):
+        context = super(FixtureViewInterface, self).report_context
+        print context
+        if not context["report_table"].get("rows"):
+            self.report_template_path = 'fixtures/no_table.html'
+        return context
+
+    @property
     @memoized
     def table(self):
         return data_table(self.request, self.domain)
