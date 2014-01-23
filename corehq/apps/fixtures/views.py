@@ -623,7 +623,12 @@ def run_upload(request, domain, workbook, replace=False):
         if replace:
             FixtureDataType.delete_fixtures_by_domain(domain, transaction)
         for number_of_fixtures, dt in enumerate(data_types):
-            tag = _get_or_raise(dt, 'table_id')
+            try:
+                tag = _get_or_raise(dt, 'table_id')
+            except ExcelMalformatException:
+                messages.info(request, _("Excel-header 'tag' is renamed as 'table_id' and 'name' header is no longer needed."))
+                tag = _get_or_raise(dt, 'tag')
+
             type_definition_fields = _get_or_raise(dt, 'field')
             type_fields_with_properties = []
             for count, field in enumerate(type_definition_fields):
@@ -648,7 +653,7 @@ def run_upload(request, domain, workbook, replace=False):
             new_data_type = FixtureDataType(
                 domain=domain,
                 is_global=dt.get('is_global', False),
-                tag=_get_or_raise(dt, 'table_id'),
+                tag=tag,
                 fields=type_fields_with_properties,
             )
             try:
