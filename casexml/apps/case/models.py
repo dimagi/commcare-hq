@@ -834,11 +834,6 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
         self.closed = True
         self.closed_on = close_action.date
 
-    def force_close(self, submit_url):
-        if not self.closed:
-            submission = get_close_case_xml(time=datetime.utcnow(), case_id=self._id)
-            spoof_submission(submit_url, submission, name="close.xml")
-
     def reconcile_actions(self, rebuild=False):
         """
         Runs through the action list and tries to reconcile things that seem
@@ -924,11 +919,6 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
         for a in self.actions:
             if a.xform_id not in self.xform_ids:
                 self.xform_ids.append(a.xform_id)
-
-    def force_close_referral(self, submit_url, referral):
-        if not referral.closed:
-            submission = get_close_referral_xml(time=datetime.utcnow(), case_id=self._id, referral_id=referral.referral_id, referral_type=referral.type)
-            spoof_submission(submit_url, submission, name="close_referral.xml")
 
     def dynamic_case_properties(self):
         """(key, value) tuples sorted by key"""
