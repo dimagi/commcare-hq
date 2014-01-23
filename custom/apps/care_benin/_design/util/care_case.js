@@ -45,6 +45,9 @@ function CareCase(doc) {
         if (self.case.closed) {
             emit(['case_closed_'+self.status, self.case.closed_on], 1)
         }
+
+        self.check_birth();
+        emit_array([], [self.case.DA], self.data_dob);
     }
 
     self.referrals = function () {
@@ -120,6 +123,7 @@ function CareCase(doc) {
 
             // first update
             if (update_count === 1) {
+                emit(['case_opened_'+properties.condition, self.opened_on_date], 1)
                 if (properties.condition === 'enceinte') {
                     self.data_open.newly_registered_pregnant = 1;
                 } else if (properties.condition === 'accouchee') {
