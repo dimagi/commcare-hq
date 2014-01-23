@@ -3,6 +3,7 @@ from corehq.apps.reports.fields import ReportSelectField
 from corehq.apps.fixtures.dispatcher import FixtureInterfaceDispatcher
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem, _id_from_doc, FieldList, FixtureTypeField, FixtureItemField
 from corehq.apps.fixtures.views import data_table
+from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext_noop
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 
@@ -29,7 +30,9 @@ class FixtureSelectField(ReportSelectField):
 
     @property
     def default_option(self):
-        return self.field_opts[-1].tag
+        if not self.field_opts:
+            return "NO TABLE"
+        return self.field_opts[0].tag + " (selected)"
 
     def update_params(self):
         self.selected = self.request.GET.get(self.slug, '')
@@ -46,6 +49,7 @@ class FixtureViewInterface(GenericTabularReport, FixtureInterface):
     ajax_pagination = False
 
     @property
+    @memoized
     def table(self):
         return data_table(self.request, self.domain)
 

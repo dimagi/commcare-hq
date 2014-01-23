@@ -224,6 +224,11 @@ def view(request, domain, template='fixtures/view.html'):
 def data_table(request, domain):
     sheets = download_item_lists(request, domain, html_response=True)
     sheets.pop("types")
+    if not sheets:
+        return {
+            "headers": DataTablesHeader(DataTablesColumn("No lookup Tables Uploaded")),
+            "rows": [["Click here to upload tables"]]
+        }
     selected_sheet = sheets.values()[0]
     data_table = {
         "headers": None,
@@ -240,10 +245,18 @@ def download_item_lists(request, domain, html_response=False):
     """
         Is used to serve excel_download and html_view for view_lookup_tables
     """
-    if request.GET.getlist("table_id"):
-        data_types_view = [FixtureDataType.get(id) for id in request.GET.getlist("table_id")]
+    table_ids = request.GET.getlist("table_id")
+    if table_ids and table_ids[0]:
+        try:
+            data_types_view = [FixtureDataType.get(id) for id in request.GET.getlist("table_id")]
+        except ResourceNotFound:
+            messages.info(request, _("Sorry, we couldn't find that table. If you think this is a mistake please report an issue."))
+            data_types_view = FixtureDataType.by_domain(domain)
     else:
         data_types_view = FixtureDataType.by_domain(domain)
+
+    if html_response:
+        data_types_view = list(data_types_view)[0:1]
     # book-keeping data from view_results for repeated use
     data_types_book = []
     data_items_boook_by_type = {}
