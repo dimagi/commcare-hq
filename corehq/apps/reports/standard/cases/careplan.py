@@ -161,10 +161,10 @@ class CareplanReport(ProjectReport, GenericReportView, ProjectReportParametersMi
 
 
 def make_careplan_reports(config):
-    for app_id, conf in config.app_configs.items():
+    for conf in config.app_configs.values():
         class AppCareplanReport(CareplanReport):
             slug = '{0}_{1}'.format(CareplanReport.slug, conf.case_type)
-            careplan_app_id = app_id
+            careplan_app_id = conf.latest_release
             config = conf
 
         class AppCareplanListReport(CareplanCaseListReport):
