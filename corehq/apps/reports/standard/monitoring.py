@@ -378,22 +378,6 @@ class DailyFormStatsReport(ElasticProjectInspectionReport, WorkerMonitoringRepor
         return headers
 
     @property
-    def users(self):
-        if self.filter_group_name and not (self.group_id or self.individual):
-            group = Group.by_name(self.domain, self.filter_group_name)
-        else:
-            group = self.group
-
-        user_ids = [self.individual]
-
-        return self.get_all_users_by_domain(
-            group=group,
-            user_ids=tuple(user_ids),
-            user_filter=tuple(self.user_filter),
-            simplified=True
-        )
-
-    @property
     def date_field(self):
         return ("received_on" if self.by_submission_time
             else "form.meta.timeStart")
@@ -446,6 +430,7 @@ class DailyFormStatsReport(ElasticProjectInspectionReport, WorkerMonitoringRepor
             doc_type="CommCareUser", return_count=True)
         return count
 
+    # Use user filter
     def users_by_username(self, order):
         # TODO: convert this and util._report_user_dict to use just a user dict
         return map(
@@ -524,92 +509,6 @@ class DailyFormStatsReport(ElasticProjectInspectionReport, WorkerMonitoringRepor
             users = self.users_by_username(order)
         rows = [self.get_row_from_user(user) for user in users]
         return rows
-
-    @property
-    def old_rows(self):
-        # not in use
-        key = make_form_couch_key(self.domain, by_submission_time=self.by_submission_time)
-        startkey = key + [
-            self.datespan.startdate_param_utc
-            if self.by_submission_time
-            else self.datespan.startdate_param
-        ]
-        endkey = key + [
-            self.datespan.enddate_param_utc
-            if self.by_submission_time
-            else self.datespan.enddate_param
-        ]
-        # GET ALL FORMS
-        results = get_db().view("reports_forms/all_forms",
-            reduce=False,
-            startkey=startkey,
-            endkey=endkey,
-            # limit=self.pagination.count,
-            # skip=self.pagination.start,
-        ).all()
-        # list of:
-        # {'id': '8063dff5-460b-46f2-b4d0-5871abfd97d4',
-        # 'key': ['completion', 'mikesproject', '2012-12-06T16:14:10Z'],
-        # 'value': {'app_id': 'fe8481a39c3738749e6a4766fca99efd',
-                # 'completion_time': '2012-12-06T16:14:10Z',
-                # 'duration': 18000,
-                # 'start_time': '2012-12-06T16:13:52Z',
-                # 'submission_time': '2012-12-06T21:14:12Z',
-                # 'time': '2012-12-06T21:14:12Z',
-                # 'user_id': 'QUZLAXSRQ6RXY1CSNQKWWRE4H',
-                # 'username': 'admin',
-                # 'xmlns': 'http://openrosa.org/formdesigner/3A7CC07C-551C-4651-AB1A-D60BE3017485'}}
-
-        # {01231: user, 94938: user}
-        user_map = dict([(user.get('user_id'), i) for (i, user) in enumerate(self.users)])
-        # {date_string: number}
-        date_map = dict([(date.strftime(DATE_FORMAT), i+1) for (i,date) in enumerate(self.dates)])
-
-        # rows = [[0]*(2+len(date_map)) for _tmp in range(len(self.users))]
-        # total_row = [0]*(2+len(date_map))
-
-        column_count = 2+len(date_map)
-        total_row = [0]*column_count
-        # rows = [[0]*column_count]*self.pagination.count
-        rows = [[0]*(2+len(date_map)) for _tmp in range(len(self.users))]
-
-        # FOR EACH FORM
-        for result in results:
-            # GET FORM DATE
-            _tmp, _domain, date = result['key']
-            date = dateutil.parser.parse(date)
-            tz_offset = self.timezone.localize(self.datespan.enddate).strftime("%z")
-            date = date + datetime.timedelta(hours=int(tz_offset[0:3]), minutes=int(tz_offset[0]+tz_offset[3:5]))
-            date = date.isoformat()
-
-            val = result['value']
-
-            # MATCH UP USERS WITH FORMS
-            user_id = val.get("user_id")
-            if user_id in self.user_ids:
-                date_key = date_map.get(date[0:10], None)
-                if date_key:
-                    rows[user_map[user_id]][date_key] += 1
-
-        for i, user in enumerate(self.users):
-            # link to user page
-            rows[i][0] = self.get_user_link(user)
-
-            # add row total
-            total = sum(rows[i][1:-1])
-            rows[i][-1] = total
-
-            # Add row to total row
-            total_row[1:-1] = [total_row[ind+1]+val for ind, val in enumerate(rows[i][1:-1])]
-            total_row[-1] += total
-
-        total_row[0] = _("All Users")
-        self.total_row = total_row
-
-        for row in rows:
-            row[1:] = [self.table_cell(val) for val in row[1:]]
-        return [[d['html'] for d in row] for row in rows]
-
 
 class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin):
     name = ugettext_noop("Form Completion Time")
