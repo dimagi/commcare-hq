@@ -1,18 +1,22 @@
 from django.test import TestCase
-from .models import DefaultConsumption, get_default_consumption, TYPE_DOMAIN, TYPE_PRODUCT, TYPE_SUPPLY_POINT_TYPE, TYPE_SUPPLY_POINT
+from corehq.apps.consumption.shortcuts import get_default_consumption, set_default_consumption_for_domain, set_default_consumption_for_product, set_default_consumption_for_supply_point
+from .models import DefaultConsumption, TYPE_DOMAIN, TYPE_PRODUCT, TYPE_SUPPLY_POINT_TYPE, TYPE_SUPPLY_POINT
 
 domain = 'consumption-test'
 product_id = 'test-product'
 type_id = 'facilities'
 supply_point_id = 'test-facility'
 
-class DefaultConsumptionTestCase(TestCase):
 
+class ConsumptionTestBase(TestCase):
     def tearDown(self):
         for consumption in DefaultConsumption.view('consumption/consumption_index',
                                                    reduce=False, include_docs=True):
             consumption.delete()
+        self.assertEqual(0, _count_consumptions())
 
+
+class GetDefaultConsumptionTestCase(ConsumptionTestBase):
     def testGetNoDefault(self):
         self.assertEqual(None, get_default_consumption(domain, 'whatever', 'goes', 'here'))
 
@@ -85,16 +89,57 @@ class DefaultConsumptionTestCase(TestCase):
         self.assertEqual(None, get_default_consumption('wrong', product_id, type_id, supply_point_id))
 
 
+class ConsumptionShortcutsTestCase(ConsumptionTestBase):
+
+    def testSetForDomain(self):
+        self.assertEqual(None, DefaultConsumption.get_domain_default(domain))
+        default = set_default_consumption_for_domain(domain, 50)
+        self.assertEqual(50, DefaultConsumption.get_domain_default(domain).default_consumption)
+        self.assertEqual(1, _count_consumptions())
+        updated = set_default_consumption_for_domain(domain, 40)
+        self.assertEqual(default._id, updated._id)
+        self.assertEqual(40, DefaultConsumption.get_domain_default(domain).default_consumption)
+        self.assertEqual(1, _count_consumptions())
+
+    def testSetForProduct(self):
+        self.assertEqual(None, DefaultConsumption.get_product_default(domain, product_id))
+        default = set_default_consumption_for_product(domain, product_id, 50)
+        self.assertEqual(50, DefaultConsumption.get_product_default(domain, product_id).default_consumption)
+        self.assertEqual(1, _count_consumptions())
+        updated = set_default_consumption_for_product(domain, product_id, 40)
+        self.assertEqual(default._id, updated._id)
+        self.assertEqual(40, DefaultConsumption.get_product_default(domain, product_id).default_consumption)
+        self.assertEqual(1, _count_consumptions())
+
+    def testSetForSupplyPoint(self):
+        self.assertEqual(None, DefaultConsumption.get_supply_point_default(domain, product_id, supply_point_id))
+        default = set_default_consumption_for_supply_point(domain, product_id, supply_point_id, 50)
+        self.assertEqual(50, DefaultConsumption.get_supply_point_default(domain, product_id, supply_point_id).default_consumption)
+        self.assertEqual(1, _count_consumptions())
+        updated = set_default_consumption_for_supply_point(domain, product_id, supply_point_id, 40)
+        self.assertEqual(default._id, updated._id)
+        self.assertEqual(40, DefaultConsumption.get_supply_point_default(domain, product_id, supply_point_id).default_consumption)
+        self.assertEqual(1, _count_consumptions())
+
+
 def _create_domain_consumption(amt, domain=domain):
     DefaultConsumption(domain=domain, default_consumption=amt, type=TYPE_DOMAIN).save()
 
+
 def _create_product_consumption(amt, domain=domain, product_id=product_id):
     DefaultConsumption(domain=domain, default_consumption=amt, type=TYPE_PRODUCT, product_id=product_id).save()
+
 
 def _create_type_consumption(amt, domain=domain, product_id=product_id, type_id=type_id):
     DefaultConsumption(domain=domain, default_consumption=amt, type=TYPE_SUPPLY_POINT_TYPE, product_id=product_id,
                        supply_point_type=type_id).save()
 
+
 def _create_id_consumption(amt, domain=domain, product_id=product_id, supply_point_id=supply_point_id):
     DefaultConsumption(domain=domain, default_consumption=amt, type=TYPE_SUPPLY_POINT, product_id=product_id,
                        supply_point_id=supply_point_id).save()
+
+
+def _count_consumptions():
+    qs = DefaultConsumption.get_db().view('consumption/consumption_index', reduce=True)
+    return qs.one()['value'] if qs else 0
