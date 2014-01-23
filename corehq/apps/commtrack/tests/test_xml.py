@@ -2,7 +2,7 @@ import random
 import uuid
 from datetime import datetime
 from dimagi.utils.parsing import json_format_datetime
-from casexml.apps.stock.const import TRANSACTION_TYPE_BALANCE
+from casexml.apps.stock import const as stockconst
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.tests.util import CommTrackTest, get_ota_balance_xml
@@ -32,7 +32,7 @@ class CommTrackOTATest(CommTrackTest):
     def test_ota_basic(self):
         user = self.reporters['fixed']
         date = datetime.utcnow()
-        report = StockReport.objects.create(form_id=uuid.uuid4().hex, date=date, type=TRANSACTION_TYPE_BALANCE)
+        report = StockReport.objects.create(form_id=uuid.uuid4().hex, date=date, type=stockconst.REPORT_TYPE_BALANCE)
         amounts = [(p._id, i*10) for i, p in enumerate(self.products)]
         for product_id, amount in amounts:
             StockTransaction.objects.create(
@@ -58,7 +58,8 @@ class CommTrackOTATest(CommTrackTest):
     def test_ota_multiple_stocks(self):
         user = self.reporters['fixed']
         date = datetime.utcnow()
-        report = StockReport.objects.create(form_id=uuid.uuid4().hex, date=date, type=TRANSACTION_TYPE_BALANCE)
+        report = StockReport.objects.create(form_id=uuid.uuid4().hex, date=date,
+                                            type=stockconst.REPORT_TYPE_BALANCE)
         amounts = [(p._id, i*10) for i, p in enumerate(self.products)]
 
         section_ids = sorted(('stock', 'losses', 'consumption'))
@@ -133,7 +134,7 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         amounts = [(p._id, float(i*10)) for i, p in enumerate(self.products)]
         self.submit_xml_form(balance_submission(amounts))
         for product, amt in amounts:
-            self.check_product_stock(self.sp, product, amt, amt)
+            self.check_product_stock(self.sp, product, amt, 0)
 
     def test_balance_consumption(self):
         initial = float(100)
@@ -143,7 +144,13 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         final_amounts = [(p._id, float(50 - 10*i)) for i, p in enumerate(self.products)]
         self.submit_xml_form(balance_submission(final_amounts))
         for product, amt in final_amounts:
-            self.check_product_stock(self.sp, product, amt, amt - initial)
+            self.check_product_stock(self.sp, product, amt, 0)
+            inferred = amt - initial
+            inferred_txn = StockTransaction.objects.get(case_id=self.sp._id, product_id=product,
+                                              subtype=stockconst.TRANSACTION_SUBTYPE_INFERRED)
+            self.assertEqual(inferred, inferred_txn.quantity)
+            self.assertEqual(amt, inferred_txn.stock_on_hand)
+            self.assertEqual(stockconst.TRANSACTION_TYPE_CONSUMPTION, inferred_txn.type)
 
     def test_balance_submit_multiple_stocks(self):
         def _random_amounts():
@@ -156,7 +163,7 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
 
         for section_id, amounts in stock_amounts:
             for product, amt in amounts:
-                self.check_product_stock(self.sp, product, amt, amt, section_id)
+                self.check_product_stock(self.sp, product, amt, 0, section_id)
 
     def test_transfer_dest_only(self):
         amounts = [(p._id, float(i*10)) for i, p in enumerate(self.products)]
@@ -193,7 +200,6 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         for product, amt in transfers:
             self.check_product_stock(self.sp, product, initial + amt, amt)
 
-
     def test_transfer_first_doc_order(self):
         # first set to 100
         initial = float(100)
@@ -207,7 +213,7 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         balance_amounts = [(p._id, final) for p in self.products]
         self.submit_xml_form(transfer_first(transfers, balance_amounts))
         for product, amt in transfers:
-            self.check_product_stock(self.sp, product, final, final - (initial + amt))
+            self.check_product_stock(self.sp, product, final, 0)
 
 
 class CommTrackRequisitionTest(CommTrackSubmissionTest):
@@ -223,12 +229,12 @@ class CommTrackRequisitionTest(CommTrackSubmissionTest):
         self.assertEqual(self.sp._id, index.referenced_id)
         self.assertEqual('parent_id', index.identifier)
         for product, amt in amounts:
-            self.check_stock_models(req, product, amt, amt)
+            self.check_stock_models(req, product, amt, 0, 'stock')
 
         self.submit_xml_form(create_fulfillment_xml(req, amounts))
 
         for product, amt in amounts:
-            self.check_stock_models(req, product, 0, -amt)
+            self.check_stock_models(req, product, 0, -amt, 'stock')
 
         for product, amt in amounts:
-            self.check_product_stock(self.sp, product, amt, amt)
+            self.check_product_stock(self.sp, product, amt, amt, 'stock')

@@ -1,17 +1,18 @@
 import uuid
 from xml.etree import ElementTree
-import collections
 from couchdbkit.exceptions import ResourceNotFound
 from couchdbkit.ext.django.schema import *
 from django.db import transaction
 from django.utils.translation import ugettext as _
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.stock import const as stockconst
+from casexml.apps.stock.consumption import ConsumptionConfiguration
 from casexml.apps.stock.models import StockReport as DbStockReport, StockTransaction as DbStockTransaction
 from casexml.apps.case.xml import V2
 from corehq import Domain
-
 from corehq.apps.commtrack import const
+from corehq.apps.consumption.shortcuts import get_default_consumption
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.couch.loosechange import map_reduce
@@ -253,6 +254,7 @@ class ConsumptionConfig(DocumentSchema):
     min_transactions = IntegerProperty(default=2)
     min_window = IntegerProperty(default=10)
     optimal_window = IntegerProperty()
+    use_supply_point_type_default_consumption = BooleanProperty(default=False)
 
 
 class StockLevelsConfig(DocumentSchema):
@@ -283,6 +285,9 @@ class AlertConfig(DocumentSchema):
     stock_out_rates = BooleanProperty(default=False)
     non_report = BooleanProperty(default=False)
 
+class StockRestoreConfig(DocumentSchema):
+
+    section_to_consumption_types = DictProperty()
 
 class CommtrackConfig(Document):
 
@@ -308,6 +313,7 @@ class CommtrackConfig(Document):
     use_auto_consumption = BooleanProperty(default=False)
     consumption_config = SchemaProperty(ConsumptionConfig)
     stock_levels_config = SchemaProperty(StockLevelsConfig)
+    ota_restore_config = SchemaProperty(StockRestoreConfig)
 
     @property
     def multiaction_keyword(self):
@@ -339,6 +345,35 @@ class CommtrackConfig(Document):
         if self.requisitions_enabled:
             actions += [_action(a, 'req') for a in self.requisition_config.actions]
         return dict((a.keyword, a) for a in actions).get(keyword)
+
+    def get_consumption_config(self):
+        def _default_consumption_function(case_id, product_id):
+            # note: for now as an optimization hack, per-supply point type is not supported
+            # unless explicitly configured, because it will require looking up the case
+            facility_type = None
+            if self.consumption_config.use_supply_point_type_default_consumption:
+                try:
+                    supply_point = SupplyPointCase.get(case_id)
+                    facility_type = supply_point.location.location_type
+                except ResourceNotFound:
+                    pass
+            return get_default_consumption(self.domain, product_id, facility_type, case_id)
+
+        return ConsumptionConfiguration(
+            min_periods=self.consumption_config.min_transactions,
+            min_window=self.consumption_config.min_window,
+            max_window=self.consumption_config.optimal_window,
+            default_consumption_function=_default_consumption_function,
+        )
+
+    def get_ota_restore_settings(self):
+        # for some reason it doesn't like this import
+        from casexml.apps.phone.restore import StockSettings
+        return StockSettings(
+            section_to_consumption_types=self.ota_restore_config.section_to_consumption_types,
+            consumption_config=self.get_consumption_config(),
+        )
+
 
     """
     @property
@@ -498,6 +533,7 @@ class NewStockReport(object):
 
     @transaction.commit_on_success
     def create_models(self):
+        # todo: this function should probably move to somewhere in casexml.apps.stock
         report = DbStockReport.objects.create(form_id=self.form_id, date=self.timestamp, type=self.tag)
         for txn in self.transactions:
             db_txn = DbStockTransaction(
@@ -508,9 +544,10 @@ class NewStockReport(object):
             )
             previous_transaction = db_txn.get_previous_transaction()
             db_txn.type = txn.action
+            db_txn.subtype = txn.subaction
             if self.tag == 'balance':
                 db_txn.stock_on_hand = txn.quantity
-                db_txn.quantity = txn.quantity - (previous_transaction.stock_on_hand if previous_transaction else 0)
+                db_txn.quantity = 0
             else:
                 assert self.tag == 'transfer'
                 db_txn.quantity = txn.relative_quantity
@@ -569,7 +606,7 @@ class StockTransaction(Document):
             }
         def _inferred(val):
             return {
-                'subaction': const.INFERRED_TRANSACTION,
+                'subaction': stockconst.TRANSACTION_SUBTYPE_INFERRED,
             }
         def _config(val):
             ret = {

@@ -22,8 +22,6 @@ ORDER_CASE_TYPE = 'commtrack-order'
 SUPPLY_POINT_PRODUCT_CASE_TYPE = 'supply-point-product' 
 COMMTRACK_SUPPLY_POINT_PRODUCT_XMLNS = 'http://openrosa.org/commtrack/supply_point_product'
 
-INFERRED_TRANSACTION = '_inferred'
-
 def is_commtrack_case(case):
     return case.type in [
         SUPPLY_POINT_CASE_TYPE,

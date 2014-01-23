@@ -32,7 +32,7 @@ class StockReportTest(CommTrackTest):
             self.assertEqual(self.sp.location_, spp.location_)
             self.assertEqual(Decimal(amt), spp.current_stock)
 
-        # todo: right now this make one report per balance when really they should all be in the same one
+        # todo: right now this makes one report per balance when really they should all be in the same one
         self.assertEqual(3, StockReport.objects.count())
         for report in StockReport.objects.all():
             self.assertEqual(forms[0]._id, report.form_id)

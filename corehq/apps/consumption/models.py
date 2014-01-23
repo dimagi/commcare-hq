@@ -1,4 +1,3 @@
-from decimal import Decimal
 from couchdbkit.ext.django.schema import Document, StringProperty, DecimalProperty
 
 
@@ -6,6 +5,7 @@ TYPE_DOMAIN = 'domain'
 TYPE_PRODUCT = 'product'
 TYPE_SUPPLY_POINT_TYPE = 'supply-point-type'
 TYPE_SUPPLY_POINT = 'supply-point'
+
 
 class DefaultConsumption(Document):
     """
@@ -18,17 +18,22 @@ class DefaultConsumption(Document):
     supply_point_id = StringProperty()
     default_consumption = DecimalProperty()
 
+    @classmethod
+    def get_domain_default(cls, domain):
+        return cls._by_index_key([domain, None, None, None])
 
-def get_default_consumption(domain, product_id, case_type, case_id):
-    keys = [
-        [domain, product_id, {}, case_id],
-        [domain, product_id, case_type, None],
-        [domain, product_id, None, None],
-        [domain, None, None, None],
-    ]
-    results = DefaultConsumption.get_db().view(
-        'consumption/consumption_index',
-        keys=keys, reduce=False, limit=1, descending=True,
-    )
-    results = results.one()
-    return Decimal(results['value']) if results else None
+    @classmethod
+    def get_product_default(cls, domain, product_id):
+        return cls._by_index_key([domain, product_id, None, None])
+
+    @classmethod
+    def get_supply_point_default(cls, domain, product_id, supply_point_id):
+        return cls._by_index_key([domain, product_id, {}, supply_point_id])
+
+    @classmethod
+    def _by_index_key(cls, key):
+        return cls.view('consumption/consumption_index',
+            key=key,
+            reduce=False,
+            include_docs=True,
+        ).one()
