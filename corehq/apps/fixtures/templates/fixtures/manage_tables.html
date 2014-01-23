@@ -15,6 +15,7 @@
 {% block js-inline %}
     <script>
         var FixtureDownloadUrl = "{% url "download_fixtures" domain%}" +"?";
+        var FixtureFileDownloadUrl = "{% url "download_fixture_file" domain%}" +"?";
     </script>
 {% endblock %}
 
@@ -40,6 +41,7 @@
         </div>
     </div>
 </header>
+
 <div class="row-fluid" id="fixtures-ui">
         <div class="span10">
             <h4 class="pull-left">
@@ -108,25 +110,45 @@
             </p>
         </div>
 </div>
-        <div class="row-fluid" id="fixture-upload">
-                <form class="form form-horizontal span10" action="{% url "upload_fixtures" domain%}" method="post" enctype="multipart/form-data">
-                    <div class="form-actions" style="padding-left: 1em;">
-                        <fieldset class="modal-body">
-                                <label for="bulk_upload_file" class="control-label">{% trans "Fixtures File" %}</label>
-                                <div class="controls">
-                                    <input id="bulk_upload_file" type="file" name="file" data-bind="value: file"/>
-                                </div>
-                                <label for="replace-check" class="control-label">{% trans "Replace existing Tables" %}</label>
-                                <div class="controls">
-                                    <input id="replace-check" type="checkbox" name="replace"/>
-                                </div>
-                        </fieldset>
-                        <div class="controls modal-footer">
-                                    <button type="submit" class="btn btn-primary" data-bind="attr: {'disabled': !file()}">
-                                        <i class="icon icon-cloud-upload"></i> {% trans 'Upload Tables' %}
-                                    </button>
-                                </div>
-                    </div>
-                </form>
+<div class="row-fluid" id="fixture-upload">
+        <form class="form form-horizontal span10" action="{% url "upload_fixtures" domain%}" method="post" enctype="multipart/form-data">
+            <div class="form-actions" style="padding-left: 1em;">
+                <fieldset class="modal-body">
+                        <label for="bulk_upload_file" class="control-label">{% trans "Fixtures File" %}</label>
+                        <div class="controls">
+                            <input id="bulk_upload_file" type="file" name="file" data-bind="value: file"/>
+                        </div>
+                        <label for="replace-check" class="control-label">{% trans "Replace existing Tables" %}</label>
+                        <div class="controls">
+                            <input id="replace-check" type="checkbox" name="replace"/>
+                        </div>
+                </fieldset>
+                <div class="controls modal-footer">
+                            <button type="submit" class="btn btn-primary" data-bind="attr: {'disabled': !file()}">
+                                <i class="icon icon-cloud-upload"></i> {% trans 'Upload Tables' %}
+                            </button>
+                        </div>
+            </div>
+        </form>
+</div>
+<div class="modal hide fade" id="fixture-download">
+    <div class="modal-header">
+        <a class="close" data-dismiss="modal">&times;</a>
+        <h3>{% trans "Downloading Lookup Tables" %}</h3>
+    </div>
+    <div class="modal-body">
+        <div class="span12" id="downloading">
+          <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
+          {% trans 'Processing data. Please wait...' %}
         </div>
+        <div class="span12 hide" id="download-complete">
+            <p class="alert alert-success">{% trans "Your file is ready." %}</p>
+            <a href="#" id="file-download-url">
+            <button type="submit" class="btn btn-primary" data-bind="attr:">
+                <i class="icon icon-cloud-download"></i> {% trans 'Download File Now' %}
+            </button>
+            </a>
+        </div>
+    </div>
+</div>
 {% endblock %}
