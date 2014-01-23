@@ -219,7 +219,6 @@ class EditSubscriptionView(AccountingSectionView):
             'credit_form': self.get_appropriate_credit_form(self.subscription),
             'credit_list': CreditLine.objects.filter(subscription=self.subscription),
             'form': self.get_appropriate_subscription_form(self.subscription),
-            'parent_link': '<a href="%s">%s<a>' % (SubscriptionInterface.get_url(), SubscriptionInterface.name),
             'subscription': self.subscription,
             'subscription_canceled': self.subscription_canceled if hasattr(self, 'subscription_canceled') else False
         })
