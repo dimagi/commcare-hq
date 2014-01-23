@@ -9,8 +9,8 @@ from datetime import date, timedelta
 from corehq.apps.commtrack.const import RequisitionActions
 from dimagi.utils.create_unique_filter import create_unique_filter
 from dimagi.utils.decorators.memoized import memoized
-from receiver.util import spoof_submission
-from corehq.apps.receiverwrapper.util import get_submit_url
+from dimagi.utils.parsing import string_to_datetime
+from corehq.apps.receiverwrapper.util import submit_form_locally
 from dimagi.utils.couch.loosechange import map_reduce
 import logging
 from corehq.apps.commtrack.models import CommtrackConfig, RequisitionCase, SupplyPointProductCase
@@ -77,9 +77,9 @@ def process(domain, instance):
     submission = etree.tostring(root)
     logger.debug('submitting: %s' % submission)
 
-    spoof_submission(get_submit_url(domain), submission,
-                     headers={'HTTP_X_SUBMIT_TIME': submit_time},
-                     hqsubmission=False)
+    submit_form_locally(submission, domain,
+                        received_on=string_to_datetime(submit_time))
+
 
 class StockTransaction(object):
     def __init__(self, **kwargs):
