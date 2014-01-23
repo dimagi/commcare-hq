@@ -11,14 +11,13 @@ def get_submit_url(domain, app_id=None):
         return "/a/{domain}/receiver/".format(domain=domain)
 
 
-def submit_form_locally(instance, domain):
+def submit_form_locally(instance, domain, **kwargs):
+    # intentionally leave these unauth'd for now
+    kwargs['auth_context'] = kwargs.get('auth_context') or DefaultAuthContext()
     response = receiver.SubmissionPost(
-        app_id=None,
         domain=domain,
         instance=instance,
-        attachments={},
-        # intentionally leave these unauth'd for now
-        auth_context=DefaultAuthContext()
+        **kwargs
     ).get_response()
     if not 200 <= response.status_code < 300:
         raise LocalSubmissionError('Error submitting (status code %s): %s' % (
