@@ -1,0 +1,5 @@
+django-jenkins==0.14.1
+pep8==1.4.6
+pylint==1.0.0
+pyflakes==0.7.3
+coverage==3.7
