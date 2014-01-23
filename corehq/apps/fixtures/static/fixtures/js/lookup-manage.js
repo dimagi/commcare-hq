@@ -313,13 +313,25 @@ $(function () {
         };
 
         self.downloadExcels = function(element, event) {
-            var tables = []
+            var tables = [];
+            var FixtureUrl = FixtureDownloadUrl;
             for (var i in self.selectedTables()) {
                 tables.push(self.selectedTables()[i]);
-                FixtureDownloadUrl = FixtureDownloadUrl + "table_id="+self.selectedTables()[i]+"&";
+                FixtureUrl = FixtureUrl + "table_id="+self.selectedTables()[i]+"&";
             }
-            if (tables.length > 0)
-            window.location.replace(FixtureDownloadUrl);
+            $("#fixture-download").modal();
+            if (tables.length > 0){
+                $.ajax({
+                    url: FixtureUrl,
+                    dataType: 'json',
+                }).success(function (response) {
+                    $("#downloading").hide();
+                    $("#download-complete").show();
+                    $("#file-download-url").attr("href", FixtureFileDownloadUrl+"path="+response.path);
+                    console.log(response);
+                });
+            }
+            
         };
 
         self.addDataType = function () {
@@ -378,4 +390,8 @@ $(function () {
     ko.applyBindings(new FileUpload(), $('#fixture-upload')[0]);
     el.show();
     app.loadData();
+    $("#fixture-download").on("hidden", function(){
+                    $("#downloading").show();
+                    $("#download-complete").hide();
+    });
 });

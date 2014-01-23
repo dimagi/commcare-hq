@@ -433,7 +433,16 @@ def download_item_lists(request, domain, html_response=False):
     with os.fdopen(fd, 'w') as temp:
         export_raw(tuple(header_groups), tuple(value_groups), temp)
     format = Format.XLS_2007
-    return export_response(open(path), format, "%s_fixtures" % domain)
+    return json_response({"path": path})
+
+def download_file(request, domain):
+    path = request.GET.get("path")
+    format = Format.XLS_2007
+    try:
+        response = export_response(open(path), format, "%s_fixtures" % domain)
+        return response
+    except IOError:
+        return HttpResponseRedirect(reverse("fixture_interface_dispatcher", args=[], kwargs={'domain': domain, 'report_slug': 'edit_lookup_tables'}))
 
 class UploadItemLists(TemplateView):
 

@@ -19,4 +19,5 @@ urlpatterns = patterns('corehq.apps.fixtures.views',
     url(r'^edit_lookup_tables/users/$', 'users'),
     url(r'^edit_lookup_tables/download/$', 'download_item_lists', name="download_fixtures"),
     url(r'^edit_lookup_tables/upload/$', UploadItemLists.as_view(), name='upload_fixtures'),
+    url(r'^edit_lookup_tables/file/$', 'download_file', name="download_fixture_file"),
 )
