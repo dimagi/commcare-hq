@@ -289,24 +289,38 @@ class CreditForm(forms.Form):
     def adjust_credit(self, account=None, subscription=None):
         amount = self.cleaned_data['amount']
         note = self.cleaned_data['note']
+
         def get_account_for_rate():
             return account if account is not None else subscription.account
-        if self.cleaned_data['rate_type'] == 'Product':
+
+        def add_product_rate():
             CreditLine.add_rate_credit(amount, get_account_for_rate(),
                                        product_rate=SoftwareProductRate.objects.get(id=self.cleaned_data['product']),
                                        subscription=subscription,
                                        note=note)
-        elif self.cleaned_data['rate_type'] == 'Feature':
+
+        def add_feature_rate():
             CreditLine.add_rate_credit(amount, get_account_for_rate(),
                                        feature_rate=FeatureRate.objects.get(id=self.cleaned_data['feature']),
                                        subscription=subscription,
                                        note=note)
-        elif account is not None:
+
+        def add_account_level():
             CreditLine.add_account_credit(amount, account,
                                           note=note)
-        elif subscription is not None:
+
+        def add_subscription_level():
             CreditLine.add_subscription_credit(amount, subscription,
                                                note=note)
+
+        if self.cleaned_data['rate_type'] == 'Product':
+            add_product_rate()
+        elif self.cleaned_data['rate_type'] == 'Feature':
+            add_feature_rate()
+        elif account is not None:
+            add_account_level()
+        elif subscription is not None:
+            add_subscription_level()
         else:
             raise ValueError('invalid credit adjustment')
 
