@@ -693,11 +693,12 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         """
         Get users from ES.  Use instead of by_domain()
         This is faster than big db calls, but only returns partial data.
-        Set wrap to False to get a raw dict object (much faster)
+        Set wrap to False to get a raw dict object (much faster).
+        This raw dict can be passed to _report_user_dict.
         The save method has been disabled.
         """
         fields = fields or ['_id', 'username', 'first_name', 'last_name',
-                'email']
+                'doc_type', 'is_active', 'email']
         raw = es_wrapper('users', domain=domain, doc_type=cls.__name__,
                 fields=fields, start_at=start_at, size=size)
         if not wrap:
