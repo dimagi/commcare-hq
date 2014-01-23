@@ -70,31 +70,28 @@ class NewBillingAccountView(BillingAccountsSectionView):
 
 
 def adjust_credit(credit_form, account=None, subscription=None):
-    if account is not None:
-        credit_line_kwargs = {
-            'account': account,
-            'subscription': None
-        }
+    amount = credit_form.cleaned_data['amount']
+    note = credit_form.cleaned_data['note']
+    def get_account_for_rate():
+        return account if account is not None else subscription.account
+    if credit_form.cleaned_data['rate_type'] == 'Product':
+        CreditLine.add_rate_credit(amount, get_account_for_rate(),
+                                   product_rate=SoftwareProductRate.objects.get(id=credit_form.cleaned_data['product']),
+                                   subscription=subscription,
+                                   note=note)
+    elif credit_form.cleaned_data['rate_type'] == 'Feature':
+        CreditLine.add_rate_credit(amount, get_account_for_rate(),
+                                   feature_rate=FeatureRate.objects.get(id=credit_form.cleaned_data['feature']),
+                                   subscription=subscription,
+                                   note=note)
+    elif account is not None:
+        CreditLine.add_account_credit(amount, account,
+                                      note=note)
     elif subscription is not None:
-        credit_line_kwargs = {
-            'account': subscription.account,
-            'subscription': subscription
-        }
+        CreditLine.add_subscription_credit(amount, subscription,
+                                           note=note)
     else:
         raise ValueError('invalid credit adjustment')
-    if credit_form.cleaned_data['rate_type'] == 'Product':
-        credit_line_kwargs.update(
-            product_rate=SoftwareProductRate.objects.get(id=credit_form.cleaned_data['product']))
-    elif credit_form.cleaned_data['rate_type'] == 'Feature':
-        credit_line_kwargs.update(
-            feature_rate=FeatureRate.objects.get(id=credit_form.cleaned_data['feature']))
-    else:
-        credit_line_kwargs.update(feature_rate=None,
-                                  product_rate=None)
-    credit_line, _ = CreditLine.objects.get_or_create(**credit_line_kwargs)
-    credit_line.adjust_credit_balance(credit_form.cleaned_data['amount'],
-                                      note=credit_form.cleaned_data['note'],
-                                      )
 
 
 class ManageBillingAccountView(BillingAccountsSectionView):
