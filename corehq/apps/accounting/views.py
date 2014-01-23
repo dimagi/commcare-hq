@@ -69,31 +69,6 @@ class NewBillingAccountView(BillingAccountsSectionView):
             return self.get(request, *args, **kwargs)
 
 
-def adjust_credit(credit_form, account=None, subscription=None):
-    amount = credit_form.cleaned_data['amount']
-    note = credit_form.cleaned_data['note']
-    def get_account_for_rate():
-        return account if account is not None else subscription.account
-    if credit_form.cleaned_data['rate_type'] == 'Product':
-        CreditLine.add_rate_credit(amount, get_account_for_rate(),
-                                   product_rate=SoftwareProductRate.objects.get(id=credit_form.cleaned_data['product']),
-                                   subscription=subscription,
-                                   note=note)
-    elif credit_form.cleaned_data['rate_type'] == 'Feature':
-        CreditLine.add_rate_credit(amount, get_account_for_rate(),
-                                   feature_rate=FeatureRate.objects.get(id=credit_form.cleaned_data['feature']),
-                                   subscription=subscription,
-                                   note=note)
-    elif account is not None:
-        CreditLine.add_account_credit(amount, account,
-                                      note=note)
-    elif subscription is not None:
-        CreditLine.add_subscription_credit(amount, subscription,
-                                           note=note)
-    else:
-        raise ValueError('invalid credit adjustment')
-
-
 class ManageBillingAccountView(BillingAccountsSectionView):
     template_name = 'accounting/accounts.html'
     urlname = 'manage_billing_account'
@@ -153,7 +128,7 @@ class ManageBillingAccountView(BillingAccountsSectionView):
         if 'account' in self.request.POST and self.account_form.is_valid():
             self.account_form.update_account_and_contacts(self.account)
         elif 'adjust_credit' in self.request.POST and self.credit_form.is_valid():
-            adjust_credit(self.credit_form, account=self.account)
+            self.credit_form.adjust_credit(account=self.account)
 
         return self.get(request, *args, **kwargs)
 
@@ -271,7 +246,7 @@ class EditSubscriptionView(AccountingSectionView):
         if 'set_subscription' in self.request.POST and self.subscription_form.is_valid():
             self.subscription_form.update_subscription(self.subscription)
         elif 'adjust_credit' in self.request.POST and self.credit_form.is_valid():
-            adjust_credit(self.credit_form, subscription=self.subscription)
+            self.credit_form.adjust_credit(subscription=self.subscription)
         elif 'cancel_subscription' in self.request.POST:
             self.cancel_subscription()
         return self.get(request, *args, **kwargs)
