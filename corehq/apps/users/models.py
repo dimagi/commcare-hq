@@ -705,9 +705,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         def save(*args, **kwargs):
             raise NotImplementedError("This is a fake user, don't save it!")
         ESUser = type(cls.__name__, (cls,), {'save': save})
-        def make_user(user):
-            return ESUser(user)
-        return [make_user(u) for u in raw]
+        return [ESUser(u) for u in raw]
 
     class AccountTypeError(Exception):
         pass

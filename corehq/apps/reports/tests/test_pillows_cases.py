@@ -469,7 +469,7 @@ class testReportCaseProcessing(TestCase):
         pillow = XFormPillow(create_index=False, online=False)
         changed = pillow.change_transform(xform)
 
-        self.assertIsNone(changed['form']['case']['@date_modified'])
+        self.assertIsNone(changed['form']['case'].get('@date_modified'))
         self.assertIsNotNone(xform['form']['case']['@date_modified'])
 
 
@@ -487,7 +487,7 @@ class testReportCaseProcessing(TestCase):
 
 
         [self.assertIsNotNone(x['@date_modified']) for x in orig_cases]
-        [self.assertIsNone(x['@date_modified']) for x in changed_cases]
+        [self.assertIsNone(x.get('@date_modified')) for x in changed_cases]
 
     def testOwnerIDSetOnTransform(self):
         """

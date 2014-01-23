@@ -3,7 +3,7 @@ from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe, mark_for_escaping
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_noop, ugettext_lazy
 from corehq.apps.domain.utils import get_adm_enabled_domains
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
@@ -606,7 +606,7 @@ class MessagingTab(UITab):
         if self.project.commtrack_enabled:
             items.append(
                 (_("CommTrack"), [
-                    {'title': _("Subscribe to SMS Reports"),
+                    {'title': ugettext_lazy("Subscribe to SMS Reports"),
                     'url': reverse(SubscribeSMSView.urlname, args=[self.domain])},])
             )
 
@@ -647,7 +647,7 @@ class MessagingTab(UITab):
         if self.couch_user.is_superuser or self.couch_user.is_domain_admin(self.domain):
             items.append(
                 (_("Settings"), [
-                    {'title': _("General Settings"),
+                    {'title': ugettext_lazy("General Settings"),
                      'url': reverse('sms_settings', args=[self.domain])},
                 ])
             )

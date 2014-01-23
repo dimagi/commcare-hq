@@ -238,4 +238,3 @@ def require_privilege(privilege_slug, fallback_view=None):
         return wrapped_view
 
     return decorator
-
