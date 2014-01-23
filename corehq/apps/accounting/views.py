@@ -211,20 +211,18 @@ class EditSubscriptionView(AccountingSectionView):
             return self.credit_form
         return CreditForm(subscription.id, False)
 
-    def data(self):
-        return {'cancel_form': CancelForm(),
-                'credit_form': self.get_appropriate_credit_form(self.subscription),
-                'credit_list': CreditLine.objects.filter(subscription=self.subscription),
-                'form': self.get_appropriate_subscription_form(self.subscription),
-                'parent_link': '<a href="%s">%s<a>' % (SubscriptionInterface.get_url(), SubscriptionInterface.name),
-                'subscription': self.subscription,
-                'subscription_canceled': self.subscription_canceled if hasattr(self, 'subscription_canceled') else False
-                }
-
     @property
     def page_context(self):
         context = super(EditSubscriptionView, self).main_context
-        context.update(self.data())
+        context.update({
+            'cancel_form': CancelForm(),
+            'credit_form': self.get_appropriate_credit_form(self.subscription),
+            'credit_list': CreditLine.objects.filter(subscription=self.subscription),
+            'form': self.get_appropriate_subscription_form(self.subscription),
+            'parent_link': '<a href="%s">%s<a>' % (SubscriptionInterface.get_url(), SubscriptionInterface.name),
+            'subscription': self.subscription,
+            'subscription_canceled': self.subscription_canceled if hasattr(self, 'subscription_canceled') else False
+        })
         return context
 
     @property
