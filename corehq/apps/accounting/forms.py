@@ -343,3 +343,63 @@ class CancelForm(forms.Form):
                 cancel_subscription_button
             )
         )
+
+
+class PlanInformationForm(forms.Form):
+    name = forms.CharField(max_length=80) # require uniqueness
+    description = forms.CharField(required=False)
+    edition = forms.ChoiceField(choices=SoftwarePlanEdition.CHOICES)
+    visibility = forms.ChoiceField(choices=SoftwarePlanVisibility.CHOICES)
+
+    def __init__(self, plan, *args, **kwargs):
+        if plan is not None:
+            kwargs['initial'] = {
+                'name': plan.name,
+                'description': plan.description,
+                'edition': plan.edition,
+                'visibility': plan.visibility,
+            }
+        else:
+            kwargs['initial'] = {
+                'edition': SoftwarePlanEdition.ENTERPRISE,
+                'visibility': SoftwarePlanVisibility.INTERNAL,
+            }
+        super(PlanInformationForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            Fieldset(
+            'Plan Information',
+                'name',
+                'description',
+                'edition',
+                'visibility',
+            ),
+            FormActions(
+                ButtonHolder(
+                    Submit('plan_information',
+                           '%s Software Plan' % ('Update' if plan is not None else 'Create'))
+                )
+            )
+        )
+
+    def clean_name(self):
+        return self.cleaned_data['name'] # TODO - implement
+
+    def create_plan(self):
+        name = self.cleaned_data['name']
+        description = self.cleaned_data['description']
+        edition = self.cleaned_data['edition']
+        visibility = self.cleaned_data['visibility']
+        plan = SoftwarePlan(name=name,
+                            description=description,
+                            edition=edition,
+                            visibility=visibility)
+        plan.save()
+        return plan
+
+    def update_plan(self, plan):
+        plan.name = self.cleaned_data['name']
+        plan.description = self.cleaned_data['description']
+        plan.edition = self.cleaned_data['edition']
+        plan.visibility = self.cleaned_data['visibility']
+        plan.save()
