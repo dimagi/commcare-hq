@@ -16,14 +16,17 @@ class NameFilter(BaseSingleOptionFilter):
     slug = 'name'
     label = _("Name")
     default_text = _("All")
-    options = [(account.name, account.name) for account in BillingAccount.objects.all()]
+
+    @property
+    def options(self):
+        return [(account.name, account.name) for account in BillingAccount.objects.all()]
 
 
 def clean_options(options):
     cleaned_options = []
     for option in options:
         if option[1] is not None and option[1].strip() != '':
-           cleaned_options.append(option)
+            cleaned_options.append(option)
     return sorted([_ for _ in set(cleaned_options)])
 
 
@@ -31,24 +34,33 @@ class SalesforceAccountIDFilter(BaseSingleOptionFilter):
     slug = 'salesforce_account_id'
     label = _("Salesforce Account ID")
     default_text = _("All")
-    options = clean_options([(account.salesforce_account_id, account.salesforce_account_id)
-                             for account in BillingAccount.objects.all()])
+
+    @property
+    def options(self):
+        return clean_options([(account.salesforce_account_id, account.salesforce_account_id)
+                              for account in BillingAccount.objects.all()])
 
 
 class SubscriberFilter(BaseSingleOptionFilter):
     slug = 'subscriber'
     label = _('Subscriber')
     default_text = _("All")
-    options = clean_options([(subscription.subscriber.domain, subscription.subscriber.domain)
-                             for subscription in Subscription.objects.all()])
+
+    @property
+    def options(self):
+        return clean_options([(subscription.subscriber.domain, subscription.subscriber.domain)
+                              for subscription in Subscription.objects.all()])
 
 
 class SalesforceContractIDFilter(BaseSingleOptionFilter):
     slug = 'salesforce_contract_id'
     label = _('Salesforce Contract ID')
     default_text = _("All")
-    options = clean_options([(subscription.salesforce_contract_id, subscription.salesforce_contract_id)
-                             for subscription in Subscription.objects.all()])
+
+    @property
+    def options(self):
+        return clean_options([(subscription.salesforce_contract_id, subscription.salesforce_contract_id)
+                              for subscription in Subscription.objects.all()])
 
 
 class ActiveStatusFilter(BaseSingleOptionFilter):
