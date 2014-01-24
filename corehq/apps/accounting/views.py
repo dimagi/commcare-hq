@@ -97,8 +97,10 @@ class ManageBillingAccountView(BillingAccountsSectionView):
             return self.credit_form
         return CreditForm(account.id, True)
 
-    def data(self):
-        return {
+    @property
+    def page_context(self):
+        context = super(ManageBillingAccountView, self).main_context
+        context.update({
             'account': self.account,
             'credit_form': self.get_appropriate_credit_form(self.account),
             'credit_list': CreditLine.objects.filter(account=self.account),
@@ -108,12 +110,7 @@ class ManageBillingAccountView(BillingAccountsSectionView):
                       if len(Invoice.objects.filter(subscription=sub)) != 0 else 'None on record',
                 ) for sub in Subscription.objects.filter(account=self.account)
             ],
-        }
-
-    @property
-    def page_context(self):
-        context = super(ManageBillingAccountView, self).main_context
-        context.update(self.data())
+        })
         return context
 
     @property
