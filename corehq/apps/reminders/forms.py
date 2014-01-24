@@ -230,11 +230,11 @@ class EventListField(Field):
     help_text = None
     validators = None
     
-    def __init__(self, required=True, label="", initial=[], widget=EventWidget(), help_text="", *args, **kwargs):
+    def __init__(self, required=True, label="", initial=None, widget=None, help_text="", *args, **kwargs):
         self.required = required
         self.label = label
-        self.initial = initial
-        self.widget = widget
+        self.initial = initial or []
+        self.widget = widget or EventWidget()
         self.help_text = help_text
         self.validators = []
     
