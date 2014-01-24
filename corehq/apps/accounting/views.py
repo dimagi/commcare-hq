@@ -1,4 +1,4 @@
-from corehq import AccountingInterface, SubscriptionInterface
+from corehq import *
 from corehq.apps.accounting.forms import *
 from corehq.apps.accounting.models import *
 from corehq.apps.domain.decorators import require_superuser
@@ -252,3 +252,44 @@ class EditSubscriptionView(AccountingSectionView):
         self.subscription.is_active = False
         self.subscription.save()
         self.subscription_canceled = True
+
+
+class NewSoftwarePlanView(AccountingSectionView):
+    template_name = 'accounting/plans_base.html'
+    urlname = 'new_software_plan'
+
+    @property
+    @memoized
+    def plan_info_form(self):
+        if self.request.method == 'POST':
+            return PlanInformationForm(None, self.request.POST)
+        return PlanInformationForm(None)
+
+    @property
+    def page_context(self):
+        context = super(NewSoftwarePlanView, self).main_context
+        context.update({
+            'plan_info_form': self.plan_info_form,
+        })
+        return context
+
+    @property
+    def page_title(self):
+        return 'New Software Plan'
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname)
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': SoftwarePlanInterface.name,
+            'url': SoftwarePlanInterface.get_url(),
+        }]
+
+    def post(self, request, *args, **kwargs):
+        if self.plan_info_form.is_valid():
+            plan = self.plan_info_form.create_plan()
+            # TODO - redirect to edit page
+        return self.get(request, *args, **kwargs)

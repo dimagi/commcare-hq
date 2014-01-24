@@ -9,6 +9,7 @@ urlpatterns = patterns('corehq.apps.accounting.views',
     url(r'^accounts/new/', NewBillingAccountView.as_view(), name=NewBillingAccountView.urlname),
     url(r'^subscriptions/(\d+)/', EditSubscriptionView.as_view(), name=EditSubscriptionView.urlname),
     url(r'^accounts/new_subscription/(\d+)/', NewSubscriptionView.as_view(), name=NewSubscriptionView.urlname),
+    url(r'^software_plans/new/', NewSoftwarePlanView.as_view(), name=NewSoftwarePlanView.urlname),
     url(AccountingAdminInterfaceDispatcher.pattern(), AccountingAdminInterfaceDispatcher.as_view(),
         name=AccountingAdminInterfaceDispatcher.name()),
 )
