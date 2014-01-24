@@ -90,7 +90,7 @@ def sync_local_copies(config):
             unpushed = _count_commits('origin/{0}..{0}'.format(branch))
             unpulled = _count_commits('{0}..origin/{0}'.format(branch))
             if unpulled or unpushed:
-                print ("  [{cwd}] {branch} "
+                print ("  [{cwd}] {branch}: "
                        "{unpushed} ahead and {unpulled} behind origin").format(
                     cwd=path,
                     branch=branch,
@@ -98,7 +98,10 @@ def sync_local_copies(config):
                     unpulled=unpulled,
                 )
             else:
-                print "  [{cwd}] Everything up to date".format(cwd=path)
+                print "  [{cwd}] {branch}: Everything up to date".format(
+                    cwd=path,
+                    branch=branch,
+                )
             if unpushed:
                 unpushed_branches.append((path, branch))
             elif unpulled:
