@@ -7,12 +7,13 @@ this more general and subclass for montly reports , but I'm holding off on
 that until we actually have another use case for it.
 """
 import datetime
+import re
 from couchdbkit.exceptions import ResourceNotFound
 from sqlagg.columns import SimpleColumn, SumColumn
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.dates import DatespanFilter
 
-from corehq.apps.reports.sqlreport import SqlTabularReport, DatabaseColumn, SqlData, AggregateColumn
+from corehq.apps.reports.sqlreport import SqlTabularReport, DatabaseColumn, SqlData, SummingSqlTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin, DatespanMixin
 from corehq.apps.reports.filters.select import SelectOpenCloseFilter
 from corehq.apps.users.models import CommCareCase
@@ -422,7 +423,7 @@ def get_report(ReportClass, month=None, year=None):
 
     return Report()
 
-class HealthStatusReport(DatespanMixin, BaseReport):
+class HealthStatusReport(DatespanMixin, BaseReport, SummingSqlTabularReport):
 
     name = "Health Status Report"
     slug = "health_status_report"
@@ -435,6 +436,12 @@ class HealthStatusReport(DatespanMixin, BaseReport):
             return False
 
     @property
+    def rows(self):
+        ret = list(super(HealthStatusReport, self).rows)
+        self.total_row = calculate_total_row(ret)
+        return ret
+
+    @property
     def fields(self):
         return [BlockFilter, AWCFilter, SelectOpenCloseFilter, DatespanFilter]
 
@@ -444,4 +451,23 @@ class HealthStatusReport(DatespanMixin, BaseReport):
     def get_row_data(self, row):
         sql_data = OpmHealthStatusSqlData(DOMAIN, row._id, self.datespan)
         return self.model(row, self, sql_data.data)
+
+
+def calculate_total_row(rows):
+    regexp = re.compile('(.*?)>([0-9]+)<.*')
+    total_row = []
+    if len(rows) > 0:
+        num_cols = len(rows[0])
+        for i in range(num_cols):
+            colrows = [cr[i] for cr in rows]
+            if i == 0:
+                total_row.append("Total:")
+            else:
+                columns = [int(regexp.match(r).group(2)) for r in colrows]
+                if len(columns):
+                    total_row.append("<span style='display: block; text-align:center;'>%s</span>" % reduce(lambda x, y: x + y, columns, 0))
+                else:
+                    total_row.append('')
+
+    return total_row
 
