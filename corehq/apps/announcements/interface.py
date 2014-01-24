@@ -1,10 +1,10 @@
-from django.conf import settings
 from django.core.urlresolvers import reverse
 from corehq.apps.announcements.dispatcher import HQAnnouncementAdminInterfaceDispatcher
 from corehq.apps.announcements.forms import HQAnnouncementForm, ReportAnnouncementForm
 from corehq.apps.announcements.models import HQAnnouncement, ReportAnnouncement
 from corehq.apps.crud.interface import BaseCRUDAdminInterface
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
+
 
 class BaseHQAnnouncementsAdminInterface(BaseCRUDAdminInterface):
     section_name = "HQ Announcements"

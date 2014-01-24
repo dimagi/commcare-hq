@@ -9,6 +9,7 @@ from django.template.loader import render_to_string
 from django.shortcuts import render
 
 import pytz
+from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.reports.models import ReportConfig
 from corehq.apps.reports import util
 from corehq.apps.reports.datatables import DataTablesHeader
