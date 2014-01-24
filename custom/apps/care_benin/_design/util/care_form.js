@@ -65,7 +65,8 @@ function CareForm(doc) {
                 self.user_data.birth_complications_referred = 1;
             }
         } else if (isAS_CompleterEnregistrement(self.doc)) {
-            if (self.form.Alerte_GARE.toLowerCase() === 'ok' || self.form.avis_mort_ne.toLowerCase() === 'ok') {
+            if ( (self.form.Alerte_GARE && self.form.Alerte_GARE.toLowerCase() === 'ok') ||
+                (self.form.avis_mort_ne && self.form.avis_mort_ne.toLowerCase() === 'ok') ) {
                 self.user_data.high_risk_pregnancy = 1;
             }
         }
@@ -155,7 +156,8 @@ function CareForm(doc) {
 
     self.as_completer_enregistrement = function() {
         if (isAS_CompleterEnregistrement(self.doc)) {
-            if (self.form.Alerte_GARE.toLowerCase() === 'ok' || self.form.avis_mort_ne.toLowerCase() === 'ok') {
+            if ( (self.form.Alerte_GARE && self.form.Alerte_GARE.toLowerCase() === 'ok') ||
+                (self.form.avis_mort_ne && self.form.avis_mort_ne.toLowerCase() === 'ok') ) {
                 self.village_data.high_risk_pregnancy = 1;
             }
         }
