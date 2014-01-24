@@ -151,3 +151,43 @@ class SubscriptionInterface(BaseCRUDAdminInterface):
     form_class = HQAnnouncementForm
 
     crud_item_type = "Subscription"
+
+
+class SoftwarePlanInterface(BaseCRUDAdminInterface):
+    section_name = "Accounting"
+    base_template = 'reports/base_template.html'# TODO add button
+    dispatcher = AccountingAdminInterfaceDispatcher
+
+    crud_form_update_url = "/accounting/form/"
+
+    fields = []# TODO add proper filters
+    hide_filters = False
+
+    def validate_document_class(self):
+        return True
+
+    @property
+    def headers(self):# TODO implement
+        return DataTablesHeader()
+
+    @property
+    def rows(self): #TODO implement
+        rows = []
+        return rows
+
+    @property
+    def report_context(self):
+        context = super(SoftwarePlanInterface, self).report_context
+        context.update(
+            hideButton=True,
+        )
+        return context
+
+    name = "Software Plans"
+    description = "List of all software plans"
+    slug = "software_plans"
+
+    document_class = HQAnnouncement
+    form_class = HQAnnouncementForm
+
+    crud_item_type = "Software_Plan"
