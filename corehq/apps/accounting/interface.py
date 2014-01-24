@@ -160,7 +160,11 @@ class SoftwarePlanInterface(BaseCRUDAdminInterface):
 
     crud_form_update_url = "/accounting/form/"
 
-    fields = []# TODO add proper filters
+    fields = [
+        'corehq.apps.accounting.interface.SoftwarePlanNameFilter',
+        'corehq.apps.accounting.interface.SoftwarePlanEditionFilter',
+        'corehq.apps.accounting.interface.SoftwarePlanVisibilityFilter',
+    ]
     hide_filters = False
 
     def validate_document_class(self):
