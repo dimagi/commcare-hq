@@ -1,6 +1,6 @@
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.accounting.filters import *
-from corehq.apps.accounting.models import BillingAccount, Subscription
+from corehq.apps.accounting.models import BillingAccount, Subscription, SoftwarePlan
 from corehq.apps.announcements.forms import HQAnnouncementForm
 from corehq.apps.announcements.models import HQAnnouncement
 from corehq.apps.crud.interface import BaseCRUDAdminInterface
@@ -177,8 +177,16 @@ class SoftwarePlanInterface(BaseCRUDAdminInterface):
         )
 
     @property
-    def rows(self): #TODO implement
+    def rows(self): #TODO apply filters
         rows = []
+        for plan in SoftwarePlan.objects.all():
+            rows.append([
+                plan.name,
+                plan.description,
+                plan.edition,
+                plan.visibility,
+                SoftwarePlan.get_latest_version(id=plan.id).date_created
+            ])
         return rows
 
     @property
