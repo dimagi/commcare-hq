@@ -3,6 +3,7 @@ Fluff IndicatorDocument definitions for the OPM reports.
 """
 from corehq.apps.users.models import CommCareUser, CommCareCase
 from couchforms.models import XFormInstance
+from custom.opm.opm_reports.constants import CFU1_XMLNS
 import fluff
 
 from . import case_calcs, user_calcs
@@ -106,8 +107,8 @@ class OpmHealthStatusFluff(fluff.IndicatorDocument):
     ifa_tablets = case_calcs.IfaTablets()
     weight_once = case_calcs.Weight()
     weight_twice = case_calcs.Weight(count=1)
-    children_monitored_at_birth = case_calcs.ChildrenInfo(prop='child%s_child_weight', num_in_condition='exist')
-    children_registered = case_calcs.ChildrenInfo(prop='child%s_child_register', num_in_condition='exist')
+    children_monitored_at_birth = case_calcs.ChildrenInfo(prop='child%s_child_weight', num_in_condition='exist', forms=[CFU1_XMLNS])
+    children_registered = case_calcs.ChildrenInfo(prop='child%s_child_register', num_in_condition='exist', forms=[CFU1_XMLNS])
     growth_monitoring_session_1 = case_calcs.ChildrenInfo(prop='child%s_child_growthmon')
     growth_monitoring_session_2 = case_calcs.ChildrenInfo(prop='child%s_child_growthmon', num_in_condition=1)
     growth_monitoring_session_3 = case_calcs.ChildrenInfo(prop='child%s_child_growthmon', num_in_condition=2)
@@ -126,7 +127,7 @@ class OpmHealthStatusFluff(fluff.IndicatorDocument):
     treated = case_calcs.ChildrenInfo(prop='child%s_child_orszntreat')
     suffering = case_calcs.ChildrenInfo(prop='child%s_suffer_diarrhea')
     excbreastfed = case_calcs.BreastFed()
-    measlesvacc =case_calcs.ChildrenInfo(prop='child%s_child_measlesvacc')
+    measlesvacc = case_calcs.ChildrenInfo(prop='child%s_child_measlesvacc')
 
 # These Pillows need to be added to the list of PILLOWTOPS in settings.py
 OpmCaseFluffPillow = OpmCaseFluff.pillow()

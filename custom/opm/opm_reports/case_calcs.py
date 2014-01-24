@@ -9,7 +9,6 @@ import fluff
 
 from .constants import *
 
-
 def get_case(form):
     case_id = form.form['case']['@case_id']
     return CommCareCase.get(case_id)
@@ -103,11 +102,12 @@ class VhndMonthly(fluff.Calculator):
     def total(self, case):
         is_vhnd = False
         for form in case.get_forms():
-            if form.xmlns == VHND_XMLNS:
+            if form.xmlns == BIRTH_PREP_XMLNS:
                 is_vhnd = is_equals(form, "pregnancy_month_%s", "attendance_vhnd_%s")
-            elif form.xmlns in [CFU1_XMLNS, CFU2_XMLNS, CFU3_XMLNS]:
+            elif form.xmlns in children_forms:
                 if form.form['child_1']['child1_attendance_vhnd'] == 1:
                     is_vhnd = True
+                    break
         if is_vhnd:
             yield case_date(case)
 
@@ -126,13 +126,10 @@ class Status(fluff.Calculator):
 
     @fluff.date_emitter
     def total(self, case):
-        is_status = False
         for form in case.get_forms():
-            if form.xmlns in [CFU1_XMLNS, CFU2_XMLNS, CFU3_XMLNS]:
-                is_status = check_status(form, self.status)
-
-        if is_status:
-            yield case_date(case)
+            if form.xmlns in children_forms and check_status(form, self.status):
+                yield case_date(case)
+                break
 
 
 class Weight(fluff.Calculator):
@@ -144,7 +141,7 @@ class Weight(fluff.Calculator):
     def total(self, case):
         weight = False
         for form in case.get_forms():
-            if form.xmlns == VHND_XMLNS:
+            if form.xmlns == BIRTH_PREP_XMLNS:
                 weight = is_equals(form, "pregnancy_month_%s", "mother_weight_%s", count=self.count)
         if weight:
             yield case_date(case)
@@ -168,16 +165,17 @@ class BreastFed(fluff.Calculator):
 
 
 class ChildrenInfo(fluff.Calculator):
-    def __init__(self, prop, num_in_condition=0, *args, **kwargs):
+    def __init__(self, prop, num_in_condition=0, forms=children_forms, *args, **kwargs):
         self.num_in_condition = num_in_condition
         self.prop1 = 'child_%s'
         self.prop2 = prop
+        self.forms = forms
         super(ChildrenInfo, self).__init__(*args, **kwargs)
 
     @fluff.date_emitter
     def total(self, case):
         for form in case.get_forms():
-            if form.xmlns in [CFU1_XMLNS, CFU2_XMLNS, CFU3_XMLNS]:
+            if form.xmlns in self.forms:
                 yield {
                     'date': case_date(case),
                     'value': num_of_children(form, self.prop1, self.prop2, self.num_in_condition, [1, 2, 3])
@@ -209,7 +207,7 @@ class Lmp(fluff.Calculator):
     def total(self, case):
         for form in case.get_forms():
             if form.xmlns == PREG_REG_XMLNS:
-                if 'lmp' in form.form and form.form.get('lmp'):
+                if 'lmp_date' in form.form and form.form.get('lmp_date'):
                     yield case_date(case)
 
 
