@@ -9,6 +9,7 @@ from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.domain.utils import get_adm_enabled_domains
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
+import toggle
 
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
