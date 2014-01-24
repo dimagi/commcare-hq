@@ -228,7 +228,7 @@ class EventListField(Field):
     initial = None
     widget = None
     help_text = None
-    validators=[]
+    validators = None
     
     def __init__(self, required=True, label="", initial=[], widget=EventWidget(), help_text="", *args, **kwargs):
         self.required = required
@@ -236,6 +236,7 @@ class EventListField(Field):
         self.initial = initial
         self.widget = widget
         self.help_text = help_text
+        self.validators = []
     
     def clean(self, value):
         # See clean_events() method in the form for validation
