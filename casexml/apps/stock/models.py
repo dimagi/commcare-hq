@@ -2,6 +2,9 @@ from django.db import models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from casexml.apps.stock import const
+from decimal import Decimal
+from django.db.models.signals import post_save
+from casexml.apps.stock import utils as utils
 
 
 class StockReport(models.Model):
@@ -79,3 +82,64 @@ def create_reconciliation_transaction(sender, instance, *args, **kwargs):
                 stock_on_hand=instance.stock_on_hand,
                 subtype=const.TRANSACTION_SUBTYPE_INFERRED,
             )
+
+
+class StockState(models.Model):
+    """
+    Read only reporting model for keeping computed stock states per case/product
+    """
+    section_id = models.CharField(max_length=100, db_index=True)
+    case_id = models.CharField(max_length=100, db_index=True)
+    product_id = models.CharField(max_length=100, db_index=True)
+    stock_on_hand = models.DecimalField(max_digits=20, decimal_places=5, default=Decimal(0))
+    daily_consumption = models.DecimalField(max_digits=20, decimal_places=5, null=True)
+    last_modified_date = models.DateTimeField()
+
+    def months_remaining(self):
+        return utils.months_of_stock_remaining(
+            self.stock_on_hand,
+            self.daily_consumption
+        )
+
+    def stock_category(self):
+        return utils.stock_category(
+            self.stock_on_hand,
+            self.daily_consumption,
+        )
+
+    class Meta:
+        unique_together = ('section_id', 'case_id', 'product_id')
+
+
+@receiver(post_save, sender=StockTransaction)
+def update_stock_state(sender, instance, *args, **kwargs):
+    from casexml.apps.stock.consumption import compute_consumption
+    try:
+        state = StockState.objects.get(
+            section_id=instance.section_id,
+            case_id=instance.case_id,
+            product_id=instance.product_id,
+        )
+    except StockState.DoesNotExist:
+        state = StockState(
+            section_id=instance.section_id,
+            case_id=instance.case_id,
+            product_id=instance.product_id,
+        )
+
+    state.last_modified_date = instance.report.date
+    state.stock_on_hand = instance.stock_on_hand
+
+    if hasattr(instance, '_test_config'):
+        consumption_calc = instance._test_config
+    else:
+        consumption_calc = None
+
+    state.daily_consumption = compute_consumption(
+        instance.case_id,
+        instance.product_id,
+        instance.report.date,
+        'stock',
+        consumption_calc
+    )
+    state.save()
