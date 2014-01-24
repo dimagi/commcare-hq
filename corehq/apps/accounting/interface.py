@@ -181,16 +181,22 @@ class SoftwarePlanInterface(BaseCRUDAdminInterface):
         )
 
     @property
-    def rows(self): #TODO apply filters
+    def rows(self):
         rows = []
         for plan in SoftwarePlan.objects.all():
-            rows.append([
-                plan.name,
-                plan.description,
-                plan.edition,
-                plan.visibility,
-                SoftwarePlan.get_latest_version(id=plan.id).date_created
-            ])
+            name = SoftwarePlanNameFilter.get_value(self.request, self.domain)
+            edition = SoftwarePlanEditionFilter.get_value(self.request, self.domain)
+            visibility = SoftwarePlanVisibilityFilter.get_value(self.request, self.domain)
+            if ((name is None or name == plan.name)
+                and (edition is None or edition == plan.edition)
+                and (visibility is None or visibility == plan.visibility)):
+                rows.append([
+                    plan.name,
+                    plan.description,
+                    plan.edition,
+                    plan.visibility,
+                    SoftwarePlan.get_latest_version(id=plan.id).date_created,
+                ])
         return rows
 
     @property
