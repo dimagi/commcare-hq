@@ -167,8 +167,14 @@ class SoftwarePlanInterface(BaseCRUDAdminInterface):
         return True
 
     @property
-    def headers(self):# TODO implement
-        return DataTablesHeader()
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn("Name"),
+            DataTablesColumn("Description"),
+            DataTablesColumn("Edition"),
+            DataTablesColumn("Visibility"),
+            DataTablesColumn("Date of Last Version"),
+        )
 
     @property
     def rows(self): #TODO implement
