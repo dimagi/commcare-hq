@@ -28,26 +28,40 @@ import sh
 import sys
 
 
-def git_check_merge(branch1, branch2, git=sh.git):
+def get_git(path=None):
+    return sh.git.bake('--no-pager', _cwd=path)
+
+
+def git_current_branch(git):
+    return sh.grep(git.branch('--no-color'), '^* ').strip()[2:]
+
+
+def git_check_merge(branch1, branch2, git):
     """
     returns True if branch1 would auto-merge cleanly into branch2,
     False if the merge requires human assistance
 
-    Thanks to http://stackoverflow.com/a/6283843/240553
+    Thanks to http://stackoverflow.com/a/501461/240553
 
     """
     with ShVerbose(False):
-        merge_base = unicode(git('merge-base', branch1, branch2)).strip()
-        merge_result = git('merge-tree', merge_base, branch1, branch2)
-        try:
-            sh.grep(merge_result, '>>>')
-        except sh.ErrorReturnCode_1:
-            # grep returns 1 for no match
-            # so no merge conflict
-            return True
+        orig_branch = git_current_branch(git)
+        git.checkout(branch2)
+        is_behind = git.log('{0}..{1}'.format(branch2, branch1),
+                            max_count=1).strip()
+        if is_behind:
+            try:
+                git.merge('--no-commit', '--no-ff', branch1).strip()
+            except sh.ErrorReturnCode_1:
+                # git merge returns 1 when there's a conflict
+                return False
+            else:
+                return True
+            finally:
+                git.merge('--abort')
+                git.checkout(orig_branch)
         else:
-            return False
-
+            return True
 
 class BranchConfig(jsonobject.JsonObject):
     trunk = jsonobject.StringProperty()
@@ -69,7 +83,7 @@ class BranchConfig(jsonobject.JsonObject):
 
 def fetch_remote(base_config):
     for path in set(path for path, _ in base_config.span_configs()):
-        git = sh.git.bake(_cwd=path)
+        git = get_git(path)
         print "  [{cwd}] fetching all".format(cwd=path)
         git.fetch('--all')
     print "All branches fetched"
@@ -83,7 +97,7 @@ def sync_local_copies(config):
         return int(sh.wc(git.log(compare_spec, '--oneline', _piped=True), '-l'))
 
     for path, config in base_config.span_configs():
-        git = sh.git.bake('--no-pager', _cwd=path)
+        git = get_git(path)
 
         for branch in [config.trunk] + config.branches:
             git.checkout(branch)
@@ -98,7 +112,7 @@ def sync_local_copies(config):
                     unpulled=unpulled,
                 )
             else:
-                print "  [{cwd}] {branch}: Everything up to date".format(
+                print "  [{cwd}] {branch}: Everything up-to-date.".format(
                     cwd=path,
                     branch=branch,
                 )
@@ -113,14 +127,14 @@ def sync_local_copies(config):
             print "  [{cwd}] {branch}".format(cwd=path, branch=branch)
         exit(1)
     else:
-        print "All branches up to date"
+        print "All branches up-to-date."
 
 
 def check_merges(config):
     merge_conflicts = []
     base_config = config
     for path, config in base_config.span_configs():
-        git = sh.git.bake(_cwd=path)
+        git = get_git(path)
 
         git.checkout(config.trunk)
         for branch in config.branches:
@@ -150,7 +164,7 @@ def check_merges(config):
 
 def rebuild_staging(config):
     for path, config in config.span_configs():
-        git = sh.git.bake(_cwd=path)
+        git = get_git(path)
         git.checkout(config.trunk)
         git.checkout('-B', config.name, config.trunk)
         for branch in config.branches:
