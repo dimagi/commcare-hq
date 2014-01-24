@@ -234,19 +234,17 @@ class SubscriptionForm(forms.Form):
 class CreditForm(forms.Form):
     amount = forms.DecimalField()
     note = forms.CharField(required=False)
-    rate_type = forms.ChoiceField(choices=(
-        ('Any', 'Any'),
-        ('Product', 'Product'),
-        ('Feature', 'Feature'),
-    ))
-    product = forms.ChoiceField()
-    feature = forms.ChoiceField(label="Rate")
+    rate_type = forms.ChoiceField()
+    product = forms.ChoiceField(required=False)
+    feature = forms.ChoiceField(label="Rate", required=False)
 
     def __init__(self, id, is_account, *args, **kwargs):
         super(CreditForm, self).__init__(*args, **kwargs)
         if not kwargs:
             self.fields['product'].choices = self.get_product_choices(id, is_account)
             self.fields['feature'].choices = self.get_feature_choices(id, is_account)
+            self.fields['rate_type'].choices = self.get_rate_type_choices(self.fields['product'].choices,
+                                                                          self.fields['feature'].choices)
         self.helper = FormHelper()
         self.helper.layout = Layout(
             Fieldset(
@@ -285,6 +283,14 @@ class CreditForm(forms.Form):
             for feature_rate in feature_rate_set.all():
                 features.add(feature_rate.feature)
         return [(feature.id, feature.name) for feature in features]
+
+    def get_rate_type_choices(self, product_choices, feature_choices):
+        choices = [('Any', 'Any')]
+        if len(product_choices) != 0:
+            choices.append(('Product', 'Product'))
+        if len(feature_choices) != 0:
+            choices.append(('Feature', 'Feature'))
+        return choices
 
     def adjust_credit(self, account=None, subscription=None):
         amount = self.cleaned_data['amount']
