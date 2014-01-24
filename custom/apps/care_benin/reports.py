@@ -315,6 +315,38 @@ class MandE(CareGroupReport):
                                        ayant eu de(s) signe(s) de danger par village""")
 
 
+class Relais(BasicTabularReport, CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
+    name = "Relais"
+    slug = "cb_relais"
+    field_classes = (DatespanField,)
+    datespan_default_days = 30
+    exportable = True
+    filter_group_name = "relais"
+
+    couch_view = "care_benin/by_village_case"
+
+    default_column_order = (
+        'relais',
+        'ref_suiviref_time',
+    )
+
+    relais = Column("Relais", calculate_fn=username)
+
+    ref_suiviref_time = Column("Mean time between referral and suivi de referral",
+                               key="ref_suiviref_time", reduce_fn=MeanTime(),
+                               help_text="Délai entre la référence et le suivi de la référence")
+
+    @property
+    def start_and_end_keys(self):
+        return ([self.datespan.startdate_param_utc],
+                [self.datespan.enddate_param_utc])
+
+    @property
+    def keys(self):
+        for user in self.users:
+            yield [user['user_id']]
+
+
 class Nurse(BasicTabularReport, CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
     name = "Nurse"
     slug = "cb_nurse"
@@ -327,7 +359,6 @@ class Nurse(BasicTabularReport, CustomProjectReport, ProjectReportParametersMixi
     default_column_order = (
         'nurse',
         'cpn_exam_rate',
-        'ref_suiviref_time',
         'post_natal_followups_15m', #requires xform_xmlns in case actions
         'post_natal_followups_6h', #requires xform_xmlns in case actions
         'post_natal_followups_sortie', #requires xform_xmlns in case actions
@@ -345,11 +376,6 @@ class Nurse(BasicTabularReport, CustomProjectReport, ProjectReportParametersMixi
     cpn_exam_rate = Column("CPN Exam Rate", key=cpn_exam_rate_view,
                            help_text="""Proportion de protocoles d’examen
                            CPN entièrement respecté (rempli) par agent de santé""")
-
-    ref_suiviref_time = Column("Mean time between referral and suivi de referral",
-                               key="ref_suiviref_time", reduce_fn=MeanTime(),
-                               couch_view="care_benin/by_village_case",
-                               help_text="Délai entre la référence et le suivi de la référence")
 
     post_natal_followups_total_view = KeyView(key="post_natal_followups_total",
                                               couch_view="care_benin/by_village_case", startkey_fn=lambda x: [])
