@@ -42,6 +42,13 @@ ACTIVE_CHILD_CASES_BY_AGE_INDICATORS = dict(
                 fixed_datespan_days=42,
                 max_age_in_days=365,
             ),
+            num_births_occured=dict(
+                description="Number of births that occured during the time period.",
+                title="# Births",
+                max_age_in_days=31,
+                show_active_only=False,
+                indicator_key="occured_on"
+            ),
             num_births_recorded=dict(
                 description="Number of births recorded during the time period.",
                 title="# Births",

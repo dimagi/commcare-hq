@@ -4,6 +4,7 @@ function (doc) {
         isPregnancyCloseForm(doc)) {
         var indicator_entries_open = {},
             indicator_entries_closed = {},
+            indicators_dob_occured = {},
             indicators_dob = [];
 
         var status = (doc.closed) ? "closed" : "open";
@@ -22,6 +23,7 @@ function (doc) {
                 indicators_dob.push("dob delivered_in_facility");
             }
 
+            indicators_dob_occured["occured_on"] = dob_date;
             indicator_entries_open["opened_on"] = dob_date;
             indicator_entries_open["opened_on "+status] = dob_date;
             if (weight_at_birth) {
@@ -42,6 +44,7 @@ function (doc) {
             emit_special(doc, opened_on_date, indicator_entries_open, [doc._id]);
             try {
                 emit_standard(doc, new Date(dob_date), indicators_dob, [doc._id]);
+                emit_special(doc, new Date(dob_date), indicators_dob_occured, [doc._id]);
             } catch (e) {
                 // just in case the date parsing fails miserably.
             }
