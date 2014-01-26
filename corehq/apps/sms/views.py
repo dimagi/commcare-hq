@@ -25,7 +25,10 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CouchUser, Permissions
 from corehq.apps.users import models as user_models
 from corehq.apps.users.views.mobile.users import EditCommCareUserView
-from corehq.apps.sms.models import SMSLog, INCOMING, OUTGOING, ForwardingRule, CommConnectCase
+from corehq.apps.sms.models import (
+    SMSLog, INCOMING, OUTGOING, ForwardingRule, CommConnectCase,
+    LastReadMessage,
+)
 from corehq.apps.sms.mixin import MobileBackend, SMSBackend, BackendMapping, VerifiedNumber
 from corehq.apps.sms.forms import ForwardingRuleForm, BackendMapForm, InitiateAddSMSBackendForm, SMSSettingsForm, SubscribeSMSForm
 from corehq.apps.sms.util import get_available_backends, get_contact
@@ -734,6 +737,7 @@ def api_history(request, domain):
                            reduce=False).all()
     data.sort(key=lambda x : x.date)
     username_map = {}
+    last_sms = None
     for sms in data:
         # Don't show outgoing SMS that haven't been processed yet
         if sms.direction == OUTGOING and not sms.processed:
@@ -765,12 +769,31 @@ def api_history(request, domain):
                 username_map[sms.chat_user_id] = sender
         else:
             sender = _("System")
+        last_sms = sms
         result.append({
             "sender" : sender,
             "text" : sms.text,
             "timestamp" : tz_utils.adjust_datetime_to_timezone(sms.date, pytz.utc.zone, timezone.zone).strftime("%I:%M%p %m/%d/%y").lower(),
             "utc_timestamp" : json_format_datetime(sms.date),
         })
+    if last_sms:
+        try:
+            entry, lock = LastReadMessage.get_locked_obj(
+                sms.domain,
+                request.couch_user._id,
+                sms.couch_recipient,
+                create=True
+            )
+            if (not entry.message_timestamp or
+                entry.message_timestamp < last_sms.date):
+                entry.message_id = last_sms._id
+                entry.message_timestamp = last_sms.date
+                entry.save()
+            lock.release()
+        except:
+            logging.exception("Could not create/save LastReadMessage for message %s" % last_sms._id)
+            # Don't let this block returning of the data
+            pass
     return HttpResponse(json.dumps(result))
 
 class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView):
