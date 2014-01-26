@@ -18,6 +18,8 @@ CACHED_VIEW_PREFIX = '#cached_view_'
 CACHED_DOC_PREFIX = '#cached_doc_'
 CACHED_DOC_PROP_PREFIX = '#cached_doc_helper_'
 
+class RedisClientError(Exception):
+    pass
 
 def rcache():
     return MOCK_REDIS_CACHE or get_redis_default_cache()
@@ -32,6 +34,16 @@ def get_redis_default_cache():
     except (InvalidCacheBackendError, ValueError):
         return cache.cache
 
+def get_redis_client():
+    from redis_cache.cache import RedisCache
+    rcache = get_redis_default_cache()
+    if not isinstance(rcache, RedisCache):
+        raise RedisClientError("Could not get redis connection.")
+    try:
+        client = rcache.raw_client
+    except:
+        raise RedisClientError("Could not get redis connection.")
+    return client
 
 def key_doc_prop(doc_id, prop_name):
     return ':'.join([CACHED_DOC_PROP_PREFIX, doc_id, prop_name])
