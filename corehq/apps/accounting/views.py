@@ -1,11 +1,14 @@
-from corehq import AccountingInterface, SubscriptionInterface
+import json
+from django.utils import translation
+from corehq.apps.accounting.interface import AccountingInterface, SubscriptionInterface, SoftwarePlanInterface
 from corehq.apps.accounting.forms import *
-from corehq.apps.accounting.models import *
+from corehq.apps.accounting.user_text import PricingTable
+from corehq.apps.accounting.utils import LazyEncoder
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from dimagi.utils.decorators.memoized import memoized
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest
 from django.utils.decorators import method_decorator
 
 
@@ -24,7 +27,6 @@ class AccountingSectionView(BaseSectionPageView):
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
         return super(AccountingSectionView, self).dispatch(request, *args, **kwargs)
-
 
 
 class BillingAccountsSectionView(AccountingSectionView):
@@ -97,8 +99,10 @@ class ManageBillingAccountView(BillingAccountsSectionView):
             return self.credit_form
         return CreditForm(account.id, True)
 
-    def data(self):
-        return {
+    @property
+    def page_context(self):
+        context = super(ManageBillingAccountView, self).main_context
+        context.update({
             'account': self.account,
             'credit_form': self.get_appropriate_credit_form(self.account),
             'credit_list': CreditLine.objects.filter(account=self.account),
@@ -108,12 +112,7 @@ class ManageBillingAccountView(BillingAccountsSectionView):
                       if len(Invoice.objects.filter(subscription=sub)) != 0 else 'None on record',
                 ) for sub in Subscription.objects.filter(account=self.account)
             ],
-        }
-
-    @property
-    def page_context(self):
-        context = super(ManageBillingAccountView, self).main_context
-        context.update(self.data())
+        })
         return context
 
     @property
@@ -255,3 +254,102 @@ class EditSubscriptionView(AccountingSectionView):
         self.subscription.is_active = False
         self.subscription.save()
         self.subscription_canceled = True
+
+
+class NewSoftwarePlanView(AccountingSectionView):
+    template_name = 'accounting/plans_base.html'
+    urlname = 'new_software_plan'
+
+    @property
+    @memoized
+    def plan_info_form(self):
+        if self.request.method == 'POST':
+            return PlanInformationForm(None, self.request.POST)
+        return PlanInformationForm(None)
+
+    @property
+    def page_context(self):
+        context = super(NewSoftwarePlanView, self).main_context
+        context.update({
+            'plan_info_form': self.plan_info_form,
+        })
+        return context
+
+    @property
+    def page_title(self):
+        return 'New Software Plan'
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname)
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': SoftwarePlanInterface.name,
+            'url': SoftwarePlanInterface.get_url(),
+        }]
+
+    def post(self, request, *args, **kwargs):
+        if self.plan_info_form.is_valid():
+            plan = self.plan_info_form.create_plan()
+            return HttpResponseRedirect(reverse(EditSoftwarePlanView.urlname, args=(plan.id,)))
+        return self.get(request, *args, **kwargs)
+
+
+class EditSoftwarePlanView(AccountingSectionView):
+    template_name = 'accounting/plans.html'
+    urlname = 'edit_software_plan'
+
+    @property
+    @memoized
+    def plan(self):
+        return SoftwarePlan.objects.get(id=self.args[0])
+
+    @property
+    @memoized
+    def plan_info_form(self):
+        if self.request.method == 'POST':
+            return PlanInformationForm(self.plan, self.request.POST)
+        return PlanInformationForm(self.plan)
+
+    @property
+    def page_context(self):
+        context = super(EditSoftwarePlanView, self).main_context
+        context.update({
+            'plan_info_form': self.plan_info_form,
+            'plan_versions': SoftwarePlanVersion.objects.filter(plan=self.plan).order_by('date_created')
+        })
+        return context
+
+    @property
+    def page_title(self):
+        return 'Edit Software Plan'
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=(self.args[0],))
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': SoftwarePlanInterface.name,
+            'url': SoftwarePlanInterface.get_url(),
+        }]
+
+    def post(self, request, *args, **kwargs):
+        if self.plan_info_form.is_valid():
+            self.plan_info_form.update_plan(self.plan)
+        return self.get(request, *args, **kwargs)
+
+
+def pricing_table_json(request, product, locale):
+    if product not in [c[0] for c in SoftwareProductType.CHOICES]:
+        return HttpResponseBadRequest("Not a valid product")
+    if locale not in [l[0] for l in settings.LANGUAGES]:
+        return HttpResponseBadRequest("Not a supported language.")
+    translation.activate(locale)
+    table = PricingTable.get_table_by_product(product)
+    table_json = json.dumps(table, cls=LazyEncoder)
+    translation.deactivate()
+    return HttpResponse(table_json, content_type='application/json')

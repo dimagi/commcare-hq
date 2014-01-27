@@ -14,7 +14,7 @@ from toggle.decorators import require_toggle
 
 from corehq.apps.accounting.models import Subscription, CreditLine, SoftwarePlanVisibility, SoftwareProductType
 from corehq.apps.accounting.usage import FeatureUsage
-from corehq.apps.accounting.user_text import DESC_BY_EDITION, get_feature_name
+from corehq.apps.accounting.user_text import DESC_BY_EDITION, get_feature_name, PricingTable
 from corehq.apps.hqwebapp.models import ProjectSettingsTab
 from corehq.apps import receiverwrapper
 from django.core.urlresolvers import reverse
@@ -390,14 +390,22 @@ def logo(request, domain):
     return HttpResponse(logo[0], mimetype=logo[1])
 
 
-class DomainSubscriptionView(BaseProjectSettingsView):
-    urlname = 'domain_subscription_view'
-    template_name = 'domain/current_subscription.html'
-    page_title = ugettext_noop("Current Subscription")
+class DomainAccountingSettings(BaseAdminProjectSettingsView):
 
     @method_decorator(require_toggle(toggles.ACCOUNTING_PREVIEW))
     def dispatch(self, request, *args, **kwargs):
-        return super(DomainSubscriptionView, self).dispatch(request, *args, **kwargs)
+        return super(DomainAccountingSettings, self).dispatch(request, *args, **kwargs)
+
+    @property
+    @memoized
+    def product(self):
+        return SoftwareProductType.get_type_by_domain(self.domain_object)
+
+
+class DomainSubscriptionView(DomainAccountingSettings):
+    urlname = 'domain_subscription_view'
+    template_name = 'domain/current_subscription.html'
+    page_title = ugettext_noop("Current Subscription")
 
     @property
     def plan(self):
@@ -415,11 +423,6 @@ class DomainSubscriptionView(BaseProjectSettingsView):
             subscription_credits = CreditLine.get_credits_by_subscription_and_features(subscription)
             info['subscription_credit'] = self._fmt_credit(self._credit_grand_total(subscription_credits))
         return info
-
-    @property
-    @memoized
-    def product(self):
-        return SoftwareProductType.get_type_by_domain(self.domain_object)
 
     def get_plan_description(self, plan_version):
         if plan_version.plan.visibility == SoftwarePlanVisibility.PUBLIC:
@@ -477,6 +480,28 @@ class DomainSubscriptionView(BaseProjectSettingsView):
     def page_context(self):
         return {
             'plan': self.plan,
+            'change_plan_url': reverse(ChangeDomainPlanView.urlname, args=[self.domain]),
+        }
+
+
+class ChangeDomainPlanView(DomainAccountingSettings):
+    template_name = 'domain/change_plan.html'
+    urlname = 'domain_change_plan'
+    page_title = ugettext_noop("Change Plan")
+
+    @property
+    def parent_pages(self):
+        return [
+            {
+                'title': DomainSubscriptionView.page_title,
+                'url': reverse(DomainSubscriptionView.urlname, args=[self.domain]),
+            }
+        ]
+
+    @property
+    def page_context(self):
+        return {
+            'pricing_table': PricingTable.get_table_by_product(self.product),
         }
 
 

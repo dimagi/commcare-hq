@@ -1,6 +1,6 @@
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.accounting.filters import *
-from corehq.apps.accounting.models import BillingAccount, Subscription
+from corehq.apps.accounting.models import BillingAccount, Subscription, SoftwarePlan
 from corehq.apps.announcements.forms import HQAnnouncementForm
 from corehq.apps.announcements.models import HQAnnouncement
 from corehq.apps.crud.interface import BaseCRUDAdminInterface
@@ -151,3 +151,67 @@ class SubscriptionInterface(BaseCRUDAdminInterface):
     form_class = HQAnnouncementForm
 
     crud_item_type = "Subscription"
+
+
+class SoftwarePlanInterface(BaseCRUDAdminInterface):
+    section_name = "Accounting"
+    base_template = 'accounting/add_software_plan_button.html'
+    dispatcher = AccountingAdminInterfaceDispatcher
+
+    crud_form_update_url = "/accounting/form/"
+
+    fields = [
+        'corehq.apps.accounting.interface.SoftwarePlanNameFilter',
+        'corehq.apps.accounting.interface.SoftwarePlanEditionFilter',
+        'corehq.apps.accounting.interface.SoftwarePlanVisibilityFilter',
+    ]
+    hide_filters = False
+
+    def validate_document_class(self):
+        return True
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn("Name"),
+            DataTablesColumn("Description"),
+            DataTablesColumn("Edition"),
+            DataTablesColumn("Visibility"),
+            DataTablesColumn("Date of Last Version"),
+        )
+
+    @property
+    def rows(self):
+        rows = []
+        for plan in SoftwarePlan.objects.all():
+            name = SoftwarePlanNameFilter.get_value(self.request, self.domain)
+            edition = SoftwarePlanEditionFilter.get_value(self.request, self.domain)
+            visibility = SoftwarePlanVisibilityFilter.get_value(self.request, self.domain)
+            if ((name is None or name == plan.name)
+                and (edition is None or edition == plan.edition)
+                and (visibility is None or visibility == plan.visibility)):
+                rows.append([
+                    mark_safe('<a href="./%d">%s</a>' % (plan.id, plan.name)),
+                    plan.description,
+                    plan.edition,
+                    plan.visibility,
+                    SoftwarePlan.get_latest_version(id=plan.id).date_created,
+                ])
+        return rows
+
+    @property
+    def report_context(self):
+        context = super(SoftwarePlanInterface, self).report_context
+        context.update(
+            hideButton=True,
+        )
+        return context
+
+    name = "Software Plans"
+    description = "List of all software plans"
+    slug = "software_plans"
+
+    document_class = HQAnnouncement
+    form_class = HQAnnouncementForm
+
+    crud_item_type = "Software_Plan"

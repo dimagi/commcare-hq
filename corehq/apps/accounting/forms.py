@@ -5,6 +5,7 @@ from crispy_forms.bootstrap import FormActions
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import *
 from django import forms
+from django_prbac import arbitrary as role_gen
 
 
 class BillingAccountForm(forms.Form):
@@ -234,19 +235,17 @@ class SubscriptionForm(forms.Form):
 class CreditForm(forms.Form):
     amount = forms.DecimalField()
     note = forms.CharField(required=False)
-    rate_type = forms.ChoiceField(choices=(
-        ('Any', 'Any'),
-        ('Product', 'Product'),
-        ('Feature', 'Feature'),
-    ))
-    product = forms.ChoiceField()
-    feature = forms.ChoiceField(label="Rate")
+    rate_type = forms.ChoiceField()
+    product = forms.ChoiceField(required=False)
+    feature = forms.ChoiceField(label="Rate", required=False)
 
     def __init__(self, id, is_account, *args, **kwargs):
         super(CreditForm, self).__init__(*args, **kwargs)
         if not kwargs:
             self.fields['product'].choices = self.get_product_choices(id, is_account)
             self.fields['feature'].choices = self.get_feature_choices(id, is_account)
+            self.fields['rate_type'].choices = self.get_rate_type_choices(self.fields['product'].choices,
+                                                                          self.fields['feature'].choices)
         self.helper = FormHelper()
         self.helper.layout = Layout(
             Fieldset(
@@ -285,6 +284,14 @@ class CreditForm(forms.Form):
             for feature_rate in feature_rate_set.all():
                 features.add(feature_rate.feature)
         return [(feature.id, feature.name) for feature in features]
+
+    def get_rate_type_choices(self, product_choices, feature_choices):
+        choices = [('Any', 'Any')]
+        if len(product_choices) != 0:
+            choices.append(('Product', 'Product'))
+        if len(feature_choices) != 0:
+            choices.append(('Feature', 'Feature'))
+        return choices
 
     def adjust_credit(self, account=None, subscription=None):
         amount = self.cleaned_data['amount']
@@ -337,3 +344,65 @@ class CancelForm(forms.Form):
                 cancel_subscription_button
             )
         )
+
+
+class PlanInformationForm(forms.Form):
+    name = forms.CharField(max_length=80) # require uniqueness
+    description = forms.CharField(required=False)
+    edition = forms.ChoiceField(choices=SoftwarePlanEdition.CHOICES)
+    visibility = forms.ChoiceField(choices=SoftwarePlanVisibility.CHOICES)
+
+    def __init__(self, plan, *args, **kwargs):
+        if plan is not None:
+            kwargs['initial'] = {
+                'name': plan.name,
+                'description': plan.description,
+                'edition': plan.edition,
+                'visibility': plan.visibility,
+            }
+        else:
+            kwargs['initial'] = {
+                'edition': SoftwarePlanEdition.ENTERPRISE,
+                'visibility': SoftwarePlanVisibility.INTERNAL,
+            }
+        super(PlanInformationForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            Fieldset(
+            'Plan Information',
+                'name',
+                'description',
+                'edition',
+                'visibility',
+            ),
+            FormActions(
+                ButtonHolder(
+                    Submit('plan_information',
+                           '%s Software Plan' % ('Update' if plan is not None else 'Create'))
+                )
+            )
+        )
+
+    def clean_name(self):
+        return self.cleaned_data['name'] # TODO - implement
+
+    def create_plan(self):
+        name = self.cleaned_data['name']
+        description = self.cleaned_data['description']
+        edition = self.cleaned_data['edition']
+        visibility = self.cleaned_data['visibility']
+        plan = SoftwarePlan(name=name,
+                            description=description,
+                            edition=edition,
+                            visibility=visibility)
+        plan.save()
+        plan_version = SoftwarePlanVersion(plan=plan, role=role_gen.arbitrary_role()) # TODO - check this
+        plan_version.save()
+        return plan
+
+    def update_plan(self, plan):
+        plan.name = self.cleaned_data['name']
+        plan.description = self.cleaned_data['description']
+        plan.edition = self.cleaned_data['edition']
+        plan.visibility = self.cleaned_data['visibility']
+        plan.save()
