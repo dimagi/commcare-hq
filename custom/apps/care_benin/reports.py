@@ -584,7 +584,7 @@ class Outcomes(GenericTabularReport, CustomProjectReport, ProjectReportParameter
 
     @property
     def headers(self):
-        return DataTablesHeader(DataTablesColumn(""),
+        return DataTablesHeader(DataTablesColumn("", sortable=False),
                                 DataTablesColumn("Value", sort_type=DTSortType.NUMERIC))
 
     @property
