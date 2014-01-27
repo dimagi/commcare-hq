@@ -191,7 +191,7 @@ class SoftwarePlanInterface(BaseCRUDAdminInterface):
                 and (edition is None or edition == plan.edition)
                 and (visibility is None or visibility == plan.visibility)):
                 rows.append([
-                    plan.name,
+                    mark_safe('<a href="./%d">%s</a>' % (plan.id, plan.name)),
                     plan.description,
                     plan.edition,
                     plan.visibility,
