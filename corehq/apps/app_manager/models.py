@@ -2245,7 +2245,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     # ended up not using a schema because properties is a reserved word
     profile = DictProperty()
     use_custom_suite = BooleanProperty(default=False)
-    force_http = BooleanProperty(default=False)
     cloudcare_enabled = BooleanProperty(default=False)
     translation_strategy = StringProperty(default='dump-known',
                                           choices=app_strings.CHOICES.keys())
@@ -2300,13 +2299,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @property
     def url_base(self):
-        # force_http is a deprecated hack
-        # for safety we're just special-casing the only
-        # domain that ever used it, wvmoz
-        if self.force_http and self.domain == 'wvmoz':
-            return settings.INSECURE_URL_BASE
-        else:
-            return get_url_base()
+        return get_url_base()
 
     @absolute_url_property
     def suite_url(self):

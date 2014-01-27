@@ -1,0 +1,33 @@
+{% extends 'accounting/accounts_base.html' %}
+{% load url from future %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static 'accounting/js/credits-tab.js' %}"></script>
+    <script src="{% static 'accounting/js/stay-on-tab.js' %}"></script>
+{% endblock %}
+
+{% block main_column %}
+
+    <ul class="nav nav-tabs" id="user-settings-tabs">
+        <li><a href="#account" data-toggle="tab">{% trans "Account" %}</a></li>
+        <li><a href="#subscriptions" data-toggle="tab">{% trans "Subscriptions" %}</a></li>
+        <li><a href="#credits" data-toggle="tab">{% trans "Credits" %}</a></li>
+    </ul>
+
+    <div class="tab-content">
+        <div class="tab-pane" id="account">
+            {{ block.super }}
+        </div>
+
+        <div class="tab-pane" id="subscriptions">
+            {% include 'accounting/subscriptions_tab.html' %}
+        </div>
+
+        <div class="tab-pane" id="credits">
+            {% include 'accounting/credits_tab.html' %}
+        </div>
+    </div>
+
+{% endblock %}

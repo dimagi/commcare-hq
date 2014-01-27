@@ -128,8 +128,6 @@ ANALYTICS_IDS = {
 AXES_LOCK_OUT_AT_FAILURE = False
 LUCENE_ENABLED = True
 
-INSECURE_URL_BASE = "http://submit.commcarehq.org"
-
 PREVIEWER_RE = r'^.*@dimagi\.com$'
 
 GMAPS_API_KEY = '******'
