@@ -13,4 +13,5 @@ urlpatterns = patterns('corehq.apps.accounting.views',
     url(r'^software_plans/(\d+)/$', EditSoftwarePlanView.as_view(), name=EditSoftwarePlanView.urlname),
     url(AccountingAdminInterfaceDispatcher.pattern(), AccountingAdminInterfaceDispatcher.as_view(),
         name=AccountingAdminInterfaceDispatcher.name()),
+    url(r'^pricing_table/(?P<product>[\w-]+)/(?P<locale>[\w-]+)/$', 'pricing_table_json', name='pricing_table_json'),
 )
