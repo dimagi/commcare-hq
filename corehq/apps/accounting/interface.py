@@ -155,7 +155,7 @@ class SubscriptionInterface(BaseCRUDAdminInterface):
 
 class SoftwarePlanInterface(BaseCRUDAdminInterface):
     section_name = "Accounting"
-    base_template = 'reports/base_template.html'# TODO add button
+    base_template = 'accounting/add_software_plan_button.html'
     dispatcher = AccountingAdminInterfaceDispatcher
 
     crud_form_update_url = "/accounting/form/"
