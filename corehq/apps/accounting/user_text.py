@@ -1,30 +1,31 @@
-from django.utils.translation import ugettext_noop, ugettext as _
+from django.utils.translation import ugettext_noop, ugettext_lazy as _
 from corehq.apps.accounting.models import SoftwarePlanEdition as Edition, SoftwareProductType as Product, FeatureType
 
 DESC_BY_EDITION = {
     Edition.COMMUNITY: {
-        'name': ugettext_noop("Community"),
-        'description': ugettext_noop("For projects in a pilot phase with a small group (up to 50) of "
+        'name': _("Community"),
+        'description': _("For projects in a pilot phase with a small group (up to 50) of "
                                      "mobile users that only need very basic CommCare features."),
     },
     Edition.STANDARD: {
-        'name': ugettext_noop("Standard"),
-        'description': ugettext_noop("For projects with a medium set (up to 250) of mobile users that want to "
+        'name': _("Standard"),
+        'description': _("For projects with a medium set (up to 250) of mobile users that want to "
                                      "build in limited SMS workflows and have increased data security needs."),
     },
     Edition.PRO: {
-        'name': ugettext_noop("Pro"),
-        'description': ugettext_noop("For projects with a large group (up to 500) of mobile users that want to "
+        'name': _("Pro"),
+        'description': _("For projects with a large group (up to 500) of mobile users that want to "
                                      "build in comprehensive SMS workflows and have increased reporting needs."),
     },
     Edition.ADVANCED: {
-        'name': ugettext_noop("Advanced"),
-        'description': ugettext_noop("For projects with a large group (up to 500) of mobile users that want to "
-                                     "build in comprehensive SMS workflows and have increased reporting needs.")
+        'name': _("Advanced"),
+        'description': _("For projects scaling to an even larger group (up to 1,000) of mobile users "
+                                     "that want the full CommCare feature set and dedicated support from Dimagi "
+                                     "staff.")
     },
     Edition.ENTERPRISE: {
-        'name': ugettext_noop("Enterprise"),
-        'description': ugettext_noop("For projects scaling regionally or country wide (1,001+ people) that require "
+        'name': _("Enterprise"),
+        'description': _("For projects scaling regionally or country wide (1,001+ people) that require "
                                      "the full CommCare feature set. Your organization will receive discounted "
                                      "pricing and dedicated enterprise-level support from Dimagi.")
     }
@@ -190,9 +191,9 @@ class PricingTableFeatures(object):
             cls.SOFTWARE_PLANS: _("Software Plans"),
             cls.PRICING: _("Pricing*"),
             cls.MOBILE_LIMIT: {
-                Product.COMMCARE: _("Mobile User Limit"),
-                Product.COMMCONNECT: _("Mobile User Limit"),
-                Product.COMMTRACK: _("Maximum Number of Facilities")
+                Product.COMMCARE: _("Free Mobile Users**"),
+                Product.COMMCONNECT: _("Free Mobile Users**"),
+                Product.COMMTRACK: _("Free Facilities**")
             }[product],
             cls.JAVA_AND_ANDROID: _("Java Feature Phones and Android Phones"),
             cls.MULTIMEDIA_SUPPORT: _("Multimedia Support"),
@@ -216,8 +217,8 @@ class PricingTableFeatures(object):
             cls.ANDROID_GATEWAY: _("Android-based SMS Gateway"),
             cls.SMS_DATA_COLLECTION: _("SMS Data Collection"),
             cls.INBOUND_SMS: _("Inbound SMS (where available)"),
-            cls.INCLUDED_SMS_DIMAGI: _("Included Messages (Dimagi Gateway)**"),
-            cls.INCLUDED_SMS_CUSTOM: _("Included Messages (Your Gateway)***"),
+            cls.INCLUDED_SMS_DIMAGI: _("Free Messages (Dimagi Gateway)***"),
+            cls.INCLUDED_SMS_CUSTOM: _("Messages (Your Gateway)"),
             cls.USER_GROUPS: _("User Groups"),
             cls.DATA_SECURITY_PRIVACY: _("Data Security and Privacy"),
             cls.ADVANCED_ROLES: _("Advanced Role-Based Access"),
@@ -261,7 +262,7 @@ class PricingTableFeatures(object):
             cls.SMS_DATA_COLLECTION: (False, False, True, True, True),
             cls.INBOUND_SMS: (False, False, True, True, True),
             cls.INCLUDED_SMS_DIMAGI: (False, _("250 /month"), _("500 /month"), _("1,000 /month"), _("2,000 /month")),
-            cls.INCLUDED_SMS_CUSTOM: (False, _("Unlimited"), _("Unlimited"), _("Unlimited"), _("Unlimited")),
+            cls.INCLUDED_SMS_CUSTOM: (False, _("1 cent/SMS"), _("1 cent/SMS"), _("1 cent/SMS"), _("1 cent/SMS")),
             cls.USER_GROUPS: (True, True, True, True, True),
             cls.DATA_SECURITY_PRIVACY: (True, True, True, True, True),
             cls.ADVANCED_ROLES: (False, True, True, True, True),
@@ -298,17 +299,25 @@ class PricingTable(object):
             PricingTableCategories.SUPPORT,
         ),
     }
-    FOOTER = (
-        ugettext_noop("*Local taxes and other country-specific fees not included. Dimagi provides pro-bono software "
-                      "plans on a needs basis. To learn more about this opportunity or see if your program qualifies, "
-                      "please contact information@dimagi.com."),
-        ugettext_noop("**Additional incoming and outgoing messages will be charged on a per-message fee, which "
-                      "depends on the telecommunications provider and country. Plaese note that this does not apply "
-                      "to the unlimited messages option, which falls under the category below."),
-        ugettext_noop("***For plans with unlimited incoming and outgoing messages, Dimagi charges an additional "
-                      "$.01 (US) per message on all incoming and outgoing messages."),
-    )
     VISIT_WIKI_TEXT = ugettext_noop("Visit the wiki to learn more.")
+
+    @classmethod
+    def get_footer_by_product(cls, product):
+        ensure_product(product)
+        return (
+            ugettext_noop("*Local taxes and other country-specific fees not included. Dimagi provides pro-bono "
+                          "software plans on a needs basis. To learn more about this opportunity or see if your "
+                          "program qualifies, please contact information@dimagi.com."),
+            {
+                Product.COMMCARE: ugettext_noop("**1 USD/month for each additional mobile user"),
+                Product.COMMCONNECT: ugettext_noop("**1 USD/month for each additional mobile user"),
+                Product.COMMTRACK: ugettext_noop("**1 USD/month for each additional facility"),
+            }[product],
+            ugettext_noop("***Additional incoming and outgoing messages will be charged on a per-message fee, which "
+                          "depends on the telecommunications provider and country. Please note that this does not apply "
+                          "to the unlimited messages option, which falls under the category below."),
+        )
+
 
     @classmethod
     def get_table_by_product(cls, product):
@@ -337,6 +346,6 @@ class PricingTable(object):
             'title': PricingTableFeatures.get_title(PricingTableFeatures.SOFTWARE_PLANS, product),
             'sections': table_sections,
             'visit_wiki_text': cls.VISIT_WIKI_TEXT,
-            'footer': cls.FOOTER,
+            'footer': cls.get_footer_by_product(product),
         }
         return table
