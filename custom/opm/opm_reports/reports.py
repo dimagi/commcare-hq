@@ -9,6 +9,7 @@ that until we actually have another use case for it.
 import datetime
 import re
 from couchdbkit.exceptions import ResourceNotFound
+from dateutil import parser
 from sqlagg.columns import SimpleColumn, SumColumn
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.dates import DatespanFilter
@@ -226,6 +227,21 @@ class BaseReport(MonthYearMixin, SqlTabularReport, CustomProjectReport):
     def fields(self):
         return [BlockFilter, AWCFilter] + super(BaseReport, self).fields
 
+    @property
+    def report_subtitles(self):
+        subtitles = ["For filters:",]
+        if self.filter_data.get('blocks', []):
+            subtitles.append("Blocks - %s" % ", ".join(self.filter_data.get('blocks', [])))
+        if self.filter_data.get('awcs', []):
+            subtitles.append("Awc's - %s" % ", ".join(self.filter_data.get('awcs', [])))
+        startdate = self.datespan.startdate_param_utc
+        enddate = self.datespan.enddate_param_utc
+        if startdate and enddate:
+            sd = parser.parse(startdate)
+            ed = parser.parse(enddate)
+            subtitles.append(" From %s to %s" % (str(sd.date()), str(ed.date())))
+        return subtitles
+
     def filter(self, fn, filter_fields=None):
         """
         This function is to be called by the row constructer to verify that
@@ -350,7 +366,7 @@ class BeneficiaryPaymentReport(BaseReport):
 
 
 class IncentivePaymentReport(BaseReport):
-    name = "Incentive Payment Report"
+    name = "AWW Incentive Payment Report"
     slug = 'incentive_payment_report'
     model = Worker
 
