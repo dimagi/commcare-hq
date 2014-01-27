@@ -291,5 +291,50 @@ class NewSoftwarePlanView(AccountingSectionView):
     def post(self, request, *args, **kwargs):
         if self.plan_info_form.is_valid():
             plan = self.plan_info_form.create_plan()
-            # TODO - redirect to edit page
+            return HttpResponseRedirect(reverse(EditSoftwarePlanView.urlname, args=(plan.id,)))
+        return self.get(request, *args, **kwargs)
+
+
+class EditSoftwarePlanView(AccountingSectionView):
+    template_name = 'accounting/plans.html'
+    urlname = 'edit_software_plan'
+
+    @property
+    @memoized
+    def plan(self):
+        return SoftwarePlan.objects.get(id=self.args[0])
+
+    @property
+    @memoized
+    def plan_info_form(self):
+        if self.request.method == 'POST':
+            return PlanInformationForm(self.plan, self.request.POST)
+        return PlanInformationForm(self.plan)
+
+    @property
+    def page_context(self):
+        context = super(EditSoftwarePlanView, self).main_context
+        context.update({
+            'plan_info_form': self.plan_info_form,
+        })
+        return context
+
+    @property
+    def page_title(self):
+        return 'Edit Software Plan'
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=(self.args[0],))
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': SoftwarePlanInterface.name,
+            'url': SoftwarePlanInterface.get_url(),
+        }]
+
+    def post(self, request, *args, **kwargs):
+        if self.plan_info_form.is_valid():
+            self.plan_info_form.update_plan(self.plan)
         return self.get(request, *args, **kwargs)
