@@ -744,6 +744,9 @@ class HealthCenter(BasicTabularReport, CustomProjectReport, ProjectReportParamet
                 res = sum(nums)
                 return fdd(res, res)
             else:
-                return fdd(vals[0], vals[0])
+                val = vals[0]
+                if val is None:
+                    val = NO_VALUE
+                return fdd(val, val)
 
         return [combine(unwrap(x)) for x in zip(*rows)]
