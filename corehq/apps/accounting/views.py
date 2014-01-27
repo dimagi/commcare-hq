@@ -1,11 +1,14 @@
-from corehq import *
+import json
+from django.utils import translation
+from corehq.apps.accounting.interface import AccountingInterface, SubscriptionInterface, SoftwarePlanInterface
 from corehq.apps.accounting.forms import *
-from corehq.apps.accounting.models import *
+from corehq.apps.accounting.user_text import PricingTable
+from corehq.apps.accounting.utils import LazyEncoder
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from dimagi.utils.decorators.memoized import memoized
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest
 from django.utils.decorators import method_decorator
 
 
@@ -24,7 +27,6 @@ class AccountingSectionView(BaseSectionPageView):
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
         return super(AccountingSectionView, self).dispatch(request, *args, **kwargs)
-
 
 
 class BillingAccountsSectionView(AccountingSectionView):
@@ -339,3 +341,15 @@ class EditSoftwarePlanView(AccountingSectionView):
         if self.plan_info_form.is_valid():
             self.plan_info_form.update_plan(self.plan)
         return self.get(request, *args, **kwargs)
+
+
+def pricing_table_json(request, product, locale):
+    if product not in [c[0] for c in SoftwareProductType.CHOICES]:
+        return HttpResponseBadRequest("Not a valid product")
+    if locale not in [l[0] for l in settings.LANGUAGES]:
+        return HttpResponseBadRequest("Not a supported language.")
+    translation.activate(locale)
+    table = PricingTable.get_table_by_product(product)
+    table_json = json.dumps(table, cls=LazyEncoder)
+    translation.deactivate()
+    return HttpResponse(table_json, content_type='application/json')
