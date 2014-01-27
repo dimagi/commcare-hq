@@ -13,7 +13,7 @@ function CareCase(doc) {
         self.check_birth();
         self.referrals();
         self.danger_signs();
-        self.process_actions();
+        self.process_actions(false);
 
         emit_array([self.owner_id], [self.opened_on_date], self.data_open);
         emit_array([self.owner_id], [self.case.DA], self.data_dob);
@@ -47,6 +47,7 @@ function CareCase(doc) {
         }
 
         self.check_birth();
+        self.process_actions(true);
         emit_array([], [self.case.DA], self.data_dob);
     }
 
@@ -106,7 +107,7 @@ function CareCase(doc) {
         }
     }
 
-    self.process_actions = function () {
+    self.process_actions = function (outcomes_only) {
         var actions = self.case.actions;
         var forms_completed ={};
         var update_count = 0;
@@ -126,13 +127,20 @@ function CareCase(doc) {
 
             // first update
             if (update_count === 1) {
-                emit(['case_opened_'+properties.condition, self.opened_on_date], 1)
-                if (properties.condition === 'enceinte') {
-                    self.data_open.newly_registered_pregnant = 1;
-                } else if (properties.condition === 'accouchee') {
-                    self.data_open.post_partum_registration = 1;
+                if (outcomes_only) {
+                    emit(['case_opened_'+properties.condition, self.opened_on_date], 1);
+                } else {
+                    if (properties.condition === 'enceinte') {
+                        self.data_open.newly_registered_pregnant = 1;
+                    } else if (properties.condition === 'accouchee') {
+                        self.data_open.post_partum_registration = 1;
+                    }
                 }
             }
+        }
+
+        if (outcomes_only) {
+            return;
         }
 
         if (forms_completed[ns_as_accouchement] && self.case.DA) {
