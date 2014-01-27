@@ -191,16 +191,6 @@ def process_case_hierarchy(case_output, get_case_url, type_info):
     process_output(case_output)
 
 def get_case_hierarchy(case, type_info):
-    # PACT has a Patient -> Goal -> Task case hierarchy, but subcase
-    # relationships are duplicated/"bubbled up" up the ancestor chain.  To
-    # remove this duplication, we just look at the case types, assuming that a
-    # given level can't have any children whose case types appear at lower
-    # levels. A more general solution would require slightly more work.
-    # 
-    # - Pact Patient
-    #   - Care Plan Goal 1
-    #     - Care Plan Task 1
-    #   - Care Plan Task 1
     def get_children(case):
         children = [get_children(i.referenced_case) for i in case.reverse_indices]
         # non-first-level descendants
