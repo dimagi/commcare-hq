@@ -4,7 +4,7 @@ from corehq.apps.reports.commtrack.data_sources import StockStatusDataSource, Re
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.commtrack.psi_prototype import CommtrackReportMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.commtrack.models import Product, SupplyPointProductCase as SPPCase
+from corehq.apps.commtrack.models import Product
 from corehq.apps.reports.graph_models import PieChart, MultiBarChart, Axis
 from dimagi.utils.couch.loosechange import map_reduce
 from datetime import datetime
@@ -13,6 +13,8 @@ from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
+from casexml.apps.stock.models import StockState
+from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids
 
 def _enabled_hack(domain):
     return not is_psi_domain(domain)
@@ -45,25 +47,39 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
         return self.prod_data
 
     def get_prod_data(self):
-        startkey = [self.domain, self.active_location._id if self.active_location else None]
-        product_cases = SPPCase.view('commtrack/product_cases', startkey=startkey, endkey=startkey + [{}], include_docs=True)
-        if self.program_id:
-            product_cases = filter(lambda c: Product.get(c.product).program_id == self.program_id, product_cases)
-        cases_by_product = map_reduce(lambda c: [(c.product,)], data=product_cases, include_docs=True)
-        products = Product.view('_all_docs', keys=cases_by_product.keys(), include_docs=True)
+        sp_ids = get_relevant_supply_point_ids(self.domain, self.active_location)
 
-        def status(case):
-            return case.current_stock_category if is_timely(case, 1000) else 'nonreporting'
+        stock_states = StockState.objects.filter(case_id__in=sp_ids).order_by('product_id')
 
-        status_by_product = dict((p, map_reduce(lambda c: [(status(c),)], len, data=cases)) for p, cases in cases_by_product.iteritems())
+        product_grouping = {}
+        for state in stock_states:
+            status = state.stock_category()
+            if state.product_id in product_grouping:
+                product_grouping[state.product_id][status] += 1
+                product_grouping[state.product_id]['facility_count'] += 1
 
-        cols = ['stockout', 'understock', 'adequate', 'overstock', 'nodata'] #'nonreporting', 'nodata']
-        for p in sorted(products, key=lambda p: p.name):
-            cases = cases_by_product.get(p._id, [])
-            results = status_by_product.get(p._id, {})
-            def val(key):
-                return results.get(key, 0) / float(len(cases))
-            yield [p.name, len(cases)] + [100. * val(key) for key in cols]
+            else:
+                product_grouping[state.product_id] = {
+                    'obj': Product.get(state.product_id),
+                    'stockout': 0,
+                    'understock': 0,
+                    'overstock': 0,
+                    'adequate': 0,
+                    'nodata': 0,
+                    'facility_count': 1
+                }
+                product_grouping[state.product_id][status] = 1
+
+        for product in product_grouping.values():
+            yield [
+                product['obj'].name,
+                product['facility_count'],
+                100.0 * product['stockout'] / product['facility_count'],
+                100.0 * product['understock'] / product['facility_count'],
+                100.0 * product['adequate'] / product['facility_count'],
+                100.0 * product['overstock'] / product['facility_count'],
+                100.0 * product['nodata'] / product['facility_count'],
+            ]
 
     @property
     def rows(self):

@@ -1,11 +1,15 @@
-from corehq.apps.commtrack.util import supply_point_type_categories, num_periods_late
+from corehq.apps.commtrack.util import num_periods_late
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import Location
 from corehq.apps.commtrack.models import Product, SupplyPointProductCase as SPPCase
 from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.reports.api import ReportDataSource
-import corehq.apps.locations.util as loc_util
 from datetime import datetime
+from corehq.apps.locations.models import all_locations
+from casexml.apps.stock.models import StockState
+from django.db.models import Sum, Avg
+from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids
+from casexml.apps.stock.utils import months_of_stock_remaining, stock_category
 
 # TODO make settings
 REPORTING_PERIOD = 'weekly'
@@ -117,17 +121,50 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
         return self._slug_attrib_map.keys()
 
     def get_data(self, slugs=None):
-        startkey = [self.domain, self.active_location._id if self.active_location else None]
-        if self.active_product:
-            startkey.append(self.active_product['_id'])
+        sp_ids = get_relevant_supply_point_ids(self.domain, self.active_location)
 
-        product_cases = SPPCase.view('commtrack/product_cases', startkey=startkey, endkey=startkey + [{}], include_docs=True)
-        if self.program_id:
-            product_cases = filter(lambda c: Product.get(c.product).program_id == self.program_id, product_cases)
-        if self.config.get('aggregate'):
-            return self.aggregate_cases(product_cases, slugs)
+        if len(sp_ids) == 1:
+            stock_states = StockState.objects.filter(case_id=sp_ids[0])
+            return self.leaf_node_data(stock_states)
         else:
-            return self.raw_cases(product_cases, slugs)
+            stock_states = StockState.objects.filter(case_id__in=sp_ids).values('product_id').annotate(
+                avg_consumption=Avg('daily_consumption'),
+                total_stock=Sum('stock_on_hand')
+            )
+            return self.aggregated_data(stock_states)
+
+        # TODO still need to support programs
+        # if self.program_id:
+        #    product_cases = filter(lambda c: Product.get(c.product).program_id == self.program_id, product_cases)
+
+    def leaf_node_data(self, stock_states):
+        for state in stock_states:
+            product = Product.get(state.product_id)
+            yield {
+                'category': state.stock_category(),
+                'product_id': product._id,
+                'consumption': state.daily_consumption,
+                'months_remaining': state.months_remaining(),
+                'location_id': state.case_id,
+                'product_name': product.name,
+                'current_stock': state.stock_on_hand,
+                'location_lineage': None
+            }
+
+    def aggregated_data(self, stock_states):
+        for state in stock_states:
+            product = Product.get(state['product_id'])
+            yield {
+                'category': stock_category(state['total_stock'], state['avg_consumption']),
+                'product_id': product._id,
+                'consumption': state['avg_consumption'],
+                'months_remaining': months_of_stock_remaining(state['total_stock'], state['avg_consumption']),
+                'location_id': None,
+                'product_name': product.name,
+                'current_stock': state['total_stock'],
+                'location_lineage': None
+            }
+
 
     def raw_cases(self, product_cases, slugs):
         def _slug_attrib(slug, attrib, product, output):
@@ -144,45 +181,6 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
 
             yield out
 
-    def aggregate_cases(self, product_cases, slugs):
-        cases_by_product = map_reduce(lambda c: [(c.product,)], data=product_cases, include_docs=True)
-        products = Product.view('_all_docs', keys=cases_by_product.keys(), include_docs=True)
-
-        def _sum(vals):
-            return sum(vals) if vals else None
-
-        def aggregate_product(cases):
-            data = [(c.current_stock_level, c.monthly_consumption) for c in cases if is_timely(c, 1000)]
-            total_stock = _sum([d[0] for d in data if d[0] is not None])
-            total_consumption = _sum([d[1] for d in data if d[1] is not None])
-            # exclude stock values w/o corresponding consumption figure from total months left calculation
-            consumable_stock = _sum([d[0] for d in data if d[0] is not None and d[1] is not None])
-
-            return {
-                'total_stock': total_stock,
-                'total_consumption': total_consumption,
-                'consumable_stock': consumable_stock,
-            }
-
-        status_by_product = dict((p, aggregate_product(cases)) for p, cases in cases_by_product.iteritems())
-        for p in sorted(products, key=lambda p: p.name):
-            stats = status_by_product[p._id]
-
-            months_left = SPPCase.months_of_stock_remaining(stats['consumable_stock'], stats['total_consumption'])
-            category = SPPCase.stock_category(stats['total_stock'], stats['total_consumption'], stats['consumable_stock'])
-
-            full_output = {
-                self.SLUG_PRODUCT_NAME: p.name,
-                self.SLUG_PRODUCT_ID: p._id,
-                self.SLUG_LOCATION_ID: self.active_location._id if self.active_location else None,
-                self.SLUG_LOCATION_LINEAGE: self.active_location.lineage if self.active_location else None,
-                self.SLUG_CURRENT_STOCK: stats['total_stock'],
-                self.SLUG_CONSUMPTION: stats['total_consumption'],
-                self.SLUG_MONTHS_REMAINING: months_left,
-                self.SLUG_CATEGORY: category,
-            }
-
-            yield dict((slug, full_output['slug']) for slug in slugs) if slugs else full_output
 
 class StockStatusBySupplyPointDataSource(StockStatusDataSource):
     
