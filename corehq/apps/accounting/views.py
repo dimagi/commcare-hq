@@ -316,6 +316,7 @@ class EditSoftwarePlanView(AccountingSectionView):
         context = super(EditSoftwarePlanView, self).main_context
         context.update({
             'plan_info_form': self.plan_info_form,
+            'plan_versions': SoftwarePlanVersion.objects.filter(plan=self.plan).order_by('date_created')
         })
         return context
 
