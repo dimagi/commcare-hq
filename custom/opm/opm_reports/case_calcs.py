@@ -73,7 +73,7 @@ def is_equals(form, prop1, prop2, start=0, end=6, count=0):
         if p1 in form.form and p2 in form.form[p1] and form.form[p1][p2] == '1':
             c += 1
             check = True
-    return check if c > count else False
+    return (case_date_group(form), check) if c > count else (None, False)
 
 
 def num_of_children(form, prop1, prop2, num_in_condition, children):
@@ -101,15 +101,17 @@ class VhndMonthly(fluff.Calculator):
     @fluff.date_emitter
     def total(self, case):
         is_vhnd = False
+        date = None
         for form in case.get_forms():
             if form.xmlns == BIRTH_PREP_XMLNS:
-                is_vhnd = is_equals(form, "pregnancy_month_%s", "attendance_vhnd_%s")
+                date, is_vhnd = is_equals(form, "pregnancy_month_%s", "attendance_vhnd_%s")
             elif form.xmlns in children_forms:
                 if form.form['child_1']['child1_attendance_vhnd'] == 1:
                     is_vhnd = True
+                    date = case_date_group(form)
                     break
-        if is_vhnd:
-            yield case_date(case)
+        if date and is_vhnd:
+            yield date
 
 
 def check_status(form, status):
@@ -128,7 +130,7 @@ class Status(fluff.Calculator):
     def total(self, case):
         for form in case.get_forms():
             if form.xmlns in children_forms and check_status(form, self.status):
-                yield case_date(case)
+                yield case_date_group(form)
                 break
 
 
@@ -140,11 +142,12 @@ class Weight(fluff.Calculator):
     @fluff.date_emitter
     def total(self, case):
         weight = False
+        date = None
         for form in case.get_forms():
             if form.xmlns == BIRTH_PREP_XMLNS:
-                weight = is_equals(form, "pregnancy_month_%s", "mother_weight_%s", count=self.count)
-        if weight:
-            yield case_date(case)
+                date, weight = is_equals(form, "pregnancy_month_%s", "mother_weight_%s", count=self.count)
+        if date and weight:
+            yield date
 
 
 class BreastFed(fluff.Calculator):
@@ -158,7 +161,7 @@ class BreastFed(fluff.Calculator):
             for form in case.get_forms():
                 if form.xmlns == CFU1_XMLNS:
                     yield {
-                        'date': case_date(case),
+                        'date': case_date_group(form),
                         'value': num_of_children(form, 'child_%s', 'child%s_child_excbreastfed', 0,
                                                  range(1, (int(birth_amount) + 1)))
                     }
@@ -177,7 +180,7 @@ class ChildrenInfo(fluff.Calculator):
         for form in case.get_forms():
             if form.xmlns in self.forms:
                 yield {
-                    'date': case_date(case),
+                    'date': case_date_group(form),
                     'value': num_of_children(form, self.prop1, self.prop2, self.num_in_condition, [1, 2, 3])
                 }
 
