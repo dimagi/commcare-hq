@@ -9,7 +9,8 @@ def create_user(username, password, is_staff=False, is_superuser=False, is_activ
     user = User()
     user.username = username.lower()
     for key, val in kwargs.items():
-        if key and val:  setattr(user, key, val)
+        if key and val:
+            setattr(user, key, val)
     user.is_staff = is_staff
     user.is_active = is_active
     user.is_superuser = is_superuser
