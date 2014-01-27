@@ -1,4 +1,4 @@
-from corehq import AccountingInterface, SubscriptionInterface
+from corehq import *
 from corehq.apps.accounting.forms import *
 from corehq.apps.accounting.models import *
 from corehq.apps.domain.decorators import require_superuser
@@ -252,3 +252,90 @@ class EditSubscriptionView(AccountingSectionView):
         self.subscription.is_active = False
         self.subscription.save()
         self.subscription_canceled = True
+
+
+class NewSoftwarePlanView(AccountingSectionView):
+    template_name = 'accounting/plans_base.html'
+    urlname = 'new_software_plan'
+
+    @property
+    @memoized
+    def plan_info_form(self):
+        if self.request.method == 'POST':
+            return PlanInformationForm(None, self.request.POST)
+        return PlanInformationForm(None)
+
+    @property
+    def page_context(self):
+        context = super(NewSoftwarePlanView, self).main_context
+        context.update({
+            'plan_info_form': self.plan_info_form,
+        })
+        return context
+
+    @property
+    def page_title(self):
+        return 'New Software Plan'
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname)
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': SoftwarePlanInterface.name,
+            'url': SoftwarePlanInterface.get_url(),
+        }]
+
+    def post(self, request, *args, **kwargs):
+        if self.plan_info_form.is_valid():
+            plan = self.plan_info_form.create_plan()
+            return HttpResponseRedirect(reverse(EditSoftwarePlanView.urlname, args=(plan.id,)))
+        return self.get(request, *args, **kwargs)
+
+
+class EditSoftwarePlanView(AccountingSectionView):
+    template_name = 'accounting/plans.html'
+    urlname = 'edit_software_plan'
+
+    @property
+    @memoized
+    def plan(self):
+        return SoftwarePlan.objects.get(id=self.args[0])
+
+    @property
+    @memoized
+    def plan_info_form(self):
+        if self.request.method == 'POST':
+            return PlanInformationForm(self.plan, self.request.POST)
+        return PlanInformationForm(self.plan)
+
+    @property
+    def page_context(self):
+        context = super(EditSoftwarePlanView, self).main_context
+        context.update({
+            'plan_info_form': self.plan_info_form,
+            'plan_versions': SoftwarePlanVersion.objects.filter(plan=self.plan).order_by('date_created')
+        })
+        return context
+
+    @property
+    def page_title(self):
+        return 'Edit Software Plan'
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=(self.args[0],))
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': SoftwarePlanInterface.name,
+            'url': SoftwarePlanInterface.get_url(),
+        }]
+
+    def post(self, request, *args, **kwargs):
+        if self.plan_info_form.is_valid():
+            self.plan_info_form.update_plan(self.plan)
+        return self.get(request, *args, **kwargs)
