@@ -30,5 +30,3 @@ class DatespanFilter(BaseReportFilter):
             'datespan': self.datespan,
             'timezone': self.timezone.zone,
         }
-
-

@@ -1,3 +1,6 @@
 #!/bin/bash
 
-python scripts/make_rebuild_staging.py < $1 > rebuildstaging.tmp.sh; bash rebuildstaging.tmp.sh
+f=$1
+shift
+
+python scripts/rebuildstaging.py < $f $@

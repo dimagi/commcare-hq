@@ -796,6 +796,7 @@ COUCHDB_APPS = [
     'pact',
     'psi',
     'trialconnect',
+    'accounting',
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
@@ -848,6 +849,7 @@ COMMCARE_USER_TERM = "Mobile Worker"
 WEB_USER_TERM = "Web User"
 
 DEFAULT_CURRENCY = "USD"
+DEFAULT_CURRENCY_SYMBOL = "$"
 
 SMS_HANDLERS = [
     'corehq.apps.sms.api.forwarding_handler',
