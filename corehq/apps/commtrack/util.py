@@ -124,31 +124,8 @@ def bootstrap_commtrack_settings_if_necessary(domain, requisitions_enabled=False
         supply_point_types=[],
     )
     if requisitions_enabled:
-        c.requisition_config = CommtrackRequisitionConfig(
-            enabled=True,
-            actions=[
-                CommtrackActionConfig(
-                    action=RequisitionActions.REQUEST,
-                    keyword='req',
-                    caption='Request',
-                ),
-                CommtrackActionConfig(
-                    action=RequisitionActions.APPROVAL,
-                    keyword='approve',
-                    caption='Approved',
-                ),
-                CommtrackActionConfig(
-                    action=RequisitionActions.PACK,
-                    keyword='pack',
-                    caption='Packed',
-                ),
-                CommtrackActionConfig(
-                    action=RequisitionActions.RECEIPTS,
-                    keyword='rec',
-                    caption='Requisition Receipts',
-                ),
-            ],
-        )
+        c.requisition_config = get_default_requisition_config()
+
     c.save()
 
     program = make_program(domain.name, 'Default', 'def')
@@ -158,6 +135,32 @@ def bootstrap_commtrack_settings_if_necessary(domain, requisitions_enabled=False
 
     return c
 
+def get_default_requisition_config():
+    return CommtrackRequisitionConfig(
+        enabled=True,
+        actions=[
+            CommtrackActionConfig(
+                action=RequisitionActions.REQUEST,
+                keyword='req',
+                caption='Request',
+            ),
+            CommtrackActionConfig(
+                action=RequisitionActions.APPROVAL,
+                keyword='approve',
+                caption='Approved',
+            ),
+            CommtrackActionConfig(
+                action=RequisitionActions.PACK,
+                keyword='pack',
+                caption='Packed',
+            ),
+            CommtrackActionConfig(
+                action=RequisitionActions.RECEIPTS,
+                keyword='rec',
+                caption='Requisition Receipts',
+            ),
+        ],
+    )
 
 def due_date_weekly(dow, past_period=0): # 0 == sunday
     """compute the next due date on a weekly schedule, where reports are

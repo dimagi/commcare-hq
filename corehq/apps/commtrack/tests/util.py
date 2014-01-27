@@ -9,8 +9,8 @@ from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.models import Location
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.commtrack.util import bootstrap_commtrack_settings_if_necessary
-from corehq.apps.commtrack.models import CommTrackUser, SupplyPointCase
+from corehq.apps.commtrack.util import bootstrap_commtrack_settings_if_necessary, get_default_requisition_config
+from corehq.apps.commtrack.models import CommTrackUser, SupplyPointCase, CommtrackConfig
 from corehq.apps.sms.backend import test
 from django.utils.unittest.case import TestCase
 from corehq.apps.commtrack.helpers import make_supply_point,\
@@ -73,13 +73,12 @@ PACKER_USER = {
     },
 }
 
-def bootstrap_domain(domain_name=TEST_DOMAIN, requisitions_enabled=False):
+def bootstrap_domain(domain_name=TEST_DOMAIN):
     # little test utility that makes a commtrack-enabled domain with
     # a default config and a location
     domain_obj = create_domain(domain_name)
     domain_obj.commtrack_enabled = True
     domain_obj.save(**get_safe_write_kwargs())
-
     return domain_obj
 
 
@@ -132,7 +131,7 @@ def update_supply_point_product_stock_level(spp, current_stock):
                        xmlns=const.COMMTRACK_SUPPLY_POINT_PRODUCT_XMLNS)
 
 class CommTrackTest(TestCase):
-    requisitions_enabled = False # can be overridden
+    requisitions_enabled = False  # can be overridden
 
     def setUp(self):
         # might as well clean house before doing anything
@@ -142,7 +141,12 @@ class CommTrackTest(TestCase):
         StockTransaction.objects.all().delete()
 
         self.backend = test.bootstrap(TEST_BACKEND, to_console=True)
-        self.domain = bootstrap_domain(requisitions_enabled=self.requisitions_enabled)
+        self.domain = bootstrap_domain()
+        ct_settings = CommtrackConfig.for_domain(self.domain.name)
+        if self.requisitions_enabled:
+            ct_settings.requisition_config = get_default_requisition_config()
+            ct_settings.save()
+
         self.loc = make_loc('loc1')
         self.sp = make_supply_point(self.domain.name, self.loc)
 
