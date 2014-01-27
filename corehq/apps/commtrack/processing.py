@@ -15,8 +15,8 @@ from casexml.apps.case.xml import V2
 from xml import etree as legacy_etree
 from datetime import date
 from lxml import etree
-from corehq.apps.receiverwrapper.util import get_submit_url
-from receiver.util import spoof_submission
+from corehq.apps.receiverwrapper.util import submit_form_locally
+from dimagi.utils.parsing import string_to_datetime
 
 
 logger = logging.getLogger('commtrack.incoming')
@@ -92,9 +92,8 @@ def process_stock(sender, xform, config=None, **kwargs):
                 set_transactions(root, post_processed_transactions, E)
                 submission = etree.tostring(root, encoding='utf-8', pretty_print=True)
                 logger.debug(submission)
-                spoof_submission(get_submit_url(domain), submission,
-                                 headers={'HTTP_X_SUBMIT_TIME': submit_time},
-                                 hqsubmission=False)
+                submit_form_locally(submission, domain,
+                                    received_on=string_to_datetime(submit_time))
 
         _do_legacy_xml_submission()
 
