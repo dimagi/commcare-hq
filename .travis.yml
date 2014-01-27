@@ -11,6 +11,7 @@ install:
  - "curl http://127.0.0.1:5984/"
  - "pip install -e ."
  - "pip install coverage coveralls"
+ - "pip install git+https://github.com/dimagi/xml2json.git"
 script: coverage run `which django-admin.py` test --settings settings --traceback case phone
 after_success:
  - coveralls
