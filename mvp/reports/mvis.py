@@ -85,6 +85,7 @@ class HealthCoordinatorReport(MVPIndicatorReport):
                 'category_title': "Vital Events",
                 'category_slug': 'vital_events',
                 'indicator_slugs': [
+                    "num_births_occured",
                     "num_births_recorded",
                     "maternal_deaths",
                     "neonatal_deaths",
