@@ -5,6 +5,7 @@ from crispy_forms.bootstrap import FormActions
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import *
 from django import forms
+from django_prbac import arbitrary as role_gen
 
 
 class BillingAccountForm(forms.Form):
@@ -395,6 +396,8 @@ class PlanInformationForm(forms.Form):
                             edition=edition,
                             visibility=visibility)
         plan.save()
+        plan_version = SoftwarePlanVersion(plan=plan, role=role_gen.arbitrary_role()) # TODO - check this
+        plan_version.save()
         return plan
 
     def update_plan(self, plan):
