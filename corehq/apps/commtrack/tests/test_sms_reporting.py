@@ -43,7 +43,7 @@ class StockReportTest(CommTrackTest):
             [product] = filter(lambda p: p.code_ == code, self.products)
             trans = StockTransaction.objects.get(product_id=product._id)
             self.assertEqual(self.sp._id, trans.case_id)
-            self.assertEqual(amt, trans.quantity)
+            self.assertEqual(0, trans.quantity)
             self.assertEqual(amt, trans.stock_on_hand)
 
 

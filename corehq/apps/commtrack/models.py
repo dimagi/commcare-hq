@@ -534,6 +534,8 @@ class NewStockReport(object):
     @transaction.commit_on_success
     def create_models(self):
         # todo: this function should probably move to somewhere in casexml.apps.stock
+        if self.tag not in stockconst.VALID_REPORT_TYPES:
+            return
         report = DbStockReport.objects.create(form_id=self.form_id, date=self.timestamp, type=self.tag)
         for txn in self.transactions:
             db_txn = DbStockTransaction(
@@ -545,11 +547,11 @@ class NewStockReport(object):
             previous_transaction = db_txn.get_previous_transaction()
             db_txn.type = txn.action
             db_txn.subtype = txn.subaction
-            if self.tag == 'balance':
+            if self.tag == stockconst.REPORT_TYPE_BALANCE:
                 db_txn.stock_on_hand = txn.quantity
                 db_txn.quantity = 0
             else:
-                assert self.tag == 'transfer'
+                assert self.tag == stockconst.REPORT_TYPE_TRANSFER
                 db_txn.quantity = txn.relative_quantity
                 db_txn.stock_on_hand = (previous_transaction.stock_on_hand if previous_transaction else 0) + db_txn.quantity
             db_txn.save()
