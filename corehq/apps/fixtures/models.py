@@ -53,11 +53,11 @@ class FixtureDataType(Document):
 
     @classmethod
     def by_domain(cls, domain):
-        return cls.view('fixtures/data_types_by_domain', key=domain, reduce=False, include_docs=True)
+        return cls.view('fixtures/data_types_by_domain', key=domain, reduce=False, include_docs=True, descending=True)
 
     @classmethod
     def by_domain_tag(cls, domain, tag):
-        return cls.view('fixtures/data_types_by_domain_tag', key=[domain, tag], reduce=False, include_docs=True)
+        return cls.view('fixtures/data_types_by_domain_tag', key=[domain, tag], reduce=False, include_docs=True, descending=True)
 
     def recursive_delete(self, transaction):
         item_ids = []
@@ -322,6 +322,7 @@ class FixtureDataItem(Document):
             key=[group.domain, 'data_item by group', group.get_id],
             reduce=False,
             wrapper=lambda r: r['value'],
+            descending=True
         ).all()
 
         return cls.view('_all_docs', keys=list(fixture_ids), include_docs=True) if wrap else fixture_ids
@@ -329,11 +330,11 @@ class FixtureDataItem(Document):
     @classmethod
     def by_data_type(cls, domain, data_type):
         data_type_id = _id_from_doc(data_type)
-        return cls.view('fixtures/data_items_by_domain_type', key=[domain, data_type_id], reduce=False, include_docs=True)
+        return cls.view('fixtures/data_items_by_domain_type', key=[domain, data_type_id], reduce=False, include_docs=True, descending=True)
 
     @classmethod
     def by_domain(cls, domain):
-        return cls.view('fixtures/data_items_by_domain_type', startkey=[domain], endkey=[domain, {}], reduce=False, include_docs=True)
+        return cls.view('fixtures/data_items_by_domain_type', startkey=[domain], endkey=[domain, {}], reduce=False, include_docs=True, descending=True)
 
     @classmethod
     def by_field_value(cls, domain, data_type, field_name, field_value):
