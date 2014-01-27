@@ -92,7 +92,7 @@ def get_transactions(case_id, product_id, section_id, window_start, window_end):
     db_transactions = StockTransaction.objects.filter(
         case_id=case_id, product_id=product_id,
         report__date__gt=window_start,
-        report__date__lte=window_end,
+        report__date__lte=datetime(window_end.year, window_end.month, window_end.day),
         section_id=section_id,
     ).order_by('report__date', 'pk')
 

@@ -71,7 +71,7 @@ def create_reconciliation_transaction(sender, instance, *args, **kwargs):
         previous_transaction = instance.get_previous_transaction()
         # only soh reports that have changed the stock create inferred transactions
         if previous_transaction and previous_transaction.stock_on_hand != instance.stock_on_hand:
-            amt = instance.stock_on_hand - previous_transaction.stock_on_hand
+            amt = instance.stock_on_hand - Decimal(previous_transaction.stock_on_hand)
             StockTransaction.objects.create(
                 report=instance.report,
                 case_id=instance.case_id,
