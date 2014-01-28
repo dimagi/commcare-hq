@@ -51,9 +51,9 @@ class NewBillingAccountView(BillingAccountsSectionView):
 
     @property
     def page_context(self):
-        context = super(NewBillingAccountView, self).main_context
-        context.update({'form': self.account_form})
-        return context
+        return {
+            'form': self.account_form,
+        }
 
     @classmethod
     def page_title(cls):
@@ -101,8 +101,7 @@ class ManageBillingAccountView(BillingAccountsSectionView):
 
     @property
     def page_context(self):
-        context = super(ManageBillingAccountView, self).main_context
-        context.update({
+        return {
             'account': self.account,
             'credit_form': self.get_appropriate_credit_form(self.account),
             'credit_list': CreditLine.objects.filter(account=self.account),
@@ -112,8 +111,7 @@ class ManageBillingAccountView(BillingAccountsSectionView):
                       if len(Invoice.objects.filter(subscription=sub)) != 0 else 'None on record',
                 ) for sub in Subscription.objects.filter(account=self.account)
             ],
-        })
-        return context
+        }
 
     @classmethod
     def page_title(cls):
@@ -145,9 +143,9 @@ class NewSubscriptionView(AccountingSectionView):
 
     @property
     def page_context(self):
-        context = super(NewSubscriptionView, self).main_context
-        context.update(dict(form=self.subscription_form))
-        return context
+        return {
+            'form': self.subscription_form,
+        }
 
     @classmethod
     def page_title(cls):
@@ -212,16 +210,14 @@ class EditSubscriptionView(AccountingSectionView):
 
     @property
     def page_context(self):
-        context = super(EditSubscriptionView, self).main_context
-        context.update({
+        return {
             'cancel_form': CancelForm(),
             'credit_form': self.get_appropriate_credit_form(self.subscription),
             'credit_list': CreditLine.objects.filter(subscription=self.subscription),
             'form': self.get_appropriate_subscription_form(self.subscription),
             'subscription': self.subscription,
-            'subscription_canceled': self.subscription_canceled if hasattr(self, 'subscription_canceled') else False
-        })
-        return context
+            'subscription_canceled': self.subscription_canceled if hasattr(self, 'subscription_canceled') else False,
+        }
 
     @classmethod
     def page_title(cls):
@@ -269,11 +265,9 @@ class NewSoftwarePlanView(AccountingSectionView):
 
     @property
     def page_context(self):
-        context = super(NewSoftwarePlanView, self).main_context
-        context.update({
+        return {
             'plan_info_form': self.plan_info_form,
-        })
-        return context
+        }
 
     @classmethod
     def page_title(cls):
