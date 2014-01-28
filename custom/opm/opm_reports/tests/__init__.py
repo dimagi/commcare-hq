@@ -101,8 +101,6 @@ class OPMTestBase(object):
             return string_row
 
         report_rows = sorted(report.rows, key=stringify)
-        print report_rows
-        print snapshot.rows
         self.assertEquals(total, len(report_rows),
             "different number of rows for %s" % self.ReportClass.__name__)
         for i, snapshot_row in enumerate(sorted(snapshot.rows, key=stringify)):
