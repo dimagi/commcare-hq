@@ -4,7 +4,8 @@
         <br/>
         Date Created: {{ plan_version.date_created }}
         <br/>
-        Role
+        Role: {{ plan_version.role.name }}
+        {% if plan_version.role.description %} ({{ plan_version.role.description }}){% endif %}
         {# TODO: add list of permissions applied to Role #}
         <br/>
         Products
