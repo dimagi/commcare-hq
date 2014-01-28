@@ -3,8 +3,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.reports.commtrack.data_sources import StockStatusDataSource
 from corehq.apps.users.models import WebUser
 from dimagi.utils.couch.loosechange import map_reduce
-from corehq.apps.commtrack.helpers import make_supply_point,\
-    make_supply_point_product, make_product
+from corehq.apps.commtrack.helpers import make_supply_point, make_product
 from corehq.apps.commtrack.tests.util import make_loc,\
     update_supply_point_product_stock_level
 
@@ -59,11 +58,7 @@ class BaseReportTest(unittest.TestCase):
                 for site_name, products in sites.items():
                     site = make_loc(site_name, type='site', parent=district)
                     cls.sites[site_name] = (site, products)
-                    supply_point = make_supply_point(TEST_DOMAIN, site)
-                    for p_code, stock in products.items():
-                        prod = cls.products[p_code]
-                        spp = make_supply_point_product(supply_point, prod._id)
-                        update_supply_point_product_stock_level(spp, stock)
+                    make_supply_point(TEST_DOMAIN, site)
 
     @classmethod
     def tearDownClass(cls):

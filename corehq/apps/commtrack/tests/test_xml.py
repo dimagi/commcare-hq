@@ -9,7 +9,7 @@ from corehq.apps.commtrack.tests.util import CommTrackTest, get_ota_balance_xml
 from casexml.apps.case.tests.util import check_xml_line_by_line
 from corehq.apps.hqcase.utils import get_cases_in_domain
 from corehq.apps.receiverwrapper import submit_form_locally
-from corehq.apps.commtrack.tests.util import make_loc, make_supply_point, make_supply_point_product
+from corehq.apps.commtrack.tests.util import make_loc, make_supply_point
 from corehq.apps.commtrack.tests.data.balances import (
     balance_ota_block,
     submission_wrap,
@@ -111,21 +111,13 @@ class CommTrackSubmissionTest(CommTrackTest):
         self.assertEqual(expected_qty, latest_trans.quantity)
 
     def check_product_stock(self, supply_point, product_id, expected_soh, expected_qty, section_id='stock'):
-        # check the case
-        if section_id == 'stock':
-            spp = supply_point.get_product_subcase(product_id)
-            self.assertEqual(expected_soh, spp.current_stock)
-
-        # and the django model
         self.check_stock_models(supply_point, product_id, expected_soh, expected_qty, section_id)
 
     def setUp(self):
         super(CommTrackSubmissionTest, self).setUp()
-        self.first_spp = self.spps[self.products[0].code]
 
         loc2 = make_loc('loc1')
         self.sp2 = make_supply_point(self.domain.name, loc2)
-        self.second_spp = make_supply_point_product(self.sp2, self.products[0]._id)
 
 
 class CommTrackBalanceTransferTest(CommTrackSubmissionTest):

@@ -1,4 +1,3 @@
-import uuid
 from xml.etree import ElementTree
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests import delete_all_cases, delete_all_xforms
@@ -9,17 +8,15 @@ from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.models import Location
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.commtrack.util import bootstrap_commtrack_settings_if_necessary, get_default_requisition_config
+from corehq.apps.commtrack.util import get_default_requisition_config
 from corehq.apps.commtrack.models import CommTrackUser, SupplyPointCase, CommtrackConfig
 from corehq.apps.sms.backend import test
 from django.utils.unittest.case import TestCase
-from corehq.apps.commtrack.helpers import make_supply_point,\
-    make_supply_point_product
+from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.apps.commtrack.models import Product
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_safe_write_kwargs
 from casexml.apps.phone.restore import generate_restore_payload
-from casexml.apps.phone.models import SyncLog
 from lxml import etree
 
 TEST_DOMAIN = 'commtrack-test'
@@ -168,10 +165,6 @@ class CommTrackTest(TestCase):
         self.sp.save()
         self.products = sorted(Product.by_domain(self.domain.name), key=lambda p: p._id)
         self.assertEqual(3, len(self.products))
-        self.spps = {}
-        for p in self.products:
-            self.spps[p.code] = make_supply_point_product(self.sp, p._id)
-            self.assertEqual(self.spps[p.code].owner_id, self.group._id)
 
     def tearDown(self):
         self.backend.delete()

@@ -2,7 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack.const import RequisitionStatus
-from corehq.apps.commtrack.models import RequisitionCase, SupplyPointProductCase
+from corehq.apps.commtrack.models import RequisitionCase
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack.tests.util import CommTrackTest
 from corehq.apps.commtrack.sms import handle, SMSError
@@ -27,11 +27,6 @@ class StockReportTest(CommTrackTest):
         self.assertEqual(1, len(forms))
         self.assertEqual(_get_location_from_sp(self.sp), _get_location_from_form(forms[0]))
 
-        for code, amt in amounts.items():
-            spp = SupplyPointProductCase.get(self.spps[code]._id)
-            self.assertEqual(self.sp.location_, spp.location_)
-            self.assertEqual(Decimal(amt), spp.current_stock)
-
         # todo: right now this makes one report per balance when really they should all be in the same one
         self.assertEqual(3, StockReport.objects.count())
         for report in StockReport.objects.all():
@@ -45,7 +40,6 @@ class StockReportTest(CommTrackTest):
             self.assertEqual(self.sp._id, trans.case_id)
             self.assertEqual(0, trans.quantity)
             self.assertEqual(amt, trans.stock_on_hand)
-
 
     def testStockReportFixed(self):
         self.assertEqual(0, len(self.get_commtrack_forms()))
@@ -65,10 +59,11 @@ class StockReportTest(CommTrackTest):
         self.assertEqual(_get_location_from_sp(self.sp), _get_location_from_form(forms[0]))
 
         for code, amt in amounts.items():
-            spp = SupplyPointProductCase.get(self.spps[code]._id)
-            self.assertEqual(self.sp.location_, spp.location_)
-            self.assertEqual(Decimal(amt), spp.current_stock)
-
+            [product] = filter(lambda p: p.code_ == code, self.products)
+            trans = StockTransaction.objects.get(product_id=product._id)
+            self.assertEqual(self.sp._id, trans.case_id)
+            self.assertEqual(0, trans.quantity)
+            self.assertEqual(amt, trans.stock_on_hand)
 
 class StockRequisitionTest(CommTrackTest):
     requisitions_enabled = True

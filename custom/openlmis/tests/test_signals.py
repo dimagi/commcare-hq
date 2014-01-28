@@ -5,7 +5,6 @@ from corehq.apps.commtrack.stockreport import Requisition
 from corehq.apps.commtrack.const import RequisitionActions
 from corehq.apps.commtrack.requisitions import create_requisition
 from custom.openlmis.signals import stock_data_submission
-from corehq.apps.commtrack.helpers import make_supply_point_product
 from custom.openlmis.tests.mock_api import MockOpenLMISSubmitEndpoint
 import os
 
@@ -54,9 +53,6 @@ class SignalsTest(CommTrackTest):
         commtrack_config = CommtrackConfig.get(self.domain.commtrack_settings._id)
         commtrack_config.openlmis_config = openlmis_config
         commtrack_config.save()
-
-        for p in self.products:
-            self.spps[p.code] = make_supply_point_product(self.sp, p._id)
 
     def testSyncStockRequisition(self):
         requisition_cases = []

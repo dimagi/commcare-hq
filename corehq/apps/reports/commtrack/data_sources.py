@@ -1,7 +1,7 @@
 from corehq.apps.commtrack.util import num_periods_late
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import Location
-from corehq.apps.commtrack.models import Product, SupplyPointProductCase as SPPCase
+from corehq.apps.commtrack.models import Product
 from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.reports.api import ReportDataSource
 from datetime import datetime
