@@ -5,7 +5,6 @@ from corehq.apps.commtrack.models import Product
 from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.reports.api import ReportDataSource
 from datetime import datetime
-from corehq.apps.locations.models import all_locations
 from casexml.apps.stock.models import StockState
 from django.db.models import Sum, Avg
 from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids
@@ -218,11 +217,14 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
     """
 
     def get_data(self):
-        startkey = [self.domain, self.active_location._id if self.active_location else None]
-        product_cases = SPPCase.view('commtrack/product_cases',
-                                     startkey=startkey,
-                                     endkey=startkey + [{}],
-                                     include_docs=True)
+        # TODO this doesn't work post SPP era
+        # startkey = [self.domain, self.active_location._id if self.active_location else None]
+        # product_cases = SPPCase.view('commtrack/product_cases',
+                                     # startkey=startkey,
+                                     # endkey=startkey + [{}],
+                                     # include_docs=True)
+        product_cases = []
+
         if self.program_id:
             product_cases = filter(lambda c: Product.get(c.product).program_id == self.program_id, product_cases)
         def latest_case(cases):
