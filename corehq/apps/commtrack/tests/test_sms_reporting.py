@@ -70,7 +70,7 @@ class StockReportTest(CommTrackTest):
             self.assertEqual(Decimal(amt), spp.current_stock)
 
 
-class StockRequisitionTest(CommTrackTest):
+class StockRequisitionTest(object):
     requisitions_enabled = True
 
     def testRequisition(self):
