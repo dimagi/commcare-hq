@@ -55,8 +55,8 @@ class NewBillingAccountView(BillingAccountsSectionView):
         context.update({'form': self.account_form})
         return context
 
-    @property
-    def page_title(self):
+    @classmethod
+    def page_title(cls):
         return "New Billing Account"
 
     @property
@@ -115,8 +115,8 @@ class ManageBillingAccountView(BillingAccountsSectionView):
         })
         return context
 
-    @property
-    def page_title(self):
+    @classmethod
+    def page_title(cls):
         return "Manage Billing Account"
 
     @property
@@ -149,8 +149,8 @@ class NewSubscriptionView(AccountingSectionView):
         context.update(dict(form=self.subscription_form))
         return context
 
-    @property
-    def page_title(self):
+    @classmethod
+    def page_title(cls):
         return 'New Subscription'
 
     @property
@@ -223,8 +223,8 @@ class EditSubscriptionView(AccountingSectionView):
         })
         return context
 
-    @property
-    def page_title(self):
+    @classmethod
+    def page_title(cls):
         return 'Edit Subscription'
 
     @property
@@ -275,8 +275,8 @@ class NewSoftwarePlanView(AccountingSectionView):
         })
         return context
 
-    @property
-    def page_title(self):
+    @classmethod
+    def page_title(cls):
         return 'New Software Plan'
 
     @property
