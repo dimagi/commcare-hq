@@ -28,7 +28,7 @@ function (doc) {
                 if (visit_date >= last_muac_date
                     && indicators.muac && indicators.muac.value) {
                     var visit_diff = visit_date.getTime() - last_muac_date.getTime();
-                    if (visit_diff < 90*MS_IN_DAY) {
+                    if (visit_diff < 30*MS_IN_DAY) {
                         visit_indicators["routine_muac"] = case_id;
                     }
                 }
