@@ -96,6 +96,8 @@ class RestoreConfig(object):
         for case_elem in case_xml_elements:
             response.append(case_elem)
 
+        response.attrib['items'] = '%d' % len(response.getchildren())
+
         resp = xml.tostring(response)
         self.set_cached_payload_if_enabled(resp)
         return resp
