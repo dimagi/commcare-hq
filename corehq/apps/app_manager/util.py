@@ -1,6 +1,7 @@
 import functools
 import json
 import itertools
+from corehq import Domain
 from corehq.apps.app_manager.xform import XForm, XFormError, parse_xml
 import re
 from dimagi.utils.decorators.memoized import memoized
@@ -166,6 +167,7 @@ def get_settings_values(app):
     # the admin_password hash shouldn't be sent to the client
     hq_settings.pop('admin_password', None)
 
+    domain = Domain.get_by_name(app.domain)
     return {
         'properties': profile.get('properties', {}),
         'features': profile.get('features', {}),
@@ -174,6 +176,7 @@ def get_settings_values(app):
             'doc_type': app.get_doc_type(),
             '_id': app.get_id,
             'domain': app.domain,
+            'commtrack_enabled': domain.commtrack_enabled,
         }
     }
 
