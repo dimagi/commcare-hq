@@ -22,11 +22,17 @@ function CommcareSettings(options) {
             }
         }
     }());
-    self.settingsIndex.$parent = {
-        doc_type: {
-            visibleValue: function () {
-                return initialValues.$parent.doc_type;
-            }
+
+    self.settingsIndex.$parent = {};
+    for (var attr in initialValues.$parent) {
+        if (initialValues.$parent.hasOwnProperty(attr)) {
+            self.settingsIndex.$parent[attr] = (function (attrib) {
+                return {
+                    visibleValue: function () {
+                        return initialValues.$parent[attrib];
+                    }
+                }
+            })(attr);
         }
     };
 

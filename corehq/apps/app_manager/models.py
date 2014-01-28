@@ -2256,6 +2256,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     cloudcare_enabled = BooleanProperty(default=False)
     translation_strategy = StringProperty(default='dump-known',
                                           choices=app_strings.CHOICES.keys())
+    commtrack_enabled = BooleanProperty(default=False)
+    commtrack_requisition_mode = StringProperty(choices=CT_REQUISITION_MODES)
 
     @classmethod
     def wrap(cls, data):
