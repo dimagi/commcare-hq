@@ -163,9 +163,9 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin):
                 # (see https://github.com/benoitc/couchdbkit/blob/a23343e539370cffcf8b0ce483c712911bb022c1/couchdbkit/schema/properties.py#L1038)
                 if meta_block.get('appVersion') is not None and not isinstance(meta_block['appVersion'], basestring):
                     if isinstance(meta_block['appVersion'], dict) and '#text' in meta_block['appVersion']:
-                        ret['appVersion'] = str(meta_block['appVersion']['#text'])
+                        ret['appVersion'] = unicode(meta_block['appVersion']['#text'])
                     else:
-                        ret['appVersion'] = str(meta_block['appVersion'])
+                        ret['appVersion'] = unicode(meta_block['appVersion'])
 
                 if meta_block:
                     for key in ("timeStart", "timeEnd"):
