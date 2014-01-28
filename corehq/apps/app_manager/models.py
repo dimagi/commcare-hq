@@ -1,5 +1,6 @@
 # coding=utf-8
 from distutils.version import LooseVersion
+from itertools import chain
 import tempfile
 import os
 import logging
@@ -31,7 +32,7 @@ from restkit.errors import ResourceError
 from couchdbkit.resource import ResourceNotFound
 
 from corehq.apps.app_manager.commcare_settings import check_condition
-from corehq.apps.app_manager.const import APP_V1, APP_V2, CAREPLAN_TASK, CAREPLAN_GOAL, CAREPLAN_CASE_NAMES
+from corehq.apps.app_manager.const import *
 from corehq.apps.app_manager.xpath import dot_interpolate
 from corehq.apps.builds import get_default_build_spec
 from corehq.util.hash_compat import make_password
@@ -66,7 +67,6 @@ from .exceptions import (
     XFormIdNotUnique,
     XFormValidationError,
 )
-
 
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 
@@ -257,19 +257,20 @@ class FormActions(DocumentSchema):
 
 
 class CommTrackPreloadAction(PreloadAction):
+    case_type = StringProperty()
     show_product_stock = BooleanProperty(default=True)
 
 
 class CommTrackFormActions(DocumentSchema):
-    load_first_supply_point = SchemaProperty(CommTrackPreloadAction)
-    load_second_supply_point = SchemaProperty(CommTrackPreloadAction)
-    open_requisition = SchemaProperty(OpenSubCaseAction)
+    case_preload1 = SchemaProperty(CommTrackPreloadAction)
+    case_preload2 = SchemaProperty(CommTrackPreloadAction)
+    open_subcase = SchemaProperty(OpenSubCaseAction)
 
     def active_actions(self):
         actions = {}
-        for action_type in ['load_first_supply_point',
-                            'load_second_supply_point',
-                            'open_requisition']:
+        for action_type in ['case_preload1',
+                            'case_preload2',
+                            'open_subcase']:
             a = getattr(self, action_type)
             if a.is_active():
                 actions[action_type] = a
@@ -277,9 +278,9 @@ class CommTrackFormActions(DocumentSchema):
 
     def all_property_names(self):
         names = set()
-        names.update(self.load_first_supply_point.preload.keys())
-        names.update(self.load_second_supply_point.preload.values())
-        names.update(self.open_requisition.case_properties.keys())
+        names.update(self.case_preload1.preload.keys())
+        names.update(self.case_preload2.preload.values())
+        names.update(self.open_subcase.case_properties.keys())
         return names
 
 
@@ -1213,12 +1214,12 @@ class CommTrackForm(IndexedFormBase, NavMenuItemMediaMixin):
     def check_actions(self):
         errors = []
 
-        if not self.actions.open_requisition.case_type:
+        if not self.actions.open_subcase.case_type:
             errors.append({'type': 'subcase has no case type'})
 
         errors.extend(self.check_case_properties(
             all_names=self.actions.all_property_names(),
-            subcase_names=self.actions.open_requisition.case_properties
+            subcase_names=self.actions.open_subcase.case_properties
         ))
 
         def generate_paths():
@@ -1253,7 +1254,7 @@ class CommTrackForm(IndexedFormBase, NavMenuItemMediaMixin):
     def get_parent_types_and_contributed_properties(self, module_case_type, case_type):
         parent_types = set()
         case_properties = set()
-        subcase = self.actions.open_requisition
+        subcase = self.actions.open_subcase
         if subcase.case_type == case_type:
             case_properties.update(
                 subcase.case_properties.keys()
@@ -1268,7 +1269,7 @@ class CommTrackModule(ModuleBase):
     product_details = SchemaProperty(DetailPair)
 
     @classmethod
-    def new_module(cls, name, lang):
+    def new_module(cls, name, lang, case_type=None, requisition_mode=None):
         detail = Detail(
             columns=[DetailColumn(
                 format='plain',
@@ -1280,7 +1281,7 @@ class CommTrackModule(ModuleBase):
         return CommTrackModule(
             name={(lang or 'en'): name or ugettext("Manage Supply Points")},
             forms=[],
-            case_type='',
+            case_type=case_type or '',
             case_details=DetailPair(
                 short=Detail(detail.to_json()),
                 long=Detail(detail.to_json()),
@@ -1294,12 +1295,6 @@ class CommTrackModule(ModuleBase):
                             field='name',
                             model='case',
                         ),
-                        DetailColumn(
-                            format='plain',
-                            header={(lang or 'en'): ugettext("Quantity")},
-                            field='product:quantity',
-                            model='case',
-                        )
                     ],
                 ),
                 long=Detail(),
@@ -2265,6 +2260,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     cloudcare_enabled = BooleanProperty(default=False)
     translation_strategy = StringProperty(default='dump-known',
                                           choices=app_strings.CHOICES.keys())
+    commtrack_enabled = BooleanProperty(default=False)
+    commtrack_requisition_mode = StringProperty(choices=CT_REQUISITION_MODES)
 
     @classmethod
     def wrap(cls, data):
@@ -2693,7 +2690,11 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @memoized
     def case_type_exists(self, case_type):
-        return case_type in [m.case_type for m in self.get_modules()]
+        return case_type in self.get_case_types()
+
+    @memoized
+    def get_case_types(self):
+        return set(chain(*[m.get_case_types() for m in self.get_modules()]))
 
     def has_media(self):
         return len(self.multimedia_map) > 0
