@@ -39,6 +39,7 @@ class BillingAccountsSectionView(AccountingSectionView):
 
 
 class NewBillingAccountView(BillingAccountsSectionView):
+    page_title = 'New Billing Account'
     template_name = 'accounting/accounts_base.html'
     urlname = 'new_billing_account'
 
@@ -55,10 +56,6 @@ class NewBillingAccountView(BillingAccountsSectionView):
             'form': self.account_form,
         }
 
-    @classmethod
-    def page_title(cls):
-        return "New Billing Account"
-
     @property
     def page_url(self):
         return reverse(self.urlname)
@@ -72,6 +69,7 @@ class NewBillingAccountView(BillingAccountsSectionView):
 
 
 class ManageBillingAccountView(BillingAccountsSectionView):
+    page_title = 'Manage Billing Account'
     template_name = 'accounting/accounts.html'
     urlname = 'manage_billing_account'
 
@@ -113,10 +111,6 @@ class ManageBillingAccountView(BillingAccountsSectionView):
             ],
         }
 
-    @classmethod
-    def page_title(cls):
-        return "Manage Billing Account"
-
     @property
     def page_url(self):
         return reverse(self.urlname, args=(self.args[0],))
@@ -131,6 +125,7 @@ class ManageBillingAccountView(BillingAccountsSectionView):
 
 
 class NewSubscriptionView(AccountingSectionView):
+    page_title = 'New Subscription'
     template_name = 'accounting/subscriptions_base.html'
     urlname = 'new_subscription'
 
@@ -146,10 +141,6 @@ class NewSubscriptionView(AccountingSectionView):
         return {
             'form': self.subscription_form,
         }
-
-    @classmethod
-    def page_title(cls):
-        return 'New Subscription'
 
     @property
     def page_url(self):
@@ -171,6 +162,7 @@ class NewSubscriptionView(AccountingSectionView):
 
 
 class EditSubscriptionView(AccountingSectionView):
+    page_title = 'Edit Subscription'
     template_name = 'accounting/subscriptions.html'
     urlname = 'edit_subscription'
 
@@ -219,10 +211,6 @@ class EditSubscriptionView(AccountingSectionView):
             'subscription_canceled': self.subscription_canceled if hasattr(self, 'subscription_canceled') else False,
         }
 
-    @classmethod
-    def page_title(cls):
-        return 'Edit Subscription'
-
     @property
     def page_url(self):
         return reverse(self.urlname, args=(self.args[0],))
@@ -253,6 +241,7 @@ class EditSubscriptionView(AccountingSectionView):
 
 
 class NewSoftwarePlanView(AccountingSectionView):
+    page_title = 'New Software Plan'
     template_name = 'accounting/plans_base.html'
     urlname = 'new_software_plan'
 
@@ -268,10 +257,6 @@ class NewSoftwarePlanView(AccountingSectionView):
         return {
             'plan_info_form': self.plan_info_form,
         }
-
-    @classmethod
-    def page_title(cls):
-        return 'New Software Plan'
 
     @property
     def page_url(self):
