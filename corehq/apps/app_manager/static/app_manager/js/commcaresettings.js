@@ -14,7 +14,6 @@ function CommcareSettings(options) {
                 var setting = section.settings[j];
 
                 self.settings.push(setting);
-
                 if (!self.settingsIndex[setting.type]) {
                     self.settingsIndex[setting.type] = {};
                 }

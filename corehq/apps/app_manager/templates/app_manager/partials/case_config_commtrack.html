@@ -1,0 +1,142 @@
+{% load i18n %}
+
+{% include 'app_manager/partials/case_config_shared.html' %}
+
+<script type="text/html" id="remove-subcase-modal-template">
+    <div class="modal-header">
+        <a href="#" class="close" data-dismiss="modal">×</a>
+        <h3>{% trans "Remove Subcase?" %}</h3>
+    </div>
+    <div class="modal-body">
+        <p>{% trans "Are you sure you want to remove this subcase?" %}</p>
+    </div>
+    <div class="modal-footer">
+        <a href="#" class="btn" data-dismiss="modal">{% trans "Cancel" %}</a>
+        <a class="btn btn-danger" href="#" data-bind="click: $parent.removeSubCase" data-dismiss="modal">{% trans "Remove Subcase" %}</a>
+    </div>
+</script>
+
+<script type="text/html" id="case-config:condition">
+    <!--ko with: condition -->
+    <div data-bind="visible: type() === 'always' && $root.edit">
+        <a href="#" data-bind="click: function () {type('if')}"><i class="icon-plus"></i> {% trans "Only if the answer to..." %}</a>
+    </div>
+    <div data-bind="visible: type() === 'if'">
+        <a href="#" data-bind="click: function () {type('always')}, visible: $root.edit"><i class="icon-remove"></i></a>
+        {% trans "Only if the answer to" %}
+        <input class="input-large" type="hidden" data-bind="
+            questionsSelect: $root.getQuestions('select1', false, $parent.case_transaction.allow.repeats()),
+            value: question,
+            optionsCaption: ' ',
+            edit: $root.edit"
+        />
+        {% trans "is" %}
+        <span data-bind="if: $root.getAnswers({question: question()}).length">
+            <select data-bind="
+                optstr: $root.getAnswers({question: question()}),
+                value: answer,
+                edit: $root.edit"></select>
+        </span>
+        <span data-bind="if: !$root.getAnswers({question: question()}).length">
+            <input type="text" class="code" data-bind="value: answer, edit: $root.edit"/>
+        </span>
+    </div>
+    <!--/ko-->
+</script>
+
+<script type="text/html" id="case-config:case-transaction">
+    <div data-bind="template: {
+        name: 'case-config:condition',
+        data: {condition: condition, case_transaction: $data}
+    }, visible: allow.condition()"></div>
+    <div data-bind="if: allow.case_preload()" class="row-fluid">
+        <div class="well span6">
+            <div data-bind="template: 'case-config:case-transaction:case-preload'"></div>
+        </div>
+        <div class="well span6">
+            <div data-bind="template: 'case-config:case-transaction:case-properties'"></div>
+        </div>
+    </div>
+    <div data-bind="if: !allow.case_preload()" class="row-fluid">
+        <div class="well span6">
+            <div data-bind="template: 'case-config:case-transaction:case-properties'"></div>
+        </div>
+    </div>
+    <div data-bind="visible: allow.close_condition()" class="well">
+        <em>{% trans "Close this case when the form is complete" %}</em>
+        <label>
+            <input type="checkbox" data-bind="checked: close_case"/>
+            {% trans "Close Case" %}
+        </label>
+        <div data-bind="template: {
+            name: 'case-config:condition',
+            data: {condition: $data.close_condition, case_transaction: $data},
+            if: $data.close_condition
+        }"></div>
+    </div>
+</script>
+
+
+<div id="case-config-ko">
+    <div data-bind="saveButton: saveButton, visible: $root.edit"></div>
+    <div data-bind="with: caseConfigViewModel">
+        <div>
+            {% trans "Before this form is loaded the user should..." %}
+            <select class="input-xlarge" data-bind="
+                optstr: [{value: 'open', label: '{% trans "Select a Supply Point" %}'},
+                         {value: 'update', label: '{% trans "Updates or closes a case" %}'},
+                         {value: 'open-other', label: '{% trans "Registers a case (different module)" %}'}],
+                value: actionType
+            "></select>
+        </div>
+        <div data-bind="if: actionType() === 'update'">
+            <div data-bind="template: {name: 'case-config:case-transaction', data: case_transaction}">
+            </div>
+        </div>
+        <div data-bind="if: actionType() === 'open'">
+            <div data-bind="template: {name: 'case-config:case-transaction', data: case_transaction}">
+            </div>
+        </div>
+        <!--ko if: actionType() !== 'none'-->
+        <header class="clearfix" data-bind="visible: actionType() !== 'open-other'">
+            <h5 class="pull-left">{% trans "Child Cases" %}</h5>
+            <span data-bind="makeHqHelp: {}"
+              data-title="{% trans "Child Cases" %}"
+              data-content="{% trans "Child Cases let you open other types of cases for use in other modules. When possible, they'll be linked to the current case so you'll always know where they came from. A great use of Child Cases is for tracking a newborn separately from its mother." %}"
+            ></span>
+        </header>
+
+        <div data-bind="foreach: subcases" class="form">
+            <div>
+                <i class="icon-ok"></i>
+                {% trans "Opens a case for a different case list:" %}
+                <span class="control-group" data-bind="css: {warning: !case_type()}">
+                    <select data-bind="
+                        options: $parent.caseTypes,
+                        optionsText: $parent.getCaseTypeLabel,
+                        value: case_type,
+                        optionsCaption: 'Choose a Module...',
+                        edit: $root.edit"
+                    ></select>
+                    <span class="help-inline" data-bind="visible: !case_type()">{% trans "Required" %}</span>
+                    {% if show_custom_ref %}
+                        <label>{% trans "Override reference id: " %}</label>
+                        <input type="text" data-bind="value: reference_id, edit: $root.edit"/>
+                    {% endif %}
+                </span>
+                <a href="#" data-bind="openModal: 'remove-subcase-modal-template', visible: $root.edit" class="pull-right">
+                    <i class="icon-trash"></i>
+                    {% trans "Remove case" %}
+                </a>
+            </div>
+            <div data-bind="template: 'case-config:case-transaction'"></div>
+        </div>
+        <div>
+            <a href="#" data-bind="click: addSubCase, visible: $root.edit">
+                <i class="icon-plus"></i>
+                {% trans "Opens a case for a different case list..." %}
+            </a>
+        </div>
+        <!--/ko-->
+    </div>
+</div>
