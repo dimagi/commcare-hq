@@ -69,5 +69,3 @@ twilio==3.6.4
 # required by ctable
 SQLAlchemy==0.8.2
 alembic==0.6.0
-
-git+git://github.com/mumrah/kafka-python.git@8f076df9
