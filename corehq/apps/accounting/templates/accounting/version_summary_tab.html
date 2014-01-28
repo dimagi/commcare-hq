@@ -2,13 +2,13 @@
     {% for plan_version in plan_versions %}
         <h3>{{ plan_version }}</h3>
         <br/>
-        Date Created: {{ plan_version.date_created }}
+        <strong>Date Created:</strong> {{ plan_version.date_created }}
         <br/>
-        Role: {{ plan_version.role.name }}
+        <strong>Role:</strong> {{ plan_version.role.name }}
         {% if plan_version.role.description %} ({{ plan_version.role.description }}){% endif %}
         {# TODO: add list of permissions applied to Role #}
         <br/>
-        Products
+        <strong>Products</strong>
         <table class="table table-striped table-bordered">
             <thead>
                 <tr>
@@ -28,7 +28,7 @@
             </tbody>
         </table>
         <br/>
-        Features
+        <strong>Features</strong>
         <table class="table table-striped table-bordered">
             <thead>
                 <tr>
