@@ -279,10 +279,8 @@ class SoftwarePlan(models.Model):
         choices=SoftwarePlanVisibility.CHOICES,
     )
 
-    @classmethod
-    def get_latest_version(cls, **kwargs):
-        plan = cls.objects.get(**kwargs)
-        return plan.softwareplanversion_set.latest('date_created')
+    def get_version(self):
+        return self.softwareplanversion_set.filter(is_active=True).latest('date_created')
 
 
 class DefaultProductPlan(models.Model):
@@ -300,7 +298,7 @@ class DefaultProductPlan(models.Model):
         product_type = SoftwareProductType.get_type_by_domain(domain)
         try:
             default_product_plan = DefaultProductPlan.objects.get(product_type=product_type)
-            return default_product_plan.plan.softwareplanversion_set.latest('date_created')
+            return default_product_plan.plan.get_version()
         except DefaultProductPlan.DoesNotExist:
             raise AccountingError("No default product plan was set up, did you forget to bootstrap plans?")
 
