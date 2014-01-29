@@ -54,3 +54,20 @@ ko.bindingHandlers.questionsSelect = {
         allBindings.optstrText = utils.getLabel;
     }
 };
+ko.bindingHandlers.accordion = {
+    init: function(element, valueAccessor) {
+        var options = valueAccessor() || {};
+        setTimeout(function() {
+            $(element).accordion(options);
+        }, 0);
+
+        //handle disposal (if KO removes by the template binding)
+        ko.utils.domNodeDisposal.addDisposeCallback(element, function(){
+            $(element).accordion("destroy");
+        });
+    },
+    update: function(element, valueAccessor) {
+        var options = valueAccessor() || {};
+        $(element).accordion("destroy").accordion(options);
+    }
+};
