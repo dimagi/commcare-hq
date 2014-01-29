@@ -935,9 +935,6 @@ PILLOWTOPS = {
     'trialconnect': [
         'custom.trialconnect.smspillow.TCSMSPillow',
     ],
-    'commtrack': [
-        'corehq.pillows.commtrack.consumption_calc.ConsumptionRatePillow',
-    ]
 }
 
 for k, v in  LOCAL_PILLOWTOPS.items():
