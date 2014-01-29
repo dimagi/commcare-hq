@@ -3,6 +3,7 @@ from decimal import Decimal
 import logging
 from couchdbkit import ResourceNotFound
 import dateutil
+from dimagi.utils.couch.resource_conflict import retry_resource
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.template.loader import render_to_string
@@ -765,6 +766,7 @@ class ManageProjectMediaView(BaseAdminProjectSettingsView):
             'licenses': LICENSES.items(),
         }
 
+    @retry_resource(3)
     def post(self, request, *args, **kwargs):
         for m_file in request.project.all_media():
             if '%s_tags' % m_file._id in request.POST:
@@ -776,7 +778,9 @@ class ManageProjectMediaView(BaseAdminProjectSettingsView):
                 m_file.shared_by.remove(self.domain)
 
             if '%s_license' % m_file._id in request.POST:
-                m_file.update_or_add_license(self.domain, type=request.POST.get('%s_license' % m_file._id, 'public'))
+                m_file.update_or_add_license(self.domain,
+                                             type=request.POST.get('%s_license' % m_file._id, 'public'),
+                                             should_save=False)
             m_file.save()
         messages.success(request, _("Multimedia updated successfully!"))
         return self.get(request, *args, **kwargs)
