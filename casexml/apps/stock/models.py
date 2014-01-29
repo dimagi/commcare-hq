@@ -19,7 +19,7 @@ class StockReport(models.Model):
     # server_date = models.DateTimeField(default=datetime.utcnow, db_index=True)
     # user_id = models.CharField(max_length=100, db_index=True)
 
-    def __repr__(self):
+    def __unicode__(self):
         return '{type} on {date} ({form})'.format(type=self.type, date=self.date, form=self.form_id)
 
 class StockTransaction(models.Model):
