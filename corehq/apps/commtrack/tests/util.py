@@ -4,6 +4,7 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests import delete_all_cases, delete_all_xforms
 from casexml.apps.case.xml import V2
 from casexml.apps.stock.models import StockReport, StockTransaction
+from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from corehq.apps.commtrack import const
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -181,14 +182,14 @@ class CommTrackTest(TestCase):
 
     def get_commtrack_forms(self):
         return XFormInstance.view('couchforms/by_xmlns',
-            key=const.COMMTRACK_REPORT_XMLNS,
+            key=COMMTRACK_REPORT_XMLNS,
             reduce=False,
             include_docs=True
         )
 
 def get_ota_balance_xml(user):
     xml = generate_restore_payload(user.to_casexml_user(), version=V2)
-    balance_blocks = etree.fromstring(xml).findall('{http://commtrack.org/stock_report}balance')
+    balance_blocks = etree.fromstring(xml).findall('{http://commcarehq.org/ledger/v1}balance')
     if balance_blocks:
         return [etree.tostring(bb) for bb in balance_blocks]
     return []

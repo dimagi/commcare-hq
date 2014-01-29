@@ -525,7 +525,7 @@ class NewStockReport(object):
         tag = elem.tag
         tag = tag[tag.find('}')+1:] # strip out ns
         timestamp = force_to_datetime(elem.attrib.get('date', form.received_on))
-        products = elem.findall('./{%s}entry' % const.COMMTRACK_REPORT_XMLNS)
+        products = elem.findall('./{%s}entry' % stockconst.COMMTRACK_REPORT_XMLNS)
         transactions = [t for prod_entry in products for t in
                         StockTransaction.from_xml(config, timestamp, tag, elem, prod_entry)]
 

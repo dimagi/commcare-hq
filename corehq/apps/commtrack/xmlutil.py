@@ -1,5 +1,5 @@
 from lxml.builder import ElementMaker
-from corehq.apps.commtrack import const
+from casexml.apps.stock import const
 
 def _(tag, ns=const.COMMTRACK_REPORT_XMLNS):
     return '{%s}%s' % (ns, tag)
