@@ -414,7 +414,7 @@ var CommTrackConfig = (function () {
         ]);
 
         self.addFormAction = function (action) {
-            $('.collapse.in').collapse('hide');
+//            $('.collapse.in').collapse('hide');
             if (action.value === 'load') {
                 self.actions.load_update_close_cases.push(LoadUpdateCloseAction.wrap({
                     case_type: config.caseType,
@@ -423,8 +423,8 @@ var CommTrackConfig = (function () {
                     update: [],
                     close_condition: {}
                 }, self.config));
-                var index = self.actions.load_update_close_cases().length-1;
-                $('#collapseLoad'+index).collapse('show');
+//                var index = self.actions.load_update_close_cases().length-1;
+//                $('#collapseLoad'+index).collapse('show');
             } else if (action.value === 'open') {
                 self.actions.open_cases.push(OpenCaseAction.wrap({
                     case_type: config.caseType,
@@ -441,7 +441,6 @@ var CommTrackConfig = (function () {
         };
 
         self.removeFormAction = function (action) {
-            console.log(action);
             if (action.actionType === 'open') {
                 self.actions.open_cases.remove(action);
             } else if (action.actionType === 'load') {
