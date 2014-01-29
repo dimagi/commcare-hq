@@ -1,6 +1,6 @@
 from decimal import Decimal
 import logging
-from casexml.apps.stock.const import TRANSACTION_SUBTYPE_INFERRED
+from casexml.apps.stock.const import TRANSACTION_SUBTYPE_INFERRED, COMMTRACK_REPORT_XMLNS
 from dimagi.utils.decorators.log_exception import log_exception
 from corehq.apps.commtrack.models import CommtrackConfig, StockTransaction, SupplyPointCase, NewStockReport, SupplyPointProductCase
 from corehq.apps.commtrack import const
@@ -140,7 +140,7 @@ def unpack_commtrack(xform, config):
 
     def commtrack_nodes(node):
         for child in node:
-            if child.tag.startswith('{%s}' % const.COMMTRACK_REPORT_XMLNS):
+            if child.tag.startswith('{%s}' % COMMTRACK_REPORT_XMLNS):
                 yield child
             else:
                 for e in commtrack_nodes(child):

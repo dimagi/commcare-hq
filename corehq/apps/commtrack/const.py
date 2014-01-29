@@ -3,7 +3,6 @@ from casexml.apps.stock import const as stockconst
 COMMTRACK_USERNAME = 'commtrack-system'
 
 COMMTRACK_SUPPLY_POINT_XMLNS = 'http://commtrack.org/supply_point'
-COMMTRACK_REPORT_XMLNS = stockconst.COMMTRACK_REPORT_XMLNS
 
 META_XMLNS = 'http://openrosa.org/jr/xforms'
 

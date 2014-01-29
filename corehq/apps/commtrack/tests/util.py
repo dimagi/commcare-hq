@@ -4,6 +4,7 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests import delete_all_cases, delete_all_xforms
 from casexml.apps.case.xml import V2
 from casexml.apps.stock.models import StockReport, StockTransaction
+from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from corehq.apps.commtrack import const
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -181,7 +182,7 @@ class CommTrackTest(TestCase):
 
     def get_commtrack_forms(self):
         return XFormInstance.view('couchforms/by_xmlns',
-            key=const.COMMTRACK_REPORT_XMLNS,
+            key=COMMTRACK_REPORT_XMLNS,
             reduce=False,
             include_docs=True
         )
