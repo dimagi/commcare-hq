@@ -1,0 +1,116 @@
+{% extends "settings/base_template.html" %}
+{% load hqstyle_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block head %}{{ block.super }}
+     <link rel="stylesheet" href="{% static 'accounting/style/table-pricing.css' %}"/>
+{% endblock %}
+
+{% block js %}{{ block.super }}
+    <script type="text/javascript" src="{% static 'accounting/ko/accounting.pricing_table.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+    <script>
+        var pricingTable = new PricingTable({{ pricing_table|JSON }});
+        ko.applyBindings(pricingTable, $('#pricing-table').get(0));
+        pricingTable.init();
+    </script>
+{% endblock %}
+
+{% block main_column %}
+<div class="row">
+    <div class="span12">
+        <article id="pricing-table">
+            <table class="table-pricing">
+                <thead>
+                    <tr>
+                        <td></td>
+                        <th class="th-feature"><h1 data-bind="text: title"></h1></th>
+                        <!-- ko foreach: editions -->
+                        <th data-bind="attr: {class: col_css, 'data-edition': slug}">
+                            <div class="edition-heading" data-bind="attr: {'data-title': description}">
+                                <span data-bind="text: name"></span>
+                                <i class="icon-info-sign corner-icon"></i>
+                            </div>
+                        </th>
+                        <!-- /ko -->
+                    </tr>
+                </thead>
+                <tbody data-bind="template: { name: 'select-plan-template', data: {
+                    pt: $data,
+                    radio_group_name: 'select_plan_top'
+                }}"></tbody>
+                <!-- ko foreach: sections -->
+                <tbody data-bind="foreach: features, attr: { class: tbody_css }">
+                    <tr>
+                        <!-- ko if: $index() == 0 && $parent.show_header() -->
+                        <th class="th-feature-section" data-bind="attr: {rowspan: $parent.features().length}">
+                            <h2>
+                                <a data-bind="attr: {href: $parent.url}" target="_blank">
+                                    <span data-bind="text: $parent.title"></span>
+                                    <i class="icon-info-sign"></i>
+                                    <span class="learn-more" data-bind="text: $root.visit_wiki_text"></span>
+                                </a>
+                            </h2>
+                        </th>
+                        <!-- /ko -->
+                        <!-- ko ifnot: $parent.show_header -->
+                        <td></td>
+                        <!-- /ko -->
+                        <th class="th-feature" data-bind="html: title"></th>
+                        <!-- ko foreach: columns -->
+                        <td data-bind="html: content_html,
+                            attr: {class: col_css, 'data-edition': edition}"></td>
+                        <!-- /ko -->
+                    </tr>
+                </tbody>
+                <!-- /ko -->
+                <tbody data-bind="template: { name: 'select-plan-template', data: {
+                    pt: $data,
+                    radio_group_name: 'select_plan_bottom'
+                }}"></tbody>
+                <tfoot>
+                    <td colspan="2">
+                        <div></div>
+                    </td>
+                    <!-- ko foreach: editions -->
+                    <th data-bind="text: name, attr: {class: col_css, 'data-edition': slug}"></th>
+                    <!-- /ko -->
+                </tfoot>
+            </table>
+            <ul class="pricing-footnotes" data-bind="foreach: footer">
+                <li data-bind="text: $data"></li>
+            </ul>
+        </article>
+    </div>
+</div>
+
+<script type="text/html" id="select-plan-template">
+    <tr class="blank-row" data-bind="template: {name: 'blank-row-template'}"></tr>
+    <tr class="select-plan">
+        <td></td>
+        <th class="th-feature">
+            <strong>{% trans 'Select Plan' %}</strong>
+        </th>
+        <!-- ko foreach: pt.editions -->
+        <td data-bind="attr: {class: col_css, 'data-edition': slug}">
+            <input type="radio" data-bind="
+                checked: $parent.pt.selected_edition,
+                attr: {value: slug, name: $parent.radio_group_name}
+            " >
+        </td>
+        <!-- /ko -->
+    </tr>
+    <tr class="blank-row" data-bind="template: {name: 'blank-row-template'}"></tr>
+</script>
+
+<script type="text/html" id="blank-row-template">
+    <td></td>
+    <th class="th-feature"></th>
+    <!-- ko foreach: pt.editions -->
+    <td data-bind="attr: {class: col_css, 'data-edition': slug}"></td>
+    <!-- /ko -->
+</script>
+{% endblock %}

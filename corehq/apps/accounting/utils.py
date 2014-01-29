@@ -1,5 +1,8 @@
 import calendar
 import datetime
+import json
+from django.utils.encoding import force_unicode
+from django.utils.functional import Promise
 from corehq import Domain
 from dimagi.utils.dates import add_months
 
@@ -27,3 +30,13 @@ def assure_domain_instance(domain):
     if not isinstance(domain, Domain):
         domain = Domain.get_by_name(domain)
     return domain
+
+
+class LazyEncoder(json.JSONEncoder):
+    """Taken from https://github.com/tomchristie/django-rest-framework/issues/87
+    This makes sure that ugettext_lazy refrences in a dict are properly evaluated
+    """
+    def default(self, obj):
+        if isinstance(obj, Promise):
+            return force_unicode(obj)
+        return super(LazyEncoder, self).default(obj)
