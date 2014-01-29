@@ -21,7 +21,8 @@ from corehq.apps.commtrack.tests.data.balances import (
     transfer_first,
     create_requisition_xml,
     create_fulfillment_xml,
-    new_transfer_format
+    receipts_enumerated,
+    balance_enumerated
 )
 
 
@@ -137,6 +138,12 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         for product, amt in amounts:
             self.check_product_stock(self.sp, product, amt, 0)
 
+    def test_balance_enumerated(self):
+        amounts = [(p._id, float(i*10)) for i, p in enumerate(self.products)]
+        self.submit_xml_form(balance_enumerated(amounts))
+        for product, amt in amounts:
+            self.check_product_stock(self.sp, product, amt, 0)
+
     def test_balance_consumption(self):
         initial = float(100)
         initial_amounts = [(p._id, initial) for p in self.products]
@@ -193,13 +200,13 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
             self.check_product_stock(self.sp, product, initial-amt, -amt)
             self.check_product_stock(self.sp2, product, amt, amt)
 
-    def test_new_transfer_format(self):
+    def test_transfer_enumerated(self):
         initial = float(100)
         initial_amounts = [(p._id, initial) for p in self.products]
         self.submit_xml_form(balance_submission(initial_amounts))
 
         receipts = [(p._id, float(50 - 10*i)) for i, p in enumerate(self.products)]
-        self.submit_xml_form(new_transfer_format(receipts))
+        self.submit_xml_form(receipts_enumerated(receipts))
         for product, amt in receipts:
             self.check_product_stock(self.sp, product, initial + amt, amt)
 

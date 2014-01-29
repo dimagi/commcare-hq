@@ -62,13 +62,13 @@ def _products_xml(product_amount_tuples):
     ])
 
 
-def _new_products_xml(product_amount_tuples):
+def _enumerated_products_xml(product_amount_tuples, section_id='stock'):
     return ''.join([
         """
             <ns0:entry id="{id}">
-                <value section-id='stock' quantity="{quantity}"/>
+                <value section-id='{section_id}' quantity="{quantity}"/>
             </ns0:entry>
-        """.format(id=p, quantity=amt) for p, amt in product_amount_tuples
+        """.format(id=p, section_id=section_id, quantity=amt) for p, amt in product_amount_tuples
     ])
 
 
@@ -78,6 +78,13 @@ def balance_submission(product_amounts, section_id='stock'):
             %(product_block)s
         </ns0:balance>
     """ % {'product_block': _products_xml(product_amounts), 'section_id': section_id}
+
+def balance_enumerated(product_amounts, section_id='stock'):
+    return """
+        <ns0:balance xmlns:ns0="http://commcarehq.org/ledger/v1" date="{long_date}" entity-id="{sp_id}">
+            %(product_block)s
+        </ns0:balance>
+    """ % {'product_block': _enumerated_products_xml(product_amounts, section_id), 'section_id': section_id}
 
 
 def transfer_dest_only(product_amounts):
@@ -109,14 +116,14 @@ def transfer_both(product_amounts):
     """ % {'product_block': _products_xml(product_amounts)}
 
 
-def new_transfer_format(product_amounts):
+def receipts_enumerated(product_amounts):
     return """
         <receipts>
             <ns0:transfer xmlns:ns0="http://commcarehq.org/ledger/v1" dest="{sp_id}" date="{long_date}">
                 %(product_block)s
             </ns0:transfer>
         </receipts>
-    """ % {'product_block': _new_products_xml(product_amounts)}
+    """ % {'product_block': _enumerated_products_xml(product_amounts)}
 
 
 def create_requisition_xml(product_amounts):
