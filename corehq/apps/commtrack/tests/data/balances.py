@@ -13,7 +13,7 @@ def long_date():
 
 def balance_ota_block(sp, section_id, product_amounts, datestring):
     return """
-        <ns0:balance xmlns:ns0="http://commtrack.org/stock_report" xmlns="http://openrosa.org/http/response" date="{long_date}" entity-id="{sp_id}" section-id="{section_id}">
+        <ns0:balance xmlns:ns0="http://commcarehq.org/ledger/v1" xmlns="http://openrosa.org/http/response" date="{long_date}" entity-id="{sp_id}" section-id="{section_id}">
             {product_block}
         </ns0:balance>
     """.format(
@@ -63,7 +63,7 @@ def _products_xml(product_amount_tuples):
 
 def balance_submission(product_amounts, section_id='stock'):
     return """
-        <ns0:balance xmlns:ns0="http://commtrack.org/stock_report" date="{long_date}" entity-id="{sp_id}" section-id="%(section_id)s">
+        <ns0:balance xmlns:ns0="http://commcarehq.org/ledger/v1" date="{long_date}" entity-id="{sp_id}" section-id="%(section_id)s">
             %(product_block)s
         </ns0:balance>
     """ % {'product_block': _products_xml(product_amounts), 'section_id': section_id}
@@ -72,7 +72,7 @@ def balance_submission(product_amounts, section_id='stock'):
 def transfer_dest_only(product_amounts):
     return """
         <receipts>
-            <ns0:transfer xmlns:ns0="http://commtrack.org/stock_report" dest="{sp_id}" date="{long_date}" section-id="stock">
+            <ns0:transfer xmlns:ns0="http://commcarehq.org/ledger/v1" dest="{sp_id}" date="{long_date}" section-id="stock">
                 %(product_block)s
             </ns0:transfer>
         </receipts>
@@ -82,7 +82,7 @@ def transfer_dest_only(product_amounts):
 def transfer_source_only(product_amounts):
     return """
         <losses>
-            <ns0:transfer xmlns:ns0="http://commtrack.org/stock_report" src="{sp_id}" date="{long_date}" section-id="stock">
+            <ns0:transfer xmlns:ns0="http://commcarehq.org/ledger/v1" src="{sp_id}" date="{long_date}" section-id="stock">
                 %(product_block)s
             </ns0:transfer>
         </losses>
@@ -92,7 +92,7 @@ def transfer_source_only(product_amounts):
 def transfer_both(product_amounts):
     # TODO Does this get wrapped in something? receipts?
     return """
-        <ns0:transfer xmlns:ns0="http://commtrack.org/stock_report" src="{sp_id}" dest="{sp2_id}" date="{long_date}" section-id="stock">
+        <ns0:transfer xmlns:ns0="http://commcarehq.org/ledger/v1" src="{sp_id}" dest="{sp2_id}" date="{long_date}" section-id="stock">
             %(product_block)s
         </ns0:transfer>
     """ % {'product_block': _products_xml(product_amounts)}
@@ -110,7 +110,7 @@ def create_requisition_xml(product_amounts):
     ).as_xml())
     return """
         %(case_block)s
-        <ns0:balance xmlns:ns0="http://commtrack.org/stock_report" date="{long_date}" entity-id="%(req_id)s" section-id="stock">
+        <ns0:balance xmlns:ns0="http://commcarehq.org/ledger/v1" date="{long_date}" entity-id="%(req_id)s" section-id="stock">
             %(product_block)s
         </ns0:balance>
     """ % {'req_id': req_id, 'case_block': req_case_block, 'product_block': _products_xml(product_amounts)}
@@ -128,7 +128,7 @@ def create_fulfillment_xml(original_requisition, product_amounts):
     ).as_xml())
     return """
         {case_block}
-        <ns0:transfer xmlns:ns0="http://commtrack.org/stock_report" dest="{dest_id}" date="{long_date}" src="{req_id}" section-id="stock">
+        <ns0:transfer xmlns:ns0="http://commcarehq.org/ledger/v1" dest="{dest_id}" date="{long_date}" src="{req_id}" section-id="stock">
             {product_block}
         </ns0:transfer>
     """.format(

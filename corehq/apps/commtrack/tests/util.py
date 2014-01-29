@@ -188,7 +188,7 @@ class CommTrackTest(TestCase):
 
 def get_ota_balance_xml(user):
     xml = generate_restore_payload(user.to_casexml_user(), version=V2)
-    balance_blocks = etree.fromstring(xml).findall('{http://commtrack.org/stock_report}balance')
+    balance_blocks = etree.fromstring(xml).findall('{http://commcarehq.org/ledger/v1}balance')
     if balance_blocks:
         return [etree.tostring(bb) for bb in balance_blocks]
     return []
