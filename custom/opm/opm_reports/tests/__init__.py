@@ -132,7 +132,7 @@ class TestBeneficiary(OPMTestBase, TestCase):
 
         # self.out_docs = []
         # self.validate_docs(docs)
-        
+
         # for doc in self.out_docs:
             # self.db.save_doc(doc)
 
