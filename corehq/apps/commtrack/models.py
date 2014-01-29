@@ -650,11 +650,13 @@ class StockTransaction(Document):
     def from_xml(cls, config, timestamp, action_tag, action_node, product_node):
         action_type = action_node.attrib.get('type')
         subaction = action_type
-        quantity = float(product_node.attrib.get('quantity'))
-        def _txn(action, case_id, section_id):
+        product_id = product_node.attrib.get('id')
+
+        def _txn(action, case_id, section_id, quantity):
+            # warning: here be closures
             data = {
                 'timestamp': timestamp,
-                'product_id': product_node.attrib.get('id'),
+                'product_id': product_id,
                 'quantity': quantity,
                 'action': action,
                 'case_id': case_id,
@@ -664,22 +666,40 @@ class StockTransaction(Document):
             }
             return cls(config=config, **data)
 
-        DEFAULT_SECTION_ID = 'stock'
-        if action_tag == 'balance':
-            yield _txn(
-                action=const.StockActions.STOCKONHAND if quantity > 0 else const.StockActions.STOCKOUT,
-                case_id=action_node.attrib['entity-id'],
-                section_id=action_node.attrib.get('section-id', DEFAULT_SECTION_ID),
-            )
-        elif action_tag == 'transfer':
-            src, dst = [action_node.attrib.get(k) for k in ('src', 'dest')]
-            assert src or dst
-            if src is not None:
-                yield _txn(action=const.StockActions.CONSUMPTION, case_id=src,
-                           section_id=action_node.attrib.get('section-id', DEFAULT_SECTION_ID))
-            if dst is not None:
-                yield _txn(action=const.StockActions.RECEIPTS, case_id=dst,
-                           section_id=action_node.attrib.get('section-id', DEFAULT_SECTION_ID))
+        def _yield_txns(section_id, quantity):
+            # warning: here be closures
+            if action_tag == 'balance':
+                case_id = action_node.attrib['entity-id']
+                yield _txn(
+                    action=const.StockActions.STOCKONHAND if quantity > 0 else const.StockActions.STOCKOUT,
+                    case_id=case_id,
+                    section_id=section_id,
+                    quantity=quantity,
+                )
+            elif action_tag == 'transfer':
+                src, dst = [action_node.attrib.get(k) for k in ('src', 'dest')]
+                assert src or dst
+                if src is not None:
+                    yield _txn(action=const.StockActions.CONSUMPTION, case_id=src,
+                               section_id=section_id, quantity=quantity)
+                if dst is not None:
+                    yield _txn(action=const.StockActions.RECEIPTS, case_id=dst,
+                               section_id=section_id, quantity=quantity)
+
+        section_id = action_node.attrib.get('section-id', None)
+        grouped_entries = section_id is not None
+        if grouped_entries:
+            quantity = float(product_node.attrib.get('quantity'))
+            for txn in _yield_txns(section_id, quantity):
+                yield txn
+
+        else:
+            values = [child for child in product_node]
+            for value in values:
+                section_id = value.attrib.get('section-id')
+                quantity = float(value.attrib.get('quantity'))
+                for txn in _yield_txns(section_id, quantity):
+                    yield txn
 
     def to_xml(self, E=None, **kwargs):
         if not E:
