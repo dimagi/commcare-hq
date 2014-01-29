@@ -65,7 +65,7 @@ class StockReportTest(CommTrackTest):
             self.assertEqual(0, trans.quantity)
             self.assertEqual(amt, trans.stock_on_hand)
 
-class StockRequisitionTest(CommTrackTest):
+class StockRequisitionTest(object):
     requisitions_enabled = True
 
     def testRequisition(self):
