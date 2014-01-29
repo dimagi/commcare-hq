@@ -20,7 +20,8 @@ from corehq.apps.commtrack.tests.data.balances import (
     balance_first,
     transfer_first,
     create_requisition_xml,
-    create_fulfillment_xml
+    create_fulfillment_xml,
+    new_transfer_format
 )
 
 
@@ -191,6 +192,16 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         for product, amt in transfers:
             self.check_product_stock(self.sp, product, initial-amt, -amt)
             self.check_product_stock(self.sp2, product, amt, amt)
+
+    def test_new_transfer_format(self):
+        initial = float(100)
+        initial_amounts = [(p._id, initial) for p in self.products]
+        self.submit_xml_form(balance_submission(initial_amounts))
+
+        deductions = [(p._id, float(50 - 10*i)) for i, p in enumerate(self.products)]
+        self.submit_xml_form(new_transfer_format(deductions))
+        for product, amt in deductions:
+            self.check_product_stock(self.sp, product, initial-amt, -amt)
 
     def test_balance_first_doc_order(self):
         initial = float(100)
