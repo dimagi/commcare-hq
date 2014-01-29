@@ -28,6 +28,18 @@ from fabric import utils
 import posixpath
 
 
+ROLES_ALL_SRC = ['django_monolith', 'django_app', 'django_celery', 'django_pillowtop', 'formsplayer', 'staticfiles']
+ROLES_ALL_SERVICES = ['django_monolith', 'django_app', 'django_celery', 'django_pillowtop', 'formsplayer']
+ROLES_CELERY = ['django_monolith', 'django_celery']
+ROLES_PILLOWTOP = ['django_monolith', 'django_pillowtop']
+ROLES_DJANGO = ['django_monolith', 'django_app']
+ROLES_TOUCHFORMS = ['django_monolith', 'formsplayer']
+ROLES_STATIC = ['django_monolith', 'staticfiles']
+ROLES_SMS_QUEUE = ['django_monolith', 'sms_queue']
+ROLES_DB_ONLY = ['pg', 'django_monolith']
+
+PROD_PROXIES = ['hqproxy0.internal.commcarehq.org', 'hqproxy2.internal.commcarehq.org']
+
 if env.ssh_config_path and os.path.isfile(os.path.expanduser(env.ssh_config_path)):
     env.use_ssh_config = True
 
@@ -56,6 +68,7 @@ env.roledefs = {
     'django_app': [],
     # for now combined with celery
     'django_pillowtop': [],
+    'sms_queue': [],
     # 'django_celery, 'django_app', and 'django_pillowtop' all in one
     # use this ONLY for single server config,
     # otherwise deploy() will run multiple times in parallel causing issues
@@ -74,6 +87,7 @@ env.roledefs = {
 }
 
 env.django_bind = '127.0.0.1'
+env.sms_queue_enabled = False
 
 def format_env(current_env):
     """
@@ -136,7 +150,7 @@ def setup_apache_dirs():
     sudo('mkdir -p %(services)s/apache' % env, user=env.sudo_user)
 
 
-@roles('django_celery', 'django_app', 'staticfiles')
+@roles(*ROLES_ALL_SRC)
 def setup_dirs():
     """
     create uploaded media, log, etc. directories (if needed) and make writable
@@ -168,6 +182,7 @@ def india():
         'pg': [],
         'rabbitmq': [],
         'django_celery': [],
+        'sms_queue': [],
         'django_app': [],
         'django_pillowtop': [],
         'formsplayer': [],
@@ -201,6 +216,7 @@ def zambia():
         'pg': [],
         'rabbitmq': [],
         'django_celery': [],
+        'sms_queue': [],
         'django_app': [],
         'django_pillowtop': [],
         'formsplayer': [],
@@ -223,6 +239,7 @@ def production():
     env.django_bind = '0.0.0.0'
     env.django_port = '9010'
     env.should_migrate = True
+    env.sms_queue_enabled = True
 
     if env.code_branch != 'master':
         branch_message = (
@@ -237,6 +254,7 @@ def production():
         'pg': ['hqdb0.internal.commcarehq.org'],
         'rabbitmq': ['hqdb0.internal.commcarehq.org'],
         'django_celery': ['hqcelery0.internal.commcarehq.org'],
+        'sms_queue': ['hqcelery0.internal.commcarehq.org'],
         'django_app': [
             'hqdjango3.internal.commcarehq.org',
             'hqdjango4.internal.commcarehq.org',
@@ -248,7 +266,7 @@ def production():
         # will remove hqdjango0 once we verify it works well on hqdb0
         'formsplayer': ['hqtouch0.internal.commcarehq.org', 'hqdb0.internal.commcarehq.org'],
         'lb': [],
-        'staticfiles': ['hqproxy0.internal.commcarehq.org', 'hqproxy1.internal.commcarehq.org'],
+        'staticfiles': PROD_PROXIES,
         # having deploy here makes it so that
         # we don't get prompted for a host or run deploy too many times
         'deploy': ['hqdb0.internal.commcarehq.org'],
@@ -263,7 +281,7 @@ def production():
     # Gets auto-populated by what_os()
     # if you don't know what it is or don't want to specify.
     env.host_os_map = None
-    env.roles = ['deploy']
+    env.roles = ['deploy']  # this line should be commented out when running bootstrap on a new machine
     env.es_endpoint = 'hqes0.internal.commcarehq.org'''
     env.flower_port = 5555
 
@@ -284,18 +302,20 @@ def staging():
     env.django_port = '9010'
 
     env.should_migrate = True
+    env.sms_queue_enabled = True
 
     env.roledefs = {
         'couch': ['hqdb0-staging.internal.commcarehq.org'],
         'pg': ['hqdb0-staging.internal.commcarehq.org'],
         'rabbitmq': ['hqdb0-staging.internal.commcarehq.org'],
         'django_celery': ['hqdb0-staging.internal.commcarehq.org'],
+        'sms_queue': ['hqdb0-staging.internal.commcarehq.org'],
         'django_app': ['hqdjango0-staging.internal.commcarehq.org','hqdjango1-staging.internal.commcarehq.org'],
         'django_pillowtop': ['hqdb0-staging.internal.commcarehq.org'],
 
         'formsplayer': ['hqdjango1-staging.internal.commcarehq.org'],
         'lb': [],
-        'staticfiles': ['hqproxy0.internal.commcarehq.org', 'hqproxy1.internal.commcarehq.org'],
+        'staticfiles': PROD_PROXIES,
         'deploy': ['hqdb0-staging.internal.commcarehq.org'],
         # fab complains if this doesn't exist
         'django_monolith': [],
@@ -338,6 +358,7 @@ def preview():
         'pg': [],
         'rabbitmq': ['hqdb0-preview.internal.commcarehq.org'],
         'django_celery': ['hqdb0-preview.internal.commcarehq.org'],
+        'sms_queue': ['hqdb0-preview.internal.commcarehq.org'],
         'django_app': [
             'hqdjango0-preview.internal.commcarehq.org',
             'hqdjango1-preview.internal.commcarehq.org'
@@ -346,7 +367,7 @@ def preview():
 
         'formsplayer': ['hqdjango0-preview.internal.commcarehq.org'],
         'lb': [],
-        'staticfiles': ['hqproxy0.internal.commcarehq.org', 'hqproxy1.internal.commcarehq.org'],
+        'staticfiles': PROD_PROXIES,
         'deploy': ['hqdb0-preview.internal.commcarehq.org'],
         'django_monolith': [],
     }
@@ -380,6 +401,7 @@ def development():
         'pg': [],
         'rabbitmq': [],
         'django_celery': [],
+        'sms_queue': [],
         'django_app': [],
         'django_pillowtop': [],
         'formsplayer': [],
@@ -394,7 +416,7 @@ def development():
     env.flower_port = 5555
 
 @task
-@roles('django_app','django_celery','staticfiles')
+@roles(*ROLES_ALL_SRC)
 def install_packages():
     """Install packages, given a list of package names"""
     require('environment', provided_by=('staging', 'preview', 'production'))
@@ -415,7 +437,7 @@ def install_packages():
 
 
 @task
-@roles('django_app', 'django_celery', 'staticfiles')
+@roles(*ROLES_ALL_SRC)
 @parallel
 def upgrade_packages():
     """
@@ -458,7 +480,7 @@ def what_os():
         return env.host_os_map[env.host_string]
 
 
-@roles('pg','django_celery','django_app','staticfiles', 'django_monolith')
+@roles(*ROLES_ALL_SRC)
 @task
 def setup_server():
     """Set up a server for the first time in preparation for deployments."""
@@ -473,7 +495,7 @@ def setup_server():
     execute(create_pg_db)
 
 
-@roles('pg', 'django_monolith')
+@roles(*ROLES_DB_ONLY)
 @task
 def create_pg_user():
     """Create the Postgres user"""
@@ -481,7 +503,7 @@ def create_pg_user():
     sudo('createuser -D -R -P -s  %(sudo_user)s' % env, user='postgres')
 
 
-@roles('pg', 'django_monolith')
+@roles(*ROLES_DB_ONLY)
 @task
 def create_pg_db():
     """Create the Postgres database"""
@@ -526,7 +548,7 @@ def unbootstrap():
               '%(code_root)s %(code_root_preindex)s') % env, user=env.sudo_user)
 
 
-@roles('django_celery', 'django_app', 'staticfiles', 'django_monolith')
+@roles(*ROLES_ALL_SRC)
 def create_virtualenvs():
     """set up virtualenv on remote host"""
     require('virtualenv_root', 'virtualenv_root_preindex',
@@ -537,7 +559,7 @@ def create_virtualenvs():
     sudo('cd && virtualenv %s %s' % (args, env.virtualenv_root_preindex), user=env.sudo_user, shell=True)
 
 
-@roles('django_celery', 'django_app', 'staticfiles', 'django_monolith')
+@roles(*ROLES_ALL_SRC)
 def clone_repo():
     """clone a new copy of the git repository"""
     with settings(warn_only=True):
@@ -571,14 +593,14 @@ def remove_submodule_source(path):
     execute(_remove_submodule_source_preindex, path)
 
 
-@roles('django_app','django_celery', 'staticfiles', 'django_monolith')
+@roles(*ROLES_ALL_SRC)
 @parallel
 def _remove_submodule_source_main(path):
     with cd(env.code_root):
         sudo('rm -rf submodules/%s' % path, user=env.sudo_user)
 
 
-@roles('pg', 'django_monolith')
+@roles(*ROLES_DB_ONLY)
 @parallel
 def _remove_submodule_source_preindex(path):
     with cd(env.code_root_preindex):
@@ -586,7 +608,7 @@ def _remove_submodule_source_preindex(path):
 
 
 @task
-@roles('pg', 'django_monolith')
+@roles(*ROLES_DB_ONLY)
 def preindex_views():
     if not env.should_migrate:
         utils.abort((
@@ -609,7 +631,7 @@ def preindex_views():
         ) % env, user=env.sudo_user)
 
 
-@roles('django_app','django_celery', 'staticfiles', 'django_monolith', 'formsplayer')
+@roles(*ROLES_ALL_SRC)
 @parallel
 def update_code(preindex=False):
     if preindex:
@@ -629,7 +651,7 @@ def update_code(preindex=False):
         sudo("find . -name '*.pyc' -delete", user=env.sudo_user)
 
 
-@roles('pg', 'django_monolith')
+@roles(*ROLES_DB_ONLY)
 def mail_admins(subject, message):
     with cd(env.code_root):
         sudo((
@@ -642,7 +664,7 @@ def mail_admins(subject, message):
         }, user=env.sudo_user)
 
 
-@roles('pg', 'django_monolith')
+@roles(*ROLES_DB_ONLY)
 def record_successful_deploy():
     with cd(env.code_root):
         sudo((
@@ -717,7 +739,7 @@ def deploy():
 
 
 @task
-@roles('django_app','django_celery','staticfiles', 'django_monolith')
+@roles(*ROLES_ALL_SRC)
 @parallel
 def update_virtualenv(preindex=False):
     """
@@ -741,29 +763,7 @@ def update_virtualenv(preindex=False):
         sudo(' '.join(cmd), user=env.sudo_user)
 
 
-@roles('lb')
-def touch_apache():
-    """Touch apache conf files to trigger reload."""
-
-    require('code_root', provided_by=('staging', 'preview', 'production'))
-    apache_path = posixpath.join(posixpath.join(env.services, 'apache'), 'apache.conf')
-    sudo('touch %s' % apache_path, user=env.sudo_user)
-
-
-@roles('django_celery', 'django_app', 'django_monolith')
-def touch_supervisor():
-    """
-    touch supervisor conf files to trigger reload. Also calls supervisorctl
-    update to load latest supervisor.conf
-
-    """
-    require('code_root', provided_by=('staging', 'preview', 'production'))
-    supervisor_path = posixpath.join(posixpath.join(env.services, 'supervisor'), 'supervisor.conf')
-    sudo('touch %s' % supervisor_path, user=env.sudo_user)
-    _supervisor_command('update')
-
-
-@roles('django_app', 'django_celery', 'django_monolith')
+@roles(*ROLES_ALL_SERVICES)
 @parallel
 def clear_services_dir():
     """
@@ -813,7 +813,7 @@ def netstat_plnt():
     sudo('netstat -plnt')
 
 
-@roles('django_app', 'django_celery','django_monolith')
+@roles(*ROLES_ALL_SERVICES)
 def services_start():
     """Start the gunicorn servers"""
     require('environment', provided_by=('staging', 'preview', 'production'))
@@ -822,7 +822,7 @@ def services_start():
     _supervisor_command('start  all')
 
 
-@roles('django_app', 'django_celery', 'django_monolith')
+@roles(*ROLES_ALL_SERVICES)
 def services_stop():
     """Stop the gunicorn servers"""
     require('environment', provided_by=('staging', 'preview', 'production'))
@@ -839,7 +839,7 @@ def restart_services():
     execute(services_restart)
 
 
-@roles('django_app', 'django_celery', 'django_monolith')
+@roles(*ROLES_ALL_SERVICES)
 def services_restart():
     """Stop and restart all supervisord services"""
     require('environment',
@@ -851,7 +851,7 @@ def services_restart():
     _supervisor_command('start  all')
 
 
-@roles('django_celery','django_monolith')
+@roles(*ROLES_DB_ONLY)
 def migrate():
     """run south migration on remote environment"""
     require('code_root',
@@ -862,7 +862,7 @@ def migrate():
         sudo('%(virtualenv_root)s/bin/python manage.py migrate --noinput' % env, user=env.sudo_user)
 
 
-@roles('django_celery','django_monolith')
+@roles(*ROLES_DB_ONLY)
 def flip_es_aliases():
     """Flip elasticsearch aliases to the latest version"""
     require('code_root',
@@ -872,14 +872,14 @@ def flip_es_aliases():
 
 
 @parallel
-@roles('staticfiles', 'django_monolith')
+@roles(*ROLES_STATIC)
 def _do_collectstatic():
     """Collect static after a code update"""
     with cd(env.code_root):
         sudo('%(virtualenv_root)s/bin/python manage.py collectstatic --noinput' % env, user=env.sudo_user)
 
 
-@roles('django_app', 'django_monolith')
+@roles(*ROLES_DJANGO)
 @parallel
 def version_static(preindex=False):
     """
@@ -888,19 +888,23 @@ def version_static(preindex=False):
     reference.
 
     """
+
     if preindex:
         withpath = env.code_root_preindex
+        venv = env.virtualenv_root_preindex
     else:
         withpath = env.code_root
+        venv = env.virtualenv_root
 
     cmd = 'resource_static' if not preindex else 'resource_static clear'
     with cd(withpath):
-        sudo('rm -f tmp.sh resource_versions.py; %(virtualenv_root)s/bin/python manage.py ' % env + cmd, user=env.sudo_user)
-
+        sudo('rm -f tmp.sh resource_versions.py; {venv}/bin/python manage.py {cmd}'.format(venv=venv, cmd=cmd),
+            user=env.sudo_user
+        )
 
 
 @task
-@roles('staticfiles',)
+@roles(*ROLES_STATIC)
 def collectstatic():
     """run collectstatic on remote environment"""
     require('code_root', provided_by=('production', 'preview', 'staging'))
@@ -963,7 +967,7 @@ def _rebuild_supervisor_conf_file(conf_command, filename):
 
 
 
-@roles('django_celery', 'django_monolith')
+@roles(*ROLES_CELERY)
 def set_celery_supervisorconf():
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_main.conf')
 
@@ -971,12 +975,14 @@ def set_celery_supervisorconf():
     if env.environment not in ['staging', 'preview', 'realstaging']:
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_beat.conf')
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_periodic.conf')
+    if env.sms_queue_enabled:
+        _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_sms_queue.conf')
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_flower.conf')
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_couchdb_lucene.conf') #to be deprecated
 
 
 
-@roles('django_pillowtop', 'django_monolith')
+@roles(*ROLES_PILLOWTOP)
 def set_pillowtop_supervisorconf():
     # in reality this also should be another machine
     # if the number of listeners gets too high
@@ -986,20 +992,19 @@ def set_pillowtop_supervisorconf():
         _rebuild_supervisor_conf_file('make_supervisor_pillowtop_conf', 'supervisor_pillowtop.conf')
 
 
-@roles('django_app', 'django_monolith')
+@roles(*ROLES_DJANGO)
 def set_djangoapp_supervisorconf():
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_django.conf')
 
 
-@roles('remote_es')
-def set_elasticsearch_supervisorconf():
-    _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_elasticsearch.conf')
-
-
-@roles('formsplayer', 'django_monolith')
+@roles(*ROLES_TOUCHFORMS)
 def set_formsplayer_supervisorconf():
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_formsplayer.conf')
 
+@roles(*ROLES_SMS_QUEUE)
+def set_sms_queue_supervisorconf():
+    if env.sms_queue_enabled:
+        _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_sms_queue.conf')
 
 @task
 def set_supervisor_config():
@@ -1009,6 +1014,7 @@ def set_supervisor_config():
     execute(set_djangoapp_supervisorconf)
     execute(set_formsplayer_supervisorconf)
     execute(set_pillowtop_supervisorconf)
+    execute(set_sms_queue_supervisorconf)
 
     # if needing tunneled ES setup, comment this back in
     # execute(set_elasticsearch_supervisorconf)
@@ -1042,7 +1048,7 @@ def update_django_locales():
     do_update_django_locales()
 
 
-@roles('django_app', 'django_celery', 'staticfiles', 'django_monolith')
+@roles(*ROLES_ALL_SRC)
 @parallel
 def do_update_django_locales():
     with cd(env.code_root):

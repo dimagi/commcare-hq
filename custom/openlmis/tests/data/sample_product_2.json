@@ -1,0 +1,20 @@
+{
+            "domain": "commtrack-test",
+            "code":"234",
+            "name":"asd",
+            "description":"desc2",
+            "category":"test_category",
+            "program_id": "",
+            "beginningBalance":"3",
+            "quantityReceived":"0",
+            "quantityDispensed":"1",
+            "lossesAndAdjustments":"-2",
+            "stockOnHand":"0",
+            "newPatientCount":"2",
+            "stockOutDays":"2",
+            "quantityRequested":"3",
+            "reasonForRequestedQuantity":"reason",
+            "calculatedOrderQuantity":"57",
+            "quantityApproved":"65",
+            "remarks":"1"
+        }

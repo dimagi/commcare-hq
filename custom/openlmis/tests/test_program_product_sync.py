@@ -26,7 +26,7 @@ class ProgramSyncTest(TestCase):
         self.assertEqual(0, len(Product.by_domain(TEST_DOMAIN)))
         commtrack_program = sync_openlmis_program(TEST_DOMAIN, lmis_program)
         self.assertEqual(lmis_program.name, commtrack_program.name)
-        self.assertEqual(lmis_program.code, commtrack_program.code)
+        self.assertEqual(lmis_program.code.lower(), commtrack_program.code)
 
         # product sync
         self.assertEqual(len(lmis_program.products), len(Product.by_domain(TEST_DOMAIN)))

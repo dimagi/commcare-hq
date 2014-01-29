@@ -3,10 +3,13 @@ from datetime import datetime
 import json
 import os
 import re
+import uuid
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core import cache
+from django.core.cache import InvalidCacheBackendError
 from django.template.loader import render_to_string
 from django.views.decorators.http import require_POST
 from django.contrib.auth.forms import AdminPasswordChangeForm
@@ -77,6 +80,26 @@ def hb_check():
     except:
         hb = False
     return hb
+
+
+def redis_check():
+    try:
+        redis = cache.get_cache('redis')
+        return redis.set('serverup_check_key', 'test')
+    except (InvalidCacheBackendError, ValueError):
+        return True  # redis not in use, ignore
+    except:
+        return False
+
+
+def memcached_check():
+    try:
+        memcached = cache.get_cache('default')
+        uuid_val = uuid.uuid1()
+        memcached.set('serverup_check_key', uuid_val)
+        return memcached.get('serverup_check_key') == uuid_val
+    except:
+        return False
 
 
 def server_error(request, template_name='500.html'):
@@ -193,6 +216,16 @@ def server_up(req):
             "always_check": True,
             "message": "* couch has issues",
             "check_func": couch_check
+        },
+        "redis": {
+            "always_check": True,
+            "message": "* redis has issues",
+            "check_func": redis_check
+        },
+        "memcached": {
+            "always_check": True,
+            "message": "* memcached has issues",
+            "check_func": memcached_check
         }
     }
 
@@ -759,7 +792,7 @@ class CRUDPaginatedViewMixin(object):
         """
         raise NotImplementedError("You must implement get_deleted_item_data")
 
-
+@login_required
 def quick_find(request):
     query = request.GET.get('q')
     redirect = request.GET.get('redirect') != 'false'

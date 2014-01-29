@@ -1,12 +1,16 @@
+from xml.etree import ElementTree
 from dimagi.utils.couch.database import get_db
-from corehq.apps.commtrack.models import *
+from corehq.apps.commtrack.models import CommtrackConfig, CommtrackActionConfig, LocationType, RequisitionActions, CommtrackRequisitionConfig, Product, SupplyPointCase, Program
 from corehq.apps.locations.models import Location
-from casexml.apps.case.models import CommCareCase
 import itertools
 from datetime import datetime, date, timedelta
 from calendar import monthrange
 import math
 import bisect
+from corehq.apps.hqcase.utils import submit_case_blocks
+from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.xml import V2
+from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 
 
 def all_supply_point_types(domain):
@@ -46,13 +50,30 @@ def get_supply_point(domain, site_code=None, loc=None):
         'location': loc,
     }
 
-def make_product(domain, name, code):
+def make_product(domain, name, code, program_id):
     p = Product()
+    p.domain = domain
+    p.name = name
+    p.code = code.lower()
+    p.program_id = program_id
+    p.save()
+    return p
+
+def make_program(domain, name, code):
+    p = Program()
     p.domain = domain
     p.name = name
     p.code = code.lower()
     p.save()
     return p
+
+def get_or_make_def_program(domain):
+    program = [p for p in Program.by_domain(domain) if p.name == "Default"]
+    if len(program) == 0:
+        return make_program(domain, 'Default', 'def')
+    else:
+        return program[0]
+
 
 def bootstrap_commtrack_settings_if_necessary(domain, requisitions_enabled=True):
     if not(domain and domain.commtrack_enabled and not domain.commtrack_settings):
@@ -135,9 +156,10 @@ def bootstrap_commtrack_settings_if_necessary(domain, requisitions_enabled=True)
         )
     c.save()
 
-    make_product(domain.name, 'Sample Product 1', 'pp')
-    make_product(domain.name, 'Sample Product 2', 'pq')
-    make_product(domain.name, 'Sample Product 3', 'pr')
+    program = make_program(domain.name, 'Default', 'def')
+    make_product(domain.name, 'Sample Product 1', 'pp', program.get_id)
+    make_product(domain.name, 'Sample Product 2', 'pq', program.get_id)
+    make_product(domain.name, 'Sample Product 3', 'pr', program.get_id)
 
     return c
 
@@ -204,3 +226,37 @@ def num_periods_late(product_case, schedule, *schedule_args):
     # find the earliest due date that is on or after the most-recent report date,
     # and return how many reporting periods back it occurs
     return bisect.bisect_right(stream, stream.normalize(last_reported))
+
+def submit_mapping_case_block(user, index):
+    mapping = user.get_location_map_case()
+
+    if mapping:
+        caseblock = CaseBlock(
+            create=False,
+            case_id=mapping._id,
+            version=V2,
+            index=index
+        )
+    else:
+        caseblock = CaseBlock(
+            create=True,
+            case_type=USER_LOCATION_OWNER_MAP_TYPE,
+            case_id=location_map_case_id(user),
+            version=V2,
+            owner_id=user._id,
+            index=index
+        )
+
+    submit_case_blocks(
+        ElementTree.tostring(caseblock.as_xml()),
+        user.domain,
+        user.username,
+        user._id
+    )
+
+
+def location_map_case_id(user):
+    return 'user-owner-mapping-' + user._id
+
+def is_commtrack_location(user, domain):
+    return True if user and user.location_id and domain.commtrack_enabled else False

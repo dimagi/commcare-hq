@@ -1,3 +1,29 @@
+git
+python-pip
+python-dev
+libevent-1.4-2
+libevent-dev
+python-setuptools
+postgresql
+memcached
+nodejs
+gdebi-core
+apache2
+
+# dependencies for couchdb and building it (as done in install.sh)
+g++
+curl
+build-essential
+erlang-base
+erlang-dev
+erlang-eunit
+erlang-nox
+libmozjs185-dev
+libicu-dev
+libcurl4-gnutls-dev
+libtool
+
+# old stale content of this file:
 python-all-dev
 python-setuptools
 libcairo2-dev

@@ -1,14 +1,16 @@
 # coding=utf-8
+import difflib
 
 import io
 
 import lxml.etree
 
 from casexml.apps.case.tests.util import check_xml_line_by_line
-from corehq.apps.app_manager.const import APP_V2
-from corehq.apps.app_manager.models import Application, OpenCaseAction, UpdateCaseAction, PreloadAction, FormAction, Module
+from corehq.apps.app_manager.const import APP_V2, CAREPLAN_GOAL, CAREPLAN_TASK
+from corehq.apps.app_manager.models import Application, OpenCaseAction, UpdateCaseAction, PreloadAction, FormAction, Module, CareplanModule
 from django.test import TestCase
 from corehq.apps.app_manager.tests.util import TestFileMixin
+from corehq.apps.app_manager.util import new_careplan_module
 
 
 class FormPrepBase(TestCase, TestFileMixin):
@@ -113,3 +115,33 @@ class CaseSharingFormPrepTest(FormPrepBase):
         self.app = Application.wrap(self.get_json('complex-case-sharing'))
         self.assert_xml_equiv(self.app.get_module(0).get_form(0).render_xform(),
                               self.get_xml('complex-case-sharing'))
+
+class FormPreparationCareplanTest(FormPrepBase):
+    file_path = 'data', 'form_preparation_careplan'
+    def setUp(self):
+        self.app = Application.new_app('domain', 'New App', APP_V2)
+        self.app.version = 3
+        self.module = self.app.add_module(Module.new_module('New Module', lang='en'))
+        self.form = self.app.new_form(0, 'New Form', lang='en')
+        self.module.case_type = 'test_case_type'
+        self.form.source = self.get_xml('original')
+        self.form.actions.open_case = OpenCaseAction(name_path="/data/question1", external_id=None)
+        self.form.actions.open_case.condition.type = 'always'
+
+        self.careplan_module = new_careplan_module(self.app, None, None, self.module)
+
+    def test_create_goal(self):
+        form = self.careplan_module.get_form_by_type(CAREPLAN_GOAL, 'create')
+        self.assert_xml_equiv(form.render_xform(), self.get_xml('create_goal'))
+
+    def test_update_goal(self):
+        form = self.careplan_module.get_form_by_type(CAREPLAN_GOAL, 'update')
+        self.assert_xml_equiv(form.render_xform(), self.get_xml('update_goal'))
+
+    def test_create_task(self):
+        form = self.careplan_module.get_form_by_type(CAREPLAN_TASK, 'create')
+        self.assert_xml_equiv(form.render_xform(), self.get_xml('create_task'))
+
+    def test_update_task(self):
+        form = self.careplan_module.get_form_by_type(CAREPLAN_TASK, 'update')
+        self.assert_xml_equiv(form.render_xform(), self.get_xml('update_task'))

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+{% load hq_shared_tags %}
+
+<html>
+<head>
+    <link href="{% static 'hqstyle/css/core/hqstyle-core.css' %}" rel="stylesheet"/>
+    <link href="{% static 'penn_state/css/smiley_reports.css' %}" rel="stylesheet"/>
+    <link href="{% static 'hqwebapp/js/lib/nvd3/nv.d3.css' %}" rel="stylesheet"/>
+    <meta name='viewport' content='width=device-width, initial-scale=.1, maximum-scale=1'/>
+    <title>Legacy Together</title>
+</head>
+
+<body>
+
+<article class="container smiley-report">
+    <section>
+        <h2>Daily Site PAX GBG Strategy Use</h2>
+        <p>
+            Every day a PAX GBG Strategy was used by any staff member at your afterschool program is marked by a "Peace" sign.  Any day that a PAX GBG strategy was not used is marked by a "Remember" finger.  The "Weekly Total" is show many days PAX GBG Strategies were used this week.
+        </p>
+        {% include "penn_state/report_row.html" with report=strategy %}
+    </section>
+
+    <section>
+        <h2>Daily Site GBG Game Goal</h2>
+        <p>
+            Every day the GBG game was played by anyone at your afterschool program site is marked by a "Smiley" face.  Any day the GBG Game was not played is marked by a "Remember" finger.  The "Weekly Total" is how many days the game was played.
+        </p>
+        {% include "penn_state/report_row.html" with report=game %}
+    </section>
+
+    <section class="row">
+        <div class="span6">
+            <h2>Weekly Staff Entry Count</h2>
+            <svg id="site-pie-chart" width="400" height="300">
+            </svg>
+        </div>
+
+        <div class="span6">
+            <h2>Weekly GBG Scores</h2>
+            <svg id="site-bar-chart"></svg>
+        </div>
+    </section>
+</article>
+
+    <script src="{% static 'hqstyle/js/jquery/jquery-1.7.1.min.js' %}"></script>
+    <script src="{% static 'hqstyle/js/core/bootstrap.min.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/nvd3/lib/d3.v3.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/nvd3/nv.d3.v1.1.10b.min.js' %}"></script>
+    <script src="{% static 'penn_state/js/charts.js' %}"></script>
+    <script type="text/javascript">
+        pieChart('site-pie-chart', {{ strategy|JSON }} );
+        barChart('site-bar-chart', {{ weekly|JSON }} );
+    </script>
+    {% comment %}
+    <script type="text/javascript" src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'hqwebapp/js/lib/knockout-2.1.0.debug.js' %}"></script>
+    <script type="text/javascript" src="{% static 'hqwebapp/js/lib/underscore-1.4.4.js' %}"></script>
+    <script type="text/javascript" src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
+    {% endcomment %}
+
+
+</body>
+</html>

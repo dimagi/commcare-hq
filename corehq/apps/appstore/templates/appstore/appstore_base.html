@@ -267,7 +267,11 @@
                         {% endif %}
                     </a>
                     <p style="margin-top: .5em;">{% trans "Last updated" %}: {{ app.snapshot_time|date:"N j, Y" }}</p>
-                    <a class="btn" href="{% url "project_info" app.name %}">{% trans "View" %} &raquo;</a>
+                    <a class="btn"
+                       href="{% url "project_info" app.name %}"
+                       onclick="_gaq.push(['_trackEvent', 'Exchange', 'View button', '{{ app.name }}']);">
+                        {% trans "View" %} &raquo;
+                    </a>
                     {% if user.is_superuser %}
                         {% if app.is_approved %}
                             <a class="btn btn-danger" href="{% url "approve_appstore_app" app.name %}?approve=false">{% trans "Unapprove" %}</a>
@@ -282,11 +286,11 @@
                             {{ app.title }}
                         </a>
                         <small style="display: block;">{% trans "By" %}
-                            {% if app.organization %}
+                            {% ifequal app.publisher 'organization' %}
                                 {{ app.get_organization.title }}
                             {% else %}
-                                {{ app.author }}
-                            {% endif %}
+                                {{ app.author|default:app.name_of_publisher }}
+                            {% endifequal %}
                         </small>
                     </h3>
                     {% if app.project_type %}

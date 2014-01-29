@@ -278,9 +278,7 @@
                 {% endif %}
                 </td>
                 <td class="cell-vertical-centered">
-                    {% if form.submissions %}
-                        <a class="btn" href='{% url "custom_export_form" domain %}?export_tag="{{ form.xmlns }}"{% if form.current_app.id %}&app_id={{ form.current_app.id }}{% endif %}'><i class="icon-star-empty"></i> {% trans "Create Custom Export" %}</a>
-                    {% endif %}
+                    <a class="btn" href='{% url "custom_export_form" domain %}?export_tag="{{ form.xmlns }}"{% if form.current_app.id %}&app_id={{ form.current_app.id }}{% endif %}'><i class="icon-star-empty"></i> {% trans "Create Custom Export" %}</a>
                 </td>
                 <td class="cell-vertical-centered">
                     {% if form.submissions %}

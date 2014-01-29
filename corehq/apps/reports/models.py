@@ -4,10 +4,13 @@ from django.http import Http404
 from django.utils import html
 from django.utils.safestring import mark_safe
 import pytz
+from corehq import Domain
 from corehq.apps import reports
 from corehq.apps.app_manager.models import get_app
+from corehq.apps.app_manager.util import ParentCasePropertyBuilder
 from corehq.apps.reports.display import xmlns_to_name
 from couchdbkit.ext.django.schema import *
+from corehq.apps.reports.exportfilters import form_matches_users, is_commconnect_form
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
 from couchexport.models import SavedExportSchema, GroupExportConfiguration
 from couchexport.transforms import couch_to_excel_datetime, identity
@@ -61,7 +64,7 @@ class HQToggle(object):
         self.name = name
         self.show = show
 
-    def __str__(self):
+    def __repr__(self):
         return "%(klass)s[%(type)s:%(show)s:%(name)s]" % dict(
             klass = self.__class__.__name__,
             type=self.type,
@@ -124,7 +127,7 @@ class TempCommCareUser(CommCareUser):
         app_label = 'reports'
 
 
-DATE_RANGE_CHOICES = ['last7', 'last30', 'lastn', 'since', 'range']
+DATE_RANGE_CHOICES = ['last7', 'last30', 'lastn', 'lastmonth', 'since', 'range']
 
 
 class ReportConfig(Document):
@@ -225,6 +228,7 @@ class ReportConfig(Document):
             return {}
 
         import datetime
+        from dateutil.relativedelta import relativedelta
         today = datetime.date.today()
 
         if date_range == 'since':
@@ -233,6 +237,9 @@ class ReportConfig(Document):
         elif date_range == 'range':
             start_date = self.start_date
             end_date = self.end_date
+        elif date_range == 'lastmonth':
+            end_date = today
+            start_date = today - relativedelta(months=1) + timedelta(days=1)  # add one day to handle inclusiveness
         else:
             end_date = today
 
@@ -314,7 +321,9 @@ class ReportConfig(Document):
 
     @property
     def date_description(self):
-        if self.days and not self.start_date:
+        if self.date_range == 'lastmonth':
+            return "Last Month"
+        elif self.days and not self.start_date:
             day = 'day' if self.days == 1 else 'days'
             return "Last %d %s" % (self.days, day)
         elif self.end_date:
@@ -332,7 +341,7 @@ class ReportConfig(Document):
         except CouchUser.AccountTypeError:
             return CommCareUser.get_by_user_id(self.owner_id)
 
-    def get_report_content(self):
+    def get_report_content(self, attach_excel=False):
         """
         Get the report's HTML content as rendered by the static view format.
 
@@ -342,7 +351,7 @@ class ReportConfig(Document):
                 return _("The report used to create this scheduled report is no"
                          " longer available on CommCare HQ.  Please delete this"
                          " scheduled report and create a new one using an available"
-                         " report.")
+                         " report."), None
         except Exception:
             pass
 
@@ -358,10 +367,15 @@ class ReportConfig(Document):
         try:
             response = self._dispatcher.dispatch(request, render_as='email',
                 **self.view_kwargs)
-            return json.loads(response.content)['report']
-        except Exception:
+            if attach_excel is True:
+                file_obj = self._dispatcher.dispatch(request, render_as='excel',
+                **self.view_kwargs)
+            else:
+                file_obj = None
+            return json.loads(response.content)['report'], file_obj
+        except Exception as e:
             notify_exception(None, "Error generating report")
-            return _("An error occurred while generating this report.")
+            return _("An error occurred while generating this report."), None
 
 
 class UnsupportedScheduledReportError(Exception):
@@ -375,6 +389,7 @@ class ReportNotification(Document):
     recipient_emails = StringListProperty()
     config_ids = StringListProperty()
     send_to_owner = BooleanProperty()
+    attach_excel = BooleanProperty()
 
     hour = IntegerProperty(default=8)
     day = IntegerProperty(default=1)
@@ -494,9 +509,13 @@ class ReportNotification(Document):
 
         if self.all_recipient_emails:
             title = "Scheduled report from CommCare HQ"
-            body = get_scheduled_report_response(self.owner, self.domain, self._id).content
+            if hasattr(self, "attach_excel"):
+                attach_excel = self.attach_excel
+            else:
+                attach_excel = False
+            body, excel_files = get_scheduled_report_response(self.owner, self.domain, self._id, attach_excel=attach_excel)
             for email in self.all_recipient_emails:
-                send_HTML_email(title, email, body, email_from=settings.DEFAULT_FROM_EMAIL)
+                send_HTML_email(title, email, body.content, email_from=settings.DEFAULT_FROM_EMAIL, file_attachments=excel_files)
 
 
 class AppNotFound(Exception):
@@ -505,7 +524,8 @@ class AppNotFound(Exception):
 
 class HQExportSchema(SavedExportSchema):
     doc_type = 'SavedExportSchema'
-    transform_dates = BooleanProperty(default=False)
+    domain = StringProperty()
+    transform_dates = BooleanProperty(default=True)
 
     @property
     def global_transform_function(self):
@@ -514,12 +534,19 @@ class HQExportSchema(SavedExportSchema):
         else:
             return identity
 
+    @classmethod
+    def wrap(cls, data):
+        if 'transform_dates' not in data:
+            data['transform_dates'] = False
+        self = super(HQExportSchema, cls).wrap(data)
+        if not self.domain:
+            self.domain = self.index[0]
+        return self
 
 class FormExportSchema(HQExportSchema):
     doc_type = 'SavedExportSchema'
     app_id = StringProperty()
     include_errors = BooleanProperty(default=False)
-
 
     @property
     @memoized
@@ -548,8 +575,14 @@ class FormExportSchema(HQExportSchema):
 
     @property
     def filter(self):
-        f = SerializableFunction()
+        user_ids = set(CouchUser.ids_by_domain(self.domain))
+        user_ids.update(CouchUser.ids_by_domain(self.domain, is_active=False))
 
+        def _top_level_filter(form):
+            # careful, closures used
+            return form_matches_users(form, user_ids) or is_commconnect_form(form)
+
+        f = SerializableFunction(_top_level_filter)
         if self.app_id is not None:
             f.add(reports.util.app_export_filter, app_id=self.app_id)
         if not self.include_errors:
@@ -568,21 +601,33 @@ class FormExportSchema(HQExportSchema):
     def formname(self):
         return xmlns_to_name(self.domain, self.xmlns, app_id=self.app_id)
 
-    def get_default_order(self):
-        if not self.app:
-            return []
+    @property
+    @memoized
+    def question_order(self):
+        try:
+            if not self.app:
+                return []
+        except AppNotFound:
+            if settings.DEBUG:
+                return []
+            raise
         else:
             questions = self.app.get_questions(self.xmlns)
 
         order = []
         for question in questions:
+            if not question['value']:  # question probably belongs to a broken form
+                continue
             index_parts = question['value'].split('/')
             assert index_parts[0] == ''
             index_parts[1] = 'form'
             index = '.'.join(index_parts[1:])
             order.append(index)
 
-        return {'#': order}
+        return order
+
+    def get_default_order(self):
+        return {'#': self.question_order}
 
 
 class FormDeidExportSchema(FormExportSchema):
@@ -595,6 +640,32 @@ class FormDeidExportSchema(FormExportSchema):
     def get_case(cls, doc, case_id):
         pass
 
+class CaseExportSchema(HQExportSchema):
+    doc_type = 'SavedExportSchema'
+
+    @property
+    def domain(self):
+        return self.index[0]
+
+    @property
+    def domain_obj(self):
+        return Domain.get_by_name(self.domain)
+
+    @property
+    def case_type(self):
+        return self.index[1]
+
+    @property
+    def applications(self):
+        return self.domain_obj.full_applications(include_builds=False)
+
+    @property
+    def case_properties(self):
+        props = set([])
+        for app in self.applications:
+            builder = ParentCasePropertyBuilder(app, ("name",))
+            props |= set(builder.get_properties(self.case_type))
+        return props
 
 class HQGroupExportConfiguration(GroupExportConfiguration):
     """

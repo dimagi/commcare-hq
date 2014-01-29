@@ -55,6 +55,10 @@ ES_MAX_CLAUSE_COUNT = 1024  #  this is what ES's maxClauseCount is currently set
                             #  can change this config value if we want to support querying over more domains
 
 
+class ESError(Exception):
+    pass
+
+
 def get_stats_data(domains, histo_type, datespan, interval="day"):
     histo_data = dict([(d['display_name'],
                         es_histogram(histo_type, d["names"], datespan.startdate_display, datespan.enddate_display, interval=interval))
@@ -157,8 +161,11 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
 
     if facets:
         q["facets"] = q.get("facets", {})
-        for facet in facets:
-            q["facets"][facet] = {"terms": {"field": facet, "size": facet_size or SIZE_LIMIT}}
+        if isinstance(facets, list):
+            for facet in facets:
+                q["facets"][facet] = {"terms": {"field": facet, "size": facet_size or SIZE_LIMIT}}
+        elif isinstance(facets, dict):
+            q["facets"].update(facets)
 
     if filter["and"]:
         query = q.pop("query", {})
@@ -183,6 +190,59 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
     ret_data = es.get(es_url, data=q)
 
     return ret_data
+
+
+def es_wrapper(index, domain=None, q=None, doc_type=None, fields=None, start_at=None, size=None):
+    """
+    This is a flat wrapper for es_query.
+    """
+    if index not in ES_URLS:
+        msg = "%s is not a valid ES index.  Available options are: %s" % (
+            index, ', '.join(ES_URLS.keys()))
+        raise IndexError(msg)
+
+    # query components
+    match_all = {"match_all": {}}
+    fuzzy_query = {"fuzzy_like_this": {"like_text": q}}
+    doc_type_filter = {"term": {"doc_type": doc_type}}
+    domain_filter = {"or": [
+        {"term": {"domain.exact": domain}},
+        {"term": {"domain_memberships.domain.exact": domain}},
+    ]}
+
+    # actual query
+    query = {"query": {
+        "filtered": {
+            "filter": {"and": []},
+            "query": fuzzy_query if q else match_all
+        }
+    }}
+
+    # add filters
+    filters = query["query"]["filtered"]["filter"]["and"]
+    if domain:
+        filters.append(domain_filter)
+    if doc_type:
+        filters.append(doc_type_filter)
+    if not doc_type and not domain:
+        filters.append(match_all)
+
+    # make query
+    res = es_query(
+        es_url=ES_URLS[index],
+        q=query,
+        fields=fields,
+        start_at=start_at,
+        size=size,
+    )
+
+    # parse results
+    if 'error' in res:
+        msg = res['error']
+        raise ESError(msg)
+    if fields is not None:
+        return [r['fields'] for r in res['hits']['hits']]
+    return [r['_source'] for r in res['hits']['hits']]
 
 
 def stream_es_query(chunksize=100, **kwargs):

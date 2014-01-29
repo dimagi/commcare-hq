@@ -1,3 +1,12 @@
+function escapeRegExp(str) {
+    return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
+}
+
+function replaceAll(find, replace, str) {
+    // http://stackoverflow.com/questions/1144783/replacing-all-occurrences-of-a-string-in-javascript#answer-1144788
+    return str.replace(new RegExp(escapeRegExp(find), 'g'), replace);
+}
+
 function chevron_toggle(show, $toggling, $chevron, $holds_toggle_state, after_fn) {
     var chev = "icon-double-angle-";
     if (show) {
@@ -34,7 +43,7 @@ $(function () {
 
     $(".facet-btn").click(function(){
         var $this = $(this);
-        var sortable = $this.data('sortable').replace(".", "\\.");
+        var sortable = replaceAll(".", "\\.", $this.data('sortable'));
 
         var fn = function() {
             $(".more-sortable-button[data-sortable='" + sortable + "']").hide();

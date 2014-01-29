@@ -82,14 +82,15 @@ class MeanTime(fn.mean):
         else:
             return millis
 
+class MandE(CareGroupReport):
+    name = "M&E"
+    slug = "cb_m_and_e"
 
-class MEGeneral(CareGroupReport):
-    name = "M&E General"
-    slug = "cb_gen"
     couch_view = "care_benin/by_village_case"
 
     default_column_order = (
         'village',
+
         'referrals_open_30_days',
         'ref_counter_ref_time',
         'danger_sign_knowledge_pregnancy',
@@ -103,9 +104,35 @@ class MEGeneral(CareGroupReport):
         'birth_place_domicile',
         'birth_place_clinique_privee',
         'birth_place_autre',
+
+        'newlyRegisteredPregnant',
+        'postPartumRegistration',
+        'pregnant_followed_up',
+        #'high_risk_pregnancy', #requires village in form
+        #'anemic_pregnancy', #requires village in form
+        #'stillborns', #requires village in form
+        #'failed_pregnancy', #requires village in form
+        #'maternal_death', #requires village in form
+        #'child_death_7_days', #requires village in form
+        'births_one_month_ago_bcg_polio',
+        'births_vat2',
+        'births_tpi2',
+        'births_one_month_ago_follow_up_x0',
+        'births_one_month_ago_follow_up_x1',
+        'births_one_month_ago_follow_up_x2',
+        'births_one_month_ago_follow_up_x3',
+        'births_one_month_ago_follow_up_x4',
+        'births_one_month_ago_follow_up_gt4',
+        #'danger_sign_count_pregnancy', #requires village in form
+        #'danger_sign_count_newborn', #requires village in form
+        'births_cpn0',
+        'births_cpn1',
+        'births_cpn2',
+        'births_cpn4',
     )
 
-    village = Column("Village", calculate_fn=groupname)
+    village = Column(
+        "Village", calculate_fn=groupname)
 
     ref_counter_ref_time = Column("Mean time between reference and counter reference", key="ref_counter_ref_time",
                                   reduce_fn=MeanTime(),
@@ -161,49 +188,11 @@ class MEGeneral(CareGroupReport):
                                            help_text="""Nombre de femmes qui connaissent au moins 3
                                            signes de danger du nouveau-né par village""")
 
-
-class MEMedical(CareGroupReport):
-    name = "M&E Medical"
-    slug = "cb_med"
-
-    couch_view = "care_benin/by_village_case"
-
-    default_column_order = (
-        'village',
-        'newlyRegisteredPregnant',
-        'postPartumRegistration',
-        'pregnant_followed_up',
-        #'high_risk_pregnancy', #requires village in form
-        #'anemic_pregnancy', #requires village in form
-        #'stillborns', #requires village in form
-        #'failed_pregnancy', #requires village in form
-        #'maternal_death', #requires village in form
-        #'child_death_7_days', #requires village in form
-        'births_one_month_ago_bcg_polio',
-        'births_vat2',
-        'births_tpi2',
-        'births_one_month_ago_follow_up_x0',
-        'births_one_month_ago_follow_up_x1',
-        'births_one_month_ago_follow_up_x2',
-        'births_one_month_ago_follow_up_x3',
-        'births_one_month_ago_follow_up_x4',
-        'births_one_month_ago_follow_up_gt4',
-        #'danger_sign_count_pregnancy', #requires village in form
-        #'danger_sign_count_newborn', #requires village in form
-        'births_cpn0',
-        'births_cpn1',
-        'births_cpn2',
-        'births_cpn4',
-    )
-
-    village = Column(
-        "Village", calculate_fn=groupname)
-
     # pregnancy
     newlyRegisteredPregnant = Column("Newly Registered Women who are Pregnant",
                                      key="newly_registered_pregnant",
                                      help_text="""Nombre de cas de femmes enceintes
-                                     enregistrées et ouverts par mois par village""")
+                                     enregistrées et ouverts par village""")
 
     pregnant_followed_up = Column("Pregnant women followed up on", key="pregnant_followed_up",
                                   startkey_fn=lambda x: [], endkey_fn=lambda x: [{}],
@@ -326,6 +315,38 @@ class MEMedical(CareGroupReport):
                                        ayant eu de(s) signe(s) de danger par village""")
 
 
+class Relais(BasicTabularReport, CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
+    name = "Relais"
+    slug = "cb_relais"
+    field_classes = (DatespanField,)
+    datespan_default_days = 30
+    exportable = True
+    filter_group_name = "relais"
+
+    couch_view = "care_benin/by_village_case"
+
+    default_column_order = (
+        'relais',
+        'ref_suiviref_time',
+    )
+
+    relais = Column("Relais", calculate_fn=username)
+
+    ref_suiviref_time = Column("Mean time between referral and suivi de referral",
+                               key="ref_suiviref_time", reduce_fn=MeanTime(),
+                               help_text="Délai entre la référence et le suivi de la référence")
+
+    @property
+    def start_and_end_keys(self):
+        return ([self.datespan.startdate_param_utc],
+                [self.datespan.enddate_param_utc])
+
+    @property
+    def keys(self):
+        for user in self.users:
+            yield [user['user_id']]
+
+
 class Nurse(BasicTabularReport, CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
     name = "Nurse"
     slug = "cb_nurse"
@@ -338,7 +359,6 @@ class Nurse(BasicTabularReport, CustomProjectReport, ProjectReportParametersMixi
     default_column_order = (
         'nurse',
         'cpn_exam_rate',
-        'ref_suiviref_time',
         'post_natal_followups_15m', #requires xform_xmlns in case actions
         'post_natal_followups_6h', #requires xform_xmlns in case actions
         'post_natal_followups_sortie', #requires xform_xmlns in case actions
@@ -356,11 +376,6 @@ class Nurse(BasicTabularReport, CustomProjectReport, ProjectReportParametersMixi
     cpn_exam_rate = Column("CPN Exam Rate", key=cpn_exam_rate_view,
                            help_text="""Proportion de protocoles d’examen
                            CPN entièrement respecté (rempli) par agent de santé""")
-
-    ref_suiviref_time = Column("Mean time between referral and suivi de referral",
-                               key="ref_suiviref_time", reduce_fn=MeanTime(),
-                               couch_view="care_benin/by_village_case",
-                               help_text="Délai entre la référence et le suivi de la référence")
 
     post_natal_followups_total_view = KeyView(key="post_natal_followups_total",
                                               couch_view="care_benin/by_village_case", startkey_fn=lambda x: [])
@@ -508,16 +523,58 @@ class Outcomes(GenericTabularReport, CustomProjectReport, ProjectReportParameter
     couch_view = "care_benin/outcomes"
 
     row_list = (
-        {"name": "Cases closed (enceinte)",
-         "view": KeyView(key="case_closed_enceinte")},
-        {"name": "Cases closed (accouchee)",
-         "view": KeyView(key="case_closed_accouchee")},
-        {"name": "Percentage of births at clinic with GATPA performed",
-         "view": AggregateKeyView(combine_indicator, KeyView(key="birth_gapta"), KeyView(key="birth_total"))},
-        {"name": "Total references to clinic (enceinte)",
-         "view": KeyView(key="references_to_clinic_total_enceinte")},
-        {"name": "Total references to clinic (accouchee)",
-         "view": KeyView(key="references_to_clinic_total_accouchee")},
+        {
+            "name": "Cases opened (enceinte)",
+            "view": KeyView(key="case_opened_enceinte")
+        },
+        {
+            "name": "Cases opened (accouchee)",
+            "view": KeyView(key="case_opened_accouchee")
+        },
+        {
+            "name": "Cases closed (enceinte)",
+            "view": KeyView(key="case_closed_enceinte")
+        },
+        {
+            "name": "Cases closed (accouchee)",
+            "view": KeyView(key="case_closed_accouchee")
+        },
+        {
+            "name": "Number of births at clinics",
+            "view": KeyView(key="birth_total")
+        },
+        {
+            "name": "Percentage of births at clinic with GATPA performed",
+            "view": AggregateKeyView(combine_indicator, KeyView(key="birth_gapta"), KeyView(key="birth_total"))
+        },
+        {
+            "name": "Birth with VAT2",
+            "view": KeyView("birth_vat_2")
+        },
+        {
+            "name": "Birth with TPI2",
+            "view": KeyView("birth_tpi_2")
+        },
+        {
+            "name": "Failed pregnancies",
+            "view": KeyView(key="pregnancy_failed")
+        },
+        {
+            "name": "Maternal deaths",
+            "view": KeyView(key="maternal_death")
+        },
+        {
+            "name": "Babies died before 7 days",
+            "view": KeyView(key="child_death_7_days")
+        },
+        {
+            "name": "Total references to clinic (enceinte)",
+            "view": KeyView(key="references_to_clinic_total_enceinte")
+        },
+        {
+            "name": "Total references to clinic (accouchee)",
+            "view": KeyView(key="references_to_clinic_total_accouchee")
+        },
     )
 
     @property
@@ -527,7 +584,7 @@ class Outcomes(GenericTabularReport, CustomProjectReport, ProjectReportParameter
 
     @property
     def headers(self):
-        return DataTablesHeader(DataTablesColumn(""),
+        return DataTablesHeader(DataTablesColumn("", sortable=False),
                                 DataTablesColumn("Value", sort_type=DTSortType.NUMERIC))
 
     @property
@@ -553,31 +610,57 @@ class DangerSigns(GenericTabularReport, CustomProjectReport, ProjectReportParame
 
     @property
     def keys(self):
-        return [row['key'][1] for row in get_db().view("care_benin/danger_signs",
+        return [row['key'] for row in get_db().view("care_benin/danger_signs",
                                                        reduce=True, group=True,
                                                        group_level=2)]
 
     @property
     def headers(self):
-        return DataTablesHeader(DataTablesColumn("Danger sign"),
-                                DataTablesColumn("Count", sort_type=DTSortType.NUMERIC))
+        return DataTablesHeader(
+            DataTablesColumn("Danger sign"),
+            DataTablesColumn("Count (enceinte)", sort_type=DTSortType.NUMERIC),
+            DataTablesColumn("Count (accouchee)", sort_type=DTSortType.NUMERIC),
+            DataTablesColumn("Count (nne)", sort_type=DTSortType.NUMERIC),
+        )
 
     @property
     def rows(self):
         reduce_fn = fn.sum()
         startkey, endkey = self.start_and_end_keys
 
+        row_dict = {}
+
         for key in self.keys:
             row = get_db().view("care_benin/danger_signs",
-                                startkey=['danger_sign', key, startkey],
-                                endkey=['danger_sign', key, endkey, {}],
+                                startkey=key + [startkey],
+                                endkey=key + [endkey, {}],
                                 reduce=True,
                                 wrapper=lambda r: r['value']
             )
 
             row = row.first()
             val = reduce_fn(row)
-            yield [key, fdd(val, val)]
+
+            cols = row_dict.setdefault(
+                key[1],
+                {
+                    'danger_sign_count_pregnancy': [],
+                    'danger_sign_count_accouchee': [],
+                    'danger_sign_count_birth': [],
+                }
+            )
+            cols[key[0]].append(val)
+
+        for sign, cols in row_dict.items():
+            pregnancy = sum(cols['danger_sign_count_pregnancy'])
+            accouchee = sum(cols['danger_sign_count_accouchee'])
+            birth = sum(cols['danger_sign_count_birth'])
+            yield [
+                sign,
+                fdd(pregnancy, pregnancy),
+                fdd(accouchee, accouchee),
+                fdd(birth, birth)
+            ]
 
 
 def health_center_name(key, report):
@@ -661,6 +744,9 @@ class HealthCenter(BasicTabularReport, CustomProjectReport, ProjectReportParamet
                 res = sum(nums)
                 return fdd(res, res)
             else:
-                return fdd(vals[0], vals[0])
+                val = vals[0]
+                if val is None:
+                    val = NO_VALUE
+                return fdd(val, val)
 
         return [combine(unwrap(x)) for x in zip(*rows)]

@@ -1,33 +1,25 @@
 .smiley-report {
-	text-align: center;
-	border: 1px solid black;
-	padding: 0px 30px;
-	margin-top: 40px;
-	margin-bottom: 60px;
+  font-size: 18px;
+  text-align: center;
+  border: 1px solid black;
+  padding: 0px 30px;
+  margin-top: 40px;
+  margin-bottom: 60px;
 }
 .smiley-report h2 {
-	margin-top: 40px;
+  margin-top: 40px;
 }
 .smiley-report .week-total {
-	font-size: 60px;
-	width:100%;
-	padding: 25px 10px;
+  font-size: 60px;
+  width:100%;
+  padding: 25px 10px;
 }
 .smiley-report .icon-caption {
-	font-size: 20px;
-	margin: 10px;
+  font-size: 20px;
+  margin: 10px;
 }
 svg {
   display: block;
-}
-#chart1 svg {
-  height: 500px;
+  height: 400px;
   min-width: 100px;
-  min-height: 100px;
-/*
-margin: 10px;
-Minimum height and width is a good idea to prevent negative SVG dimensions...
-For example width should be =< margin.left + margin.right + 1,
-of course 1 pixel for the entire chart would not be very useful, BUT should not have errors
-*/
 }

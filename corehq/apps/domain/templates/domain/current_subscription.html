@@ -1,0 +1,76 @@
+{% extends "settings/base_template.html" %}
+{% load hqstyle_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block main_column %}
+<div class="row">
+    <div class="span12">
+        <article>
+            <div class="page-header">
+                <h1>{% trans 'Current Subscription' %}</h1>
+            </div>
+            <div class="form form-horizontal">
+                <div class="control-group">
+                    <label class="control-label">{% trans 'Plan' %}</label>
+                    <div class="controls">
+                        <p class="control-group-text">
+                            <span class="{{ plan.css_class }}">{{ plan.name }}</span>
+                            <a class="btn" href="{{ change_plan_url }}">{% trans "Change Plan" %}</a>
+                        </p>
+                        <span class="alert alert-info">
+                            <i class="icon-info-sign"></i> {{ plan.description }}
+                        </span>
+                    </div>
+                </div>
+                {% for product in plan.products %}
+                    {# todo handle multiproducts #}
+                    <div class="control-group">
+                        <label class="control-label">{% trans 'Price' %}</label>
+                        <div class="controls">
+                            <p class="control-group-text">{{ product.monthly_fee }}</p>
+                        </div>
+                    </div>
+                    {% if product.credit %}
+                        <div class="control-group">
+                            <label class="control-label">{% trans 'Plan Credit' %}</label>
+                            <div class="controls">
+                                <p class="control-group-text">{{ product.credit }}</p>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+                {% if plan.subscription_credit %}
+                    <div class="control-group">
+                        <label class="control-label">{% trans 'General Credit' %}</label>
+                        <div class="controls">
+                            <p class="control-group-text">{{ plan.subscription_credit }}</p>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+            <h2>{% trans 'Usage Summary' %}</h2>
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>{% trans "Feature" %}</th>
+                        <th>{% trans "Usage" %}</th>
+                        <th>{% trans "Remaining" %}</th>
+                        <th>{% trans "Credits Available" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for feature in plan.features %}
+                        <tr>
+                            <td>{{ feature.name }}</td>
+                            <td>{{ feature.usage }}</td>
+                            <td>{{ feature.remaining }}</td>
+                            <td>{{ feature.credit }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </article>
+    </div>
+</div>
+{% endblock %}

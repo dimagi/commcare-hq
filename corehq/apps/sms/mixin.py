@@ -1,5 +1,6 @@
 from collections import defaultdict
 import re
+from decimal import Decimal
 from couchdbkit.ext.django.schema import *
 from couchdbkit.exceptions import MultipleResultsFound
 from dimagi.utils.couch.undo import DELETED_SUFFIX
@@ -64,6 +65,10 @@ class VerifiedNumber(Document):
             # Circular import
             from corehq.apps.users.models import CommCareUser
             return CommCareUser.get(self.owner_id)
+        elif self.owner_doc_type == "CommTrackUser":
+            # Circular import
+            from corehq.apps.commtrack.models import CommTrackUser
+            return CommTrackUser.get(self.owner_id)
         elif self.owner_doc_type == 'WebUser':
             # Circular importsms
             from corehq.apps.users.models import WebUser
@@ -131,6 +136,7 @@ class VerifiedNumber(Document):
         # We use .one() here because the framework prevents duplicates
         # from being entered when a contact saves a number.
         # See CommCareMobileContactMixin.save_verified_number()
+        from corehq.apps.sms.util import strip_plus
         v = cls.view(view_name,
                      key=strip_plus(phone_number),
                      include_docs=True).one()
@@ -144,9 +150,6 @@ class VerifiedNumber(Document):
                           include_docs=True,
                           reduce=False).all()
         return result
-
-def strip_plus(phone_number):
-    return phone_number[1:] if phone_number.startswith('+') else phone_number
 
 def add_plus(phone_number):
     return ('+' + phone_number) if not phone_number.startswith('+') else phone_number
@@ -301,6 +304,25 @@ class BackendMapping(Document):
     prefix = StringProperty()
     backend_id = StringProperty() # Couch Document id of a MobileBackend
 
+def apply_leniency(contact_phone_number):
+    """
+    The documentation says that contact_phone_number should be
+    in international format and consist of only digits. However,
+    we can apply some leniency to avoid common mistakes.
+    Returns None if an unsupported data type is passed in.
+    """
+    from corehq.apps.sms.util import strip_plus
+    # Decimal preserves trailing zeroes, so it's ok 
+    if isinstance(contact_phone_number, (int, long, Decimal)):
+        contact_phone_number = str(contact_phone_number)
+    if isinstance(contact_phone_number, basestring):
+        chars = re.compile(r"(\s|-|\.)+")
+        contact_phone_number = chars.sub("", contact_phone_number)
+        contact_phone_number = strip_plus(contact_phone_number)
+    else:
+        contact_phone_number = None
+    return contact_phone_number
+
 class CommCareMobileContactMixin(object):
     """
     Defines a mixin to manage a mobile contact's information. This mixin must be used with
@@ -322,9 +344,8 @@ class CommCareMobileContactMixin(object):
         raise NotImplementedError("Subclasses of CommCareMobileContactMixin must implement method get_language_code().")
 
     def get_verified_numbers(self, include_pending=False):
-        v = VerifiedNumber.view("sms/verified_number_by_doc_type_id",
-            startkey=[self.doc_type, self._id],
-            endkey=[self.doc_type, self._id],
+        v = VerifiedNumber.view("sms/verified_number_by_owner_id",
+            key=self._id,
             include_docs=True
         )
         v = filter(lambda c: c.verified or include_pending, v)
@@ -336,6 +357,7 @@ class CommCareMobileContactMixin(object):
 
         return  the VerifiedNumber entry
         """
+        from corehq.apps.sms.util import strip_plus
         verified = self.get_verified_numbers(True)
         if not phone:
             # for backwards compatibility with code that assumes only one verified phone #
@@ -353,7 +375,7 @@ class CommCareMobileContactMixin(object):
         return  void
         raises  InvalidFormatException if the phone number format is invalid
         """
-        if not phone_number_re.match(phone_number):
+        if (not phone_number) or (not phone_number_re.match(phone_number)):
             raise InvalidFormatException("Phone number format must consist of only digits.")
 
     def verify_unique_number(self, phone_number):
@@ -380,7 +402,7 @@ class CommCareMobileContactMixin(object):
         raises  InvalidFormatException if the phone number format is invalid
         raises  PhoneNumberInUseException if the phone number is already in use by another contact
         """
-        phone_number = strip_plus(phone_number)
+        phone_number = apply_leniency(phone_number)
         self.verify_unique_number(phone_number)
         if only_one_number_allowed:
             v = self.get_verified_number()

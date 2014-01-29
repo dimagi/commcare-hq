@@ -13,6 +13,7 @@ def non_empty_only(dct):
 
 
 def _create_custom_app_strings(app, lang):
+    from corehq.apps.app_manager.models import Module
 
     def trans(d):
         return clean_trans(d, langs)
@@ -39,7 +40,7 @@ def _create_custom_app_strings(app, lang):
             yield lc, name
 
     for module in app.get_modules():
-        for detail_type, detail in module.get_details():
+        for detail_type, detail, _ in module.get_details():
             if detail_type.startswith('case'):
                 label = trans(module.case_label)
             else:
@@ -56,10 +57,11 @@ def _create_custom_app_strings(app, lang):
                         yield id_strings.detail_column_enum_variable(module, detail_type, column, item.key), trans(item.value)
 
         yield id_strings.module_locale(module), maybe_add_index(trans(module.name))
-        if module.case_list.show:
-            yield id_strings.case_list_locale(module), trans(module.case_list.label) or "Case List"
-        if module.referral_list.show:
-            yield id_strings.referral_list_locale(module), trans(module.referral_list.label)
+        if isinstance(module, Module):
+            if module.case_list.show:
+                yield id_strings.case_list_locale(module), trans(module.case_list.label) or "Case List"
+            if module.referral_list.show:
+                yield id_strings.referral_list_locale(module), trans(module.referral_list.label)
         for form in module.get_forms():
             form_name = trans(form.name) + ('${0}' if form.show_count else '')
             yield id_strings.form_locale(form), maybe_add_index(form_name)
@@ -106,7 +108,8 @@ class AppStringsBase(object):
 
         if 'case_sharing.exactly_one_group' not in messages:
             messages['case_sharing.exactly_one_group'] = \
-                u'Your phone is not set up properly for case sharing. Please contact your supervisor.'
+                (u'The case sharing settings for your user are incorrect. '
+                 u'This user must be in exactly one case sharing group. Please contact your supervisor.')
 
         return commcare_translations.dumps(messages).encode('utf-8')
 

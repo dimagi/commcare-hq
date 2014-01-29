@@ -15,7 +15,7 @@
     {% for row in rows %}
         <tr>
             <td>
-                <a href="{% url "render_form_data" row.domain row.report_id %}">
+                <a href="{% url "render_form_data" row.domain row.report_id %}" target="_blank">
                     {% trans "View Form" %}
                 </a>
             </td>

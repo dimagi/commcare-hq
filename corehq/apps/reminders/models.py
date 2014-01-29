@@ -12,6 +12,7 @@ from dimagi.utils.parsing import string_to_datetime, json_format_datetime
 from dateutil.parser import parse
 from corehq.apps.reminders.util import get_form_name
 from couchdbkit.exceptions import ResourceConflict
+from couchdbkit.resource import ResourceNotFound
 from corehq.apps.sms.util import create_task, close_task, update_task
 from corehq.apps.smsforms.app import submit_unfinished_form
 from dimagi.utils.couch import LockableMixIn
@@ -1039,6 +1040,13 @@ class CaseReminder(Document, LockableMixIn):
 
     @property
     def recipient(self):
+        try:
+            return self._recipient_lookup
+        except ResourceNotFound:
+            return None
+
+    @property
+    def _recipient_lookup(self):
         handler = self.handler
         if handler.recipient == RECIPIENT_USER:
             return self.user

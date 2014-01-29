@@ -98,3 +98,5 @@ def get_commtrack_user_id(domain):
     # abstracted out in case we one day want to back this
     # by a real user, but for now it's like demo_user
     return COMMTRACK_USERNAME
+
+USER_LOCATION_OWNER_MAP_TYPE = 'user-owner-mapping-case'

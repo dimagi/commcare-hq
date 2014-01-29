@@ -37,6 +37,7 @@ var SaveButton = {
     */
     init: function (options) {
         var button = {
+            disabled: false,
             $save: $('<span/>').text(SaveButton.message.SAVE).click(function () {
                 button.fire('save');
             }).addClass('btn btn-success'),
@@ -105,18 +106,32 @@ var SaveButton = {
         button.on('change', function () {
             this.setStateWhenReady('save');
         });
-        if (options.save) {
-            button.on('save', options.save);
-        } else if (options.saveRequest) {
-            button.on('save', function () {
+        button.on('disable', function () {
+            this.disabled = true;
+            this.$save.addClass('disabled');
+            this.$saving.addClass('disabled');
+            this.$retry.addClass('disabled');
+        });
+        button.on('enable', function () {
+            this.disabled = false;
+            this.$save.removeClass('disabled');
+            this.$saving.removeClass('disabled');
+            this.$retry.removeClass('disabled');
+        });
+        button.on('save', function () {
+            if (button.disabled){
+                return;
+            } else if (options.save) {
+                options.save();
+            } else if (options.saveRequest){
                 var o = button.ajaxOptions();
                 o.beforeSend();
                 options.saveRequest()
                     .success(o.success)
                     .error(o.error)
                 ;
-            })
-        }
+            }
+        });
 
         var beforeunload = function () {
             var stillAttached = button.ui.parents()[button.ui.parents().length - 1].tagName.toLowerCase() == 'html';
@@ -132,7 +147,7 @@ var SaveButton = {
             button = SaveButton.init({
                 unsavedMessage: options.unsavedMessage,
                 save: function () {
-                    this.ajax({
+                    button.ajax({
                         url: url,
                         type: 'POST',
                         dataType: 'json',

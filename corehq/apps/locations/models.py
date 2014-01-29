@@ -119,6 +119,10 @@ class Location(Document):
     def _geopoint(self):
         return '%s %s' % (self.latitude, self.longitude) if self.latitude is not None and self.longitude is not None else None
 
+    def linked_supply_point(self):
+        from corehq.apps.commtrack.models import SupplyPointCase
+        return SupplyPointCase.get_by_location(self)
+
 
 def location_tree(domain):
     """build a hierarchical tree of the entire location structure for a domain"""

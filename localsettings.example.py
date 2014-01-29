@@ -128,8 +128,6 @@ ANALYTICS_IDS = {
 AXES_LOCK_OUT_AT_FAILURE = False
 LUCENE_ENABLED = True
 
-INSECURE_URL_BASE = "http://submit.commcarehq.org"
-
 PREVIEWER_RE = r'^.*@dimagi\.com$'
 
 GMAPS_API_KEY = '******'
@@ -202,8 +200,8 @@ ES_XFORM_CHECK_DIRECT_DOC_ID = None
 
 ####### API throttling #####
 
-API_THROTTLE_REQUESTS=20  # number of requests allowed per timeframe
-API_THROTTLE_TIMEFRAME=10 # seconds
+CCHQ_API_THROTTLE_REQUESTS = 20  # number of requests allowed per timeframe
+CCHQ_API_THROTTLE_TIMEFRAME = 10  # seconds
 
 ####### django-coverage config ########
 

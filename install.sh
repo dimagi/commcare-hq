@@ -42,7 +42,7 @@ if [ $? -eq 0 ]; then
     fi
     sudo apt-get update
 
-    sudo apt-get install -y requirements/apt-packages.txt
+    cat requirements/apt-package.txt | sed 's/#.*$//g' | xargs sudo apt-get install -y
 
 else
     command -v yum > /dev/null 2>&1
@@ -54,7 +54,7 @@ else
     sudo yum update
     sudo yum clean all
 
-    cat requirements/yum-packages.txt | xargs sudo yum install -y
+    cat requirements/yum-packages.txt | sed 's/#.*$//g' | xargs sudo yum install -y
 
     sudo yum install htop
     sudo yum remove -y mysql php

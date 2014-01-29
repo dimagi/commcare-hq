@@ -1,3 +1,18 @@
+Data
+-----
+There are three "blocks" of beneficiaries (cases) corresponding to different triggers for incentive payments.
+Hard Block -> Atri
+Soft Block -> Wazirganj
+Control -> ???  (no custom report)
+
+**Differences between Hard and Soft blocks:**
+Birth Preparedness 1 -> window_1_3 is called soft_window_1_3
+Birth Preparedness 2 -> window_2_3 is called soft_window_2_3
+Delivery Form -> no change
+Child Followup Form -> same, but look for /data/total_soft_conditions == '1'
+Birth Spacing -> no change
+
+
 Module structure
 ----------------
 

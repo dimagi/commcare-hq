@@ -6,7 +6,6 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.reports.models import FormExportSchema
 from corehq.apps.users.models import CommCareUser
 from couchexport.models import Format
-from couchforms.models import XFormInstance
 from django_digest.test import Client
 
 XMLNS = 'http://www.commcarehq.org/example/hello-world'
@@ -22,12 +21,12 @@ XML_DATA = """<?xml version='1.0' ?>
         <n1:timeStart>2012-10-15T15:26:02.386-04</n1:timeStart>
         <n1:timeEnd>2012-10-15T15:26:14.745-04</n1:timeEnd>
         <n1:username>user1</n1:username>
-        <n1:userID>9247d96f8d6496f51cda6bf2bab963a7</n1:userID>
+        <n1:userID>{user_id}</n1:userID>
         <n1:instanceID>{xform_id}</n1:instanceID>
         <n2:appVersion xmlns:n2="http://commcarehq.org/xforms">2.0</n2:appVersion>
     </n1:meta>
 </data>
-""".format(xmlns=XMLNS, xform_id=XFORM_ID)
+"""
 
 
 class FormExportTest(TestCase):
@@ -43,14 +42,6 @@ class FormExportTest(TestCase):
         self.client.login(username=self.couch_user.username, password='xxx')
         self.url = reverse("receiver_post_with_app_id",
                            args=[self.domain_name, self.app_id])
-
-        def post_it():
-            f = StringIO(XML_DATA)
-            f.name = 'form.xml'
-            response = self.client.post(self.url, {'xml_submission_file': f})
-        self.form1 = post_it()
-        self.form2 = post_it()
-
         self.custom_export = FormExportSchema.wrap({
             'type': 'form',
             'app_id': self.app_id,
@@ -63,18 +54,49 @@ class FormExportTest(TestCase):
             }]
         })
 
+    def tearDown(self):
+        self.couch_user.delete()
+
+    def post_it(self, user_id=None, form_id=XFORM_ID):
+        user_id = user_id or self.couch_user._id
+        f = StringIO(XML_DATA.format(
+            user_id=user_id,
+            xmlns=XMLNS,
+            xform_id=form_id,
+        ))
+        f.name = 'form.xml'
+        return self.client.post(self.url, {'xml_submission_file': f})
+
     def test_include_duplicates(self):
+        self.post_it()
+        self.post_it()
 
         self.custom_export.include_errors = True
         tmp, _ = self.custom_export.get_export_files()
-        data = tmp.getvalue()
-        data = json.loads(data)
+        data = json.loads(tmp.getvalue())
         self.assertEqual(data['Export']['headers'], ['Name'])
         self.assertEqual(len(data['Export']['rows']), 2)
 
         self.custom_export.include_errors = False
         tmp, _ = self.custom_export.get_export_files()
-        data = tmp.getvalue()
-        data = json.loads(data)
+        data = json.loads(tmp.getvalue())
         self.assertEqual(data['Export']['headers'], ['Name'])
         self.assertEqual(len(data['Export']['rows']), 1)
+
+    def test_exclude_unknown_users(self):
+        self.post_it(form_id='good', user_id=self.couch_user._id)
+        tmp, _ = self.custom_export.get_export_files()
+        data = json.loads(tmp.getvalue())
+        self.assertEqual(len(data['Export']['rows']), 1)
+
+        # posting from a non-real user shouldn't update
+        self.post_it(form_id='bad', user_id='notarealuser')
+        tmp, _ = self.custom_export.get_export_files()
+        data = json.loads(tmp.getvalue())
+        self.assertEqual(len(data['Export']['rows']), 1)
+
+        # posting from the real user should update
+        self.post_it(form_id='stillgood', user_id=self.couch_user._id)
+        tmp, _ = self.custom_export.get_export_files()
+        data = json.loads(tmp.getvalue())
+        self.assertEqual(len(data['Export']['rows']), 2)

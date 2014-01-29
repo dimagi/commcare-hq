@@ -16,7 +16,7 @@ class Command(BaseCommand):
                                    reduce=False).all()
         keys = {}
         for form in forms:
-            form_inst = form.get_form
+            form_inst = form.form
             if form_inst.get("@xmlns") == xmlns:
                 # Timestamp of device event: ddmmyyhhmmss
                 t = form_inst.get("t")

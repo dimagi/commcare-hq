@@ -838,6 +838,9 @@ def stats_data(request):
     datefield = request.GET.get("datefield")
     individual_domain_limit = request.GET.get("individual_domain_limit[]") or 16
 
+    if not request.GET.get("enddate"):  # datespan should include up to the current day when unspecified
+        request.datespan.enddate += timedelta(days=1)
+
     params, __ = parse_args_for_es(request, prefix='es_')
 
     if histo_type == "domains":

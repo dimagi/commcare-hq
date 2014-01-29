@@ -7,8 +7,8 @@ function pieChart(id, report) {
             y: report.days_used,
         },
         {
-            key: "Total Days",
-            y: report.days_on,
+            key: "Days Missed",
+            y: report.days_missed,
         }
     ];
 

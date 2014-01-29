@@ -1,4 +1,6 @@
 import re
+import json
+from datetime import time
 from crispy_forms.bootstrap import StrictButton, InlineField
 from crispy_forms.helper import FormHelper
 from django import forms
@@ -7,12 +9,13 @@ from django.forms.fields import *
 from crispy_forms import layout as crispy
 from django.utils.safestring import mark_safe
 from corehq.apps.hqwebapp.crispy import BootstrapMultiField
-from corehq.apps.sms.models import ForwardingRule, FORWARD_ALL, FORWARD_BY_KEYWORD
+from corehq.apps.sms.models import FORWARD_ALL, FORWARD_BY_KEYWORD
 from django.core.exceptions import ValidationError
 from corehq.apps.sms.mixin import SMSBackend
-from corehq.apps.reminders.forms import RecordListField
-from django.utils.translation import ugettext as _, ugettext_noop
+from corehq.apps.reminders.forms import RecordListField, validate_time
+from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from corehq.apps.sms.util import get_available_backends
+from corehq.apps.domain.models import DayTimeWindow
 from dimagi.utils.django.fields import TrimmedCharField
 from django.conf import settings
 
@@ -20,6 +23,19 @@ FORWARDING_CHOICES = (
     (FORWARD_ALL, ugettext_noop("All messages")),
     (FORWARD_BY_KEYWORD, ugettext_noop("All messages starting with a keyword")),
 )
+
+SMS_CONVERSATION_LENGTH_CHOICES = (
+    (5, 5),
+    (10, 10),
+    (15, 15),
+    (20, 20),
+    (25, 25),
+    (30, 30),
+)
+
+TIME_BEFORE = "BEFORE"
+TIME_AFTER = "AFTER"
+TIME_BETWEEN = "BETWEEN"
 
 class SMSSettingsForm(Form):
     _cchq_is_previewer = False
@@ -31,6 +47,41 @@ class SMSSettingsForm(Form):
     custom_message_count_threshold = IntegerField(required=False)
     use_custom_chat_template = BooleanField(required=False)
     custom_chat_template = TrimmedCharField(required=False)
+    use_restricted_sms_times = BooleanField(required=False)
+    restricted_sms_times_json = CharField(required=False)
+    use_sms_conversation_times = BooleanField(required=False)
+    sms_conversation_times_json = CharField(required=False)
+    sms_conversation_length = ChoiceField(
+        choices=SMS_CONVERSATION_LENGTH_CHOICES,
+        required=False,
+    )
+    filter_surveys_from_chat = BooleanField(required=False)
+    show_invalid_survey_responses_in_chat = BooleanField(required=False)
+
+    def initialize_time_window_fields(self, initial, bool_field, json_field):
+        time_window_json = [w.to_json() for w in initial]
+        self.initial[json_field] = json.dumps(time_window_json)
+        if len(initial) > 0:
+            self.initial[bool_field] = True
+        else:
+            self.initial[bool_field] = False
+
+    def __init__(self, *args, **kwargs):
+        self._cchq_is_previewer = kwargs.pop("_cchq_is_previewer", False)
+        super(SMSSettingsForm, self).__init__(*args, **kwargs)
+        if "initial" in kwargs:
+            self.initialize_time_window_fields(
+                kwargs["initial"].get("restricted_sms_times", []),
+                "use_restricted_sms_times",
+                "restricted_sms_times_json"
+            )
+            self.initialize_time_window_fields(
+                kwargs["initial"].get("sms_conversation_times", []),
+                "use_sms_conversation_times",
+                "sms_conversation_times_json"
+            )
+        if settings.SMS_QUEUE_ENABLED and self._cchq_is_previewer:
+            self.fields["sms_conversation_length"].required = True
 
     def _clean_dependent_field(self, bool_field, field):
         if self.cleaned_data.get(bool_field):
@@ -64,6 +115,67 @@ class SMSSettingsForm(Form):
         if value is not None and value not in settings.CUSTOM_CHAT_TEMPLATES:
             raise ValidationError(_("Unknown custom template identifier."))
         return value
+
+    def _clean_time_window_json(self, field_name):
+        try:
+            time_window_json = json.loads(self.cleaned_data.get(field_name))
+        except ValueError:
+            raise ValidationError(_("An error has occurred. Please try again, and if the problem persists, please report an issue."))
+        result = []
+        for window in time_window_json:
+            day = window.get("day")
+            start_time = window.get("start_time")
+            end_time = window.get("end_time")
+            time_input_relationship = window.get("time_input_relationship")
+
+            try:
+                day = int(day)
+                assert day >= -1 and day <= 6
+            except (ValueError, AssertionError):
+                raise ValidationError(_("Invalid day chosen."))
+
+            if time_input_relationship == TIME_BEFORE:
+                end_time = validate_time(end_time)
+                result.append(DayTimeWindow(
+                    day=day,
+                    start_time=None,
+                    end_time=end_time
+                ))
+            elif time_input_relationship == TIME_AFTER:
+                start_time = validate_time(start_time)
+                result.append(DayTimeWindow(
+                    day=day,
+                    start_time=start_time,
+                    end_time=None
+                ))
+            else:
+                start_time = validate_time(start_time)
+                end_time = validate_time(end_time)
+                result.append(DayTimeWindow(
+                    day=day,
+                    start_time=start_time,
+                    end_time=end_time
+                ))
+        return result
+
+    def clean_restricted_sms_times_json(self):
+        if self.cleaned_data.get("use_restricted_sms_times", False):
+            return self._clean_time_window_json("restricted_sms_times_json")
+        else:
+            return []
+
+    def clean_sms_conversation_times_json(self):
+        if self.cleaned_data.get("use_sms_conversation_times", False):
+            return self._clean_time_window_json("sms_conversation_times_json")
+        else:
+            return []
+
+    def clean_show_invalid_survey_responses_in_chat(self):
+        value = self.cleaned_data.get("show_invalid_survey_responses_in_chat", False)
+        if self.cleaned_data.get("filter_surveys_from_chat", False):
+            return value
+        else:
+            return False
 
 class ForwardingRuleForm(Form):
     forward_type = ChoiceField(choices=FORWARDING_CHOICES)
@@ -201,3 +313,34 @@ class InitiateAddSMSBackendForm(Form):
                 ),
             ),
         )
+
+class SubscribeSMSForm(Form):
+    stock_out_facilities = BooleanField(
+        label=ugettext_lazy("Receive stockout facilities SMS alert"),
+        required=False,
+        help_text=ugettext_lazy("This will alert you with specific users/facilities that are stocked out of your commodities")
+    )
+    stock_out_commodities = BooleanField(
+        label=ugettext_lazy("Receive stockout commodities SMS alert"),
+        required=False,
+        help_text=ugettext_lazy("This will alert you with specific commodities that are stocked out by your users/facilities")
+    )
+    stock_out_rates = BooleanField(
+        label=ugettext_lazy("Receive stockout SMS alert"),
+        required=False,
+        help_text=ugettext_lazy("This will alert you with the percent of facilities that are stocked out of a specific commodity")
+    )
+    non_report = BooleanField(
+        label=ugettext_lazy("Receive non-reporting SMS alert"),
+        required=False,
+        help_text=ugettext_lazy("This alert highlight users/facilities which have not submitted their CommTrack stock report.")
+    )
+
+    def save(self, commtrack_settings):
+        alert_config = commtrack_settings.alert_config
+        alert_config.stock_out_facilities = self.cleaned_data.get("stock_out_facilities", False)
+        alert_config.stock_out_commodities = self.cleaned_data.get("stock_out_commodities", False)
+        alert_config.stock_out_rates = self.cleaned_data.get("stock_out_rates", False)
+        alert_config.non_report = self.cleaned_data.get("non_report", False)
+
+        commtrack_settings.save()

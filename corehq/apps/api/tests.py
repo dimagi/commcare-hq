@@ -6,8 +6,10 @@ import dateutil.parser
 from django.utils.http import urlencode
 from django.test import TestCase
 from django.core.urlresolvers import reverse
+from tastypie.exceptions import BadRequest
 from tastypie.resources import Resource
 from tastypie import fields
+from corehq.apps.groups.models import Group
 from corehq.pillows.reportxform import ReportXFormPillow
 
 from couchforms.models import XFormInstance
@@ -18,9 +20,10 @@ from corehq.pillows.case import CasePillow
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.domain.models import Domain
 from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater, ShortFormRepeater
-from corehq.apps.api.resources import v0_1, v0_4
+from corehq.apps.api.resources import v0_1, v0_4, v0_5
 from corehq.apps.api.fields import ToManyDocumentsField, ToOneDocumentField, UseIfRequested, ToManyDictField
-from corehq.apps.api.es import ESQuerySet
+from corehq.apps.api import es
+from corehq.apps.api.es import ESQuerySet, ESUserError
 from django.conf import settings
 
 class FakeXFormES(object):
@@ -60,9 +63,10 @@ class APIResourceTest(TestCase):
     def setUp(self):
         self.maxDiff = None
         self.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
-        self.list_endpoint = reverse('api_dispatch_list', kwargs=dict(domain=self.domain.name,
-                                                                      api_name=self.api_name,
-                                                                      resource_name=self.resource.Meta.resource_name))
+        self.list_endpoint = reverse('api_dispatch_list',
+                kwargs=dict(domain=self.domain.name,
+                            api_name=self.api_name,
+                            resource_name=self.resource.Meta.resource_name))
         self.username = 'rudolph@qwerty.commcarehq.org'
         self.password = '***'
         self.user = WebUser.create(self.domain.name, self.username, self.password)
@@ -314,8 +318,9 @@ class TestCommCareUserResource(APIResourceTest):
     """
     Basic sanity checking of v0_1.CommCareUserResource
     """
-    resource = v0_1.CommCareUserResource
-        
+    resource = v0_5.CommCareUserResource
+    api_name = 'v0.5'
+
     def test_get_list(self):
         self.client.login(username=self.username, password=self.password)
 
@@ -343,12 +348,97 @@ class TestCommCareUserResource(APIResourceTest):
         api_user = simplejson.loads(response.content)
         self.assertEqual(api_user['id'], backend_id)
 
+    def test_create(self):
+        self.client.login(username=self.username, password=self.password)
+
+        group = Group({"name": "test"})
+        group.save()
+
+        self.assertEqual(0, len(CommCareUser.by_domain(self.domain.name)))
+
+        user_json = {
+            "username": "jdoe",
+            "password": "qwer1234",
+            "first_name": "John",
+            "last_name": "Doe",
+            "email": "jdoe@example.org",
+            "language": "en",
+            "phone_numbers": [
+                "+50253311399",
+                "50253314588"
+            ],
+            "groups": [
+                group._id
+            ],
+            "user_data": {
+                "chw_id": "13/43/DFA"
+            }
+        }
+        response = self.client.post(self.list_endpoint,
+                                    simplejson.dumps(user_json),
+                                    content_type='application/json')
+        self.assertEqual(response.status_code, 201)
+        [user_back] = CommCareUser.by_domain(self.domain.name)
+        self.assertEqual(user_back.username, "jdoe")
+        self.assertEqual(user_back.first_name, "John")
+        self.assertEqual(user_back.last_name, "Doe")
+        self.assertEqual(user_back.email, "jdoe@example.org")
+        self.assertEqual(user_back.language, "en")
+        self.assertEqual(user_back.get_group_ids()[0], group._id)
+        self.assertEqual(user_back.user_data["chw_id"], "13/43/DFA")
+        self.assertEqual(user_back.default_phone_number, "+50253311399")
+        user_back.delete()
+        group.delete()
+
+    def test_update(self):
+        self.client.login(username=self.username, password=self.password)
+
+        user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234")
+        group = Group({"name": "test"})
+        group.save()
+
+        user_json = {
+            "first_name": "test",
+            "last_name": "last",
+            "email": "tlast@example.org",
+            "language": "pol",
+            "phone_numbers": [
+                "+50253311399",
+                "50253314588"
+            ],
+            "groups": [
+                group._id
+            ],
+            "user_data": {
+                "chw_id": "13/43/DFA"
+            }
+        }
+
+        backend_id = user._id
+        response = self.client.put(self.single_endpoint(backend_id),
+                                   simplejson.dumps(user_json),
+                                   content_type='application/json')
+        self.assertEqual(response.status_code, 204, response.content)
+        self.assertEqual(1, len(CommCareUser.by_domain(self.domain.name)))
+        modified = CommCareUser.get(backend_id)
+        self.assertEqual(modified.username, "test")
+        self.assertEqual(modified.first_name, "test")
+        self.assertEqual(modified.last_name, "last")
+        self.assertEqual(modified.email, "tlast@example.org")
+        self.assertEqual(modified.language, "pol")
+        self.assertEqual(modified.get_group_ids()[0], group._id)
+        self.assertEqual(modified.user_data["chw_id"], "13/43/DFA")
+        self.assertEqual(modified.default_phone_number, "+50253311399")
+        modified.delete()
+        group.delete()
+
 
 class TestWebUserResource(APIResourceTest):
     """
     Basic sanity checking of v0_1.CommCareUserResource
     """
-    resource = v0_1.WebUserResource
+    resource = v0_5.WebUserResource
+    api_name = 'v0.5'
 
     def _check_user_data(self, user, json_user):
         self.assertEqual(user._id, json_user['id'])
@@ -400,6 +490,72 @@ class TestWebUserResource(APIResourceTest):
 
         api_user = simplejson.loads(response.content)
         self._check_user_data(self.user, api_user)
+
+    def test_create(self):
+        self.client.login(username=self.username, password=self.password)
+
+        user_json = {
+            "username":"test_1234",
+            "password":"qwer1234",
+            "email":"admin@example.com",
+            "first_name":"Joe",
+            "is_admin": True,
+            "last_name":"Admin",
+            "permissions":{
+                "edit_apps":True,
+                "edit_commcare_users":True,
+                "edit_data":True,
+                "edit_web_users":True,
+                "view_reports":True
+            },
+            "phone_numbers":[
+            ],
+            "role":"admin"
+        }
+        response = self.client.post(self.list_endpoint,
+                                    simplejson.dumps(user_json),
+                                    content_type='application/json')
+        self.assertEqual(response.status_code, 201)
+        user_back = WebUser.get_by_username("test_1234")
+        self.assertEqual(user_back.username, "test_1234")
+        self.assertEqual(user_back.first_name, "Joe")
+        self.assertEqual(user_back.last_name, "Admin")
+        self.assertEqual(user_back.email, "admin@example.com")
+        user_back.delete()
+
+    def test_update(self):
+        self.client.login(username=self.username, password=self.password)
+
+        user = WebUser.create(domain=self.domain.name, username="test", password="qwer1234")
+
+        user_json = {
+            "email":"admin@example.com",
+            "first_name":"Joe",
+            "is_admin": True,
+            "last_name":"Admin",
+            "permissions":{
+                "edit_apps":True,
+                "edit_commcare_users":True,
+                "edit_data":True,
+                "edit_web_users":True,
+                "view_reports":True
+            },
+            "phone_numbers":[
+            ],
+            "role":"admin"
+        }
+
+        backend_id = user._id
+        response = self.client.put(self.single_endpoint(backend_id),
+                                   simplejson.dumps(user_json),
+                                   content_type='application/json')
+        self.assertEqual(response.status_code, 204, response.content)
+        modified = WebUser.get(backend_id)
+        self.assertEqual(modified.username, "test")
+        self.assertEqual(modified.first_name, "Joe")
+        self.assertEqual(modified.last_name, "Admin")
+        self.assertEqual(modified.email, "admin@example.com")
+        modified.delete()
 
 class TestRepeaterResource(APIResourceTest):
     """
@@ -882,3 +1038,188 @@ class TestSingleSignOnResource(APIResourceTest):
         response = self.client.post(self.list_endpoint, {'username': self.username})
         self.assertEqual(response.status_code, 400)
 
+class TestGroupResource(APIResourceTest):
+
+    resource = v0_5.GroupResource
+    api_name = 'v0.5'
+
+    def test_get_list(self):
+        self.client.login(username=self.username, password=self.password)
+
+        group = Group({"name": "test", "domain": self.domain.name})
+        group.save()
+        backend_id = group.get_id
+
+        response = self.client.get(self.list_endpoint)
+        self.assertEqual(response.status_code, 200)
+
+        api_groups = simplejson.loads(response.content)['objects']
+        self.assertEqual(len(api_groups), 1)
+        self.assertEqual(api_groups[0]['id'], backend_id)
+
+        group.delete()
+
+    def test_get_single(self):
+        self.client.login(username=self.username, password=self.password)
+
+        group = Group({"name": "test", "domain": self.domain.name})
+        group.save()
+        backend_id = group.get_id
+
+        response = self.client.get(self.single_endpoint(backend_id))
+        self.assertEqual(response.status_code, 200)
+
+        api_groups = simplejson.loads(response.content)
+        self.assertEqual(api_groups['id'], backend_id)
+
+    def test_create(self):
+        self.client.login(username=self.username, password=self.password)
+
+        self.assertEqual(0, len(Group.by_domain(self.domain.name)))
+
+        group_json = {
+            "case_sharing": True,
+            "metadata": {
+                "localization": "Ghana"
+            },
+            "name": "test group",
+            "reporting": True,
+        }
+        response = self.client.post(self.list_endpoint,
+                                    simplejson.dumps(group_json),
+                                    content_type='application/json')
+        self.assertEqual(response.status_code, 201)
+        [group_back] = Group.by_domain(self.domain.name)
+        self.assertEqual(group_back.name, "test group")
+        self.assertTrue(group_back.reporting)
+        self.assertTrue(group_back.case_sharing)
+        self.assertEqual(group_back.metadata["localization"], "Ghana")
+        group_back.delete()
+
+    def test_update(self):
+        self.client.login(username=self.username, password=self.password)
+
+        group = Group({"name": "test", "domain": self.domain.name})
+        group.save()
+
+        group_json =  {
+            "case_sharing": True,
+            "metadata": {
+                "localization": "Ghana"
+            },
+            "name": "test group",
+            "reporting": True,
+        }
+
+        backend_id = group._id
+        response = self.client.put(self.single_endpoint(backend_id),
+                                   simplejson.dumps(group_json),
+                                   content_type='application/json')
+        self.assertEqual(response.status_code, 204, response.content)
+        self.assertEqual(1, len(Group.by_domain(self.domain.name)))
+        modified = Group.get(backend_id)
+        self.assertEqual(modified.name, "test group")
+        self.assertTrue(modified.reporting)
+        self.assertTrue(modified.case_sharing)
+        self.assertEqual(modified.metadata["localization"], "Ghana")
+        modified.delete()
+
+
+class FakeUserES(object):
+    def __init__(self):
+        self.docs = []
+        self.queries = []
+
+    def add_doc(self, doc):
+        self.docs.append(doc)
+
+    def make_query(self, q=None, fields=None, domain=None, start_at=None, size=None):
+        self.queries.append(q)
+        start = int(start_at) if start_at else 0
+        end = min(len(self.docs), start + int(size)) if size else None
+        return self.docs[start:end]
+
+
+class TestBulkUserAPI(APIResourceTest):
+    resource = v0_5.BulkUserResource
+    api_name = 'v0.5'
+
+    def setUp(self):
+        self.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
+        self.username = 'rudolph@qwerty.commcarehq.org'
+        self.password = '***'
+        self.admin_user = WebUser.create(self.domain.name, self.username, self.password)
+        self.admin_user.set_role(self.domain.name, 'admin')
+        self.admin_user.save()
+
+        self.fake_user_es = FakeUserES()
+        v0_5.MOCK_BULK_USER_ES = self.mock_es_wrapper
+        self.make_users()
+
+    def tearDown(self):
+        self.admin_user.delete()
+        self.domain.delete()
+        v0_5.MOCK_BULK_USER_ES = None
+
+    def make_users(self):
+        users = [
+            ('Robb', 'Stark'),
+            ('Jon', 'Snow'),
+            ('Brandon', 'Stark'),
+            ('Eddard', 'Stark'),
+            ('Catelyn', 'Stark'),
+            ('Tyrion', 'Lannister'),
+            ('Tywin', 'Lannister'),
+            ('Jamie', 'Lannister'),
+            ('Cersei', 'Lannister'),
+        ]
+        for first, last in users:
+            username = '_'.join([first.lower(), last.lower()])
+            email = username + '@qwerty.commcarehq.org'
+            self.fake_user_es.add_doc({
+                'id': 'lskdjflskjflaj',
+                'email': email,
+                'username': username,
+                'first_name': first,
+                'last_name': last,
+                'phone_numbers': ['9042411080'],
+            })
+
+    def mock_es_wrapper(self, *args, **kwargs):
+        return self.fake_user_es.make_query(**kwargs)
+
+    @property
+    def list_endpoint(self):
+        return reverse(
+            'api_dispatch_list',
+            kwargs={
+                'domain': self.domain.name,
+                'api_name': self.api_name,
+                'resource_name': self.resource.Meta.resource_name,
+            }
+        )
+
+    def test_excluded_field(self):
+        result = self.query(fields=['email', 'first_name', 'password'])
+        self.assertEqual(result.status_code, 400)
+
+    def query(self, **params):
+        self.client.login(username=self.username, password=self.password)
+        url = '%s?%s' % (self.list_endpoint, urlencode(params, doseq=True))
+        return self.client.get(url)
+
+    def test_paginate(self):
+        limit = 3
+        result = self.query(limit=limit)
+        self.assertEqual(result.status_code, 200)
+        users = simplejson.loads(result.content)['objects']
+        self.assertEquals(len(users), limit)
+
+        result = self.query(start_at=limit, limit=limit)
+        self.assertEqual(result.status_code, 200)
+        users = simplejson.loads(result.content)['objects']
+        self.assertEquals(len(users), limit)
+
+    def test_basic(self):
+        response = self.query()
+        self.assertEqual(response.status_code, 200)

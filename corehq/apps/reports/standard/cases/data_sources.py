@@ -187,7 +187,7 @@ class CaseDisplay(CaseInfo):
     def case_link(self):
         url = self.case_detail_url
         if url:
-            return html.mark_safe("<a class='ajax_dialog' href='%s'>%s</a>" % (
+            return html.mark_safe("<a class='ajax_dialog' href='%s' target='_blank'>%s</a>" % (
                 self.case_detail_url, html.escape(self.case_name)))
         else:
             return "%s (bad ID format)" % self.case_name

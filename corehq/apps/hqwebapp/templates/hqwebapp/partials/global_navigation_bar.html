@@ -12,7 +12,7 @@
     </div>
 
     {% if request.couch_user and request.couch_user.is_web_user %}
-    <div class="btn-group">
+    <div id="nav-projects-menu" class="btn-group">
         {% if domain %}
 
             {% ifequal domain 'public' %}
@@ -55,7 +55,7 @@
     </div>
     {% endif %}
 
-    <div class="btn-group">
+    <div id="nav-user-menu" class="btn-group">
         <a class="btn btn-primary dropdown-toggle{% if is_my_account_settings %} btn-account-active{% endif %}" data-toggle="dropdown" href="#">
             {% if user.first_name %}
                 {{ user.first_name }}

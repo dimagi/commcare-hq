@@ -1,0 +1,827 @@
+Country, Name, Rate
+,"ARMENIA Outbound SMS - Karabakh Telecom",0.020
+,"ICELAND Outbound SMS - Viking Wireless",0.040
+,"UNITED STATES Inbound SMS - Other",0.007
+AD,"ANDORRA Outbound SMS - Mobiland",0.010
+AD,"ANDORRA Outbound SMS - Other",0.010
+AE,"UNITED ARAB EMIRATES Outbound SMS - Etisalat",0.023
+AE,"UNITED ARAB EMIRATES Outbound SMS - Other",0.023
+AE,"UNITED ARAB EMIRATES Outbound SMS - du",0.023
+AF,"AFGHANISTAN Outbound SMS - AWCC",0.012
+AF,"AFGHANISTAN Outbound SMS - Etisalat",0.010
+AF,"AFGHANISTAN Outbound SMS - MTN",0.010
+AF,"AFGHANISTAN Outbound SMS - Other",0.010
+AF,"AFGHANISTAN Outbound SMS - Roshan",0.050
+AG,"ANTIGUA AND BARBUDA Outbound SMS - APUA",0.012
+AG,"ANTIGUA AND BARBUDA Outbound SMS - Digicel",0.012
+AG,"ANTIGUA AND BARBUDA Outbound SMS - Other",0.010
+AI,"ANGUILLA Outbound SMS - Digicel",0.010
+AI,"ANGUILLA Outbound SMS - LIME",0.025
+AI,"ANGUILLA Outbound SMS - Other",0.010
+AL,"ALBANIA Outbound SMS - AMC",0.100
+AL,"ALBANIA Outbound SMS - Eagle Mobile",0.015
+AL,"ALBANIA Outbound SMS - Other",0.010
+AL,"ALBANIA Outbound SMS - Plus Communications",0.010
+AL,"ALBANIA Outbound SMS - Vodafone",0.010
+AM,"ARMENIA Outbound SMS - Beeline",0.100
+AM,"ARMENIA Outbound SMS - Orange",0.031
+AM,"ARMENIA Outbound SMS - Other",0.012
+AM,"ARMENIA Outbound SMS - Viva Cell",0.012
+AN,"NETHERLANDS ANTILLES Outbound SMS - Digicel",0.010
+AN,"NETHERLANDS ANTILLES Outbound SMS - Other",0.010
+AN,"NETHERLANDS ANTILLES Outbound SMS - Telcell",0.010
+AN,"NETHERLANDS ANTILLES Outbound SMS - UTS",0.040
+AO,"ANGOLA Outbound SMS - Other",0.010
+AO,"ANGOLA Outbound SMS - Unitel",0.010
+AR,"ARGENTINA Outbound SMS - Claro",0.075
+AR,"ARGENTINA Outbound SMS - Other",0.010
+AR,"ARGENTINA Outbound SMS - Personal",0.072
+AR,"ARGENTINA Outbound SMS - movistar",0.022
+AT,"AUSTRIA Outbound SMS - 3",0.075
+AT,"AUSTRIA Outbound SMS - A1",0.075
+AT,"AUSTRIA Outbound SMS - Orange",0.075
+AT,"AUSTRIA Outbound SMS - Other",0.075
+AT,"AUSTRIA Outbound SMS - T-Mobile",0.075
+AU,"AUSTRALIA Outbound SMS - 3",0.023
+AU,"AUSTRALIA Outbound SMS - Lycamobile",0.065
+AU,"AUSTRALIA Outbound SMS - Optus",0.065
+AU,"AUSTRALIA Outbound SMS - Other",0.023
+AU,"AUSTRALIA Outbound SMS - Telstra",0.065
+AU,"AUSTRALIA Outbound SMS - Vodafone",0.023
+AW,"ARUBA Outbound SMS - Digicel",0.012
+AW,"ARUBA Outbound SMS - Other",0.012
+AW,"ARUBA Outbound SMS - SETAR",0.052
+AZ,"AZERBAIJAN Outbound SMS - AzerCell",0.030
+AZ,"AZERBAIJAN Outbound SMS - BakCell",0.140
+AZ,"AZERBAIJAN Outbound SMS - Nar Mobile",0.020
+AZ,"AZERBAIJAN Outbound SMS - Other",0.010
+BA,"BOSNIA AND HERZEGOVINA Outbound SMS - BH Mobile",0.010
+BA,"BOSNIA AND HERZEGOVINA Outbound SMS - ERONET",0.010
+BA,"BOSNIA AND HERZEGOVINA Outbound SMS - Other",0.010
+BA,"BOSNIA AND HERZEGOVINA Outbound SMS - m:tel",0.010
+BB,"BARBADOS Outbound SMS - Digicel",0.010
+BB,"BARBADOS Outbound SMS - LIME",0.025
+BB,"BARBADOS Outbound SMS - Other",0.010
+BD,"BANGLADESH Outbound SMS - Airtel",0.015
+BD,"BANGLADESH Outbound SMS - Banglalink",0.010
+BD,"BANGLADESH Outbound SMS - Grameenphone",0.010
+BD,"BANGLADESH Outbound SMS - Other",0.010
+BD,"BANGLADESH Outbound SMS - Robi",0.010
+BE,"BELGIUM Outbound SMS - BASE",0.022
+BE,"BELGIUM Outbound SMS - Mobistar",0.063
+BE,"BELGIUM Outbound SMS - Other",0.010
+BE,"BELGIUM Outbound SMS - Proximus",0.140
+BE,"BELGIUM Outbound SMS - Telenet Mobile",0.100
+BF,"BURKINA FASO Outbound SMS - Airtel",0.061
+BF,"BURKINA FASO Outbound SMS - Onatel",0.020
+BF,"BURKINA FASO Outbound SMS - Other",0.012
+BF,"BURKINA FASO Outbound SMS - Telecel Faso",0.012
+BG,"BULGARIA Outbound SMS - GLOBUL",0.141
+BG,"BULGARIA Outbound SMS - M-Tel",0.077
+BG,"BULGARIA Outbound SMS - Other",0.012
+BG,"BULGARIA Outbound SMS - VIVACOM",0.012
+BH,"BAHRAIN Outbound SMS - BATELCO",0.012
+BH,"BAHRAIN Outbound SMS - Other",0.012
+BH,"BAHRAIN Outbound SMS - VIVA",0.013
+BH,"BAHRAIN Outbound SMS - zain",0.012
+BI,"BURUNDI Outbound SMS - Econet",0.010
+BI,"BURUNDI Outbound SMS - Leo",0.063
+BI,"BURUNDI Outbound SMS - Other",0.010
+BI,"BURUNDI Outbound SMS - Smart Mobile",0.012
+BJ,"BENIN Outbound SMS - Glo",0.032
+BJ,"BENIN Outbound SMS - Libercom",0.020
+BJ,"BENIN Outbound SMS - MTN",0.012
+BJ,"BENIN Outbound SMS - Moov",0.012
+BJ,"BENIN Outbound SMS - Other",0.010
+BM,"BERMUDA Outbound SMS - CellONE",0.025
+BM,"BERMUDA Outbound SMS - Digicel",0.012
+BM,"BERMUDA Outbound SMS - Other",0.012
+BN,"BRUNEI DARUSSALAM Outbound SMS - B-Mobile",0.010
+BN,"BRUNEI DARUSSALAM Outbound SMS - DSTCom",0.010
+BN,"BRUNEI DARUSSALAM Outbound SMS - Other",0.010
+BO,"BOLIVIA Outbound SMS - Entel",0.012
+BO,"BOLIVIA Outbound SMS - NuevaTel PCS",0.012
+BO,"BOLIVIA Outbound SMS - Other",0.012
+BO,"BOLIVIA Outbound SMS - Tigo",0.012
+BR,"BRAZIL Outbound SMS - CTBC",0.060
+BR,"BRAZIL Outbound SMS - Claro",0.060
+BR,"BRAZIL Outbound SMS - NEXTEL",0.052
+BR,"BRAZIL Outbound SMS - Other",0.060
+BR,"BRAZIL Outbound SMS - Sercomtel",0.060
+BR,"BRAZIL Outbound SMS - TIM",0.014
+BR,"BRAZIL Outbound SMS - Vivo",0.057
+BS,"BAHAMAS Outbound SMS - BTC",0.031
+BS,"BAHAMAS Outbound SMS - Other",0.031
+BT,"BHUTAN Outbound SMS - B-Mobile",0.014
+BT,"BHUTAN Outbound SMS - Other",0.014
+BW,"BOTSWANA Outbound SMS - Be Mobile",0.039
+BW,"BOTSWANA Outbound SMS - MASCOM",0.012
+BW,"BOTSWANA Outbound SMS - Orange",0.012
+BW,"BOTSWANA Outbound SMS - Other",0.012
+BY,"BELARUS Outbound SMS - MTS",0.012
+BY,"BELARUS Outbound SMS - Other",0.010
+BY,"BELARUS Outbound SMS - Velcom",0.012
+BY,"BELARUS Outbound SMS - life:)",0.025
+BZ,"BELIZE Outbound SMS - Digicell",0.010
+BZ,"BELIZE Outbound SMS - Other",0.010
+CD,"CONGO, DEMOCRATIC REPUBLIC OF THE Outbound SMS - Airtel",0.060
+CD,"CONGO, DEMOCRATIC REPUBLIC OF THE Outbound SMS - Orange",0.065
+CD,"CONGO, DEMOCRATIC REPUBLIC OF THE Outbound SMS - Other",0.010
+CD,"CONGO, DEMOCRATIC REPUBLIC OF THE Outbound SMS - Tigo",0.050
+CD,"CONGO, DEMOCRATIC REPUBLIC OF THE Outbound SMS - Vodacom",0.012
+CF,"CENTRAL AFRICAN REPUBLIC Outbound SMS - Moov",0.012
+CF,"CENTRAL AFRICAN REPUBLIC Outbound SMS - Orange",0.012
+CF,"CENTRAL AFRICAN REPUBLIC Outbound SMS - Other",0.010
+CF,"CENTRAL AFRICAN REPUBLIC Outbound SMS - Telecel Centrafrique",0.015
+CG,"CONGO, REPUBLIC OF THE Outbound SMS - Airtel",0.083
+CG,"CONGO, REPUBLIC OF THE Outbound SMS - MTN",0.012
+CG,"CONGO, REPUBLIC OF THE Outbound SMS - Other",0.010
+CH,"SWITZERLAND Outbound SMS - Orange",0.070
+CH,"SWITZERLAND Outbound SMS - Other",0.022
+CH,"SWITZERLAND Outbound SMS - Sunrise",0.045
+CH,"SWITZERLAND Outbound SMS - Swisscom",0.050
+CH,"SWITZERLAND Outbound SMS - Tele2",0.022
+CH,"SWITZERLAND Outbound SMS - in&phone",0.061
+CI,"CÔTE D'IVOIRE Outbound SMS - Koz",0.040
+CI,"CÔTE D'IVOIRE Outbound SMS - MTN",0.010
+CI,"CÔTE D'IVOIRE Outbound SMS - Moov",0.012
+CI,"CÔTE D'IVOIRE Outbound SMS - Orange",0.078
+CI,"CÔTE D'IVOIRE Outbound SMS - Other",0.010
+CK,"COOK ISLANDS Outbound SMS - Other",0.012
+CK,"COOK ISLANDS Outbound SMS - Telecom",0.020
+CL,"CHILE Outbound SMS - Claro",0.075
+CL,"CHILE Outbound SMS - Entel",0.025
+CL,"CHILE Outbound SMS - Nextel",0.080
+CL,"CHILE Outbound SMS - Other",0.010
+CL,"CHILE Outbound SMS - movistar",0.093
+CM,"CAMEROON Outbound SMS - MTN",0.130
+CM,"CAMEROON Outbound SMS - Orange",0.010
+CM,"CAMEROON Outbound SMS - Other",0.010
+CN,"CHINA Outbound SMS - China Mobile",0.060
+CN,"CHINA Outbound SMS - China Netcom",0.060
+CN,"CHINA Outbound SMS - ChinaSat",0.060
+CN,"CHINA Outbound SMS - China Telecom",0.060
+CN,"CHINA Outbound SMS - China Unicom",0.067
+CN,"CHINA Outbound SMS - Other",0.067
+CO,"COLOMBIA Outbound SMS - Claro",0.080
+CO,"COLOMBIA Outbound SMS - Other",0.010
+CO,"COLOMBIA Outbound SMS - Tigo",0.110
+CR,"COSTA RICA Outbound SMS - Kölbi",0.047
+CR,"COSTA RICA Outbound SMS - Other",0.047
+CR,"COSTA RICA Outbound SMS - movistar",0.047
+CU,"CUBA Outbound SMS - Cubacel",0.028
+CU,"CUBA Outbound SMS - Movitel",0.012
+CU,"CUBA Outbound SMS - Other",0.012
+CV,"CAPE VERDE Outbound SMS - CVMóvel",0.012
+CV,"CAPE VERDE Outbound SMS - Other",0.012
+CV,"CAPE VERDE Outbound SMS - T+",0.012
+CY,"CYPRUS Outbound SMS - Cyta Mobile-Vodafone",0.012
+CY,"CYPRUS Outbound SMS - MTN",0.012
+CY,"CYPRUS Outbound SMS - Other",0.012
+CZ,"CZECH REPUBLIC Outbound SMS - O2",0.077
+CZ,"CZECH REPUBLIC Outbound SMS - Other",0.061
+CZ,"CZECH REPUBLIC Outbound SMS - T-Mobile",0.077
+CZ,"CZECH REPUBLIC Outbound SMS - U:fon",0.095
+CZ,"CZECH REPUBLIC Outbound SMS - Vodafone",0.095
+DE,"GERMANY Outbound SMS - E-Plus",0.070
+DE,"GERMANY Outbound SMS - O2",0.070
+DE,"GERMANY Outbound SMS - Other",0.070
+DE,"GERMANY Outbound SMS - Telekom",0.120
+DE,"GERMANY Outbound SMS - Vodafone",0.070
+DJ,"DJIBOUTI Outbound SMS - Evatis",0.050
+DJ,"DJIBOUTI Outbound SMS - Other",0.050
+DK,"DENMARK Outbound SMS - 3",0.012
+DK,"DENMARK Outbound SMS - Lycamobile",0.010
+DK,"DENMARK Outbound SMS - Other",0.010
+DK,"DENMARK Outbound SMS - TDC",0.012
+DK,"DENMARK Outbound SMS - Telenor",0.012
+DK,"DENMARK Outbound SMS - Telia",0.010
+DM,"DOMINICA Outbound SMS - Digicel",0.012
+DM,"DOMINICA Outbound SMS - LIME",0.012
+DM,"DOMINICA Outbound SMS - Other",0.012
+DO,"DOMINICAN REPUBLIC Outbound SMS - Claro",0.100
+DO,"DOMINICAN REPUBLIC Outbound SMS - Other",0.010
+DO,"DOMINICAN REPUBLIC Outbound SMS - Viva",0.086
+DZ,"ALGERIA Outbound SMS - Djezzy",0.012
+DZ,"ALGERIA Outbound SMS - Nedjma",0.083
+DZ,"ALGERIA Outbound SMS - Other",0.012
+EC,"ECUADOR Outbound SMS - Other",0.010
+EC,"ECUADOR Outbound SMS - movistar",0.040
+EE,"ESTONIA Outbound SMS - EMT",0.097
+EE,"ESTONIA Outbound SMS - Elisa",0.012
+EE,"ESTONIA Outbound SMS - Other",0.012
+EE,"ESTONIA Outbound SMS - Tele2",0.012
+EG,"EGYPT Outbound SMS - Etisalat",0.012
+EG,"EGYPT Outbound SMS - Mobinil",0.044
+EG,"EGYPT Outbound SMS - Other",0.012
+EG,"EGYPT Outbound SMS - Vodafone",0.012
+ES,"SPAIN Outbound SMS - Lleida",0.091
+ES,"SPAIN Outbound SMS - Movistar",0.080
+ES,"SPAIN Outbound SMS - Orange",0.080
+ES,"SPAIN Outbound SMS - Other",0.091
+ES,"SPAIN Outbound SMS - Vodafone",0.080
+ES,"SPAIN Outbound SMS - Yoigo",0.080
+ET,"ETHIOPIA Outbound SMS - Other",0.010
+FI,"FINLAND Outbound SMS - DNA",0.012
+FI,"FINLAND Outbound SMS - Elisa",0.070
+FI,"FINLAND Outbound SMS - Other",0.012
+FI,"FINLAND Outbound SMS - Saunalahti",0.070
+FI,"FINLAND Outbound SMS - Sonera",0.058
+FI,"FINLAND Outbound SMS - ÅMT",0.012
+FJ,"FIJI Outbound SMS - Digicel",0.012
+FJ,"FIJI Outbound SMS - Other",0.010
+FJ,"FIJI Outbound SMS - Vodafone",0.010
+FK,"FALKLAND ISLANDS Outbound SMS - Other",0.070
+FK,"FALKLAND ISLANDS Outbound SMS - Touch",0.070
+FO,"FAROE ISLANDS Outbound SMS - Føroya Tele",0.012
+FO,"FAROE ISLANDS Outbound SMS - Other",0.010
+FO,"FAROE ISLANDS Outbound SMS - Vodafone",0.010
+FR,"FRANCE Outbound SMS - Bouygues Télécom",0.091
+FR,"FRANCE Outbound SMS - Free Mobile",0.090
+FR,"FRANCE Outbound SMS - NRJ Mobile",0.130
+FR,"FRANCE Outbound SMS - Orange",0.085
+FR,"FRANCE Outbound SMS - Other",0.070
+FR,"FRANCE Outbound SMS - SFR",0.110
+FR,"FRANCE Outbound SMS - Virgin Mobile",0.070
+GA,"GABON Outbound SMS - Airtel",0.130
+GA,"GABON Outbound SMS - Libertis",0.017
+GA,"GABON Outbound SMS - Moov",0.012
+GA,"GABON Outbound SMS - Other",0.010
+GB,"BRITISH VIRGIN ISLANDS Outbound SMS - CCT",0.039
+GB,"BRITISH VIRGIN ISLANDS Outbound SMS - Digicel",0.039
+GB,"BRITISH VIRGIN ISLANDS Outbound SMS - LIME",0.025
+GB,"BRITISH VIRGIN ISLANDS Outbound SMS - Other",0.025
+GB,"GUERNSEY Outbound SMS - Airtel-Vodafone",0.025
+GB,"GUERNSEY Outbound SMS - Wave",0.012
+GB,"JERSEY Outbound SMS - Sure Mobile",0.040
+GB,"UNITED KINGDOM Outbound SMS - 3",0.040
+GB,"UNITED KINGDOM Outbound SMS - Everything Everywhere",0.040
+GB,"UNITED KINGDOM Outbound SMS - O2",0.040
+GB,"UNITED KINGDOM Outbound SMS - Orange",0.040
+GB,"UNITED KINGDOM Outbound SMS - Other",0.040
+GB,"UNITED KINGDOM Outbound SMS - T-Mobile",0.040
+GB,"UNITED KINGDOM Outbound SMS - Vodafone",0.040
+GD,"GRENADA Outbound SMS - Digicel",0.010
+GD,"GRENADA Outbound SMS - LIME",0.012
+GD,"GRENADA Outbound SMS - Other",0.010
+GE,"GEORGIA Outbound SMS - Beeline",0.014
+GE,"GEORGIA Outbound SMS - Geocell",0.010
+GE,"GEORGIA Outbound SMS - Magti GSM",0.010
+GE,"GEORGIA Outbound SMS - Other",0.010
+GF,"FRENCH GUIANA Outbound SMS - Digicel",0.010
+GF,"FRENCH GUIANA Outbound SMS - Orange Caraïbe",0.170
+GF,"FRENCH GUIANA Outbound SMS - Other",0.010
+GH,"GHANA Outbound SMS - Airtel",0.061
+GH,"GHANA Outbound SMS - Glo",0.020
+GH,"GHANA Outbound SMS - MTN",0.010
+GH,"GHANA Outbound SMS - Other",0.010
+GH,"GHANA Outbound SMS - Tigo",0.028
+GH,"GHANA Outbound SMS - Vodafone",0.025
+GI,"GIBRALTAR Outbound SMS - CTS",0.020
+GI,"GIBRALTAR Outbound SMS - Gibtel",0.010
+GI,"GIBRALTAR Outbound SMS - Other",0.010
+GL,"GREENLAND Outbound SMS - Other",0.010
+GL,"GREENLAND Outbound SMS - TELE Greenland",0.010
+GM,"GAMBIA Outbound SMS - Africell",0.012
+GM,"GAMBIA Outbound SMS - Comium",0.012
+GM,"GAMBIA Outbound SMS - Gamtel",0.010
+GM,"GAMBIA Outbound SMS - Other",0.010
+GM,"GAMBIA Outbound SMS - Qcell",0.012
+GN,"GUINEA Outbound SMS - Areeba",0.012
+GN,"GUINEA Outbound SMS - Cellcom",0.025
+GN,"GUINEA Outbound SMS - Intercel",0.030
+GN,"GUINEA Outbound SMS - Orange",0.012
+GN,"GUINEA Outbound SMS - Other",0.012
+GP,"GUADELOUPE Outbound SMS - Dauphin",0.080
+GP,"GUADELOUPE Outbound SMS - Telcell",0.012
+GQ,"EQUATORIAL GUINEA Outbound SMS - Orange",0.010
+GQ,"EQUATORIAL GUINEA Outbound SMS - Other",0.010
+GR,"GREECE Outbound SMS - Cosmote",0.047
+GR,"GREECE Outbound SMS - Other",0.023
+GR,"GREECE Outbound SMS - Vodafone",0.070
+GR,"GREECE Outbound SMS - Wind",0.080
+GT,"GUATEMALA Outbound SMS - Claro",0.070
+GT,"GUATEMALA Outbound SMS - Other",0.010
+GT,"GUATEMALA Outbound SMS - Tigo",0.010
+GT,"GUATEMALA Outbound SMS - movistar",0.025
+GU,"GUAM & NORTHERN MARIANA ISLANDS Outbound SMS - Docomo Pacific",0.010
+GU,"GUAM & NORTHERN MARIANA ISLANDS Outbound SMS - IT&E",0.010
+GW,"GUINEA-BISSAU Outbound SMS - MTN",0.012
+GW,"GUINEA-BISSAU Outbound SMS - Orange",0.020
+GW,"GUINEA- Other",0.012
+GY,"GUYANA Outbound SMS - Digicel",0.010
+GY,"GUYANA Outbound SMS - Other",0.010
+HK,"HONG KONG Outbound SMS - 3",0.010
+HK,"HONG KONG Outbound SMS - CHKTL",0.010
+HK,"HONG KONG Outbound SMS - CITIC Telecom",0.010
+HK,"HONG KONG Outbound SMS - CSL",0.052
+HK,"HONG KONG Outbound SMS - China Mobile Hong Kong",0.012
+HK,"HONG KONG Outbound SMS - China Motion Telecom",0.010
+HK,"HONG KONG Outbound SMS - Other",0.010
+HK,"HONG KONG Outbound SMS - PCCW Mobile",0.010
+HK,"HONG KONG Outbound SMS - SmarTone",0.060
+HN,"HONDURAS Outbound SMS - Claro",0.031
+HN,"HONDURAS Outbound SMS - Digicel",0.012
+HN,"HONDURAS Outbound SMS - Other",0.010
+HR,"CROATIA Outbound SMS - Other",0.022
+HR,"CROATIA Outbound SMS - T-Mobile",0.041
+HR,"CROATIA Outbound SMS - Tele2",0.022
+HR,"CROATIA Outbound SMS - Vip",0.070
+HT,"HAITI Outbound SMS - Comcel/Voila",0.083
+HT,"HAITI Outbound SMS - Digicel",0.010
+HT,"HAITI Outbound SMS - Haitel",0.010
+HT,"HAITI Outbound SMS - Other",0.010
+HU,"HUNGARY Outbound SMS - Other",0.055
+HU,"HUNGARY Outbound SMS - T-Mobile",0.077
+HU,"HUNGARY Outbound SMS - Telenor",0.077
+HU,"HUNGARY Outbound SMS - Vodafone",0.055
+ID,"INDONESIA Outbound SMS - 3",0.010
+ID,"INDONESIA Outbound SMS - Axis",0.012
+ID,"INDONESIA Outbound SMS - Indosat",0.010
+ID,"INDONESIA Outbound SMS - Other",0.010
+ID,"INDONESIA Outbound SMS - Telkom",0.047
+ID,"INDONESIA Outbound SMS - Telkomsel",0.047
+ID,"INDONESIA Outbound SMS - XL Axiata",0.010
+IE,"IRELAND Outbound SMS - 3",0.014
+IE,"IRELAND Outbound SMS - LIffey Telecom",0.039
+IE,"IRELAND Outbound SMS - Meteor",0.014
+IE,"IRELAND Outbound SMS - O2",0.056
+IE,"IRELAND Outbound SMS - Other",0.014
+IE,"IRELAND Outbound SMS - Vodafone",0.080
+IL,"ISRAEL Outbound SMS - Cellcom",0.012
+IL,"ISRAEL Outbound SMS - Golan Telecom",0.010
+IL,"ISRAEL Outbound SMS - Hot Mobile",0.010
+IL,"ISRAEL Outbound SMS - Orange",0.012
+IL,"ISRAEL Outbound SMS - Other",0.010
+IL,"ISRAEL Outbound SMS - Pelephone",0.012
+IN,"INDIA Outbound SMS - Aircel",0.010
+IN,"INDIA Outbound SMS - Airtel",0.010
+IN,"INDIA Outbound SMS - BSNL",0.010
+IN,"INDIA Outbound SMS - Etisalat DB Telecom",0.010
+IN,"INDIA Outbound SMS - Idea Cellular",0.010
+IN,"INDIA Outbound SMS - Loop Mobile",0.010
+IN,"INDIA Outbound SMS - MTNL",0.010
+IN,"INDIA Outbound SMS - MTS",0.010
+IN,"INDIA Outbound SMS - Other",0.010
+IN,"INDIA Outbound SMS - Ping Mobile",0.010
+IN,"INDIA Outbound SMS - Reliance",0.010
+IN,"INDIA Outbound SMS - S Tel",0.010
+IN,"INDIA Outbound SMS - Tata DoCoMo",0.010
+IN,"INDIA Outbound SMS - Tata indicom",0.010
+IN,"INDIA Outbound SMS - Uninor",0.010
+IN,"INDIA Outbound SMS - Videocon",0.010
+IN,"INDIA Outbound SMS - Vodafone India",0.010
+IQ,"IRAQ Outbound SMS - Asia Cell",0.014
+IQ,"IRAQ Outbound SMS - Korek",0.012
+IQ,"IRAQ Outbound SMS - Mobitel",0.014
+IQ,"IRAQ Outbound SMS - Other",0.010
+IQ,"IRAQ Outbound SMS - Zain",0.017
+IR,"IRAN Outbound SMS - MCI",0.010
+IR,"IRAN Outbound SMS - MTCE",0.040
+IR,"IRAN Outbound SMS - MTN Irancell",0.010
+IR,"IRAN Outbound SMS - Other",0.010
+IR,"IRAN Outbound SMS - TKC",0.010
+IR,"IRAN Outbound SMS - Taliya",0.012
+IS,"ICELAND Outbound SMS - IceCell",0.020
+IS,"ICELAND Outbound SMS - Nova",0.010
+IS,"ICELAND Outbound SMS - Other",0.010
+IS,"ICELAND Outbound SMS - Síminn",0.010
+IS,"ICELAND Outbound SMS - Vodafone",0.010
+IT,"ITALY Outbound SMS - 3",0.077
+IT,"ITALY Outbound SMS - Noverca",0.090
+IT,"ITALY Outbound SMS - Other",0.014
+IT,"ITALY Outbound SMS - TIM",0.072
+IT,"ITALY Outbound SMS - Vodafone",0.077
+IT,"ITALY Outbound SMS - Wind",0.077
+JM,"JAMAICA Outbound SMS - Digicel",0.010
+JM,"JAMAICA Outbound SMS - LIME",0.012
+JM,"JAMAICA Outbound SMS - Other",0.010
+JO,"JORDAN Outbound SMS - Orange",0.040
+JO,"JORDAN Outbound SMS - Other",0.010
+JO,"JORDAN Outbound SMS - Umniah",0.040
+JO,"JORDAN Outbound SMS - Zain",0.040
+JP,"JAPAN Outbound SMS - EMOBILE",0.050
+JP,"JAPAN Outbound SMS - KDDI",0.057
+JP,"JAPAN Outbound SMS - NTT docomo",0.090
+JP,"JAPAN Outbound SMS - Other",0.012
+JP,"JAPAN Outbound SMS - SoftBank Mobile",0.012
+KE,"KENYA Outbound SMS - Airtel",0.061
+KE,"KENYA Outbound SMS - Orange",0.040
+KE,"KENYA Outbound SMS - Other",0.010
+KE,"KENYA Outbound SMS - Safaricom",0.100
+KE,"KENYA Outbound SMS - yu Mobile",0.010
+KG,"KYRGYZSTAN Outbound SMS - Beeline",0.010
+KG,"KYRGYZSTAN Outbound SMS - MegaCom",0.030
+KG,"KYRGYZSTAN Outbound SMS - O!",0.010
+KG,"KYRGYZSTAN Outbound SMS - Other",0.010
+KH,"CAMBODIA Outbound SMS - Beeline",0.010
+KH,"CAMBODIA Outbound SMS - Hello",0.010
+KH,"CAMBODIA Outbound SMS - Mfone",0.010
+KH,"CAMBODIA Outbound SMS - MobiTel",0.015
+KH,"CAMBODIA Outbound SMS - Other",0.010
+KH,"CAMBODIA Outbound SMS - Smart Mobile",0.010
+KH,"CAMBODIA Outbound SMS - Star Cell",0.010
+KH,"CAMBODIA Outbound SMS - qb",0.010
+KM,"COMOROS Outbound SMS - HURI",0.010
+KM,"COMOROS Outbound SMS - Other",0.010
+KN,"ST. KITTS & NEVIS Outbound SMS - Digicel",0.010
+KN,"ST. KITTS & NEVIS Outbound SMS - LIME",0.025
+KN,"ST. KITTS & NEVIS Outbound SMS - Other",0.010
+KR,"SOUTH KOREA Outbound SMS - KT",0.055
+KR,"SOUTH KOREA Outbound SMS - LG U+",0.055
+KR,"SOUTH KOREA Outbound SMS - Other",0.010
+KR,"SOUTH KOREA Outbound SMS - SK Telecom",0.055
+KR,"SOUTH KOREA Outbound SMS - olleh KT",0.080
+KW,"KUWAIT Outbound SMS - Other",0.010
+KW,"KUWAIT Outbound SMS - VIVA",0.010
+KW,"KUWAIT Outbound SMS - Wataniya",0.010
+KW,"KUWAIT Outbound SMS - Zain",0.012
+KY,"CAYMAN ISLANDS Outbound SMS - Digicel",0.010
+KY,"CAYMAN ISLANDS Outbound SMS - LIME",0.025
+KY,"CAYMAN ISLANDS Outbound SMS - Other",0.010
+LA,"LAOS Outbound SMS - Beeline",0.010
+LA,"LAOS Outbound SMS - Other",0.010
+LB,"LEBANON Outbound SMS - Alfa",0.063
+LB,"LEBANON Outbound SMS - Other",0.047
+LB,"LEBANON Outbound SMS - mtc touch",0.094
+LC,"ST. LUCIA Outbound SMS - Digicel",0.012
+LC,"ST. LUCIA Outbound SMS - LIME",0.012
+LC,"ST. LUCIA Outbound SMS - Other",0.012
+LI,"LIECHTENSTEIN Outbound SMS - Alpmobil",0.012
+LI,"LIECHTENSTEIN Outbound SMS - FL1",0.022
+LI,"LIECHTENSTEIN Outbound SMS - Orange",0.010
+LI,"LIECHTENSTEIN Outbound SMS - Other",0.010
+LI,"LIECHTENSTEIN Outbound SMS - Swisscom",0.012
+LK,"SRI LANKA Outbound SMS - Airtel",0.036
+LK,"SRI LANKA Outbound SMS - Dialog",0.020
+LK,"SRI LANKA Outbound SMS - Etisalat",0.010
+LK,"SRI LANKA Outbound SMS - Hutch",0.012
+LK,"SRI LANKA Outbound SMS - Mobitel",0.010
+LK,"SRI LANKA Outbound SMS - Other",0.010
+LR,"LIBERIA Outbound SMS - Cellcom",0.025
+LR,"LIBERIA Outbound SMS - Comium",0.012
+LR,"LIBERIA Outbound SMS - Other",0.012
+LS,"LESOTHO Outbound SMS - Econet Ezi-Cel",0.070
+LS,"LESOTHO Outbound SMS - Other",0.010
+LS,"LESOTHO Outbound SMS - Vodacom",0.010
+LT,"LITHUANIA Outbound SMS - BITĖ",0.010
+LT,"LITHUANIA Outbound SMS - Omnitel",0.010
+LT,"LITHUANIA Outbound SMS - Other",0.010
+LT,"LITHUANIA Outbound SMS - Tele 2",0.012
+LU,"LUXEMBOURG Outbound SMS - LuxGSM",0.010
+LU,"LUXEMBOURG Outbound SMS - Orange",0.010
+LU,"LUXEMBOURG Outbound SMS - Other",0.010
+LU,"LUXEMBOURG Outbound SMS - Tango",0.010
+LV,"LATVIA Outbound SMS - Bite",0.010
+LV,"LATVIA Outbound SMS - LMT",0.010
+LV,"LATVIA Outbound SMS - Other",0.010
+LV,"LATVIA Outbound SMS - TRIATEL",0.080
+LV,"LATVIA Outbound SMS - Tele2",0.010
+LY,"LIBYA Outbound SMS - Al Madar",0.012
+LY,"LIBYA Outbound SMS - Libyana",0.055
+LY,"LIBYA Outbound SMS - Other",0.012
+MA,"MOROCCO Outbound SMS - IAM",0.073
+MA,"MOROCCO Outbound SMS - Inwi",0.070
+MA,"MOROCCO Outbound SMS - Méditel",0.070
+MA,"MOROCCO Outbound SMS - Other",0.031
+MA,"MOROCCO Outbound SMS - Wana",0.070
+MC,"MONACO Outbound SMS - Monaco Telecom",0.010
+MC,"MONACO Outbound SMS - Other",0.010
+MD,"MOLDOVA Outbound SMS - Other",0.010
+ME,"MONTENEGRO Outbound SMS - Other",0.010
+ME,"MONTENEGRO Outbound SMS - T-Mobile",0.010
+ME,"MONTENEGRO Outbound SMS - Telenor",0.010
+ME,"MONTENEGRO Outbound SMS - m:tel",0.012
+MG,"MADAGASCAR Outbound SMS - Airtel",0.061
+MG,"MADAGASCAR Outbound SMS - Orange",0.012
+MG,"MADAGASCAR Outbound SMS - Other",0.010
+MG,"MADAGASCAR Outbound SMS - Telma Mobile",0.010
+MK,"MACEDONIA Outbound SMS - ONE",0.012
+MK,"MACEDONIA Outbound SMS - Other",0.010
+MK,"MACEDONIA Outbound SMS - T-Mobile",0.090
+MK,"MACEDONIA Outbound SMS - vip",0.077
+ML,"MALI Outbound SMS - Malitel",0.010
+ML,"MALI Outbound SMS - Orange",0.083
+ML,"MALI Outbound SMS - Other",0.010
+MN,"MONGOLIA Outbound SMS - Mobicom",0.010
+MN,"MONGOLIA Outbound SMS - Other",0.010
+MN,"MONGOLIA Outbound SMS - Unitel",0.025
+MO,"MACAU Outbound SMS - 3",0.010
+MO,"MACAU Outbound SMS - CTM",0.010
+MO,"MACAU Outbound SMS - Other",0.010
+MO,"MACAU Outbound SMS - SmarTone",0.020
+MQ,"MARTINIQUE Outbound SMS - Digicel",0.010
+MQ,"MARTINIQUE Outbound SMS - Orange",0.150
+MQ,"MARTINIQUE Outbound SMS - Other",0.010
+MQ,"MARTINIQUE Outbound SMS - Outremer",0.010
+MR,"MAURITANIA Outbound SMS - MATTEL",0.140
+MR,"MAURITANIA Outbound SMS - Other",0.020
+MS,"MONTSERRAT Outbound SMS - LIME",0.012
+MS,"MONTSERRAT Outbound SMS - Other",0.012
+MT,"MALTA Outbound SMS - GO",0.012
+MT,"MALTA Outbound SMS - Melita",0.012
+MT,"MALTA Outbound SMS - Other",0.010
+MT,"MALTA Outbound SMS - Vodafone",0.010
+MU,"MAURITIUS Outbound SMS - Emtel",0.010
+MU,"MAURITIUS Outbound SMS - Orange",0.025
+MU,"MAURITIUS Outbound SMS - Other",0.010
+MV,"MALDIVES Outbound SMS - Dhiraagu",0.010
+MV,"MALDIVES Outbound SMS - Other",0.010
+MV,"MALDIVES Outbound SMS - Wataniya",0.010
+MW,"MALAWI Outbound SMS - Airtel",0.061
+MW,"MALAWI Outbound SMS - Other",0.010
+MX,"MEXICO Outbound SMS - Iusacell",0.040
+MX,"MEXICO Outbound SMS - NEXTEL",0.045
+MX,"MEXICO Outbound SMS - Other",0.010
+MX,"MEXICO Outbound SMS - Telcel",0.083
+MX,"MEXICO Outbound SMS - movistar",0.083
+MY,"MALAYSIA Outbound SMS - Celcom",0.027
+MY,"MALAYSIA Outbound SMS - DiGi",0.027
+MY,"MALAYSIA Outbound SMS - Maxis",0.027
+MY,"MALAYSIA Outbound SMS - Other",0.010
+MY,"MALAYSIA Outbound SMS - U Mobile",0.027
+MY,"MALAYSIA Outbound SMS - Yes 4G",0.027
+MZ,"MOZAMBIQUE Outbound SMS - Other",0.010
+MZ,"MOZAMBIQUE Outbound SMS - Vodacom",0.010
+MZ,"MOZAMBIQUE Outbound SMS - mCel",0.012
+NA,"NAMIBIA Outbound SMS - MTC",0.044
+NA,"NAMIBIA Outbound SMS - Other",0.010
+NA,"NAMIBIA Outbound SMS - leo",0.010
+NC,"NEW CALEDONIA Outbound SMS - Mobilis",0.028
+NC,"NEW CALEDONIA Outbound SMS - Other",0.028
+NE,"NIGER Outbound SMS - Airtel",0.061
+NE,"NIGER Outbound SMS - Moov",0.030
+NE,"NIGER Outbound SMS - Orange",0.010
+NE,"NIGER Outbound SMS - Other",0.010
+NG,"NIGERIA Outbound SMS - Airtel",0.010
+NG,"NIGERIA Outbound SMS - Etisalat",0.080
+NG,"NIGERIA Outbound SMS - Glo Mobile",0.017
+NG,"NIGERIA Outbound SMS - MTN",0.017
+NG,"NIGERIA Outbound SMS - Other",0.010
+NG,"NIGERIA Outbound SMS - Reliance",0.020
+NG,"NIGERIA Outbound SMS - Starcomms",0.010
+NI,"NICARAGUA Outbound SMS - Claro",0.025
+NI,"NICARAGUA Outbound SMS - Other",0.025
+NL,"NETHERLANDS Outbound SMS - 6GMOBILE",0.039
+NL,"NETHERLANDS Outbound SMS - KPN",0.089
+NL,"NETHERLANDS Outbound SMS - Lycamobile",0.039
+NL,"NETHERLANDS Outbound SMS - Other",0.039
+NL,"NETHERLANDS Outbound SMS - T-Mobile",0.107
+NL,"NETHERLANDS Outbound SMS - TELE2 Mobiel",0.110
+NL,"NETHERLANDS Outbound SMS - Teleena",0.039
+NL,"NETHERLANDS Outbound SMS - Telfort",0.089
+NL,"NETHERLANDS Outbound SMS - Vodafone",0.077
+NL,"NETHERLANDS Outbound SMS - Voiceworks",0.077
+NO,"NORWAY Outbound SMS - NetCom",0.050
+NO,"NORWAY Outbound SMS - Network Norway",0.040
+NO,"NORWAY Outbound SMS - Other",0.012
+NO,"NORWAY Outbound SMS - TDC",0.063
+NO,"NORWAY Outbound SMS - Tele2",0.031
+NO,"NORWAY Outbound SMS - Telenor",0.065
+NO,"NORWAY Outbound SMS - ventelo",0.020
+NP,"NEPAL Outbound SMS - Ncell",0.047
+NP,"NEPAL Outbound SMS - Nepal Telecom",0.083
+NP,"NEPAL Outbound SMS - Other",0.047
+NZ,"NEW ZEALAND Outbound SMS - 2degrees",0.120
+NZ,"NEW ZEALAND Outbound SMS - Other",0.020
+NZ,"NEW ZEALAND Outbound SMS - Telecom",0.120
+NZ,"NEW ZEALAND Outbound SMS - TelstraClear",0.067
+NZ,"NEW ZEALAND Outbound SMS - Vodafone",0.120
+OM,"OMAN Outbound SMS - Nawras",0.010
+OM,"OMAN Outbound SMS - Oman Mobile",0.080
+OM,"OMAN Outbound SMS - Other",0.010
+PA,"PANAMA Outbound SMS - Claro",0.010
+PA,"PANAMA Outbound SMS - Digicel",0.012
+PA,"PANAMA Outbound SMS - Más Móvil",0.083
+PA,"PANAMA Outbound SMS - Other",0.010
+PA,"PANAMA Outbound SMS - movistar",0.025
+PF,"FRENCH POLYNESIA Outbound SMS - Other",0.010
+PF,"FRENCH POLYNESIA Outbound SMS - VINI",0.010
+PG,"PAPUA NEW GUINEA Outbound SMS - Digicel",0.012
+PG,"PAPUA NEW GUINEA Outbound SMS - Other",0.012
+PH,"PHILIPPINES Outbound SMS - Globe Telecom",0.047
+PH,"PHILIPPINES Outbound SMS - Nextel",0.020
+PH,"PHILIPPINES Outbound SMS - Other",0.010
+PH,"PHILIPPINES Outbound SMS - Red Mobile",0.012
+PH,"PHILIPPINES Outbound SMS - Smart Communications",0.100
+PH,"PHILIPPINES Outbound SMS - Sun Cellular",0.012
+PK,"PAKISTAN Outbound SMS - Mobilink",0.020
+PK,"PAKISTAN Outbound SMS - Other",0.010
+PK,"PAKISTAN Outbound SMS - Telenor",0.016
+PK,"PAKISTAN Outbound SMS - Ufone",0.010
+PK,"PAKISTAN Outbound SMS - Warid",0.010
+PK,"PAKISTAN Outbound SMS - ZONG",0.010
+PL,"POLAND Outbound SMS - Cyfrowy Polsat",0.142
+PL,"POLAND Outbound SMS - Orange",0.090
+PL,"POLAND Outbound SMS - Other",0.010
+PL,"POLAND Outbound SMS - Play",0.030
+PL,"POLAND Outbound SMS - Plus",0.055
+PL,"POLAND Outbound SMS - T-Mobile",0.080
+PL,"POLAND Outbound SMS - wRodzinie",0.032
+PR,"PUERTO RICO Outbound SMS",0.010
+PS,"PALESTINE Outbound SMS - Jawwal",0.083
+PS,"PALESTINE Outbound SMS - Wataniya",0.012
+PT,"PORTUGAL Outbound SMS - Optimus",0.047
+PT,"PORTUGAL Outbound SMS - Other",0.056
+PT,"PORTUGAL Outbound SMS - TMN",0.047
+PT,"PORTUGAL Outbound SMS - Vodafone",0.047
+PY,"PARAGUAY Outbound SMS - Claro",0.012
+PY,"PARAGUAY Outbound SMS - Other",0.012
+PY,"PARAGUAY Outbound SMS - Personal",0.063
+PY,"PARAGUAY Outbound SMS - Tigo",0.012
+PY,"PARAGUAY Outbound SMS - VOX",0.012
+QA,"QATAR Outbound SMS - Other",0.010
+QA,"QATAR Outbound SMS - Q-Tel",0.038
+QA,"QATAR Outbound SMS - Vodafone",0.012
+RE,"RÉUNION Outbound SMS - Orange",0.039
+RE,"RÉUNION Outbound SMS - Other",0.039
+RE,"RÉUNION Outbound SMS - Outremer",0.010
+RE,"RÉUNION Outbound SMS - SFR",0.240
+RO,"ROMANIA Outbound SMS - Cosmote",0.063
+RO,"ROMANIA Outbound SMS - Orange",0.080
+RO,"ROMANIA Outbound SMS - Other",0.010
+RO,"ROMANIA Outbound SMS - Vodafone",0.052
+RS,"SERBIA Outbound SMS - Other",0.010
+RS,"SERBIA Outbound SMS - Telenor",0.015
+RS,"SERBIA Outbound SMS - mt:s",0.010
+RS,"SERBIA Outbound SMS - vip",0.010
+RU,"KAZAKHSTAN Outbound SMS - Beeline",0.012
+RU,"KAZAKHSTAN Outbound SMS - K-Cell",0.200
+RU,"KAZAKHSTAN Outbound SMS - Other",0.012
+RU,"KAZAKHSTAN Outbound SMS - Tele2",0.012
+RU,"RUSSIA Outbound SMS - Beeline",0.010
+RU,"RUSSIA Outbound SMS - MOTIV",0.010
+RU,"RUSSIA Outbound SMS - MTS",0.010
+RU,"RUSSIA Outbound SMS - MegaFon",0.030
+RU,"RUSSIA Outbound SMS - Other",0.010
+RU,"RUSSIA Outbound SMS - SMARTS",0.010
+RU,"RUSSIA Outbound SMS - SkyLink",0.010
+RU,"RUSSIA Outbound SMS - Tele2",0.010
+RU,"RUSSIA Outbound SMS - Yota",0.010
+RW,"RWANDA Outbound SMS - Airtel",0.061
+RW,"RWANDA Outbound SMS - MTN",0.010
+RW,"RWANDA Outbound SMS - Other",0.010
+RW,"RWANDA Outbound SMS - Rwandatel",0.012
+SA,"SAUDI ARABIA Outbound SMS - Mobily",0.028
+SA,"SAUDI ARABIA Outbound SMS - Other",0.010
+SA,"SAUDI ARABIA Outbound SMS - STC",0.028
+SA,"SAUDI ARABIA Outbound SMS - Zain",0.010
+SC,"SEYCHELLES Outbound SMS - Airtel",0.130
+SC,"SEYCHELLES Outbound SMS - Cable and Wireless",0.012
+SC,"SEYCHELLES Outbound SMS - Other",0.010
+SC,"SEYCHELLES Outbound SMS - Smartcom",0.083
+SD,"SUDAN Outbound SMS - MTN",0.025
+SD,"SUDAN Outbound SMS - Other",0.010
+SD,"SUDAN Outbound SMS - Zain",0.012
+SE,"SWEDEN Outbound SMS - 3",0.036
+SE,"SWEDEN Outbound SMS - Lycamobile",0.041
+SE,"SWEDEN Outbound SMS - Other",0.077
+SE,"SWEDEN Outbound SMS - Tele2",0.036
+SE,"SWEDEN Outbound SMS - Telenor",0.041
+SE,"SWEDEN Outbound SMS - Telia",0.041
+SG,"SINGAPORE Outbound SMS - M1",0.012
+SG,"SINGAPORE Outbound SMS - Other",0.012
+SG,"SINGAPORE Outbound SMS - SingTel",0.028
+SG,"SINGAPORE Outbound SMS - StarHub",0.020
+SI,"SLOVENIA Outbound SMS - Mobitel",0.010
+SI,"SLOVENIA Outbound SMS - Other",0.010
+SI,"SLOVENIA Outbound SMS - Si.mobil",0.055
+SI,"SLOVENIA Outbound SMS - Tuaŭobil",0.080
+SK,"SLOVAKIA Outbound SMS - O2",0.012
+SK,"SLOVAKIA Outbound SMS - Other",0.012
+SK,"SLOVAKIA Outbound SMS - Telekom",0.115
+SL,"SIERRA LEONE Outbound SMS - Africell",0.010
+SL,"SIERRA LEONE Outbound SMS - Airtel",0.060
+SL,"SIERRA LEONE Outbound SMS - Comium",0.010
+SL,"SIERRA LEONE Outbound SMS - Other",0.010
+SL,"SIERRA LEONE Outbound SMS - Tigo",0.050
+SM,"SAN MARINO Outbound SMS - Other",0.063
+SM,"SAN MARINO Outbound SMS - Prima",0.063
+SN,"SENEGAL Outbound SMS - Expresso",0.040
+SN,"SENEGAL Outbound SMS - Orange",0.140
+SN,"SENEGAL Outbound SMS - Other",0.010
+SN,"SENEGAL Outbound SMS - Tigo",0.012
+SR,"SURINAME Outbound SMS - Digicel",0.010
+SR,"SURINAME Outbound SMS - Other",0.010
+SR,"SURINAME Outbound SMS - Telesur",0.012
+SS,"SOUTH SUDAN Outbound SMS - Other",0.012
+SS,"SOUTH SUDAN Outbound SMS - Vivacell",0.012
+ST,"SÃO TOMÉ AND PRÍNCIPE Outbound SMS - CST",0.078
+ST,"SÃO TOMÉ AND PRÍNCIPE Outbound SMS - Other",0.078
+SV,"EL SALVADOR Outbound SMS - Claro",0.025
+SV,"EL SALVADOR Outbound SMS - Digicel",0.012
+SV,"EL SALVADOR Outbound SMS - Other",0.010
+SV,"EL SALVADOR Outbound SMS - Tigo",0.010
+SY,"SYRIA Outbound SMS - MTN",0.028
+SY,"SYRIA Outbound SMS - Other",0.028
+SY,"SYRIA Outbound SMS - Syriatel",0.030
+SZ,"SWAZILAND Outbound SMS - MTN",0.010
+SZ,"SWAZILAND Outbound SMS - Other",0.010
+TC,"TURKS & CAICOS Outbound SMS - Digicel",0.012
+TC,"TURKS & CAICOS Outbound SMS - LIME",0.012
+TC,"TURKS & CAICOS Outbound SMS - Other",0.012
+TD,"CHAD Outbound SMS - Airtel",0.130
+TD,"CHAD Outbound SMS - Other",0.010
+TD,"CHAD Outbound SMS - Tigo",0.020
+TG,"TOGO Outbound SMS - Moov",0.025
+TG,"TOGO Outbound SMS - Other",0.012
+TH,"THAILAND Outbound SMS - AIS",0.012
+TH,"THAILAND Outbound SMS - DTAC",0.017
+TH,"THAILAND Outbound SMS - GSM 1800",0.010
+TH,"THAILAND Outbound SMS - MY",0.020
+TH,"THAILAND Outbound SMS - Other",0.010
+TH,"THAILAND Outbound SMS - TOT 3G",0.070
+TH,"THAILAND Outbound SMS - True Move",0.010
+TJ,"TAJIKISTAN Outbound SMS - Babilon Mobile",0.010
+TJ,"TAJIKISTAN Outbound SMS - Beeline",0.010
+TJ,"TAJIKISTAN Outbound SMS - Indigo",0.010
+TJ,"TAJIKISTAN Outbound SMS - MLT",0.016
+TJ,"TAJIKISTAN Outbound SMS - Other",0.010
+TJ,"TAJIKISTAN Outbound SMS - Somoncom",0.010
+TL,"TIMOR-LESTE Outbound SMS - Telin",0.100
+TL,"TIMOR-LESTE Outbound SMS - Timor Telecom",0.063
+TL,"TIMOR- Other",0.063
+TN,"TUNISIA Outbound SMS - Orange",0.012
+TN,"TUNISIA Outbound SMS - Other",0.010
+TN,"TUNISIA Outbound SMS - Tunicell",0.010
+TN,"TUNISIA Outbound SMS - Tunisiana",0.010
+TO,"TONGA Outbound SMS - Digicel",0.012
+TO,"TONGA Outbound SMS - Other",0.012
+TR,"TURKEY Outbound SMS - Avea",0.050
+TR,"TURKEY Outbound SMS - Other",0.012
+TR,"TURKEY Outbound SMS - Turkcell",0.060
+TR,"TURKEY Outbound SMS - Vodafone",0.050
+TT,"TRINIDAD AND TOBAGO Outbound SMS - Digicel",0.010
+TT,"TRINIDAD AND TOBAGO Outbound SMS - Other",0.010
+TT,"TRINIDAD AND TOBAGO Outbound SMS - bMobile",0.031
+TW,"TAIWAN Outbound SMS - Chunghwa Telecom",0.050
+TW,"TAIWAN Outbound SMS - FarEasTone",0.012
+TW,"TAIWAN Outbound SMS - Other",0.010
+TW,"TAIWAN Outbound SMS - Taiwan Mobile",0.010
+TW,"TAIWAN Outbound SMS - VIBO",0.010
+TZ,"TANZANIA Outbound SMS - Airtel",0.130
+TZ,"TANZANIA Outbound SMS - Other",0.010
+TZ,"TANZANIA Outbound SMS - Tigo",0.010
+TZ,"TANZANIA Outbound SMS - Vodacom",0.040
+TZ,"TANZANIA Outbound SMS - Zantel",0.010
+UA,"UKRAINE Outbound SMS - Beeline",0.012
+UA,"UKRAINE Outbound SMS - Golden Telecom",0.025
+UA,"UKRAINE Outbound SMS - ITC",0.095
+UA,"UKRAINE Outbound SMS - Kyivstar",0.090
+UA,"UKRAINE Outbound SMS - MTS",0.059
+UA,"UKRAINE Outbound SMS - Other",0.012
+UA,"UKRAINE Outbound SMS - TriMob",0.012
+UA,"UKRAINE Outbound SMS - life:)",0.059
+UG,"UGANDA Outbound SMS - Airtel",0.061
+UG,"UGANDA Outbound SMS - MTN",0.010
+UG,"UGANDA Outbound SMS - Orange",0.012
+UG,"UGANDA Outbound SMS - Other",0.010
+UG,"UGANDA Outbound SMS - UT Mobile",0.010
+UG,"UGANDA Outbound SMS - Warid",0.012
+US,"UNITED STATES Outbound SMS - Other",0.007
+UY,"URUGUAY Outbound SMS - Antel",0.025
+UY,"URUGUAY Outbound SMS - Claro",0.025
+UY,"URUGUAY Outbound SMS - Other",0.012
+UY,"URUGUAY Outbound SMS - movistar",0.012
+UZ,"UZBEKISTAN Outbound SMS - Beeline",0.010
+UZ,"UZBEKISTAN Outbound SMS - Other",0.010
+UZ,"UZBEKISTAN Outbound SMS - Ucell",0.010
+UZ,"UZBEKISTAN Outbound SMS - Uzdunrobita",0.010
+VC,"ST. VINCENT & GRENADINES Outbound SMS - Digicel",0.010
+VC,"ST. VINCENT & GRENADINES Outbound SMS - LIME",0.045
+VC,"ST. VINCENT & GRENADINES Outbound SMS - Other",0.010
+VE,"VENEZUELA Outbound SMS - Digitel",0.025
+VE,"VENEZUELA Outbound SMS - Movilnet",0.060
+VE,"VENEZUELA Outbound SMS - Other",0.040
+VE,"VENEZUELA Outbound SMS - movistar",0.078
+VI,"US VIRGIN ISLANDS Outbound SMS",0.010
+VN,"VIETNAM Outbound SMS - Beeline",0.016
+VN,"VIETNAM Outbound SMS - EVNTelecom",0.100
+VN,"VIETNAM Outbound SMS - MobiFone",0.080
+VN,"VIETNAM Outbound SMS - Other",0.016
+VN,"VIETNAM Outbound SMS - Vietnamobile",0.016
+VN,"VIETNAM Outbound SMS - Viettel Mobile",0.030
+VN,"VIETNAM Outbound SMS - Vinaphone",0.015
+VU,"VANUATU Outbound SMS - AIL Vanuatu",0.090
+VU,"VANUATU Outbound SMS - Digicel Vanuatu",0.141
+VU,"VANUATU Outbound SMS - Other",0.141
+WS,"SAMOA Outbound SMS - Digicel",0.012
+WS,"SAMOA Outbound SMS - Other",0.010
+YE,"YEMEN Outbound SMS - HiTS-UNITEL",0.012
+YE,"YEMEN Outbound SMS - Other",0.010
+YE,"YEMEN Outbound SMS - Sabafon",0.010
+YE,"YEMEN Outbound SMS - Spacetel Yemen",0.010
+YE,"YEMEN Outbound SMS - Yemen Mobile",0.080
+ZA,"SOUTH AFRICA Outbound SMS - 8ta",0.027
+ZA,"SOUTH AFRICA Outbound SMS - Cell C",0.027
+ZA,"SOUTH AFRICA Outbound SMS - MTN",0.027
+ZA,"SOUTH AFRICA Outbound SMS - Other",0.047
+ZA,"SOUTH AFRICA Outbound SMS - Vodacom",0.027
+ZM,"ZAMBIA Outbound SMS - Airtel",0.130
+ZM,"ZAMBIA Outbound SMS - MTN",0.012
+ZM,"ZAMBIA Outbound SMS - Other",0.012
+ZM,"ZAMBIA Outbound SMS - ZAMTEL",0.012
+ZW,"ZIMBABWE Outbound SMS - Econet Wireless",0.110
+ZW,"ZIMBABWE Outbound SMS - NetOne",0.010
+ZW,"ZIMBABWE Outbound SMS - Other",0.010
+ZW,"ZIMBABWE Outbound SMS - Telecel",0.078

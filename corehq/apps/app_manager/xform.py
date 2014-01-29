@@ -2,7 +2,8 @@ from collections import defaultdict
 from casexml.apps.case.xml import V2_NAMESPACE
 from corehq.apps.app_manager.const import APP_V1
 from lxml import etree as ET
-from .exceptions import XFormError, CaseError, XFormValidationError
+from .xpath import CaseIDXPath, session_var, XPath, CaseTypeXpath
+from .exceptions import XFormError, CaseError, XFormValidationError, BindNotFound
 import formtranslate.api
 
 
@@ -14,7 +15,7 @@ def parse_xml(string):
     try:
         return ET.fromstring(string, parser=ET.XMLParser(encoding="utf-8", remove_comments=True))
     except ET.ParseError, e:
-        raise XFormError("Error parsing XML" + (": %s" % e if e.message else ""))
+        raise XFormError("Error parsing XML" + (": %s" % str(e)))
 
 
 namespaces = dict(
@@ -47,39 +48,47 @@ def get_case_parent_id_xpath(parent_path):
         return xpath
 
 
-class XPath(unicode):
-    def slash(self, xpath):
-        if self:
-            return XPath(u'%s/%s' % (self, xpath))
-        else:
-            return XPath(xpath)
+def relative_path(from_path, to_path):
+            from_nodes = from_path.split('/')
+            to_nodes = to_path.split('/')
+            while True:
+                if to_nodes[0] == from_nodes[0]:
+                    from_nodes.pop(0)
+                    to_nodes.pop(0)
+                else:
+                    break
+
+            return '%s/%s' % ('/'.join(['..' for n in from_nodes]), '/'.join(to_nodes))
 
 
-class CaseIDXPath(XPath):
-
-    def case(self):
-        return CaseXPath(u"instance('casedb')/casedb/case[@case_id=%s]" % self)
+SESSION_CASE_ID = CaseIDXPath(session_var('case_id'))
 
 
-class CaseXPath(XPath):
+class WrappedAttribs(object):
+    def __init__(self, attrib, namespaces=namespaces):
+        self.attrib = attrib
+        self.namespaces = namespaces
 
-    def index_id(self, name):
-        return CaseIDXPath(self.slash(u'index').slash(name))
+    def __getattr__(self, name):
+        return getattr(self.attrib, name)
 
-    def parent_id(self):
-        return self.index_id('parent')
+    def _get_item_name(self, item):
+        return item if item.startswith('{http') else item.format(**self.namespaces)
 
-    def property(self, property):
-        return self.slash(property)
+    def __contains__(self, item):
+        return self._get_item_name(item) in self.attrib
 
-SESSION_CASE_ID = CaseIDXPath(u"instance('commcaresession')/session/data/case_id")
+    def __setitem__(self, item, value):
+        self.attrib[self._get_item_name(item)] = value
 
+    def get(self, item, default=None):
+        try:
+            return self[item]
+        except KeyError:
+            return default
 
-class IndicatorXpath(XPath):
-
-    def indicator(self, indicator_name):
-        return XPath(u"instance('%s')/indicators/case[@id = current()/@case_id]" % self).slash(indicator_name)
-
+    def __getitem__(self, item):
+        return self.attrib[self._get_item_name(item)]
 
 class WrappedNode(object):
     def __init__(self, xml, namespaces=namespaces):
@@ -89,26 +98,36 @@ class WrappedNode(object):
             self.xml = xml
         self.namespaces=namespaces
 
-    def __getattr__(self, name):
-        if name in ('find', 'findall', 'findtext'):
-            wrap = {
-                'find': WrappedNode,
-                'findall': lambda list: map(WrappedNode, list),
-                'findtext': lambda text: text
-            }[name]
-            none = {
-                'find': lambda: WrappedNode(None),
-                'findall': list,
-                'findtext': lambda: None
-            }[name]
-            def _fn(xpath, *args, **kwargs):
-                if self.xml is not None:
-                    return wrap(getattr(self.xml, name)(xpath.format(**self.namespaces), *args, **kwargs))
-                else:
-                    return none()
-            return _fn
+    def find(self, xpath, *args, **kwargs):
+        if self.xml is not None:
+            return WrappedNode(self.xml.find(
+                xpath.format(**self.namespaces), *args, **kwargs))
         else:
-            return getattr(self.xml, name)
+            return WrappedNode(None)
+
+    def findall(self, xpath, *args, **kwargs):
+        if self.xml is not None:
+            return [WrappedNode(n) for n in self.xml.findall(
+                    xpath.format(**self.namespaces), *args, **kwargs)]
+        else:
+            return []
+
+    def findtext(self, xpath, *args, **kwargs):
+        if self.xml is not None:
+            return self.xml.findtext(
+                xpath.format(**self.namespaces), *args, **kwargs)
+        else:
+            return None
+
+    @property
+    def attrib(self):
+        return WrappedAttribs(self.xml.attrib, namespaces=self.namespaces)
+
+    def __getattr__(self, attr):
+        return getattr(self.xml, attr)
+
+    def __nonzero__(self):
+        return self.xml is not None
 
     @property
     def tag_xmlns(self):
@@ -168,7 +187,7 @@ class CaseBlock(object):
 
         self.xform.add_bind(
             nodeset="%scase/@date_modified" % path,
-            type="dateTime",
+            type="xsd:dateTime",
             calculate=self.xform.resolve_path("meta/timeEnd")
         )
         self.xform.add_bind(
@@ -177,7 +196,9 @@ class CaseBlock(object):
         )
 
     def add_create_block(self, relevance, case_name, case_type, path='',
-                         delay_case_id=False, autoset_owner_id=True, has_case_sharing=False):
+                         delay_case_id=False, autoset_owner_id=True,
+                         has_case_sharing=False, case_id='uuid()',
+                         make_relative=False):
         create_block = make_case_elem('create')
         self.elem.append(create_block)
         case_type_node = make_case_elem('case_type')
@@ -200,11 +221,17 @@ class CaseBlock(object):
         )
         add_setvalue_or_bind(
             ref='%scase/@case_id' % path,
-            value='uuid()',
+            value=case_id,
         )
+
+        nodeset = self.xform.resolve_path("%scase/create/case_name" % path)
+        name_path = self.xform.resolve_path(case_name)
+        if make_relative:
+            name_path = relative_path(nodeset, name_path)
+
         self.xform.add_bind(
-            nodeset="%scase/create/case_name" % path,
-            calculate=self.xform.resolve_path(case_name),
+            nodeset=nodeset,
+            calculate=name_path,
         )
 
         if not autoset_owner_id:
@@ -229,7 +256,7 @@ class CaseBlock(object):
             required="true()",
         )
 
-    def add_update_block(self, updates, path=''):
+    def add_update_block(self, updates, path='', make_relative=False):
         update_block = make_case_elem('update')
         self.elem.append(update_block)
         update_mapping = {}
@@ -244,9 +271,13 @@ class CaseBlock(object):
             update_block.append(make_case_elem(key))
 
         for key, q_path in sorted(update_mapping.items()):
+            nodeset = self.xform.resolve_path("%scase/update/%s" % (path, key))
             resolved_path = self.xform.resolve_path(q_path)
+            if make_relative:
+                resolved_path = relative_path(nodeset, resolved_path)
+
             self.xform.add_bind(
-                nodeset="%scase/update/%s" % (path, key),
+                nodeset=nodeset,
                 calculate=resolved_path,
                 relevant=("count(%s) > 0" % resolved_path)
             )
@@ -258,15 +289,17 @@ class CaseBlock(object):
             relevant=relevance,
         )
 
-    def add_index_ref(self, reference_id, case_type, case_path='', ref_path="case/@case_id"):
-        index_node = make_case_elem('index')
+    def add_index_ref(self, reference_id, case_type, ref, case_path=''):
+        index_node = self.elem.find('{cx2}index'.format(**namespaces))
+        if index_node is None:
+            index_node = make_case_elem('index')
+            self.elem.append(index_node)
         parent_index = make_case_elem(reference_id, {'case_type': case_type})
         index_node.append(parent_index)
-        self.elem.append(index_node)
 
         self.xform.add_bind(
             nodeset='{path}case/index/{ref}'.format(path=case_path, ref=reference_id),
-            calculate=self.xform.resolve_path(ref_path),
+            calculate=ref,
         )
 
 
@@ -440,7 +473,7 @@ class XForm(WrappedNode):
             langs.append(translation.attrib['lang'])
         return langs
 
-    def get_questions(self, langs):
+    def get_questions(self, langs, include_triggers=False):
         """
         parses out the questions from the xform, into the format:
         [{"label": label, "tag": tag, "value": value}, ...]
@@ -452,82 +485,124 @@ class XForm(WrappedNode):
         if not self.exists():
             return []
 
-        def get_path(prompt):
-            # TODO: add safety tests so that when something fails it fails with a good error
-            path = None
-            if 'ref' in prompt.attrib:
-                path = prompt.attrib['ref']
-            elif 'bind' in prompt.attrib:
-                bind_id = prompt.attrib['bind']
-                bind = self.model_node.find('{f}bind[@id="%s"]' % bind_id)
-                path = bind.attrib['nodeset']
-            elif prompt.tag_name == "group":
-                path = ""
-            elif prompt.tag_name == "repeat":
-                path = prompt.attrib['nodeset']
-            else:
-                raise XFormError("Node <%s> has no 'ref' or 'bind'" % prompt.tag_name)
-            return path
-
         questions = []
+        repeat_contexts = set()
         excluded_paths = set()
-        repeat_contexts = set([''])
 
-        def build_questions(group, path_context="", repeat_context="", exclude=False):
-            repeat_contexts.add(repeat_context)
-            for prompt in group.findall('*'):
-                if prompt.tag_xmlns == namespaces['f'][1:-1] and prompt.tag_name != "label":
-                    path = self.resolve_path(get_path(prompt), path_context)
-                    excluded_paths.add(path)
-                    if prompt.tag_name == "group":
-                        build_questions(prompt, path_context=path, repeat_context=repeat_context)
-                    elif prompt.tag_name == "repeat":
-                        build_questions(prompt, path_context=path, repeat_context=path)
-                    elif prompt.tag_name not in ("trigger", "label"):
-                        if not exclude:
-                            question = {
-                                "label": self.get_label_text(prompt, langs),
-                                "tag": prompt.tag_name,
-                                "value": path,
-                                "repeat": repeat_context,
-                            }
+        for node_data in self.get_control_nodes(include_triggers=include_triggers):
+            node, path, repeat_context, items, is_leaf = node_data
+            excluded_paths.add(path)
+            if not is_leaf:
+                continue
 
-                            if question['tag'] == "select1":
-                                options = []
-                                for item in prompt.findall('{f}item'):
-                                    translation = self.get_label_text(item, langs)
-                                    try:
-                                        value = item.findtext('{f}value').strip()
-                                    except AttributeError:
-                                        raise XFormError("<item> (%r) has no <value>" % translation)
-                                    options.append({
-                                        'label': translation,
-                                        'value': value
-                                    })
-                                question.update({'options': options})
-                            questions.append(question)
-        build_questions(self.find('{h}body'))
+            if repeat_context is not None:
+                repeat_contexts.add(repeat_context)
+
+            question = {
+                "label": self.get_label_text(node, langs),
+                "tag": node.tag_name,
+                "value": path,
+                "repeat": repeat_context,
+            }
+
+            if items:
+                options = []
+                for item in items:
+                    translation = self.get_label_text(item, langs)
+                    try:
+                        value = item.findtext('{f}value').strip()
+                    except AttributeError:
+                        raise XFormError("<item> (%r) has no <value>" % translation)
+                    options.append({
+                        'label': translation,
+                        'value': value
+                    })
+                question['options'] = options
+            questions.append(question)
+
         repeat_contexts = sorted(repeat_contexts, reverse=True)
+       
+        for data_node, path in self.get_leaf_data_nodes():
+            if path not in excluded_paths:
+                try:
+                    matching_repeat_context = [
+                        rc for rc in repeat_contexts if path.startswith(rc)
+                    ][0]
+                except IndexError:
+                    matching_repeat_context = None
+                questions.append({
+                    "label": path,
+                    "tag": "hidden",
+                    "value": path,
+                    "repeat": matching_repeat_context,
+                })
 
-        def build_non_question_paths(parent, path_context=""):
+        return questions
+
+    def get_control_nodes(self, include_triggers=True):
+        if not self.exists():
+            return []
+
+        control_nodes = []
+
+        def for_each_control_node(group, path_context="", repeat_context=None):
+            for node in group.findall('*'):
+                is_leaf = False
+                items = None
+                tag = node.tag_name
+                if node.tag_xmlns == namespaces['f'][1:-1] and tag != 'label':
+                    path = self.resolve_path(self.get_path(node), path_context)
+                    if tag == "group":
+                        for_each_control_node(node, path_context=path, repeat_context=repeat_context)
+                    elif tag == "repeat":
+                        for_each_control_node(node, path_context=path, repeat_context=path)
+                    elif include_triggers or tag != 'trigger':
+                        is_leaf = True
+                        if tag in ("select1", "select"):
+                            items = node.findall('{f}item')
+
+                    control_nodes.append(
+                            (node, path, repeat_context, items, is_leaf))
+
+        for_each_control_node(self.find('{h}body'))
+        return control_nodes
+
+    def get_path(self, node):
+        # TODO: add safety tests so that when something fails it fails with a good error
+        path = None
+        if 'nodeset' in node.attrib:
+            path = node.attrib['nodeset']
+        elif 'ref' in node.attrib:
+            path = node.attrib['ref']
+        elif 'bind' in node.attrib:
+            bind_id = node.attrib['bind']
+            bind = self.model_node.find('{f}bind[@id="%s"]' % bind_id)
+            if not bind.xml:
+                raise BindNotFound('No binding found for %s' % bind_id)
+            path = bind.attrib['nodeset']
+        elif node.tag_name == "group":
+            path = ""
+        elif node.tag_name == "repeat":
+            path = node.attrib['nodeset']
+        else:
+            raise XFormError("Node <%s> has no 'ref' or 'bind'" % node.tag_name)
+        return path
+    
+    def get_leaf_data_nodes(self):
+        if not self.exists():
+            return []
+       
+        data_nodes = []
+
+        def for_each_data_node(parent, path_context=""):
             for child in parent.findall('*'):
                 path = self.resolve_path(child.tag_name, path_context)
-                build_non_question_paths(child, path_context=path)
+                for_each_data_node(child, path_context=path)
             if not parent.findall('*'):
-                path = path_context
-                if path not in excluded_paths:
-                    matching_repeat_context = (
-                        repeat_context for repeat_context in repeat_contexts
-                        if repeat_context in path
-                    ).next()
-                    questions.append({
-                        "label": path,
-                        "tag": "hidden",
-                        "value": path,
-                        "repeat": matching_repeat_context,
-                    })
-        build_non_question_paths(self.data_node)
-        return questions
+                data_nodes.append((parent, path_context))
+
+        for_each_data_node(self.data_node)
+        return data_nodes
 
     def add_case_and_meta(self, form):
         if form.get_app().application_version == APP_V1:
@@ -854,6 +929,8 @@ class XForm(WrappedNode):
                     repeat_contexts[subcase.repeat_context] += 1
 
             for i, subcase in enumerate(subcases):
+                if not form.get_app().case_type_exists(subcase.case_type):
+                    raise CaseError("Case type (%s) for form (%s) does not exist" % (subcase.case_type, form.default_name()))
                 if subcase.repeat_context:
                     base_path = '%s/' % subcase.repeat_context
                     parent_node = self.instance_node.find(
@@ -890,7 +967,12 @@ class XForm(WrappedNode):
 
                 if case_block is not None and subcase.case_type != form.get_case_type():
                     reference_id = subcase.reference_id or 'parent'
-                    subcase_block.add_index_ref(reference_id, form.get_case_type(), case_path=path)
+                    subcase_block.add_index_ref(
+                        reference_id,
+                        form.get_case_type(),
+                        self.resolve_path("case/@case_id"),
+                        case_path=path
+                    )
 
         case = self.case_node
         case_parent = self.data_node
@@ -1189,3 +1271,148 @@ class XForm(WrappedNode):
                 'nodeset': self.resolve_path('registration/user_data/%s' % key),
                 'calculate': self.resolve_path(path),
             }))
+
+    def add_care_plan(self, form):
+        from const import CAREPLAN_GOAL, CAREPLAN_TASK
+        from corehq.apps.app_manager.util import split_path
+        self.add_meta_2()
+        self.add_instance('casedb', src='jr://instance/casedb')
+
+        for property, nodeset in form.case_preload.items():
+            parent_path, property = split_path(property)
+            property_xpath = {
+                'name': 'case_name',
+                'owner_id': '@owner_id'
+            }.get(property, property)
+
+            id_xpath = {
+                'parent': CaseIDXPath(session_var('case_id')),
+                'goal': CaseIDXPath(session_var('case_id_goal'))
+            }.get(parent_path.split('/')[-1])
+
+            if id_xpath:
+                self.add_setvalue(
+                    ref=nodeset,
+                    value=id_xpath.case().property(property_xpath),
+                )
+            else:
+                raise CaseError("Unknown parent reference '{ref}' for case type '{type}'".format(
+                    ref=parent_path,
+                    type=form.get_case_type())
+                )
+
+        def add_parent_case_id(case_block, case_path=''):
+            parent_case_id = _make_elem('parent_case_id')
+            self.data_node.append(parent_case_id)
+            self.add_bind(
+                nodeset=self.resolve_path('parent_case_id'),
+                calculate=session_var('case_id')
+            )
+            case_block.add_index_ref(
+                'parent',
+                form.get_parent_case_type(),
+                self.resolve_path('parent_case_id'),
+                case_path=case_path
+            )
+
+        if form.case_type == CAREPLAN_GOAL:
+            if form.mode == 'create':
+                case_block = CaseBlock(self)
+                case_block.add_create_block(
+                    relevance='true()',
+                    case_name=form.name_path,
+                    case_type=form.case_type,
+                    autoset_owner_id=False,
+                    case_id=session_var('case_id_goal')
+                )
+
+                case_block.add_update_block(form.case_updates())
+
+                add_parent_case_id(case_block)
+
+                # set case owner to whatever parent case owner is
+                self.add_setvalue(
+                    ref="case/create/owner_id",
+                    value=CaseIDXPath(self.resolve_path('parent_case_id')).case().property('@owner_id'),
+                    event='xforms-revalidate'
+                )
+
+                self.data_node.append(case_block.elem)
+            elif form.mode == 'update':
+                case_parent = self.data_node
+                case_block = CaseBlock(self)
+                case_block.add_update_block(form.case_updates())
+
+                idx_path = CaseIDXPath(session_var('case_id_goal'))
+                self.add_setvalue(
+                    ref='case/@case_id',
+                    value=session_var('case_id_goal')
+                )
+
+                case_block.add_close_block("%s = '%s'" % (form.close_path, 'yes'))
+
+                # preload values from case
+                self.add_setvalue(
+                    ref=form.description_path,
+                    value=idx_path.case().property('description')
+                )
+                self.add_setvalue(
+                    ref=form.date_followup_path,
+                    value=idx_path.case().property('date_followup')
+                )
+
+                # load task case ID's into child_tasks node
+                self.add_setvalue(
+                    ref=self.resolve_path('child_tasks'),
+                    value="join(' ', %s)" % CaseTypeXpath(CAREPLAN_TASK).case().select(
+                        'index/goal', session_var('case_id_goal'), quote=False
+                    ).select('@status', 'open').slash('@case_id')
+                )
+
+                case_parent.append(case_block.elem)
+
+                task_case_block = CaseBlock(self, path='tasks_to_close/')
+                task_case_block.elem.append(make_case_elem('close'))
+                self.add_bind(
+                    nodeset=self.resolve_path('tasks_to_close/case/@case_id'),
+                    calculate='selected-at(%s, ../../@index)' % self.resolve_path('child_tasks')
+                )
+
+                self.data_node.find('{x}tasks_to_close').append(task_case_block.elem)
+        elif form.case_type == CAREPLAN_TASK:
+            if form.mode == 'create':
+                path = 'task_repeat/'
+                case_block = CaseBlock(self, path=self.resolve_path(path))
+                case_block.add_create_block(
+                    path=path,
+                    relevance='true()',
+                    case_name=form.name_path,
+                    case_type=CAREPLAN_TASK,
+                    autoset_owner_id=False,
+                    delay_case_id=True,
+                    make_relative=True
+                )
+
+                # set case owner to whatever parent case owner is
+                self.add_bind(
+                    nodeset="%scase/create/owner_id" % path,
+                    calculate=CaseIDXPath(self.resolve_path('parent_case_id')).case().property('@owner_id')
+                )
+
+                case_block.add_update_block(form.case_updates(), path=path, make_relative=True)
+
+                add_parent_case_id(case_block, case_path=path)
+                case_block.add_index_ref('goal', CAREPLAN_GOAL, session_var('case_id_goal'), case_path=path)
+
+                self.data_node.find('{x}task_repeat').append(case_block.elem)
+            elif form.mode == 'update':
+                case_block = CaseBlock(self)
+                case_block.add_update_block(form.case_updates())
+
+                self.add_setvalue(
+                    ref='case/@case_id',
+                    value=CaseIDXPath(session_var('case_id_task'))
+                )
+                relevance = "%s = '%s'" % (self.resolve_path(form.close_path), 'yes')
+                case_block.add_close_block(relevance)
+                self.data_node.append(case_block.elem)

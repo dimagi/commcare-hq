@@ -122,7 +122,7 @@ class SubmissionErrorTest(TestCase):
                     "xml_submission_file": f
             })
             self.assertEqual(500, res.status_code)
-            self.assertTrue("render_error" in res.content)
+            self.assertIn('Invalid XML', res.content)
         
         # make sure we logged it
         log = SubmissionErrorLog.view("couchforms/all_submissions_by_domain",
@@ -132,6 +132,6 @@ class SubmissionErrorTest(TestCase):
                                       endkey=[self.domain.name, "by_type", "SubmissionErrorLog", {}]).one()
         
         self.assertTrue(log is not None)
-        self.assertTrue("render_error" in log.problem)
+        self.assertIn('Invalid XML', log.problem)
         self.assertEqual("this isn't even close to xml", log.get_xml())
         

@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from couchdbkit.resource import ResourceNotFound
 
 from dimagi.utils.couch.database import get_db
-
+from django.core.cache import cache
 
 
 def cc_user_domain(domain):
@@ -44,16 +44,33 @@ def raw_username(username):
     else:
         return username
 
+
 def user_id_to_username(user_id):
+    from corehq.apps.users.models import CouchUser
     if not user_id:
         return user_id
     elif user_id == "demo_user":
         return "demo_user"
     try:
-        login = get_db().get(user_id)
+        login = CouchUser.get_db().get(user_id)
     except ResourceNotFound:
         return None
     return raw_username(login['username']) if "username" in login else None
+
+
+def cached_user_id_to_username(user_id):
+    if not user_id:
+        return None
+
+    key = 'user_id_username_cache_{id}'.format(id=user_id)
+    ret = cache.get(key)
+    if ret:
+        return ret
+    else:
+        ret = user_id_to_username(user_id)
+        cache.set(key, ret)
+        return ret
+
 
 def django_user_from_couch_id(id):
     """

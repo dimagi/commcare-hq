@@ -11,10 +11,17 @@ from xml.dom.minidom import parseString
 from diff_match_patch import diff_match_patch
 from django.core.cache import cache
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, get_language
 from django.views.decorators.cache import cache_control
 from corehq import ApplicationsTab, toggles
 from corehq.apps.app_manager import commcare_settings
+from corehq.apps.app_manager.exceptions import (
+    AppManagerException,
+    BlankXFormError,
+    ConflictingCaseTypeError,
+    RearrangeError,
+)
+from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from django.utils.http import urlencode as django_urlencode
@@ -24,11 +31,12 @@ from unidecode import unidecode
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse, RegexURLResolver
 from django.shortcuts import render
+from dimagi.utils.django.cached_object import CachedObject
 from django.utils.http import urlencode
 from django.views.decorators.http import require_GET
 from django.conf import settings
 from couchdbkit.resource import ResourceNotFound
-from corehq.apps.app_manager.const import APP_V1
+from corehq.apps.app_manager.const import APP_V1, CAREPLAN_GOAL, CAREPLAN_TASK, APP_V2
 from corehq.apps.app_manager.success_message import SuccessMessage
 from corehq.apps.app_manager.util import is_valid_case_type, get_all_case_properties, add_odk_profile_after_build, ParentCasePropertyBuilder
 from corehq.apps.app_manager.util import save_xform, get_settings_values
@@ -57,7 +65,8 @@ from dimagi.utils.web import json_response, json_request
 from corehq.apps.reports import util as report_utils
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
 from corehq.apps.app_manager.models import Application, get_app, DetailColumn, Form, FormActions,\
-    AppError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, DeleteApplicationRecord, str_to_cls, validate_lang, SavedAppBuild, ParentSelect, Module
+    AppEditingError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, \
+    DeleteApplicationRecord, str_to_cls, validate_lang, SavedAppBuild, ParentSelect, Module, CareplanModule, CareplanForm, CareplanGoalForm, CareplanTaskForm, CommTrackModule, CommTrackForm
 from corehq.apps.app_manager.models import DETAIL_TYPES, import_app as import_app_util, SortElement
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST
@@ -226,6 +235,20 @@ def app_source(req, domain, app_id):
     return HttpResponse(app.export_json())
 
 @login_and_domain_required
+def copy_app_check_domain(req, domain, name, app_id):
+    app_copy = import_app_util(app_id, domain, name=name)
+    return back_to_main(req, app_copy.domain, app_id=app_copy._id)
+
+@login_and_domain_required
+def copy_app(req, domain):
+    app_id = req.POST.get('app')
+    form = CopyApplicationForm(app_id, req.POST)
+    if form.is_valid():
+        return copy_app_check_domain(req, form.cleaned_data['domain'], form.cleaned_data['name'], app_id)
+    else:
+        return view_generic(req, domain, app_id=app_id, copy_app_form=form)
+
+@login_and_domain_required
 def import_app(req, domain, template="app_manager/import_app.html"):
     if req.method == "POST":
         _clear_app_cache(req, domain)
@@ -252,7 +275,7 @@ def import_app(req, domain, template="app_manager/import_app.html"):
                     messages.error(req, "We can't find a project called %s." % redirect_domain)
                 else:
                     messages.error(req, "You left the project name blank.")
-                return HttpResponseRedirect(req.META['HTTP_REFERER'])
+                return HttpResponseRedirect(req.META.get('HTTP_REFERER', req.path))
 
         if app_id:
             app = get_app(None, app_id)
@@ -281,7 +304,7 @@ def default(req, domain):
     return view_app(req, domain)
 
 
-def get_form_view_context(request, form, langs, is_user_registration, messages=messages):
+def get_form_view_context_and_template(request, form, langs, is_user_registration, messages=messages):
     xform_questions = []
     xform = None
     form_errors = []
@@ -304,10 +327,10 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
 
         try:
             form.validate_form()
-            xform_questions = xform.get_questions(langs)
+            xform_questions = xform.get_questions(langs, include_triggers=True)
         except etree.XMLSyntaxError as e:
             form_errors.append("Syntax Error: %s" % e)
-        except AppError as e:
+        except AppEditingError as e:
             form_errors.append("Error in application: %s" % e)
         except XFormValidationError:
             xform_validation_errored = True
@@ -350,22 +373,37 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
             form_errors[i] = err[0]
         else:
             messages.error(request, err)
+
     module_case_types = [
         {'module_name': trans(module.name, langs),
          'case_type': module.case_type}
         for module in form.get_app().modules if module.case_type
     ] if not is_user_registration else None
-    return {
+
+    context = {
         'nav_form': form if not is_user_registration else '',
         'xform_languages': languages,
         "xform_questions": xform_questions,
         'case_reserved_words_json': load_case_reserved_words(),
-        'is_user_registration': is_user_registration,
         'module_case_types': module_case_types,
         'form_errors': form_errors,
         'xform_validation_errored': xform_validation_errored,
-        'show_custom_ref': toggle_enabled(toggles.APP_BUILDER_CUSTOM_PARENT_REF, request.user.username),
     }
+
+    if isinstance(form, CareplanForm):
+        context.update({
+            'mode': form.mode,
+            'fixed_questions': form.get_fixed_questions(),
+            'custom_case_properties': [{'key': key, 'path': path} for key, path in form.custom_case_updates.items()],
+            'case_preload': [{'key': key, 'path': path} for key, path in form.case_preload.items()],
+        })
+        return "app_manager/form_view_careplan.html", context
+    else:
+        context.update({
+            'is_user_registration': is_user_registration,
+            'show_custom_ref': toggle_enabled(toggles.APP_BUILDER_CUSTOM_PARENT_REF, request.user.username),
+        })
+        return "app_manager/form_view.html", context
 
 
 def get_app_view_context(request, app):
@@ -382,7 +420,6 @@ def get_app_view_context(request, app):
         options = [option for option in options if not option.superuser_only]
     options_labels = [option.get_label() for option in options]
     options_builds = [option.build.to_string() for option in options]
-
 
     (build_spec_setting,) = filter(
         lambda x: x['type'] == 'hq' and x['id'] == 'build_spec',
@@ -443,7 +480,8 @@ def _clear_app_cache(request, domain):
             None, # tab.org should be None for any non org page
             ApplicationsTab.view,
             is_active,
-            request.couch_user.get_id
+            request.couch_user.get_id,
+            get_language(),
         ])
         cache.delete(key)
 
@@ -496,6 +534,8 @@ def paginate_releases(request, domain, app_id):
         limit=limit,
         wrapper=lambda x: SavedAppBuild.wrap(x['value']).to_saved_build_json(timezone),
     ).all()
+    for app in saved_apps:
+        app['include_media'] = toggle_enabled(toggles.APP_BUILDER_INCLUDE_MULTIMEDIA_ODK, request.user.username)
     return json_response(saved_apps)
 
 
@@ -506,14 +546,10 @@ def release_manager(request, domain, app_id, template='app_manager/releases.html
     context = get_apps_base_context(request, domain, app)
     context['sms_contacts'] = get_sms_autocomplete_context(request, domain)['sms_contacts']
 
-    saved_apps = []
-
-    users_cannot_share = CommCareUser.cannot_share(domain)
     context.update({
         'release_manager': True,
-        'saved_apps': saved_apps,
+        'saved_apps': [],
         'latest_release': latest_release,
-        'users_cannot_share': users_cannot_share,
     })
     if not app.is_remote_app():
         # Multimedia is not supported for remote applications at this time.
@@ -556,6 +592,8 @@ def release_build(request, domain, app_id, saved_app_id):
         raise Http404
     saved_app.is_released = is_released
     saved_app.save(increment_version=False)
+    from corehq.apps.app_manager.signals import app_post_release
+    app_post_release.send(Application, application=saved_app)
     if ajax:
         return json_response({'is_released': is_released})
     else:
@@ -569,38 +607,51 @@ def get_module_view_context_and_template(app, module):
     )
 
     def get_parent_modules_and_save(case_type):
-        """
-        This closure is so we don't override the `module` variable
-
-        """
         parent_types = builder.get_parent_types(case_type)
         modules = app.modules
         # make sure all modules have unique ids
-        if any(not module.unique_id for module in modules):
-            for module in modules:
-                module.get_or_create_unique_id()
+        if any(not mod.unique_id for mod in modules):
+            for mod in modules:
+                mod.get_or_create_unique_id()
             app.save()
-        parent_module_ids = [module.unique_id for module in modules
-                             if module.case_type in parent_types]
+        parent_module_ids = [mod.unique_id for mod in modules
+                             if mod.case_type in parent_types]
         return [{
-                    'unique_id': module.unique_id,
-                    'name': module.name,
-                    'is_parent': module.unique_id in parent_module_ids,
-                } for module in app.modules if module.case_type != case_type]
+                    'unique_id': mod.unique_id,
+                    'name': mod.name,
+                    'is_parent': mod.unique_id in parent_module_ids,
+                } for mod in app.modules if mod.case_type != case_type and mod.unique_id != module.unique_id]
 
     def get_sort_elements(details):
         return [prop.values() for prop in details.sort_elements]
 
-    case_type = module.case_type
-    return "app_manager/module_view.html", {
-        'parent_modules': get_parent_modules_and_save(case_type),
-        'case_properties': sorted(builder.get_properties(case_type)),
-        "sortElements": json.dumps(get_sort_elements(module.case_details.short))
-    }
+    if isinstance(module, CareplanModule):
+        return "app_manager/module_view_careplan.html", {
+            'parent_modules': get_parent_modules_and_save(CAREPLAN_GOAL),
+            'goal_case_properties': sorted(builder.get_properties(CAREPLAN_GOAL)),
+            'task_case_properties': sorted(builder.get_properties(CAREPLAN_TASK)),
+            "goal_sortElements": json.dumps(get_sort_elements(module.goal_details.short)),
+            "task_sortElements": json.dumps(get_sort_elements(module.task_details.short)),
+        }
+    elif isinstance(module, CommTrackModule):
+        case_type = module.case_type
+        return "app_manager/module_view_commtrack.html", {
+            'case_properties': sorted(builder.get_properties(case_type)),
+            'product_properties': ('name', 'product:quantity'),
+            'case_sortElements': json.dumps(get_sort_elements(module.case_details.short)),
+            'product_sortElements': json.dumps(get_sort_elements(module.product_details.short)),
+        }
+    else:
+        case_type = module.case_type
+        return "app_manager/module_view.html", {
+            'parent_modules': get_parent_modules_and_save(case_type),
+            'case_properties': sorted(builder.get_properties(case_type)),
+            "sortElements": json.dumps(get_sort_elements(module.case_details.short))
+        }
 
 
 @retry_resource(3)
-def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user_registration=False):
+def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user_registration=False, copy_app_form=None):
     """
     This is the main view for the app. All other views redirect to here.
 
@@ -654,8 +705,13 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         del app['use_commcare_sense']
         app.save()
 
+    v2_app = app and app.application_version == APP_V2
     context.update({
-        'show_care_plan': toggle_enabled(toggles.APP_BUILDER_CAREPLAN, req.user.username),
+        'show_care_plan': (v2_app
+                           and not (app and app.has_careplan_module)
+                           and toggle_enabled(toggles.APP_BUILDER_CAREPLAN, req.user.username)),
+        'show_commtrack': (v2_app
+                           and toggle_enabled(toggles.APP_BUILDER_COMMTRACK, req.user.username)),
         'module': module,
         'form': form,
     })
@@ -664,11 +720,11 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         context.update({"translations": app.translations.get(context['lang'], {})})
 
     if form:
-        template = "app_manager/form_view.html"
+        template, form_context = get_form_view_context_and_template(req, form, context['langs'], is_user_registration)
         context.update({
             'case_properties': get_all_case_properties(app),
         })
-        context.update(get_form_view_context(req, form, context['langs'], is_user_registration))
+        context.update(form_context)
     elif module:
         template, module_context = get_module_view_context_and_template(app, module)
         context.update(module_context)
@@ -683,6 +739,12 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         'error':error,
         'app': app,
     })
+
+    # Pass form for Copy Application to template:
+    context.update({
+        'copy_app_form': copy_app_form if copy_app_form is not None else CopyApplicationForm(app_id)
+    })
+
     response = render(req, template, context)
     response.set_cookie('lang', _encode_if_unicode(context['lang']))
     return response
@@ -774,6 +836,7 @@ def new_app(req, domain):
 
     return back_to_main(req, domain, app_id=app_id)
 
+
 @no_conflict_require_POST
 @require_can_edit_apps
 def new_module(req, domain, app_id):
@@ -790,15 +853,51 @@ def new_module(req, domain, app_id):
         response = back_to_main(req, domain, app_id=app_id, module_id=module_id)
         response.set_cookie('suppress_build_errors', 'yes')
         return response
-    elif module_type == 'careplan':
-        return new_care_plan_module(req, domain, app, name, lang)
+    elif module_type in MODULE_TYPE_MAP:
+        fn = MODULE_TYPE_MAP[module_type][FN]
+        validations = MODULE_TYPE_MAP[module_type][VALIDATIONS]
+        error = next((v[1] for v in validations if v[0](app)), None)
+        if error:
+            messages.warning(req, error)
+            return back_to_main(req, domain, app_id=app.id)
+        else:
+            return fn(req, domain, app, name, lang)
     else:
         logger.error('Unexpected module type for new module: "%s"' % module_type)
         return back_to_main(req, domain, app_id=app_id)
 
-def new_care_plan_module(req, domain, app, name, lang):
-    messages.warning(req, 'Care Plan modules coming soon')
-    return back_to_main(req, domain, app_id=app.id)
+
+def _new_careplan_module(req, domain, app, name, lang):
+    from corehq.apps.app_manager.util import new_careplan_module
+    target_module_index = req.POST.get('target_module_id')
+    target_module = app.get_module(target_module_index)
+    if not target_module.case_type:
+        name = target_module.name[lang]
+        messages.error(req, _("Please set the case type for the target module '{name}'.".format(name=name)))
+        return back_to_main(req, domain, app_id=app.id)
+    module = new_careplan_module(app, name, lang, target_module)
+    app.save()
+    response = back_to_main(req, domain, app_id=app.id, module_id=module.id)
+    response.set_cookie('suppress_build_errors', 'yes')
+    messages.info(req, _('Caution: Care Plan modules are a labs feature'))
+    return response
+
+
+def _new_commtrack_module(req, domain, app, name, lang):
+    module = app.add_module(CommTrackModule.new_module(name, lang))
+    module_id = module.id
+    form = CommTrackForm(
+        name={lang if lang else "en": name if name else "Untitled Form"},
+    )
+    module.forms.append(form)
+    form = module.get_form(-1)
+    form.source = ''
+    app.save()
+    response = back_to_main(req, domain, app_id=app.id, module_id=module_id)
+    response.set_cookie('suppress_build_errors', 'yes')
+    messages.info(req, _('Caution: CommTrack modules are a labs feature'))
+    return response
+
 
 @no_conflict_require_POST
 @require_can_edit_apps
@@ -885,9 +984,18 @@ def delete_form(req, domain, app_id, module_id, form_id):
 def copy_form(req, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
     to_module_id = int(req.POST['to_module_id'])
-    if app.copy_form(int(module_id), int(form_id), to_module_id) == 'case type conflict':
+    try:
+        app.copy_form(int(module_id), int(form_id), to_module_id)
+    except ConflictingCaseTypeError:
         messages.warning(req, CASE_TYPE_CONFLICT_MSG,  extra_tags="html")
-    app.save()
+        app.save()
+    except BlankXFormError:
+        # don't save!
+        messages.error(req, _('We could not copy this form, because it is blank.'
+                              'In order to copy this form, please add some questions first.'))
+    else:
+        app.save()
+
     return back_to_main(req, domain, app_id=app_id, module_id=module_id,
                         form_id=form_id)
 
@@ -914,6 +1022,7 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
         'media_image': None, 'media_audio': None,
         "case_list": ('case_list-show', 'case_list-label'),
         "task_list": ('task_list-show', 'task_list-label'),
+        "parent_module": None,
     }
 
     if attr not in attributes:
@@ -940,10 +1049,16 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
         if is_valid_case_type(case_type):
             # todo: something better than nothing when invalid
             module["case_type"] = case_type
+            for cp_mod in (mod for mod in app.modules if isinstance(mod, CareplanModule)):
+                if cp_mod.unique_id != module.unique_id and cp_mod.parent_select.module_id == module.unique_id:
+                    cp_mod.case_type = case_type
         else:
             return HttpResponseBadRequest("case type is improperly formatted")
     if should_edit("put_in_root"):
         module["put_in_root"] = json.loads(req.POST.get("put_in_root"))
+    if should_edit("parent_module"):
+        parent_module = req.POST.get("parent_module")
+        module.parent_select.module_id = parent_module
     for attribute in ("name", "case_label", "referral_label"):
         if should_edit(attribute):
             name = req.POST.get(attribute, None)
@@ -982,8 +1097,15 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
 
     if detail_type == 'case':
         detail = module.case_details
+    elif detail_type == CAREPLAN_GOAL:
+        detail = module.goal_details
+    elif detail_type == CAREPLAN_TASK:
+        detail = module.task_details
     else:
-        return HttpResponseBadRequest("Unknown detail type '%s'" % detail_type)
+        try:
+            detail = getattr(module, '{0}_details'.format(detail_type))
+        except AttributeError:
+            return HttpResponseBadRequest("Unknown detail type '%s'" % detail_type)
 
     detail.short.columns = map(DetailColumn.wrap, screens['short'])
     detail.long.columns = map(DetailColumn.wrap, screens['long'])
@@ -996,7 +1118,8 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
         item.direction = sort_element['direction']
         detail.short.sort_elements.append(item)
 
-    module.parent_select = ParentSelect.wrap(parent_select)
+    if parent_select:
+        module.parent_select = ParentSelect.wrap(parent_select)
     resp = {}
     app.save(resp)
     return json_response(resp)
@@ -1176,6 +1299,26 @@ def edit_form_actions(req, domain, app_id, module_id, form_id):
     response_json['propertiesMap'] = get_all_case_properties(app)
     return json_response(response_json)
 
+@no_conflict_require_POST
+@require_can_edit_apps
+def edit_careplan_form_actions(req, domain, app_id, module_id, form_id):
+    app = get_app(domain, app_id)
+    form = app.get_module(module_id).get_form(form_id)
+    transaction = json.loads(req.POST.get('transaction'))
+
+    for question in transaction['fixedQuestions']:
+        setattr(form, question['name'], question['path'])
+
+    def to_dict(properties):
+        return dict((p['key'], p['path']) for p in properties)
+
+    form.custom_case_updates = to_dict(transaction['case_properties'])
+    form.case_preload = to_dict(transaction['case_preload'])
+
+    response_json = {}
+    app.save(response_json)
+    return json_response(response_json)
+
 @require_can_edit_apps
 def multimedia_list_download(req, domain, app_id):
     app = get_app(domain, app_id)
@@ -1241,42 +1384,6 @@ def edit_commcare_profile(request, domain, app_id):
     response_json = {"status": "ok", "changed": changed}
     app.save(response_json)
     return json_response(response_json)
-
-
-@no_conflict_require_POST
-@require_can_edit_apps
-def edit_app_lang(req, domain, app_id):
-    """
-    DEPRECATED
-    Called when an existing language (such as 'zh') is changed (e.g. to 'zh-cn')
-    or when a language is to be added.
-
-    """
-    lang = req.POST['lang']
-    lang_id = int(req.POST.get('index', -1))
-    app = get_app(domain, app_id)
-    if lang_id == -1:
-        if lang in app.langs:
-            messages.error(req, "Language %s already exists" % lang)
-        else:
-            try:
-                validate_lang(lang)
-            except ValueError as e:
-                messages.error(req, unicode(e))
-            else:
-                app.langs.append(lang)
-                app.save()
-    else:
-        try:
-            app.rename_lang(app.langs[lang_id], lang)
-        except AppError as e:
-            messages.error(req, unicode(e))
-        except ValueError as e:
-            messages.error(req, unicode(e))
-        else:
-            app.save()
-
-    return back_to_main(req, domain, app_id=app_id)
 
 
 @no_conflict_require_POST
@@ -1479,13 +1586,23 @@ def rearrange(req, domain, app_id, key):
     resp = {}
     module_id = None
 
-    if "forms" == key:
-        to_module_id = int(req.POST['to_module_id'])
-        from_module_id = int(req.POST['from_module_id'])
-        if app.rearrange_forms(to_module_id, from_module_id, i, j) == 'case type conflict':
-            messages.warning(req, CASE_TYPE_CONFLICT_MSG,  extra_tags="html")
-    elif "modules" == key:
-        app.rearrange_modules(i, j)
+    try:
+        if "forms" == key:
+            to_module_id = int(req.POST['to_module_id'])
+            from_module_id = int(req.POST['from_module_id'])
+            try:
+                app.rearrange_forms(to_module_id, from_module_id, i, j)
+            except ConflictingCaseTypeError:
+                messages.warning(req, CASE_TYPE_CONFLICT_MSG,  extra_tags="html")
+        elif "modules" == key:
+            app.rearrange_modules(i, j)
+    except RearrangeError:
+        messages.error(req, _(
+            'Oops. '
+            'Looks like you got out of sync with us. '
+            'The sidebar has been updated, so please try again.'
+        ))
+        return back_to_main(req, domain, app_id=app_id, module_id=module_id)
     app.save(resp)
     if ajax:
         return HttpResponse(json.dumps(resp))
@@ -1539,7 +1656,8 @@ def save_copy(req, domain, app_id):
         }),
     })
 
-def validate_form_for_build(request, domain, app_id, unique_form_id):
+
+def validate_form_for_build(request, domain, app_id, unique_form_id, ajax=True):
     app = get_app(domain, app_id)
     try:
         form = app.get_form(unique_form_id)
@@ -1548,12 +1666,11 @@ def validate_form_for_build(request, domain, app_id, unique_form_id):
         raise Http404()
     errors = form.validate_for_build()
     lang, langs = get_langs(request, app)
-    if "blank form" in [error.get('type') for error in errors]:
-        return json_response({
-            "error_html": render_to_string('app_manager/partials/create_form_prompt.html')
-        })
-    return json_response({
-        "error_html": render_to_string('app_manager/partials/build_errors.html', {
+
+    if ajax and "blank form" in [error.get('type') for error in errors]:
+        response_html = render_to_string('app_manager/partials/create_form_prompt.html')
+    else:
+        response_html = render_to_string('app_manager/partials/build_errors.html', {
             'app': app,
             'form': form,
             'build_errors': errors,
@@ -1561,9 +1678,16 @@ def validate_form_for_build(request, domain, app_id, unique_form_id):
             'domain': domain,
             'langs': langs,
             'lang': lang
-        }),
-    })
-    
+        })
+
+    if ajax:
+        return json_response({
+            'error_html': response_html,
+        })
+    else:
+        return HttpResponse(response_html)
+
+
 @no_conflict_require_POST
 @require_can_edit_apps
 def revert_to_copy(req, domain, app_id):
@@ -1634,9 +1758,10 @@ def download_file(req, domain, app_id, path):
         'txt': 'text/plain',
     }
     try:
-        response = HttpResponse(mimetype=mimetype_map[path.split('.')[-1]])
+        mimetype = mimetype_map[path.split('.')[-1]]
     except KeyError:
-        response = HttpResponse()
+        mimetype = None
+    response = HttpResponse(mimetype=mimetype)
 
     if path in ('CommCare.jad', 'CommCare.jar'):
         set_file_download(response, path)
@@ -1646,7 +1771,20 @@ def download_file(req, domain, app_id, path):
 
     try:
         assert req.app.copy_of
-        payload = req.app.fetch_attachment(full_path)
+        obj = CachedObject('{id}::{path}'.format(
+            id=req.app._id,
+            path=full_path,
+        ))
+        if not obj.is_cached():
+            payload = req.app.fetch_attachment(full_path)
+            if type(payload) is unicode:
+                payload = payload.encode('utf-8')
+            buffer = StringIO(payload)
+            metadata = {'content_type': mimetype}
+            obj.cache_put(buffer, metadata, timeout=0)
+        else:
+            _, buffer = obj.get()
+            payload = buffer.getvalue()
         response.write(payload)
         response['Content-Length'] = len(response.content)
         return response
@@ -1750,6 +1888,7 @@ def download_app_strings(req, domain, app_id, lang):
         req.app.create_app_strings(lang)
     )
 
+
 @safe_download
 def download_xform(req, domain, app_id, module_id, form_id):
     """
@@ -1760,8 +1899,14 @@ def download_xform(req, domain, app_id, module_id, form_id):
         return HttpResponse(
             req.app.fetch_xform(module_id, form_id)
         )
-    except (IndexError, XFormValidationError):
+    except IndexError:
         raise Http404()
+    except AppManagerException:
+        unique_form_id = req.app.get_module(module_id).get_form(form_id).unique_id
+        response = validate_form_for_build(req, domain, app_id, unique_form_id, ajax=False)
+        response.status_code = 404
+        return response
+
 
 @safe_download
 def download_user_registration(req, domain, app_id):
@@ -1930,7 +2075,7 @@ def _questions_for_form(request, form, langs):
 
     m = FakeMessages()
 
-    context = get_form_view_context(request, form, langs, None, messages=m)
+    _, context = get_form_view_context_and_template(request, form, langs, None, messages=m)
     xform_questions = context['xform_questions']
     return xform_questions, m.messages
 
@@ -2048,3 +2193,26 @@ def upload_translations(request, domain, app_id):
         messages.success(request, _("UI Translations Updated!"))
 
     return HttpResponseRedirect(reverse('app_languages', args=[domain, app_id]))
+
+
+common_module_validations = [
+    (lambda app: app.application_version == APP_V1,
+     _('Please upgrade you app to > 2.0 in order to add a Careplan module'))
+]
+
+
+FN = 'fn'
+VALIDATIONS = 'validations'
+MODULE_TYPE_MAP = {
+    'careplan': {
+        FN: _new_careplan_module,
+        VALIDATIONS: common_module_validations + [
+            (lambda app: app.has_careplan_module,
+             _('This application already has a Careplan module'))
+        ]
+    },
+    'commtrack': {
+        FN: _new_commtrack_module,
+        VALIDATIONS: common_module_validations
+    }
+}

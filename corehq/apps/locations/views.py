@@ -6,7 +6,7 @@ from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.locations.models import Location
 from corehq.apps.locations.forms import LocationForm
-from corehq.apps.locations.util import load_locs_json, location_hierarchy_config
+from corehq.apps.locations.util import load_locs_json, location_hierarchy_config, dump_locations
 from corehq.apps.commtrack.models import LocationType
 from corehq.apps.facilities.models import FacilityRegistry
 from django.core.urlresolvers import reverse
@@ -25,6 +25,8 @@ from soil import DownloadBase
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 from soil.heartbeat import heartbeat_enabled, is_alive
+from couchexport.models import Format
+
 
 
 @domain_admin_required
@@ -183,15 +185,12 @@ class LocationImportView(BaseLocationView):
 
         domain = args[0]
 
-        update_existing = bool(request.POST.get('update'))
-
         # stash this in soil to make it easier to pass to celery
         file_ref = expose_download(upload.read(),
                                    expiry=1*60*60)
         task = import_locations_async.delay(
             domain,
             file_ref.download_id,
-            update_existing
         )
         file_ref.set_task(task)
 
@@ -231,6 +230,15 @@ def location_importer_job_poll(request, domain, download_id, template="locations
     context['progress'] = download_data.get_progress()
     context['download_id'] = download_id
     return render_to_response(template, context_instance=context)
+
+
+def location_export(request, domain):
+    response = HttpResponse(mimetype=Format.from_format('xlsx').mimetype)
+    response['Content-Disposition'] = 'attachment; filename=locations.xlsx'
+
+    dump_locations(response, domain)
+
+    return response
 
 
 @domain_admin_required # TODO: will probably want less restrictive permission

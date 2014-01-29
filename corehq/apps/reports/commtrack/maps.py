@@ -9,7 +9,8 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
     name = ugettext_noop("Stock Status (map)")
     slug = "stockstatus_map"
 
-    fields = ['corehq.apps.reports.fields.AsyncLocationField']
+    fields = ['corehq.apps.reports.fields.AsyncLocationField',
+              'corehq.apps.reports.fields.SelectProgramField']
 
     data_source = {
         'adapter': 'report',
@@ -46,6 +47,8 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
 
         products = sorted(Product.view('commtrack/products', startkey=[self.domain], endkey=[self.domain, {}], include_docs=True),
                           key=lambda p: p.name)
+        if self.program_id:
+            products = filter(lambda c: c.program_id == self.program_id, products)
         for p in products:
             col_id = lambda c: '%s-%s' % (p._id, c)
 
@@ -129,7 +132,8 @@ class ReportingStatusMapReport(GenericMapReport, CommtrackReportMixin):
     name = ugettext_noop("Reporting Status (map)")
     slug = "reportingstatus_map"
 
-    fields = ['corehq.apps.reports.fields.AsyncLocationField']
+    fields = ['corehq.apps.reports.fields.AsyncLocationField',
+              'corehq.apps.reports.fields.SelectProgramField']
 
     data_source = {
         'adapter': 'report',

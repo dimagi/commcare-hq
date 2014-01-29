@@ -121,11 +121,14 @@ def saved_exports():
 def update_calculated_properties():
     es = get_es()
 
-    #todo: use some sort of ES scrolling/paginating
-    results = es.get(DOMAIN_INDEX + "/hqdomain/_search", data={"size": 99999})['hits']['hits']
+    q = {"filter": {"and": [
+        {"term": {"doc_type": "Domain"}},
+        {"term": {"is_snapshot": False}}
+    ]}}
+    results = stream_es_query(q=q, es_url=ES_URLS["domains"], size=999999, chunksize=500, fields=["name"])
     all_stats = _all_domain_stats()
     for r in results:
-        dom = r["_source"]["name"]
+        dom = r["fields"]["name"]
         calced_props = {
             "cp_n_web_users": int(all_stats["web_users"][dom]),
             "cp_n_active_cc_users": int(CALC_FNS["mobile_users"](dom)),

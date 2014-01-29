@@ -1,0 +1,27 @@
+{% extends 'sms/add_backend.html' %}
+{% load i18n %}
+
+{% block backend_specific %}
+<h4>{{ backend_generic_name }} {% trans "Settings" %}</h4>
+<div class="form-block">
+    <table>
+        <tbody>
+            <tr>
+                <td><label for="id_account_sid">{% trans "Account Sid" %}</label></td>
+                <td>{{ form.account_sid }}</td>
+                <td>{{ form.account_sid.errors }}</td>
+            </tr>
+            <tr>
+                <td><label for="id_auth_token">{% trans "Auth Token" %}</label></td>
+                <td>{{ form.auth_token }}</td>
+                <td>{{ form.auth_token.errors }}</td>
+            </tr>
+            <tr>
+                <td><label for="id_phone_number">{% trans "Phone Number" %}</label></td>
+                <td>{{ form.phone_number }}</td>
+                <td>{{ form.phone_number.errors }} {% trans "(For short codes, just enter the short code. For phone numbers, enter the number in international format, including + sign)" %}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+{% endblock %}

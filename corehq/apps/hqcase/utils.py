@@ -11,9 +11,7 @@ from casexml.apps.case.xml import V2
 from casexml.apps.phone.caselogic import get_related_cases
 from corehq.apps.hqcase.exceptions import CaseAssignmentError
 
-from receiver.util import spoof_submission
-
-from corehq.apps.receiverwrapper.util import get_submit_url
+from corehq.apps.receiverwrapper import submit_form_locally
 
 ALLOWED_CASE_IDENTIFIER_TYPES = [
     "contact_phone_number",
@@ -34,10 +32,9 @@ def submit_case_blocks(case_blocks, domain, username="system", user_id="",
         'username': username,
         'user_id': user_id,
     })
-    spoof_submission(
-        get_submit_url(domain),
-        form_xml,
-        hqsubmission=False,
+    submit_form_locally(
+        instance=form_xml,
+        domain=domain,
     )
 
 

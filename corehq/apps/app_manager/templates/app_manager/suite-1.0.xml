@@ -32,7 +32,7 @@
  {% endfor %}
 {% if not app.use_custom_suite %}
  {% for module in app.get_modules %}
-  {% for detail_type, detail in module.get_details %}
+  {% for detail_type, detail, enabled in module.get_details %}
    {% if detail.columns %}
     <detail id="m{{ module.id }}_{{ detail_type }}">
         <title><text><locale id="m{{ module.id }}.{{ detail_type }}.title"/></text></title>

@@ -34,6 +34,9 @@ class AuthTest(TestCase):
         )
         self.url = reverse(secure_post, args=[self.domain, self.app.get_id])
 
+    def tearDown(self):
+        self.user.delete()
+
     def _test_post(self, client, url, expected_auth_context):
         with open(self.file_path, "rb") as f:
             response = client.post(url, {"xml_submission_file": f})
@@ -66,3 +69,29 @@ class AuthTest(TestCase):
             'authenticated': False,
             'user_id': None,
         })
+
+    def test_bad_noauth(self):
+        """
+        if someone submits a form in noauth mode, but it creates or updates
+        cases not owned by demo_user, the form must be rejected
+        """
+        file_path = os.path.join(
+            os.path.dirname(__file__), "data", 'form_with_case.xml'
+        )
+        client = django.test.Client()
+        with open(file_path, "rb") as f:
+            response = client.post(self.url + '?authtype=noauth',{
+                "xml_submission_file": f
+            })
+        self.assertEqual(response.status_code, 403)
+
+    def test_case_noauth(self):
+        file_path = os.path.join(
+            os.path.dirname(__file__), "data", 'form_with_demo_case.xml'
+        )
+        client = django.test.Client()
+        with open(file_path, "rb") as f:
+            response = client.post(self.url + '?authtype=noauth',{
+                "xml_submission_file": f
+            })
+        self.assertEqual(response.status_code, 201)

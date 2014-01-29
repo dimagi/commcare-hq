@@ -1,0 +1,2 @@
+class LinkedSupplyPointNotFoundError(Exception):
+    pass

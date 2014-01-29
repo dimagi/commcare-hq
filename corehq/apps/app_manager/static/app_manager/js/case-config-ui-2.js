@@ -1,72 +1,9 @@
 /*globals $, COMMCAREHQ */
 
+var action_names = ["open_case", "update_case", "close_case", "case_preload"];
+
 var CaseConfig = (function () {
     "use strict";
-
-
-    var utils = {
-        getDisplay: function (question, MAXLEN) {
-            return utils.getLabel(question, MAXLEN) + " (" + question.value + ")";
-        },
-        getLabel: function (question, MAXLEN) {
-            return utils.truncateLabel((question.repeat ? '- ' : '') + question.label, question.tag == 'hidden' ? ' (Hidden)' : '', MAXLEN);
-        },
-        truncateLabel: function (label, suffix, MAXLEN) {
-            suffix = suffix || "";
-            var MAXLEN = MAXLEN || 40,
-                maxlen = MAXLEN - suffix.length;
-            return ((label.length <= maxlen) ? (label) : (label.slice(0, maxlen) + "...")) + suffix;
-        },
-        escapeQuotes: function (string) {
-            return string.replace(/'/g, "&apos;").replace(/"/g, "&quot;");
-        },
-        action_is_active: function (action) {
-            return action && action.condition && (action.condition.type === "if" || action.condition.type === "always");
-        }
-    };
-
-    ko.bindingHandlers.questionsSelect = {
-        init: function (element, valueAccessor) {
-            $(element).addClass('input-large');
-            $(element).after('<div class="alert alert-error"></div>');
-        },
-        update: function (element, valueAccessor, allBindingsAccessor) {
-            var optionObjects = ko.utils.unwrapObservable(valueAccessor());
-            var allBindings = ko.utils.unwrapObservable(allBindingsAccessor());
-            var value = ko.utils.unwrapObservable(allBindings.value);
-            var $warning = $(element).next();
-            if (value && !_.some(optionObjects, function (option) {
-                        return option.value === value;
-                    })) {
-                var option = {
-                    label: 'Unidentified Question (' + value + ')',
-                    value: value
-                };
-                optionObjects = [option].concat(optionObjects);
-                $warning.show().text('We cannot find this question in the form. It is likely that you deleted or renamed the question. Please choose a valid question from the dropdown.');
-            } else {
-                $warning.hide();
-            }
-            _.delay(function () {
-                $(element).select2({
-                    placeholder: 'Select a Question',
-                    data: {
-                        results: _(optionObjects).map(function (o) {
-                            return {id: o.value, text: utils.getDisplay(o), question: o};
-                        })
-                    },
-                    formatSelection: function (o) {
-                        return utils.getDisplay(o.question);
-                    },
-                    formatResult: function (o) {
-                        return utils.getDisplay(o.question, 90);
-                    },
-                    dropdownCssClass: 'bigdrop'
-                });
-            });
-            allBindings.optstrText = utils.getLabel;
-        }
-    };
 
 
     var CaseConfig = function (params) {
@@ -90,26 +27,7 @@ var CaseConfig = (function () {
         self.caseType = params.caseType;
         self.reserved_words = params.reserved_words;
         self.moduleCaseTypes = params.moduleCaseTypes;
-        self.propertiesMap = {};
-        self.utils = utils;
-
-        self.setPropertiesMap = function (propertiesMap) {
-            _(self.moduleCaseTypes).each(function (case_type) {
-                if (!_(propertiesMap).has(case_type)) {
-                    propertiesMap[case_type] = [];
-                }
-                propertiesMap[case_type].sort();
-            });
-            _(propertiesMap).each(function (properties, case_type) {
-                if (_(self.propertiesMap).has(case_type)) {
-                    self.propertiesMap[case_type](properties);
-                } else {
-                    self.propertiesMap[case_type] = ko.observableArray(properties);
-                }
-            });
-            self.propertiesMap = ko.mapping.fromJS(params.propertiesMap);
-        };
-        self.setPropertiesMap(params.propertiesMap);
+        self.propertiesMap = ko.mapping.fromJS(params.propertiesMap);
 
         self.saveButton = COMMCAREHQ.SaveButton.init({
             unsavedMessage: "You have unchanged case settings",
@@ -169,6 +87,13 @@ var CaseConfig = (function () {
             });
         };
 
+        self.getQuestions = function (filter, excludeHidden, includeRepeat) {
+            return CC_UTILS.getQuestions(self.questions, filter, excludeHidden, includeRepeat);
+        };
+        self.getAnswers = function (condition) {
+            return CC_UTILS.getAnswers(self.questions, condition);
+        };
+
         self.change = function () {
             self.saveButton.fire('change');
             self.ensureBlankProperties();
@@ -186,7 +111,6 @@ var CaseConfig = (function () {
             });
         }
     };
-    CaseConfig.prototype = utils;
 
 
     var CaseConfigViewModel = function (caseConfig) {
@@ -294,7 +218,8 @@ var CaseConfig = (function () {
             } catch (e) {
                 self.case_name = null;
             }
-            self.suggestedProperties = ko.computed(self.suggestedProperties, self);
+            self.suggestedPreloadProperties = ko.computed(self.suggestedProperties, self);
+            self.suggestedSaveProperties = ko.computed(self.suggestedProperties, self);
 
             self.addProperty = function () {
                 var property = CaseProperty.wrap({
@@ -720,46 +645,6 @@ var CaseConfig = (function () {
         }
     };
 
-    var action_names = ["open_case", "update_case", "close_case", "case_preload"];
-    CaseConfig.prototype.getQuestions = function (filter, excludeHidden, includeRepeat) {
-        // filter can be "all", or any of "select1", "select", or "input" separated by spaces
-        var i, options = [],
-            q;
-        excludeHidden = excludeHidden || false;
-        includeRepeat = includeRepeat || false;
-        filter = filter.split(" ");
-        if (!excludeHidden) {
-            filter.push('hidden');
-        }
-        for (i = 0; i < this.questions.length; i += 1) {
-            q = this.questions[i];
-            if (filter[0] === "all" || filter.indexOf(q.tag) !== -1) {
-                if (includeRepeat || !q.repeat) {
-                    options.push(q);
-                }
-            }
-        }
-        return options;
-    };
-    CaseConfig.prototype.getAnswers = function (condition) {
-        var i, q, o, value = condition.question,
-            found = false,
-            options = [];
-        for (i = 0; i < this.questions.length; i += 1) {
-            q = this.questions[i];
-            if (q.value === value) {
-                found = true;
-                break;
-            }
-        }
-        if (found && q.options) {
-            for (i = 0; i < q.options.length; i += 1) {
-                o = q.options[i];
-                options.push(o);
-            }
-        }
-        return options;
-    };
     return {
         CaseConfig: CaseConfig
     };

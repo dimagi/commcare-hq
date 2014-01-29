@@ -1,4 +1,5 @@
-from .models import CommCareBuild
+from .models import CommCareBuild, CommCareBuildConfig
+
 
 def get_all_versions(versions=None):
     """
@@ -10,3 +11,7 @@ def get_all_versions(versions=None):
     results = db.view('builds/all', group_level=1).all()
     versions += [result['key'][0] for result in results]
     return sorted(list(set(versions)))
+
+
+def get_default_build_spec(application_version):
+    return CommCareBuildConfig.fetch().get_default(application_version)

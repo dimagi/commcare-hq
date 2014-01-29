@@ -9,6 +9,7 @@ from django.template.loader import render_to_string
 from django.shortcuts import render
 
 import pytz
+from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.reports.models import ReportConfig
 from corehq.apps.reports import util
 from corehq.apps.reports.datatables import DataTablesHeader
@@ -20,7 +21,7 @@ from couchexport.shortcuts import export_response
 from dimagi.utils.couch.pagination import DatatablesParams
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.modules import to_function
-from dimagi.utils.web import json_request
+from dimagi.utils.web import json_request, json_response
 from dimagi.utils.parsing import string_to_boolean
 from corehq.apps.reports.cache import CacheableRequestMixIn, request_cache
 
@@ -567,6 +568,12 @@ class GenericReportView(CacheableRequestMixIn):
         )
 
     @property
+    def excel_response(self):
+        file = StringIO()
+        export_from_tables(self.export_table, file, self.export_format)
+        return file
+
+    @property
     @request_cache("filters", expiry=60 * 10)
     def filters_response(self):
         """
@@ -590,7 +597,7 @@ class GenericReportView(CacheableRequestMixIn):
             Intention: Not to be overridden in general.
             Renders the json version for the report, if available.
         """
-        return HttpResponse(json.dumps(self.json_dict), content_type="application/json")
+        return json_response(self.json_dict)
 
     @property
     @request_cache("export")

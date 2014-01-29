@@ -22,7 +22,7 @@ from corehq.apps.users.models import CouchUser, CommCareUser
 
 from corehq.apps.api.resources import v0_1, v0_3, JsonResource, DomainSpecificResourceMixin, dict_object, SimpleSortableResourceMixin
 from corehq.apps.api.es import XFormES, CaseES, ESQuerySet, es_search
-from corehq.apps.api.fields import ToManyDocumentsField, UseIfRequested, ToManyDictField, ToManyListDictField
+from corehq.apps.api.fields import ToManyDocumentsField, UseIfRequested, ToManyDictField, ToManyListDictField, CallableCharField
 from corehq.apps.api.serializers import CommCareCaseSerializer
 
 # By the time a test case is running, the resource is already instantiated,
@@ -252,10 +252,10 @@ class SingleSignOnResource(JsonResource, DomainSpecificResourceMixin):
         return user_resource.create_response(request, bundle, response_class=HttpResponse)
 
     def get_list(self, bundle, **kwargs):
-        return HttpForbidden()
+        return HttpResponseForbidden()
 
     def get_detail(self, bundle, **kwargs):
-        return HttpForbidden()
+        return HttpResponseForbidden()
 
     class Meta(v0_1.CustomResourceMeta):
         authentication = Authentication() 
@@ -324,6 +324,16 @@ class ApplicationResource(JsonResource, DomainSpecificResourceMixin):
         detail_allowed_methods = ['get']
         resource_name = 'application'
 
+def bool_to_yesno(value):
+    if value is None:
+        return None
+    elif value:
+        return 'yes'
+    else:
+        return 'no'
+
+def get_yesno(attribute):
+    return lambda obj: bool_to_yesno(getattr(obj, attribute, None))
 
 class HOPECaseResource(CommCareCaseResource):
     """
@@ -332,29 +342,33 @@ class HOPECaseResource(CommCareCaseResource):
 
     # For the curious, the attribute='<exact thing I just typed>' is mandatory,
     # and refers to a property on the HOPECase object
-    all_anc_doses_given = fields.BooleanField(attribute='_HOPE_all_anc_doses_given', readonly=True, null=True)
-    all_dpt1_opv1_hb1_doses_given = fields.BooleanField(attribute='_HOPE_all_dpt1_opv1_hb1_doses_given', readonly=True, null=True)
-    all_dpt2_opv2_hb2_doses_given = fields.BooleanField(attribute='_HOPE_all_dpt2_opv2_hb2_doses_given', readonly=True, null=True)
-    all_dpt3_opv3_hb3_doses_given = fields.BooleanField(attribute='_HOPE_all_dpt3_opv3_hb3_doses_given', readonly=True, null=True)
-    all_ifa_doses_given = fields.BooleanField(attribute='_HOPE_all_ifa_doses_given', readonly=True, null=True)
-    all_tt_doses_given = fields.BooleanField(attribute='_HOPE_all_tt_doses_given', readonly=True, null=True)
+    all_anc_doses_given = CallableCharField(attribute=get_yesno('_HOPE_all_anc_doses_given'), readonly=True, null=True)
+    all_dpt1_opv1_hb1_doses_given = CallableCharField(attribute=get_yesno('_HOPE_all_dpt1_opv1_hb1_doses_given'),
+                                                     readonly=True, null=True)
+    all_dpt2_opv2_hb2_doses_given = CallableCharField(attribute=get_yesno('_HOPE_all_dpt2_opv2_hb2_doses_given'),
+                                                     readonly=True, null=True)
+    all_dpt3_opv3_hb3_doses_given = CallableCharField(attribute=get_yesno('_HOPE_all_dpt3_opv3_hb3_doses_given'),
+                                                     readonly=True, null=True)
+    all_ifa_doses_given = CallableCharField(attribute=get_yesno('_HOPE_all_ifa_doses_given'),
+                                           readonly=True, null=True)
+    all_tt_doses_given = CallableCharField(attribute=get_yesno('_HOPE_all_tt_doses_given'),
+                                          readonly=True, null=True)
     asha_id = fields.CharField(attribute='_HOPE_asha_id', readonly=True, null=True)
     bcg_indicator = fields.BooleanField(attribute='_HOPE_bcg_indicator', readonly=True, null=True)
-    bpl_indicator = fields.BooleanField(attribute='_HOPE_bpl_indicator', readonly=True, null=True)
     child_name = fields.CharField(attribute='_HOPE_child_name', readonly=True, null=True)
-    delivery_time = fields.CharField(attribute='_HOPE_delivery_time', readonly=True, null=True)
+    delivery_nature = fields.CharField(attribute='_HOPE_delivery_nature', readonly=True, null=True)
     delivery_type = fields.CharField(attribute='_HOPE_delivery_type', readonly=True, null=True)
     dpt_1_indicator = fields.BooleanField(attribute='_HOPE_dpt_1_indicator', readonly=True, null=True)
     existing_child_count = fields.IntegerField(attribute='_HOPE_existing_child_count', readonly=True, null=True)
     ifa1_date = fields.CharField(attribute='_HOPE_ifa1_date', readonly=True, null=True)
     ifa2_date = fields.CharField(attribute='_HOPE_ifa2_date', readonly=True, null=True)
     ifa3_date = fields.CharField(attribute='_HOPE_ifa3_date', readonly=True, null=True)
-    measles_dose_given = fields.BooleanField(attribute='_HOPE_measles_dose_given', readonly=True, null=True)
+    measles_dose_given = CallableCharField(attribute=get_yesno('_HOPE_measles_dose_given'),
+                                          readonly=True, null=True)
     number_of_visits = fields.IntegerField(attribute='_HOPE_number_of_visits', readonly=True, null=True)
     opv_1_indicator = fields.BooleanField(attribute='_HOPE_opv_1_indicator', readonly=True, null=True)
-    patient_reg_num = fields.CharField(attribute='_HOPE_patient_reg_num', readonly=True, null=True)
     registration_date = fields.CharField(attribute='_HOPE_registration_date', readonly=True, null=True)
-    tubal_ligation = fields.CharField(attribute='_HOPE_tubal_ligation', readonly=True, null=True)
+    tubal_ligation = CallableCharField(attribute=get_yesno('_HOPE_tubal_ligation'), readonly=True, null=True)
 
     def obj_get(self, bundle, **kwargs):
         return get_object_or_not_exist(HOPECase, kwargs['pk'], kwargs['domain'],

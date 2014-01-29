@@ -40,16 +40,15 @@ class TestHOPECaseResource(TestCase):
         hope_case._HOPE_all_ifa_doses_given
         hope_case._HOPE_all_tt_doses_given
         hope_case._HOPE_bcg_indicator
-        hope_case._HOPE_bpl_indicator
+        hope_case._HOPE_delivery_nature
         hope_case._HOPE_delivery_type
         hope_case._HOPE_existing_child_count
         hope_case._HOPE_ifa1_date
         hope_case._HOPE_ifa2_date
         hope_case._HOPE_ifa3_date
         hope_case._HOPE_measles_dose_given
-        hope_case._HOPE_num_visits
+        hope_case._HOPE_number_of_visits
         hope_case._HOPE_opv_1_indicator
-        hope_case._HOPE_patient_reg_num
         hope_case._HOPE_registration_date
         hope_case._HOPE_time_of_birth
         hope_case._HOPE_tubal_ligation

@@ -3,8 +3,8 @@ def decompress(compressed):
     """Decompress a list of output ks to a string."""
 
     # Build the dictionary.
-    dict_size = 256
-    dictionary = dict((chr(i), chr(i)) for i in xrange(dict_size))
+    dict_size = 0x10000
+    dictionary = dict((unichr(i), unichr(i)) for i in xrange(dict_size))
     # in Python 3: dictionary = {chr(i): chr(i) for i in range(dict_size)}
 
     w = result = compressed.pop(0)

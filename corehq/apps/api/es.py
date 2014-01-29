@@ -2,21 +2,25 @@ import logging
 import simplejson
 import six
 import copy
+
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator, classonlymethod
+from django.views.generic import View
+
+from no_exceptions.exceptions import Http400
+from dimagi.utils.logging import notify_exception
+
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.reports.filters.forms import FormsByApplicationFilter
-from corehq.elastic import get_es
-from django.views.generic import View
+from corehq.elastic import get_es, es_query, ES_URLS
 from corehq.pillows.base import restore_property_dict, VALUE_TAG
-from dimagi.utils.logging import notify_exception
-from corehq.apps.reports.exceptions import BadRequestError
 
 
 DEFAULT_SIZE = 10
 
-class ESUserError(BadRequestError):
+class ESUserError(Http400):
     pass
+
 
 class ESView(View):
     """
@@ -50,7 +54,8 @@ class ESView(View):
     http_method_names = ['get', 'post', 'head', ]
 
     def __init__(self, domain):
-        self.domain=domain.lower()
+        super(ESView, self).__init__()
+        self.domain = domain.lower()
         self.es = get_es()
 
     def head(self, *args, **kwargs):
@@ -168,24 +173,24 @@ class ESView(View):
             query['filter']['and'].append({"term": {k: v}})
         return query
 
-    def get(self, *args, **kwargs):
+    def get(self, request, *args, **kwargs):
         """
         Very basic querying based upon GET parameters.
         todo: apply GET params as lucene query_string params to base_query
         """
-        size = self.request.GET.get('size', DEFAULT_SIZE)
-        start = self.request.GET.get('start', 0)
+        size = request.GET.get('size', DEFAULT_SIZE)
+        start = request.GET.get('start', 0)
         query_results = self.run_query(self.base_query(start=start, size=size))
         query_output = simplejson.dumps(query_results, indent=self.indent)
         response = HttpResponse(query_output, content_type="application/json")
         return response
 
-    def post(self, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         """
         More powerful ES querying using POST params.
         """
         try:
-            raw_post = self.request.raw_post_data
+            raw_post = request.raw_post_data
             raw_query = simplejson.loads(raw_post)
         except Exception, ex:
             content_response = dict(message="Error parsing query request", exception=ex.message)
@@ -260,6 +265,54 @@ class XFormES(ESView):
         return es_results
 
 
+class UserES(ESView):
+    """
+    self.run_query accepts a structured elasticsearch query
+    """
+
+    index = "hqusers"
+
+    def validate_query(self, query):
+        if 'password' in query['fields']:
+            raise ESUserError("You cannot include password in the results")
+
+    def run_query(self, es_query, es_type=None):
+        """
+        Must be called with a "fields" parameter
+        Returns the raw query json back, or None if there's an error
+        """
+
+        logging.info("ESlog: [%s.%s] ESquery: %s" % (
+            self.__class__.__name__, self.domain, simplejson.dumps(es_query)))
+
+        self.validate_query(es_query)
+
+        es_base = self.es[self.index] if es_type is None else \
+            self.es[self.index][es_type]
+        es_results = es_base.get('_search', data=es_query)
+
+        if 'error' in es_results:
+            msg = "Error in elasticsearch query [%s]: %s\nquery: %s" % (
+                self.index, es_results['error'], es_query)
+            notify_exception(None, message=msg)
+            return None
+
+        hits = []
+        for res in es_results['hits']['hits']:
+            if '_source' in res:
+                raise ESUserError(
+                    "This query does not support full document lookups")
+            res_domain = res['fields'].get('domain_membership.domain', None)
+
+            # security check
+            if res_domain == self.domain:
+                hits.append(res)
+            else:
+                logging.info(
+                    "Requester domain %s does not match result domain %s" % (
+                    self.domain, res_domain))
+        es_results['hits']['hits'] = hits
+        return es_results
 
 
 def report_term_filter(terms, mapping):

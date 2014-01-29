@@ -48,7 +48,7 @@
                 </translation>
             </itext>
             <bind calculate="/data/meta/timeEnd"
-                  nodeset="/data/case/@date_modified" type="dateTime"/>
+                  nodeset="/data/case/@date_modified" type="xsd:dateTime"/>
             <bind calculate="/data/meta/userID" nodeset="/data/case/@user_id"/>
             <setvalue event="xforms-ready" ref="/data/case/@case_id"
                       value="uuid()"/>

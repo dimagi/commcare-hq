@@ -1,10 +1,13 @@
 from datetime import datetime
+from couchdbkit import ResourceNotFound
 
 import dateutil.parser
 from dateutil.relativedelta import relativedelta
 
+from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.users.models import CommCareUser
+
 
 class HOPECase(CommCareCase):
     '''
@@ -13,6 +16,8 @@ class HOPECase(CommCareCase):
     registration_xmlns = 'http://bihar.commcarehq.org/pregnancy/registration'
     bp_xmlns = 'http://bihar.commcarehq.org/pregnancy/bp'
     delivery_xmlns = 'http://bihar.commcarehq.org/pregnancy/del'
+    ebf_xmlns = 'http://bihar.commcarehq.org/pregnancy/ebf'
+    pnc_xmlns = 'http://bihar.commcarehq.org/pregnancy/pnc'
 
     def forms_with_xmlns(self, xmlns):
         return sorted([form for form in self.get_forms() if form.xmlns == xmlns],
@@ -23,9 +28,30 @@ class HOPECase(CommCareCase):
     #
 
     @property
+    @memoized
     def registration_form(self):
         forms = self.forms_with_xmlns(self.registration_xmlns)
         return forms[0] if forms else None
+
+    @property
+    @memoized
+    def delivery_forms(self):
+        return self.forms_with_xmlns(self.delivery_xmlns)
+
+    @property
+    @memoized
+    def bp_forms(self):
+        return self.forms_with_xmlns(self.bp_xmlns)
+
+    @property
+    @memoized
+    def ebf_forms(self):
+        return self.forms_with_xmlns(self.ebf_xmlns)
+
+    @property
+    @memoized
+    def pnc_forms(self):
+        return self.forms_with_xmlns(self.pnc_xmlns)
 
     def nth_dpt_opv_hb_doses_given(self, n):
         dpt = 'dpt_%d_date' % (n+1)
@@ -46,17 +72,20 @@ class HOPECase(CommCareCase):
 
     @property
     def _HOPE_admission_date(self):
-        forms = self.forms_with_xmlns(self.delivery_xmlns)
-        if forms:
-            return forms[0].get_form.get('adm_date')
+        if self.delivery_forms:
+            return self.delivery_forms[0].form.get('adm_date')
         else:
             return None
 
+    @property
+    @memoized
     def user(self):
         user_id = self.user_id
-
         if user_id:
-            return CommCareUser.get(user_id)
+            try:
+                return CommCareUser.get(user_id)
+            except ResourceNotFound:
+                return None
         else:
             return None
 
@@ -92,8 +121,7 @@ class HOPECase(CommCareCase):
 
     @property
     def _HOPE_area_indicator(self):
-        form = self.registration_form
-        return form.get_form.get('area_indicator') if form else None
+        return self.registration_form.form.get('area_indicator') if self.registration_form else None
 
     @property
     def _HOPE_asha_id(self):
@@ -109,14 +137,6 @@ class HOPECase(CommCareCase):
         return bool(self.get_case_property('bcg_date'))
 
     @property
-    def _HOPE_bpl_indicator(self):
-        form = self.registration_form
-        if form:
-            return form.get_form.get('bpl_indicator')
-        else:
-            return None
-
-    @property
     def _HOPE_child_name(self):
         if self.type == 'cc_bihar_newborn':
             return self.name
@@ -124,24 +144,46 @@ class HOPECase(CommCareCase):
             return None
 
     @property
+    def _HOPE_delivery_nature(self):
+        add = self.get_case_property('add')
+
+        if not add:
+            return None
+        elif self.delivery_forms:
+            return self.delivery_forms[-1].form.get('delivery_nature')
+        else:
+            return None
+
+    @property
     def _HOPE_delivery_type(self):
-        return 'home' if self.get_case_property('birth_place') == 'home' else 'institution'
+        if not self.get_case_property('add'):
+            return None
+        else:
+            birth_place = self.get_case_property('birth_place').strip()
+            if birth_place == 'home':
+                return 'home'
+            elif birth_place == '':
+                return None
+            else:
+                return 'institutional'
 
     @property
     def _HOPE_dpt_1_indicator(self):
         return bool(self.get_case_property('dpt_1_date'))
 
+
     @property
     def _HOPE_education(self):
-        forms = self.forms_with_xmlns(self.registration_xmlns)
-        if forms:
-            return forms[0].get_form.get('education')
+        if self.registration_form:
+            return self.registration_form.form.get('education')
         else:
             return None
 
     @property
     def _HOPE_existing_child_count(self):
-        num_girls = self.get_case_property('num_girls') or 0
+        reg_form = self.registration_form
+
+        num_girls = reg_form.form.get('num_girls', 0) if reg_form else 0
         num_boys = self.get_case_property('num_boys') or 0
 
         # The form fields are strings; the coercion to int is deliberately
@@ -160,12 +202,24 @@ class HOPECase(CommCareCase):
 
     @property
     def _HOPE_ifa_issue_forms(self):
-        return [form for form in self.forms_with_xmlns(self.bp_xmlns)
-                if form.get_form.get('if_tablet_issued')]
+        ifa_issue_forms = []
+
+        for form in self.bp_forms:
+            ifa_tablets_issued = form.form.get('bp1', {}).get('ifa_tablets_issued')
+
+            try:
+                ifa_tablets_issued = int(ifa_tablets_issued)
+            except (ValueError, TypeError):
+                ifa_tablets_issued = 0
+
+            if ifa_tablets_issued > 0:
+                ifa_issue_forms.append(form)
+
+        return ifa_issue_forms
 
     @property
     def _HOPE_ifa_issue_dates(self):
-        return [form.date_modified for form in self._HOPE_ifa_issue_forms]
+        return [form.received_on for form in self._HOPE_ifa_issue_forms]
 
     @property
     def _HOPE_ifa1_date(self):
@@ -184,40 +238,30 @@ class HOPECase(CommCareCase):
         return bool(self.get_case_property('measles_date'))
 
     @property
-    def _HOPE_num_visits(self):
-        visit_dates = [self.get_case_property('visit_%d_date' % (n+1)) for n in range(0,7)]
-        return len([date for date in visit_dates if date])
+    def _HOPE_number_of_visits(self):
+        add = self.get_case_property('add')
+
+        if not add:
+            return 0
+
+        return len([form for form in self.pnc_forms + self.ebf_forms
+                    if (form.form.get("meta")['timeEnd'].date() - add).days <= 42])
 
     @property
     def _HOPE_opv_1_indicator(self):
         return bool(self.get_case_property('opv_1_date'))
 
     @property
-    def _HOPE_patient_reg_num(self):
-        forms = self.forms_with_xmlns(self.delivery_xmlns)
-        if forms:
-            return forms[0].get_form.get('patient_reg_form')
+    def _HOPE_registration_date(self):
+        if self.delivery_forms:
+            return  self.delivery_forms[-1].form.get('registration_date')
         else:
             return None
 
     @property
-    def _HOPE_registration_date(self):
-        forms = self.forms_with_xmlns(self.registration_xmlns)
-
-        if not forms:
-            return ''
-        else:
-            reg_form = forms[0]
-            if reg_form.get_form.get('jsy_beneficiary', False):
-                return self.get_server_modified_date()
-            else:
-                return ''
-
-    @property
     def _HOPE_time_of_birth(self):
-        forms = self.forms_with_xmlns(self.delivery_xmlns)
-        if forms:
-            return forms[0].get_form.get('time_of_birth')
+        if self.delivery_forms:
+            return self.delivery_forms[0].form.get('time_of_birth')
         else:
             return None
 

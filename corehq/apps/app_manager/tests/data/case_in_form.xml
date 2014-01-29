@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+	<h:head>
+		<h:title>Untitled Form</h:title>
+		<model>
+			<instance>
+				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/7C07141C-3131-4934-8461-E58F664DFDCC" uiVersion="1" version="1" name="Untitled Form">
+                    <question1 />
+                    <question2 />
+                    <question3 />
+
+
+                    <!-- repeat context test -->
+					<hi />
+					<question15 jr:template="">
+						<question16 />
+						<question21 />
+						<question25 />
+					</question15>
+                    <thing />
+
+                    <!-- a data node that doesn't have a control node 
+                    should show up as 'hidden' in get_questions() -->
+                    <datanode />
+				</data>
+            </instance>
+            <bind nodeset="/data/question1" type="xsd:string"
+                constraint="1 + instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/child_property_1"
+                jr:constraintMsg="jr:itext('question1-constraintMsg')"
+                relevant="instance('casedb')/casedb/case[@case_id=instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/index/parent]/parent_property_1 + 1 + instance('casedb')/casedb/case[@case_id=instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/index/parent]/parent_property_1" />
+            <bind nodeset="/data/question2" type="xsd:string" />
+            <bind nodeset="/data/question3" type="xsd:string" />
+
+            <!-- repeat context test -->
+            <bind nodeset="/data/hi" />
+			<bind nodeset="/data/question15" />
+            <bind nodeset="/data/question15/question16" type="xsd:string" constraint="1" />
+			<bind nodeset="/data/question15/question21" />
+			<bind nodeset="/data/question15/question25" type="xsd:int" />
+            <bind nodeset="/data/thing" type="xsd:string" />
+            <bind nodeset="/data/datanode" />
+
+			<itext>
+                <translation lang="en" default="">
+                    <!-- tests reference parsing with various "edge" cases :-P -->
+					<text id="question1-label">
+                        <value>label en <output value="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/nonexistent_child_property" /> label en</value>
+					</text>
+					<text id="question1-hint">
+                        <value><output value="instance('casedb')/casedb/case[@case_id=instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/index/parent]/parent_property_1" /> hint message en</value>
+                    </text>
+                    <text id="question1-constraintMsg">
+                        <value>constraint message en <output value="instance('casedb')/casedb/case[@case_id=instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/index/parent]/parent_property_1"/></value>
+                    </text>
+                    <text id="question2-label">
+                        <value>label en <output value="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/nonexistent_child_property" /> label en</value>
+                    </text>
+                    <text id="question3-label">
+                        <value>no references here!</value>
+                    </text>
+                    <text id="hi-label">
+                        <value>woo</value>
+                    </text>
+                    <text id="jr:itext('question15-label')">
+                        <value>woo</value>
+                    </text>
+                    <text id="jr:itext('question16-label')">
+                        <value>woo</value>
+                    </text>
+                    <text id="jr:itext('question21-label')">
+                        <value>woo</value>
+                    </text>
+                    <text id="jr:itext('question21-item22-label')">
+                        <value>woo</value>
+                    </text>
+                    <text id="jr:itext('question25-label')">
+                        <value>woo</value>
+                    </text>
+                    <text id="jr:itext('thing-label')">
+                        <value>woo</value>
+                    </text>
+				</translation>
+				<translation lang="es">
+                    <text id="question1-label">
+                        <!-- make sure multiple references to the same property in one message get replaced -->
+                        <!-- make sure output ref gets recognized as well as output value, from legacy handmade forms -->
+                        <value>label es <output value="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/nonexistent_child_property" />
+                            <output value="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/nonexistent_child_property" />
+                            <output ref="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/child_property_1" />
+                        </value>
+					</text>
+					<text id="question1-hint">
+						<value>hint message</value>
+					</text>
+                    <text id="question1-constraintMsg">
+                        <value>constraint message en</value>
+                    </text>
+				</translation>
+			</itext>
+        </model>
+        <setvalue ref="/data/question3" event="xforms-ready" 
+            value="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/child_property_1"/>
+	</h:head>
+	<h:body>
+		<input ref="/data/question1">
+			<label ref="jr:itext('question1-label')" />
+			<hint ref="jr:itext('question1-hint')" />
+        </input>
+        <input ref="/data/question2">
+            <label ref="jr:itext('question2-label')" />
+        </input>
+        <input ref="/data/question3">
+            <label ref="jr:itext('question3-label')" />
+        </input>
+
+        <trigger ref="/data/hi">
+			<label ref="jr:itext('hi-label')" />
+		</trigger>
+		<group>
+			<label ref="jr:itext('question15-label')" />
+			<repeat nodeset="/data/question15" jr:count="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/gender">
+				<input ref="/data/question15/question16">
+					<label ref="jr:itext('question16-label')" />
+				</input>
+				<select1 ref="/data/question15/question21">
+					<label ref="jr:itext('question21-label')" />
+					<item>
+						<label ref="jr:itext('question21-item22-label')" />
+						<value>item22</value>
+					</item>
+				</select1>
+				<input ref="/data/question15/question25">
+					<label ref="jr:itext('question25-label')" />
+				</input>
+			</repeat>
+		</group>
+		<input ref="/data/thing">
+			<label ref="jr:itext('thing-label')" />
+		</input>
+
+	</h:body>
+</h:html>
+

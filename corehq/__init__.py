@@ -9,15 +9,17 @@ from corehq.apps.reports.commtrack import standard as commtrack_reports
 from corehq.apps.reports.commtrack import maps as commtrack_maps
 import hashlib
 from dimagi.utils.modules import to_function
+import logging
 
-from django.utils.translation import ugettext_noop as _
+from django.utils.translation import ugettext_noop as _, ugettext_lazy
 
 def REPORTS(project):
     from corehq.apps.reports.standard.cases.basic import CaseListReport
+    from corehq.apps.reports.standard.cases.careplan import make_careplan_reports
     from corehq.apps.reports.standard.maps import DemoMapReport, DemoMapReport2, DemoMapCaseList
 
     reports = [
-        (_("Monitor Workers"), (
+        (ugettext_lazy("Monitor Workers"), (
             monitoring.WorkerActivityReport,
             monitoring.DailyFormStatsReport,
             monitoring.SubmissionsByFormReport,
@@ -26,25 +28,26 @@ def REPORTS(project):
             monitoring.FormCompletionVsSubmissionTrendsReport,
             monitoring.WorkerActivityTimes,
         )),
-        (_("Inspect Data"), (
+        (ugettext_lazy("Inspect Data"), (
             inspect.SubmitHistory, CaseListReport,
         )),
-        (_("Manage Deployments"), (
+        (ugettext_lazy("Manage Deployments"), (
             deployments.ApplicationStatusReport,
             receiverwrapper.SubmissionErrorReport,
             phonelog.FormErrorReport,
             phonelog.DeviceLogDetailsReport
         )),
-        (_("Demos for Previewers"), (
+        (ugettext_lazy("Demos for Previewers"), (
             DemoMapReport, DemoMapReport2, DemoMapCaseList,
         )),
     ]
     
     if project.commtrack_enabled:
-        reports.insert(0, (_("Commtrack"), (
+        reports.insert(0, (ugettext_lazy("Commtrack"), (
             commtrack_reports.ReportingRatesReport,
             commtrack_reports.CurrentStockStatusReport,
             commtrack_reports.AggregateStockStatusReport,
+            commtrack_reports.RequisitionReport,
             psi_prototype.VisitReport,
             psi_prototype.SalesAndConsumptionReport,
             psi_prototype.CumulativeSalesAndConsumptionReport,
@@ -53,6 +56,13 @@ def REPORTS(project):
             commtrack_maps.StockStatusMapReport,
             commtrack_maps.ReportingStatusMapReport,
         )))
+
+    if project.has_careplan:
+        from corehq.apps.app_manager.models import CareplanConfig
+        config = CareplanConfig.for_domain(project.name)
+        if config:
+            cp_reports = tuple(make_careplan_reports(config))
+            reports.insert(0, (ugettext_lazy("Care Plans"), cp_reports))
 
     messaging_reports = (
         sms.MessagesReport,
@@ -64,7 +74,7 @@ def REPORTS(project):
     messaging_reports += getattr(Domain.get_module_by_name(project.name), 'MESSAGING_REPORTS', ())
 
     messaging = (lambda project, user: (
-        _("Logs") if project.commtrack_enabled else _("Messaging")), messaging_reports)
+        ugettext_lazy("Logs") if project.commtrack_enabled else ugettext_lazy("Messaging")), messaging_reports)
 
     if project.commconnect_enabled:
         reports.insert(0, messaging)
@@ -74,11 +84,11 @@ def REPORTS(project):
     reports.extend(dynamic_reports(project))
 
     return reports
-    
+
 def dynamic_reports(project):
     """include any reports that can be configured/customized with static parameters for this domain"""
     for reportset in project.dynamic_reports:
-        yield (reportset.section_title, [make_dynamic_report(report, [reportset.section_title]) for report in reportset.reports])
+        yield (reportset.section_title, filter(None, (make_dynamic_report(report, [reportset.section_title]) for report in reportset.reports)))
 
 def make_dynamic_report(report_config, keyprefix):
     """create a report class the descends from a generic report class but has specific parameters set"""
@@ -96,7 +106,13 @@ def make_dynamic_report(report_config, keyprefix):
         def show_in_navigation(cls, domain=None, project=None, user=None):
             return user and user.is_previewer()
         kwargs['show_in_navigation'] = show_in_navigation
-    metaclass = to_function(report_config.report)
+
+    try:
+        metaclass = to_function(report_config.report, failhard=True)
+    except StandardError:
+        logging.error('dynamic report config for [%s] is invalid' % report_config.report)
+        return None
+
     # dynamically create a report class
     return type('DynamicReport%s' % slug, (metaclass,), kwargs)
 
@@ -166,12 +182,27 @@ INDICATOR_ADMIN_INTERFACES = (
 
 from corehq.apps.announcements.interface import (
     ManageGlobalHQAnnouncementsInterface,
-    ManageReportAnnouncementsInterface)
+    ManageReportAnnouncementsInterface,
+)
 
 ANNOUNCEMENTS_ADMIN_INTERFACES = (
     (_("Manage Announcements"), (
         ManageGlobalHQAnnouncementsInterface,
-        ManageReportAnnouncementsInterface
+        ManageReportAnnouncementsInterface,
+    )),
+)
+
+from corehq.apps.accounting.interface import (
+    AccountingInterface,
+    SubscriptionInterface,
+    SoftwarePlanInterface,
+)
+
+ACCOUNTING_ADMIN_INTERFACES = (
+    (_("Accounting Admin"), (
+        AccountingInterface,
+        SubscriptionInterface,
+        SoftwarePlanInterface,
     )),
 )
 

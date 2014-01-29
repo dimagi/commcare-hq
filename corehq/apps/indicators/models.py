@@ -50,14 +50,15 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
 
     def __str__(self):
         return "\n\n%(class_name)s - Modified %(last_modified)s\n %(slug)s, domain: %(domain)s," \
-            " version: %(version)s, namespace: %(namespace)s." % {
+            " version: %(version)s, namespace: %(namespace)s. ID: %(indicator_id)s." % {
                 'class_name': self.__class__.__name__,
                 'slug': self.slug,
                 'domain': self.domain,
                 'version': self.version,
                 'namespace': self.namespace,
-                'last_modified': (self.last_modified.strftime('%M %B %Y at %H:%M')
-                                  if self.last_modified else "Ages Ago")
+                'last_modified': (self.last_modified.strftime('%m %B %Y at %H:%M')
+                                  if self.last_modified else "Ages Ago"),
+                'indicator_id': self._id,
             }
 
     @classmethod
@@ -92,14 +93,15 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
     @classmethod
     def increment_or_create_unique(cls, namespace, domain, slug=None, version=None, **kwargs):
         """
-            If an indicator with the same namespace, domain, and version exists, create a new indicator with the
-            version number incremented.
+        If an indicator with the same namespace, domain, and version exists, create a new indicator with the
+        version number incremented.
         """
         couch_key = cls._generate_couch_key(
             namespace=namespace,
             domain=domain,
             slug=slug,
-            reverse=True
+            reverse=True,
+            **kwargs
         )
 
         existing_indicator = cls.view(
@@ -128,6 +130,7 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
         return new_indicator
 
     @classmethod
+    @memoized
     def get_current(cls, namespace, domain, slug, version=None, wrap=True, **kwargs):
         couch_key = cls._generate_couch_key(
             namespace=namespace,
@@ -137,13 +140,15 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
             reverse=True,
             **kwargs
         )
-        doc = get_db().view(cls.indicator_list_view(),
+        results = cache_core.cached_view(cls.get_db(), cls.indicator_list_view(),
+            cache_expire=60*60*6,
             reduce=False,
             include_docs=False,
             descending=True,
             **couch_key
-        ).first()
-        if wrap:
+        )
+        doc = results[0] if results else None
+        if wrap and doc:
             try:
                 doc_class = to_function(doc.get('value', "%s.%s" % (cls._class_path, cls.__name__)))
                 return doc_class.get(doc.get('id'))
@@ -171,6 +176,7 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
         return [item.get('key',[])[-1] for item in data]
 
     @classmethod
+    @memoized
     def get_all(cls, namespace, domain, version=None, **kwargs):
         all_slugs = cls.all_slugs(namespace, domain, **kwargs)
         all_indicators = list()
@@ -365,7 +371,7 @@ class CouchIndicatorDef(DynamicIndicatorDefinition):
                 reduce=reduce
             )
 
-        return cache_core.cached_view(self.get_db(), self.couch_view, cache_expire=60*60, **view_kwargs)
+        return cache_core.cached_view(self.get_db(), self.couch_view, cache_expire=60*60*6, **view_kwargs)
 
     def get_raw_results(self, user_ids, datespan=False, date_group_level=False, reduce=False):
         """
@@ -711,7 +717,7 @@ class FormDataAliasIndicatorDefinition(FormIndicatorDefinition):
     _admin_crud_class = FormAliasIndicatorAdminCRUDManager
 
     def get_value(self, doc):
-        form_data = doc.get_form
+        form_data = doc.form
         return self.get_from_form(form_data, self.question_id)
 
     @classmethod
@@ -737,7 +743,7 @@ class CaseDataInFormIndicatorDefinition(FormIndicatorDefinition):
         return None
 
     def _get_related_case(self, xform):
-        form_data = xform.get_form
+        form_data = xform.form
         related_case_id = form_data.get('case', {}).get('@case_id')
         if related_case_id:
             try:
@@ -817,7 +823,7 @@ class FormDataInCaseIndicatorDefinition(CaseIndicatorDefinition, FormDataIndicat
         forms = self.get_related_forms(doc)
         for form in forms:
             if isinstance(form, XFormInstance):
-                form_data = form.get_form
+                form_data = form.form
                 existing_value[form.get_id] = {
                     'value': self.get_from_form(form_data, self.question_id),
                     'timeEnd': self.get_from_form(form_data, 'meta.timeEnd'),

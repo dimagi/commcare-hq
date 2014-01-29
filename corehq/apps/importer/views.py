@@ -83,7 +83,7 @@ def excel_config(request, domain):
                                  group=True,
                                  startkey=[domain],
                                  endkey=[domain,{}]).all():
-        if not row['key'][1] in case_types_from_cases:
+        if row['key'][1] and not row['key'][1] in case_types_from_cases:
             case_types_from_cases.append(row['key'][1])
 
     # for this we just want cases that have data but aren't being used anymore
@@ -186,7 +186,7 @@ def excel_fields(request, domain):
 @require_POST
 @require_can_edit_data
 def excel_commit(request, domain):
-    config = ImporterConfig(request)
+    config = ImporterConfig.from_request(request)
 
     excel_id = request.session.get(EXCEL_SESSION_ID)
 

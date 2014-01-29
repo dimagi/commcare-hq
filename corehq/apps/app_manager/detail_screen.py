@@ -1,7 +1,6 @@
 from corehq.apps.app_manager import suite_xml as sx
 from corehq.apps.app_manager.util import is_sort_only_column
-from corehq.apps.app_manager.xform import CaseXPath, IndicatorXpath
-from corehq.apps.app_manager.xpath import dot_interpolate
+from .xpath import dot_interpolate, CaseXPath, IndicatorXpath
 
 CASE_PROPERTY_MAP = {
     # IMPORTANT: if you edit this you probably want to also edit
@@ -332,6 +331,14 @@ class Filter(HideShortColumn):
     @property
     def filter_xpath(self):
         return dot_interpolate(self.column.filter_xpath, self.xpath)
+
+
+@register_format_type('calculate')
+class Calculate(FormattedDetailColumn):
+
+    @property
+    def xpath_function(self):
+        return dot_interpolate(self.column.calc_xpath, self.xpath)
 
 
 @register_format_type('address')

@@ -11,7 +11,8 @@ from corehq.apps.domain.views import (EditBasicProjectInfoView, EditDeploymentPr
                                       ExchangeSnapshotsView, CreateNewExchangeSnapshotView,
                                       ManageProjectMediaView, DomainForwardingOptionsView,
                                       AddRepeaterView, EditInternalDomainInfoView, EditInternalCalculationsView,
-                                      BasicCommTrackSettingsView, AdvancedCommTrackSettingsView, OrgSettingsView)
+                                      BasicCommTrackSettingsView, AdvancedCommTrackSettingsView, OrgSettingsView,
+                                      DomainSubscriptionView, ChangeDomainPlanView)
 
 #
 # After much reading, I discovered that Django matches URLs derived from the environment
@@ -77,6 +78,8 @@ domain_settings = patterns(
     url(r'^$', DefaultProjectSettingsView.as_view(), name=DefaultProjectSettingsView.urlname),
     url(r'^my_settings/$', EditMyProjectSettingsView.as_view(), name=EditMyProjectSettingsView.urlname),
     url(r'^basic/$', EditBasicProjectInfoView.as_view(), name=EditBasicProjectInfoView.urlname),
+    url(r'^subscription/change/$', ChangeDomainPlanView.as_view(), name=ChangeDomainPlanView.urlname),
+    url(r'^subscription/$', DomainSubscriptionView.as_view(), name=DomainSubscriptionView.urlname),
     url(r'^deployment/$', EditDeploymentProjectInfoView.as_view(), name=EditDeploymentProjectInfoView.urlname),
     url(r'^forwarding/$', DomainForwardingOptionsView.as_view(), name=DomainForwardingOptionsView.urlname),
     url(r'^forwarding/new/(?P<repeater_type>\w+)/$', AddRepeaterView.as_view(), name=AddRepeaterView.urlname),

@@ -104,7 +104,7 @@ class SnapshotApplicationForm(forms.Form):
         ]
 
 class SnapshotSettingsForm(SnapshotSettingsMixin):
-    title = CharField(label=ugettext_noop("Title"), required=True)
+    title = CharField(label=ugettext_noop("Title"), required=True, max_length=100)
     project_type = CharField(label=ugettext_noop("Project Category"), required=True,
         help_text=ugettext_noop("e.g. MCH, HIV, etc."))
     license = ChoiceField(label=ugettext_noop("License"), required=True, choices=LICENSES.items(),
@@ -114,7 +114,7 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
     description = CharField(label=ugettext_noop("Long Description"), required=False, widget=forms.Textarea,
         help_text=ugettext_noop("A high-level overview of your project as a whole"))
     short_description = CharField(label=ugettext_noop("Short Description"), required=False,
-        max_length=200, widget=forms.Textarea,
+        widget=forms.Textarea(attrs={'maxlength': 200}),
         help_text=ugettext_noop("A brief description of your project (max. 200 characters)"))
     share_multimedia = BooleanField(label=ugettext_noop("Share all multimedia?"), required=False,
         help_text=ugettext_noop("This will allow any user to see and use all multimedia in this project"))
@@ -277,7 +277,9 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
     )
     is_test = ChoiceField(
         label=_("Test Project"),
-        choices=tf_choices('Test', _('Real'))
+        choices=(('true', _('Test')),
+                 ('false', _('Real')),
+                 ('none', _('Not Sure')))
     )
     commconnect_enabled = BooleanField(
         label=_("CommConnect Enabled"),
@@ -343,7 +345,7 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
     call_center_case_type = CharField(
         label=_("Call Center Case Type"),
         required=False,
-        help_text=_("Enter the case type to be used for call center workers")
+        help_text=_("Enter the case type to be used for FLWs in call center apps")
     )
     restrict_superusers = BooleanField(
         label=_("Restrict Superuser Access"),
@@ -457,7 +459,7 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
 
             domain.project_type = self.cleaned_data['project_type']
             domain.customer_type = self.cleaned_data['customer_type']
-            domain.is_test = self.cleaned_data['is_test'] == 'true'
+            domain.is_test = self.cleaned_data['is_test']
             domain.commconnect_enabled = self.cleaned_data.get(
                     'commconnect_enabled', False)
             domain.survey_management_enabled = self.cleaned_data.get('survey_management_enabled', False)
@@ -510,12 +512,15 @@ def tuple_of_copies(a_list, blank=True):
 class DomainInternalForm(forms.Form, SubAreaMixin):
     sf_contract_id = CharField(label=ugettext_noop("Salesforce Contract ID"), required=False)
     sf_account_id = CharField(label=ugettext_noop("Salesforce Account ID"), required=False)
-    commcare_edition = ChoiceField(label=ugettext_noop("Commcare Edition"), required=False,
-                                   choices=tuple_of_copies(["standard", "plus", "advanced"]))
+    commcare_edition = ChoiceField(label=ugettext_noop("CommCare Plan"), initial="community", required=False,
+                                   choices=tuple([(p, p) for p in
+                                                  ["community", "standard", "pro", "advanced", "enterprise"]]))
     services = ChoiceField(label=ugettext_noop("Services"), required=False,
                            choices=tuple_of_copies(["basic", "plus", "full", "custom"]))
     initiative = forms.MultipleChoiceField(label=ugettext_noop("Initiative"), widget=forms.CheckboxSelectMultiple(),
                                            choices=tuple_of_copies(DATA_DICT["initiatives"], blank=False), required=False)
+    workshop_region = CharField(label=ugettext_noop("Workshop Region"), required=False,
+        help_text=ugettext_noop("e.g. US, LAC, SA, Sub-Saharan Africa, Southeast Asia, etc."))
     project_state = ChoiceField(label=ugettext_noop("Project State"), required=False,
                                 choices=tuple_of_copies(["POC", "transition", "at-scale"]))
     self_started = ChoiceField(label=ugettext_noop("Self Started?"), choices=tf_choices('Yes', 'No'), required=False)
@@ -533,6 +538,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
     project_manager = CharField(label=ugettext_noop("Project Manager's Email"), required=False)
 
     def save(self, domain):
+        kw = {"workshop_region": self.cleaned_data["workshop_region"]} if self.cleaned_data["workshop_region"] else {}
         domain.update_internal(sf_contract_id=self.cleaned_data['sf_contract_id'],
             sf_account_id=self.cleaned_data['sf_account_id'],
             commcare_edition=self.cleaned_data['commcare_edition'],
@@ -551,6 +557,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             platform=self.cleaned_data['platform'],
             project_manager=self.cleaned_data['project_manager'],
             phone_model=self.cleaned_data['phone_model'],
+            **kw
         )
 
 

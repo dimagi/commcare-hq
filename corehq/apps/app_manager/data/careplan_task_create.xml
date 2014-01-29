@@ -1,0 +1,62 @@
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms"
+	xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	xmlns:jr="http://openrosa.org/javarosa">
+	<h:head>
+		<h:title>New Careplan Task</h:title>
+		<model>
+			<instance>
+				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
+					xmlns="http://dev.commcarehq.org/careplan/task/create"
+					uiVersion="1" version="1" name="New Careplan Task">
+					
+					<task_repeat jr:template="">
+					    <g/>
+					    <name />
+                        <description />
+                        <date_followup />
+					</task_repeat>
+				</data>
+			</instance>
+
+			<bind nodeset="/data/task_repeat" />
+			<bind nodeset="/data/task_repeat/name" type="xsd:string" required="true()" />
+			<bind nodeset="/data/task_repeat/description" type="xsd:string"/>
+			<bind nodeset="/data/task_repeat/date_followup" type="xsd:date" />
+
+			<itext>
+				<translation lang="en" default="">
+					<text id="task_repeat-label">
+						<value>Care Plan Tasks</value>
+					</text>
+					<text id="name-label">
+						<value>Give this task a short name which will be used to refer to it later</value>
+					</text>
+					<text id="description-label">
+						<value>Describe this the task and what needs to be done for it to be accomplished</value>
+					</text>
+					<text id="date_followup-label">
+						<value>When will you follow up to check on progress towards this task?</value>
+					</text>
+				</translation>
+			</itext>
+		</model>
+	</h:head>
+	<h:body>
+		<group>
+			<label ref="jr:itext('task_repeat-label')" />
+			<repeat nodeset="/data/task_repeat">
+				<group ref="/data/task_repeat/g" appearance="field-list">
+				<input ref="/data/task_repeat/name">
+					<label ref="jr:itext('name-label')" />
+				</input>
+				<input ref="/data/task_repeat/description">
+					<label ref="jr:itext('description-label')" />
+				</input>
+				<input ref="/data/task_repeat/date_followup">
+					<label ref="jr:itext('date_followup-label')" />
+				</input>
+				</group>
+			</repeat>
+		</group>
+	</h:body>
+</h:html>

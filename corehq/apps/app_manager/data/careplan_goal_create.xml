@@ -1,0 +1,52 @@
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms"
+	xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	xmlns:jr="http://openrosa.org/javarosa">
+	<h:head>
+		<h:title>New Careplan Goal</h:title>
+		<model>
+			<instance>
+				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
+					xmlns="http://dev.commcarehq.org/careplan/goal/create"
+					uiVersion="1" version="1" name="New Careplan Goal">
+					<name />
+					<description />
+					<date_followup />
+
+                    <group/>
+				</data>
+			</instance>
+
+			<bind nodeset="/data/name" type="xsd:string" required="true()" />
+			<bind nodeset="/data/description" type="xsd:string" required="false()" />
+			<bind nodeset="/data/date_followup" type="xsd:date" required="true()" />
+
+			<itext>
+				<translation lang="en" default="">
+					<text id="name-label">
+						<value>Give this goal a short name which will be used to refer to it later</value>
+					</text>
+					<text id="description-label">
+						<value>Describe the goal that the patient wants to reach</value>
+					</text>
+					<text id="date_followup-label">
+						<value>When are they hoping to reach this goal?</value>
+					</text>
+				</translation>
+			</itext>
+
+		</model>
+	</h:head>
+	<h:body>
+		<group ref="/data/group" appearance="field-list">
+			<input ref="/data/name">
+				<label ref="jr:itext('name-label')" />
+			</input>
+			<input ref="/data/description">
+				<label ref="jr:itext('description-label')" />
+			</input>
+			<input ref="/data/date_followup">
+				<label ref="jr:itext('date_followup-label')" />
+			</input>
+		</group>
+	</h:body>
+</h:html>

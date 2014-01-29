@@ -1,0 +1,35 @@
+{% extends 'accounting/subscriptions_base.html' %}
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static 'accounting/js/stay-on-tab.js' %}"></script>
+{% endblock %}
+
+{% block main_column %}
+    <ul class="nav nav-tabs" id="user-settings-tabs">
+        <li><a href="#subscription" data-toggle="tab">{% trans "Subscription" %}</a></li>
+        <li><a href="#credits" data-toggle="tab">{% trans "Credits" %}</a></li>
+        <li><a href="#actions" data-toggle="tab">{% trans "Permanent Actions" %}</a></li>
+    </ul>
+
+    <div class="tab-content">
+        <div class="tab-pane" id="subscription">
+            {{ block.super }}
+        </div>
+
+        <div class="tab-pane" id="credits">
+            {% include 'accounting/credits_tab.html' %}
+        </div>
+
+        <div class="tab-pane" id="actions">
+            <form class="form form-horizontal" method="post">
+                {% crispy cancel_form %}
+            </form>
+            {% if subscription_canceled %}
+                Subscription has been canceled.
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

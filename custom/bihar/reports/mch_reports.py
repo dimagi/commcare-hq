@@ -1,12 +1,15 @@
 from django.utils.translation import ugettext as _
+from corehq.apps.groups.models import Group
 from corehq.apps.reports.standard.cases.basic import CaseListReport
-from corehq.apps.api.es import ReportCaseES
-from corehq.apps.reports.generic import GenericTabularReport
+from corehq.apps.api.es import CaseES
 
-from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
+from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 from dimagi.utils.decorators.memoized import memoized
 from custom.bihar.reports.display import MCHMotherDisplay, MCHChildDisplay
+from dimagi.utils.timezones import utils as tz_utils
+import pytz
+from custom.bihar.utils import get_all_owner_ids_from_group
 
 
 class MCHBaseReport(CustomProjectReport, CaseListReport):
@@ -22,24 +25,36 @@ class MCHBaseReport(CustomProjectReport, CaseListReport):
 
     @property
     def case_filter(self):
-        group = self.request_params.get('group', '')
+        group_id = self.request_params.get('group', '')
         filters = []
 
-        if group:
-            filters.append({'term': {'owner_id': group}})
+        if group_id:
+            group = Group.get(group_id)
+            users_in_group = get_all_owner_ids_from_group(group)
+            if users_in_group:
+                or_stm = []
+                for user_id in users_in_group:
+                    or_stm.append({'term': {'owner_id': user_id}})
+                filters.append({"or": or_stm})
+            else:
+                filters.append({'term': {'owner_id': group_id}})
 
         return {'and': filters} if filters else {}
 
     @property
     @memoized
     def case_es(self):
-        return ReportCaseES(self.domain)
+        return CaseES(self.domain)
 
     @property
     @memoized
     def rendered_report_title(self):
         return self.name
 
+    def date_to_json(self, date):
+        return tz_utils.adjust_datetime_to_timezone\
+            (date, pytz.utc.zone, self.timezone.zone).strftime\
+            ('%d/%m/%Y') if date else ""
 
 
 class MotherMCHRegister(MCHBaseReport):
@@ -235,7 +250,7 @@ class ChildMCHRegister(MCHBaseReport):
                                    DataTablesColumnGroup(
                                        _("Beneficiary Information"),
                                        DataTablesColumn(_("Child Name"), sortable=False),
-                                       DataTablesColumn(_("Father an Mother Name"), sortable=False),
+                                       DataTablesColumn(_("Father and Mother Name"), sortable=False),
                                        DataTablesColumn(_("Mother's MCTS ID"), sortable=False),
                                        DataTablesColumn(_("Gender"), sortable=False),
                                        DataTablesColumn(_("City/ward/village"), sortable=False),

@@ -5,6 +5,7 @@ from couchdbkit.ext.django.schema import *
 from django.utils.translation import ugettext as _
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
+from corehq import Domain
 
 from corehq.apps.commtrack import const
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -18,7 +19,8 @@ from copy import copy
 from django.dispatch import receiver
 from corehq.apps.locations.signals import location_created, location_edited
 from corehq.apps.locations.models import Location
-from corehq.apps.commtrack.const import RequisitionActions, RequisitionStatus
+from corehq.apps.commtrack.const import RequisitionActions, RequisitionStatus, USER_LOCATION_OWNER_MAP_TYPE
+from corehq.apps.commtrack.exceptions import LinkedSupplyPointNotFoundError
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -69,8 +71,30 @@ class Program(Document):
     domain = StringProperty()
     name = StringProperty()
     code = StringProperty()
-    description = StringProperty()
 
+    @classmethod
+    def by_domain(cls, domain, wrap=True):
+        """
+        Gets all programs in a domain.
+        """
+        kwargs = dict(
+            view_name='commtrack/programs',
+            startkey=[domain],
+            endkey=[domain, {}],
+            include_docs=True
+        )
+        if wrap:
+            return Program.view(**kwargs)
+        else:
+            return [row["doc"] for row in Program.view(wrap_doc=False, **kwargs)]
+
+    @classmethod
+    def get_by_code(cls, domain, code):
+        result = cls.view("commtrack/program_by_code",
+                          key=[domain, code],
+                          include_docs=True,
+                          limit=1).first()
+        return result
 
 class Product(Document):
     """
@@ -93,20 +117,61 @@ class Product(Document):
         return result
 
     @classmethod
-    def by_domain(cls, domain, wrap=True):
-        """
-        Gets all products in a domain.
-        """
-        kwargs = dict(
-            view_name='commtrack/products',
-            startkey=[domain],
+    def by_program_id(cls, domain, prog_id, wrap=True, **kwargs):
+        kwargs.update(dict(
+            view_name='commtrack/product_by_program_id',
+            startkey=[domain, prog_id],
             endkey=[domain, {}],
             include_docs=True
-        )
+        ))
         if wrap:
             return Product.view(**kwargs)
         else:
             return [row["doc"] for row in Product.view(wrap_doc=False, **kwargs)]
+
+    @classmethod
+    def by_domain(cls, domain, wrap=True, **kwargs):
+        """
+        Gets all products in a domain.
+        """
+        kwargs.update(dict(
+            view_name='commtrack/products',
+            startkey=[domain],
+            endkey=[domain, {}],
+            include_docs=True
+        ))
+        if wrap:
+            return Product.view(**kwargs)
+        else:
+            return [row["doc"] for row in Product.view(wrap_doc=False, **kwargs)]
+
+
+def product_fixture_generator(user, version, last_sync):
+    if not Domain.get_by_name(user.domain).commtrack_enabled:
+        return []
+    root = ElementTree.Element('fixture',
+                               attrib={'id': 'commtrack:products',
+                                       'user_id': user.user_id})
+    products = ElementTree.Element('products')
+    root.append(products)
+    for product_data in Product.by_domain(user.domain):
+        product = (ElementTree.Element('product',
+                                       {'id': product_data.get_id}))
+        products.append(product)
+        product_fields = ['name',
+                          'unit',
+                          'code',
+                          'description',
+                          'category',
+                          'program_id',
+                          'cost']
+        for product_field in product_fields:
+            field = ElementTree.Element(product_field)
+            field.text = unicode(getattr(product_data, product_field) or '')
+            product.append(field)
+
+    return [root]
+
 
 class CommtrackActionConfig(DocumentSchema):
     action_type = StringProperty() # a value in ACTION_TYPES (could be converted to enum?)
@@ -195,6 +260,16 @@ class OpenLMISConfig(DocumentSchema):
 
     using_requisitions = BooleanProperty(default=False) # whether openlmis handles our requisitions for us
 
+    @property
+    def is_configured(self):
+        return True if self.enabled and self.url and self.password and self.username else False
+
+class AlertConfig(DocumentSchema):
+    stock_out_facilities = BooleanProperty(default=False)
+    stock_out_commodities = BooleanProperty(default=False)
+    stock_out_rates = BooleanProperty(default=False)
+    non_report = BooleanProperty(default=False)
+
 
 class CommtrackConfig(Document):
 
@@ -222,11 +297,14 @@ class CommtrackConfig(Document):
     consumption_config = SchemaProperty(ConsumptionConfig)
     stock_levels_config = SchemaProperty(StockLevelsConfig)
 
+    # configured on Subscribe Sms page
+    alert_config = SchemaProperty(AlertConfig)
+
     @classmethod
     def for_domain(cls, domain):
         result = cls.view("commtrack/domain_config",
                           key=[domain],
-                          include_docs=True).one()
+                          include_docs=True).first()
         return result
 
     def all_actions(self):
@@ -520,7 +598,8 @@ class SupplyPointCase(CommCareCase):
 
     @classmethod
     def get_by_location(cls, location):
-        return cls.view('commtrack/supply_point_by_loc',
+        return cls.view(
+            'commtrack/supply_point_by_loc',
             key=[location.domain, location._id],
             include_docs=True,
             classes={'CommCareCase': SupplyPointCase},
@@ -902,6 +981,14 @@ class RequisitionCase(CommCareCase):
         return data
 
     @classmethod
+    def get_by_external_id(cls, domain, external_id):
+        return cls.view('hqcase/by_domain_external_id',
+            key=[domain, external_id],
+            include_docs=True, reduce=False,
+            classes={'CommCareCase': RequisitionCase}
+        ).all()
+
+    @classmethod
     def get_display_config(cls):
         return [
             {
@@ -1033,6 +1120,135 @@ class StockReport(object):
                                    startkey=startkey,
                                    endkey=endkey,
                                    include_docs=True)]
+
+
+class CommTrackUser(CommCareUser):
+    @classmethod
+    def wrap(cls, data):
+        # lazy migration from commtrack_location to locations
+        if 'commtrack_location' in data:
+            original_location = data['commtrack_location']
+            del data['commtrack_location']
+
+            instance = super(CommTrackUser, cls).wrap(data)
+
+            try:
+                original_location_object = Location.get(original_location)
+            except ResourceNotFound:
+                # if there was bad data in there before, we can ignore it
+                return instance
+            instance.set_locations([original_location_object])
+
+            return instance
+        else:
+            return super(CommTrackUser, cls).wrap(data)
+
+    @classmethod
+    def by_domain(cls, domain, is_active=True, reduce=False, limit=None, skip=0, strict=False, doc_type=None):
+        doc_type = doc_type or 'CommCareUser'
+        return super(CommTrackUser, cls).by_domain(domain, is_active, reduce, limit, skip, strict, doc_type)
+
+    def get_location_map_case(self):
+        try:
+            from corehq.apps.commtrack.util import location_map_case_id
+            return CommCareCase.get(location_map_case_id(self))
+        except ResourceNotFound:
+            return None
+
+    @property
+    def location(self):
+        """ Legacy method. To be removed when the site supports multiple locations """
+        if self.locations:
+            return self.locations[0]
+        else:
+            return None
+
+    @property
+    def locations(self):
+        mapping = self.get_location_map_case()
+
+        if mapping:
+            return [SupplyPointCase.wrap(index.referenced_case.to_json()).location for index in mapping.indices]
+        else:
+            return []
+
+    def supply_point_index_mapping(self, supply_point, clear=False):
+        if supply_point:
+            return {
+                'supply_point-' + supply_point._id:
+                (
+                    supply_point.type,
+                    supply_point._id if not clear else ''
+                )
+            }
+        else:
+            raise LinkedSupplyPointNotFoundError(
+                "There was no linked supply point for the location."
+            )
+
+    def add_location(self, location):
+        sp = location.linked_supply_point()
+
+        from corehq.apps.commtrack.util import submit_mapping_case_block
+        submit_mapping_case_block(self, self.supply_point_index_mapping(sp))
+
+    def clear_locations(self):
+        mapping = self.get_location_map_case()
+        if mapping:
+            mapping.delete()
+
+    def submit_location_block(self, caseblock):
+        submit_case_blocks(
+            ElementTree.tostring(caseblock.as_xml()),
+            self.domain,
+            self.username,
+            self._id
+        )
+
+    def set_locations(self, locations):
+        if set([loc._id for loc in locations]) == set([loc._id for loc in self.locations]):
+            # don't do anything if the list passed is the same
+            # as the users current locations. the check is a little messy
+            # as we can't compare the location objects themself
+            return
+
+        self.clear_locations()
+
+        if not locations:
+            return
+
+        index = {}
+        for location in locations:
+            sp = SupplyPointCase.get_by_location(location)
+            index.update(self.supply_point_index_mapping(sp))
+
+        from corehq.apps.commtrack.util import location_map_case_id
+        caseblock = CaseBlock(
+            create=True,
+            case_type=USER_LOCATION_OWNER_MAP_TYPE,
+            case_id=location_map_case_id(self),
+            version=V2,
+            owner_id=self._id,
+            index=index
+        )
+
+        self.submit_location_block(caseblock)
+
+    def remove_location(self, location):
+        sp = SupplyPointCase.get_by_location(location)
+
+        mapping = self.get_location_map_case()
+
+        if mapping and location._id in [loc._id for loc in self.locations]:
+            caseblock = CaseBlock(
+                create=False,
+                case_id=mapping._id,
+                version=V2,
+                index=self.supply_point_index_mapping(sp, True)
+            )
+
+            self.submit_location_block(caseblock)
+
 
 def sync_location_supply_point(loc):
     # circular import

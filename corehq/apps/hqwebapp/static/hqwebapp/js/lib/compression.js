@@ -9,8 +9,8 @@ var LZW = {
             wc,
             w = "",
             result = [],
-            dictSize = 256;
-        for (i = 0; i < 256; i += 1) {
+            dictSize = 0x10000;
+        for (i = 0; i < dictSize; i += 1) {
             dictionary[String.fromCharCode(i)] = i;
         }
 

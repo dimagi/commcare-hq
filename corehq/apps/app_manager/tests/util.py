@@ -1,5 +1,7 @@
 import json
 import os
+from corehq.apps.builds.models import CommCareBuild
+
 
 class TestFileMixin(object):
 
@@ -18,3 +20,9 @@ class TestFileMixin(object):
 
     def get_xml(self, name):
         return self.get_file(name, 'xml')
+
+
+def add_build(version, build_number):
+    path = os.path.join(os.path.dirname(__file__), "jadjar")
+    jad_path = os.path.join(path, 'CommCare_%s_%s.zip' % (version, build_number))
+    CommCareBuild.create_from_zip(jad_path, version, build_number)

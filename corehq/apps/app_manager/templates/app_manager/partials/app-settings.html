@@ -111,7 +111,7 @@ todo fix
 {% endcomment %}
 
 <div class="tab-pane" id="commcare-settings">
-    <div class="clearfix" data-bind="saveButton2: state, saveOptions: saveOptions"></div>
+    <div class="clearfix" id="settings-save-btn" data-bind="saveButton2: state, saveOptions: saveOptions"></div>
     <form class="form-horizontal" data-bind="foreach: sections">
         <fieldset data-bind="visible: notEmpty">
             <legend>
