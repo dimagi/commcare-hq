@@ -85,7 +85,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
         current_stock: The current stock level
         consumption: The current monthly consumption rate
         months_remaining: The number of months remaining until stock out
-        category: The status category. See corehq.apps.commtrack.models.SupplyPointProductCase#stock_category
+        category: The status category. See casexml.apps.stock.models.StockState.stock_category
 
     """
     slug = 'agg_stock_status'
