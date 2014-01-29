@@ -84,7 +84,8 @@
                 form: formSrc,
                 langs: {{ app.langs|JSON }},
                 formName: "{{ form.name|trans:app.langs }}",
-                displayLanguage: {{ lang|JSON }}
+                displayLanguage: {{ lang|JSON }},
+                sessionid: {{ sessionid|JSON }}
             });
             formdesigner.on('form-saved', function (args) {
                 var response = args.response;
