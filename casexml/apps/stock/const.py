@@ -1,4 +1,4 @@
-COMMTRACK_REPORT_XMLNS = 'http://commtrack.org/stock_report'
+COMMTRACK_REPORT_XMLNS = 'http://commcarehq.org/ledger/v1'
 
 SECTION_TYPE_STOCK = 'stock'
 
