@@ -33,13 +33,6 @@
     </div>
 {% endif %}
 {% if show_commtrack %}
-    <script type="text/javascript">
-        $(function () {
-            $("#include_requisition_module").change(function () {
-                $('#requisition_settings').toggle($(this).is(':checked'));
-            });
-        });
-    </script>
     <div id="commtrack-module-dialog" class="modal hide fade">
         <div class="modal-header">
             <a class="close" data-dismiss="modal">×</a>
@@ -51,48 +44,14 @@
                 <div class="control-group">
                     <label class="control-label" for="name">{% trans "Module name" %}</label>
                     <div class="controls">
-                        <input type="text" name="name" class="input-medium" value="Manage Supply Points"/>
+                        <input type="text" name="name" class="input-medium" value=""/>
                     </div>
                 </div>
                 <div class="control-group">
-                    <label class="control-label" for="sp_case_type">{% trans "Supply point case type" %}</label>
+                    <label class="control-label" for="ct_case_type">{% trans "Case type" %}</label>
                     <div class="controls">
-                        <input type="text" name="sp_case_type" class="input-medium"  data-provide="typeahead" autocomplete="off"
+                        <input type="text" name="ct_case_type" class="input-medium"  data-provide="typeahead" autocomplete="off"
                            data-source="[&quot;{{ app.get_case_types|join:"&quot;,&quot;" }}&quot;]"/>
-                    </div>
-                </div>
-                <div class="control-group">
-                    <label class="control-label" for="include_requisition_module">{% trans "Include requisitions module" %}</label>
-                    <div class="controls">
-                        <input id="include_requisition_module" type="checkbox" name="include_requisition_module" value="true">
-                    </div>
-                </div>
-                <div id="requisition_settings" style="display: none;">
-                    <hr/>
-                    <div class="control-group">
-                        <label class="control-label" for="requisition_name">{% trans "Requisition module name" %}</label>
-                        <div class="controls">
-                            <input type="text" name="requisition_name" class="input-medium" value="Requisitions"/>
-                        </div>
-                    </div>
-                    <div class="control-group">
-                        <label class="control-label" for="requisition_case_type">{% trans "Requisition case type" %}</label>
-                        <div class="controls">
-                            <input type="text" name="requisition_case_type" class="input-medium" value="commtrack_requisition"/>
-                        </div>
-                    </div>
-                    <div class="control-group">
-                        <label class="control-label">{% trans "Requisition mode" %}</label>
-                        <div class="controls">
-                            <label class="radio">
-                                <input type="radio" name="requisition_mode" value="3" checked>
-                                    {% trans "Three step" %}<br/>{% trans "(Requisition &rarr; Fulfillment &rarr; Receipt)" %}
-                            </label>
-                            <label class="radio">
-                                <input type="radio" name="requisition_mode" value="4">
-                                    {% trans "Four step" %}<br/>{% trans "(Requisition &rarr; Approval &rarr; Fulfillment &rarr; Receipt)" %}
-                            </label>
-                        </div>
                     </div>
                 </div>
             </div>
