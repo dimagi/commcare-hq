@@ -808,7 +808,8 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None,
         'edit': True,
         'nav_form': form if not is_user_registration else '',
         'formdesigner': True,
-        'multimedia_object_map': app.get_object_map()
+        'multimedia_object_map': app.get_object_map(),
+        'sessionid': req.COOKIES.get('sessionid')
     })
     return render(req, 'app_manager/form_designer.html', context)
 
