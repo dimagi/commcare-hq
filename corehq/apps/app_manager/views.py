@@ -38,7 +38,7 @@ from django.conf import settings
 from couchdbkit.resource import ResourceNotFound
 from corehq.apps.app_manager.const import APP_V1, CAREPLAN_GOAL, CAREPLAN_TASK, APP_V2, CT_REQUISITION_MODES
 from corehq.apps.app_manager.success_message import SuccessMessage
-from corehq.apps.app_manager.util import is_valid_case_type, get_all_case_properties, add_odk_profile_after_build, ParentCasePropertyBuilder
+from corehq.apps.app_manager.util import is_valid_case_type, get_all_case_properties, add_odk_profile_after_build, ParentCasePropertyBuilder, commtrack_ledger_sections
 from corehq.apps.app_manager.util import save_xform, get_settings_values
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin
@@ -640,7 +640,7 @@ def get_module_view_context_and_template(app, module):
         case_type = module.case_type
         return "app_manager/module_view_commtrack.html", {
             'case_properties': sorted(builder.get_properties(case_type)),
-            'product_properties': ('name',),
+            'product_properties': ('name', commtrack_ledger_sections(app.commtrack_requisition_mode)),
             'case_sortElements': json.dumps(get_sort_elements(module.case_details.short)),
             'product_sortElements': json.dumps(get_sort_elements(module.product_details.short)),
         }
@@ -888,44 +888,24 @@ def _new_careplan_module(req, domain, app, name, lang):
 
 
 def _new_commtrack_module(req, domain, app, name, lang):
-    supply_point_case_type = req.POST.get('sp_case_type')
-    include_requisitions = req.POST.get('include_requisition_module')
+    case_type = req.POST.get('ct_case_type')
 
-    def add_module(module):
-        module = app.add_module(module)
-        form = CommTrackForm(
-            name={lang if lang else "en": _("Untitled Form")},
-        )
-        module.forms.append(form)
-        form = module.get_form(-1)
-        form.source = ''
-        return module
-
-    module = add_module(
+    module = app.add_module(
         CommTrackModule.new_module(
             name,
             lang,
-            case_type=supply_point_case_type,
+            case_type=case_type,
         )
     )
+    form = CommTrackForm(
+        name={lang if lang else "en": _("Untitled Form")},
+    )
+    module.forms.append(form)
+    form = module.get_form(-1)
+    form.source = ''
+
     module_id = module.id
 
-    if include_requisitions:
-        requistion_mode = req.POST.get('requisition_mode')
-        module_name = req.POST.get('requisition_name')
-        requistion_case_type = req.POST.get('requisition_case_type')
-
-        add_module(
-            CommTrackModule.new_module(
-                module_name,
-                lang,
-                case_type=requistion_case_type,
-            )
-        )
-
-        app.commtrack_requisition_mode = requistion_mode
-
-    app.commtrack_enabled = True
     app.save()
     response = back_to_main(req, domain, app_id=app.id, module_id=module_id)
     response.set_cookie('suppress_build_errors', 'yes')

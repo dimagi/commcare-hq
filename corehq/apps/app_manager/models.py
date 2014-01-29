@@ -256,32 +256,67 @@ class FormActions(DocumentSchema):
         return names
 
 
-class CommTrackPreloadAction(PreloadAction):
+class LoadUpdateCloseAction(DocumentSchema):
     case_type = StringProperty()
+    case_tag = StringProperty()
+    preload = DictProperty()
+    update = DictProperty()
+
+    close_condition = SchemaProperty(FormActionCondition)
+
     show_product_stock = BooleanProperty(default=True)
 
 
-class CommTrackFormActions(DocumentSchema):
-    case_preload1 = SchemaProperty(CommTrackPreloadAction)
-    case_preload2 = SchemaProperty(CommTrackPreloadAction)
-    open_subcase = SchemaProperty(OpenSubCaseAction)
+class CommTrackOpenCaseAction(DocumentSchema):
+    case_type = StringProperty()
+    case_name = StringProperty()
+    case_properties = DictProperty()
+    repeat_context = StringProperty()
+    parent_reference_id = StringProperty()
 
-    def active_actions(self):
-        actions = {}
-        for action_type in ['case_preload1',
-                            'case_preload2',
-                            'open_subcase']:
-            a = getattr(self, action_type)
-            if a.is_active():
-                actions[action_type] = a
-        return actions
+    open_condition = SchemaProperty(FormActionCondition)
+    close_condition = SchemaProperty(FormActionCondition)
+
+
+class CommTrackFormActions(DocumentSchema):
+    load_update_close_cases = SchemaListProperty(LoadUpdateCloseAction)
+    open_cases = SchemaListProperty(CommTrackOpenCaseAction)
 
     def all_property_names(self):
         names = set()
-        names.update(self.case_preload1.preload.keys())
-        names.update(self.case_preload2.preload.values())
-        names.update(self.open_subcase.case_properties.keys())
+        for action in self.load_update_close:
+            names.update(action.preload.keys())
+            names.update(action.update.keys())
+        for action in self.open_cases:
+            names.update(action.case_properties.keys())
+
         return names
+
+    def get_subcase_actions(self):
+        return (a for a in self.open_cases if a.parent_reference_id)
+
+#
+# class CommTrackFormActions(DocumentSchema):
+#     case_preload1 = SchemaProperty(CommTrackPreloadAction)
+#     case_preload2 = SchemaProperty(CommTrackPreloadAction)
+#     open_subcase = SchemaProperty(OpenSubCaseAction)
+#
+#     def active_actions(self):
+#         actions = {}
+#         for action_type in ['case_preload1',
+#                             'case_preload2',
+#                             'open_subcase']:
+#             a = getattr(self, action_type)
+#             if a.is_active():
+#                 actions[action_type] = a
+#         return actions
+#
+#     def all_property_names(self):
+#         names = set()
+#         names.update(self.case_preload1.preload.keys())
+#         names.update(self.case_preload2.preload.values())
+#         names.update(self.open_subcase.case_properties.keys())
+#         return names
 
 
 class FormSource(object):
@@ -1214,20 +1249,22 @@ class CommTrackForm(IndexedFormBase, NavMenuItemMediaMixin):
     def check_actions(self):
         errors = []
 
-        if not self.actions.open_subcase.case_type:
-            errors.append({'type': 'subcase has no case type'})
-
-        errors.extend(self.check_case_properties(
-            all_names=self.actions.all_property_names(),
-            subcase_names=self.actions.open_subcase.case_properties
-        ))
-
-        def generate_paths():
-            for action in self.actions.active_actions().values():
-                for path in FormAction.get_action_paths(action):
-                    yield path
-
-        self.check_paths(generate_paths())
+        #TODO: fix this
+        #
+        # if not self.actions.open_subcase.case_type:
+        #     errors.append({'type': 'subcase has no case type'})
+        #
+        # errors.extend(self.check_case_properties(
+        #     all_names=self.actions.all_property_names(),
+        #     subcase_names=self.actions.open_subcase.case_properties
+        # ))
+        #
+        # def generate_paths():
+        #     for action in self.actions.active_actions().values():
+        #         for path in FormAction.get_action_paths(action):
+        #             yield path
+        #
+        # self.check_paths(generate_paths())
 
         return errors
 
@@ -1254,11 +1291,11 @@ class CommTrackForm(IndexedFormBase, NavMenuItemMediaMixin):
     def get_parent_types_and_contributed_properties(self, module_case_type, case_type):
         parent_types = set()
         case_properties = set()
-        subcase = self.actions.open_subcase
-        if subcase.case_type == case_type:
-            case_properties.update(
-                subcase.case_properties.keys()
-            )
+        for subcase in self.actions.get_subcase_actions():
+            if subcase.case_type == case_type:
+                case_properties.update(
+                    subcase.case_properties.keys()
+                )
         return parent_types, case_properties
 
 
