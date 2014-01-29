@@ -68,6 +68,7 @@
             }());
             var edit = {% if edit %}true{% else %}false{% endif %};
 
+            {% if form.source %}
             var caseConfig = new CommTrackConfig.Commtrack({
                 home: $('#casexml_home'),
                 actions: {{ form.actions|JSON }},
@@ -81,7 +82,7 @@
                 propertiesMap: {{ case_properties|JSON }}
             });
             caseConfig.init();
-
+            {% endif %}
         });
     </script>
     <script>
@@ -204,14 +205,6 @@
             <i class="icon-pencil"></i>
             {% trans "Edit" %}
         </a>
-        {% if app.application_version == '2.0' %}
-            {% if form.source and not is_user_registration %}
-            <a id="cloudcare-preview-url" href="#" target="_blank" class="btn">
-                <i class="icon-play"></i>
-                {% trans "Try in CloudCare" %}
-            </a>
-            {% endif %}
-        {% endif %}
     </div>
     <hr/>
     {% endif %}
@@ -318,13 +311,6 @@
                     </div>
                 </li>
             </ul>
-            <form class="form-inline" method='POST' action='{% url "copy_form" domain app.id module.id form.id %}'>
-                <p><i class="icon-share"></i> {% trans "Copy form to a different module" %}</p>
-                <select name='to_module_id'>{% for mod in app.get_modules %}
-                    <option value={{ mod.id }}>{{ mod.name|html_trans:langs }}</option>
-                {% endfor %}</select>
-                <button class='btn btn-primary' type="submit">Copy</button>
-            </form>
         </div>
         </div>
     </div>
