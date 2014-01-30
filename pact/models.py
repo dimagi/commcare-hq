@@ -18,7 +18,6 @@ ALLOWED_PROPERTY_TYPES.add(partial)
 def make_uuid():
     return uuid.uuid4().hex
 
-#placeholder for management of pact case models
 from datetime import datetime, timedelta
 from couchdbkit.ext.django.schema import StringProperty, DateTimeProperty, BooleanProperty, Document, DateProperty, SchemaListProperty, IntegerProperty
 
@@ -34,7 +33,7 @@ class DOTSubmission(XFormInstance):
         else:
             pillbox_check_str = {}
             anchor_date = datetime.min
-        encounter_date = self.form['encounter_date'] #datetime already from couch
+        encounter_date = self.form['encounter_date']  # datetime already from couch
         return 'yes' if anchor_date.date() == encounter_date else 'no'
 
     @property
@@ -285,10 +284,6 @@ class PactPatientCase(CommCareCase):
             future = filter(lambda x: x.deprecated and x.started > datetime.utcnow(), schedule_arr)
             past.reverse()
 
-            # if len(current) > 1:
-            #     for x in current:
-            #         print '\n'.join(x.weekly_arr())
-
             ret['current_schedule'] = current[0]
             ret['past_schedules'] = past
             ret['future_schedules'] = future
@@ -440,12 +435,12 @@ class CObservation(Document):
     created_date = DateTimeProperty()
 
     is_art = BooleanProperty()
-    dose_number=IntegerProperty()
+    dose_number = IntegerProperty()
     total_doses = IntegerProperty()
-    adherence=StringProperty()
+    adherence = StringProperty()
 
     # DOT_OBSERVATION_ types
-    method=StringProperty()
+    method = StringProperty()
 
     is_reconciliation = BooleanProperty(default=False)
 
@@ -454,6 +449,15 @@ class CObservation(Document):
     day_note = StringProperty() #if there's something for that particular day, then it'll be here
     day_slot = IntegerProperty() #new addition, if there's a slot for the day label, then retain it
     note = StringProperty() #this is for the overall note for that submission, will exist on the anchor date
+
+    @classmethod
+    def wrap(cls, obj):
+        ints = ['dose_number', 'total_doses', 'day_index', 'day_slot']
+        for prop_name in ints:
+            val = obj.get(prop_name)
+            if val and isinstance(val, basestring):
+                obj[prop_name] = int(val)
+        return super(CObservation, cls).wrap(obj)
 
     @property
     def obs_score(self):
@@ -466,18 +470,10 @@ class CObservation(Document):
         if self.method == "self":
             return 1
 
-
-
     @property
     def adinfo(self):
         """helper function to concatenate adherence and method to check for conflicts"""
         return ((self.is_art, self.dose_number, self.total_doses), "%s" % (self.adherence))
-
-
-    #    def save(self):
-    #        #override save as this is not a document but just a view
-    #        pass
-
 
     def get_time_label(self):
         """
@@ -504,15 +500,14 @@ class CObservation(Document):
         return simplejson.dumps(self.to_json(), indent=4)
 
 class CObservationAddendum(Document):
-#    sub_id = StringProperty(default=make_uuid)
     observed_date = DateProperty()
     art_observations = SchemaListProperty(CObservation)
     nonart_observations = SchemaListProperty(CObservation)
     created_by = StringProperty()
     created_date = DateTimeProperty()
-    notes = StringProperty() #placeholder if need be
+    notes = StringProperty()  # placeholder if need be
     class Meta:
         app_label = 'pact'
 
 
-from signals import *
+from .signals import *
