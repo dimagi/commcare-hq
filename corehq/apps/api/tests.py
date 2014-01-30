@@ -418,7 +418,7 @@ class TestCommCareUserResource(APIResourceTest):
         response = self.client.put(self.single_endpoint(backend_id),
                                    simplejson.dumps(user_json),
                                    content_type='application/json')
-        self.assertEqual(response.status_code, 204, response.content)
+        self.assertEqual(response.status_code, 202, response.content)
         self.assertEqual(1, len(CommCareUser.by_domain(self.domain.name)))
         modified = CommCareUser.get(backend_id)
         self.assertEqual(modified.username, "test")
@@ -549,7 +549,7 @@ class TestWebUserResource(APIResourceTest):
         response = self.client.put(self.single_endpoint(backend_id),
                                    simplejson.dumps(user_json),
                                    content_type='application/json')
-        self.assertEqual(response.status_code, 204, response.content)
+        self.assertEqual(response.status_code, 202, response.content)
         modified = WebUser.get(backend_id)
         self.assertEqual(modified.username, "test")
         self.assertEqual(modified.first_name, "Joe")
@@ -1115,7 +1115,7 @@ class TestGroupResource(APIResourceTest):
         response = self.client.put(self.single_endpoint(backend_id),
                                    simplejson.dumps(group_json),
                                    content_type='application/json')
-        self.assertEqual(response.status_code, 204, response.content)
+        self.assertEqual(response.status_code, 202, response.content)
         self.assertEqual(1, len(Group.by_domain(self.domain.name)))
         modified = Group.get(backend_id)
         self.assertEqual(modified.name, "test group")
