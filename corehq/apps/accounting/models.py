@@ -247,6 +247,14 @@ class FeatureRate(models.Model):
             self.monthly_fee, self.per_excess_fee, self.monthly_limit
         )
 
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__) or not self.feature.pk == other.feature.pk:
+            return False
+        for field in ['monthly_fee', 'monthly_limit', 'per_excess_fee', 'is_active']:
+            if not getattr(self, field) == getattr(other, field):
+                return False
+        return True
+
     @classmethod
     def new_rate(cls, feature_name, feature_type,
                  monthly_fee=None, monthly_limit=None, per_excess_fee=None, save=True):
