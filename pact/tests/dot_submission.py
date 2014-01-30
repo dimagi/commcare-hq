@@ -95,20 +95,7 @@ class dotsSubmissionTests(TestCase):
         dot_count = XFormInstance.view('couchforms/by_xmlns', key=XMLNS_DOTS_FORM).all()[0]['value']
         update_count = XFormInstance.view('couchforms/by_xmlns', key=XMLNS_PATIENT_UPDATE_DOT).all()[0]['value']
 
-        print "testSignal"
-#        ======================================================================
-#    FAIL: testDOTFormatConversion (pact.tests.dot_submission.dotsSubmissionTests)
-#    ----------------------------------------------------------------------
-#    Traceback (most recent call last):
-#    File "submodules/pact-src/pact/tests/dot_submission.py", line 184, in testDOTFormatConversion
-#    self.testSignal()
-#File "submodules/pact-src/pact/tests/dot_submission.py", line 92, in testSignal
-#self.assertEquals(start_count + 2, dot_count + update_count)
-#AssertionError: 3 != 2
-
-
         self.assertEquals(dot_count, update_count)
-        print XFormInstance.view('couchforms/by_xmlns').all()
         self.assertEquals(start_dot+start_update + 2, dot_count + update_count)
 
         casedoc = CommCareCase.get(CASE_ID)
@@ -142,7 +129,6 @@ class dotsSubmissionTests(TestCase):
             self.assertEquals(obs.day_note, "No check, from form") #magic string from the view to indicate a generated DOT observation from form data.
             art_nonart.add(obs.is_art)
             self.assertEquals(obs.doc_id, bundle['xform_id'])
-            #print obs.to_json()
 
         art = filter(lambda x: x.is_art, observations)
         self.assertEquals(2, len(art))
@@ -164,31 +150,17 @@ class dotsSubmissionTests(TestCase):
         #encounter_date = datetime.strptime(submitted.form['encounter_date'], '%Y-%m-%d')
         encounter_date = submitted.form['encounter_date']
 
-        #print simplejson.dumps(case_json, indent=4)
         for day_delta in range(DOT_DAYS_INTERVAL):
             obs_date = enddate - timedelta(days=day_delta)
             ret_index = DOT_DAYS_INTERVAL - day_delta -1
 
-            #print obs_date.strftime("%Y-%m-%d")
 
             day_arr = case_json['days'][ret_index]
             nonart_day_data = day_arr[0]
             art_day_data = day_arr[1]
 
-            #if obs_date.date() == encounter_date:
-                #print "\tespecially no pillbox check days"
-                #print nonart_day_data
-                #print art_day_data
-
             self.assertEquals(len(nonart_day_data), 3)
             self.assertEquals(len(art_day_data), 2)
-            #print "\tsuccess"
-
-
-
-
-            #day_data = DOTDay.merge_from_observations(day_arr)
-            #ret['days'].append(day_data.to_case_json(casedoc))
 
     def testDOTFormatConversion(self):
         """
@@ -230,15 +202,7 @@ class dotsSubmissionTests(TestCase):
 
         for k in orig_data.keys():
             if k != 'days':
-            #                print "%s:\n\t%s\n\t%s" % (k, orig_data[k], computed_json[k])
                 self.assertEquals(orig_data[k], computed_json[k])
-            #            else:
-            #                print '### Days ###"'
-            #                for x in range(DOT_DAYS_INTERVAL):
-            #                    obs_date = ANCHOR_DATE + timedelta(days=x)-timedelta(days=DOT_DAYS_INTERVAL)
-            #                    print "%d: %s" % (x, obs_date.strftime("%m/%d/%Y"))
-            #                    print "\to: %s\n\tc: %s\n" % (orig_data['days'][x], computed_json['days'][x])
-            ##                    print filter_obs_for_day(obs_date.date(), observations)
 
         self.assertEquals(simplejson.dumps(orig_data), simplejson.dumps(computed_json))
 
@@ -358,7 +322,6 @@ class dotsSubmissionTests(TestCase):
                 check_obs_props(non_art_first_2, non_art_first_2_props)
 
             if this_day.date() == (ANCHOR_DATE - timedelta(days=1)).date():
-                #print day_data.art.dose_dict
                 self.assertEquals(len(day_data.art.dose_dict.keys()),
                                   2) # two doses, one for the answered, another for unchecked
                 art_slast = day_data.art.dose_dict[0][0]
@@ -514,4 +477,3 @@ class dotsSubmissionTests(TestCase):
                 check_obs_props(non_art_last_noon, non_art_last_noon_props)
                 #todo: check reconciliation?
             pass
-            #outside for

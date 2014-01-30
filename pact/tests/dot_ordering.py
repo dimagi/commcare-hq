@@ -33,7 +33,7 @@ class dotsOrderingTests(TestCase):
     def setUp(self):
         for doc in XFormInstance.get_db().view('couchforms/by_xmlns', reduce=False,
                                                include_docs=True).all():
-            #purge all xforms prior to start
+            # purge all xforms prior to start
             if doc['doc']['xmlns'] in [XMLNS_DOTS_FORM, XMLNS_PATIENT_UPDATE_DOT]:
                 XFormInstance.get_db().delete_doc(doc['doc'])
 
