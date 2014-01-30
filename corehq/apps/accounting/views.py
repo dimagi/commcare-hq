@@ -323,7 +323,7 @@ class EditSoftwarePlanView(AccountingSectionView):
             'plan_version_form': self.software_plan_version_form,
             'feature_rate_form': FeatureRateForm(),
             'product_rate_form': ProductRateForm(),
-            'plan_versions': SoftwarePlanVersion.objects.filter(plan=self.plan).order_by('date_created')
+            'plan_versions': SoftwarePlanVersion.objects.filter(plan=self.plan).order_by('-date_created')
         }
 
     @property
