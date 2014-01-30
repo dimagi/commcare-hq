@@ -1,5 +1,4 @@
 from datetime import datetime
-from decimal import Decimal
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack.const import RequisitionStatus
 from corehq.apps.commtrack.models import RequisitionCase
