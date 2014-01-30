@@ -2,6 +2,8 @@ from corehq.apps.commtrack.tests.util import CommTrackTest, make_loc
 from corehq.apps.locations.models import Location
 from corehq.apps.locations.bulk import import_location
 from mock import patch
+from corehq.apps.consumption.shortcuts import get_default_consumption
+from corehq.apps.commtrack.models import Product
 
 
 class LocationImportTest(CommTrackTest):
@@ -157,3 +159,26 @@ class LocationImportTest(CommTrackTest):
             # id isn't accurate because of the mock, but want to make
             # sure we didn't actually return with None
             self.assertTrue(result['id'] is not None)
+
+    def test_should_import_consumption(self):
+        existing = make_loc('existingloc')
+        existing.location_type = 'state'
+        existing.save()
+
+        data = {
+            'id': existing._id,
+            'name': 'existingloc',
+            'default_pp': 77
+        }
+
+        import_location(self.domain.name, 'state', data)
+
+        self.assertEqual(
+            get_default_consumption(
+                self.domain.name,
+                Product.get_by_code(self.domain.name, 'pp')._id,
+                'state',
+                existing._id
+            ),
+            77
+        )
