@@ -1,3 +1,4 @@
+from decimal import Decimal
 import uuid
 from xml.etree import ElementTree
 from couchdbkit.exceptions import ResourceNotFound
@@ -493,7 +494,7 @@ class NewStockReport(object):
     def from_xml(cls, form, config, elem):
         tag = elem.tag
         tag = tag[tag.find('}')+1:] # strip out ns
-        timestamp = force_to_datetime(elem.attrib.get('date', form.received_on))
+        timestamp = force_to_datetime(elem.attrib.get('date', form.received_on)).replace(tzinfo=None)
         products = elem.findall('./{%s}entry' % stockconst.COMMTRACK_REPORT_XMLNS)
         transactions = [t for prod_entry in products for t in
                         StockTransaction.from_xml(config, timestamp, tag, elem, prod_entry)]
@@ -526,21 +527,10 @@ class NewStockReport(object):
             db_txn.save()
 
 
-class StockTransaction(Document):
+class StockTransaction(object):
     """
     wrapper/helper for transactions
     """
-    # todo: why is this a Document?
-    domain = StringProperty()
-    timestamp = DateTimeProperty()
-    location_id = StringProperty()  # location record id
-    case_id = StringProperty()
-    section_id = StringProperty()
-    product_id = StringProperty()
-    action = StringProperty()
-    subaction = StringProperty()
-    quantity = DecimalProperty()
-    processing_order = IntegerProperty()
 
     def __init__(self, **kwargs):
         def _action_def(val):
@@ -575,7 +565,8 @@ class StockTransaction(Document):
                     del kwargs[attr]
                     kwargs.update(var(val))
 
-        super(StockTransaction, self).__init__(**kwargs)
+        for k, v in kwargs.items():
+            setattr(self, k, v)
 
     @property
     def relative_quantity(self):
@@ -606,7 +597,7 @@ class StockTransaction(Document):
             data = {
                 'timestamp': timestamp,
                 'product_id': product_id,
-                'quantity': quantity,
+                'quantity': Decimal(quantity),
                 'action': action,
                 'case_id': case_id,
                 'section_id': section_id,
