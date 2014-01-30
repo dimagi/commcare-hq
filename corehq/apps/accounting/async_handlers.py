@@ -84,4 +84,11 @@ class Select2RateAsyncHandler(BaseAsyncHandler):
         return [(f.id, f.name, f.feature_type) for f in features.all()]
 
     def _fmt_success(self, response):
-        return json.dumps([{'id': r[0], 'name': r[1], 'rate_type': r[2], 'isExisting': True} for r in response])
+        return json.dumps([
+            {
+                'id': r[0],
+                'name': r[1],
+                'rate_type': r[2],
+                'text': '%s (%s)' % (r[1], r[2]),
+                'isExisting': True,
+            } for r in response])
