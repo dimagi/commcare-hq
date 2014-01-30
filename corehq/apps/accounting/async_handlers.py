@@ -67,7 +67,7 @@ class SoftwareProductRateAsyncHandler(BaseRateAsyncHandler):
             product_type=self.rate_type
         )
         if not is_new:
-            raise AsyncHandlerError("Product '%s' already existsm and likely already "
+            raise AsyncHandlerError("Product '%s' already exists, and likely already "
                                     "in this Software Plan Version." % new_product.name)
         return fmt_product_rate_dict(new_product)
 
