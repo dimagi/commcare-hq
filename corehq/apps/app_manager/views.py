@@ -66,7 +66,7 @@ from corehq.apps.reports import util as report_utils
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
 from corehq.apps.app_manager.models import Application, get_app, DetailColumn, Form, FormActions,\
     AppEditingError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, \
-    DeleteApplicationRecord, str_to_cls, SavedAppBuild, ParentSelect, Module, CareplanModule, CareplanForm, CommTrackModule, CommTrackForm
+    DeleteApplicationRecord, str_to_cls, SavedAppBuild, ParentSelect, Module, CareplanModule, CareplanForm, CommTrackModule, CommTrackForm, CommTrackFormActions
 from corehq.apps.app_manager.models import import_app as import_app_util, SortElement
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST

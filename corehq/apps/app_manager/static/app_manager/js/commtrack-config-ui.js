@@ -159,7 +159,7 @@ var CommTrackConfig = (function () {
         }
     };
 
-    var LoadUpdateCloseAction = {
+    var LoadUpdateAction = {
         mapping: function (self) {
             return {
                 include: ['case_type', 'case_tag', 'close_condition', 'show_product_stock'],
@@ -168,7 +168,7 @@ var CommTrackConfig = (function () {
                         return CasePreloadProperty.wrap(options.data,  self.config);
                     }
                 },
-                update: {
+                case_properties: {
                     create: function (options) {
                         return CaseProperty.wrap(options.data,  self);
                     }
@@ -181,17 +181,13 @@ var CommTrackConfig = (function () {
                 actionType: 'load'
             };
             self.config = config;
-            ko.mapping.fromJS(data, LoadUpdateCloseAction.mapping(this), self);
+            ko.mapping.fromJS(data, LoadUpdateAction.mapping(this), self);
 
             self.validate = ko.computed(function () {
                 return ActionBase.validate(self, self.case_type(), self.case_tag());
             });
 
             self.close_case = ko.computed(ActionBase.close_case(self));
-
-            self.case_properties = ko.computed(function () {
-               return self.update();
-            });
 
             self.propertyCounts = ko.computed(ActionBase.propertyCounts(self));
 
@@ -216,7 +212,7 @@ var CommTrackConfig = (function () {
             });
 
             self.addProperty = function () {
-                self.update.push(CaseProperty.wrap({
+                self.case_properties.push(CaseProperty.wrap({
                     key: '',
                     path: '',
                     required: false
@@ -224,7 +220,7 @@ var CommTrackConfig = (function () {
             };
 
             self.removeProperty = function (property) {
-                self.update.remove(property);
+                self.case_properties.remove(property);
             };
 
             self.addPreload = function () {
@@ -294,9 +290,9 @@ var CommTrackConfig = (function () {
     var FormActions = {
         mapping: function (self) {
             return {
-                load_update_close_cases: {
+                load_update_cases: {
                     create: function (options) {
-                        return LoadUpdateCloseAction.wrap(options.data, self.config);
+                        return LoadUpdateAction.wrap(options.data, self.config);
                     }
                 },
                 open_cases: {
@@ -445,7 +441,7 @@ var CommTrackConfig = (function () {
                 actions = actions.concat(self.actions.open_cases());
             }
             if (type === 'all' || type === 'load') {
-                actions = actions.concat(self.actions.load_update_close_cases());
+                actions = actions.concat(self.actions.load_update_cases());
             }
             for (var i = 0; i < actions.length; i++) {
                 var tag = actions[i].case_tag();
@@ -461,7 +457,7 @@ var CommTrackConfig = (function () {
 
         self.actionOptions = ko.computed(function () {
             var options = [];
-            if (self.actions.load_update_close_cases().length <= 1) {
+            if (self.actions.load_update_cases().length <= 1) {
                 options.push({
                     display: 'Load / Update / Close a case',
                     value: 'load'
@@ -476,14 +472,14 @@ var CommTrackConfig = (function () {
         
         self.ensureBlankProperties = function () {
             var items = [];
-            var actions = self.actions.load_update_close_cases();
+            var actions = self.actions.load_update_cases();
             for (var i = 0; i < actions.length; i++){
                 items.push({
                     properties: actions[i].preload(),
                     addProperty: actions[i].addPreload
                 });
                 items.push({
-                    properties: actions[i].update(),
+                    properties: actions[i].case_properties(),
                     addProperty: actions[i].addProperty
                 });
             }
@@ -506,12 +502,12 @@ var CommTrackConfig = (function () {
         self.addFormAction = function (action) {
             if (action.value === 'load') {
                 $('#case-open-accordion').accordion({active: false});
-                var index = self.actions.load_update_close_cases().length;
-                self.actions.load_update_close_cases.push(LoadUpdateCloseAction.wrap({
+                var index = self.actions.load_update_cases().length;
+                self.actions.load_update_cases.push(LoadUpdateAction.wrap({
                     case_type: config.caseType,
                     case_tag: 'load_' + config.caseType + index,
                     preload: [],
-                    update: [],
+                    case_properties: [],
                     close_condition: DEFAULT_CONDITION('never')
                 }, self.config));
                 if (index > 0) {
@@ -545,7 +541,7 @@ var CommTrackConfig = (function () {
             if (action.actionType === 'open') {
                 self.actions.open_cases.remove(action);
             } else if (action.actionType === 'load') {
-                self.actions.load_update_close_cases.remove(action);
+                self.actions.load_update_cases.remove(action);
             }
         };
     };
