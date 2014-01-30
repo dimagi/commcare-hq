@@ -455,6 +455,15 @@ class CObservation(Document):
     day_slot = IntegerProperty() #new addition, if there's a slot for the day label, then retain it
     note = StringProperty() #this is for the overall note for that submission, will exist on the anchor date
 
+    @classmethod
+    def wrap(cls, obj):
+        ints = ['dose_number', 'total_doses', 'day_index', 'day_slot']
+        for prop_name in ints:
+            val = obj.get(prop_name)
+            if val and isinstance(val, basestring):
+                obj[prop_name] = int(val)
+        return super(CObservation, cls).wrap(obj)
+
     @property
     def obs_score(self):
         """Gets the relative score of the observation.
