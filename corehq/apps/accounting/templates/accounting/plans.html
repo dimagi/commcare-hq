@@ -16,7 +16,8 @@
 {% block js-inline %}{{ block.super }}
     <script>
         var planVersionFormHandler = new SoftwarePlanVersionFormHandler(
-            {{ plan_version_form.feature_rates_dict|JSON }}
+            {{ plan_version_form.feature_rates_dict|JSON }},
+            {{ plan_version_form.product_rates_dict|JSON }}
         );
         ko.applyBindings(planVersionFormHandler, $('#roles').get(0));
         planVersionFormHandler.init();
@@ -53,6 +54,17 @@
                 </button>
             </div>
             {% crispy feature_rate_form %}
+        </div>
+    </script>
+
+    <script type="text/html" id="product-rate-form-template">
+        <div class="well">
+            <div class="pull-right">
+                <button type="button" class="btn btn-danger" data-bind="event: {click: $parent.productRates.removeRate}">
+                    <i class="icon-remove"></i>
+                </button>
+            </div>
+            {% crispy product_rate_form %}
         </div>
     </script>
 {% endblock %}

@@ -209,6 +209,12 @@ class SoftwareProduct(models.Model):
     def __str__(self):
         return "Software Product '%s' of type '%s'" % (self.name, self.product_type)
 
+    def get_rate(self, default_instance=True):
+        try:
+            return self.softwareproductrate_set.filter(is_active=True).latest('date_created')
+        except SoftwareProductRate.DoesNotExist:
+            return SoftwareProductRate() if default_instance else None  # the defaults
+
 
 class SoftwareProductRate(models.Model):
     """
@@ -219,6 +225,17 @@ class SoftwareProductRate(models.Model):
     monthly_fee = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2)
     date_created = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return 'Product Rate: $%s /month' % self.monthly_fee
+
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__) or not self.product.pk == other.product.pk:
+            return False
+        for field in ['monthly_fee', 'is_active']:
+            if not getattr(self, field) == getattr(other, field):
+                return False
+        return True
 
     @classmethod
     def new_rate(cls, product_name, monthly_fee, save=True):
