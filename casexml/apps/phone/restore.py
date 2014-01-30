@@ -95,7 +95,7 @@ class RestoreConfig(object):
             for section_id in relevant_sections:
                 relevant_reports = StockTransaction.objects.filter(case_id=commtrack_case._id, section_id=section_id)
                 product_ids = sorted(relevant_reports.values_list('product_id', flat=True).distinct())
-                transactions = [relevant_reports.filter(product_id=p).order_by('-report__date').select_related()[0] for p in product_ids]
+                transactions = [StockTransaction.latest(commtrack_case._id, section_id, p) for p in product_ids]
                 as_of = json_format_datetime(max(txn.report.date for txn in transactions))
                 yield E.balance(*(transaction_to_xml(e) for e in transactions),
                                 **{'entity-id': commtrack_case._id, 'date': as_of, 'section-id': section_id})
