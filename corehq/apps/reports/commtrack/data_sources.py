@@ -218,6 +218,7 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
 
     def get_data(self):
         # TODO this doesn't work post SPP era
+        raise NotImplementedError('this report needs to be rewritten')
         # startkey = [self.domain, self.active_location._id if self.active_location else None]
         # product_cases = SPPCase.view('commtrack/product_cases',
                                      # startkey=startkey,

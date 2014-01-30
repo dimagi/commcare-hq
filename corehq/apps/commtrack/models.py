@@ -475,39 +475,6 @@ class StringDataSchema(DocumentSchema):
     def wrap(cls, data):
         raise NotImplementedError()
 
-
-class StockStatus(StringDataSchema):
-    """
-    This is a wrapper/helper class to represent the current stock status
-    of a commtrack case.
-    """
-
-    current_stock = StringProperty()
-    stocked_out_since = DateTimeProperty()
-    product = StringProperty()
-    location_path = StringListProperty(name="location_")
-    server_modified_on = DateTimeProperty()
-
-    @property
-    def location_id(self):
-        return self.location_path[-1]
-
-    @classmethod
-    def from_case(cls, case):
-        return StockStatus.force_wrap(case._doc)
-
-    @classmethod
-    def by_domain(cls, domain, skip=0, limit=100):
-        return [StockStatus.force_wrap(row["value"]) for row in _view_shared(
-            'commtrack/current_stock_status', domain, skip=skip, limit=limit)]
-
-    @classmethod
-    def by_location(cls, domain, location_id, skip=0, limit=100):
-        return [StockStatus.force_wrap(row["value"]) for row in _view_shared(
-            'commtrack/current_stock_status', domain, location_id,
-            skip=skip, limit=limit)]
-
-
 class NewStockReport(object):
     """
     Intermediate class for dealing with stock XML
@@ -572,26 +539,6 @@ class StockTransaction(Document):
     subaction = StringProperty()
     quantity = DecimalProperty()
     processing_order = IntegerProperty()
-
-    """
-    @classmethod
-    def by_domain(cls, domain, skip=0, limit=100):
-        return [StockTransaction.force_wrap(row["value"]) for row in _view_shared(
-            'commtrack/stock_transactions', domain, skip=skip, limit=limit)]
-
-    @classmethod
-    def by_location(cls, domain, location_id, skip=0, limit=100):
-        return [StockTransaction.force_wrap(row["value"]) for row in _view_shared(
-            'commtrack/stock_transactions', domain, location_id,
-            skip=skip, limit=limit)]
-
-    @classmethod
-    def by_product(cls, product_case, start_date, end_date):
-        q = CommCareCase.get_db().view('commtrack/stock_transactions_by_product',
-                                       startkey=[product_case, start_date],
-                                       endkey=[product_case, end_date, {}])
-        return [StockTransaction.force_wrap(row['value']) for row in q]
-    """
 
     def __init__(self, **kwargs):
         def _action_def(val):
