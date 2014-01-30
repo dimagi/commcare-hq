@@ -184,30 +184,36 @@
     {% if edit and not is_user_registration %}
         <div class="delete-me">
             <form action="{% url "delete_form" domain app.id module.id form.id %}" method="post">
-                <button type="submit" class="disable-on-submit btn btn-danger">
-                    <i class="icon-trash"></i>
-                    {% trans "Delete Form" %}
-                </button>
+                <h3>
+                    <button type="submit" class="disable-on-submit btn btn-danger">
+                        <i class="icon-trash"></i>
+                        {% trans "Delete Form" %}
+                    </button>
+                </h3>
             </form>
         </div>
     {% endif %}
 
-    <h3>
-        <i class="icon icon-file-alt"></i>
-        <span class="app-manager-title variable-form_name">{{ form.name|html_trans:langs|safe }}</span>
-    </h3>
-
-    {% if edit %}
-    <div class="btn-group">
-        <a href="./source/" class="btn btn-primary" onclick="
-            _gaq.push(['_trackEvent', 'App Builder', 'Open Form', 'Edit Label']);
-        ">
-            <i class="icon-pencil"></i>
-            {% trans "Edit" %}
-        </a>
+    <div class="row">
+        {% if edit %}
+        <div class="span1">
+            <h3>
+                <a href="./source/" class="btn btn-primary" onclick="
+                    _gaq.push(['_trackEvent', 'App Builder', 'Open Form', 'Edit Label']);
+                ">
+                    <i class="icon-pencil"></i>
+                    {% trans "Edit" %}
+                </a>
+            </h3>
+        </div>
+        {% endif %}
+        <div>
+            <h3>
+                <i class="icon icon-file-alt"></i>
+                <span class="app-manager-title variable-form_name">{{ form.name|html_trans:langs|safe }}</span>
+            </h3>
+        </div>
     </div>
-    <hr/>
-    {% endif %}
 
     <div class="tabbable">
         <ul class="nav nav-tabs">
@@ -246,13 +252,6 @@
                 {% trans "There are errors in your form. Fix your form in order to view and edit Case Management." %}
             </p>
         {% else %}{% if form.source %}
-            <header class="clearfix">
-                <h4 class="pull-left">{% trans "Case Management" %}</h4>
-                <span class="hq-help-template"
-                    data-title="{% trans "Case Management" %}"
-                    data-content="{% trans "Cases give you a way to track patients, farms, etc. over time.  You can choose to save data from a form to the case, which will store the data locally on the phone to use later." %}"
-                ></span>
-            </header>
             <div class="casexml" id="casexml_home">
                 {% include 'app_manager/partials/case_config_commtrack.html' %}
             </div>

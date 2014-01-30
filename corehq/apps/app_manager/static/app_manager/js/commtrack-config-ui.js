@@ -112,6 +112,53 @@ var CommTrackConfig = (function () {
         }
     };
 
+    var  ActionBase = {
+        validate: function (self, case_type, case_tag) {
+            if (!case_type) {
+                return "Case Type required";
+            } else if (!case_tag) {
+                return "Case Tag required";
+            }
+            if (!/^[a-zA-Z][\w_-]*(\/[a-zA-Z][\w_-]*)*$/.test(case_tag)) {
+                return "Case Tag: only letters, numbers, '-', and '_' allowed";
+            }
+            var tags = self.config.caseConfigViewModel.getCaseTags('all');
+            if (_.where(tags, {value: case_tag}).length > 1) {
+                return "Case Tag already in use";
+            }
+            return null;
+        },
+        close_case: function (self) {
+            return {
+                read: function () {
+                    if (self.close_condition) {
+                        return self.close_condition.type() !== 'never';
+                    } else {
+                        return false;
+                    }
+
+                },
+                write: function (value) {
+                    self.close_condition.type(value ? 'always' : 'never');
+                    self.config.saveButton.fire('change');
+                }
+            };
+        },
+        propertyCounts: function (self) {
+            return function () {
+                var count = {};
+                _(self.case_properties()).each(function (p) {
+                    var key = p.key();
+                    if (!count.hasOwnProperty(key)) {
+                        count[key] = 0;
+                    }
+                    return count[key] += 1;
+                });
+                return count;
+            };
+        }
+    };
+
     var LoadUpdateCloseAction = {
         mapping: function (self) {
             return {
@@ -136,33 +183,17 @@ var CommTrackConfig = (function () {
             self.config = config;
             ko.mapping.fromJS(data, LoadUpdateCloseAction.mapping(this), self);
 
-            self.close_case = ko.computed({
-                read: function () {
-                    if (self.close_condition) {
-                        return self.close_condition.type() !== 'never';
-                    } else {
-                        return false;
-                    }
-
-                },
-                write: function (value) {
-                    self.close_condition.type(value ? 'always' : 'never');
-                    self.config.saveButton.fire('change');
-                }
+            self.validate = ko.computed(function () {
+                return ActionBase.validate(self, self.case_type(), self.case_tag());
             });
 
-            // TODO: validate case_tag
-            self.propertyCounts = ko.computed(function () {
-                var count = {};
-                _(self.update()).each(function (p) {
-                    var key = p.key();
-                    if (!count.hasOwnProperty(key)) {
-                        count[key] = 0;
-                    }
-                    return count[key] += 1;
-                });
-                return count;
+            self.close_case = ko.computed(ActionBase.close_case(self));
+
+            self.case_properties = ko.computed(function () {
+               return self.update();
             });
+
+            self.propertyCounts = ko.computed(ActionBase.propertyCounts(self));
 
             self.preloadCounts = ko.computed(function () {
                 var count = {};
@@ -184,7 +215,7 @@ var CommTrackConfig = (function () {
                 }
             });
 
-            self.addUpdate = function () {
+            self.addProperty = function () {
                 self.update.push(CaseProperty.wrap({
                     key: '',
                     path: '',
@@ -192,7 +223,7 @@ var CommTrackConfig = (function () {
                 }, self));
             };
 
-            self.removeUpdate = function (property) {
+            self.removeProperty = function (property) {
                 self.update.remove(property);
             };
 
@@ -211,11 +242,10 @@ var CommTrackConfig = (function () {
         }
     };
 
-
     var OpenCaseAction = {
         mapping: function (self) {
             return {
-                include: ['case_type', 'case_name', 'repeat_context', 'parent_reference_id', 'open_condition', 'close_condition'],
+                include: ['case_type', 'case_name', 'case_tag', 'repeat_context', 'parent_tag', 'parent_reference_id', 'open_condition', 'close_condition'],
                 case_properties: {
                     create: function (options) {
                         return CaseProperty.wrap(options.data,  self);
@@ -230,17 +260,20 @@ var CommTrackConfig = (function () {
             };
             ko.mapping.fromJS(data, OpenCaseAction.mapping(self), self);
 
-            self.propertyCounts = ko.computed(function () {
-                var count = {};
-                _(self.case_properties()).each(function (p) {
-                    var key = p.key();
-                    if (!count.hasOwnProperty(key)) {
-                        count[key] = 0;
-                    }
-                    return count[key] += 1;
-                });
-                return count;
+            self.validate = ko.computed(function () {
+                return ActionBase.validate(self, self.case_type(), self.case_tag());
             });
+
+            self.subcase = ko.observable(Boolean(self.parent_tag()));
+            self.subcase.subscribe(function (subcase) {
+                if (!subcase) {
+                    self.parent_tag('');
+                }
+            });
+
+            self.close_case = ko.computed(ActionBase.close_case(self));
+
+            self.propertyCounts = ko.computed(ActionBase.propertyCounts(self));
 
             self.addProperty = function () {
                 self.case_properties.push(CaseProperty.wrap({
@@ -253,6 +286,7 @@ var CommTrackConfig = (function () {
             self.removeProperty = function (property) {
                 self.case_properties.remove(property);
             };
+
             return self;
         }
     };
@@ -404,6 +438,27 @@ var CommTrackConfig = (function () {
             return label;
         };
 
+        self.getCaseTags = function (type) {
+            var tags = [];
+            var actions = [];
+            if (type === 'all' || type === 'open') {
+                actions = actions.concat(self.actions.open_cases());
+            }
+            if (type === 'all' || type === 'load') {
+                actions = actions.concat(self.actions.load_update_close_cases());
+            }
+            for (var i = 0; i < actions.length; i++) {
+                var tag = actions[i].case_tag();
+                if (tag) {
+                    tags.push({
+                        value: tag,
+                        label: tag
+                    });
+                }
+            }
+            return tags;
+        };
+
         self.actionOptions = ko.computed(function () {
             var options = [];
             if (self.actions.load_update_close_cases().length <= 1) {
@@ -412,6 +467,10 @@ var CommTrackConfig = (function () {
                     value: 'load'
                 });
             }
+            options.push({
+                display: 'Open a Case',
+                value: 'open'
+            });
             return options;
         });
         
@@ -425,7 +484,7 @@ var CommTrackConfig = (function () {
                 });
                 items.push({
                     properties: actions[i].update(),
-                    addProperty: actions[i].addUpdate
+                    addProperty: actions[i].addProperty
                 });
             }
             actions = self.actions.open_cases();
@@ -446,31 +505,39 @@ var CommTrackConfig = (function () {
 
         self.addFormAction = function (action) {
             if (action.value === 'load') {
+                $('#case-open-accordion').accordion({active: false});
+                var index = self.actions.load_update_close_cases().length;
                 self.actions.load_update_close_cases.push(LoadUpdateCloseAction.wrap({
                     case_type: config.caseType,
-                    case_tag: '',
+                    case_tag: 'load_' + config.caseType + index,
                     preload: [],
                     update: [],
                     close_condition: DEFAULT_CONDITION('never')
                 }, self.config));
-                var index = self.actions.load_update_close_cases().length-1;
                 if (index > 0) {
                     $('#case-load-accordion').accordion('activate', index);
                 }
             } else if (action.value === 'open') {
+                $('#case-load-accordion').accordion({active: false});
+                var index = self.actions.open_cases().length;
                 self.actions.open_cases.push(OpenCaseAction.wrap({
                     case_type: config.caseType,
                     case_name: '',
+                    case_tag: 'open_' + config.caseType + '_' + index,
                     case_properties: [{
                             path: '',
                             key: 'name',
                             required: true
                         }],
                     repeat_context: '',
+                    parent_tag: '',
                     parent_reference_id: '',
                     open_condition: DEFAULT_CONDITION('always'),
                     close_condition: DEFAULT_CONDITION('never')
                 }, self.config));
+                if (index > 0) {
+                    $('#case-open-accordion').accordion('activate', index);
+                }
             }
         };
 
