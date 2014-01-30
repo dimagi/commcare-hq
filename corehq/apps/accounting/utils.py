@@ -48,6 +48,20 @@ def fmt_feature_rate_dict(feature, feature_rate=None):
         'per_excess_fee': feature_rate.per_excess_fee.__str__(),
     }
 
+def fmt_product_rate_dict(product, product_rate=None):
+    """
+    This will be turned into a JSON representation of this SoftwareProduct and its SoftwareProductRate
+    """
+    if product_rate is None:
+        product_rate = product.get_rate()
+    return {
+        'name': product.name,
+        'product_type': product.product_type,
+        'product_id': product.id,
+        'rate_id': product_rate.id,
+        'monthly_fee': product_rate.monthly_fee.__str__(),
+    }
+
 
 class LazyEncoder(json.JSONEncoder):
     """Taken from https://github.com/tomchristie/django-rest-framework/issues/87

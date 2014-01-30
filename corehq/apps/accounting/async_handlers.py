@@ -1,6 +1,6 @@
 import json
-from corehq.apps.accounting.models import Feature
-from corehq.apps.accounting.utils import fmt_feature_rate_dict
+from corehq.apps.accounting.models import Feature, SoftwareProduct
+from corehq.apps.accounting.utils import fmt_feature_rate_dict, fmt_product_rate_dict
 from corehq.apps.hqwebapp.async_handler import BaseAsyncHandler, AsyncHandlerError
 
 
@@ -57,13 +57,37 @@ class FeatureRateAsyncHandler(BaseRateAsyncHandler):
             raise AsyncHandlerError("could not find an existing feature")
 
 
+class SoftwareProductRateAsyncHandler(BaseRateAsyncHandler):
+    slug = 'products_handler'
+
+    @property
+    def create_response(self):
+        new_product, is_new = SoftwareProduct.objects.get_or_create(
+            name=self.name,
+            product_type=self.rate_type
+        )
+        if not is_new:
+            raise AsyncHandlerError("Product '%s' already existsm and likely already "
+                                    "in this Software Plan Version." % new_product.name)
+        return fmt_product_rate_dict(new_product)
+
+    @property
+    def apply_response(self):
+        try:
+            product = SoftwareProduct.objects.get(id=self.rate_id)
+            return fmt_product_rate_dict(product)
+        except SoftwareProduct.DoesNotExist:
+            raise AsyncHandlerError("could not find an existing product")
+
+
 class Select2RateAsyncHandler(BaseAsyncHandler):
     """
     For interacting with Select2FieldHandler
     """
     slug = 'select2_rate'
     allowed_actions = [
-        'feature_id'
+        'feature_id',
+        'product_id',
     ]
 
     @property
@@ -82,6 +106,15 @@ class Select2RateAsyncHandler(BaseAsyncHandler):
         if self.search_string:
             features = features.filter(name__startswith=self.search_string)
         return [(f.id, f.name, f.feature_type) for f in features.all()]
+
+    @property
+    def product_id_response(self):
+        products = SoftwareProduct.objects
+        if self.existing:
+            products = products.exclude(name__in=self.existing)
+        if self.search_string:
+            products = products.filter(name__startswith=self.search_string)
+        return [(p.id, p.name, p.product_type) for p in products.all()]
 
     def _fmt_success(self, response):
         return json.dumps([

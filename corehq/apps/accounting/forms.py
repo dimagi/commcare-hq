@@ -12,15 +12,16 @@ from crispy_forms.layout import *
 from dimagi.utils.decorators.memoized import memoized
 from django_prbac import arbitrary as role_gen
 
-from corehq.apps.accounting.async_handlers import FeatureRateAsyncHandler, Select2RateAsyncHandler
-from corehq.apps.accounting.utils import fmt_feature_rate_dict
+from corehq.apps.accounting.async_handlers import FeatureRateAsyncHandler, SoftwareProductRateAsyncHandler, Select2RateAsyncHandler
+from corehq.apps.accounting.utils import fmt_feature_rate_dict, fmt_product_rate_dict
 from corehq.apps.hqwebapp.crispy import BootstrapMultiField
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
 from corehq.apps.accounting.models import (BillingContactInfo, Currency, SoftwarePlanVersion, BillingAccount,
                                            Subscription, Subscriber, CreditLine, SoftwareProductRate,
                                            FeatureRate, SoftwarePlanEdition, SoftwarePlanVisibility,
-                                           BillingAccountAdmin, SoftwarePlan, Feature, FeatureType)
+                                           BillingAccountAdmin, SoftwarePlan, Feature, FeatureType,
+                                           SoftwareProduct, SoftwareProductType)
 
 
 class BillingAccountForm(forms.Form):
@@ -446,6 +447,18 @@ class SoftwarePlanVersionForm(forms.Form):
         required=False,
         widget=forms.HiddenInput,
     )
+    product_id = forms.CharField(
+        required=False,
+        label="Search for or Create Product"
+    )
+    new_product_type = forms.ChoiceField(
+        required=False,
+        choices=SoftwareProductType.CHOICES,
+    )
+    product_rates = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput,
+    )
 
     def __init__(self, plan_version, data=None, *args, **kwargs):
         self.plan_version = plan_version
@@ -453,6 +466,9 @@ class SoftwarePlanVersionForm(forms.Form):
         if not 'feature_rates' in data:
             data['feature_rates'] = json.dumps([fmt_feature_rate_dict(r.feature, r)
                                            for r in self.plan_version.feature_rates.all()])
+        if not 'product_rates' in data:
+            data['product_rates'] = json.dumps([fmt_product_rate_dict(r.product, r)
+                                           for r in self.plan_version.product_rates.all()])
 
         self.is_update = False
 
@@ -564,9 +580,23 @@ class SoftwarePlanVersionForm(forms.Form):
         }
 
     @property
+    def product_rates_dict(self):
+        return {
+            'current_value': self['product_rates'].value(),
+            'field_name': 'product_id',
+            'async_handler': SoftwareProductRateAsyncHandler.slug,
+            'select2_handler': Select2RateAsyncHandler.slug,
+        }
+
+    @property
     @memoized
     def current_features_to_rates(self):
         return dict([(r.feature.id, r) for r in self.plan_version.feature_rates.all()])
+
+    @property
+    @memoized
+    def current_products_to_rates(self):
+        return dict([(r.product.id, r) for r in self.plan_version.product_rates.all()])
 
     def _get_errors_from_subform(self, form_name, subform):
         for field, field_errors in subform._errors.items():
@@ -600,6 +630,28 @@ class SoftwarePlanVersionForm(forms.Form):
             return new_rate
         return current_rate
 
+    def _retrieve_product_rate(self, rate_form):
+        product = SoftwareProduct.objects.get(id=rate_form['product_id'].value())
+        new_rate = rate_form.get_instance(product)
+        if rate_form.is_new():
+            # a brand new rate
+            self.is_update = True
+            return new_rate
+        if product.id not in self.current_products_to_rates.keys():
+            # the plan does not have this rate yet, compare any changes to the feature's current latest rate
+            # also mark the form as updated
+            current_rate = product.get_rate(default_instance=False)
+            if current_rate is None:
+                return new_rate
+            self.is_update = True
+        else:
+            current_rate = self.current_products_to_rates[product.id]
+        # note: custom implementation of SoftwareProductRate.__eq__ here...
+        if not current_rate == new_rate:
+            self.is_update = True
+            return new_rate
+        return current_rate
+
     def clean_feature_rates(self):
         original_data = self.cleaned_data['feature_rates']
         rates = json.loads(original_data)
@@ -620,6 +672,26 @@ class SoftwarePlanVersionForm(forms.Form):
             self.is_update = True
         return original_data
 
+    def clean_product_rates(self):
+        original_data = self.cleaned_data['product_rates']
+        rates = json.loads(original_data)
+        rate_instances = []
+        errors = ErrorList()
+        for rate_data in rates:
+            rate_form = ProductRateForm(rate_data)
+            if not rate_form.is_valid():
+                errors.extend(list(self._get_errors_from_subform(rate_data['name'], rate_form)))
+            else:
+                rate_instances.append(self._retrieve_product_rate(rate_form))
+        if errors:
+            self._errors.setdefault('product_rates', errors)
+        self.new_product_rates = rate_instances
+        rate_ids = lambda x: set([r.id for r in x])
+        if (not self.is_update and
+                rate_ids(rate_instances).symmetric_difference(rate_ids(self.plan_version.product_rates.all()))):
+            self.is_update = True
+        return original_data
+
     def save(self, request):
         if not self.is_update:
             messages.info(request, "No changes to rates and roles were present, so the current version was kept.")
@@ -634,8 +706,7 @@ class SoftwarePlanVersionForm(forms.Form):
             feature_rate.save()
             new_version.feature_rates.add(feature_rate)
 
-        # todo update this like feature_rates
-        for product_rate in self.plan_version.product_rates.all():
+        for product_rate in self.new_product_rates:
             new_version.product_rates.add(product_rate)
 
         new_version.save()
