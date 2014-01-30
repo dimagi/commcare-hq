@@ -131,7 +131,7 @@ class BillingAccount(models.Model):
         help_text="This is how we link to the salesforce account",
     )
     created_by = models.CharField(max_length=80)
-    date_created = models.DateField(auto_now_add=True)
+    date_created = models.DateTimeField(auto_now_add=True)
     billing_admins = models.ManyToManyField(BillingAccountAdmin, null=True)
     currency = models.ForeignKey(Currency, on_delete=models.PROTECT)
     is_auto_invoiceable = models.BooleanField(default=False)
@@ -160,7 +160,6 @@ class BillingAccount(models.Model):
         account = BillingAccount(
             name=domain,
             created_by=created_by,
-            date_created=datetime.date.today(),
             currency=Currency.get_default(),
             account_type=BillingAccountType.INVOICE_GENERATED,
         )
@@ -201,7 +200,7 @@ class SoftwareProductRate(models.Model):
     """
     product = models.ForeignKey(SoftwareProduct, on_delete=models.PROTECT)
     monthly_fee = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2)
-    date_created = models.DateField(auto_now_add=True)
+    date_created = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
 
     @classmethod
@@ -224,6 +223,12 @@ class Feature(models.Model):
     def __str__(self):
         return "Feature '%s' of type '%s'" % (self.name, self.feature_type)
 
+    def get_rate(self, default_instance=True):
+        try:
+            return self.featurerate_set.filter(is_active=True).latest('date_created')
+        except FeatureRate.DoesNotExist:
+            return FeatureRate() if default_instance else None  # the defaults
+
 
 class FeatureRate(models.Model):
     """
@@ -231,16 +236,27 @@ class FeatureRate(models.Model):
     Once created, Feature Rates cannot be modified. Instead, a new Feature Rate must be created.
     """
     feature = models.ForeignKey(Feature, on_delete=models.PROTECT)
-    monthly_fee = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2)
-    monthly_limit = models.IntegerField(default=0)
-    per_excess_fee = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2)
-    date_created = models.DateField(auto_now_add=True)
+    monthly_fee = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2,
+                                      verbose_name="Monthly Fee")
+    monthly_limit = models.IntegerField(default=0,
+                                        verbose_name="Monthly Included Limit")
+    per_excess_fee = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2,
+                                         verbose_name="Fee Per Excess of Limit")
+    date_created = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
 
     def __str__(self):
         return 'Feature Rate: $%s /month, $%s /excess, limit: %d' % (
             self.monthly_fee, self.per_excess_fee, self.monthly_limit
         )
+
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__) or not self.feature.pk == other.feature.pk:
+            return False
+        for field in ['monthly_fee', 'monthly_limit', 'per_excess_fee', 'is_active']:
+            if not getattr(self, field) == getattr(other, field):
+                return False
+        return True
 
     @classmethod
     def new_rate(cls, feature_name, feature_type,
@@ -279,10 +295,8 @@ class SoftwarePlan(models.Model):
         choices=SoftwarePlanVisibility.CHOICES,
     )
 
-    @classmethod
-    def get_latest_version(cls, **kwargs):
-        plan = cls.objects.get(**kwargs)
-        return plan.softwareplanversion_set.latest('date_created')
+    def get_version(self):
+        return self.softwareplanversion_set.filter(is_active=True).latest('date_created')
 
 
 class DefaultProductPlan(models.Model):
@@ -300,7 +314,7 @@ class DefaultProductPlan(models.Model):
         product_type = SoftwareProductType.get_type_by_domain(domain)
         try:
             default_product_plan = DefaultProductPlan.objects.get(product_type=product_type)
-            return default_product_plan.plan.softwareplanversion_set.latest('date_created')
+            return default_product_plan.plan.get_version()
         except DefaultProductPlan.DoesNotExist:
             raise AccountingError("No default product plan was set up, did you forget to bootstrap plans?")
 
@@ -314,7 +328,7 @@ class SoftwarePlanVersion(models.Model):
     plan = models.ForeignKey(SoftwarePlan, on_delete=models.PROTECT)
     product_rates = models.ManyToManyField(SoftwareProductRate, blank=True)
     feature_rates = models.ManyToManyField(FeatureRate, blank=True)
-    date_created = models.DateField(auto_now_add=True)
+    date_created = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
     role = models.ForeignKey(Role)
 
@@ -357,7 +371,7 @@ class Subscription(models.Model):
     date_start = models.DateField()
     date_end = models.DateField(blank=True, null=True)
     date_delay_invoicing = models.DateField(blank=True, null=True)
-    date_created = models.DateField(auto_now_add=True)
+    date_created = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=False)
 
     @classmethod
@@ -408,7 +422,7 @@ class Invoice(models.Model):
     balance = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
     date_due = models.DateField(db_index=True)
     date_paid = models.DateField(blank=True, null=True)
-    date_created = models.DateField(auto_now_add=True)
+    date_created = models.DateTimeField(auto_now_add=True)
     date_received = models.DateField(blank=True, db_index=True, null=True)
     date_start = models.DateField()
     date_end = models.DateField()
@@ -542,7 +556,7 @@ class CreditLine(models.Model):
     subscription = models.ForeignKey(Subscription, on_delete=models.PROTECT, null=True, blank=True)
     product_rate = models.ForeignKey(SoftwareProductRate, on_delete=models.PROTECT, null=True, blank=True)
     feature_rate = models.ForeignKey(FeatureRate, on_delete=models.PROTECT, null=True, blank=True)
-    date_created = models.DateField(auto_now_add=True)
+    date_created = models.DateTimeField(auto_now_add=True)
     balance = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
 
     def adjust_credit_balance(self, amount, is_new=False, note=None, line_item=None, invoice=None):
@@ -656,7 +670,7 @@ class CreditAdjustment(models.Model):
     line_item = models.ForeignKey(LineItem, on_delete=models.PROTECT, null=True)
     invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT, null=True)
     # todo payment_method = models.ForeignKey(PaymentMethod)
-    date_created = models.DateField(auto_now_add=True)
+    date_created = models.DateTimeField(auto_now_add=True)
     web_user = models.CharField(max_length=80, null=True)
 
     def clean(self):

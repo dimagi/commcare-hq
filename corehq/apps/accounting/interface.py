@@ -195,7 +195,7 @@ class SoftwarePlanInterface(BaseCRUDAdminInterface):
                     plan.description,
                     plan.edition,
                     plan.visibility,
-                    SoftwarePlan.get_latest_version(id=plan.id).date_created
+                    SoftwarePlan.objects.get(id=plan.id).get_version().date_created
                         if len(SoftwarePlanVersion.objects.filter(plan=plan)) != 0 else 'N/A',
                 ])
         return rows

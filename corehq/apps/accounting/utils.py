@@ -32,6 +32,23 @@ def assure_domain_instance(domain):
     return domain
 
 
+def fmt_feature_rate_dict(feature, feature_rate=None):
+    """
+    This will be turned into a JSON representation of this Feature and its FeatureRate
+    """
+    if feature_rate is None:
+        feature_rate = feature.get_rate()
+    return {
+        'name': feature.name,
+        'feature_type': feature.feature_type,
+        'feature_id': feature.id,
+        'rate_id': feature_rate.id,
+        'monthly_fee': feature_rate.monthly_fee.__str__(),
+        'monthly_limit': feature_rate.monthly_limit,
+        'per_excess_fee': feature_rate.per_excess_fee.__str__(),
+    }
+
+
 class LazyEncoder(json.JSONEncoder):
     """Taken from https://github.com/tomchristie/django-rest-framework/issues/87
     This makes sure that ugettext_lazy refrences in a dict are properly evaluated
