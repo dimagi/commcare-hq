@@ -58,9 +58,16 @@ class PtopReindexer(NoArgsCommand):
     doc_class = None
     view_name = None
     couch_key = None
-    pillow_class = None
+    pillow_class = None  # the pillow where the main indexing logic is
+    indexing_pillow_class = None  # the pillow that points to the index you want to index. By default this == self.pillow_class
     file_prefix = "ptop_fast_reindex_"
+    own_index_exists = True
 
+    def __init__(self):
+        super(PtopReindexer, self).__init__()
+        if not getattr(self, "indexing_pillow_class", None):
+            print "\n\nNo INDEXING PILLOW"
+            self.indexing_pillow_class = self.pillow_class
 
     def custom_filter(self, view_row):
         """
@@ -161,6 +168,7 @@ class PtopReindexer(NoArgsCommand):
         self.resume = options['resume']
         self.bulk = options['bulk']
         self.pillow = self.pillow_class()
+        self.indexing_pillow = self.indexing_pillow_class()
         self.db = self.doc_class.get_db()
         self.runfile = options['runfile']
         self.chunk_size = options.get('chunk_size', CHUNK_SIZE)
@@ -176,7 +184,7 @@ class PtopReindexer(NoArgsCommand):
         ALL index data in the case index and will take a while to reload.
         Are you sure you want to do this. Also you MUST have run_ptop disabled for this to run.
 
-        Type 'yes' to continue, or 'no' to cancel: """ % self.pillow_class.__name__)
+        Type 'yes' to continue, or 'no' to cancel: """ % self.indexing_pillow_class.__name__)
 
             if confirm != 'yes':
                 print "\tReset cancelled."
@@ -196,12 +204,13 @@ class PtopReindexer(NoArgsCommand):
         print "using chunk size %s" % self.chunk_size
 
         if not self.resume:
-            #delete the existing index.
-            print "Deleting index"
-            self.pillow.delete_index()
-            print "Recreating index"
-            self.pillow.create_index()
-            self.pillow.seen_types = {}
+            if self.own_index_exists:
+                #delete the existing index.
+                print "Deleting index"
+                self.indexing_pillow.delete_index()
+                print "Recreating index"
+                self.indexing_pillow.create_index()
+                self.indexing_pillow.seen_types = {}
             self.load_from_view()
         else:
             if self.runfile is None:
@@ -218,7 +227,7 @@ class PtopReindexer(NoArgsCommand):
         seq = self.load_seq_from_disk()
 
         #configure index to indexing mode
-        self.pillow.set_index_reindex_settings()
+        self.indexing_pillow.set_index_reindex_settings()
 
         if self.bulk:
             print "Preparing Bulk Payload"
@@ -229,7 +238,7 @@ class PtopReindexer(NoArgsCommand):
         end = datetime.utcnow()
 
         print "setting index settings to normal search configuration"
-        self.pillow.set_index_normal_settings()
+        self.indexing_pillow.set_index_normal_settings()
         print "done in %s seconds" % (end - start).seconds
 
     def process_row(self, row, count):

@@ -3,7 +3,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.elastic import es_query, ES_URLS, stream_es_query, get_es
 from corehq.pillows.mappings.user_mapping import USER_MAPPING, USER_INDEX
 from dimagi.utils.decorators.memoized import memoized
-from pillowtop.listener import AliasedElasticPillow, BasicPillow
+from pillowtop.listener import AliasedElasticPillow, BulkPillow
 from django.conf import settings
 
 
@@ -69,8 +69,9 @@ class UserPillow(AliasedElasticPillow):
     def get_type_string(self, doc_dict):
         return self.es_type
 
-class GroupToUserPillow(BasicPillow):
+class GroupToUserPillow(BulkPillow):
     couch_filter = "groups/all_groups"
+    document_class = CommCareUser
 
     def __init__(self, **kwargs):
         super(GroupToUserPillow, self).__init__(**kwargs)
@@ -90,4 +91,7 @@ class GroupToUserPillow(BasicPillow):
                 es.post("%s/user/%s/_update" % (USER_INDEX, user_source["_id"]), data={"doc": doc})
 
     def change_transport(self, doc_dict):
+        pass
+
+    def send_bulk(self, payload):
         pass
