@@ -55,4 +55,15 @@
             {% crispy feature_rate_form %}
         </div>
     </script>
+
+    <script type="text/html" id="product-rate-form-template">
+        <div class="well">
+            <div class="pull-right">
+                <button type="button" class="btn btn-danger" data-bind="event: {click: $parent.productRates.removeRate}">
+                    <i class="icon-remove"></i>
+                </button>
+            </div>
+            {% crispy product_rate_form %}
+        </div>
+    </script>
 {% endblock %}
