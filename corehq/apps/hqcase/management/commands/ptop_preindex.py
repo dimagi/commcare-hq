@@ -1,4 +1,5 @@
 from datetime import datetime
+from time import sleep
 from optparse import make_option
 from django.core.mail import mail_admins
 from pillowtop import get_all_pillows
@@ -11,29 +12,31 @@ from django.core.management import call_command
 from django.conf import settings
 
 
-def get_reindex_command(pillow_class_name):
+def get_reindex_commands(pillow_class_name):
     pillow_command_map = {
         'DomainPillow': 'ptop_fast_reindex_domains',
         'CasePillow': 'ptop_fast_reindex_cases',
         'XFormPillow': 'ptop_fast_reindex_xforms',
-        'UserPillow': 'ptop_fast_reindex_users',
-        'GroupToUserPillow': 'ptop_fast_reindex_groupstousers',
+        'UserPillow': ['ptop_fast_reindex_users', 'ptop_fast_reindex_groupstousers'],
+        # groupstousers indexing must happen after all users are indexed
         'AppPillow': 'ptop_fast_reindex_apps',
         'SMSPillow': 'ptop_fast_reindex_smslogs',
         'TCSMSPillow': 'ptop_fast_reindex_tc_smslogs',
         'ReportXFormPillow': 'ptop_fast_reindex_reportxforms',
         'ReportCasePillow': 'ptop_fast_reindex_reportcases',
     }
-    reindex_command = pillow_command_map.get(pillow_class_name, None)
-    return reindex_command
+    reindex_commands = pillow_command_map.get(pillow_class_name, [])
+    reindex_commands = [reindex_commands] if isinstance(reindex_commands, basestring) else reindex_commands
+    return reindex_commands
 
 
 def do_reindex(pillow_class_name):
     print "Starting pillow preindex %s" % pillow_class_name
-    reindex_command = get_reindex_command(pillow_class_name)
-    if reindex_command:
+    reindex_commands = get_reindex_commands(pillow_class_name)
+    for reindex_command in reindex_commands:
         call_command(reindex_command, **{'noinput': True, 'bulk': True})
-        print "Pillow preindex finished %s" % pillow_class_name
+        sleep(1.5)  # wait atleast 1 second for the just-indexed index to refresh so that its docs become queryable
+    print "Pillow preindex finished %s" % pillow_class_name
 
 
 class Command(BaseCommand):
@@ -96,7 +99,7 @@ class Command(BaseCommand):
         for pillow in reindex_pillows:
             #loop through pillows once before running greenlets to fail hard on misconfigured pillows
             pillow_class_name = pillow.__class__.__name__
-            reindex_command = get_reindex_command(pillow_class_name)
+            reindex_command = get_reindex_commands(pillow_class_name)
             if not reindex_command:
                 raise Exception("Error, pillow [%s] is not configured with its own management command reindex command - it needs one" % pillow_class_name)
 

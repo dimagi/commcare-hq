@@ -66,7 +66,6 @@ class PtopReindexer(NoArgsCommand):
     def __init__(self):
         super(PtopReindexer, self).__init__()
         if not getattr(self, "indexing_pillow_class", None):
-            print "\n\nNo INDEXING PILLOW"
             self.indexing_pillow_class = self.pillow_class
 
     def custom_filter(self, view_row):
