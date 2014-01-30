@@ -29,9 +29,9 @@ class NewWebUserRegistrationForm(forms.Form):
                                max_length=max_pwd,
                                widget=forms.PasswordInput(render_value=False))
     email_opt_out = forms.BooleanField(required=False,
-                                       initial=False,
+                                       initial=True,
                                        label="",
-                                       help_text=_("Opt out of emails about new features and other CommCare updates."))
+                                       help_text=_("Opt into emails about new features and other CommCare updates."))
     # Must be set to False to have the clean_*() routine called
     eula_confirmed = forms.BooleanField(required=False,
                                         label="",
