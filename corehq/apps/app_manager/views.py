@@ -67,7 +67,7 @@ from corehq.apps.domain.decorators import login_and_domain_required, login_or_di
 from corehq.apps.app_manager.models import Application, get_app, DetailColumn, Form, FormActions,\
     AppEditingError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, \
     DeleteApplicationRecord, str_to_cls, validate_lang, SavedAppBuild, ParentSelect, Module, CareplanModule, \
-    CareplanForm, CareplanGoalForm, CareplanTaskForm, CommTrackModule, CommTrackForm, ModuleNotFoundException
+    CareplanForm, CareplanGoalForm, CareplanTaskForm, CommTrackModule, CommTrackForm, CommTrackFormActions, ModuleNotFoundException
 from corehq.apps.app_manager.models import DETAIL_TYPES, import_app as import_app_util, SortElement
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST

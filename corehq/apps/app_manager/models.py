@@ -256,22 +256,24 @@ class FormActions(DocumentSchema):
         return names
 
 
-class LoadUpdateCloseAction(DocumentSchema):
+class LoadUpdateAction(DocumentSchema):
     case_type = StringProperty()
     case_tag = StringProperty()
     preload = DictProperty()
-    update = DictProperty()
+    case_properties = DictProperty()
 
     close_condition = SchemaProperty(FormActionCondition)
 
     show_product_stock = BooleanProperty(default=True)
 
 
-class CommTrackOpenCaseAction(DocumentSchema):
+class AdvancedOpenCaseAction(DocumentSchema):
     case_type = StringProperty()
     case_name = StringProperty()
+    case_tag = StringProperty()
     case_properties = DictProperty()
     repeat_context = StringProperty()
+    parent_tag = StringProperty()
     parent_reference_id = StringProperty()
 
     open_condition = SchemaProperty(FormActionCondition)
@@ -279,21 +281,21 @@ class CommTrackOpenCaseAction(DocumentSchema):
 
 
 class CommTrackFormActions(DocumentSchema):
-    load_update_close_cases = SchemaListProperty(LoadUpdateCloseAction)
-    open_cases = SchemaListProperty(CommTrackOpenCaseAction)
+    load_update_cases = SchemaListProperty(LoadUpdateAction)
+    open_cases = SchemaListProperty(AdvancedOpenCaseAction)
 
     def all_property_names(self):
         names = set()
         for action in self.load_update_close:
             names.update(action.preload.keys())
-            names.update(action.update.keys())
+            names.update(action.case_properties.keys())
         for action in self.open_cases:
             names.update(action.case_properties.keys())
 
         return names
 
     def get_subcase_actions(self):
-        return (a for a in self.open_cases if a.parent_reference_id)
+        return (a for a in self.open_cases if a.parent_tag)
 
 #
 # class CommTrackFormActions(DocumentSchema):
