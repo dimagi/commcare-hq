@@ -1,6 +1,5 @@
 from corehq.apps.commtrack.models import CommtrackConfig, OpenLMISConfig
 from corehq.apps.commtrack.tests.util import CommTrackTest
-from corehq.apps.commtrack.stockreport import Requisition
 from corehq.apps.commtrack.const import RequisitionActions
 from corehq.apps.commtrack.requisitions import create_requisition
 from custom.openlmis.commtrack import requisition_receipt
@@ -22,6 +21,7 @@ class ConfirmDeliveryTest(CommTrackTest):
         commtrack_config.save()
 
     def testConfirmDelivery(self):
+        from corehq.apps.commtrack.stockreport import Requisition
         requisition_cases = []
         config = self.domain.commtrack_settings
         for spp in self.spps.values():
