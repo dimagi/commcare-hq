@@ -110,8 +110,10 @@ class Product(Document):
 
     @classmethod
     def get_by_code(cls, domain, code):
+        if not code:
+            return None
         result = cls.view("commtrack/product_by_code",
-                          key=[domain, code],
+                          key=[domain, code.lower()],
                           include_docs=True).first()
         return result
 

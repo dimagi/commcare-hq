@@ -111,23 +111,6 @@ def make_loc(code, name=None, domain=TEST_DOMAIN, type=TEST_LOCATION_TYPE, paren
     loc.save()
     return loc
 
-def update_supply_point_product_stock_level(spp, current_stock):
-    caseblock = CaseBlock(
-        case_id=spp._id,
-        create=False,
-        version=V2,
-        user_id=spp.user_id,
-        owner_id=spp.owner_id,
-        case_type=const.SUPPLY_POINT_PRODUCT_CASE_TYPE,
-        update={
-            "current_stock": current_stock
-        },
-    )
-    username = const.COMMTRACK_USERNAME
-    casexml = ElementTree.tostring(caseblock.as_xml())
-    submit_case_blocks(casexml, spp.domain, username, spp.user_id,
-                       xmlns=const.COMMTRACK_SUPPLY_POINT_PRODUCT_XMLNS)
-
 class CommTrackTest(TestCase):
     requisitions_enabled = False  # can be overridden
 
