@@ -44,38 +44,6 @@
     <!--/ko-->
 </script>
 
-<script type="text/html" id="case-config:case-transaction">
-    <div data-bind="template: {
-        name: 'case-config:condition',
-        data: {condition: condition, case_transaction: $data}
-    }, visible: allow.condition()"></div>
-    <div data-bind="if: allow.case_preload()" class="row-fluid">
-        <div class="well span6">
-            <div data-bind="template: 'case-config:case-transaction:case-preload'"></div>
-        </div>
-        <div class="well span6">
-            <div data-bind="template: 'case-config:case-transaction:case-properties'"></div>
-        </div>
-    </div>
-    <div data-bind="if: !allow.case_preload()" class="row-fluid">
-        <div class="well span6">
-            <div data-bind="template: 'case-config:case-transaction:case-properties'"></div>
-        </div>
-    </div>
-    <div data-bind="visible: allow.close_condition()" class="well">
-        <em>{% trans "Close this case when the form is complete" %}</em>
-        <label>
-            <input type="checkbox" data-bind="checked: close_case"/>
-            {% trans "Close Case" %}
-        </label>
-        <div data-bind="template: {
-            name: 'case-config:condition',
-            data: {condition: $data.close_condition, case_transaction: $data},
-            if: $data.close_condition
-        }"></div>
-    </div>
-</script>
-
 <script type="text/html" id="case-config:case-properties:question">
     <input class="input-large" type="hidden" data-bind="
         questionsSelect: $root.getQuestions('all', false, true),
@@ -117,7 +85,7 @@
         </thead>
 
         <tbody data-bind="foreach: preload">
-            <tr class="control-group" data-bind="css: {error: validateProperty || validateQuestion}">
+            <tr class="control-group" data-bind="css: {error: validateProperty() || validateQuestion()}">
                 <td>
                     <a href="#" data-bind="
                         click: $parent.removePreload,
@@ -150,10 +118,10 @@
 
 <script type="text/html" id="case-config:case-load:update">
     <em>{% trans "Save data to the following case properties" %}</em>
-    <div class="alert alert-block alert-info" data-bind="visible: !update().length">
+    <div class="alert alert-block alert-info" data-bind="visible: !case_properties().length">
         {% trans "No case properties will be saved" %}
     </div>
-    <table class="table table-condensed" data-bind="visible: update().length">
+    <table class="table table-condensed" data-bind="visible: case_properties().length">
         <thead>
             <tr>
                 <th></th>
@@ -163,12 +131,12 @@
             </tr>
         </thead>
 
-        <tbody data-bind="foreach: update">
+        <tbody data-bind="foreach: case_properties">
             <tr class="control-group" data-bind="css: {error: validate, warning: !validate() && required() && !path()}">
                 <td>
                     <a href="#" data-bind="
-                        click: $parent.removeUpdate,
-                        visible: $root.edit && !required() && !(isBlank() && $index() === $parent.update().length - 1)
+                        click: $parent.removeProperty,
+                        visible: $root.edit && !required() && !(isBlank() && $index() === $parent.case_properties().length - 1)
                     ">
                         <i class="icon-remove"></i>
                     </a>
@@ -189,13 +157,13 @@
             </tr>
         </tbody>
     </table>
-    <a href="#" data-bind="click: addUpdate, visible: $root.edit && !update().length">
+    <a href="#" data-bind="click: addProperty, visible: $root.edit && !case_properties().length">
         <i class="icon-plus"></i>
         {% trans "Save properties" %}
     </a>
 </script>
 
-<script type="text/html" id="case-config:case-load">
+<script type="text/html" id="case-config:case-action">
     <h3><a href="#">
         <strong data-bind="text: case_tag"></strong>
         &nbsp;
@@ -205,8 +173,8 @@
     <div>
             <div>
                 <i class="icon-ok"></i>
-                {% trans "Select case list:" %}
-                <span class="control-group" data-bind="css: {warning: !case_type()}">
+                {% trans "Select case module:" %}
+                <span class="control-group" data-bind="css: {warning: validate()}">
                     <select data-bind="
                         options: config.caseTypes,
                         optionsText: $parent.getCaseTypeLabel,
@@ -214,28 +182,49 @@
                         optionsCaption: 'Choose a Module...',
                         edit: $root.edit"
                     ></select>
-                &nbsp;
-                </span>
-                <span class="control-group" data-bind="css: {warning: !case_tag()}">
+                    &nbsp;
                     {% trans "Case Tag:" %}
-                    <input type="text" data-bind="value: case_tag" />
+                    <input type="text" class="input-medium" data-bind="value: case_tag" />
+                    <span class="help-inline" data-bind="text: validate"></span>
+                    <a href="#" data-bind="openModal: 'remove-action-modal-template', visible: $root.edit" class="pull-right">
+                        <i class="icon-trash"></i>
+                        {% trans "Remove action" %}
+                    </a>
                 </span>
-                <span class="help-inline warning" data-bind="visible: !case_type() || !case_tag()">{% trans "Required" %}</span>
-                <a href="#" data-bind="openModal: 'remove-action-modal-template', visible: $root.edit" class="pull-right">
-                    <i class="icon-trash"></i>
-                    {% trans "Remove action" %}
-                </a>
             </div>
             <div data-bind="visible: !case_type">
                 <em>{% trans "Please select a case type." %}</em>
             </div>
             <div data-bind="visible: case_type">
-                <div class="row-fluid">
+                <!--ko if: actionType == 'open'-->
+                <div data-bind="template: {
+                    name: 'case-config:condition',
+                    data: {condition: open_condition}
+                }"></div>
+                <!-- /ko -->
+                <div data-bind="if: actionType == 'load'" class="row-fluid">
                     <div class="well span6">
                         <div data-bind="template: 'case-config:case-load:preload'"></div>
                     </div>
                     <div class="well span6">
                         <div data-bind="template: 'case-config:case-load:update'"></div>
+                    </div>
+                </div>
+                <div data-bind="if: actionType == 'open'" class="row-fluid">
+                    <div class="well">
+                        <div data-bind="template: 'case-config:case-load:update'"></div>
+                    </div>
+                    <div class="well">
+                        <em>{% trans "Make this case a subcase of another case" %}</em>
+                        <label>
+                            <input type="checkbox" data-bind="checked: subcase"/>
+                            {% trans "Make subcase" %}
+                        </label>
+                        <div data-bind="if: subcase">
+                            <select data-bind="optstr: $parent.getCaseTags('load'),
+                                value: parent_tag,
+                                edit: $root.edit"></select>
+                        </div>
                     </div>
                 </div>
                 <div class="well">
@@ -253,10 +242,10 @@
             </div>
     </div>
 </script>
-
+{#<!--ko if: actionType() !== 'none'-->#}
 <div id="case-config-ko" class="row">
     <div data-bind="saveButton: saveButton, visible: $root.edit"></div>
-    <div data-bind="with: caseConfigViewModel" class="span10">
+    <div data-bind="with: caseConfigViewModel" class="span11">
         <div class="dropdown" data-bind="visible: actionOptions().length">
             <a href="#" data-toggle="dropdown">
                 <i class="icon-plus icon-blue"></i>
@@ -271,11 +260,20 @@
             <span class="muted">{% trans "Add Action" %}</span>
         </div>
         <div>
-            <div id="case-load-accordion" data-bind="foreach: actions.load_update_close_cases, accordion: {header: '> div > h3', heightStyle: 'content', collapsible: true}">
-                <div class="group" data-bind="template: {name: 'case-config:case-load'}"></div>
+            <div class="row-fluid">
+                <span data-bind="visible: actions.load_update_close_cases().length"><i class="icon-asterisk"></i> Load / Update / Close cases</span>
+                <div id="case-load-accordion" data-bind="foreach: actions.load_update_close_cases, accordion: {header: '> div > h3', heightStyle: 'content', collapsible: true, autoFill: true}">
+                    <div class="group" data-bind="template: {name: 'case-config:case-action'}"></div>
+                </div>
             </div>
-            <div data-bind="foreach: actions.open_cases">
-                <input type="text" data-bind="value: case_type" />
+            <div class="row" data-bind="visible: actions.open_cases().length && actions.load_update_close_cases().length">
+                <hr/>
+            </div>
+            <div class="row-fluid">
+                <span data-bind="visible: actions.open_cases().length"><i class="icon-asterisk"></i> Open new cases</span>
+                <div id="case-open-accordion" data-bind="foreach: actions.open_cases, accordion: {header: '> div > h3', heightStyle: 'content', collapsible: true, autoFill: true}">
+                    <div class="group" data-bind="template: {name: 'case-config:case-action'}"></div>
+                </div>
             </div>
         </div>
 {#        <!--ko if: actionType() !== 'none'-->#}
