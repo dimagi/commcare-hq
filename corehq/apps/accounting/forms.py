@@ -347,12 +347,13 @@ class CancelForm(forms.Form):
 
 
 class PlanInformationForm(forms.Form):
-    name = forms.CharField(max_length=80) # require uniqueness
+    name = forms.CharField(max_length=80)
     description = forms.CharField(required=False)
     edition = forms.ChoiceField(choices=SoftwarePlanEdition.CHOICES)
     visibility = forms.ChoiceField(choices=SoftwarePlanVisibility.CHOICES)
 
     def __init__(self, plan, *args, **kwargs):
+        self.plan = plan
         if plan is not None:
             kwargs['initial'] = {
                 'name': plan.name,
@@ -384,7 +385,11 @@ class PlanInformationForm(forms.Form):
         )
 
     def clean_name(self):
-        return self.cleaned_data['name'] # TODO - implement
+        name = self.cleaned_data['name']
+        if (len(SoftwarePlan.objects.filter(name=name)) != 0
+            and (self.plan is None or self.plan.name != name)):
+            raise ValidationError('Name already taken.  Please enter a new name.')
+        return name
 
     def create_plan(self):
         name = self.cleaned_data['name']
@@ -396,8 +401,6 @@ class PlanInformationForm(forms.Form):
                             edition=edition,
                             visibility=visibility)
         plan.save()
-        plan_version = SoftwarePlanVersion(plan=plan, role=role_gen.arbitrary_role()) # TODO - check this
-        plan_version.save()
         return plan
 
     def update_plan(self, plan):
