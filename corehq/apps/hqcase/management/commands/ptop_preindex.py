@@ -35,7 +35,6 @@ def do_reindex(pillow_class_name):
     reindex_commands = get_reindex_commands(pillow_class_name)
     for reindex_command in reindex_commands:
         call_command(reindex_command, **{'noinput': True, 'bulk': True})
-        sleep(1.5)  # wait atleast 1 second for the just-indexed index to refresh so that its docs become queryable
     print "Pillow preindex finished %s" % pillow_class_name
 
 

@@ -236,8 +236,9 @@ class PtopReindexer(NoArgsCommand):
             self.load_traditional()
         end = datetime.utcnow()
 
-        print "setting index settings to normal search configuration"
+        print "setting index settings to normal search configuration and refreshing index"
         self.indexing_pillow.set_index_normal_settings()
+        self.indexing_pillow.refresh_index()
         print "done in %s seconds" % (end - start).seconds
 
     def process_row(self, row, count):
