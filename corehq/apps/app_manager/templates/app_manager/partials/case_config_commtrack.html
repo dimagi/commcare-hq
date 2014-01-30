@@ -25,7 +25,7 @@
         <a href="#" data-bind="click: function () {type('always')}, visible: $root.edit"><i class="icon-remove"></i></a>
         {% trans "Only if the answer to" %}
         <input class="input-large" type="hidden" data-bind="
-            questionsSelect: $root.getQuestions('select1', false, $parent.case_transaction.allow.repeats()),
+            questionsSelect: $root.getQuestions('select1', false, true),
             value: question,
             optionsCaption: ' ',
             edit: $root.edit"
@@ -197,9 +197,9 @@
 
 <script type="text/html" id="case-config:case-load">
     <h3><a href="#">
-        <strong>{% trans "Case Type: " %}</strong><span data-bind="text: case_type" />
-        &nbsp;-&nbsp;
-        <strong>{% trans "Tag: " %}</strong><span data-bind="text: case_tag" />
+        <strong data-bind="text: case_tag"></strong>
+        &nbsp;
+        ({% trans "Type: " %}<span data-bind="text: case_type" />)
         </a>
     </h3>
     <div>
@@ -238,50 +238,46 @@
                         <div data-bind="template: 'case-config:case-load:update'"></div>
                     </div>
                 </div>
-{#                    <div class="well">#}
-{#                        <em>{% trans "Close this case when the form is complete" %}</em>#}
-{#                        <label>#}
-{#                            <input type="checkbox" data-bind="checked: close_case"/>#}
-{#                            {% trans "Close Case" %}#}
-{#                        </label>#}
-{#                        <div data-bind="template: {#}
-{#                            name: 'case-config:condition',#}
-{#                            data: {condition: $data.close_condition, case_transaction: $data},#}
-{#                            if: $data.close_condition#}
-{#                        }"></div>#}
-{#                    </div>#}
+                <div class="well">
+                    <em>{% trans "Close this case when the form is complete" %}</em>
+                    <label>
+                        <input type="checkbox" data-bind="checked: close_case"/>
+                        {% trans "Close Case" %}
+                    </label>
+                    <div data-bind="template: {
+                        name: 'case-config:condition',
+                        data: {condition: close_condition},
+                        if: close_case
+                    }"></div>
+                </div>
             </div>
     </div>
 </script>
 
-<div id="case-config-ko">
+<div id="case-config-ko" class="row">
     <div data-bind="saveButton: saveButton, visible: $root.edit"></div>
-    <div data-bind="with: caseConfigViewModel">
+    <div data-bind="with: caseConfigViewModel" class="span10">
+        <div class="dropdown" data-bind="visible: actionOptions().length">
+            <a href="#" data-toggle="dropdown">
+                <i class="icon-plus icon-blue"></i>
+                <span>{% trans "Add Action" %}</span><span class="caret"></span>
+            </a>
+            <ul class="dropdown-menu" role="menu" data-bind="foreach: actionOptions">
+                <li><a href="#" data-bind="click: $parent.addFormAction, text: display"></a></li>
+            </ul>
+        </div>
+        <div data-bind="visible: !actionOptions().length">
+            <i class="icon-plus icon-muted"></i>
+            <span class="muted">{% trans "Add Action" %}</span>
+        </div>
         <div>
-            <div data-bind="foreach: actions.load_update_close_cases, accordion: {header: '> div > h3'}">
+            <div id="case-load-accordion" data-bind="foreach: actions.load_update_close_cases, accordion: {header: '> div > h3', heightStyle: 'content', collapsible: true}">
                 <div class="group" data-bind="template: {name: 'case-config:case-load'}"></div>
             </div>
             <div data-bind="foreach: actions.open_cases">
                 <input type="text" data-bind="value: case_type" />
             </div>
-            <div class="btn-group">
-                <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
-                    {% trans "Add case action to the form" %}
-                    <span class="caret"></span>
-                </a>
-                <ul class="dropdown-menu" data-bind="foreach: actionOptions">
-                    <li><a href="#" data-bind="click: $parent.addFormAction, text: display"></a></li>
-                </ul>
-            </div>
         </div>
-{#        <div data-bind="if: actionType() === 'update'">#}
-{#            <div data-bind="template: {name: 'case-config:case-transaction', data: case_transaction}">#}
-{#            </div>#}
-{#        </div>#}
-{#        <div data-bind="if: actionType() === 'open'">#}
-{#            <div data-bind="template: {name: 'case-config:case-transaction', data: case_transaction}">#}
-{#            </div>#}
-{#        </div>#}
 {#        <!--ko if: actionType() !== 'none'-->#}
 {#        <header class="clearfix" data-bind="visible: actionType() !== 'open-other'">#}
 {#            <h5 class="pull-left">{% trans "Child Cases" %}</h5>#}
