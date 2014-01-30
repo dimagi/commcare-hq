@@ -5,6 +5,7 @@ from dimagi.utils import parsing as dateparse
 from datetime import datetime, timedelta
 from casexml.apps.stock import const
 from casexml.apps.stock.models import StockTransaction
+from dimagi.utils.dates import force_to_datetime
 
 DEFAULT_CONSUMPTION_FUNCTION = lambda case_id, product_id: None
 
@@ -92,7 +93,7 @@ def get_transactions(case_id, product_id, section_id, window_start, window_end):
     db_transactions = StockTransaction.objects.filter(
         case_id=case_id, product_id=product_id,
         report__date__gt=window_start,
-        report__date__lte=datetime(window_end.year, window_end.month, window_end.day),
+        report__date__lte=force_to_datetime(window_end),
         section_id=section_id,
     ).order_by('report__date', 'pk')
 
