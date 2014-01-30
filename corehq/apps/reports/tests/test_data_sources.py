@@ -1,12 +1,12 @@
+from datetime import datetime
 from django import test as unittest
+from casexml.apps.stock.models import StockState
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.reports.commtrack.data_sources import StockStatusDataSource
 from corehq.apps.users.models import WebUser
 from dimagi.utils.couch.loosechange import map_reduce
-from corehq.apps.commtrack.helpers import make_supply_point,\
-    make_supply_point_product, make_product
-from corehq.apps.commtrack.tests.util import make_loc,\
-    update_supply_point_product_stock_level
+from corehq.apps.commtrack.helpers import make_supply_point, make_product
+from corehq.apps.commtrack.tests.util import make_loc
 
 CURRENT_STOCK = StockStatusDataSource.SLUG_CURRENT_STOCK
 PRODUCT_ID = StockStatusDataSource.SLUG_PRODUCT_ID
@@ -16,7 +16,7 @@ LOCATION_ID = StockStatusDataSource.SLUG_LOCATION_ID
 format_string = "%Y-%m-%d"
 TEST_DOMAIN = 'commtrack-test1'
 
-class BaseReportTest(unittest.TestCase):
+class DataSourceTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
 
@@ -57,13 +57,18 @@ class BaseReportTest(unittest.TestCase):
                 district = make_loc(district_name, type='district', parent=region)
                 cls.districts[district_name] = district
                 for site_name, products in sites.items():
-                    site = make_loc(site_name, type='site', parent=district)
+                    site = make_loc(site_name, type='site', parent=district, domain=TEST_DOMAIN)
                     cls.sites[site_name] = (site, products)
                     supply_point = make_supply_point(TEST_DOMAIN, site)
                     for p_code, stock in products.items():
                         prod = cls.products[p_code]
-                        spp = make_supply_point_product(supply_point, prod._id)
-                        update_supply_point_product_stock_level(spp, stock)
+                        StockState.objects.create(
+                            section_id='stock',
+                            case_id=supply_point._id,
+                            product_id=prod._id,
+                            stock_on_hand=stock,
+                            last_modified_date=datetime.utcnow(),
+                        )
 
     @classmethod
     def tearDownClass(cls):
