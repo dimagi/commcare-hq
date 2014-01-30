@@ -796,6 +796,21 @@ def api_history(request, domain):
             pass
     return HttpResponse(json.dumps(result))
 
+@require_permission(Permissions.edit_data)
+def api_last_read_message(request, domain):
+    contact_id = request.GET.get("contact_id", None)
+    domain_obj = Domain.get_by_name(domain, strict=True)
+    if domain_obj.count_messages_as_read_by_anyone:
+        lrm = LastReadMessage.by_anyone(domain, contact_id)
+    else:
+        lrm = LastReadMessage.by_user(domain, request.couch_user._id, contact_id)
+    result = {
+        "message_timestamp" : None,
+    }
+    if lrm:
+        result["message_timestamp"] = json_format_datetime(lrm.message_timestamp)
+    return HttpResponse(json.dumps(result))
+
 class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView):
     template_name = "sms/gateway_list.html"
     urlname = 'list_domain_backends_new'
@@ -976,6 +991,7 @@ def sms_settings(request, domain):
                 domain_obj.custom_chat_template = form.cleaned_data["custom_chat_template"]
                 domain_obj.filter_surveys_from_chat = form.cleaned_data["filter_surveys_from_chat"]
                 domain_obj.show_invalid_survey_responses_in_chat = form.cleaned_data["show_invalid_survey_responses_in_chat"]
+                domain_obj.count_messages_as_read_by_anyone = form.cleaned_data["count_messages_as_read_by_anyone"]
                 if settings.SMS_QUEUE_ENABLED:
                     domain_obj.sms_conversation_times = form.cleaned_data["sms_conversation_times_json"]
                     domain_obj.sms_conversation_length = int(form.cleaned_data["sms_conversation_length"])
@@ -996,6 +1012,7 @@ def sms_settings(request, domain):
             "sms_conversation_length" : domain_obj.sms_conversation_length,
             "filter_surveys_from_chat" : domain_obj.filter_surveys_from_chat,
             "show_invalid_survey_responses_in_chat" : domain_obj.show_invalid_survey_responses_in_chat,
+            "count_messages_as_read_by_anyone" : domain_obj.count_messages_as_read_by_anyone,
         }
         form = SMSSettingsForm(initial=initial)
 

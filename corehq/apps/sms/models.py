@@ -239,6 +239,20 @@ class LastReadMessage(Document, CouchDocLockableMixIn):
         obj.save()
         return obj
 
+    @classmethod
+    def by_user(cls, domain, user_id, contact_id):
+        return cls.get_obj(domain, user_id, contact_id)
+
+    @classmethod
+    def by_anyone(cls, domain, contact_id):
+        return LastReadMessage.view(
+            "sms/last_read_message",
+            startkey=["by_anyone", domain, contact_id, {}],
+            endkey=["by_anyone", domain, contact_id],
+            descending=True,
+            include_docs=True
+        ).first()
+
 class CallLog(MessageLog):
     form_unique_id = StringProperty()
     answered = BooleanProperty(default=False)

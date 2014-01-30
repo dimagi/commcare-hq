@@ -57,6 +57,7 @@ class SMSSettingsForm(Form):
     )
     filter_surveys_from_chat = BooleanField(required=False)
     show_invalid_survey_responses_in_chat = BooleanField(required=False)
+    count_messages_as_read_by_anyone = BooleanField(required=False)
 
     def initialize_time_window_fields(self, initial, bool_field, json_field):
         time_window_json = [w.to_json() for w in initial]
