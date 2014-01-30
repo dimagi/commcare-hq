@@ -2,9 +2,9 @@ import json
 import os
 from django.test import TestCase
 from corehq.apps.commtrack.models import Product
-from corehq.apps.commtrack.tests import bootstrap_domain
 from custom.openlmis.api import Program
-from custom.openlmis.commtrack import sync_openlmis_program
+from corehq.apps.commtrack.tests.util import bootstrap_domain as initial_bootstrap
+from custom.openlmis.commtrack import sync_openlmis_program, bootstrap_domain
 
 
 TEST_DOMAIN = 'openlmis-commtrack-program-test'
@@ -13,6 +13,7 @@ class ProgramSyncTest(TestCase):
 
     def setUp(self):
         self.datapath = os.path.join(os.path.dirname(__file__), 'data')
+        initial_bootstrap(TEST_DOMAIN)
         bootstrap_domain(TEST_DOMAIN)
         for product in Product.by_domain(TEST_DOMAIN):
             product.delete()
