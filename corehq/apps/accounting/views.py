@@ -291,6 +291,10 @@ class EditSoftwarePlanView(AccountingSectionView):
     template_name = 'accounting/plans.html'
     urlname = 'edit_software_plan'
     page_title = "Edit Software Plan"
+    async_handlers = [
+        Select2RateAsyncHandler,
+        FeatureRateAsyncHandler,
+    ]
 
     @property
     @memoized
@@ -305,9 +309,17 @@ class EditSoftwarePlanView(AccountingSectionView):
         return PlanInformationForm(self.plan)
 
     @property
+    @memoized
+    def software_plan_version_form(self):
+        if self.request.method == 'POST':
+            return SoftwarePlanVersionForm(self.plan.get_version(), self.request.POST)
+        return SoftwarePlanVersionForm(self.plan.get_version())
+
+    @property
     def page_context(self):
         return {
             'plan_info_form': self.plan_info_form,
+            'plan_version_form': self.software_plan_version_form,
             'feature_rate_form': FeatureRateForm(),
             'plan_versions': SoftwarePlanVersion.objects.filter(plan=self.plan).order_by('date_created')
         }
@@ -323,8 +335,22 @@ class EditSoftwarePlanView(AccountingSectionView):
             'url': SoftwarePlanInterface.get_url(),
         }]
 
+    @property
+    def handler_slug(self):
+        return self.request.POST.get('handler')
+
+    def get_async_handler(self):
+        handler_class = dict([(h.slug, h) for h in self.async_handlers])[self.handler_slug]
+        return handler_class(self.request)
+
     def post(self, request, *args, **kwargs):
-        if self.plan_info_form.is_valid():
+        if self.handler_slug in [h.slug for h in self.async_handlers]:
+            return self.get_async_handler().get_response()
+        if 'update_version' in request.POST:
+            if self.software_plan_version_form.is_valid():
+                self.software_plan_version_form.save(request)
+                return HttpResponseRedirect(self.page_url)
+        elif self.plan_info_form.is_valid():
             self.plan_info_form.update_plan(self.plan)
         return self.get(request, *args, **kwargs)
 

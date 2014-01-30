@@ -426,6 +426,182 @@ class PlanInformationForm(forms.Form):
         plan.save()
 
 
+class SoftwarePlanVersionForm(forms.Form):
+    """
+    A form for updating the software plan
+    """
+    update_version = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput,
+    )
+    feature_id = forms.CharField(
+        required=False,
+        label="Search for or Create Feature"
+    )
+    new_feature_type = forms.ChoiceField(
+        required=False,
+        choices=FeatureType.CHOICES,
+    )
+    feature_rates = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput,
+    )
+
+    def __init__(self, plan_version, data=None, *args, **kwargs):
+        self.plan_version = plan_version
+        data = data or {}
+        if not 'feature_rates' in data:
+            data['feature_rates'] = json.dumps([fmt_feature_rate_dict(r.feature, r)
+                                           for r in self.plan_version.feature_rates.all()])
+
+        self.is_update = False
+
+        super(SoftwarePlanVersionForm, self).__init__(data, *args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_class = 'form form-horizontal'
+        self.helper.form_method = 'POST'
+        # from corehq.apps.accounting.views import UpdateSoftwarePlanVersionView
+        # self.helper._form_action = reverse(UpdateSoftwarePlanVersionView.urlname, args=[self.plan_version.plan.id])
+        self.helper.layout = Layout(
+            'update_version',
+            Fieldset(
+                "Features",
+                InlineField('feature_rates', data_bind="value: featureRates.objectsValue"),
+                BootstrapMultiField(
+                    "Add Feature",
+                    InlineField('feature_id', css_class="input-xxlarge",
+                                data_bind="value: featureRates.select2.object_id"),
+                    StrictButton(
+                        "Select Feature",
+                        css_class="btn-primary",
+                        data_bind="event: {click: featureRates.apply}, "
+                                  "visible: featureRates.select2.isExisting",
+                        style="margin-left: 5px;"
+                    ),
+                ),
+                Div(
+                    css_class="alert alert-error",
+                    data_bind="text: featureRates.error, visible: featureRates.showError"
+                ),
+                BootstrapMultiField(
+                    "Feature Type",
+                    InlineField(
+                        'new_feature_type',
+                        data_bind="value: featureRates.rateType",
+                    ),
+                    Div(
+                        StrictButton(
+                            "Create Feature",
+                            css_class="btn-success",
+                            data_bind="event: {click: featureRates.createNew}",
+
+                        ),
+                        style="margin: 10px 0;"
+                    ),
+                    data_bind="visible: featureRates.select2.isNew",
+                ),
+                Div(
+                    data_bind="template: {"
+                              "name: 'feature-rate-form-template', foreach: featureRates.objects"
+                              "}",
+                ),
+            ),
+            FormActions(
+                StrictButton(
+                    'Update Plan Version',
+                    css_class='btn-primary',
+                    type="submit",
+                ),
+            )
+        )
+
+    @property
+    def feature_rates_dict(self):
+        return {
+            'current_value': self['feature_rates'].value(),
+            'field_name': 'feature_id',
+            'async_handler': FeatureRateAsyncHandler.slug,
+            'select2_handler': Select2RateAsyncHandler.slug,
+        }
+
+    @property
+    @memoized
+    def current_features_to_rates(self):
+        return dict([(r.feature.id, r) for r in self.plan_version.feature_rates.all()])
+
+    def _get_errors_from_subform(self, form_name, subform):
+        for field, field_errors in subform._errors.items():
+            for field_error in field_errors:
+                error_message = "%(form_name)s > %(field_name)s: %(error)s" % {
+                    'form_name': form_name,
+                    'error': field_error,
+                    'field_name': subform[field].label,
+                }
+                yield error_message
+
+    def _retrieve_feature_rate(self, rate_form):
+        feature = Feature.objects.get(id=rate_form['feature_id'].value())
+        new_rate = rate_form.get_instance(feature)
+        if rate_form.is_new():
+            # a brand new rate
+            self.is_update = True
+            return new_rate
+        if feature.id not in self.current_features_to_rates.keys():
+            # the plan does not have this rate yet, compare any changes to the feature's current latest rate
+            # also mark the form as updated
+            current_rate = feature.get_rate(default_instance=False)
+            if current_rate is None:
+                return new_rate
+            self.is_update = True
+        else:
+            current_rate = self.current_features_to_rates[feature.id]
+        # note: custom implementation of FeatureRate.__eq__ here...
+        if not current_rate == new_rate:
+            self.is_update = True
+            return new_rate
+        return current_rate
+
+    def clean_feature_rates(self):
+        original_data = self.cleaned_data['feature_rates']
+        rates = json.loads(self.cleaned_data['feature_rates'])
+        rate_instances = []
+        errors = ErrorList()
+        for rate_data in rates:
+            rate_form = FeatureRateForm(rate_data)
+            if not rate_form.is_valid():
+                errors.extend(list(self._get_errors_from_subform(rate_data['name'], rate_form)))
+            else:
+                rate_instances.append(self._retrieve_feature_rate(rate_form))
+        if errors:
+            self._errors.setdefault('feature_rates', errors)
+        self.new_feature_rates = rate_instances
+        rate_ids = lambda x: set([r.id for r in x])
+        if (not self.is_update and
+                rate_ids(rate_instances).symmetric_difference(rate_ids(self.plan_version.feature_rates.all()))):
+            self.is_update = True
+        return original_data
+
+    def save(self, request):
+        if not self.is_update:
+            messages.info(request, "No changes to rates and roles were present, so the current version was kept.")
+            return
+        new_version = SoftwarePlanVersion(
+            plan=self.plan_version.plan,
+            role=self.plan_version.role,
+        )
+        new_version.save()
+
+        for feature_rate in self.new_feature_rates:
+            feature_rate.save()
+            new_version.feature_rates.add(feature_rate)
+
+        # todo update this like feature_rates
+        for product_rate in self.plan_version.product_rates.all():
+            new_version.product_rates.add(product_rate)
+
+        new_version.save()
+
+
 class FeatureRateForm(forms.ModelForm):
     """
     A form for creating a new FeatureRate.
