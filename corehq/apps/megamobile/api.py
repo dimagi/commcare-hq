@@ -42,9 +42,9 @@ class MegamobileBackend(SMSBackend):
         pid = None
         if msg.in_reply_to:
             original_msg = SMSLog.get(msg.in_reply_to)
-            pid = getattr(original_msg, "_megamobile_pid", None)
+            pid = getattr(original_msg, "megamobile_pid", None)
         pid = pid or DEFAULT_PID
-        setattr(msg, "_megamobile_pid", pid)
+        setattr(msg, "megamobile_pid", pid)
         msg.save()
 
         params = urlencode({

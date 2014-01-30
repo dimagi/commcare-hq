@@ -11,8 +11,8 @@ def sms_in(request):
     tcs = request.GET.get("tcs", None)
 
     megamobile_attrs = {
-        "_megamobile_pid" : pid,
-        "_megamobile_tcs" : tcs,
+        "megamobile_pid" : pid,
+        "megamobile_tcs" : tcs,
     }
 
     phone_number = "%s%s" % ("63", cel)
