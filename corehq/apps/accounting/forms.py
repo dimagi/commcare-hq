@@ -646,3 +646,43 @@ class FeatureRateForm(forms.ModelForm):
         return instance
 
 
+class ProductRateForm(forms.ModelForm):
+    """
+    A form for creating a new ProductRate.
+    """
+    # product id will point to a  select2 field, hence the CharField here.
+    product_id = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput,
+    )
+    rate_id = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput,
+    )
+
+    class Meta:
+        model = SoftwareProductRate
+        fields = ['monthly_fee']
+
+    def __init__(self, data=None, *args, **kwargs):
+        super(ProductRateForm, self).__init(data, *args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.layout = Layout(
+            HTML("""
+                <h4><span data-bind="text: name"></span>
+                <span class="label"
+                      style="display: inline-block; margin: 0 10px;"
+                      data-bind="text: product_type"></span></h4>
+                <hr />
+            """),
+            Field('monthly_fee', data_bind="value: monthly_fee"),
+        )
+
+    def is_new(self):
+        return not self['rate_id'].value()
+
+    def get_instance(self, product):
+        instance = self.save(commit=False)
+        instance.product = product
+        return instance
