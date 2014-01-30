@@ -457,6 +457,9 @@ class ElasticPillow(BulkPillow):
         self.send_robust(self.es_index, data=self.es_meta)
         self.set_index_normal_settings()
 
+    def refresh_index(self):
+        self.get_es().post("%s/_refresh" % self.es_index)
+
     def change_trigger(self, changes_dict):
         if changes_dict.get('deleted', False):
             try:
