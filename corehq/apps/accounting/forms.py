@@ -460,8 +460,6 @@ class SoftwarePlanVersionForm(forms.Form):
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
         self.helper.form_method = 'POST'
-        # from corehq.apps.accounting.views import UpdateSoftwarePlanVersionView
-        # self.helper._form_action = reverse(UpdateSoftwarePlanVersionView.urlname, args=[self.plan_version.plan.id])
         self.helper.layout = Layout(
             'update_version',
             Fieldset(
@@ -563,7 +561,7 @@ class SoftwarePlanVersionForm(forms.Form):
 
     def clean_feature_rates(self):
         original_data = self.cleaned_data['feature_rates']
-        rates = json.loads(self.cleaned_data['feature_rates'])
+        rates = json.loads(original_data)
         rate_instances = []
         errors = ErrorList()
         for rate_data in rates:
