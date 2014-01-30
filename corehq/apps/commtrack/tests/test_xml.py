@@ -43,7 +43,8 @@ class CommTrackOTATest(CommTrackTest):
                 case_id=self.sp._id,
                 product_id=product_id,
                 stock_on_hand=amount,
-                quantity=amount,
+                quantity=0,
+                type=stockconst.TRANSACTION_TYPE_STOCKONHAND,
             )
 
         check_xml_line_by_line(
@@ -73,7 +74,8 @@ class CommTrackOTATest(CommTrackTest):
                     case_id=self.sp._id,
                     product_id=product_id,
                     stock_on_hand=amount,
-                    quantity=amount,
+                    quantity=0,
+                    type=stockconst.TRANSACTION_TYPE_STOCKONHAND,
                 )
 
         balance_blocks = get_ota_balance_xml(user)
