@@ -529,8 +529,14 @@ class NewStockReport(object):
 
 class StockTransaction(object):
     """
-    wrapper/helper for transactions
+    Helper class for transactions
     """
+    action = None
+    subaction = None
+    quantity = None
+    location_id = None
+    product = None
+    timestamp = None
 
     def __init__(self, **kwargs):
         def _action_def(val):
@@ -688,7 +694,13 @@ class StockTransaction(object):
         return '%s%s' % (Product.get(self.product_id).code.lower(), quant)
 
     def __repr__(self):
-        return '{action} ({subaction}): {quantity} (loc: {location_id}, product: {product_id})'.format(**self._doc)
+        return '{action} ({subaction}): {quantity} (loc: {location_id}, product: {product_id})'.format(
+            action=self.action,
+            subaction=self.subaction,
+            quantity=self.quantity,
+            location_id=self.location_id,
+            product_id=self.product_id,
+        )
 
 
 def _get_single_index(case, identifier, type, wrapper=None):
