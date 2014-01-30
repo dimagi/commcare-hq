@@ -504,6 +504,47 @@ class SoftwarePlanVersionForm(forms.Form):
                               "}",
                 ),
             ),
+            Fieldset(
+                "Products",
+                InlineField('product_rates', data_bind="value: productRates.objectsValue"),
+                BootstrapMultiField(
+                    "Add Product",
+                    InlineField('product_id', css_class="input-xxlarge",
+                                data_bind="value: productRates.select2.object_id"),
+                    StrictButton(
+                        "Select Product",
+                        css_class="btn-primary",
+                        data_bind="event: {click: productRates.apply}, "
+                                  "visible: productRates.select2.isExisting",
+                        style="margin-left: 5px;"
+                    ),
+                ),
+                Div(
+                    css_class="alert alert-error",
+                    data_bind="text: productRates.error, visible: productRates.showError",
+                ),
+                BootstrapMultiField(
+                    "Product Type",
+                    InlineField(
+                        'new_product_type',
+                        data_bind="value: productRates.rateType",
+                    ),
+                    Div(
+                        StrictButton(
+                            "Create Product",
+                            css_class="btn-success",
+                            data_bind="event: {click: productRates.createNew}",
+                        ),
+                        style="margin: 10px 0;"
+                    ),
+                    data_bind="visible: productRates.select2.isNew",
+                ),
+                Div(
+                    data_bind="template: {"
+                              "name: 'product-rate-form-template', foreach: productRates.objects"
+                              "}",
+                ),
+            ),
             FormActions(
                 StrictButton(
                     'Update Plan Version',
