@@ -97,6 +97,23 @@ class CreditAdjustmentReason(object):
     )
 
 
+class SubscriptionAdjustmentReason(object):
+    CREATE = "CREATE"
+    MODIFY = "MODIFY"
+    CANCEL = "CANCEL"
+    UPGRADE = "UPGRADE"
+    DOWNGRADE = "DOWNGRADE"
+    SWITCH = "SWITCH"
+    CHOICES = (
+        (CREATE, "A new subscription created from scratch."),
+        (MODIFY, "Some part of the subscription was modified...likely a date."),
+        (CANCEL, "The subscription was cancelled with no followup subscription."),
+        (UPGRADE, "The subscription was upgraded to the related subscription."),
+        (DOWNGRADE, "The subscription was downgraded to the related subscription."),
+        (SWITCH, "The plan was changed to the related subscription and was neither an upgrade or downgrade.")
+    )
+
+
 class Currency(models.Model):
     """
     Keeps track of the current conversion rates so that we don't have to poll the free, but rate limited API

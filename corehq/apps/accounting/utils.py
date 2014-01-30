@@ -49,6 +49,25 @@ def fmt_feature_rate_dict(feature, feature_rate=None):
     }
 
 
+def get_privileges(plan_version):
+    role = plan_version.role
+    return set([grant.to_role.slug for grant in role.memberships_granted.filter(from_role=role)])
+
+
+def get_change_status(from_plan_version, to_plan_version):
+    from_privs = get_privileges(from_plan_version)
+    to_privs = get_privileges(to_plan_version)
+    downgraded_privs = from_privs.difference(to_privs)
+    upgraded_privs = to_privs.difference(from_privs)
+    from corehq.apps.accounting.models import SubscriptionAdjustmentReason as Reason
+    adjustment_reason = Reason.SWITCH
+    if len(downgraded_privs) == 0 and len(upgraded_privs) > 0:
+        adjustment_reason = Reason.UPGRADE
+    elif len(upgraded_privs) == 0 and len(downgraded_privs) > 0:
+        adjustment_reason = Reason.DOWNGRADE
+    return adjustment_reason, downgraded_privs, upgraded_privs
+
+
 class LazyEncoder(json.JSONEncoder):
     """Taken from https://github.com/tomchristie/django-rest-framework/issues/87
     This makes sure that ugettext_lazy refrences in a dict are properly evaluated
