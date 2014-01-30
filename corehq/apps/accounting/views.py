@@ -1,7 +1,8 @@
 import json
 from django.utils import translation
+from corehq.apps.accounting.forms import (BillingAccountForm, CreditForm, SubscriptionForm, CancelForm,
+                                          PlanInformationForm, SoftwarePlanVersionForm, FeatureRateForm)
 from corehq.apps.accounting.interface import AccountingInterface, SubscriptionInterface, SoftwarePlanInterface
-from corehq.apps.accounting.forms import *
 from corehq.apps.accounting.user_text import PricingTable
 from corehq.apps.accounting.utils import LazyEncoder
 from corehq.apps.domain.decorators import require_superuser
@@ -299,6 +300,7 @@ class EditSoftwarePlanView(AccountingSectionView):
         context = super(EditSoftwarePlanView, self).main_context
         context.update({
             'plan_info_form': self.plan_info_form,
+            'feature_rate_form': FeatureRateForm(),
             'plan_versions': SoftwarePlanVersion.objects.filter(plan=self.plan).order_by('date_created')
         })
         return context

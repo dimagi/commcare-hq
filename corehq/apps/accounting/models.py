@@ -236,9 +236,12 @@ class FeatureRate(models.Model):
     Once created, Feature Rates cannot be modified. Instead, a new Feature Rate must be created.
     """
     feature = models.ForeignKey(Feature, on_delete=models.PROTECT)
-    monthly_fee = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2)
-    monthly_limit = models.IntegerField(default=0)
-    per_excess_fee = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2)
+    monthly_fee = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2,
+                                      verbose_name="Monthly Fee")
+    monthly_limit = models.IntegerField(default=0,
+                                        verbose_name="Monthly Included Limit")
+    per_excess_fee = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2,
+                                         verbose_name="Fee Per Excess of Limit")
     date_created = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
 

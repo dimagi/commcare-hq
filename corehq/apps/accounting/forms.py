@@ -424,3 +424,51 @@ class PlanInformationForm(forms.Form):
         plan.edition = self.cleaned_data['edition']
         plan.visibility = self.cleaned_data['visibility']
         plan.save()
+
+
+class FeatureRateForm(forms.ModelForm):
+    """
+    A form for creating a new FeatureRate.
+    """
+    # feature id will point to a  select2 field, hence the CharField here.
+    feature_id = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput,
+    )
+    rate_id = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput,
+    )
+
+    class Meta:
+        model = FeatureRate
+        fields = ['monthly_fee', 'monthly_limit', 'per_excess_fee']
+
+    def __init__(self, data=None, *args, **kwargs):
+        super(FeatureRateForm, self).__init__(data, *args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.layout = Layout(
+            HTML("""
+                <h4><span data-bind="text: name"></span>
+                <span class="label"
+                      style="display: inline-block; margin: 0 10px;"
+                      data-bind="text: feature_type"></span></h4>
+                <hr />
+            """),
+            Field('feature_id', data_bind="value: feature_id"),
+            Field('rate_id', data_bind="value: rate_id"),
+            Field('monthly_fee', data_bind="value: monthly_fee"),
+            Field('monthly_limit', data_bind="value: monthly_limit"),
+            Field('per_excess_fee', data_bind="value: per_excess_fee"),
+        )
+
+    def is_new(self):
+        return not self['rate_id'].value()
+
+    def get_instance(self, feature):
+        instance = self.save(commit=False)
+        instance.feature = feature
+        return instance
+
+
