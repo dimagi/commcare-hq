@@ -52,6 +52,9 @@ class MessageLog(SafeSaveDocument, UnicodeMixIn):
     domain_scope = StringProperty()
     queued_timestamp = DateTimeProperty()
     processed_timestamp = DateTimeProperty()
+    # If this outgoing message is a reply to an inbound message, then this is
+    # the _id of the inbound message
+    in_reply_to = StringProperty()
 
     def __unicode__(self):
         to_from = (self.direction == INCOMING) and "from" or "to"

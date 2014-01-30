@@ -228,6 +228,7 @@ HQ_APPS = (
     'corehq.apps.ivr',
     'corehq.apps.tropo',
     'corehq.apps.twilio',
+    'corehq.apps.megamobile',
     'corehq.apps.kookoo',
     'corehq.apps.sislog',
     'corehq.apps.yo',
@@ -299,6 +300,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'corehq.apps.sislog',
     'corehq.apps.telerivet',
     'corehq.apps.tropo',
+    'corehq.apps.megamobile',
     'corehq.apps.yo',
     'crispy_forms',
     'django_extensions',
@@ -866,6 +868,7 @@ SMS_LOADED_BACKENDS = [
     "corehq.apps.sms.backend.test.TestBackend",
     "corehq.apps.grapevine.api.GrapevineBackend",
     "corehq.apps.twilio.models.TwilioBackend",
+    "corehq.apps.megamobile.api.MegamobileBackend",
 ]
 
 # These are functions that can be called to retrieve custom content in a reminder event.

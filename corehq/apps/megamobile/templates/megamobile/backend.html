@@ -1,0 +1,17 @@
+{% extends 'sms/add_backend.html' %}
+{% load i18n %}
+
+{% block backend_specific %}
+<h4>{{ backend_generic_name }} {% trans "Settings" %}</h4>
+<div class="form-block">
+    <table>
+        <tbody>
+            <tr>
+                <td><label for="id_default_pid">{% trans "Default Pid" %}</label></td>
+                <td>{{ form.default_pid }}</td>
+                <td>{{ form.default_pid.errors }}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+{% endblock %}
