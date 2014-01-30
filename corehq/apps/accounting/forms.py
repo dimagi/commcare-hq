@@ -707,6 +707,7 @@ class SoftwarePlanVersionForm(forms.Form):
             new_version.feature_rates.add(feature_rate)
 
         for product_rate in self.new_product_rates:
+            product_rate.save()
             new_version.product_rates.add(product_rate)
 
         new_version.save()
