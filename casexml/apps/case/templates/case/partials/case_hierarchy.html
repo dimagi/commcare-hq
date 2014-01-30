@@ -66,7 +66,7 @@
                 {% endif %}
                 <span class="case-tree-spacer"></span>
 
-                {% if case.add_child_data and case.add_child_data.edit_form_id %}
+                {% if case.add_child_data and case.add_child_data.edit_form_id != None %}
                 {% with case.add_child_data as data %}
                 <a href="#" class="btn btn-small touchforms-link"
                     data-target="#edit_{{ case.get_id }}"
@@ -82,7 +82,7 @@
                 {% endif %}
                 
                 <div class="pull-right btn-group">
-                    {% if case.edit_data.edit_form_id and not case.closed %}
+                    {% if case.edit_data.edit_form_id != None and not case.closed %}
                     {% with case.edit_data as data %}
                     <a href="#" class="btn btn-small touchforms-link"
                         data-target="#edit_{{ case.get_id }}"
@@ -112,7 +112,7 @@
                 </div>
                 {% endif %}
 
-                {% if case.edit_data.edit_form_id or case.add_child_data.create_form_id %}
+                {% if case.edit_data.edit_form_id != None or case.add_child_data.create_form_id != None %}
                 <br style="line-height:0">
                 <span class="indenter" style="line-height:0; padding-left:{{ case.edit_data.indent_px }}px"></span>
                 <div style="display:inline-block" class="touchforms-inline" id="edit_{{ case.get_id }}"></div>
