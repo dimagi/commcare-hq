@@ -3,5 +3,5 @@ from corehq.apps.sms.forms import BackendForm
 from dimagi.utils.django.fields import TrimmedCharField
 
 class MegamobileBackendForm(BackendForm):
-    default_pid = TrimmedCharField()
+    api_account_name = TrimmedCharField()
 

@@ -1,5 +1,5 @@
 import logging
-from urllib import urlencode
+from urllib import urlencode, quote
 from urllib2 import urlopen
 from corehq.apps.sms.util import strip_plus
 from corehq.apps.sms.mixin import SMSBackend
@@ -7,11 +7,13 @@ from corehq.apps.sms.models import SMSLog
 from couchdbkit.ext.django.schema import *
 from corehq.apps.megamobile.forms import MegamobileBackendForm
 
+DEFAULT_PID = "0"
+
 class MegamobileException(Exception):
     pass
 
 class MegamobileBackend(SMSBackend):
-    default_pid = StringProperty()
+    api_account_name = StringProperty()
 
     @classmethod
     def get_api_id(cls):
@@ -41,7 +43,7 @@ class MegamobileBackend(SMSBackend):
         if msg.in_reply_to:
             original_msg = SMSLog.get(msg.in_reply_to)
             pid = getattr(original_msg, "_megamobile_pid", None)
-        pid = pid or self.default_pid
+        pid = pid or DEFAULT_PID
         setattr(msg, "_megamobile_pid", pid)
         msg.save()
 
@@ -50,6 +52,7 @@ class MegamobileBackend(SMSBackend):
             "cel" : phone_number,
             "msg" : text,
         })
-        url = "http://api.mymegamobile.com/dimagi?%s" % params
+        api_account_name = quote(self.api_account_name)
+        url = "http://api.mymegamobile.com/%s?%s" % (api_account_name, params)
         response = urlopen(url).read()
 
