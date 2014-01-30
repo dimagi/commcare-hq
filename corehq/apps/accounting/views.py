@@ -10,6 +10,8 @@ from dimagi.utils.decorators.memoized import memoized
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest
 from django.utils.decorators import method_decorator
+from corehq import toggles
+from toggle.decorators import require_toggle
 
 
 @require_superuser
@@ -24,7 +26,7 @@ class AccountingSectionView(BaseSectionPageView):
     def section_url(self):
         return reverse('accounting_default')
 
-    @method_decorator(require_superuser)
+    @method_decorator(require_toggle(toggles.ACCOUNTING_PREVIEW))
     def dispatch(self, request, *args, **kwargs):
         return super(AccountingSectionView, self).dispatch(request, *args, **kwargs)
 
