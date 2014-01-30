@@ -24,7 +24,7 @@ class OpenRosaMiddleware(object):
             if header in request.META:
                 or_headers[header] = request.META[header]
         request.openrosa_headers = or_headers
-        
+
     def process_response(self, request, response):
         response[OPENROSA_VERSION_HEADER] = settings.OPENROSA_VERSION
         return response
