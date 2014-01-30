@@ -74,7 +74,7 @@
                 actions: {{ form.actions|JSON }},
                 questions: {{ xform_questions|JSON }},
                 edit: edit,
-                save_url: "{% url "corehq.apps.app_manager.views.edit_form_actions" app.domain app.id module.id nav_form.id %}",
+                save_url: "{% url "corehq.apps.app_manager.views.edit_advanced_form_actions" app.domain app.id module.id nav_form.id %}",
                 requires: true,
                 caseType: {{ form.get_case_type|JSON }},
                 reserved_words: {{ case_reserved_words_json|JSON }},

@@ -1336,6 +1336,22 @@ def edit_careplan_form_actions(req, domain, app_id, module_id, form_id):
     app.save(response_json)
     return json_response(response_json)
 
+
+@no_conflict_require_POST
+@require_can_edit_apps
+def edit_advanced_form_actions(req, domain, app_id, module_id, form_id):
+    app = get_app(domain, app_id)
+    form = app.get_module(module_id).get_form(form_id)
+    json_loads = json.loads(req.POST.get('actions'))
+    print json_loads
+    actions = CommTrackFormActions.wrap(json_loads)
+    print actions
+    form.actions = actions
+    response_json = {}
+    app.save(response_json)
+    return json_response(response_json)
+
+
 @require_can_edit_apps
 def multimedia_list_download(req, domain, app_id):
     app = get_app(domain, app_id)

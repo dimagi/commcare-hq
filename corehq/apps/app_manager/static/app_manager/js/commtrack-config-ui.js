@@ -156,6 +156,12 @@ var CommTrackConfig = (function () {
                 });
                 return count;
             };
+        },
+        clean_condition: function (condition) {
+            if (condition.type() !== 'if') {
+                condition.question(null);
+                condition.answer(null);
+            }
         }
     };
 
@@ -235,6 +241,19 @@ var CommTrackConfig = (function () {
                 self.preload.remove(property);
             };
             return self;
+        },
+        unwrap: function (self) {
+            var nonBlank = function (prop) {
+                return prop.isBlank();
+            };
+            self.preload.remove(nonBlank);
+            self.case_properties.remove(nonBlank);
+            ActionBase.clean_condition(self.close_condition);
+            var action = ko.mapping.toJS(self, LoadUpdateAction.mapping(self));
+
+            action.preload = propertyArrayToDict([], action.preload)[0];
+            action.case_properties = propertyArrayToDict([], action.case_properties)[0];
+            return action;
         }
     };
 
@@ -284,6 +303,18 @@ var CommTrackConfig = (function () {
             };
 
             return self;
+        },
+        unwrap: function (self) {
+            self.case_properties.remove(function (prop) {
+                return prop.isBlank();
+            });
+            var action = ko.mapping.toJS(self, OpenCaseAction.mapping(self));
+            ActionBase.clean_condition(self.open_condition);
+            ActionBase.clean_condition(self.close_condition);
+            var x = propertyArrayToDict(['name'], action.case_properties);
+            action.case_properties = x[0];
+            action.case_name = x[1].name;
+            return action;
         }
     };
 
@@ -307,6 +338,12 @@ var CommTrackConfig = (function () {
             self.config = config;
 
             return self;
+        },
+        unwrap: function (self) {
+            return {
+                load_update_cases: _(self.load_update_cases()).map(LoadUpdateAction.unwrap),
+                open_cases: _(self.open_cases()).map(OpenCaseAction.unwrap)
+            };
         }
     };
 
@@ -327,32 +364,19 @@ var CommTrackConfig = (function () {
         self.saveButton = COMMCAREHQ.SaveButton.init({
             unsavedMessage: "You have unchanged case settings",
             save: function () {
-//                var requires = self.caseConfigViewModel.actionType() === 'update' ? 'case' : 'none';
-//                var subcases;
-//                if (self.caseConfigViewModel.actionType() === 'none') {
-//                    subcases = [];
-//                } else {
-//                    subcases = _(self.caseConfigViewModel.subcases()).map(HQOpenSubCaseAction.from_case_transaction);
-//                }
-//                var actions = JSON.stringify(_(self.actions).extend(
-//                    HQFormActions.from_case_transaction(self.caseConfigViewModel.case_transaction),
-//                    {subcases: subcases}
-//                ));
-//
-//                self.saveButton.ajax({
-//                    type: 'post',
-//                    url: self.save_url,
-//                    data: {
-//                        requires: requires,
-//                        actions: actions
-//                    },
-//                    dataType: 'json',
-//                    success: function (data) {
-//                        COMMCAREHQ.app_manager.updateDOM(data.update);
-//                        self.requires(requires);
-//                        self.setPropertiesMap(data.propertiesMap);
-//                    }
-//                });
+                var actions = JSON.stringify(FormActions.unwrap(self.caseConfigViewModel.actions));
+                self.saveButton.ajax({
+                    type: 'post',
+                    url: self.save_url,
+                    data: {
+                        actions: actions
+                    },
+                    dataType: 'json',
+                    success: function (data) {
+                        COMMCAREHQ.app_manager.updateDOM(data.update);
+                        self.caseConfigViewModel.ensureBlankProperties();
+                    }
+                });
             }
         });
 
