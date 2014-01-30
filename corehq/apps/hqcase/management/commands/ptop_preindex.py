@@ -17,6 +17,7 @@ def get_reindex_command(pillow_class_name):
         'CasePillow': 'ptop_fast_reindex_cases',
         'XFormPillow': 'ptop_fast_reindex_xforms',
         'UserPillow': 'ptop_fast_reindex_users',
+        'GroupToUserPillow': 'ptop_fast_reindex_groupstousers',
         'AppPillow': 'ptop_fast_reindex_apps',
         'SMSPillow': 'ptop_fast_reindex_smslogs',
         'TCSMSPillow': 'ptop_fast_reindex_tc_smslogs',
