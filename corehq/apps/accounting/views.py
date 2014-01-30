@@ -290,6 +290,7 @@ class NewSoftwarePlanView(AccountingSectionView):
 class EditSoftwarePlanView(AccountingSectionView):
     template_name = 'accounting/plans.html'
     urlname = 'edit_software_plan'
+    page_title = "Edit Software Plan"
 
     @property
     @memoized
@@ -305,21 +306,15 @@ class EditSoftwarePlanView(AccountingSectionView):
 
     @property
     def page_context(self):
-        context = super(EditSoftwarePlanView, self).main_context
-        context.update({
+        return {
             'plan_info_form': self.plan_info_form,
             'feature_rate_form': FeatureRateForm(),
             'plan_versions': SoftwarePlanVersion.objects.filter(plan=self.plan).order_by('date_created')
-        })
-        return context
-
-    @property
-    def page_title(self):
-        return 'Edit Software Plan'
+        }
 
     @property
     def page_url(self):
-        return reverse(self.urlname, args=(self.args[0],))
+        return reverse(self.urlname, args=self.args)
 
     @property
     def parent_pages(self):
