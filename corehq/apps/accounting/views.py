@@ -10,11 +10,11 @@ from django.utils.decorators import method_decorator
 from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.accounting.forms import (BillingAccountForm, CreditForm, SubscriptionForm, CancelForm,
-                                          PlanInformationForm, SoftwarePlanVersionForm, FeatureRateForm)
+                                          PlanInformationForm, SoftwarePlanVersionForm, FeatureRateForm, ProductRateForm)
 from corehq.apps.accounting.interface import AccountingInterface, SubscriptionInterface, SoftwarePlanInterface
 from corehq.apps.accounting.models import (SoftwareProductType, Invoice, BillingAccount, CreditLine, Subscription,
                                            SoftwarePlanVersion, SoftwarePlan)
-from corehq.apps.accounting.async_handlers import FeatureRateAsyncHandler, Select2RateAsyncHandler
+from corehq.apps.accounting.async_handlers import FeatureRateAsyncHandler, Select2RateAsyncHandler, SoftwareProductRateAsyncHandler
 from corehq.apps.accounting.user_text import PricingTable
 from corehq.apps.accounting.utils import LazyEncoder
 from corehq.apps.domain.decorators import require_superuser
@@ -294,6 +294,7 @@ class EditSoftwarePlanView(AccountingSectionView):
     async_handlers = [
         Select2RateAsyncHandler,
         FeatureRateAsyncHandler,
+        SoftwareProductRateAsyncHandler,
     ]
 
     @property
@@ -321,6 +322,7 @@ class EditSoftwarePlanView(AccountingSectionView):
             'plan_info_form': self.plan_info_form,
             'plan_version_form': self.software_plan_version_form,
             'feature_rate_form': FeatureRateForm(),
+            'product_rate_form': ProductRateForm(),
             'plan_versions': SoftwarePlanVersion.objects.filter(plan=self.plan).order_by('date_created')
         }
 

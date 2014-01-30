@@ -777,7 +777,7 @@ class ProductRateForm(forms.ModelForm):
         fields = ['monthly_fee']
 
     def __init__(self, data=None, *args, **kwargs):
-        super(ProductRateForm, self).__init(data, *args, **kwargs)
+        super(ProductRateForm, self).__init__(data, *args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
