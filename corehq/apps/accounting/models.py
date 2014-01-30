@@ -223,6 +223,12 @@ class Feature(models.Model):
     def __str__(self):
         return "Feature '%s' of type '%s'" % (self.name, self.feature_type)
 
+    def get_rate(self, default_instance=True):
+        try:
+            return self.featurerate_set.filter(is_active=True).latest('date_created')
+        except FeatureRate.DoesNotExist:
+            return FeatureRate() if default_instance else None  # the defaults
+
 
 class FeatureRate(models.Model):
     """
