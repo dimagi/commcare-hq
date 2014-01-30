@@ -41,12 +41,15 @@ class ConsumptionConfiguration(object):
         return cls(0, 0, 60)
 
 
-def from_ts(dt):  # damn this is ugly
+def from_ts(dt):
+    # damn this is ugly
     if isinstance(dt, datetime):
-        return dt
-    if len(dt) > 20 and dt.endswith('Z'): # deal with invalid timestamps (where are these coming from?)
+        return dt.replace(tzinfo=None)
+    if len(dt) > 20 and dt.endswith('Z'):
+        # deal with invalid timestamps (where are these coming from?)
         dt = dt[:-1]
     return dateparse.string_to_datetime(dt).replace(tzinfo=None)
+
 to_ts = dateparse.json_format_datetime
 
 
