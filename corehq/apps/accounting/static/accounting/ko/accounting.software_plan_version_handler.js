@@ -1,11 +1,14 @@
-var SoftwarePlanVersionFormHandler = function (featureRates, productRates) {
+var SoftwarePlanVersionFormHandler = function (role, featureRates, productRates) {
     'use strict';
     var self = this;
+    console.log(role);
 
+    self.role = new RatesManager(Role, role); // how much of the functionality can be shared with RatesManager?
     self.featureRates = new RatesManager(FeatureRate, featureRates);
     self.productRates = new RatesManager(ProductRate, productRates);
 
     self.init = function () {
+        self.role.init();
         self.featureRates.init();
         self.productRates.init();
     };
@@ -100,6 +103,7 @@ var Select2FieldHandler = function (fieldName, asyncHandler, existingObjects) {
 
     self.init = function () {
         var fieldInput = self.utils.getField();
+        console.log(fieldInput);
         fieldInput.select2({
             minimumInputLength: 0,
             allowClear: true,
@@ -165,6 +169,24 @@ var Select2FieldHandler = function (fieldName, asyncHandler, existingObjects) {
         getfield: function () {
             return $('[name="' + self.fieldName + '"]');
         }
+    };
+};
+
+var Role = function (data) {
+    'use strict';
+    var self = this;
+
+    self.slug = ko.observable(data.slug);
+    self.name = ko.observable(data.name);
+    self.description = ko.observable(data.description);
+    self.parameters = ko.observable(data.parameters);
+
+    self.asJSON = function () {
+        var result = {};
+        _.each(['slug', 'name', 'description', 'parameters'], function (field) {
+            result[field] = self[field]();
+        });
+        return result;
     };
 };
 
