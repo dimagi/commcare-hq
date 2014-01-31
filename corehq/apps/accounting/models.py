@@ -330,7 +330,10 @@ class SoftwarePlan(models.Model):
     )
 
     def get_version(self):
-        return self.softwareplanversion_set.filter(is_active=True).latest('date_created')
+        try:
+            return self.softwareplanversion_set.filter(is_active=True).latest('date_created')
+        except SoftwarePlanVersion.DoesNotExist:
+            return None
 
 
 class DefaultProductPlan(models.Model):

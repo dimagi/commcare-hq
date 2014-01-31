@@ -313,8 +313,8 @@ class EditSoftwarePlanView(AccountingSectionView):
     @memoized
     def software_plan_version_form(self):
         if self.request.method == 'POST':
-            return SoftwarePlanVersionForm(self.plan.get_version(), self.request.POST)
-        return SoftwarePlanVersionForm(self.plan.get_version())
+            return SoftwarePlanVersionForm(self.plan, self.plan.get_version(), self.request.POST)
+        return SoftwarePlanVersionForm(self.plan, self.plan.get_version())
 
     @property
     def page_context(self):
