@@ -5,6 +5,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
 
 from corehq.apps.groups.models import Group
+from corehq.apps.reports.util import _report_user_dict
 from corehq.apps.users.forms import MultipleSelectionForm
 from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.apps.users.decorators import require_can_edit_commcare_users
@@ -76,44 +77,34 @@ class EditGroupMembersView(BaseGroupsView):
     @property
     @memoized
     def member_ids(self):
-        return set([u._id for u in self.members])
+        return set([u['user_id'] for u in self.members])
 
     @property
     @memoized
     def all_users(self):
-        return sorted(CommCareUser.by_domain(self.domain), key=lambda user: user.username)
+        return map(_report_user_dict, sorted(
+            CommCareUser.es_fakes(self.domain, wrap=False),
+            key=lambda user: user['username']
+        ))
 
     @property
     @memoized
     def all_user_ids(self):
-        return set([u._id for u in self.all_users])
+        return set([u['user_id'] for u in self.all_users])
 
     @property
     @memoized
     def members(self):
         member_ids = set(self.group.get_user_ids())
-        return [u for u in self.all_users if u._id in member_ids]
-
-    @property
-    def nonmembers(self):
-        member_ids = self.member_ids
-        return [u for u in self.all_users if u not in member_ids]
+        return [u for u in self.all_users if u['user_id'] in member_ids]
 
     @property
     @memoized
     def user_selection_form(self):
-        def _user_display(user):
-            full_name = user.full_name
-            username = user.raw_username
-            return u'{username}{full_name}'.format(
-                username=username,
-                full_name=(u' (%s)' % full_name) if full_name else '',
-            )
-
         form = MultipleSelectionForm(initial={
             'selected_ids': list(self.member_ids),
         })
-        form.fields['selected_ids'].choices = [(u._id, _user_display(u)) for u in self.all_users]
+        form.fields['selected_ids'].choices = [(u['user_id'], u['username_in_report']) for u in self.all_users]
         return form
 
     @property
