@@ -2,6 +2,7 @@
 {% load url from future %}
 {% load case_tags %}
 {% load hq_shared_tags %}
+{% load i18n %}
 
 {% block title %}Case: {{ report.name }}{% endblock %}
 
@@ -75,10 +76,10 @@
 {% block page-title %}
     <ul class="breadcrumb">
         <li>
-            <a href="{% url "reports_home" domain %}"><strong>Reports</strong></a> <span class="divider">&gt;</span>
+            <a href="{% url "reports_home" domain %}"><strong>{% trans "Reports" %}w</strong></a> <span class="divider">&gt;</span>
         </li>
         <li>
-            <a href="{% url "project_report_dispatcher" domain 'case_list' %}">Case List</a> <span class="divider">&gt;</span>
+            <a href="{% url "project_report_dispatcher" domain 'case_list' %}">{% trans "Case List" %}</a> <span class="divider">&gt;</span>
         </li>
         <li class="active">
             <a href="#">{{ report.name }}</a>
