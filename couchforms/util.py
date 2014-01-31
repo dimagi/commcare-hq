@@ -71,7 +71,7 @@ def convert_xform_to_json(xml_string):
     return json_form
 
 
-def create_xform_from_xml(xml_string, _id=None):
+def create_xform_from_xml(xml_string, _id=None, auth_context=Ellipsis):
     """
     create and save an XFormInstance from an xform payload (xml_string)
     optionally set the doc _id to a predefined value (_id)
@@ -82,6 +82,11 @@ def create_xform_from_xml(xml_string, _id=None):
       - do not save form
 
     """
+    kwargs = {'#export_tag': 'xmlns'}
+    if auth_context is not Ellipsis:
+        kwargs['auth_context'] = (
+            auth_context or DefaultAuthContext()
+        ).to_json()
 
     json_form = convert_xform_to_json(xml_string)
 
@@ -95,7 +100,7 @@ def create_xform_from_xml(xml_string, _id=None):
         form=json_form,
         xmlns=json_form.get('@xmlns'),
         received_on=datetime.datetime.utcnow(),
-        **{'#export_tag': 'xmlns'}
+        **kwargs
     )
     _id = _id or _extract_meta_instance_id(json_form)
     if _id:
@@ -105,14 +110,6 @@ def create_xform_from_xml(xml_string, _id=None):
 
 
 def post_xform_to_couch(instance, attachments=None, auth_context=None):
-    auth_context = auth_context or DefaultAuthContext()
-    doc = _post_xform_to_couch(instance, attachments=attachments)
-    doc.auth_context = auth_context.to_json()
-    doc.save()
-    return doc
-
-
-def _post_xform_to_couch(instance, attachments=None):
     """
     Save a new xform to couchdb
     Returns the newly created document from couchdb,
@@ -125,7 +122,7 @@ def _post_xform_to_couch(instance, attachments=None):
     try:
         # todo: pretty sure nested try/except can be cleaned up
         try:
-            doc_id = create_xform_from_xml(instance)
+            doc_id = create_xform_from_xml(instance, auth_context=auth_context)
         except couchforms.XMLSyntaxError as e:
             doc = _log_hard_failure(instance, attachments, e)
             raise SubmissionError(doc)
