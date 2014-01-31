@@ -5,7 +5,7 @@ from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.stock import const as stockconst
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack import const
-from corehq.apps.commtrack.tests.util import CommTrackTest, get_ota_balance_xml
+from corehq.apps.commtrack.tests.util import CommTrackTest, get_ota_balance_xml, FIXED_USER
 from casexml.apps.case.tests.util import check_xml_line_by_line
 from corehq.apps.hqcase.utils import get_cases_in_domain
 from corehq.apps.receiverwrapper import submit_form_locally
@@ -27,12 +27,18 @@ from corehq.apps.commtrack.tests.data.balances import (
 
 
 class CommTrackOTATest(CommTrackTest):
+    user_definitions = [FIXED_USER]
+
+    def setUp(self):
+        super(CommTrackOTATest, self).setUp()
+        self.user = self.users[0]
+
     def test_ota_blank_balances(self):
-        user = self.reporters['fixed']
+        user = self.user
         self.assertFalse(get_ota_balance_xml(user))
 
     def test_ota_basic(self):
-        user = self.reporters['fixed']
+        user = self.user
         date = datetime.utcnow()
         report = StockReport.objects.create(form_id=uuid.uuid4().hex, date=date, type=stockconst.REPORT_TYPE_BALANCE)
         amounts = [(p._id, i*10) for i, p in enumerate(self.products)]
@@ -59,7 +65,7 @@ class CommTrackOTATest(CommTrackTest):
         )
 
     def test_ota_multiple_stocks(self):
-        user = self.reporters['fixed']
+        user = self.user
         date = datetime.utcnow()
         report = StockReport.objects.create(form_id=uuid.uuid4().hex, date=date,
                                             type=stockconst.REPORT_TYPE_BALANCE)
@@ -93,12 +99,20 @@ class CommTrackOTATest(CommTrackTest):
             )
 
 class CommTrackSubmissionTest(CommTrackTest):
+    user_definitions = [FIXED_USER]
+
+    def setUp(self):
+        super(CommTrackSubmissionTest, self).setUp()
+        self.user = self.users[0]
+        loc2 = make_loc('loc1')
+        self.sp2 = make_supply_point(self.domain.name, loc2)
+
     def submit_xml_form(self, xml_method):
         from casexml.apps.case import settings
         settings.CASEXML_FORCE_DOMAIN_CHECK = False
         instance = submission_wrap(
             self.products,
-            self.reporters['fixed'],
+            self.user,
             self.sp,
             self.sp2,
             xml_method,
@@ -116,12 +130,6 @@ class CommTrackSubmissionTest(CommTrackTest):
 
     def check_product_stock(self, supply_point, product_id, expected_soh, expected_qty, section_id='stock'):
         self.check_stock_models(supply_point, product_id, expected_soh, expected_qty, section_id)
-
-    def setUp(self):
-        super(CommTrackSubmissionTest, self).setUp()
-
-        loc2 = make_loc('loc1')
-        self.sp2 = make_supply_point(self.domain.name, loc2)
 
 
 class CommTrackBalanceTransferTest(CommTrackSubmissionTest):

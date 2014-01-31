@@ -27,28 +27,27 @@ TEST_NUMBER = '5551234'
 TEST_PASSWORD = 'secret'
 TEST_BACKEND = 'test-backend'
 
-REPORTING_USERS = {
-    'roaming': {
-        'username': TEST_USER + '-roaming',
-        'phone_number': TEST_NUMBER,
-        'first_name': 'roaming',
-        'last_name': 'reporter',
-        'user_data': {
-            const.UserRequisitionRoles.REQUESTER: True,
-            const.UserRequisitionRoles.RECEIVER: True,
-        },
+ROAMING_USER = {
+    'username': TEST_USER + '-roaming',
+    'phone_number': TEST_NUMBER,
+    'first_name': 'roaming',
+    'last_name': 'reporter',
+    'user_data': {
+        const.UserRequisitionRoles.REQUESTER: True,
+        const.UserRequisitionRoles.RECEIVER: True,
     },
-    'fixed': {
-        'username': TEST_USER + '-fixed',
-        'phone_number': str(int(TEST_NUMBER) + 1),
-        'first_name': 'fixed',
-        'last_name': 'reporter',
-        'user_data': {
-            const.UserRequisitionRoles.REQUESTER: True,
-            const.UserRequisitionRoles.RECEIVER: True,
-        },
-        'home_loc': 'loc1',
+}
+
+FIXED_USER = {
+    'username': TEST_USER + '-fixed',
+    'phone_number': str(int(TEST_NUMBER) + 1),
+    'first_name': 'fixed',
+    'last_name': 'reporter',
+    'user_data': {
+        const.UserRequisitionRoles.REQUESTER: True,
+        const.UserRequisitionRoles.RECEIVER: True,
     },
+    'home_loc': 'loc1',
 }
 
 APPROVER_USER = {
@@ -113,6 +112,7 @@ def make_loc(code, name=None, domain=TEST_DOMAIN, type=TEST_LOCATION_TYPE, paren
 
 class CommTrackTest(TestCase):
     requisitions_enabled = False  # can be overridden
+    user_definitions = []
 
     def setUp(self):
         # might as well clean house before doing anything
@@ -130,16 +130,15 @@ class CommTrackTest(TestCase):
 
         self.loc = make_loc('loc1')
         self.sp = make_supply_point(self.domain.name, self.loc)
+        self.users = [bootstrap_user(self, **user_def) for user_def in self.user_definitions]
 
-        self.reporters = dict((k, bootstrap_user(self, **v)) for k, v in REPORTING_USERS.iteritems())
-        # backwards compatibility
-        self.user = self.reporters['roaming']
+        if False:
+            # bootstrap additional users for requisitions
+            # needs to get reinserted for requisition stuff later
+            self.approver = bootstrap_user(self, **APPROVER_USER)
+            self.packer = bootstrap_user(self, **PACKER_USER)
+            self.users += [self.approver, self.packer]
 
-        # bootstrap additional users for requisitions
-        self.approver = bootstrap_user(self, **APPROVER_USER)
-        self.packer = bootstrap_user(self, **PACKER_USER)
-
-        self.users = self.reporters.values() + [self.approver, self.packer]
         # everyone should be in a group.
         self.group = Group(domain=TEST_DOMAIN, name='commtrack-folks',
                            users=[u._id for u in self.users],
