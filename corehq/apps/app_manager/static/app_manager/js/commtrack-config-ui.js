@@ -61,6 +61,21 @@ var CommTrackConfig = (function () {
         mapping: CasePropertyBase.mapping,
         wrap: function (data, action) {
             var self = CasePropertyBase.wrap(data, action);
+
+            // for compatibility with common templates
+            self.case_transaction = {
+                // template: case-config:case-properties:question
+                allow: {
+                    repeats: function () {
+                        return true;
+                    }
+                },
+                // template: case-config:case-transaction:case-properties
+                suggestedSaveProperties: function () {
+                    return action.suggestedProperties();
+                }
+            };
+
             self.defaultKey = ko.computed(function () {
                 var path = self.path() || '';
                 var value = path.split('/');
@@ -89,6 +104,20 @@ var CommTrackConfig = (function () {
     var CasePreloadProperty = {
         wrap: function (data, action) {
             var self = CasePropertyBase.wrap(data, action);
+
+            // for compatibility with common templates
+            self.case_transaction = {
+                // template: case-config:case-properties:question
+                allow: {
+                    repeats: function () {
+                        return true;
+                    }
+                },
+                // template: case-config:case-transaction:case-preload
+                suggestedPreloadProperties: function () {
+                    return action.suggestedProperties();
+                }
+            };
             self.defaultKey = ko.computed(function () {
                 return '';
             });
@@ -186,11 +215,23 @@ var CommTrackConfig = (function () {
                 config: config,
                 actionType: 'load'
             };
-            self.config = config;
             ko.mapping.fromJS(data, LoadUpdateAction.mapping(this), self);
+
+            // for compatibility with common templates
+            // template: case-config:condition
+            self.allow = {
+                repeats: function () {
+                    return true;
+                }
+            };
 
             self.validate = ko.computed(function () {
                 return ActionBase.validate(self, self.case_type(), self.case_tag());
+            });
+
+            // for compatibility with common templates
+            self.case_preload = ko.computed(function () {
+                return self.preload();
             });
 
             self.close_case = ko.computed(ActionBase.close_case(self));
@@ -274,6 +315,14 @@ var CommTrackConfig = (function () {
                 actionType: 'open'
             };
             ko.mapping.fromJS(data, OpenCaseAction.mapping(self), self);
+
+            // for compatibility with common templates
+            // template: case-config:condition
+            self.allow = {
+                repeats: function () {
+                    return true;
+                }
+            };
 
             self.validate = ko.computed(function () {
                 return ActionBase.validate(self, self.case_type(), self.case_tag());

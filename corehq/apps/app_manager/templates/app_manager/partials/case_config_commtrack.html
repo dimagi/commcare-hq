@@ -1,6 +1,6 @@
 {% load i18n %}
 
-{#{% include 'app_manager/partials/case_config_shared.html' %}#}
+{% include 'app_manager/partials/case_config_shared.html' %}
 
 <script type="text/html" id="remove-action-modal-template">
     <div class="modal-header">
@@ -14,153 +14,6 @@
         <a href="#" class="btn" data-dismiss="modal">{% trans "Cancel" %}</a>
         <a class="btn btn-danger" href="#" data-bind="click: $parent.removeFormAction" data-dismiss="modal">{% trans "Remove Action" %}</a>
     </div>
-</script>
-
-<script type="text/html" id="case-config:condition">
-    <!--ko with: condition -->
-    <div data-bind="visible: type() === 'always' && $root.edit">
-        <a href="#" data-bind="click: function () {type('if')}"><i class="icon-plus"></i> {% trans "Only if the answer to..." %}</a>
-    </div>
-    <div data-bind="visible: type() === 'if'">
-        <a href="#" data-bind="click: function () {type('always')}, visible: $root.edit"><i class="icon-remove"></i></a>
-        {% trans "Only if the answer to" %}
-        <input class="input-large" type="hidden" data-bind="
-            questionsSelect: $root.getQuestions('select1', false, true),
-            value: question,
-            optionsCaption: ' ',
-            edit: $root.edit"
-        />
-        {% trans "is" %}
-        <span data-bind="if: $root.getAnswers({question: question()}).length">
-            <select data-bind="
-                optstr: $root.getAnswers({question: question()}),
-                value: answer,
-                edit: $root.edit"></select>
-        </span>
-        <span data-bind="if: !$root.getAnswers({question: question()}).length">
-            <input type="text" class="code" data-bind="value: answer, edit: $root.edit"/>
-        </span>
-    </div>
-    <!--/ko-->
-</script>
-
-<script type="text/html" id="case-config:case-properties:question">
-    <input class="input-large" type="hidden" data-bind="
-        questionsSelect: $root.getQuestions('all', false, true),
-        value: path,
-        optionsCaption: ' ',
-        edit: $root.edit"
-    />
-    <p class="help-inline" data-bind="visible: required() && !path()">{% trans "Required" %}</p>
-</script>
-
-<script type="text/html" id="case-config:case-properties:property">
-    <span data-bind="visible: !property.required()">
-        <input type="text" class="input-medium" data-bind="
-            valueDefault: property.key,
-            default: property.defaultKey,
-            edit: $root.edit,
-            typeahead: suggestedProperties
-        "/>
-    </span>
-    <span data-bind="visible: property.required()">
-        <code data-bind="text: property.key"></code>
-    </span>
-</script>
-
-
-<script type="text/html" id="case-config:case-load:preload">
-    <em>{% trans "Load the following case properties into the form" %}</em>
-    <div class="alert alert-block alert-info" data-bind="visible: !preload().length">
-        {% trans "No case properties will be loaded" %}
-    </div>
-    <table class="table table-condensed" data-bind="visible: preload().length">
-        <thead>
-            <tr>
-                <th></th>
-                <th>{% trans "Case Property" %}</th>
-                <th></th>
-                <th>{% trans "Question" %}</th>
-            </tr>
-        </thead>
-
-        <tbody data-bind="foreach: preload">
-            <tr class="control-group" data-bind="css: {error: validateProperty() || validateQuestion()}">
-                <td>
-                    <a href="#" data-bind="
-                        click: $parent.removePreload,
-                        visible: $root.edit && !(isBlank() && $index() === $parent.preload().length - 1)">
-                        <i class="icon-remove"></i>
-                    </a>
-                </td>
-                <td>
-                    <div data-bind="template: {
-                        name: 'case-config:case-properties:property',
-                        data: {'property': $data, 'suggestedProperties': $parent.suggestedProperties}
-                    }"></div>
-                    <p class="help-inline" data-bind="html: validateProperty, visible: validateProperty"></p>
-                </td>
-                <td>
-                    <i class="icon-arrow-right"></i>
-                </td>
-                <td>
-                    <div data-bind="template: 'case-config:case-properties:question'"></div>
-                    <p class="help-inline" data-bind="html: validateQuestion, visible: validateQuestion"></p>
-                </td>
-            </tr>
-        </tbody>
-    </table>
-    <a href="#" data-bind="click: addPreload, visible: $root.edit && !preload().length">
-        <i class="icon-plus"></i>
-        {% trans "Load properties" %}
-    </a>
-</script>
-
-<script type="text/html" id="case-config:case-load:update">
-    <em>{% trans "Save data to the following case properties" %}</em>
-    <div class="alert alert-block alert-info" data-bind="visible: !case_properties().length">
-        {% trans "No case properties will be saved" %}
-    </div>
-    <table class="table table-condensed" data-bind="visible: case_properties().length">
-        <thead>
-            <tr>
-                <th></th>
-                <th>{% trans "Question" %}</th>
-                <th></th>
-                <th>{% trans "Case Property" %}</th>
-            </tr>
-        </thead>
-
-        <tbody data-bind="foreach: case_properties">
-            <tr class="control-group" data-bind="css: {error: validate, warning: !validate() && required() && !path()}">
-                <td>
-                    <a href="#" data-bind="
-                        click: $parent.removeProperty,
-                        visible: $root.edit && !required() && !(isBlank() && $index() === $parent.case_properties().length - 1)
-                    ">
-                        <i class="icon-remove"></i>
-                    </a>
-                </td>
-                <td>
-                    <div data-bind="template: 'case-config:case-properties:question'"></div>
-                </td>
-                <td>
-                    <i class="icon-arrow-right"></i>
-                </td>
-                <td>
-                    <div data-bind="template: {
-                        name: 'case-config:case-properties:property',
-                        data: {property: $data, suggestedProperties: $parent.suggestedProperties}
-                    }"></div>
-                    <p class="help-inline" data-bind="html: validate, visible: validate"></p>
-                </td>
-            </tr>
-        </tbody>
-    </table>
-    <a href="#" data-bind="click: addProperty, visible: $root.edit && !case_properties().length">
-        <i class="icon-plus"></i>
-        {% trans "Save properties" %}
-    </a>
 </script>
 
 <script type="text/html" id="case-config:case-action">
@@ -199,20 +52,20 @@
                 <!--ko if: actionType == 'open'-->
                 <div data-bind="template: {
                     name: 'case-config:condition',
-                    data: {condition: open_condition}
+                    data: {condition: open_condition, case_transaction: $data},
                 }"></div>
                 <!-- /ko -->
                 <div data-bind="if: actionType == 'load'" class="row-fluid">
                     <div class="well span6">
-                        <div data-bind="template: 'case-config:case-load:preload'"></div>
+                        <div data-bind="template: 'case-config:case-transaction:case-preload'"></div>
                     </div>
                     <div class="well span6">
-                        <div data-bind="template: 'case-config:case-load:update'"></div>
+                        <div data-bind="template: 'case-config:case-transaction:case-properties'"></div>
                     </div>
                 </div>
                 <div data-bind="if: actionType == 'open'" class="row-fluid">
                     <div class="well">
-                        <div data-bind="template: 'case-config:case-load:update'"></div>
+                        <div data-bind="template: 'case-config:case-transaction:case-properties'"></div>
                     </div>
                 </div>
                 <div class="well">
@@ -239,7 +92,7 @@
                         </label>
                         <div data-bind="template: {
                             name: 'case-config:condition',
-                            data: {condition: close_condition},
+                            data: {condition: close_condition, case_transaction: $data},
                             if: close_case
                         }"></div>
                     </div>
