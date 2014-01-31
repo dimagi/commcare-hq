@@ -11,6 +11,7 @@ from crispy_forms.layout import *
 
 from dimagi.utils.decorators.memoized import memoized
 from django_prbac import arbitrary as role_gen
+from django_prbac.models import Role
 
 from corehq.apps.accounting.async_handlers import FeatureRateAsyncHandler, SoftwareProductRateAsyncHandler, Select2RateAsyncHandler
 from corehq.apps.accounting.utils import fmt_feature_rate_dict, fmt_product_rate_dict
@@ -460,15 +461,22 @@ class SoftwarePlanVersionForm(forms.Form):
         widget=forms.HiddenInput,
     )
 
-    def __init__(self, plan_version, data=None, *args, **kwargs):
+    def __init__(self, plan, plan_version, data=None, *args, **kwargs):
+        self.plan = plan
         self.plan_version = plan_version
         data = data or {}
-        if not 'feature_rates' in data:
-            data['feature_rates'] = json.dumps([fmt_feature_rate_dict(r.feature, r)
-                                           for r in self.plan_version.feature_rates.all()])
-        if not 'product_rates' in data:
-            data['product_rates'] = json.dumps([fmt_product_rate_dict(r.product, r)
-                                           for r in self.plan_version.product_rates.all()])
+        if self.plan_version is not None:
+            if not 'feature_rates' in data:
+                data['feature_rates'] = json.dumps([fmt_feature_rate_dict(r.feature, r)
+                                               for r in self.plan_version.feature_rates.all()])
+            if not 'product_rates' in data:
+                data['product_rates'] = json.dumps([fmt_product_rate_dict(r.product, r)
+                                               for r in self.plan_version.product_rates.all()])
+        else:
+            if not 'feature_rates' in data:
+                data['feature_rates'] = json.dumps([])
+            if not 'product_rates' in data:
+                data['product_rates'] = json.dumps([])
 
         self.is_update = False
 
@@ -667,8 +675,8 @@ class SoftwarePlanVersionForm(forms.Form):
             self._errors.setdefault('feature_rates', errors)
         self.new_feature_rates = rate_instances
         rate_ids = lambda x: set([r.id for r in x])
-        if (not self.is_update and
-                rate_ids(rate_instances).symmetric_difference(rate_ids(self.plan_version.feature_rates.all()))):
+        if (not self.is_update and (self.plan_version is None or
+                rate_ids(rate_instances).symmetric_difference(rate_ids(self.plan_version.feature_rates.all())))):
             self.is_update = True
         return original_data
 
@@ -687,8 +695,8 @@ class SoftwarePlanVersionForm(forms.Form):
             self._errors.setdefault('product_rates', errors)
         self.new_product_rates = rate_instances
         rate_ids = lambda x: set([r.id for r in x])
-        if (not self.is_update and
-                rate_ids(rate_instances).symmetric_difference(rate_ids(self.plan_version.product_rates.all()))):
+        if (not self.is_update and (self.plan_version is None or
+                rate_ids(rate_instances).symmetric_difference(rate_ids(self.plan_version.product_rates.all())))):
             self.is_update = True
         return original_data
 
@@ -697,8 +705,8 @@ class SoftwarePlanVersionForm(forms.Form):
             messages.info(request, "No changes to rates and roles were present, so the current version was kept.")
             return
         new_version = SoftwarePlanVersion(
-            plan=self.plan_version.plan,
-            role=self.plan_version.role,
+            plan=self.plan,
+            role=Role.objects.get(id=1), # hacked so it doesn't break - TODO needs to get fixed
         )
         new_version.save()
 
