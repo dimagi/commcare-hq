@@ -577,6 +577,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             return result
         else:
             new_domain = Domain(name=name, is_active=is_active, date_created=datetime.utcnow())
+            new_domain.migrations = DomainMigrations(has_migrated_permissions=True)
             new_domain.save(**get_safe_write_kwargs())
             return new_domain
 
