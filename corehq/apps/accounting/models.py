@@ -6,12 +6,15 @@ from couchdbkit.ext.django.schema import DateTimeProperty, StringProperty
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models
+from django.utils.translation import ugettext_lazy as _
+from corehq.apps.accounting.downgrade import DomainDowngradeActionHandler
 
 from django_prbac.models import Role
 from dimagi.utils.couch.database import SafeSaveDocument
 
-from corehq.apps.accounting.exceptions import CreditLineError, AccountingError
-from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES, assure_domain_instance
+from corehq.apps.accounting.exceptions import (CreditLineError, AccountingError, SubscriptionAdjustmentError,
+                                               SubscriptionDowngradeError, NewSubscriptionError)
+from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES, assure_domain_instance, get_change_status, get_privileges
 
 global_logger = logging.getLogger(__name__)
 
@@ -425,6 +428,14 @@ class Subscriber(models.Model):
             return "ORGANIZATION %s" % self.organization
         return "DOMAIN %s" % self.domain
 
+    def downgrade(self, new_plan_version, downgraded_privileges):
+        if self.organization is not None:
+            raise SubscriptionDowngradeError("Only domain downgrades are possible.")
+
+        downgrade_handler = DomainDowngradeActionHandler(self.domain, new_plan_version, downgraded_privileges)
+        if not downgrade_handler.get_response():
+            raise SubscriptionDowngradeError("The downgrade was not successful.")
+
 
 class Subscription(models.Model):
     """
@@ -439,6 +450,63 @@ class Subscription(models.Model):
     date_delay_invoicing = models.DateField(blank=True, null=True)
     date_created = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=False)
+
+    def cancel_subscription(self, adjustment_method=None, web_user=None, note=None):
+        adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
+        today = datetime.date.today()
+        if self.date_end is not None and today > self.date_end:
+            raise SubscriptionAdjustmentError("The end date for this subscription already passed.")
+        self.date_end = today
+        self.is_active = False
+        self.save()
+        SubscriptionAdjustment.record_adjustment(
+            self, reason=SubscriptionAdjustmentReason.CANCEL, method=adjustment_method, note=note, web_user=web_user,
+        )
+
+    def change_plan(self, new_plan_version, date_end=None, salesforce_contract_id=None, note=None,
+                    web_user=None, adjustment_method=None):
+        """
+        Changing a plan terminates the current subscription and creates a new subscription where the old plan
+        left off.
+        """
+        adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
+
+        adjustment_reason, downgrades, upgrades = get_change_status(self.plan_version, new_plan_version)
+        if adjustment_reason == SubscriptionAdjustmentReason.DOWNGRADE:
+            self.subscriber.downgrade(new_plan_version, downgrades)
+
+        today = datetime.date.today()
+        new_start_date = today if self.date_start < today else self.date_start
+
+        new_subscription = Subscription(
+            account=self.account,
+            plan_version=new_plan_version,
+            subscriber=self.subscriber,
+            salesforce_contract_id=salesforce_contract_id or self.salesforce_contract_id,
+            date_start=new_start_date,
+            date_end=date_end,
+            date_delay_invoicing=self.date_delay_invoicing,
+            is_active=self.is_active,
+        )
+        new_subscription.save()
+
+        if self.date_start > today:
+            self.date_start = today
+        if self.date_end is None or self.date_end > today:
+            self.date_end = today
+        if self.date_delay_invoicing is not None and self.date_delay_invoicing > today:
+            self.date_delay_invoicing = today
+        self.is_active = False
+        self.save()
+
+        # record new subscription
+        SubscriptionAdjustment.record_adjustment(new_subscription,
+                                                 method=adjustment_method, note=note, web_user=web_user)
+        # record transfer from old subscription
+        SubscriptionAdjustment.record_adjustment(self, method=adjustment_method, note=note, web_user=web_user,
+                                                 reason=adjustment_reason, related_subscription=new_subscription)
+
+        return new_subscription
 
     @classmethod
     def _get_plan_by_subscriber(cls, subscriber):
@@ -475,6 +543,43 @@ class Subscription(models.Model):
         if plan_version is None:
             plan_version =  DefaultProductPlan.get_default_plan_by_domain(domain)
         return plan_version, subscription
+    
+    @classmethod
+    def new_domain_subscription(cls, account, domain, plan_version, date_start=None, adjustment_method=None,
+                                note=None, web_user=None, **kwargs):
+        subscriber = Subscriber.objects.get_or_create(domain=domain, organization=None)[0]
+        today = datetime.date.today()
+        future_subscriptions = Subscription.objects.filter(
+            models.Q(subscriber=subscriber, date_end__gt=today) | models.Q(subscriber=subscriber, date_end__exact=None)
+        )
+        if future_subscriptions.filter(is_active=True).count() > 0:
+            raise NewSubscriptionError(_("Project '%s' currently has an active subscription. "
+                                         "Please cancel the current subscription.") % domain)
+        try:
+            next_subscription = future_subscriptions.filter(date_start__gt=today).order_by('date_start')[0]
+            date_end = kwargs.get('date_end')
+            if date_end is None or date_end > next_subscription.date_start:
+                raise NewSubscriptionError(_("The end date for this subscription overlaps with the start date "
+                                             "of the next subscription on %s. Please cancel this subscription first.")
+                                           % next_subscription.date_start)
+        except (Subscription.DoesNotExist, IndexError):
+            pass
+
+        downgrades = get_change_status(None, plan_version)[1]
+        if downgrades:
+            subscriber.downgrade(plan_version, downgrades)
+
+        adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
+        subscription = Subscription(
+            account=account,
+            plan_version=plan_version,
+            subscriber=subscriber,
+            date_start=date_start or datetime.date.today(),
+            **kwargs
+        )
+        subscription.save()
+        SubscriptionAdjustment.record_adjustment(subscription, method=adjustment_method, note=note, web_user=web_user)
+        return subscription
 
 
 class Invoice(models.Model):
