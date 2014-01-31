@@ -14,7 +14,10 @@ def get_default_consumption(domain, product_id, location_type, case_id):
         keys=keys, reduce=False, limit=1, descending=True,
     )
     results = results.one()
-    return Decimal(results['value']) if results else None
+    if results and results['value']:
+        return Decimal(results['value'])
+    else:
+        return None
 
 
 def set_default_consumption_for_domain(domain, amount):
