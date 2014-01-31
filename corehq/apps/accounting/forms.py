@@ -17,7 +17,7 @@ from django_prbac import arbitrary as role_gen
 from django_prbac.models import Role
 
 from corehq.apps.accounting.async_handlers import (FeatureRateAsyncHandler, SoftwareProductRateAsyncHandler,
-                                                   RoleAsyncHandler, Select2RateAsyncHandler, Select2RoleAsyncHandler)
+                                                   RoleAsyncHandler, Select2RateAsyncHandler)
 from corehq.apps.accounting.utils import fmt_feature_rate_dict, fmt_product_rate_dict, fmt_role_dict
 from corehq.apps.hqwebapp.crispy import BootstrapMultiField
 from corehq.apps.domain.models import Domain
