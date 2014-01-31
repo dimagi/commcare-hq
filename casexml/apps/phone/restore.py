@@ -20,13 +20,15 @@ class RestoreConfig(object):
     """
     A collection of attributes associated with an OTA restore
     """
-    def __init__(self, user, restore_id="", version=V1, state_hash="", caching_enabled=False):
+    def __init__(self, user, restore_id="", version=V1, state_hash="",
+                 caching_enabled=False, items=False):
         self.user = user
         self.restore_id = restore_id
         self.version = version
         self.state_hash = state_hash
         self.caching_enabled = caching_enabled
         self.cache = get_redis_default_cache()
+        self.items = items
 
     @property
     @memoized
@@ -96,6 +98,9 @@ class RestoreConfig(object):
         for case_elem in case_xml_elements:
             response.append(case_elem)
 
+        if self.items:
+            response.attrib['items'] = '%d' % len(response.getchildren())
+
         resp = xml.tostring(response)
         self.set_cached_payload_if_enabled(resp)
         return resp
@@ -140,23 +145,26 @@ class RestoreConfig(object):
                 self.cache.set(self._initial_cache_key(), resp, 60*60)
 
 
-def generate_restore_payload(user, restore_id="", version=V1, state_hash=""):
+def generate_restore_payload(user, restore_id="", version=V1, state_hash="",
+                             items=False):
     """
     Gets an XML payload suitable for OTA restore. If you need to do something
     other than find all cases matching user_id = user.user_id then you have
     to pass in a user object that overrides the get_case_updates() method.
-    
+
     It should match the same signature as models.user.get_case_updates():
-    
+
         user:          who the payload is for. must implement get_case_updates
         restore_id:    sync token
-        version:       the CommCare version 
-        
+        version:       the CommCare version
+
         returns: the xml payload of the sync operation
     """
-    config = RestoreConfig(user, restore_id, version, state_hash)
+    config = RestoreConfig(user, restore_id, version, state_hash, items=items)
     return config.get_payload()
 
 
-def generate_restore_response(user, restore_id="", version="1.0", state_hash=""):
-    return RestoreConfig(user, restore_id, version, state_hash).get_response()
+def generate_restore_response(user, restore_id="", version=V1, state_hash="",
+                              items=False):
+    config = RestoreConfig(user, restore_id, version, state_hash, items=items)
+    return config.get_response()
