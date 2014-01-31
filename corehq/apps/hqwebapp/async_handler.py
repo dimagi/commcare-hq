@@ -30,6 +30,7 @@ class BaseAsyncHandler(object):
     def __init__(self, request):
         if not isinstance(request, HttpRequest):
             raise ValueError("request must be an HttpRequest.")
+        self.request = request
         self.data = request.POST if request.method == 'POST' else request.GET
         self.action = self.data.get('action')
 
