@@ -3,7 +3,7 @@ import datetime
 import json
 from django.utils.encoding import force_unicode
 from django.utils.functional import Promise
-from corehq import Domain
+from corehq import Domain, privileges
 from dimagi.utils.dates import add_months
 
 
@@ -69,16 +69,19 @@ def get_privileges(plan_version):
 
 
 def get_change_status(from_plan_version, to_plan_version):
-    from_privs = get_privileges(from_plan_version)
+    from_privs = get_privileges(from_plan_version) if from_plan_version is not None else set(privileges.MAX_PRIVILEGES)
     to_privs = get_privileges(to_plan_version)
     downgraded_privs = from_privs.difference(to_privs)
     upgraded_privs = to_privs.difference(from_privs)
     from corehq.apps.accounting.models import SubscriptionAdjustmentReason as Reason
-    adjustment_reason = Reason.SWITCH
-    if len(downgraded_privs) == 0 and len(upgraded_privs) > 0:
-        adjustment_reason = Reason.UPGRADE
-    elif len(upgraded_privs) == 0 and len(downgraded_privs) > 0:
-        adjustment_reason = Reason.DOWNGRADE
+    if from_plan_version is None:
+        adjustment_reason = Reason.CREATE
+    else:
+        adjustment_reason = Reason.SWITCH
+        if len(downgraded_privs) == 0 and len(upgraded_privs) > 0:
+            adjustment_reason = Reason.UPGRADE
+        elif len(upgraded_privs) == 0 and len(downgraded_privs) > 0:
+            adjustment_reason = Reason.DOWNGRADE
     return adjustment_reason, downgraded_privs, upgraded_privs
 
 

@@ -162,7 +162,7 @@ var Select2FieldHandler = function (fieldName, asyncHandler, existingObjects) {
     };
 
     self.utils = {
-        getField: function () {
+        getfield: function () {
             return $('[name="' + self.fieldName + '"]');
         }
     };

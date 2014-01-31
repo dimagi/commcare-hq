@@ -3,6 +3,10 @@ from decimal import Decimal
 import logging
 from couchdbkit import ResourceNotFound
 import dateutil
+from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
+from corehq.apps.accounting.downgrade import DomainDowngradeStatusHandler
+from corehq.apps.accounting.forms import EnterprisePlanContactForm
+from corehq.apps.accounting.utils import get_change_status
 from dimagi.utils.couch.resource_conflict import retry_resource
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -13,9 +17,10 @@ from django.utils.safestring import mark_safe
 from corehq import toggles
 from toggle.decorators import require_toggle
 
-from corehq.apps.accounting.models import Subscription, CreditLine, SoftwarePlanVisibility, SoftwareProductType
+from corehq.apps.accounting.models import (Subscription, CreditLine, SoftwarePlanVisibility, SoftwareProductType,
+                                           DefaultProductPlan, SoftwarePlanEdition, BillingAccount, BillingAccountType)
 from corehq.apps.accounting.usage import FeatureUsage
-from corehq.apps.accounting.user_text import DESC_BY_EDITION, get_feature_name, PricingTable
+from corehq.apps.accounting.user_text import get_feature_name, PricingTable, DESC_BY_EDITION
 from corehq.apps.hqwebapp.models import ProjectSettingsTab
 from corehq.apps import receiverwrapper
 from django.core.urlresolvers import reverse
@@ -26,8 +31,9 @@ from corehq.apps.domain.calculations import CALCS, CALC_FNS, CALC_ORDER, dom_cal
 
 from corehq.apps.domain.decorators import (domain_admin_required,
     login_required, require_superuser, login_and_domain_required)
-from corehq.apps.domain.forms import DomainGlobalSettingsForm,\
-    DomainMetadataForm, SnapshotSettingsForm, SnapshotApplicationForm, DomainDeploymentForm, DomainInternalForm
+from corehq.apps.domain.forms import (DomainGlobalSettingsForm, DomainMetadataForm, SnapshotSettingsForm,
+                                      SnapshotApplicationForm, DomainDeploymentForm, DomainInternalForm,
+                                      BillingAccountInfoForm)
 from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.domain.utils import get_domained_url, normalize_domain_name
 from corehq.apps.hqwebapp.views import BaseSectionPageView
@@ -419,22 +425,11 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'subscription_credit': None,
             'css_class': "label-plan %s" % plan_version.plan.edition.lower(),
         }
-        info.update(self.get_plan_description(plan_version))
+        info.update(plan_version.user_facing_description)
         if subscription is not None:
             subscription_credits = CreditLine.get_credits_by_subscription_and_features(subscription)
             info['subscription_credit'] = self._fmt_credit(self._credit_grand_total(subscription_credits))
         return info
-
-    def get_plan_description(self, plan_version):
-        if plan_version.plan.visibility == SoftwarePlanVisibility.PUBLIC:
-            try:
-                return DESC_BY_EDITION[plan_version.plan.edition]
-            except KeyError:
-                pass
-        return {
-            'name': plan_version.plan.name,
-            'description': plan_version.plan.description,
-        }
 
     def _fmt_credit(self, credit_amount=None):
         if credit_amount is None:
@@ -481,14 +476,25 @@ class DomainSubscriptionView(DomainAccountingSettings):
     def page_context(self):
         return {
             'plan': self.plan,
-            'change_plan_url': reverse(ChangeDomainPlanView.urlname, args=[self.domain]),
+            'change_plan_url': reverse(SelectPlanView.urlname, args=[self.domain]),
         }
 
 
-class ChangeDomainPlanView(DomainAccountingSettings):
+class SelectPlanView(DomainAccountingSettings):
     template_name = 'domain/select_plan.html'
     urlname = 'domain_select_plan'
     page_title = ugettext_noop("Change Plan")
+    step_title = ugettext_noop("Select Plan")
+    edition = None
+
+    @property
+    def current_subscription(self):
+        return Subscription.get_subscribed_plan_by_domain(self.domain_object)[1]
+
+    @property
+    def edition_name(self):
+        if self.edition:
+            return DESC_BY_EDITION[self.edition]['name'].encode('utf-8')
 
     @property
     def parent_pages(self):
@@ -500,10 +506,211 @@ class ChangeDomainPlanView(DomainAccountingSettings):
         ]
 
     @property
+    def steps(self):
+        return [
+            {
+                'title': _("1. Select a Plan%s") % (" (%s)" % self.edition_name if self.edition_name else ""),
+                'url': reverse(SelectPlanView.urlname, args=[self.domain]),
+            }
+        ]
+
+    @property
+    def main_context(self):
+        context = super(SelectPlanView, self).main_context
+        context.update({
+            'steps': self.steps,
+            'step_title': self.step_title,
+        })
+        return context
+
+    @property
     def page_context(self):
         return {
             'pricing_table': PricingTable.get_table_by_product(self.product),
+            'current_edition': (self.current_subscription.plan_version.plan.edition.lower()
+                                if self.current_subscription is not None else "")
         }
+
+
+class SelectedEnterprisePlanView(SelectPlanView):
+    template_name = 'domain/selected_enterprise_plan.html'
+    urlname = 'enterprise_request_quote'
+    step_title = ugettext_noop("Contact Dimagi")
+    edition = SoftwarePlanEdition.ENTERPRISE
+
+    @property
+    def steps(self):
+        last_steps = super(SelectedEnterprisePlanView, self).steps
+        last_steps.append({
+            'title': _("2. Contact Dimagi"),
+            'url': reverse(SelectedEnterprisePlanView.urlname, args=[self.domain]),
+        })
+        return last_steps
+
+    @property
+    @memoized
+    def is_not_redirect(self):
+        return not 'plan_edition' in self.request.POST
+
+    @property
+    @memoized
+    def enterprise_contact_form(self):
+        if self.request.method == 'POST' and self.is_not_redirect:
+            return EnterprisePlanContactForm(self.domain, self.request.couch_user, data=self.request.POST)
+        return EnterprisePlanContactForm(self.domain, self.request.couch_user)
+
+    @property
+    def page_context(self):
+        return {
+            'enterprise_contact_form': self.enterprise_contact_form,
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.is_not_redirect and self.enterprise_contact_form.is_valid():
+            self.enterprise_contact_form.send_message()
+            messages.success(request, _("Your request was sent to Dimagi. "
+                                        "We will try our best to follow up in a timely manner."))
+            return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
+        return self.get(request, *args, **kwargs)
+
+
+class ConfirmSelectedPlanView(SelectPlanView):
+    template_name = 'domain/confirm_plan.html'
+    urlname = 'confirm_selected_plan'
+    step_title = ugettext_noop("Confirm Plan")
+
+    @property
+    def steps(self):
+        last_steps = super(ConfirmSelectedPlanView, self).steps
+        last_steps.append({
+            'title': _("2. Confirm Plan"),
+            'url': reverse(SelectPlanView.urlname, args=[self.domain]),
+        })
+        return last_steps
+
+    @property
+    @memoized
+    def edition(self):
+        edition = self.request.POST.get('plan_edition').title()
+        if edition not in [e[0] for e in SoftwarePlanEdition.CHOICES]:
+            raise Http404()
+        return edition
+
+    @property
+    @memoized
+    def selected_plan_version(self):
+        return DefaultProductPlan.get_default_plan_by_domain(self.domain, self.edition).plan.get_version()
+
+    @property
+    def downgrade_messages(self):
+        current_plan_version, subscription = Subscription.get_subscribed_plan_by_domain(self.domain_object)
+        if subscription is None:
+            current_plan_version = None
+        downgrades = get_change_status(current_plan_version, self.selected_plan_version)[1]
+        downgrade_handler = DomainDowngradeStatusHandler(self.domain_object, self.selected_plan_version, downgrades)
+        return downgrade_handler.get_response()
+
+    @property
+    def page_context(self):
+        return {
+            'downgrade_messages': self.downgrade_messages,
+            'current_plan': (self.current_subscription.plan_version.user_facing_description
+                             if self.current_subscription is not None else None),
+            'show_community_notice': (self.edition == SoftwarePlanEdition.COMMUNITY
+                                      and self.current_subscription is None),
+        }
+
+    @property
+    def main_context(self):
+        context = super(ConfirmSelectedPlanView, self).main_context
+        context.update({
+            'plan': self.selected_plan_version.user_facing_description,
+        })
+        return context
+
+    def get(self, request, *args, **kwargs):
+        return HttpResponseRedirect(reverse(SelectPlanView.urlname, args=[self.domain]))
+
+    def post(self, request, *args, **kwargs):
+        if self.edition == SoftwarePlanEdition.ENTERPRISE:
+            return HttpResponseRedirect(reverse(SelectedEnterprisePlanView.urlname, args=[self.domain]))
+        return super(ConfirmSelectedPlanView, self).get(request, *args, **kwargs)
+
+
+class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView):
+    template_name = 'domain/confirm_billing_info.html'
+    urlname = 'confirm_billing_account_info'
+    step_title = ugettext_noop("Confirm Billing Information")
+    is_new = False
+    async_handlers = [
+        Select2BillingInfoHandler,
+    ]
+
+    @property
+    def steps(self):
+        last_steps = super(ConfirmBillingAccountInfoView, self).steps
+        last_steps.append({
+            'title': _("3. Confirm Billing Account"),
+            'url': reverse(ConfirmBillingAccountInfoView.urlname, args=[self.domain]),
+        })
+        return last_steps
+
+    @property
+    @memoized
+    def account(self):
+        if self.current_subscription:
+            return self.current_subscription.account
+        account, self.is_new = BillingAccount.get_or_create_account_by_domain(
+            self.domain, created_by=self.request.couch_user.email, account_type=BillingAccountType.USER_CREATED,
+        )
+        return account
+
+    @property
+    @memoized
+    def is_form_post(self):
+        return 'billing_admins' in self.request.POST
+
+    @property
+    @memoized
+    def billing_account_info_form(self):
+        if self.request.method == 'POST' and self.is_form_post:
+            return BillingAccountInfoForm(
+                self.account, self.domain, self.selected_plan_version, self.current_subscription,
+                self.request.couch_user.username, data=self.request.POST
+            )
+        return BillingAccountInfoForm(self.account, self.domain, self.selected_plan_version, self.current_subscription,
+                                      self.request.couch_user.username)
+
+    @property
+    def page_context(self):
+        return {
+            'billing_account_info_form': self.billing_account_info_form,
+        }
+
+    @property
+    def async_handler(self):
+        return self.request.POST.get('handler')
+
+    def post(self, request, *args, **kwargs):
+        if self.async_handler in [h.slug for h in self.async_handlers]:
+            slug_to_handler = dict([(h.slug, h) for h in self.async_handlers])
+            handler = slug_to_handler[self.async_handler](request)
+            return handler.get_response()
+        if self.is_form_post and self.billing_account_info_form.is_valid():
+            is_saved = self.billing_account_info_form.save()
+            software_plan_name = DESC_BY_EDITION[self.selected_plan_version.plan.edition]['name'].encode('utf-8')
+            if not is_saved:
+                messages.error(
+                    request, _("It appears there was an issue subscribing your project to the %s Software Plan. You "
+                               "may try resubmitting, but if that doesn't work, rest assured someone will be "
+                               "contacting you shortly") % software_plan_name)
+            else:
+                messages.success(
+                    request, _("Your project has been successfully subscribed to the %s Software Plan."
+                               % software_plan_name)
+                )
+                return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
+        return super(ConfirmBillingAccountInfoView, self).post(request, *args, **kwargs)
 
 
 class ExchangeSnapshotsView(BaseAdminProjectSettingsView):
