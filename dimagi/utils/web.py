@@ -10,6 +10,8 @@ from django.shortcuts import render_to_response as django_r_to_r
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.contrib.sites.models import Site
 import json
+from django.utils.encoding import force_unicode
+from django.utils.functional import Promise
 from dimagi.utils.parsing import json_format_datetime
 from datetime import date, datetime
 from decimal import Decimal
@@ -178,6 +180,8 @@ def json_handler(obj):
         return obj.isoformat()
     elif isinstance(obj, Decimal):
         return float(obj) # warning, potential loss of precision
+    elif isinstance(obj, Promise):
+            return force_unicode(obj)  # to support ugettext_lazy
     else:
         return json.JSONEncoder().default(obj)
 
