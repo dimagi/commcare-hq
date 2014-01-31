@@ -17,11 +17,8 @@
 </script>
 
 <script type="text/html" id="case-config:case-action">
-    <h3><a href="#">
-        <strong data-bind="text: case_tag"></strong>
-        &nbsp;
-        ({% trans "Type: " %}<span data-bind="text: case_type" />)
-        </a>
+    <h3>
+        <a href="#" data-bind="html: header"></a>
     </h3>
     <div>
             <div>
@@ -118,17 +115,17 @@
         </div>
         <div>
             <div class="row-fluid">
-                <span data-bind="visible: actions.load_update_cases().length"><i class="icon-asterisk"></i> {% trans "Load / Update / Close cases" %}</span>
-                <div id="case-load-accordion" data-bind="foreach: actions.load_update_cases, accordion: {header: '> div > h3', heightStyle: 'content', collapsible: true, autoFill: true}">
+                <span data-bind="visible: load_update_cases().length"><i class="icon-asterisk"></i> {% trans "Load / Update / Close cases" %}</span>
+                <div id="case-load-accordion" data-bind="foreach: load_update_cases, accordion: {header: '> div > h3', heightStyle: 'content', collapsible: true, autoFill: true}">
                     <div class="group" data-bind="template: {name: 'case-config:case-action'}"></div>
                 </div>
             </div>
-            <div class="row" data-bind="visible: actions.open_cases().length && actions.load_update_cases().length">
+            <div class="row" data-bind="visible: open_cases().length && load_update_cases().length">
                 <hr/>
             </div>
             <div class="row-fluid">
-                <span data-bind="visible: actions.open_cases().length"><i class="icon-asterisk"></i> {% trans "Open new cases" %}</span>
-                <div id="case-open-accordion" data-bind="foreach: actions.open_cases, accordion: {header: '> div > h3', heightStyle: 'content', collapsible: true, autoFill: true}">
+                <span data-bind="visible: open_cases().length"><i class="icon-asterisk"></i> {% trans "Open new cases" %}</span>
+                <div id="case-open-accordion" data-bind="foreach: open_cases, accordion: {header: '> div > h3', heightStyle: 'content', collapsible: true, autoFill: true}">
                     <div class="group" data-bind="template: {name: 'case-config:case-action'}"></div>
                 </div>
             </div>
