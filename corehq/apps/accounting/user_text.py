@@ -5,30 +5,35 @@ DESC_BY_EDITION = {
     Edition.COMMUNITY: {
         'name': _("Community"),
         'description': _("For projects in a pilot phase with a small group (up to 50) of "
-                                     "mobile users that only need very basic CommCare features."),
+                         "mobile users that only need very basic CommCare features."),
     },
     Edition.STANDARD: {
         'name': _("Standard"),
         'description': _("For projects with a medium set (up to 250) of mobile users that want to "
-                                     "build in limited SMS workflows and have increased data security needs."),
+                         "build in limited SMS workflows and have increased data security needs."),
     },
     Edition.PRO: {
         'name': _("Pro"),
         'description': _("For projects with a large group (up to 500) of mobile users that want to "
-                                     "build in comprehensive SMS workflows and have increased reporting needs."),
+                         "build in comprehensive SMS workflows and have increased reporting needs."),
     },
     Edition.ADVANCED: {
         'name': _("Advanced"),
         'description': _("For projects scaling to an even larger group (up to 1,000) of mobile users "
-                                     "that want the full CommCare feature set and dedicated support from Dimagi "
-                                     "staff.")
+                         "that want the full CommCare feature set and dedicated support from Dimagi "
+                         "staff.")
     },
     Edition.ENTERPRISE: {
         'name': _("Enterprise"),
         'description': _("For projects scaling regionally or country wide (1,001+ people) that require "
-                                     "the full CommCare feature set. Your organization will receive discounted "
-                                     "pricing and dedicated enterprise-level support from Dimagi.")
+                         "the full CommCare feature set. Your organization will receive discounted "
+                         "pricing and dedicated enterprise-level support from Dimagi.")
     }
+}
+
+FEATURE_TYPE_TO_NAME = {
+    FeatureType.SMS: _("SMS Messages"),
+    FeatureType.USER: _("Mobile Workers"),
 }
 
 

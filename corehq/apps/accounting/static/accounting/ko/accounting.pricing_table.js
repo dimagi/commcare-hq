@@ -1,9 +1,11 @@
-var PricingTable = function (pricing_table) {
+var PricingTable = function (pricing_table, current_edition) {
     'use strict';
     var self = this;
+
+    self.currentEdition = current_edition;
     self.title = ko.observable(pricing_table.title);
     self.editions = ko.observableArray(_.map(pricing_table.editions, function (edition) {
-        return new PricingTableEdition(edition);
+        return new PricingTableEdition(edition, self.currentEdition);
     }));
     self.sections = ko.observableArray(_.map(pricing_table.sections, function (section) {
         return new PricingTableSection(section);
@@ -17,6 +19,9 @@ var PricingTable = function (pricing_table) {
     self.visit_wiki_text = ko.observable(pricing_table.visit_wiki_text);
 
     self.selected_edition = ko.observable();
+    self.isSubmitVisible = ko.computed(function () {
+        return !! self.selected_edition() && !(self.selected_edition() === self.currentEdition);
+    });
 
     self.init = function () {
         $('.edition-heading').tooltip();
@@ -24,16 +29,19 @@ var PricingTable = function (pricing_table) {
             self.selected_edition($(this).data('edition'));
         });
     };
-    console.log(self.sections());
 };
 
-var PricingTableEdition = function (data) {
+var PricingTableEdition = function (data, current_edition) {
     'use strict';
     var self = this;
 
     self.slug = ko.observable(data[0]);
     self.name = ko.observable(data[1].name);
     self.description = ko.observable(data[1].description);
+    self.currentEdition = ko.observable(data[0] === current_edition);
+    self.notCurrentEdition = ko.computed(function (){
+        return !self.currentEdition();
+    });
     self.col_css = ko.computed(function () {
        return 'col-edition col-edition-' + self.slug();
     });

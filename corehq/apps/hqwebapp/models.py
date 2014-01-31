@@ -833,7 +833,7 @@ class ProjectSettingsTab(UITab):
                 BasicCommTrackSettingsView,
                 AdvancedCommTrackSettingsView,
                 DomainSubscriptionView,
-                ChangeDomainPlanView,
+                SelectPlanView,
             )
 
             subscription = [
