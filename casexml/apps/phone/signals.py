@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from django.conf import settings
 from receiver.signals import successful_form_received, ReceiverResult,\
     Certainty
 from receiver import xml as xml
@@ -10,7 +11,14 @@ def send_default_response(sender, xform, **kwargs):
     """
     This signal just sends a default response to xform submissions.
     """
-    
+    def _default_response():
+        return ReceiverResult(xml.get_simple_response_xml(
+            "Thanks for submitting!", ResponseNature.SUBMIT_SUCCESS),
+            Certainty.MILD)
+
+    if getattr(settings, 'UNIT_TESTING', False):
+        return _default_response()
+
     def forms_submitted_count(user):
         forms_submitted = get_db().view("couchforms/by_user", 
                                         startkey=[user], 
@@ -40,9 +48,6 @@ def send_default_response(sender, xform, **kwargs):
             message, nature=ResponseNature.SUBMIT_SUCCESS), Certainty.MILD)
             
     else:
-        return ReceiverResult(xml.get_simple_response_xml(
-            "Thanks for submitting!", ResponseNature.SUBMIT_SUCCESS), 
-            Certainty.MILD)
-
+        return _default_response()
 
 successful_form_received.connect(send_default_response)
