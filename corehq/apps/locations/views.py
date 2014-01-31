@@ -7,7 +7,7 @@ from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.locations.models import Location
 from corehq.apps.locations.forms import LocationForm
 from corehq.apps.locations.util import load_locs_json, location_hierarchy_config, dump_locations
-from corehq.apps.commtrack.models import LocationType
+from corehq.apps.commtrack.models import LocationType, Product
 from corehq.apps.facilities.models import FacilityRegistry
 from django.core.urlresolvers import reverse
 from django.shortcuts import render
@@ -26,7 +26,7 @@ from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 from soil.heartbeat import heartbeat_enabled, is_alive
 from couchexport.models import Format
-
+from corehq.apps.consumption.shortcuts import get_default_consumption
 
 
 @domain_admin_required
@@ -84,6 +84,10 @@ class NewLocationView(BaseLocationView):
         return Location(domain=self.domain, parent=self.parent_id)
 
     @property
+    def consumption(self):
+        return None
+
+    @property
     @memoized
     def location_form(self):
         if self.request.method == 'POST':
@@ -95,6 +99,7 @@ class NewLocationView(BaseLocationView):
         return {
             'form': self.location_form,
             'location': self.location,
+            'consumption': self.consumption,
         }
 
     def post(self, request, *args, **kwargs):
@@ -122,6 +127,20 @@ class EditLocationView(NewLocationView):
             return Location.get(self.location_id)
         except ResourceNotFound:
             raise Http404()
+
+    @property
+    def consumption(self):
+        consumptions = []
+        for product in Product.by_domain(self.domain):
+            consumption = get_default_consumption(
+                self.domain,
+                product._id,
+                self.location.location_type,
+                self.location._id,
+            )
+            if consumption:
+                consumptions.append((product.name, consumption))
+        return consumptions
 
     @property
     def page_name(self):
