@@ -8,7 +8,7 @@ from django.core.urlresolvers import reverse
 from django.forms.util import ErrorList
 from crispy_forms.bootstrap import FormActions, StrictButton, InlineField
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import *
+from crispy_forms import layout as crispy
 from django.utils.translation import ugettext_noop, ugettext as _, ugettext
 
 from dimagi.utils.decorators.memoized import memoized
@@ -80,14 +80,14 @@ class BillingAccountForm(forms.Form):
         self.fields['currency'].choices =\
             [(cur.code, cur.code) for cur in Currency.objects.order_by('code')]
         self.helper = FormHelper()
-        self.helper.layout = Layout(
-            Fieldset(
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
             'Basic Information',
                 'name',
                 'salesforce_account_id',
                 'currency',
             ),
-            Fieldset(
+            crispy.Fieldset(
             'Contact Information',
                 'billing_account_admins',
                 'first_name',
@@ -102,8 +102,8 @@ class BillingAccountForm(forms.Form):
                 'country',
             ) if account is not None else None,
             FormActions(
-                ButtonHolder(
-                    Submit('account', 'Update Account' if account is not None else 'Add New Account')
+                crispy.ButtonHolder(
+                    crispy.Submit('account', 'Update Account' if account is not None else 'Add New Account')
                 )
             )
         )
@@ -197,19 +197,19 @@ class SubscriptionForm(forms.Form):
             domain_kwargs.update(disabled)
             self.fields['domain'].required = False
         self.helper = FormHelper()
-        self.helper.layout = Layout(
-            Fieldset(
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
             '%s Subscription' % ('Edit' if subscription is not None else 'New'),
-                Field('start_date', **start_date_kwargs),
-                Field('end_date', **end_date_kwargs),
-                Field('delay_invoice_until', **delay_invoice_until_kwargs),
-                Field('plan_version', **plan_kwargs),
-                Field('domain', **domain_kwargs),
+                crispy.Field('start_date', **start_date_kwargs),
+                crispy.Field('end_date', **end_date_kwargs),
+                crispy.Field('delay_invoice_until', **delay_invoice_until_kwargs),
+                crispy.Field('plan_version', **plan_kwargs),
+                crispy.Field('domain', **domain_kwargs),
                 'salesforce_contract_id',
             ),
             FormActions(
-                ButtonHolder(
-                    Submit('set_subscription',
+                crispy.ButtonHolder(
+                    crispy.Submit('set_subscription',
                            '%s Subscription' % ('Update' if subscription is not None else 'Create'))
                 )
             )
@@ -268,18 +268,18 @@ class CreditForm(forms.Form):
             self.fields['rate_type'].choices = self.get_rate_type_choices(self.fields['product'].choices,
                                                                           self.fields['feature'].choices)
         self.helper = FormHelper()
-        self.helper.layout = Layout(
-            Fieldset(
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
             'Adjust %s Level Credit' % ('Account' if is_account else 'Subscription'),
                 'amount',
                 'note',
-                Field('rate_type', data_bind="value: rateType"),
-                Div('product', data_bind="visible: showProduct"),
-                Div('feature', data_bind="visible: showFeature"),
+                crispy.Field('rate_type', data_bind="value: rateType"),
+                crispy.Div('product', data_bind="visible: showProduct"),
+                crispy.Div('feature', data_bind="visible: showFeature"),
             ),
             FormActions(
-                ButtonHolder(
-                    Submit('adjust_credit', 'Update Credit')
+                crispy.ButtonHolder(
+                    crispy.Submit('adjust_credit', 'Update Credit')
                 )
             )
         )
@@ -358,10 +358,10 @@ class CancelForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super(CancelForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
-        cancel_subscription_button = Button('cancel_subscription', 'CANCEL SUBSCRIPTION', css_class="btn-danger")
+        cancel_subscription_button = crispy.Button('cancel_subscription', 'CANCEL SUBSCRIPTION', css_class="btn-danger")
         cancel_subscription_button.input_type = 'submit'
-        self.helper.layout = Layout(
-            ButtonHolder(
+        self.helper.layout = crispy.Layout(
+            crispy.ButtonHolder(
                 cancel_subscription_button
             )
         )
@@ -389,8 +389,8 @@ class PlanInformationForm(forms.Form):
             }
         super(PlanInformationForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
-        self.helper.layout = Layout(
-            Fieldset(
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
             'Plan Information',
                 'name',
                 'description',
@@ -398,8 +398,8 @@ class PlanInformationForm(forms.Form):
                 'visibility',
             ),
             FormActions(
-                ButtonHolder(
-                    Submit('plan_information',
+                crispy.ButtonHolder(
+                    crispy.Submit('plan_information',
                            '%s Software Plan' % ('Update' if plan is not None else 'Create'))
                 )
             )
@@ -504,9 +504,9 @@ class SoftwarePlanVersionForm(forms.Form):
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
         self.helper.form_method = 'POST'
-        self.helper.layout = Layout(
+        self.helper.layout = crispy.Layout(
             'update_version',
-            Fieldset(
+            crispy.Fieldset(
                 "Role",
                 InlineField('role', data_bind="value: role.objectsValue"),
                 BootstrapMultiField(
@@ -521,7 +521,7 @@ class SoftwarePlanVersionForm(forms.Form):
                         style="margin-left: 5px;"
                     ),
                 ),
-                Div(
+                crispy.Div(
                     css_class="alert alert-error",
                     data_bind="text: role.error, visible: role.showError"
                 ),
@@ -531,7 +531,7 @@ class SoftwarePlanVersionForm(forms.Form):
                         'new_role_slug',
                         data_bind="value: role.slug"
                     ),
-                    Div(
+                    crispy.Div(
                         StrictButton(
                             "Create Role",
                             css_class="btn-success",
@@ -541,13 +541,13 @@ class SoftwarePlanVersionForm(forms.Form):
                     ),
                     data_bind="visible: role.select2.isNew",
                 ),
-                Div(
+                crispy.Div(
                     data_bind="template: {"
                               "name: 'role-form-template', foreach: role.objects"
                               "}",
                 ),
             ),
-            Fieldset(
+            crispy.Fieldset(
                 "Features",
                 InlineField('feature_rates', data_bind="value: featureRates.objectsValue"),
                 BootstrapMultiField(
@@ -562,7 +562,7 @@ class SoftwarePlanVersionForm(forms.Form):
                         style="margin-left: 5px;"
                     ),
                 ),
-                Div(
+                crispy.Div(
                     css_class="alert alert-error",
                     data_bind="text: featureRates.error, visible: featureRates.showError"
                 ),
@@ -572,7 +572,7 @@ class SoftwarePlanVersionForm(forms.Form):
                         'new_feature_type',
                         data_bind="value: featureRates.rateType",
                     ),
-                    Div(
+                    crispy.Div(
                         StrictButton(
                             "Create Feature",
                             css_class="btn-success",
@@ -583,13 +583,13 @@ class SoftwarePlanVersionForm(forms.Form):
                     ),
                     data_bind="visible: featureRates.select2.isNew",
                 ),
-                Div(
+                crispy.Div(
                     data_bind="template: {"
                               "name: 'feature-rate-form-template', foreach: featureRates.objects"
                               "}",
                 ),
             ),
-            Fieldset(
+            crispy.Fieldset(
                 "Products",
                 InlineField('product_rates', data_bind="value: productRates.objectsValue"),
                 BootstrapMultiField(
@@ -604,7 +604,7 @@ class SoftwarePlanVersionForm(forms.Form):
                         style="margin-left: 5px;"
                     ),
                 ),
-                Div(
+                crispy.Div(
                     css_class="alert alert-error",
                     data_bind="text: productRates.error, visible: productRates.showError",
                 ),
@@ -614,7 +614,7 @@ class SoftwarePlanVersionForm(forms.Form):
                         'new_product_type',
                         data_bind="value: productRates.rateType",
                     ),
-                    Div(
+                    crispy.Div(
                         StrictButton(
                             "Create Product",
                             css_class="btn-success",
@@ -624,7 +624,7 @@ class SoftwarePlanVersionForm(forms.Form):
                     ),
                     data_bind="visible: productRates.select2.isNew",
                 ),
-                Div(
+                crispy.Div(
                     data_bind="template: {"
                               "name: 'product-rate-form-template', foreach: productRates.objects"
                               "}",
@@ -813,19 +813,19 @@ class FeatureRateForm(forms.ModelForm):
         super(FeatureRateForm, self).__init__(data, *args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_tag = False
-        self.helper.layout = Layout(
-            HTML("""
-                <h4><span data-bind="text: name"></span>
-                <span class="label"
-                      style="display: inline-block; margin: 0 10px;"
-                      data-bind="text: feature_type"></span></h4>
-                <hr />
+        self.helper.layout = crispy.Layout(
+            crispy.HTML("""
+                        <h4><span data-bind="text: name"></span>
+                        <span class="label"
+                            style="display: inline-block; margin: 0 10px;"
+                            data-bind="text: feature_type"></span></h4>
+                        <hr />
             """),
-            Field('feature_id', data_bind="value: feature_id"),
-            Field('rate_id', data_bind="value: rate_id"),
-            Field('monthly_fee', data_bind="value: monthly_fee"),
-            Field('monthly_limit', data_bind="value: monthly_limit"),
-            Field('per_excess_fee', data_bind="value: per_excess_fee"),
+            crispy.Field('feature_id', data_bind="value: feature_id"),
+            crispy.Field('rate_id', data_bind="value: rate_id"),
+            crispy.Field('monthly_fee', data_bind="value: monthly_fee"),
+            crispy.Field('monthly_limit', data_bind="value: monthly_limit"),
+            crispy.Field('per_excess_fee', data_bind="value: per_excess_fee"),
         )
 
     def is_new(self):
@@ -859,15 +859,15 @@ class ProductRateForm(forms.ModelForm):
         super(ProductRateForm, self).__init__(data, *args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_tag = False
-        self.helper.layout = Layout(
-            HTML("""
-                <h4><span data-bind="text: name"></span>
-                <span class="label"
-                      style="display: inline-block; margin: 0 10px;"
-                      data-bind="text: product_type"></span></h4>
-                <hr />
+        self.helper.layout = crispy.Layout(
+            crispy.HTML("""
+                        <h4><span data-bind="text: name"></span>
+                        <span class="label"
+                            style="display: inline-block; margin: 0 10px;"
+                            data-bind="text: product_type"></span></h4>
+                        <hr />
             """),
-            Field('monthly_fee', data_bind="value: monthly_fee"),
+            crispy.Field('monthly_fee', data_bind="value: monthly_fee"),
         )
 
     def is_new(self):
@@ -900,7 +900,7 @@ class EnterprisePlanContactForm(forms.Form):
         from corehq.apps.domain.views import SelectPlanView
         self.helper = FormHelper()
         self.helper.form_class = "form form-horizontal"
-        self.helper.layout = Layout(
+        self.helper.layout = crispy.Layout(
             'name',
             'company_name',
             'message',
@@ -910,9 +910,9 @@ class EnterprisePlanContactForm(forms.Form):
                     type="submit",
                     css_class="btn-primary",
                 ),
-                HTML('<a href="%(url)s" class="btn">%(title)s</a>' % {
-                    'url': reverse(SelectPlanView.urlname, args=[self.domain]),
-                    'title': ugettext("Select different plan"),
+                crispy.HTML('<a href="%(url)s" class="btn">%(title)s</a>' % {
+                            'url': reverse(SelectPlanView.urlname, args=[self.domain]),
+                            'title': ugettext("Select different plan"),
                 }),
             )
         )
@@ -955,9 +955,9 @@ class RoleForm(forms.ModelForm):
         super(RoleForm, self).__init__(data, *args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_tag = False
-        self.helper.layout = Layout(
-            HTML('<h4><span data-bind="text: name"></span></h4>'),
-            Field('parameters', data_bind="value: parameters"),
+        self.helper.layout = crispy.Layout(
+            crispy.HTML('<h4><span data-bind="text: name"></span></h4>'),
+            crispy.Field('parameters', data_bind="value: parameters"),
         )
 
     def is_new(self):
