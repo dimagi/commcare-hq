@@ -30,6 +30,7 @@ from corehq.apps.domain.models import LicenseAgreement
 from corehq.apps.users.util import normalize_username, user_data_from_registration_form, format_username, raw_username
 from corehq.apps.users.xml import group_fixture
 from corehq.apps.sms.mixin import CommCareMobileContactMixin, VerifiedNumber, PhoneNumberInUseException, InvalidFormatException
+from corehq.elastic import es_wrapper
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.django.email import send_HTML_email
@@ -686,6 +687,26 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         if should_save:
             couch_user.save()
         return couch_user
+
+    @classmethod
+    def es_fakes(cls, domain, fields=None, start_at=None, size=None, wrap=True):
+        """
+        Get users from ES.  Use instead of by_domain()
+        This is faster than big db calls, but only returns partial data.
+        Set wrap to False to get a raw dict object (much faster).
+        This raw dict can be passed to _report_user_dict.
+        The save method has been disabled.
+        """
+        fields = fields or ['_id', 'username', 'first_name', 'last_name',
+                'doc_type', 'is_active', 'email']
+        raw = es_wrapper('users', domain=domain, doc_type=cls.__name__,
+                fields=fields, start_at=start_at, size=size)
+        if not wrap:
+            return raw
+        def save(*args, **kwargs):
+            raise NotImplementedError("This is a fake user, don't save it!")
+        ESUser = type(cls.__name__, (cls,), {'save': save})
+        return [ESUser(u) for u in raw]
 
     class AccountTypeError(Exception):
         pass
@@ -1576,7 +1597,7 @@ class OrgMembershipMixin(DocumentSchema):
 
     def get_organizations(self):
         from corehq.apps.orgs.models import Organization
-        return [Organization.get_by_name(org) for org in self.organizations]
+        return filter(None, [Organization.get_by_name(org) for org in self.organizations])
 
     def is_member_of_org(self, org_name_or_model):
         """

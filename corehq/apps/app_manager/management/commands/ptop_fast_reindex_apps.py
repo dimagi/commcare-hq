@@ -12,3 +12,4 @@ class Command(PtopReindexer):
     doc_class = ApplicationBase
     view_name = 'app_manager/applications'
     pillow_class = AppPillow
+

@@ -72,7 +72,9 @@
 
     {% if edit %}
     <div class="btn-group">
-        <a href="./source/" class="btn btn-primary">
+        <a href="./source/" class="btn btn-primary" onclick="
+            _gaq.push(['_trackEvent', 'App Builder', 'Open Form', 'Edit Label']);
+        ">
             <i class="icon-pencil"></i>
             {% trans "Edit" %}
         </a>

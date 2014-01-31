@@ -143,7 +143,7 @@ class GSIDSQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin)
     def gps_key(self):
         gps_key = "gps"
         agg_at = self.request.GET.get('aggregate_at', None)
-        if agg_at and agg_at is not "clinic":
+        if agg_at and not agg_at == "clinic":
             gps_key = "gps_" + agg_at
         return gps_key
 

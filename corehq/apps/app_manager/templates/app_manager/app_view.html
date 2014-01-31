@@ -3,6 +3,7 @@
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 {% load i18n %}
+{% load crispy_forms_tags %}
 {% block js %}{{ block.super }}
     <script src="{% static 'app_manager/js/commcaresettings.js' %}"></script>
     {% if app.get_doc_type == "Application" %}
@@ -252,15 +253,9 @@
 
         {% endif %}
         <div class="tab-pane" id="copy">
-            <h3>{% trans "Copy Application" %}</h3>
             <div>
-                <form class="form form-inline" method="get" action="{% url "copy_app" domain %}">
-                    <input type="hidden" name="app" value="{{ app.id }}"/>
-                    {% trans "Copy this app to project:" %} <input type="text" name="domain" />
-                    <br>
-                    {% trans "New name:" %} <input type="text" name="name" value="{{ app.name }}">
-                    <br>
-                    <button type="submit" class="btn btn-primary">{% trans "Copy..." %}</button>
+                <form class="form form-horizontal" method="post" action="{% url "copy_app" domain %}">
+                    {% crispy copy_app_form %}
                 </form>
             </div>
         </div>

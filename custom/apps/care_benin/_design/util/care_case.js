@@ -45,6 +45,9 @@ function CareCase(doc) {
         if (self.case.closed) {
             emit(['case_closed_'+self.status, self.case.closed_on], 1)
         }
+
+        self.check_birth();
+        emit_array([], [self.case.DA], self.data_dob);
     }
 
     self.referrals = function () {
@@ -116,10 +119,14 @@ function CareCase(doc) {
                 update_count++;
             }
 
-            forms_completed[a.xform_xmlns] = new Date(a.date);
+            forms_completed[a.xform_xmlns] = {
+                date: new Date(a.date),
+                user_id: a.user_id
+            };
 
             // first update
             if (update_count === 1) {
+                emit(['case_opened_'+properties.condition, self.opened_on_date], 1)
                 if (properties.condition === 'enceinte') {
                     self.data_open.newly_registered_pregnant = 1;
                 } else if (properties.condition === 'accouchee') {
@@ -145,25 +152,28 @@ function CareCase(doc) {
 
         var rc_ref = forms_completed[ns_rc_reference];
         if (rc_ref) {
-            var min = forms_completed[ns_as_contre_reference_dune_accouche];
+            var min = undefined;
+            if (forms_completed[ns_as_contre_reference_dune_accouche]) {
+                min = forms_completed[ns_as_contre_reference_dune_accouche].date
+            }
             var f2 = forms_completed[ns_as_contre_reference_dune_femme_enceinte];
             var f3 = forms_completed[ns_as_contre_reference_dune_nouveau_ne];
-            if (f2 && (!min || f2 < min)) {
-                min = f2;
+            if (f2 && (!min || f2.date < min)) {
+                min = f2.date;
             }
-            if (f3 && (!min || f3 < min)) {
-                min = f3;
+            if (f3 && (!min || f3.date < min)) {
+                min = f3.date;
             }
 
             if (min) {
-                var val = min.getTime() - rc_ref.getTime();
+                var val = min.getTime() - rc_ref.date.getTime();
                 emit([self.owner_id, 'ref_counter_ref_time', min], val)
             }
 
             var suivi_ref = forms_completed[ns_rc_suivi_de_reference];
             if (suivi_ref) {
-                var val = suivi_ref.getTime() - rc_ref.getTime();
-                emit([self.user_id, 'ref_suiviref_time', suivi_ref], val)
+                var val = suivi_ref.date.getTime() - rc_ref.date.getTime();
+                emit([rc_ref.user_id, 'ref_suiviref_time', suivi_ref.date], val)
             }
         }
     }

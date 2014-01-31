@@ -41,7 +41,6 @@
 {% endblock %}
 
 {% block main_column %}
-    {% include "hqwebapp/partials/time-notice.html" %}
     <form class="form form-horizontal" action="{% url "corehq.apps.sms.views.send_to_recipients" domain %}" method="post">
         <fieldset>
             <legend>{% trans "Send SMS Message" %}</legend>
@@ -60,7 +59,7 @@
                     <div class="row-fluid">
                         <textarea id="sms-message" name="message" class="span12"></textarea>
                     </div>
-                    <p class="alert alert-info help-block" id="character-count">0 characters (160 max)</p>
+                    <p class="alert alert-info help-block" id="character-count">{% trans "0 characters (160 max)" %}</p>
                 </div>
             </div>
         </fieldset>

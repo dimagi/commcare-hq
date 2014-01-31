@@ -87,6 +87,7 @@ env.roledefs = {
 }
 
 env.django_bind = '127.0.0.1'
+env.sms_queue_enabled = False
 
 def format_env(current_env):
     """
@@ -238,6 +239,7 @@ def production():
     env.django_bind = '0.0.0.0'
     env.django_port = '9010'
     env.should_migrate = True
+    env.sms_queue_enabled = True
 
     if env.code_branch != 'master':
         branch_message = (
@@ -300,6 +302,7 @@ def staging():
     env.django_port = '9010'
 
     env.should_migrate = True
+    env.sms_queue_enabled = True
 
     env.roledefs = {
         'couch': ['hqdb0-staging.internal.commcarehq.org'],
@@ -972,7 +975,8 @@ def set_celery_supervisorconf():
     if env.environment not in ['staging', 'preview', 'realstaging']:
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_beat.conf')
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_periodic.conf')
-    _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_sms_queue.conf')
+    if env.sms_queue_enabled:
+        _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_sms_queue.conf')
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_flower.conf')
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_couchdb_lucene.conf') #to be deprecated
 
@@ -999,7 +1003,8 @@ def set_formsplayer_supervisorconf():
 
 @roles(*ROLES_SMS_QUEUE)
 def set_sms_queue_supervisorconf():
-    _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_sms_queue.conf')
+    if env.sms_queue_enabled:
+        _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_sms_queue.conf')
 
 @task
 def set_supervisor_config():

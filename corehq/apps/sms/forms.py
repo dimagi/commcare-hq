@@ -13,7 +13,7 @@ from corehq.apps.sms.models import FORWARD_ALL, FORWARD_BY_KEYWORD
 from django.core.exceptions import ValidationError
 from corehq.apps.sms.mixin import SMSBackend
 from corehq.apps.reminders.forms import RecordListField, validate_time
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from corehq.apps.sms.util import get_available_backends
 from corehq.apps.domain.models import DayTimeWindow
 from dimagi.utils.django.fields import TrimmedCharField
@@ -55,6 +55,8 @@ class SMSSettingsForm(Form):
         choices=SMS_CONVERSATION_LENGTH_CHOICES,
         required=False,
     )
+    filter_surveys_from_chat = BooleanField(required=False)
+    show_invalid_survey_responses_in_chat = BooleanField(required=False)
 
     def initialize_time_window_fields(self, initial, bool_field, json_field):
         time_window_json = [w.to_json() for w in initial]
@@ -167,6 +169,13 @@ class SMSSettingsForm(Form):
             return self._clean_time_window_json("sms_conversation_times_json")
         else:
             return []
+
+    def clean_show_invalid_survey_responses_in_chat(self):
+        value = self.cleaned_data.get("show_invalid_survey_responses_in_chat", False)
+        if self.cleaned_data.get("filter_surveys_from_chat", False):
+            return value
+        else:
+            return False
 
 class ForwardingRuleForm(Form):
     forward_type = ChoiceField(choices=FORWARDING_CHOICES)
@@ -306,10 +315,26 @@ class InitiateAddSMSBackendForm(Form):
         )
 
 class SubscribeSMSForm(Form):
-    stock_out_facilities = BooleanField(label=_("Receive stockout facilities SMS alert"), required=False, help_text=_("This will alert you with specific users/facilities that are stocked out of your commodities"))
-    stock_out_commodities = BooleanField(label=_("Receive stockout commodities SMS alert"), required=False, help_text=_("This will alert you with specific commodities that are stocked out by your users/facilities"))
-    stock_out_rates = BooleanField(label=_("Receive stockout SMS alert"), required=False, help_text=_("This will alert you with the percent of facilities that are stocked out of a specific commodity"))
-    non_report = BooleanField(label=_("Receive non-reporting SMS alert"), required=False, help_text=_("This alert highlight users/facilities which have not submitted their CommTrack stock report."))
+    stock_out_facilities = BooleanField(
+        label=ugettext_lazy("Receive stockout facilities SMS alert"),
+        required=False,
+        help_text=ugettext_lazy("This will alert you with specific users/facilities that are stocked out of your commodities")
+    )
+    stock_out_commodities = BooleanField(
+        label=ugettext_lazy("Receive stockout commodities SMS alert"),
+        required=False,
+        help_text=ugettext_lazy("This will alert you with specific commodities that are stocked out by your users/facilities")
+    )
+    stock_out_rates = BooleanField(
+        label=ugettext_lazy("Receive stockout SMS alert"),
+        required=False,
+        help_text=ugettext_lazy("This will alert you with the percent of facilities that are stocked out of a specific commodity")
+    )
+    non_report = BooleanField(
+        label=ugettext_lazy("Receive non-reporting SMS alert"),
+        required=False,
+        help_text=ugettext_lazy("This alert highlight users/facilities which have not submitted their CommTrack stock report.")
+    )
 
     def save(self, commtrack_settings):
         alert_config = commtrack_settings.alert_config

@@ -28,8 +28,12 @@ def handle_unsuccessful_processing_attempt(msg):
         set_error(msg, ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS)
 
 def handle_successful_processing_attempt(msg):
+    utcnow = datetime.utcnow()
     msg.num_processing_attempts += 1
     msg.processed = True
+    msg.processed_timestamp = utcnow
+    if msg.direction == OUTGOING:
+        msg.date = utcnow
     msg.save()
 
 def delay_processing(msg, minutes):

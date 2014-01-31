@@ -92,6 +92,9 @@
         self.sms_conversation_times_json = ko.computed(function() {
             return ko.toJSON(self.sms_conversation_times());
         });
+        
+        self.filter_surveys_from_chat = ko.observable(initial_values.filter_surveys_from_chat);
+        self.show_invalid_survey_responses_in_chat = ko.observable(initial_values.show_invalid_survey_responses_in_chat);
     }
     $(function(){
         svm = SettingsViewModel({
@@ -107,6 +110,8 @@
             "custom_message_count_threshold" : {{ form.custom_message_count_threshold.value|JSON }},
             "use_custom_chat_template" : {{ form.use_custom_chat_template.value|JSON }},
             "custom_chat_template" : {{ form.custom_chat_template.value|JSON }},
+            "filter_surveys_from_chat" : {{ form.filter_surveys_from_chat.value|JSON }},
+            "show_invalid_survey_responses_in_chat" : {{ form.show_invalid_survey_responses_in_chat.value|JSON }},
         });
         ko.applyBindings(svm);
     });
@@ -215,6 +220,16 @@
                     <td class="dependent_field">{% trans "Custom Chat Template" %}</td>
                     <td><input type="text" name="custom_chat_template" data-bind="value: custom_chat_template" /></td>
                     <td>{{ form.custom_chat_template.errors }}</td>
+                </tr>
+                <tr>
+                    <td>{% trans "Hide SMS survey questions and responses from chat windows" %}</td>
+                    <td><input type="checkbox" name="filter_surveys_from_chat" data-bind="checked: filter_surveys_from_chat" /></td>
+                    <td>{{ form.filter_surveys_from_chat.errors }}</td>
+                </tr>
+                <tr data-bind="visible: filter_surveys_from_chat">
+                    <td class="dependent_field">{% trans "But show invalid SMS survey responses" %}</td>
+                    <td><input type="checkbox" name="show_invalid_survey_responses_in_chat" data-bind="checked: show_invalid_survey_responses_in_chat" /></td>
+                    <td>{{ form.show_invalid_survey_responses_in_chat.errors }}</td>
                 </tr>
                 {% if sms_queue_enabled %}
                 <tr>

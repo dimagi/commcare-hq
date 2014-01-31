@@ -187,6 +187,8 @@ class MessageReport(FRIReport, DatespanMixin):
         user_cache = UserCache()
 
         for message in data:
+            if message.direction == OUTGOING and not message.processed:
+                continue
             # Add metadata from the message bank if it has not been added already
             if (message.direction == OUTGOING) and (not message.fri_message_bank_lookup_completed):
                 add_metadata(message, message_bank_messages)

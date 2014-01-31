@@ -6,7 +6,7 @@ from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from couchdbkit.ext.django.schema import (Document, StringProperty, BooleanProperty, DateTimeProperty, IntegerProperty,
                                           DocumentSchema, SchemaProperty, DictProperty, ListProperty,
-                                          StringListProperty, SchemaListProperty, TimeProperty)
+                                          StringListProperty, SchemaListProperty, SchemaDictProperty, TimeProperty)
 from django.core.cache import cache
 from django.utils.safestring import mark_safe
 from corehq.apps.appstore.models import Review, SnapshotMixin
@@ -242,6 +242,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     is_shared = BooleanProperty(default=False)
     commtrack_enabled = BooleanProperty(default=False)
     call_center_config = SchemaProperty(CallCenterProperties)
+    has_careplan = BooleanProperty(default=False)
     restrict_superusers = BooleanProperty(default=False)
     location_restriction_for_users = BooleanProperty(default=True)
 
@@ -276,6 +277,13 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     sms_conversation_times = SchemaListProperty(DayTimeWindow)
     # In minutes, see above.
     sms_conversation_length = IntegerProperty(default=10)
+    # Set to True to prevent survey questions and answers form being seen in
+    # SMS chat windows.
+    filter_surveys_from_chat = BooleanProperty(default=False)
+    # The below option only matters if filter_surveys_from_chat = True.
+    # If set to True, invalid survey responses will still be shown in the chat
+    # window, while questions and valid responses will be filtered out.
+    show_invalid_survey_responses_in_chat = BooleanProperty(default=False)
 
     # exchange/domain copying stuff
     is_snapshot = BooleanProperty(default=False)

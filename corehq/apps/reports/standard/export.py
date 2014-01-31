@@ -273,7 +273,7 @@ class CaseExportReport(ExportReport):
 
 class DeidExportReport(FormExportReportBase):
     slug = 'deid_export'
-    name = "De-Identified Export"
+    name = ugettext_noop("De-Identified Export")
     report_template_path = 'reports/reportdata/form_deid_export.html'
 
     @classmethod

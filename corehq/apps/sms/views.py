@@ -735,6 +735,17 @@ def api_history(request, domain):
     data.sort(key=lambda x : x.date)
     username_map = {}
     for sms in data:
+        # Don't show outgoing SMS that haven't been processed yet
+        if sms.direction == OUTGOING and not sms.processed:
+            continue
+        # Filter SMS that are tied to surveys if necessary
+        if ((domain_obj.filter_surveys_from_chat and 
+             sms.xforms_session_couch_id)
+            and not
+            (domain_obj.show_invalid_survey_responses_in_chat and
+             sms.direction == INCOMING and
+             sms.invalid_survey_response)):
+            continue
         if sms.direction == INCOMING:
             if doc.doc_type == "CommCareCase" and domain_obj.custom_case_username:
                 sender = doc.get_case_property(domain_obj.custom_case_username)
@@ -940,6 +951,8 @@ def sms_settings(request, domain):
                 domain_obj.custom_case_username = form.cleaned_data["custom_case_username"]
                 domain_obj.chat_message_count_threshold = form.cleaned_data["custom_message_count_threshold"]
                 domain_obj.custom_chat_template = form.cleaned_data["custom_chat_template"]
+                domain_obj.filter_surveys_from_chat = form.cleaned_data["filter_surveys_from_chat"]
+                domain_obj.show_invalid_survey_responses_in_chat = form.cleaned_data["show_invalid_survey_responses_in_chat"]
                 if settings.SMS_QUEUE_ENABLED:
                     domain_obj.sms_conversation_times = form.cleaned_data["sms_conversation_times_json"]
                     domain_obj.sms_conversation_length = int(form.cleaned_data["sms_conversation_length"])
@@ -958,6 +971,8 @@ def sms_settings(request, domain):
             "restricted_sms_times" : domain_obj.restricted_sms_times,
             "sms_conversation_times" : domain_obj.sms_conversation_times,
             "sms_conversation_length" : domain_obj.sms_conversation_length,
+            "filter_surveys_from_chat" : domain_obj.filter_surveys_from_chat,
+            "show_invalid_survey_responses_in_chat" : domain_obj.show_invalid_survey_responses_in_chat,
         }
         form = SMSSettingsForm(initial=initial)
 

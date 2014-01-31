@@ -13,6 +13,7 @@ from casexml.apps.case.signals import case_post_save
 from .mixin import CommCareMobileContactMixin, MobileBackend, PhoneNumberInUseException, InvalidFormatException
 from corehq.apps.sms import util as smsutil
 from dimagi.utils.couch.database import SafeSaveDocument
+from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 INCOMING = "I"
 OUTGOING = "O"
@@ -49,6 +50,8 @@ class MessageLog(SafeSaveDocument, UnicodeMixIn):
     system_error_message = StringProperty()
     # If the message was simulated from a domain, this is the domain
     domain_scope = StringProperty()
+    queued_timestamp = DateTimeProperty()
+    processed_timestamp = DateTimeProperty()
 
     def __unicode__(self):
         to_from = (self.direction == INCOMING) and "from" or "to"
@@ -181,6 +184,9 @@ class SMSLog(MessageLog):
     # This is the unique message id that the gateway uses to track this
     # message, if applicable.
     backend_message_id = StringProperty()
+    # True if this was an inbound message that was an
+    # invalid response to a survey question
+    invalid_survey_response = BooleanProperty(default=False)
     
     @property
     def outbound_backend(self):
@@ -311,14 +317,15 @@ class MessageLogOld(models.Model):
             return CouchUser.get_by_user_id(self.couch_recipient).username
         return self.phone_number
 
-
 class CommConnectCase(CommCareCase, CommCareMobileContactMixin):
     def case_changed(self):
         contact_phone_number = self.get_case_property("contact_phone_number")
         contact_phone_number_is_verified = self.get_case_property("contact_phone_number_is_verified")
         contact_backend_id = self.get_case_property("contact_backend_id")
         contact_ivr_backend_id = self.get_case_property("contact_ivr_backend_id")
-        if (contact_phone_number is None) or (contact_phone_number == "") or (str(contact_phone_number) == "0") or self.closed:
+        if ((contact_phone_number is None) or (contact_phone_number == "") or
+            (str(contact_phone_number) == "0") or self.closed or
+            self.doc_type.endswith(DELETED_SUFFIX)):
             try:
                 self.delete_verified_number()
             except:

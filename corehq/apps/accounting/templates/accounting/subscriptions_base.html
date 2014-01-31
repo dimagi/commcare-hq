@@ -1,0 +1,27 @@
+{% extends 'hqwebapp/base_section.html' %}
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+
+{% block head %} {{ block.super }}
+    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
+{% endblock %}
+
+{% block js %} {{ block.super }}
+    <script src="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/jquery-ui-1.8.17.custom.datepicker.min.js' %}"></script>
+    <script src="{% static 'accounting/js/credits-tab.js' %}"></script>
+    <script src="{% static 'accounting/js/stay-on-tab.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %} {{ block.super }}
+ <script>
+    $( "#id_start_date" ).datepicker({ dateFormat: "yy-mm-dd" });
+    $( "#id_end_date" ).datepicker({ dateFormat: "yy-mm-dd" });
+    $( "#id_delay_invoice_until" ).datepicker({ dateFormat: "yy-mm-dd" });
+</script>
+{% endblock %}
+
+{% block main_column %}
+    <form class="form form-horizontal" method="post">
+        {% crispy form %}
+    </form>
+{% endblock %}

@@ -24,9 +24,9 @@
 {% block main_column %}
     {% block group-info %}
         {% if all_groups %}
-            <h2>Select a group:</h2>
+            <h2>{% trans "Select a group:" %}</h2>
         {% else %}
-            <h2>Create your first group:</h2>
+            <h2>{% trans "Create your first group:" %}</h2>
         {% endif %}
     {% endblock %}
 
@@ -53,8 +53,8 @@
         </div>
     </div>
     <form class="well form-inline" method="post" action="{% url "add_group" domain %}">
-        <input type="text" placeholder="Group Name" id="id_group_name" name="group_name" />
-        <button class="btn btn-success" type="submit">Create Group</button>
+        <input type="text" placeholder="{% trans "Group Name" %}" id="id_group_name" name="group_name" />
+        <button class="btn btn-success" type="submit">{% trans "Create Group" %}</button>
     </form>
 {% endblock %}
 

@@ -21,6 +21,7 @@ from corehq.apps.app_manager.exceptions import (
     ConflictingCaseTypeError,
     RearrangeError,
 )
+from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from django.utils.http import urlencode as django_urlencode
@@ -65,7 +66,7 @@ from corehq.apps.reports import util as report_utils
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
 from corehq.apps.app_manager.models import Application, get_app, DetailColumn, Form, FormActions,\
     AppEditingError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, \
-    DeleteApplicationRecord, str_to_cls, validate_lang, SavedAppBuild, ParentSelect, Module, CareplanModule, CareplanForm, CareplanGoalForm, CareplanTaskForm
+    DeleteApplicationRecord, str_to_cls, validate_lang, SavedAppBuild, ParentSelect, Module, CareplanModule, CareplanForm, CareplanGoalForm, CareplanTaskForm, CommTrackModule, CommTrackForm
 from corehq.apps.app_manager.models import DETAIL_TYPES, import_app as import_app_util, SortElement
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST
@@ -234,16 +235,18 @@ def app_source(req, domain, app_id):
     return HttpResponse(app.export_json())
 
 @login_and_domain_required
-def copy_app_check_domain(req, domain):
-    app_id = req.GET.get('app')
-    name = req.GET.get('name')
-
+def copy_app_check_domain(req, domain, name, app_id):
     app_copy = import_app_util(app_id, domain, name=name)
     return back_to_main(req, app_copy.domain, app_id=app_copy._id)
 
 @login_and_domain_required
 def copy_app(req, domain):
-    return copy_app_check_domain(req, req.GET.get('domain', ''))
+    app_id = req.POST.get('app')
+    form = CopyApplicationForm(app_id, req.POST)
+    if form.is_valid():
+        return copy_app_check_domain(req, form.cleaned_data['domain'], form.cleaned_data['name'], app_id)
+    else:
+        return view_generic(req, domain, app_id=app_id, copy_app_form=form)
 
 @login_and_domain_required
 def import_app(req, domain, template="app_manager/import_app.html"):
@@ -589,6 +592,8 @@ def release_build(request, domain, app_id, saved_app_id):
         raise Http404
     saved_app.is_released = is_released
     saved_app.save(increment_version=False)
+    from corehq.apps.app_manager.signals import app_post_release
+    app_post_release.send(Application, application=saved_app)
     if ajax:
         return json_response({'is_released': is_released})
     else:
@@ -628,6 +633,14 @@ def get_module_view_context_and_template(app, module):
             "goal_sortElements": json.dumps(get_sort_elements(module.goal_details.short)),
             "task_sortElements": json.dumps(get_sort_elements(module.task_details.short)),
         }
+    elif isinstance(module, CommTrackModule):
+        case_type = module.case_type
+        return "app_manager/module_view_commtrack.html", {
+            'case_properties': sorted(builder.get_properties(case_type)),
+            'product_properties': ('name', 'product:quantity'),
+            'case_sortElements': json.dumps(get_sort_elements(module.case_details.short)),
+            'product_sortElements': json.dumps(get_sort_elements(module.product_details.short)),
+        }
     else:
         case_type = module.case_type
         return "app_manager/module_view.html", {
@@ -638,7 +651,7 @@ def get_module_view_context_and_template(app, module):
 
 
 @retry_resource(3)
-def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user_registration=False):
+def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user_registration=False, copy_app_form=None):
     """
     This is the main view for the app. All other views redirect to here.
 
@@ -697,6 +710,8 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         'show_care_plan': (v2_app
                            and not (app and app.has_careplan_module)
                            and toggle_enabled(toggles.APP_BUILDER_CAREPLAN, req.user.username)),
+        'show_commtrack': (v2_app
+                           and toggle_enabled(toggles.APP_BUILDER_COMMTRACK, req.user.username)),
         'module': module,
         'form': form,
     })
@@ -724,6 +739,12 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         'error':error,
         'app': app,
     })
+
+    # Pass form for Copy Application to template:
+    context.update({
+        'copy_app_form': copy_app_form if copy_app_form is not None else CopyApplicationForm(app_id)
+    })
+
     response = render(req, template, context)
     response.set_cookie('lang', _encode_if_unicode(context['lang']))
     return response
@@ -815,6 +836,7 @@ def new_app(req, domain):
 
     return back_to_main(req, domain, app_id=app_id)
 
+
 @no_conflict_require_POST
 @require_can_edit_apps
 def new_module(req, domain, app_id):
@@ -831,19 +853,15 @@ def new_module(req, domain, app_id):
         response = back_to_main(req, domain, app_id=app_id, module_id=module_id)
         response.set_cookie('suppress_build_errors', 'yes')
         return response
-    elif module_type == 'careplan':
-        validations = [
-            (lambda a: a.application_version == APP_V1,
-             _('Please upgrade you app to > 2.0 in order to add a Careplan module')),
-            (lambda a: app.has_careplan_module,
-             _('This application already has a Careplan module'))
-        ]
+    elif module_type in MODULE_TYPE_MAP:
+        fn = MODULE_TYPE_MAP[module_type][FN]
+        validations = MODULE_TYPE_MAP[module_type][VALIDATIONS]
         error = next((v[1] for v in validations if v[0](app)), None)
         if error:
             messages.warning(req, error)
             return back_to_main(req, domain, app_id=app.id)
         else:
-            return _new_careplan_module(req, domain, app, name, lang)
+            return fn(req, domain, app, name, lang)
     else:
         logger.error('Unexpected module type for new module: "%s"' % module_type)
         return back_to_main(req, domain, app_id=app_id)
@@ -861,7 +879,23 @@ def _new_careplan_module(req, domain, app, name, lang):
     app.save()
     response = back_to_main(req, domain, app_id=app.id, module_id=module.id)
     response.set_cookie('suppress_build_errors', 'yes')
-    messages.warning(req, 'Care Plan modules are a work in progress!')
+    messages.info(req, _('Caution: Care Plan modules are a labs feature'))
+    return response
+
+
+def _new_commtrack_module(req, domain, app, name, lang):
+    module = app.add_module(CommTrackModule.new_module(name, lang))
+    module_id = module.id
+    form = CommTrackForm(
+        name={lang if lang else "en": name if name else "Untitled Form"},
+    )
+    module.forms.append(form)
+    form = module.get_form(-1)
+    form.source = ''
+    app.save()
+    response = back_to_main(req, domain, app_id=app.id, module_id=module_id)
+    response.set_cookie('suppress_build_errors', 'yes')
+    messages.info(req, _('Caution: CommTrack modules are a labs feature'))
     return response
 
 
@@ -1068,7 +1102,10 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
     elif detail_type == CAREPLAN_TASK:
         detail = module.task_details
     else:
-        return HttpResponseBadRequest("Unknown detail type '%s'" % detail_type)
+        try:
+            detail = getattr(module, '{0}_details'.format(detail_type))
+        except AttributeError:
+            return HttpResponseBadRequest("Unknown detail type '%s'" % detail_type)
 
     detail.short.columns = map(DetailColumn.wrap, screens['short'])
     detail.long.columns = map(DetailColumn.wrap, screens['long'])
@@ -1081,7 +1118,8 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
         item.direction = sort_element['direction']
         detail.short.sort_elements.append(item)
 
-    module.parent_select = ParentSelect.wrap(parent_select)
+    if parent_select:
+        module.parent_select = ParentSelect.wrap(parent_select)
     resp = {}
     app.save(resp)
     return json_response(resp)
@@ -2155,3 +2193,26 @@ def upload_translations(request, domain, app_id):
         messages.success(request, _("UI Translations Updated!"))
 
     return HttpResponseRedirect(reverse('app_languages', args=[domain, app_id]))
+
+
+common_module_validations = [
+    (lambda app: app.application_version == APP_V1,
+     _('Please upgrade you app to > 2.0 in order to add a Careplan module'))
+]
+
+
+FN = 'fn'
+VALIDATIONS = 'validations'
+MODULE_TYPE_MAP = {
+    'careplan': {
+        FN: _new_careplan_module,
+        VALIDATIONS: common_module_validations + [
+            (lambda app: app.has_careplan_module,
+             _('This application already has a Careplan module'))
+        ]
+    },
+    'commtrack': {
+        FN: _new_commtrack_module,
+        VALIDATIONS: common_module_validations
+    }
+}

@@ -1,5 +1,5 @@
 django-debug-toolbar
-django-devserver
+django-devserver>=0.7.0
 coverage
 guppy
 werkzeug
