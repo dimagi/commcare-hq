@@ -28,7 +28,7 @@ var CommTrackConfig = (function () {
         self.saveButton = COMMCAREHQ.SaveButton.init({
             unsavedMessage: "You have unchanged case settings",
             save: function () {
-                var actions = JSON.stringify(FormActions.unwrap(self.caseConfigViewModel.actions));
+                var actions = JSON.stringify(self.caseConfigViewModel.unwrap());
                 self.saveButton.ajax({
                     type: 'post',
                     url: self.save_url,
@@ -43,6 +43,12 @@ var CommTrackConfig = (function () {
                 });
             }
         });
+
+        var questionScores = {};
+        _(self.questions).each(function (question, i) {
+            questionScores[question.value] = i;
+        });
+        self.questionScores = questionScores;
 
         self.caseTypes = _.unique(_(self.moduleCaseTypes).map(function (moduleCaseType) {
             return moduleCaseType.case_type;
@@ -60,13 +66,6 @@ var CommTrackConfig = (function () {
             }
         };
 
-        var questionScores = {};
-        _(self.questions).each(function (question, i) {
-            questionScores[question.value] = i;
-        });
-        self.questionScores = questionScores;
-        self.caseConfigViewModel = new CaseConfigViewModel(self, params);
-
         self.ensureBlankProperties = function () {
             self.caseConfigViewModel.ensureBlankProperties();
         };
@@ -83,6 +82,8 @@ var CommTrackConfig = (function () {
             self.ensureBlankProperties();
         };
 
+        self.caseConfigViewModel = new CaseConfigViewModel(self, params);
+
         self.init = function () {
             var $home = $('#case-config-ko');
             _.delay(function () {
@@ -92,6 +93,11 @@ var CommTrackConfig = (function () {
                      .on('change', 'select, input[type="hidden"]', self.change)
                      .on('click', 'a', self.change);
                 self.ensureBlankProperties();
+                _.delay(function () {
+                    var options = {header: '> div > h3', heightStyle: 'content', collapsible: true, autoFill: true};
+                    $('#case-open-accordion').accordion("destroy").accordion(options);
+                    $('#case-load-accordion').accordion("destroy").accordion(options);
+                });
             });
         };
     };
@@ -105,8 +111,6 @@ var CommTrackConfig = (function () {
         self.caseTypes = _.unique(_(self.moduleCaseTypes).map(function (moduleCaseType) {
             return moduleCaseType.case_type;
         }));
-
-        self.actions = FormActions.wrap(params.actions, self);
 
         self.getCaseTypeLabel = function (caseType) {
             var module_names = [], label;
@@ -126,10 +130,10 @@ var CommTrackConfig = (function () {
             var tags = [];
             var actions = [];
             if (type === 'all' || type === 'open') {
-                actions = actions.concat(self.actions.open_cases());
+                actions = actions.concat(self.open_cases());
             }
             if (type === 'all' || type === 'load') {
-                actions = actions.concat(self.actions.load_update_cases());
+                actions = actions.concat(self.load_update_cases());
             }
             for (var i = 0; i < actions.length; i++) {
                 var tag = actions[i].case_tag();
@@ -143,9 +147,25 @@ var CommTrackConfig = (function () {
             return tags;
         };
 
+        self.load_update_cases = ko.observableArray(_(params.actions.load_update_cases).map(function (a) {
+            a.preload = propertyDictToArray([], a.preload, config);
+            a.case_properties = propertyDictToArray([], a.case_properties, config);
+            return LoadUpdateAction.wrap(a, config);
+        }));
+
+        self.open_cases = ko.observableArray(_(params.actions.open_cases).map(function (a) {
+            var required_properties = [{
+                key: 'name',
+                path: a.case_name,
+                required: true
+            }];
+            a.case_properties = propertyDictToArray(required_properties, a.case_properties, config);
+            return OpenCaseAction.wrap(a, config);
+        }));
+
         self.actionOptions = ko.computed(function () {
             var options = [];
-            if (self.actions.load_update_cases().length <= 1) {
+            if (self.load_update_cases().length <= 1) {
                 options.push({
                     display: 'Load / Update / Close a case',
                     value: 'load'
@@ -160,7 +180,7 @@ var CommTrackConfig = (function () {
 
         self.ensureBlankProperties = function () {
             var items = [];
-            var actions = self.actions.load_update_cases();
+            var actions = self.load_update_cases();
             for (var i = 0; i < actions.length; i++){
                 items.push({
                     properties: actions[i].preload(),
@@ -171,7 +191,7 @@ var CommTrackConfig = (function () {
                     addProperty: actions[i].addProperty
                 });
             }
-            actions = self.actions.open_cases();
+            actions = self.open_cases();
             for (i = 0; i < actions.length; i++){
                 items.push({
                     properties: actions[i].case_properties(),
@@ -190,8 +210,8 @@ var CommTrackConfig = (function () {
         self.addFormAction = function (action) {
             if (action.value === 'load') {
                 $('#case-open-accordion').accordion({active: false});
-                var index = self.actions.load_update_cases().length;
-                self.actions.load_update_cases.push(LoadUpdateAction.wrap({
+                var index = self.load_update_cases().length;
+                self.load_update_cases.push(LoadUpdateAction.wrap({
                     case_type: config.caseType,
                     case_tag: 'load_' + config.caseType + index,
                     preload: [],
@@ -203,8 +223,8 @@ var CommTrackConfig = (function () {
                 }
             } else if (action.value === 'open') {
                 $('#case-load-accordion').accordion({active: false});
-                var index = self.actions.open_cases().length;
-                self.actions.open_cases.push(OpenCaseAction.wrap({
+                var index = self.open_cases().length;
+                self.open_cases.push(OpenCaseAction.wrap({
                     case_type: config.caseType,
                     case_name: '',
                     case_tag: 'open_' + config.caseType + '_' + index,
@@ -227,44 +247,25 @@ var CommTrackConfig = (function () {
 
         self.removeFormAction = function (action) {
             if (action.actionType === 'open') {
-                self.actions.open_cases.remove(action);
+                self.open_cases.remove(action);
             } else if (action.actionType === 'load') {
-                self.actions.load_update_cases.remove(action);
+                self.load_update_cases.remove(action);
             }
         };
-    };
 
-    var FormActions = {
-        mapping: function (self) {
-            return {
-                load_update_cases: {
-                    create: function (options) {
-                        return LoadUpdateAction.wrap(options.data, self.config);
-                    }
-                },
-                open_cases: {
-                    create: function (options) {
-                        return OpenCaseAction.wrap(options.data, self.config);
-                    }
-                }
-            };
-        },
-        wrap: function (data, config) {
-            var self = ko.mapping.fromJS(data, FormActions.mapping);
-            self.config = config;
-
-            return self;
-        },
-        unwrap: function (self) {
+        self.unwrap = function () {
             return {
                 load_update_cases: _(self.load_update_cases()).map(LoadUpdateAction.unwrap),
                 open_cases: _(self.open_cases()).map(OpenCaseAction.unwrap)
             };
-        }
+        };
     };
 
     var  ActionBase = {
         validate: function (self, case_type, case_tag) {
+            if (!self.config.caseConfigViewModel) {
+                return;
+            }
             if (!case_type) {
                 return "Case Type required";
             } else if (!case_tag) {
@@ -313,6 +314,23 @@ var CommTrackConfig = (function () {
                 condition.question(null);
                 condition.answer(null);
             }
+        },
+        header: function (action) {
+            var nameSnip = "<%= action.case_tag() %> (<%= action.case_type() %>)";
+            var closeSnip = "<% if (action.close_case()) { %> : close<% }%>";
+            var spanSnip = '<span class="muted" style="font-weight: normal;">';
+            if (action.actionType === 'open') {
+                return _.template(nameSnip + spanSnip +
+                    '<% if (action.subcase()) { %> : subacese of <span style="font-weight: bold;"><%= action.parent_tag() %></span><% } %>' +
+                    closeSnip + "</span>",
+                    action, {variable: 'action'});
+            } else {
+                return _.template(nameSnip + spanSnip +
+                    "<% if (action.hasPreload()) { %> : load<% } %>" +
+                    "<% if (action.hasCaseProperties()) { %> : update<% } %>" +
+                    closeSnip + "</span>",
+                    action, {variable: 'action'});
+            }
         }
     };
 
@@ -322,7 +340,7 @@ var CommTrackConfig = (function () {
                 include: ['case_type', 'case_tag', 'close_condition', 'show_product_stock'],
                 preload: {
                     create: function (options) {
-                        return CasePreloadProperty.wrap(options.data,  self.config);
+                        return CasePreloadProperty.wrap(options.data,  self);
                     }
                 },
                 case_properties: {
@@ -337,7 +355,7 @@ var CommTrackConfig = (function () {
                 config: config,
                 actionType: 'load'
             };
-            ko.mapping.fromJS(data, LoadUpdateAction.mapping(this), self);
+            ko.mapping.fromJS(data, LoadUpdateAction.mapping(self), self);
 
             // for compatibility with common templates
             // template: case-config:condition
@@ -347,6 +365,8 @@ var CommTrackConfig = (function () {
                 }
             };
 
+            self.close_case = ko.computed(ActionBase.close_case(self));
+
             self.validate = ko.computed(function () {
                 return ActionBase.validate(self, self.case_type(), self.case_tag());
             });
@@ -355,8 +375,6 @@ var CommTrackConfig = (function () {
             self.case_preload = ko.computed(function () {
                 return self.preload();
             });
-
-            self.close_case = ko.computed(ActionBase.close_case(self));
 
             self.propertyCounts = ko.computed(ActionBase.propertyCounts(self));
 
@@ -403,14 +421,27 @@ var CommTrackConfig = (function () {
             self.removePreload = function (property) {
                 self.preload.remove(property);
             };
+
+            self.hasPreload = function() {
+                return _.find(self.preload(), function (prop) { return !prop.isBlank(); });
+            };
+
+            self.hasCaseProperties = function() {
+                return _.find(self.case_properties(), function (prop) { return !prop.isBlank(); });
+            };
+
+            self.header = ko.computed(function () {
+                return ActionBase.header(self);
+            });
+
             return self;
         },
         unwrap: function (self) {
-            var nonBlank = function (prop) {
+            var blank = function (prop) {
                 return prop.isBlank();
             };
-            self.preload.remove(nonBlank);
-            self.case_properties.remove(nonBlank);
+            self.preload.remove(blank);
+            self.case_properties.remove(blank);
             ActionBase.clean_condition(self.close_condition);
             var action = ko.mapping.toJS(self, LoadUpdateAction.mapping(self));
 
@@ -458,6 +489,10 @@ var CommTrackConfig = (function () {
             });
 
             self.close_case = ko.computed(ActionBase.close_case(self));
+
+            self.header = ko.computed(function () {
+                return ActionBase.header(self);
+            });
 
             self.propertyCounts = ko.computed(ActionBase.propertyCounts(self));
 
