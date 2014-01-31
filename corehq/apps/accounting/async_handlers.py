@@ -1,7 +1,8 @@
 import json
 from corehq.apps.accounting.models import Feature, SoftwareProduct
-from corehq.apps.accounting.utils import fmt_feature_rate_dict, fmt_product_rate_dict
+from corehq.apps.accounting.utils import fmt_feature_rate_dict, fmt_product_rate_dict, LazyEncoder
 from corehq.apps.hqwebapp.async_handler import BaseAsyncHandler, AsyncHandlerError
+from corehq.apps.users.models import WebUser
 
 
 class BaseRateAsyncHandler(BaseAsyncHandler):
@@ -90,6 +91,8 @@ class Select2RateAsyncHandler(BaseAsyncHandler):
         'product_id',
     ]
 
+
+class BaseSelect2AsyncHandler(BaseAsyncHandler):
     @property
     def search_string(self):
         return self.data.get('searchString')
@@ -97,6 +100,16 @@ class Select2RateAsyncHandler(BaseAsyncHandler):
     @property
     def existing(self):
         return self.data.getlist('existing[]')
+
+
+class Select2RateAsyncHandler(BaseSelect2AsyncHandler):
+    """
+    For interacting with Select2FieldHandler
+    """
+    slug = 'select2_rate'
+    allowed_actions = [
+        'feature_id'
+    ]
 
     @property
     def feature_id_response(self):
@@ -125,3 +138,33 @@ class Select2RateAsyncHandler(BaseAsyncHandler):
                 'text': '%s (%s)' % (r[1], r[2]),
                 'isExisting': True,
             } for r in response])
+
+
+class Select2BillingInfoHandler(BaseSelect2AsyncHandler):
+    slug = 'select2_billing'
+    allowed_actions = [
+        'country',
+        'billing_admins',
+    ]
+
+    @property
+    def country_response(self):
+        from django_countries.countries import COUNTRIES
+        if self.search_string:
+            return filter(lambda x: x[1].lower().startswith(self.search_string.lower()), COUNTRIES)
+        return COUNTRIES
+
+    @property
+    def billing_admins_response(self):
+        all_web_users = WebUser.by_domain(domain=self.request.domain)
+        admins = filter(lambda x: x.is_domain_admin and x.username != self.request.couch_user.username,
+                        all_web_users)
+        admins = filter(lambda x: x.username not in self.existing, admins)
+        return [(a.username, "%s (%s)" % (a.full_name, a.username)) for a in admins]
+
+    def _fmt_success(self, response):
+        return json.dumps([
+            {
+                'id': r[1],
+                'text': r[1],
+            } for r in response], cls=LazyEncoder)
