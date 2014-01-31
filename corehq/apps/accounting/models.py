@@ -114,6 +114,17 @@ class SubscriptionAdjustmentReason(object):
     )
 
 
+class SubscriptionAdjustmentMethod(object):
+    USER = "USER"
+    INTERNAL = "INTERNAL"
+    TASK = "TASK"
+    CHOICES = (
+        (USER, "This modification was made through a public UI."),
+        (INTERNAL, "This modification was made through an internal UI."),
+        (TASK, "The subscription was modified by a task (like an invoice)."),
+    )
+
+
 class Currency(models.Model):
     """
     Keeps track of the current conversion rates so that we don't have to poll the free, but rate limited API
@@ -506,6 +517,49 @@ class Invoice(models.Model):
         current_total = self.get_total()
         credit_lines = CreditLine.get_credits_for_invoice(self)
         CreditLine.apply_credits_toward_balance(credit_lines, current_total, dict(invoice=self))
+
+
+class SubscriptionAdjustment(models.Model):
+    """
+    A record of any adjustments made to a subscription, so we always have a paper trail.
+    Things that cannot be modified after a subscription is created:
+    - account
+    - plan
+    - subscriber
+    Things that have limited modification abilities:
+    - dates if the current date is today or earlier
+    All other modifications require cancelling the current subscription and creating a new one.
+
+    Note: related_subscription is the subscription to be filled in when the subscription is upgraded / downgraded.
+    """
+    subscription = models.ForeignKey(Subscription, on_delete=models.PROTECT)
+    reason = models.CharField(max_length=50, default=SubscriptionAdjustmentReason.CREATE,
+                              choices=SubscriptionAdjustmentReason.CHOICES)
+    method = models.CharField(max_length=50, default=SubscriptionAdjustmentMethod.INTERNAL,
+                              choices=SubscriptionAdjustmentMethod.CHOICES)
+    note = models.TextField(null=True)
+    web_user = models.CharField(max_length=80, null=True)
+    invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT, null=True)
+    related_subscription = models.ForeignKey(Subscription, on_delete=models.PROTECT, null=True,
+                                             related_name='subscriptionadjustment_related')
+    date_created = models.DateField(auto_now_add=True)
+    new_date_start = models.DateField()
+    new_date_end = models.DateField(blank=True, null=True)
+    new_date_delay_invoicing = models.DateField(blank=True, null=True)
+    new_salesforce_contract_id = models.CharField(blank=True, null=True, max_length=80)
+
+    @classmethod
+    def record_adjustment(cls, subscription, **kwargs):
+        adjustment = SubscriptionAdjustment(
+            subscription=subscription,
+            new_date_start=subscription.date_start,
+            new_date_end=subscription.date_end,
+            new_date_delay_invoicing=subscription.date_delay_invoicing,
+            new_salesforce_contract_id=subscription.salesforce_contract_id,
+            **kwargs
+        )
+        adjustment.save()
+        return adjustment
 
 
 class BillingRecord(models.Model):

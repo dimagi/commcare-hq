@@ -13,7 +13,8 @@ from dimagi.utils.data import generator as data_gen
 
 from corehq.apps.accounting.models import (FeatureType, Currency, BillingAccount, FeatureRate, SoftwarePlanVersion,
                                            SoftwarePlan, SoftwareProductRate, Subscription, Subscriber, SoftwareProduct,
-                                           Feature, SoftwareProductType, DefaultProductPlan, BillingAccountAdmin)
+                                           Feature, SoftwareProductType, DefaultProductPlan, BillingAccountAdmin,
+                                           SubscriptionAdjustment, SoftwarePlanEdition)
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser, CommCareUser
 
@@ -257,6 +258,7 @@ def generate_domain_subscription_from_date(date_start, billing_account, domain,
 
 
 def delete_all_subscriptions():
+    SubscriptionAdjustment.objects.all().delete()
     Subscription.objects.all().delete()
     Subscriber.objects.all().delete()
 
