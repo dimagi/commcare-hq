@@ -69,6 +69,20 @@
     </div>
     {% endfor %}
 
+    {% if consumption %}
+      <legend>{% trans "Default consumption values" %}</legend>
+      {% for code, amount in consumption %}
+        <div class="control-group">
+          <label class="control-label">{{ code }}</label>
+          <div class="controls">
+            <span class="uneditable-input">
+              {{ amount }}
+            </span>
+          </div>
+        </div>
+      {% endfor %}
+    {% endif %}
+
     <div class="form-actions"><button type="submit" class="btn btn-primary">
         {% if location.get_id %}{% trans 'Update' %}{% else %}{% trans 'Create' %}{% endif %} {% trans 'Location' %}
     </button></div>
