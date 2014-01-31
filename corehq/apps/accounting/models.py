@@ -159,6 +159,7 @@ class BillingAccount(models.Model):
         help_text="This is how we link to the salesforce account",
     )
     created_by = models.CharField(max_length=80)
+    created_by_domain = models.CharField(max_length=25, null=True, blank=True)
     date_created = models.DateTimeField(auto_now_add=True)
     billing_admins = models.ManyToManyField(BillingAccountAdmin, null=True)
     currency = models.ForeignKey(Currency, on_delete=models.PROTECT)
@@ -175,7 +176,7 @@ class BillingAccount(models.Model):
         return 0.0
 
     @classmethod
-    def get_or_create_account_by_domain(cls, domain, created_by=None):
+    def get_or_create_account_by_domain(cls, domain, created_by=None, account_type=None):
         """
         First try to grab the account used for the last subscription.
         If an account is not found, create it.
@@ -185,11 +186,21 @@ class BillingAccount(models.Model):
             return last_subscription.account, False
         except ObjectDoesNotExist:
             pass
+        account_type = account_type or BillingAccountType.INVOICE_GENERATED
+        try:
+            return cls.objects.get(created_by_domain=domain), False
+        except cls.DoesNotExist:
+            pass
+        except cls.MultipleObjectsReturned:
+            global_logger.error("Multiple billing accounts showed up for the domain '%s'. The "
+                                "latest one was served, but you should reconcile very soon." % domain)
+            return cls.objects.filter(created_by_domain=domain).latest('date_created'), False
         account = BillingAccount(
-            name=domain,
+            name="Account for Project %s" % domain,
             created_by=created_by,
+            created_by_domain=domain,
             currency=Currency.get_default(),
-            account_type=BillingAccountType.INVOICE_GENERATED,
+            account_type=account_type,
         )
         account.save()
         return account, True
