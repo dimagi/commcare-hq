@@ -206,6 +206,7 @@ def instantiate_community_plans():
     for ind, plan in enumerate(plans):
         DefaultProductPlan.objects.get_or_create(
             product_type=COMMUNITY_COMMCARE_PLANS[ind]['product_type'],
+            edition=SoftwarePlanEdition.COMMUNITY,
             plan=plan,
         )
 

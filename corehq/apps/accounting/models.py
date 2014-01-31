@@ -353,15 +353,22 @@ class DefaultProductPlan(models.Model):
     The latest SoftwarePlanVersion that's linked to this plan will be the one used to create a new subscription if
     nothing is found for that domain.
     """
-    product_type = models.CharField(max_length=25, choices=SoftwareProductType.CHOICES, unique=True)
+    product_type = models.CharField(max_length=25, choices=SoftwareProductType.CHOICES)
+    edition = models.CharField(
+        default=SoftwarePlanEdition.COMMUNITY,
+        choices=SoftwarePlanEdition.CHOICES,
+        max_length=25,
+    )
     plan = models.ForeignKey(SoftwarePlan, on_delete=models.PROTECT)
 
     @classmethod
-    def get_default_plan_by_domain(cls, domain):
+    def get_default_plan_by_domain(cls, domain, edition=None):
         domain = assure_domain_instance(domain)
+        edition = edition or SoftwarePlanEdition.COMMUNITY
         product_type = SoftwareProductType.get_type_by_domain(domain)
         try:
-            default_product_plan = DefaultProductPlan.objects.get(product_type=product_type)
+            default_product_plan = DefaultProductPlan.objects.get(product_type=product_type,
+                                                                  edition=edition)
             return default_product_plan.plan.get_version()
         except DefaultProductPlan.DoesNotExist:
             raise AccountingError("No default product plan was set up, did you forget to bootstrap plans?")
