@@ -486,8 +486,8 @@ class DomainSubscriptionView(DomainAccountingSettings):
 
 
 class ChangeDomainPlanView(DomainAccountingSettings):
-    template_name = 'domain/change_plan.html'
-    urlname = 'domain_change_plan'
+    template_name = 'domain/select_plan.html'
+    urlname = 'domain_select_plan'
     page_title = ugettext_noop("Change Plan")
 
     @property
