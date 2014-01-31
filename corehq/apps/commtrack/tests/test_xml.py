@@ -5,11 +5,11 @@ from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.stock import const as stockconst
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack import const
-from corehq.apps.commtrack.tests.util import CommTrackTest, get_ota_balance_xml
+from corehq.apps.commtrack.tests.util import CommTrackTest, get_ota_balance_xml, FIXED_USER
 from casexml.apps.case.tests.util import check_xml_line_by_line
 from corehq.apps.hqcase.utils import get_cases_in_domain
 from corehq.apps.receiverwrapper import submit_form_locally
-from corehq.apps.commtrack.tests.util import make_loc, make_supply_point, make_supply_point_product
+from corehq.apps.commtrack.tests.util import make_loc, make_supply_point
 from corehq.apps.commtrack.tests.data.balances import (
     balance_ota_block,
     submission_wrap,
@@ -27,12 +27,18 @@ from corehq.apps.commtrack.tests.data.balances import (
 
 
 class CommTrackOTATest(CommTrackTest):
+    user_definitions = [FIXED_USER]
+
+    def setUp(self):
+        super(CommTrackOTATest, self).setUp()
+        self.user = self.users[0]
+
     def test_ota_blank_balances(self):
-        user = self.reporters['fixed']
+        user = self.user
         self.assertFalse(get_ota_balance_xml(user))
 
     def test_ota_basic(self):
-        user = self.reporters['fixed']
+        user = self.user
         date = datetime.utcnow()
         report = StockReport.objects.create(form_id=uuid.uuid4().hex, date=date, type=stockconst.REPORT_TYPE_BALANCE)
         amounts = [(p._id, i*10) for i, p in enumerate(self.products)]
@@ -43,7 +49,8 @@ class CommTrackOTATest(CommTrackTest):
                 case_id=self.sp._id,
                 product_id=product_id,
                 stock_on_hand=amount,
-                quantity=amount,
+                quantity=0,
+                type=stockconst.TRANSACTION_TYPE_STOCKONHAND,
             )
 
         check_xml_line_by_line(
@@ -58,7 +65,7 @@ class CommTrackOTATest(CommTrackTest):
         )
 
     def test_ota_multiple_stocks(self):
-        user = self.reporters['fixed']
+        user = self.user
         date = datetime.utcnow()
         report = StockReport.objects.create(form_id=uuid.uuid4().hex, date=date,
                                             type=stockconst.REPORT_TYPE_BALANCE)
@@ -73,7 +80,8 @@ class CommTrackOTATest(CommTrackTest):
                     case_id=self.sp._id,
                     product_id=product_id,
                     stock_on_hand=amount,
-                    quantity=amount,
+                    quantity=0,
+                    type=stockconst.TRANSACTION_TYPE_STOCKONHAND,
                 )
 
         balance_blocks = get_ota_balance_xml(user)
@@ -91,12 +99,20 @@ class CommTrackOTATest(CommTrackTest):
             )
 
 class CommTrackSubmissionTest(CommTrackTest):
+    user_definitions = [FIXED_USER]
+
+    def setUp(self):
+        super(CommTrackSubmissionTest, self).setUp()
+        self.user = self.users[0]
+        loc2 = make_loc('loc1')
+        self.sp2 = make_supply_point(self.domain.name, loc2)
+
     def submit_xml_form(self, xml_method):
         from casexml.apps.case import settings
         settings.CASEXML_FORCE_DOMAIN_CHECK = False
         instance = submission_wrap(
             self.products,
-            self.reporters['fixed'],
+            self.user,
             self.sp,
             self.sp2,
             xml_method,
@@ -113,21 +129,7 @@ class CommTrackSubmissionTest(CommTrackTest):
         self.assertEqual(expected_qty, latest_trans.quantity)
 
     def check_product_stock(self, supply_point, product_id, expected_soh, expected_qty, section_id='stock'):
-        # check the case
-        if section_id == 'stock':
-            spp = supply_point.get_product_subcase(product_id)
-            self.assertEqual(expected_soh, spp.current_stock)
-
-        # and the django model
         self.check_stock_models(supply_point, product_id, expected_soh, expected_qty, section_id)
-
-    def setUp(self):
-        super(CommTrackSubmissionTest, self).setUp()
-        self.first_spp = self.spps[self.products[0].code]
-
-        loc2 = make_loc('loc1')
-        self.sp2 = make_supply_point(self.domain.name, loc2)
-        self.second_spp = make_supply_point_product(self.sp2, self.products[0]._id)
 
 
 class CommTrackBalanceTransferTest(CommTrackSubmissionTest):

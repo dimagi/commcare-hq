@@ -1,7 +1,7 @@
 from corehq.apps.commtrack.util import num_periods_late
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import Location
-from corehq.apps.commtrack.models import Product, SupplyPointProductCase as SPPCase, SupplyPointCase
+from corehq.apps.commtrack.models import Product
 from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.reports.api import ReportDataSource
 from datetime import datetime
@@ -85,7 +85,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
         current_stock: The current stock level
         consumption: The current monthly consumption rate
         months_remaining: The number of months remaining until stock out
-        category: The status category. See corehq.apps.commtrack.models.SupplyPointProductCase#stock_category
+        category: The status category. See casexml.apps.stock.models.StockState.stock_category
 
     """
     slug = 'agg_stock_status'
@@ -220,11 +220,15 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
     """
 
     def get_data(self):
-        startkey = [self.domain, self.active_location._id if self.active_location else None]
-        product_cases = SPPCase.view('commtrack/product_cases',
-                                     startkey=startkey,
-                                     endkey=startkey + [{}],
-                                     include_docs=True)
+        # TODO this doesn't work post SPP era
+        raise NotImplementedError('this report needs to be rewritten')
+        # startkey = [self.domain, self.active_location._id if self.active_location else None]
+        # product_cases = SPPCase.view('commtrack/product_cases',
+                                     # startkey=startkey,
+                                     # endkey=startkey + [{}],
+                                     # include_docs=True)
+        product_cases = []
+
         if self.program_id:
             product_cases = filter(lambda c: Product.get(c.product).program_id == self.program_id, product_cases)
         def latest_case(cases):

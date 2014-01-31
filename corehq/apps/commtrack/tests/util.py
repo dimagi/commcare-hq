@@ -1,4 +1,3 @@
-import uuid
 from xml.etree import ElementTree
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests import delete_all_cases, delete_all_xforms
@@ -10,17 +9,15 @@ from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.models import Location
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.commtrack.util import bootstrap_commtrack_settings_if_necessary, get_default_requisition_config
+from corehq.apps.commtrack.util import get_default_requisition_config
 from corehq.apps.commtrack.models import CommTrackUser, SupplyPointCase, CommtrackConfig
 from corehq.apps.sms.backend import test
 from django.utils.unittest.case import TestCase
-from corehq.apps.commtrack.helpers import make_supply_point,\
-    make_supply_point_product
+from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.apps.commtrack.models import Product
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_safe_write_kwargs
 from casexml.apps.phone.restore import generate_restore_payload
-from casexml.apps.phone.models import SyncLog
 from lxml import etree
 
 TEST_DOMAIN = 'commtrack-test'
@@ -30,28 +27,27 @@ TEST_NUMBER = '5551234'
 TEST_PASSWORD = 'secret'
 TEST_BACKEND = 'test-backend'
 
-REPORTING_USERS = {
-    'roaming': {
-        'username': TEST_USER + '-roaming',
-        'phone_number': TEST_NUMBER,
-        'first_name': 'roaming',
-        'last_name': 'reporter',
-        'user_data': {
-            const.UserRequisitionRoles.REQUESTER: True,
-            const.UserRequisitionRoles.RECEIVER: True,
-        },
+ROAMING_USER = {
+    'username': TEST_USER + '-roaming',
+    'phone_number': TEST_NUMBER,
+    'first_name': 'roaming',
+    'last_name': 'reporter',
+    'user_data': {
+        const.UserRequisitionRoles.REQUESTER: True,
+        const.UserRequisitionRoles.RECEIVER: True,
     },
-    'fixed': {
-        'username': TEST_USER + '-fixed',
-        'phone_number': str(int(TEST_NUMBER) + 1),
-        'first_name': 'fixed',
-        'last_name': 'reporter',
-        'user_data': {
-            const.UserRequisitionRoles.REQUESTER: True,
-            const.UserRequisitionRoles.RECEIVER: True,
-        },
-        'home_loc': 'loc1',
+}
+
+FIXED_USER = {
+    'username': TEST_USER + '-fixed',
+    'phone_number': str(int(TEST_NUMBER) + 1),
+    'first_name': 'fixed',
+    'last_name': 'reporter',
+    'user_data': {
+        const.UserRequisitionRoles.REQUESTER: True,
+        const.UserRequisitionRoles.RECEIVER: True,
     },
+    'home_loc': 'loc1',
 }
 
 APPROVER_USER = {
@@ -116,6 +112,7 @@ def make_loc(code, name=None, domain=TEST_DOMAIN, type=TEST_LOCATION_TYPE, paren
 
 class CommTrackTest(TestCase):
     requisitions_enabled = False  # can be overridden
+    user_definitions = []
 
     def setUp(self):
         # might as well clean house before doing anything
@@ -133,16 +130,15 @@ class CommTrackTest(TestCase):
 
         self.loc = make_loc('loc1')
         self.sp = make_supply_point(self.domain.name, self.loc)
+        self.users = [bootstrap_user(self, **user_def) for user_def in self.user_definitions]
 
-        self.reporters = dict((k, bootstrap_user(self, **v)) for k, v in REPORTING_USERS.iteritems())
-        # backwards compatibility
-        self.user = self.reporters['roaming']
+        if False:
+            # bootstrap additional users for requisitions
+            # needs to get reinserted for requisition stuff later
+            self.approver = bootstrap_user(self, **APPROVER_USER)
+            self.packer = bootstrap_user(self, **PACKER_USER)
+            self.users += [self.approver, self.packer]
 
-        # bootstrap additional users for requisitions
-        self.approver = bootstrap_user(self, **APPROVER_USER)
-        self.packer = bootstrap_user(self, **PACKER_USER)
-
-        self.users = self.reporters.values() + [self.approver, self.packer]
         # everyone should be in a group.
         self.group = Group(domain=TEST_DOMAIN, name='commtrack-folks',
                            users=[u._id for u in self.users],
@@ -152,10 +148,6 @@ class CommTrackTest(TestCase):
         self.sp.save()
         self.products = sorted(Product.by_domain(self.domain.name), key=lambda p: p._id)
         self.assertEqual(3, len(self.products))
-        self.spps = {}
-        for p in self.products:
-            self.spps[p.code] = make_supply_point_product(self.sp, p._id)
-            self.assertEqual(self.spps[p.code].owner_id, self.group._id)
 
     def tearDown(self):
         self.backend.delete()

@@ -2,9 +2,10 @@ from xml.etree import ElementTree
 from dimagi.utils.couch.database import get_db
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack import const
-from corehq.apps.commtrack.models import (CommtrackConfig, CommtrackActionConfig, LocationType, RequisitionActions,
-                                          CommtrackRequisitionConfig, Product, SupplyPointCase, SupplyPointProductCase,
-                                          RequisitionCase, Program)
+from corehq.apps.commtrack.models import (
+    CommtrackConfig, CommtrackActionConfig, LocationType, RequisitionActions,
+    CommtrackRequisitionConfig, Product, SupplyPointCase, RequisitionCase, Program
+)
 from corehq.apps.locations.models import Location
 import itertools
 from datetime import datetime, date, timedelta
@@ -264,7 +265,6 @@ def is_commtrack_location(user, domain):
 def get_case_wrapper(data):
     return {
         const.SUPPLY_POINT_CASE_TYPE: SupplyPointCase,
-        const.SUPPLY_POINT_PRODUCT_CASE_TYPE: SupplyPointProductCase,
         const.REQUISITION_CASE_TYPE: RequisitionCase,
     }.get(data.get('type'), CommCareCase)
 

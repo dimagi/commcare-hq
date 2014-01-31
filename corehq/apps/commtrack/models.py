@@ -1,3 +1,4 @@
+from decimal import Decimal
 import uuid
 from xml.etree import ElementTree
 from couchdbkit.exceptions import ResourceNotFound
@@ -477,39 +478,6 @@ class StringDataSchema(DocumentSchema):
     def wrap(cls, data):
         raise NotImplementedError()
 
-
-class StockStatus(StringDataSchema):
-    """
-    This is a wrapper/helper class to represent the current stock status
-    of a commtrack case.
-    """
-
-    current_stock = StringProperty()
-    stocked_out_since = DateTimeProperty()
-    product = StringProperty()
-    location_path = StringListProperty(name="location_")
-    server_modified_on = DateTimeProperty()
-
-    @property
-    def location_id(self):
-        return self.location_path[-1]
-
-    @classmethod
-    def from_case(cls, case):
-        return StockStatus.force_wrap(case._doc)
-
-    @classmethod
-    def by_domain(cls, domain, skip=0, limit=100):
-        return [StockStatus.force_wrap(row["value"]) for row in _view_shared(
-            'commtrack/current_stock_status', domain, skip=skip, limit=limit)]
-
-    @classmethod
-    def by_location(cls, domain, location_id, skip=0, limit=100):
-        return [StockStatus.force_wrap(row["value"]) for row in _view_shared(
-            'commtrack/current_stock_status', domain, location_id,
-            skip=skip, limit=limit)]
-
-
 class NewStockReport(object):
     """
     Intermediate class for dealing with stock XML
@@ -526,7 +494,7 @@ class NewStockReport(object):
     def from_xml(cls, form, config, elem):
         tag = elem.tag
         tag = tag[tag.find('}')+1:] # strip out ns
-        timestamp = force_to_datetime(elem.attrib.get('date', form.received_on))
+        timestamp = force_to_datetime(elem.attrib.get('date', form.received_on)).replace(tzinfo=None)
         products = elem.findall('./{%s}entry' % stockconst.COMMTRACK_REPORT_XMLNS)
         transactions = [t for prod_entry in products for t in
                         StockTransaction.from_xml(config, timestamp, tag, elem, prod_entry)]
@@ -559,41 +527,16 @@ class NewStockReport(object):
             db_txn.save()
 
 
-class StockTransaction(Document):
+class StockTransaction(object):
     """
-    wrapper/helper for transactions
+    Helper class for transactions
     """
-    # todo: why is this a Document?
-    domain = StringProperty()
-    timestamp = DateTimeProperty()
-    location_id = StringProperty()  # location record id
-    case_id = StringProperty()
-    section_id = StringProperty()
-    product_id = StringProperty()
-    action = StringProperty()
-    subaction = StringProperty()
-    quantity = DecimalProperty()
-    processing_order = IntegerProperty()
-
-    """
-    @classmethod
-    def by_domain(cls, domain, skip=0, limit=100):
-        return [StockTransaction.force_wrap(row["value"]) for row in _view_shared(
-            'commtrack/stock_transactions', domain, skip=skip, limit=limit)]
-
-    @classmethod
-    def by_location(cls, domain, location_id, skip=0, limit=100):
-        return [StockTransaction.force_wrap(row["value"]) for row in _view_shared(
-            'commtrack/stock_transactions', domain, location_id,
-            skip=skip, limit=limit)]
-
-    @classmethod
-    def by_product(cls, product_case, start_date, end_date):
-        q = CommCareCase.get_db().view('commtrack/stock_transactions_by_product',
-                                       startkey=[product_case, start_date],
-                                       endkey=[product_case, end_date, {}])
-        return [StockTransaction.force_wrap(row['value']) for row in q]
-    """
+    action = None
+    subaction = None
+    quantity = None
+    location_id = None
+    product = None
+    timestamp = None
 
     def __init__(self, **kwargs):
         def _action_def(val):
@@ -628,7 +571,8 @@ class StockTransaction(Document):
                     del kwargs[attr]
                     kwargs.update(var(val))
 
-        super(StockTransaction, self).__init__(**kwargs)
+        for k, v in kwargs.items():
+            setattr(self, k, v)
 
     @property
     def relative_quantity(self):
@@ -659,7 +603,7 @@ class StockTransaction(Document):
             data = {
                 'timestamp': timestamp,
                 'product_id': product_id,
-                'quantity': quantity,
+                'quantity': Decimal(quantity),
                 'action': action,
                 'case_id': case_id,
                 'section_id': section_id,
@@ -750,7 +694,13 @@ class StockTransaction(Document):
         return '%s%s' % (Product.get(self.product_id).code.lower(), quant)
 
     def __repr__(self):
-        return '{action} ({subaction}): {quantity} (loc: {location_id}, product: {product_id})'.format(**self._doc)
+        return '{action} ({subaction}): {quantity} (loc: {location_id}, product: {product_id})'.format(
+            action=self.action,
+            subaction=self.subaction,
+            quantity=self.quantity,
+            location_id=self.location_id,
+            product_id=self.product_id,
+        )
 
 
 def _get_single_index(case, identifier, type, wrapper=None):
@@ -843,14 +793,6 @@ class SupplyPointCase(CommCareCase):
         else:
             return self
 
-    def get_product_subcases(self):
-        product_subcase_uuids = [ix.referenced_id for ix in self.reverse_indices if ix.identifier == const.PARENT_CASE_REF]
-        return SupplyPointProductCase.view('_all_docs', keys=product_subcase_uuids, include_docs=True)
-
-    def get_product_subcase(self, product_id):
-        filtered = filter(lambda spp: spp.product == product_id, self.get_product_subcases())
-        return filtered[0] if filtered else None
-
     def to_full_dict(self):
         data = super(SupplyPointCase, self).to_full_dict()
         data.update({
@@ -924,219 +866,6 @@ UNDERSTOCK_THRESHOLD = 0.5 # months
 OVERSTOCK_THRESHOLD = 2. # months
 
 DEFAULT_CONSUMPTION = 10. # per month
-
-# TODO eliminate this
-class SupplyPointProductCase(CommCareCase):
-    """
-    A wrapper around CommCareCases to get more built in functionality
-    specific to supply point products.
-
-    See
-    https://confluence.dimagi.com/display/ctinternal/Data+Model+Documentation
-    """
-    class Meta:
-        # This is necessary otherwise syncdb will confuse this app with casexml
-        app_label = "commtrack"
-
-    # can flesh this out more as needed
-    product = StringProperty()  # would be nice if this was product_id but is grandfathered in
-    current_stock = DecimalProperty()
-    stocked_out_since = StringProperty()
-
-    @memoized
-    def get_product(self):
-        return Product.get(self.product)
-
-    @memoized
-    def get_supply_point_case(self):
-        return _get_single_index(self, const.PARENT_CASE_REF, const.SUPPLY_POINT_CASE_TYPE,
-                                 wrapper=SupplyPointCase)
-
-    def get_supply_point_case_id(self):
-        return _get_single_index(self, const.PARENT_CASE_REF, const.SUPPLY_POINT_CASE_TYPE)
-
-    @property
-    def current_stock_level(self):
-        return float(self.current_stock) if self.current_stock is not None else None
-
-    @property
-    @memoized
-    def monthly_consumption(self):
-        daily_rate = self.computed_.get('commtrack', {}).get('consumption_rate')
-        if daily_rate is None:
-            daily_rate = self.default_consumption / DAYS_PER_MONTH
-        if daily_rate is None:
-            return None
-
-        return daily_rate * DAYS_PER_MONTH
-
-    @property
-    def default_consumption(self):
-        # TODO does this belong in this class? in the future this will be configurable
-        # based on (product, supply point type)
-        return DEFAULT_CONSUMPTION
-
-    @staticmethod
-    def default_thresholds():
-        return {
-            'low': UNDERSTOCK_THRESHOLD,
-            'high': OVERSTOCK_THRESHOLD,
-        }
-
-    @property
-    def stock_thresholds(self):
-        # TODO does this belong in this class? in the future will these thresholds vary
-        # by supply point type? by product?
-        return SupplyPointProductCase.default_thresholds()
-
-    @staticmethod
-    def months_of_stock_remaining(stock, consumption):
-        try:
-            return stock / consumption
-        except (TypeError, ZeroDivisionError):
-            return None
-
-    @property
-    def months_until_stockout(self):
-        return SupplyPointProductCase.months_of_stock_remaining(self.current_stock_level, self.monthly_consumption)
-
-    @property
-    def stockout_duration_in_months(self):
-        if self.stocked_out_since:
-            sos = datetime.strptime(self.stocked_out_since, '%Y-%m-%d').date()
-            today = datetime.today().date()
-            return (today - sos).days / DAYS_PER_MONTH
-        else:
-            return None
-
-    @staticmethod
-    def stock_category(stock, consumption, consumable_stock=None, thresholds=None):
-        # "consumable stock" if the amount of stock for which we know the consumption rate
-        if consumable_stock is None:
-            consumable_stock = stock
-        if thresholds is None:
-            thresholds = SupplyPointProductCase.default_thresholds()
-
-        if stock is None:
-            return 'nodata'
-        elif stock == 0:
-            return 'stockout'
-        elif consumption is None:
-            return 'nodata'
-        elif consumption == 0:
-            return 'overstock'
-
-        months_left = SupplyPointProductCase.months_of_stock_remaining(consumable_stock, consumption)
-        if months_left is None:
-            return 'nodata'
-        elif months_left < thresholds['low']:
-            return 'understock'
-        elif months_left > thresholds['high']:
-            return 'overstock'
-        else:
-            return 'adequate'
-
-    @property
-    @memoized
-    def current_stock_category(self):
-        return SupplyPointProductCase.stock_category(
-            self.current_stock_level,
-            self.monthly_consumption,
-            thresholds=self.stock_thresholds
-        )
-
-    def get_last_reported_date(self):
-        last_reported = getattr(self, 'last_reported', None)
-        return force_to_date(last_reported)
-
-    def to_full_dict(self):
-        def roundif(k, digits):
-            return round(k, digits) if k is not None else None
-
-        data = super(SupplyPointProductCase, self).to_full_dict()
-        del data['stocked_out_since']
-        data['consumption_rate'] = self.monthly_consumption
-
-        data['supply_point_name'] = self.get_supply_point_case()['name']
-        data['product_name'] = self.get_product()['name']
-
-        #data['emergency_level'] = None
-        #data['max_level'] = None
-
-        # TODO shouldn't this rounding happen in the presentation layer?
-        data['months_until_stockout'] = roundif(self.months_until_stockout, 1)
-        data['stockout_duration_in_months'] = roundif(self.stockout_duration_in_months, 1)
-
-        return data
-
-    @classmethod
-    def get_display_config(cls):
-        return [
-            {
-                "layout": [
-                    [
-                        {
-                            "name": _("Supply Point"),
-                            "expr": "supply_point_name"
-                        },
-                        {
-                            "name": _("Product"),
-                            "expr": "product_name"
-                        },
-                        {
-                            "name": _("Last reported"),
-                            "expr": "last_reported",
-                            "parse_date": True
-                        }
-                    ],
-                    [
-                        {
-                            "name": _("Current stock"),
-                            "expr": "current_stock"
-                        },
-                        {
-                            "name": _("Monthly consumption"),
-                            "expr": "consumption_rate"
-                        },
-                        {
-                            "name": _("Months until stockout"),
-                            "expr": "months_until_stockout"
-                        },
-                        {
-                            "name": _("Stockout duration in months"),
-                            "expr": "stockout_duration_in_months"
-                        }
-                        #{
-                            #"name": _("Emergency level"),
-                            #"expr": "emergency_level"
-                        #},
-                        #{
-                            #"name": _("Max level"),
-                            #"expr": "max_level"
-                        #}
-                    ],
-                ],
-            }
-        ]
-
-    def get_json(self, lite=True):
-        data = super(SupplyPointProductCase, self).get_json(lite=lite)
-        data['properties'].update({
-            'product': self.product,
-            'current_stock': self.current_stock_level,
-            'consumption': self.monthly_consumption,
-            'months_remaining': self.months_until_stockout,
-            'stock_category': self.current_stock_category,
-        })
-        return data
-
-    # block extra couch query per case to fetch reverse index info
-    @memoized
-    def get_index_map(self, reversed=False):
-        if reversed:
-            return None
-        return super(SupplyPointProductCase, self).get_index_map(reversed)
-
 
 
 class RequisitionCase(CommCareCase):

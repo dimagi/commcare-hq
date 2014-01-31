@@ -1,14 +1,18 @@
 from datetime import datetime
-from decimal import Decimal
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack.const import RequisitionStatus
-from corehq.apps.commtrack.models import RequisitionCase, SupplyPointProductCase
+from corehq.apps.commtrack.models import RequisitionCase
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.commtrack.tests.util import CommTrackTest
+from corehq.apps.commtrack.tests.util import CommTrackTest, bootstrap_user, FIXED_USER, ROAMING_USER
 from corehq.apps.commtrack.sms import handle, SMSError
 
 
 class StockReportTest(CommTrackTest):
+    user_definitions = [ROAMING_USER, FIXED_USER]
+
+    def setUp(self):
+        super(StockReportTest, self).setUp()
+
 
     def testStockReportRoaming(self):
         self.assertEqual(0, len(self.get_commtrack_forms()))
@@ -18,7 +22,7 @@ class StockReportTest(CommTrackTest):
             'pr': 30,
         }
         # soh loc1 pp 10 pq 20...
-        handled = handle(self.reporters['roaming'].get_verified_number(), 'soh {loc} {report}'.format(
+        handled = handle(self.users[0].get_verified_number(), 'soh {loc} {report}'.format(
             loc='loc1',
             report=' '.join('%s %s' % (k, v) for k, v in amounts.items())
         ))
@@ -26,11 +30,6 @@ class StockReportTest(CommTrackTest):
         forms = list(self.get_commtrack_forms())
         self.assertEqual(1, len(forms))
         self.assertEqual(_get_location_from_sp(self.sp), _get_location_from_form(forms[0]))
-
-        for code, amt in amounts.items():
-            spp = SupplyPointProductCase.get(self.spps[code]._id)
-            self.assertEqual(self.sp.location_, spp.location_)
-            self.assertEqual(Decimal(amt), spp.current_stock)
 
         # todo: right now this makes one report per balance when really they should all be in the same one
         self.assertEqual(3, StockReport.objects.count())
@@ -46,7 +45,6 @@ class StockReportTest(CommTrackTest):
             self.assertEqual(0, trans.quantity)
             self.assertEqual(amt, trans.stock_on_hand)
 
-
     def testStockReportFixed(self):
         self.assertEqual(0, len(self.get_commtrack_forms()))
 
@@ -56,7 +54,7 @@ class StockReportTest(CommTrackTest):
             'pr': 30,
         }
         # soh loc1 pp 10 pq 20...
-        handled = handle(self.reporters['fixed'].get_verified_number(), 'soh {report}'.format(
+        handled = handle(self.users[1].get_verified_number(), 'soh {report}'.format(
             report=' '.join('%s %s' % (k, v) for k, v in amounts.items())
         ))
         self.assertTrue(handled)
@@ -65,13 +63,19 @@ class StockReportTest(CommTrackTest):
         self.assertEqual(_get_location_from_sp(self.sp), _get_location_from_form(forms[0]))
 
         for code, amt in amounts.items():
-            spp = SupplyPointProductCase.get(self.spps[code]._id)
-            self.assertEqual(self.sp.location_, spp.location_)
-            self.assertEqual(Decimal(amt), spp.current_stock)
-
+            [product] = filter(lambda p: p.code_ == code, self.products)
+            trans = StockTransaction.objects.get(product_id=product._id)
+            self.assertEqual(self.sp._id, trans.case_id)
+            self.assertEqual(0, trans.quantity)
+            self.assertEqual(amt, trans.stock_on_hand)
 
 class StockRequisitionTest(object):
     requisitions_enabled = True
+    user_definitions = [ROAMING_USER]
+    def setUp(self):
+        super(CommTrackTest, self).setUp()
+        self.user = self.users[0]
+
 
     def testRequisition(self):
         self.assertEqual(0, len(RequisitionCase.open_for_location(self.domain.name, self.loc._id)))
