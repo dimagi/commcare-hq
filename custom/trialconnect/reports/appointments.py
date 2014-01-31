@@ -1,15 +1,15 @@
 from datetime import timedelta
 from django.utils.translation import ugettext as _, ugettext_noop
+from corehq.apps.reports.commconnect import div, CommConnectReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.graph_models import LineChart
 from corehq.apps.sms.models import WORKFLOW_REMINDER
 from corehq.elastic import es_query, ES_URLS
 from corehq.util.dates import unix_time_millis
-from custom.trialconnect.reports import TrialConnectReport, div
 from custom.trialconnect.smspillow import TC_STUB
 
 
-class AppointmentsReport(TrialConnectReport):
+class AppointmentsReport(CommConnectReport):
     slug = 'appointment_performance'
     name = ugettext_noop("Appointment Performance")
     description = ugettext_noop("Appointment confirmation and response rates")

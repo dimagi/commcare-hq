@@ -224,7 +224,7 @@ def delete_all_plans():
 def arbitrary_subscribable_plan():
     subscribable_plans = [plan['name'] for plan in SUBSCRIBABLE_COMMCARE_PLANS]
     plan = SoftwarePlan.objects.get(name=random.choice(subscribable_plans))
-    return plan.softwareplanversion_set.latest('date_created')
+    return plan.get_version()
 
 
 def generate_domain_subscription_from_date(date_start, billing_account, domain,

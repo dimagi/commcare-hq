@@ -38,6 +38,7 @@ function BaseHQMediaUploadController (uploader_name, marker, options) {
 
     // Stuff for processing the upload
     self.uploadParams = options.uploadParams || {};
+    self.sessionid = options.sessionid || null;
     self.licensingParams = options.licensingParams || [];
     self.uploadURL = options.uploadURL;
     self.processingURL = options.processingURL;
@@ -284,7 +285,14 @@ function BaseHQMediaUploadController (uploader_name, marker, options) {
                 postParams[key] = true;
             }
         }
-        postParams['_cookie'] = document.cookie;
+        var _cookie = document.cookie;
+        if (!/sessionid=/.exec(_cookie) && self.sessionid) {
+            if (_cookie) {
+                _cookie += '; ';
+            }
+            _cookie += 'sessionid=' + self.sessionid;
+        }
+        postParams['_cookie'] = _cookie;
         // With YUI 3.9 you can trigger downloads on a per file basis, but for now just keep the original behavior
         // of uploading the entire queue.
         self.uploader.uploadAll(self.uploadURL, postParams);

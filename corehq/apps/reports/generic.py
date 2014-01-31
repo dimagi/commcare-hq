@@ -1021,14 +1021,18 @@ class ElasticTabularReport(GenericTabularReport):
             return 0
 
 
-class ElasticProjectInspectionReport(ProjectInspectionReportParamsMixin, ElasticTabularReport):
+class GetParamsMixin(object):
     @property
     def shared_pagination_GET_params(self):
         """
         Override the params and applies all the params of the originating view to the GET
         so as to get sorting working correctly with the context of the GET params
         """
-        ret = super(ElasticTabularReport, self).shared_pagination_GET_params
+        ret = super(GetParamsMixin, self).shared_pagination_GET_params
         for k, v in self.request.GET.iterlists():
             ret.append(dict(name=k, value=v))
         return ret
+
+
+class ElasticProjectInspectionReport(GetParamsMixin, ProjectInspectionReportParamsMixin, ElasticTabularReport):
+    pass

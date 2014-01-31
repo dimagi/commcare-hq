@@ -27,7 +27,7 @@ def groupname(key, report):
 
 def combine_indicator(num, denom):
     if isinstance(num, Number) and isinstance(denom, Number):
-        return '%s %%' % (num * 100 / denom)
+        return '%s %% (%s / %s)' % (num * 100 / denom, num, denom)
     else:
         return NO_VALUE
 
@@ -540,12 +540,12 @@ class Outcomes(GenericTabularReport, CustomProjectReport, ProjectReportParameter
             "view": KeyView(key="case_closed_accouchee")
         },
         {
-            "name": "Number of births at clinics",
-            "view": KeyView(key="birth_total")
+            "name": "Percentage of births at clinic",
+            "view": AggregateKeyView(combine_indicator, KeyView(key="births_at_clinic"), KeyView(key="births_total"))
         },
         {
             "name": "Percentage of births at clinic with GATPA performed",
-            "view": AggregateKeyView(combine_indicator, KeyView(key="birth_gapta"), KeyView(key="birth_total"))
+            "view": AggregateKeyView(combine_indicator, KeyView(key="birth_gapta"), KeyView(key="birth_total_gapta"))
         },
         {
             "name": "Birth with VAT2",

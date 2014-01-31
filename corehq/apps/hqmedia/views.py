@@ -150,6 +150,7 @@ class BaseMultimediaUploaderView(BaseMultimediaTemplateView):
     def page_context(self):
         return {
             'uploaders': self.upload_controllers,
+            "sessionid": self.request.COOKIES.get('sessionid'),
         }
 
     @property
@@ -173,6 +174,7 @@ class MultimediaReferencesView(BaseMultimediaUploaderView):
             "references": self.app.get_references(),
             "object_map": self.app.get_object_map(),
             "totals": self.app.get_reference_totals(),
+            "sessionid": self.request.COOKIES.get('sessionid'),
         })
         return context
 

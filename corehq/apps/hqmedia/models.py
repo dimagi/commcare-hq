@@ -74,7 +74,7 @@ class CommCareMultimedia(SafeSaveDocument):
     def license(self):
         return self.licenses[0] if self.licenses else None
 
-    def update_or_add_license(self, domain, type="", author="", attribution_notes="", org=""):
+    def update_or_add_license(self, domain, type="", author="", attribution_notes="", org="", should_save=True):
         for license in self.licenses:
             if license.domain == domain:
                 license.type = type or license.type
@@ -87,7 +87,8 @@ class CommCareMultimedia(SafeSaveDocument):
                                         attribution_notes=attribution_notes, organization=org)
             self.licenses.append(license)
 
-        self.save()
+        if should_save:
+            self.save()
 
     def url(self):
         return reverse("hqmedia_download", args=[self.doc_type, self._id])

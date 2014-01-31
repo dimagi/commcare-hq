@@ -1,11 +1,28 @@
-from corehq import Domain
-from corehq.apps.accounting.models import *
-from corehq.apps.users.models import WebUser
-from crispy_forms.bootstrap import FormActions
+import datetime
+import json
+
+from django.contrib import messages
+from django.core.exceptions import ValidationError
+from django import forms
+from django.forms.util import ErrorList
+from crispy_forms.bootstrap import FormActions, StrictButton, InlineField
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import *
-from django import forms
+
+from dimagi.utils.decorators.memoized import memoized
 from django_prbac import arbitrary as role_gen
+from django_prbac.models import Role
+
+from corehq.apps.accounting.async_handlers import FeatureRateAsyncHandler, SoftwareProductRateAsyncHandler, Select2RateAsyncHandler
+from corehq.apps.accounting.utils import fmt_feature_rate_dict, fmt_product_rate_dict
+from corehq.apps.hqwebapp.crispy import BootstrapMultiField
+from corehq.apps.domain.models import Domain
+from corehq.apps.users.models import WebUser
+from corehq.apps.accounting.models import (BillingContactInfo, Currency, SoftwarePlanVersion, BillingAccount,
+                                           Subscription, Subscriber, CreditLine, SoftwareProductRate,
+                                           FeatureRate, SoftwarePlanEdition, SoftwarePlanVisibility,
+                                           BillingAccountAdmin, SoftwarePlan, Feature, FeatureType,
+                                           SoftwareProduct, SoftwareProductType)
 
 
 class BillingAccountForm(forms.Form):
@@ -347,12 +364,13 @@ class CancelForm(forms.Form):
 
 
 class PlanInformationForm(forms.Form):
-    name = forms.CharField(max_length=80) # require uniqueness
+    name = forms.CharField(max_length=80)
     description = forms.CharField(required=False)
     edition = forms.ChoiceField(choices=SoftwarePlanEdition.CHOICES)
     visibility = forms.ChoiceField(choices=SoftwarePlanVisibility.CHOICES)
 
     def __init__(self, plan, *args, **kwargs):
+        self.plan = plan
         if plan is not None:
             kwargs['initial'] = {
                 'name': plan.name,
@@ -384,7 +402,11 @@ class PlanInformationForm(forms.Form):
         )
 
     def clean_name(self):
-        return self.cleaned_data['name'] # TODO - implement
+        name = self.cleaned_data['name']
+        if (len(SoftwarePlan.objects.filter(name=name)) != 0
+            and (self.plan is None or self.plan.name != name)):
+            raise ValidationError('Name already taken.  Please enter a new name.')
+        return name
 
     def create_plan(self):
         name = self.cleaned_data['name']
@@ -396,8 +418,6 @@ class PlanInformationForm(forms.Form):
                             edition=edition,
                             visibility=visibility)
         plan.save()
-        plan_version = SoftwarePlanVersion(plan=plan, role=role_gen.arbitrary_role()) # TODO - check this
-        plan_version.save()
         return plan
 
     def update_plan(self, plan):
@@ -406,3 +426,384 @@ class PlanInformationForm(forms.Form):
         plan.edition = self.cleaned_data['edition']
         plan.visibility = self.cleaned_data['visibility']
         plan.save()
+
+
+class SoftwarePlanVersionForm(forms.Form):
+    """
+    A form for updating the software plan
+    """
+    update_version = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput,
+    )
+    feature_id = forms.CharField(
+        required=False,
+        label="Search for or Create Feature"
+    )
+    new_feature_type = forms.ChoiceField(
+        required=False,
+        choices=FeatureType.CHOICES,
+    )
+    feature_rates = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput,
+    )
+    product_id = forms.CharField(
+        required=False,
+        label="Search for or Create Product"
+    )
+    new_product_type = forms.ChoiceField(
+        required=False,
+        choices=SoftwareProductType.CHOICES,
+    )
+    product_rates = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput,
+    )
+
+    def __init__(self, plan, plan_version, data=None, *args, **kwargs):
+        self.plan = plan
+        self.plan_version = plan_version
+        data = data or {}
+        if self.plan_version is not None:
+            if not 'feature_rates' in data:
+                data['feature_rates'] = json.dumps([fmt_feature_rate_dict(r.feature, r)
+                                               for r in self.plan_version.feature_rates.all()])
+            if not 'product_rates' in data:
+                data['product_rates'] = json.dumps([fmt_product_rate_dict(r.product, r)
+                                               for r in self.plan_version.product_rates.all()])
+        else:
+            if not 'feature_rates' in data:
+                data['feature_rates'] = json.dumps([])
+            if not 'product_rates' in data:
+                data['product_rates'] = json.dumps([])
+
+        self.is_update = False
+
+        super(SoftwarePlanVersionForm, self).__init__(data, *args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_class = 'form form-horizontal'
+        self.helper.form_method = 'POST'
+        self.helper.layout = Layout(
+            'update_version',
+            Fieldset(
+                "Features",
+                InlineField('feature_rates', data_bind="value: featureRates.objectsValue"),
+                BootstrapMultiField(
+                    "Add Feature",
+                    InlineField('feature_id', css_class="input-xxlarge",
+                                data_bind="value: featureRates.select2.object_id"),
+                    StrictButton(
+                        "Select Feature",
+                        css_class="btn-primary",
+                        data_bind="event: {click: featureRates.apply}, "
+                                  "visible: featureRates.select2.isExisting",
+                        style="margin-left: 5px;"
+                    ),
+                ),
+                Div(
+                    css_class="alert alert-error",
+                    data_bind="text: featureRates.error, visible: featureRates.showError"
+                ),
+                BootstrapMultiField(
+                    "Feature Type",
+                    InlineField(
+                        'new_feature_type',
+                        data_bind="value: featureRates.rateType",
+                    ),
+                    Div(
+                        StrictButton(
+                            "Create Feature",
+                            css_class="btn-success",
+                            data_bind="event: {click: featureRates.createNew}",
+
+                        ),
+                        style="margin: 10px 0;"
+                    ),
+                    data_bind="visible: featureRates.select2.isNew",
+                ),
+                Div(
+                    data_bind="template: {"
+                              "name: 'feature-rate-form-template', foreach: featureRates.objects"
+                              "}",
+                ),
+            ),
+            Fieldset(
+                "Products",
+                InlineField('product_rates', data_bind="value: productRates.objectsValue"),
+                BootstrapMultiField(
+                    "Add Product",
+                    InlineField('product_id', css_class="input-xxlarge",
+                                data_bind="value: productRates.select2.object_id"),
+                    StrictButton(
+                        "Select Product",
+                        css_class="btn-primary",
+                        data_bind="event: {click: productRates.apply}, "
+                                  "visible: productRates.select2.isExisting",
+                        style="margin-left: 5px;"
+                    ),
+                ),
+                Div(
+                    css_class="alert alert-error",
+                    data_bind="text: productRates.error, visible: productRates.showError",
+                ),
+                BootstrapMultiField(
+                    "Product Type",
+                    InlineField(
+                        'new_product_type',
+                        data_bind="value: productRates.rateType",
+                    ),
+                    Div(
+                        StrictButton(
+                            "Create Product",
+                            css_class="btn-success",
+                            data_bind="event: {click: productRates.createNew}",
+                        ),
+                        style="margin: 10px 0;"
+                    ),
+                    data_bind="visible: productRates.select2.isNew",
+                ),
+                Div(
+                    data_bind="template: {"
+                              "name: 'product-rate-form-template', foreach: productRates.objects"
+                              "}",
+                ),
+            ),
+            FormActions(
+                StrictButton(
+                    'Update Plan Version',
+                    css_class='btn-primary',
+                    type="submit",
+                ),
+            )
+        )
+
+    @property
+    def feature_rates_dict(self):
+        return {
+            'current_value': self['feature_rates'].value(),
+            'field_name': 'feature_id',
+            'async_handler': FeatureRateAsyncHandler.slug,
+            'select2_handler': Select2RateAsyncHandler.slug,
+        }
+
+    @property
+    def product_rates_dict(self):
+        return {
+            'current_value': self['product_rates'].value(),
+            'field_name': 'product_id',
+            'async_handler': SoftwareProductRateAsyncHandler.slug,
+            'select2_handler': Select2RateAsyncHandler.slug,
+        }
+
+    @property
+    @memoized
+    def current_features_to_rates(self):
+        return dict([(r.feature.id, r) for r in self.plan_version.feature_rates.all()])
+
+    @property
+    @memoized
+    def current_products_to_rates(self):
+        return dict([(r.product.id, r) for r in self.plan_version.product_rates.all()])
+
+    def _get_errors_from_subform(self, form_name, subform):
+        for field, field_errors in subform._errors.items():
+            for field_error in field_errors:
+                error_message = "%(form_name)s > %(field_name)s: %(error)s" % {
+                    'form_name': form_name,
+                    'error': field_error,
+                    'field_name': subform[field].label,
+                }
+                yield error_message
+
+    def _retrieve_feature_rate(self, rate_form):
+        feature = Feature.objects.get(id=rate_form['feature_id'].value())
+        new_rate = rate_form.get_instance(feature)
+        if rate_form.is_new():
+            # a brand new rate
+            self.is_update = True
+            return new_rate
+        if feature.id not in self.current_features_to_rates.keys():
+            # the plan does not have this rate yet, compare any changes to the feature's current latest rate
+            # also mark the form as updated
+            current_rate = feature.get_rate(default_instance=False)
+            if current_rate is None:
+                return new_rate
+            self.is_update = True
+        else:
+            current_rate = self.current_features_to_rates[feature.id]
+        # note: custom implementation of FeatureRate.__eq__ here...
+        if not current_rate == new_rate:
+            self.is_update = True
+            return new_rate
+        return current_rate
+
+    def _retrieve_product_rate(self, rate_form):
+        product = SoftwareProduct.objects.get(id=rate_form['product_id'].value())
+        new_rate = rate_form.get_instance(product)
+        if rate_form.is_new():
+            # a brand new rate
+            self.is_update = True
+            return new_rate
+        if product.id not in self.current_products_to_rates.keys():
+            # the plan does not have this rate yet, compare any changes to the feature's current latest rate
+            # also mark the form as updated
+            current_rate = product.get_rate(default_instance=False)
+            if current_rate is None:
+                return new_rate
+            self.is_update = True
+        else:
+            current_rate = self.current_products_to_rates[product.id]
+        # note: custom implementation of SoftwareProductRate.__eq__ here...
+        if not current_rate == new_rate:
+            self.is_update = True
+            return new_rate
+        return current_rate
+
+    def clean_feature_rates(self):
+        original_data = self.cleaned_data['feature_rates']
+        rates = json.loads(original_data)
+        rate_instances = []
+        errors = ErrorList()
+        for rate_data in rates:
+            rate_form = FeatureRateForm(rate_data)
+            if not rate_form.is_valid():
+                errors.extend(list(self._get_errors_from_subform(rate_data['name'], rate_form)))
+            else:
+                rate_instances.append(self._retrieve_feature_rate(rate_form))
+        if errors:
+            self._errors.setdefault('feature_rates', errors)
+        self.new_feature_rates = rate_instances
+        rate_ids = lambda x: set([r.id for r in x])
+        if (not self.is_update and (self.plan_version is None or
+                rate_ids(rate_instances).symmetric_difference(rate_ids(self.plan_version.feature_rates.all())))):
+            self.is_update = True
+        return original_data
+
+    def clean_product_rates(self):
+        original_data = self.cleaned_data['product_rates']
+        rates = json.loads(original_data)
+        rate_instances = []
+        errors = ErrorList()
+        for rate_data in rates:
+            rate_form = ProductRateForm(rate_data)
+            if not rate_form.is_valid():
+                errors.extend(list(self._get_errors_from_subform(rate_data['name'], rate_form)))
+            else:
+                rate_instances.append(self._retrieve_product_rate(rate_form))
+        if errors:
+            self._errors.setdefault('product_rates', errors)
+        self.new_product_rates = rate_instances
+        rate_ids = lambda x: set([r.id for r in x])
+        if (not self.is_update and (self.plan_version is None or
+                rate_ids(rate_instances).symmetric_difference(rate_ids(self.plan_version.product_rates.all())))):
+            self.is_update = True
+        return original_data
+
+    def save(self, request):
+        if not self.is_update:
+            messages.info(request, "No changes to rates and roles were present, so the current version was kept.")
+            return
+        new_version = SoftwarePlanVersion(
+            plan=self.plan,
+            role=Role.objects.get(id=1), # hacked so it doesn't break - TODO needs to get fixed
+        )
+        new_version.save()
+
+        for feature_rate in self.new_feature_rates:
+            feature_rate.save()
+            new_version.feature_rates.add(feature_rate)
+
+        for product_rate in self.new_product_rates:
+            product_rate.save()
+            new_version.product_rates.add(product_rate)
+
+        new_version.save()
+
+
+class FeatureRateForm(forms.ModelForm):
+    """
+    A form for creating a new FeatureRate.
+    """
+    # feature id will point to a  select2 field, hence the CharField here.
+    feature_id = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput,
+    )
+    rate_id = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput,
+    )
+
+    class Meta:
+        model = FeatureRate
+        fields = ['monthly_fee', 'monthly_limit', 'per_excess_fee']
+
+    def __init__(self, data=None, *args, **kwargs):
+        super(FeatureRateForm, self).__init__(data, *args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.layout = Layout(
+            HTML("""
+                <h4><span data-bind="text: name"></span>
+                <span class="label"
+                      style="display: inline-block; margin: 0 10px;"
+                      data-bind="text: feature_type"></span></h4>
+                <hr />
+            """),
+            Field('feature_id', data_bind="value: feature_id"),
+            Field('rate_id', data_bind="value: rate_id"),
+            Field('monthly_fee', data_bind="value: monthly_fee"),
+            Field('monthly_limit', data_bind="value: monthly_limit"),
+            Field('per_excess_fee', data_bind="value: per_excess_fee"),
+        )
+
+    def is_new(self):
+        return not self['rate_id'].value()
+
+    def get_instance(self, feature):
+        instance = self.save(commit=False)
+        instance.feature = feature
+        return instance
+
+
+class ProductRateForm(forms.ModelForm):
+    """
+    A form for creating a new ProductRate.
+    """
+    # product id will point to a  select2 field, hence the CharField here.
+    product_id = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput,
+    )
+    rate_id = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput,
+    )
+
+    class Meta:
+        model = SoftwareProductRate
+        fields = ['monthly_fee']
+
+    def __init__(self, data=None, *args, **kwargs):
+        super(ProductRateForm, self).__init__(data, *args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.layout = Layout(
+            HTML("""
+                <h4><span data-bind="text: name"></span>
+                <span class="label"
+                      style="display: inline-block; margin: 0 10px;"
+                      data-bind="text: product_type"></span></h4>
+                <hr />
+            """),
+            Field('monthly_fee', data_bind="value: monthly_fee"),
+        )
+
+    def is_new(self):
+        return not self['rate_id'].value()
+
+    def get_instance(self, product):
+        instance = self.save(commit=False)
+        instance.product = product
+        return instance

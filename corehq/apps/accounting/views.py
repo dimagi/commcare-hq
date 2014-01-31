@@ -1,15 +1,26 @@
 import json
+import datetime
+
+from django.conf import settings
 from django.utils import translation
+from django.core.urlresolvers import reverse
+from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest
+from django.utils.decorators import method_decorator
+
+from dimagi.utils.decorators.memoized import memoized
+
+from corehq.apps.accounting.forms import (BillingAccountForm, CreditForm, SubscriptionForm, CancelForm,
+                                          PlanInformationForm, SoftwarePlanVersionForm, FeatureRateForm, ProductRateForm)
 from corehq.apps.accounting.interface import AccountingInterface, SubscriptionInterface, SoftwarePlanInterface
-from corehq.apps.accounting.forms import *
+from corehq.apps.accounting.models import (SoftwareProductType, Invoice, BillingAccount, CreditLine, Subscription,
+                                           SoftwarePlanVersion, SoftwarePlan)
+from corehq.apps.accounting.async_handlers import FeatureRateAsyncHandler, Select2RateAsyncHandler, SoftwareProductRateAsyncHandler
 from corehq.apps.accounting.user_text import PricingTable
 from corehq.apps.accounting.utils import LazyEncoder
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.hqwebapp.views import BaseSectionPageView
-from dimagi.utils.decorators.memoized import memoized
-from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest
-from django.utils.decorators import method_decorator
+from corehq import toggles
+from toggle.decorators import require_toggle
 
 
 @require_superuser
@@ -24,7 +35,7 @@ class AccountingSectionView(BaseSectionPageView):
     def section_url(self):
         return reverse('accounting_default')
 
-    @method_decorator(require_superuser)
+    @method_decorator(require_toggle(toggles.ACCOUNTING_PREVIEW))
     def dispatch(self, request, *args, **kwargs):
         return super(AccountingSectionView, self).dispatch(request, *args, **kwargs)
 
@@ -39,6 +50,7 @@ class BillingAccountsSectionView(AccountingSectionView):
 
 
 class NewBillingAccountView(BillingAccountsSectionView):
+    page_title = 'New Billing Account'
     template_name = 'accounting/accounts_base.html'
     urlname = 'new_billing_account'
 
@@ -51,13 +63,9 @@ class NewBillingAccountView(BillingAccountsSectionView):
 
     @property
     def page_context(self):
-        context = super(NewBillingAccountView, self).main_context
-        context.update({'form': self.account_form})
-        return context
-
-    @property
-    def page_title(self):
-        return "New Billing Account"
+        return {
+            'form': self.account_form,
+        }
 
     @property
     def page_url(self):
@@ -72,6 +80,7 @@ class NewBillingAccountView(BillingAccountsSectionView):
 
 
 class ManageBillingAccountView(BillingAccountsSectionView):
+    page_title = 'Manage Billing Account'
     template_name = 'accounting/accounts.html'
     urlname = 'manage_billing_account'
 
@@ -101,8 +110,7 @@ class ManageBillingAccountView(BillingAccountsSectionView):
 
     @property
     def page_context(self):
-        context = super(ManageBillingAccountView, self).main_context
-        context.update({
+        return {
             'account': self.account,
             'credit_form': self.get_appropriate_credit_form(self.account),
             'credit_list': CreditLine.objects.filter(account=self.account),
@@ -112,12 +120,7 @@ class ManageBillingAccountView(BillingAccountsSectionView):
                       if len(Invoice.objects.filter(subscription=sub)) != 0 else 'None on record',
                 ) for sub in Subscription.objects.filter(account=self.account)
             ],
-        })
-        return context
-
-    @property
-    def page_title(self):
-        return "Manage Billing Account"
+        }
 
     @property
     def page_url(self):
@@ -133,6 +136,7 @@ class ManageBillingAccountView(BillingAccountsSectionView):
 
 
 class NewSubscriptionView(AccountingSectionView):
+    page_title = 'New Subscription'
     template_name = 'accounting/subscriptions_base.html'
     urlname = 'new_subscription'
 
@@ -145,13 +149,9 @@ class NewSubscriptionView(AccountingSectionView):
 
     @property
     def page_context(self):
-        context = super(NewSubscriptionView, self).main_context
-        context.update(dict(form=self.subscription_form))
-        return context
-
-    @property
-    def page_title(self):
-        return 'New Subscription'
+        return {
+            'form': self.subscription_form,
+        }
 
     @property
     def page_url(self):
@@ -173,6 +173,7 @@ class NewSubscriptionView(AccountingSectionView):
 
 
 class EditSubscriptionView(AccountingSectionView):
+    page_title = 'Edit Subscription'
     template_name = 'accounting/subscriptions.html'
     urlname = 'edit_subscription'
 
@@ -212,20 +213,14 @@ class EditSubscriptionView(AccountingSectionView):
 
     @property
     def page_context(self):
-        context = super(EditSubscriptionView, self).main_context
-        context.update({
+        return {
             'cancel_form': CancelForm(),
             'credit_form': self.get_appropriate_credit_form(self.subscription),
             'credit_list': CreditLine.objects.filter(subscription=self.subscription),
             'form': self.get_appropriate_subscription_form(self.subscription),
             'subscription': self.subscription,
-            'subscription_canceled': self.subscription_canceled if hasattr(self, 'subscription_canceled') else False
-        })
-        return context
-
-    @property
-    def page_title(self):
-        return 'Edit Subscription'
+            'subscription_canceled': self.subscription_canceled if hasattr(self, 'subscription_canceled') else False,
+        }
 
     @property
     def page_url(self):
@@ -257,6 +252,7 @@ class EditSubscriptionView(AccountingSectionView):
 
 
 class NewSoftwarePlanView(AccountingSectionView):
+    page_title = 'New Software Plan'
     template_name = 'accounting/plans_base.html'
     urlname = 'new_software_plan'
 
@@ -269,15 +265,9 @@ class NewSoftwarePlanView(AccountingSectionView):
 
     @property
     def page_context(self):
-        context = super(NewSoftwarePlanView, self).main_context
-        context.update({
+        return {
             'plan_info_form': self.plan_info_form,
-        })
-        return context
-
-    @property
-    def page_title(self):
-        return 'New Software Plan'
+        }
 
     @property
     def page_url(self):
@@ -300,6 +290,12 @@ class NewSoftwarePlanView(AccountingSectionView):
 class EditSoftwarePlanView(AccountingSectionView):
     template_name = 'accounting/plans.html'
     urlname = 'edit_software_plan'
+    page_title = "Edit Software Plan"
+    async_handlers = [
+        Select2RateAsyncHandler,
+        FeatureRateAsyncHandler,
+        SoftwareProductRateAsyncHandler,
+    ]
 
     @property
     @memoized
@@ -314,21 +310,25 @@ class EditSoftwarePlanView(AccountingSectionView):
         return PlanInformationForm(self.plan)
 
     @property
-    def page_context(self):
-        context = super(EditSoftwarePlanView, self).main_context
-        context.update({
-            'plan_info_form': self.plan_info_form,
-            'plan_versions': SoftwarePlanVersion.objects.filter(plan=self.plan).order_by('date_created')
-        })
-        return context
+    @memoized
+    def software_plan_version_form(self):
+        if self.request.method == 'POST':
+            return SoftwarePlanVersionForm(self.plan, self.plan.get_version(), self.request.POST)
+        return SoftwarePlanVersionForm(self.plan, self.plan.get_version())
 
     @property
-    def page_title(self):
-        return 'Edit Software Plan'
+    def page_context(self):
+        return {
+            'plan_info_form': self.plan_info_form,
+            'plan_version_form': self.software_plan_version_form,
+            'feature_rate_form': FeatureRateForm(),
+            'product_rate_form': ProductRateForm(),
+            'plan_versions': SoftwarePlanVersion.objects.filter(plan=self.plan).order_by('-date_created')
+        }
 
     @property
     def page_url(self):
-        return reverse(self.urlname, args=(self.args[0],))
+        return reverse(self.urlname, args=self.args)
 
     @property
     def parent_pages(self):
@@ -337,8 +337,22 @@ class EditSoftwarePlanView(AccountingSectionView):
             'url': SoftwarePlanInterface.get_url(),
         }]
 
+    @property
+    def handler_slug(self):
+        return self.request.POST.get('handler')
+
+    def get_async_handler(self):
+        handler_class = dict([(h.slug, h) for h in self.async_handlers])[self.handler_slug]
+        return handler_class(self.request)
+
     def post(self, request, *args, **kwargs):
-        if self.plan_info_form.is_valid():
+        if self.handler_slug in [h.slug for h in self.async_handlers]:
+            return self.get_async_handler().get_response()
+        if 'update_version' in request.POST:
+            if self.software_plan_version_form.is_valid():
+                self.software_plan_version_form.save(request)
+                return HttpResponseRedirect(self.page_url)
+        elif self.plan_info_form.is_valid():
             self.plan_info_form.update_plan(self.plan)
         return self.get(request, *args, **kwargs)
 

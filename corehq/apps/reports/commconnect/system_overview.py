@@ -1,17 +1,17 @@
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 from corehq.apps.reminders.models import REMINDER_TYPE_ONE_TIME
+from corehq.apps.reports.commconnect import div, CommConnectReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 from corehq.apps.reports.graph_models import Axis, LineChart
 from corehq.apps.sms.models import WORKFLOW_KEYWORD, WORKFLOW_REMINDER, WORKFLOW_BROADCAST
 from corehq.elastic import es_query, ES_URLS, es_histogram
-from custom.trialconnect.reports import TrialConnectReport, div
 from dimagi.utils.couch.database import get_db
 
 WORKFLOWS = [WORKFLOW_KEYWORD, WORKFLOW_REMINDER, WORKFLOW_BROADCAST]
 NA = 'N/A'
 
-class BaseSystemOverviewReport(TrialConnectReport):
+class BaseSystemOverviewReport(CommConnectReport):
     need_group_ids = True
     fields = [
         'corehq.apps.reports.filters.select.MultiGroupFilter',
@@ -161,7 +161,7 @@ class SystemUsersReport(BaseSystemOverviewReport):
                     startkey=[self.domain, owner_type],
                     endkey=[self.domain, owner_type, {}],
                 ).one()
-                return data["value"]
+                return data["value"] if data else 0
             else:
                 owners = get_db().view('sms/verified_number_by_domain',
                     reduce=False,
