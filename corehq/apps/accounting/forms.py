@@ -16,8 +16,9 @@ from dimagi.utils.django.email import send_HTML_email
 from django_prbac import arbitrary as role_gen
 from django_prbac.models import Role
 
-from corehq.apps.accounting.async_handlers import FeatureRateAsyncHandler, SoftwareProductRateAsyncHandler, Select2RateAsyncHandler
-from corehq.apps.accounting.utils import fmt_feature_rate_dict, fmt_product_rate_dict
+from corehq.apps.accounting.async_handlers import (FeatureRateAsyncHandler, SoftwareProductRateAsyncHandler,
+                                                   RoleAsyncHandler, Select2RateAsyncHandler, Select2RoleAsyncHandler)
+from corehq.apps.accounting.utils import fmt_feature_rate_dict, fmt_product_rate_dict, fmt_role_dict
 from corehq.apps.hqwebapp.crispy import BootstrapMultiField
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
@@ -439,6 +440,7 @@ class SoftwarePlanVersionForm(forms.Form):
         required=False,
         widget=forms.HiddenInput,
     )
+
     feature_id = forms.CharField(
         required=False,
         label="Search for or Create Feature"
@@ -451,6 +453,7 @@ class SoftwarePlanVersionForm(forms.Form):
         required=False,
         widget=forms.HiddenInput,
     )
+
     product_id = forms.CharField(
         required=False,
         label="Search for or Create Product"
@@ -464,6 +467,18 @@ class SoftwarePlanVersionForm(forms.Form):
         widget=forms.HiddenInput,
     )
 
+    role_id = forms.CharField(
+        required=False,
+        label="Search for or Create Role"
+    )
+    new_role_slug = forms.CharField(
+        required=False
+    )
+    role = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput
+    )
+
     def __init__(self, plan, plan_version, data=None, *args, **kwargs):
         self.plan = plan
         self.plan_version = plan_version
@@ -471,15 +486,17 @@ class SoftwarePlanVersionForm(forms.Form):
         if self.plan_version is not None:
             if not 'feature_rates' in data:
                 data['feature_rates'] = json.dumps([fmt_feature_rate_dict(r.feature, r)
-                                               for r in self.plan_version.feature_rates.all()])
+                                                    for r in self.plan_version.feature_rates.all()])
             if not 'product_rates' in data:
                 data['product_rates'] = json.dumps([fmt_product_rate_dict(r.product, r)
-                                               for r in self.plan_version.product_rates.all()])
+                                                    for r in self.plan_version.product_rates.all()])
         else:
             if not 'feature_rates' in data:
                 data['feature_rates'] = json.dumps([])
             if not 'product_rates' in data:
                 data['product_rates'] = json.dumps([])
+            if not 'role' in data:
+                data['role'] = json.dumps([])
 
         self.is_update = False
 
@@ -489,6 +506,47 @@ class SoftwarePlanVersionForm(forms.Form):
         self.helper.form_method = 'POST'
         self.helper.layout = Layout(
             'update_version',
+            Fieldset(
+                "Role",
+                InlineField('role', data_bind="value: role.objectsValue"),
+                BootstrapMultiField(
+                    "Add Role",
+                    InlineField('role_id', css_class="input-xxlarge",
+                                data_bind="value: role.select2.object_id"),
+                    StrictButton(
+                        "Select Role",
+                        css_class="btn-primary",
+                        data_bind="event: {click: role.apply}, "
+                                  "visible: role.select2.isExisting",
+                        style="margin-left: 5px;"
+                    ),
+                ),
+                Div(
+                    css_class="alert alert-error",
+                    data_bind="text: role.error, visible: role.showError"
+                ),
+                BootstrapMultiField(
+                    "Role Slug",
+                    InlineField(
+                        'new_role_slug',
+                        data_bind="value: role.slug"
+                    ),
+                    Div(
+                        StrictButton(
+                            "Create Role",
+                            css_class="btn-success",
+                            data_bind="event: {click: role.createNew}",
+                        ),
+                        style="margin: 10px 0;"
+                    ),
+                    data_bind="visible: role.select2.isNew",
+                ),
+                Div(
+                    data_bind="template: {"
+                              "name: 'role-form-template', foreach: role.objects"
+                              "}",
+                ),
+            ),
             Fieldset(
                 "Features",
                 InlineField('feature_rates', data_bind="value: featureRates.objectsValue"),
@@ -597,6 +655,15 @@ class SoftwarePlanVersionForm(forms.Form):
             'field_name': 'product_id',
             'async_handler': SoftwareProductRateAsyncHandler.slug,
             'select2_handler': Select2RateAsyncHandler.slug,
+        }
+
+    @property
+    def role_dict(self):
+        return {
+            'current_value': self['role'].value(),
+            'field_name': 'role_id',
+            'async_handler': RoleAsyncHandler.slug,
+            'select2_handler': Select2RoleAsyncHandler.slug,
         }
 
     @property
@@ -869,3 +936,34 @@ class EnterprisePlanContactForm(forms.Form):
         send_HTML_email(subject, settings.SUPPORT_EMAIL, html_content, text_content,
                         email_from=self.web_user.email)
 
+
+class RoleForm(forms.ModelForm):
+    """
+    A form for creating a new ProductRate.
+    """
+    role_id = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput,
+    )
+    # TODO - rate_id ?
+
+    class Meta:
+        model = Role
+        fields = ['slug', 'name', 'description', 'parameters']
+
+    def __init__(self, data=None, *args, **kwargs):
+        super(RoleForm, self).__init__(data, *args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.layout = Layout(
+            HTML('<h4><span data-bind="text: name"></span></h4>'),
+            Field('parameters', data_bind="value: parameters"),
+        )
+
+    def is_new(self):
+        return not self['role_id'].value()
+
+    def get_instance(self, role):
+        instance = self.save(commit=False)
+        instance.role = role
+        return instance

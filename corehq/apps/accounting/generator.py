@@ -1,7 +1,6 @@
 from __future__ import unicode_literals, absolute_import, print_function
 import calendar
 from decimal import Decimal
-from idlelib.tabbedpages import AlreadyExistsError
 import random
 import datetime
 
@@ -145,12 +144,9 @@ def init_default_currency():
 def arbitrary_web_user(save=True, is_dimagi=False):
     domain = data_gen.arbitrary_unique_name().lower()[:25]
     username = "%s@%s.com" % (data_gen.arbitrary_username(), 'dimagi' if is_dimagi else 'gmail')
-    try:
-        web_user = WebUser.create(domain, username, 'test123')
-        if save:
-            web_user.save()
-    except AlreadyExistsError:
-        web_user = WebUser.get_by_username(username)
+    web_user = WebUser.create(domain, username, 'test123')
+    if save:
+        web_user.save()
     return web_user
 
 

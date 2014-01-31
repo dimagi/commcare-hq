@@ -16,6 +16,7 @@
 {% block js-inline %}{{ block.super }}
     <script>
         var planVersionFormHandler = new SoftwarePlanVersionFormHandler(
+            {{ plan_version_form.role_dict|JSON }},
             {{ plan_version_form.feature_rates_dict|JSON }},
             {{ plan_version_form.product_rates_dict|JSON }}
         );
@@ -65,6 +66,17 @@
                 </button>
             </div>
             {% crispy product_rate_form %}
+        </div>
+    </script>
+
+    <script type="text/html" id="role-form-template">
+        <div class="well">
+            <div class="pull-right">
+                <button type="button" class="btn btn-danger" data-bind="event: {click: $parent.role.removeRate}">
+                    <i class="icon-remove"></i>
+                </button>
+            </div>
+            {% crispy role_form %}
         </div>
     </script>
 {% endblock %}

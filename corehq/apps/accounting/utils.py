@@ -63,6 +63,15 @@ def fmt_product_rate_dict(product, product_rate=None):
     }
 
 
+def fmt_role_dict(role):
+    return {
+        'slug': role.slug,
+        'name': role.name,
+        'description': role.description,
+        'parameters': list(role.parameters),
+    }
+
+
 def get_privileges(plan_version):
     role = plan_version.role
     return set([grant.to_role.slug for grant in role.memberships_granted.filter(from_role=role)])
