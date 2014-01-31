@@ -211,17 +211,25 @@ class BillingAccount(models.Model):
 
 class BillingContactInfo(models.Model):
     account = models.OneToOneField(BillingAccount, primary_key=True, null=False)
-    first_name = models.CharField(max_length=50, null=True)
-    last_name = models.CharField(max_length=50, null=True)
-    emails = models.CharField(max_length=200, null=True)
-    phone_number = models.CharField(max_length=20, null=True)
-    company_name = models.CharField(max_length=50, null=True)
-    first_line = models.CharField(max_length=50, null=False)
-    second_line = models.CharField(max_length=50, null=True)
-    city = models.CharField(max_length=50, null=False)
-    state_province_region = models.CharField(max_length=50, null=False)
-    postal_code = models.CharField(max_length=20, null=False)
-    country = models.CharField(max_length=50, null=False)
+    first_name = models.CharField(
+        max_length=50, null=True, blank=True, verbose_name=_("First Name")
+    )
+    last_name = models.CharField(
+        max_length=50, null=True, blank=True, verbose_name=_("Last Name")
+    )
+    emails = models.CharField(
+        max_length=200, null=True, blank=True, verbose_name=_("Additional Contact Emails"),
+        help_text=_("We will email communications to the emails specified here and the emails "
+                    "of the Billing Administrators.")
+    )
+    phone_number = models.CharField(max_length=20, null=True, blank=True, verbose_name=_("Phone Number"))
+    company_name = models.CharField(max_length=50, null=True, blank=True, verbose_name=_("Company / Organization"))
+    first_line = models.CharField(max_length=50, null=False, verbose_name=_("Address First Line"))
+    second_line = models.CharField(max_length=50, null=True, blank=True, verbose_name=_("Address Second Line"))
+    city = models.CharField(max_length=50, null=False, verbose_name=_("City"))
+    state_province_region = models.CharField(max_length=50, null=False, verbose_name=_("State / Province / Region"))
+    postal_code = models.CharField(max_length=20, null=False, verbose_name=_("Postal Code"))
+    country = models.CharField(max_length=50, null=False, verbose_name=_("Country"))
 
 
 class SoftwareProduct(models.Model):
