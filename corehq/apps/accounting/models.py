@@ -412,6 +412,27 @@ class SoftwarePlanVersion(models.Model):
     def __str__(self):
         return "Software Plan Version For Plan '%s' with Role '%s'" % (self.plan.name, self.role.slug)
 
+    @property
+    def user_facing_description(self):
+        from corehq.apps.accounting.user_text import DESC_BY_EDITION, FEATURE_TYPE_TO_NAME
+        product = self.product_rates.get()
+        desc = {
+            'name': self.plan.name,
+            'description': self.plan.description,
+        }
+        if self.plan.visibility == SoftwarePlanVisibility.PUBLIC:
+            try:
+                desc = DESC_BY_EDITION[self.plan.edition]
+            except KeyError:
+                pass
+        desc.update({
+            'monthly_fee': 'USD %s' % product.monthly_fee,
+            'rates': [{'name': FEATURE_TYPE_TO_NAME[r.feature.feature_type], 'included': r.monthly_limit}
+                      for r in self.feature_rates.all()],
+            'edition': self.plan.edition,
+        })
+        return desc
+
 
 class SubscriberManager(models.Manager):
 
