@@ -170,19 +170,3 @@ class CaseFromXFormTest(TestCase):
         self.assertEqual(ORIGINAL_DATE, case.opened_on)
         self.assertEqual(ORIGINAL_DATE, case.modified_on)
         self.assertEqual("someexternal", case.external_id)
-
-        
-def _replace_ids_and_post(xml_data, case_id_override=None, referral_id_override=None):
-    # from our test forms, replace the UIDs so we don't get id conflicts
-    uid, case_id, ref_id = (uuid.uuid4().hex for i in range(3))
-    
-    if case_id_override:      case_id = case_id_override
-    if referral_id_override:  ref_id = referral_id_override
-        
-    xml_data = xml_data.replace("REPLACE_UID", uid)
-    xml_data = xml_data.replace("REPLACE_CASEID", case_id)
-    xml_data = xml_data.replace("REPLACE_REFID", ref_id)
-    doc_id, _ = post_data(xml_data, settings.XFORMS_POST_URL )
-    return (doc_id, uid, case_id, ref_id)
-    
-    
