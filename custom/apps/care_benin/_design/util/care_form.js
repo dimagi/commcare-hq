@@ -76,7 +76,7 @@ function CareForm(doc) {
 
     self.outcomes = function () {
         if (isAS_Accouchement(self.doc)) {
-            self.outcome_data.birth_total = 1;
+            self.outcome_data.birth_total_gapta = 1;
             if (self.form.question108 && self.form.question108.delivrance === 'GAPTA') {
                 self.outcome_data.birth_gapta = 1;
             }
