@@ -31,9 +31,6 @@ COUCHDB_DATABASES = [
 ]
 
 
-# Hardcode the test database?
-XFORMS_POST_URL = "http://127.0.0.1:5984/couchforms_test/_design/couchforms/_update/xform/" 
-
 TEST_RUNNER = 'couchdbkit.ext.django.testrunner.CouchDbKitTestSuiteRunner'
 
 ####### # Email setup ########

@@ -114,7 +114,7 @@ def post_xform_to_couch(instance, attachments=None, auth_context=None):
 
 def _post_xform_to_couch(instance, attachments=None):
     """
-    Post an xform to couchdb, based on the settings.XFORMS_POST_URL.
+    Save a new xform to couchdb
     Returns the newly created document from couchdb,
     or raises an exception if anything goes wrong.
 
