@@ -4,12 +4,15 @@ import json
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django import forms
+from django.core.urlresolvers import reverse
 from django.forms.util import ErrorList
 from crispy_forms.bootstrap import FormActions, StrictButton, InlineField
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import *
+from django.utils.translation import ugettext_noop, ugettext as _, ugettext
 
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.django.email import send_HTML_email
 from django_prbac import arbitrary as role_gen
 from django_prbac.models import Role
 
@@ -807,3 +810,62 @@ class ProductRateForm(forms.ModelForm):
         instance = self.save(commit=False)
         instance.product = product
         return instance
+
+
+class EnterprisePlanContactForm(forms.Form):
+    name = forms.CharField(
+        label=ugettext_noop("Name")
+    )
+    company_name = forms.CharField(
+        required=False,
+        label=ugettext_noop("Company / Organization")
+    )
+    message = forms.CharField(
+        required=False,
+        label=ugettext_noop("Message"),
+        widget=forms.Textarea
+    )
+
+    def __init__(self, domain, web_user, data=None, *args, **kwargs):
+        self.domain = domain
+        self.web_user = web_user
+        super(EnterprisePlanContactForm, self).__init__(data, *args, **kwargs)
+        from corehq.apps.domain.views import SelectPlanView
+        self.helper = FormHelper()
+        self.helper.form_class = "form form-horizontal"
+        self.helper.layout = Layout(
+            'name',
+            'company_name',
+            'message',
+            FormActions(
+                StrictButton(
+                    _("Request Quote"),
+                    type="submit",
+                    css_class="btn-primary",
+                ),
+                HTML('<a href="%(url)s" class="btn">%(title)s</a>' % {
+                    'url': reverse(SelectPlanView.urlname, args=[self.domain]),
+                    'title': ugettext("Select different plan"),
+                }),
+            )
+        )
+
+    def send_message(self):
+        subject = "[Enterprise Plan Request] %s" % self.domain
+        context = {
+            'name': self.cleaned_data['name'],
+            'company': self.cleaned_data['company_name'],
+            'message': self.cleaned_data['message'],
+            'domain': self.domain,
+        }
+        html_content = render_to_string('accounting/enterprise_request_email.html', context)
+        text_content = """
+        Name: %(name)s
+        Company: %(company)s
+        Domain: %(domain)s
+        Message:
+        %(message)s
+        """ % context
+        send_HTML_email(subject, settings.SUPPORT_EMAIL, html_content, text_content,
+                        email_from=self.web_user.email)
+
