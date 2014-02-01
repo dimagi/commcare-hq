@@ -1,4 +1,3 @@
-import csv
 from corehq.apps.locations.models import Location
 from corehq.apps.locations.forms import LocationForm
 from corehq.apps.locations.util import defined_location_types, parent_child
@@ -6,7 +5,8 @@ import itertools
 from soil import DownloadBase
 from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.consumption.shortcuts import get_default_consumption, set_default_consumption_for_supply_point
-from corehq.apps.commtrack.models import Product
+from corehq.apps.commtrack.models import Product, SupplyPointCase
+
 
 class LocationCache(object):
     """
@@ -137,7 +137,7 @@ def check_parent_id(parent_id, domain, location_type):
             }
 
 
-def no_changes_needed(domain, existing, properties, form_data, consumption):
+def no_changes_needed(domain, existing, properties, form_data, consumption, sp=None):
     if not existing:
         return False
     for prop, val in properties.iteritems():
@@ -161,6 +161,7 @@ def no_changes_needed(domain, existing, properties, form_data, consumption):
 
 def submit_form(domain, parent, form_data, properties, existing, location_type, consumption):
     # don't save if there is nothing to save
+    sp = SupplyPointCase.get_by_location(existing) if consumption else None
     if no_changes_needed(domain, existing, properties, form_data, consumption):
         return {
             'id': existing._id,
@@ -173,15 +174,14 @@ def submit_form(domain, parent, form_data, properties, existing, location_type, 
     form.strict = False  # optimization hack to turn off strict validation
     if form.is_valid():
         loc = form.save()
-
-        for product_code, amount in consumption:
-            set_default_consumption_for_supply_point(
-                domain,
-                Product.get_by_code(domain, product_code)._id,
-                loc._id,
-                amount
-            )
-
+        if consumption and sp:
+            for product_code, amount in consumption:
+                set_default_consumption_for_supply_point(
+                    domain,
+                    Product.get_by_code(domain, product_code)._id,
+                    sp._id,
+                    amount
+                )
         if existing:
             message = 'updated %s %s' % (location_type, loc.name)
         else:
