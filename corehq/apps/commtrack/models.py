@@ -289,7 +289,6 @@ class AlertConfig(DocumentSchema):
     non_report = BooleanProperty(default=False)
 
 class StockRestoreConfig(DocumentSchema):
-
     section_to_consumption_types = DictProperty()
 
 class CommtrackConfig(Document):
