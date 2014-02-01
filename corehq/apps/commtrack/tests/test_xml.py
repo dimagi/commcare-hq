@@ -1,8 +1,12 @@
 import random
 import uuid
 from datetime import datetime
+from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
+from casexml.apps.phone.models import SyncLog
 from casexml.apps.phone.restore import RestoreConfig
+from casexml.apps.phone.tests import synclog_from_restore_payload
+from casexml.apps.phone.tests.utils import synclog_id_from_restore_payload
 from corehq.apps.commtrack.models import ConsumptionConfig, StockRestoreConfig
 from corehq.apps.consumption.shortcuts import set_default_consumption_for_domain
 from dimagi.utils.parsing import json_format_datetime
@@ -10,7 +14,7 @@ from casexml.apps.stock import const as stockconst
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.tests.util import CommTrackTest, get_ota_balance_xml, FIXED_USER, extract_balance_xml
-from casexml.apps.case.tests.util import check_xml_line_by_line
+from casexml.apps.case.tests.util import check_xml_line_by_line, check_user_has_case
 from corehq.apps.hqcase.utils import get_cases_in_domain
 from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.apps.commtrack.tests.util import make_loc, make_supply_point
@@ -134,7 +138,7 @@ class CommTrackSubmissionTest(CommTrackTest):
         loc2 = make_loc('loc1')
         self.sp2 = make_supply_point(self.domain.name, loc2)
 
-    def submit_xml_form(self, xml_method):
+    def submit_xml_form(self, xml_method, **submit_extras):
         from casexml.apps.case import settings
         settings.CASEXML_FORCE_DOMAIN_CHECK = False
         instance = submission_wrap(
@@ -147,6 +151,7 @@ class CommTrackSubmissionTest(CommTrackTest):
         submit_form_locally(
             instance=instance,
             domain=self.domain.name,
+            **submit_extras
         )
 
     def check_stock_models(self, case, product_id, expected_soh, expected_qty, section_id):
@@ -285,6 +290,51 @@ class CommTrackRequisitionTest(CommTrackSubmissionTest):
 
         for product, amt in amounts:
             self.check_product_stock(self.sp, product, amt, amt, 'stock')
+
+
+class CommTrackSyncTest(CommTrackSubmissionTest):
+
+    def setUp(self):
+        super(CommTrackSyncTest, self).setUp()
+        # reused stuff
+        self.casexml_user = self.user.to_casexml_user()
+        self.sp_block = CaseBlock(
+            case_id=self.sp._id,
+            version=V2,
+        ).as_xml()
+
+        # bootstrap ota stuff
+        self.ct_settings.consumption_config = ConsumptionConfig(
+            min_transactions=0,
+            min_window=0,
+            optimal_window=60,
+        )
+        self.ct_settings.ota_restore_config = StockRestoreConfig(
+            section_to_consumption_types={'stock': 'consumption'}
+        )
+        set_default_consumption_for_domain(self.domain.name, 5)
+        self.ota_settings = self.ct_settings.get_ota_restore_settings()
+
+        # get initial restore token
+        restore_config = RestoreConfig(
+            self.casexml_user,
+            version=V2,
+            stock_settings=self.ota_settings,
+        )
+        self.sync_log_id = synclog_id_from_restore_payload(restore_config.get_payload())
+
+    def testStockSyncToken(self):
+        # first restore should not have the updated case
+        check_user_has_case(self, self.casexml_user, self.sp_block, should_have=False,
+                            restore_id=self.sync_log_id, version=V2)
+
+        # submit with token
+        amounts = [(p._id, float(i*10)) for i, p in enumerate(self.products)]
+        self.submit_xml_form(balance_submission(amounts), last_sync_token=self.sync_log_id)
+        # now restore should have the case
+        check_user_has_case(self, self.casexml_user, self.sp_block, should_have=True,
+                            restore_id=self.sync_log_id, version=V2, line_by_line=False)
+
 
 def _report_soh(amounts, case_id, section_id='stock', report=None):
     if report is None:

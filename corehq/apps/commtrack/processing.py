@@ -47,9 +47,11 @@ def process_stock(sender, xform, config=None, **kwargs):
     submit_time = xform['received_on']
 
     # touch every case for proper ota restore logic syncing to be preserved
-    # todo: confirm this is necessary
     for case in relevant_cases:
         case_action = CommCareCaseAction.from_parsed_action(submit_time, user_id, xform, AbstractAction('commtrack'))
+        # hack: clear the sync log id so this modification always counts
+        # since consumption data could change server-side
+        case_action.sync_log_id = ''
         case.actions.append(case_action)
         case.save()
 
