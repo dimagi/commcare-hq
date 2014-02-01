@@ -39,27 +39,15 @@ class CommTrackOTATest(CommTrackTest):
 
     def test_ota_basic(self):
         user = self.user
-        date = datetime.utcnow()
-        report = StockReport.objects.create(form_id=uuid.uuid4().hex, date=date, type=stockconst.REPORT_TYPE_BALANCE)
         amounts = [(p._id, i*10) for i, p in enumerate(self.products)]
-        for product_id, amount in amounts:
-            StockTransaction.objects.create(
-                report=report,
-                section_id='stock',
-                case_id=self.sp._id,
-                product_id=product_id,
-                stock_on_hand=amount,
-                quantity=0,
-                type=stockconst.TRANSACTION_TYPE_STOCKONHAND,
-            )
-
+        report = _report_soh(amounts, self.sp._id, 'stock')
         check_xml_line_by_line(
             self,
             balance_ota_block(
                 self.sp,
                 'stock',
                 amounts,
-                datestring=json_format_datetime(date),
+                datestring=json_format_datetime(report.date),
             ),
             get_ota_balance_xml(user)[0],
         )
@@ -73,16 +61,7 @@ class CommTrackOTATest(CommTrackTest):
 
         section_ids = sorted(('stock', 'losses', 'consumption'))
         for section_id in section_ids:
-            for product_id, amount in amounts:
-                StockTransaction.objects.create(
-                    report=report,
-                    section_id=section_id,
-                    case_id=self.sp._id,
-                    product_id=product_id,
-                    stock_on_hand=amount,
-                    quantity=0,
-                    type=stockconst.TRANSACTION_TYPE_STOCKONHAND,
-                )
+            _report_soh(amounts, self.sp._id, section_id, report=report)
 
         balance_blocks = get_ota_balance_xml(user)
         self.assertEqual(3, len(balance_blocks))
@@ -97,6 +76,7 @@ class CommTrackOTATest(CommTrackTest):
                 ),
                 balance_blocks[i],
             )
+
 
 class CommTrackSubmissionTest(CommTrackTest):
     user_definitions = [FIXED_USER]
@@ -258,3 +238,22 @@ class CommTrackRequisitionTest(CommTrackSubmissionTest):
 
         for product, amt in amounts:
             self.check_product_stock(self.sp, product, amt, amt, 'stock')
+
+def _report_soh(amounts, case_id, section_id='stock', report=None):
+    if report is None:
+        report = StockReport.objects.create(
+            form_id=uuid.uuid4().hex,
+            date=datetime.utcnow(),
+            type=stockconst.REPORT_TYPE_BALANCE,
+        )
+    for product_id, amount in amounts:
+        StockTransaction.objects.create(
+            report=report,
+            section_id=section_id,
+            case_id=case_id,
+            product_id=product_id,
+            stock_on_hand=amount,
+            quantity=0,
+            type=stockconst.TRANSACTION_TYPE_STOCKONHAND,
+        )
+    return report
