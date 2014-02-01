@@ -1,11 +1,14 @@
+from collections import deque
+from casexml.apps.case.models import CommCareCase
 from corehq.apps.api.es import CaseES
 from corehq.apps.commtrack.psi_hacks import is_psi_domain
+from corehq.apps.commtrack.util import supply_point_type_categories
 from corehq.apps.reports.commtrack.data_sources import StockStatusDataSource, ReportingStatusDataSource, is_timely
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.commtrack.psi_prototype import CommtrackReportMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.commtrack.models import Product
+from corehq.apps.commtrack.models import Product, CommtrackConfig, CommtrackActionConfig
 from corehq.apps.reports.graph_models import PieChart, MultiBarChart, Axis
+from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin
 from dimagi.utils.couch.loosechange import map_reduce
 from datetime import datetime
 from corehq.apps.locations.models import Location
@@ -18,6 +21,65 @@ from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids
 
 def _enabled_hack(domain):
     return not is_psi_domain(domain)
+
+class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
+
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return project.commtrack_enabled
+
+    @property
+    @memoized
+    def config(self):
+        return CommtrackConfig.for_domain(self.domain)
+
+    @property
+    @memoized
+    def products(self):
+        prods = Product.by_domain(self.domain, wrap=False)
+        return sorted(prods, key=lambda p: p['name'])
+
+    def ordered_products(self, ordering):
+        return sorted(self.products, key=lambda p: (0, ordering.index(p['name'])) if p['name'] in ordering else (1, p['name']))
+
+    @property
+    def actions(self):
+        return sorted(action_config.name for action_config in self.config.actions)
+
+    def ordered_actions(self, ordering):
+        return sorted(self.actions, key=lambda a: (0, ordering.index(a)) if a in ordering else (1, a))
+
+    @property
+    def incr_actions(self):
+        """action types that increment/decrement stock"""
+        actions = [action_config for action_config in self.config.actions if action_config.action_type in ('receipts', 'consumption')]
+        if not any(a.action_type == 'consumption' for a in actions):
+            # add implicitly calculated consumption -- TODO find a way to refer to this more explicitly once we track different kinds of consumption (losses, etc.)
+            actions.append(CommtrackActionConfig(action_type='consumption', caption='Consumption'))
+        if is_psi_domain(self.domain):
+            ordering = ['sales', 'receipts', 'consumption']
+            actions.sort(key=lambda a: (0, ordering.index(a.action_name)) if a.action_name in ordering else (1, a.action_name))
+        return actions
+
+    @property
+    @memoized
+    def active_location(self):
+        loc_id = self.request_params.get('location_id')
+        if loc_id:
+            return Location.get(loc_id)
+
+    @property
+    @memoized
+    def program_id(self):
+        prog_id = self.request_params.get('program')
+        if prog_id != '':
+            return prog_id
+
+    @property
+    @memoized
+    def aggregate_by(self):
+        return self.request.GET.get('agg_type')
+
 
 class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Stock Status by Product')
