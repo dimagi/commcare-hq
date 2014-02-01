@@ -1,11 +1,15 @@
 import random
 import uuid
 from datetime import datetime
+from casexml.apps.case.xml import V2
+from casexml.apps.phone.restore import RestoreConfig
+from corehq.apps.commtrack.models import ConsumptionConfig, StockRestoreConfig
+from corehq.apps.consumption.shortcuts import set_default_consumption_for_domain
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.stock import const as stockconst
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack import const
-from corehq.apps.commtrack.tests.util import CommTrackTest, get_ota_balance_xml, FIXED_USER
+from corehq.apps.commtrack.tests.util import CommTrackTest, get_ota_balance_xml, FIXED_USER, extract_balance_xml
 from casexml.apps.case.tests.util import check_xml_line_by_line
 from corehq.apps.hqcase.utils import get_cases_in_domain
 from corehq.apps.receiverwrapper import submit_form_locally
@@ -76,6 +80,49 @@ class CommTrackOTATest(CommTrackTest):
                 ),
                 balance_blocks[i],
             )
+
+    def test_ota_consumption(self):
+        self.ct_settings.consumption_config = ConsumptionConfig(
+            min_transactions=0,
+            min_window=0,
+            optimal_window=60,
+        )
+        self.ct_settings.ota_restore_config = StockRestoreConfig(
+            section_to_consumption_types={'stock': 'consumption'}
+        )
+        set_default_consumption_for_domain(self.domain.name, 5)
+        ota_settings = self.ct_settings.get_ota_restore_settings()
+
+        amounts = [(p._id, i*10) for i, p in enumerate(self.products)]
+        report = _report_soh(amounts, self.sp._id, 'stock')
+        restore_config = RestoreConfig(
+            self.user.to_casexml_user(),
+            version=V2,
+            stock_settings=ota_settings,
+        )
+        balance_blocks = extract_balance_xml(restore_config.get_payload())
+        self.assertEqual(2, len(balance_blocks))
+        stock_block, consumption_block = balance_blocks
+        check_xml_line_by_line(
+            self,
+            balance_ota_block(
+                self.sp,
+                'stock',
+                amounts,
+                datestring=json_format_datetime(report.date),
+            ),
+            stock_block,
+        )
+        check_xml_line_by_line(
+            self,
+            balance_ota_block(
+                self.sp,
+                'consumption',
+                [(p._id, 5) for p in self.products],
+                datestring=json_format_datetime(report.date),
+            ),
+             consumption_block,
+        )
 
 
 class CommTrackSubmissionTest(CommTrackTest):

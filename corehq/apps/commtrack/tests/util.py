@@ -123,10 +123,10 @@ class CommTrackTest(TestCase):
 
         self.backend = test.bootstrap(TEST_BACKEND, to_console=True)
         self.domain = bootstrap_domain()
-        ct_settings = CommtrackConfig.for_domain(self.domain.name)
+        self.ct_settings = CommtrackConfig.for_domain(self.domain.name)
         if self.requisitions_enabled:
-            ct_settings.requisition_config = get_default_requisition_config()
-            ct_settings.save()
+            self.ct_settings.requisition_config = get_default_requisition_config()
+            self.ct_settings.save()
 
         self.loc = make_loc('loc1')
         self.sp = make_supply_point(self.domain.name, self.loc)
@@ -164,7 +164,10 @@ class CommTrackTest(TestCase):
 
 def get_ota_balance_xml(user):
     xml = generate_restore_payload(user.to_casexml_user(), version=V2)
-    balance_blocks = etree.fromstring(xml).findall('{http://commcarehq.org/ledger/v1}balance')
+    return extract_balance_xml(xml)
+
+def extract_balance_xml(xml_payload):
+    balance_blocks = etree.fromstring(xml_payload).findall('{http://commcarehq.org/ledger/v1}balance')
     if balance_blocks:
         return [etree.tostring(bb) for bb in balance_blocks]
     return []
