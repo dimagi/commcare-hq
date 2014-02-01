@@ -2,7 +2,6 @@ import logging
 from casexml.apps.stock.const import TRANSACTION_SUBTYPE_INFERRED, COMMTRACK_REPORT_XMLNS
 from dimagi.utils.decorators.log_exception import log_exception
 from corehq.apps.commtrack.models import CommtrackConfig, StockTransaction, NewStockReport
-from corehq.apps.commtrack import const
 from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.commtrack.util import wrap_commtrack_case
 from casexml.apps.case.models import CommCareCaseAction, CommCareCase
