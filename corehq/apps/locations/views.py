@@ -7,7 +7,7 @@ from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.locations.models import Location
 from corehq.apps.locations.forms import LocationForm
 from corehq.apps.locations.util import load_locs_json, location_hierarchy_config, dump_locations
-from corehq.apps.commtrack.models import LocationType, Product
+from corehq.apps.commtrack.models import LocationType, Product, SupplyPointCase
 from corehq.apps.facilities.models import FacilityRegistry
 from django.core.urlresolvers import reverse
 from django.shortcuts import render
@@ -122,11 +122,17 @@ class EditLocationView(NewLocationView):
         return self.kwargs['loc_id']
 
     @property
+    @memoized
     def location(self):
         try:
             return Location.get(self.location_id)
         except ResourceNotFound:
             raise Http404()
+
+    @property
+    @memoized
+    def supply_point(self):
+        return SupplyPointCase.get_by_location(self.location)
 
     @property
     def consumption(self):
@@ -136,7 +142,7 @@ class EditLocationView(NewLocationView):
                 self.domain,
                 product._id,
                 self.location.location_type,
-                self.location._id,
+                self.supply_point._id if self.supply_point else None,
             )
             if consumption:
                 consumptions.append((product.name, consumption))
