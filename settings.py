@@ -30,9 +30,6 @@ COUCH_DATABASE = 'http://127.0.0.1:5984/dimagi_utils_test'
 COUCHDB_DATABASES = [(app, 'http://127.0.0.1:5984/dimagi_utils') for app in ['utils', 'couch']]
 
 
-# Hardcode the test database?
-XFORMS_POST_URL = "http://127.0.0.1:5984/dimagi_utils_test/_design/couchforms/_update/xform/"
-
 TEST_RUNNER = 'couchdbkit.ext.django.testrunner.CouchDbKitTestSuiteRunner'
 
 ####### # Email setup ########
