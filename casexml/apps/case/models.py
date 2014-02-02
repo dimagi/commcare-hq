@@ -90,7 +90,7 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
     @classmethod
     def from_parsed_action(cls, date, user_id, xformdoc, action):
         if not action.action_type_slug in const.CASE_ACTIONS:
-            raise ValueError("%s not a valid case action!" % action.action_type)
+            raise ValueError("%s not a valid case action!" % action.action_type_slug)
         
         ret = CommCareCaseAction(action_type=action.action_type_slug, date=date, user_id=user_id)
         
@@ -771,6 +771,8 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
             self.apply_close(action)
         elif action.action_type == const.CASE_ACTION_ATTACHMENT:
             self.apply_attachments(action)
+        elif action.action_type == const.CASE_ACTION_COMMTRACK:
+            pass  # no action needed here, it's just a placeholder stub
         else:
             raise ValueError("Can't apply action of type %s" % action.action_type)
 

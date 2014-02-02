@@ -113,6 +113,19 @@ class CaseUpdateAction(CaseActionBase):
 class CaseCloseAction(CaseActionBase):
     action_type_slug = const.CASE_ACTION_CLOSE
 
+class AbstractAction(object):
+    def __init__(self, action_type_slug):
+        self.action_type_slug = action_type_slug
+
+        self.dynamic_properties = {}
+        self.indices = []
+        self.attachments = {}
+        # TODO log which products were touched?
+
+    def get_known_properties(self):
+        return {}
+
+
 class CaseAttachment(object):
     """
     A class that wraps an attachment to a case
