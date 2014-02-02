@@ -2,7 +2,7 @@ from casexml.apps.case import settings
 from django.test import TestCase
 import os
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.phone.xml import SYNC_XMLNS
+from casexml.apps.phone.tests.utils import synclog_from_restore_payload
 from couchforms.util import post_xform_to_couch
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import check_user_has_case, delete_all_sync_logs, delete_all_xforms, delete_all_cases
@@ -1039,10 +1039,3 @@ class SyncTokenReprocessingTest(SyncBaseTest):
         except AssertionError:
             # this should fail because it's a true error
             pass
-
-def synclog_id_from_restore_payload(restore_payload):
-    element = ElementTree.fromstring(restore_payload)
-    return element.findall('{%s}Sync' % SYNC_XMLNS)[0].findall('{%s}restore_id' % SYNC_XMLNS)[0].text
-
-def synclog_from_restore_payload(restore_payload):
-    return SyncLog.get(synclog_id_from_restore_payload(restore_payload))
