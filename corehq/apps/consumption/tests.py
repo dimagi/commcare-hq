@@ -9,10 +9,12 @@ supply_point_id = 'test-facility'
 
 
 class ConsumptionTestBase(TestCase):
+    def setUp(self):
+        _delete_all_consumptions()
+        self.assertEqual(0, _count_consumptions())
+
     def tearDown(self):
-        for consumption in DefaultConsumption.view('consumption/consumption_index',
-                                                   reduce=False, include_docs=True):
-            consumption.delete()
+        _delete_all_consumptions()
         self.assertEqual(0, _count_consumptions())
 
 
@@ -143,3 +145,9 @@ def _create_id_consumption(amt, domain=domain, product_id=product_id, supply_poi
 def _count_consumptions():
     qs = DefaultConsumption.get_db().view('consumption/consumption_index', reduce=True)
     return qs.one()['value'] if qs else 0
+
+
+def _delete_all_consumptions():
+    for consumption in DefaultConsumption.view('consumption/consumption_index',
+                                                   reduce=False, include_docs=True):
+        consumption.delete()
