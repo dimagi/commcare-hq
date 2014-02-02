@@ -53,7 +53,7 @@ import json
 from dimagi.utils.post import simple_post
 import cStringIO
 from PIL import Image
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 
 
 # Domain not required here - we could be selecting it for the first time. See notes domain.decorators
@@ -1308,11 +1308,12 @@ class BasicCommTrackSettingsView(BaseCommTrackAdminView):
             'administrative': loctype.administrative,
         }
 
+    # FIXME
     def _get_action_info(self, action):
         return {
-            'type': action.action_type,
+            'type': action.action,
             'keyword': action.keyword,
-            'name': action.action_name,
+            'name': action.subaction,
             'caption': action.caption,
         }
 
@@ -1328,27 +1329,13 @@ class BasicCommTrackSettingsView(BaseCommTrackAdminView):
 
         self.commtrack_settings.multiaction_keyword = payload['keyword']
 
-        def make_action_name(caption, actions):
-            existing = filter(None, [a.get('name') for a in actions])
-            name = ''.join(c.lower() if c.isalpha() else '_' for c in caption)
-            disambig = 1
-
-            def _name():
-                return name + ('_%s' % disambig if disambig > 1 else '')
-
-            while _name() in existing:
-                disambig += 1
-
-            return _name()
-
         def mk_action(action):
-            action['action_type'] = action['type']
-            del action['type']
-
-            if not action.get('name'):
-                action['name'] = make_action_name(action['caption'], payload['actions'])
-
-            return CommtrackActionConfig(**action)
+            return CommtrackActionConfig(**{
+                    'action': action['type'],
+                    'subaction': action['caption'],
+                    'keyword': action['keyword'],
+                    'caption': action['caption'],
+                })
 
         def mk_loctype(loctype):
             loctype['allowed_parents'] = [p or '' for p in loctype['allowed_parents']]
@@ -1372,7 +1359,7 @@ class BasicCommTrackSettingsView(BaseCommTrackAdminView):
 
 class AdvancedCommTrackSettingsView(BaseCommTrackAdminView):
     urlname = 'commtrack_settings_advanced'
-    page_title = ugettext_noop("Advanced CommTrack Settings")
+    page_title = ugettext_lazy("Advanced CommTrack Settings")
     template_name = 'domain/admin/commtrack_settings_advanced.html'
 
     @property
@@ -1406,7 +1393,7 @@ class AdvancedCommTrackSettingsView(BaseCommTrackAdminView):
                     setattr(self.commtrack_settings.stock_levels_config, field,
                             data['stock_' + field])
 
-            consumption_fields = ('min_periods', 'min_window', 'window')
+            consumption_fields = ('min_transactions', 'min_window', 'optimal_window')
             for field in consumption_fields:
                 if data.get('consumption_' + field):
                     setattr(self.commtrack_settings.consumption_config, field,

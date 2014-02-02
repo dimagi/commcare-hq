@@ -4,7 +4,6 @@ from corehq.apps.reports.standard import (monitoring, inspect, export,
     deployments, sms, ivr)
 import corehq.apps.receiverwrapper.reports as receiverwrapper
 import phonelog.reports as phonelog
-from corehq.apps.reports.commtrack import psi_prototype
 from corehq.apps.reports.commtrack import standard as commtrack_reports
 from corehq.apps.reports.commtrack import maps as commtrack_maps
 from corehq.apps.reports.commconnect import system_overview
@@ -48,14 +47,9 @@ def REPORTS(project):
             commtrack_reports.ReportingRatesReport,
             commtrack_reports.CurrentStockStatusReport,
             commtrack_reports.AggregateStockStatusReport,
-            commtrack_reports.RequisitionReport,
-            psi_prototype.VisitReport,
-            psi_prototype.SalesAndConsumptionReport,
-            psi_prototype.CumulativeSalesAndConsumptionReport,
-            psi_prototype.StockOutReport,
-            psi_prototype.StockReportExport,
-            commtrack_maps.StockStatusMapReport,
-            commtrack_maps.ReportingStatusMapReport,
+            # commtrack_reports.RequisitionReport,
+            # commtrack_maps.StockStatusMapReport,
+            # commtrack_maps.ReportingStatusMapReport,
         )))
 
     if project.has_careplan:
@@ -125,7 +119,7 @@ from corehq.apps.data_interfaces.interfaces import CaseReassignmentInterface
 from corehq.apps.importer.base import ImportCases
 
 DATA_INTERFACES = (
-    (_("Export Data"), (
+    (ugettext_lazy("Export Data"), (
         export.ExcelExportReport,
         export.CaseExportReport,
         export.DeidExportReport,
@@ -133,7 +127,7 @@ DATA_INTERFACES = (
 )
 
 EDIT_DATA_INTERFACES = (
-    (_('Edit Data'), (
+    (ugettext_lazy('Edit Data'), (
         CaseReassignmentInterface,
         ImportCases
     )),

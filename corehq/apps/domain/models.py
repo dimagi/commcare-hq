@@ -606,8 +606,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         super(Domain, self).save(**params)
 
         from corehq.apps.domain.signals import commcare_domain_post_save
-        results = commcare_domain_post_save.send_robust(sender='domain',
-                                                     domain=self)
+        results = commcare_domain_post_save.send_robust(sender='domain', domain=self)
         for result in results:
             # Second argument is None if there was no error
             if result[1]:
@@ -941,6 +940,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             return None
 
     @property
+    @memoized
     def commtrack_settings(self):
         # this import causes some dependency issues so lives in here
         from corehq.apps.commtrack.models import CommtrackConfig

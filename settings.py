@@ -6,7 +6,7 @@ import sys, os
 from django.contrib import messages
 
 # odd celery fix
-import djcelery;
+import djcelery
 
 djcelery.setup_loader()
 
@@ -181,6 +181,7 @@ HQ_APPS = (
     'hqscripts',
     'casexml.apps.case',
     'casexml.apps.phone',
+    'casexml.apps.stock',
     'corehq.apps.cleanup',
     'corehq.apps.cloudcare',
     'corehq.apps.smsbillables',
@@ -195,6 +196,7 @@ HQ_APPS = (
     'corehq.apps.hqmedia',
     'corehq.apps.locations',
     'corehq.apps.commtrack',
+    'corehq.apps.consumption',
     'couchforms',
     'couchexport',
     'couchlog',
@@ -739,6 +741,7 @@ COUCHDB_APPS = [
     'cleanup',
     'cloudcare',
     'commtrack',
+    'consumption',
     'couch',
     # This is necessary for abstract classes in dimagi.utils.couch.undo; otherwise breaks tests
     'couchdbkit_aggregate',
@@ -935,9 +938,6 @@ PILLOWTOPS = {
     'trialconnect': [
         'custom.trialconnect.smspillow.TCSMSPillow',
     ],
-    'commtrack': [
-        'corehq.pillows.commtrack.ConsumptionRatePillow',
-    ]
 }
 
 for k, v in  LOCAL_PILLOWTOPS.items():

@@ -24,6 +24,7 @@ from dimagi.utils.modules import to_function
 from dimagi.utils.web import json_request, json_response
 from dimagi.utils.parsing import string_to_boolean
 from corehq.apps.reports.cache import CacheableRequestMixIn, request_cache
+from django.utils.translation import ugettext
 
 CHART_SPAN_MAP = {1: '10', 2: '6', 3: '4', 4: '3', 5: '2', 6: '2'}
 
@@ -271,7 +272,7 @@ class GenericReportView(CacheableRequestMixIn):
     @property
     @memoized
     def rendered_report_title(self):
-        return self.name
+        return ugettext(self.name)
 
     @property
     @memoized

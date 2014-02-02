@@ -2,7 +2,6 @@ import csv
 from StringIO import StringIO
 from datetime import datetime
 from corehq.apps.commtrack.models import *
-from corehq.apps.commtrack.stockreport import StockTransaction
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.util import strip_plus
 from corehq.apps.users.models import CouchUser
