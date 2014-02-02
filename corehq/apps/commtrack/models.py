@@ -149,8 +149,12 @@ class Product(Document):
 
 
 def product_fixture_generator(user, version, last_sync):
-    if not Domain.get_by_name(user.domain).commtrack_enabled:
+    if not user.domain:
         return []
+    domain = Domain.get_by_name(user.domain)
+    if not domain or not Domain.get_by_name(user.domain).commtrack_enabled:
+        return []
+
     root = ElementTree.Element('fixture',
                                attrib={'id': 'commtrack:products',
                                        'user_id': user.user_id})
@@ -289,7 +293,6 @@ class AlertConfig(DocumentSchema):
     non_report = BooleanProperty(default=False)
 
 class StockRestoreConfig(DocumentSchema):
-
     section_to_consumption_types = DictProperty()
 
 class CommtrackConfig(Document):

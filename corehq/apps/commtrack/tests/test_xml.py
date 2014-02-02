@@ -1,12 +1,20 @@
 import random
 import uuid
 from datetime import datetime
+from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.xml import V2
+from casexml.apps.phone.models import SyncLog
+from casexml.apps.phone.restore import RestoreConfig
+from casexml.apps.phone.tests import synclog_from_restore_payload
+from casexml.apps.phone.tests.utils import synclog_id_from_restore_payload
+from corehq.apps.commtrack.models import ConsumptionConfig, StockRestoreConfig
+from corehq.apps.consumption.shortcuts import set_default_consumption_for_domain
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.stock import const as stockconst
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack import const
-from corehq.apps.commtrack.tests.util import CommTrackTest, get_ota_balance_xml, FIXED_USER
-from casexml.apps.case.tests.util import check_xml_line_by_line
+from corehq.apps.commtrack.tests.util import CommTrackTest, get_ota_balance_xml, FIXED_USER, extract_balance_xml
+from casexml.apps.case.tests.util import check_xml_line_by_line, check_user_has_case
 from corehq.apps.hqcase.utils import get_cases_in_domain
 from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.apps.commtrack.tests.util import make_loc, make_supply_point
@@ -39,27 +47,15 @@ class CommTrackOTATest(CommTrackTest):
 
     def test_ota_basic(self):
         user = self.user
-        date = datetime.utcnow()
-        report = StockReport.objects.create(form_id=uuid.uuid4().hex, date=date, type=stockconst.REPORT_TYPE_BALANCE)
         amounts = [(p._id, i*10) for i, p in enumerate(self.products)]
-        for product_id, amount in amounts:
-            StockTransaction.objects.create(
-                report=report,
-                section_id='stock',
-                case_id=self.sp._id,
-                product_id=product_id,
-                stock_on_hand=amount,
-                quantity=0,
-                type=stockconst.TRANSACTION_TYPE_STOCKONHAND,
-            )
-
+        report = _report_soh(amounts, self.sp._id, 'stock')
         check_xml_line_by_line(
             self,
             balance_ota_block(
                 self.sp,
                 'stock',
                 amounts,
-                datestring=json_format_datetime(date),
+                datestring=json_format_datetime(report.date),
             ),
             get_ota_balance_xml(user)[0],
         )
@@ -73,16 +69,7 @@ class CommTrackOTATest(CommTrackTest):
 
         section_ids = sorted(('stock', 'losses', 'consumption'))
         for section_id in section_ids:
-            for product_id, amount in amounts:
-                StockTransaction.objects.create(
-                    report=report,
-                    section_id=section_id,
-                    case_id=self.sp._id,
-                    product_id=product_id,
-                    stock_on_hand=amount,
-                    quantity=0,
-                    type=stockconst.TRANSACTION_TYPE_STOCKONHAND,
-                )
+            _report_soh(amounts, self.sp._id, section_id, report=report)
 
         balance_blocks = get_ota_balance_xml(user)
         self.assertEqual(3, len(balance_blocks))
@@ -98,6 +85,50 @@ class CommTrackOTATest(CommTrackTest):
                 balance_blocks[i],
             )
 
+    def test_ota_consumption(self):
+        self.ct_settings.consumption_config = ConsumptionConfig(
+            min_transactions=0,
+            min_window=0,
+            optimal_window=60,
+        )
+        self.ct_settings.ota_restore_config = StockRestoreConfig(
+            section_to_consumption_types={'stock': 'consumption'}
+        )
+        set_default_consumption_for_domain(self.domain.name, 5)
+        ota_settings = self.ct_settings.get_ota_restore_settings()
+
+        amounts = [(p._id, i*10) for i, p in enumerate(self.products)]
+        report = _report_soh(amounts, self.sp._id, 'stock')
+        restore_config = RestoreConfig(
+            self.user.to_casexml_user(),
+            version=V2,
+            stock_settings=ota_settings,
+        )
+        balance_blocks = extract_balance_xml(restore_config.get_payload())
+        self.assertEqual(2, len(balance_blocks))
+        stock_block, consumption_block = balance_blocks
+        check_xml_line_by_line(
+            self,
+            balance_ota_block(
+                self.sp,
+                'stock',
+                amounts,
+                datestring=json_format_datetime(report.date),
+            ),
+            stock_block,
+        )
+        check_xml_line_by_line(
+            self,
+            balance_ota_block(
+                self.sp,
+                'consumption',
+                [(p._id, 5) for p in self.products],
+                datestring=json_format_datetime(report.date),
+            ),
+             consumption_block,
+        )
+
+
 class CommTrackSubmissionTest(CommTrackTest):
     user_definitions = [FIXED_USER]
 
@@ -107,7 +138,7 @@ class CommTrackSubmissionTest(CommTrackTest):
         loc2 = make_loc('loc1')
         self.sp2 = make_supply_point(self.domain.name, loc2)
 
-    def submit_xml_form(self, xml_method):
+    def submit_xml_form(self, xml_method, **submit_extras):
         from casexml.apps.case import settings
         settings.CASEXML_FORCE_DOMAIN_CHECK = False
         instance = submission_wrap(
@@ -120,6 +151,7 @@ class CommTrackSubmissionTest(CommTrackTest):
         submit_form_locally(
             instance=instance,
             domain=self.domain.name,
+            **submit_extras
         )
 
     def check_stock_models(self, case, product_id, expected_soh, expected_qty, section_id):
@@ -258,3 +290,67 @@ class CommTrackRequisitionTest(CommTrackSubmissionTest):
 
         for product, amt in amounts:
             self.check_product_stock(self.sp, product, amt, amt, 'stock')
+
+
+class CommTrackSyncTest(CommTrackSubmissionTest):
+
+    def setUp(self):
+        super(CommTrackSyncTest, self).setUp()
+        # reused stuff
+        self.casexml_user = self.user.to_casexml_user()
+        self.sp_block = CaseBlock(
+            case_id=self.sp._id,
+            version=V2,
+        ).as_xml()
+
+        # bootstrap ota stuff
+        self.ct_settings.consumption_config = ConsumptionConfig(
+            min_transactions=0,
+            min_window=0,
+            optimal_window=60,
+        )
+        self.ct_settings.ota_restore_config = StockRestoreConfig(
+            section_to_consumption_types={'stock': 'consumption'}
+        )
+        set_default_consumption_for_domain(self.domain.name, 5)
+        self.ota_settings = self.ct_settings.get_ota_restore_settings()
+
+        # get initial restore token
+        restore_config = RestoreConfig(
+            self.casexml_user,
+            version=V2,
+            stock_settings=self.ota_settings,
+        )
+        self.sync_log_id = synclog_id_from_restore_payload(restore_config.get_payload())
+
+    def testStockSyncToken(self):
+        # first restore should not have the updated case
+        check_user_has_case(self, self.casexml_user, self.sp_block, should_have=False,
+                            restore_id=self.sync_log_id, version=V2)
+
+        # submit with token
+        amounts = [(p._id, float(i*10)) for i, p in enumerate(self.products)]
+        self.submit_xml_form(balance_submission(amounts), last_sync_token=self.sync_log_id)
+        # now restore should have the case
+        check_user_has_case(self, self.casexml_user, self.sp_block, should_have=True,
+                            restore_id=self.sync_log_id, version=V2, line_by_line=False)
+
+
+def _report_soh(amounts, case_id, section_id='stock', report=None):
+    if report is None:
+        report = StockReport.objects.create(
+            form_id=uuid.uuid4().hex,
+            date=datetime.utcnow(),
+            type=stockconst.REPORT_TYPE_BALANCE,
+        )
+    for product_id, amount in amounts:
+        StockTransaction.objects.create(
+            report=report,
+            section_id=section_id,
+            case_id=case_id,
+            product_id=product_id,
+            stock_on_hand=amount,
+            quantity=0,
+            type=stockconst.TRANSACTION_TYPE_STOCKONHAND,
+        )
+    return report
