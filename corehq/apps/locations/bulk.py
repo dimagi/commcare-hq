@@ -161,7 +161,6 @@ def no_changes_needed(domain, existing, properties, form_data, consumption, sp=N
 
 def submit_form(domain, parent, form_data, properties, existing, location_type, consumption):
     # don't save if there is nothing to save
-    sp = SupplyPointCase.get_by_location(existing) if consumption else None
     if no_changes_needed(domain, existing, properties, form_data, consumption):
         return {
             'id': existing._id,
@@ -174,6 +173,9 @@ def submit_form(domain, parent, form_data, properties, existing, location_type, 
     form.strict = False  # optimization hack to turn off strict validation
     if form.is_valid():
         loc = form.save()
+
+        sp = SupplyPointCase.get_by_location(loc) if consumption else None
+
         if consumption and sp:
             for product_code, amount in consumption:
                 set_default_consumption_for_supply_point(
