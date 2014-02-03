@@ -1,4 +1,5 @@
 import logging
+from casexml.apps.case.xform import is_device_report
 from casexml.apps.stock.const import TRANSACTION_SUBTYPE_INFERRED, COMMTRACK_REPORT_XMLNS
 from dimagi.utils.decorators.log_exception import log_exception
 from corehq.apps.commtrack.models import CommtrackConfig, StockTransaction, NewStockReport
@@ -19,6 +20,9 @@ def process_stock(sender, xform, config=None, **kwargs):
     """
     process the commtrack xml constructs in an incoming submission
     """
+    if is_device_report(xform):
+        return
+
     domain = xform.domain
 
     config = CommtrackConfig.for_domain(domain)

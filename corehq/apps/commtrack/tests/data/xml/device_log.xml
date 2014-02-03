@@ -1,0 +1,9 @@
+<?xml version='1.0' standalone='no' ?>
+<device_report xmlns="http://code.javarosa.org/devicereport">
+    <meta>
+        <instanceID>{form_id}</instanceID>
+    </meta>
+    <ns0:balance xmlns:ns0="http://commcarehq.org/ledger/v1" date="{date}" entity-id="{sp_id}" section-id="stock">
+        {product_block}
+    </ns0:balance>
+</device_report>
