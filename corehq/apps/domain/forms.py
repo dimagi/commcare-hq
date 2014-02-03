@@ -420,9 +420,9 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
             self.fields["sms_case_registration_owner_id"].choices = domain_owner_choices
             self.fields["sms_case_registration_user_id"].choices = domain_user_choices
 
-            call_center_user_choices = [(user._id, user.name + ' (user)')
+            call_center_user_choices = [(user._id, user.raw_username + ' [user]')
                                          for user in users]
-            call_center_group_choices = [(group._id, group.name + ' (group)')
+            call_center_group_choices = [(group._id, group.name + ' [group]')
                                          for group in groups]
 
             self.fields["call_center_case_owner"].choices = \
