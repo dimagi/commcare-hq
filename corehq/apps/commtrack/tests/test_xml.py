@@ -1,11 +1,10 @@
+import os
 import random
 import uuid
 from datetime import datetime
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
-from casexml.apps.phone.models import SyncLog
 from casexml.apps.phone.restore import RestoreConfig
-from casexml.apps.phone.tests import synclog_from_restore_payload
 from casexml.apps.phone.tests.utils import synclog_id_from_restore_payload
 from corehq.apps.commtrack.models import ConsumptionConfig, StockRestoreConfig
 from corehq.apps.consumption.shortcuts import set_default_consumption_for_domain
@@ -30,8 +29,8 @@ from corehq.apps.commtrack.tests.data.balances import (
     create_requisition_xml,
     create_fulfillment_xml,
     receipts_enumerated,
-    balance_enumerated
-)
+    balance_enumerated,
+    products_xml, long_date)
 
 
 class CommTrackOTATest(CommTrackTest):
@@ -266,6 +265,33 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         self.submit_xml_form(transfer_first(transfers, balance_amounts))
         for product, amt in transfers:
             self.check_product_stock(self.sp, product, final, 0)
+
+
+class BugSubmissionsTest(CommTrackSubmissionTest):
+    def test_device_report_submissions_ignored(self):
+        """
+        submit a device report with a stock block and make sure it doesn't
+        get processed
+        """
+        self.assertEqual(0, StockTransaction.objects.count())
+
+        fpath = os.path.join(os.path.dirname(__file__), 'data', 'xml', 'device_log.xml')
+        with open(fpath) as f:
+            form = f.read()
+        amounts = [(p._id, 10) for p in self.products]
+        product_block = products_xml(amounts)
+        form = form.format(
+            form_id=uuid.uuid4().hex,
+            user_id=self.user._id,
+            date=long_date(),
+            sp_id=self.sp._id,
+            product_block=product_block
+        )
+        submit_form_locally(
+            instance=form,
+            domain=self.domain.name,
+        )
+        self.assertEqual(0, StockTransaction.objects.count())
 
 
 class CommTrackRequisitionTest(CommTrackSubmissionTest):
