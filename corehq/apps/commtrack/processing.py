@@ -15,8 +15,11 @@ logger = logging.getLogger('commtrack.incoming')
 
 COMMTRACK_LEGACY_REPORT_XMLNS = 'http://commtrack.org/legacy/stock_report'
 
+def process_stock_signal_catcher(sender, xform, config=None, **kwargs):
+    return process_stock(xform)
+
 @log_exception()
-def process_stock(sender, xform, config=None, **kwargs):
+def process_stock(xform):
     """
     process the commtrack xml constructs in an incoming submission
     """
