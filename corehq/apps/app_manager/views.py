@@ -714,7 +714,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
                            and not (app and app.has_careplan_module)
                            and toggle_enabled(toggles.APP_BUILDER_CAREPLAN, req.user.username)),
         'show_advanced': (v2_app
-                           and toggle_enabled(toggles.APP_BUILDER_COMMTRACK, req.user.username)),
+                           and toggle_enabled(toggles.APP_BUILDER_ADVANCED, req.user.username)),
         'module': module,
         'form': form,
     })
