@@ -70,7 +70,7 @@ def process_stock(xform):
         report.create_models()
 
 def unpack_commtrack(xform, config):
-    xml = etree.fromstring(xform.get_xml())
+    xml = xform.get_xml_element()
 
     def commtrack_nodes(node):
         for child in node:
