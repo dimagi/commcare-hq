@@ -226,7 +226,12 @@ def _get_or_update_model(case_update, xform, case_db):
 def is_device_report(doc):
     """exclude device reports"""
     device_report_xmlns = "http://code.javarosa.org/devicereport"
-    return "@xmlns" in doc and doc["@xmlns"] == device_report_xmlns
+    def _from_form_dict(doc):
+        return "@xmlns" in doc and doc["@xmlns"] == device_report_xmlns
+    def _from_xform_instance(doc):
+        return "xmlns" in doc and doc["xmlns"] == device_report_xmlns
+
+    return _from_form_dict(doc) or _from_xform_instance(doc)
 
 
 def has_case_id(case_block):
