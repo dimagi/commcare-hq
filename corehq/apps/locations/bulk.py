@@ -117,6 +117,13 @@ def import_location(domain, location_type, location_data):
     )
 
 
+def invalid_location_type(location_type, parent_obj, parent_relationships):
+    return (
+        parent_obj.location_type not in parent_relationships or
+        location_type not in parent_relationships[parent_obj.location_type]
+    )
+
+
 def check_parent_id(parent_id, domain, location_type):
     if parent_id:
         try:
@@ -129,7 +136,7 @@ def check_parent_id(parent_id, domain, location_type):
                 )
             }
         parent_relationships = parent_child(domain)
-        if location_type not in parent_relationships[parent_obj.location_type]:
+        if invalid_location_type(location_type, parent_obj, parent_relationships):
             return {
                 'id': None,
                 'message': 'Invalid parent type of {0} for child type {1}'.format(
