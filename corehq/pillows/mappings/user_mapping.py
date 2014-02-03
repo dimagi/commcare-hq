@@ -1,6 +1,6 @@
-USER_INDEX="hqusers_dd94ypavd8b15to146900m727gqh4b5q"
+USER_INDEX="hqusers_ff853dapkb27uo1486t0m789gao495q"
 USER_MAPPING={'_all': {'analyzer': 'standard'},
- '_meta': {'comment': 'Ethan made on 2013-01-08',
+ '_meta': {'comment': 'Yedi modified on 2013-01-27',
            'created': None},
  'date_detection': False,
  'date_formats': ['yyyy-MM-dd',
@@ -84,4 +84,10 @@ USER_MAPPING={'_all': {'analyzer': 'standard'},
                                         'username': {'analyzer': 'standard',
                                                      'index': 'analyzed',
                                                      'type': 'string'}},
-                             'type': 'multi_field'}}}
+                             'type': 'multi_field'},
+                '__group_ids': {'type': 'string'},
+                '__group_names': {'fields': {'__group_names': { 'index': 'analyzed',
+                                                                'type': 'string'},
+                                             'exact': {'index': 'not_analyzed',
+                                                                'type': 'string'}},
+                                  'type': 'multi_field'}}}
