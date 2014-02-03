@@ -256,34 +256,57 @@ class FormActions(DocumentSchema):
         return names
 
 
-class LoadUpdateAction(DocumentSchema):
+class AdvancedAction(DocumentSchema):
     case_type = StringProperty()
     case_tag = StringProperty()
-    preload = DictProperty()
     case_properties = DictProperty()
     parent_tag = StringProperty()
 
     close_condition = SchemaProperty(FormActionCondition)
 
+    def get_paths(self):
+        for path in self.case_properties.values():
+            yield path
+
+        if self.close_condition.type == 'if':
+            yield self.close_condition.question
+
+
+class LoadUpdateAction(AdvancedAction):
+    preload = DictProperty()
     show_product_stock = BooleanProperty(default=True)
 
+    def get_paths(self):
+        for path in super(LoadUpdateAction, self).get_paths():
+            yield path
 
-class AdvancedOpenCaseAction(DocumentSchema):
-    case_type = StringProperty()
+        for path in self.preload.values():
+            yield path
+
+
+class AdvancedOpenCaseAction(AdvancedAction):
     case_name = StringProperty()
-    case_tag = StringProperty()
-    case_properties = DictProperty()
     repeat_context = StringProperty()
-    parent_tag = StringProperty()
     parent_reference_id = StringProperty()
 
     open_condition = SchemaProperty(FormActionCondition)
-    close_condition = SchemaProperty(FormActionCondition)
+
+    def get_paths(self):
+        for path in super(AdvancedOpenCaseAction, self).get_paths():
+            yield path
+
+        yield self.case_name
+
+        if self.open_condition.type == 'if':
+            yield self.open_condition.question
 
 
 class AdvancedFormActions(DocumentSchema):
     load_update_cases = SchemaListProperty(LoadUpdateAction)
     open_cases = SchemaListProperty(AdvancedOpenCaseAction)
+
+    def get_all_actions(self):
+        return self.load_update_cases + self.open_cases
 
     def all_property_names(self):
         names = set()
@@ -295,31 +318,18 @@ class AdvancedFormActions(DocumentSchema):
 
         return names
 
-    def get_subcase_actions(self):
-        return (a for a in self.open_cases if a.parent_tag)
+    def subcase_property_names(self):
+        names = set()
+        for action in self.get_subcase_actions():
+            names.update(action.case_properties.keys())
+        return names
 
-#
-# class CommTrackFormActions(DocumentSchema):
-#     case_preload1 = SchemaProperty(CommTrackPreloadAction)
-#     case_preload2 = SchemaProperty(CommTrackPreloadAction)
-#     open_subcase = SchemaProperty(OpenSubCaseAction)
-#
-#     def active_actions(self):
-#         actions = {}
-#         for action_type in ['case_preload1',
-#                             'case_preload2',
-#                             'open_subcase']:
-#             a = getattr(self, action_type)
-#             if a.is_active():
-#                 actions[action_type] = a
-#         return actions
-#
-#     def all_property_names(self):
-#         names = set()
-#         names.update(self.case_preload1.preload.keys())
-#         names.update(self.case_preload2.preload.values())
-#         names.update(self.open_subcase.case_properties.keys())
-#         return names
+    def get_subcase_actions(self):
+        return (a for a in self.get_all_actions() if a.parent_tag)
+
+    def get_case_tags(self):
+        for action in self.get_all_actions():
+            yield action.case_tag
 
 
 class FormSource(object):
@@ -1243,6 +1253,7 @@ class Module(ModuleBase):
 
 
 class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
+    form_type = 'advanced_form'
     actions = SchemaProperty(AdvancedFormActions)
 
     def add_stuff_to_xform(self, xform):
@@ -1252,22 +1263,26 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
     def check_actions(self):
         errors = []
 
-        #TODO: fix this
-        #
-        # if not self.actions.open_subcase.case_type:
-        #     errors.append({'type': 'subcase has no case type'})
-        #
-        # errors.extend(self.check_case_properties(
-        #     all_names=self.actions.all_property_names(),
-        #     subcase_names=self.actions.open_subcase.case_properties
-        # ))
-        #
-        # def generate_paths():
-        #     for action in self.actions.active_actions().values():
-        #         for path in FormAction.get_action_paths(action):
-        #             yield path
-        #
-        # self.check_paths(generate_paths())
+        for action in self.actions.get_subcase_actions():
+            if not action.parent_tag:
+                errors.append({'type': 'subcase has no parent tag'})
+            elif action.parent_tag not in self.actions.get_case_tags():
+                errors.append({'type': 'subcase parent tag does not exist', 'word': action.parent_tag})
+
+            if not action.case_name:
+                errors.append({'type': 'subcase has no name property'})
+
+        errors.extend(self.check_case_properties(
+            all_names=self.actions.all_property_names(),
+            subcase_names=self.actions.subcase_property_names()
+        ))
+
+        def generate_paths():
+            for action in self.actions.all_actions():
+                for path in action.get_paths():
+                    yield path
+
+        self.check_paths(generate_paths())
 
         return errors
 
@@ -1309,7 +1324,7 @@ class AdvancedModule(ModuleBase):
     product_details = SchemaProperty(DetailPair)
 
     @classmethod
-    def new_module(cls, name, lang, case_type=None, requisition_mode=None):
+    def new_module(cls, name, lang, case_type=None, commtrack_enabled=False):
         detail = Detail(
             columns=[DetailColumn(
                 format='plain',
@@ -1318,15 +1333,9 @@ class AdvancedModule(ModuleBase):
                 model='case',
             )]
         )
-        return AdvancedModule(
-            name={(lang or 'en'): name or ugettext("Manage Supply Points")},
-            forms=[],
-            case_type=case_type or '',
-            case_details=DetailPair(
-                short=Detail(detail.to_json()),
-                long=Detail(detail.to_json()),
-            ),
-            product_details=DetailPair(
+        product_details = None
+        if commtrack_enabled:
+            product_details = DetailPair(
                 short=Detail(
                     columns=[
                         DetailColumn(
@@ -1338,7 +1347,17 @@ class AdvancedModule(ModuleBase):
                     ],
                 ),
                 long=Detail(),
+            )
+
+        return AdvancedModule(
+            name={(lang or 'en'): name or ugettext("Manage Supply Points")},
+            forms=[],
+            case_type=case_type or '',
+            case_details=DetailPair(
+                short=Detail(detail.to_json()),
+                long=Detail(detail.to_json()),
             ),
+            product_details=product_details,
         )
 
     def requires_case_details(self):
@@ -1368,19 +1387,21 @@ class AdvancedModule(ModuleBase):
                     'type': 'no case detail for supply point',
                     'module': module_info,
                 }
-            if not self.product_details.short.columns:
+            if self.get_app().commtrack_enabled and not self.product_details.short.columns:
                 yield {
                     'type': 'no case detail for products',
                     'module': module_info,
                 }
             columns = self.case_details.short.columns + self.case_details.long.columns
-            columns += self.product_details.short.columns
+            if self.get_app().commtrack_enabled:
+                columns += self.product_details.short.columns
             errors = self.validate_detail_columns(columns)
             for error in errors:
                 yield error
 
 
 class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):
+    form_type = 'careplan_form'
     mode = StringProperty(required=True, choices=['create', 'update'])
     custom_case_updates = DictProperty()
     case_preload = DictProperty()
