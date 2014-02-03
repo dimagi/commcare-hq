@@ -32,15 +32,15 @@
         </form>
     </div>
 {% endif %}
-{% if show_commtrack %}
-    <div id="commtrack-module-dialog" class="modal hide fade">
+{% if show_advanced %}
+    <div id="advanced-module-dialog" class="modal hide fade">
         <div class="modal-header">
             <a class="close" data-dismiss="modal">×</a>
             <h4>{% trans "New CommTrack module" %}</h4>
         </div>
-        <form class="form-horizontal" name="new_commtrack_module" action="{% url "corehq.apps.app_manager.views.new_module" domain app.id %}" method="post">
+        <form class="form-horizontal" name="new_advanced_module" action="{% url "corehq.apps.app_manager.views.new_module" domain app.id %}" method="post">
             <div class="modal-body">
-                <input type="hidden" name="module_type" value="commtrack" />
+                <input type="hidden" name="module_type" value="advanced" />
                 <div class="control-group">
                     <label class="control-label" for="name">{% trans "Module name" %}</label>
                     <div class="controls">

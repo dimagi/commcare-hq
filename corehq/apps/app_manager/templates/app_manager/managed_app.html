@@ -262,7 +262,7 @@
                           method="post" style="display: none">
                     <input id="new-module-type" type="hidden" name="module_type" />
                 </form>
-                {% if show_care_plan or show_commtrack %}
+                {% if show_care_plan or show_advanced %}
                     <li class="sort-disabled dropdown">
                         <a href="#" data-toggle="dropdown">
                             <i class="new-module-icon icon-plus icon-blue"></i>
@@ -273,8 +273,8 @@
                             {% if show_care_plan %}
                             <li><a data-toggle="modal" href="#careplan-module-dialog">{% trans "New Care Plan Module" %}</a></li>
                             {% endif %}
-                            {% if show_commtrack %}
-                            <li><a data-toggle="modal" href="#commtrack-module-dialog">{% trans "New CommTrack Module" %}</a></li>
+                            {% if show_advanced %}
+                            <li><a data-toggle="modal" href="#advanced-module-dialog">{% trans "New Advanced Module" %}</a></li>
                             {% endif %}
                         </ul>
                     </li>
