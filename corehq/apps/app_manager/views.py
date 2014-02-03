@@ -66,7 +66,7 @@ from corehq.apps.reports import util as report_utils
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
 from corehq.apps.app_manager.models import Application, get_app, DetailColumn, Form, FormActions,\
     AppEditingError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, \
-    DeleteApplicationRecord, str_to_cls, SavedAppBuild, ParentSelect, Module, CareplanModule, CareplanForm, CommTrackModule, CommTrackForm, CommTrackFormActions
+    DeleteApplicationRecord, str_to_cls, SavedAppBuild, ParentSelect, Module, CareplanModule, CareplanForm, AdvancedModule, AdvancedForm, AdvancedFormActions
 from corehq.apps.app_manager.models import import_app as import_app_util, SortElement
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST
@@ -398,8 +398,11 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
             'case_preload': [{'key': key, 'path': path} for key, path in form.case_preload.items()],
         })
         return "app_manager/form_view_careplan.html", context
-    elif isinstance(form, CommTrackForm):
-        return "app_manager/form_view_commtrack.html", context
+    elif isinstance(form, AdvancedForm):
+        context.update({
+            'show_custom_ref': toggle_enabled(toggles.APP_BUILDER_CUSTOM_PARENT_REF, request.user.username),
+        })
+        return "app_manager/form_view_advanced.html", context
     else:
         context.update({
             'is_user_registration': is_user_registration,
@@ -635,7 +638,7 @@ def get_module_view_context_and_template(app, module):
             "goal_sortElements": json.dumps(get_sort_elements(module.goal_details.short)),
             "task_sortElements": json.dumps(get_sort_elements(module.task_details.short)),
         }
-    elif isinstance(module, CommTrackModule):
+    elif isinstance(module, AdvancedModule):
         case_type = module.case_type
         return "app_manager/module_view_commtrack.html", {
             'case_properties': sorted(builder.get_properties(case_type)),
@@ -890,13 +893,13 @@ def _new_commtrack_module(req, domain, app, name, lang):
     case_type = req.POST.get('ct_case_type')
 
     module = app.add_module(
-        CommTrackModule.new_module(
+        AdvancedModule.new_module(
             name,
             lang,
             case_type=case_type,
         )
     )
-    form = CommTrackForm(
+    form = AdvancedForm(
         name={lang if lang else "en": _("Untitled Form")},
     )
     module.forms.append(form)
@@ -1340,7 +1343,7 @@ def edit_advanced_form_actions(req, domain, app_id, module_id, form_id):
     form = app.get_module(module_id).get_form(form_id)
     json_loads = json.loads(req.POST.get('actions'))
     print json_loads
-    actions = CommTrackFormActions.wrap(json_loads)
+    actions = AdvancedFormActions.wrap(json_loads)
     print actions
     form.actions = actions
     response_json = {}
