@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='{encoding}' ?>
+<form xmlns="http://commcarehq.org/couchforms-tests">
+    <meta>
+        <instanceID>{form_id}</instanceID>
+    </meta>
+    <test>{sample_value}</test>
+</form>

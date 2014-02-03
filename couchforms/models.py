@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 import datetime, hashlib, logging, time
 from copy import copy
+from lxml import etree
 from xml.etree import ElementTree
 
 from django.utils.datastructures import SortedDict
@@ -238,7 +239,13 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin):
                 return self[const.TAG_XML]
             except AttributeError:
                 return None
-    
+
+    def get_xml_element(self):
+        xml = self.get_xml()
+        if isinstance(xml, unicode):
+            xml = xml.encode('utf-8')
+        return etree.fromstring(xml)
+
     @property
     def attachments(self):
         """
