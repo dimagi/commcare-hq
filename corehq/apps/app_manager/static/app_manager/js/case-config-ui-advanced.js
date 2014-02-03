@@ -1,6 +1,6 @@
 /*globals $, COMMCAREHQ, _, ko, CC_UTILS, console*/
 
-var CommTrackConfig = (function () {
+var AdvancedCase = (function () {
     'use strict';
 
     var DEFAULT_CONDITION = function (type) {
@@ -11,7 +11,7 @@ var CommTrackConfig = (function () {
         };
     };
 
-    var Commtrack = function (params) {
+    var CaseConfig = function (params) {
         var self = this;
 
         self.home = params.home;
@@ -23,6 +23,7 @@ var CommTrackConfig = (function () {
         self.caseType = params.caseType;
         self.reserved_words = params.reserved_words;
         self.moduleCaseTypes = params.moduleCaseTypes;
+        self.commtrack = params.commtrack_enabled;
         self.propertiesMap = ko.mapping.fromJS(params.propertiesMap);
 
         self.saveButton = COMMCAREHQ.SaveButton.init({
@@ -214,9 +215,11 @@ var CommTrackConfig = (function () {
                 self.load_update_cases.push(LoadUpdateAction.wrap({
                     case_type: config.caseType,
                     case_tag: 'load_' + config.caseType + index,
+                    parent_tag: '',
                     preload: [],
                     case_properties: [],
-                    close_condition: DEFAULT_CONDITION('never')
+                    close_condition: DEFAULT_CONDITION('never'),
+                    show_product_stock: self.config.commtrack
                 }, self.config));
                 if (index > 0) {
                     $('#case-load-accordion').accordion('activate', index);
@@ -331,13 +334,20 @@ var CommTrackConfig = (function () {
                     closeSnip + "</span>",
                     action, {variable: 'action'});
             }
+        },
+        suggestedProperties: function(action) {
+            if (_(action.config.propertiesMap).has(action.case_type())) {
+                return  action.config.propertiesMap[action.case_type()]();
+            } else {
+                return [];
+            }
         }
     };
 
     var LoadUpdateAction = {
         mapping: function (self) {
             return {
-                include: ['case_type', 'case_tag', 'close_condition', 'show_product_stock'],
+                include: ['case_type', 'case_tag', 'parent_tag', 'close_condition', 'show_product_stock'],
                 preload: {
                     create: function (options) {
                         return CasePreloadProperty.wrap(options.data,  self);
@@ -365,6 +375,21 @@ var CommTrackConfig = (function () {
                 }
             };
 
+            self.subcaseLoad = ko.computed({
+                read: function () {
+                    return self.parent_tag();
+                },
+                write: function (value) {
+                    console.log(value);
+                    if (value) {
+                        var parent = self.config.caseConfigViewModel.load_update_cases()[0];
+                        if (parent) {
+                            self.parent_tag(parent.case_tag());
+                        }
+                    }
+                }
+            });
+
             self.close_case = ko.computed(ActionBase.close_case(self));
 
             self.validate = ko.computed(function () {
@@ -391,11 +416,7 @@ var CommTrackConfig = (function () {
             });
 
             self.suggestedProperties = ko.computed(function () {
-                if (_(config.propertiesMap).has(self.case_type())) {
-                    return config.propertiesMap[self.case_type()]();
-                } else {
-                    return [];
-                }
+                return ActionBase.suggestedProperties(self);
             });
 
             self.addProperty = function () {
@@ -477,6 +498,10 @@ var CommTrackConfig = (function () {
                 }
             };
 
+            self.suggestedProperties = ko.computed(function () {
+                return ActionBase.suggestedProperties(self);
+            });
+
             self.validate = ko.computed(function () {
                 return ActionBase.validate(self, self.case_type(), self.case_tag());
             });
@@ -552,9 +577,7 @@ var CommTrackConfig = (function () {
                     }
                 },
                 // template: case-config:case-transaction:case-properties
-                suggestedSaveProperties: function () {
-                    return action.suggestedProperties();
-                }
+                suggestedSaveProperties: self.action.suggestedProperties
             };
 
             self.defaultKey = ko.computed(function () {
@@ -595,9 +618,7 @@ var CommTrackConfig = (function () {
                     }
                 },
                 // template: case-config:case-transaction:case-preload
-                suggestedPreloadProperties: function () {
-                    return action.suggestedProperties();
-                }
+                suggestedPreloadProperties: self.action.suggestedProperties
             };
             self.defaultKey = ko.computed(function () {
                 return '';
@@ -654,6 +675,6 @@ var CommTrackConfig = (function () {
     };
 
     return {
-        Commtrack: Commtrack
+        CaseConfig: CaseConfig
     };
 }());

@@ -53,45 +53,71 @@
                 }"></div>
                 <!-- /ko -->
                 <div data-bind="if: actionType == 'load'" class="row-fluid">
-                    <div class="well span6">
+                    <div class="well well-small span6">
                         <div data-bind="template: 'case-config:case-transaction:case-preload'"></div>
                     </div>
-                    <div class="well span6">
+                    <div class="well well-small span6">
                         <div data-bind="template: 'case-config:case-transaction:case-properties'"></div>
                     </div>
                 </div>
                 <div data-bind="if: actionType == 'open'" class="row-fluid">
-                    <div class="well">
+                    <div class="well well-small">
                         <div data-bind="template: 'case-config:case-transaction:case-properties'"></div>
                     </div>
                 </div>
-                <div class="well">
-                    <div class="form-inline" data-bind="if: actionType == 'open', visible: actionType == 'open'">
-                        <label class="checkbox">
-                            <input type="checkbox" data-bind="checked: subcase"/>
-                            {% trans "Make this case a subcase" %}
-                            <span data-bind="if: subcase">
-                                {% trans " of " %}
-                            </span>
-                        </label>
-                        <span data-bind="if: subcase">
-                            <select data-bind="optstr: $parent.getCaseTags('load'),
-                                value: parent_tag,
-                                edit: $root.edit">
-                            </select>
-                        </span>
-                        <hr/>
-                    </div>
+                <div class="well well-small">
                     <div class="form-inline">
-                        <label class="checkbox">
-                            <input type="checkbox" data-bind="checked: close_case"/>
-                            {% trans "Close this case when the form is complete" %}
-                        </label>
-                        <div data-bind="template: {
-                            name: 'case-config:condition',
-                            data: {condition: close_condition, case_transaction: $data},
-                            if: close_case
-                        }"></div>
+                        <!-- ko if:  actionType === 'load' -->
+                        <div class="control-group">
+                            <label class="checkbox">
+                                <input type="checkbox" data-bind="checked: show_product_stock"/>
+                                {% trans "Display the Product Stock for this Supply Point after it is selected" %}
+                            </label>
+                        </div>
+
+                        <!-- ko if:  $index() > 0 -->
+                        <div class="control-group">
+                            <label class="checkbox">
+                                <input type="checkbox" data-bind="checked: subcaseLoad"/>
+                                {% trans "This case is a subcase of the previous case" %}
+                            </label>
+                        </div>
+                        <!-- /ko -->
+                        <!-- /ko -->
+
+                        <!-- ko if:  actionType === 'open' -->
+                        <div class="control-group">
+                            <label class="checkbox">
+                                <input type="checkbox" data-bind="checked: subcase"/>
+                                {% trans "Make this case a subcase" %}
+                                <span data-bind="if: subcase">
+                                    {% trans " of " %}
+                                </span>
+                            </label>
+                            <span data-bind="if: subcase">
+                                <select data-bind="optstr: $parent.getCaseTags('load'),
+                                    value: parent_tag,
+                                    edit: $root.edit">
+                                </select>
+                                {% if show_custom_ref %}
+                                    <label>{% trans "Override reference id: " %}</label>
+                                    <input type="text" data-bind="value: parent_reference_id, edit: $root.edit"/>
+                                {% endif %}
+                            </span>
+                        </div>
+                        <!-- /ko -->
+
+                        <div class="control-group">
+                            <label class="checkbox">
+                                <input type="checkbox" data-bind="checked: close_case"/>
+                                {% trans "Close this case when the form is complete" %}
+                            </label>
+                            <div data-bind="template: {
+                                name: 'case-config:condition',
+                                data: {condition: close_condition, case_transaction: $data},
+                                if: close_case
+                            }"></div>
+                        </div>
                     </div>
                 </div>
             </div>

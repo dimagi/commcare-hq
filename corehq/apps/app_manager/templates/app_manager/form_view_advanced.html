@@ -11,7 +11,7 @@
 
     <script src="{% static 'app_manager/js/case-knockout-bindings.js' %}"></script>
     <script src="{% static 'app_manager/js/case-config-utils.js' %}"></script>
-    <script src="{% static 'app_manager/js/commtrack-config-ui.js' %}"></script>
+    <script src="{% static 'app_manager/js/case-config-ui-advanced.js' %}"></script>
     <script src="{% static 'cloudcare/js/util.js' %}"></script>
 {% endblock %}
 
@@ -69,7 +69,7 @@
             var edit = {% if edit %}true{% else %}false{% endif %};
 
             {% if form.source %}
-            var caseConfig = new CommTrackConfig.Commtrack({
+            var caseConfig = new AdvancedCase.CaseConfig({
                 home: $('#casexml_home'),
                 actions: {{ form.actions|JSON }},
                 questions: {{ xform_questions|JSON }},
@@ -79,7 +79,8 @@
                 caseType: {{ form.get_case_type|JSON }},
                 reserved_words: {{ case_reserved_words_json|JSON }},
                 moduleCaseTypes: {{ module_case_types|JSON }},
-                propertiesMap: {{ case_properties|JSON }}
+                propertiesMap: {{ case_properties|JSON }},
+                commtrack_enabled: {{ app.commtrack_enabled|JSON }}
             });
             caseConfig.init();
             {% endif %}
@@ -253,7 +254,7 @@
             </p>
         {% else %}{% if form.source %}
             <div class="casexml" id="casexml_home">
-                {% include 'app_manager/partials/case_config_commtrack.html' %}
+                {% include 'app_manager/partials/case_config_advanced.html' %}
             </div>
         {% else %}
             <p class="alert alert-warning">
