@@ -640,7 +640,7 @@ def get_module_view_context_and_template(app, module):
         }
     elif isinstance(module, AdvancedModule):
         case_type = module.case_type
-        return "app_manager/module_view_commtrack.html", {
+        return "app_manager/module_view_advanced.html", {
             'case_properties': sorted(builder.get_properties(case_type)),
             'product_properties': ('name', commtrack_ledger_sections(app.commtrack_requisition_mode)),
             'case_sortElements': json.dumps(get_sort_elements(module.case_details.short)),
@@ -897,6 +897,7 @@ def _new_commtrack_module(req, domain, app, name, lang):
             name,
             lang,
             case_type=case_type,
+            commtrack_enabled=app.commtrack_enabled
         )
     )
     form = AdvancedForm(
@@ -1342,9 +1343,7 @@ def edit_advanced_form_actions(req, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
     form = app.get_module(module_id).get_form(form_id)
     json_loads = json.loads(req.POST.get('actions'))
-    print json_loads
     actions = AdvancedFormActions.wrap(json_loads)
-    print actions
     form.actions = actions
     response_json = {}
     app.save(response_json)
