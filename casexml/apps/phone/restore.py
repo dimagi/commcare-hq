@@ -84,7 +84,6 @@ class RestoreConfig(object):
             return entry_xml(trans.product_id, trans.stock_on_hand)
 
         def consumption_entry(case_id, product_id, section_id):
-            # todo, config
             consumption_value = compute_consumption(case_id, product_id, datetime.utcnow(), section_id,
                                                     self.stock_settings.consumption_config)
             if consumption_value is not None:
