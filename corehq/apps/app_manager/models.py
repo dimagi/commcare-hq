@@ -257,6 +257,7 @@ class LoadUpdateAction(DocumentSchema):
     case_tag = StringProperty()
     preload = DictProperty()
     case_properties = DictProperty()
+    parent_tag = StringProperty()
 
     close_condition = SchemaProperty(FormActionCondition)
 
@@ -276,7 +277,7 @@ class AdvancedOpenCaseAction(DocumentSchema):
     close_condition = SchemaProperty(FormActionCondition)
 
 
-class CommTrackFormActions(DocumentSchema):
+class AdvancedFormActions(DocumentSchema):
     load_update_cases = SchemaListProperty(LoadUpdateAction)
     open_cases = SchemaListProperty(AdvancedOpenCaseAction)
 
@@ -1012,7 +1013,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
             elif doc_type == 'CareplanModule':
                 return CareplanModule.wrap(data)
             elif doc_type == 'CommTrackModule':
-                return CommTrackModule.wrap(data)
+                return AdvancedModule.wrap(data)
             else:
                 raise ValueError('Unexpected doc_type for Module', doc_type)
         else:
@@ -1237,11 +1238,11 @@ class Module(ModuleBase):
             }
 
 
-class CommTrackForm(IndexedFormBase, NavMenuItemMediaMixin):
-    actions = SchemaProperty(CommTrackFormActions)
+class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
+    actions = SchemaProperty(AdvancedFormActions)
 
     def add_stuff_to_xform(self, xform):
-        super(CommTrackForm, self).add_stuff_to_xform(xform)
+        super(AdvancedForm, self).add_stuff_to_xform(xform)
         # TODO: add stuff to xform
 
     def check_actions(self):
@@ -1297,9 +1298,9 @@ class CommTrackForm(IndexedFormBase, NavMenuItemMediaMixin):
         return parent_types, case_properties
 
 
-class CommTrackModule(ModuleBase):
+class AdvancedModule(ModuleBase):
     case_label = DictProperty()
-    forms = SchemaListProperty(CommTrackForm)
+    forms = SchemaListProperty(AdvancedForm)
     case_details = SchemaProperty(DetailPair)
     product_details = SchemaProperty(DetailPair)
 
@@ -1313,7 +1314,7 @@ class CommTrackModule(ModuleBase):
                 model='case',
             )]
         )
-        return CommTrackModule(
+        return AdvancedModule(
             name={(lang or 'en'): name or ugettext("Manage Supply Points")},
             forms=[],
             case_type=case_type or '',
