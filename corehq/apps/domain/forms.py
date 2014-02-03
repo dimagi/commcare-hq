@@ -29,6 +29,7 @@ from corehq.apps.reminders.models import CaseReminderHandler
 
 from corehq.apps.users.models import WebUser, CommCareUser
 from corehq.apps.groups.models import Group
+from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.timezones.fields import TimeZoneField
 from dimagi.utils.timezones.forms import TimeZoneChoiceField
 from django.template.loader import render_to_string
@@ -736,3 +737,52 @@ class BillingAccountInfoForm(forms.ModelForm):
             logger.exception("There was an error subscribing the domain '%s' to plan '%s'. "
                              "Go quickly!" % (self.domain, self.plan_version.plan.name))
         return False
+
+
+class ProBonoForm(forms.Form):
+    contact_email = forms.CharField()
+    organization = forms.CharField(required=False)
+    project_overview = forms.CharField(widget=forms.Textarea)
+    pay_only_features_needed = forms.BooleanField(required=False)
+    duration_of_project = forms.CharField(help_text="We grant pro-bono software plans for "
+                                                    "12 months at a time. After 12 months "
+                                                    "groups must reapply to renew their "
+                                                    "pro-bono subscription.")
+
+    def __init__(self, *args, **kwargs):
+        super(ProBonoForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_class = 'form form-horizontal'
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+            'Pro-Bono Application',
+                'contact_email',
+                'organization',
+                'project_overview',
+                'pay_only_features_needed',
+                'duration_of_project',
+            ),
+            FormActions(
+                crispy.ButtonHolder(
+                    crispy.Submit('submit_pro_bono', 'Submit Pro-Bono Application')
+                )
+            ),
+        )
+
+    def process_submission(self):
+        try:
+            params = {
+                'contact_email': self.cleaned_data['contact_email'],
+                'organization': self.cleaned_data['organization'],
+                'project_overview': self.cleaned_data['project_overview'],
+                'pay_only_features_needed': self.cleaned_data['pay_only_features_needed'],
+                'duration_of_project': self.cleaned_data['duration_of_project'],
+            }
+            html_content = render_to_string("domain/email/pro_bono_application.html", params)
+            text_content = render_to_string("domain/email/pro_bono_application.txt", params)
+            recipient = "infomation@dimagi.com"
+            send_HTML_email("Pro-Bono Application", recipient, html_content, text_content=text_content)
+        except Exception:
+            logging.error("Couldn't send pro-bono application email. "
+                          "Contact: %s" % self.cleaned_data['contact_email']
+            )
