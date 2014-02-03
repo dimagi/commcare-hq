@@ -371,7 +371,7 @@ var AdvancedCase = (function () {
             // template: case-config:condition
             self.allow = {
                 repeats: function () {
-                    return true;
+                    return false;
                 }
             };
 
@@ -521,6 +521,20 @@ var AdvancedCase = (function () {
 
             self.propertyCounts = ko.computed(ActionBase.propertyCounts(self));
 
+            self.case_name = ko.computed(function() {
+                try {
+                    return _(self.case_properties()).find(function (p) {
+                        return p.key() === 'name' && p.required();
+                    }).path();
+                } catch (e) {
+                    return null;
+                }
+            });
+
+            self.repeat_context = function () {
+                return self.config.get_repeat_context(self.case_name());
+            };
+
             self.addProperty = function () {
                 self.case_properties.push(CaseProperty.wrap({
                     key: '',
@@ -573,7 +587,7 @@ var AdvancedCase = (function () {
                 // template: case-config:case-properties:question
                 allow: {
                     repeats: function () {
-                        return true;
+                        return action.allow.repeats();
                     }
                 },
                 // template: case-config:case-transaction:case-properties
@@ -595,12 +609,13 @@ var AdvancedCase = (function () {
                         return "Property updated by two questions";
                     } else if (action.config.reserved_words.indexOf(self.key()) !== -1) {
                         return '<strong>' + self.key() + '</strong> is a reserved word';
-                    } else if (self.repeat_context() && self.repeat_context() !== action.repeat_context()) {
+                    } else if (self.repeat_context() && self.repeat_context() !== self.action.repeat_context()) {
                         return 'Inside the wrong repeat!';
                     }
                 }
                 return null;
             });
+
             return self;
         }
     };
@@ -614,7 +629,7 @@ var AdvancedCase = (function () {
                 // template: case-config:case-properties:question
                 allow: {
                     repeats: function () {
-                        return true;
+                        return action.allow.repeats();
                     }
                 },
                 // template: case-config:case-transaction:case-preload
@@ -639,6 +654,7 @@ var AdvancedCase = (function () {
                 }
                 return null;
             });
+
             return self;
         }
     };

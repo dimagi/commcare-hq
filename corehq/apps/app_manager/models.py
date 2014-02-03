@@ -310,7 +310,7 @@ class AdvancedFormActions(DocumentSchema):
 
     def all_property_names(self):
         names = set()
-        for action in self.load_update_close:
+        for action in self.load_update_cases:
             names.update(action.preload.keys())
             names.update(action.case_properties.keys())
         for action in self.open_cases:
@@ -1026,7 +1026,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
                 return Module.wrap(data)
             elif doc_type == 'CareplanModule':
                 return CareplanModule.wrap(data)
-            elif doc_type == 'CommTrackModule':
+            elif doc_type == 'AdvancedModule':
                 return AdvancedModule.wrap(data)
             else:
                 raise ValueError('Unexpected doc_type for Module', doc_type)
@@ -1269,7 +1269,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             elif action.parent_tag not in self.actions.get_case_tags():
                 errors.append({'type': 'subcase parent tag does not exist', 'word': action.parent_tag})
 
-            if not action.case_name:
+            if isinstance(action, AdvancedOpenCaseAction) and not action.case_name:
                 errors.append({'type': 'subcase has no name property'})
 
         errors.extend(self.check_case_properties(
@@ -1278,7 +1278,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
         ))
 
         def generate_paths():
-            for action in self.actions.all_actions():
+            for action in self.actions.get_all_actions():
                 for path in action.get_paths():
                     yield path
 
@@ -1325,17 +1325,35 @@ class AdvancedModule(ModuleBase):
 
     @classmethod
     def new_module(cls, name, lang, case_type=None, commtrack_enabled=False):
+        if commtrack_enabled:
+            names = {
+                'case_detail': ugettext("Supply point"),
+                'module': ugettext("Manage Supply Points")
+            }
+        else:
+            names = {
+                'case_detail': ugettext("Name"),
+                'module': ugettext("Untitled Module")
+            }
+
         detail = Detail(
             columns=[DetailColumn(
                 format='plain',
-                header={(lang or 'en'): ugettext("Supply point")},
+                header={(lang or 'en'): names['case_detail']},
                 field='name',
                 model='case',
             )]
         )
-        product_details = None
-        if commtrack_enabled:
-            product_details = DetailPair(
+
+        return AdvancedModule(
+            name={(lang or 'en'): name or names['module']},
+            forms=[],
+            case_type=case_type or '',
+            case_details=DetailPair(
+                short=Detail(detail.to_json()),
+                long=Detail(detail.to_json()),
+            ),
+            product_details=DetailPair(
                 short=Detail(
                     columns=[
                         DetailColumn(
@@ -1347,17 +1365,7 @@ class AdvancedModule(ModuleBase):
                     ],
                 ),
                 long=Detail(),
-            )
-
-        return AdvancedModule(
-            name={(lang or 'en'): name or ugettext("Manage Supply Points")},
-            forms=[],
-            case_type=case_type or '',
-            case_details=DetailPair(
-                short=Detail(detail.to_json()),
-                long=Detail(detail.to_json()),
             ),
-            product_details=product_details,
         )
 
     def requires_case_details(self):

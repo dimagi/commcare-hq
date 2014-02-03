@@ -56,29 +56,31 @@
             }
             {% endif %}
 
-            var $product_home = $("#product-detail-screen-config");
-            var product_detailScreenConfig = DetailScreenConfig.init($product_home, {
-                state: {
-                    type: 'product',
-                    short: {{ module.product_details.short|JSON }},
-                    long: null
-                },
-                properties: {{ product_properties|JSON }},
-                lang: {{ lang|JSON }},
-                langs: {{ app.langs|JSON }},
-                edit: {{ edit|JSON }},
-                saveUrl: "{% url "edit_module_detail_screens" domain app.id module.id %}"
-            });
+            {% if app.commtrack_enabled %}
+                var $product_home = $("#product-detail-screen-config");
+                var product_detailScreenConfig = DetailScreenConfig.init($product_home, {
+                    state: {
+                        type: 'product',
+                        short: {{ module.product_details.short|JSON }},
+                        long: null
+                    },
+                    properties: {{ product_properties|JSON }},
+                    lang: {{ lang|JSON }},
+                    langs: {{ app.langs|JSON }},
+                    edit: {{ edit|JSON }},
+                    saveUrl: "{% url "edit_module_detail_screens" domain app.id module.id %}"
+                });
 
-            {% if product_sortElements %}
-            var product_parsedSortRows = JSON.parse({{ product_sortElements|JSON }});
-            for (var i = 0; i < product_parsedSortRows.length; i++) {
-                product_detailScreenConfig.sortRows.addSortRow(
-                    product_parsedSortRows[i].field,
-                    product_parsedSortRows[i].type,
-                    product_parsedSortRows[i].direction
-                );
-            }
+                {% if product_sortElements %}
+                var product_parsedSortRows = JSON.parse({{ product_sortElements|JSON }});
+                for (var i = 0; i < product_parsedSortRows.length; i++) {
+                    product_detailScreenConfig.sortRows.addSortRow(
+                        product_parsedSortRows[i].field,
+                        product_parsedSortRows[i].type,
+                        product_parsedSortRows[i].direction
+                    );
+                }
+                {% endif %}
             {% endif %}
         });
         $(function () {
@@ -126,11 +128,13 @@
             {% trans "Case List" %}
         </a>
     </li>
+    {% if app.commtrack_enabled %}
     <li>
         <a href="#product-detail-screen-config-tab" data-toggle="tab">
             {% trans "Prodcut List" %}
         </a>
     </li>
+    {% endif %}
 </ul>
 <div class="tab-content">
     <div class="tab-pane active" id="module-settings">
@@ -297,6 +301,7 @@
         </div>
     </div>
 
+    {% if app.commtrack_enabled %}
     <div class="tab-pane" id="product-detail-screen-config-tab">
         <div id="product-detail-screen-config-body">
             <div id="product-detail-screen-sort">
@@ -397,6 +402,7 @@
             </div>
         </div>
     </div>
+    {% endif %}
 </div>
 </div>
 {% endblock %}

@@ -713,7 +713,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         'show_care_plan': (v2_app
                            and not (app and app.has_careplan_module)
                            and toggle_enabled(toggles.APP_BUILDER_CAREPLAN, req.user.username)),
-        'show_commtrack': (v2_app
+        'show_advanced': (v2_app
                            and toggle_enabled(toggles.APP_BUILDER_COMMTRACK, req.user.username)),
         'module': module,
         'form': form,
@@ -887,7 +887,7 @@ def _new_careplan_module(req, domain, app, name, lang):
     return response
 
 
-def _new_commtrack_module(req, domain, app, name, lang):
+def _new_advanced_module(req, domain, app, name, lang):
     case_type = req.POST.get('ct_case_type')
 
     module = app.add_module(
@@ -910,7 +910,7 @@ def _new_commtrack_module(req, domain, app, name, lang):
     app.save()
     response = back_to_main(req, domain, app_id=app.id, module_id=module_id)
     response.set_cookie('suppress_build_errors', 'yes')
-    messages.info(req, _('Caution: CommTrack modules are a labs feature'))
+    messages.info(req, _('Caution: Advanced modules are a labs feature'))
     return response
 
 
@@ -2245,8 +2245,8 @@ MODULE_TYPE_MAP = {
              _('This application already has a Careplan module'))
         ]
     },
-    'commtrack': {
-        FN: _new_commtrack_module,
+    'advanced': {
+        FN: _new_advanced_module,
         VALIDATIONS: common_module_validations
     }
 }
