@@ -114,8 +114,8 @@ class SubscriptionInterface(BaseCRUDAdminInterface):
                 and (subscription.date_end is None
                         or (EndDateFilter.get_start_date(self.request).date() <= subscription.date_end
                             and EndDateFilter.get_end_date(self.request).date() >= subscription.date_end)) \
-                and (DateCreatedFilter.get_start_date(self.request).date() <= subscription.date_created
-                    and DateCreatedFilter.get_end_date(self.request).date() >= subscription.date_created) \
+                and (DateCreatedFilter.get_start_date(self.request).date() <= subscription.date_created.date()
+                    and DateCreatedFilter.get_end_date(self.request).date() >= subscription.date_created.date()) \
                 and (SubscriberFilter.get_value(self.request, self.domain) is None
                     or SubscriberFilter.get_value(self.request, self.domain) == subscription.subscriber.domain) \
                 and (SalesforceContractIDFilter.get_value(self.request, self.domain) is None
