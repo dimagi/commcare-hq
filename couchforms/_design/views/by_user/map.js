@@ -9,7 +9,7 @@ function (doc) {
 
     function get_username(xform_doc) {
         var meta = xform_doc.form.meta;
-        if (meta) return meta.userID;
+        if (meta) return meta.username;
     }
 
     if (doc.doc_type == "XFormInstance" && get_user_id(doc) != null) {
