@@ -231,7 +231,6 @@
                         });
                         request.done(function(response, textStatus, jqXHR) {
                             var chat_message = null;
-                            var last_read_message_found = false;
                             data = $.parseJSON(response);
                             for(i = 0; i < data.length; i++) {
                                 chat_message = new ChatMessage(
