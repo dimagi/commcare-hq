@@ -1,5 +1,5 @@
 import copy
-from django.template.loader import render_to_string
+from couchdbkit.exceptions import ResourceNotFound
 from django.utils.safestring import mark_safe
 import re
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter
@@ -451,12 +451,18 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
 
     @memoized
     def get_unknown_form_name(self, xmlns, app_id=None, none_if_not_found=False):
-        if app_id is not None:
-            app = get_db().get(app_id)
-            for module in app['modules']:
-                for form in module['forms']:
-                    if form['xmlns'] == xmlns:
-                        return form['name'].values()[0]
+        if app_id is not None and app_id != '_MISSING_APP_ID':
+            try:
+                app = get_db().get(app_id)
+            except ResourceNotFound:
+                # must have been a weird app id, don't fail hard
+                pass
+            else:
+                for module in app['modules']:
+                    for form in module['forms']:
+                        if form['xmlns'] == xmlns:
+                            return form['name'].values()[0]
+
 
         key = ["xmlns", self.domain, xmlns]
         results = cache_core.cached_view(
