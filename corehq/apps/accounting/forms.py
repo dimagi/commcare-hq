@@ -663,7 +663,6 @@ class SoftwarePlanVersionForm(forms.Form):
             'current_value': self['role'].value(),
             'field_name': 'role_id',
             'async_handler': RoleAsyncHandler.slug,
-            'select2_handler': Select2RoleAsyncHandler.slug,
         }
 
     @property
