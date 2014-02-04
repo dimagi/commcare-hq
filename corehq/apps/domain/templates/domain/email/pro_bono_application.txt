@@ -1,0 +1,9 @@
+Contact email: {{ contact_email }}
+
+Organization: {{ organization }}
+
+Project overview: {{ project_overview }}
+
+Pay only features needed: {{ pay_only_features_needed }}
+
+Duration of project: {{ duration_of_project }}

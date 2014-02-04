@@ -33,7 +33,7 @@ from corehq.apps.domain.decorators import (domain_admin_required,
     login_required, require_superuser, login_and_domain_required)
 from corehq.apps.domain.forms import (DomainGlobalSettingsForm, DomainMetadataForm, SnapshotSettingsForm,
                                       SnapshotApplicationForm, DomainDeploymentForm, DomainInternalForm,
-                                      BillingAccountInfoForm)
+                                      BillingAccountInfoForm, ProBonoForm)
 from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.domain.utils import get_domained_url, normalize_domain_name
 from corehq.apps.hqwebapp.views import BaseSectionPageView
@@ -526,7 +526,7 @@ class SelectPlanView(DomainAccountingSettings):
     @property
     def page_context(self):
         return {
-            'pricing_table': PricingTable.get_table_by_product(self.product),
+            'pricing_table': PricingTable.get_table_by_product(self.product, domain=self.domain),
             'current_edition': (self.current_subscription.plan_version.plan.edition.lower()
                                 if self.current_subscription is not None else "")
         }
@@ -1402,6 +1402,42 @@ class AdvancedCommTrackSettingsView(BaseCommTrackAdminView):
             self.commtrack_settings.save()
             messages.success(request, _("Settings updated!"))
             return HttpResponseRedirect(self.page_url)
+        return self.get(request, *args, **kwargs)
+
+
+class ProBonoView(DomainAccountingSettings):
+    template_name = 'domain/pro_bono.html'
+    urlname = 'pro_bono'
+    page_title = ugettext_noop("Pro Bono Application")
+    is_submitted = False
+
+    @property
+    @memoized
+    def pro_bono_form(self):
+        if self.request.method == 'POST':
+            return ProBonoForm(self.request.POST)
+        return ProBonoForm()
+
+    @property
+    def page_context(self):
+        return {
+            'pro_bono_form': self.pro_bono_form,
+            'is_submitted': self.is_submitted
+        }
+
+    @property
+    def parent_pages(self):
+        return [
+            {
+                'title': DomainSubscriptionView.page_title,
+                'url': reverse(DomainSubscriptionView.urlname, args=[self.domain]),
+            }
+        ]
+
+    def post(self, request, *args, **kwargs):
+        if self.pro_bono_form.is_valid():
+            self.pro_bono_form.process_submission()
+            self.is_submitted = True
         return self.get(request, *args, **kwargs)
 
 

@@ -12,7 +12,7 @@ from corehq.apps.domain.views import (EditBasicProjectInfoView, EditDeploymentPr
                                       ManageProjectMediaView, DomainForwardingOptionsView,
                                       AddRepeaterView, EditInternalDomainInfoView, EditInternalCalculationsView,
                                       BasicCommTrackSettingsView, AdvancedCommTrackSettingsView, OrgSettingsView,
-                                      DomainSubscriptionView, SelectPlanView, ConfirmSelectedPlanView, SelectedEnterprisePlanView, ConfirmBillingAccountInfoView)
+                                      DomainSubscriptionView, SelectPlanView, ConfirmSelectedPlanView, SelectedEnterprisePlanView, ConfirmBillingAccountInfoView, ProBonoView)
 
 #
 # After much reading, I discovered that Django matches URLs derived from the environment
@@ -85,6 +85,7 @@ domain_settings = patterns(
         name=SelectedEnterprisePlanView.urlname),
     url(r'^subscription/change/account/$', ConfirmBillingAccountInfoView.as_view(),
         name=ConfirmBillingAccountInfoView.urlname),
+    url(r'^subscription/pro_bono/$', ProBonoView.as_view(), name=ProBonoView.urlname),
     url(r'^subscription/$', DomainSubscriptionView.as_view(), name=DomainSubscriptionView.urlname),
     url(r'^deployment/$', EditDeploymentProjectInfoView.as_view(), name=EditDeploymentProjectInfoView.urlname),
     url(r'^forwarding/$', DomainForwardingOptionsView.as_view(), name=DomainForwardingOptionsView.urlname),

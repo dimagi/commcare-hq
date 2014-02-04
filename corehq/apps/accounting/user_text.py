@@ -1,3 +1,5 @@
+from django.core.urlresolvers import reverse
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop, ugettext_lazy as _
 from corehq.apps.accounting.models import SoftwarePlanEdition as Edition, SoftwareProductType as Product, FeatureType
 
@@ -307,12 +309,15 @@ class PricingTable(object):
     VISIT_WIKI_TEXT = ugettext_noop("Visit the wiki to learn more.")
 
     @classmethod
-    def get_footer_by_product(cls, product):
+    def get_footer_by_product(cls, product, domain=None):
         ensure_product(product)
+        link_text = ugettext_noop('pro-bono form')
         return (
             ugettext_noop("*Local taxes and other country-specific fees not included. Dimagi provides pro-bono "
                           "software plans on a needs basis. To learn more about this opportunity or see if your "
-                          "program qualifies, please contact information@dimagi.com."),
+                          "program qualifies, please fill out our %s."
+                          % (mark_safe(('<a href="%s">%s</a>') % (reverse('pro_bono', args=[domain]), link_text))
+                             if domain is not None else link_text)),
             {
                 Product.COMMCARE: ugettext_noop("**1 USD/month for each additional mobile user"),
                 Product.COMMCONNECT: ugettext_noop("**1 USD/month for each additional mobile user"),
@@ -325,7 +330,7 @@ class PricingTable(object):
 
 
     @classmethod
-    def get_table_by_product(cls, product):
+    def get_table_by_product(cls, product, domain=None):
         ensure_product(product)
         categories = cls.STRUCTURE_BY_PRODUCT[product]
         editions = PricingTableFeatures.get_columns(PricingTableFeatures.SOFTWARE_PLANS)
@@ -351,6 +356,6 @@ class PricingTable(object):
             'title': PricingTableFeatures.get_title(PricingTableFeatures.SOFTWARE_PLANS, product),
             'sections': table_sections,
             'visit_wiki_text': cls.VISIT_WIKI_TEXT,
-            'footer': cls.get_footer_by_product(product),
+            'footer': cls.get_footer_by_product(product, domain=domain),
         }
         return table
