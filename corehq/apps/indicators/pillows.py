@@ -73,23 +73,24 @@ class CaseIndicatorPillow(IndicatorPillowBase):
                                          'domain': domain,
                                          'doc_id': doc_dict['_id'],
                                      })
-        for namespace in namespaces:
-            for xform_id in xform_ids:
-                try:
-                    xform_doc = XFormInstance.get(xform_id)
-                    if not xform_doc.xmlns:
-                        continue
-                    related_xform_indicators = CaseDataInFormIndicatorDefinition.get_all(namespace, domain,
-                                                                                         xmlns=xform_doc.xmlns)
-                    xform_doc.update_indicators_in_bulk(related_xform_indicators, logger=pillow_eval_logging)
-                except ResourceNotFound:
-                    pillow_logging.error("[INDICATOR %(namespace)s %(domain)s] Tried to form indicator %(xform_id)s "
-                                         "from case %(case_id)s and failed." % {
-                                             'namespace': namespace,
-                                             'domain': domain,
-                                             'xform_id': xform_id,
-                                             'case_id': doc_dict['_id'],
-                                         })
+
+        for xform_id in xform_ids:
+            try:
+                xform_doc = XFormInstance.get(xform_id)
+                if not xform_doc.xmlns:
+                    continue
+                related_xform_indicators = []
+                for namespace in namespaces:
+                    related_xform_indicators.extend(CaseDataInFormIndicatorDefinition.get_all(
+                        namespace, domain, xmlns=xform_doc.xmlns))
+                xform_doc.update_indicators_in_bulk(related_xform_indicators, logger=pillow_eval_logging)
+            except ResourceNotFound:
+                pillow_logging.error("[INDICATOR %(domain)s] Tried to form grab indicators for %(xform_id)s "
+                                     "from case %(case_id)s and failed." % {
+                                         'domain': domain,
+                                         'xform_id': xform_id,
+                                         'case_id': doc_dict['_id'],
+                                     })
 
 
 class FormIndicatorPillow(IndicatorPillowBase):
