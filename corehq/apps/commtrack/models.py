@@ -147,6 +147,18 @@ class Product(Document):
         else:
             return [row["doc"] for row in Product.view(wrap_doc=False, **kwargs)]
 
+    @classmethod
+    def ids_by_domain(cls, domain):
+        """
+        Gets all product ids in a domain.
+        """
+        view_results = Product.get_db().view('commtrack/products',
+            startkey=[domain],
+            endkey=[domain, {}],
+            include_docs=False,
+        )
+        return [row['id'] for row in view_results]
+
 
 def product_fixture_generator(user, version, last_sync):
     if not user.domain:
@@ -286,14 +298,19 @@ class OpenLMISConfig(DocumentSchema):
     def is_configured(self):
         return True if self.enabled and self.url and self.password and self.username else False
 
+
 class AlertConfig(DocumentSchema):
     stock_out_facilities = BooleanProperty(default=False)
     stock_out_commodities = BooleanProperty(default=False)
     stock_out_rates = BooleanProperty(default=False)
     non_report = BooleanProperty(default=False)
 
+
 class StockRestoreConfig(DocumentSchema):
     section_to_consumption_types = DictProperty()
+    force_consumption_case_types = ListProperty()
+    use_dynamic_product_list = BooleanProperty(default=False)
+
 
 class CommtrackConfig(Document):
 
@@ -375,9 +392,14 @@ class CommtrackConfig(Document):
     def get_ota_restore_settings(self):
         # for some reason it doesn't like this import
         from casexml.apps.phone.restore import StockSettings
+        default_product_ids = Product.ids_by_domain(self.domain) \
+            if self.ota_restore_config.use_dynamic_product_list else []
+        case_filter = lambda case: case.type in set(self.ota_restore_config.force_consumption_case_types)
         return StockSettings(
             section_to_consumption_types=self.ota_restore_config.section_to_consumption_types,
             consumption_config=self.get_consumption_config(),
+            default_product_list=default_product_ids,
+            force_consumption_case_filter=case_filter,
         )
 
 
