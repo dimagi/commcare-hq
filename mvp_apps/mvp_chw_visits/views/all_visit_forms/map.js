@@ -64,7 +64,7 @@ function(doc) {
                             indicator_entries['child under6mo_ex_breast'] = case_id;
                         }
                     }
-                    if (age < 31*MS_IN_DAY) {
+                    if (age < 29*MS_IN_DAY) {
                         // This under5 child is also neonate
                         indicator_entries["child neonate"] = case_id;
                     }
