@@ -458,7 +458,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                 # must have been a weird app id, don't fail hard
                 pass
             else:
-                for module in app['modules']:
+                for module in app.get('modules', []):
                     for form in module['forms']:
                         if form['xmlns'] == xmlns:
                             return form['name'].values()[0]
