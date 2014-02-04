@@ -1,19 +1,22 @@
 import datetime
 import json
+from django.conf import settings
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
+from django.core.validators import MinLengthValidator
 from django import forms
 from django.core.urlresolvers import reverse
 from django.forms.util import ErrorList
+from django.template.loader import render_to_string
+from django.utils.translation import ugettext_noop, ugettext as _, ugettext
+
 from crispy_forms.bootstrap import FormActions, StrictButton, InlineField
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
-from django.utils.translation import ugettext_noop, ugettext as _, ugettext
 
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.email import send_HTML_email
-from django_prbac import arbitrary as role_gen
 from django_prbac.models import Role
 
 from corehq.apps.accounting.async_handlers import (FeatureRateAsyncHandler, SoftwareProductRateAsyncHandler,
@@ -467,16 +470,12 @@ class SoftwarePlanVersionForm(forms.Form):
         widget=forms.HiddenInput,
     )
 
-    role_id = forms.CharField(
-        required=False,
-        label="Search for or Create Role"
+    privileges = forms.MultipleChoiceField(
+        label="Privileges",
+        validators=[MinLengthValidator(1)]
     )
     new_role_slug = forms.CharField(
         required=False
-    )
-    role = forms.CharField(
-        required=False,
-        widget=forms.HiddenInput
     )
 
     def __init__(self, plan, plan_version, data=None, *args, **kwargs):
@@ -507,45 +506,45 @@ class SoftwarePlanVersionForm(forms.Form):
         self.helper.layout = crispy.Layout(
             'update_version',
             crispy.Fieldset(
-                "Role",
-                InlineField('role', data_bind="value: role.objectsValue"),
+                "Permissions",
+                # InlineField('privileges', data_bind="value: roles.objectsValue"),
                 BootstrapMultiField(
-                    "Add Role",
-                    InlineField('role_id', css_class="input-xxlarge",
-                                data_bind="value: role.select2.object_id"),
-                    StrictButton(
-                        "Select Role",
-                        css_class="btn-primary",
-                        data_bind="event: {click: role.apply}, "
-                                  "visible: role.select2.isExisting",
-                        style="margin-left: 5px;"
-                    ),
+                    "Privileges",
+                    # InlineField('privileges', css_class="input-xxlarge",
+                    #             data_bind="value: role.select2.value"),
+                    # StrictButton(
+                    #     "Select Role",
+                    #     css_class="btn-primary",
+                    #     data_bind="event: {click: role.apply}, "
+                    #               "visible: role.select2.isExisting",
+                    #     style="margin-left: 5px;"
+                    # ),
                 ),
-                crispy.Div(
-                    css_class="alert alert-error",
-                    data_bind="text: role.error, visible: role.showError"
-                ),
-                BootstrapMultiField(
-                    "Role Slug",
-                    InlineField(
-                        'new_role_slug',
-                        data_bind="value: role.slug"
-                    ),
-                    crispy.Div(
-                        StrictButton(
-                            "Create Role",
-                            css_class="btn-success",
-                            data_bind="event: {click: role.createNew}",
-                        ),
-                        style="margin: 10px 0;"
-                    ),
-                    data_bind="visible: role.select2.isNew",
-                ),
-                crispy.Div(
-                    data_bind="template: {"
-                              "name: 'role-form-template', foreach: role.objects"
-                              "}",
-                ),
+                # crispy.Div(
+                #     css_class="alert alert-error",
+                #     data_bind="text: privileges.error, visible: privileges.showError"
+                # ),
+                # BootstrapMultiField(
+                #     "Role Slug",
+                #     InlineField(
+                #         'new_role_slug',
+                #         data_bind="value: role.slug"
+                #     ),
+                #     Div(
+                #         StrictButton(
+                #             "Create Role",
+                #             css_class="btn-success",
+                #             data_bind="event: {click: role.createNew}",
+                #         ),
+                #         style="margin: 10px 0;"
+                #     ),
+                #     data_bind="visible: role.select2.isNew",
+                # ),
+                # Div(
+                #     data_bind="template: {"
+                #               "name: 'role-form-template', foreach: role.objects"
+                #               "}",
+                # ),
             ),
             crispy.Fieldset(
                 "Features",
@@ -553,7 +552,7 @@ class SoftwarePlanVersionForm(forms.Form):
                 BootstrapMultiField(
                     "Add Feature",
                     InlineField('feature_id', css_class="input-xxlarge",
-                                data_bind="value: featureRates.select2.object_id"),
+                                data_bind="value: featureRates.select2.value"),
                     StrictButton(
                         "Select Feature",
                         css_class="btn-primary",
@@ -595,7 +594,7 @@ class SoftwarePlanVersionForm(forms.Form):
                 BootstrapMultiField(
                     "Add Product",
                     InlineField('product_id', css_class="input-xxlarge",
-                                data_bind="value: productRates.select2.object_id"),
+                                data_bind="value: productRates.select2.value"),
                     StrictButton(
                         "Select Product",
                         css_class="btn-primary",
@@ -642,27 +641,31 @@ class SoftwarePlanVersionForm(forms.Form):
     @property
     def feature_rates_dict(self):
         return {
-            'current_value': self['feature_rates'].value(),
-            'field_name': 'feature_id',
-            'async_handler': FeatureRateAsyncHandler.slug,
-            'select2_handler': Select2RateAsyncHandler.slug,
+            'currentValue': self['feature_rates'].value(),
+            'handlerSlug': FeatureRateAsyncHandler.slug,
+            'select2Options': {
+                'fieldName': 'feature_id',
+            }
         }
 
     @property
     def product_rates_dict(self):
         return {
-            'current_value': self['product_rates'].value(),
-            'field_name': 'product_id',
-            'async_handler': SoftwareProductRateAsyncHandler.slug,
-            'select2_handler': Select2RateAsyncHandler.slug,
+            'currentValue': self['product_rates'].value(),
+            'handlerSlug': SoftwareProductRateAsyncHandler.slug,
+            'select2Options': {
+                'fieldName': 'product_id',
+            }
         }
 
     @property
     def role_dict(self):
         return {
-            'current_value': self['role'].value(),
-            'field_name': 'role_id',
-            'async_handler': RoleAsyncHandler.slug,
+            'currentValue': self['privileges'].value(),
+            'select2Options': {
+                'fieldName': 'privileges',
+                'multiple': True,
+            }
         }
 
     @property
@@ -878,6 +881,38 @@ class ProductRateForm(forms.ModelForm):
         return instance
 
 
+class RoleForm(forms.ModelForm):
+    """
+    A form for creating a new ProductRate.
+    """
+    role_id = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput,
+    )
+    # TODO - rate_id ?
+
+    class Meta:
+        model = Role
+        fields = ['slug', 'name', 'description', 'parameters']
+
+    def __init__(self, data=None, *args, **kwargs):
+        super(RoleForm, self).__init__(data, *args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.layout = crispy.Layout(
+            crispy.HTML('<h4><span data-bind="text: name"></span></h4>'),
+            crispy.Field('parameters', data_bind="value: parameters"),
+        )
+
+    def is_new(self):
+        return not self['role_id'].value()
+
+    def get_instance(self, role):
+        instance = self.save(commit=False)
+        instance.role = role
+        return instance
+
+
 class EnterprisePlanContactForm(forms.Form):
     name = forms.CharField(
         label=ugettext_noop("Name")
@@ -936,33 +971,4 @@ class EnterprisePlanContactForm(forms.Form):
                         email_from=self.web_user.email)
 
 
-class RoleForm(forms.ModelForm):
-    """
-    A form for creating a new ProductRate.
-    """
-    role_id = forms.CharField(
-        required=False,
-        widget=forms.HiddenInput,
-    )
-    # TODO - rate_id ?
 
-    class Meta:
-        model = Role
-        fields = ['slug', 'name', 'description', 'parameters']
-
-    def __init__(self, data=None, *args, **kwargs):
-        super(RoleForm, self).__init__(data, *args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.form_tag = False
-        self.helper.layout = crispy.Layout(
-            crispy.HTML('<h4><span data-bind="text: name"></span></h4>'),
-            crispy.Field('parameters', data_bind="value: parameters"),
-        )
-
-    def is_new(self):
-        return not self['role_id'].value()
-
-    def get_instance(self, role):
-        instance = self.save(commit=False)
-        instance.role = role
-        return instance

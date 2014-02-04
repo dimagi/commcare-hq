@@ -15,8 +15,7 @@
 
 {% block js-inline %}{{ block.super }}
     <script>
-        var planVersionFormHandler = new SoftwarePlanVersionFormHandler(
-            {{ plan_version_form.role_dict|JSON }},
+        var planVersionFormHandler = new SoftwarePlanVersionFormHandler({{ plan_version_form.role_dict|JSON }},
             {{ plan_version_form.feature_rates_dict|JSON }},
             {{ plan_version_form.product_rates_dict|JSON }}
         );

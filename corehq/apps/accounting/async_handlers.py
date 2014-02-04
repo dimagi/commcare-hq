@@ -1,4 +1,5 @@
 import json
+from corehq import privileges
 from corehq.apps.accounting.models import Feature, SoftwareProduct
 from corehq.apps.accounting.utils import fmt_feature_rate_dict, fmt_product_rate_dict, LazyEncoder
 from corehq.apps.hqwebapp.async_handler import BaseAsyncHandler, AsyncHandlerError
@@ -118,17 +119,6 @@ class RoleAsyncHandler(BaseAsyncHandler):
             raise AsyncHandlerError("could not find an existing role")
 
 
-class Select2RateAsyncHandler(BaseAsyncHandler):
-    """
-    For interacting with Select2FieldHandler
-    """
-    slug = 'select2_rate'
-    allowed_actions = [
-        'feature_id',
-        'product_id',
-    ]
-
-
 class BaseSelect2AsyncHandler(BaseAsyncHandler):
     @property
     def search_string(self):
@@ -141,11 +131,13 @@ class BaseSelect2AsyncHandler(BaseAsyncHandler):
 
 class Select2RateAsyncHandler(BaseSelect2AsyncHandler):
     """
-    For interacting with Select2FieldHandler
+    Handles the async responses for the select2 widget in the Features & Rates portion
+    of the SoftwarePlanVersion form.
     """
     slug = 'select2_rate'
     allowed_actions = [
-        'feature_id'
+        'feature_id',
+        'product_id',
     ]
 
     @property
@@ -166,24 +158,41 @@ class Select2RateAsyncHandler(BaseSelect2AsyncHandler):
             products = products.filter(name__startswith=self.search_string)
         return [(p.id, p.name, p.product_type) for p in products.all()]
 
-    @property
-    def role_response(self):
-        roles = Role.objects
-        if self.existing:
-            roles = roles.exclude(name__in=self.existing)
-        if self.search_string:
-            roles = roles.filter(name__startswith=self.search_string)
-        return [(r.id, r.slug, r.name) for r in roles.all()]
-
     def _fmt_success(self, response):
-        return json.dumps([
+        return json.dumps({
+            'results': [
             {
                 'id': r[0],
                 'name': r[1],
                 'rate_type': r[2],
                 'text': '%s (%s)' % (r[1], r[2]),
                 'isExisting': True,
-            } for r in response])
+            } for r in response]
+        })
+
+
+class Select2RoleAsyncHandler(BaseSelect2AsyncHandler):
+    """
+    Handles the async responses for the select2 widget in the Roles portion of the
+    SoftwarePlanVersionForm.
+    """
+    slug = 'select2_role'
+    allowed_actions = [
+        'privileges',
+    ]
+
+    @property
+    def privileges_response(self):
+        current_privileges = [Role.objects.get(slug=priv) for priv in privileges.MAX_PRIVILEGES]
+        return [(p.slug, p.name) for p in current_privileges]
+
+    def _fmt_success(self, response):
+        return json.dumps([
+            {
+                'id': r[0],
+                'text': r[1],
+            } for r in response
+        ])
 
 
 class Select2BillingInfoHandler(BaseSelect2AsyncHandler):
