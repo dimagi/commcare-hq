@@ -586,9 +586,9 @@ class SuiteGenerator(object):
             xpath += "[start_date = '' or double(date(start_date)) <= double(now())]"
         return xpath
 
-    def get_nodeset_xpath(self, module, use_filter):
+    def get_nodeset_xpath(self, case_type, module, use_filter):
         return "instance('casedb')/casedb/case[@case_type='{case_type}'][@status='open']{filter_xpath}".format(
-            case_type=module.case_type,
+            case_type=case_type,
             filter_xpath=self.get_filter_xpath(module) if use_filter else '',
         )
 
@@ -621,76 +621,188 @@ class SuiteGenerator(object):
             select_chain.append(current_module)
         return select_chain
 
+    @memoized
+    def get_detail_ids(self):
+        return [detail.id for detail in self.details]
+
+    def get_detail_id_safe(self, module, detail_type):
+        detail_id = self.id_strings.detail(
+            module=module,
+            detail_type=detail_type,
+        )
+        return detail_id if detail_id in self.get_detail_ids() else None
+
     @property
     def entries(self):
         # avoid circular dependency
-        from corehq.apps.app_manager.models import CareplanForm, Module
+        from corehq.apps.app_manager.models import Module
 
-        detail_ids = [detail.id for detail in self.details]
-        def get_detail_id_safe(module, detail_type):
-            detail_id = self.id_strings.detail(
-                module=module,
-                detail_type=detail_type,
-            )
-            return detail_id if detail_id in detail_ids else None
+        for module in self.modules:
+            for form in module.get_forms():
+                e = Entry()
+                e.form = form.xmlns
+                e.command=Command(
+                    id=self.id_strings.form_command(form),
+                    locale_id=self.id_strings.form_locale(form),
+                    media_image=form.media_image,
+                    media_audio=form.media_audio,
+                )
 
-        def add_case_stuff(module, e, use_filter=False):
-            def get_instances():
-                yield Instance(id='casedb', src='jr://instance/casedb')
-                if (any(form.form_filter for form in module.get_forms())
-                    and module.all_forms_require_a_case()) \
-                    or module.parent_select.active:
-                    yield Instance(id='commcaresession',
-                                   src='jr://instance/session')
+                getattr(self, 'configure_entry_{}'.format(form.form_type))(module, e, form)
+                yield e
 
-                indicator_sets = []
-                for _, detail, _ in module.get_details():
-                    for column in detail.get_columns():
-                        if column.field_type == FIELD_TYPE_INDICATOR:
-                            indicator_set, _ = column.field_property.split('/', 1)
-                            if indicator_set not in indicator_sets:
-                                indicator_sets.append(indicator_set)
-                                yield Instance(id=self.id_strings.indicator_instance(indicator_set),
-                                       src='jr://fixture/indicators:%s' % indicator_set)
-
-            e.instances.extend(get_instances())
-
-            select_chain = self.get_select_chain(module)
-            # generate names ['child_id', 'parent_id', 'parent_parent_id', ...]
-            datum_ids = [('parent_' * i or 'case_') + 'id'
-                         for i in range(len(select_chain))]
-            # iterate backwards like
-            # [..., (2, 'parent_parent_id'), (1, 'parent_id'), (0, 'child_id')]
-            for i, module in reversed(list(enumerate(select_chain))):
-                try:
-                    parent_id = datum_ids[i + 1]
-                except IndexError:
-                    parent_filter = ''
-                else:
-                    parent_filter = self.get_parent_filter(module.parent_select.relationship, parent_id)
-                e.datums.append(SessionDatum(
-                    id=datum_ids[i],
-                    nodeset=(self.get_nodeset_xpath(module, use_filter)
-                             + parent_filter),
-                    value="./@case_id",
-                    detail_select=get_detail_id_safe(module, 'case_short'),
-                    detail_confirm=(
-                        get_detail_id_safe(module, 'case_long')
-                        if i == 0 else None
+            # TODO SK: add case-list for advanced module
+            if isinstance(module, Module) and module.case_list.show:
+                e = Entry(
+                    command=Command(
+                        id=self.id_strings.case_list_command(module),
+                        locale_id=self.id_strings.case_list_locale(module),
                     )
-                ))
+                )
+                self.configure_entry_module(module, e, use_filter=False)
+                yield e
 
-        def add_careplan_stuff(module, form, e):
+    def get_indicator_instances(self, module):
+        indicator_sets = []
+        for _, detail, _ in module.get_details():
+            for column in detail.get_columns():
+                if column.field_type == FIELD_TYPE_INDICATOR:
+                    indicator_set, _ = column.field_property.split('/', 1)
+                    if indicator_set not in indicator_sets:
+                        indicator_sets.append(indicator_set)
+                        yield Instance(id=self.id_strings.indicator_instance(indicator_set),
+                               src='jr://fixture/indicators:%s' % indicator_set)
+
+    def add_case_sharing_assertion(self, entry):
+        entry.instances.append(Instance(id='groups', src='jr://fixture/user-groups'))
+        assertion = Assertion(test="count(instance('groups')/groups/group) = 1")
+        assertion.text.append(Text(locale_id='case_sharing.exactly_one_group'))
+        entry.assertions.append(assertion)
+
+    def configure_entry_module_form(self, module, e, form=None, use_filter=True, **kwargs):
+        def case_sharing_requires_assertion(form):
+            actions = form.active_actions()
+            if 'open_case' in actions and autoset_owner_id_for_open_case(actions):
+                return True
+            if 'subcases' in actions:
+                for subcase in actions['subcases']:
+                    if autoset_owner_id_for_subcase(subcase):
+                        return True
+            return False
+
+        if form and self.app.case_sharing and case_sharing_requires_assertion(form):
+            self.add_case_sharing_assertion(e)
+
+        if not form or form.requires == 'case':
+            self.configure_entry_module(module, e, use_filter=True)
+
+    def configure_entry_module(self, module, e, use_filter=False):
+        def get_instances():
+            yield Instance(id='casedb', src='jr://instance/casedb')
+            if (any(form.form_filter for form in module.get_forms())
+                and module.all_forms_require_a_case()) \
+                or module.parent_select.active:
+                yield Instance(id='commcaresession',
+                               src='jr://instance/session')
+
+            for instance in self.get_indicator_instances(module):
+                yield instance
+
+        e.instances.extend(get_instances())
+
+        select_chain = self.get_select_chain(module)
+        # generate names ['child_id', 'parent_id', 'parent_parent_id', ...]
+        datum_ids = [('parent_' * i or 'case_') + 'id'
+                     for i in range(len(select_chain))]
+        # iterate backwards like
+        # [..., (2, 'parent_parent_id'), (1, 'parent_id'), (0, 'child_id')]
+        for i, module in reversed(list(enumerate(select_chain))):
+            try:
+                parent_id = datum_ids[i + 1]
+            except IndexError:
+                parent_filter = ''
+            else:
+                parent_filter = self.get_parent_filter(module.parent_select.relationship, parent_id)
+            e.datums.append(SessionDatum(
+                id=datum_ids[i],
+                nodeset=(self.get_nodeset_xpath(module.case_type, module, use_filter)
+                         + parent_filter),
+                value="./@case_id",
+                detail_select=self.get_detail_id_safe(module, 'case_short'),
+                detail_confirm=(
+                    self.get_detail_id_safe(module, 'case_long')
+                    if i == 0 else None
+                )
+            ))
+
+    def configure_entry_advanced_form(self, module, e, form=None, **kwargs):
+        def case_sharing_requires_assertion(form):
+            actions = form.actions.open_cases
+            for action in actions:
+                if 'owner_id' in action.case_properties:
+                    return True
+            return False
+
+        def get_instances():
+            yield Instance(id='casedb', src='jr://instance/casedb')
+
+            # TODO SK: add form_filter check
+            if form and any(action.parent_tag for action in form.actions.load_update_cases):
+                yield Instance(id='commcaresession', src='jr://instance/session')
+
+            for instance in self.get_indicator_instances(module):
+                yield instance
+
+        e.instances.extend(get_instances())
+
+        case_id = lambda a: 'case_id_{}'.format(a.case_tag)
+
+        for action in form.actions.load_update_cases:
+            if action.parent_tag:
+                parent_action = form.actions.actions_by_tag[action.parent_tag]['action']
+                parent_filter = self.get_parent_filter(parent_action.parent_reference_id, case_id(parent_action))
+            else:
+                parent_filter = ''
+
+            referenced_by = form.actions.actions_by_parent_tag.get(action.case_tag)
+
+            e.datums.append(SessionDatum(
+                id=case_id(action),
+                nodeset=(self.get_nodeset_xpath(action.case_type, module, False) + parent_filter),
+                value="./@case_id",
+                detail_select=self.get_detail_id_safe(module, 'case_short'),
+                detail_confirm=(
+                    self.get_detail_id_safe(module, 'case_long')
+                    if not referenced_by or referenced_by['type'] != 'load' else None
+                )
+            ))
+
+        try:
+            last_action = form.actions.load_update_cases[-1]
+            if last_action.show_product_stock:
+                e.datums.append(SessionDatum(
+                    id='throwaway',
+                    nodeset="instance('products')/products/product",
+                    value="./@id",
+                    detail_select=self.get_detail_id_safe(module, 'product_short')
+                ))
+        except IndexError:
+            pass
+
+        if form and self.app.case_sharing and case_sharing_requires_assertion(form):
+            self.add_case_sharing_assertion(e)
+
+    def configure_entry_careplan_form(self, module, e, form=None, **kwargs):
             e.instances.append(Instance(id='casedb', src='jr://instance/casedb'))
             e.instances.append(Instance(id='commcaresession', src='jr://instance/session'))
 
             parent_module = self.get_module_by_id(module.parent_select.module_id)
             e.datums.append(SessionDatum(
                 id='case_id',
-                nodeset=self.get_nodeset_xpath(parent_module, False),
+                nodeset=self.get_nodeset_xpath(parent_module.case_type, parent_module, False),
                 value="./@case_id",
-                detail_select=get_detail_id_safe(parent_module, 'case_short'),
-                detail_confirm=get_detail_id_safe(parent_module, 'case_long')
+                detail_select=self.get_detail_id_safe(parent_module, 'case_short'),
+                detail_confirm=self.get_detail_id_safe(parent_module, 'case_long')
             ))
 
             def session_datum(datum_id, case_type, parent_ref, parent_val):
@@ -701,8 +813,8 @@ class SuiteGenerator(object):
                     id=datum_id,
                     nodeset=nodeset,
                     value="./@case_id",
-                    detail_select=get_detail_id_safe(module, '%s_short' % case_type),
-                    detail_confirm=get_detail_id_safe(module, '%s_long' % case_type)
+                    detail_select=self.get_detail_id_safe(module, '%s_short' % case_type),
+                    detail_confirm=self.get_detail_id_safe(module, '%s_long' % case_type)
                 )
 
             if form.case_type == CAREPLAN_GOAL:
@@ -742,50 +854,6 @@ class SuiteGenerator(object):
                     frame.if_clause = '{count} >= 1'.format(count=count)
 
                     frame.add_command(self.id_strings.form_command(module.get_form_by_type(CAREPLAN_TASK, 'update')))
-
-        def case_sharing_requires_assertion(form):
-            actions = form.active_actions()
-            if 'open_case' in actions and autoset_owner_id_for_open_case(actions):
-                return True
-            if 'subcases' in actions:
-                for subcase in actions['subcases']:
-                    if autoset_owner_id_for_subcase(subcase):
-                        return True
-            return False
-
-        def add_case_sharing_assertion(e):
-            e.instances.append(Instance(id='groups', src='jr://fixture/user-groups'))
-            assertion = Assertion(test="count(instance('groups')/groups/group) = 1")
-            assertion.text.append(Text(locale_id='case_sharing.exactly_one_group'))
-            e.assertions.append(assertion)
-
-        for module in self.modules:
-            for form in module.get_forms():
-                e = Entry()
-                e.form = form.xmlns
-                e.command=Command(
-                    id=self.id_strings.form_command(form),
-                    locale_id=self.id_strings.form_locale(form),
-                    media_image=form.media_image,
-                    media_audio=form.media_audio,
-                )
-                if isinstance(form, CareplanForm):
-                    add_careplan_stuff(module, form, e)
-                elif form.requires == "case":
-                    add_case_stuff(module, e, use_filter=True)
-
-                if self.app.case_sharing and case_sharing_requires_assertion(form):
-                    add_case_sharing_assertion(e)
-                yield e
-            if isinstance(module, Module) and module.case_list.show:
-                e = Entry(
-                    command=Command(
-                        id=self.id_strings.case_list_command(module),
-                        locale_id=self.id_strings.case_list_locale(module),
-                    )
-                )
-                add_case_stuff(module, e, use_filter=False)
-                yield e
 
     @property
     def menus(self):
@@ -831,7 +899,7 @@ class SuiteGenerator(object):
                                     form.form_filter, SESSION_CASE_ID.case())
                         yield command
 
-                    if module.case_list.show:
+                    if hasattr(module, 'case_list') and module.case_list.show:
                         yield Command(id=self.id_strings.case_list_command(module))
 
                 menu.commands.extend(get_commands())

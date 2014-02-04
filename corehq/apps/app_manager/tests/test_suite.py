@@ -61,7 +61,6 @@ class SuiteTest(XmlTest, TestFileMixin):
 
     def test_tiered_select(self):
         self._test_generic_suite('tiered-select', 'tiered-select')
-
     def test_3_tiered_select(self):
         self._test_generic_suite('tiered-select-3', 'tiered-select-3')
 
@@ -77,6 +76,16 @@ class SuiteTest(XmlTest, TestFileMixin):
 
     def test_careplan_suite(self):
         self._test_generic_suite('careplan')
+
+    def test_advanced_suite(self):
+        self._test_generic_suite('suite-advanced')
+
+    # TODO SK: test commtrack suite
+    # def test_advanced_suite_commtrack(self):
+    #     app = Application.wrap(self.get_json('suite-advanced'))
+    #     app.commtrack_enabled = True
+    #     app.modules[1].forms[0].actions.load_update_cases[-1].show_product_stock = True
+    #     self.assertXmlEqual(self.get_xml('suite-advanced-commtrack'), app.create_suite())
 
     def test_case_assertions(self):
         self._test_generic_suite('app_case_sharing', 'suite-case-sharing')

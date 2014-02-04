@@ -152,6 +152,26 @@
                     </div>
                 </div>
 
+                 <div class="control-group">
+                    <label class="control-label">
+                        {% trans "Menu Mode" %}
+                    </label>
+                    <div class="controls">
+                        {% if edit %}
+                            <select type="text" name="put_in_root" data-value="{% if module.put_in_root %}true{% else %}false{% endif %}">
+                                <option value="false">{% trans "Display module and then forms" %}</option>
+                                <option value="true">{% trans "Display only forms" %}</option>
+                            </select>
+                        {% else %}
+                            {% if not module.put_in_root %}
+                                {% trans "Display module and then forms" %}
+                            {% else %}
+                                {% trans "Display only forms" %}
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+
                 {% include "app_manager/partials/nav_menu_media.html" with item=module %}
             </fieldset>
         </form>
