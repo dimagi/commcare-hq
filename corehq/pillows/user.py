@@ -132,6 +132,7 @@ class UnknownUsersPillow(BulkPillow):
         if user_id and not self.user_db.doc_exist(user_id) and not es.head(es_path + user_id):
             print "adding unknown user: %s" % user_id
             doc = {
+                "_id": user_id,
                 "domain": domain,
                 "username": username,
                 "first_form_found_in": xform_id,
