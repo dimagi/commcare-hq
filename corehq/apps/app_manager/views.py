@@ -640,7 +640,7 @@ def get_module_view_context_and_template(app, module):
         case_type = module.case_type
         return "app_manager/module_view_advanced.html", {
             'case_properties': sorted(builder.get_properties(case_type)),
-            'product_properties': ('name', commtrack_ledger_sections(app.commtrack_requisition_mode)),
+            'product_properties': ['name'] + commtrack_ledger_sections(app.commtrack_requisition_mode),
             'case_sortElements': json.dumps(get_sort_elements(module.case_details.short)),
             'product_sortElements': json.dumps(get_sort_elements(module.product_details.short)),
         }

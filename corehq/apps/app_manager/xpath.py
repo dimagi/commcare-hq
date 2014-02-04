@@ -64,3 +64,10 @@ class IndicatorXpath(XPath):
 
     def indicator(self, indicator_name):
         return XPath(u"instance('%s')/indicators/case[@id = current()/@case_id]" % self).slash(indicator_name)
+
+class LedgerXpath(XPath):
+
+    def section(self, section):
+        xpath = XPath(u"instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('session')/session/data/%s]" % self)
+        return xpath.slash(u'section').select(u'section_id', section)
+

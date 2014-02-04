@@ -1,5 +1,6 @@
 from corehq.apps.app_manager import suite_xml as sx
 from corehq.apps.app_manager.util import is_sort_only_column
+from corehq.apps.app_manager.xpath import LedgerXpath
 from .xpath import dot_interpolate, CaseXPath, IndicatorXpath
 
 CASE_PROPERTY_MAP = {
@@ -369,3 +370,5 @@ class IndicatorXpathGenerator(BaseXpathGenerator):
         indicator_set, indicator = self.column.field_property.split('/', 1)
         instance_id = self.id_strings.indicator_instance(indicator_set)
         return IndicatorXpath(instance_id).indicator(indicator)
+
+# TODO SK: type processor for commtrack ledger

@@ -302,7 +302,6 @@ class CaseBlock(object):
             calculate=ref,
         )
 
-
 def autoset_owner_id_for_open_case(actions):
     return not ('update_case' in actions and
                 'owner_id' in actions['update_case'].update)
@@ -610,6 +609,10 @@ class XForm(WrappedNode):
         else:
             self.create_casexml_2(form)
             self.add_meta_2()
+
+    def add_case_and_meta_advanced(self, form):
+        self.add_meta_2()
+        self.create_casexml_2_advanced(form)
 
     def already_has_meta(self):
         meta_blocks = set()
@@ -991,6 +994,12 @@ class XForm(WrappedNode):
                              "xforms namespace defined in your form. Please verify "
                              'that the xmlns="http://www.w3.org/2002/xforms" '
                              "attribute exists in your form.")
+
+    def create_casexml_2_advanced(self, form):
+        # TODO SK: add bindings for preload values
+        # TODO SK: add case sections for updates
+        # TODO SK: add case sections for new cases
+        pass
 
     def create_casexml_1(self, form):
         from xml_utils import XMLTag as __

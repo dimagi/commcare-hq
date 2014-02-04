@@ -261,6 +261,7 @@ class AdvancedAction(DocumentSchema):
     case_tag = StringProperty()
     case_properties = DictProperty()
     parent_tag = StringProperty()
+    parent_reference_id = StringProperty(default='parent')
 
     close_condition = SchemaProperty(FormActionCondition)
 
@@ -274,7 +275,7 @@ class AdvancedAction(DocumentSchema):
 
 class LoadUpdateAction(AdvancedAction):
     preload = DictProperty()
-    show_product_stock = BooleanProperty(default=True)
+    show_product_stock = BooleanProperty(default=False)
 
     def get_paths(self):
         for path in super(LoadUpdateAction, self).get_paths():
@@ -287,7 +288,6 @@ class LoadUpdateAction(AdvancedAction):
 class AdvancedOpenCaseAction(AdvancedAction):
     case_name = StringProperty()
     repeat_context = StringProperty()
-    parent_reference_id = StringProperty()
 
     open_condition = SchemaProperty(FormActionCondition)
 
@@ -331,6 +331,42 @@ class AdvancedFormActions(DocumentSchema):
         for action in self.get_all_actions():
             yield action.case_tag
 
+    def get_action_from_tag(self, tag):
+        for action in self.get_all_actions():
+            if action.case_tag == tag:
+                return action
+
+    @property
+    def actions_by_tag(self):
+        return self._action_meta()['by_tag']
+
+    @property
+    def actions_by_parent_tag(self):
+        return self._action_meta()['by_parent_tag']
+
+    @memoized
+    def _action_meta(self):
+        meta = {
+            'by_tag': {},
+            'by_parent_tag': {}
+        }
+
+        def add_actions(type, action_list):
+            for action in action_list:
+                meta['by_tag'][action.case_tag] = {
+                    'type': type,
+                    'action': action
+                }
+                if action.parent_tag:
+                    meta['by_parent_tag'][action.parent_tag] = {
+                        'type': type,
+                        'action': action
+                    }
+
+        add_actions('load', self.load_update_cases)
+        add_actions('open', self.open_cases)
+
+        return meta
 
 class FormSource(object):
     def __get__(self, form, form_cls):
@@ -1258,7 +1294,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
 
     def add_stuff_to_xform(self, xform):
         super(AdvancedForm, self).add_stuff_to_xform(xform)
-        # TODO: add stuff to xform
+        xform.add_case_and_meta_advanced(self)
 
     def check_actions(self):
         errors = []
@@ -1322,6 +1358,7 @@ class AdvancedModule(ModuleBase):
     forms = SchemaListProperty(AdvancedForm)
     case_details = SchemaProperty(DetailPair)
     product_details = SchemaProperty(DetailPair)
+    put_in_root = BooleanProperty(default=False)
 
     @classmethod
     def new_module(cls, name, lang, case_type=None, commtrack_enabled=False):
@@ -1371,11 +1408,14 @@ class AdvancedModule(ModuleBase):
     def requires_case_details(self):
         return True
 
+    def all_forms_require_a_case(self):
+        return all(form.actions.load_update_cases for form in self.forms)
+
     def get_details(self):
         return (
             ('case_short', self.case_details.short, True),
             ('case_long', self.case_details.long, True),
-            ('product_short', self.product_details.short, True),
+            ('product_short', self.product_details.short, self.get_app().commtrack_enabled),
             ('product_long', self.product_details.long, False),
         )
 
