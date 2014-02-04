@@ -71,21 +71,25 @@ def convert_xform_to_json(xml_string):
     return json_form
 
 
-def create_xform_from_xml(xml_string, _id=None):
+def create_xform_from_xml(xml_string, _id=None, process=None):
     """
     create and save an XFormInstance from an xform payload (xml_string)
     optionally set the doc _id to a predefined value (_id)
     return doc _id of the created doc
+
+    `process` is transformation to apply to the form right before saving
+    This is to avoid having to save multiple times
 
     If xml_string is bad xml
       - raise couchforms.XMLSyntaxError
       - do not save form
 
     """
-
     json_form = convert_xform_to_json(xml_string)
 
-    xform = XFormInstance(
+    _id = _id or _extract_meta_instance_id(json_form)
+
+    kwargs = dict(
         _attachments=resource.encode_attachments({
             "form.xml": {
                 "content_type": "text/xml",
@@ -97,24 +101,28 @@ def create_xform_from_xml(xml_string, _id=None):
         received_on=datetime.datetime.utcnow(),
         **{'#export_tag': 'xmlns'}
     )
-    _id = _id or _extract_meta_instance_id(json_form)
     if _id:
-        xform._id = _id
-    xform.save(encode_attachments=False)
+        kwargs['_id'] = _id
+
+    xform = XFormInstance(**kwargs)
+
+    try:
+        if process:
+            process(xform)
+    except Exception:
+        # if there's any problem with process just save what we had before
+        # rather than whatever intermediate state `process` left it in
+        xform = XFormInstance(**kwargs)
+        raise
+    finally:
+        xform.save(encode_attachments=False)
+
     return xform.get_id
 
 
-def post_xform_to_couch(instance, attachments=None, auth_context=None):
-    auth_context = auth_context or DefaultAuthContext()
-    doc = _post_xform_to_couch(instance, attachments=attachments)
-    doc.auth_context = auth_context.to_json()
-    doc.save()
-    return doc
-
-
-def _post_xform_to_couch(instance, attachments=None):
+def post_xform_to_couch(instance, attachments=None, process=None):
     """
-    Post an xform to couchdb, based on the settings.XFORMS_POST_URL.
+    Save a new xform to couchdb
     Returns the newly created document from couchdb,
     or raises an exception if anything goes wrong.
 
@@ -125,7 +133,7 @@ def _post_xform_to_couch(instance, attachments=None):
     try:
         # todo: pretty sure nested try/except can be cleaned up
         try:
-            doc_id = create_xform_from_xml(instance)
+            doc_id = create_xform_from_xml(instance, process=process)
         except couchforms.XMLSyntaxError as e:
             doc = _log_hard_failure(instance, attachments, e)
             raise SubmissionError(doc)
@@ -160,7 +168,7 @@ def _post_xform_to_couch(instance, attachments=None):
             raise
     except ResourceConflict:
         # this is an update conflict, i.e. the uid in the form was the same.
-        return _handle_id_conflict(instance, attachments)
+        return _handle_id_conflict(instance, attachments, process=process)
 
 
 def _has_errors(response, errors):
@@ -174,7 +182,7 @@ def _extract_id_from_raw_xml(xml):
     return _extract_meta_instance_id(json_form) or ''
 
 
-def _handle_id_conflict(instance, attachments):
+def _handle_id_conflict(instance, attachments, process):
     """
     For id conflicts, we check if the files contain exactly the same content,
     If they do, we just log this as a dupe. If they don't, we deprecate the 
@@ -204,11 +212,13 @@ def _handle_id_conflict(instance, attachments):
 
         # after that delete the original document and resubmit.
         XFormInstance.get_db().delete_doc(conflict_id)
-        return post_xform_to_couch(instance, attachments=attachments)
+        return post_xform_to_couch(instance, attachments=attachments,
+                                   process=process)
     else:
         # follow standard dupe handling
         new_doc_id = uid.new()
-        new_form_id = create_xform_from_xml(instance, _id=new_doc_id)
+        new_form_id = create_xform_from_xml(instance, _id=new_doc_id,
+                                            process=process)
 
         # create duplicate doc
         # get and save the duplicate to ensure the doc types are set correctly
@@ -234,15 +244,98 @@ def _log_hard_failure(instance, attachments, error):
     return SubmissionErrorLog.from_instance(instance, message)
 
 
+def scrub_meta(xform):
+    """
+    Cleans up old format metadata to our current standard.
+
+    Does NOT save the doc, but returns whether the doc needs to be saved.
+    """
+    property_map = {'TimeStart': 'timeStart',
+                    'TimeEnd': 'timeEnd',
+                    'chw_id': 'userID',
+                    'DeviceID': 'deviceID',
+                    'uid': 'instanceID'}
+
+    if not hasattr(xform, 'form'):
+        return
+
+    # hack to make sure uppercase meta still ends up in the right place
+    found_old = False
+    if 'Meta' in xform.form:
+        xform.form['meta'] = xform.form['Meta']
+        del xform.form['Meta']
+        found_old = True
+    if 'meta' in xform.form:
+        meta_block = xform.form['meta']
+        # scrub values from 0.9 to 1.0
+        if isinstance(meta_block, list):
+            if isinstance(meta_block[0], dict):
+                # if it's a list of dictionaries, arbitrarily pick the first one
+                # this is a pretty serious error, but it's also recoverable
+                xform.form['meta'] = meta_block = meta_block[0]
+                logging.error((
+                    'form %s contains multiple meta blocks. '
+                    'this is not correct but we picked one abitrarily'
+                ) % xform.get_id)
+            else:
+                # if it's a list of something other than dictionaries.
+                # don't bother scrubbing.
+                logging.error('form %s contains a poorly structured meta block.'
+                              'this might cause data display problems.')
+        if isinstance(meta_block, dict):
+            for key in meta_block:
+                if key in property_map and property_map[key] not in meta_block:
+                    meta_block[property_map[key]] = meta_block[key]
+                    del meta_block[key]
+                    found_old = True
+
+    return found_old
+
+
 class SubmissionPost(object):
 
     def __init__(self, instance=None, attachments=None,
-                 auth_context=None, path=None):
+                 auth_context=None, domain=None, app_id=None, path=None,
+                 location=None, submit_ip=None, openrosa_headers=None,
+                 last_sync_token=None, received_on=None, date_header=None):
+        assert domain
         assert instance and not isinstance(instance, HttpRequest), instance
+        # get_location has good default
+        self.domain = domain
+        self.app_id = app_id
+        self.location = location or couchforms.get_location()
+        self.received_on = received_on
+        self.date_header = date_header
+        self.submit_ip = submit_ip
+        self.last_sync_token = last_sync_token
+        self.openrosa_headers = openrosa_headers
         self.instance = instance
         self.attachments = attachments or {}
         self.auth_context = auth_context or DefaultAuthContext()
         self.path = path
+
+    def _attach_shared_props(self, doc):
+        # attaches shared properties of the request to the document.
+        # used on forms and errors
+        doc['auth_context'] = self.auth_context.to_json()
+        doc['submit_ip'] = self.submit_ip
+        doc['path'] = self.path
+
+        doc['openrosa_headers'] = self.openrosa_headers
+
+        doc['last_sync_token'] = self.last_sync_token
+
+        if self.received_on:
+            doc.received_on = self.received_on
+
+        if self.date_header:
+            doc['date_header'] = self.date_header
+
+        doc['domain'] = self.domain
+        doc['app_id'] = self.app_id
+        doc['#export_tag'] = ["domain", "xmlns"]
+
+        return doc
 
     def get_response(self):
         if not self.auth_context.is_valid():
@@ -256,10 +349,14 @@ class SubmissionPost(object):
                 'with the xml submission as the request body instead.'
             ) % MAGIC_PROPERTY)
 
+        def process(xform):
+            self._attach_shared_props(xform)
+            scrub_meta(xform)
+
         try:
             doc = post_xform_to_couch(self.instance,
                                       attachments=self.attachments,
-                                      auth_context=self.auth_context)
+                                      process=process)
             return self.get_success_response(doc)
         except SubmissionError as e:
             logging.exception(
