@@ -68,12 +68,16 @@
                 <div class="well well-small">
                     <div class="form-inline">
                         <!-- ko if:  actionType === 'load' -->
+                        {% if app.commtrack_enabled %}
+                        <!-- ko if:  $index() > 0 -->
                         <div class="control-group">
                             <label class="checkbox">
                                 <input type="checkbox" data-bind="checked: show_product_stock"/>
                                 {% trans "Display the Product Stock for this Supply Point after it is selected" %}
                             </label>
                         </div>
+                        <!-- /ko -->
+                        {% endif %}
 
                         <!-- ko if:  $index() > 0 -->
                         <div class="control-group">
