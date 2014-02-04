@@ -1,57 +1,14 @@
 import logging
 from django.http import HttpResponse, HttpResponseServerError
 import couchforms
-from couchforms.models import XFormInstance, SubmissionErrorLog
-import receiver
+from couchforms.models import SubmissionErrorLog
 from receiver.signals import successful_form_received, ReceiverResult
 from receiver import xml
-from receiver.util import scrub_meta
 from receiver.xml import ResponseNature
 from couchforms.signals import submission_error_received
 
 
 class SubmissionPost(couchforms.SubmissionPost):
-
-    def __init__(self, instance=None, attachments=None,
-                 auth_context=None, domain=None, app_id=None, path=None,
-                 location=None, submit_ip=None, openrosa_headers=None,
-                 last_sync_token=None, received_on=None, date_header=None):
-        assert domain
-        # get_location has good default
-        self.domain = domain
-        self.app_id = app_id
-        self.location = location or receiver.get_location()
-        self.received_on = received_on
-        self.date_header = date_header
-        self.submit_ip = submit_ip
-        self.last_sync_token = last_sync_token
-        self.openrosa_headers = openrosa_headers
-
-        super(SubmissionPost, self).__init__(auth_context=auth_context,
-                                             path=path, instance=instance,
-                                             attachments=attachments)
-
-    def _attach_shared_props(self, doc):
-        # attaches shared properties of the request to the document.
-        # used on forms and errors
-        doc['submit_ip'] = self.submit_ip
-        doc['path'] = self.path
-
-        doc['openrosa_headers'] = self.openrosa_headers
-
-        doc['last_sync_token'] = self.last_sync_token
-
-        if self.received_on:
-            doc.received_on = self.received_on
-
-        if self.date_header:
-            doc['date_header'] = self.date_header
-
-        doc['domain'] = self.domain
-        doc['app_id'] = self.app_id
-        doc['#export_tag'] = ["domain", "xmlns"]
-
-        return doc
 
     def success_actions_and_respond(self, doc):
         feedback = successful_form_received.send_robust(sender='receiver', xform=doc)
@@ -107,13 +64,7 @@ class SubmissionPost(couchforms.SubmissionPost):
             status=201,
         )
 
-    def get_success_response(self, doc):
-        # get a fresh copy of the doc, in case other things modified it.
-        instance = XFormInstance.get(doc.get_id)
-        self._attach_shared_props(instance)
-        scrub_meta(instance)
-        instance.save()
-
+    def get_success_response(self, instance):
         if instance.doc_type == "XFormInstance":
             response = self.success_actions_and_respond(instance)
         else:
@@ -123,7 +74,7 @@ class SubmissionPost(couchforms.SubmissionPost):
         response["Location"] = self.location
 
         # this is a magic thing that we add
-        response['X-CommCareHQ-FormID'] = doc.get_id
+        response['X-CommCareHQ-FormID'] = instance.get_id
         return response
 
     def get_error_response(self, error_log):
