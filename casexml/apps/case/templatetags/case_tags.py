@@ -191,8 +191,15 @@ def process_case_hierarchy(case_output, get_case_url, type_info):
     process_output(case_output)
 
 def get_case_hierarchy(case, type_info):
-    def get_children(case):
-        children = [get_children(i.referenced_case) for i in case.reverse_indices]
+    def get_children(case, referenced_type=None):
+        children = [get_children(i.referenced_case, i.referenced_type) for i in case.reverse_indices]
+
+        ignore_types = type_info[case.type].get("ignore_relationship_types", [])
+        if referenced_type and referenced_type in ignore_types:
+            return None
+
+        children = [c for c in children if c is not None]
+
         # non-first-level descendants
         descendant_types = []
         for c in children:
@@ -213,8 +220,7 @@ def get_case_hierarchy(case, type_info):
         return {
             'case': case,
             'child_cases': children,
-            'descendant_types': descendant_types + list(set(
-                    c['case'].type for c in children)),
+            'descendant_types': list(set(descendant_types + [c['case'].type for c in children])),
             'case_list': [case] + child_cases
         }
 
