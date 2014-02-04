@@ -85,6 +85,12 @@
                                 <input type="checkbox" data-bind="checked: subcaseLoad"/>
                                 {% trans "This case is a subcase of the previous case" %}
                             </label>
+                            <span data-bind="if: subcaseLoad">
+                                {% if show_custom_ref %}
+                                    <label>{% trans "Override reference id: " %}</label>
+                                    <input type="text" data-bind="value: parent_reference_id, edit: $root.edit"/>
+                                {% endif %}
+                            </span>
                         </div>
                         <!-- /ko -->
                         <!-- /ko -->
