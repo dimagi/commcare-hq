@@ -1,3 +1,4 @@
+from lxml import etree
 import os
 import random
 import uuid
@@ -94,16 +95,10 @@ class CommTrackOTATest(CommTrackTest):
             section_to_consumption_types={'stock': 'consumption'}
         )
         set_default_consumption_for_domain(self.domain.name, 5)
-        ota_settings = self.ct_settings.get_ota_restore_settings()
 
         amounts = [(p._id, i*10) for i, p in enumerate(self.products)]
         report = _report_soh(amounts, self.sp._id, 'stock')
-        restore_config = RestoreConfig(
-            self.user.to_casexml_user(),
-            version=V2,
-            stock_settings=ota_settings,
-        )
-        balance_blocks = extract_balance_xml(restore_config.get_payload())
+        balance_blocks = _get_ota_balance_blocks(self.ct_settings, self.user)
         self.assertEqual(2, len(balance_blocks))
         stock_block, consumption_block = balance_blocks
         check_xml_line_by_line(
@@ -126,6 +121,35 @@ class CommTrackOTATest(CommTrackTest):
             ),
              consumption_block,
         )
+
+    def test_force_consumption(self):
+        self.ct_settings.consumption_config = ConsumptionConfig(
+            min_transactions=0,
+            min_window=0,
+            optimal_window=60,
+        )
+        self.ct_settings.ota_restore_config = StockRestoreConfig(
+            section_to_consumption_types={'stock': 'consumption'},
+        )
+        set_default_consumption_for_domain(self.domain.name, 5)
+
+        balance_blocks = _get_ota_balance_blocks(self.ct_settings, self.user)
+        self.assertEqual(0, len(balance_blocks))
+
+        # self.ct_settings.ota_restore_config.use_dynamic_product_list = True
+        self.ct_settings.ota_restore_config.force_consumption_case_types = [const.SUPPLY_POINT_CASE_TYPE]
+        balance_blocks = _get_ota_balance_blocks(self.ct_settings, self.user)
+        self.assertEqual(1, len(balance_blocks))
+        [balance_block] = balance_blocks
+        element = etree.fromstring(balance_block)
+        self.assertEqual(0, len([child for child in element]))
+
+        self.ct_settings.ota_restore_config.use_dynamic_product_list = True
+        balance_blocks = _get_ota_balance_blocks(self.ct_settings, self.user)
+        self.assertEqual(1, len(balance_blocks))
+        [balance_block] = balance_blocks
+        element = etree.fromstring(balance_block)
+        self.assertEqual(3, len([child for child in element]))
 
 
 class CommTrackSubmissionTest(CommTrackTest):
@@ -380,3 +404,12 @@ def _report_soh(amounts, case_id, section_id='stock', report=None):
             type=stockconst.TRANSACTION_TYPE_STOCKONHAND,
         )
     return report
+
+def _get_ota_balance_blocks(ct_settings, user):
+    ota_settings = ct_settings.get_ota_restore_settings()
+    restore_config = RestoreConfig(
+        user.to_casexml_user(),
+        version=V2,
+        stock_settings=ota_settings,
+    )
+    return extract_balance_xml(restore_config.get_payload())
