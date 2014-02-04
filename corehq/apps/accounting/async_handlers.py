@@ -128,6 +128,16 @@ class BaseSelect2AsyncHandler(BaseAsyncHandler):
     def existing(self):
         return self.data.getlist('existing[]')
 
+    def _fmt_success(self, response):
+        success = json.dumps({
+            'results': [{
+                'id': r[0],
+                'text': r[1],
+            } for r in response]
+        }, cls=LazyEncoder)
+        print success
+        return success
+
 
 class Select2RateAsyncHandler(BaseSelect2AsyncHandler):
     """
@@ -185,14 +195,6 @@ class Select2RoleAsyncHandler(BaseSelect2AsyncHandler):
     def privileges_response(self):
         current_privileges = [Role.objects.get(slug=priv) for priv in privileges.MAX_PRIVILEGES]
         return [(p.slug, p.name) for p in current_privileges]
-
-    def _fmt_success(self, response):
-        return json.dumps([
-            {
-                'id': r[0],
-                'text': r[1],
-            } for r in response
-        ])
 
 
 class Select2BillingInfoHandler(BaseSelect2AsyncHandler):
