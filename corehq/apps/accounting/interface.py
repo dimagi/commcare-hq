@@ -49,7 +49,7 @@ class AccountingInterface(BaseCRUDAdminInterface):
                      or AccountTypeFilter.get_value(self.request, self.domain) == account.account_type):
                 rows.append([mark_safe('<a href="./%d">%s</a>' % (account.id, account.name)),
                              account.salesforce_account_id,
-                             account.date_created,
+                             account.date_created.date(),
                              account.account_type])
         return rows
 
