@@ -39,8 +39,8 @@ class AccountingInterface(BaseCRUDAdminInterface):
     def rows(self):
         rows = []
         for account in BillingAccount.objects.all():
-            if DateCreatedFilter.get_start_date(self.request).date() <= account.date_created \
-                and DateCreatedFilter.get_end_date(self.request).date() >= account.date_created \
+            if DateCreatedFilter.get_start_date(self.request).date() <= account.date_created.date() \
+                and DateCreatedFilter.get_end_date(self.request).date() >= account.date_created.date() \
                 and (NameFilter.get_value(self.request, self.domain) is None
                      or NameFilter.get_value(self.request, self.domain) == account.name) \
                 and (SalesforceAccountIDFilter.get_value(self.request, self.domain) is None
