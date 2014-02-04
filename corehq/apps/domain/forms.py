@@ -740,14 +740,14 @@ class BillingAccountInfoForm(forms.ModelForm):
 
 
 class ProBonoForm(forms.Form):
-    contact_email = forms.CharField()
-    organization = forms.CharField(required=False)
-    project_overview = forms.CharField(widget=forms.Textarea)
-    pay_only_features_needed = forms.BooleanField(required=False)
-    duration_of_project = forms.CharField(help_text="We grant pro-bono software plans for "
-                                                    "12 months at a time. After 12 months "
-                                                    "groups must reapply to renew their "
-                                                    "pro-bono subscription.")
+    contact_email = forms.CharField(label=_("Contact email"))
+    organization = forms.CharField(required=False, label=_("Organization"))
+    project_overview = forms.CharField(widget=forms.Textarea, label="Project Overview")
+    pay_only_features_needed = forms.BooleanField(required=False, label="Pay only features needed")
+    duration_of_project = forms.CharField(help_text=_("We grant pro-bono software plans for "
+                                                      "12 months at a time. After 12 months "
+                                                      "groups must reapply to renew their "
+                                                      "pro-bono subscription."))
 
     def __init__(self, *args, **kwargs):
         super(ProBonoForm, self).__init__(*args, **kwargs)
@@ -755,7 +755,7 @@ class ProBonoForm(forms.Form):
         self.helper.form_class = 'form form-horizontal'
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-            'Pro-Bono Application',
+            _('Pro-Bono Application'),
                 'contact_email',
                 'organization',
                 'project_overview',
@@ -764,7 +764,7 @@ class ProBonoForm(forms.Form):
             ),
             FormActions(
                 crispy.ButtonHolder(
-                    crispy.Submit('submit_pro_bono', 'Submit Pro-Bono Application')
+                    crispy.Submit('submit_pro_bono', _('Submit Pro-Bono Application'))
                 )
             ),
         )

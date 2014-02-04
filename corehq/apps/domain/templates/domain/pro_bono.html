@@ -3,7 +3,7 @@
 
 {% block main_column %}
     {% if is_submitted %}
-        Thank you for your submission.
+        {% trans "Thank you for your submission." %}
     {% else %}
         {% crispy pro_bono_form %}
     {% endif %}
