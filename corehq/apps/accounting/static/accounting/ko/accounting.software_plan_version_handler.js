@@ -22,6 +22,7 @@ var BaseAsyncManager = function (objClass, select2Class, options) {
 
     self.objClass = objClass;
     self.select2Class = select2Class;
+    self.handlerSlug = options.handlerSlug;
 
     self.error = ko.observable();
     self.showError = ko.computed(function () {
@@ -123,8 +124,6 @@ RoleAsyncManager.prototype.constructor = RoleAsyncManager;
 var BaseSelect2Handler = function (options, currentValue) {
     'use strict';
     var self = this;
-    console.log(options);
-    console.log(options.fieldName);
     self.currentValue = currentValue;
     self.fieldName = options.fieldName;
     self.value = ko.observable();

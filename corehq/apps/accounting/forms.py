@@ -642,6 +642,7 @@ class SoftwarePlanVersionForm(forms.Form):
     def feature_rates_dict(self):
         return {
             'currentValue': self['feature_rates'].value(),
+            'handlerSlug': FeatureRateAsyncHandler.slug,
             'select2Options': {
                 'fieldName': 'feature_id',
             }
@@ -651,6 +652,7 @@ class SoftwarePlanVersionForm(forms.Form):
     def product_rates_dict(self):
         return {
             'currentValue': self['product_rates'].value(),
+            'handlerSlug': SoftwareProductRateAsyncHandler.slug,
             'select2Options': {
                 'fieldName': 'product_id',
             }
