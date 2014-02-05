@@ -135,7 +135,6 @@ class BaseSelect2AsyncHandler(BaseAsyncHandler):
                 'text': r[1],
             } for r in response]
         }, cls=LazyEncoder)
-        print success
         return success
 
 
