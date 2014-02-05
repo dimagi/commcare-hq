@@ -194,7 +194,7 @@ def get_case_hierarchy(case, type_info):
     def get_children(case, referenced_type=None):
         children = [get_children(i.referenced_case, i.referenced_type) for i in case.reverse_indices]
 
-        ignore_types = type_info[case.type].get("ignore_relationship_types", [])
+        ignore_types = type_info.get(case.type, {}).get("ignore_relationship_types", [])
         if referenced_type and referenced_type in ignore_types:
             return None
 
