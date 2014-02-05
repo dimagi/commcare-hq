@@ -42,8 +42,8 @@ class OpmCaseSqlData(SqlData):
         return dict(
             domain=self.domain,
             user_id=self.user_id,
-            startdate=self.datespan.startdate_param_utc,
-            enddate=self.datespan.enddate_param_utc
+            startdate=self.datespan.startdate_utc.date(),
+            enddate=self.datespan.enddate_utc.date()
         )
 
     @property
@@ -91,8 +91,8 @@ class OpmFormSqlData(SqlData):
         return dict(
             domain=self.domain,
             case_id=self.case_id,
-            startdate=self.datespan.startdate_param_utc,
-            enddate=self.datespan.enddate_param_utc
+            startdate=self.datespan.startdate_utc.date(),
+            enddate=self.datespan.enddate_utc.date()
         )
 
     @property
@@ -145,8 +145,8 @@ class OpmHealthStatusSqlData(SqlData):
         return dict(
             domain=self.domain,
             user_id=self.user_id,
-            startdate=self.datespan.startdate_param_utc,
-            enddate=self.datespan.enddate_param_utc
+            startdate=self.datespan.startdate_utc.date(),
+            enddate=self.datespan.enddate_utc.date()
         )
 
     @property
