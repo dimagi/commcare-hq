@@ -2,7 +2,7 @@ from corehq.apps.reports.filters.base import BaseReportFilter
 
 # For translations
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from dimagi.utils.dates import DateSpan
 
 class DatespanFilter(BaseReportFilter):
@@ -12,7 +12,7 @@ class DatespanFilter(BaseReportFilter):
         @datespan_in_request
     """
     template = "reports/filters/datespan.html"
-    label = ugettext_noop("Date Range")
+    label = ugettext_lazy("Date Range")
     slug = "datespan"
     default_days = 7
 

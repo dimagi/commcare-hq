@@ -833,12 +833,13 @@ class ProjectSettingsTab(UITab):
                 BasicCommTrackSettingsView,
                 AdvancedCommTrackSettingsView,
                 DomainSubscriptionView,
+                SelectPlanView,
             )
 
             subscription = [
                 {
                     'title': DomainSubscriptionView.page_title,
-                    'url': reverse(DomainSubscriptionView.urlname, args=[self.domain])
+                    'url': reverse(DomainSubscriptionView.urlname, args=[self.domain]),
                 },
             ]
 

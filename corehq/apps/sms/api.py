@@ -254,7 +254,9 @@ def process_sms_registration(msg):
     
     return registration_processed
 
-def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None, backend_message_id=None, delay=True):
+def incoming(phone_number, text, backend_api, timestamp=None, 
+             domain_scope=None, backend_message_id=None, delay=True,
+             backend_attributes=None):
     """
     entry point for incoming sms
 
@@ -277,6 +279,9 @@ def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None,
         backend_api = backend_api,
         backend_message_id = backend_message_id,
     )
+    if backend_attributes:
+        for k, v in backend_attributes.items():
+            setattr(msg, k, v)
     if settings.SMS_QUEUE_ENABLED:
         msg.processed = False
         msg.datetime_to_process = datetime.utcnow()

@@ -8,12 +8,12 @@ from tastypie.resources import Resource
 from tastypie.serializers import Serializer
 from tastypie.throttle import CacheThrottle
 from corehq.apps.grapevine.forms import GrapevineBackendForm
-from corehq.apps.grapevine.tasks import incoming_sms_async
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.sms.mixin import SMSBackend
 from couchdbkit.ext.django.schema import *
 from xml.sax.saxutils import escape, unescape
 from django.conf import settings
+from corehq.apps.sms.api import incoming as incoming_sms
 import logging
 
 logger = logging.getLogger(__name__)
@@ -200,7 +200,7 @@ class GrapevineResource(Resource):
         bundle = self.full_hydrate(bundle)
 
         if bundle.obj.is_complete:
-            incoming_sms_async.delay(bundle.obj.phonenumber, bundle.obj.text, GrapevineBackend.get_api_id())
+            incoming_sms(bundle.obj.phonenumber, bundle.obj.text, GrapevineBackend.get_api_id())
 
         return bundle
 

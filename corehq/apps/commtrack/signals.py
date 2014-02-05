@@ -5,15 +5,15 @@ from casexml.apps.case.signals import cases_received
 from casexml.apps.case.xform import get_case_updates
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.const import is_commtrack_form, RequisitionStatus
-from corehq.apps.commtrack.models import (RequisitionCase, SupplyPointProductCase,
-        CommtrackConfig, SupplyPointCase)
+from corehq.apps.commtrack.models import RequisitionCase, CommtrackConfig, SupplyPointCase
 from corehq.apps.commtrack.util import bootstrap_commtrack_settings_if_necessary
 from corehq.apps.domain.signals import commcare_domain_post_save
 from corehq.apps.locations.models import Location
 from corehq.apps.sms.api import send_sms_to_verified_number
 from dimagi.utils import create_unique_filter
+from corehq.apps.commtrack.processing import process_stock
+from receiver.signals import successful_form_received
 from custom.openlmis.commtrack import requisition_receipt, requisition_approved
-
 
 supply_point_modified = Signal(providing_args=['supply_point', 'created'])
 
@@ -39,14 +39,6 @@ def attach_locations(xform, cases):
                     if loc_id:
                         loc = Location.get(loc_id)
                         case.bind_to_location(loc)
-
-                elif case.type == const.SUPPLY_POINT_PRODUCT_CASE_TYPE:
-                    wrapped_case = SupplyPointProductCase.wrap(case._doc)
-                    sp = wrapped_case.get_supply_point_case()
-                    if sp and sp.location_:
-                        loc = sp.location_
-                        case.location_ = loc
-
                 elif case.type == const.REQUISITION_CASE_TYPE:
                     req = RequisitionCase.wrap(case._doc)
                     prod = req.get_product_case()
@@ -134,3 +126,4 @@ def bootstrap_commtrack_settings_if_necessary_signal(sender, **kwargs):
     bootstrap_commtrack_settings_if_necessary(kwargs['domain'])
 
 commcare_domain_post_save.connect(bootstrap_commtrack_settings_if_necessary_signal)
+successful_form_received.connect(process_stock)

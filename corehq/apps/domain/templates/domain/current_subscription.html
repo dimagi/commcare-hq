@@ -16,7 +16,7 @@
                     <div class="controls">
                         <p class="control-group-text">
                             <span class="{{ plan.css_class }}">{{ plan.name }}</span>
-                            <a class="btn" href="#">{% trans "Change Plan" %}</a>
+                            <a class="btn" href="{{ change_plan_url }}">{% trans "Change Plan" %}</a>
                         </p>
                         <span class="alert alert-info">
                             <i class="icon-info-sign"></i> {{ plan.description }}

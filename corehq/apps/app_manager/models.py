@@ -15,7 +15,7 @@ from copy import deepcopy
 from urllib2 import urlopen
 from urlparse import urljoin
 
-from couchdbkit import ResourceConflict
+from couchdbkit import ResourceConflict, MultipleResultsFound
 from lxml import etree
 from django.core.cache import cache
 from django.utils.encoding import force_unicode
@@ -63,6 +63,7 @@ from .exceptions import (
     RearrangeError,
     VersioningError,
     XFormError,
+    XFormIdNotUnique,
     XFormValidationError,
 )
 
@@ -392,8 +393,15 @@ class FormBase(DocumentSchema):
 
     @classmethod
     def get_form(cls, form_unique_id, and_app=False):
-
-        d = get_db().view('app_manager/xforms_index', key=form_unique_id).one()
+        try:
+            d = get_db().view(
+                'app_manager/xforms_index',
+                key=form_unique_id
+            ).one()
+        except MultipleResultsFound as e:
+            raise XFormIdNotUnique(
+                "xform id '%s' not unique: %s" % (form_unique_id, e)
+            )
         if d:
             d = d['value']
         else:

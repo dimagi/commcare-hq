@@ -12,3 +12,17 @@ class InvoiceError(Exception):
 
 class CreditLineError(Exception):
     pass
+
+
+class SubscriptionAdjustmentError(Exception):
+    pass
+
+
+class SubscriptionDowngradeError(Exception):
+    pass
+
+
+class NewSubscriptionError(Exception):
+    pass
+
+

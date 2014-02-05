@@ -1,7 +1,9 @@
 from corehq.apps.groups.models import Group
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.elastic import es_query, ES_URLS, stream_es_query, get_es
 from corehq.pillows.mappings.user_mapping import USER_MAPPING, USER_INDEX
+from couchforms.models import XFormInstance
 from dimagi.utils.decorators.memoized import memoized
 from pillowtop.listener import AliasedElasticPillow, BulkPillow
 from django.conf import settings
@@ -89,6 +91,56 @@ class GroupToUserPillow(BulkPillow):
                 group_names.add(changes_dict["doc"]["name"])
                 doc = {"__group_ids": list(group_ids), "__group_names": list(group_names)}
                 es.post("%s/user/%s/_update" % (USER_INDEX, user_source["_id"]), data={"doc": doc})
+
+    def change_transport(self, doc_dict):
+        pass
+
+    def send_bulk(self, payload):
+        pass
+
+class UnknownUsersPillow(BulkPillow):
+    """
+        This pillow adds users from xform submissions that come in to the User Index if they don't exist in HQ
+    """
+    document_class = XFormInstance
+    couch_filter = "couchforms/xforms"
+    include_docs = False
+
+    def __init__(self, **kwargs):
+        super(UnknownUsersPillow, self).__init__(**kwargs)
+        self.couch_db = XFormInstance.get_db()
+        self.user_db = CouchUser.get_db()
+
+    def get_fields(self, changes_or_emitted_dict):
+        if "doc" in changes_or_emitted_dict:
+            form_meta = changes_or_emitted_dict["doc"].get("form", {}).get("meta", {})
+            user_id, username = form_meta.get("userID"), form_meta.get("username")
+            domain = changes_or_emitted_dict["doc"].get("domain")
+            xform_id = changes_or_emitted_dict["doc"].get("_id")
+        else:
+            emitted = changes_or_emitted_dict["value"]
+            user_id, username, domain = emitted["user_id"], emitted["username"], emitted["domain"]
+            xform_id = changes_or_emitted_dict["id"]
+
+        user_id = None if user_id in WEIRD_USER_IDS else user_id
+        return user_id, username, domain, xform_id
+
+    def change_trigger(self, changes_dict):
+        user_id, username, domain, xform_id = self.get_fields(changes_dict)
+        es = get_es()
+        es_path = USER_INDEX + "/user/"
+        if user_id and not self.user_db.doc_exist(user_id) and not es.head(es_path + user_id):
+            doc_type = "AdminUser" if username == "admin" else "UnknownUser"
+            doc = {
+                "_id": user_id,
+                "domain": domain,
+                "username": username,
+                "first_form_found_in": xform_id,
+                "doc_type": doc_type,
+            }
+            if domain:
+                doc["domain_membership"] = {"domain": domain}
+            es.put(es_path + user_id, data=doc)
 
     def change_transport(self, doc_dict):
         pass

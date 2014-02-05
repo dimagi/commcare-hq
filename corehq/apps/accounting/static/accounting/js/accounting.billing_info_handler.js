@@ -1,0 +1,111 @@
+var BillingContactInfoHandler = function (valid_email_text, domain) {
+    'use strict';
+    var self = this;
+
+    self.country = new AsyncSelect2Handler('country');
+    self.billing_admins = new AsyncSelect2Handler('billing_admins', true);
+    self.emails = new EmailSelect2Handler('emails', valid_email_text);
+
+    self.init = function () {
+        self.country.init();
+        self.billing_admins.init();
+        self.emails.init();
+    };
+};
+
+var AsyncSelect2Handler = function (field, multiple) {
+    'use strict';
+    var self = this;
+
+    self.fieldName = field;
+    self.multiple = !! multiple;
+
+    self.init = function () {
+        $(function () {
+            $('[name="' + self.fieldName + '"]').select2({
+                minimumInputLength: 0,
+                allowClear: true,
+                ajax: {
+                    quietMillis: 150,
+                    url: '',
+                    dataType: 'json',
+                    type: 'post',
+                    data: function (term) {
+                        return {
+                            handler: 'select2_billing',
+                            action: self.fieldName,
+                            searchString: term,
+                            existing: $('[name="' + self.fieldName + '"]').val().split(',')
+                        };
+                    },
+                    results: function (data) {
+                        return {
+                            results: data
+                        };
+                    }
+                },
+                multiple: self.multiple,
+                initSelection: function (element, callback) {
+                    var data = (self.multiple) ? billingInfoUtils.getMultiResultsFromElement(element) :
+                        billingInfoUtils.getSingleResultFromElement(element);
+                    callback(data);
+                }
+            });
+        });
+    };
+};
+
+var EmailSelect2Handler = function (field, valid_email_text) {
+    'use strict';
+    var self = this;
+
+    self.fieldName = field;
+    self.validEmailText = valid_email_text;
+
+    self.init = function () {
+        $(function () {
+            $('[name="' + self.fieldName + '"]').select2({
+                createSearchChoice: function (term, data) {
+                    var matchedData = $(data).filter(function() {
+                        return this.text.localeCompare(term) === 0;
+                    });
+
+                    var isEmailValid = self.utils.validateEmail(term);
+
+                    if (matchedData.length === 0 && isEmailValid) {
+                        return { id: term, text: term };
+                    }
+                },
+                multiple: true,
+                data: [],
+                formatNoMatches: function () {
+                    return self.validEmailText;
+                },
+                initSelection: function (element, callback) {
+                    callback(billingInfoUtils.getMultiResultsFromElement(element));
+                }
+            });
+        })
+    };
+
+    self.utils = {
+        validateEmail: function (email) {
+            // from http://stackoverflow.com/questions/46155/validate-email-address-in-javascript
+            var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+            return re.test(email);
+        }
+    };
+};
+
+var billingInfoUtils = {
+    getMultiResultsFromElement: function (element) {
+        var data = $(element).val();
+        return _.map(data.split(','), function (email) {
+            return {id: email, text: email };
+        });
+    },
+    getSingleResultFromElement: function (element) {
+        var value = $(element).val();
+        return {id: value, text: value};
+    }
+};

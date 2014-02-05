@@ -13,7 +13,8 @@ from dimagi.utils.data import generator as data_gen
 
 from corehq.apps.accounting.models import (FeatureType, Currency, BillingAccount, FeatureRate, SoftwarePlanVersion,
                                            SoftwarePlan, SoftwareProductRate, Subscription, Subscriber, SoftwareProduct,
-                                           Feature, SoftwareProductType, DefaultProductPlan, BillingAccountAdmin)
+                                           Feature, SoftwareProductType, DefaultProductPlan, BillingAccountAdmin,
+                                           SubscriptionAdjustment, SoftwarePlanEdition)
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser, CommCareUser
 
@@ -205,6 +206,7 @@ def instantiate_community_plans():
     for ind, plan in enumerate(plans):
         DefaultProductPlan.objects.get_or_create(
             product_type=COMMUNITY_COMMCARE_PLANS[ind]['product_type'],
+            edition=SoftwarePlanEdition.COMMUNITY,
             plan=plan,
         )
 
@@ -224,7 +226,7 @@ def delete_all_plans():
 def arbitrary_subscribable_plan():
     subscribable_plans = [plan['name'] for plan in SUBSCRIBABLE_COMMCARE_PLANS]
     plan = SoftwarePlan.objects.get(name=random.choice(subscribable_plans))
-    return plan.softwareplanversion_set.latest('date_created')
+    return plan.get_version()
 
 
 def generate_domain_subscription_from_date(date_start, billing_account, domain,
@@ -257,6 +259,7 @@ def generate_domain_subscription_from_date(date_start, billing_account, domain,
 
 
 def delete_all_subscriptions():
+    SubscriptionAdjustment.objects.all().delete()
     Subscription.objects.all().delete()
     Subscriber.objects.all().delete()
 
@@ -291,14 +294,24 @@ def arbitrary_domains_by_product_type():
     return domains
 
 
+def arbitrary_commcare_user(domain, is_active=True):
+    username = data_gen.arbitrary_unique_name()[:80]
+    try:
+        commcare_user = CommCareUser.create(domain, username, 'test123')
+        commcare_user.is_active = is_active
+        commcare_user.save()
+        return commcare_user
+    except AlreadyExistsError:
+        pass
+
+
 def arbitrary_commcare_users_for_domain(domain, num_users, is_active=True):
     count = 0
     for _ in range(0, num_users):
         count += 1
-        username = data_gen.arbitrary_unique_name()[:80]
-        commcare_user = CommCareUser.create(domain, username, 'test123')
-        commcare_user.is_active = is_active
-        commcare_user.save()
+        commcare_user = None
+        while commcare_user is None:
+            commcare_user = arbitrary_commcare_user(domain, is_active=is_active)
     return num_users
 
 

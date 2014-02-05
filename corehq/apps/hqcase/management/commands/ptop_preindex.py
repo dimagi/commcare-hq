@@ -17,7 +17,9 @@ def get_reindex_commands(pillow_class_name):
         'DomainPillow': 'ptop_fast_reindex_domains',
         'CasePillow': 'ptop_fast_reindex_cases',
         'XFormPillow': 'ptop_fast_reindex_xforms',
-        'UserPillow': ['ptop_fast_reindex_users', 'ptop_fast_reindex_groupstousers'],
+        'UserPillow': ['ptop_fast_reindex_users',
+                       'ptop_fast_reindex_groupstousers',
+                       'ptop_fast_reindex_unknownusers'],
         # groupstousers indexing must happen after all users are indexed
         'AppPillow': 'ptop_fast_reindex_apps',
         'SMSPillow': 'ptop_fast_reindex_smslogs',
