@@ -84,10 +84,10 @@ class DomainViewMixin(object):
     @property
     @memoized
     def domain_object(self):
-        try:
-            return Domain.get_by_name(self.domain, strict=True)
-        except ResourceNotFound:
+        domain = Domain.get_by_name(self.domain, strict=True)
+        if not domain:
             raise Http404()
+        return domain
 
 
 class BaseDomainView(BaseSectionPageView, DomainViewMixin):
