@@ -130,7 +130,6 @@ class UnknownUsersPillow(BulkPillow):
         es = get_es()
         es_path = USER_INDEX + "/user/"
         if user_id and not self.user_db.doc_exist(user_id) and not es.head(es_path + user_id):
-            print "adding unknown user: %s" % user_id
             doc = {
                 "_id": user_id,
                 "domain": domain,
@@ -140,7 +139,7 @@ class UnknownUsersPillow(BulkPillow):
             }
             if domain:
                 doc["domain_membership"] = {"domain": domain}
-            es.put(es_path + user_id, data={"doc": doc})
+            es.put(es_path + user_id, data=doc)
 
     def change_transport(self, doc_dict):
         pass
