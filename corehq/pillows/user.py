@@ -130,12 +130,13 @@ class UnknownUsersPillow(BulkPillow):
         es = get_es()
         es_path = USER_INDEX + "/user/"
         if user_id and not self.user_db.doc_exist(user_id) and not es.head(es_path + user_id):
+            doc_type = "AdminUser" if username == "admin" else "UnknownUser"
             doc = {
                 "_id": user_id,
                 "domain": domain,
                 "username": username,
                 "first_form_found_in": xform_id,
-                "doc_type": "UnknownUser",
+                "doc_type": doc_type,
             }
             if domain:
                 doc["domain_membership"] = {"domain": domain}
