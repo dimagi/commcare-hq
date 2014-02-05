@@ -4,6 +4,7 @@ import uuid
 from xml.etree import ElementTree
 from couchdbkit.schema.properties import LazyDict
 from django.template.loader import render_to_string
+from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.phone.models import SyncLogAssertionError, SyncLog
 from couchforms.models import XFormInstance
 from couchforms.util import post_xform_to_couch
@@ -100,3 +101,11 @@ def update_sync_log_with_checks(sync_log, xform, cases, case_id_blacklist=None):
             updated_log = SyncLog.get(sync_log._id)
 
             update_sync_log_with_checks(updated_log, xform, cases, case_id_blacklist=case_id_blacklist)
+
+
+def reverse_indices(db, case):
+    return db.view("case/related",
+        key=[case.domain, case._id, "reverse_index"],
+        reduce=False,
+        wrapper=lambda r: CommCareCaseIndex.wrap(r['value'])
+    ).all()
