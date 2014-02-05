@@ -173,12 +173,11 @@ class SubscriptionForm(forms.Form):
         start_date_kwargs = dict(**css_class)
         end_date_kwargs = dict(**css_class)
         delay_invoice_until_kwargs = dict(**css_class)
-        plan_kwargs = dict()
         domain_kwargs = dict()
 
-        self.fields['plan_version'].choices = [(plan_version.id, str(plan_version))
-                                               for plan_version in SoftwarePlanVersion.objects.all()]
         if subscription is not None:
+            self.fields['plan_version'].choices = [(subscription.plan_version.id,
+                                                    str(subscription.plan_version))]
             self.fields['start_date'].initial = subscription.date_start
             self.fields['end_date'].initial = subscription.date_end
             self.fields['delay_invoice_until'].initial = subscription.date_delay_invoicing
@@ -195,10 +194,12 @@ class SubscriptionForm(forms.Form):
             if (subscription.date_delay_invoicing is not None
                 and subscription.date_delay_invoicing <= datetime.date.today()):
                 delay_invoice_until_kwargs.update(disabled)
-            plan_kwargs.update(disabled)
             self.fields['plan_version'].required = False
             domain_kwargs.update(disabled)
             self.fields['domain'].required = False
+        else:
+            self.fields['plan_version'].choices = [(plan_version.id, str(plan_version))
+                                                   for plan_version in SoftwarePlanVersion.objects.all()]
         self.helper = FormHelper()
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
@@ -206,7 +207,7 @@ class SubscriptionForm(forms.Form):
                 crispy.Field('start_date', **start_date_kwargs),
                 crispy.Field('end_date', **end_date_kwargs),
                 crispy.Field('delay_invoice_until', **delay_invoice_until_kwargs),
-                crispy.Field('plan_version', **plan_kwargs),
+                crispy.Field('plan_version'),
                 crispy.Field('domain', **domain_kwargs),
                 'salesforce_contract_id',
             ),
