@@ -79,15 +79,16 @@ class DomainViewMixin(object):
     @property
     @memoized
     def domain(self):
-        return self.args[0] if len(self.args) > 0 else self.kwargs.get('domain', "")
+        domain = self.args[0] if len(self.args) > 0 else self.kwargs.get('domain', "")
+        return normalize_domain_name(domain)
 
     @property
     @memoized
     def domain_object(self):
-        try:
-            return Domain.get_by_name(self.domain, strict=True)
-        except ResourceNotFound:
+        domain = Domain.get_by_name(self.domain, strict=True)
+        if not domain:
             raise Http404()
+        return domain
 
 
 class BaseDomainView(BaseSectionPageView, DomainViewMixin):
@@ -379,10 +380,6 @@ def test_repeater(request, domain):
     else:
         return HttpResponse(json.dumps({"success": False, "response": "Please enter a valid url."}))
 
-
-def legacy_domain_name(request, domain, path):
-    domain = normalize_domain_name(domain)
-    return HttpResponseRedirect(get_domained_url(domain, path))
 
 def autocomplete_fields(request, field):
     prefix = request.GET.get('prefix', '')
