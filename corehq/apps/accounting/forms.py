@@ -260,16 +260,16 @@ class CreditForm(forms.Form):
     amount = forms.DecimalField()
     note = forms.CharField(required=False)
     rate_type = forms.ChoiceField()
-    product = forms.ChoiceField(required=False)
-    feature = forms.ChoiceField(label="Rate", required=False)
+    product_rate = forms.ChoiceField(required=False, label=_("Product Rate"))
+    feature_rate = forms.ChoiceField(required=False, label=_("Feature Rate"))
 
     def __init__(self, id, is_account, *args, **kwargs):
         super(CreditForm, self).__init__(*args, **kwargs)
         if not kwargs:
-            self.fields['product'].choices = self.get_product_choices(id, is_account)
-            self.fields['feature'].choices = self.get_feature_choices(id, is_account)
-            self.fields['rate_type'].choices = self.get_rate_type_choices(self.fields['product'].choices,
-                                                                          self.fields['feature'].choices)
+            self.fields['product_rate'].choices = self.get_product_rate_choices(id, is_account)
+            self.fields['feature_rate'].choices = self.get_feature_choices(id, is_account)
+            self.fields['rate_type'].choices = self.get_rate_type_choices(self.fields['product_rate'].choices,
+                                                                          self.fields['feature_rate'].choices)
         self.helper = FormHelper()
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
@@ -277,8 +277,8 @@ class CreditForm(forms.Form):
                 'amount',
                 'note',
                 crispy.Field('rate_type', data_bind="value: rateType"),
-                crispy.Div('product', data_bind="visible: showProduct"),
-                crispy.Div('feature', data_bind="visible: showFeature"),
+                crispy.Div('product_rate', data_bind="visible: showProduct"),
+                crispy.Div('feature_rate', data_bind="visible: showFeature"),
             ),
             FormActions(
                 crispy.ButtonHolder(
@@ -291,23 +291,23 @@ class CreditForm(forms.Form):
         return Subscription.objects.filter(account=BillingAccount.objects.get(id=id))\
             if is_account else [Subscription.objects.get(id=id)]
 
-    def get_product_choices(self, id, is_account):
+    def get_product_rate_choices(self, id, is_account):
         subscriptions = self.get_subscriptions(id, is_account)
         product_rate_sets = [sub.plan_version.product_rates for sub in subscriptions]
-        products = set()
+        product_rates = set()
         for product_rate_set in product_rate_sets:
             for product_rate in product_rate_set.all():
-                products.add(product_rate.product)
-        return [(product.id, product.name) for product in products]
+                product_rates.add(product_rate)
+        return [(product_rate.id, str(product_rate)) for product_rate in product_rates]
 
     def get_feature_choices(self, id, is_account):
         subscriptions = self.get_subscriptions(id, is_account)
         feature_rate_sets = [sub.plan_version.feature_rates for sub in subscriptions]
-        features = set()
+        feature_rates = set()
         for feature_rate_set in feature_rate_sets:
             for feature_rate in feature_rate_set.all():
-                features.add(feature_rate.feature)
-        return [(feature.id, feature.name) for feature in features]
+                feature_rates.add(feature_rate)
+        return [(feature_rate.id, str(feature_rate)) for feature_rate in feature_rates]
 
     def get_rate_type_choices(self, product_choices, feature_choices):
         choices = [('Any', 'Any')]
@@ -326,13 +326,15 @@ class CreditForm(forms.Form):
 
         def add_product_rate():
             CreditLine.add_rate_credit(amount, get_account_for_rate(),
-                                       product_rate=SoftwareProductRate.objects.get(id=self.cleaned_data['product']),
+                                       product_rate=SoftwareProductRate.objects.get(
+                                           id=self.cleaned_data['product_rate']),
                                        subscription=subscription,
                                        note=note)
 
         def add_feature_rate():
             CreditLine.add_rate_credit(amount, get_account_for_rate(),
-                                       feature_rate=FeatureRate.objects.get(id=self.cleaned_data['feature']),
+                                       feature_rate=FeatureRate.objects.get(
+                                           id=self.cleaned_data['feature_rate']),
                                        subscription=subscription,
                                        note=note)
 

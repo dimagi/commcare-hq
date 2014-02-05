@@ -260,7 +260,7 @@ class SoftwareProductRate(models.Model):
     is_active = models.BooleanField(default=True)
 
     def __str__(self):
-        return 'Product Rate: $%s /month' % self.monthly_fee
+        return '%s @ $%s /month' % (self.product.name, self.monthly_fee)
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__) or not self.product.pk == other.product.pk:
@@ -313,8 +313,8 @@ class FeatureRate(models.Model):
     is_active = models.BooleanField(default=True)
 
     def __str__(self):
-        return 'Feature Rate: $%s /month, $%s /excess, limit: %d' % (
-            self.monthly_fee, self.per_excess_fee, self.monthly_limit
+        return '%s @ $%s /month, $%s /excess, limit: %d' % (
+            self.feature.name, self.monthly_fee, self.per_excess_fee, self.monthly_limit
         )
 
     def __eq__(self, other):
