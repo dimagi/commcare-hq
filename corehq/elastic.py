@@ -186,6 +186,9 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
     if dict_only:
         return q
 
+    import json
+    print json.dumps(q)
+
     es_url = es_url or DOMAIN_INDEX + '/hqdomain/_search'
 
     es = get_es()
