@@ -1,10 +1,12 @@
-import csv
 from corehq.apps.locations.models import Location
 from corehq.apps.locations.forms import LocationForm
 from corehq.apps.locations.util import defined_location_types, parent_child
 import itertools
 from soil import DownloadBase
 from couchdbkit.exceptions import ResourceNotFound
+from corehq.apps.consumption.shortcuts import get_default_consumption, set_default_consumption_for_supply_point
+from corehq.apps.commtrack.models import Product, SupplyPointCase
+
 
 class LocationCache(object):
     """
@@ -97,8 +99,12 @@ def import_location(domain, location_type, location_data):
     form_data['location_type'] = location_type
 
     properties = {}
+    consumption = []
     for k, v in data.iteritems():
-        properties[(location_type, k)] = v
+        if k.startswith('default_'):
+            consumption.append((k[8:], v))
+        else:
+            properties[(location_type, k)] = v
 
     return submit_form(
         domain,
@@ -106,7 +112,15 @@ def import_location(domain, location_type, location_data):
         form_data,
         properties,
         existing,
-        location_type
+        location_type,
+        consumption
+    )
+
+
+def invalid_location_type(location_type, parent_obj, parent_relationships):
+    return (
+        parent_obj.location_type not in parent_relationships or
+        location_type not in parent_relationships[parent_obj.location_type]
     )
 
 
@@ -122,25 +136,39 @@ def check_parent_id(parent_id, domain, location_type):
                 )
             }
         parent_relationships = parent_child(domain)
-        if location_type not in parent_relationships[parent_obj.location_type]:
+        if invalid_location_type(location_type, parent_obj, parent_relationships):
             return {
                 'id': None,
                 'message': 'Invalid parent type of {0} for child type {1}'.format(
                     parent_obj.location_type, location_type)
             }
 
-def anything_to_update(existing, properties, form_data):
+
+def no_changes_needed(domain, existing, properties, form_data, consumption, sp=None):
+    if not existing:
+        return False
     for prop, val in properties.iteritems():
         if getattr(existing, prop[1], None) != val:
-            return True
+            return False
     for key, val in form_data.iteritems():
         if getattr(existing, key, None) != val:
-            return True
-    return False
+            return False
+    for product_code, val in consumption:
+        product = Product.get_by_code(domain, product_code)
+        if get_default_consumption(
+            domain,
+            product._id,
+            existing.location_type,
+            existing._id
+        ) != val:
+            return False
 
-def submit_form(domain, parent, form_data, properties, existing, location_type):
+    return True
+
+
+def submit_form(domain, parent, form_data, properties, existing, location_type, consumption):
     # don't save if there is nothing to save
-    if existing and not anything_to_update(existing, properties, form_data):
+    if no_changes_needed(domain, existing, properties, form_data, consumption):
         return {
             'id': existing._id,
             'message': 'no changes for %s %s' % (location_type, existing.name)
@@ -152,6 +180,17 @@ def submit_form(domain, parent, form_data, properties, existing, location_type):
     form.strict = False  # optimization hack to turn off strict validation
     if form.is_valid():
         loc = form.save()
+
+        sp = SupplyPointCase.get_by_location(loc) if consumption else None
+
+        if consumption and sp:
+            for product_code, amount in consumption:
+                set_default_consumption_for_supply_point(
+                    domain,
+                    Product.get_by_code(domain, product_code)._id,
+                    sp._id,
+                    amount
+                )
         if existing:
             message = 'updated %s %s' % (location_type, loc.name)
         else:

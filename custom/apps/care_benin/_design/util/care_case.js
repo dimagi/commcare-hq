@@ -143,16 +143,25 @@ function CareCase(doc) {
             return;
         }
 
-        if (forms_completed[ns_as_accouchement] && self.case.DA) {
+        if (forms_completed[ns_as_enregistrement_nouveau_ne] && self.case.DA) {
             var data_nurse = {};
+            var followedUp = false;
             data_nurse.post_natal_followups_total = 1;
+
             if (forms_completed[ns_as_surveillanceLorsDeLaSortieDuCS]) {
                 data_nurse.post_natal_followups_sortie = 1;
-            } else if (forms_completed[ns_as_surveillanceA6h]) {
+                followedUp = true;
+            }
+            if (forms_completed[ns_as_surveillanceA6h]) {
                 data_nurse.post_natal_followups_6h = 1;
-            } else if (forms_completed[ns_as_surveillanceA15m]) {
+                followedUp = true;
+            }
+            if (forms_completed[ns_as_surveillanceA15m]) {
                 data_nurse.post_natal_followups_15m = 1;
-            } else {
+                followedUp = true;
+            }
+
+            if (!followedUp) {
                 data_nurse.post_natal_followups_none = 1;
             }
             emit_array([self.user_id], [self.case.DA], data_nurse);
@@ -189,6 +198,9 @@ function CareCase(doc) {
     self.check_birth = function () {
         // assume presence of DA means birth
         if (self.case.DA) {
+            if (self.case.condition === 'accouchee') {
+                self.data_dob.births_total = 1;
+            }
             if (self.case.VAT2 === 'oui') {
                 self.data_dob.birth_vat_2 = 1;
             }
@@ -199,6 +211,16 @@ function CareCase(doc) {
 
             if (self.case.lieu_acc) {
                 self.data_dob['birth_place_'+self.case.lieu_acc] = 1;
+            }
+
+            if (['clinique_privee',
+                'CS_arrondissement',
+                'CS_commune',
+                'CSA',
+                'hopital',
+                'hopital_zone',
+                'mat_isolee'].indexOf(self.case.lieu_acc) !== -1) {
+                self.data_dob.births_at_clinic = 1;
             }
 
             var data_dob_adj = {};

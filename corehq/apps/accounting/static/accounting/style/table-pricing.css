@@ -212,7 +212,6 @@ body {
  */
 .table-pricing {
   width: 940px;
-  margin: 0 auto;
 }
 .table-pricing thead h1 {
   font-size: 15.6px;
@@ -497,7 +496,7 @@ body {
 .pricing-footnotes {
   width: 950px;
   list-style: none;
-  margin: 10px auto;
+  margin: 10px 0;
   font-size: 11.700000000000001px;
   background-color: #f6f7f9;
   padding: 10px 0;

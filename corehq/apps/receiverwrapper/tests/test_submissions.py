@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.utils.unittest.case import TestCase
 from corehq.apps.users.models import WebUser
 from corehq.apps.domain.shortcuts import create_domain
@@ -7,6 +8,10 @@ import os
 
 class SubmissionTest(TestCase):
     def setUp(self):
+        # bit of a hack, but the tests optimize around this flag to run faster
+        # so when we actually want to test this functionality we need to set
+        # the flag to False explicitly
+        settings.UNIT_TESTING = False
         self.domain = create_domain("submit")
         self.couch_user = WebUser.create(None, "test", "foobar")
         self.couch_user.add_domain_membership(self.domain.name, is_admin=True)

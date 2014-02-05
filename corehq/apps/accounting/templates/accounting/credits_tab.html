@@ -27,15 +27,15 @@
                     </td>
                     {% endif %}
                     <td>
-                        {% if credit.product_rate.product.name %}
-                        {{ credit.product_rate.product.name }}
+                        {% if credit.product_rate %}
+                        {{ credit.product_rate }}
                         {% else %}
                         --
                         {% endif %}
                     </td>
                     <td>
-                        {% if credit.feature_rate.feature.name %}
-                        {{ credit.feature_rate.feature.name }}
+                        {% if credit.feature_rate %}
+                        {{ credit.feature_rate }}
                         {% else %}
                         --
                         {% endif %}

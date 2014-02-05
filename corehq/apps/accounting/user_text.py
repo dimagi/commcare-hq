@@ -1,3 +1,5 @@
+from django.core.urlresolvers import reverse
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop, ugettext_lazy as _
 from corehq.apps.accounting.models import SoftwarePlanEdition as Edition, SoftwareProductType as Product, FeatureType
 
@@ -5,30 +7,35 @@ DESC_BY_EDITION = {
     Edition.COMMUNITY: {
         'name': _("Community"),
         'description': _("For projects in a pilot phase with a small group (up to 50) of "
-                                     "mobile users that only need very basic CommCare features."),
+                         "mobile users that only need very basic CommCare features."),
     },
     Edition.STANDARD: {
         'name': _("Standard"),
         'description': _("For projects with a medium set (up to 250) of mobile users that want to "
-                                     "build in limited SMS workflows and have increased data security needs."),
+                         "build in limited SMS workflows and have increased data security needs."),
     },
     Edition.PRO: {
         'name': _("Pro"),
         'description': _("For projects with a large group (up to 500) of mobile users that want to "
-                                     "build in comprehensive SMS workflows and have increased reporting needs."),
+                         "build in comprehensive SMS workflows and have increased reporting needs."),
     },
     Edition.ADVANCED: {
         'name': _("Advanced"),
         'description': _("For projects scaling to an even larger group (up to 1,000) of mobile users "
-                                     "that want the full CommCare feature set and dedicated support from Dimagi "
-                                     "staff.")
+                         "that want the full CommCare feature set and dedicated support from Dimagi "
+                         "staff.")
     },
     Edition.ENTERPRISE: {
         'name': _("Enterprise"),
         'description': _("For projects scaling regionally or country wide (1,001+ people) that require "
-                                     "the full CommCare feature set. Your organization will receive discounted "
-                                     "pricing and dedicated enterprise-level support from Dimagi.")
+                         "the full CommCare feature set. Your organization will receive discounted "
+                         "pricing and dedicated enterprise-level support from Dimagi.")
     }
+}
+
+FEATURE_TYPE_TO_NAME = {
+    FeatureType.SMS: _("SMS Messages"),
+    FeatureType.USER: _("Mobile Workers"),
 }
 
 
@@ -302,12 +309,15 @@ class PricingTable(object):
     VISIT_WIKI_TEXT = ugettext_noop("Visit the wiki to learn more.")
 
     @classmethod
-    def get_footer_by_product(cls, product):
+    def get_footer_by_product(cls, product, domain=None):
         ensure_product(product)
+        link_text = ugettext_noop('pro-bono form')
         return (
             ugettext_noop("*Local taxes and other country-specific fees not included. Dimagi provides pro-bono "
                           "software plans on a needs basis. To learn more about this opportunity or see if your "
-                          "program qualifies, please contact information@dimagi.com."),
+                          "program qualifies, please fill out our %s."
+                          % (mark_safe(('<a href="%s">%s</a>') % (reverse('pro_bono', args=[domain]), link_text))
+                             if domain is not None else link_text)),
             {
                 Product.COMMCARE: ugettext_noop("**1 USD/month for each additional mobile user"),
                 Product.COMMCONNECT: ugettext_noop("**1 USD/month for each additional mobile user"),
@@ -320,7 +330,7 @@ class PricingTable(object):
 
 
     @classmethod
-    def get_table_by_product(cls, product):
+    def get_table_by_product(cls, product, domain=None):
         ensure_product(product)
         categories = cls.STRUCTURE_BY_PRODUCT[product]
         editions = PricingTableFeatures.get_columns(PricingTableFeatures.SOFTWARE_PLANS)
@@ -346,6 +356,6 @@ class PricingTable(object):
             'title': PricingTableFeatures.get_title(PricingTableFeatures.SOFTWARE_PLANS, product),
             'sections': table_sections,
             'visit_wiki_text': cls.VISIT_WIKI_TEXT,
-            'footer': cls.get_footer_by_product(product),
+            'footer': cls.get_footer_by_product(product, domain=domain),
         }
         return table

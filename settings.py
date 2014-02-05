@@ -7,7 +7,7 @@ import sys, os
 from django.contrib import messages
 
 # odd celery fix
-import djcelery;
+import djcelery
 
 djcelery.setup_loader()
 
@@ -182,6 +182,7 @@ HQ_APPS = (
     'hqscripts',
     'casexml.apps.case',
     'casexml.apps.phone',
+    'casexml.apps.stock',
     'corehq.apps.cleanup',
     'corehq.apps.cloudcare',
     'corehq.apps.smsbillables',
@@ -196,6 +197,7 @@ HQ_APPS = (
     'corehq.apps.hqmedia',
     'corehq.apps.locations',
     'corehq.apps.commtrack',
+    'corehq.apps.consumption',
     'couchforms',
     'couchexport',
     'couchlog',
@@ -229,6 +231,7 @@ HQ_APPS = (
     'corehq.apps.ivr',
     'corehq.apps.tropo',
     'corehq.apps.twilio',
+    'corehq.apps.megamobile',
     'corehq.apps.kookoo',
     'corehq.apps.sislog',
     'corehq.apps.yo',
@@ -300,6 +303,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'corehq.apps.sislog',
     'corehq.apps.telerivet',
     'corehq.apps.tropo',
+    'corehq.apps.megamobile',
     'corehq.apps.yo',
     'crispy_forms',
     'django_extensions',
@@ -584,6 +588,7 @@ IVR_OUTBOUND_RETRIES = 3
 IVR_OUTBOUND_RETRY_INTERVAL = 10
 
 # List of Fluff pillow classes that ctable should process diffs for
+# deprecated - use IndicatorDocument.save_direct_to_sql
 FLUFF_PILLOW_TYPES_TO_SQL = {
     'UnicefMalawiFluff': 'SQL',
     'MalariaConsortiumFluff': 'SQL',
@@ -742,6 +747,7 @@ COUCHDB_APPS = [
     'cleanup',
     'cloudcare',
     'commtrack',
+    'consumption',
     'couch',
     # This is necessary for abstract classes in dimagi.utils.couch.undo; otherwise breaks tests
     'couchdbkit_aggregate',
@@ -871,6 +877,7 @@ SMS_LOADED_BACKENDS = [
     "corehq.apps.sms.backend.test.TestBackend",
     "corehq.apps.grapevine.api.GrapevineBackend",
     "corehq.apps.twilio.models.TwilioBackend",
+    "corehq.apps.megamobile.api.MegamobileBackend",
 ]
 
 # These are functions that can be called to retrieve custom content in a reminder event.
@@ -938,9 +945,6 @@ PILLOWTOPS = {
     'trialconnect': [
         'custom.trialconnect.smspillow.TCSMSPillow',
     ],
-    'commtrack': [
-        'corehq.pillows.commtrack.ConsumptionRatePillow',
-    ]
 }
 
 for k, v in  LOCAL_PILLOWTOPS.items():
