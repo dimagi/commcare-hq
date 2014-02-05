@@ -296,6 +296,15 @@ class PricingTable(object):
             PricingTableCategories.USER_MANAGEMENT_AND_SECURITY,
             PricingTableCategories.SUPPORT,
         ),
+        Product.COMMCONNECT: (
+            PricingTableCategories.CORE,
+            PricingTableCategories.MOBILE,
+            PricingTableCategories.WEB,
+            PricingTableCategories.ANALYTICS,
+            PricingTableCategories.SMS,
+            PricingTableCategories.USER_MANAGEMENT_AND_SECURITY,
+            PricingTableCategories.SUPPORT,
+        ),
         Product.COMMTRACK: (
             PricingTableCategories.CORE,
             PricingTableCategories.MOBILE,
