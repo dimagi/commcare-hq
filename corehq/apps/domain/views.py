@@ -381,10 +381,6 @@ def test_repeater(request, domain):
         return HttpResponse(json.dumps({"success": False, "response": "Please enter a valid url."}))
 
 
-def legacy_domain_name(request, domain, path):
-    domain = normalize_domain_name(domain)
-    return HttpResponseRedirect(get_domained_url(domain, path))
-
 def autocomplete_fields(request, field):
     prefix = request.GET.get('prefix', '')
     results = Domain.field_by_prefix(field, prefix)
