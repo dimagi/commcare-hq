@@ -1,19 +1,53 @@
 # coding=utf-8
 import difflib
+from doctest import Example
 
 import io
+import StringIO
+from xml.sax import SAXParseException
+from lxml.doctestcompare import LXMLOutputChecker
 
 import lxml.etree
 
 from casexml.apps.case.tests.util import check_xml_line_by_line
 from corehq.apps.app_manager.const import APP_V2, CAREPLAN_GOAL, CAREPLAN_TASK
-from corehq.apps.app_manager.models import Application, OpenCaseAction, UpdateCaseAction, PreloadAction, FormAction, Module, CareplanModule
+from corehq.apps.app_manager.models import Application, OpenCaseAction, UpdateCaseAction, PreloadAction, FormAction, Module, CareplanModule, AdvancedModule, AdvancedForm, AdvancedOpenCaseAction, LoadUpdateAction
 from django.test import TestCase
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.util import new_careplan_module
 
+import xmldiff
+
+
+def assertXmlEqual(want, got):
+    from xmldiff.input import tree_from_stream
+    encoding = 'UTF-8'
+    norm_sp = 1
+    ext_ges, ext_pes = 0, 0
+    include_comment = 0
+    html = 0
+    fh1 = StringIO.StringIO(want)
+    fh2 = StringIO.StringIO(got)
+    tree1 = tree_from_stream(fh1, norm_sp, ext_ges,
+                             ext_pes, include_comment,
+                             encoding, html)
+    tree2 = tree_from_stream(fh2, norm_sp, ext_ges,
+                             ext_pes, include_comment,
+                             encoding, html)
+    fh1.close()
+    fh2.close()
+
+    from xmldiff.format import InternalPrinter
+    formatter = InternalPrinter()
+    from xmldiff.fmes import FmesCorrector
+    strategy = FmesCorrector(formatter)
+    strategy.process_trees(tree1, tree2)
+    if len(formatter.edit_s):
+        raise AssertionError("XML not equal")
+
 
 class FormPrepBase(TestCase, TestFileMixin):
+
     def assert_xml_equiv(self, actual, expected):
         actual_canonicalized = io.BytesIO()
         expected_canonicalized = io.BytesIO()
@@ -145,3 +179,189 @@ class FormPreparationCareplanTest(FormPrepBase):
     def test_update_task(self):
         form = self.careplan_module.get_form_by_type(CAREPLAN_TASK, 'update')
         self.assert_xml_equiv(form.render_xform(), self.get_xml('update_task'))
+
+
+
+class FormPreparationV2TestAdvanced(FormPrepBase):
+    file_path = 'data', 'form_preparation_v2_advanced'
+    def setUp(self):
+        self.app = Application.new_app('domain', 'New App', APP_V2)
+        self.app.version = 3
+        self.module = self.app.add_module(AdvancedModule.new_module('New Module', lang='en'))
+        form = AdvancedForm(name={"en": "Untitled Form"})
+        self.module.forms.append(form)
+        self.form = self.module.get_form(-1)
+        self.module.case_type = 'test_case_type'
+        self.form.source = self.get_xml('original')
+
+    def test_no_actions(self):
+        self.assert_xml_equiv(self.get_xml('no_actions'), self.form.render_xform())
+
+    def test_open_case(self):
+        self.form.actions.open_cases.append(AdvancedOpenCaseAction(
+            case_type=self.module.case_type,
+            case_tag='open_1',
+            name_path="/data/question1"
+        ))
+        self.form.actions.open_cases[0].open_condition.type = 'always'
+        self.assert_xml_equiv(self.get_xml('open_case'), self.form.render_xform())
+
+    def test_update_case(self):
+        self.form.actions.load_update_cases.append(LoadUpdateAction(
+            case_type=self.module.case_type,
+            case_tag='load_1',
+            case_properties={'question1': '/data/question1'}
+        ))
+        self.assert_xml_equiv(self.get_xml('update_case'), self.form.render_xform())
+
+    def test_open_update_case(self):
+        self.form.actions.open_cases.append(AdvancedOpenCaseAction(
+            case_type=self.module.case_type,
+            case_tag='open_1',
+            name_path="/data/question1",
+            case_properties={'question1': '/data/question1'}
+        ))
+        self.form.actions.open_cases[0].open_condition.type = 'always'
+        self.assert_xml_equiv(self.get_xml('open_update_case'), self.form.render_xform())
+
+    def test_open_close_case(self):
+        self.form.actions.open_cases.append(AdvancedOpenCaseAction(
+            case_type=self.module.case_type,
+            case_tag='open_1',
+            name_path="/data/question1",
+        ))
+        self.form.actions.open_cases[0].open_condition.type = 'always'
+        self.form.actions.open_cases[0].close_condition.type = 'always'
+        self.assert_xml_equiv(self.get_xml('open_close_case'), self.form.render_xform())
+
+    def test_update_preload_case(self):
+        self.form.actions.load_update_cases.append(LoadUpdateAction(
+            case_type=self.module.case_type,
+            case_tag='load_1',
+            case_properties={'question1': '/data/question1'},
+            preload={'question1': '/data/question1'}
+        ))
+        self.assert_xml_equiv(self.get_xml('update_preload_case'), self.form.render_xform())
+
+    def test_close_case(self):
+        self.form.actions.load_update_cases.append(LoadUpdateAction(
+            case_type=self.module.case_type,
+            case_tag='load_1',
+        ))
+        self.form.actions.load_update_cases[0].close_condition.type = 'always'
+        self.assert_xml_equiv(self.get_xml('close_case'), self.form.render_xform())
+
+    def test_update_preload_multiple_case(self):
+        self.form.actions.load_update_cases.append(LoadUpdateAction(
+            case_type=self.module.case_type,
+            case_tag='load_1',
+            case_properties={'question1': '/data/question1'},
+            preload={'question1': '/data/question1'}
+        ))
+        self.form.actions.load_update_cases.append(LoadUpdateAction(
+            case_type=self.module.case_type,
+            case_tag='load_2',
+            case_properties={'question2': '/data/question2'},
+            preload={'question2': '/data/question2'}
+        ))
+        self.assert_xml_equiv(self.get_xml('update_preload_case_multiple'), self.form.render_xform())
+
+
+class SubcaseRepeatTestAdvanced(FormPrepBase):
+    file_path = ('data', 'form_preparation_v2_advanced')
+
+    def setUp(self):
+        self.app = Application.new_app('domain', 'New App', APP_V2)
+        self.app.version = 3
+        self.parent_module = self.app.add_module(Module.new_module('New Module', lang='en'))
+        self.parent_form = self.app.new_form(0, 'New Form', lang='en')
+        self.parent_module.case_type = 'parent_test_case_type'
+        self.parent_form.source = self.get_xml('original')
+        self.parent_form.actions.open_case = OpenCaseAction(name_path="/data/question1", external_id=None)
+        self.parent_form.actions.open_case.condition.type = 'always'
+
+        self.module = self.app.add_module(AdvancedModule.new_module('New Module', lang='en'))
+        form = AdvancedForm(name={"en": "Untitled Form"})
+        self.module.forms.append(form)
+        self.form = self.module.get_form(-1)
+        self.module.case_type = 'test_case_type'
+        self.form.source = self.get_xml('subcase_original')
+
+        child_module_1 = self.app.add_module(Module.new_module('New Module', lang='en'))
+        child_module_1.case_type ='child1'
+        child_module_2 = self.app.add_module(Module.new_module('New Module', lang='en'))
+        child_module_2.case_type ='child2'
+
+
+    def test_subcase(self):
+        self.form.actions.load_update_cases.append(LoadUpdateAction(
+            case_type=self.parent_module.case_type,
+            case_tag='load_1',
+        ))
+        self.form.actions.open_cases.append(AdvancedOpenCaseAction(
+            case_type=self.module.case_type,
+            case_tag='open_1',
+            name_path='/data/mother_name',
+            parent_tag='load_1'
+        ))
+        self.form.actions.open_cases[0].open_condition.type = 'always'
+        self.assert_xml_equiv(self.get_xml('subcase'), self.form.render_xform())
+
+    def test_subcase_repeat(self):
+        self.form.actions.load_update_cases.append(LoadUpdateAction(
+            case_type=self.parent_module.case_type,
+            case_tag='load_1',
+        ))
+        self.form.actions.open_cases.append(AdvancedOpenCaseAction(
+            case_type=self.module.case_type,
+            case_tag='open_1',
+            name_path='/data/mother_name',
+            parent_tag='load_1',
+            repeat_context="/data/child"
+        ))
+        self.form.actions.open_cases[0].open_condition.type = 'always'
+        self.assert_xml_equiv(self.get_xml('subcase-repeat'), self.form.render_xform())
+
+    def test_subcase_repeat_sharing(self):
+        self.form.actions.load_update_cases.append(LoadUpdateAction(
+            case_type=self.parent_module.case_type,
+            case_tag='load_1',
+        ))
+        self.form.actions.open_cases.append(AdvancedOpenCaseAction(
+            case_type=self.module.case_type,
+            case_tag='open_1',
+            name_path='/data/mother_name',
+            parent_tag='load_1',
+            repeat_context="/data/child"
+        ))
+        self.form.actions.open_cases[0].open_condition.type = 'always'
+        self.app.case_sharing = True
+        self.assert_xml_equiv(self.get_xml('subcase-repeat-sharing'), self.form.render_xform())
+
+    def test_subcase_multiple_repeats(self):
+        self.form.actions.load_update_cases.append(LoadUpdateAction(
+            case_type=self.parent_module.case_type,
+            case_tag='load_1',
+        ))
+        self.form.actions.open_cases.append(AdvancedOpenCaseAction(
+            case_type='child1',
+            case_tag='open_1',
+            name_path='/data/mother_name',
+            parent_tag='load_1',
+            repeat_context="/data/child",
+        ))
+        self.form.actions.open_cases[0].open_condition.type = 'if'
+        self.form.actions.open_cases[0].open_condition.question = '/data/child/which_child'
+        self.form.actions.open_cases[0].open_condition.answer = '1'
+
+        self.form.actions.open_cases.append(AdvancedOpenCaseAction(
+            case_type='child2',
+            case_tag='open_2',
+            name_path='/data/mother_name',
+            parent_tag='load_1',
+            repeat_context="/data/child",
+        ))
+        self.form.actions.open_cases[1].open_condition.type = 'if'
+        self.form.actions.open_cases[1].open_condition.question = '/data/child/which_child'
+        self.form.actions.open_cases[1].open_condition.answer = '2'
+        self.assert_xml_equiv(self.get_xml('subcase-repeat-multiple'), self.form.render_xform())

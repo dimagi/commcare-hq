@@ -157,7 +157,7 @@ var AdvancedCase = (function () {
         self.open_cases = ko.observableArray(_(params.actions.open_cases).map(function (a) {
             var required_properties = [{
                 key: 'name',
-                path: a.case_name,
+                path: a.name_path,
                 required: true
             }];
             a.case_properties = propertyDictToArray(required_properties, a.case_properties, config);
@@ -229,7 +229,7 @@ var AdvancedCase = (function () {
                 var index = self.open_cases().length;
                 self.open_cases.push(OpenCaseAction.wrap({
                     case_type: config.caseType,
-                    case_name: '',
+                    name_path: '',
                     case_tag: 'open_' + config.caseType + '_' + index,
                     case_properties: [{
                             path: '',
@@ -475,7 +475,7 @@ var AdvancedCase = (function () {
     var OpenCaseAction = {
         mapping: function (self) {
             return {
-                include: ['case_type', 'case_name', 'case_tag', 'repeat_context', 'parent_tag', 'parent_reference_id', 'open_condition', 'close_condition'],
+                include: ['case_type', 'name_path', 'case_tag', 'repeat_context', 'parent_tag', 'parent_reference_id', 'open_condition', 'close_condition'],
                 case_properties: {
                     create: function (options) {
                         return CaseProperty.wrap(options.data,  self);
@@ -521,7 +521,7 @@ var AdvancedCase = (function () {
 
             self.propertyCounts = ko.computed(ActionBase.propertyCounts(self));
 
-            self.case_name = ko.computed(function() {
+            self.name_path = ko.computed(function() {
                 try {
                     return _(self.case_properties()).find(function (p) {
                         return p.key() === 'name' && p.required();
@@ -532,7 +532,7 @@ var AdvancedCase = (function () {
             });
 
             self.repeat_context = function () {
-                return self.config.get_repeat_context(self.case_name());
+                return self.config.get_repeat_context(self.name_path());
             };
 
             self.addProperty = function () {
@@ -558,7 +558,7 @@ var AdvancedCase = (function () {
             ActionBase.clean_condition(self.close_condition);
             var x = propertyArrayToDict(['name'], action.case_properties);
             action.case_properties = x[0];
-            action.case_name = x[1].name;
+            action.name_path = x[1].name;
             return action;
         }
     };
