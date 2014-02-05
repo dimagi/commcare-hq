@@ -3,6 +3,7 @@ from time import sleep
 from optparse import make_option
 from django.core.mail import mail_admins
 from pillowtop import get_all_pillows
+from corehq.pillows.user import add_demo_user_to_user_index
 from gevent import monkey;monkey.patch_all()
 import gevent
 from pillowtop.listener import AliasedElasticPillow
@@ -13,11 +14,14 @@ from django.conf import settings
 
 
 def get_reindex_commands(pillow_class_name):
+    # pillow_command_map is a mapping from es pillows for keeping an es index insync
+    # to a list of the management commands or functions that are used to build the index
     pillow_command_map = {
         'DomainPillow': 'ptop_fast_reindex_domains',
         'CasePillow': 'ptop_fast_reindex_cases',
         'XFormPillow': 'ptop_fast_reindex_xforms',
         'UserPillow': ['ptop_fast_reindex_users',
+                       add_demo_user_to_user_index,
                        'ptop_fast_reindex_groupstousers',
                        'ptop_fast_reindex_unknownusers'],
         # groupstousers indexing must happen after all users are indexed
@@ -36,7 +40,10 @@ def do_reindex(pillow_class_name):
     print "Starting pillow preindex %s" % pillow_class_name
     reindex_commands = get_reindex_commands(pillow_class_name)
     for reindex_command in reindex_commands:
-        call_command(reindex_command, **{'noinput': True, 'bulk': True})
+        if isinstance(reindex_command, basestring):
+            call_command(reindex_command, **{'noinput': True, 'bulk': True})
+        else:
+            reindex_command()
     print "Pillow preindex finished %s" % pillow_class_name
 
 
