@@ -272,6 +272,10 @@ class AdvancedAction(DocumentSchema):
         if self.close_condition.type == 'if':
             yield self.close_condition.question
 
+    @property
+    def session_case_id(self):
+        return 'case_id_{}'.format(self.case_tag)
+
 
 class LoadUpdateAction(AdvancedAction):
     preload = DictProperty()
@@ -286,7 +290,7 @@ class LoadUpdateAction(AdvancedAction):
 
 
 class AdvancedOpenCaseAction(AdvancedAction):
-    case_name = StringProperty()
+    name_path = StringProperty()
     repeat_context = StringProperty()
 
     open_condition = SchemaProperty(FormActionCondition)
@@ -295,7 +299,7 @@ class AdvancedOpenCaseAction(AdvancedAction):
         for path in super(AdvancedOpenCaseAction, self).get_paths():
             yield path
 
-        yield self.case_name
+        yield self.name_path
 
         if self.open_condition.type == 'if':
             yield self.open_condition.question
@@ -332,16 +336,14 @@ class AdvancedFormActions(DocumentSchema):
             yield action.case_tag
 
     def get_action_from_tag(self, tag):
-        for action in self.get_all_actions():
-            if action.case_tag == tag:
-                return action
+        return self.actions_meta_by_tag.get(tag, {}).get('action', None)
 
     @property
-    def actions_by_tag(self):
+    def actions_meta_by_tag(self):
         return self._action_meta()['by_tag']
 
     @property
-    def actions_by_parent_tag(self):
+    def actions_meta_by_parent_tag(self):
         return self._action_meta()['by_parent_tag']
 
     @memoized
@@ -1300,12 +1302,10 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
         errors = []
 
         for action in self.actions.get_subcase_actions():
-            if not action.parent_tag:
-                errors.append({'type': 'subcase has no parent tag'})
-            elif action.parent_tag not in self.actions.get_case_tags():
+            if action.parent_tag not in self.actions.get_case_tags():
                 errors.append({'type': 'subcase parent tag does not exist', 'word': action.parent_tag})
 
-            if isinstance(action, AdvancedOpenCaseAction) and not action.case_name:
+            if isinstance(action, AdvancedOpenCaseAction) and not action.name_path:
                 errors.append({'type': 'subcase has no name property'})
 
         errors.extend(self.check_case_properties(
