@@ -25,7 +25,10 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CouchUser, Permissions
 from corehq.apps.users import models as user_models
 from corehq.apps.users.views.mobile.users import EditCommCareUserView
-from corehq.apps.sms.models import SMSLog, INCOMING, OUTGOING, ForwardingRule, CommConnectCase
+from corehq.apps.sms.models import (
+    SMSLog, INCOMING, OUTGOING, ForwardingRule, CommConnectCase,
+    LastReadMessage,
+)
 from corehq.apps.sms.mixin import MobileBackend, SMSBackend, BackendMapping, VerifiedNumber
 from corehq.apps.sms.forms import ForwardingRuleForm, BackendMapForm, InitiateAddSMSBackendForm, SMSSettingsForm, SubscribeSMSForm
 from corehq.apps.sms.util import get_available_backends, get_contact
@@ -734,6 +737,7 @@ def api_history(request, domain):
                            reduce=False).all()
     data.sort(key=lambda x : x.date)
     username_map = {}
+    last_sms = None
     for sms in data:
         # Don't show outgoing SMS that haven't been processed yet
         if sms.direction == OUTGOING and not sms.processed:
@@ -765,12 +769,46 @@ def api_history(request, domain):
                 username_map[sms.chat_user_id] = sender
         else:
             sender = _("System")
+        last_sms = sms
         result.append({
             "sender" : sender,
             "text" : sms.text,
             "timestamp" : tz_utils.adjust_datetime_to_timezone(sms.date, pytz.utc.zone, timezone.zone).strftime("%I:%M%p %m/%d/%y").lower(),
             "utc_timestamp" : json_format_datetime(sms.date),
         })
+    if last_sms:
+        try:
+            entry, lock = LastReadMessage.get_locked_obj(
+                sms.domain,
+                request.couch_user._id,
+                sms.couch_recipient,
+                create=True
+            )
+            if (not entry.message_timestamp or
+                entry.message_timestamp < last_sms.date):
+                entry.message_id = last_sms._id
+                entry.message_timestamp = last_sms.date
+                entry.save()
+            lock.release()
+        except:
+            logging.exception("Could not create/save LastReadMessage for message %s" % last_sms._id)
+            # Don't let this block returning of the data
+            pass
+    return HttpResponse(json.dumps(result))
+
+@require_permission(Permissions.edit_data)
+def api_last_read_message(request, domain):
+    contact_id = request.GET.get("contact_id", None)
+    domain_obj = Domain.get_by_name(domain, strict=True)
+    if domain_obj.count_messages_as_read_by_anyone:
+        lrm = LastReadMessage.by_anyone(domain, contact_id)
+    else:
+        lrm = LastReadMessage.by_user(domain, request.couch_user._id, contact_id)
+    result = {
+        "message_timestamp" : None,
+    }
+    if lrm:
+        result["message_timestamp"] = json_format_datetime(lrm.message_timestamp)
     return HttpResponse(json.dumps(result))
 
 class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView):
@@ -953,6 +991,7 @@ def sms_settings(request, domain):
                 domain_obj.custom_chat_template = form.cleaned_data["custom_chat_template"]
                 domain_obj.filter_surveys_from_chat = form.cleaned_data["filter_surveys_from_chat"]
                 domain_obj.show_invalid_survey_responses_in_chat = form.cleaned_data["show_invalid_survey_responses_in_chat"]
+                domain_obj.count_messages_as_read_by_anyone = form.cleaned_data["count_messages_as_read_by_anyone"]
                 if settings.SMS_QUEUE_ENABLED:
                     domain_obj.sms_conversation_times = form.cleaned_data["sms_conversation_times_json"]
                     domain_obj.sms_conversation_length = int(form.cleaned_data["sms_conversation_length"])
@@ -973,6 +1012,7 @@ def sms_settings(request, domain):
             "sms_conversation_length" : domain_obj.sms_conversation_length,
             "filter_surveys_from_chat" : domain_obj.filter_surveys_from_chat,
             "show_invalid_survey_responses_in_chat" : domain_obj.show_invalid_survey_responses_in_chat,
+            "count_messages_as_read_by_anyone" : domain_obj.count_messages_as_read_by_anyone,
         }
         form = SMSSettingsForm(initial=initial)
 

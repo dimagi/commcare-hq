@@ -68,6 +68,7 @@
         self.custom_message_count_threshold = ko.observable(initial_values.custom_message_count_threshold);
         self.use_custom_chat_template = ko.observable(initial_values.use_custom_chat_template);
         self.custom_chat_template = ko.observable(initial_values.custom_chat_template);
+        self.count_messages_as_read_by_anyone = ko.observable(initial_values.count_messages_as_read_by_anyone);
         
         self.add_restricted_sms_time = function() {
             self.restricted_sms_times.push(new DayTimeWindow(-1, null, null));
@@ -112,6 +113,7 @@
             "custom_chat_template" : {{ form.custom_chat_template.value|JSON }},
             "filter_surveys_from_chat" : {{ form.filter_surveys_from_chat.value|JSON }},
             "show_invalid_survey_responses_in_chat" : {{ form.show_invalid_survey_responses_in_chat.value|JSON }},
+            "count_messages_as_read_by_anyone" : {{ form.count_messages_as_read_by_anyone.value|JSON }},
         });
         ko.applyBindings(svm);
     });
@@ -230,6 +232,11 @@
                     <td class="dependent_field">{% trans "But show invalid SMS survey responses" %}</td>
                     <td><input type="checkbox" name="show_invalid_survey_responses_in_chat" data-bind="checked: show_invalid_survey_responses_in_chat" /></td>
                     <td>{{ form.show_invalid_survey_responses_in_chat.errors }}</td>
+                </tr>
+                <tr>
+                    <td>{% trans "Count a message as read if it is read by anyone" %}</td>
+                    <td><input type="checkbox" name="count_messages_as_read_by_anyone" data-bind="checked: count_messages_as_read_by_anyone" /></td>
+                    <td>{{ form.count_messages_as_read_by_anyone.errors }}</td>
                 </tr>
                 {% if sms_queue_enabled %}
                 <tr>

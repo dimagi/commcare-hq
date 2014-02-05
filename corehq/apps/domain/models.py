@@ -284,6 +284,10 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     # If set to True, invalid survey responses will still be shown in the chat
     # window, while questions and valid responses will be filtered out.
     show_invalid_survey_responses_in_chat = BooleanProperty(default=False)
+    # If set to True, if a message is read by anyone it counts as being read by
+    # everyone. Set to False so that a message is only counted as being read
+    # for a user if only that user has read it.
+    count_messages_as_read_by_anyone = BooleanProperty(default=False)
 
     # exchange/domain copying stuff
     is_snapshot = BooleanProperty(default=False)
