@@ -16,7 +16,7 @@ from dimagi.utils.excel import alphanumeric_sort_key
 def _get_sorted_groups(domain):
     return sorted(
         Group.by_domain(domain),
-        key=lambda group: alphanumeric_sort_key(group.name)
+        key=lambda group: alphanumeric_sort_key(group.name or '')
     )
 
 
