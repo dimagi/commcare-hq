@@ -755,19 +755,17 @@ class SuiteGenerator(object):
 
         e.instances.extend(get_instances())
 
-        case_id = lambda a: 'case_id_{}'.format(a.case_tag)
-
         for action in form.actions.load_update_cases:
             if action.parent_tag:
-                parent_action = form.actions.actions_by_tag[action.parent_tag]['action']
-                parent_filter = self.get_parent_filter(parent_action.parent_reference_id, case_id(parent_action))
+                parent_action = form.actions.actions_meta_by_tag[action.parent_tag]['action']
+                parent_filter = self.get_parent_filter(parent_action.parent_reference_id, parent_action.session_case_id)
             else:
                 parent_filter = ''
 
-            referenced_by = form.actions.actions_by_parent_tag.get(action.case_tag)
+            referenced_by = form.actions.actions_meta_by_parent_tag.get(action.case_tag)
 
             e.datums.append(SessionDatum(
-                id=case_id(action),
+                id=action.session_case_id,
                 nodeset=(self.get_nodeset_xpath(action.case_type, module, False) + parent_filter),
                 value="./@case_id",
                 detail_select=self.get_detail_id_safe(module, 'case_short'),
