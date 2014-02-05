@@ -1,0 +1,91 @@
+{% extends "domain/base_change_plan.html" %}
+{% load i18n %}
+
+{% block form_content %}
+    <p class="lead">
+        {% blocktrans with plan.name as p %}
+        You have selected the <strong>{{ p }} Software Plan</strong>.
+        {% endblocktrans %}
+    </p>
+    <dl class="dl-horizontal">
+        <dt>{% trans 'Monthly Fee' %}</dt>
+        <dd>{{ plan.monthly_fee }}</dd>
+    </dl>
+    <div class="alert alert-info">
+        <h4>{% trans 'Included each month' %}</h4>
+        <dl class="dl-horizontal">
+            {% for rate in plan.rates %}
+                <dt>{{ rate.name }}</dt>
+                <dd>{{ rate.included }}</dd>
+            {% endfor %}
+        </dl>
+    </div>
+    <p>{{ plan.description }}</p>
+    {% if show_community_notice %}
+    <p>
+        {% blocktrans %}
+        All projects are enrolled in the Community Plan automatically. You will not have to do anything until
+        you are charged for extra users or SMS messaging.
+        {% endblocktrans %}
+    </p>
+    {% endif %}
+    {% if current_plan %}
+    <hr />
+    <div class="alert alert-error">
+        {% blocktrans with current_plan.name as p %}
+        <h4>Note: Continuing will cancel your current subscription.</h4>
+        <p>You are currently subscribed to the <strong>{{ p }} Software Plan</strong></p>
+        {% endblocktrans %}
+    </div>
+    {% endif %}
+
+    {% if downgrade_messages %}
+    <hr />
+    <h4>
+        {% if show_community_notice %}
+        {% trans 'Note: If you do not upgrade from the Community Plan the following changes will take place.' %}
+        {% else %}
+        {% trans 'Note: Selecting this plan will result in the following changes to your project.' %}
+        {% endif %}
+    </h4>
+    {% endif %}
+
+    {% for message in downgrade_messages %}
+        <div class="alert alert-info">
+            {{ message.message }}
+            <ul>
+            {% for detail in message.details %}
+                <li>{{ detail|safe }}</li>
+            {% endfor %}
+            </ul>
+        </div>
+    {% endfor %}
+    {% if show_community_notice %}
+    <div class="form-actions">
+        <a href="{% url 'domain_subscription_view' domain %}" class="btn btn-primary">{% trans 'Stay with Community Plan' %}</a>
+        <a href="{% url 'domain_select_plan' domain %}" class="btn">{% trans 'Select different plan' %}</a>
+    </div>
+    {% else %}
+    <form action="{% url 'confirm_billing_account_info' domain %}" method="post" class="form">
+        <hr />
+        <input type="hidden" value="{{ plan.edition }}" name="plan_edition" />
+        <p>
+            {% blocktrans %}
+            Clicking the confirm button below will bring you to a page where you can enter basic billing information.
+            {% endblocktrans %}
+        </p>
+        <p>
+            {% blocktrans %}
+            By clicking confirm you acknowledge the information presented to you on this page.
+            PLEASE SOMEONE GIVE ME BETTER LEGAL TEXT HERE. KTHNX.
+            {% endblocktrans %}
+        </p>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+                {% trans 'Select this Plan' %}
+            </button>
+            <a href="{% url 'domain_select_plan' domain %}" class="btn">{% trans 'Select different plan' %}</a>
+        </div>
+    </form>
+    {% endif %}
+{% endblock %}

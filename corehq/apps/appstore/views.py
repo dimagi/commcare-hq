@@ -1,6 +1,7 @@
 from datetime import datetime
 import json
 from urllib import urlencode
+from dimagi.utils.couch.resource_conflict import retry_resource
 
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
@@ -219,6 +220,7 @@ def approve_app(request, domain):
     return HttpResponseRedirect(request.META.get('HTTP_REFERER') or reverse('appstore'))
 
 @login_required
+@retry_resource(3)
 def import_app(request, domain):
     user = request.couch_user
     if not user.is_eula_signed():

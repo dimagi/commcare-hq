@@ -1,6 +1,11 @@
 {% extends 'accounting/subscriptions_base.html' %}
 {% load crispy_forms_tags %}
+{% load hq_shared_tags %}
 {% load i18n %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static 'accounting/js/stay-on-tab.js' %}"></script>
+{% endblock %}
 
 {% block main_column %}
     <ul class="nav nav-tabs" id="user-settings-tabs">

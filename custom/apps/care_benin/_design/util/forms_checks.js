@@ -116,8 +116,9 @@ function isAS_CounselingLorsDeLaSortieDuCS(doc) {
     return checkNs(doc, "http://openrosa.org/formdesigner/cb780e6e3b40db0cff0e524741371466fc0210e0");
 }
 
+var ns_as_enregistrement_nouveau_ne = "http://openrosa.org/formdesigner/A4FCED7D-DC8B-470E-8FC6-D30ADE4131DE";
 function isAS_EnregistrementduNouveauNe(doc) {
-    return checkNs(doc, "http://openrosa.org/formdesigner/A4FCED7D-DC8B-470E-8FC6-D30ADE4131DE");
+    return checkNs(doc, ns_as_enregistrement_nouveau_ne);
 }
 
 var ns_as_surveillanceLorsDeLaSortieDuCS = "http://openrosa.org/formdesigner/fb01c7e9a965c32a6aa73bac222e4c79c8bae40";

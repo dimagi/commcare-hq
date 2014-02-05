@@ -1,6 +1,11 @@
 from xml.etree import ElementTree
 from dimagi.utils.couch.database import get_db
-from corehq.apps.commtrack.models import CommtrackConfig, CommtrackActionConfig, LocationType, RequisitionActions, CommtrackRequisitionConfig, Product, SupplyPointCase, Program
+from casexml.apps.case.models import CommCareCase
+from corehq.apps.commtrack import const
+from corehq.apps.commtrack.models import (
+    CommtrackConfig, CommtrackActionConfig, LocationType, RequisitionActions,
+    CommtrackRequisitionConfig, Product, SupplyPointCase, RequisitionCase, Program
+)
 from corehq.apps.locations.models import Location
 import itertools
 from datetime import datetime, date, timedelta
@@ -10,7 +15,6 @@ import bisect
 from corehq.apps.hqcase.utils import submit_case_blocks
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
-from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 
 
 def all_supply_point_types(domain):
@@ -26,7 +30,7 @@ def supply_point_type_categories(domain):
 def all_sms_codes(domain):
     config = CommtrackConfig.for_domain(domain)
 
-    actions = dict((action_config._keyword(False), action_config) for action_config in config.actions)
+    actions = dict((action.keyword, action) for action in config.actions)
     products = dict((p.code, p) for p in Product.by_domain(domain))
     commands = {
         config.multiaction_keyword: {'type': 'stock_report_generic', 'caption': 'Stock Report'},
@@ -75,7 +79,7 @@ def get_or_make_def_program(domain):
         return program[0]
 
 
-def bootstrap_commtrack_settings_if_necessary(domain, requisitions_enabled=True):
+def bootstrap_commtrack_settings_if_necessary(domain, requisitions_enabled=False):
     if not(domain and domain.commtrack_enabled and not domain.commtrack_settings):
         return
 
@@ -85,34 +89,30 @@ def bootstrap_commtrack_settings_if_necessary(domain, requisitions_enabled=True)
         multiaction_keyword='report',
         actions=[
             CommtrackActionConfig(
-                action_type='receipts',
+                action='receipts',
                 keyword='r',
                 caption='Received',
-                name='received',
             ),
             CommtrackActionConfig(
-                action_type='consumption',
+                action='consumption',
                 keyword='c',
                 caption='Consumed',
-                name='consumed',
             ),
             CommtrackActionConfig(
-                action_type='consumption',
+                action='consumption',
+                subaction='loss',
                 keyword='l',
                 caption='Losses',
-                name='lost',
             ),
             CommtrackActionConfig(
-                action_type='stockonhand',
+                action='stockonhand',
                 keyword='soh',
                 caption='Stock on hand',
-                name='stock_on_hand',
             ),
             CommtrackActionConfig(
-                action_type='stockout',
+                action='stockout',
                 keyword='so',
                 caption='Stock-out',
-                name='stock_out',
             ),
         ],
         location_types=[
@@ -125,35 +125,8 @@ def bootstrap_commtrack_settings_if_necessary(domain, requisitions_enabled=True)
         supply_point_types=[],
     )
     if requisitions_enabled:
-        c.requisition_config = CommtrackRequisitionConfig(
-            enabled=True,
-            actions=[
-                CommtrackActionConfig(
-                    action_type=RequisitionActions.REQUEST,
-                    keyword='req',
-                    caption='Request',
-                    name='request',
-                ),
-                CommtrackActionConfig(
-                    action_type=RequisitionActions.APPROVAL,
-                    keyword='approve',
-                    caption='Approved',
-                    name='approved',
-                ),
-                CommtrackActionConfig(
-                    action_type=RequisitionActions.PACK,
-                    keyword='pack',
-                    caption='Packed',
-                    name='packed',
-                ),
-                CommtrackActionConfig(
-                    action_type=RequisitionActions.RECEIPTS,
-                    keyword='rec',
-                    caption='Requisition Receipts',
-                    name='req_received',
-                ),
-            ],
-        )
+        c.requisition_config = get_default_requisition_config()
+
     c.save()
 
     program = make_program(domain.name, 'Default', 'def')
@@ -163,6 +136,32 @@ def bootstrap_commtrack_settings_if_necessary(domain, requisitions_enabled=True)
 
     return c
 
+def get_default_requisition_config():
+    return CommtrackRequisitionConfig(
+        enabled=True,
+        actions=[
+            CommtrackActionConfig(
+                action=RequisitionActions.REQUEST,
+                keyword='req',
+                caption='Request',
+            ),
+            CommtrackActionConfig(
+                action=RequisitionActions.APPROVAL,
+                keyword='approve',
+                caption='Approved',
+            ),
+            CommtrackActionConfig(
+                action=RequisitionActions.PACK,
+                keyword='pack',
+                caption='Packed',
+            ),
+            CommtrackActionConfig(
+                action=RequisitionActions.RECEIPTS,
+                keyword='rec',
+                caption='Requisition Receipts',
+            ),
+        ],
+    )
 
 def due_date_weekly(dow, past_period=0): # 0 == sunday
     """compute the next due date on a weekly schedule, where reports are
@@ -195,7 +194,7 @@ def due_date_monthly(day, from_end=False, past_period=0):
     return date(y, m, min(day, monthrange(y, m)[1]))
 
 def num_periods_late(product_case, schedule, *schedule_args):
-    last_reported = getattr(product_case, 'last_reported', datetime(2000, 1, 1)).date()
+    last_reported = datetime.strptime(getattr(product_case, 'last_reported', '2000-01-01')[:10], '%Y-%m-%d').date()
 
     class DueDateStream(object):
         """mimic an array of due dates to perform a binary search"""
@@ -240,7 +239,7 @@ def submit_mapping_case_block(user, index):
     else:
         caseblock = CaseBlock(
             create=True,
-            case_type=USER_LOCATION_OWNER_MAP_TYPE,
+            case_type=const.USER_LOCATION_OWNER_MAP_TYPE,
             case_id=location_map_case_id(user),
             version=V2,
             owner_id=user._id,
@@ -258,5 +257,17 @@ def submit_mapping_case_block(user, index):
 def location_map_case_id(user):
     return 'user-owner-mapping-' + user._id
 
+
 def is_commtrack_location(user, domain):
     return True if user and user.location_id and domain.commtrack_enabled else False
+
+
+def get_case_wrapper(data):
+    return {
+        const.SUPPLY_POINT_CASE_TYPE: SupplyPointCase,
+        const.REQUISITION_CASE_TYPE: RequisitionCase,
+    }.get(data.get('type'), CommCareCase)
+
+
+def wrap_commtrack_case(case_json):
+    return get_case_wrapper(case_json).wrap(case_json)

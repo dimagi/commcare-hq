@@ -86,6 +86,12 @@ class CommCareUserResource(v0_1.CommCareUserResource):
     class Meta(v0_1.CommCareUserResource.Meta):
         detail_allowed_methods = ['get', 'put', 'delete']
         list_allowed_methods = ['get', 'post']
+        always_return_data = True
+
+    def serialize(self, request, data, format, options=None):
+        if not isinstance(data, dict) and request.method == 'POST':
+            data = {'id': data.obj._id}
+        return self._meta.serializer.serialize(data, format, options)
 
     def get_resource_uri(self, bundle_or_obj=None, url_name='api_dispatch_detail'):
         if isinstance(bundle_or_obj, Bundle):
@@ -144,6 +150,12 @@ class WebUserResource(v0_1.WebUserResource):
     class Meta(v0_1.WebUserResource.Meta):
         detail_allowed_methods = ['get', 'put', 'delete']
         list_allowed_methods = ['get', 'post']
+        always_return_data = True
+
+    def serialize(self, request, data, format, options=None):
+        if not isinstance(data, dict) and request.method == 'POST':
+            data = {'id': data.obj._id}
+        return self._meta.serializer.serialize(data, format, options)
 
     def get_resource_uri(self, bundle_or_obj=None, url_name='api_dispatch_detail'):
         if isinstance(bundle_or_obj, Bundle):
@@ -198,6 +210,12 @@ class GroupResource(v0_4.GroupResource):
     class Meta(v0_4.GroupResource.Meta):
         detail_allowed_methods = ['get', 'put', 'delete']
         list_allowed_methods = ['get', 'post', 'patch']
+        always_return_data = True
+
+    def serialize(self, request, data, format, options=None):
+        if not isinstance(data, dict) and request.method == 'POST':
+            data = {'id': data.obj._id}
+        return self._meta.serializer.serialize(data, format, options)
 
     def patch_list(self, request=None, **kwargs):
         """
@@ -236,7 +254,7 @@ class GroupResource(v0_4.GroupResource):
         for key, value in bundle.data.items():
             if key == 'name' and getattr(bundle.obj, key, None) != value:
                 if not Group.by_name(bundle.obj.domain, value):
-                    setattr(bundle.obj, key, value)
+                    setattr(bundle.obj, key, value or '')
                     should_save = True
                 else:
                     raise Exception("A group with this name already exists")
@@ -269,6 +287,7 @@ class GroupResource(v0_4.GroupResource):
     def obj_create(self, bundle, request=None, **kwargs):
         if not Group.by_name(kwargs['domain'], bundle.data.get("name")):
             bundle.obj = Group(bundle.data)
+            bundle.obj.name = bundle.obj.name or ''
             bundle.obj.domain = kwargs['domain']
             bundle.obj.save()
             for user in bundle.obj.users:

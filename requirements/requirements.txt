@@ -65,6 +65,7 @@ pycurl==7.19.0
 fakecouch==0.0.5
 # WeasyPrint==0.20.2
 twilio==3.6.4
+django-countries==1.5
 
 # required by ctable
 SQLAlchemy==0.8.2

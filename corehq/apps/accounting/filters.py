@@ -1,5 +1,4 @@
-import datetime
-from corehq.apps.accounting.models import BillingAccount, BillingAccountType, Subscription
+from corehq.apps.accounting.models import *
 from corehq.apps.reports.filters.base import BaseReportFilter, BaseSingleOptionFilter
 from dimagi.utils.dates import DateSpan
 from django.utils.translation import ugettext_noop as _
@@ -137,3 +136,27 @@ class StartDateFilter(DateRangeFilter):
 class EndDateFilter(DateRangeFilter):
     slug = 'end_date'
     label = _("End Date")
+
+
+class SoftwarePlanNameFilter(BaseSingleOptionFilter):
+    slug = 'name'
+    label = _("Name")
+    default_text = _("All")
+
+    @property
+    def options(self):
+        return clean_options([(account.name, account.name) for account in SoftwarePlan.objects.all()])
+
+
+class SoftwarePlanEditionFilter(BaseSingleOptionFilter):
+    slug = 'edition'
+    label = _("Edition")
+    default_text = _("All")
+    options = SoftwarePlanEdition.CHOICES
+
+
+class SoftwarePlanVisibilityFilter(BaseSingleOptionFilter):
+    slug = 'visibility'
+    label = _("Visibility")
+    default_text = _("All")
+    options = SoftwarePlanVisibility.CHOICES

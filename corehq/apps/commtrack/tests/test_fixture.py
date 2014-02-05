@@ -5,7 +5,7 @@ from xml.etree import ElementTree
 from casexml.apps.case.xml import V1
 from corehq.apps.app_manager.tests import XmlTest
 from corehq.apps.commtrack.models import Product, product_fixture_generator
-from corehq.apps.commtrack.tests import CommTrackTest
+from corehq.apps.commtrack.tests.util import CommTrackTest
 from corehq.apps.commtrack.tests.util import bootstrap_user
 
 

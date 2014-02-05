@@ -1,0 +1,39 @@
+{% extends "domain/base_change_plan.html" %}
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static 'hqwebapp/js/lib/select2/select2.js' %}"></script>
+    <script src="{% static 'accounting/js/accounting.billing_info_handler.js' %}"></script>
+{% endblock %}
+
+{% block head %}{{ block.super }}
+    <link href="{% static 'hqwebapp/js/lib/select2/select2.css' %}" rel="stylesheet"/>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+    <script>
+        var billingInfoHandler = new BillingContactInfoHandler(
+            '{% trans "Please enter a valid email." %}'
+        );
+        billingInfoHandler.init();
+    </script>
+{% endblock %}
+
+{% block form_content %}
+    <p class="lead">
+        {% blocktrans with plan.name as p%}
+        You are about to subscribe to the {{ p }} Software Plan.
+        {% endblocktrans %}
+    </p>
+    <p>
+        {% blocktrans %}
+        Please update your billing information below before continuing.
+        {% endblocktrans %}
+    </p>
+    <hr />
+    <div id="billing-info">
+        {% crispy billing_account_info_form %}
+    </div>
+{% endblock %}
