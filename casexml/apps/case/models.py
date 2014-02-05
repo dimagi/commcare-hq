@@ -19,7 +19,7 @@ from dimagi.utils.django.cached_object import CachedObject, OBJECT_ORIGINAL, OBJ
 from casexml.apps.phone.xml import get_case_element
 from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.util import get_close_case_xml, get_close_referral_xml,\
-    couchable_property, get_case_xform_ids
+    couchable_property, get_case_xform_ids, reverse_indices
 from casexml.apps.case import const
 from dimagi.utils.modules import to_function
 from dimagi.utils import parsing, web
@@ -332,11 +332,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
     @property
     @memoized
     def reverse_indices(self):
-        return get_db().view("case/related",
-            key=[self.domain, self.get_id, "reverse_index"],
-            reduce=False,
-            wrapper=lambda r: CommCareCaseIndex.wrap(r['value'])
-        ).all()
+        return reverse_indices(self.get_db(), self)
 
     @memoized
     def get_subcases(self):
