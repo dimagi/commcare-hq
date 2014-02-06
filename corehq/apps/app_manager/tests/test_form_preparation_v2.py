@@ -1,49 +1,13 @@
 # coding=utf-8
-import difflib
-from doctest import Example
-
 import io
-import StringIO
-from xml.sax import SAXParseException
-from lxml.doctestcompare import LXMLOutputChecker
-
 import lxml.etree
 
 from casexml.apps.case.tests.util import check_xml_line_by_line
 from corehq.apps.app_manager.const import APP_V2, CAREPLAN_GOAL, CAREPLAN_TASK
-from corehq.apps.app_manager.models import Application, OpenCaseAction, UpdateCaseAction, PreloadAction, FormAction, Module, CareplanModule, AdvancedModule, AdvancedForm, AdvancedOpenCaseAction, LoadUpdateAction
+from corehq.apps.app_manager.models import Application, OpenCaseAction, UpdateCaseAction, PreloadAction, FormAction, Module, AdvancedModule, AdvancedForm, AdvancedOpenCaseAction, LoadUpdateAction
 from django.test import TestCase
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.util import new_careplan_module
-
-import xmldiff
-
-
-def assertXmlEqual(want, got):
-    from xmldiff.input import tree_from_stream
-    encoding = 'UTF-8'
-    norm_sp = 1
-    ext_ges, ext_pes = 0, 0
-    include_comment = 0
-    html = 0
-    fh1 = StringIO.StringIO(want)
-    fh2 = StringIO.StringIO(got)
-    tree1 = tree_from_stream(fh1, norm_sp, ext_ges,
-                             ext_pes, include_comment,
-                             encoding, html)
-    tree2 = tree_from_stream(fh2, norm_sp, ext_ges,
-                             ext_pes, include_comment,
-                             encoding, html)
-    fh1.close()
-    fh2.close()
-
-    from xmldiff.format import InternalPrinter
-    formatter = InternalPrinter()
-    from xmldiff.fmes import FmesCorrector
-    strategy = FmesCorrector(formatter)
-    strategy.process_trees(tree1, tree2)
-    if len(formatter.edit_s):
-        raise AssertionError("XML not equal")
 
 
 class FormPrepBase(TestCase, TestFileMixin):
