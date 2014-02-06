@@ -264,11 +264,7 @@ class EditSubscriptionView(AccountingSectionView):
         return self.get(request, *args, **kwargs)
 
     def cancel_subscription(self):
-        if self.subscription.date_start > datetime.date.today():
-            self.subscription.date_start = datetime.date.today()
-        self.subscription.date_end = datetime.date.today()
-        self.subscription.is_active = False
-        self.subscription.save()
+        self.subscription.cancel_subscription()
         self.subscription_canceled = True
 
 
