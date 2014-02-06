@@ -2,7 +2,7 @@ import functools
 import json
 import itertools
 from corehq import Domain
-from corehq.apps.app_manager.const import CT_REQUISITION_MODE_3, CT_LEDGER_STOCK, CT_LEDGER_REQUEST, CT_LEDGER_FULFILLED, CT_REQUISITION_MODE_4, CT_LEDGER_APPROVED
+from corehq.apps.app_manager.const import CT_REQUISITION_MODE_3, CT_LEDGER_STOCK, CT_LEDGER_REQUESTED, CT_LEDGER_FULFILLED, CT_REQUISITION_MODE_4, CT_LEDGER_APPROVED, CT_LEDGER_PREFIX
 from corehq.apps.app_manager.xform import XForm, XFormError, parse_xml
 import re
 from dimagi.utils.decorators.memoized import memoized
@@ -270,8 +270,8 @@ def languages_mapping():
 def commtrack_ledger_sections(mode):
     sections = [CT_LEDGER_STOCK]
     if mode == CT_REQUISITION_MODE_3:
-        sections += [CT_LEDGER_REQUEST, CT_LEDGER_FULFILLED]
+        sections += [CT_LEDGER_REQUESTED, CT_LEDGER_FULFILLED]
     elif mode == CT_REQUISITION_MODE_4:
-        sections += [CT_LEDGER_REQUEST, CT_LEDGER_APPROVED, CT_LEDGER_FULFILLED]
+        sections += [CT_LEDGER_REQUESTED, CT_LEDGER_APPROVED, CT_LEDGER_FULFILLED]
 
-    return sections
+    return ['{}{}'.format(CT_LEDGER_PREFIX, s) for s in sections]
