@@ -172,6 +172,8 @@ $(function () {
         self.downloadExcels = function(element, event) {
             var tables = [];
             var FixtureUrl = FixtureDownloadUrl;
+            if (self.selectedTables().length < 1)
+                return;
             for (var i in self.selectedTables()) {
                 tables.push(self.selectedTables()[i]);
                 FixtureUrl = FixtureUrl + "table_id="+self.selectedTables()[i]+"&";
