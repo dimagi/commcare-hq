@@ -1,5 +1,5 @@
 from django.utils.unittest.case import TestCase
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models import Application, AdvancedModule
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.suite_xml import dot_interpolate
 
@@ -15,9 +15,9 @@ from lxml.doctestcompare import LXMLOutputChecker
 def assertXmlEqual(want, got):
     checker = LXMLOutputChecker()
     if not checker.check_output(want, got, 0):
-        message = checker.output_difference(Example("", want), got, 0)
+        message = "XML mismatch\n\n"
         for line in difflib.unified_diff(want.splitlines(1), got.splitlines(1), fromfile='want.xml', tofile='got.xml'):
-            print line
+            message += line + '\n'
         raise AssertionError(message)
 
 class XmlTest(TestCase):
@@ -80,12 +80,10 @@ class SuiteTest(XmlTest, TestFileMixin):
     def test_advanced_suite(self):
         self._test_generic_suite('suite-advanced')
 
-    # TODO SK: test commtrack suite
-    # def test_advanced_suite_commtrack(self):
-    #     app = Application.wrap(self.get_json('suite-advanced'))
-    #     app.commtrack_enabled = True
-    #     app.modules[1].forms[0].actions.load_update_cases[-1].show_product_stock = True
-    #     self.assertXmlEqual(self.get_xml('suite-advanced-commtrack'), app.create_suite())
+    def test_advanced_suite_commtrack(self):
+        app = Application.wrap(self.get_json('suite-advanced'))
+        app.commtrack_enabled = True
+        self.assertXmlEqual(self.get_xml('suite-advanced-commtrack'), app.create_suite())
 
     def test_case_assertions(self):
         self._test_generic_suite('app_case_sharing', 'suite-case-sharing')

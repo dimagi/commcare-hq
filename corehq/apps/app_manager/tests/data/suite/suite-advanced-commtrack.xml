@@ -128,6 +128,42 @@
       </template>
     </field>
   </detail>
+  <detail id="m1_product_short">
+    <title>
+      <text>
+        <locale id="m1.product_short.title"/>
+      </text>
+    </title>
+    <field>
+      <header>
+        <text>
+          <locale id="m1.product_short.case_name_1.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </template>
+      <sort type="string" order="1" direction="ascending">
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </sort>
+    </field>
+    <field>
+      <header>
+        <text>
+          <locale id="m1.product_short.case_ledger:stock_2.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="if(count(instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('session')/session/data/case_id_case_clinic]) = 0 or count(instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('session')/session/data/case_id_case_clinic]/section[@section-id='stock']) = 0 or count(instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('session')/session/data/case_id_case_clinic]/section[@section-id='stock']/entry[@id=current()/@id]) = 0, 0, instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('session')/session/data/case_id_case_clinic]/section[@section-id='stock']/entry[@id=current()/@id])"/>
+        </text>
+      </template>
+    </field>
+  </detail>
   <detail id="m2_case_short">
     <title>
       <text>
@@ -171,6 +207,66 @@
       </template>
     </field>
   </detail>
+  <detail id="m2_product_short">
+    <title>
+      <text>
+        <locale id="m2.product_short.title"/>
+      </text>
+    </title>
+    <field>
+      <header>
+        <text>
+          <locale id="m2.product_short.case_name_1.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </template>
+      <sort type="string" order="1" direction="ascending">
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </sort>
+    </field>
+    <field>
+      <header>
+        <text>
+          <locale id="m2.product_short.case_ledger:requested_2.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="if(count(instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('session')/session/data/case_id_case_requisition]) = 0 or count(instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('session')/session/data/case_id_case_requisition]/section[@section-id='requested']) = 0 or count(instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('session')/session/data/case_id_case_requisition]/section[@section-id='requested']/entry[@id=current()/@id]) = 0, 0, instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('session')/session/data/case_id_case_requisition]/section[@section-id='requested']/entry[@id=current()/@id])"/>
+        </text>
+      </template>
+    </field>
+    <field>
+      <header>
+        <text>
+          <locale id="m2.product_short.case_ledger:approved_3.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="if(count(instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('session')/session/data/case_id_case_requisition]) = 0 or count(instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('session')/session/data/case_id_case_requisition]/section[@section-id='approved']) = 0 or count(instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('session')/session/data/case_id_case_requisition]/section[@section-id='approved']/entry[@id=current()/@id]) = 0, 0, instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('session')/session/data/case_id_case_requisition]/section[@section-id='approved']/entry[@id=current()/@id])"/>
+        </text>
+      </template>
+    </field>
+    <field>
+      <header>
+        <text>
+          <locale id="m2.product_short.case_ledger:fulfilled_4.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="if(count(instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('session')/session/data/case_id_case_requisition]) = 0 or count(instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('session')/session/data/case_id_case_requisition]/section[@section-id='fulfilled']) = 0 or count(instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('session')/session/data/case_id_case_requisition]/section[@section-id='fulfilled']/entry[@id=current()/@id]) = 0, 0, instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('session')/session/data/case_id_case_requisition]/section[@section-id='fulfilled']/entry[@id=current()/@id])"/>
+        </text>
+      </template>
+    </field>
+  </detail>
   <entry>
     <form>http://openrosa.org/formdesigner/BF9D5051-D9E8-4740-A48E-91BFD8EB6371</form>
     <command id="m0-f0">
@@ -187,8 +283,10 @@
       </text>
     </command>
     <instance id="casedb" src="jr://instance/casedb"/>
+    <instance id="commcaresession" src="jr://instance/session"/>
     <session>
       <datum id="case_id_case_clinic" nodeset="instance('casedb')/casedb/case[@case_type='clinic'][@status='open']" value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
+      <datum id="throwaway" nodeset="instance('products')/products/product" value="./@id" detail-select="m1_product_short"/>
     </session>
   </entry>
   <entry>
@@ -215,6 +313,7 @@
     <session>
       <datum id="case_id_load_clinic0" nodeset="instance('casedb')/casedb/case[@case_type='clinic'][@status='open']" value="./@case_id" detail-select="m0_case_short"/>
       <datum id="case_id_case_requisition" nodeset="instance('casedb')/casedb/case[@case_type='requisition'][@status='open'][index/parent=instance('commcaresession')/session/data/case_id_load_clinic0]" value="./@case_id" detail-select="m2_case_short" detail-confirm="m2_case_long"/>
+      <datum id="throwaway" nodeset="instance('products')/products/product" value="./@id" detail-select="m2_product_short"/>
     </session>
   </entry>
   <entry>
@@ -225,8 +324,10 @@
       </text>
     </command>
     <instance id="casedb" src="jr://instance/casedb"/>
+    <instance id="commcaresession" src="jr://instance/session"/>
     <session>
       <datum id="case_id_case_requisition" nodeset="instance('casedb')/casedb/case[@case_type='requisition'][@status='open']" value="./@case_id" detail-select="m2_case_short" detail-confirm="m2_case_long"/>
+      <datum id="throwaway" nodeset="instance('products')/products/product" value="./@id" detail-select="m2_product_short"/>
     </session>
   </entry>
   <menu id="m0">
