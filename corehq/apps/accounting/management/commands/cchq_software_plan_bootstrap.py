@@ -155,8 +155,24 @@ class Command(BaseCommand):
         logging.info('Ensuring Products and Product Rates')
 
         product = SoftwareProduct(name='%s %s' % (product_type, edition), product_type=product_type)
+
         product_rates = []
-        for product_rate in self.BOOTSTRAP_PRODUCT_RATES[edition]:
+        BOOTSTRAP_PRODUCT_RATES = {
+            SoftwarePlanEdition.COMMUNITY: [
+                SoftwareProductRate(),  # use all the defaults
+            ],
+            SoftwarePlanEdition.STANDARD: [
+                SoftwareProductRate(monthly_fee=Decimal('100.00')),
+            ],
+            SoftwarePlanEdition.PRO: [
+                SoftwareProductRate(monthly_fee=Decimal('500.00')),
+            ],
+            SoftwarePlanEdition.ADVANCED: [
+                SoftwareProductRate(monthly_fee=Decimal('1000.00')),
+            ],
+        }
+
+        for product_rate in BOOTSTRAP_PRODUCT_RATES[edition]:
             if dry_run:
                 logging.info("[DRY RUN] Creating Product: %s" % product)
                 logging.info("[DRY RUN] Corresponding product rate of $%d created." % product_rate.monthly_fee)
@@ -202,8 +218,26 @@ class Command(BaseCommand):
         logging.info('Ensuring Feature Rates')
 
         feature_rates = []
+        BOOTSTRAP_FEATURE_RATES = {
+            SoftwarePlanEdition.COMMUNITY: {
+                FeatureType.USER: FeatureRate(monthly_limit=50, per_excess_fee=Decimal('1.00')),
+                FeatureType.SMS: FeatureRate(monthly_limit=0),  # use defaults here
+            },
+            SoftwarePlanEdition.STANDARD: {
+                FeatureType.USER: FeatureRate(monthly_limit=100, per_excess_fee=Decimal('1.00')),
+                FeatureType.SMS: FeatureRate(monthly_limit=250),
+            },
+            SoftwarePlanEdition.PRO: {
+                FeatureType.USER: FeatureRate(monthly_limit=500, per_excess_fee=Decimal('1.00')),
+                FeatureType.SMS: FeatureRate(monthly_limit=500),
+            },
+            SoftwarePlanEdition.ADVANCED: {
+                FeatureType.USER: FeatureRate(monthly_limit=1000, per_excess_fee=Decimal('1.00')),
+                FeatureType.SMS: FeatureRate(monthly_limit=1000),
+            },
+        }
         for feature in features:
-            feature_rate = self.BOOTSTRAP_FEATURE_RATES[edition][feature.feature_type]
+            feature_rate = BOOTSTRAP_FEATURE_RATES[edition][feature.feature_type]
             if dry_run:
                 logging.info("[DRY RUN] Creating rate for feature '%s': %s" % (feature.name, feature_rate))
             else:
@@ -220,36 +254,4 @@ class Command(BaseCommand):
         SoftwarePlanEdition.ADVANCED: 'advanced_plan_v0',
     }
 
-    BOOTSTRAP_PRODUCT_RATES = {
-        SoftwarePlanEdition.COMMUNITY: [
-            SoftwareProductRate(),  # use all the defaults
-        ],
-        SoftwarePlanEdition.STANDARD: [
-            SoftwareProductRate(monthly_fee=Decimal('100.00')),
-        ],
-        SoftwarePlanEdition.PRO: [
-            SoftwareProductRate(monthly_fee=Decimal('500.00')),
-        ],
-        SoftwarePlanEdition.ADVANCED: [
-            SoftwareProductRate(monthly_fee=Decimal('1000.00')),
-        ],
-    }
 
-    BOOTSTRAP_FEATURE_RATES = {
-        SoftwarePlanEdition.COMMUNITY: {
-            FeatureType.USER: FeatureRate(monthly_limit=50, per_excess_fee=Decimal('1.00')),
-            FeatureType.SMS: FeatureRate(monthly_limit=0),  # use defaults here
-        },
-        SoftwarePlanEdition.STANDARD: {
-            FeatureType.USER: FeatureRate(monthly_limit=100, per_excess_fee=Decimal('1.00')),
-            FeatureType.SMS: FeatureRate(monthly_limit=250),
-        },
-        SoftwarePlanEdition.PRO: {
-            FeatureType.USER: FeatureRate(monthly_limit=500, per_excess_fee=Decimal('1.00')),
-            FeatureType.SMS: FeatureRate(monthly_limit=500),
-        },
-        SoftwarePlanEdition.ADVANCED: {
-            FeatureType.USER: FeatureRate(monthly_limit=1000, per_excess_fee=Decimal('1.00')),
-            FeatureType.SMS: FeatureRate(monthly_limit=1000),
-        },
-    }
