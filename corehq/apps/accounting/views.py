@@ -16,8 +16,7 @@ from corehq.apps.accounting.interface import AccountingInterface, SubscriptionIn
 from corehq.apps.accounting.models import (SoftwareProductType, Invoice, BillingAccount, CreditLine, Subscription,
                                            SoftwarePlanVersion, SoftwarePlan)
 from corehq.apps.accounting.async_handlers import (FeatureRateAsyncHandler, Select2RateAsyncHandler,
-                                                   Select2RoleAsyncHandler, SoftwareProductRateAsyncHandler,
-                                                   RoleAsyncHandler)
+                                                   SoftwareProductRateAsyncHandler)
 from corehq.apps.accounting.user_text import PricingTable
 from corehq.apps.accounting.utils import LazyEncoder
 from corehq.apps.domain.decorators import require_superuser
@@ -314,10 +313,8 @@ class EditSoftwarePlanView(AccountingSectionView):
     page_title = "Edit Software Plan"
     async_handlers = [
         Select2RateAsyncHandler,
-        Select2RoleAsyncHandler,
         FeatureRateAsyncHandler,
         SoftwareProductRateAsyncHandler,
-        RoleAsyncHandler,
     ]
 
     @property

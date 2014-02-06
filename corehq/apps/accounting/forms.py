@@ -20,8 +20,7 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.email import send_HTML_email
 from django_prbac.models import Role, Grant
 
-from corehq.apps.accounting.async_handlers import (FeatureRateAsyncHandler, SoftwareProductRateAsyncHandler,
-                                                   RoleAsyncHandler)
+from corehq.apps.accounting.async_handlers import (FeatureRateAsyncHandler, SoftwareProductRateAsyncHandler)
 from corehq.apps.accounting.utils import fmt_feature_rate_dict, fmt_product_rate_dict
 from corehq.apps.hqwebapp.crispy import BootstrapMultiField
 from corehq.apps.domain.models import Domain
@@ -746,7 +745,6 @@ class SoftwarePlanVersionForm(forms.Form):
     def role_dict(self):
         return {
             'currentValue': self['privileges'].value(),
-            'handlerSlug': RoleAsyncHandler.slug,
             'multiSelectField': 'privileges',
             'existingRoles': list(self.existing_roles),
             'roleType': self['role_type'].value() or 'existing',
