@@ -11,7 +11,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.accounting.forms import (BillingAccountForm, CreditForm, SubscriptionForm, CancelForm,
                                           PlanInformationForm, SoftwarePlanVersionForm, FeatureRateForm,
-                                          ProductRateForm, RoleForm)
+                                          ProductRateForm)
 from corehq.apps.accounting.interface import AccountingInterface, SubscriptionInterface, SoftwarePlanInterface
 from corehq.apps.accounting.models import (SoftwareProductType, Invoice, BillingAccount, CreditLine, Subscription,
                                            SoftwarePlanVersion, SoftwarePlan)
@@ -346,7 +346,6 @@ class EditSoftwarePlanView(AccountingSectionView):
             'plan_version_form': self.software_plan_version_form,
             'feature_rate_form': FeatureRateForm(),
             'product_rate_form': ProductRateForm(),
-            'role_form': RoleForm(),
             'plan_versions': SoftwarePlanVersion.objects.filter(plan=self.plan).order_by('-date_created')
         }
 

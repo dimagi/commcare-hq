@@ -1010,38 +1010,6 @@ class ProductRateForm(forms.ModelForm):
         return instance
 
 
-class RoleForm(forms.ModelForm):
-    """
-    A form for creating a new ProductRate.
-    """
-    role_id = forms.CharField(
-        required=False,
-        widget=forms.HiddenInput,
-    )
-    # TODO - rate_id ?
-
-    class Meta:
-        model = Role
-        fields = ['slug', 'name', 'description', 'parameters']
-
-    def __init__(self, data=None, *args, **kwargs):
-        super(RoleForm, self).__init__(data, *args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.form_tag = False
-        self.helper.layout = crispy.Layout(
-            crispy.HTML('<h4><span data-bind="text: name"></span></h4>'),
-            crispy.Field('parameters', data_bind="value: parameters"),
-        )
-
-    def is_new(self):
-        return not self['role_id'].value()
-
-    def get_instance(self, role):
-        instance = self.save(commit=False)
-        instance.role = role
-        return instance
-
-
 class EnterprisePlanContactForm(forms.Form):
     name = forms.CharField(
         label=ugettext_noop("Name")
