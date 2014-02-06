@@ -262,7 +262,7 @@
       </header>
       <template>
         <text>
-          <xpath function="if(count(instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('session')/session/data/case_id_case_requisition]) = 0 or count(instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('session')/session/data/case_id_case_requisition]/section[@section-id='fulfilled']) = 0 or count(instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('session')/session/data/case_id_case_requisition]/section[@section-id='fulfilled']/entry[@id=current()/@id]) = 0, 0, instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('session')/session/data/case_id_case_requisition]/section[@section-id='fulfilled']/entry[@id=current()/@id])"/>
+          <xpath function="if(count(instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('session')/session/data/case_id_case_requisition]) = 0 or count(instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('session')/session/data/case_id_case_requisition]/section[@section-id='stock']) = 0 or count(instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('session')/session/data/case_id_case_requisition]/section[@section-id='stock']/entry[@id=current()/@id]) = 0, 0, instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('session')/session/data/case_id_case_requisition]/section[@section-id='stock']/entry[@id=current()/@id])"/>
         </text>
       </template>
     </field>
