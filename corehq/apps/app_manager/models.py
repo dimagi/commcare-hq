@@ -1354,7 +1354,11 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
         return errors
 
     def get_case_updates(self, case_type):
-        return []
+        updates = set()
+        for action in self.actions.get_all_actions():
+            if action.case_type == case_type:
+                updates.update(action.case_properties.keys())
+        return updates
 
     @memoized
     def get_parent_types_and_contributed_properties(self, module_case_type, case_type):

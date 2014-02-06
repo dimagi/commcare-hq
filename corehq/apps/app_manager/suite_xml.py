@@ -652,7 +652,6 @@ class SuiteGenerator(object):
                 getattr(self, 'configure_entry_{}'.format(form.form_type))(module, e, form)
                 yield e
 
-            # TODO SK: add case-list for advanced module
             if isinstance(module, Module) and module.case_list.show:
                 e = Entry(
                     command=Command(
