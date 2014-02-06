@@ -30,6 +30,7 @@ from corehq.apps.accounting.models import (BillingContactInfo, Currency, Softwar
                                            FeatureRate, SoftwarePlanEdition, SoftwarePlanVisibility,
                                            BillingAccountAdmin, SoftwarePlan, Feature, FeatureType,
                                            SoftwareProduct, SoftwareProductType)
+import localsettings
 
 
 class BillingAccountForm(forms.Form):
@@ -47,7 +48,7 @@ class BillingAccountForm(forms.Form):
     city = forms.CharField()
     region = forms.CharField(label="State/Province/Region")
     postal_code = forms.CharField(label="Postal Code")
-    country = forms.CharField()
+    country = forms.ChoiceField()
 
     def __init__(self, account, *args, **kwargs):
         if account is not None:
@@ -74,6 +75,8 @@ class BillingAccountForm(forms.Form):
                 'currency': Currency.get_default().code,
             }
         super(BillingAccountForm, self).__init__(*args, **kwargs)
+        self.fields['country'].choices = [(country, country)
+                                          for country in localsettings.INTERNAL_DATA['country']]
         if account is None:
             self.fields['address_line_1'].required = False
             self.fields['city'].required = False
