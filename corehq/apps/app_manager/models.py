@@ -1195,6 +1195,19 @@ class Module(ModuleBase):
             ),
         )
 
+    def new_form(self, name, lang, attachment=''):
+        form = Form(
+            name={lang if lang else "en": name if name else _("Untitled Form")},
+        )
+        self.forms.append(form)
+        form = self.get_form(-1)
+        form.source = attachment
+        return form
+
+    def new_form_from_source(self, source):
+        self.forms.append(Form.wrap(source))
+        return self.get_form(-1)
+
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.name, old_lang, new_lang)
         for form in self.get_forms():
@@ -1404,6 +1417,19 @@ class AdvancedModule(ModuleBase):
                 long=Detail(),
             ),
         )
+
+    def new_form(self, name, lang, attachment=''):
+        form = AdvancedForm(
+            name={lang if lang else "en": name if name else _("Untitled Form")},
+        )
+        self.forms.append(form)
+        form = self.get_form(-1)
+        form.source = attachment
+        return form
+
+    def new_form_from_source(self, source):
+        self.forms.append(AdvancedForm.wrap(source))
+        return self.get_form(-1)
 
     def requires_case_details(self):
         return True
@@ -2686,19 +2712,11 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     def new_form(self, module_id, name, lang, attachment=""):
         module = self.get_module(module_id)
-        form = Form(
-            name={lang if lang else "en": name if name else "Untitled Form"},
-        )
-        module.forms.append(form)
-        form = module.get_form(-1)
-        form.source = attachment
-        return form
+        return module.new_form(name, lang, attachment)
 
     def new_form_from_source(self, module_id, source):
         module = self.get_module(module_id)
-        module.forms.append(Form.wrap(source))
-        form = module.get_form(-1)
-        return form
+        return module.new_form_from_source(source)
 
     @parse_int([1, 2])
     def delete_form(self, module_id, form_id):

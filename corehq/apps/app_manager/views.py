@@ -898,14 +898,8 @@ def _new_advanced_module(req, domain, app, name, lang):
             commtrack_enabled=app.commtrack_enabled
         )
     )
-    form = CommTrackForm(
-        name={lang if lang else "en": _("Untitled Form")},
-    )
-    module.forms.append(form)
-    form = module.get_form(-1)
-    form.source = ''
-
     module_id = module.id
+    app.new_form(module_id, _("Untitled Form"), lang)
 
     app.save()
     response = back_to_main(req, domain, app_id=app.id, module_id=module_id)
