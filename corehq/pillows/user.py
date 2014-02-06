@@ -147,3 +147,9 @@ class UnknownUsersPillow(BulkPillow):
 
     def send_bulk(self, payload):
         pass
+
+
+def add_demo_user_to_user_index():
+    es = get_es()
+    es_path = USER_INDEX + "/user/demo_user"
+    es.put(es_path, data={"_id": "demo_user", "username": "demo_user", "doc_type": "DemoUser"})
