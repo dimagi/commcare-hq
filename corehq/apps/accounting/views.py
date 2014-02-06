@@ -383,6 +383,7 @@ class EditSoftwarePlanView(AccountingSectionView):
                 return HttpResponseRedirect(self.page_url)
         elif self.plan_info_form.is_valid():
             self.plan_info_form.update_plan(self.plan)
+            messages.success(request, "The %s Software Plan was successfully updated." % self.plan.name)
         return self.get(request, *args, **kwargs)
 
 
