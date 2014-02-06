@@ -377,7 +377,8 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
 
     module_case_types = [
         {'module_name': trans(module.name, langs),
-         'case_type': module.case_type}
+         'case_type': module.case_type,
+         'module_type': module.doc_type}
         for module in form.get_app().modules if module.case_type
     ] if not is_user_registration else None
 

@@ -34,7 +34,7 @@
                     ></select>
                     &nbsp;
                     {% trans "Case Tag:" %}
-                    <input type="text" class="input-medium" data-bind="value: case_tag" />
+                    <input type="text" class="input-medium" data-bind="value: case_tag, disable: disable_tag" />
                     <span class="help-inline" data-bind="text: validate"></span>
                     <a href="#" data-bind="openModal: 'remove-action-modal-template', visible: $root.edit" class="pull-right">
                         <i class="icon-trash"></i>
@@ -69,10 +69,10 @@
                     <div class="form-inline">
                         <!-- ko if:  actionType === 'load' -->
                         {% if app.commtrack_enabled %}
-                        <!-- ko if:  $index() > 0 -->
+                        <!-- ko if:  allow_product_stock -->
                         <div class="control-group">
                             <label class="checkbox">
-                                <input type="checkbox" data-bind="checked: show_product_stock"/>
+                                <input type="checkbox" data-bind="checked: show_product_stock_var"/>
                                 {% trans "Display the Product Stock for this Supply Point after it is selected" %}
                             </label>
                         </div>
