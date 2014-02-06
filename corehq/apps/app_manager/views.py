@@ -1333,6 +1333,7 @@ def edit_advanced_form_actions(req, domain, app_id, module_id, form_id):
     form.actions = actions
     response_json = {}
     app.save(response_json)
+    response_json['propertiesMap'] = get_all_case_properties(app)
     return json_response(response_json)
 
 

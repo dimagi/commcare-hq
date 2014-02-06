@@ -18,13 +18,15 @@ var AdvancedCase = (function () {
         self.questions = params.questions;
         self.edit = params.edit;
         self.save_url = params.save_url;
-        // `requires` is a ko observable so it can be read by another UI
-        self.requires = params.requires;
         self.caseType = params.caseType;
         self.reserved_words = params.reserved_words;
         self.moduleCaseTypes = params.moduleCaseTypes;
         self.commtrack = params.commtrack_enabled;
-        self.propertiesMap = ko.mapping.fromJS(params.propertiesMap);
+
+        self.setPropertiesMap = function (propertiesMap) {
+             self.propertiesMap = ko.mapping.fromJS(propertiesMap);
+        };
+         self.setPropertiesMap(params.propertiesMap);
 
         self.saveButton = COMMCAREHQ.SaveButton.init({
             unsavedMessage: "You have unchanged case settings",
@@ -40,6 +42,7 @@ var AdvancedCase = (function () {
                     success: function (data) {
                         COMMCAREHQ.app_manager.updateDOM(data.update);
                         self.caseConfigViewModel.ensureBlankProperties();
+                        self.setPropertiesMap(data.propertiesMap);
                     }
                 });
             }
