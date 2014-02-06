@@ -9,6 +9,8 @@ from dimagi.utils.couch.database import get_db
 from django.core.cache import cache
 
 
+WEIRD_USER_IDS = ['commtrack-system', 'demo_user']
+
 def cc_user_domain(domain):
     sitewide_domain = settings.HQ_ACCOUNT_ROOT 
     return ("%s.%s" % (domain, sitewide_domain)).lower()

@@ -915,6 +915,8 @@ PILLOWTOPS = {
         'corehq.pillows.user.UserPillow',
         'corehq.pillows.application.AppPillow',
         'corehq.pillows.sms.SMSPillow',
+        'corehq.pillows.user.GroupToUserPillow',
+        'corehq.pillows.user.UnknownUsersPillow',
     ],
     'core_ext': [
         'corehq.pillows.reportcase.ReportCasePillow',
