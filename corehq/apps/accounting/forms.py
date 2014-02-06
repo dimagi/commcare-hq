@@ -37,7 +37,9 @@ class BillingAccountForm(forms.Form):
     salesforce_account_id = forms.CharField(label="Salesforce ID", required=False)
     currency = forms.ChoiceField(label="Currency")
 
-    billing_account_admins = forms.CharField(label='Billing Account Admins', required=False)
+    billing_account_admins = forms.CharField(label=_('Account Admins (emails)'),
+                                             required=False,
+                                             widget=forms.Textarea)
     first_name = forms.CharField(label='First Name', required=False)
     last_name = forms.CharField(label='Last Name', required=False)
     company_name = forms.CharField(label='Company Name', required=False)
