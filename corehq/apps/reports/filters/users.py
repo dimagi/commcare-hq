@@ -244,6 +244,8 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
 
             query_filter["and"].append(or_filter)
 
+        if "t__1" in emws:  # Demo user selected
+            query_filter = {"or": [{"term": {"username": "demo_user"}}, query_filter]}
 
         q["filter"] = query_filter
         return es_query(es_url=ES_URLS["users"], q=q, **kwargs)

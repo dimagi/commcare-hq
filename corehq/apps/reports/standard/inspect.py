@@ -99,9 +99,6 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
 
     @property
     def rows(self):
-
-        ExpandedMobileWorkerFilter.pull_users_from_es(self.domain, self.request)
-
         def form_data_link(instance_id):
             return "<a class='ajax_dialog' href='%(url)s'>%(text)s</a>" % {
                 "url": reverse('render_form_data', args=[self.domain, instance_id]),
