@@ -240,7 +240,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
                 password = unicode(password)
             group_names = group_names or []
             try:
-                username = normalize_username(username, domain)
+                username = normalize_username(str(username), domain)
             except TypeError:
                 username = None
             except ValidationError:
