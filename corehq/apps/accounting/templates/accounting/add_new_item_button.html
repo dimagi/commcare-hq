@@ -3,9 +3,9 @@
 
 
 {% block main_column %}
-    <a href="{% url 'new_billing_account' %}" class="btn btn-primary" data-toggle="modal" style="margin-left:2px">
+    <a href="{{ new_url_name }}" class="btn btn-primary" data-toggle="modal" style="margin-left:2px">
         <i class="icon-white icon-plus">
-            Add New Billing Account
+            Add New {{ item_name }}
         </i>
     </a>
     {{ block.super }}

@@ -9,10 +9,26 @@ from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 
 
-class AccountingInterface(BaseCRUDAdminInterface):
+class AddItemInterface(BaseCRUDAdminInterface):
+    base_template = 'accounting/add_new_item_button.html'
+
+    item_name = None
+    new_item_view = None
+
+    @property
+    def template_context(self):
+        context = super(AddItemInterface, self).template_context
+        context.update(
+            item_name=self.item_name,
+            new_url_name=reverse(self.new_item_view.urlname),
+        )
+        return context
+
+class AccountingInterface(AddItemInterface):
     section_name = "Accounting"
-    base_template = 'accounting/add_account_button.html'
     dispatcher = AccountingAdminInterfaceDispatcher
+
+    item_name = "Billing Account"
 
     crud_form_update_url = "/accounting/form/"
 
@@ -25,6 +41,11 @@ class AccountingInterface(BaseCRUDAdminInterface):
 
     def validate_document_class(self):
         return True
+
+    @property
+    def new_item_view(self):
+        from corehq.apps.accounting.views import NewBillingAccountView
+        return NewBillingAccountView
 
     @property
     def headers(self):
@@ -71,10 +92,11 @@ class AccountingInterface(BaseCRUDAdminInterface):
     crud_item_type = "Billing Account"
 
 
-class SubscriptionInterface(BaseCRUDAdminInterface):
+class SubscriptionInterface(AddItemInterface):
     section_name = "Accounting"
-    base_template = 'accounting/report_filter_actions.html'
     dispatcher = AccountingAdminInterfaceDispatcher
+
+    item_name = "Subscription"
 
     crud_form_update_url = "/accounting/form/"
 
@@ -89,6 +111,11 @@ class SubscriptionInterface(BaseCRUDAdminInterface):
 
     def validate_document_class(self):
         return True
+
+    @property
+    def new_item_view(self):
+        from corehq.apps.accounting.views import NewSubscriptionViewNoDefaultDomain
+        return NewSubscriptionViewNoDefaultDomain
 
     @property
     def headers(self):
@@ -153,10 +180,11 @@ class SubscriptionInterface(BaseCRUDAdminInterface):
     crud_item_type = "Subscription"
 
 
-class SoftwarePlanInterface(BaseCRUDAdminInterface):
+class SoftwarePlanInterface(AddItemInterface):
     section_name = "Accounting"
-    base_template = 'accounting/report_filter_actions.html'
     dispatcher = AccountingAdminInterfaceDispatcher
+
+    item_name = "Software Plan"
 
     crud_form_update_url = "/accounting/form/"
 
@@ -169,6 +197,11 @@ class SoftwarePlanInterface(BaseCRUDAdminInterface):
 
     def validate_document_class(self):
         return True
+
+    @property
+    def new_item_view(self):
+        from corehq.apps.accounting.views import NewSoftwarePlanView
+        return NewSoftwarePlanView
 
     @property
     def headers(self):
