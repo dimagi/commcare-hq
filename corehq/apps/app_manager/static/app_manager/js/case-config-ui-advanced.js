@@ -94,10 +94,13 @@ var AdvancedCase = (function () {
                      .on('change', 'select, input[type="hidden"]', self.change)
                      .on('click', 'a', self.change);
                 self.ensureBlankProperties();
-                _.delay(function () {
-                    var options = {header: '> div > h3', heightStyle: 'content', collapsible: true, autoFill: true};
-                    $('#case-open-accordion').accordion("destroy").accordion(options);
-                    $('#case-load-accordion').accordion("destroy").accordion(options);
+                $('#case-configuration-tab').on('click', function () {
+                    // re-apply accordion settings
+                    _.delay(function () {
+                        var options = {header: '> div > h3', heightStyle: 'content', collapsible: true, autoFill: true};
+                        $('#case-open-accordion').accordion("destroy").accordion(options);
+                        $('#case-load-accordion').accordion("destroy").accordion(options);
+                    });
                 });
             });
         };
@@ -125,6 +128,15 @@ var AdvancedCase = (function () {
                 label = '*' + label;
             }
             return label;
+        };
+
+        self.case_supports_products = function (case_type) {
+            for (var i = 0; i < self.moduleCaseTypes.length; i++) {
+                if (self.moduleCaseTypes[i].case_type === case_type &&
+                    self.moduleCaseTypes[i].module_type === 'AdvancedModule') {
+                    return true;
+                }
+            }
         };
 
         self.getCaseTags = function (type) {
@@ -179,6 +191,20 @@ var AdvancedCase = (function () {
             return options;
         });
 
+        self.renameCaseTag = function (oldTag, newTag) {
+            var actions = self.open_cases();
+            actions = actions.concat(self.load_update_cases());
+            for (var i = 0; i < actions.length; i++) {
+                var action = actions[i];
+                if (action.case_tag() === oldTag) {
+                    action.case_tag(newTag);
+                }
+                if (action.parent_tag() === oldTag) {
+                    action.parent_tag(newTag);
+                }
+            }
+        };
+
         self.ensureBlankProperties = function () {
             var items = [];
             var actions = self.load_update_cases();
@@ -219,7 +245,7 @@ var AdvancedCase = (function () {
                     preload: [],
                     case_properties: [],
                     close_condition: DEFAULT_CONDITION('never'),
-                    show_product_stock: self.config.commtrack
+                    show_product_stock: false
                 }, self.config));
                 if (index > 0) {
                     $('#case-load-accordion').accordion('activate', index);
@@ -375,12 +401,24 @@ var AdvancedCase = (function () {
                 }
             };
 
+            self.show_product_stock_var = ko.computed({
+                read: function () {
+                    return self.show_product_stock();
+                },
+                write: function (value) {
+                    self.show_product_stock(value);
+                    if (value) {
+                        var newTag = 'case_' + self.case_type();
+                        self.config.caseConfigViewModel.renameCaseTag(self.case_tag(), newTag);
+                    }
+                }
+            });
+
             self.subcaseLoad = ko.computed({
                 read: function () {
                     return self.parent_tag();
                 },
                 write: function (value) {
-                    console.log(value);
                     if (value) {
                         var parent = self.config.caseConfigViewModel.load_update_cases()[0];
                         if (parent) {
@@ -455,6 +493,25 @@ var AdvancedCase = (function () {
                 return ActionBase.header(self);
             });
 
+            var add_circular = function() {
+                // hacky way to prevent trying to access caseConfigViewModel before it is defined
+                self.allow_product_stock = ko.computed(function () {
+                    var supported = self.config.caseConfigViewModel.case_supports_products(self.case_type());
+                    var loadupdatecases = self.config.caseConfigViewModel.load_update_cases;
+                    return supported && loadupdatecases.indexOf(self) === loadupdatecases().length - 1;
+                });
+
+                self.disable_tag = ko.computed(function () {
+                    return self.show_product_stock() && self.allow_product_stock();
+                });
+            };
+
+            if (!self.config.caseConfigViewModel) {
+                _.delay(add_circular);
+            } else {
+                add_circular();
+            }
+
             return self;
         },
         unwrap: function (self) {
@@ -464,6 +521,7 @@ var AdvancedCase = (function () {
             self.preload.remove(blank);
             self.case_properties.remove(blank);
             ActionBase.clean_condition(self.close_condition);
+            self.show_product_stock(self.disable_tag());
             var action = ko.mapping.toJS(self, LoadUpdateAction.mapping(self));
 
             action.preload = propertyArrayToDict([], action.preload)[0];
@@ -497,6 +555,10 @@ var AdvancedCase = (function () {
                     return true;
                 }
             };
+
+            self.disable_tag = ko.computed(function () {
+                return false;
+            });
 
             self.suggestedProperties = ko.computed(function () {
                 return ActionBase.suggestedProperties(self);
