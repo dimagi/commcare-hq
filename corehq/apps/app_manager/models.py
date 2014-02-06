@@ -1374,7 +1374,7 @@ class AdvancedModule(ModuleBase):
     put_in_root = BooleanProperty(default=False)
 
     @classmethod
-    def new_module(cls, name, lang, case_type=None, commtrack_enabled=False):
+    def new_module(cls, name, lang, commtrack_enabled=False):
         if commtrack_enabled:
             names = {
                 'case_detail': ugettext("Supply point"),
@@ -1398,7 +1398,7 @@ class AdvancedModule(ModuleBase):
         return AdvancedModule(
             name={(lang or 'en'): name or names['module']},
             forms=[],
-            case_type=case_type or '',
+            case_type='',
             case_details=DetailPair(
                 short=Detail(detail.to_json()),
                 long=Detail(detail.to_json()),

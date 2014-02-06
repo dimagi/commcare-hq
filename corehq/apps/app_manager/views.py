@@ -889,13 +889,10 @@ def _new_careplan_module(req, domain, app, name, lang):
 
 
 def _new_advanced_module(req, domain, app, name, lang):
-    case_type = req.POST.get('ct_case_type')
-
     module = app.add_module(
         CommTrackModule.new_module(
             name,
             lang,
-            case_type=case_type,
             commtrack_enabled=app.commtrack_enabled
         )
     )
