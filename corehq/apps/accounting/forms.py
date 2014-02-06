@@ -524,27 +524,12 @@ class SoftwarePlanVersionForm(forms.Form):
         widget=forms.Textarea,
     )
 
-    def __init__(self, plan, plan_version, data=None, *args, **kwargs):
+    def __init__(self, plan, plan_version, *args, **kwargs):
         self.plan = plan
         self.plan_version = plan_version
-        data = data or {}
-        if self.plan_version is not None:
-            if not 'feature_rates' in data:
-                data['feature_rates'] = json.dumps([fmt_feature_rate_dict(r.feature, r)
-                                                    for r in self.plan_version.feature_rates.all()])
-            if not 'product_rates' in data:
-                data['product_rates'] = json.dumps([fmt_product_rate_dict(r.product, r)
-                                                    for r in self.plan_version.product_rates.all()])
-            if not 'role_slug' in data:
-                data['role_slug'] = self.plan_version.role.slug
-        else:
-            if not 'feature_rates' in data:
-                data['feature_rates'] = json.dumps([])
-            if not 'product_rates' in data:
-                data['product_rates'] = json.dumps([])
         self.is_update = False
 
-        super(SoftwarePlanVersionForm, self).__init__(data, *args, **kwargs)
+        super(SoftwarePlanVersionForm, self).__init__(*args, **kwargs)
 
         self.fields['privileges'].choices = list(self.available_privileges)
         self.fields['role_slug'].choices = [(r['slug'], "%s (%s)" % (r['name'], r['slug'])) for r in self.existing_roles]
