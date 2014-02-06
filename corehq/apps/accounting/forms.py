@@ -258,7 +258,7 @@ class SubscriptionForm(forms.Form):
 
 
 class CreditForm(forms.Form):
-    amount = forms.DecimalField()
+    amount = forms.DecimalField(label=_("Amount %s") % Currency.get_default().symbol)
     note = forms.CharField(required=False)
     rate_type = forms.ChoiceField()
     product_rate = forms.ChoiceField(required=False, label=_("Product Rate"))
