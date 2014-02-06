@@ -361,12 +361,16 @@ var AdvancedCase = (function () {
                     action, {variable: 'action'});
             }
         },
-        suggestedProperties: function(action) {
-            if (_(action.config.propertiesMap).has(action.case_type())) {
-                return  action.config.propertiesMap[action.case_type()]();
-            } else {
-                return [];
+        suggestedProperties: function(action, allow_parent) {
+            var properties = [];
+            var propertiesMap = action.config.propertiesMap;
+            var caseType = action.case_type();
+            if (_(propertiesMap).has(caseType)) {
+                properties = _.filter(propertiesMap[caseType](), function (p) {
+                    return allow_parent ? true : p.indexOf('/') === -1;
+                });
             }
+            return properties;
         }
     };
 
@@ -414,7 +418,7 @@ var AdvancedCase = (function () {
                 }
             });
 
-            self.subcaseLoad = ko.computed({
+            self.subcase = ko.computed({
                 read: function () {
                     return self.parent_tag();
                 },
@@ -424,6 +428,8 @@ var AdvancedCase = (function () {
                         if (parent) {
                             self.parent_tag(parent.case_tag());
                         }
+                    } else {
+                        self.parent_tag('');
                     }
                 }
             });
@@ -454,7 +460,7 @@ var AdvancedCase = (function () {
             });
 
             self.suggestedProperties = ko.computed(function () {
-                return ActionBase.suggestedProperties(self);
+                return ActionBase.suggestedProperties(self, !self.subcase());
             });
 
             self.addProperty = function () {
@@ -561,7 +567,7 @@ var AdvancedCase = (function () {
             });
 
             self.suggestedProperties = ko.computed(function () {
-                return ActionBase.suggestedProperties(self);
+                return ActionBase.suggestedProperties(self, false);
             });
 
             self.validate = ko.computed(function () {
@@ -673,6 +679,8 @@ var AdvancedCase = (function () {
                         return '<strong>' + self.key() + '</strong> is a reserved word';
                     } else if (self.repeat_context() && self.repeat_context() !== self.action.repeat_context()) {
                         return 'Inside the wrong repeat!';
+                    } else if (action.subcase() && _(self.key()).contains('/')) {
+                        return 'Parent property references not allowed for subcases';
                     }
                 }
                 return null;
@@ -704,6 +712,8 @@ var AdvancedCase = (function () {
                 if (self.path() || self.key()) {
                     if (action.config.reserved_words.indexOf(self.key()) !== -1) {
                         return '<strong>' + self.key() + '</strong> is a reserved word';
+                    } else if (action.subcase() && _(self.key()).contains('/')) {
+                        return 'Parent property references not allowed for subcases';
                     }
                 }
                 return null;

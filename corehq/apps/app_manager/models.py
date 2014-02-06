@@ -326,6 +326,8 @@ class AdvancedFormActions(DocumentSchema):
         names = set()
         for action in self.get_subcase_actions():
             names.update(action.case_properties.keys())
+            if hasattr(action, 'preload'):
+                names.update(action.preload.keys())
         return names
 
     def get_subcase_actions(self):
