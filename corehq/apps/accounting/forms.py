@@ -165,7 +165,7 @@ class SubscriptionForm(forms.Form):
     end_date = forms.DateField(label="End Date", widget=forms.DateInput(), required=False)
     delay_invoice_until = forms.DateField(label="Delay Invoice Until", widget=forms.DateInput(), required=False)
     plan_version = forms.ChoiceField(label="Plan Version")
-    domain = forms.CharField(max_length=25)
+    domain = forms.CharField(label=_("Project Space"), max_length=25)
     salesforce_contract_id = forms.CharField(label=_("Salesforce Deployment ID"),
                                              max_length=80,
                                              required=False)
