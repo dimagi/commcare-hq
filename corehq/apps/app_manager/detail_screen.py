@@ -1,5 +1,6 @@
 from corehq.apps.app_manager import suite_xml as sx
 from corehq.apps.app_manager.util import is_sort_only_column
+from corehq.apps.app_manager.xpath import LedgerXpath, LedgerdbXpath
 from .xpath import dot_interpolate, CaseXPath, IndicatorXpath
 
 CASE_PROPERTY_MAP = {
@@ -369,3 +370,17 @@ class IndicatorXpathGenerator(BaseXpathGenerator):
         indicator_set, indicator = self.column.field_property.split('/', 1)
         instance_id = self.id_strings.indicator_instance(indicator_set)
         return IndicatorXpath(instance_id).indicator(indicator)
+
+@register_type_processor(sx.FIELD_TYPE_LEDGER)
+class LedgerXpathGenerator(BaseXpathGenerator):
+    @property
+    def xpath(self):
+        session_case_id = 'case_id_case_{}'.format(self.module.case_type)
+        section = self.column.field_property
+
+        return "if({0} = 0 or {1} = 0 or {2} = 0, 0, {3})".format(
+            LedgerdbXpath(session_case_id).ledger().count(),
+            LedgerdbXpath(session_case_id).ledger().section(section).count(),
+            LedgerdbXpath(session_case_id).ledger().section(section).entry(u'current()/@id').count(),
+            LedgerdbXpath(session_case_id).ledger().section(section).entry(u'current()/@id')
+        )

@@ -1,0 +1,66 @@
+<h:html xmlns="http://www.w3.org/2002/xforms" xmlns:h="http://www.w3.org/1999/xhtml" xmlns:jr="http://openrosa.org/javarosa" xmlns:orx="http://openrosa.org/jr/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+	<h:head>
+		<h:title>New Form</h:title>
+		<model>
+			<instance>
+				<data name="New Form" uiVersion="1" version="3" xmlns="http://openrosa.org/formdesigner/21683C30-2763-4659-B13F-2D4AF089EF7C" xmlns:jrm="http://dev.commcarehq.org/jr/xforms">
+					<mother_name/>
+					<child jr:template="">
+						<name/>
+                        <which_child/>
+					</child>
+				</data>
+			</instance>
+			<bind nodeset="/data/mother_name" required="true()" type="xsd:string"/>
+			<bind nodeset="/data/child"/>
+			<bind nodeset="/data/child/name" required="true()" type="xsd:string"/>
+            <bind nodeset="/data/children/which_child"/>
+			<itext>
+				<translation default="" lang="en">
+					<text id="mother_name-label">
+						<value>Name</value>
+					</text>
+					<text id="child-label">
+						<value>Child</value>
+					</text>
+					<text id="name-label">
+						<value>Name</value>
+					</text>
+                    <text id="which_child-label">
+						<value>which child</value>
+					</text>
+					<text id="which_child-1-label">
+						<value>one</value>
+					</text>
+					<text id="which_child-2-label">
+						<value>two</value>
+					</text>
+				</translation>
+			</itext>
+		</model>
+	</h:head>
+	<h:body>
+		<input ref="/data/mother_name">
+			<label ref="jr:itext('mother_name-label')"/>
+		</input>
+		<group>
+			<label ref="jr:itext('child-label')"/>
+			<repeat nodeset="/data/child">
+                <select1 ref="/data/children/which_child">
+					<label ref="jr:itext('which_child-label')"/>
+					<item>
+						<label ref="jr:itext('which_child-1-label')"/>
+						<value>1</value>
+					</item>
+					<item>
+						<label ref="jr:itext('which_child-2-label')"/>
+						<value>2</value>
+					</item>
+				</select1>
+				<input ref="/data/child/name">
+					<label ref="jr:itext('name-label')"/>
+				</input>
+			</repeat>
+		</group>
+	</h:body>
+</h:html>
