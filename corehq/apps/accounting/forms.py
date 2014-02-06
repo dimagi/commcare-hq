@@ -34,7 +34,9 @@ from corehq.apps.accounting.models import (BillingContactInfo, Currency, Softwar
 
 class BillingAccountForm(forms.Form):
     name = forms.CharField(label="Name")
-    salesforce_account_id = forms.CharField(label="Salesforce ID", required=False)
+    salesforce_account_id = forms.CharField(label=_("Salesforce Account ID"),
+                                            max_length=80,
+                                            required=False)
     currency = forms.ChoiceField(label="Currency")
 
     billing_account_admins = forms.CharField(label=_('Account Admins (emails)'),
@@ -164,7 +166,9 @@ class SubscriptionForm(forms.Form):
     delay_invoice_until = forms.DateField(label="Delay Invoice Until", widget=forms.DateInput(), required=False)
     plan_version = forms.ChoiceField(label="Plan Version")
     domain = forms.CharField(max_length=25)
-    salesforce_contract_id = forms.CharField(label="Salesforce Contract ID", max_length=80, required=False)
+    salesforce_contract_id = forms.CharField(label=_("Salesforce Deployment ID"),
+                                             max_length=80,
+                                             required=False)
 
     def __init__(self, subscription, *args, **kwargs):
         super(SubscriptionForm, self).__init__(*args, **kwargs)
