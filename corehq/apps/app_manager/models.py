@@ -1422,8 +1422,19 @@ class AdvancedModule(ModuleBase):
         self.forms.append(AdvancedForm.wrap(source))
         return self.get_form(-1)
 
+    def get_case_types(self):
+        case_types = set()
+        for form in self.forms:
+            for action in form.actions.get_all_actions():
+                case_types.add(action.case_type)
+
+        return case_types
+
     def requires_case_details(self):
-        return True
+        for form in self.forms:
+            for action in form.actions.load_update_cases:
+                if action.case_type == self.case_type:
+                    return True
 
     def all_forms_require_a_case(self):
         return all(form.actions.load_update_cases for form in self.forms)
