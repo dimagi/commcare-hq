@@ -1376,29 +1376,18 @@ class AdvancedModule(ModuleBase):
     put_in_root = BooleanProperty(default=False)
 
     @classmethod
-    def new_module(cls, name, lang, commtrack_enabled=False):
-        if commtrack_enabled:
-            names = {
-                'case_detail': ugettext("Supply point"),
-                'module': ugettext("Manage Supply Points")
-            }
-        else:
-            names = {
-                'case_detail': ugettext("Name"),
-                'module': ugettext("Untitled Module")
-            }
-
+    def new_module(cls, name, lang):
         detail = Detail(
             columns=[DetailColumn(
                 format='plain',
-                header={(lang or 'en'): names['case_detail']},
+                header={(lang or 'en'): ugettext("Name")},
                 field='name',
                 model='case',
             )]
         )
 
         return AdvancedModule(
-            name={(lang or 'en'): name or names['module']},
+            name={(lang or 'en'): name or ugettext("Untitled Module")},
             forms=[],
             case_type='',
             case_details=DetailPair(

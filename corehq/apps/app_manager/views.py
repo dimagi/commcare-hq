@@ -889,13 +889,7 @@ def _new_careplan_module(req, domain, app, name, lang):
 
 
 def _new_advanced_module(req, domain, app, name, lang):
-    module = app.add_module(
-        CommTrackModule.new_module(
-            name,
-            lang,
-            commtrack_enabled=app.commtrack_enabled
-        )
-    )
+    module = app.add_module(AdvancedModule.new_module(name, lang))
     module_id = module.id
     app.new_form(module_id, _("Untitled Form"), lang)
 
