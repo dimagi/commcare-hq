@@ -249,6 +249,7 @@ HQ_APPS = (
     'corehq.couchapps',
     'custom.apps.wisepill',
     'custom.fri',
+    'couchpulse',
     'fluff',
     'fluff.fluff_filter',
     'soil',

@@ -723,6 +723,7 @@ def deploy():
         set_supervisor_config()
         if env.should_migrate:
             execute(migrate)
+            execute(migrate_couchpulse)
         execute(_do_collectstatic)
         execute(do_update_django_locales)
         execute(version_static)
@@ -1070,3 +1071,33 @@ def selenium_test():
         'pass': env.jenkins_password,
         'url': url,
     })
+
+
+@task
+def migrate_couchpulse():
+    """
+    cd /home/cchq/www/staging/code_root/submodules/couchpulse/
+    export PYTHONPATH=`pwd`
+    alembic upgrade head
+
+    """
+
+    venv = env.virtualenv_root
+    # reconstruct alembic.ini file
+    # wish there were a better way, but a couple lines of mind-numbing bash
+    # is better than making people log into machines...
+    command = (
+        # extract COUCHPULSE_DATABASE_URL from localsettings.py
+        """COUCHPULSE_DATABASE_URL=$(cat localsettings.py | grep COUCHPULSE_DATABASE_URL | grep -o "'.*'" | cut -d"'" -f2) && """
+        # insert that into the alembic.ini example file
+        'sed "s|^sqlalchemy\.url.*$|sqlalchemy.url = $COUCHPULSE_DATABASE_URL|" submodules/couchpulse/alembic.ini.example '
+        # and redirect the result into alembic.ini
+        "> submodules/couchpulse/alembic.ini"
+    )
+    with cd(env.code_root):
+        sudo(command, user=env.sudo_user)
+
+    with cd(os.path.join(env.code_root, 'submodules', 'couchpulse')):
+
+        sudo('export PYTHONPATH=`pwd` && %s/bin/alembic upgrade head' % venv,
+             user=env.sudo_user)
