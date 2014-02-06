@@ -481,24 +481,19 @@ class SoftwarePlanVersionForm(forms.Form):
         required=False
     )
 
-    def __init__(self, plan, plan_version, data=None, *args, **kwargs):
+    def __init__(self, plan, plan_version, *args, **kwargs):
         self.plan = plan
         self.plan_version = plan_version
-        data = data or {}
+        data = {}
         if self.plan_version is not None:
-            if not 'feature_rates' in data:
-                data['feature_rates'] = json.dumps([fmt_feature_rate_dict(r.feature, r)
-                                                    for r in self.plan_version.feature_rates.all()])
-            if not 'product_rates' in data:
-                data['product_rates'] = json.dumps([fmt_product_rate_dict(r.product, r)
-                                                    for r in self.plan_version.product_rates.all()])
+            data['feature_rates'] = json.dumps([fmt_feature_rate_dict(r.feature, r)
+                                                for r in self.plan_version.feature_rates.all()])
+            data['product_rates'] = json.dumps([fmt_product_rate_dict(r.product, r)
+                                                for r in self.plan_version.product_rates.all()])
         else:
-            if not 'feature_rates' in data:
-                data['feature_rates'] = json.dumps([])
-            if not 'product_rates' in data:
-                data['product_rates'] = json.dumps([])
-            if not 'role' in data:
-                data['role'] = json.dumps([])
+            data['feature_rates'] = json.dumps([])
+            data['product_rates'] = json.dumps([])
+            data['role'] = json.dumps([])
 
         self.is_update = False
 
