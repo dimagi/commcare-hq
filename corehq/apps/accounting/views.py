@@ -180,6 +180,19 @@ class NewSubscriptionView(AccountingSectionView):
         return self.get(request, *args, **kwargs)
 
 
+class NewSubscriptionViewNoDefaultDomain(NewSubscriptionView):
+    urlname = 'new_subscription_no_default_domain'
+
+    @property
+    @memoized
+    def account_id(self):
+        return None
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname)
+
+
 class EditSubscriptionView(AccountingSectionView):
     page_title = 'Edit Subscription'
     template_name = 'accounting/subscriptions.html'
