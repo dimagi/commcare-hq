@@ -16,6 +16,7 @@ from .xpath import dot_interpolate, CaseIDXPath, session_var, CaseTypeXpath
 
 FIELD_TYPE_INDICATOR = 'indicator'
 FIELD_TYPE_PROPERTY = 'property'
+FIELD_TYPE_LEDGER = 'ledger'
 
 
 class OrderedXmlObject(XmlObject):
@@ -690,11 +691,11 @@ class SuiteGenerator(object):
                         return True
             return False
 
-        if form and self.app.case_sharing and case_sharing_requires_assertion(form):
-            self.add_case_sharing_assertion(e)
-
         if not form or form.requires == 'case':
             self.configure_entry_module(module, e, use_filter=True)
+
+        if form and self.app.case_sharing and case_sharing_requires_assertion(form):
+            self.add_case_sharing_assertion(e)
 
     def configure_entry_module(self, module, e, use_filter=False):
         def get_instances():
@@ -749,6 +750,12 @@ class SuiteGenerator(object):
             # TODO SK: add form_filter check
             if form and any(action.parent_tag for action in form.actions.load_update_cases):
                 yield Instance(id='commcaresession', src='jr://instance/session')
+            elif form and module.get_app().commtrack_enabled:
+                try:
+                    if form.actions.load_update_cases[-1].show_product_stock:
+                        yield Instance(id='commcaresession', src='jr://instance/session')
+                except IndexError:
+                    pass
 
             for instance in self.get_indicator_instances(module):
                 yield instance
@@ -764,28 +771,35 @@ class SuiteGenerator(object):
 
             referenced_by = form.actions.actions_meta_by_parent_tag.get(action.case_tag)
 
-            e.datums.append(SessionDatum(
-                id=action.session_case_id,
-                nodeset=(self.get_nodeset_xpath(action.case_type, module, False) + parent_filter),
-                value="./@case_id",
-                detail_select=self.get_detail_id_safe(module, 'case_short'),
-                detail_confirm=(
-                    self.get_detail_id_safe(module, 'case_long')
-                    if not referenced_by or referenced_by['type'] != 'load' else None
-                )
-            ))
-
-        try:
-            last_action = form.actions.load_update_cases[-1]
-            if last_action.show_product_stock:
+            target_modules = [mod for mod in module.get_app().modules if mod.case_type == action.case_type]
+            if target_modules:
+                target_module = target_modules[0]
                 e.datums.append(SessionDatum(
-                    id='throwaway',
-                    nodeset="instance('products')/products/product",
-                    value="./@id",
-                    detail_select=self.get_detail_id_safe(module, 'product_short')
+                    id=action.session_case_id,
+                    nodeset=(self.get_nodeset_xpath(action.case_type, target_module, False) + parent_filter),
+                    value="./@case_id",
+                    detail_select=self.get_detail_id_safe(target_module, 'case_short'),
+                    detail_confirm=(
+                        self.get_detail_id_safe(target_module, 'case_long')
+                        if not referenced_by or referenced_by['type'] != 'load' else None
+                    )
                 ))
-        except IndexError:
-            pass
+
+        if module.get_app().commtrack_enabled:
+            try:
+                last_action = form.actions.load_update_cases[-1]
+                if last_action.show_product_stock:
+                    target_modules = [mod for mod in module.get_app().modules
+                                      if mod.case_type == last_action.case_type and hasattr(mod, 'product_details')]
+                    if target_modules:
+                        e.datums.append(SessionDatum(
+                            id='throwaway',
+                            nodeset="instance('products')/products/product",
+                            value="./@id",
+                            detail_select=self.get_detail_id_safe(target_modules[0], 'product_short')
+                        ))
+            except IndexError:
+                pass
 
         if form and self.app.case_sharing and case_sharing_requires_assertion(form):
             self.add_case_sharing_assertion(e)
