@@ -73,7 +73,7 @@ class AccountingInterface(BaseCRUDAdminInterface):
 
 class SubscriptionInterface(BaseCRUDAdminInterface):
     section_name = "Accounting"
-    base_template = 'reports/base_template.html'
+    base_template = 'accounting/report_filter_actions.html'
     dispatcher = AccountingAdminInterfaceDispatcher
 
     crud_form_update_url = "/accounting/form/"
@@ -155,7 +155,7 @@ class SubscriptionInterface(BaseCRUDAdminInterface):
 
 class SoftwarePlanInterface(BaseCRUDAdminInterface):
     section_name = "Accounting"
-    base_template = 'accounting/add_software_plan_button.html'
+    base_template = 'accounting/report_filter_actions.html'
     dispatcher = AccountingAdminInterfaceDispatcher
 
     crud_form_update_url = "/accounting/form/"
