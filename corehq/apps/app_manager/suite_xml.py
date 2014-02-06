@@ -770,19 +770,27 @@ class SuiteGenerator(object):
 
             referenced_by = form.actions.actions_meta_by_parent_tag.get(action.case_tag)
 
-            target_modules = [mod for mod in module.get_app().modules if mod.case_type == action.case_type]
-            if target_modules:
-                target_module = target_modules[0]
-                e.datums.append(SessionDatum(
-                    id=action.session_case_id,
-                    nodeset=(self.get_nodeset_xpath(action.case_type, target_module, False) + parent_filter),
-                    value="./@case_id",
-                    detail_select=self.get_detail_id_safe(target_module, 'case_short'),
-                    detail_confirm=(
-                        self.get_detail_id_safe(target_module, 'case_long')
-                        if not referenced_by or referenced_by['type'] != 'load' else None
+            if module.case_type == action.case_type:
+                target_module = module
+            else:
+                target_modules = [mod for mod in module.get_app().modules if mod.case_type == action.case_type]
+                try:
+                    target_module = target_modules[0]
+                except IndexError:
+                    raise ParentModuleReferenceError(
+                        "Module with case type %s in app %s not found" % (action.case_type, self.app)
                     )
-                ))
+
+            e.datums.append(SessionDatum(
+                id=action.session_case_id,
+                nodeset=(self.get_nodeset_xpath(action.case_type, target_module, False) + parent_filter),
+                value="./@case_id",
+                detail_select=self.get_detail_id_safe(target_module, 'case_short'),
+                detail_confirm=(
+                    self.get_detail_id_safe(target_module, 'case_long')
+                    if not referenced_by or referenced_by['type'] != 'load' else None
+                )
+            ))
 
         if module.get_app().commtrack_enabled:
             try:
