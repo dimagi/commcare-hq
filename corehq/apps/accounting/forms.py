@@ -244,21 +244,17 @@ class SubscriptionForm(forms.Form):
 
     def create_subscription(self):
         account = BillingAccount.objects.get(id=self.cleaned_data['account'])
+        domain = self.cleaned_data['domain']
+        plan_version = SoftwarePlanVersion.objects.get(id=self.cleaned_data['plan_version'])
         date_start = self.cleaned_data['start_date']
         date_end = self.cleaned_data['end_date']
         date_delay_invoicing = self.cleaned_data['delay_invoice_until']
-        plan_version_id = self.cleaned_data['plan_version']
-        domain = self.cleaned_data['domain']
-        subscription = Subscription(account=account,
-                                    date_start=date_start,
-                                    date_end=date_end,
-                                    date_delay_invoicing=date_delay_invoicing,
-                                    plan_version=SoftwarePlanVersion.objects.get(id=plan_version_id),
-                                    salesforce_contract_id=self.cleaned_data['salesforce_contract_id'],
-                                    subscriber=Subscriber.objects.get_or_create(domain=domain,
-                                                                                organization=None)[0])
-        subscription.save()
-        return subscription
+        salesforce_contract_id = self.cleaned_data['salesforce_contract_id']
+        return Subscription.new_domain_subscription(account, domain, plan_version,
+                                                    date_start=date_start,
+                                                    date_end=date_end,
+                                                    date_delay_invoicing=date_delay_invoicing,
+                                                    salesforce_contract_id=salesforce_contract_id)
 
     def update_subscription(self, subscription):
         if self.fields['start_date'].required:
