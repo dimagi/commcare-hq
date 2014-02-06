@@ -34,10 +34,14 @@ from corehq.apps.accounting.models import (BillingContactInfo, Currency, Softwar
 
 class BillingAccountForm(forms.Form):
     name = forms.CharField(label="Name")
-    salesforce_account_id = forms.CharField(label="Salesforce ID", required=False)
+    salesforce_account_id = forms.CharField(label=_("Salesforce Account ID"),
+                                            max_length=80,
+                                            required=False)
     currency = forms.ChoiceField(label="Currency")
 
-    billing_account_admins = forms.CharField(label='Billing Account Admins', required=False)
+    billing_account_admins = forms.CharField(label=_('Account Admins (emails)'),
+                                             required=False,
+                                             widget=forms.Textarea)
     first_name = forms.CharField(label='First Name', required=False)
     last_name = forms.CharField(label='Last Name', required=False)
     company_name = forms.CharField(label='Company Name', required=False)
@@ -157,14 +161,18 @@ class BillingAccountForm(forms.Form):
 
 
 class SubscriptionForm(forms.Form):
+    account = forms.ChoiceField(label=_("Billing Account"))
     start_date = forms.DateField(label="Start Date", widget=forms.DateInput())
     end_date = forms.DateField(label="End Date", widget=forms.DateInput(), required=False)
     delay_invoice_until = forms.DateField(label="Delay Invoice Until", widget=forms.DateInput(), required=False)
     plan_version = forms.ChoiceField(label="Plan Version")
-    domain = forms.CharField(max_length=25)
-    salesforce_contract_id = forms.CharField(label="Salesforce Contract ID", max_length=80, required=False)
+    domain = forms.ChoiceField(label=_("Project Space"))
+    salesforce_contract_id = forms.CharField(label=_("Salesforce Deployment ID"),
+                                             max_length=80,
+                                             required=False)
 
-    def __init__(self, subscription, *args, **kwargs):
+    # account_id is not referenced if subscription is not None
+    def __init__(self, subscription, account_id, *args, **kwargs):
         super(SubscriptionForm, self).__init__(*args, **kwargs)
 
         css_class = {'css_class': 'date-picker'}
@@ -173,11 +181,13 @@ class SubscriptionForm(forms.Form):
         start_date_kwargs = dict(**css_class)
         end_date_kwargs = dict(**css_class)
         delay_invoice_until_kwargs = dict(**css_class)
-        domain_kwargs = dict()
 
         if subscription is not None:
+            self.fields['account'].choices = [(subscription.account.id, subscription.account.name)]
             self.fields['plan_version'].choices = [(subscription.plan_version.id,
                                                     str(subscription.plan_version))]
+            self.fields['domain'].choices = [(subscription.subscriber.domain,
+                                              subscription.subscriber.domain)]
             self.fields['start_date'].initial = subscription.date_start
             self.fields['end_date'].initial = subscription.date_end
             self.fields['delay_invoice_until'].initial = subscription.date_delay_invoicing
@@ -195,20 +205,25 @@ class SubscriptionForm(forms.Form):
                 and subscription.date_delay_invoicing <= datetime.date.today()):
                 delay_invoice_until_kwargs.update(disabled)
             self.fields['plan_version'].required = False
-            domain_kwargs.update(disabled)
             self.fields['domain'].required = False
         else:
+            self.fields['account'].choices = [(account.id, account.name)
+                                              for account in BillingAccount.objects.order_by('name')]
+            if account_id is not None:
+                self.fields['account'].initial = account_id
             self.fields['plan_version'].choices = [(plan_version.id, str(plan_version))
                                                    for plan_version in SoftwarePlanVersion.objects.all()]
+            self.fields['domain'].choices = [(domain, domain) for domain in Domain.get_all()]
         self.helper = FormHelper()
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
             '%s Subscription' % ('Edit' if subscription is not None else 'New'),
+                crispy.Field('account'),
                 crispy.Field('start_date', **start_date_kwargs),
                 crispy.Field('end_date', **end_date_kwargs),
                 crispy.Field('delay_invoice_until', **delay_invoice_until_kwargs),
                 crispy.Field('plan_version'),
-                crispy.Field('domain', **domain_kwargs),
+                crispy.Field('domain'),
                 'salesforce_contract_id',
             ),
             FormActions(
@@ -227,8 +242,8 @@ class SubscriptionForm(forms.Form):
                 raise forms.ValidationError("A valid project space is required.")
         return domain_name
 
-    def create_subscription(self, account_id):
-        account = BillingAccount.objects.get(id=account_id)
+    def create_subscription(self):
+        account = BillingAccount.objects.get(id=self.cleaned_data['account'])
         date_start = self.cleaned_data['start_date']
         date_end = self.cleaned_data['end_date']
         date_delay_invoicing = self.cleaned_data['delay_invoice_until']
@@ -258,7 +273,7 @@ class SubscriptionForm(forms.Form):
 
 
 class CreditForm(forms.Form):
-    amount = forms.DecimalField()
+    amount = forms.DecimalField(label=_("Amount %s") % Currency.get_default().symbol)
     note = forms.CharField(required=False)
     rate_type = forms.ChoiceField()
     product_rate = forms.ChoiceField(required=False, label=_("Product Rate"))

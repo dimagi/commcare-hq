@@ -145,10 +145,15 @@ class NewSubscriptionView(AccountingSectionView):
 
     @property
     @memoized
+    def account_id(self):
+        return self.args[0]
+
+    @property
+    @memoized
     def subscription_form(self):
         if self.request.method == 'POST':
-            return SubscriptionForm(None, self.request.POST)
-        return SubscriptionForm(None)
+            return SubscriptionForm(None, self.account_id, self.request.POST)
+        return SubscriptionForm(None, self.account_id)
 
     @property
     def page_context(self):
@@ -158,7 +163,7 @@ class NewSubscriptionView(AccountingSectionView):
 
     @property
     def page_url(self):
-        return reverse(self.urlname, args=(self.args[0],))
+        return reverse(self.urlname, args=(self.account_id,))
 
     @property
     def parent_pages(self):
@@ -169,10 +174,23 @@ class NewSubscriptionView(AccountingSectionView):
 
     def post(self, request, *args, **kwargs):
         if self.subscription_form.is_valid():
-            account_id = self.args[0]
-            self.subscription_form.create_subscription(account_id)
-            return HttpResponseRedirect(reverse(ManageBillingAccountView.urlname, args=(account_id,)))
+            subscription = self.subscription_form.create_subscription()
+            return HttpResponseRedirect(
+                reverse(ManageBillingAccountView.urlname, args=(subscription.account.id,)))
         return self.get(request, *args, **kwargs)
+
+
+class NewSubscriptionViewNoDefaultDomain(NewSubscriptionView):
+    urlname = 'new_subscription_no_default_domain'
+
+    @property
+    @memoized
+    def account_id(self):
+        return None
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname)
 
 
 class EditSubscriptionView(AccountingSectionView):
@@ -194,13 +212,13 @@ class EditSubscriptionView(AccountingSectionView):
     @memoized
     def subscription_form(self):
         if self.request.method == 'POST' and 'set_subscription' in self.request.POST:
-            return SubscriptionForm(self.subscription, self.request.POST)
-        return SubscriptionForm(self.subscription)
+            return SubscriptionForm(self.subscription, None, self.request.POST)
+        return SubscriptionForm(self.subscription, None)
 
     def get_appropriate_subscription_form(self, subscription):
         if (not self.subscription_form.is_bound) or (not self.subscription_form.is_valid()):
             return self.subscription_form
-        return SubscriptionForm(subscription)
+        return SubscriptionForm(subscription, None)
 
     @property
     @memoized
