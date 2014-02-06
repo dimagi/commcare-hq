@@ -32,33 +32,3 @@
         </form>
     </div>
 {% endif %}
-{% if show_advanced %}
-    <div id="advanced-module-dialog" class="modal hide fade">
-        <div class="modal-header">
-            <a class="close" data-dismiss="modal">×</a>
-            <h4>{% trans "New CommTrack module" %}</h4>
-        </div>
-        <form class="form-horizontal" name="new_advanced_module" action="{% url "corehq.apps.app_manager.views.new_module" domain app.id %}" method="post">
-            <div class="modal-body">
-                <input type="hidden" name="module_type" value="advanced" />
-                <div class="control-group">
-                    <label class="control-label" for="name">{% trans "Module name" %}</label>
-                    <div class="controls">
-                        <input type="text" name="name" class="input-medium" value=""/>
-                    </div>
-                </div>
-                <div class="control-group">
-                    <label class="control-label" for="ct_case_type">{% trans "Case type" %}</label>
-                    <div class="controls">
-                        <input type="text" name="ct_case_type" class="input-medium"  data-provide="typeahead" autocomplete="off"
-                           data-source="[&quot;{{ app.get_case_types|join:"&quot;,&quot;" }}&quot;]"/>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-success" type="submit">{% trans "Create New Module" %}</button>
-                <a href="#" class="btn" data-dismiss="modal">{% trans "Cancel" %}</a>
-            </div>
-        </form>
-    </div>
-{% endif %}

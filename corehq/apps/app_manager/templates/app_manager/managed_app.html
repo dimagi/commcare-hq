@@ -274,7 +274,15 @@
                             <li><a data-toggle="modal" href="#careplan-module-dialog">{% trans "New Care Plan Module" %}</a></li>
                             {% endif %}
                             {% if show_advanced %}
-                            <li><a data-toggle="modal" href="#advanced-module-dialog">{% trans "New Advanced Module" %}</a></li>
+                            <li>
+                                <a href="#" class="new-module" data-type="advanced">
+                                    {% if app.commtrack_enabled %}
+                                        {% trans "New CommTrack Module" %}
+                                    {% else %}
+                                        {% trans "New Advanced Module" %}
+                                    {% endif %}
+                                </a>
+                            </li>
                             {% endif %}
                         </ul>
                     </li>
