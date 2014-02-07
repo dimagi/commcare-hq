@@ -636,7 +636,7 @@ class SuiteGenerator(object):
     @property
     def entries(self):
         # avoid circular dependency
-        from corehq.apps.app_manager.models import Module
+        from corehq.apps.app_manager.models import Module, AdvancedModule
 
         for module in self.modules:
             for form in module.get_forms():
@@ -652,14 +652,31 @@ class SuiteGenerator(object):
                 getattr(self, 'configure_entry_{}'.format(form.form_type))(module, e, form)
                 yield e
 
-            if isinstance(module, Module) and module.case_list.show:
+            if hasattr(module, 'case_list') and module.case_list.show:
                 e = Entry(
                     command=Command(
                         id=self.id_strings.case_list_command(module),
                         locale_id=self.id_strings.case_list_locale(module),
                     )
                 )
-                self.configure_entry_module(module, e, use_filter=False)
+                if isinstance(module, Module):
+                    self.configure_entry_module(module, e, use_filter=False)
+                elif isinstance(module, AdvancedModule):
+                    e.instances.append(Instance(id='casedb', src='jr://instance/casedb'))
+                    e.datums.append(SessionDatum(
+                        id='case_id_case_%s' % module.case_type,
+                        nodeset=(self.get_nodeset_xpath(module.case_type, module, False)),
+                        value="./@case_id",
+                        detail_select=self.get_detail_id_safe(module, 'case_short'),
+                        detail_confirm=self.get_detail_id_safe(module, 'case_long')
+                    ))
+                    if self.app.commtrack_enabled:
+                        e.datums.append(SessionDatum(
+                            id='throwaway',
+                            nodeset="instance('products')/products/product",
+                            value="./@id",
+                            detail_select=self.get_detail_id_safe(module, 'product_short')
+                        ))
                 yield e
 
     def get_indicator_instances(self, module):
