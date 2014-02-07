@@ -48,6 +48,7 @@ def fmt_feature_rate_dict(feature, feature_rate=None):
         'per_excess_fee': feature_rate.per_excess_fee.__str__(),
     }
 
+
 def fmt_product_rate_dict(product, product_rate=None):
     """
     This will be turned into a JSON representation of this SoftwareProduct and its SoftwareProductRate
@@ -63,18 +64,9 @@ def fmt_product_rate_dict(product, product_rate=None):
     }
 
 
-def fmt_role_dict(role):
-    return {
-        'slug': role.slug,
-        'name': role.name,
-        'description': role.description,
-        'parameters': list(role.parameters),
-    }
-
-
 def get_privileges(plan_version):
     role = plan_version.role
-    return set([grant.to_role.slug for grant in role.memberships_granted.filter(from_role=role)])
+    return set([grant.to_role.slug for grant in role.memberships_granted.all()])
 
 
 def get_change_status(from_plan_version, to_plan_version):

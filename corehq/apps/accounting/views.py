@@ -2,6 +2,7 @@ import json
 import datetime
 
 from django.conf import settings
+from django.contrib import messages
 from django.utils import translation
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest
@@ -11,15 +12,14 @@ from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.accounting.forms import (BillingAccountForm, CreditForm, SubscriptionForm, CancelForm,
                                           PlanInformationForm, SoftwarePlanVersionForm, FeatureRateForm,
-                                          ProductRateForm, RoleForm)
+                                          ProductRateForm)
 from corehq.apps.accounting.interface import AccountingInterface, SubscriptionInterface, SoftwarePlanInterface
 from corehq.apps.accounting.models import (SoftwareProductType, Invoice, BillingAccount, CreditLine, Subscription,
                                            SoftwarePlanVersion, SoftwarePlan)
 from corehq.apps.accounting.async_handlers import (FeatureRateAsyncHandler, Select2RateAsyncHandler,
-                                                   Select2RoleAsyncHandler, SoftwareProductRateAsyncHandler,
-                                                   RoleAsyncHandler)
+                                                   SoftwareProductRateAsyncHandler)
 from corehq.apps.accounting.user_text import PricingTable
-from corehq.apps.accounting.utils import LazyEncoder
+from corehq.apps.accounting.utils import LazyEncoder, fmt_feature_rate_dict, fmt_product_rate_dict
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq import toggles
@@ -314,10 +314,8 @@ class EditSoftwarePlanView(AccountingSectionView):
     page_title = "Edit Software Plan"
     async_handlers = [
         Select2RateAsyncHandler,
-        Select2RoleAsyncHandler,
         FeatureRateAsyncHandler,
         SoftwareProductRateAsyncHandler,
-        RoleAsyncHandler,
     ]
 
     @property
@@ -328,16 +326,24 @@ class EditSoftwarePlanView(AccountingSectionView):
     @property
     @memoized
     def plan_info_form(self):
-        if self.request.method == 'POST':
+        if self.request.method == 'POST' and 'update_version' not in self.request.POST:
             return PlanInformationForm(self.plan, self.request.POST)
         return PlanInformationForm(self.plan)
 
     @property
     @memoized
     def software_plan_version_form(self):
-        if self.request.method == 'POST':
-            return SoftwarePlanVersionForm(self.plan, self.plan.get_version(), self.request.POST)
-        return SoftwarePlanVersionForm(self.plan, self.plan.get_version())
+        plan_version = self.plan.get_version()
+        initial = {
+            'feature_rates': json.dumps([fmt_feature_rate_dict(r.feature, r)
+                                         for r in plan_version.feature_rates.all()] if plan_version else []),
+            'product_rates': json.dumps([fmt_product_rate_dict(r.product, r)
+                                         for r in plan_version.product_rates.all()] if plan_version else []),
+            'role_slug': plan_version.role.slug if plan_version else None,
+        }
+        if self.request.method == 'POST' and 'update_version' in self.request.POST:
+            return SoftwarePlanVersionForm(self.plan, self.plan.get_version(), self.request.POST, initial=initial)
+        return SoftwarePlanVersionForm(self.plan, self.plan.get_version(), initial=initial)
 
     @property
     def page_context(self):
@@ -346,7 +352,6 @@ class EditSoftwarePlanView(AccountingSectionView):
             'plan_version_form': self.software_plan_version_form,
             'feature_rate_form': FeatureRateForm(),
             'product_rate_form': ProductRateForm(),
-            'role_form': RoleForm(),
             'plan_versions': SoftwarePlanVersion.objects.filter(plan=self.plan).order_by('-date_created')
         }
 
@@ -378,6 +383,7 @@ class EditSoftwarePlanView(AccountingSectionView):
                 return HttpResponseRedirect(self.page_url)
         elif self.plan_info_form.is_valid():
             self.plan_info_form.update_plan(self.plan)
+            messages.success(request, "The %s Software Plan was successfully updated." % self.plan.name)
         return self.get(request, *args, **kwargs)
 
 
