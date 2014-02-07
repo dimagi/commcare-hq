@@ -763,7 +763,6 @@ class SuiteGenerator(object):
         def get_instances():
             yield Instance(id='casedb', src='jr://instance/casedb')
 
-            # TODO SK: add form_filter check
             if form and any(action.parent_tag for action in form.actions.load_update_cases):
                 yield Instance(id='commcaresession', src='jr://instance/session')
             elif form and module.get_app().commtrack_enabled:
@@ -778,6 +777,20 @@ class SuiteGenerator(object):
 
         e.instances.extend(get_instances())
 
+        def get_target_module(case_type, with_product_details=False):
+            if module.case_type == case_type:
+                return module
+            else:
+                target_modules = [mod for mod in module.get_app().modules
+                                      if mod.case_type == case_type and
+                                         (not with_product_details or hasattr(mod, 'product_details'))]
+                try:
+                    return target_modules[0]
+                except IndexError:
+                    raise ParentModuleReferenceError(
+                        "Module with case type %s in app %s not found" % (case_type, self.app)
+                    )
+
         for action in form.actions.load_update_cases:
             if action.parent_tag:
                 parent_action = form.actions.actions_meta_by_tag[action.parent_tag]['action']
@@ -787,17 +800,7 @@ class SuiteGenerator(object):
 
             referenced_by = form.actions.actions_meta_by_parent_tag.get(action.case_tag)
 
-            if module.case_type == action.case_type:
-                target_module = module
-            else:
-                target_modules = [mod for mod in module.get_app().modules if mod.case_type == action.case_type]
-                try:
-                    target_module = target_modules[0]
-                except IndexError:
-                    raise ParentModuleReferenceError(
-                        "Module with case type %s in app %s not found" % (action.case_type, self.app)
-                    )
-
+            target_module = get_target_module(action.case_type)
             e.datums.append(SessionDatum(
                 id=action.session_case_id,
                 nodeset=(self.get_nodeset_xpath(action.case_type, target_module, False) + parent_filter),
@@ -813,15 +816,13 @@ class SuiteGenerator(object):
             try:
                 last_action = form.actions.load_update_cases[-1]
                 if last_action.show_product_stock:
-                    target_modules = [mod for mod in module.get_app().modules
-                                      if mod.case_type == last_action.case_type and hasattr(mod, 'product_details')]
-                    if target_modules:
-                        e.datums.append(SessionDatum(
-                            id='throwaway',
-                            nodeset="instance('products')/products/product",
-                            value="./@id",
-                            detail_select=self.get_detail_id_safe(target_modules[0], 'product_short')
-                        ))
+                    target_module = get_target_module(last_action.case_type, True)
+                    e.datums.append(SessionDatum(
+                        id='throwaway',
+                        nodeset="instance('products')/products/product",
+                        value="./@id",
+                        detail_select=self.get_detail_id_safe(target_module, 'product_short')
+                    ))
             except IndexError:
                 pass
 
