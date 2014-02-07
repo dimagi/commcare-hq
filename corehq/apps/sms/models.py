@@ -13,6 +13,7 @@ from casexml.apps.case.signals import case_post_save
 from .mixin import CommCareMobileContactMixin, MobileBackend, PhoneNumberInUseException, InvalidFormatException
 from corehq.apps.sms import util as smsutil
 from dimagi.utils.couch.database import SafeSaveDocument
+from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 INCOMING = "I"
 OUTGOING = "O"
@@ -42,6 +43,19 @@ class MessageLog(SafeSaveDocument, UnicodeMixIn):
     workflow = StringProperty() # One of the WORKFLOW_* constants above describing what kind of workflow this sms was a part of
     xforms_session_couch_id = StringProperty() # Points to the _id of an instance of corehq.apps.smsforms.models.XFormsSession that this sms is tied to
     reminder_id = StringProperty() # Points to the _id of an instance of corehq.apps.reminders.models.CaseReminder that this sms is tied to
+    processed = BooleanProperty(default=True)
+    datetime_to_process = DateTimeProperty()
+    num_processing_attempts = IntegerProperty(default=0)
+    error = BooleanProperty(default=False)
+    system_error_message = StringProperty()
+    # If the message was simulated from a domain, this is the domain
+    domain_scope = StringProperty()
+    queued_timestamp = DateTimeProperty()
+    processed_timestamp = DateTimeProperty()
+    # If this outgoing message is a reply to an inbound message, then this is
+    # the _id of the inbound message
+    # TODO: For now this is a placeholder and needs to be implemented
+    in_reply_to = StringProperty()
 
     def __unicode__(self):
         to_from = (self.direction == INCOMING) and "from" or "to"
@@ -145,17 +159,49 @@ class MessageLog(SafeSaveDocument, UnicodeMixIn):
                     endkey=[domain, cls.__name__] + [end_date],
                     include_docs=True)
 
+    @classmethod
+    def inbound_entry_exists(cls, contact_doc_type, contact_id, from_timestamp, to_timestamp=None):
+        """
+        Checks to see if an inbound sms or call exists for the given caller.
+
+        contact_doc_type - The doc_type of the contact (e.g., "CommCareCase")
+        contact_id - The _id of the contact
+        after_timestamp - The datetime after which to check for the existence of an entry
+
+        return          True if an sms/call exists in the log, False if not.
+        """
+        if cls.__name__ == "MessageLog":
+            raise NotImplementedError("Not implemented for base class")
+        from_timestamp_str = json_format_datetime(from_timestamp)
+        to_timestamp_str = json_format_datetime(to_timestamp or datetime.utcnow())
+        reduced = cls.view("sms/by_recipient",
+            startkey=[contact_doc_type, contact_id, cls.__name__, INCOMING, from_timestamp_str],
+            endkey=[contact_doc_type, contact_id, cls.__name__, INCOMING, to_timestamp_str],
+            reduce=True).all()
+        if reduced:
+            return (reduced[0]['value'] > 0)
+        else:
+            return False
+
 class SMSLog(MessageLog):
     text = StringProperty()
+    # This is the unique message id that the gateway uses to track this
+    # message, if applicable.
     backend_message_id = StringProperty()
+    # True if this was an inbound message that was an
+    # invalid response to a survey question
+    invalid_survey_response = BooleanProperty(default=False)
     
     @property
     def outbound_backend(self):
         """appropriate outbound sms backend"""
-        return MobileBackend.auto_load(
-            smsutil.clean_phone_number(self.phone_number),
-            self.domain
-        )
+        if self.backend_id:
+            return MobileBackend.load(self.backend_id)
+        else:
+            return MobileBackend.auto_load(
+                smsutil.clean_phone_number(self.phone_number),
+                self.domain
+            )
 
     def __unicode__(self):
 
@@ -172,8 +218,7 @@ class CallLog(MessageLog):
     duration = IntegerProperty() # Length of the call in seconds
     gateway_session_id = StringProperty() # This is the session id returned from the backend
     xforms_session_id = StringProperty()
-    error = BooleanProperty(default=False)
-    error_message = StringProperty()
+    error_message = StringProperty() # Error message from the gateway, if any
     submit_partial_form = BooleanProperty(default=False) # True to submit a partial form on hangup if it's not completed yet
     include_case_side_effects = BooleanProperty(default=False)
     max_question_retries = IntegerProperty() # Max number of times to retry a question with an invalid response before hanging up
@@ -185,28 +230,6 @@ class CallLog(MessageLog):
         to_from = (self.direction == INCOMING) and "from" or "to"
         return "Call %s %s" % (to_from, self.phone_number)
 
-    @classmethod
-    def inbound_call_exists(cls, caller_doc_type, caller_id, after_timestamp):
-        """
-        Checks to see if an inbound call exists for the given caller.
-        
-        caller_doc_type The doc_type of the caller (e.g., "CommCareCase").
-        caller_id       The _id of the caller's document.
-        after_timestamp The datetime after which to check for the existence of a call.
-        
-        return          True if a call exists in the CallLog, False if not.
-        """
-        start_timestamp = json_format_datetime(after_timestamp)
-        end_timestamp = json_format_datetime(datetime.utcnow())
-        reduced = cls.view("sms/by_recipient",
-                    startkey=[caller_doc_type, caller_id, "CallLog", INCOMING] + [start_timestamp],
-                    endkey=[caller_doc_type, caller_id, "CallLog", INCOMING] + [end_timestamp],
-                    reduce=True).all()
-        if reduced:
-            return (reduced[0]['value'] > 0)
-        else:
-            return False
-    
     @classmethod
     def answered_call_exists(cls, caller_doc_type, caller_id, after_timestamp):
         """
@@ -298,14 +321,15 @@ class MessageLogOld(models.Model):
             return CouchUser.get_by_user_id(self.couch_recipient).username
         return self.phone_number
 
-
 class CommConnectCase(CommCareCase, CommCareMobileContactMixin):
     def case_changed(self):
         contact_phone_number = self.get_case_property("contact_phone_number")
         contact_phone_number_is_verified = self.get_case_property("contact_phone_number_is_verified")
         contact_backend_id = self.get_case_property("contact_backend_id")
         contact_ivr_backend_id = self.get_case_property("contact_ivr_backend_id")
-        if (contact_phone_number is None) or (contact_phone_number == "") or (str(contact_phone_number) == "0") or self.closed:
+        if ((contact_phone_number is None) or (contact_phone_number == "") or
+            (str(contact_phone_number) == "0") or self.closed or
+            self.doc_type.endswith(DELETED_SUFFIX)):
             try:
                 self.delete_verified_number()
             except:

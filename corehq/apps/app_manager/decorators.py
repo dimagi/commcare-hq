@@ -6,7 +6,7 @@ from couchdbkit.exceptions import ResourceConflict
 from django.views.decorators.http import require_POST
 from django.core.urlresolvers import reverse
 from corehq.apps.app_manager.exceptions import CaseError
-from corehq.apps.app_manager.models import AppError, get_app
+from corehq.apps.app_manager.models import AppEditingError, get_app
 
 
 def safe_download(f):
@@ -25,7 +25,7 @@ def safe_download(f):
         try:
             req.app = get_app(domain, app_id, latest=latest)
             return f(req, *args, **kwargs)
-        except (AppError, CaseError), e:
+        except (AppEditingError, CaseError), e:
             logging.exception(e)
             messages.error(req, "Problem downloading file: %s" % e)
             return HttpResponseRedirect(reverse("corehq.apps.app_manager.views.view_app", args=[domain,app_id]))

@@ -50,14 +50,15 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
 
     def __str__(self):
         return "\n\n%(class_name)s - Modified %(last_modified)s\n %(slug)s, domain: %(domain)s," \
-            " version: %(version)s, namespace: %(namespace)s." % {
+            " version: %(version)s, namespace: %(namespace)s. ID: %(indicator_id)s." % {
                 'class_name': self.__class__.__name__,
                 'slug': self.slug,
                 'domain': self.domain,
                 'version': self.version,
                 'namespace': self.namespace,
-                'last_modified': (self.last_modified.strftime('%M %B %Y at %H:%M')
-                                  if self.last_modified else "Ages Ago")
+                'last_modified': (self.last_modified.strftime('%m %B %Y at %H:%M')
+                                  if self.last_modified else "Ages Ago"),
+                'indicator_id': self._id,
             }
 
     @classmethod
@@ -99,7 +100,8 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
             namespace=namespace,
             domain=domain,
             slug=slug,
-            reverse=True
+            reverse=True,
+            **kwargs
         )
 
         existing_indicator = cls.view(
@@ -715,7 +717,7 @@ class FormDataAliasIndicatorDefinition(FormIndicatorDefinition):
     _admin_crud_class = FormAliasIndicatorAdminCRUDManager
 
     def get_value(self, doc):
-        form_data = doc.get_form
+        form_data = doc.form
         return self.get_from_form(form_data, self.question_id)
 
     @classmethod
@@ -741,7 +743,7 @@ class CaseDataInFormIndicatorDefinition(FormIndicatorDefinition):
         return None
 
     def _get_related_case(self, xform):
-        form_data = xform.get_form
+        form_data = xform.form
         related_case_id = form_data.get('case', {}).get('@case_id')
         if related_case_id:
             try:
@@ -821,7 +823,7 @@ class FormDataInCaseIndicatorDefinition(CaseIndicatorDefinition, FormDataIndicat
         forms = self.get_related_forms(doc)
         for form in forms:
             if isinstance(form, XFormInstance):
-                form_data = form.get_form
+                form_data = form.form
                 existing_value[form.get_id] = {
                     'value': self.get_from_form(form_data, self.question_id),
                     'timeEnd': self.get_from_form(form_data, 'meta.timeEnd'),

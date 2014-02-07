@@ -1,3 +1,4 @@
+from corehq.apps.commtrack.models import Program
 from corehq.apps.users.models import CouchUser
 from django import forms
 from django.contrib.auth.models import User
@@ -28,9 +29,9 @@ class NewWebUserRegistrationForm(forms.Form):
                                max_length=max_pwd,
                                widget=forms.PasswordInput(render_value=False))
     email_opt_out = forms.BooleanField(required=False,
-                                       initial=False,
+                                       initial=True,
                                        label="",
-                                       help_text=_("Opt out of emails about new features and other CommCare updates."))
+                                       help_text=_("Opt into emails about new features and other CommCare updates."))
     # Must be set to False to have the clean_*() routine called
     eula_confirmed = forms.BooleanField(required=False,
                                         label="",
@@ -132,12 +133,12 @@ class DomainRegistrationForm(forms.Form):
     Form for creating a domain for the first time
     """
     org = forms.CharField(widget=forms.HiddenInput(), required=False)
-    domain_name = forms.CharField(label='Project Name:', max_length=25,
+    domain_name = forms.CharField(label=_('Project Name:'), max_length=25,
                                   help_text=_("Project name cannot contain spaces."))
     domain_type = forms.CharField(widget=forms.HiddenInput(), required=False,
                                   initial='commcare')
     domain_timezone = TimeZoneChoiceField(
-        label="Time Zone:", initial="UTC", required=False,
+        label=_("Time Zone:"), initial="UTC", required=False,
         widget=forms.Select(attrs={'class': 'input-xlarge',
                                    'bindparent': 'visible: override_tz',
                                    'data-bind': 'event: {change: updateForm}'}))
@@ -195,8 +196,13 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
             domain = Domain.get_by_name(kwargs['domain'])
             del kwargs['domain']
         super(AdminInvitesUserForm, self).__init__(data=data, *args, **kwargs)
-        if domain and not domain.location_restriction_for_users:
+        if domain and domain.commtrack_enabled:
             self.fields['supply_point'] = forms.CharField(label='Supply Point:', required=False, widget=SupplyPointSelectWidget(domain=domain.name))
+            self.fields['program'] = forms.ChoiceField(label="Program", choices=(), required=False)
+            programs = Program.by_domain(domain.name, wrap=False)
+            choices = list((prog['_id'], prog['name']) for prog in programs)
+            choices.insert(0, ('', ''))
+            self.fields['program'].choices = choices
         self.excluded_emails = excluded_emails or []
 
     def clean_email(self):

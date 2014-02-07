@@ -74,7 +74,7 @@ class CommCareMultimedia(SafeSaveDocument):
     def license(self):
         return self.licenses[0] if self.licenses else None
 
-    def update_or_add_license(self, domain, type="", author="", attribution_notes="", org=""):
+    def update_or_add_license(self, domain, type="", author="", attribution_notes="", org="", should_save=True):
         for license in self.licenses:
             if license.domain == domain:
                 license.type = type or license.type
@@ -87,7 +87,8 @@ class CommCareMultimedia(SafeSaveDocument):
                                         attribution_notes=attribution_notes, organization=org)
             self.licenses.append(license)
 
-        self.save()
+        if should_save:
+            self.save()
 
     def url(self):
         return reverse("hqmedia_download", args=[self.doc_type, self._id])
@@ -552,7 +553,8 @@ class HQMediaMixin(Document):
             If not, then that item is removed from the multimedia map.
         """
         map_changed = False
-        for path in self.multimedia_map.keys():
+        paths = self.multimedia_map.keys() if self.multimedia_map else []
+        for path in paths:
             if path not in self.all_media_paths:
                 map_changed = True
                 del self.multimedia_map[path]

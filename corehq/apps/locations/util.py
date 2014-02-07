@@ -4,6 +4,8 @@ from corehq.apps.domain.models import Domain
 from couchdbkit import ResourceNotFound
 from django.utils.translation import ugettext as _
 from dimagi.utils.couch.loosechange import map_reduce
+from couchexport.writers import Excel2007ExportWriter
+from StringIO import StringIO
 
 def load_locs_json(domain, selected_loc_id=None):
     """initialize a json location tree for drill-down controls on
@@ -194,3 +196,37 @@ def property_uniqueness(domain, loc, prop_name, val, scope='global'):
             uniqueness_set = loc.siblings()
 
         return set(l._id for l in uniqueness_set if val == normalize(getattr(l, prop_name, None)))
+
+
+def get_custom_property_names(domain, loc_type):
+    return [prop.name for prop in location_custom_properties(domain, loc_type)]
+
+
+def dump_locations(response, domain):
+    file = StringIO()
+    writer = Excel2007ExportWriter()
+
+    location_types = defined_location_types(domain)
+
+    common_types = ['id', 'name', 'parent_id', 'latitude', 'longitude']
+    writer.open(
+        header_table=[
+            (loc_type, [common_types + get_custom_property_names(domain, loc_type)])
+            for loc_type in location_types
+        ],
+        file=file,
+    )
+
+    for loc_type in location_types:
+        tab_rows = []
+        locations = Location.filter_by_type(domain, loc_type)
+        for loc in locations:
+            parent_id = loc.parent._id if loc.parent else ''
+            custom_prop_values = [loc[prop.name] or '' for prop in location_custom_properties(domain, loc.location_type)]
+            tab_rows.append(
+                [loc._id, loc.name, parent_id, loc.latitude or '', loc.longitude or ''] + custom_prop_values
+            )
+        writer.write([(loc_type, tab_rows)])
+
+    writer.close()
+    response.write(file.getvalue())

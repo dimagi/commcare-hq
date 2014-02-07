@@ -1,5 +1,4 @@
 from corehq.apps.cloudcare.api import es_filter_cases
-from couchforms import models as couchforms_models
 from couchdbkit.exceptions import ResourceNotFound
 from tastypie import fields
 
@@ -7,8 +6,11 @@ from casexml.apps.case.models import CommCareCase
 
 from corehq.apps.api.util import get_object_or_not_exist
 from corehq.apps.api.resources import v0_2, v0_1
-from corehq.apps.api.resources import DomainSpecificResourceMixin, dict_object
+from corehq.apps.api.resources import DomainSpecificResourceMixin
 from corehq.apps.api.util import object_does_not_exist
+import couchforms
+from couchforms.models import XFormArchived
+
 
 class CaseListFilters(object):
     format = 'json'
@@ -60,7 +62,7 @@ class XFormInstanceResource(v0_1.XFormInstanceResource, DomainSpecificResourceMi
     archived = fields.CharField(readonly=True)
 
     def dehydrate_archived(self, bundle):
-        return isinstance(bundle.obj, couchforms_models.XFormArchived)
+        return isinstance(bundle.obj, XFormArchived)
     
     def obj_get(self, bundle, **kwargs):
         domain = kwargs['domain']
@@ -68,7 +70,7 @@ class XFormInstanceResource(v0_1.XFormInstanceResource, DomainSpecificResourceMi
         doc_type = 'XFormInstance'
         # Logic borrowed from util.get_object_or_not_exist
         try:
-            doc = couchforms_models.get(doc_id)
+            doc = couchforms.fetch_and_wrap_form(doc_id)
             if doc and doc.domain == domain:
                 return doc
         except ResourceNotFound:

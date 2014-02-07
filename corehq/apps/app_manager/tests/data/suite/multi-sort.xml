@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<suite>
+<suite descriptor="Suite File">
   <xform>
     <resource id="b295dd7f9f003fcba77ce347b4ef70f67fface8f">
       <location authority="local">./modules-0/forms-0.xml</location>

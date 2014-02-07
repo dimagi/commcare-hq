@@ -13,9 +13,13 @@ from corehq.apps.locations.models import Location
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.app_manager.models import validate_lang
-from corehq.apps.commtrack.models import CommTrackUser
+from corehq.apps.commtrack.models import CommTrackUser, Program
 import re
 
+# required to translate inside of a mark_safe tag
+from django.utils.functional import lazy
+import six  # Python 3 compatibility
+mark_safe_lazy = lazy(mark_safe, six.text_type)
 
 def wrapped_language_validation(value):
     try:
@@ -103,10 +107,18 @@ class BaseUserInfoForm(forms.Form):
     first_name = forms.CharField(label=ugettext_lazy('First Name'), max_length=50, required=False)
     last_name = forms.CharField(label=ugettext_lazy('Last Name'), max_length=50, required=False)
     email = forms.EmailField(label=ugettext_lazy("E-mail"), max_length=75, required=False)
-    language = forms.ChoiceField(choices=(), initial=None, required=False, help_text=mark_safe(ugettext_lazy(
-        "<i class=\"icon-info-sign\"></i> Becomes default language seen in CloudCare and reports (if applicable). "
-        "Supported languages for reports are en, fr (partial), and hin (partial)."
-    )))
+    language = forms.ChoiceField(
+        choices=(),
+        initial=None,
+        required=False,
+        help_text=mark_safe_lazy(
+            ugettext_lazy(
+                "<i class=\"icon-info-sign\"></i> "
+                "Becomes default language seen in CloudCare and reports (if applicable). "
+                "Supported languages for reports are en, fr (partial), and hin (partial)."
+            )
+        )
+    )
 
     def load_language(self, language_choices=None):
         if language_choices is None:
@@ -282,6 +294,7 @@ class SupplyPointSelectWidget(forms.Widget):
 
 class CommtrackUserForm(forms.Form):
     supply_point = forms.CharField(label='Supply Point:', required=False)
+    program_id = forms.ChoiceField(label="Program", choices=(), required=False)
 
     def __init__(self, *args, **kwargs):
         domain = None
@@ -290,6 +303,10 @@ class CommtrackUserForm(forms.Form):
             del kwargs['domain']
         super(CommtrackUserForm, self).__init__(*args, **kwargs)
         self.fields['supply_point'].widget = SupplyPointSelectWidget(domain=domain)
+        programs = Program.by_domain(domain, wrap=False)
+        choices = list((prog['_id'], prog['name']) for prog in programs)
+        choices.insert(0, ('', ''))
+        self.fields['program_id'].choices = choices
 
     def save(self, user):
         commtrack_user = CommTrackUser.wrap(user.to_json())

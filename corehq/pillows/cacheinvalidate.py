@@ -9,7 +9,6 @@ from pillowtop.listener import BasicPillow, ms_from_timedelta
 
 
 pillow_logging = logging.getLogger("pillowtop")
-pillow_logging.setLevel(logging.DEBUG)
 
 class CacheInvalidatePillow(BasicPillow):
     """

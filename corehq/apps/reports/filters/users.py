@@ -1,4 +1,6 @@
 from corehq.apps.users.models import CommCareUser
+from corehq.elastic import es_query, ES_URLS
+from corehq.util import remove_dups
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
@@ -214,6 +216,41 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     placeholder = ugettext_noop("Start typing to specify the groups and users to include in the report. You can select multiple users and groups.")
 
     @classmethod
+    def pull_users_from_es(cls, domain, request, **kwargs):
+        emws = request.GET.getlist('emw')
+        user_ids = [u[3:] for u in filter(lambda s: s.startswith("u__"), emws)]
+        group_ids = [g[3:] for g in filter(lambda s: s.startswith("g__"), emws)]
+
+        q = {"query": {"match_all": {}}}
+        doc_types_to_include = ["CommCareUser"]
+        if "t__2" in emws:  # Admin users selected
+            doc_types_to_include.append("AdminUser")
+        if "t__3" in emws:  # Unknown users selected
+            doc_types_to_include.append("UnknownUser")
+
+        query_filter = { "and": [{"terms": {"doc_type": doc_types_to_include}}, {"term": {"domain": domain}}]}
+        if "_all_mobile_workers" not in emws:
+            or_filter = {"or": [
+                {"terms": {"_id": user_ids}},
+                {"terms": {"__group_ids": group_ids}},
+            ]}
+
+            # for setting up an 'or' filter for non commcare users. This occurs when all mobile workers is not selected,
+            # but admin, demo, or unknown users are
+            other_doc_types = doc_types_to_include[:]
+            other_doc_types.remove("CommCareUser")
+            if doc_types_to_include:
+                or_filter["or"].append({"terms": {"doc_type": other_doc_types}})
+
+            query_filter["and"].append(or_filter)
+
+        if "t__1" in emws:  # Demo user selected
+            query_filter = {"or": [{"term": {"username": "demo_user"}}, query_filter]}
+
+        q["filter"] = query_filter
+        return es_query(es_url=ES_URLS["users"], q=q, **kwargs)
+
+    @classmethod
     @memoized
     def pull_users_and_groups(cls, domain, request, simplified_users=False, combined=False, CommCareUser=CommCareUser):
         emws = request.GET.getlist('emw')
@@ -249,14 +286,12 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             users_in_groups = [user for sublist in user_dict.values() for user in sublist]
 
             ret["users_by_group"] = user_dict
-            ret["combined_users"] = ret["users"] + users_in_groups
+            ret["combined_users"] = remove_dups(ret["users"] + users_in_groups, "user_id")
         return ret
 
     @property
     def options(self):
         user_type_opts = [("t__%s" % (i+1), "[%s]" % name) for i, name in enumerate(HQUserType.human_readable[1:])]
-        user_opts = [("u__%s" % u.get_id, "%s [user]" % u.human_friendly_name) for u in util.user_list(self.domain)]
+        user_opts = [("u__%s" % u.get_id, "%s [user]" % u.name_in_filters) for u in util.user_list(self.domain)]
         group_opts = [("g__%s" % g.get_id, "%s [group]" % g.name) for g in Group.get_reporting_groups(self.domain)]
         return [("_all_mobile_workers", _("[All mobile workers]"))] + user_type_opts + user_opts + group_opts
-
-

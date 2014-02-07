@@ -18,6 +18,26 @@ TEST_USER = 'case_attachment@hqtesting.com'
 
 TEST_PASSWORD = 'testing'
 
+def hack_local_url(url):
+    #hack, in tests, this is the in built sites which is not useful externally
+    local_url = '/'.join(url.split('/')[3:])
+    return local_url
+
+
+def rebuild_stream(response_iter):
+    data = StringIO.StringIO()
+    try:
+        while True:
+            payload = response_iter.next()
+            if payload:
+                data.write(payload)
+    except StopIteration:
+        pass
+    data.seek(0)
+    return data
+
+
+
 class CaseObjectCacheTest(BaseCaseMultimediaTest):
     """
     test case object caching - for case-attachments and api access.
@@ -58,9 +78,9 @@ class CaseObjectCacheTest(BaseCaseMultimediaTest):
         client = Client()
         client.login(username=TEST_USER, password=TEST_PASSWORD)
         for a in attachments:
-            url = case.get_attachment_server_url(a)
+            url = '/%s' % hack_local_url(case.get_attachment_server_url(a))
             data = client.get(url, follow=True)
-            content = StringIO.StringIO(data.content)
+            content = rebuild_stream(data.streaming_content)
             self.assertEqual(hashlib.md5(self._attachmentFileStream(a).read()).hexdigest(),
                              hashlib.md5(content.read()).hexdigest())
 
@@ -74,14 +94,15 @@ class CaseObjectCacheTest(BaseCaseMultimediaTest):
         client = Client()
         client.login(username=TEST_USER, password=TEST_PASSWORD)
         for a in attachments:
-            url = case.get_attachment_server_url(a)
+            url = '/%s' % hack_local_url(case.get_attachment_server_url(a))
             data = client.get(url, follow=True)
-            content = StringIO.StringIO(data.content)
+            content = rebuild_stream(data.streaming_content)
             self.assertEqual(hashlib.md5(self._attachmentFileStream(a).read()).hexdigest(),
                              hashlib.md5(content.read()).hexdigest())
 
             orig_filename = os.path.split(MEDIA_FILES[a])[-1]
             self.assertNotEqual(orig_filename, os.path.split(url[-1]))
-            self.assertEqual(http.urlquote(orig_filename), os.path.split(url)[-1])
+
             #verify that the url filename is escaped
+            self.assertEqual(http.urlquote(orig_filename), os.path.split(url)[-1])
 

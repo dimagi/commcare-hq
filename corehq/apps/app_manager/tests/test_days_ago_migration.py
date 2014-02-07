@@ -13,10 +13,10 @@ class DaysAgoMigrationTest(TestCase):
         self.app = Application.wrap(app_doc)
 
     def test_suite(self):
-
+        from corehq.apps.app_manager.tests import assertXmlEqual
         with open(os.path.join(os.path.dirname(__file__), 'data', 'days_ago_suite.xml')) as f:
             suiteA = f.read()
 
         suiteB = self.app.create_suite()
 
-        check_xml_line_by_line(self, suiteA, suiteB)
+        assertXmlEqual(suiteA, suiteB)

@@ -83,7 +83,7 @@ def excel_config(request, domain):
                                  group=True,
                                  startkey=[domain],
                                  endkey=[domain,{}]).all():
-        if not row['key'][1] in case_types_from_cases:
+        if row['key'][1] and not row['key'][1] in case_types_from_cases:
             case_types_from_cases.append(row['key'][1])
 
     # for this we just want cases that have data but aren't being used anymore

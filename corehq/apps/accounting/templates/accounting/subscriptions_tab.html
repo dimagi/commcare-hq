@@ -1,0 +1,43 @@
+{% load url from future %}
+{% load i18n %}
+
+<div>
+    <a href="{% url 'new_subscription' account.id %}" class="btn btn-primary" data-toggle="modal" style="margin-left:2px">
+        <i class="icon-white icon-plus">
+            Add New Subscription
+        </i>
+    </a>
+</div>
+
+<div>
+    <table class="table table-striped table-bordered">
+        <thead>
+            <tr>
+                <th>{% trans "Project Space" %}</th>
+                <th>{% trans "Software Plan" %}</th>
+                <th>{% trans "Start Date" %}</th>
+                <th>{% trans "End Date" %}</th>
+                <th>{% trans "Currently Active" %}</th>
+                <th>{% trans "Salesforce Contract ID" %}</th>
+                <th>{% trans "Last Invoice" %}</th>
+                <th>{% trans "Delay Invoicing Until" %}</th>
+                <th>{% trans "Edit" %}</th>
+            </tr>
+        </thead>
+        <tbody data-bind="foreach: subscription_list">
+            {% for subscription, invoice in subscription_list %}
+                <tr>
+                    <td>{{ subscription.subscriber.domain }}</td>
+                    <td>{{ subscription.plan_version.plan.name }}</td>
+                    <td>{{ subscription.date_start }}</td>
+                    <td>{{ subscription.date_end }}</td>
+                    <td>{{ subscription.is_active }}</td>
+                    <td>{{ subscription.salesforce_contract_id }}</td>
+                    <td>{{ invoice }}</td>
+                    <td>{{ subscription.date_delay_invoicing }}</td>
+                    <td><a href="{% url 'edit_subscription' subscription.id %}" class="btn">Edit</a></td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

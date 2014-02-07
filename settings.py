@@ -6,7 +6,7 @@ import sys, os
 from django.contrib import messages
 
 # odd celery fix
-import djcelery;
+import djcelery
 
 djcelery.setup_loader()
 
@@ -105,12 +105,24 @@ MIDDLEWARE_CLASSES = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'corehq.middleware.OpenRosaMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
+    'corehq.apps.domain.middleware.CCHQPRBACMiddleware',
     'casexml.apps.phone.middleware.SyncTokenMiddleware',
     'auditcare.middleware.AuditMiddleware',
     'no_exceptions.middleware.NoExceptionsMiddleware',
 ]
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
+
+PASSWORD_HASHERS = (
+    # this is the default list with SHA1 moved to the front
+    'django.contrib.auth.hashers.SHA1PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
+    'django.contrib.auth.hashers.BCryptPasswordHasher',
+    'django.contrib.auth.hashers.MD5PasswordHasher',
+    'django.contrib.auth.hashers.UnsaltedMD5PasswordHasher',
+    'django.contrib.auth.hashers.CryptPasswordHasher',
+)
 
 ROOT_URLCONF = "urls"
 
@@ -169,8 +181,11 @@ HQ_APPS = (
     'hqscripts',
     'casexml.apps.case',
     'casexml.apps.phone',
+    'casexml.apps.stock',
     'corehq.apps.cleanup',
     'corehq.apps.cloudcare',
+    'corehq.apps.smsbillables',
+    'corehq.apps.accounting',
     'corehq.apps.appstore',
     'corehq.apps.domain',
     'corehq.apps.domainsync',
@@ -181,6 +196,7 @@ HQ_APPS = (
     'corehq.apps.hqmedia',
     'corehq.apps.locations',
     'corehq.apps.commtrack',
+    'corehq.apps.consumption',
     'couchforms',
     'couchexport',
     'couchlog',
@@ -214,6 +230,7 @@ HQ_APPS = (
     'corehq.apps.ivr',
     'corehq.apps.tropo',
     'corehq.apps.twilio',
+    'corehq.apps.megamobile',
     'corehq.apps.kookoo',
     'corehq.apps.sislog',
     'corehq.apps.yo',
@@ -285,6 +302,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'corehq.apps.sislog',
     'corehq.apps.telerivet',
     'corehq.apps.tropo',
+    'corehq.apps.megamobile',
     'corehq.apps.yo',
     'crispy_forms',
     'django_extensions',
@@ -306,6 +324,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'casexml.apps.case',
     'casexml.apps.phone',
     'couchforms',
+    'couchexport',
     'ctable',
     'ctable_view',
     'dimagi.utils',
@@ -458,6 +477,34 @@ MACH_CONFIG = {"username": "Dimagi",
                "password": "changeme",
                "service_profile": "changeme"}
 
+""" SMS Queue Settings"""
+
+# Setting this to False will make the system process outgoing and incoming SMS
+# immediately rather than use the queue.
+SMS_QUEUE_ENABLED = False
+
+# If an SMS still has not been processed in this number of minutes, enqueue it
+# again.
+SMS_QUEUE_ENQUEUING_TIMEOUT = 60
+
+# Number of minutes a celery task will alot for itself (via lock timeout)
+SMS_QUEUE_PROCESSING_LOCK_TIMEOUT = 5
+
+# Number of minutes to wait before retrying an unsuccessful processing attempt
+# for a single SMS
+SMS_QUEUE_REPROCESS_INTERVAL = 5
+
+# Max number of processing attempts before giving up on processing the SMS
+SMS_QUEUE_MAX_PROCESSING_ATTEMPTS = 3
+
+# Number of minutes to wait before retrying SMS that was delayed because the
+# domain restricts sending SMS to certain days/times.
+SMS_QUEUE_DOMAIN_RESTRICTED_RETRY_INTERVAL = 15
+
+# The number of hours to wait before counting a message as stale. Stale
+# messages will not be processed.
+SMS_QUEUE_STALE_MESSAGE_DURATION = 7 * 24
+
 #auditcare parameters
 AUDIT_MODEL_SAVE = [
     'corehq.apps.app_manager.Application',
@@ -484,6 +531,8 @@ ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_ID': '',
     'PINGDOM_ID': ''
 }
+
+OPEN_EXCHANGE_RATES_ID = ''
 
 # for touchforms maps
 GMAPS_API_KEY = "changeme"
@@ -631,6 +680,16 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
+        'smsbillables': {
+            'handlers': ['file', 'sentry'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'currency_update': {
+            'handlers': ['file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
     }
 }
 
@@ -668,9 +727,6 @@ _dynamic_db_settings = get_dynamic_db_settings(COUCH_SERVER_ROOT, COUCH_USERNAME
 COUCH_SERVER = _dynamic_db_settings["COUCH_SERVER"]
 COUCH_DATABASE = _dynamic_db_settings["COUCH_DATABASE"]
 
-# other urls that depend on the server
-XFORMS_POST_URL = _dynamic_db_settings["XFORMS_POST_URL"]
-
 COUCHDB_APPS = [
     'adm',
     'announcements',
@@ -685,6 +741,7 @@ COUCHDB_APPS = [
     'cleanup',
     'cloudcare',
     'commtrack',
+    'consumption',
     'couch',
     # This is necessary for abstract classes in dimagi.utils.couch.undo; otherwise breaks tests
     'couchdbkit_aggregate',
@@ -741,6 +798,7 @@ COUCHDB_APPS = [
     'pact',
     'psi',
     'trialconnect',
+    'accounting',
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
@@ -793,6 +851,7 @@ COMMCARE_USER_TERM = "Mobile Worker"
 WEB_USER_TERM = "Web User"
 
 DEFAULT_CURRENCY = "USD"
+DEFAULT_CURRENCY_SYMBOL = "$"
 
 SMS_HANDLERS = [
     'corehq.apps.sms.api.forwarding_handler',
@@ -812,12 +871,14 @@ SMS_LOADED_BACKENDS = [
     "corehq.apps.sms.backend.test.TestBackend",
     "corehq.apps.grapevine.api.GrapevineBackend",
     "corehq.apps.twilio.models.TwilioBackend",
+    "corehq.apps.megamobile.api.MegamobileBackend",
 ]
 
 # These are functions that can be called to retrieve custom content in a reminder event.
 # If the function is not in here, it will not be called.
 ALLOWED_CUSTOM_CONTENT_HANDLERS = {
     "FRI_SMS_CONTENT" : "custom.fri.api.custom_content_handler",
+    "FRI_SMS_CATCHUP_CONTENT" : "custom.fri.api.catchup_custom_content_handler",
 }
 
 # These are custom templates which can wrap default the sms/chat.html template
@@ -853,6 +914,8 @@ PILLOWTOPS = {
         'corehq.pillows.user.UserPillow',
         'corehq.pillows.application.AppPillow',
         'corehq.pillows.sms.SMSPillow',
+        'corehq.pillows.user.GroupToUserPillow',
+        'corehq.pillows.user.UnknownUsersPillow',
     ],
     'core_ext': [
         'corehq.pillows.reportcase.ReportCasePillow',
@@ -877,9 +940,6 @@ PILLOWTOPS = {
     'trialconnect': [
         'custom.trialconnect.smspillow.TCSMSPillow',
     ],
-    'commtrack': [
-        'corehq.pillows.commtrack.ConsumptionRatePillow',
-    ]
 }
 
 for k, v in  LOCAL_PILLOWTOPS.items():
@@ -947,7 +1007,7 @@ DOMAIN_MODULE_MAP = {
     'hsph-dev': 'hsph',
     'hsph-betterbirth-pilot-2': 'hsph',
     'mc-inscale': 'custom.reports.mc',
-    'mikesproject': 'custom.penn_state',
+    'psu-legacy-together': 'custom.penn_state',
     'mvp-potou': 'mvp',
     'mvp-sauri': 'mvp',
     'mvp-bonsaaso': 'mvp',

@@ -324,6 +324,7 @@ class Suite(XmlObject):
     menus = NodeListField('menu', Menu)
 
     fixtures = NodeListField('fixture', Fixture)
+    descriptor = StringField('@descriptor')
 
 
 class IdStrings(object):
@@ -367,7 +368,8 @@ class IdStrings(object):
         )
 
     def menu(self, module):
-        return u"m{module.id}".format(module=module)
+        put_in_root = getattr(module, 'put_in_root', False)
+        return 'root' if put_in_root else u"m{module.id}".format(module=module)
 
     def module_locale(self, module):
         return module.get_locale_id()
@@ -498,6 +500,8 @@ class SuiteGenerator(object):
         # you have to call remove_unused_mappings
         # before iterating through multimedia_map
         self.app.remove_unused_mappings()
+        if self.app.multimedia_map is None:
+            self.app.multimedia_map = {}
         for path, m in self.app.multimedia_map.items():
             unchanged_path = path
             if path.startswith(PREFIX):
@@ -535,32 +539,33 @@ class SuiteGenerator(object):
         if not self.app.use_custom_suite:
             for module in self.modules:
                 for detail_type, detail, enabled in module.get_details():
-                    detail_column_infos = get_detail_column_infos(
-                        detail,
-                        include_sort=detail_type.endswith('short'),
-                    )
-
-                    if detail_column_infos and enabled:
-                        d = Detail(
-                            id=self.id_strings.detail(module, detail_type),
-                            title=Text(locale_id=self.id_strings.detail_title_locale(module, detail_type))
+                    if enabled:
+                        detail_column_infos = get_detail_column_infos(
+                            detail,
+                            include_sort=detail_type.endswith('short'),
                         )
 
-                        for column_info in detail_column_infos:
-                            fields = get_column_generator(
-                                self.app, module, detail,
-                                detail_type=detail_type, *column_info
-                            ).fields
-                            d.fields.extend(fields)
+                        if detail_column_infos:
+                            d = Detail(
+                                id=self.id_strings.detail(module, detail_type),
+                                title=Text(locale_id=self.id_strings.detail_title_locale(module, detail_type))
+                            )
 
-                        try:
-                            if not self.app.enable_multi_sort:
-                                d.fields[0].sort = 'default'
-                        except IndexError:
-                            pass
-                        else:
-                            # only yield the Detail if it has Fields
-                            r.append(d)
+                            for column_info in detail_column_infos:
+                                fields = get_column_generator(
+                                    self.app, module, detail,
+                                    detail_type=detail_type, *column_info
+                                ).fields
+                                d.fields.extend(fields)
+
+                            try:
+                                if not self.app.enable_multi_sort:
+                                    d.fields[0].sort = 'default'
+                            except IndexError:
+                                pass
+                            else:
+                                # only yield the Detail if it has Fields
+                                r.append(d)
 
         return r
 
@@ -701,47 +706,42 @@ class SuiteGenerator(object):
                 )
 
             if form.case_type == CAREPLAN_GOAL:
-                if form.mode == 'create':
-                    e.datums.append(SessionDatum(
-                        id='new_goal_id',
-                        function='uuid()'
-                    ))
+                e.stack = Stack()
+                open_goal = CaseIDXPath(session_var('case_id_goal')).case().select('@status', 'open')
+                frame = CreateFrame(
+                    if_clause='{count} = 1'.format(count=open_goal.count())
+                )
+                frame.add_command(self.id_strings.menu(parent_module))
+                frame.add_datum(StackDatum(id='case_id', value=session_var('case_id')))
+                frame.add_command(self.id_strings.menu(module))
+                frame.add_datum(StackDatum(id='case_id_goal', value=session_var('case_id_goal')))
+                e.stack.add_frame(frame)
 
-                    e.stack = Stack()
-                    frame = CreateFrame(
-                        if_clause='{count} = 1'.format(count=CaseIDXPath(session_var('new_goal_id')).case().count())
-                    )
-                    frame.add_command(self.id_strings.menu(parent_module))
-                    frame.add_datum(StackDatum(id='case_id', value=session_var('case_id')))
-                    frame.add_command(self.id_strings.menu(module))
-                    frame.add_datum(StackDatum(id='case_id_goal', value=session_var('new_goal_id')))
-                    e.stack.add_frame(frame)
+                if form.mode == 'create':
+                    e.datums.append(SessionDatum(id='case_id_goal', function='uuid()'))
                 elif form.mode == 'update':
                     e.datums.append(session_datum('case_id_goal', CAREPLAN_GOAL, 'parent', 'case_id'))
             elif form.case_type == CAREPLAN_TASK:
+                e.stack = Stack()
+                frame = CreateFrame()
+                frame.add_command(self.id_strings.menu(parent_module))
+                frame.add_datum(StackDatum(id='case_id', value=session_var('case_id')))
+                frame.add_command(self.id_strings.menu(module))
+                frame.add_datum(StackDatum(id='case_id_goal', value=session_var('case_id_goal')))
+                e.stack.add_frame(frame)
+
                 if form.mode == 'create':
-                    e.datums.append(SessionDatum(
-                        id='new_task_id',
-                        function='uuid()'
-                    ))
                     e.datums.append(session_datum('case_id_goal', CAREPLAN_GOAL, 'parent', 'case_id'))
                 elif form.mode == 'update':
                     e.datums.append(session_datum('case_id_goal', CAREPLAN_GOAL, 'parent', 'case_id'))
                     e.datums.append(session_datum('case_id_task', CAREPLAN_TASK, 'goal', 'case_id_goal'))
 
-                    e.stack = Stack()
                     count = CaseTypeXpath(CAREPLAN_TASK).case().select(
                         'index/goal', session_var('case_id_goal'), quote=False
                     ).select('@status', 'open').count()
-                    frame = CreateFrame(
-                        if_clause='{count} >= 1'.format(count=count)
-                    )
-                    frame.add_command(self.id_strings.menu(parent_module))
-                    frame.add_datum(StackDatum(id='case_id', value=session_var('case_id')))
-                    frame.add_command(self.id_strings.menu(module))
-                    frame.add_datum(StackDatum(id='case_id_goal', value=session_var('case_id_goal')))
+                    frame.if_clause = '{count} >= 1'.format(count=count)
+
                     frame.add_command(self.id_strings.form_command(module.get_form_by_type(CAREPLAN_TASK, 'update')))
-                    e.stack.add_frame(frame)
 
         def case_sharing_requires_assertion(form):
             actions = form.active_actions()
@@ -815,7 +815,7 @@ class SuiteGenerator(object):
                 yield update_menu
             else:
                 menu = Menu(
-                    id='root' if module.put_in_root else self.id_strings.menu(module),
+                    id=self.id_strings.menu(module),
                     locale_id=self.id_strings.module_locale(module),
                     media_image=module.media_image,
                     media_audio=module.media_audio,
@@ -853,7 +853,7 @@ class SuiteGenerator(object):
             f.set_content(groups)
             yield f
 
-    def generate_suite(self, sections=None):
+    def generate_suite(self, sections=None, is_media=False):
         sections = sections or (
             'xform_resources',
             'locale_resources',
@@ -862,7 +862,8 @@ class SuiteGenerator(object):
             'menus',
             'fixtures',
         )
-        suite = Suite()
+        kw = {"descriptor": u"Suite File" if not is_media else u"Media Suite File"}
+        suite = Suite(**kw)
         suite.version = self.app.version
 
         def add_to_suite(attr):

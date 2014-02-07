@@ -24,6 +24,10 @@ def visit_is(action, visit_type):
 
     if (action.xform_xmlns and actual_visit_type in VISIT_TYPES
             and VISIT_TYPES[actual_visit_type] != action.xform_xmlns):
+        # make sure it's not just because this is a manual case reassignment
+        # or some other HQ-submitted system form
+        if action.xform_xmlns not in VISIT_TYPES.values():
+            return False
         logging.error('last_visit_type is %r but xmlns is not %r: %r' % (
             actual_visit_type,
             VISIT_TYPES[actual_visit_type],

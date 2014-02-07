@@ -77,8 +77,9 @@
 	                                $(document).trigger('correction', [key, data.corrections[key]]);
 	                            }
 	                        }
-                            if (data.hasOwnProperty('case_list-show')){
-                                COMMCAREHQ.app_manager.module_view.requires_case_details(data['case_list-show'])
+                            if (data.hasOwnProperty('case_list-show')
+                                && COMMCAREHQ.app_manager.hasOwnProperty('module_view')){
+                                COMMCAREHQ.app_manager.module_view.requires_case_details(data['case_list-show']);
                             }
 	                    }
 	                }).ui.appendTo($buttonHolder);
@@ -227,8 +228,10 @@
             }
         });
 
-        $('.new-module').on('click', function(e){
+        $('.new-module').on('click', function (e) {
             e.preventDefault();
+            var dataType = $(this).data('type');
+            $('#new-module-type').val(dataType);
             var form = $('#new-module-form');
             if (!form.data('clicked')) {
                 form.data('clicked', 'true');

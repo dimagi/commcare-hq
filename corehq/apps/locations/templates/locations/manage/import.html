@@ -16,6 +16,21 @@
         </div>
     </header>
 
+    <ol>
+        <li>
+            {% trans "Download your current location data: " %}<a href="{% url "location_export" domain %}">{% trans "locations.xlsx" %}</a>
+        </li>
+        <li>
+            {% trans "Updated it with the changes you want to make" %}
+        </li>
+        <li>
+            {% trans "To speed up the process, you can remove rows you aren't modifying" %}
+        </li>
+        <li>
+            {% trans "Use the form below to upload your completed file" %}
+        </li>
+    </ol>
+
     <form class="form-horizontal form-report"
           method="post"
           action=""
@@ -26,15 +41,6 @@
             </label>
             <div class="controls">
                 <input type="file" name="locs" />
-            </div>
-        </div>
-
-        <div class="control-group">
-            <div class="controls">
-                <label class="checkbox" for="named_columns">
-                    <input id="update" type="checkbox" name="update" />
-                    {% trans "Update existing locations" %}
-                </label>
             </div>
         </div>
 

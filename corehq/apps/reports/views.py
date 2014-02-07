@@ -22,6 +22,7 @@ from django.views.decorators.http import (require_http_methods,
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.templatetags.case_tags import case_inline_display
 from couchdbkit.exceptions import ResourceNotFound
+from casexml.apps.case.xml import V2
 import couchexport
 from couchexport import views as couchexport_views
 from couchexport.export import SchemaMismatchException
@@ -33,7 +34,7 @@ from couchexport.tasks import rebuild_schemas
 from couchexport.util import SerializableFunction
 import couchforms.views as couchforms_views
 from couchforms.filters import instances
-from couchforms.models import XFormInstance
+from couchforms.models import XFormInstance, doc_types
 from couchforms.templatetags.xform_tags import render_form
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import wrapped_docs
@@ -104,6 +105,7 @@ def saved_reports(request, domain, template="reports/reports_home.html"):
         return hasattr(rn, "_id") and rn._id and (not hasattr(rn, 'report_slug') or rn.report_slug != 'admin_domains')
 
     scheduled_reports = [rn for rn in ReportNotification.by_domain_and_owner(domain, user._id) if _is_valid(rn)]
+    scheduled_reports = sorted(scheduled_reports, key=lambda rn: rn.configs[0].name)
 
     context = dict(
         couch_user=request.couch_user,
@@ -394,7 +396,7 @@ def add_config(request, domain=None):
         POST['days'] = 30
     elif POST.get('days'):
         POST['days'] = int(POST['days'])
-  
+
     exclude_filters = ['startdate', 'enddate']
     for field in exclude_filters:
         POST['filters'].pop(field, None)
@@ -411,7 +413,13 @@ def add_config(request, domain=None):
     for field in config.properties().keys():
         if field in POST:
             setattr(config, field, POST[field])
-    
+
+    if POST.get('days') or date_range == 'lastmonth':  # remove start and end date if the date range is "last xx days"
+        if "start_date" in config:
+            delattr(config, "start_date")
+        if "end_date" in config:
+            delattr(config, "end_date")
+
     config.save()
 
     touch_saved_reports_views(request.couch_user, domain)
@@ -456,7 +464,7 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
                                   domain,
                                   user_id, request.couch_user,
                                   True,
-                                  notes=form.cleaned_data['notes']).content
+                                  notes=form.cleaned_data['notes'])[0].content
 
     subject = form.cleaned_data['subject'] or _("Email report from CommCare HQ")
 
@@ -603,7 +611,12 @@ def send_test_scheduled_report(request, domain, scheduled_report_id):
 
 
 def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
-                                  email=True):
+                                  email=True, attach_excel=False):
+    """
+    This function somewhat confusingly returns a tuple of: (response, excel_files)
+    If attach_excel is false, excel_files will always be an empty list.
+    """
+    # todo: clean up this API?
     from django.http import HttpRequest
     
     request = HttpRequest()
@@ -613,23 +626,33 @@ def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
     request.couch_user.current_domain = domain
 
     notification = ReportNotification.get(scheduled_report_id)
-
     return _render_report_configs(request, notification.configs,
                                   notification.domain,
                                   notification.owner_id,
                                   couch_user,
-                                  email)
+                                  email, attach_excel=attach_excel)
 
-def _render_report_configs(request, configs, domain, owner_id, couch_user, email, notes=None):
+def _render_report_configs(request, configs, domain, owner_id, couch_user, email, notes=None, attach_excel=False):
     from dimagi.utils.web import get_url_base
 
     report_outputs = []
+    excel_attachments = []
+    format = Format.from_format(request.GET.get('format') or Format.XLS_2007)
     for config in configs:
+        content, excel_file = config.get_report_content(attach_excel=attach_excel)
+        if excel_file:
+            excel_attachments.append({
+                'title': config.full_name + "." + format.extension,
+                'file_obj': excel_file,
+                'mimetype': format.mimetype
+            })
         report_outputs.append({
             'title': config.full_name,
             'url': config.url,
-            'content': config.get_report_content()
+            'content': content
         })
+
+    date_range = config.get_date_range()
 
     return render(request, "reports/report_email.html", {
         "reports": report_outputs,
@@ -638,16 +661,17 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
         "DNS_name": get_url_base(),
         "owner_name": couch_user.full_name or couch_user.get_email(),
         "email": email,
-        "notes": notes,
-        "startdate": config.start_date,
-        "enddate": config.end_date,
-    })
+        "notes": notes or getattr(config, "description", ""),
+        "startdate": date_range["startdate"] if date_range else "",
+        "enddate": date_range["enddate"] if date_range else "",
+    }), excel_attachments
 
 @login_and_domain_required
 @permission_required("is_superuser")
 def view_scheduled_report(request, domain, scheduled_report_id):
     return get_scheduled_report_response(
-        request.couch_user, domain, scheduled_report_id, email=False)
+        request.couch_user, domain, scheduled_report_id, email=False
+    )[0]
 
 
 @require_case_view_permission
@@ -657,11 +681,8 @@ def case_details(request, domain, case_id):
     timezone = util.get_timezone(request.couch_user.user_id, domain)
 
     try:
-        case = CommCareCase.get(case_id)
-    except ResourceNotFound:
-        case = None
-    
-    if case is None or case.doc_type != "CommCareCase" or case.domain != domain:
+        case = _get_case_or_404(domain, case_id)
+    except Http404:
         messages.info(request, "Sorry, we couldn't find that case. If you think this is a mistake please report an issue.")
         return HttpResponseRedirect(CaseListReport.get_url(domain=domain))
 
@@ -700,6 +721,24 @@ def case_details(request, domain, case_id):
                 case_details, args=[domain, case_id])
         },
     })
+
+@require_case_view_permission
+@login_and_domain_required
+@require_GET
+def case_xml(request, domain, case_id):
+    case = _get_case_or_404(domain, case_id)
+    version = request.GET.get('version', V2)
+    return HttpResponse(case.to_xml(version), content_type='text/xml')
+
+
+def _get_case_or_404(domain, case_id):
+    try:
+        case = CommCareCase.get(case_id)
+    except ResourceNotFound:
+        case = None
+    if case is None or case.doc_type != "CommCareCase" or case.domain != domain:
+        raise Http404
+    return case
 
 def generate_case_export_payload(domain, include_closed, format, group, user_filter, process=None):
     """
@@ -808,10 +847,11 @@ def _get_form_or_404(id):
     except ResourceNotFound:
         raise Http404()
 
-    if xform_json.get('doc_type') not in ('XFormInstance',):
+    doc_type = doc_types().get(xform_json.get('doc_type'))
+    if not doc_type:
         raise Http404()
 
-    return XFormInstance.wrap(xform_json)
+    return doc_type.wrap(xform_json)
 
 
 @require_form_view_permission
@@ -821,7 +861,7 @@ def form_data(request, domain, instance_id):
     context = _get_form_context(request, domain, instance_id)
 
     try:
-        form_name = context['instance'].get_form["@name"]
+        form_name = context['instance'].form["@name"]
     except KeyError:
         form_name = "Untitled Form"
    

@@ -1,3 +1,4 @@
+import logging
 from urlparse import urlparse, parse_qs
 import dateutil
 import re
@@ -6,11 +7,20 @@ from PIL import Image
 import uuid
 
 from django import forms
+from crispy_forms.bootstrap import FormActions, StrictButton
+from crispy_forms.helper import FormHelper
+from crispy_forms import layout as crispy
+from django.core.urlresolvers import reverse
+
 from django.forms.fields import (ChoiceField, CharField, BooleanField,
     ImageField)
 from django.forms.widgets import  Select
 from django.utils.encoding import smart_str
 from django.contrib.auth.forms import PasswordResetForm
+from django.utils.safestring import mark_safe
+from django_countries import CountryField
+import phonenumbers
+from corehq.apps.accounting.models import BillingContactInfo, BillingAccountAdmin, SubscriptionAdjustmentMethod, Subscription, SoftwarePlanEdition
 from corehq.apps.app_manager.models import Application, FormBase
 
 from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
@@ -22,12 +32,14 @@ from corehq.apps.groups.models import Group
 from dimagi.utils.timezones.fields import TimeZoneField
 from dimagi.utils.timezones.forms import TimeZoneChoiceField
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext_noop
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_noop, ugettext as _
 from hqstyle.forms.widgets import BootstrapCheckboxInput, BootstrapDisabledInput
 
 # used to resize uploaded custom logos, aspect ratio is preserved
 LOGO_SIZE = (211, 32)
+
+logger = logging.getLogger(__name__)
+
 
 def tf_choices(true_txt, false_txt):
     return (('false', false_txt), ('true', true_txt))
@@ -104,7 +116,7 @@ class SnapshotApplicationForm(forms.Form):
         ]
 
 class SnapshotSettingsForm(SnapshotSettingsMixin):
-    title = CharField(label=ugettext_noop("Title"), required=True)
+    title = CharField(label=ugettext_noop("Title"), required=True, max_length=100)
     project_type = CharField(label=ugettext_noop("Project Category"), required=True,
         help_text=ugettext_noop("e.g. MCH, HIV, etc."))
     license = ChoiceField(label=ugettext_noop("License"), required=True, choices=LICENSES.items(),
@@ -114,7 +126,7 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
     description = CharField(label=ugettext_noop("Long Description"), required=False, widget=forms.Textarea,
         help_text=ugettext_noop("A high-level overview of your project as a whole"))
     short_description = CharField(label=ugettext_noop("Short Description"), required=False,
-        max_length=200, widget=forms.Textarea,
+        widget=forms.Textarea(attrs={'maxlength': 200}),
         help_text=ugettext_noop("A brief description of your project (max. 200 characters)"))
     share_multimedia = BooleanField(label=ugettext_noop("Share all multimedia?"), required=False,
         help_text=ugettext_noop("This will allow any user to see and use all multimedia in this project"))
@@ -345,7 +357,7 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
     call_center_case_type = CharField(
         label=_("Call Center Case Type"),
         required=False,
-        help_text=_("Enter the case type to be used for call center workers")
+        help_text=_("Enter the case type to be used for FLWs in call center apps")
     )
     restrict_superusers = BooleanField(
         label=_("Restrict Superuser Access"),
@@ -408,9 +420,9 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
             self.fields["sms_case_registration_owner_id"].choices = domain_owner_choices
             self.fields["sms_case_registration_user_id"].choices = domain_user_choices
 
-            call_center_user_choices = [(user._id, user.name + ' (user)')
+            call_center_user_choices = [(user._id, user.raw_username + ' [user]')
                                          for user in users]
-            call_center_group_choices = [(group._id, group.name + ' (group)')
+            call_center_group_choices = [(group._id, group.name + ' [group]')
                                          for group in groups]
 
             self.fields["call_center_case_owner"].choices = \
@@ -512,12 +524,15 @@ def tuple_of_copies(a_list, blank=True):
 class DomainInternalForm(forms.Form, SubAreaMixin):
     sf_contract_id = CharField(label=ugettext_noop("Salesforce Contract ID"), required=False)
     sf_account_id = CharField(label=ugettext_noop("Salesforce Account ID"), required=False)
-    commcare_edition = ChoiceField(label=ugettext_noop("Commcare Edition"), required=False,
-                                   choices=tuple_of_copies(["standard", "plus", "advanced"]))
+    commcare_edition = ChoiceField(label=ugettext_noop("CommCare Plan"), initial="community", required=False,
+                                   choices=tuple([(p, p) for p in
+                                                  ["community", "standard", "pro", "advanced", "enterprise"]]))
     services = ChoiceField(label=ugettext_noop("Services"), required=False,
                            choices=tuple_of_copies(["basic", "plus", "full", "custom"]))
     initiative = forms.MultipleChoiceField(label=ugettext_noop("Initiative"), widget=forms.CheckboxSelectMultiple(),
                                            choices=tuple_of_copies(DATA_DICT["initiatives"], blank=False), required=False)
+    workshop_region = CharField(label=ugettext_noop("Workshop Region"), required=False,
+        help_text=ugettext_noop("e.g. US, LAC, SA, Sub-Saharan Africa, Southeast Asia, etc."))
     project_state = ChoiceField(label=ugettext_noop("Project State"), required=False,
                                 choices=tuple_of_copies(["POC", "transition", "at-scale"]))
     self_started = ChoiceField(label=ugettext_noop("Self Started?"), choices=tf_choices('Yes', 'No'), required=False)
@@ -535,6 +550,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
     project_manager = CharField(label=ugettext_noop("Project Manager's Email"), required=False)
 
     def save(self, domain):
+        kw = {"workshop_region": self.cleaned_data["workshop_region"]} if self.cleaned_data["workshop_region"] else {}
         domain.update_internal(sf_contract_id=self.cleaned_data['sf_contract_id'],
             sf_account_id=self.cleaned_data['sf_account_id'],
             commcare_edition=self.cleaned_data['commcare_edition'],
@@ -553,6 +569,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             platform=self.cleaned_data['platform'],
             project_manager=self.cleaned_data['project_manager'],
             phone_model=self.cleaned_data['phone_model'],
+            **kw
         )
 
 
@@ -581,3 +598,141 @@ class ConfidentialPasswordResetForm(PasswordResetForm):
             # The base class throws various emails that give away information about the user;
             # we can pretend all is well since the save() method is safe for missing users.
             return self.cleaned_data['email']
+
+
+class BillingAccountInfoForm(forms.ModelForm):
+    billing_admins = forms.CharField(
+        required=False,
+        label=ugettext_noop("Other Billing Admins"),
+        help_text=ugettext_noop(mark_safe("<p>These are the Web Users that will be able to access and modify your "
+                                "subscription and billing information. They will also receive billing-related "
+                                "emails from Dimagi.</p> <p>Your account is already a Billing Administrator.</p>")),
+    )
+    plan_edition = forms.CharField(
+        widget=forms.HiddenInput,
+    )
+
+    class Meta:
+        model = BillingContactInfo
+        fields = ['first_name', 'last_name', 'phone_number', 'emails', 'company_name', 'first_line',
+                  'second_line', 'city', 'state_province_region', 'postal_code', 'country']
+
+    def __init__(self, account, domain, plan_version, current_subscription, creating_user,
+                 data=None, *args, **kwargs):
+        self.account = account
+        self.domain = domain
+        self.plan_version = plan_version
+        self.current_subscription = current_subscription
+        self.creating_user = creating_user
+
+        try:
+            kwargs['instance'] = self.account.billingcontactinfo
+        except BillingContactInfo.DoesNotExist:
+            pass
+
+        super(BillingAccountInfoForm, self).__init__(data, *args, **kwargs)
+
+        self.fields['plan_edition'].initial = self.plan_version.plan.edition
+        other_admins = self.account.billing_admins.exclude(web_user=self.creating_user).all()
+        self.fields['billing_admins'].initial = ','.join([o.web_user for o in other_admins])
+
+        from corehq.apps.domain.views import DomainSubscriptionView
+        self.helper = FormHelper()
+        self.helper.form_class = 'form form-horizontal'
+        self.helper.layout = crispy.Layout(
+            'plan_edition',
+            crispy.Fieldset(
+                _("Billing Administrators"),
+                crispy.Field('billing_admins', css_class='input-xxlarge'),
+            ),
+            crispy.Fieldset(
+                _("Basic Information"),
+                'company_name',
+                'first_name',
+                'last_name',
+                crispy.Field('emails', css_class='input-xxlarge'),
+                'phone_number',
+            ),
+            crispy.Fieldset(
+                 _("Mailing Address"),
+                'first_line',
+                'second_line',
+                'city',
+                'state_province_region',
+                'postal_code',
+                crispy.Field('country', css_class="input-large"),
+            ),
+            FormActions(
+                StrictButton(
+                    _("Subscribe to Plan"),
+                    type="submit",
+                    css_class='btn btn-primary',
+                ),
+                crispy.HTML('<a href="%(url)s" class="btn">%(title)s</a>' % {
+                    'url': reverse(DomainSubscriptionView.urlname, args=[self.domain]),
+                    'title': _("Cancel"),
+                }),
+            )
+        )
+
+    def clean_billing_admins(self):
+        data = self.cleaned_data['billing_admins']
+        all_admins = data.split(',')
+        result = []
+        for admin in all_admins:
+            result.append(BillingAccountAdmin.objects.get_or_create(web_user=admin)[0])
+        result.append(BillingAccountAdmin.objects.get_or_create(web_user=self.creating_user)[0])
+        return result
+
+    def _parse_number(self, number, country):
+        try:
+            return phonenumbers.parse(number, country)
+        except phonenumbers.NumberParseException:
+            pass
+
+    def clean_phone_number(self):
+        data = self.cleaned_data['phone_number']
+        parsed_number = None
+        if data:
+            for country in ["US", "GB", None]:
+                parsed_number = self._parse_number(data, country)
+                if parsed_number is not None:
+                    break
+            if parsed_number is None:
+                raise forms.ValidationError(_("It looks like this phone number is invalid. "
+                                              "Did you forget the country code?"))
+            return "+%s%s" % (parsed_number.country_code, parsed_number.national_number)
+
+    def save(self, commit=True):
+        try:
+            billing_contact_info = super(BillingAccountInfoForm, self).save(commit=False)
+            billing_contact_info.account = self.account
+            billing_contact_info.save()
+
+            billing_admins = self.cleaned_data['billing_admins']
+            for admin in billing_admins:
+                if not self.account.billing_admins.filter(web_user=admin.web_user).exists():
+                    self.account.billing_admins.add(admin)
+            self.account.save()
+            if self.current_subscription is not None:
+                if self.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY:
+                    self.current_subscription.cancel_subscription(adjustment_method=SubscriptionAdjustmentMethod.USER,
+                                                                  web_user=self.creating_user)
+                else:
+                    subscription = self.current_subscription.change_plan(
+                        self.plan_version, web_user=self.creating_user, adjustment_method=SubscriptionAdjustmentMethod.USER
+                    )
+                    subscription.is_active = True
+                    subscription.save()
+            else:
+                subscription = Subscription.new_domain_subscription(
+                    self.account, self.domain, self.plan_version,
+                    web_user=self.creating_user, adjustment_method=SubscriptionAdjustmentMethod.USER
+                )
+                subscription.is_active = True
+                subscription.save()
+            return True
+        except Exception:
+            logger.exception("There was an error subscribing the domain '%s' to plan '%s'. "
+                             "Go quickly!" % (self.domain, self.plan_version.plan.name))
+        return False

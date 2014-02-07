@@ -36,7 +36,13 @@
     {% if published_snapshot %}
         {% include 'domain/partials/project_version_display.html' with version=published_snapshot published=1 %}
     {% else %}
-    <h3>This project has not been published</h3>
+        <h3 style="display: inline">This project has not been published</h3>
+        <span class="hq-help-template"
+                  data-content={% blocktrans %}
+                          "Share your applications with the world by publishing them to the CommCare Exchange.
+                          For more information about the CommCare Exchange visit the CommCare Exchange Wiki <a href='https://wiki.commcarehq.org/display/commcarepublic/CommCare+Exchange'>[link]</a>"
+                    {% endblocktrans %}
+        ></span>
         {% if snapshots %}
             {% include 'domain/partials/project_version_display.html' with version=snapshots.0 published=0 %}
         {% endif %}
@@ -58,7 +64,14 @@
         <tbody>
         {% for snapshot in snapshots %}
         <tr>
-            <td><a class="btn btn-primary" href="{% url "project_info" snapshot.name %}">View</a></td>
+            <td>
+                <a class="btn btn-primary"
+                   href="{% url "project_info" snapshot.name %}"
+                   onclick="_gaq.push(['_trackEvent', 'Exchange', 'View', '{{ snapshot.name }}']);"
+                >
+                    View
+                </a>
+            </td>
             <td>{{ snapshot.snapshot_time }}</td>
             <td>{{ snapshot.get_license_display }}</td>
             {% if snapshot.published %}
@@ -77,7 +90,16 @@
             {% else %}
             <td></td>
             <td>
-                <a class="btn btn-primary" data-action="{% url "domain_set_published" domain snapshot.name %}" data-toggle="modal" data-target="#contentDistributionAgreement" href="#contentDistributionAgreement">Publish</a> (only one snapshot can be published at a time)
+                <a class="btn btn-primary"
+                   data-action="{% url "domain_set_published" domain snapshot.name %}"
+                   data-toggle="modal"
+                   data-target="#contentDistributionAgreement"
+                   href="#contentDistributionAgreement"
+                   onclick="_gaq.push(['_trackEvent', 'Exchange', 'Publish Previous Version', '{{ snapshot.name }}']);"
+                >
+                    Publish
+                </a>
+                (only one snapshot can be published at a time)
             </td>
             {% endif %}
         </tr>

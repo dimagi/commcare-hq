@@ -2,7 +2,7 @@ from lxml import etree
 import urllib2
 import urlparse
 from django.core import urlresolvers
-from corehq.apps.app_manager.exceptions import AppError
+from corehq.apps.app_manager.exceptions import AppEditingError
 from corehq.apps.app_manager.xform import WrappedNode
 from corehq.apps.users.util import cc_user_domain
 
@@ -45,7 +45,7 @@ def make_remote_profile(app):
     try:
         profile = urllib2.urlopen(app.profile_url).read()
     except Exception:
-        raise AppError('Unable to access profile url: "%s"' % app.profile_url)
+        raise AppEditingError('Unable to access profile url: "%s"' % app.profile_url)
 
     if app.manage_urls or app.build_langs:
         profile_xml = ProfileXML(profile)

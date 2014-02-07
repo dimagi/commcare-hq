@@ -256,18 +256,33 @@ ko.bindingHandlers.visibleFade = {
 
 ko.bindingHandlers.starred = {
     init: function (element) {
-        $(element).addClass('star');
+        $(element).addClass('icon');
     },
     update: function (element, valueAccessor) {
         var value = ko.utils.unwrapObservable(valueAccessor()),
             $element = $(element);
-        $element.addClass('star');
+        value = value + '';
+        $element.addClass('icon pointer');
 
-        $element.removeClass('star-false');
-        $element.removeClass('star-true');
-        $element.removeClass('star-pending');
-        $element.removeClass('star-error');
-        $element.addClass('star-' + value);
+        var unselected = 'icon-star-empty';
+        var selected = 'icon-star icon-large released';
+        var pending = 'icon-refresh icon-spin';
+        var error = 'icon-ban-circle';
+
+        var suffix = error;
+        if(value === 'false') {
+            suffix = unselected;
+        } else if(value === 'true') {
+            suffix = selected;
+        } else if(value === 'pending') {
+            suffix = pending;
+        }
+
+        $element.removeClass(unselected);
+        $element.removeClass(selected);
+        $element.removeClass(pending);
+        $element.removeClass(error);
+        $element.addClass(suffix);
     }
 };
 

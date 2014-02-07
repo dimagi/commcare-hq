@@ -22,7 +22,7 @@ from corehq.apps.data_interfaces.dispatcher import (DataInterfaceDispatcher, Edi
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404
 from dimagi.utils.decorators.memoized import memoized
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 
 
 @login_and_domain_required
@@ -62,13 +62,13 @@ class DataInterfaceSection(BaseDomainView):
 class CaseGroupListView(DataInterfaceSection, CRUDPaginatedViewMixin):
     template_name = "data_interfaces/list_case_groups.html"
     urlname = 'case_group_list'
-    page_title = ugettext_noop("Case Groups")
+    page_title = ugettext_lazy("Case Groups")
 
-    limit_text = ugettext_noop("groups per page")
-    empty_notification = ugettext_noop("You have no case groups. Please create one!")
-    loading_message = ugettext_noop("Loading groups...")
-    deleted_items_header = ugettext_noop("Deleted Groups:")
-    new_items_header = ugettext_noop("New Groups:")
+    limit_text = ugettext_lazy("groups per page")
+    empty_notification = ugettext_lazy("You have no case groups. Please create one!")
+    loading_message = ugettext_lazy("Loading groups...")
+    deleted_items_header = ugettext_lazy("Deleted Groups:")
+    new_items_header = ugettext_lazy("New Groups:")
 
     @property
     def page_url(self):

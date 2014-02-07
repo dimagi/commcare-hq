@@ -9,6 +9,7 @@ from django.template.loader import render_to_string
 from django.shortcuts import render
 
 import pytz
+from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.reports.models import ReportConfig
 from corehq.apps.reports import util
 from corehq.apps.reports.datatables import DataTablesHeader
@@ -20,9 +21,10 @@ from couchexport.shortcuts import export_response
 from dimagi.utils.couch.pagination import DatatablesParams
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.modules import to_function
-from dimagi.utils.web import json_request
+from dimagi.utils.web import json_request, json_response
 from dimagi.utils.parsing import string_to_boolean
 from corehq.apps.reports.cache import CacheableRequestMixIn, request_cache
+from django.utils.translation import ugettext
 
 CHART_SPAN_MAP = {1: '10', 2: '6', 3: '4', 4: '3', 5: '2', 6: '2'}
 
@@ -270,7 +272,7 @@ class GenericReportView(CacheableRequestMixIn):
     @property
     @memoized
     def rendered_report_title(self):
-        return self.name
+        return ugettext(self.name)
 
     @property
     @memoized
@@ -567,6 +569,12 @@ class GenericReportView(CacheableRequestMixIn):
         )
 
     @property
+    def excel_response(self):
+        file = StringIO()
+        export_from_tables(self.export_table, file, self.export_format)
+        return file
+
+    @property
     @request_cache("filters", expiry=60 * 10)
     def filters_response(self):
         """
@@ -590,7 +598,7 @@ class GenericReportView(CacheableRequestMixIn):
             Intention: Not to be overridden in general.
             Renders the json version for the report, if available.
         """
-        return HttpResponse(json.dumps(self.json_dict), content_type="application/json")
+        return json_response(self.json_dict)
 
     @property
     @request_cache("export")
@@ -1013,14 +1021,18 @@ class ElasticTabularReport(GenericTabularReport):
             return 0
 
 
-class ElasticProjectInspectionReport(ProjectInspectionReportParamsMixin, ElasticTabularReport):
+class GetParamsMixin(object):
     @property
     def shared_pagination_GET_params(self):
         """
         Override the params and applies all the params of the originating view to the GET
         so as to get sorting working correctly with the context of the GET params
         """
-        ret = super(ElasticTabularReport, self).shared_pagination_GET_params
+        ret = super(GetParamsMixin, self).shared_pagination_GET_params
         for k, v in self.request.GET.iterlists():
             ret.append(dict(name=k, value=v))
         return ret
+
+
+class ElasticProjectInspectionReport(GetParamsMixin, ProjectInspectionReportParamsMixin, ElasticTabularReport):
+    pass

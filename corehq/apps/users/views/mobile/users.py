@@ -468,12 +468,14 @@ def update_user_groups(request, domain, couch_user_id):
 @require_can_edit_commcare_users
 @require_POST
 def update_user_data(request, domain, couch_user_id):
-    updated_data = json.loads(request.POST["user-data"])
-    user = CommCareUser.get(couch_user_id)
-    assert user.doc_type == "CommCareUser"
-    assert user.domain == domain
-    user.user_data = updated_data
-    user.save()
+    user_data = request.POST["user-data"]
+    if user_data:
+        updated_data = json.loads(user_data)
+        user = CommCareUser.get(couch_user_id)
+        assert user.doc_type == "CommCareUser"
+        assert user.domain == domain
+        user.user_data = updated_data
+        user.save()
     messages.success(request, "User data updated!")
     return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id]))
 

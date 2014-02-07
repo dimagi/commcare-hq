@@ -24,3 +24,6 @@ class MockOpenLMISEndpoint(OpenLMISEndpoint):
 class MockOpenLMISSubmitEndpoint(OpenLMISEndpoint):
     def submit_requisition(self, requisition_data):
         return {'requisitionId': 'REQ_123'}
+
+    def get_requisition_details(self, requisition_id):
+        return None

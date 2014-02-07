@@ -37,7 +37,7 @@ from corehq.apps.orgs.models import Team
 from corehq.apps.reports.util import get_possible_reports
 from corehq.apps.sms import verify as smsverify
 
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 
 
 def _users_context(request, domain):
@@ -183,8 +183,21 @@ class BaseEditUserView(BaseUserSettingsView):
         })
         return context
 
+    @property
+    @memoized
+    def commtrack_form(self):
+        if self.request.method == "POST" and self.request.POST['form_type'] == "commtrack":
+            return CommtrackUserForm(self.request.POST, domain=self.domain)
+        linked_loc = self.editable_user._obj.get('location_id')
+        linked_prog = self.editable_user._obj.get('program_id')
+        return CommtrackUserForm(domain=self.domain, initial={'supply_point': linked_loc, 'program_id': linked_prog})
+
     def post(self, request, *args, **kwargs):
-        if self.request.POST['form_type'] == "update-user":
+        if self.request.POST['form_type'] == "commtrack":
+            self.editable_user.location_id = self.request.POST['supply_point']
+            self.editable_user.program_id = self.request.POST['program_id']
+            self.editable_user.save()
+        elif self.request.POST['form_type'] == "update-user":
             if self.form_user_update.is_valid():
                 old_lang = self.request.couch_user.language
                 if self.form_user_update.update_user(existing_user=self.editable_user, domain=self.domain):
@@ -216,9 +229,12 @@ class EditWebUserView(BaseEditUserView):
 
     @property
     def page_context(self):
-        return {
+        ctx = {
             'form_uneditable': BaseUserInfoForm(),
         }
+        if self.request.project.commtrack_enabled:
+            ctx.update({'update_form': self.commtrack_form})
+        return ctx
 
     @method_decorator(require_can_edit_web_users)
     def dispatch(self, request, *args, **kwargs):
@@ -304,19 +320,11 @@ class EditMyAccountDomainView(BaseFullEditUserView):
     @property
     def page_context(self):
         context = {}
-        if self.request.project.commtrack_enabled and not self.request.project.location_restriction_for_users:
+        if self.request.project.commtrack_enabled:
             context.update({
-                'update_form': self.localization_form,
+                'update_form': self.commtrack_form,
             })
         return context
-
-    @property
-    @memoized
-    def localization_form(self):
-        if self.request.method == "POST" and self.request.POST['form_type'] == "commtrack":
-            return CommtrackUserForm(self.request.POST, domain=self.domain)
-        linked_loc = self.couch_user._obj.get('location_id')
-        return CommtrackUserForm(domain=self.domain, initial={'supply_point': linked_loc})
 
     def get(self, request, *args, **kwargs):
         if self.couch_user.is_commcare_user():
@@ -324,16 +332,9 @@ class EditMyAccountDomainView(BaseFullEditUserView):
             return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[self.domain, self.editable_user_id]))
         return super(EditMyAccountDomainView, self).get(request, *args, **kwargs)
 
-    def post(self, request, *args, **kwargs):
-        if self.request.POST['form_type'] == "commtrack":
-            self.editable_user.location_id = self.request.POST['supply_point']
-            self.editable_user.save()
-        return super(EditMyAccountDomainView, self).post(request, *args, **kwargs)
-
-
 class ListWebUsersView(BaseUserSettingsView):
     template_name = 'users/web_users.html'
-    page_title = ugettext_noop("Web Users & Roles")
+    page_title = ugettext_lazy("Web Users & Roles")
     urlname = 'web_users'
 
     @method_decorator(require_can_edit_web_users)
@@ -450,6 +451,7 @@ class UserInvitationView(InvitationView):
         user.set_role(self.domain, invitation.role)
         if project.commtrack_enabled and not project.location_restriction_for_users:
             user.location_id = invitation.supply_point
+            user.program_id = invitation.program
         user.save()
 
 

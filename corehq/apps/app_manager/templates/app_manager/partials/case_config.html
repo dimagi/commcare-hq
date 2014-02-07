@@ -1,5 +1,7 @@
 {% load i18n %}
 
+{% include 'app_manager/partials/case_config_shared.html' %}
+
 <script type="text/html" id="remove-subcase-modal-template">
     <div class="modal-header">
         <a href="#" class="close" data-dismiss="modal">×</a>
@@ -40,118 +42,6 @@
         </span>
     </div>
     <!--/ko-->
-</script>
-
-<script type="text/html" id="case-config:case-properties:question">
-    <input class="input-large" type="hidden" data-bind="
-        questionsSelect: $root.getQuestions('all', false, case_transaction.allow.repeats()),
-        value: path,
-        optionsCaption: ' ',
-        edit: $root.edit"
-    />
-    <p class="help-inline" data-bind="visible: required() && !path()">{% trans "Required" %}</p>
-</script>
-
-<script type="text/html" id="case-config:case-properties:property">
-    <span data-bind="visible: !required()">
-        <input type="text" class="input-medium" data-bind="
-            valueDefault: key,
-            default: defaultKey,
-            edit: $root.edit,
-            typeahead: case_transaction.suggestedProperties
-        "/>
-    </span>
-    <span data-bind="visible: required()">
-        <code data-bind="text: key"></code>
-    </span>
-</script>
-
-<script type="text/html" id="case-config:case-transaction:case-preload">
-    <em>{% trans "Load the following case properties into the form" %}</em>
-    <div class="alert alert-block alert-info" data-bind="visible: !case_preload().length">
-        {% trans "No case properties will be loaded" %}
-    </div>
-    <table class="table table-condensed" data-bind="visible: case_preload().length">
-        <thead>
-            <tr>
-                <th></th>
-                <th>{% trans "Case Property" %}</th>
-                <th></th>
-                <th>{% trans "Question" %}</th>
-            </tr>
-        </thead>
-
-        <tbody data-bind="foreach: case_preload">
-            <tr class="control-group" data-bind="css: {error: validateProperty() || validateQuestion}">
-                <td>
-                    <a href="#" data-bind="
-                        click: $parent.removePreload,
-                        visible: $root.edit && !(isBlank() && $index() === $parent.case_preload().length - 1)">
-                        <i class="icon-remove"></i>
-                    </a>
-                </td>
-                <td>
-                    <div data-bind="template: 'case-config:case-properties:property'"></div>
-                    <p class="help-inline" data-bind="html: validateProperty, visible: validateProperty"></p>
-                </td>
-                <td>
-                    <i class="icon-arrow-right"></i>
-                </td>
-                <td>
-                    <div data-bind="template: 'case-config:case-properties:question'"></div>
-                    <p class="help-inline" data-bind="html: validateQuestion, visible: validateQuestion"></p>
-                </td>
-            </tr>
-        </tbody>
-    </table>
-    <a href="#" data-bind="click: addPreload, visible: $root.edit && !case_preload().length">
-        <i class="icon-plus"></i>
-        {% trans "Load properties" %}
-    </a>
-</script>
-
-<script type="text/html" id="case-config:case-transaction:case-properties">
-    <em>{% trans "Save data to the following case properties" %}</em>
-    <div class="alert alert-block alert-info" data-bind="visible: !case_properties().length">
-        {% trans "No case properties will be saved" %}
-    </div>
-    <table class="table table-condensed" data-bind="visible: case_properties().length">
-        <thead>
-            <tr>
-                <th></th>
-                <th>{% trans "Question" %}</th>
-                <th></th>
-                <th>{% trans "Case Property" %}</th>
-            </tr>
-        </thead>
-
-        <tbody data-bind="foreach: case_properties">
-            <tr class="control-group" data-bind="css: {error: validate, warning: !validate() && required() && !path()}">
-                <td>
-                    <a href="#" data-bind="
-                        click: $parent.removeProperty,
-                        visible: $root.edit && !required() && !(isBlank() && $index() === $parent.case_properties().length - 1)
-                    ">
-                        <i class="icon-remove"></i>
-                    </a>
-                </td>
-                <td>
-                    <div data-bind="template: 'case-config:case-properties:question'"></div>
-                </td>
-                <td>
-                    <i class="icon-arrow-right"></i>
-                </td>
-                <td>
-                    <div data-bind="template: 'case-config:case-properties:property'"></div>
-                    <p class="help-inline" data-bind="html: validate, visible: validate"></p>
-                </td>
-            </tr>
-        </tbody>
-    </table>
-    <a href="#" data-bind="click: addProperty, visible: $root.edit && !case_properties().length">
-        <i class="icon-plus"></i>
-        {% trans "Save properties" %}
-    </a>
 </script>
 
 <script type="text/html" id="case-config:case-transaction">

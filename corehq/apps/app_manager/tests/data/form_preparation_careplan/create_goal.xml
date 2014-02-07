@@ -69,7 +69,7 @@
 
             <bind calculate="/data/meta/timeEnd" nodeset="/data/case/@date_modified" type="xsd:dateTime"/>
 			<bind calculate="/data/meta/userID" nodeset="/data/case/@user_id"/>
-			<setvalue event="xforms-ready" ref="/data/case/@case_id" value="instance('commcaresession')/session/data/new_goal_id"/>
+			<setvalue event="xforms-ready" ref="/data/case/@case_id" value="instance('commcaresession')/session/data/case_id_goal"/>
 
 			<bind calculate="/data/name" nodeset="/data/case/create/case_name"/>
 			<bind calculate="/data/date_followup" nodeset="/data/case/update/date_followup" relevant="count(/data/date_followup) &gt; 0"/>

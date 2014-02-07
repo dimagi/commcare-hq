@@ -4,8 +4,9 @@ function SavedApp(o, r) {
     $.each(['comment_user_name', '_deleteState'], function (i, attr) {
         self[attr] = self[attr] || ko.observable();
     });
-    self.include_media = ko.observable(false);
-
+    if (!self.include_media) {
+        self.include_media = ko.observable(false);
+    }
     self.get_short_odk_url = ko.computed(function() {
         if (self.include_media()) {
            if (self.short_odk_media_url) {
@@ -54,7 +55,6 @@ function ReleasesMain(o) {
     /* {fetchUrl, deleteUrl} */
     var self = this;
     self.options = o;
-    self.users_cannot_share = self.options.users_cannot_share;
     self.recipients = self.options.recipient_contacts;
     self.savedApps = ko.observableArray();
     self.doneFetching = ko.observable(false);

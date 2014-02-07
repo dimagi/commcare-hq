@@ -17,10 +17,13 @@ Welcome to CommCareHQ's documentation!
 .. toctree::
    :maxdepth: 2
 
+   deploy
    reporting
+   api
    maps
    ui_helpers
    class_views
+   forms
    management_commands
    commtrack
    cloudcare

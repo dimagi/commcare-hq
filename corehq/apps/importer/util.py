@@ -189,9 +189,9 @@ def convert_custom_fields_to_struct(config):
             }
 
             if case_fields[i]:
-                field_map[field]['case'] = case_fields[i]
-            else:
-                field_map[field]['custom'] = custom_fields[i] or field
+                field_map[field]['field_name'] = case_fields[i]
+            elif custom_fields[i]:
+                field_map[field]['field_name'] = custom_fields[i]
 
     return field_map
 
@@ -318,12 +318,11 @@ def populate_updated_fields(config, columns, row):
         except:
             continue
 
-        if 'custom' in field_map[key]:
-            # custom (new) field was entered
-            update_field_name = field_map[key]['custom']
+        if 'field_name' in field_map[key]:
+            update_field_name = field_map[key]['field_name']
         else:
-            # existing case field was chosen
-            update_field_name = field_map[key]['case']
+            # nothing was selected so don't add this value
+            continue
 
         if update_value is not None:
             if field_map[key]['type_field'] == 'date':

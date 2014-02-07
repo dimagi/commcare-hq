@@ -9,6 +9,8 @@ localization strings. For more comprehensive information, consult the
 Tagging strings in views
 ------------------------
 
+The most common case is just wrapping text with ugettext.
+
 .. code-block:: python
 
     from django.utils.translation import ugettext as _
@@ -19,8 +21,8 @@ Tagging strings in views
 
 Sometimes it isn't always so simple, for example with report or settings
 section names. Two methods (`ugettext_noop` and `ugettext_lazy`) are available to mark
-a string for translation but not store the translated string value. Both of these
-solve the problem of 
+a string for translation but not store the translated string value. These solve
+slightly different cases but are often interchangeable.
 
 .. code-block:: python
 
@@ -28,6 +30,21 @@ solve the problem of
         urlname = 'my_account_settings'
         page_title = ugettext_lazy("My Information")
         template_name = 'settings/edit_my_account.html'
+
+When variables are needed in the middle of translated strings, interpolation
+can be used as normal. However, named variables should be used to ensure
+that the translator has enough context.
+
+.. code-block:: python
+
+    message = _("User '{user}' has successfully been {action}.").format(
+        user=user.raw_username,
+        action=_("Un-Archived") if user.is_active else _("Archived"),
+    )
+
+This ends up in the translations file as::
+
+    msgid "User '{user}' has successfully been {action}."
 
 Using `ugettext_lazy`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
