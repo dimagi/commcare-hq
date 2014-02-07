@@ -353,7 +353,7 @@ var AdvancedCase = (function () {
             var spanSnip = '<span class="muted" style="font-weight: normal;">';
             if (action.actionType === 'open') {
                 return _.template(nameSnip + spanSnip +
-                    '<% if (action.subcase()) { %> : subacese of <span style="font-weight: bold;"><%= action.parent_tag() %></span><% } %>' +
+                    '<% if (action.subcase()) { %> : subcase of <span style="font-weight: bold;"><%= action.parent_tag() %></span><% } %>' +
                     closeSnip + "</span>",
                     action, {variable: 'action'});
             } else {
