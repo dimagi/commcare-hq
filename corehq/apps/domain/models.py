@@ -719,13 +719,15 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             new_doc.copy_history.append(id)
         else:
             cls = str_to_cls[doc_type]
+
+            if doc_type == 'CaseReminderHandler':
+                cur_doc = cls.get(id)
+                if not self.reminder_should_be_copied(cur_doc):
+                    return None
+
             new_id = db.copy_doc(id)['id']
 
             new_doc = cls.get(new_id)
-
-            if (new_doc.doc_type == 'CaseReminderHandler' and
-                not self.reminder_should_be_copied(new_doc)):
-                return None
 
             for field in self._dirty_fields:
                 if hasattr(new_doc, field):
