@@ -594,6 +594,8 @@ FLUFF_PILLOW_TYPES_TO_SQL = {
     'CareSAFluff': 'SQL',
 }
 
+PREVIEWER_RE = '^$'
+
 try:
     #try to see if there's an environmental variable set for local_settings
     if os.environ.get('CUSTOMSETTINGS', None) == "demo":
