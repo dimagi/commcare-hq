@@ -157,6 +157,8 @@ class SMSSettingsForm(Form):
                     start_time=start_time,
                     end_time=end_time
                 ))
+                if start_time >= end_time:
+                    raise ValidationError(_("End time must come after start time."))
         return result
 
     def clean_restricted_sms_times_json(self):
