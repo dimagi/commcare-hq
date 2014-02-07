@@ -699,6 +699,10 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
 
         return new_domain
 
+    def reminder_should_be_copied(self, handler):
+        return (handler.start_condition_type != ON_DATETIME and
+                handler.user_group_id is None)
+
     def copy_component(self, doc_type, id, new_domain_name, user=None):
         from corehq.apps.app_manager.models import import_app
         from corehq.apps.users.models import UserRole
@@ -718,7 +722,8 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
 
             new_doc = cls.get(new_id)
 
-            if new_doc.doc_type == 'CaseReminderHandler' and new_doc.start_condition_type == ON_DATETIME:
+            if (new_doc.doc_type == 'CaseReminderHandler' and
+                not self.reminder_should_be_copied(new_doc)):
                 return None
 
             for field in self._dirty_fields:
