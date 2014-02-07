@@ -649,7 +649,8 @@ class DangerSigns(GenericTabularReport, CustomProjectReport, ProjectReportParame
                     'danger_sign_count_birth': [],
                 }
             )
-            cols[key[0]].append(val)
+            if val != NO_VALUE:
+                cols[key[0]].append(val)
 
         for sign, cols in row_dict.items():
             pregnancy = sum(cols['danger_sign_count_pregnancy'])
