@@ -48,3 +48,27 @@ def notify_exception(request, message=None):
             'request':request
         }
     )
+
+
+def get_traceback(limit):
+    from cStringIO import StringIO
+    import traceback
+    f = StringIO()
+    traceback.print_stack(file=f, limit=15 + limit)
+    lines = f.getvalue().strip().split('\n')
+    count = 2
+    for line in reversed(lines[:-2 * count]):
+        if not line.lstrip().startswith("File"):
+            continue
+        elif '/restkit/' in line or '/couchdbkit/' in line:
+            count += 1
+        else:
+            break
+
+    end = -2 * count
+    start = -2 * (count + limit)
+
+    return "{traceback}\n[plus {skipped} other frames]".format(
+        traceback='\n'.join(lines[start:end]),
+        skipped=count,
+    )
