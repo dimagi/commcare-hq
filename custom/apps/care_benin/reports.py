@@ -442,7 +442,7 @@ class Referrals(CareGroupReport):
         'referrals_by_type_nouveau_ne',
     )
 
-    village = Column("Village", calculate_fn=lambda key, report: 'Total')#groupname)
+    village = Column("", calculate_fn=lambda key, report: '')#groupname)
 
     referrals_total_view = KeyView(key="referrals_transport_total")
 
