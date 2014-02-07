@@ -111,6 +111,10 @@
                         {% if error.type == "empty lang" %}
                             One of your languages is empty. Check your <a href="{% url "view_app" domain app.id %}">app settings</a>.
                         {% endif %}
+                        {% if error.type == "missing parent tag" %}
+                            A subcase is referencing a parent case tag that does not "{{ error.case_tag }}" exist
+                            {% if not not_actual_build %}in form {% include "app_manager/partials/form_error_message.html" %}{% endif %}
+                        {% endif %}
                         {# And then show the optional `message` regardless #}
                         <span>{{ error.message }}</span>
                     </span>

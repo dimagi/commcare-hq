@@ -1318,10 +1318,10 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
 
         for action in self.actions.get_subcase_actions():
             if action.parent_tag not in self.actions.get_case_tags():
-                errors.append({'type': 'subcase parent tag does not exist', 'word': action.parent_tag})
+                errors.append({'type': 'missing parent tag', 'case_tag': action.parent_tag})
 
             if isinstance(action, AdvancedOpenCaseAction) and not action.name_path:
-                errors.append({'type': 'subcase has no name property'})
+                errors.append({'type': 'case_name required'})
 
         errors.extend(self.check_case_properties(
             all_names=self.actions.all_property_names(),
