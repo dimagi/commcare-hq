@@ -700,13 +700,14 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         return new_domain
 
     def reminder_should_be_copied(self, handler):
+        from corehq.apps.reminders.models import ON_DATETIME
         return (handler.start_condition_type != ON_DATETIME and
                 handler.user_group_id is None)
 
     def copy_component(self, doc_type, id, new_domain_name, user=None):
         from corehq.apps.app_manager.models import import_app
         from corehq.apps.users.models import UserRole
-        from corehq.apps.reminders.models import CaseReminderHandler, ON_DATETIME
+        from corehq.apps.reminders.models import CaseReminderHandler
 
         str_to_cls = {
             'UserRole': UserRole,
