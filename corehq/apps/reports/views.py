@@ -22,6 +22,7 @@ from django.views.decorators.http import (require_http_methods,
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.templatetags.case_tags import case_inline_display
 from couchdbkit.exceptions import ResourceNotFound
+from casexml.apps.case.xml import V2
 import couchexport
 from couchexport import views as couchexport_views
 from couchexport.export import SchemaMismatchException
@@ -680,11 +681,8 @@ def case_details(request, domain, case_id):
     timezone = util.get_timezone(request.couch_user.user_id, domain)
 
     try:
-        case = CommCareCase.get(case_id)
-    except ResourceNotFound:
-        case = None
-    
-    if case is None or case.doc_type != "CommCareCase" or case.domain != domain:
+        case = _get_case_or_404(domain, case_id)
+    except Http404:
         messages.info(request, "Sorry, we couldn't find that case. If you think this is a mistake please report an issue.")
         return HttpResponseRedirect(CaseListReport.get_url(domain=domain))
 
@@ -723,6 +721,24 @@ def case_details(request, domain, case_id):
                 case_details, args=[domain, case_id])
         },
     })
+
+@require_case_view_permission
+@login_and_domain_required
+@require_GET
+def case_xml(request, domain, case_id):
+    case = _get_case_or_404(domain, case_id)
+    version = request.GET.get('version', V2)
+    return HttpResponse(case.to_xml(version), content_type='text/xml')
+
+
+def _get_case_or_404(domain, case_id):
+    try:
+        case = CommCareCase.get(case_id)
+    except ResourceNotFound:
+        case = None
+    if case is None or case.doc_type != "CommCareCase" or case.domain != domain:
+        raise Http404
+    return case
 
 def generate_case_export_payload(domain, include_closed, format, group, user_filter, process=None):
     """

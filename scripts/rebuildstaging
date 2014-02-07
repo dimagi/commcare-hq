@@ -1,0 +1,6 @@
+#!/bin/bash
+
+f=$1
+shift
+
+python scripts/rebuildstaging.py < $f $@

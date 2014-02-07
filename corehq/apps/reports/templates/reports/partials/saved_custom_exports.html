@@ -73,7 +73,7 @@
             </td>
             {% if allow_edit %}
                 <td class="cell-vertical-centered">
-                    <a class="btn btn-danger" data-toggle="modal" class="delete_link" href="#delete-export-modal-{{ export.get_id }}"><i class="icon-remove icon-white"></i> Delete</a>
+                    <a class="btn btn-danger" data-toggle="modal" class="delete_link" href="#delete-export-modal-{{ export.get_id }}"><i class="icon-remove icon-white"></i> {% trans "Delete" %}</a>
                     {% include "export/dialogs/delete_custom_export_dialog.html" %}
                 </td>
             {% endif %}

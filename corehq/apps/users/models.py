@@ -693,14 +693,14 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         """
         Get users from ES.  Use instead of by_domain()
         This is faster than big db calls, but only returns partial data.
-        Set wrap to False to get a raw dict object (much faster)
+        Set wrap to False to get a raw dict object (much faster).
+        This raw dict can be passed to _report_user_dict.
         The save method has been disabled.
         sort_order accepts "asc" or "desc"
         """
         fields = fields or ['_id', 'username', 'first_name', 'last_name',
-                'email']
+                'doc_type', 'is_active', 'email']
         sort_params = {'sort_by': 'username.exact', 'order': order} if order else {}
-
         raw = es_wrapper('users', domain=domain, doc_type=cls.__name__,
                 fields=fields, start_at=start_at, size=size, **sort_params)
         if not wrap:
@@ -708,9 +708,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         def save(*args, **kwargs):
             raise NotImplementedError("This is a fake user, don't save it!")
         ESUser = type(cls.__name__, (cls,), {'save': save})
-        def make_user(user):
-            return ESUser(user)
-        return [make_user(u) for u in raw]
+        return [ESUser(u) for u in raw]
 
     class AccountTypeError(Exception):
         pass
@@ -767,6 +765,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     @property
     def human_friendly_name(self):
         return self.full_name if self.full_name else self.username
+
+    @property
+    def name_in_filters(self):
+        return "%s <%s>" % (self.full_name, self.username) if self.full_name else self.username
 
     formatted_name = full_name
     name = full_name

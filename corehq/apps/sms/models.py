@@ -13,6 +13,7 @@ from casexml.apps.case.signals import case_post_save
 from .mixin import CommCareMobileContactMixin, MobileBackend, PhoneNumberInUseException, InvalidFormatException
 from corehq.apps.sms import util as smsutil
 from dimagi.utils.couch.database import SafeSaveDocument
+from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 INCOMING = "I"
 OUTGOING = "O"
@@ -51,6 +52,10 @@ class MessageLog(SafeSaveDocument, UnicodeMixIn):
     domain_scope = StringProperty()
     queued_timestamp = DateTimeProperty()
     processed_timestamp = DateTimeProperty()
+    # If this outgoing message is a reply to an inbound message, then this is
+    # the _id of the inbound message
+    # TODO: For now this is a placeholder and needs to be implemented
+    in_reply_to = StringProperty()
 
     def __unicode__(self):
         to_from = (self.direction == INCOMING) and "from" or "to"
@@ -316,14 +321,15 @@ class MessageLogOld(models.Model):
             return CouchUser.get_by_user_id(self.couch_recipient).username
         return self.phone_number
 
-
 class CommConnectCase(CommCareCase, CommCareMobileContactMixin):
     def case_changed(self):
         contact_phone_number = self.get_case_property("contact_phone_number")
         contact_phone_number_is_verified = self.get_case_property("contact_phone_number_is_verified")
         contact_backend_id = self.get_case_property("contact_backend_id")
         contact_ivr_backend_id = self.get_case_property("contact_ivr_backend_id")
-        if (contact_phone_number is None) or (contact_phone_number == "") or (str(contact_phone_number) == "0") or self.closed:
+        if ((contact_phone_number is None) or (contact_phone_number == "") or
+            (str(contact_phone_number) == "0") or self.closed or
+            self.doc_type.endswith(DELETED_SUFFIX)):
             try:
                 self.delete_verified_number()
             except:

@@ -77,8 +77,9 @@
 	                                $(document).trigger('correction', [key, data.corrections[key]]);
 	                            }
 	                        }
-                            if (data.hasOwnProperty('case_list-show')){
-                                COMMCAREHQ.app_manager.module_view.requires_case_details(data['case_list-show'])
+                            if (data.hasOwnProperty('case_list-show')
+                                && COMMCAREHQ.app_manager.hasOwnProperty('module_view')){
+                                COMMCAREHQ.app_manager.module_view.requires_case_details(data['case_list-show']);
                             }
 	                    }
 	                }).ui.appendTo($buttonHolder);

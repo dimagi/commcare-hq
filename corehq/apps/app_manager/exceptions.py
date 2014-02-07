@@ -1,3 +1,6 @@
+import couchdbkit
+
+
 class AppManagerException(Exception):
     pass
 
@@ -82,4 +85,8 @@ class ParentModuleReferenceError(SuiteError):
 
 
 class SuiteValidationError(SuiteError):
+    pass
+
+
+class XFormIdNotUnique(AppManagerException, couchdbkit.MultipleResultsFound):
     pass

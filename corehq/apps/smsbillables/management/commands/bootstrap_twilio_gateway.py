@@ -97,4 +97,7 @@ class Command(LabelCommand):
             else:
                 print "%s not in mach_data" % iso
 
+        # https://www.twilio.com/help/faq/sms/will-i-be-charged-if-twilio-encounters-an-error-when-sending-an-sms
+        SmsGatewayFee.create_new(TwilioBackend.get_api_id(), OUTGOING, 0.00, country_code=None)
+
         print "Updated Twilio gateway fees."

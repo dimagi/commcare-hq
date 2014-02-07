@@ -1,6 +1,7 @@
 from datetime import datetime
 import json
 from urllib import urlencode
+from dimagi.utils.couch.resource_conflict import retry_resource
 
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
@@ -8,7 +9,7 @@ from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.template.loader import render_to_string
 from django.shortcuts import render
 from django.contrib import messages
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq.apps.app_manager.views import _clear_app_cache
 
 from corehq.apps.appstore.forms import AddReviewForm
@@ -24,10 +25,10 @@ SNAPSHOT_FACETS = ['project_type', 'license', 'author.exact']
 DEPLOYMENT_FACETS = ['deployment.region']
 SNAPSHOT_MAPPING = [
     ("", True, [
-        {"facet": "project_type", "name": "Category", "expanded": True },
+        {"facet": "project_type", "name": ugettext_lazy("Category"), "expanded": True },
         {
             "facet": "license",
-            "name": "License",
+            "name": ugettext_lazy("License"),
             "expanded": True,
             "mapping": {
                 'cc': 'CC BY',
@@ -38,7 +39,7 @@ SNAPSHOT_MAPPING = [
                 'cc-nc-nd': 'CC BY-NC-ND',
             }
         },
-        {"facet": "author.exact", "name": "Author", "expanded": True },
+        {"facet": "author.exact", "name": ugettext_lazy("Author"), "expanded": True },
     ]),
 ]
 DEPLOYMENT_MAPPING = [
@@ -219,6 +220,7 @@ def approve_app(request, domain):
     return HttpResponseRedirect(request.META.get('HTTP_REFERER') or reverse('appstore'))
 
 @login_required
+@retry_resource(3)
 def import_app(request, domain):
     user = request.couch_user
     if not user.is_eula_signed():

@@ -37,7 +37,7 @@ from corehq.apps.orgs.models import Team
 from corehq.apps.reports.util import get_possible_reports
 from corehq.apps.sms import verify as smsverify
 
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 
 
 def _users_context(request, domain):
@@ -334,7 +334,7 @@ class EditMyAccountDomainView(BaseFullEditUserView):
 
 class ListWebUsersView(BaseUserSettingsView):
     template_name = 'users/web_users.html'
-    page_title = ugettext_noop("Web Users & Roles")
+    page_title = ugettext_lazy("Web Users & Roles")
     urlname = 'web_users'
 
     @method_decorator(require_can_edit_web_users)

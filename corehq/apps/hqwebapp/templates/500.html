@@ -1,15 +1,16 @@
 {% extends "error_base.html" %}
 {% load url from future %}
 {% load hq_shared_tags %}
+{% load i18n %}
 {% block title %}
-    500 Error
+    {% trans "500 Error" %}
 {% endblock %}
 {% block js-inline %}
     <script type="text/javascript">
         $(function () {
             $('#sad-danny').popover({
-                            title: 'This is Danny, one of our best developers.',
-                            content: "Danny is pretty sad that you had to encounter this issue. He's making sure it gets fixed as soon as possible."
+                title: "{% trans "This is Danny, one of our best developers." %}",
+                content: "{% trans "Danny is pretty sad that you had to encounter this issue. He's making sure it gets fixed as soon as possible." %}"
             });
         });
     </script>
@@ -17,13 +18,13 @@
 {% block centered-content %}
     <div class="page-header">
         <h1>500
-            <small>Sorry, something unexpected just went wrong, and we're very sorry about it.</small>
+            <small>{% trans "Sorry, something unexpected just went wrong, and we're very sorry about it." %}</small>
         </h1>
     </div>
     <div class="row">
         <div class="span4">
-            <p><img id="sad-danny" src="{% static 'hqwebapp/img/sad_danny.jpg' %}" alt="Sad Danny is Sad" /></p>
-            <blockquote><p>This problem has been logged and we're already hard at work figuring out the issue.</p></blockquote>
+            <p><img id="sad-danny" src="{% static 'hqwebapp/img/sad_danny.jpg' %}" alt="{% trans "Sad Danny is Sad" %}" /></p>
+            <blockquote><p>{% trans "This problem has been logged and we're already hard at work figuring out the issue." %}</p></blockquote>
         </div>
         <div class="span8">
             <form class="well form form-horizontal" style="padding-bottom: 0;" action="{% url "bug_report" %}" method="post">
@@ -37,27 +38,31 @@
 
                 {{ now }}
                 <fieldset>
-                    <legend>Report an Issue <small>Help us get this problem fixed faster.</small></legend>
-                    <p>We would appreciate it a lot if you could provide us with any additional info about what happened before you encountered this problem.</p>
+                    <legend>
+                        {% blocktrans %}
+                            Report an Issue <small>Help us get this problem fixed faster.</small>
+                        {% endblocktrans %}
+                    </legend>
+                    <p>{% trans "We would appreciate it a lot if you could provide us with any additional info about what happened before you encountered this problem." %}</p>
                     <div class="control-group">
-                        <label class="control-label" for="bug-report-500-subject">Short Description</label>
+                        <label class="control-label" for="bug-report-500-subject">{% trans "Short Description" %}</label>
                         <div class="controls">
                             <input type="text" class="input-xlarge" name="subject" id="bug-report-500-subject">
-                            <p class="help-block">Please summarize the issue in one sentence&mdash;the message field below should contain more detail.</p>
+                            <p class="help-block">{% trans "Please summarize the issue in one sentence&mdash;the message field below should contain more detail." %}</p>
                         </div>
                     </div>
                     <div class="control-group">
-                        <label class="control-label" for="bug-report-500-message">Full Description</label>
+                        <label class="control-label" for="bug-report-500-message">{% trans "Full Description" %}</label>
                         <div class="controls">
                             <textarea class="input-xlarge" name="message" id="bug-report-500-message" rows="10"></textarea>
-                            <p class="help-block">Please try to include as much information as possible.
+                            <p class="help-block">{% trans "Please try to include as much information as possible." %}
                             </p>
                         </div>
                     </div>
                 </fieldset>
 
                 <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">Submit Report</button>
+                    <button type="submit" class="btn btn-primary">{% trans "Submit Report" %}</button>
                 </div>
             </form>
         </div>

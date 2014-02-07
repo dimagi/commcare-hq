@@ -45,4 +45,8 @@ class Command(LabelCommand):
             SmsGatewayFee.create_new(MachBackend.get_api_id(), OUTGOING, weighted_price,
                                      country_code=country_code, currency=Currency.objects.get(code="EUR"))
 
+        # Fee for invalid phonenumber
+        SmsGatewayFee.create_new(MachBackend.get_api_id(), OUTGOING, 0.0225,
+                                 country_code=None, currency=Currency.objects.get(code="EUR"))
+
         print "Updated MACH/Syniverse gateway fees."

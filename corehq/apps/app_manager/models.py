@@ -15,7 +15,7 @@ from copy import deepcopy
 from urllib2 import urlopen
 from urlparse import urljoin
 
-from couchdbkit import ResourceConflict
+from couchdbkit import ResourceConflict, MultipleResultsFound
 from lxml import etree
 from django.core.cache import cache
 from django.utils.encoding import force_unicode
@@ -63,6 +63,7 @@ from .exceptions import (
     RearrangeError,
     VersioningError,
     XFormError,
+    XFormIdNotUnique,
     XFormValidationError,
 )
 
@@ -251,6 +252,33 @@ class FormActions(DocumentSchema):
         return names
 
 
+class CommTrackPreloadAction(PreloadAction):
+    show_product_stock = BooleanProperty(default=True)
+
+
+class CommTrackFormActions(DocumentSchema):
+    load_first_supply_point = SchemaProperty(CommTrackPreloadAction)
+    load_second_supply_point = SchemaProperty(CommTrackPreloadAction)
+    open_requisition = SchemaProperty(OpenSubCaseAction)
+
+    def active_actions(self):
+        actions = {}
+        for action_type in ['load_first_supply_point',
+                            'load_second_supply_point',
+                            'open_requisition']:
+            a = getattr(self, action_type)
+            if a.is_active():
+                actions[action_type] = a
+        return actions
+
+    def all_property_names(self):
+        names = set()
+        names.update(self.load_first_supply_point.preload.keys())
+        names.update(self.load_second_supply_point.preload.values())
+        names.update(self.open_requisition.case_properties.keys())
+        return names
+
+
 class FormSource(object):
     def __get__(self, form, form_cls):
         if not form:
@@ -365,8 +393,15 @@ class FormBase(DocumentSchema):
 
     @classmethod
     def get_form(cls, form_unique_id, and_app=False):
-
-        d = get_db().view('app_manager/xforms_index', key=form_unique_id).one()
+        try:
+            d = get_db().view(
+                'app_manager/xforms_index',
+                key=form_unique_id
+            ).one()
+        except MultipleResultsFound as e:
+            raise XFormIdNotUnique(
+                "xform id '%s' not unique: %s" % (form_unique_id, e)
+            )
         if d:
             d = d['value']
         else:
@@ -938,6 +973,8 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
                 return Module.wrap(data)
             elif doc_type == 'CareplanModule':
                 return CareplanModule.wrap(data)
+            elif doc_type == 'CommTrackModule':
+                return CommTrackModule.wrap(data)
             else:
                 raise ValueError('Unexpected doc_type for Module', doc_type)
         else:
@@ -1160,6 +1197,148 @@ class Module(ModuleBase):
                 'type': 'no ref detail',
                 'module': module_info,
             }
+
+
+class CommTrackForm(IndexedFormBase, NavMenuItemMediaMixin):
+    actions = SchemaProperty(CommTrackFormActions)
+
+    def add_stuff_to_xform(self, xform):
+        super(CommTrackForm, self).add_stuff_to_xform(xform)
+        # TODO: add stuff to xform
+
+    def check_actions(self):
+        errors = []
+
+        if not self.actions.open_requisition.case_type:
+            errors.append({'type': 'subcase has no case type'})
+
+        errors.extend(self.check_case_properties(
+            all_names=self.actions.all_property_names(),
+            subcase_names=self.actions.open_requisition.case_properties
+        ))
+
+        def generate_paths():
+            for action in self.actions.active_actions().values():
+                for path in FormAction.get_action_paths(action):
+                    yield path
+
+        self.check_paths(generate_paths())
+
+        return errors
+
+    def extended_build_validation(self, error_meta, xml_valid, validate_module=True):
+        errors = []
+        if xml_valid:
+            for error in self.check_actions():
+                error.update(error_meta)
+                errors.append(error)
+
+        if validate_module:
+            errors.extend(self.get_module().get_case_errors(
+                needs_case_type=True,
+                needs_case_detail=True,
+                needs_referral_detail=False,
+            ))
+
+        return errors
+
+    def get_case_updates(self, case_type):
+        return []
+
+    @memoized
+    def get_parent_types_and_contributed_properties(self, module_case_type, case_type):
+        parent_types = set()
+        case_properties = set()
+        subcase = self.actions.open_requisition
+        if subcase.case_type == case_type:
+            case_properties.update(
+                subcase.case_properties.keys()
+            )
+        return parent_types, case_properties
+
+
+class CommTrackModule(ModuleBase):
+    case_label = DictProperty()
+    forms = SchemaListProperty(CommTrackForm)
+    case_details = SchemaProperty(DetailPair)
+    product_details = SchemaProperty(DetailPair)
+
+    @classmethod
+    def new_module(cls, name, lang):
+        detail = Detail(
+            columns=[DetailColumn(
+                format='plain',
+                header={(lang or 'en'): ugettext("Supply point")},
+                field='name',
+                model='case',
+            )]
+        )
+        return CommTrackModule(
+            name={(lang or 'en'): name or ugettext("Manage Supply Points")},
+            forms=[],
+            case_type='',
+            case_details=DetailPair(
+                short=Detail(detail.to_json()),
+                long=Detail(detail.to_json()),
+            ),
+            product_details=DetailPair(
+                short=Detail(
+                    columns=[
+                        DetailColumn(
+                            format='plain',
+                            header={(lang or 'en'): ugettext("Product")},
+                            field='name',
+                            model='case',
+                        ),
+                        DetailColumn(
+                            format='plain',
+                            header={(lang or 'en'): ugettext("Quantity")},
+                            field='product:quantity',
+                            model='case',
+                        )
+                    ],
+                ),
+                long=Detail(),
+            ),
+        )
+
+    def requires_case_details(self):
+        return True
+
+    def get_details(self):
+        return (
+            ('case_short', self.case_details.short, True),
+            ('case_long', self.case_details.long, True),
+            ('product_short', self.product_details.short, True),
+            ('product_long', self.product_details.long, False),
+        )
+
+    def get_case_errors(self, needs_case_type, needs_case_detail, needs_referral_detail=False):
+
+        module_info = self.get_module_info()
+
+        if needs_case_type and not self.case_type:
+            yield {
+                'type': 'no case type',
+                'module': module_info,
+            }
+
+        if needs_case_detail:
+            if not self.case_details.short.columns:
+                yield {
+                    'type': 'no case detail for supply point',
+                    'module': module_info,
+                }
+            if not self.product_details.short.columns:
+                yield {
+                    'type': 'no case detail for products',
+                    'module': module_info,
+                }
+            columns = self.case_details.short.columns + self.case_details.long.columns
+            columns += self.product_details.short.columns
+            errors = self.validate_detail_columns(columns)
+            for error in errors:
+                yield error
 
 
 class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):
@@ -2074,7 +2253,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     # ended up not using a schema because properties is a reserved word
     profile = DictProperty()
     use_custom_suite = BooleanProperty(default=False)
-    force_http = BooleanProperty(default=False)
     cloudcare_enabled = BooleanProperty(default=False)
     translation_strategy = StringProperty(default='dump-known',
                                           choices=app_strings.CHOICES.keys())
@@ -2129,13 +2307,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @property
     def url_base(self):
-        # force_http is a deprecated hack
-        # for safety we're just special-casing the only
-        # domain that ever used it, wvmoz
-        if self.force_http and self.domain == 'wvmoz':
-            return settings.INSECURE_URL_BASE
-        else:
-            return get_url_base()
+        return get_url_base()
 
     @absolute_url_property
     def suite_url(self):
@@ -2740,7 +2912,7 @@ def get_app(domain, app_id, wrap_cls=None, latest=False):
 
         if original_app.get('copy_of'):
             parent_app_id = original_app.get('copy_of')
-            min_version = original_app['version']
+            min_version = original_app['version'] if original_app.get('is_released') else -1
         else:
             parent_app_id = original_app['_id']
             min_version = -1
@@ -2864,6 +3036,7 @@ class DeleteFormRecord(DeleteRecord):
 
 class CareplanAppProperties(DocumentSchema):
     name = StringProperty()
+    latest_release = StringProperty()
     case_type = StringProperty()
     goal_conf = DictProperty()
     task_conf = DictProperty()

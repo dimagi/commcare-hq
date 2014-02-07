@@ -3,10 +3,13 @@ from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe, mark_for_escaping
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_noop, ugettext_lazy
+from corehq import toggles
+from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.domain.utils import get_adm_enabled_domains
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
+import toggle
 
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
@@ -606,7 +609,7 @@ class MessagingTab(UITab):
         if self.project.commtrack_enabled:
             items.append(
                 (_("CommTrack"), [
-                    {'title': _("Subscribe to SMS Reports"),
+                    {'title': ugettext_lazy("Subscribe to SMS Reports"),
                     'url': reverse(SubscribeSMSView.urlname, args=[self.domain])},])
             )
 
@@ -647,7 +650,7 @@ class MessagingTab(UITab):
         if self.couch_user.is_superuser or self.couch_user.is_domain_admin(self.domain):
             items.append(
                 (_("Settings"), [
-                    {'title': _("General Settings"),
+                    {'title': ugettext_lazy("General Settings"),
                      'url': reverse('sms_settings', args=[self.domain])},
                 ])
             )
@@ -826,7 +829,19 @@ class ProjectSettingsTab(UITab):
         items.append((_('Project Information'), project_info))
 
         if user_is_admin:
-            from corehq.apps.domain.views import BasicCommTrackSettingsView, AdvancedCommTrackSettingsView
+            from corehq.apps.domain.views import (
+                BasicCommTrackSettingsView,
+                AdvancedCommTrackSettingsView,
+                DomainSubscriptionView,
+                SelectPlanView,
+            )
+
+            subscription = [
+                {
+                    'title': DomainSubscriptionView.page_title,
+                    'url': reverse(DomainSubscriptionView.urlname, args=[self.domain]),
+                },
+            ]
 
             if self.project.commtrack_enabled:
                 commtrack_settings = [
@@ -869,7 +884,8 @@ class ProjectSettingsTab(UITab):
                  ]}
             ])
             items.append((_('Project Administration'), administration))
-
+            if toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, self.couch_user.username):
+                items.append((_('Subscription'), subscription))
 
         if self.couch_user.is_superuser:
             from corehq.apps.domain.views import EditInternalDomainInfoView, EditInternalCalculationsView
@@ -989,6 +1005,16 @@ class BillingTab(UITab):
         return self.couch_user and self.couch_user.is_superuser
 
 
+class AccountingTab(UITab):
+    title = ugettext_noop("Accounting")
+    view = "accounting_default"
+    dispatcher = AccountingAdminInterfaceDispatcher
+
+    @property
+    def is_viewable(self):
+        return self.couch_user and self.couch_user.is_superuser
+
+
 class SMSAdminTab(UITab):
     title = ugettext_noop("SMS Connectivity")
     view = "default_sms_admin_interface"
@@ -1034,6 +1060,7 @@ class AdminTab(UITab):
         BillingTab,
         SMSAdminTab,
         AnnouncementsTab,
+        AccountingTab,
     )
 
     @property
@@ -1048,6 +1075,7 @@ class AdminTab(UITab):
             format_submenu_context(mark_for_escaping(_("Commands")), url=reverse("management_commands")),
 #            format_submenu_context(mark_for_escaping("HQ Announcements"),
 #                url=reverse("default_announcement_admin")),
+            format_submenu_context(AccountingTab.title, url=reverse('accounting_default')),
         ]
         try:
             submenu_context.append(format_submenu_context(mark_for_escaping(_("Billing")),

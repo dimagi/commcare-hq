@@ -500,6 +500,8 @@ class SuiteGenerator(object):
         # you have to call remove_unused_mappings
         # before iterating through multimedia_map
         self.app.remove_unused_mappings()
+        if self.app.multimedia_map is None:
+            self.app.multimedia_map = {}
         for path, m in self.app.multimedia_map.items():
             unchanged_path = path
             if path.startswith(PREFIX):
@@ -537,32 +539,33 @@ class SuiteGenerator(object):
         if not self.app.use_custom_suite:
             for module in self.modules:
                 for detail_type, detail, enabled in module.get_details():
-                    detail_column_infos = get_detail_column_infos(
-                        detail,
-                        include_sort=detail_type.endswith('short'),
-                    )
-
-                    if detail_column_infos and enabled:
-                        d = Detail(
-                            id=self.id_strings.detail(module, detail_type),
-                            title=Text(locale_id=self.id_strings.detail_title_locale(module, detail_type))
+                    if enabled:
+                        detail_column_infos = get_detail_column_infos(
+                            detail,
+                            include_sort=detail_type.endswith('short'),
                         )
 
-                        for column_info in detail_column_infos:
-                            fields = get_column_generator(
-                                self.app, module, detail,
-                                detail_type=detail_type, *column_info
-                            ).fields
-                            d.fields.extend(fields)
+                        if detail_column_infos:
+                            d = Detail(
+                                id=self.id_strings.detail(module, detail_type),
+                                title=Text(locale_id=self.id_strings.detail_title_locale(module, detail_type))
+                            )
 
-                        try:
-                            if not self.app.enable_multi_sort:
-                                d.fields[0].sort = 'default'
-                        except IndexError:
-                            pass
-                        else:
-                            # only yield the Detail if it has Fields
-                            r.append(d)
+                            for column_info in detail_column_infos:
+                                fields = get_column_generator(
+                                    self.app, module, detail,
+                                    detail_type=detail_type, *column_info
+                                ).fields
+                                d.fields.extend(fields)
+
+                            try:
+                                if not self.app.enable_multi_sort:
+                                    d.fields[0].sort = 'default'
+                            except IndexError:
+                                pass
+                            else:
+                                # only yield the Detail if it has Fields
+                                r.append(d)
 
         return r
 

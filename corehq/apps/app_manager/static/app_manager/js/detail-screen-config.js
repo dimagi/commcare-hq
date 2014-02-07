@@ -413,7 +413,8 @@ var DetailScreenConfig = (function () {
                 });
             }
 
-            columns = lcsMerge(spec.short.columns, spec.long.columns, _.isEqual).merge;
+            var longColumns = spec.long ? spec.long.columns : [];
+            columns = lcsMerge(spec.short.columns, longColumns, _.isEqual).merge;
 
             // set up the columns
             for (i = 0; i < columns.length; i += 1) {
@@ -530,18 +531,21 @@ var DetailScreenConfig = (function () {
         };
         Screen.prototype = {
             save: function () {
-                var parentSelect = this.config.parentSelect;
+                var parentSelect;
+                if (this.config.hasOwnProperty('parentSelect')) {
+                    parentSelect = JSON.stringify({
+                        module_id: this.config.parentSelect.moduleId(),
+                        relationship: 'parent',
+                        active: this.config.parentSelect.active()
+                    });
+                }
                 this.saveButton.ajax({
                     url: this.saveUrl,
                     type: "POST",
                     data: {
                         type: this.type,
                         screens: JSON.stringify(this.serialize()),
-                        parent_select: JSON.stringify({
-                            module_id: parentSelect.moduleId(),
-                            relationship: 'parent',
-                            active: parentSelect.active()
-                        })
+                        parent_select: parentSelect
                     },
                     dataType: 'json',
                     success: function (data) {
@@ -656,6 +660,7 @@ var DetailScreenConfig = (function () {
                         ).addClass('detail-screen-table'
                     ).appendTo($box);
                     $thead = $('<thead/>').appendTo($table);
+
                     $tr = $('<tr/>').appendTo($thead);
 
                     // grip
@@ -668,6 +673,7 @@ var DetailScreenConfig = (function () {
                     $('<th/>').addClass('detail-screen-format').text(DetailScreenConfig.message.FORMAT).appendTo($tr);
                     $('<th/>').addClass('detail-screen-extra').appendTo($tr);
 
+                    $('<th/>').addClass('detail-screen-icon').appendTo($tr);
                     $('<th/>').addClass('detail-screen-icon').appendTo($tr);
 
                     $columns = $('<tbody/>').addClass('detail-screen-columns').appendTo($table);
@@ -725,13 +731,15 @@ var DetailScreenConfig = (function () {
             this.sortRows = new SortRows();
             this.lang = spec.lang;
             this.langs = spec.langs || [];
-            this.parentSelect = new ParentSelect({
-                active: spec.parentSelect.active,
-                moduleId: spec.parentSelect.module_id,
-                parentModules: spec.parentModules,
-                lang: this.lang,
-                langs: this.langs
-            });
+            if (spec.hasOwnProperty('parentSelect')) {
+                this.parentSelect = new ParentSelect({
+                    active: spec.parentSelect.active,
+                    moduleId: spec.parentSelect.module_id,
+                    parentModules: spec.parentModules,
+                    lang: this.lang,
+                    langs: this.langs
+                });
+            }
             this.edit = spec.edit;
             this.saveUrl = spec.saveUrl;
 
@@ -760,12 +768,12 @@ var DetailScreenConfig = (function () {
             var $sortRowsHome = $('#' + type + '-detail-screen-sort');
             var $parentSelectHome = $('#' + type + '-detail-screen-parent');
             ko.applyBindings(ds.sortRows, $sortRowsHome.get(0));
-            if ($parentSelectHome.get(0)){
+            if ($parentSelectHome.get(0) && ds.hasOwnProperty('parentSelect')){
                 ko.applyBindings(ds.parentSelect, $parentSelectHome.get(0));
+                $parentSelectHome.on('change', '*', function () {
+                    ds.screens[0].fire('change');
+                });
             }
-            $parentSelectHome.on('change', '*', function () {
-                ds.screens[0].fire('change');
-            });
             return ds;
         };
         return DetailScreenConfig;

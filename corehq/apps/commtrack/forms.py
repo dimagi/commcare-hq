@@ -1,5 +1,5 @@
 from django import forms
-from django.utils.translation import ugettext_noop, ugettext as _
+from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Fieldset, ButtonHolder, Submit
 
@@ -30,6 +30,7 @@ class ProductForm(forms.Form):
     def __init__(self, product, *args, **kwargs):
         self.product = product
         kwargs['initial'] = self.product._doc
+        kwargs['initial']['code'] = self.product.code
         super(ProductForm, self).__init__(*args, **kwargs)
         programs = Program.by_domain(self.product.domain, wrap=False)
         self.fields['program_id'].choices = tuple((prog['_id'], prog['name']) for prog in programs)
@@ -82,39 +83,42 @@ class ProductForm(forms.Form):
 class AdvancedSettingsForm(forms.Form):
     use_auto_emergency_levels = forms.BooleanField(
         label=ugettext_noop("Use default emergency levels"), required=False)
-    
+
     stock_emergency_level = forms.DecimalField(
-        label=ugettext_noop("Emergency Level (months)"), required=False)
+        label=ugettext_lazy("Emergency Level (months)"), required=False)
     stock_understock_threshold = forms.DecimalField(
-        label=ugettext_noop("Low Stock Level (months)"), required=False)
+        label=ugettext_lazy("Low Stock Level (months)"), required=False)
     stock_overstock_threshold = forms.DecimalField(
-        label=ugettext_noop("Overstock Level (months)"), required=False)
+        label=ugettext_lazy("Overstock Level (months)"), required=False)
 
     use_auto_consumption = forms.BooleanField(
-        label=ugettext_noop("Use automatic consumption calculation"), required=False)
-    
+        label=ugettext_lazy("Use automatic consumption calculation"), required=False)
     consumption_min_transactions = forms.IntegerField(
-        label=ugettext_noop("Minimum Transactions (Count)"), required=False)
+        label=ugettext_lazy("Minimum Transactions (Count)"), required=False)
     consumption_min_window = forms.IntegerField(
-        label=ugettext_noop("Minimum Window for Calculation (Days)"), required=False)
+        label=ugettext_lazy("Minimum Window for Calculation (Days)"), required=False)
     consumption_optimal_window = forms.IntegerField(
-        label=ugettext_noop("Optimal Window for Calculation (Days)"), required=False)
+        label=ugettext_lazy("Optimal Window for Calculation (Days)"), required=False)
 
     def clean(self):
         cleaned_data = super(AdvancedSettingsForm, self).clean()
 
-        if (not cleaned_data.get('use_auto_consumption') and 
-            not (all(cleaned_data.get(f) for f in (
+        if cleaned_data.get('use_auto_consumption'):
+            consumption_keys = [
                 'consumption_min_transactions',
-                'consumption_min_window', 
-                'consumption_optimal_window')))):
-            self._errors['use_auto_consumption'] = self.error_class([_(
-                "You must use automatic consumption calculation or " +
-                " specify a value for all consumption settings.")])
+                'consumption_min_window',
+                'consumption_optimal_window'
+            ]
+
+            for key in consumption_keys:
+                if not cleaned_data.get(key):
+                    self._errors[key] = self.error_class([_(
+                        "You must use automatic consumption calculation or " +
+                        " specify a value for all consumption settings."
+                    )])
 
         return cleaned_data
 
-    
     def __init__(self, *args, **kwargs):
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
@@ -133,7 +137,7 @@ class AdvancedSettingsForm(forms.Form):
                 'consumption_optimal_window',
             ),
             ButtonHolder(
-                Submit('submit', 'Submit')
+                Submit('submit', ugettext_lazy('Submit'))
             )
         )
 
