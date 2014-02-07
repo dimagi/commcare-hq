@@ -96,7 +96,7 @@
                         <!-- /ko -->
 
                         <!-- ko if:  actionType === 'open' -->
-                        <div class="control-group">
+                        <div class="control-group" data-bind="visible: allow_subcase">
                             <label class="checkbox">
                                 <input type="checkbox" data-bind="checked: subcase"/>
                                 {% trans "Make this case a subcase" %}
