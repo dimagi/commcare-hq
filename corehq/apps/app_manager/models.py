@@ -1374,6 +1374,7 @@ class AdvancedModule(ModuleBase):
     case_details = SchemaProperty(DetailPair)
     product_details = SchemaProperty(DetailPair)
     put_in_root = BooleanProperty(default=False)
+    case_list = SchemaProperty(CaseList)
 
     @classmethod
     def new_module(cls, name, lang):
@@ -3202,8 +3203,8 @@ FormBase.get_locale_id = lambda self: "forms.m{module.id}f{form.id}".format(modu
 
 ModuleBase.get_locale_id = lambda self: "modules.m{module.id}".format(module=self)
 
-Module.get_case_list_command_id = lambda self: "m{module.id}-case-list".format(module=self)
-Module.get_case_list_locale_id = lambda self: "case_lists.m{module.id}".format(module=self)
+ModuleBase.get_case_list_command_id = lambda self: "m{module.id}-case-list".format(module=self)
+ModuleBase.get_case_list_locale_id = lambda self: "case_lists.m{module.id}".format(module=self)
 
 Module.get_referral_list_command_id = lambda self: "m{module.id}-referral-list".format(module=self)
 Module.get_referral_list_locale_id = lambda self: "referral_lists.m{module.id}".format(module=self)

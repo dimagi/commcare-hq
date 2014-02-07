@@ -351,6 +351,11 @@
           "display": "long"
         }
       },
+      "case_list": {
+        "doc_type": "CaseList",
+        "show": true,
+        "label": {}
+      },
       "forms": [
         {
           "doc_type": "AdvancedForm",
