@@ -498,7 +498,7 @@ class SoftwarePlanVersionForm(forms.Form):
         label="Role"
     )
     role_type = forms.ChoiceField(
-        required=False,
+        required=True,
         choices=(
             ('existing', "Use Existing Role"),
             ('new', "Create New Role"),
@@ -851,7 +851,7 @@ class SoftwarePlanVersionForm(forms.Form):
 
     def clean_role_slug(self):
         role_slug = self.cleaned_data['role_slug']
-        if role_slug != self.plan_version.role.slug:
+        if self.plan_version is None or role_slug != self.plan_version.role.slug:
             self.is_update = True
         return role_slug
 
