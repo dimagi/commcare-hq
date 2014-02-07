@@ -618,12 +618,27 @@ var AdvancedCase = (function () {
                 self.case_properties.remove(property);
             };
 
+            var add_circular = function () {
+                self.allow_subcase = ko.computed(function () {
+                    return self.config.caseConfigViewModel.load_update_cases().length > 0;
+                });
+            };
+            // hacky way to prevent trying to access caseConfigViewModel before it is defined
+            if (!self.config.caseConfigViewModel) {
+                _.delay(add_circular);
+            } else {
+                add_circular();
+            }
+
             return self;
         },
         unwrap: function (self) {
             self.case_properties.remove(function (prop) {
                 return prop.isBlank();
             });
+            if (self.parent_tag() && !self.allow_subcase()) {
+                self.parent_tag('');
+            }
             var action = ko.mapping.toJS(self, OpenCaseAction.mapping(self));
             ActionBase.clean_condition(self.open_condition);
             ActionBase.clean_condition(self.close_condition);
