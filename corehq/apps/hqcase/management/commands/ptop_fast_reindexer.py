@@ -101,7 +101,11 @@ class PtopReindexer(NoArgsCommand):
 
     def full_couch_view_iter(self):
         start_seq = 0
-        view_kwargs = {"include_docs": self.pillow.include_docs}
+        if hasattr(self.pillow, 'include_docs_when_preindexing'):
+            include_docs = self.pillow.include_docs_when_preindexing
+        else:
+            include_docs = self.pillow.include_docs
+        view_kwargs = {"include_docs": include_docs}
         if self.couch_key is not None:
             view_kwargs["key"] = self.couch_key
 
