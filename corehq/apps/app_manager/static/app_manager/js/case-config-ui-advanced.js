@@ -95,7 +95,8 @@ var AdvancedCase = (function () {
                 $home.on('textchange', 'input', self.change)
                      // all select2's are represented by an input[type="hidden"]
                      .on('change', 'select, input[type="hidden"]', self.change)
-                     .on('click', 'a', self.change);
+                     .on('click', 'a:not(.header)', self.change)
+                     .on('change', 'input[type="checkbox"]', self.change);
                 self.ensureBlankProperties();
                 $('#case-configuration-tab').on('click', function () {
                     // re-apply accordion settings
@@ -142,14 +143,20 @@ var AdvancedCase = (function () {
             }
         };
 
-        self.getCaseTags = function (type) {
+        self.getCaseTags = function (type, action) {
             var tags = [];
             var actions = [];
-            if (type === 'all' || type === 'open') {
+            if (type === 'all') {
                 actions = actions.concat(self.open_cases());
-            }
-            if (type === 'all' || type === 'load') {
                 actions = actions.concat(self.load_update_cases());
+            }
+            if (type === 'subcase') {
+                actions = actions.concat(self.load_update_cases());
+                // only allow creating subcases of actions before this one
+                var index = self.open_cases.indexOf(action);
+                if (index > 0) {
+                    actions = actions.concat(self.open_cases.slice(0, index));
+                }
             }
             for (var i = 0; i < actions.length; i++) {
                 var tag = actions[i].case_tag();
@@ -161,6 +168,19 @@ var AdvancedCase = (function () {
                 }
             }
             return tags;
+        };
+
+        self.getActionFromTag = function (tag) {
+            var action = _.find(self.open_cases(), function (a) {
+                return a.case_tag() === tag;
+            });
+            if (action) {
+                return action;
+            }
+            action = _.find(self.load_update_cases(), function (a) {
+                return a.case_tag() === tag;
+            });
+            return action;
         };
 
         self.load_update_cases = ko.observableArray(_(params.actions.load_update_cases).map(function (a) {
@@ -181,7 +201,7 @@ var AdvancedCase = (function () {
 
         self.actionOptions = ko.computed(function () {
             var options = [];
-            if (self.load_update_cases().length <= 1) {
+            if (self.load_update_cases().length <= 2) {
                 options.push({
                     display: 'Load / Update / Close a case',
                     value: 'load'
@@ -577,10 +597,16 @@ var AdvancedCase = (function () {
                 return ActionBase.validate(self, self.case_type(), self.case_tag());
             });
 
-            self.subcase = ko.observable(Boolean(self.parent_tag()));
-            self.subcase.subscribe(function (subcase) {
-                if (!subcase) {
-                    self.parent_tag('');
+            self.subcase = ko.computed({
+                read: function () {
+                    return self.parent_tag();
+                },
+                write: function (value) {
+                    if (value) {
+                        self.parent_tag('Select parent');
+                    } else {
+                        self.parent_tag('');
+                    }
                 }
             });
 
@@ -620,7 +646,25 @@ var AdvancedCase = (function () {
 
             var add_circular = function () {
                 self.allow_subcase = ko.computed(function () {
-                    return self.config.caseConfigViewModel.load_update_cases().length > 0;
+                    return self.parent_tag() || self.config.caseConfigViewModel.getCaseTags('subcase', self).length > 0;
+                });
+                self.validate_subcase = ko.computed(function () {
+                    if (!self.parent_tag()) {
+                        return null;
+                    }
+
+                    var parent = self.config.caseConfigViewModel.getActionFromTag(self.parent_tag());
+                    if (!parent) {
+                        return "Subcase parent reference is missing";
+                    } else if (parent.actionType === 'open') {
+                        if (!parent.repeat_context()){
+                            return null;
+                        } else if (!self.repeat_context() ||
+                            !ko.utils.stringStartsWith(self.repeat_context(), parent.repeat_context())) {
+                            return "Subcase must be in same repeat context as parent.";
+                        }
+                    }
+                    return null;
                 });
             };
             // hacky way to prevent trying to access caseConfigViewModel before it is defined

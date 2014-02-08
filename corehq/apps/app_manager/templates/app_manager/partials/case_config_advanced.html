@@ -18,7 +18,7 @@
 
 <script type="text/html" id="case-config:case-action">
     <h3>
-        <a href="#" data-bind="html: header"></a>
+        <a href="#" data-bind="html: header" class="header"></a>
     </h3>
     <div>
             <div>
@@ -96,7 +96,7 @@
                         <!-- /ko -->
 
                         <!-- ko if:  actionType === 'open' -->
-                        <div class="control-group" data-bind="visible: allow_subcase">
+                        <div class="control-group" data-bind="visible: allow_subcase, css: {warning: validate_subcase()}">
                             <label class="checkbox">
                                 <input type="checkbox" data-bind="checked: subcase"/>
                                 {% trans "Make this case a subcase" %}
@@ -105,7 +105,7 @@
                                 </span>
                             </label>
                             <span data-bind="if: subcase">
-                                <select data-bind="optstr: $parent.getCaseTags('load'),
+                                <select data-bind="optstr: $parent.getCaseTags('subcase', $data),
                                     value: parent_tag,
                                     edit: $root.edit">
                                 </select>
@@ -114,6 +114,7 @@
                                     <input type="text" data-bind="value: parent_reference_id, edit: $root.edit"/>
                                 {% endif %}
                             </span>
+                            <span class="help-inline" data-bind="text: validate_subcase"></span>
                         </div>
                         <!-- /ko -->
 

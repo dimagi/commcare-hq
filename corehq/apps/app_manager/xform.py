@@ -1012,9 +1012,7 @@ class XForm(WrappedNode):
             if action.repeat_context:
                 repeat_contexts[action.repeat_context] += 1
 
-        for action in form.actions.open_cases:
-            check_case_type(action)
-
+        def get_action_path(action, create_subcase_node=True):
             if action.repeat_context:
                 base_path = '%s/' % action.repeat_context
                 parent_node = self.instance_node.find(
@@ -1028,12 +1026,22 @@ class XForm(WrappedNode):
 
             if nest:
                 name = case_tag(action)
-                subcase_node = _make_elem('{x}%s' % name)
-                parent_node.append(subcase_node)
                 path = '%s%s/' % (base_path, name)
+                if create_subcase_node:
+                    subcase_node = _make_elem('{x}%s' % name)
+                    parent_node.append(subcase_node)
+                else:
+                    subcase_node = None
             else:
                 subcase_node = parent_node
                 path = base_path
+
+            return path, subcase_node
+
+        for action in form.actions.open_cases:
+            check_case_type(action)
+
+            path, subcase_node = get_action_path(action)
 
             open_case_block = CaseBlock(self, path)
             subcase_node.insert(0, open_case_block.elem)
@@ -1050,12 +1058,18 @@ class XForm(WrappedNode):
                 open_case_block.add_update_block(action.case_properties)
 
             if action.parent_tag:
-                parent_action = form.actions.get_action_from_tag(action.parent_tag)
+                parent_meta = form.actions.actions_meta_by_tag.get(action.parent_tag)
                 reference_id = action.parent_reference_id or 'parent'
+                if parent_meta['type'] == 'load':
+                    ref = CaseIDXPath(session_var(parent_meta['action'].session_case_id))
+                else:
+                    path, _ = get_action_path(parent_meta['action'], create_subcase_node=False)
+                    ref = self.resolve_path("%scase/@case_id" % path)
+
                 open_case_block.add_index_ref(
                     reference_id,
-                    parent_action.case_type,
-                    CaseIDXPath(session_var(parent_action.session_case_id)),
+                    parent_meta['action'].case_type,
+                    ref,
                 )
 
             if action.close_condition.type != 'never':

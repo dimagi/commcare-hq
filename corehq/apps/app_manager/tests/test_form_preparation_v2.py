@@ -286,6 +286,24 @@ class SubcaseRepeatTestAdvanced(FormPrepBase):
         self.form.actions.open_cases[0].open_condition.type = 'always'
         self.assert_xml_equiv(self.get_xml('subcase-repeat'), self.form.render_xform())
 
+    def test_subcase_of_open(self):
+        self.form.actions.open_cases.append(AdvancedOpenCaseAction(
+            case_type=self.module.case_type,
+            case_tag='open_1',
+            name_path='/data/mother_name',
+            repeat_context="/data/child"
+        ))
+
+        self.form.actions.open_cases.append(AdvancedOpenCaseAction(
+            case_type=self.module.case_type,
+            case_tag='open_2',
+            name_path='/data/mother_name',
+            parent_tag='open_1',
+            repeat_context="/data/child"
+        ))
+        self.form.actions.open_cases[0].open_condition.type = 'always'
+        self.assert_xml_equiv(self.get_xml('subcase-repeat'), self.form.render_xform())
+
     def test_subcase_repeat_sharing(self):
         self.form.actions.load_update_cases.append(LoadUpdateAction(
             case_type=self.parent_module.case_type,
