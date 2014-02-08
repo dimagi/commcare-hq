@@ -74,7 +74,6 @@ FIELD_SEPARATOR = ':'
 
 ATTACHMENT_REGEX = r'[^/]*\.xml'
 
-
 def _rename_key(dct, old, new):
     if old in dct:
         if new in dct and dct[new]:
@@ -272,6 +271,9 @@ class AdvancedAction(DocumentSchema):
         if self.close_condition.type == 'if':
             yield self.close_condition.question
 
+    def get_property_names(self):
+        return set(self.case_properties.keys())
+
     @property
     def session_case_id(self):
         return 'case_id_{}'.format(self.case_tag)
@@ -287,6 +289,11 @@ class LoadUpdateAction(AdvancedAction):
 
         for path in self.preload.values():
             yield path
+
+    def get_property_names(self):
+        names = super(LoadUpdateAction, self).get_property_names()
+        names.update(self.preload.keys())
+        return names
 
 
 class AdvancedOpenCaseAction(AdvancedAction):
@@ -312,24 +319,6 @@ class AdvancedFormActions(DocumentSchema):
     def get_all_actions(self):
         return self.load_update_cases + self.open_cases
 
-    def all_property_names(self):
-        names = set()
-        for action in self.load_update_cases:
-            names.update(action.preload.keys())
-            names.update(action.case_properties.keys())
-        for action in self.open_cases:
-            names.update(action.case_properties.keys())
-
-        return names
-
-    def subcase_property_names(self):
-        names = set()
-        for action in self.get_subcase_actions():
-            names.update(action.case_properties.keys())
-            if hasattr(action, 'preload'):
-                names.update(action.preload.keys())
-        return names
-
     def get_subcase_actions(self):
         return (a for a in self.get_all_actions() if a.parent_tag)
 
@@ -347,6 +336,20 @@ class AdvancedFormActions(DocumentSchema):
     @property
     def actions_meta_by_parent_tag(self):
         return self._action_meta()['by_parent_tag']
+
+    def get_action_hierarchy(self, action):
+        current = action
+        hierarchy = [current]
+        while current and current.parent_tag:
+            parent = self.get_action_from_tag(current.parent_tag)
+            current = parent
+            if parent:
+                if parent in hierarchy:
+                    circular = [a.case_tag for a in hierarchy + [parent]]
+                    raise ValueError("Circular reference in subcase hierarchy: {}".format(circular))
+                hierarchy.append(parent)
+
+        return hierarchy
 
     @memoized
     def _action_meta(self):
@@ -658,7 +661,7 @@ class IndexedFormBase(FormBase, IndexedSchema):
     def get_case_type(self):
         return self._parent.case_type
 
-    def check_case_properties(self, all_names=None, subcase_names=None):
+    def check_case_properties(self, all_names=None, subcase_names=None, case_tag=None):
         all_names = all_names or []
         subcase_names = subcase_names or []
         errors = []
@@ -669,15 +672,15 @@ class IndexedFormBase(FormBase, IndexedSchema):
         for key in all_names:
             # this regex is also copied in propertyList.ejs
             if not re.match(r'^[a-zA-Z][\w_-]*(/[a-zA-Z][\w_-]*)*$', key):
-                errors.append({'type': 'update_case word illegal', 'word': key})
+                errors.append({'type': 'update_case word illegal', 'word': key, 'case_tag': case_tag})
             _, key = split_path(key)
             if key in reserved_words:
-                errors.append({'type': 'update_case uses reserved word', 'word': key})
+                errors.append({'type': 'update_case uses reserved word', 'word': key, 'case_tag': case_tag})
 
         # no parent properties for subcase
         for key in subcase_names:
             if not re.match(r'^[a-zA-Z][\w_-]*$', key):
-                errors.append({'type': 'update_case word illegal', 'word': key})
+                errors.append({'type': 'update_case word illegal', 'word': key, 'case_tag': case_tag})
 
         return errors
 
@@ -1320,20 +1323,37 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             if action.parent_tag not in self.actions.get_case_tags():
                 errors.append({'type': 'missing parent tag', 'case_tag': action.parent_tag})
 
-            if isinstance(action, AdvancedOpenCaseAction) and not action.name_path:
-                errors.append({'type': 'case_name required'})
+            if isinstance(action, AdvancedOpenCaseAction):
+                if not action.name_path:
+                    errors.append({'type': 'case_name required', 'case_tag': action.case_tag})
 
-        errors.extend(self.check_case_properties(
-            all_names=self.actions.all_property_names(),
-            subcase_names=self.actions.subcase_property_names()
-        ))
+                meta = self.actions.actions_meta_by_tag.get(action.parent_tag)
+                if meta and meta['type'] == 'open' and meta['action'].repeat_context:
+                    if not action.repeat_context or not action.repeat_context.startswith(meta['action'].repeat_context):
+                        errors.append({'type': 'subcase repeat context', 'case_tag': action.case_tag})
+
+            try:
+                self.actions.get_action_hierarchy(action)
+            except ValueError:
+                errors.append({'type': 'circular ref', 'case_tag': action.case_tag})
+
+            errors.extend(self.check_case_properties(
+                subcase_names=action.get_property_names(),
+                case_tag=action.case_tag
+            ))
+
+        for action in self.actions.get_all_actions():
+            errors.extend(self.check_case_properties(
+                all_names=action.get_property_names(),
+                case_tag=action.case_tag
+            ))
 
         def generate_paths():
             for action in self.actions.get_all_actions():
                 for path in action.get_paths():
                     yield path
 
-        self.check_paths(generate_paths())
+        errors.extend(self.check_paths(generate_paths()))
 
         return errors
 

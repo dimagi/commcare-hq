@@ -1,8 +1,5 @@
 # coding=utf-8
-import io
-import lxml.etree
-
-from casexml.apps.case.tests.util import check_xml_line_by_line
+import lxml
 from corehq.apps.app_manager.const import APP_V2, CAREPLAN_GOAL, CAREPLAN_TASK
 from corehq.apps.app_manager.models import Application, OpenCaseAction, UpdateCaseAction, PreloadAction, FormAction, Module, AdvancedModule, AdvancedForm, AdvancedOpenCaseAction, LoadUpdateAction
 from django.test import TestCase
@@ -11,18 +8,11 @@ from corehq.apps.app_manager.util import new_careplan_module
 
 
 class FormPrepBase(TestCase, TestFileMixin):
-
-    def assert_xml_equiv(self, actual, expected):
-        actual_canonicalized = io.BytesIO()
-        expected_canonicalized = io.BytesIO()
-
+    def assertXmlEqual(self, expected, actual):
         parser = lxml.etree.XMLParser(remove_blank_text=True)
-
-        lxml.etree.fromstring(actual, parser=parser).getroottree().write_c14n(actual_canonicalized)
-        lxml.etree.fromstring(expected, parser=parser).getroottree().write_c14n(expected_canonicalized)
-
-        if actual_canonicalized.getvalue() != expected_canonicalized.getvalue():
-            check_xml_line_by_line(self, actual, expected)
+        parsed_expected = lxml.etree.tostring(lxml.etree.XML(expected, parser), pretty_print=True)
+        parsed_actual = lxml.etree.tostring(lxml.etree.XML(actual, parser), pretty_print=True)
+        super(FormPrepBase, self).assertXmlEqual(parsed_actual, parsed_expected)
 
 
 class FormPreparationV2Test(FormPrepBase):
@@ -36,30 +26,30 @@ class FormPreparationV2Test(FormPrepBase):
         self.form.source = self.get_xml('original')
 
     def test_no_actions(self):
-        self.assert_xml_equiv(self.get_xml('no_actions'), self.form.render_xform())
+        self.assertXmlEqual(self.get_xml('no_actions'), self.form.render_xform())
 
     def test_open_case(self):
         self.form.actions.open_case = OpenCaseAction(name_path="/data/question1", external_id=None)
         self.form.actions.open_case.condition.type = 'always'
-        self.assert_xml_equiv(self.get_xml('open_case'), self.form.render_xform())
+        self.assertXmlEqual(self.get_xml('open_case'), self.form.render_xform())
 
     def test_open_case_external_id(self):
         self.form.actions.open_case = OpenCaseAction(name_path="/data/question1", external_id='/data/question1')
         self.form.actions.open_case.condition.type = 'always'
-        self.assert_xml_equiv(self.get_xml('open_case_external_id'), self.form.render_xform())
+        self.assertXmlEqual(self.get_xml('open_case_external_id'), self.form.render_xform())
 
     def test_update_case(self):
         self.form.requires = 'case'
         self.form.actions.update_case = UpdateCaseAction(update={'question1': '/data/question1'})
         self.form.actions.update_case.condition.type = 'always'
-        self.assert_xml_equiv(self.get_xml('update_case'), self.form.render_xform())
+        self.assertXmlEqual(self.get_xml('update_case'), self.form.render_xform())
 
     def test_open_update_case(self):
         self.form.actions.open_case = OpenCaseAction(name_path="/data/question1", external_id=None)
         self.form.actions.open_case.condition.type = 'always'
         self.form.actions.update_case = UpdateCaseAction(update={'question1': '/data/question1'})
         self.form.actions.update_case.condition.type = 'always'
-        self.assert_xml_equiv(self.get_xml('open_update_case'), self.form.render_xform())
+        self.assertXmlEqual(self.get_xml('open_update_case'), self.form.render_xform())
 
     def test_update_preload_case(self):
         self.form.requires = 'case'
@@ -67,13 +57,13 @@ class FormPreparationV2Test(FormPrepBase):
         self.form.actions.update_case.condition.type = 'always'
         self.form.actions.case_preload = PreloadAction(preload={'/data/question1': 'question1'})
         self.form.actions.case_preload.condition.type = 'always'
-        self.assert_xml_equiv(self.get_xml('update_preload_case'), self.form.render_xform())
+        self.assertXmlEqual(self.get_xml('update_preload_case'), self.form.render_xform())
 
     def test_close_case(self):
         self.form.requires = 'case'
         self.form.actions.close_case = FormAction()
         self.form.actions.close_case.condition.type = 'always'
-        self.assert_xml_equiv(self.get_xml('close_case'), self.form.render_xform())
+        self.assertXmlEqual(self.get_xml('close_case'), self.form.render_xform())
 
 
 class SubcaseRepeatTest(FormPrepBase):
@@ -82,18 +72,18 @@ class SubcaseRepeatTest(FormPrepBase):
     def test_subcase_repeat(self):
         self.app = Application.wrap(self.get_json('subcase-repeat'))
         self.app.case_sharing = False
-        self.assert_xml_equiv(self.app.get_module(0).get_form(0).render_xform(),
+        self.assertXmlEqual(self.app.get_module(0).get_form(0).render_xform(),
                               self.get_xml('subcase-repeat'))
 
     def test_subcase_repeat_sharing(self):
         self.app = Application.wrap(self.get_json('subcase-repeat'))
         self.app.case_sharing = True
-        self.assert_xml_equiv(self.app.get_module(0).get_form(0).render_xform(),
+        self.assertXmlEqual(self.app.get_module(0).get_form(0).render_xform(),
                               self.get_xml('subcase-repeat-sharing'))
 
     def test_subcase_multiple_repeats(self):
         self.app = Application.wrap(self.get_json('multiple_subcase_repeat'))
-        self.assert_xml_equiv(self.app.get_module(0).get_form(0).render_xform(),
+        self.assertXmlEqual(self.app.get_module(0).get_form(0).render_xform(),
                               self.get_xml('multiple_subcase_repeat'))
 
 
@@ -102,7 +92,7 @@ class SubcaseParentRefTeset(FormPrepBase):
 
     def test_parent_ref(self):
         self.app = Application.wrap(self.get_json('subcase-parent-ref'))
-        self.assert_xml_equiv(self.app.get_module(1).get_form(0).render_xform(),
+        self.assertXmlEqual(self.app.get_module(1).get_form(0).render_xform(),
                               self.get_xml('subcase-parent-ref'))
 
 
@@ -111,7 +101,7 @@ class CaseSharingFormPrepTest(FormPrepBase):
 
     def test_subcase_repeat(self):
         self.app = Application.wrap(self.get_json('complex-case-sharing'))
-        self.assert_xml_equiv(self.app.get_module(0).get_form(0).render_xform(),
+        self.assertXmlEqual(self.app.get_module(0).get_form(0).render_xform(),
                               self.get_xml('complex-case-sharing'))
 
 class FormPreparationCareplanTest(FormPrepBase):
@@ -130,19 +120,19 @@ class FormPreparationCareplanTest(FormPrepBase):
 
     def test_create_goal(self):
         form = self.careplan_module.get_form_by_type(CAREPLAN_GOAL, 'create')
-        self.assert_xml_equiv(form.render_xform(), self.get_xml('create_goal'))
+        self.assertXmlEqual(form.render_xform(), self.get_xml('create_goal'))
 
     def test_update_goal(self):
         form = self.careplan_module.get_form_by_type(CAREPLAN_GOAL, 'update')
-        self.assert_xml_equiv(form.render_xform(), self.get_xml('update_goal'))
+        self.assertXmlEqual(form.render_xform(), self.get_xml('update_goal'))
 
     def test_create_task(self):
         form = self.careplan_module.get_form_by_type(CAREPLAN_TASK, 'create')
-        self.assert_xml_equiv(form.render_xform(), self.get_xml('create_task'))
+        self.assertXmlEqual(form.render_xform(), self.get_xml('create_task'))
 
     def test_update_task(self):
         form = self.careplan_module.get_form_by_type(CAREPLAN_TASK, 'update')
-        self.assert_xml_equiv(form.render_xform(), self.get_xml('update_task'))
+        self.assertXmlEqual(form.render_xform(), self.get_xml('update_task'))
 
 
 
@@ -159,7 +149,7 @@ class FormPreparationV2TestAdvanced(FormPrepBase):
         self.form.source = self.get_xml('original')
 
     def test_no_actions(self):
-        self.assert_xml_equiv(self.get_xml('no_actions'), self.form.render_xform())
+        self.assertXmlEqual(self.get_xml('no_actions'), self.form.render_xform())
 
     def test_open_case(self):
         self.form.actions.open_cases.append(AdvancedOpenCaseAction(
@@ -168,7 +158,7 @@ class FormPreparationV2TestAdvanced(FormPrepBase):
             name_path="/data/question1"
         ))
         self.form.actions.open_cases[0].open_condition.type = 'always'
-        self.assert_xml_equiv(self.get_xml('open_case'), self.form.render_xform())
+        self.assertXmlEqual(self.get_xml('open_case'), self.form.render_xform())
 
     def test_update_case(self):
         self.form.actions.load_update_cases.append(LoadUpdateAction(
@@ -176,7 +166,7 @@ class FormPreparationV2TestAdvanced(FormPrepBase):
             case_tag='load_1',
             case_properties={'question1': '/data/question1'}
         ))
-        self.assert_xml_equiv(self.get_xml('update_case'), self.form.render_xform())
+        self.assertXmlEqual(self.get_xml('update_case'), self.form.render_xform())
 
     def test_open_update_case(self):
         self.form.actions.open_cases.append(AdvancedOpenCaseAction(
@@ -186,7 +176,7 @@ class FormPreparationV2TestAdvanced(FormPrepBase):
             case_properties={'question1': '/data/question1'}
         ))
         self.form.actions.open_cases[0].open_condition.type = 'always'
-        self.assert_xml_equiv(self.get_xml('open_update_case'), self.form.render_xform())
+        self.assertXmlEqual(self.get_xml('open_update_case'), self.form.render_xform())
 
     def test_open_close_case(self):
         self.form.actions.open_cases.append(AdvancedOpenCaseAction(
@@ -196,7 +186,7 @@ class FormPreparationV2TestAdvanced(FormPrepBase):
         ))
         self.form.actions.open_cases[0].open_condition.type = 'always'
         self.form.actions.open_cases[0].close_condition.type = 'always'
-        self.assert_xml_equiv(self.get_xml('open_close_case'), self.form.render_xform())
+        self.assertXmlEqual(self.get_xml('open_close_case'), self.form.render_xform())
 
     def test_update_preload_case(self):
         self.form.actions.load_update_cases.append(LoadUpdateAction(
@@ -205,7 +195,7 @@ class FormPreparationV2TestAdvanced(FormPrepBase):
             case_properties={'question1': '/data/question1'},
             preload={'question1': '/data/question1'}
         ))
-        self.assert_xml_equiv(self.get_xml('update_preload_case'), self.form.render_xform())
+        self.assertXmlEqual(self.get_xml('update_preload_case'), self.form.render_xform())
 
     def test_close_case(self):
         self.form.actions.load_update_cases.append(LoadUpdateAction(
@@ -213,7 +203,7 @@ class FormPreparationV2TestAdvanced(FormPrepBase):
             case_tag='load_1',
         ))
         self.form.actions.load_update_cases[0].close_condition.type = 'always'
-        self.assert_xml_equiv(self.get_xml('close_case'), self.form.render_xform())
+        self.assertXmlEqual(self.get_xml('close_case'), self.form.render_xform())
 
     def test_update_preload_multiple_case(self):
         self.form.actions.load_update_cases.append(LoadUpdateAction(
@@ -228,7 +218,7 @@ class FormPreparationV2TestAdvanced(FormPrepBase):
             case_properties={'question2': '/data/question2'},
             preload={'question2': '/data/question2'}
         ))
-        self.assert_xml_equiv(self.get_xml('update_preload_case_multiple'), self.form.render_xform())
+        self.assertXmlEqual(self.get_xml('update_preload_case_multiple'), self.form.render_xform())
 
 
 class SubcaseRepeatTestAdvanced(FormPrepBase):
@@ -269,7 +259,7 @@ class SubcaseRepeatTestAdvanced(FormPrepBase):
             parent_tag='load_1'
         ))
         self.form.actions.open_cases[0].open_condition.type = 'always'
-        self.assert_xml_equiv(self.get_xml('subcase'), self.form.render_xform())
+        self.assertXmlEqual(self.get_xml('subcase'), self.form.render_xform())
 
     def test_subcase_repeat(self):
         self.form.actions.load_update_cases.append(LoadUpdateAction(
@@ -284,7 +274,24 @@ class SubcaseRepeatTestAdvanced(FormPrepBase):
             repeat_context="/data/child"
         ))
         self.form.actions.open_cases[0].open_condition.type = 'always'
-        self.assert_xml_equiv(self.get_xml('subcase-repeat'), self.form.render_xform())
+        self.assertXmlEqual(self.get_xml('subcase-repeat'), self.form.render_xform())
+
+    def test_subcase_of_open(self):
+        self.form.actions.open_cases.append(AdvancedOpenCaseAction(
+            case_type=self.parent_module.case_type,
+            case_tag='open_1',
+            name_path='/data/mother_name',
+        ))
+
+        self.form.actions.open_cases.append(AdvancedOpenCaseAction(
+            case_type=self.module.case_type,
+            case_tag='open_2',
+            name_path='/data/mother_name',
+            parent_tag='open_1',
+            repeat_context="/data/child"
+        ))
+        self.form.actions.open_cases[0].open_condition.type = 'always'
+        self.assertXmlEqual(self.get_xml('subcase-open'), self.form.render_xform())
 
     def test_subcase_repeat_sharing(self):
         self.form.actions.load_update_cases.append(LoadUpdateAction(
@@ -300,7 +307,7 @@ class SubcaseRepeatTestAdvanced(FormPrepBase):
         ))
         self.form.actions.open_cases[0].open_condition.type = 'always'
         self.app.case_sharing = True
-        self.assert_xml_equiv(self.get_xml('subcase-repeat-sharing'), self.form.render_xform())
+        self.assertXmlEqual(self.get_xml('subcase-repeat-sharing'), self.form.render_xform())
 
     def test_subcase_multiple_repeats(self):
         self.form.actions.load_update_cases.append(LoadUpdateAction(
@@ -328,4 +335,4 @@ class SubcaseRepeatTestAdvanced(FormPrepBase):
         self.form.actions.open_cases[1].open_condition.type = 'if'
         self.form.actions.open_cases[1].open_condition.question = '/data/child/which_child'
         self.form.actions.open_cases[1].open_condition.answer = '2'
-        self.assert_xml_equiv(self.get_xml('subcase-repeat-multiple'), self.form.render_xform())
+        self.assertXmlEqual(self.get_xml('subcase-repeat-multiple'), self.form.render_xform())

@@ -1,33 +1,13 @@
 from django.utils.unittest.case import TestCase
-from corehq.apps.app_manager.models import Application, AdvancedModule
+from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.suite_xml import dot_interpolate
 
 from lxml import etree
 import commcare_translations
-import difflib
 
 
-# snippet from http://stackoverflow.com/questions/321795/comparing-xml-in-a-unit-test-in-python/7060342#7060342
-from doctest import Example
-from lxml.doctestcompare import LXMLOutputChecker
-
-def assertXmlEqual(want, got):
-    checker = LXMLOutputChecker()
-    if not checker.check_output(want, got, 0):
-        message = "XML mismatch\n\n"
-        for line in difflib.unified_diff(want.splitlines(1), got.splitlines(1), fromfile='want.xml', tofile='got.xml'):
-            message += line + '\n'
-        raise AssertionError(message)
-
-class XmlTest(TestCase):
-
-    def assertXmlEqual(self, want, got):
-        return assertXmlEqual(want, got)
-# end snippet
-
-
-class SuiteTest(XmlTest, TestFileMixin):
+class SuiteTest(TestCase, TestFileMixin):
     file_path = ('data', 'suite')
 
     def assertHasAllStrings(self, app, strings):
