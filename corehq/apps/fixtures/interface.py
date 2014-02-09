@@ -32,14 +32,14 @@ class FixtureSelectField(ReportSelectField):
     def default_option(self):
         if not self.field_opts:
             return "NO TABLE"
-        return self.field_opts[0].tag + " (selected)"
+        return "Default: " + self.field_opts[0].tag
 
     def update_params(self):
         self.selected = self.request.GET.get(self.slug, '')
         self.options = [{'val': _id_from_doc(f), 'text': f.tag} for f in [fo for fo in self.field_opts if fo != self.selected]]
 
 class FixtureViewInterface(GenericTabularReport, FixtureInterface):
-    name = ugettext_noop("View Table Data")
+    name = ugettext_noop("View Tables")
     slug = "view_lookup_tables"
 
     report_template_path = 'fixtures/view_table.html'
@@ -70,7 +70,7 @@ class FixtureViewInterface(GenericTabularReport, FixtureInterface):
 
 
 class FixtureEditInterface(FixtureInterface):
-    name = ugettext_noop("Manage Table Data")
+    name = ugettext_noop("Manage Tables")
     slug = "edit_lookup_tables"
 
     base_template = "fixtures/fixtures_base.html"
