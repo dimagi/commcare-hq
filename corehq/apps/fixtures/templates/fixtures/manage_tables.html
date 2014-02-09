@@ -25,18 +25,17 @@
         <div class="span8">
             <h2>
                 {% blocktrans %}
-                    Manage Lookup Tables <small>for CommCare Mobile and
-                    CommCare HQ Reports</small>
+                    Manage Lookup Tables
                 {% endblocktrans %}
             </h2>
             <p>
                 {% blocktrans %}
-                    Lookup Tables are used in applications and reports to provide data that is not directly stored in the application and may change over time.
+                    Lookup tables are used in applications to provide data that is not directly stored in the application and may change over time.  For example, you can use them for a list of villages that changes over the time of your project.  They also allow you to assign certain data (ex. villages) to certain users
                 {% endblocktrans %}
             </p>
             <p class="help-block">
             <i class="icon icon-info-sign"></i>
-            For more info see the <a href='https://wiki.commcarehq.org/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers#CreateandManageCommCareMobileWorkers-C.SearchforMobileWorkers' target='_blank'>UPDATE LINK</a> help page
+            For more info see the <a href='https://confluence.dimagi.com/pages/viewpage.action?pageId=12222793' target='_blank'>Lookup Tables</a> help page
         </p>
         </div>
     </div>
@@ -105,7 +104,7 @@
             </h4>
             <p>
                 {% blocktrans %}
-                    Create new tables or update existing ones by uploading a new or existing Excel file. Follow these instructions (UPDATE LINK to WIKI) for setting up your excel file.
+                    Create new tables or update existing ones by uploading a new or existing Excel file. Follow these instructions <a href='https://confluence.dimagi.com/pages/viewpage.action?pageId=12222793' target='_blank'>Lookup Tables</a> for setting up your excel file.
                 {% endblocktrans %}
             </p>
         </div>
@@ -118,7 +117,7 @@
                         <div class="controls">
                             <input id="bulk_upload_file" type="file" name="file" data-bind="value: file"/>
                         </div>
-                        <label for="replace-check" class="control-label">{% trans "Replace existing Tables" %}</label>
+                        <label for="replace-check" class="control-label">{% trans "Replace Existing Tables" %}</label>
                         <div class="controls">
                             <input id="replace-check" type="checkbox" name="replace"/>
                         </div>

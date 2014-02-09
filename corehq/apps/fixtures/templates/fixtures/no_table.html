@@ -1,4 +1,5 @@
 {% extends 'fixtures/fixtures_base.html' %}
+{% load url from future %}
 {% load hq_shared_tags %}
 {% load report_tags %}
 {% load i18n %}
@@ -17,23 +18,22 @@
         <div class="span8">
             <h2>
                 {% blocktrans %}
-                    Lookup Tables <small>for CommCare Mobile and
-                    CommCare HQ Reports</small>
+                    View Tables
                 {% endblocktrans %}
             </h2>
             <p>
                 {% blocktrans %}
-                    Lookup Tables are used in applications and reports to provide data that is not directly stored in the application and may change over time.
+                    Lookup tables are used in applications to provide data that is not directly stored in the application and may change over time. For example, you can use them for a list of villages that changes over the time of your project. They also allow you to assign certain data (ex. villages) to certain users
                 {% endblocktrans %}
             </p>
-            <p>
+            <p class="warning">
                 {% blocktrans %}
                     Currently you have not uploaded any tables. Go to <strong>Manage Table Data</strong> to upload tables.
                 {% endblocktrans %}
             </p>
             <p class="help-block">
             <i class="icon icon-info-sign"></i>
-            For more info see the <a href='https://wiki.commcarehq.org/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers#CreateandManageCommCareMobileWorkers-C.SearchforMobileWorkers' target='_blank'>UPDATE LINK</a> help page
+            For more info see the <a href='https://confluence.dimagi.com/pages/viewpage.action?pageId=12222793' target='_blank'>Lookup Tables</a> help page
         </p>
         </div>
     </div>
