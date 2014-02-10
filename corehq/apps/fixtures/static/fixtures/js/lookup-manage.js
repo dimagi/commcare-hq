@@ -225,12 +225,24 @@ $(function () {
     }
     function FileUpload() {
                 this.file = ko.observable();
+                var self = this;
+                self.uploadExcels = function(element, event) {
+                    $("#uploadModal").modal({
+                        keyboard: false,
+                        backdrop: 'static'
+                    });
+                    $("#uploading").show();
+                    $("#uploadForm")[0].submit();
+                };
     }
     var app = new App();
     ko.applyBindings(app, el.get(0));
-    ko.applyBindings(new FileUpload(), $('#fixture-upload')[0]);
     el.show();
     app.loadData();
+
+    var uploadApp = new FileUpload();
+    ko.applyBindings(uploadApp, $('#fixture-upload')[0]);
+
     $("#fixture-download").on("hidden", function(){
                     $("#downloading").show();
                     $("#download-complete").hide();
