@@ -11,6 +11,8 @@ import re
 from couchdbkit.exceptions import ResourceNotFound
 from dateutil import parser
 from sqlagg.columns import SimpleColumn, SumColumn
+from corehq.apps.reports.cache import request_cache
+from django.http import HttpResponse
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.dates import DatespanFilter
 
@@ -512,7 +514,16 @@ class HealthStatusReport(DatespanMixin, BaseReport, SummingSqlTabularReport):
 
         return [[self.export_sheet_name, table]]
 
-
+    @property
+    @request_cache("raw")
+    def print_response(self):
+        """
+        Returns the report for printing.
+        """
+        self.is_rendered_as_email = True
+        self.use_datatables = False
+        self.override_template = "opm/print_report.html"
+        return HttpResponse(self._async_context()['report'])
 
 def calculate_total_row(rows):
     regexp = re.compile('(.*?)>([0-9]+)<.*')
