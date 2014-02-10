@@ -31,6 +31,7 @@ var Selectable = Backbone.View.extend({
     }, 
     select: function (options) {
         if (!this.selected) {
+            window.mainView.router.setView(this);
 	        this.selected = true;
 	        this.$el.addClass("active");
 	        if (typeof options === 'undefined' || !options.noEvents) {
