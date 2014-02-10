@@ -11,6 +11,7 @@ from corehq.apps.reports import util
 from corehq.apps.reports.standard import ProjectReportParametersMixin, \
     DatespanMixin, ProjectReport, DATE_FORMAT
 from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, FormsByApplicationFilter, SingleFormByApplicationFilter
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType, DataTablesColumnGroup
 from corehq.apps.reports.generic import GenericTabularReport, ElasticProjectInspectionReport
 from corehq.apps.reports.util import make_form_couch_key, friendly_timedelta, format_datatables_data
@@ -349,10 +350,13 @@ class DailyFormStatsReport(ElasticProjectInspectionReport, WorkerMonitoringRepor
     slug = "daily_form_stats"
     name = ugettext_noop("Daily Form Activity")
 
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-                'corehq.apps.reports.fields.GroupField',
-                'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
-                'corehq.apps.reports.fields.DatespanField']
+    fields = [
+        # 'corehq.apps.reports.fields.FilterUsersField',
+        # 'corehq.apps.reports.fields.GroupField',
+        'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
+        'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
+        'corehq.apps.reports.fields.DatespanField'
+    ]
 
     description = ugettext_noop("Number of submissions per day.")
 
@@ -430,8 +434,22 @@ class DailyFormStatsReport(ElasticProjectInspectionReport, WorkerMonitoringRepor
             doc_type="CommCareUser", return_count=True)
         return count
 
+    def _filter(self):
+        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
+        user_map = dict([(user.get('user_id'), i) for (i, user) in enumerate(users_data["combined_users"])])
+
+    @property
+    @memoized
+    def all_users(self):
+        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(
+            self.domain, self.request, True, True)
+        user_map = dict((user.get('user_id'), i)
+            for (i, user) in enumerate(users_data["combined_users"]))
+        return user_map
+
     # Use user filter
     def users_by_username(self, order):
+        # import ipdb; ipdb.set_trace()
         # TODO: convert this and util._report_user_dict to use just a user dict
         return map(
             util._report_user_dict,
