@@ -740,12 +740,18 @@ class SoftwarePlanVersionForm(forms.Form):
     @property
     @memoized
     def current_features_to_rates(self):
-        return dict([(r.feature.id, r) for r in self.plan_version.feature_rates.all()])
+        if self.plan_version is not None:
+            return dict([(r.feature.id, r) for r in self.plan_version.feature_rates.all()])
+        else:
+            return {}
 
     @property
     @memoized
     def current_products_to_rates(self):
-        return dict([(r.product.id, r) for r in self.plan_version.product_rates.all()])
+        if self.plan_version is not None:
+            return dict([(r.product.id, r) for r in self.plan_version.product_rates.all()])
+        else:
+            return {}
 
     def _get_errors_from_subform(self, form_name, subform):
         for field, field_errors in subform._errors.items():
