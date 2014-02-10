@@ -18,6 +18,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from couchexport.properties import TimeStampProperty, JsonProperty
 from couchdbkit.consumer import Consumer
 from dimagi.utils.logging import notify_exception
+from casexml.apps.stock.models import StockState
 
 class Format(object):
     """
@@ -257,6 +258,58 @@ class ExportColumn(DocumentSchema):
             "show": self.show,
         }
 
+
+class ComplexExportColumn(ExportColumn):
+    """
+    A single column config that can represent multiple actual columns
+    in the excel sheet.
+    """
+    def get_headers(self):
+        """
+        Return a list of headers that this column contributes to
+        """
+        raise NotImplementedError()
+
+    def get_data(self, value):
+        """
+        Return a list of data values that correspond to the headers
+        """
+        raise NotImplementedError()
+
+
+class StockExportColumn(ComplexExportColumn):
+    domain = StringProperty()
+
+    def get_headers(self):
+        from corehq.apps.commtrack.models import Product
+        # TODO filter by domain
+        self._column_tuples = sorted(list(StockState.objects.values_list(
+            'product_id',
+            'section_id'
+        ).distinct()))
+
+        for product_id, section in self._column_tuples:
+            yield "{product} ({section})".format(
+                product=Product.get(product_id).name,
+                section=section
+            )
+
+    def get_data(self, value):
+        from corehq.apps.commtrack.models import RequisitionCase
+        req = RequisitionCase.get(value)
+        states = StockState.objects.filter(case_id=req._id)
+
+        values = [None] * len(self._column_tuples)
+
+        for state in states:
+            state_index = self._column_tuples.index((
+                state.product_id,
+                state.section_id
+            ))
+            values[state_index] = state.stock_on_hand
+        return values
+
+
 class ExportTable(DocumentSchema):
     """
     A table configuration, for export
@@ -270,7 +323,9 @@ class ExportTable(DocumentSchema):
     def wrap(cls, data):
         # hack: manually remove any references to _attachments at runtime
         data['columns'] = [c for c in data['columns'] if not c['index'].startswith("_attachments.")]
-        return super(ExportTable, cls).wrap(data)
+        ret = super(ExportTable, cls).wrap(data)
+        ret.columns.append(StockExportColumn(domain='drew-commtrack', index='_id'))
+        return ret
 
     @classmethod
     def default(cls, index):
@@ -297,17 +352,21 @@ class ExportTable(DocumentSchema):
         from couchexport.export import FormattedRow
         headers = []
         for col in self.columns:
-            display = col.get_display()
-            if col.index == 'id':
-                id_len = len(
-                    filter(lambda part: part == '#', self.index.split('.'))
-                )
-                headers.append(display)
-                if id_len > 1:
-                    for i in range(id_len):
-                        headers.append('{id}__{i}'.format(id=display, i=i))
+            if issubclass(type(col), ComplexExportColumn):
+                for header in col.get_headers():
+                    headers.append(header)
             else:
-                headers.append(display)
+                display = col.get_display()
+                if col.index == 'id':
+                    id_len = len(
+                        filter(lambda part: part == '#', self.index.split('.'))
+                    )
+                    headers.append(display)
+                    if id_len > 1:
+                        for i in range(id_len):
+                            headers.append('{id}__{i}'.format(id=display, i=i))
+                else:
+                    headers.append(display)
         return FormattedRow(headers)
 
     @property
@@ -328,9 +387,14 @@ class ExportTable(DocumentSchema):
             try:
                 i = self.row_positions_by_index[column.index]
                 val = row_data[i]
-                yield column, val
             except KeyError:
-                yield column, ''
+                val = ''
+
+            if issubclass(type(column), ComplexExportColumn):
+                for value in column.get_data(val):
+                    yield column, value
+            else:
+                yield column, val
 
     def trim(self, data, doc, apply_transforms, global_transform):
         from couchexport.export import FormattedRow, Constant, transform_error_constant
