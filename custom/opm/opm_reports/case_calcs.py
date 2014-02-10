@@ -103,6 +103,7 @@ class VhndMonthly(fluff.Calculator):
         for form in case.get_forms():
             if form.xmlns == BIRTH_PREP_XMLNS and is_equals(form, "pregnancy_month_%s", "attendance_vhnd_%s"):
                 yield case_date_group(form)
+                break
             elif form.xmlns in children_forms and form.form['child_1']['child1_attendance_vhnd'] == 1:
                 yield case_date_group(form)
                 break
@@ -139,6 +140,7 @@ class Weight(fluff.Calculator):
         for form in case.get_forms():
             if form.xmlns == BIRTH_PREP_XMLNS and is_equals(form, "pregnancy_month_%s", "mother_weight_%s", count=self.count):
                 yield case_date_group(form)
+                break
 
 
 class BreastFed(fluff.Calculator):
