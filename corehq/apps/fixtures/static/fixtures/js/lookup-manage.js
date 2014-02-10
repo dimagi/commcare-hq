@@ -45,6 +45,9 @@ $(function () {
             raw_fields = self.fields();
         self.fields = ko.observableArray([]);
         self.data_items = ko.observableArray([]);
+        self.view_link = ko.computed(function(){
+            return TableViewUrl + "?table_id="+self._id();
+        }, self);
         makeEditable(self);
         if (!o._id) {
             self._id = ko.observable();
@@ -124,6 +127,7 @@ $(function () {
                 _id: self._id(),
                 name: self.name(),
                 tag: self.tag(),
+                view_link: self.view_link(),
                 fields: (function () {
                     var fields = [], i;
                     for (i = 0; i < self.fields().length; i += 1) {
