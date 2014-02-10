@@ -38,7 +38,7 @@
             <form action="{% url 'confirm_selected_plan' domain %}" method="post" class="form">
                 <input type="hidden" name="plan_edition" data-bind="value: selected_edition">
                 <div class="form-actions" data-bind="visible: isSubmitVisible">
-                    <button type="submit" class="btn btn-primary">{% trans 'Next' %}</button>
+                    <button type="submit" class="btn btn-primary btn-large">{% trans 'Next' %}</button>
                 </div>
                 <table class="table-pricing">
                 <thead>
@@ -101,7 +101,7 @@
                     <li data-bind="text: $data"></li>
                 </ul>
                 <div class="form-actions" data-bind="visible: isSubmitVisible">
-                    <button type="submit" class="btn btn-primary">{% trans 'Next' %}</button>
+                    <button type="submit" class="btn btn-primary btn-large">{% trans 'Next' %}</button>
                 </div>
             </form>
         </article>
