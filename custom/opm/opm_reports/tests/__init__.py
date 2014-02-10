@@ -115,11 +115,11 @@ class OPMTestBase(object):
         self.assertEquals(errors, [], "\n\n" + '\n'.join(errors))
 
 
-class TestIncentive(OPMTestBase, TestCase):
-    ReportClass = IncentivePaymentReport
+# class TestIncentive(OPMTestBase, TestCase):
+    # ReportClass = IncentivePaymentReport
 
-class TestBeneficiary(OPMTestBase, TestCase):
-    ReportClass = BeneficiaryPaymentReport
+# class TestBeneficiary(OPMTestBase, TestCase):
+    # ReportClass = BeneficiaryPaymentReport
 
 
 # class TestBuildOPM(OPMTestBase, TestCase):
