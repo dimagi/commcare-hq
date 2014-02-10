@@ -11,6 +11,7 @@
     {% endif %}
 {% endblock %}
 
+{% block main_column %}
 {% block reportcontent %}
 {% block reporttable %}
 <form>
@@ -93,6 +94,7 @@
     </table>
 {% endblock %}
 {% block posttable %}{% endblock %}
+{% endblock %}
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
