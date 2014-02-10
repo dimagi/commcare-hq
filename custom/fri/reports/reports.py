@@ -115,7 +115,7 @@ class MessageBankReport(FRIReport):
             result[entry["message"]._id] = 0
         participant_messages = self.get_participant_messages(case)
         for sms in participant_messages:
-            if sms.chat_user_id is not None:
+            if sms.xforms_session_couch_id is None and sms.direction == OUTGOING:
                 if not sms.fri_message_bank_lookup_completed:
                     add_metadata(sms, message_bank_messages)
                 if sms.fri_message_bank_message_id in result:
