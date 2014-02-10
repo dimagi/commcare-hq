@@ -468,6 +468,51 @@ class HealthStatusReport(DatespanMixin, BaseReport, SummingSqlTabularReport):
         sql_data = OpmHealthStatusSqlData(DOMAIN, row._id, self.datespan)
         return self.model(row, self, sql_data.data)
 
+    @property
+    def export_table(self):
+        """
+        Exports the report as excel.
+
+        When rendering a complex cell, it will assign a value in the following order:
+        1. cell['raw']
+        2. cell['sort_key']
+        3. str(cell)
+        """
+        try:
+            import xlwt
+        except ImportError:
+            raise Exception("It doesn't look like this machine is configured for "
+                            "excel export. To export to excel you have to run the "
+                            "command:  easy_install xlutils")
+        headers = self.headers
+        formatted_rows = self.rows
+
+        regexp = re.compile('(.*?)>([0-9]+)(<.*?)>([0-9]*).*')
+
+        def _unformat_row(row):
+
+            formatted_row = []
+            for col in row:
+                if regexp.match(col):
+                    formated_col = "%s" % (regexp.match(col).group(2))
+                    if regexp.match(col).group(4) != "":
+                        formated_col = "%s - %s%%" % (formated_col, regexp.match(col).group(4))
+                    formatted_row.append(formated_col)
+                else:
+                    formatted_row.append(col)
+            return formatted_row
+
+        table = headers.as_table
+        rows = [_unformat_row(row) for row in formatted_rows]
+        table.extend(rows)
+        if self.total_row:
+            table.append(_unformat_row(self.total_row))
+        if self.statistics_rows:
+            table.extend([_unformat_row(row) for row in self.statistics_rows])
+
+        return [[self.export_sheet_name, table]]
+
+
 
 def calculate_total_row(rows):
     regexp = re.compile('(.*?)>([0-9]+)<.*')

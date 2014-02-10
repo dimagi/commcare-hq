@@ -22,7 +22,7 @@ def format_percent(value, percent):
         color = 'orange'
     else:
         color = 'green'
-    return "<span style='display: block; text-align:center; color:%s;'>%d<hr style='border-color: black;'> %d%%</span>" % (color, value, percent)
+    return "<span style='display: block; text-align:center; color:%s;'>%d<hr style='border-color: black;'>%d%%</span>" % (color, value, percent)
 
 
 def normal_format(value):
