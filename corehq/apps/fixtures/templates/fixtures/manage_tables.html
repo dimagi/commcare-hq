@@ -14,8 +14,9 @@
 {% endblock %}
 {% block js-inline %}
     <script>
-        var FixtureDownloadUrl = "{% url "download_fixtures" domain%}" +"?";
-        var FixtureFileDownloadUrl = "{% url "download_fixture_file" domain%}" +"?";
+        var FixtureDownloadUrl = "{% url 'download_fixtures' domain%}" +"?";
+        var FixtureFileDownloadUrl = "{% url 'download_fixture_file' domain%}" +"?";
+        var TableViewUrl = "{% url 'fixture_interface_dispatcher' domain 'view_lookup_tables'%}";
     </script>
 {% endblock %}
 
@@ -57,6 +58,10 @@
                             {% trans "Table Id" %}
                         </th>
                         <th>
+                            {% trans "View Table" %}
+                            <i class="icon-white icon-share"></i>
+                        </th>                        
+                        <th>
                             {% trans "Delete Table" %}
                         </th>
                         <th>
@@ -71,6 +76,9 @@
                         <tr>
                             <td>
                                 <span data-bind="text: tag"></span>
+                            </td>
+                            <td>
+                                <a data-bind="attr: {href: view_link}" target='_blank'><span>View Table</span></a>
                             </td>
                             <td>
 <!--                                 <button class="btn" data-bind="click: startEditing, visible: saveState() === 'saved'">
