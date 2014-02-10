@@ -253,16 +253,22 @@ class ChildFollowup(fluff.Calculator):
 
     @fluff.date_emitter
     def total(self, form):
-        if form.xmlns == CHILD_FOLLOWUP_XMLNS:
+        if form.xmlns in children_forms + CHILD_FOLLOWUP_XMLNS:
+            block = block_type(form)
             followed_up = False
-            for prop in [
-                        'window%d_child%d' % (window, child)
-                        for window in range(3, 15) for child in range(1, 4)
-            ]:
-                if form.form.get(prop):# == '1':
-                    followed_up = True
-            if followed_up:
+            if block == "soft" and "total_soft_conditions" in form.form and form.form["total_soft_conditions"] == 1:
                 yield case_date_group(form)
+            else:
+                for prop in [
+                    'window%d_child%d' % (window, child)
+                    for window in range(3, 15) for child in range(1, 4)
+                ]:
+                    if form.form.get(prop) == 1 and block == 'hard':
+                        followed_up = True
+                    elif form.form.get(prop) and block not in ['hard', 'soft']:
+                        followed_up = True
+                if followed_up:
+                    yield case_date_group(form)
 
 
 class ChildSpacing(fluff.Calculator):
