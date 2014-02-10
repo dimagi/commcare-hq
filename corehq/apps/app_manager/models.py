@@ -1,5 +1,6 @@
 # coding=utf-8
 from distutils.version import LooseVersion
+from itertools import chain
 import tempfile
 import os
 import logging
@@ -31,7 +32,7 @@ from restkit.errors import ResourceError
 from couchdbkit.resource import ResourceNotFound
 
 from corehq.apps.app_manager.commcare_settings import check_condition
-from corehq.apps.app_manager.const import APP_V1, APP_V2, CAREPLAN_TASK, CAREPLAN_GOAL, CAREPLAN_CASE_NAMES
+from corehq.apps.app_manager.const import *
 from corehq.apps.app_manager.xpath import dot_interpolate
 from corehq.apps.builds import get_default_build_spec
 from corehq.util.hash_compat import make_password
@@ -67,13 +68,11 @@ from .exceptions import (
     XFormValidationError,
 )
 
-
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 
 FIELD_SEPARATOR = ':'
 
 ATTACHMENT_REGEX = r'[^/]*\.xml'
-
 
 def _rename_key(dct, old, new):
     if old in dct:
@@ -252,32 +251,125 @@ class FormActions(DocumentSchema):
         return names
 
 
-class CommTrackPreloadAction(PreloadAction):
-    show_product_stock = BooleanProperty(default=True)
+class AdvancedAction(DocumentSchema):
+    case_type = StringProperty()
+    case_tag = StringProperty()
+    case_properties = DictProperty()
+    parent_tag = StringProperty()
+    parent_reference_id = StringProperty(default='parent')
+
+    close_condition = SchemaProperty(FormActionCondition)
+
+    def get_paths(self):
+        for path in self.case_properties.values():
+            yield path
+
+        if self.close_condition.type == 'if':
+            yield self.close_condition.question
+
+    def get_property_names(self):
+        return set(self.case_properties.keys())
+
+    @property
+    def session_case_id(self):
+        return 'case_id_{}'.format(self.case_tag)
 
 
-class CommTrackFormActions(DocumentSchema):
-    load_first_supply_point = SchemaProperty(CommTrackPreloadAction)
-    load_second_supply_point = SchemaProperty(CommTrackPreloadAction)
-    open_requisition = SchemaProperty(OpenSubCaseAction)
+class LoadUpdateAction(AdvancedAction):
+    preload = DictProperty()
+    show_product_stock = BooleanProperty(default=False)
 
-    def active_actions(self):
-        actions = {}
-        for action_type in ['load_first_supply_point',
-                            'load_second_supply_point',
-                            'open_requisition']:
-            a = getattr(self, action_type)
-            if a.is_active():
-                actions[action_type] = a
-        return actions
+    def get_paths(self):
+        for path in super(LoadUpdateAction, self).get_paths():
+            yield path
 
-    def all_property_names(self):
-        names = set()
-        names.update(self.load_first_supply_point.preload.keys())
-        names.update(self.load_second_supply_point.preload.values())
-        names.update(self.open_requisition.case_properties.keys())
+        for path in self.preload.values():
+            yield path
+
+    def get_property_names(self):
+        names = super(LoadUpdateAction, self).get_property_names()
+        names.update(self.preload.keys())
         return names
 
+
+class AdvancedOpenCaseAction(AdvancedAction):
+    name_path = StringProperty()
+    repeat_context = StringProperty()
+
+    open_condition = SchemaProperty(FormActionCondition)
+
+    def get_paths(self):
+        for path in super(AdvancedOpenCaseAction, self).get_paths():
+            yield path
+
+        yield self.name_path
+
+        if self.open_condition.type == 'if':
+            yield self.open_condition.question
+
+
+class AdvancedFormActions(DocumentSchema):
+    load_update_cases = SchemaListProperty(LoadUpdateAction)
+    open_cases = SchemaListProperty(AdvancedOpenCaseAction)
+
+    def get_all_actions(self):
+        return self.load_update_cases + self.open_cases
+
+    def get_subcase_actions(self):
+        return (a for a in self.get_all_actions() if a.parent_tag)
+
+    def get_case_tags(self):
+        for action in self.get_all_actions():
+            yield action.case_tag
+
+    def get_action_from_tag(self, tag):
+        return self.actions_meta_by_tag.get(tag, {}).get('action', None)
+
+    @property
+    def actions_meta_by_tag(self):
+        return self._action_meta()['by_tag']
+
+    @property
+    def actions_meta_by_parent_tag(self):
+        return self._action_meta()['by_parent_tag']
+
+    def get_action_hierarchy(self, action):
+        current = action
+        hierarchy = [current]
+        while current and current.parent_tag:
+            parent = self.get_action_from_tag(current.parent_tag)
+            current = parent
+            if parent:
+                if parent in hierarchy:
+                    circular = [a.case_tag for a in hierarchy + [parent]]
+                    raise ValueError("Circular reference in subcase hierarchy: {}".format(circular))
+                hierarchy.append(parent)
+
+        return hierarchy
+
+    @memoized
+    def _action_meta(self):
+        meta = {
+            'by_tag': {},
+            'by_parent_tag': {}
+        }
+
+        def add_actions(type, action_list):
+            for action in action_list:
+                meta['by_tag'][action.case_tag] = {
+                    'type': type,
+                    'action': action
+                }
+                if action.parent_tag:
+                    meta['by_parent_tag'][action.parent_tag] = {
+                        'type': type,
+                        'action': action
+                    }
+
+        add_actions('load', self.load_update_cases)
+        add_actions('open', self.open_cases)
+
+        return meta
 
 class FormSource(object):
     def __get__(self, form, form_cls):
@@ -565,7 +657,7 @@ class IndexedFormBase(FormBase, IndexedSchema):
     def get_case_type(self):
         return self._parent.case_type
 
-    def check_case_properties(self, all_names=None, subcase_names=None):
+    def check_case_properties(self, all_names=None, subcase_names=None, case_tag=None):
         all_names = all_names or []
         subcase_names = subcase_names or []
         errors = []
@@ -576,15 +668,15 @@ class IndexedFormBase(FormBase, IndexedSchema):
         for key in all_names:
             # this regex is also copied in propertyList.ejs
             if not re.match(r'^[a-zA-Z][\w_-]*(/[a-zA-Z][\w_-]*)*$', key):
-                errors.append({'type': 'update_case word illegal', 'word': key})
+                errors.append({'type': 'update_case word illegal', 'word': key, 'case_tag': case_tag})
             _, key = split_path(key)
             if key in reserved_words:
-                errors.append({'type': 'update_case uses reserved word', 'word': key})
+                errors.append({'type': 'update_case uses reserved word', 'word': key, 'case_tag': case_tag})
 
         # no parent properties for subcase
         for key in subcase_names:
             if not re.match(r'^[a-zA-Z][\w_-]*$', key):
-                errors.append({'type': 'update_case word illegal', 'word': key})
+                errors.append({'type': 'update_case word illegal', 'word': key, 'case_tag': case_tag})
 
         return errors
 
@@ -973,8 +1065,8 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
                 return Module.wrap(data)
             elif doc_type == 'CareplanModule':
                 return CareplanModule.wrap(data)
-            elif doc_type == 'CommTrackModule':
-                return CommTrackModule.wrap(data)
+            elif doc_type == 'AdvancedModule':
+                return AdvancedModule.wrap(data)
             else:
                 raise ValueError('Unexpected doc_type for Module', doc_type)
         else:
@@ -1104,6 +1196,19 @@ class Module(ModuleBase):
             ),
         )
 
+    def new_form(self, name, lang, attachment=''):
+        form = Form(
+            name={lang if lang else "en": name if name else _("Untitled Form")},
+        )
+        self.forms.append(form)
+        form = self.get_form(-1)
+        form.source = attachment
+        return form
+
+    def new_form_from_source(self, source):
+        self.forms.append(Form.wrap(source))
+        return self.get_form(-1)
+
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.name, old_lang, new_lang)
         for form in self.get_forms():
@@ -1199,30 +1304,52 @@ class Module(ModuleBase):
             }
 
 
-class CommTrackForm(IndexedFormBase, NavMenuItemMediaMixin):
-    actions = SchemaProperty(CommTrackFormActions)
+class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
+    form_type = 'advanced_form'
+    actions = SchemaProperty(AdvancedFormActions)
 
     def add_stuff_to_xform(self, xform):
-        super(CommTrackForm, self).add_stuff_to_xform(xform)
-        # TODO: add stuff to xform
+        super(AdvancedForm, self).add_stuff_to_xform(xform)
+        xform.add_case_and_meta_advanced(self)
 
     def check_actions(self):
         errors = []
 
-        if not self.actions.open_requisition.case_type:
-            errors.append({'type': 'subcase has no case type'})
+        for action in self.actions.get_subcase_actions():
+            if action.parent_tag not in self.actions.get_case_tags():
+                errors.append({'type': 'missing parent tag', 'case_tag': action.parent_tag})
 
-        errors.extend(self.check_case_properties(
-            all_names=self.actions.all_property_names(),
-            subcase_names=self.actions.open_requisition.case_properties
-        ))
+            if isinstance(action, AdvancedOpenCaseAction):
+                if not action.name_path:
+                    errors.append({'type': 'case_name required', 'case_tag': action.case_tag})
+
+                meta = self.actions.actions_meta_by_tag.get(action.parent_tag)
+                if meta and meta['type'] == 'open' and meta['action'].repeat_context:
+                    if not action.repeat_context or not action.repeat_context.startswith(meta['action'].repeat_context):
+                        errors.append({'type': 'subcase repeat context', 'case_tag': action.case_tag})
+
+            try:
+                self.actions.get_action_hierarchy(action)
+            except ValueError:
+                errors.append({'type': 'circular ref', 'case_tag': action.case_tag})
+
+            errors.extend(self.check_case_properties(
+                subcase_names=action.get_property_names(),
+                case_tag=action.case_tag
+            ))
+
+        for action in self.actions.get_all_actions():
+            errors.extend(self.check_case_properties(
+                all_names=action.get_property_names(),
+                case_tag=action.case_tag
+            ))
 
         def generate_paths():
-            for action in self.actions.active_actions().values():
-                for path in FormAction.get_action_paths(action):
+            for action in self.actions.get_all_actions():
+                for path in action.get_paths():
                     yield path
 
-        self.check_paths(generate_paths())
+        errors.extend(self.check_paths(generate_paths()))
 
         return errors
 
@@ -1243,38 +1370,45 @@ class CommTrackForm(IndexedFormBase, NavMenuItemMediaMixin):
         return errors
 
     def get_case_updates(self, case_type):
-        return []
+        updates = set()
+        for action in self.actions.get_all_actions():
+            if action.case_type == case_type:
+                updates.update(action.case_properties.keys())
+        return updates
 
     @memoized
     def get_parent_types_and_contributed_properties(self, module_case_type, case_type):
         parent_types = set()
         case_properties = set()
-        subcase = self.actions.open_requisition
-        if subcase.case_type == case_type:
-            case_properties.update(
-                subcase.case_properties.keys()
-            )
+        for subcase in self.actions.get_subcase_actions():
+            if subcase.case_type == case_type:
+                case_properties.update(
+                    subcase.case_properties.keys()
+                )
         return parent_types, case_properties
 
 
-class CommTrackModule(ModuleBase):
+class AdvancedModule(ModuleBase):
     case_label = DictProperty()
-    forms = SchemaListProperty(CommTrackForm)
+    forms = SchemaListProperty(AdvancedForm)
     case_details = SchemaProperty(DetailPair)
     product_details = SchemaProperty(DetailPair)
+    put_in_root = BooleanProperty(default=False)
+    case_list = SchemaProperty(CaseList)
 
     @classmethod
     def new_module(cls, name, lang):
         detail = Detail(
             columns=[DetailColumn(
                 format='plain',
-                header={(lang or 'en'): ugettext("Supply point")},
+                header={(lang or 'en'): ugettext("Name")},
                 field='name',
                 model='case',
             )]
         )
-        return CommTrackModule(
-            name={(lang or 'en'): name or ugettext("Manage Supply Points")},
+
+        return AdvancedModule(
+            name={(lang or 'en'): name or ugettext("Untitled Module")},
             forms=[],
             case_type='',
             case_details=DetailPair(
@@ -1290,26 +1424,47 @@ class CommTrackModule(ModuleBase):
                             field='name',
                             model='case',
                         ),
-                        DetailColumn(
-                            format='plain',
-                            header={(lang or 'en'): ugettext("Quantity")},
-                            field='product:quantity',
-                            model='case',
-                        )
                     ],
                 ),
                 long=Detail(),
             ),
         )
 
+    def new_form(self, name, lang, attachment=''):
+        form = AdvancedForm(
+            name={lang if lang else "en": name if name else _("Untitled Form")},
+        )
+        self.forms.append(form)
+        form = self.get_form(-1)
+        form.source = attachment
+        return form
+
+    def new_form_from_source(self, source):
+        self.forms.append(AdvancedForm.wrap(source))
+        return self.get_form(-1)
+
+    def get_case_types(self):
+        case_types = set()
+        for form in self.forms:
+            for action in form.actions.get_all_actions():
+                case_types.add(action.case_type)
+
+        return case_types
+
     def requires_case_details(self):
-        return True
+        for form in self.forms:
+            for action in form.actions.load_update_cases:
+                if action.case_type == self.case_type:
+                    return True
+
+    def all_forms_require_a_case(self):
+        return all(form.actions.load_update_cases for form in self.forms)
 
     def get_details(self):
         return (
             ('case_short', self.case_details.short, True),
             ('case_long', self.case_details.long, True),
-            ('product_short', self.product_details.short, True),
+            ('product_short', self.product_details.short, self.get_app().commtrack_enabled),
             ('product_long', self.product_details.long, False),
         )
 
@@ -1329,19 +1484,21 @@ class CommTrackModule(ModuleBase):
                     'type': 'no case detail for supply point',
                     'module': module_info,
                 }
-            if not self.product_details.short.columns:
+            if self.get_app().commtrack_enabled and not self.product_details.short.columns:
                 yield {
                     'type': 'no case detail for products',
                     'module': module_info,
                 }
             columns = self.case_details.short.columns + self.case_details.long.columns
-            columns += self.product_details.short.columns
+            if self.get_app().commtrack_enabled:
+                columns += self.product_details.short.columns
             errors = self.validate_detail_columns(columns)
             for error in errors:
                 yield error
 
 
 class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):
+    form_type = 'careplan_form'
     mode = StringProperty(required=True, choices=['create', 'update'])
     custom_case_updates = DictProperty()
     case_preload = DictProperty()
@@ -2256,6 +2413,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     cloudcare_enabled = BooleanProperty(default=False)
     translation_strategy = StringProperty(default='dump-known',
                                           choices=app_strings.CHOICES.keys())
+    commtrack_enabled = BooleanProperty(default=False)
+    commtrack_requisition_mode = StringProperty(choices=CT_REQUISITION_MODES)
 
     @classmethod
     def wrap(cls, data):
@@ -2568,19 +2727,11 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     def new_form(self, module_id, name, lang, attachment=""):
         module = self.get_module(module_id)
-        form = Form(
-            name={lang if lang else "en": name if name else "Untitled Form"},
-        )
-        module.forms.append(form)
-        form = module.get_form(-1)
-        form.source = attachment
-        return form
+        return module.new_form(name, lang, attachment)
 
     def new_form_from_source(self, module_id, source):
         module = self.get_module(module_id)
-        module.forms.append(Form.wrap(source))
-        form = module.get_form(-1)
-        return form
+        return module.new_form_from_source(source)
 
     @parse_int([1, 2])
     def delete_form(self, module_id, form_id):
@@ -2681,7 +2832,11 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @memoized
     def case_type_exists(self, case_type):
-        return case_type in [m.case_type for m in self.get_modules()]
+        return case_type in self.get_case_types()
+
+    @memoized
+    def get_case_types(self):
+        return set(chain(*[m.get_case_types() for m in self.get_modules()]))
 
     def has_media(self):
         return len(self.multimedia_map) > 0
@@ -3068,8 +3223,8 @@ FormBase.get_locale_id = lambda self: "forms.m{module.id}f{form.id}".format(modu
 
 ModuleBase.get_locale_id = lambda self: "modules.m{module.id}".format(module=self)
 
-Module.get_case_list_command_id = lambda self: "m{module.id}-case-list".format(module=self)
-Module.get_case_list_locale_id = lambda self: "case_lists.m{module.id}".format(module=self)
+ModuleBase.get_case_list_command_id = lambda self: "m{module.id}-case-list".format(module=self)
+ModuleBase.get_case_list_locale_id = lambda self: "case_lists.m{module.id}".format(module=self)
 
 Module.get_referral_list_command_id = lambda self: "m{module.id}-referral-list".format(module=self)
 Module.get_referral_list_locale_id = lambda self: "referral_lists.m{module.id}".format(module=self)

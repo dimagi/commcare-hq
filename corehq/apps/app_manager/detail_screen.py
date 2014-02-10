@@ -1,6 +1,7 @@
 from corehq.apps.app_manager import suite_xml as sx
 from corehq.apps.app_manager.util import is_sort_only_column
-from .xpath import dot_interpolate, CaseXPath, IndicatorXpath
+from corehq.apps.app_manager.const import CT_LEDGER_STOCK, CT_LEDGER_FULFILLED
+from corehq.apps.app_manager.xpath import dot_interpolate, CaseXPath, IndicatorXpath, LedgerdbXpath
 
 CASE_PROPERTY_MAP = {
     # IMPORTANT: if you edit this you probably want to also edit
@@ -369,3 +370,21 @@ class IndicatorXpathGenerator(BaseXpathGenerator):
         indicator_set, indicator = self.column.field_property.split('/', 1)
         instance_id = self.id_strings.indicator_instance(indicator_set)
         return IndicatorXpath(instance_id).indicator(indicator)
+
+@register_type_processor(sx.FIELD_TYPE_LEDGER)
+class LedgerXpathGenerator(BaseXpathGenerator):
+
+    @property
+    def xpath(self):
+        session_case_id = 'case_id_case_{}'.format(self.module.case_type)
+        section = self.column.field_property
+
+        # fulfillment section must be same ID as stock section
+        section = CT_LEDGER_STOCK if section == CT_LEDGER_FULFILLED else section
+
+        return "if({0} = 0 or {1} = 0 or {2} = 0, 0, {3})".format(
+            LedgerdbXpath(session_case_id).ledger().count(),
+            LedgerdbXpath(session_case_id).ledger().section(section).count(),
+            LedgerdbXpath(session_case_id).ledger().section(section).entry(u'current()/@id').count(),
+            LedgerdbXpath(session_case_id).ledger().section(section).entry(u'current()/@id')
+        )
