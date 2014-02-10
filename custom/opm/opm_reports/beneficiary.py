@@ -68,7 +68,8 @@ class Beneficiary(object):
         self.village = case_data('village_name')
 
         def get_sql_property(property):
-            property = int(0 if sql_form_data.get(property) is None else sql_form_data.get(property))
+            property = int(0 if sql_form_data.get(property) is None
+                    else sql_form_data.get(property))
             return property
 
         if sql_form_data:
