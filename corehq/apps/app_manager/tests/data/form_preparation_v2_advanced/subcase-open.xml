@@ -73,7 +73,7 @@
             <bind nodeset="/data/case_open_1/case/create/owner_id" calculate="/data/meta/userID"/>
             <bind nodeset="/data/child/case/@date_modified" type="xsd:dateTime" calculate="/data/meta/timeEnd"/>
             <bind nodeset="/data/child/case/@user_id" calculate="/data/meta/userID"/>
-            <setvalue ref="/data/child/case/@case_id" event="xforms-ready" value="uuid()"/>
+            <bind nodeset="/data/child/case/@case_id" calculate="uuid()"/>
             <bind nodeset="/data/child/case/create/case_name" calculate="/data/mother_name"/>
             <bind nodeset="/data/child/case/create/owner_id" calculate="/data/meta/userID"/>
             <bind nodeset="/data/child/case/index/parent" calculate="/data/case_open_1/case/@case_id"/>

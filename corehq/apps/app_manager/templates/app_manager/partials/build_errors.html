@@ -40,6 +40,12 @@
                             uses cases but doesn't have
                             detail screens configured for cases.
                         {% endif %}
+                        {% if error.type == "no product detail" %}
+                            Module
+                            <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
+                            uses CommTrack products but doesn't have
+                            detail screens configured for products.
+                        {% endif %}
                         {% if error.type == "invalid id key" %}
                             Module
                             <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>

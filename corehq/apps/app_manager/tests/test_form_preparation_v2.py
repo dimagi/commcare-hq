@@ -220,6 +220,14 @@ class FormPreparationV2TestAdvanced(FormPrepBase):
         ))
         self.assertXmlEqual(self.get_xml('update_preload_case_multiple'), self.form.render_xform())
 
+    def test_update_parent_case(self):
+        self.form.actions.load_update_cases.append(LoadUpdateAction(
+            case_type=self.module.case_type,
+            case_tag='load_1',
+            case_properties={'question1': '/data/question1', 'parent/question1': '/data/question1'}
+        ))
+        self.assertXmlEqual(self.get_xml('update_parent_case'), self.form.render_xform())
+
 
 class SubcaseRepeatTestAdvanced(FormPrepBase):
     file_path = ('data', 'form_preparation_v2_advanced')
@@ -290,7 +298,8 @@ class SubcaseRepeatTestAdvanced(FormPrepBase):
             parent_tag='open_1',
             repeat_context="/data/child"
         ))
-        self.form.actions.open_cases[0].open_condition.type = 'always'
+        for action in self.form.actions.open_cases:
+            action.open_condition.type = 'always'
         self.assertXmlEqual(self.get_xml('subcase-open'), self.form.render_xform())
 
     def test_subcase_repeat_sharing(self):

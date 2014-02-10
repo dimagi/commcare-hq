@@ -26,7 +26,7 @@ var AdvancedCase = (function () {
         self.setPropertiesMap = function (propertiesMap) {
              self.propertiesMap = ko.mapping.fromJS(propertiesMap);
         };
-         self.setPropertiesMap(params.propertiesMap);
+        self.setPropertiesMap(params.propertiesMap);
 
         self.saveButton = COMMCAREHQ.SaveButton.init({
             unsavedMessage: "You have unchanged case settings",

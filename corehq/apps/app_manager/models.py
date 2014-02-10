@@ -1365,9 +1365,10 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 errors.append(error)
 
         if validate_module:
-            errors.extend(self.get_module().get_case_errors(
-                needs_case_type=True,
-                needs_case_detail=True,
+            module = self.get_module()
+            errors.extend(module.get_case_errors(
+                needs_case_type=False,
+                needs_case_detail=module.requires_case_details(),
                 needs_referral_detail=False,
             ))
 
@@ -1389,6 +1390,9 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 case_properties.update(
                     subcase.case_properties.keys()
                 )
+                parent = self.actions.get_action_from_tag(subcase.parent_tag)
+                parent_types.add((parent.case_type, subcase.parent_reference_id or 'parent'))
+
         return parent_types, case_properties
 
 
@@ -1456,10 +1460,12 @@ class AdvancedModule(ModuleBase):
         return case_types
 
     def requires_case_details(self):
+        if self.case_list.show:
+            return True
+
         for form in self.forms:
-            for action in form.actions.load_update_cases:
-                if action.case_type == self.case_type:
-                    return True
+            if any(action.case_type == self.case_type for action in form.actions.load_update_cases):
+                return True
 
     def all_forms_require_a_case(self):
         return all(form.actions.load_update_cases for form in self.forms)
@@ -1485,14 +1491,18 @@ class AdvancedModule(ModuleBase):
         if needs_case_detail:
             if not self.case_details.short.columns:
                 yield {
-                    'type': 'no case detail for supply point',
+                    'type': 'no case detail',
                     'module': module_info,
                 }
             if self.get_app().commtrack_enabled and not self.product_details.short.columns:
-                yield {
-                    'type': 'no case detail for products',
-                    'module': module_info,
-                }
+                for form in self.forms:
+                    if self.case_list.show or \
+                            any(action.show_product_stock for action in form.actions.load_update_cases):
+                        yield {
+                            'type': 'no product detail',
+                            'module': module_info,
+                        }
+                        break
             columns = self.case_details.short.columns + self.case_details.long.columns
             if self.get_app().commtrack_enabled:
                 columns += self.product_details.short.columns

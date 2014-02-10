@@ -40,8 +40,8 @@ def make_case_elem(tag, attr=None):
         return _make_elem('{cx2}%s' % tag, attr)
 
 
-def get_case_parent_id_xpath(parent_path, xpath=None):
-        xpath = xpath or SESSION_CASE_ID
+def get_case_parent_id_xpath(parent_path, case_id_xpath=None):
+        xpath = case_id_xpath or SESSION_CASE_ID
         if parent_path:
             for parent_name in parent_path.split('/'):
                 xpath = xpath.case().index_id(parent_name)
@@ -165,9 +165,9 @@ def raise_if_none(message):
 class CaseBlock(object):
 
     @classmethod
-    def make_parent_case_block(cls, xform, node_path, parent_path):
+    def make_parent_case_block(cls, xform, node_path, parent_path, case_id_xpath=None):
         case_block = CaseBlock(xform, node_path)
-        id_xpath = get_case_parent_id_xpath(parent_path)
+        id_xpath = get_case_parent_id_xpath(parent_path, case_id_xpath=case_id_xpath)
         xform.add_bind(
             nodeset='%scase/@case_id' % node_path,
             calculate=id_xpath,
@@ -976,7 +976,7 @@ class XForm(WrappedNode):
                 )
 
             base_node.append(case_block.elem)
-            return case_block, base_node
+            return case_block, path
 
         def check_case_type(action):
             if not form.get_app().case_type_exists(action.case_type):
@@ -994,15 +994,19 @@ class XForm(WrappedNode):
                         'owner_id': '@owner_id'
                     }.get(property, property)
 
-                    id_xpath = get_case_parent_id_xpath(parent_path, xpath=session_case_id)
+                    id_xpath = get_case_parent_id_xpath(parent_path, case_id_xpath=session_case_id)
                     self.add_setvalue(
                         ref=nodeset,
                         value=id_xpath.case().property(property_xpath),
                     )
 
             if action.case_properties or action.close_condition.type != 'never':
-                update_case_block, base_node = create_case_block(action, session_case_id)
-                self.add_case_updates(update_case_block, action.case_properties, base_node=base_node)
+                update_case_block, path = create_case_block(action, session_case_id)
+                self.add_case_updates(
+                    update_case_block,
+                    action.case_properties,
+                    base_node_path=path,
+                    case_id_xpath=session_case_id)
 
                 if action.close_condition.type != 'never':
                     update_case_block.add_close_block(self.action_relevance(action.close_condition))
@@ -1080,7 +1084,7 @@ class XForm(WrappedNode):
             self.add_instance('casedb', src='jr://instance/casedb')
             self.has_casedb = True
 
-    def add_case_updates(self, case_block, updates, extra_updates=None, base_node=None):
+    def add_case_updates(self, case_block, updates, extra_updates=None, base_node_path=None, case_id_xpath=None):
         from corehq.apps.app_manager.util import split_path
 
         def group_updates_by_case(updates):
@@ -1117,13 +1121,18 @@ class XForm(WrappedNode):
                     prev_node = node
                 return node
 
-            base_node = base_node or self.data_node
+            node_xpath = "{{x}}{}".format(base_node_path[:-1])
+            base_node = self.data_node if not base_node_path else self.data_node.find(node_xpath)
             parent_base = _make_elem('{x}parents')
             base_node.append(parent_base)
             for parent_path, updates in sorted(updates_by_case.items()):
                 node = make_nested_subnode(parent_base, parent_path)
-                node_path = 'parents/%s/' % parent_path
-                parent_case_block = CaseBlock.make_parent_case_block(self, node_path, parent_path)
+                node_path = '%sparents/%s/' % (base_node_path, parent_path)
+                parent_case_block = CaseBlock.make_parent_case_block(
+                    self,
+                    node_path,
+                    parent_path,
+                    case_id_xpath=case_id_xpath)
                 parent_case_block.add_update_block(updates)
                 node.append(parent_case_block.elem)
 
