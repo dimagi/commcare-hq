@@ -62,8 +62,8 @@
     {% endfor %}
     {% if show_community_notice %}
     <div class="form-actions">
-        <a href="{% url 'domain_subscription_view' domain %}" class="btn btn-primary">{% trans 'Stay with Community Plan' %}</a>
         <a href="{% url 'domain_select_plan' domain %}" class="btn">{% trans 'Select different plan' %}</a>
+        <a href="{% url 'domain_subscription_view' domain %}" class="btn btn-primary">{% trans 'Stay with Community Plan' %}</a>
     </div>
     {% else %}
     <form action="{% url 'confirm_billing_account_info' domain %}" method="post" class="form">
@@ -81,10 +81,10 @@
             {% endblocktrans %}
         </p>
         <div class="form-actions">
+            <a href="{% url 'domain_select_plan' domain %}" class="btn">{% trans 'Select different plan' %}</a>
             <button type="submit" class="btn btn-primary">
                 {% trans 'Select this Plan' %}
             </button>
-            <a href="{% url 'domain_select_plan' domain %}" class="btn">{% trans 'Select different plan' %}</a>
         </div>
     </form>
     {% endif %}
