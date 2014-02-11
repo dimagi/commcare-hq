@@ -1405,7 +1405,7 @@ class AdvancedCommTrackSettingsView(BaseCommTrackAdminView):
 class ProBonoView(DomainAccountingSettings):
     template_name = 'domain/pro_bono.html'
     urlname = 'pro_bono'
-    page_title = ugettext_noop("Pro Bono Application")
+    page_title = ugettext_noop("Pro-Bono Application")
     is_submitted = False
 
     @property

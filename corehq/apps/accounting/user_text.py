@@ -322,11 +322,14 @@ class PricingTable(object):
         ensure_product(product)
         link_text = ugettext_noop('pro-bono form')
         return (
-            ugettext_noop("*Local taxes and other country-specific fees not included. Dimagi provides pro-bono "
-                          "software plans on a needs basis. To learn more about this opportunity or see if your "
-                          "program qualifies, please fill out our %s."
-                          % (mark_safe(('<a href="%s">%s</a>') % (reverse('pro_bono', args=[domain]), link_text))
-                             if domain is not None else link_text)),
+            ugettext_noop(
+                mark_safe(
+                    ('*Local taxes and other country-specific fees not included. Dimagi provides pro-bono '
+                     'software plans on a needs basis. To learn more about this opportunity or see if your '
+                     'program qualifies, please fill out our <a href="%s">%s</a>.')
+                        % (reverse('pro_bono', args=[domain]), link_text)
+                ) if domain is not None else link_text
+            ),
             {
                 Product.COMMCARE: ugettext_noop("**1 USD/month for each additional mobile user"),
                 Product.COMMCONNECT: ugettext_noop("**1 USD/month for each additional mobile user"),
