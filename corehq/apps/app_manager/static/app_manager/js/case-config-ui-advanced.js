@@ -88,6 +88,14 @@ var AdvancedCase = (function () {
 
         self.caseConfigViewModel = new CaseConfigViewModel(self, params);
 
+        self.applyAccordion = function () {
+            _.delay(function () {
+                var options = {header: '> div > h3', heightStyle: 'content', collapsible: true, autoFill: true};
+                $('#case-open-accordion').accordion("destroy").accordion(options);
+                $('#case-load-accordion').accordion("destroy").accordion(options);
+            });
+        };
+
         self.init = function () {
             var $home = $('#case-config-ko');
             _.delay(function () {
@@ -100,11 +108,7 @@ var AdvancedCase = (function () {
                 self.ensureBlankProperties();
                 $('#case-configuration-tab').on('click', function () {
                     // re-apply accordion settings
-                    _.delay(function () {
-                        var options = {header: '> div > h3', heightStyle: 'content', collapsible: true, autoFill: true};
-                        $('#case-open-accordion').accordion("destroy").accordion(options);
-                        $('#case-load-accordion').accordion("destroy").accordion(options);
-                    });
+                    self.applyAccordion();
                 });
             });
         };
@@ -427,6 +431,12 @@ var AdvancedCase = (function () {
                     return false;
                 }
             };
+
+            self.case_type.subscribe(function (value) {
+                if (!value) {
+                    self.config.applyAccordion();
+                }
+            }, null, 'beforeChange');
 
             self.show_product_stock_var = ko.computed({
                 read: function () {
