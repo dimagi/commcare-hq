@@ -104,6 +104,10 @@ def partial_escape(xpath):
     return mark_safe(force_unicode(xpath).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;'))
 
 
+class ModuleNotFoundException(Exception):
+    pass
+
+
 class IndexedSchema(DocumentSchema):
     """
     Abstract class.
@@ -2505,7 +2509,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     @parse_int([1])
     def get_module(self, i):
         self__modules = self.modules
-        return self__modules[i].with_id(i%len(self__modules), self)
+        try:
+            return self__modules[i].with_id(i%len(self__modules), self)
+        except IndexError:
+            raise ModuleNotFoundException()
 
     def get_user_registration(self):
         form = self.user_registration
@@ -2554,21 +2561,17 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @parse_int([1])
     def delete_module(self, module_id):
-        try:
-            module = self.modules[module_id]
-        except IndexError:
-            raise Http404()
-        else:
-            record = DeleteModuleRecord(
-                domain=self.domain,
-                app_id=self.id,
-                module_id=module_id,
-                module=module,
-                datetime=datetime.utcnow()
-            )
-            del self.modules[module_id]
-            record.save()
-            return record
+        module = self.get_module(module_id)
+        record = DeleteModuleRecord(
+            domain=self.domain,
+            app_id=self.id,
+            module_id=module_id,
+            module=module,
+            datetime=datetime.utcnow()
+        )
+        del self.modules[module_id]
+        record.save()
+        return record
 
     def new_form(self, module_id, name, lang, attachment=""):
         module = self.get_module(module_id)
