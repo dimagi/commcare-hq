@@ -430,8 +430,13 @@ class DomainSubscriptionView(DomainAccountingSettings):
 
     def _fmt_credit(self, credit_amount=None):
         if credit_amount is None:
-            return "--"
-        return _("USD %s") % credit_amount
+            return {
+                'amount': "--",
+            }
+        return {
+            'amount': _("USD %s") % credit_amount.quantize(Decimal(10) ** -2),
+            'is_visible': credit_amount != Decimal('0.0'),
+        }
 
     def _credit_grand_total(self, credit_lines):
         return sum([c.balance for c in credit_lines]) if credit_lines else Decimal('0.00')
