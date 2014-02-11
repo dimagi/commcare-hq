@@ -29,20 +29,20 @@
                             <p class="control-group-text">{{ product.monthly_fee }}</p>
                         </div>
                     </div>
-                    {% if product.credit %}
+                    {% if product.credit and product.credit.is_visible %}
                         <div class="control-group">
                             <label class="control-label">{% trans 'Plan Credit' %}</label>
                             <div class="controls">
-                                <p class="control-group-text">{{ product.credit }}</p>
+                                <p class="control-group-text">{{ product.credit.amount }}</p>
                             </div>
                         </div>
                     {% endif %}
                 {% endfor %}
-                {% if plan.subscription_credit %}
+                {% if plan.subscription_credit and plan.subscription_credit.is_visible %}
                     <div class="control-group">
                         <label class="control-label">{% trans 'General Credit' %}</label>
                         <div class="controls">
-                            <p class="control-group-text">{{ plan.subscription_credit }}</p>
+                            <p class="control-group-text">{{ plan.subscription_credit.amount }}</p>
                         </div>
                     </div>
                 {% endif %}
@@ -63,7 +63,7 @@
                             <td>{{ feature.name }}</td>
                             <td>{{ feature.usage }}</td>
                             <td>{{ feature.remaining }}</td>
-                            <td>{{ feature.credit }}</td>
+                            <td>{{ feature.credit.amount }}</td>
                         </tr>
                     {% endfor %}
                 </tbody>
