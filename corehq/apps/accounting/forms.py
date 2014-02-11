@@ -734,7 +734,7 @@ class SoftwarePlanVersionForm(forms.Form):
             'existingRoles': list(self.existing_roles),
             'roleType': self['role_type'].value() or 'existing',
             'newPrivileges': self['privileges'].value(),
-            'currentRoleSlug': self.plan_version.role.slug,
+            'currentRoleSlug': self.plan_version.role.slug if self.plan_version is not None else None,
         }
 
     @property
