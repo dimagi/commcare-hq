@@ -106,7 +106,7 @@ class BillingAccountForm(forms.Form):
                 'city',
                 'region',
                 'postal_code',
-                crispy.Field('country', css_class="input-large"),
+                crispy.Field('country', css_class="input-xlarge"),
             ) if account is not None else None,
             FormActions(
                 crispy.ButtonHolder(
