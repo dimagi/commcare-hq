@@ -1723,7 +1723,7 @@ class CareplanModule(ModuleBase):
         return True
 
     def get_case_types(self):
-        return set(f.case_type for f in self.forms)
+        return set([self.case_type]) | set(f.case_type for f in self.forms)
 
     def get_form_by_type(self, case_type, mode):
         for form in self.get_forms():

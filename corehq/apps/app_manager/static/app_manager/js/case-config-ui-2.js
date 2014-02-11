@@ -138,7 +138,7 @@ var CaseConfig = (function () {
             if (caseType === self.caseConfig.caseType) {
                 label = '*' + label;
             }
-            return label;
+            return label + ' (' + caseType + ')';
         };
         self.case_transaction = HQFormActions.to_case_transaction(caseConfig.actions, caseConfig);
         self.subcases = ko.observableArray(

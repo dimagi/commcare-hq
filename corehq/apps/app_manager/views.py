@@ -375,12 +375,17 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
         else:
             messages.error(request, err)
 
-    module_case_types = [
-        {'module_name': trans(module.name, langs),
-         'case_type': module.case_type,
-         'module_type': module.doc_type}
-        for module in form.get_app().modules if module.case_type
-    ] if not is_user_registration else None
+    module_case_types = []
+    if is_user_registration:
+        module_case_types = None
+    else:
+        for module in form.get_app().modules:
+            for case_type in module.get_case_types():
+                module_case_types.append({
+                    'module_name': trans(module.name, langs),
+                    'case_type': case_type,
+                    'module_type': module.doc_type
+                })
 
     context = {
         'nav_form': form if not is_user_registration else '',

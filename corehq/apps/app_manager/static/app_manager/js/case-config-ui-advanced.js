@@ -135,7 +135,7 @@ var AdvancedCase = (function () {
             if (caseType === self.config.caseType) {
                 label = '*' + label;
             }
-            return label;
+            return label + ' (' + caseType + ')';
         };
 
         self.case_supports_products = function (case_type) {
