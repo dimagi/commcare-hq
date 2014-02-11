@@ -2,7 +2,7 @@ import json
 from corehq.apps.reports.standard import export
 from corehq.apps.reports.models import FormExportSchema, HQGroupExportConfiguration, CaseExportSchema
 from corehq.apps.reports.standard.export import DeidExportReport
-from couchexport.models import ExportTable, ExportSchema, ExportColumn
+from couchexport.models import ExportTable, ExportSchema, ExportColumn, StockExportColumn
 from django.utils.translation import ugettext as _
 from dimagi.utils.decorators.memoized import memoized
 
@@ -40,7 +40,12 @@ class CustomExportHelper(object):
         return cls.subclasses_map[export_type](request, domain, export_id=export_id)
 
     def update_custom_params(self):
-        pass
+        if len(self.custom_export.tables) > 0:
+            t = self.custom_export.tables[0]
+            if t.export_stock:
+                t.columns.append(
+                    StockExportColumn(domain='drew-commtrack', index='_id')
+                )
 
     def format_config_for_javascript(self, table_configuration):
         return table_configuration
@@ -115,6 +120,7 @@ class CustomExportHelper(object):
                 self.custom_export.tables.append(
                     ExportTable(
                         index=table.index,
+                        export_stock=table.export_stock,
                         display=self.custom_export.name,
                         columns=table.columns
                     )

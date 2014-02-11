@@ -287,6 +287,7 @@
                         return {
                             display: table.display,
                             index: table.index,
+                            export_stock: table.export_stock,
                             columns: _(table.column_configuration()).filter(function (column) {
                                 return column.selected();
                             }).map(function (column) {
@@ -309,6 +310,7 @@
                                 table.columns.splice(0, 0, {
                                     index: 'id',
                                     display: 'row.number',
+                                    export_stock: false,
                                     transform: null
                                 });
                             }
@@ -452,6 +454,12 @@
                 <label class="control-label">{% trans "Sheet Name" %}</label>
                 <div class="controls">
                     <input type="text" data-bind="value: display" />
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">{% trans "Export Stock Columns" %}</label>
+                <div class="controls">
+                    <input type="checkbox" data-bind="checked: export_stock" />
                 </div>
             </div>
             <div class="control-group">
