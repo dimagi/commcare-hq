@@ -18,7 +18,14 @@ from couchdbkit.exceptions import ResourceNotFound
 from couchexport.properties import TimeStampProperty, JsonProperty
 from couchdbkit.consumer import Consumer
 from dimagi.utils.logging import notify_exception
-from casexml.apps.stock.models import StockState
+
+column_types = {}
+
+
+def register_column_type(cls):
+    column_types[cls.__name__] = cls
+    return cls
+
 
 class Format(object):
     """
@@ -224,14 +231,6 @@ class ExportSchema(Document, UnicodeMixIn):
         return iter_docs(self.get_new_ids(database))
 
 
-column_types = {}
-
-
-def register_column_type(cls):
-    column_types[cls.__name__] = cls
-    return cls
-
-
 class ExportColumn(DocumentSchema):
     """
     A column configuration, for export
@@ -249,11 +248,11 @@ class ExportColumn(DocumentSchema):
         if 'is_sensitive' not in data and data.get('transform', None):
             data['is_sensitive'] = True
 
-        doc_type = data['doc_type']
-        if self.__name__ == ExportColumn.__name__ and \
-           self.__name__ != doc_type:
-            if doc_type in column_types:
-                return column_types[doc_type].wrap(data)
+        if 'doc_type' in data and \
+           self.__name__ == ExportColumn.__name__ and \
+           self.__name__ != data['doc_type']:
+            if data['doc_type'] in column_types:
+                return column_types[data['doc_type']].wrap(data)
             else:
                 raise ResourceNotFound('Unknown column type: %s', data)
         else:
@@ -294,40 +293,6 @@ class ComplexExportColumn(ExportColumn):
         Return a list of data values that correspond to the headers
         """
         raise NotImplementedError()
-
-
-@register_column_type
-class StockExportColumn(ComplexExportColumn):
-    domain = StringProperty()
-
-    def get_headers(self):
-        from corehq.apps.commtrack.models import Product
-        # TODO filter by domain
-        self._column_tuples = sorted(list(StockState.objects.values_list(
-            'product_id',
-            'section_id'
-        ).distinct()))
-
-        for product_id, section in self._column_tuples:
-            yield "{product} ({section})".format(
-                product=Product.get(product_id).name,
-                section=section
-            )
-
-    def get_data(self, value):
-        from corehq.apps.commtrack.models import RequisitionCase
-        req = RequisitionCase.get(value)
-        states = StockState.objects.filter(case_id=req._id)
-
-        values = [None] * len(self._column_tuples)
-
-        for state in states:
-            state_index = self._column_tuples.index((
-                state.product_id,
-                state.section_id
-            ))
-            values[state_index] = state.stock_on_hand
-        return values
 
 
 class ExportTable(DocumentSchema):
