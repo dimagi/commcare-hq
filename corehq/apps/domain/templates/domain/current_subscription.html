@@ -7,20 +7,18 @@
 <div class="row">
     <div class="span12">
         <article>
-            <div class="page-header">
-                <h1>{% trans 'Current Subscription' %}</h1>
-            </div>
+            <h2>{% trans 'Current Subscription' %}</h2>
             <div class="form form-horizontal">
                 <div class="control-group">
                     <label class="control-label">{% trans 'Plan' %}</label>
                     <div class="controls">
-                        <p class="control-group-text">
-                            <span class="{{ plan.css_class }}">{{ plan.name }}</span>
-                            <a class="btn" href="{{ change_plan_url }}">{% trans "Change Plan" %}</a>
-                        </p>
-                        <span class="alert alert-info">
-                            <i class="icon-info-sign"></i> {{ plan.description }}
-                        </span>
+                        <div class="{{ plan.css_class }}">
+                            <h4>{{ plan.name }}</h4>
+                            <p><i class="icon-info-sign"></i> {{ plan.description }}</p>
+                        </div>
+                        <a class="btn btn-primary" style="margin-top:10px;" href="{{ change_plan_url }}">
+                            {% trans "Change Plan" %}
+                        </a>
                     </div>
                 </div>
                 {% for product in plan.products %}
