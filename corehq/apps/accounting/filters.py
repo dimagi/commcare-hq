@@ -115,7 +115,10 @@ class DateRangeFilter(BaseReportFilter):
 
     @property
     def datespan(self):
-        datespan = DateSpan.since(self.default_days, format="%Y-%m-%d", timezone=self.timezone)
+        datespan = DateSpan.since(self.default_days,
+                                  enddate=datetime.date.today(),
+                                  format="%Y-%m-%d",
+                                  timezone=self.timezone)
         if self.get_start_date(self.request) is not None:
             datespan.startdate = self.get_start_date(self.request)
         if self.get_end_date(self.request) is not None:

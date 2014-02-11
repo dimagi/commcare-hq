@@ -155,6 +155,7 @@
             /* form_requires needs to be a knockout observable so that
              its value can be read by another UI (form filtering) */
             var form_requires = ko.observable({{ form.requires|JSON }});
+            {% if form.source %}
             var caseConfig = new CaseConfig.CaseConfig({
                 home: $('#casexml_home'),
                 actions: {{ form.actions|JSON }},
@@ -183,6 +184,7 @@
                 {% endif %}
             });
             caseConfig.init();
+            {% endif %}
 
             // tag the 'preview in cloudcare' button with the right url
             // unfortunately, has to be done in javascript

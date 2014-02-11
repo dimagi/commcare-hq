@@ -15,4 +15,7 @@ class AuthContext(DocumentSchema):
             raise ResourceNotFound('No domain with name %s' % self.domain)
 
     def is_valid(self):
-        return self.authenticated or not self.auth_required()
+        try:
+            return self.authenticated or not self.auth_required()
+        except ResourceNotFound:
+            return False

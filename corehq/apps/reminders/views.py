@@ -373,6 +373,7 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
         form._cchq_is_superuser = request.couch_user.is_superuser
         form._cchq_use_custom_content_handler = (h is not None and h.custom_content_handler is not None)
         form._cchq_custom_content_handler = h.custom_content_handler if h is not None else None
+        form._cchq_domain = domain
         if form.is_valid():
             if h is None:
                 h = CaseReminderHandler(domain=domain)
@@ -410,6 +411,7 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
             h.recipient_case_match_value = form.cleaned_data["recipient_case_match_value"]
             h.custom_content_handler = form.cleaned_data["custom_content_handler"]
             h.force_surveys_to_use_triggered_case = form.cleaned_data["force_surveys_to_use_triggered_case"]
+            h.user_group_id = form.cleaned_data["user_group_id"]
             if form.cleaned_data["start_condition_type"] == "ON_DATETIME":
                 dt = parse(form.cleaned_data["start_datetime_date"]).date()
                 tm = parse(form.cleaned_data["start_datetime_time"]).time()
@@ -462,6 +464,7 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
                 "use_custom_content_handler" : h.custom_content_handler is not None,
                 "custom_content_handler" : h.custom_content_handler,
                 "force_surveys_to_use_triggered_case" : h.force_surveys_to_use_triggered_case,
+                "user_group_id": h.user_group_id,
             }
         else:
             initial = {
@@ -480,6 +483,7 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
         "handler_id":   handler_id,
         "sample_list":  sample_list,
         "is_superuser" : request.couch_user.is_superuser,
+        "user_groups": Group.by_domain(domain),
     })
 
 

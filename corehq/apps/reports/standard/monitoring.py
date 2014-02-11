@@ -784,11 +784,6 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
     emailable = True
 
     @property
-    def special_notice(self):
-        if self.domain_object.case_sharing_included():
-            return _('This report currently does not fully support case sharing. There might be inconsistencies in the cases modified and average cases modified columns.')
-
-    @property
     def view_by(self):
         return self.request.GET.get('view_by', None)
 

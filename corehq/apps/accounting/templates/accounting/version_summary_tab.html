@@ -3,8 +3,7 @@
         <p><h3>{{ plan_version }}</h3></p>
         <p><strong>Date Created:</strong> {{ plan_version.date_created }}</p>
         <p>
-            <strong>Role:</strong> {{ plan_version.role.name }}
-            {% if plan_version.role.description %} ({{ plan_version.role.description }}){% endif %}
+            <strong>Role:</strong> {{ plan_version.role }}
         </p>
         <p>
             <strong>Products:</strong>

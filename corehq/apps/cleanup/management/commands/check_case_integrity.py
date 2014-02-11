@@ -4,7 +4,7 @@ from couchdbkit import ResourceNotFound
 from django.core.management.base import BaseCommand
 from casexml.apps.case.cleanup import rebuild_case
 from casexml.apps.case.models import CommCareCase
-from corehq.elastic import stream_es_query, ES_URLS
+from corehq.elastic import stream_es_query, ES_URLS, ADD_TO_ES_FILTER
 import dateutil.parser as dparser
 import csv
 import logging
@@ -25,6 +25,7 @@ def forms_with_cases(domain=None, since=None, chunksize=500):
         q["filter"]["and"][0]["bool"]["must"] = {
             "range": {
                 "received_on": {"from": since.strftime("%Y-%m-%d")}}}
+    q["filter"]["and"].extend(ADD_TO_ES_FILTER["forms"][:])
     return stream_es_query(params=params, q=q, es_url=ES_URLS["forms"],
                            fields=["__retrieved_case_ids", "domain", "received_on"], chunksize=chunksize)
 
@@ -36,15 +37,10 @@ def case_ids_by_xform_id(xform_ids):
 
 def iter_forms_with_cases(domain, since, chunksize=500):
     for form_list in chunked(forms_with_cases(domain, since), chunksize):
-        case_ids = []
-        for form in form_list:
-            f_case_ids = form["fields"]["__retrieved_case_ids"]
-            received_on = form["fields"]["received_on"]
-            case_ids.extend(f_case_ids)
-
         case_id_mapping = case_ids_by_xform_id([f["_id"] for f in form_list])
         for form in form_list:
             form_id, f_case_ids, f_domain = form["_id"], form["fields"]["__retrieved_case_ids"], form["fields"]["domain"]
+            received_on = form["fields"]["received_on"]
             for case_id in f_case_ids:
                 yield form_id, received_on, case_id, case_id in case_id_mapping.get(form_id, []), f_domain
 

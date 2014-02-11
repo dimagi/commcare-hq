@@ -599,6 +599,8 @@ FLUFF_PILLOW_TYPES_TO_SQL = {
     'OpmHealthStatusFluff': 'SQL',
 }
 
+PREVIEWER_RE = '^$'
+
 try:
     #try to see if there's an environmental variable set for local_settings
     if os.environ.get('CUSTOMSETTINGS', None) == "demo":
@@ -920,6 +922,8 @@ PILLOWTOPS = {
         'corehq.pillows.user.UserPillow',
         'corehq.pillows.application.AppPillow',
         'corehq.pillows.sms.SMSPillow',
+        'corehq.pillows.user.GroupToUserPillow',
+        'corehq.pillows.user.UnknownUsersPillow',
     ],
     'core_ext': [
         'corehq.pillows.reportcase.ReportCasePillow',

@@ -284,6 +284,10 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     # If set to True, invalid survey responses will still be shown in the chat
     # window, while questions and valid responses will be filtered out.
     show_invalid_survey_responses_in_chat = BooleanProperty(default=False)
+    # If set to True, if a message is read by anyone it counts as being read by
+    # everyone. Set to False so that a message is only counted as being read
+    # for a user if only that user has read it.
+    count_messages_as_read_by_anyone = BooleanProperty(default=False)
 
     # exchange/domain copying stuff
     is_snapshot = BooleanProperty(default=False)
@@ -695,10 +699,15 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
 
         return new_domain
 
+    def reminder_should_be_copied(self, handler):
+        from corehq.apps.reminders.models import ON_DATETIME
+        return (handler.start_condition_type != ON_DATETIME and
+                handler.user_group_id is None)
+
     def copy_component(self, doc_type, id, new_domain_name, user=None):
         from corehq.apps.app_manager.models import import_app
         from corehq.apps.users.models import UserRole
-        from corehq.apps.reminders.models import CaseReminderHandler, ON_DATETIME
+        from corehq.apps.reminders.models import CaseReminderHandler
 
         str_to_cls = {
             'UserRole': UserRole,
@@ -710,12 +719,15 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             new_doc.copy_history.append(id)
         else:
             cls = str_to_cls[doc_type]
+
+            if doc_type == 'CaseReminderHandler':
+                cur_doc = cls.get(id)
+                if not self.reminder_should_be_copied(cur_doc):
+                    return None
+
             new_id = db.copy_doc(id)['id']
 
             new_doc = cls.get(new_id)
-
-            if new_doc.doc_type == 'CaseReminderHandler' and new_doc.start_condition_type == ON_DATETIME:
-                return None
 
             for field in self._dirty_fields:
                 if hasattr(new_doc, field):
