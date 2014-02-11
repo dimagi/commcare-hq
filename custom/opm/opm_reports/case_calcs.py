@@ -253,7 +253,8 @@ class ChildFollowup(fluff.Calculator):
 
     @fluff.date_emitter
     def total(self, form):
-        if form.xmlns in children_forms + CHILD_FOLLOWUP_XMLNS:
+        forms = children_forms.append(CHILD_FOLLOWUP_XMLNS)
+        if form.xmlns in children_forms:
             block = block_type(form)
             followed_up = False
             if block == "soft" and "total_soft_conditions" in form.form and form.form["total_soft_conditions"] == 1:
