@@ -798,8 +798,8 @@ ol.inline {
   margin-left: 0;
   list-style: none;
 }
-ul.inline  > li,
-ol.inline  > li {
+ul.inline > li,
+ol.inline > li {
   display: inline-block;
   padding-left: 5px;
   padding-right: 5px;
@@ -977,9 +977,12 @@ dl.def-form-data dl > dd {
   border-radius: 5px;
   background-color: #333333;
   color: #ffffff;
-  font-weight: bold;
-  display: inline-block;
   vertical-align: middle;
+  border: 3px solid #ffffff;
+  -webkit-box-shadow: rgba(0, 0, 0, 0.3) 0px 0px 5px;
+  -moz-box-shadow: rgba(0, 0, 0, 0.3) 0px 0px 5px;
+  box-shadow: rgba(0, 0, 0, 0.3) 0px 0px 5px;
+  margin-bottom: 10px;
 }
 .label-plan.community {
   background-color: #006fca;
@@ -3594,7 +3597,7 @@ th.header > div {
 .open {
   *z-index: 1000;
 }
-.open  > .dropdown-menu {
+.open > .dropdown-menu {
   display: block;
 }
 .pull-right > .dropdown-menu {
