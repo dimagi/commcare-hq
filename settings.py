@@ -246,6 +246,7 @@ HQ_APPS = (
     'corehq.apps.api',
     'corehq.apps.indicators',
     'corehq.apps.cachehq',
+    'corehq.apps.toggle_ui',
     'corehq.couchapps',
     'custom.apps.wisepill',
     'custom.fri',

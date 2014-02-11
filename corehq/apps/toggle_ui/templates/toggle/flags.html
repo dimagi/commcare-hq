@@ -1,0 +1,42 @@
+{% extends 'hqwebapp/base_page.html' %}
+{% load url from future %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load timezone_tags %}
+
+{% block title %}{% trans "Feature Flags" %}{% endblock %}
+
+{% block js %}{{ block.super }}
+    {% include "imports/datatables.html" %}
+    <script type="text/javascript" src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+<script>
+    $(function(){
+        var table = new HQReportDataTables({
+            showAllRowsOption: true
+        });
+        table.render();
+    });
+</script>
+{% endblock %}
+
+{% block page_content %}
+    <table class="table table-striped datatable">
+        <thead>
+            <th>{% trans "Name" %}</th>
+            <th></th>
+        </thead>
+        <tbody>
+            {% for toggle in toggles %}
+            <tr>
+                <td>{{ toggle }}</td>
+                <td>
+                    <a href="{% url "edit_toggle" toggle %}" role="button" data-toggle="modal" class="btn btn-primary">{% trans "Edit" %}</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
