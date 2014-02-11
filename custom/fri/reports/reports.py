@@ -11,7 +11,7 @@ from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.util import format_datatables_data
 from custom.fri.models import FRISMSLog, PROFILE_DESC
 from custom.fri.reports.filters import InteractiveParticipantFilter, RiskProfileFilter
-from custom.fri.api import get_message_bank, add_metadata
+from custom.fri.api import get_message_bank, add_metadata, get_date
 from corehq.apps.sms.models import INCOMING, OUTGOING
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.models import CommCareCase
@@ -331,7 +331,9 @@ class SurveyResponsesReport(FRIReport):
         for case in participants:
             pid = case.get_case_property("pid")
             study_arm = case.get_case_property("study_arm")
-            registration_date = case.get_case_property("registration_date")
+            registration_date = get_date(case, "start_date")
+            if registration_date is None:
+                continue
             first_survey_date = self.get_first_tuesday(registration_date)
             row = [
                 self._fmt(pid),
@@ -367,7 +369,9 @@ class SurveyResponsesReport(FRIReport):
         local_date = local_now.date()
 
         def filter_function(case):
-            registration_date = case.get_case_property("registration_date")
+            registration_date = get_date(case, "start_date")
+            if registration_date is None:
+                return False
             first_tuesday = self.get_first_tuesday(registration_date)
             end_date = first_tuesday + timedelta(days=56)
             return end_date >= local_date
