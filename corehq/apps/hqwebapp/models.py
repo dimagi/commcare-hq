@@ -1040,6 +1040,14 @@ class SMSAdminTab(UITab):
     def is_viewable(self):
         return self.couch_user and self.couch_user.is_superuser
 
+class FeatureFlagsTab(UITab):
+    title = ugettext_noop("Feature Flags")
+    view = "toggle_list"
+
+    @property
+    def is_viewable(self):
+        return self.couch_user and self.couch_user.is_superuser
+
 
 class AnnouncementsTab(UITab):
     title = ugettext_noop("Announcements")
@@ -1061,6 +1069,7 @@ class AdminTab(UITab):
         SMSAdminTab,
         AnnouncementsTab,
         AccountingTab,
+        FeatureFlagsTab
     )
 
     @property
@@ -1084,6 +1093,7 @@ class AdminTab(UITab):
             pass
         submenu_context.extend([
             format_submenu_context(_("SMS Connectivity"), url=reverse("default_sms_admin_interface")),
+            format_submenu_context(_("Feature Flags"), url=reverse("toggle_list")),
             format_submenu_context(None, is_divider=True),
             format_submenu_context(_("Django Admin"), url="/admin")
         ])
