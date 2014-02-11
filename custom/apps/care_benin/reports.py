@@ -14,7 +14,9 @@ from couchdbkit_aggregate.fn import NO_VALUE
 from dimagi.utils.couch.database import get_db
 from corehq.apps.reports.util import format_datatables_data as fdd
 
-AGENTS_DE_SANTE_GROUP = '12cfe9ecf54249e214072aad08d03a1e'
+RELAIS_GROUP = "relais"
+
+AGENTS_DE_SANTE_GROUP = "Agents de Santé"
 
 
 def username(key, report):
@@ -321,7 +323,7 @@ class Relais(BasicTabularReport, CustomProjectReport, ProjectReportParametersMix
     field_classes = (DatespanField,)
     datespan_default_days = 30
     exportable = True
-    filter_group_name = "relais"
+    filter_group_name = RELAIS_GROUP
 
     couch_view = "care_benin/by_village_case"
 
@@ -353,6 +355,7 @@ class Nurse(BasicTabularReport, CustomProjectReport, ProjectReportParametersMixi
     field_classes = (DatespanField,)
     datespan_default_days = 30
     exportable = True
+    filter_group_name = AGENTS_DE_SANTE_GROUP
 
     couch_view = "care_benin/by_user_form"
 
@@ -674,6 +677,7 @@ class HealthCenter(BasicTabularReport, CustomProjectReport, ProjectReportParamet
     field_classes = (DatespanField,)
     datespan_default_days = 30
     exportable = True
+    filter_group_name = AGENTS_DE_SANTE_GROUP
 
     couch_view = "care_benin/by_user_form"
 
@@ -707,15 +711,6 @@ class HealthCenter(BasicTabularReport, CustomProjectReport, ProjectReportParamet
     @memoized
     def hc(self):
         return dict([(user['_id'], user.user_data.get('CS')) for user in self.users])
-
-    @property
-    @memoized
-    def users(self):
-        group = Group.get(AGENTS_DE_SANTE_GROUP)
-
-        return self.get_all_users_by_domain(
-            group=group,
-        )
 
     @property
     def start_and_end_keys(self):
