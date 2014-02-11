@@ -273,7 +273,7 @@ class SubscriptionForm(forms.Form):
 
 
 class CreditForm(forms.Form):
-    amount = forms.DecimalField(label=_("Amount %s") % Currency.get_default().symbol)
+    amount = forms.DecimalField()
     note = forms.CharField(required=False)
     rate_type = forms.ChoiceField()
     product_rate = forms.ChoiceField(required=False, label=_("Product Rate"))
@@ -286,6 +286,7 @@ class CreditForm(forms.Form):
             self.fields['feature_rate'].choices = self.get_feature_choices(id, is_account)
             self.fields['rate_type'].choices = self.get_rate_type_choices(self.fields['product_rate'].choices,
                                                                           self.fields['feature_rate'].choices)
+        self.fields['amount'].label = _("Amount (%s)") % self.get_currency_str(id, is_account)
         self.helper = FormHelper()
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
@@ -302,6 +303,15 @@ class CreditForm(forms.Form):
                 )
             )
         )
+
+    def get_currency_str(self, id, is_account):
+        account = BillingAccount.objects.get(id=id) \
+            if is_account else Subscription.objects.get(id=id).account
+        symbol = account.currency.symbol
+        if len(symbol) != 0:
+            return symbol
+        else:
+            return account.currency.code
 
     def get_subscriptions(self, id, is_account):
         return Subscription.objects.filter(account=BillingAccount.objects.get(id=id))\
