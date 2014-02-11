@@ -80,14 +80,7 @@
     </script>
 
     <script type="text/html" id="select-role-type-template">
-        <label class="radio">
-            <input type="radio" data-bind="checked: roleType" name="role_type" value="existing">
-            Use Existing Role
-        </label>
-        <label class="radio">
-            <input type="radio" data-bind="checked: roleType" name="role_type" value="new">
-            Create New Role
-        </label>
+        {% crispy role_form %}
     </script>
 
     <script type="text/html" id="selected-role-privileges-template">
