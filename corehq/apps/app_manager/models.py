@@ -2554,17 +2554,21 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @parse_int([1])
     def delete_module(self, module_id):
-        module = self.modules[module_id]
-        record = DeleteModuleRecord(
-            domain=self.domain,
-            app_id=self.id,
-            module_id=module_id,
-            module=module,
-            datetime=datetime.utcnow()
-        )
-        del self.modules[module_id]
-        record.save()
-        return record
+        try:
+            module = self.modules[module_id]
+        except IndexError:
+            raise Http404()
+        else:
+            record = DeleteModuleRecord(
+                domain=self.domain,
+                app_id=self.id,
+                module_id=module_id,
+                module=module,
+                datetime=datetime.utcnow()
+            )
+            del self.modules[module_id]
+            record.save()
+            return record
 
     def new_form(self, module_id, name, lang, attachment=""):
         module = self.get_module(module_id)
