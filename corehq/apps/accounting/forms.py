@@ -497,13 +497,6 @@ class SoftwarePlanVersionForm(forms.Form):
         required=False,
         label="Role"
     )
-    role_type = forms.ChoiceField(
-        required=True,
-        choices=(
-            ('existing', "Use Existing Role"),
-            ('new', "Create New Role"),
-        )
-    )
     create_new_role = forms.BooleanField(
         required=False,
         widget=forms.HiddenInput,
@@ -530,6 +523,8 @@ class SoftwarePlanVersionForm(forms.Form):
         self.is_update = False
 
         super(SoftwarePlanVersionForm, self).__init__(*args, **kwargs)
+        # Check that a Role Type is provided:
+        self.is_valid()
 
         self.fields['privileges'].choices = list(self.available_privileges)
         self.fields['role_slug'].choices = [(r['slug'], "%s (%s)" % (r['name'], r['slug'])) for r in self.existing_roles]
@@ -541,14 +536,11 @@ class SoftwarePlanVersionForm(forms.Form):
             'update_version',
             crispy.Fieldset(
                 "Permissions",
-                BootstrapMultiField(
-                    "Role Type",
-                    crispy.Div(
-                        data_bind="template: {"
-                                  " name: 'select-role-type-template', "
-                                  " data: role"
-                                  "}, "
-                    ),
+                crispy.Div(
+                    data_bind="template: {"
+                              " name: 'select-role-type-template', "
+                              " data: role"
+                              "}, "
                 ),
                 crispy.Div(
                     BootstrapMultiField(
@@ -732,7 +724,7 @@ class SoftwarePlanVersionForm(forms.Form):
             'currentValue': self['privileges'].value(),
             'multiSelectField': 'privileges',
             'existingRoles': list(self.existing_roles),
-            'roleType': self['role_type'].value() or 'existing',
+            #'roleType': self.role_form['role_type'].value() or 'existing',
             'newPrivileges': self['privileges'].value(),
             'currentRoleSlug': self.plan_version.role.slug,
         }
@@ -909,6 +901,26 @@ class SoftwarePlanVersionForm(forms.Form):
 
         new_version.save()
         messages.success(request, 'The version for %s Software Plan was successfully updated.' % new_version.plan.name)
+
+
+class RoleForm(forms.Form):
+    role_type = forms.ChoiceField(
+        required=True,
+        choices=(
+            ('existing', "Use Existing Role"),
+            ('new', "Create New Role"),
+        )
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(RoleForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.layout = crispy.Layout(
+            InlineRadios('role_type',
+                         data_bind="checked: roleType",
+                         name="role_type")
+        )
 
 
 class FeatureRateForm(forms.ModelForm):
