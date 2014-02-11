@@ -26,9 +26,13 @@
                     Lookup tables are used in applications to provide data that is not directly stored in the application and may change over time. For example, you can use them for a list of villages that changes over the time of your project. They also allow you to assign certain data (ex. villages) to certain users
                 {% endblocktrans %}
             </p>
-            <p class="warning">
+            <p class="alert alert-info">
                 {% blocktrans %}
-                    Currently you have not uploaded any tables. Go to <strong>Manage Table Data</strong> to upload tables.
+                    Currently you have not uploaded any tables. Go to 
+                {% endblocktrans %}
+                    <a href="{% url 'fixture_interface_dispatcher' domain 'edit_lookup_tables'%}"><strong>Manage Table Data</strong></a>
+                {% blocktrans %}
+                    to upload tables.
                 {% endblocktrans %}
             </p>
             <p class="help-block">
