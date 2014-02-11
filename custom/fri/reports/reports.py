@@ -1,5 +1,6 @@
 import pytz
 import logging
+import cgi
 from datetime import datetime, time, timedelta
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
@@ -126,6 +127,8 @@ class MessageBankReport(FRIReport):
         return format_datatables_data(val, val)
 
     def _fmt2(self, val1, val2):
+        val1 = cgi.escape(val1, True)
+        val2 = cgi.escape(val2, True)
         return self.table_cell(val1, '<span style="display: none;">%s</span><span>%s</span>' % (val1, val2))
 
 class MessageReport(FRIReport, DatespanMixin):
