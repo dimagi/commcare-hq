@@ -223,6 +223,15 @@ class ExportSchema(Document, UnicodeMixIn):
     def get_new_docs(self, database=None):
         return iter_docs(self.get_new_ids(database))
 
+
+column_types = {}
+
+
+def register_column_type(cls):
+    column_types[cls.__name__] = cls
+    return cls
+
+
 class ExportColumn(DocumentSchema):
     """
     A column configuration, for export
@@ -239,13 +248,22 @@ class ExportColumn(DocumentSchema):
     def wrap(self, data):
         if 'is_sensitive' not in data and data.get('transform', None):
             data['is_sensitive'] = True
-        return super(ExportColumn, self).wrap(data)
+
+        doc_type = data['doc_type']
+        if self.__name__ == ExportColumn.__name__ and \
+           self.__name__ != doc_type:
+            if doc_type in column_types:
+                return column_types[doc_type].wrap(data)
+            else:
+                raise ResourceNotFound('Unknown column type: %s', data)
+        else:
+            return super(ExportColumn, self).wrap(data)
 
     def get_display(self):
-         return u'{primary}{extra}'.format(
-             primary=self.display,
-             extra=" [sensitive]" if self.is_sensitive else ''
-         )
+        return u'{primary}{extra}'.format(
+            primary=self.display,
+            extra=" [sensitive]" if self.is_sensitive else ''
+        )
 
     def to_config_format(self, selected=True):
         return {
@@ -259,6 +277,7 @@ class ExportColumn(DocumentSchema):
         }
 
 
+@register_column_type
 class ComplexExportColumn(ExportColumn):
     """
     A single column config that can represent multiple actual columns
@@ -277,6 +296,7 @@ class ComplexExportColumn(ExportColumn):
         raise NotImplementedError()
 
 
+@register_column_type
 class StockExportColumn(ComplexExportColumn):
     domain = StringProperty()
 
@@ -316,6 +336,7 @@ class ExportTable(DocumentSchema):
     """
     index = StringProperty()
     display = StringProperty()
+    export_stock = BooleanProperty()
     columns = SchemaListProperty(ExportColumn)
     order = ListProperty()
 
@@ -323,13 +344,11 @@ class ExportTable(DocumentSchema):
     def wrap(cls, data):
         # hack: manually remove any references to _attachments at runtime
         data['columns'] = [c for c in data['columns'] if not c['index'].startswith("_attachments.")]
-        ret = super(ExportTable, cls).wrap(data)
-        ret.columns.append(StockExportColumn(domain='drew-commtrack', index='_id'))
-        return ret
+        return super(ExportTable, cls).wrap(data)
 
     @classmethod
     def default(cls, index):
-        return cls(index=index, display="", columns=[])
+        return cls(index=index, display="", export_stock=False, columns=[])
         
     @property
     @memoized
@@ -602,9 +621,16 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
             else:
                 return ''
 
+        def export_stock():
+            if self.tables_by_index.has_key(index):
+                return self.tables_by_index[index].export_stock
+            else:
+                return False
+
         return {
             "index": index,
             "display": display(),
+            "export_stock": export_stock(),
             "column_configuration": column_configuration(),
             "selected": index in self.tables_by_index
         }
