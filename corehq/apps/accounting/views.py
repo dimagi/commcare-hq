@@ -65,7 +65,7 @@ class AsyncHandlerMixin():
 
     @property
     @memoized
-    def get_response(self):
+    def response(self):
         if self.handler_slug in [h.slug for h in self.async_handlers]:
             return self.get_async_handler().get_response()
         return None
@@ -152,8 +152,8 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
         return reverse(self.urlname, args=(self.args[0],))
 
     def post(self, request, *args, **kwargs):
-        if self.get_response is not None:
-            return self.get_response
+        if self.response is not None:
+            return self.response
         if 'account' in self.request.POST and self.account_form.is_valid():
             self.account_form.update_account_and_contacts(self.account)
         elif 'adjust_credit' in self.request.POST and self.credit_form.is_valid():
@@ -391,8 +391,8 @@ class EditSoftwarePlanView(AccountingSectionView, AsyncHandlerMixin):
         }]
 
     def post(self, request, *args, **kwargs):
-        if self.get_response is not None:
-            return self.get_response
+        if self.response is not None:
+            return self.response
         if 'update_version' in request.POST:
             if self.software_plan_version_form.is_valid():
                 self.software_plan_version_form.save(request)
