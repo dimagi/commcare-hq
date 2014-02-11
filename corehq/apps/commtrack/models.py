@@ -19,7 +19,6 @@ from corehq.apps.users.models import CommCareUser
 from dimagi.utils.couch.loosechange import map_reduce
 from couchforms.models import XFormInstance
 from dimagi.utils import parsing as dateparse
-from dimagi.utils.dates import force_to_date, force_to_datetime
 from datetime import datetime
 from copy import copy
 from django.dispatch import receiver
@@ -28,6 +27,8 @@ from corehq.apps.locations.models import Location
 from corehq.apps.commtrack.const import StockActions, RequisitionActions, RequisitionStatus, USER_LOCATION_OWNER_MAP_TYPE
 from corehq.apps.commtrack.xmlutil import XML
 from corehq.apps.commtrack.exceptions import LinkedSupplyPointNotFoundError
+from couchexport.models import register_column_type, ComplexExportColumn
+from casexml.apps.stock.models import StockState
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -1230,6 +1231,43 @@ class CommTrackUser(CommCareUser):
             )
 
             self.submit_location_block(caseblock)
+
+
+@register_column_type
+class StockExportColumn(ComplexExportColumn):
+    """
+    A special column type for case exports. Related to the
+    couchexport/models.py code.
+    """
+    domain = StringProperty()
+
+    def get_headers(self):
+        # TODO filter by domain
+        self._column_tuples = sorted(list(StockState.objects.values_list(
+            'product_id',
+            'section_id'
+        ).distinct()))
+
+        for product_id, section in self._column_tuples:
+            yield "{product} ({section})".format(
+                product=Product.get(product_id).name,
+                section=section
+            )
+
+    def get_data(self, value):
+        req = RequisitionCase.get(value)
+        states = StockState.objects.filter(case_id=req._id)
+
+        values = [None] * len(self._column_tuples)
+
+        for state in states:
+            state_index = self._column_tuples.index((
+                state.product_id,
+                state.section_id
+            ))
+            values[state_index] = state.stock_on_hand
+        return values
+
 
 
 def sync_location_supply_point(loc):
