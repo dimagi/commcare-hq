@@ -16,7 +16,7 @@ function (doc) {
             var edd_date = new Date(edd);
             var difference = edd_date.getTime() - visit_date.getTime();
 
-            if (edd_date >= visit_date && difference <= 120*MS_IN_DAY) {
+            if (edd_date >= visit_date && difference <= 150*MS_IN_DAY) {
                 indicator_emits["anc_visit_120"] = case_id;
                 if (indicators.cur_num_anc) {
                     try {
