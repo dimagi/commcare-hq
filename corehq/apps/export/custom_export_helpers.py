@@ -45,7 +45,7 @@ class CustomExportHelper(object):
         if len(self.custom_export.tables) > 0:
             if self.export_stock:
                 self.custom_export.tables[0].columns.append(
-                    StockExportColumn(domain='drew-commtrack', index='_id')
+                    StockExportColumn(domain=self.domain, index='_id')
                 )
 
     def format_config_for_javascript(self, table_configuration):
