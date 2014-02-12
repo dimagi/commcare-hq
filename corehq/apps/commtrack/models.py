@@ -1236,8 +1236,10 @@ class CommTrackUser(CommCareUser):
 @register_column_type
 class StockExportColumn(ComplexExportColumn):
     """
-    A special column type for case exports. Related to the
-    couchexport/models.py code.
+    A special column type for case exports. This will export a column
+    for each product/section combo on the provided domain.
+
+    See couchexport/models.
     """
     domain = StringProperty()
 
