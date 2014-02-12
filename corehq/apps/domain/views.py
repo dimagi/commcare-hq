@@ -875,7 +875,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
 
                     # set the license of every multimedia file that doesn't yet have a license set
                     if not m_file.license:
-                        m_file.update_or_add_license(self.domain, type=new_license)
+                        m_file.update_or_add_license(self.domain, type=new_license, should_save=False)
 
                     m_file.save()
 
