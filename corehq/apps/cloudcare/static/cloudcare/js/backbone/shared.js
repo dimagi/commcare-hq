@@ -23,8 +23,16 @@ var Selectable = Backbone.View.extend({
             return;
         }
         if (this.selected) {
-            this.deselect();
-            this.trigger("deselected");
+            if (window.mainView.router.view.dirty) {
+                var dialog = confirm("You have unsaved changes. To stay on the page, press cancel. To discard changes and leave the page, press OK");
+                if (dialog == true) {
+                    this.deselect();
+                    this.trigger("deselected");
+                }
+            } else {
+                this.deselect();
+                this.trigger("deselected");
+            }
         } else {
             this.select();
         }

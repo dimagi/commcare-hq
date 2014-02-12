@@ -8,7 +8,7 @@ cloudCare.dispatch = _.extend({}, Backbone.Events);
 cloudCare.AppNavigation = Backbone.Router.extend({
 
     initialize: function() {
-        _.bindAll(this, 'setView', 'hashChange');
+        _.bindAll(this, 'setView');
     },
 
     routes: {
@@ -24,24 +24,6 @@ cloudCare.AppNavigation = Backbone.Router.extend({
     setView: function (view) {
         this.view = view;
     },
-    hashChange: function (evt) {
-        if (this.cancelNavigate) { // cancel out if just reverting the URL
-            evt.stopImmediatePropagation();
-            this.cancelNavigate = false;
-            return;
-        }
-
-        if (this.view && this.view.dirty) {
-            var dialog = confirm("You have unsaved changes. To stay on the page, press cancel. To discard changes and leave the page, press OK");
-            if (dialog == true) return;
-            else {
-                evt.stopImmediatePropagation();
-                this.cancelNavigate = true;
-                window.location.href = evt.originalEvent.oldURL;
-            }
-        }
-    }
-
 });
 
 
@@ -165,7 +147,6 @@ cloudCare.FormView = Selectable.extend({
     tagName: 'li',
     initialize: function() {
         var self = this;
-        this.dirty = true;
         _.bindAll(self, 'render', 'toggle', 'select', 'deselect', 'enable', 'disable');
         cloudCare.dispatch.on("form:enter", function (form, caseModel) {
             self.disable();
@@ -342,7 +323,6 @@ cloudCare.FormListView = Backbone.View.extend({
         var formView = new cloudCare.FormView({
             model: form,
             language: self.options.language,
-            dirty: true
         });
         self._formViews[form.get("index")] = formView;
         formView.on("selected", function () {
