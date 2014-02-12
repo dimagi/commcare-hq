@@ -2237,9 +2237,14 @@ class SavedAppBuild(ApplicationBase):
             'jar_path': self.get_jar_path(),
             'short_name': self.short_name
         })
-        if data['comment_from']:
-            comment_user = CouchUser.get(data['comment_from'])
-            data['comment_user_name'] = comment_user.full_name
+        comment_from = data['comment_from']
+        if comment_from:
+            try:
+                comment_user = CouchUser.get(comment_from)
+            except ResourceNotFound:
+                data['comment_user_name'] = comment_from
+            else:
+                data['comment_user_name'] = comment_user.full_name
 
         return data
 
