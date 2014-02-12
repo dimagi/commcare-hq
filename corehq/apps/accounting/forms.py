@@ -257,15 +257,37 @@ class SubscriptionForm(forms.Form):
                                                     salesforce_contract_id=salesforce_contract_id)
 
     def update_subscription(self, subscription):
+        kwargs = {
+            'salesforce_contract_id': self.cleaned_data['salesforce_contract_id'],
+        }
+
         if self.fields['start_date'].required:
-            subscription.date_start = self.cleaned_data['start_date']
+            kwargs.update({
+                'date_start': self.cleaned_data['start_date'],
+            })
+
         if subscription.date_end is None or subscription.date_end > datetime.date.today():
-            subscription.date_end = self.cleaned_data['end_date']
+            kwargs.update({
+                'date_end': self.cleaned_data['end_date'],
+            })
+        else:
+           kwargs.update({
+                'date_end': subscription.date_end,
+            })
+
         if (subscription.date_delay_invoicing is None
             or subscription.date_delay_invoicing > datetime.date.today()):
-            subscription.date_delay_invoicing = self.cleaned_data['delay_invoice_until']
-        subscription.salesforce_contract_id = self.cleaned_data['salesforce_contract_id']
-        subscription.save()
+            kwargs.update({
+                'date_delay_invoicing': self.cleaned_data['delay_invoice_until'],
+            })
+        else:
+            kwargs.update({
+                'date_delay_invoicing': subscription.date_delay_invoicing,
+            })
+
+        new_plan_version = SoftwarePlanVersion.objects.get(id=self.cleaned_data['plan_version'])
+
+        return subscription.change_plan(new_plan_version, **kwargs)
 
 
 class CreditForm(forms.Form):
