@@ -29,6 +29,7 @@ from corehq.apps.commtrack.xmlutil import XML
 from corehq.apps.commtrack.exceptions import LinkedSupplyPointNotFoundError
 from couchexport.models import register_column_type, ComplexExportColumn
 from casexml.apps.stock.models import StockState
+from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -1246,14 +1247,16 @@ class StockExportColumn(ComplexExportColumn):
     @property
     @memoized
     def _column_tuples(self):
-        return sorted(list(StockState.objects.values_list(
-            'product_id',
-            'section_id'
-        ).distinct()))
+        sp_ids = get_relevant_supply_point_ids(self.domain)
+        return sorted(list(
+            StockState.objects.filter(case_id__in=sp_ids).values_list(
+                'product_id',
+                'section_id'
+            ).distinct()
+        ))
 
 
     def get_headers(self):
-        # TODO filter by domain
         for product_id, section in self._column_tuples:
             yield "{product} ({section})".format(
                 product=Product.get(product_id).name,
@@ -1268,11 +1271,16 @@ class StockExportColumn(ComplexExportColumn):
         values = [None] * len(self._column_tuples)
 
         for state in states:
-            state_index = self._column_tuples.index((
-                state.product_id,
-                state.section_id
-            ))
-            values[state_index] = state.stock_on_hand
+            try:
+                state_index = self._column_tuples.index((
+                    state.product_id,
+                    state.section_id
+                ))
+                values[state_index] = state.stock_on_hand
+            except ValueError:
+                # TODO: if _column_tuples uses all cases on the domain
+                # or on this report, then we don't have to catch this
+                pass
         return values
 
 
