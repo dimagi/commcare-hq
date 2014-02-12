@@ -6,6 +6,7 @@ from couchexport.models import ExportTable, ExportSchema, ExportColumn
 from django.utils.translation import ugettext as _
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.commtrack.models import StockExportColumn
+from corehq.apps.domain.models import Domain
 
 
 USERNAME_TRANSFORM = 'corehq.apps.export.transforms.user_id_to_username'
@@ -145,6 +146,7 @@ class CustomExportHelper(object):
             'DeidExportReport_name': DeidExportReport.name,
             'table_configuration': table_configuration,
             'domain': self.domain,
+            'commtrack_domain': Domain.get_by_name(self.domain).commtrack_enabled,
             'helper': {
                 'back_url': self.ExportReport.get_url(domain=self.domain),
                 'export_title': self.export_title,

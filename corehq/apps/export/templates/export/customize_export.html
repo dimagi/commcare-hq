@@ -457,12 +457,6 @@
                 </div>
             </div>
             <div class="control-group">
-                <label class="control-label">{% trans "Export Stock Columns" %}</label>
-                <div class="controls">
-                    <input type="checkbox" data-bind="checked: export_stock" />
-                </div>
-            </div>
-            <div class="control-group">
                 <label class="control-label">
                     <strong>{% trans "Choose the fields you want to export." %}</strong><br />
                     {% trans "You can drag and drop fields to reorder them.  You can also rename fields, which will update the headers in the export file." %}
@@ -510,6 +504,14 @@
                     </table>
                 </div>
             </div>
+            {% if commtrack_domain %}
+                <div class="control-group">
+                    <label class="control-label">{% trans "Export Stock Columns" %}</label>
+                    <div class="controls">
+                        <input type="checkbox" data-bind="checked: export_stock" />
+                    </div>
+                </div>
+            {% endif %}
             </div>
         </fieldset>
         {% if helper.allow_deid %}
