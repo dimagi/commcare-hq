@@ -43,14 +43,19 @@ class CustomExportHelper(object):
 
     def update_custom_params(self):
         if len(self.custom_export.tables) > 0:
-            t = self.custom_export.tables[0]
-            if t.export_stock:
-                t.columns.append(
+            if self.export_stock:
+                self.custom_export.tables[0].columns.append(
                     StockExportColumn(domain='drew-commtrack', index='_id')
                 )
 
     def format_config_for_javascript(self, table_configuration):
         return table_configuration
+
+    def has_stock_column(self):
+        return any(
+            col.doc_type == 'StockExportColumn'
+            for col in self.custom_export.tables[0].columns
+        )
 
     class DEID(object):
         options = (
@@ -77,11 +82,14 @@ class CustomExportHelper(object):
             saved_group = HQGroupExportConfiguration.get_for_domain(self.domain)
             self.presave = export_id in saved_group.custom_export_ids
 
+            self.export_stock = self.has_stock_column()
+
             assert(self.custom_export.doc_type == 'SavedExportSchema')
             assert(self.custom_export.type == self.export_type)
             assert(self.custom_export.index[0] == domain)
         else:
             self.custom_export = self.ExportSchemaClass(type=self.export_type)
+            self.export_stock = False
 
     @property
     @memoized
@@ -108,6 +116,7 @@ class CustomExportHelper(object):
         self.custom_export.index = schema.index
 
         self.presave = post_data['presave']
+        self.export_stock = post_data['export_stock']
 
         self.custom_export.tables = [
             ExportTable.wrap(table)
@@ -122,7 +131,6 @@ class CustomExportHelper(object):
                 self.custom_export.tables.append(
                     ExportTable(
                         index=table.index,
-                        export_stock=table.export_stock,
                         display=self.custom_export.name,
                         columns=table.columns
                     )
@@ -143,6 +151,7 @@ class CustomExportHelper(object):
             'default_order': self.default_order,
             'deid_options': self.DEID.json_options,
             'presave': self.presave,
+            'export_stock': self.export_stock,
             'DeidExportReport_name': DeidExportReport.name,
             'table_configuration': table_configuration,
             'domain': self.domain,
