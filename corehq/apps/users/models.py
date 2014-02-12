@@ -920,14 +920,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             include_docs=True,
         )
 
-
     def is_previewer(self):
-        try:
-            from django.conf.settings import PREVIEWER_RE
-        except ImportError:
-            return self.is_superuser
-        else:
-            return self.is_superuser or re.compile(PREVIEWER_RE).match(self.username)
+        from django.conf import settings
+        return (self.is_superuser or
+                re.compile(settings.PREVIEWER_RE).match(self.username))
 
     def sync_from_django_user(self, django_user):
         if not django_user:

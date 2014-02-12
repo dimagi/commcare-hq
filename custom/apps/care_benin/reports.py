@@ -442,7 +442,7 @@ class Referrals(CareGroupReport):
         'referrals_by_type_nouveau_ne',
     )
 
-    village = Column("Village", calculate_fn=lambda key, report: 'Total')#groupname)
+    village = Column("", calculate_fn=lambda key, report: '')#groupname)
 
     referrals_total_view = KeyView(key="referrals_transport_total")
 
@@ -649,7 +649,8 @@ class DangerSigns(GenericTabularReport, CustomProjectReport, ProjectReportParame
                     'danger_sign_count_birth': [],
                 }
             )
-            cols[key[0]].append(val)
+            if val != NO_VALUE:
+                cols[key[0]].append(val)
 
         for sign, cols in row_dict.items():
             pregnancy = sum(cols['danger_sign_count_pregnancy'])

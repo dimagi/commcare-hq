@@ -548,8 +548,7 @@ class Subscription(models.Model):
             current_subscription = active_subscriptions.latest('date_created')
             return current_subscription.plan_version, current_subscription
         except Subscription.DoesNotExist:
-            global_logger.error("A Subscriber object exists without a Subscription for the domain '%s'. "
-                                "This seems strange." % subscriber)
+            pass
         return None, None
 
     @classmethod

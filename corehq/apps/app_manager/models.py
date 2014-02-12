@@ -104,6 +104,10 @@ def partial_escape(xpath):
     return mark_safe(force_unicode(xpath).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;'))
 
 
+class ModuleNotFoundException(Exception):
+    pass
+
+
 class IndexedSchema(DocumentSchema):
     """
     Abstract class.
@@ -2505,7 +2509,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     @parse_int([1])
     def get_module(self, i):
         self__modules = self.modules
-        return self__modules[i].with_id(i%len(self__modules), self)
+        try:
+            return self__modules[i].with_id(i%len(self__modules), self)
+        except IndexError:
+            raise ModuleNotFoundException()
 
     def get_user_registration(self):
         form = self.user_registration
@@ -2554,7 +2561,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @parse_int([1])
     def delete_module(self, module_id):
-        module = self.modules[module_id]
+        module = self.get_module(module_id)
         record = DeleteModuleRecord(
             domain=self.domain,
             app_id=self.id,

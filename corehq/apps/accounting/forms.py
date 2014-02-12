@@ -4,24 +4,24 @@ from django.conf import settings
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
-from django.core.validators import MinLengthValidator
+from django.core.validators import MinLengthValidator, validate_slug
 from django import forms
 from django.core.urlresolvers import reverse
 from django.forms.util import ErrorList
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop, ugettext as _, ugettext
 
-from crispy_forms.bootstrap import FormActions, StrictButton, InlineField
+from crispy_forms.bootstrap import FormActions, StrictButton, InlineField, InlineRadios
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
+from corehq import privileges
 
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.email import send_HTML_email
-from django_prbac.models import Role
+from django_prbac.models import Role, Grant
 
-from corehq.apps.accounting.async_handlers import (FeatureRateAsyncHandler, SoftwareProductRateAsyncHandler,
-                                                   RoleAsyncHandler, Select2RateAsyncHandler)
-from corehq.apps.accounting.utils import fmt_feature_rate_dict, fmt_product_rate_dict, fmt_role_dict
+from corehq.apps.accounting.async_handlers import (FeatureRateAsyncHandler, SoftwareProductRateAsyncHandler)
+from corehq.apps.accounting.utils import fmt_feature_rate_dict, fmt_product_rate_dict
 from corehq.apps.hqwebapp.crispy import BootstrapMultiField
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
@@ -34,10 +34,14 @@ from corehq.apps.accounting.models import (BillingContactInfo, Currency, Softwar
 
 class BillingAccountForm(forms.Form):
     name = forms.CharField(label="Name")
-    salesforce_account_id = forms.CharField(label="Salesforce ID", required=False)
+    salesforce_account_id = forms.CharField(label=_("Salesforce Account ID"),
+                                            max_length=80,
+                                            required=False)
     currency = forms.ChoiceField(label="Currency")
 
-    billing_account_admins = forms.CharField(label='Billing Account Admins', required=False)
+    billing_account_admins = forms.CharField(label=_('Account Admins (emails)'),
+                                             required=False,
+                                             widget=forms.Textarea)
     first_name = forms.CharField(label='First Name', required=False)
     last_name = forms.CharField(label='Last Name', required=False)
     company_name = forms.CharField(label='Company Name', required=False)
@@ -157,14 +161,18 @@ class BillingAccountForm(forms.Form):
 
 
 class SubscriptionForm(forms.Form):
+    account = forms.ChoiceField(label=_("Billing Account"))
     start_date = forms.DateField(label="Start Date", widget=forms.DateInput())
     end_date = forms.DateField(label="End Date", widget=forms.DateInput(), required=False)
     delay_invoice_until = forms.DateField(label="Delay Invoice Until", widget=forms.DateInput(), required=False)
     plan_version = forms.ChoiceField(label="Plan Version")
-    domain = forms.CharField(max_length=25)
-    salesforce_contract_id = forms.CharField(label="Salesforce Contract ID", max_length=80, required=False)
+    domain = forms.ChoiceField(label=_("Project Space"))
+    salesforce_contract_id = forms.CharField(label=_("Salesforce Deployment ID"),
+                                             max_length=80,
+                                             required=False)
 
-    def __init__(self, subscription, *args, **kwargs):
+    # account_id is not referenced if subscription is not None
+    def __init__(self, subscription, account_id, *args, **kwargs):
         super(SubscriptionForm, self).__init__(*args, **kwargs)
 
         css_class = {'css_class': 'date-picker'}
@@ -173,12 +181,13 @@ class SubscriptionForm(forms.Form):
         start_date_kwargs = dict(**css_class)
         end_date_kwargs = dict(**css_class)
         delay_invoice_until_kwargs = dict(**css_class)
-        plan_kwargs = dict()
-        domain_kwargs = dict()
 
-        self.fields['plan_version'].choices = [(plan_version.id, str(plan_version))
-                                               for plan_version in SoftwarePlanVersion.objects.all()]
         if subscription is not None:
+            self.fields['account'].choices = [(subscription.account.id, subscription.account.name)]
+            self.fields['plan_version'].choices = [(subscription.plan_version.id,
+                                                    str(subscription.plan_version))]
+            self.fields['domain'].choices = [(subscription.subscriber.domain,
+                                              subscription.subscriber.domain)]
             self.fields['start_date'].initial = subscription.date_start
             self.fields['end_date'].initial = subscription.date_end
             self.fields['delay_invoice_until'].initial = subscription.date_delay_invoicing
@@ -195,19 +204,26 @@ class SubscriptionForm(forms.Form):
             if (subscription.date_delay_invoicing is not None
                 and subscription.date_delay_invoicing <= datetime.date.today()):
                 delay_invoice_until_kwargs.update(disabled)
-            plan_kwargs.update(disabled)
             self.fields['plan_version'].required = False
-            domain_kwargs.update(disabled)
             self.fields['domain'].required = False
+        else:
+            self.fields['account'].choices = [(account.id, account.name)
+                                              for account in BillingAccount.objects.order_by('name')]
+            if account_id is not None:
+                self.fields['account'].initial = account_id
+            self.fields['plan_version'].choices = [(plan_version.id, str(plan_version))
+                                                   for plan_version in SoftwarePlanVersion.objects.all()]
+            self.fields['domain'].choices = [(domain, domain) for domain in Domain.get_all()]
         self.helper = FormHelper()
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
             '%s Subscription' % ('Edit' if subscription is not None else 'New'),
+                crispy.Field('account'),
                 crispy.Field('start_date', **start_date_kwargs),
                 crispy.Field('end_date', **end_date_kwargs),
                 crispy.Field('delay_invoice_until', **delay_invoice_until_kwargs),
-                crispy.Field('plan_version', **plan_kwargs),
-                crispy.Field('domain', **domain_kwargs),
+                crispy.Field('plan_version'),
+                crispy.Field('domain'),
                 'salesforce_contract_id',
             ),
             FormActions(
@@ -226,8 +242,8 @@ class SubscriptionForm(forms.Form):
                 raise forms.ValidationError("A valid project space is required.")
         return domain_name
 
-    def create_subscription(self, account_id):
-        account = BillingAccount.objects.get(id=account_id)
+    def create_subscription(self):
+        account = BillingAccount.objects.get(id=self.cleaned_data['account'])
         date_start = self.cleaned_data['start_date']
         date_end = self.cleaned_data['end_date']
         date_delay_invoicing = self.cleaned_data['delay_invoice_until']
@@ -270,6 +286,7 @@ class CreditForm(forms.Form):
             self.fields['feature_rate'].choices = self.get_feature_choices(id, is_account)
             self.fields['rate_type'].choices = self.get_rate_type_choices(self.fields['product_rate'].choices,
                                                                           self.fields['feature_rate'].choices)
+        self.fields['amount'].label = _("Amount (%s)") % self.get_currency_str(id, is_account)
         self.helper = FormHelper()
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
@@ -286,6 +303,15 @@ class CreditForm(forms.Form):
                 )
             )
         )
+
+    def get_currency_str(self, id, is_account):
+        account = BillingAccount.objects.get(id=id) \
+            if is_account else Subscription.objects.get(id=id).account
+        symbol = account.currency.symbol
+        if len(symbol) != 0:
+            return symbol
+        else:
+            return account.currency.code
 
     def get_subscriptions(self, id, is_account):
         return Subscription.objects.filter(account=BillingAccount.objects.get(id=id))\
@@ -473,35 +499,51 @@ class SoftwarePlanVersionForm(forms.Form):
     )
 
     privileges = forms.MultipleChoiceField(
+        required=False,
         label="Privileges",
         validators=[MinLengthValidator(1)]
     )
+    role_slug = forms.ChoiceField(
+        required=False,
+        label="Role"
+    )
+    role_type = forms.ChoiceField(
+        required=True,
+        choices=(
+            ('existing', "Use Existing Role"),
+            ('new', "Create New Role"),
+        )
+    )
+    create_new_role = forms.BooleanField(
+        required=False,
+        widget=forms.HiddenInput,
+    )
     new_role_slug = forms.CharField(
-        required=False
+        required=False,
+        max_length=256,
+        label="New Role Slug",
+    )
+    new_role_name = forms.CharField(
+        required=False,
+        max_length=256,
+        label="New Role Name",
+    )
+    new_role_description = forms.CharField(
+        required=False,
+        label="New Role Description",
+        widget=forms.Textarea,
     )
 
-    def __init__(self, plan, plan_version, data=None, *args, **kwargs):
+    def __init__(self, plan, plan_version, *args, **kwargs):
         self.plan = plan
         self.plan_version = plan_version
-        data = data or {}
-        if self.plan_version is not None:
-            if not 'feature_rates' in data:
-                data['feature_rates'] = json.dumps([fmt_feature_rate_dict(r.feature, r)
-                                                    for r in self.plan_version.feature_rates.all()])
-            if not 'product_rates' in data:
-                data['product_rates'] = json.dumps([fmt_product_rate_dict(r.product, r)
-                                                    for r in self.plan_version.product_rates.all()])
-        else:
-            if not 'feature_rates' in data:
-                data['feature_rates'] = json.dumps([])
-            if not 'product_rates' in data:
-                data['product_rates'] = json.dumps([])
-            if not 'role' in data:
-                data['role'] = json.dumps([])
-
         self.is_update = False
 
-        super(SoftwarePlanVersionForm, self).__init__(data, *args, **kwargs)
+        super(SoftwarePlanVersionForm, self).__init__(*args, **kwargs)
+
+        self.fields['privileges'].choices = list(self.available_privileges)
+        self.fields['role_slug'].choices = [(r['slug'], "%s (%s)" % (r['name'], r['slug'])) for r in self.existing_roles]
+
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
         self.helper.form_method = 'POST'
@@ -509,48 +551,61 @@ class SoftwarePlanVersionForm(forms.Form):
             'update_version',
             crispy.Fieldset(
                 "Permissions",
-                # InlineField('privileges', data_bind="value: roles.objectsValue"),
                 BootstrapMultiField(
-                    "Privileges",
-                    # InlineField('privileges', css_class="input-xxlarge",
-                    #             data_bind="value: role.select2.value"),
-                    # StrictButton(
-                    #     "Select Role",
-                    #     css_class="btn-primary",
-                    #     data_bind="event: {click: role.apply}, "
-                    #               "visible: role.select2.isExisting",
-                    #     style="margin-left: 5px;"
-                    # ),
+                    "Role Type",
+                    crispy.Div(
+                        data_bind="template: {"
+                                  " name: 'select-role-type-template', "
+                                  " data: role"
+                                  "}, "
+                    ),
                 ),
-                # crispy.Div(
-                #     css_class="alert alert-error",
-                #     data_bind="text: privileges.error, visible: privileges.showError"
-                # ),
-                # BootstrapMultiField(
-                #     "Role Slug",
-                #     InlineField(
-                #         'new_role_slug',
-                #         data_bind="value: role.slug"
-                #     ),
-                #     Div(
-                #         StrictButton(
-                #             "Create Role",
-                #             css_class="btn-success",
-                #             data_bind="event: {click: role.createNew}",
-                #         ),
-                #         style="margin: 10px 0;"
-                #     ),
-                #     data_bind="visible: role.select2.isNew",
-                # ),
-                # Div(
-                #     data_bind="template: {"
-                #               "name: 'role-form-template', foreach: role.objects"
-                #               "}",
-                # ),
+                crispy.Div(
+                    BootstrapMultiField(
+                        'Role',
+                        InlineField('role_slug',
+                                    data_bind="value: role.existing.roleSlug",
+                                    css_class="input-xxlarge"),
+                        crispy.Div(
+                            data_bind="template: {"
+                                      " name: 'selected-role-privileges-template', "
+                                      " data: {"
+                                      "     privileges: role.existing.selectedPrivileges,"
+                                      "     hasNoPrivileges: role.existing.hasNoPrivileges"
+                                      " }"
+                                      "}, "
+                        ),
+                        data_bind="visible: role.isRoleTypeExisting",
+                    ),
+                ),
+                crispy.Div(
+                    BootstrapMultiField(
+                        "Privileges",
+                        InlineField('privileges', data_bind="selectedOptions: role.new.privileges"),
+                        crispy.Div(
+                            data_bind="template: {"
+                                      " name: 'privileges-match-role-template', "
+                                      " data: {"
+                                      "     role: role.new.matchingRole"
+                                      " },"
+                                      " if: role.new.hasMatchingRole"
+                                      "}, "
+                        ),
+                    ),
+                    crispy.Field('create_new_role', data_bind="value: role.new.allowCreate"),
+                    crispy.Div(
+                        'new_role_slug',
+                        'new_role_name',
+                        'new_role_description',
+                        data_bind="visible: role.new.allowCreate",
+                        css_class="well",
+                    ),
+                    data_bind="visible: role.isRoleTypeNew",
+                ),
             ),
             crispy.Fieldset(
                 "Features",
-                InlineField('feature_rates', data_bind="value: featureRates.objectsValue"),
+                InlineField('feature_rates', data_bind="value: featureRates.ratesString"),
                 BootstrapMultiField(
                     "Add Feature",
                     InlineField('feature_id', css_class="input-xxlarge",
@@ -586,13 +641,13 @@ class SoftwarePlanVersionForm(forms.Form):
                 ),
                 crispy.Div(
                     data_bind="template: {"
-                              "name: 'feature-rate-form-template', foreach: featureRates.objects"
+                              "name: 'feature-rate-form-template', foreach: featureRates.rates"
                               "}",
                 ),
             ),
             crispy.Fieldset(
                 "Products",
-                InlineField('product_rates', data_bind="value: productRates.objectsValue"),
+                InlineField('product_rates', data_bind="value: productRates.ratesString"),
                 BootstrapMultiField(
                     "Add Product",
                     InlineField('product_id', css_class="input-xxlarge",
@@ -627,7 +682,7 @@ class SoftwarePlanVersionForm(forms.Form):
                 ),
                 crispy.Div(
                     data_bind="template: {"
-                              "name: 'product-rate-form-template', foreach: productRates.objects"
+                              "name: 'product-rate-form-template', foreach: productRates.rates"
                               "}",
                 ),
             ),
@@ -639,6 +694,27 @@ class SoftwarePlanVersionForm(forms.Form):
                 ),
             )
         )
+
+    @property
+    def available_privileges(self):
+        for priv in privileges.MAX_PRIVILEGES:
+            role = Role.objects.get(slug=priv)
+            yield (role.slug, role.name)
+
+    @property
+    def existing_roles(self):
+        roles = set([r['role'] for r in SoftwarePlanVersion.objects.values('role').distinct()])
+        grant_roles = set([r['from_role'] for r in Grant.objects.filter(
+            to_role__slug__in=privileges.MAX_PRIVILEGES).values('from_role').distinct()])
+        roles = roles.union(grant_roles)
+        roles = [Role.objects.get(pk=r) for r in roles]
+        for role in roles:
+            yield {
+                'slug': role.slug,
+                'name': role.name,
+                'description': role.description,
+                'privileges': [(grant.to_role.slug, grant.to_role.name) for grant in role.memberships_granted.all()]
+            }
 
     @property
     def feature_rates_dict(self):
@@ -664,21 +740,28 @@ class SoftwarePlanVersionForm(forms.Form):
     def role_dict(self):
         return {
             'currentValue': self['privileges'].value(),
-            'select2Options': {
-                'fieldName': 'privileges',
-                'multiple': True,
-            }
+            'multiSelectField': 'privileges',
+            'existingRoles': list(self.existing_roles),
+            'roleType': self['role_type'].value() or 'existing',
+            'newPrivileges': self['privileges'].value(),
+            'currentRoleSlug': self.plan_version.role.slug if self.plan_version is not None else None,
         }
 
     @property
     @memoized
     def current_features_to_rates(self):
-        return dict([(r.feature.id, r) for r in self.plan_version.feature_rates.all()])
+        if self.plan_version is not None:
+            return dict([(r.feature.id, r) for r in self.plan_version.feature_rates.all()])
+        else:
+            return {}
 
     @property
     @memoized
     def current_products_to_rates(self):
-        return dict([(r.product.id, r) for r in self.plan_version.product_rates.all()])
+        if self.plan_version is not None:
+            return dict([(r.product.id, r) for r in self.plan_version.product_rates.all()])
+        else:
+            return {}
 
     def _get_errors_from_subform(self, form_name, subform):
         for field, field_errors in subform._errors.items():
@@ -749,8 +832,9 @@ class SoftwarePlanVersionForm(forms.Form):
             self._errors.setdefault('feature_rates', errors)
         self.new_feature_rates = rate_instances
         rate_ids = lambda x: set([r.id for r in x])
-        if (not self.is_update and (self.plan_version is None or
-                rate_ids(rate_instances).symmetric_difference(rate_ids(self.plan_version.feature_rates.all())))):
+        if (not self.is_update
+            and (self.plan_version is None
+                 or rate_ids(rate_instances).symmetric_difference(rate_ids(self.plan_version.feature_rates.all())))):
             self.is_update = True
         return original_data
 
@@ -769,18 +853,59 @@ class SoftwarePlanVersionForm(forms.Form):
             self._errors.setdefault('product_rates', errors)
         self.new_product_rates = rate_instances
         rate_ids = lambda x: set([r.id for r in x])
-        if (not self.is_update and (self.plan_version is None or
-                rate_ids(rate_instances).symmetric_difference(rate_ids(self.plan_version.product_rates.all())))):
+        if (not self.is_update
+            and (self.plan_version is None
+                 or rate_ids(rate_instances).symmetric_difference(rate_ids(self.plan_version.product_rates.all())))):
             self.is_update = True
         return original_data
+
+    def clean_create_new_role(self):
+        val = self.cleaned_data['create_new_role']
+        if val:
+            self.is_update = True
+        return val
+
+    def clean_role_slug(self):
+        role_slug = self.cleaned_data['role_slug']
+        if self.plan_version is None or role_slug != self.plan_version.role.slug:
+            self.is_update = True
+        return role_slug
+
+    def clean_new_role_slug(self):
+        val = self.cleaned_data['new_role_slug']
+        if self.cleaned_data['create_new_role'] and not val:
+            raise ValidationError("A slug is required for this new role.")
+        if val:
+            validate_slug(val)
+        return val
+
+    def clean_new_role_name(self):
+        val = self.cleaned_data['new_role_name']
+        if self.cleaned_data['create_new_role'] and not val:
+            raise ValidationError("A name is required for this new role.")
+        return val
 
     def save(self, request):
         if not self.is_update:
             messages.info(request, "No changes to rates and roles were present, so the current version was kept.")
             return
+        if self.cleaned_data['create_new_role']:
+            role = Role.objects.create(
+                slug=self.cleaned_data['new_role_slug'],
+                name=self.cleaned_data['new_role_name'],
+                description=self.cleaned_data['new_role_description'],
+            )
+            for privilege in self.cleaned_data['privileges']:
+                privilege = Role.objects.get(slug=privilege)
+                Grant.objects.create(
+                    from_role=role,
+                    to_role=privilege,
+                )
+        else:
+            role = Role.objects.get(slug=self.cleaned_data['role_slug'])
         new_version = SoftwarePlanVersion(
             plan=self.plan,
-            role=Role.objects.get(id=1), # hacked so it doesn't break - TODO needs to get fixed
+            role=role
         )
         new_version.save()
 
@@ -793,6 +918,7 @@ class SoftwarePlanVersionForm(forms.Form):
             new_version.product_rates.add(product_rate)
 
         new_version.save()
+        messages.success(request, 'The version for %s Software Plan was successfully updated.' % new_version.plan.name)
 
 
 class FeatureRateForm(forms.ModelForm):
@@ -880,38 +1006,6 @@ class ProductRateForm(forms.ModelForm):
     def get_instance(self, product):
         instance = self.save(commit=False)
         instance.product = product
-        return instance
-
-
-class RoleForm(forms.ModelForm):
-    """
-    A form for creating a new ProductRate.
-    """
-    role_id = forms.CharField(
-        required=False,
-        widget=forms.HiddenInput,
-    )
-    # TODO - rate_id ?
-
-    class Meta:
-        model = Role
-        fields = ['slug', 'name', 'description', 'parameters']
-
-    def __init__(self, data=None, *args, **kwargs):
-        super(RoleForm, self).__init__(data, *args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.form_tag = False
-        self.helper.layout = crispy.Layout(
-            crispy.HTML('<h4><span data-bind="text: name"></span></h4>'),
-            crispy.Field('parameters', data_bind="value: parameters"),
-        )
-
-    def is_new(self):
-        return not self['role_id'].value()
-
-    def get_instance(self, role):
-        instance = self.save(commit=False)
-        instance.role = role
         return instance
 
 

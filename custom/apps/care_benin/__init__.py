@@ -5,9 +5,11 @@ CUSTOM_REPORTS = (
         MandE,
         Nurse,
         Relais,
-        Outcomes,
         DangerSigns,
         Referrals,
         HealthCenter,
+    )),
+    ('CARE Benin Special Reports', (
+        Outcomes,
     )),
 )

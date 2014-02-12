@@ -5,6 +5,7 @@ from django.conf import settings
 from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
+from corehq.pillows.mappings.group_mapping import GROUP_INDEX
 from corehq.pillows.mappings.sms_mapping import SMS_INDEX
 from corehq.pillows.mappings.tc_sms_mapping import TCSMS_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
@@ -26,6 +27,7 @@ ES_URLS = {
     "users": USER_INDEX + '/user/_search',
     "domains": DOMAIN_INDEX + '/hqdomain/_search',
     "apps": APP_INDEX + '/app/_search',
+    "groups": GROUP_INDEX + '/group/_search',
     "sms": SMS_INDEX + '/sms/_search',
     "tc_sms": TCSMS_INDEX + '/tc_sms/_search',
 }

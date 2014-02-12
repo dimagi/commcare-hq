@@ -79,15 +79,16 @@ class DomainViewMixin(object):
     @property
     @memoized
     def domain(self):
-        return self.args[0] if len(self.args) > 0 else self.kwargs.get('domain', "")
+        domain = self.args[0] if len(self.args) > 0 else self.kwargs.get('domain', "")
+        return normalize_domain_name(domain)
 
     @property
     @memoized
     def domain_object(self):
-        try:
-            return Domain.get_by_name(self.domain, strict=True)
-        except ResourceNotFound:
+        domain = Domain.get_by_name(self.domain, strict=True)
+        if not domain:
             raise Http404()
+        return domain
 
 
 class BaseDomainView(BaseSectionPageView, DomainViewMixin):
@@ -380,10 +381,6 @@ def test_repeater(request, domain):
         return HttpResponse(json.dumps({"success": False, "response": "Please enter a valid url."}))
 
 
-def legacy_domain_name(request, domain, path):
-    domain = normalize_domain_name(domain)
-    return HttpResponseRedirect(get_domained_url(domain, path))
-
 def autocomplete_fields(request, field):
     prefix = request.GET.get('prefix', '')
     results = Domain.field_by_prefix(field, prefix)
@@ -433,8 +430,13 @@ class DomainSubscriptionView(DomainAccountingSettings):
 
     def _fmt_credit(self, credit_amount=None):
         if credit_amount is None:
-            return "--"
-        return _("USD %s") % credit_amount
+            return {
+                'amount': "--",
+            }
+        return {
+            'amount': _("USD %s") % credit_amount.quantize(Decimal(10) ** -2),
+            'is_visible': credit_amount != Decimal('0.0'),
+        }
 
     def _credit_grand_total(self, credit_lines):
         return sum([c.balance for c in credit_lines]) if credit_lines else Decimal('0.00')
@@ -1408,7 +1410,7 @@ class AdvancedCommTrackSettingsView(BaseCommTrackAdminView):
 class ProBonoView(DomainAccountingSettings):
     template_name = 'domain/pro_bono.html'
     urlname = 'pro_bono'
-    page_title = ugettext_noop("Pro Bono Application")
+    page_title = ugettext_noop("Pro-Bono Application")
     is_submitted = False
 
     @property

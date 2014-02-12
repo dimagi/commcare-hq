@@ -56,7 +56,7 @@ class EditCommCareUserView(BaseFullEditUserView):
             if user.is_deleted():
                 self.template_name = "users/deleted_account.html"
             return user
-        except (ResourceNotFound, CouchUser.AccountTypeError):
+        except (ResourceNotFound, CouchUser.AccountTypeError, KeyError):
             raise Http404()
 
     @property
