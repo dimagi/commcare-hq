@@ -276,7 +276,6 @@ class ExportColumn(DocumentSchema):
         }
 
 
-@register_column_type
 class ComplexExportColumn(ExportColumn):
     """
     A single column config that can represent multiple actual columns
@@ -314,7 +313,7 @@ class ExportTable(DocumentSchema):
     @classmethod
     def default(cls, index):
         return cls(index=index, display="", export_stock=False, columns=[])
-        
+
     @property
     @memoized
     def displays_by_index(self):
