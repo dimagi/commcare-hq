@@ -300,7 +300,6 @@ class ExportTable(DocumentSchema):
     """
     index = StringProperty()
     display = StringProperty()
-    export_stock = BooleanProperty()
     columns = SchemaListProperty(ExportColumn)
     order = ListProperty()
 
@@ -312,7 +311,7 @@ class ExportTable(DocumentSchema):
 
     @classmethod
     def default(cls, index):
-        return cls(index=index, display="", export_stock=False, columns=[])
+        return cls(index=index, display="", columns=[])
 
     @property
     @memoized
@@ -585,16 +584,9 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
             else:
                 return ''
 
-        def export_stock():
-            if self.tables_by_index.has_key(index):
-                return self.tables_by_index[index].export_stock
-            else:
-                return False
-
         return {
             "index": index,
             "display": display(),
-            "export_stock": export_stock(),
             "column_configuration": column_configuration(),
             "selected": index in self.tables_by_index
         }
