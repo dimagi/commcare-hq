@@ -9,6 +9,7 @@ from django import forms
 from django.core.urlresolvers import reverse
 from django.forms.util import ErrorList
 from django.template.loader import render_to_string
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop, ugettext as _, ugettext
 
 from crispy_forms.bootstrap import FormActions, StrictButton, InlineField, InlineRadios
@@ -29,7 +30,7 @@ from corehq.apps.accounting.models import (BillingContactInfo, Currency, Softwar
                                            Subscription, Subscriber, CreditLine, SoftwareProductRate,
                                            FeatureRate, SoftwarePlanEdition, SoftwarePlanVisibility,
                                            BillingAccountAdmin, SoftwarePlan, Feature, FeatureType,
-                                           SoftwareProduct, SoftwareProductType)
+                                           SoftwareProduct, SoftwareProductType, CreditAdjustment)
 
 
 class BillingAccountForm(forms.Form):
@@ -330,6 +331,16 @@ class CreditForm(forms.Form):
             return symbol
         else:
             return account.currency.code
+
+    def clean_amount(self):
+        amount = self.cleaned_data['amount']
+        field_metadata = CreditAdjustment._meta.get_field('amount')
+        if amount >= 10 ** (field_metadata.max_digits - field_metadata.decimal_places):
+            raise ValidationError(mark_safe('Amount over maximum size.  If you need support '
+                                            'for quantities this large, please '
+                                            '<a data-toggle="modal" data-target="#reportIssueModal" '
+                                            'href="#reportIssueModal">Report an Issue</a>.'))
+        return amount
 
     def get_subscriptions(self, id, is_account):
         return Subscription.objects.filter(account=BillingAccount.objects.get(id=id))\
