@@ -113,7 +113,6 @@ class Transaction(HQTransaction):
         extras = LONG_FORM_DATA  # 5k filler
 
         block, caseid = _case_block(action=case_action)
-        # print include_image, case_action, caseid
         extras += block
 
         if not include_image:
