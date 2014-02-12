@@ -17,7 +17,7 @@ from corehq.apps.accounting.interface import AccountingInterface, SubscriptionIn
 from corehq.apps.accounting.models import (SoftwareProductType, Invoice, BillingAccount, CreditLine, Subscription,
                                            SoftwarePlanVersion, SoftwarePlan)
 from corehq.apps.accounting.async_handlers import (FeatureRateAsyncHandler, Select2RateAsyncHandler,
-                                                   SoftwareProductRateAsyncHandler)
+                                                   SoftwareProductRateAsyncHandler, Select2BillingInfoHandler)
 from corehq.apps.accounting.user_text import PricingTable
 from corehq.apps.accounting.utils import LazyEncoder, fmt_feature_rate_dict, fmt_product_rate_dict
 from corehq.apps.domain.decorators import require_superuser
@@ -52,6 +52,25 @@ class BillingAccountsSectionView(AccountingSectionView):
         }]
 
 
+class AsyncHandlerMixin():
+    async_handlers = []
+
+    @property
+    def handler_slug(self):
+        return self.request.POST.get('handler')
+
+    def get_async_handler(self):
+        handler_class = dict([(h.slug, h) for h in self.async_handlers])[self.handler_slug]
+        return handler_class(self.request)
+
+    @property
+    @memoized
+    def response(self):
+        if self.handler_slug in [h.slug for h in self.async_handlers]:
+            return self.get_async_handler().get_response()
+        return None
+
+
 class NewBillingAccountView(BillingAccountsSectionView):
     page_title = 'New Billing Account'
     template_name = 'accounting/accounts_base.html'
@@ -82,10 +101,13 @@ class NewBillingAccountView(BillingAccountsSectionView):
             return self.get(request, *args, **kwargs)
 
 
-class ManageBillingAccountView(BillingAccountsSectionView):
+class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
     page_title = 'Manage Billing Account'
     template_name = 'accounting/accounts.html'
     urlname = 'manage_billing_account'
+    async_handlers = [
+        Select2BillingInfoHandler,
+    ]
 
     @property
     @memoized
@@ -130,6 +152,8 @@ class ManageBillingAccountView(BillingAccountsSectionView):
         return reverse(self.urlname, args=(self.args[0],))
 
     def post(self, request, *args, **kwargs):
+        if self.response is not None:
+            return self.response
         if 'account' in self.request.POST and self.account_form.is_valid():
             self.account_form.update_account_and_contacts(self.account)
         elif 'adjust_credit' in self.request.POST and self.credit_form.is_valid():
@@ -308,7 +332,7 @@ class NewSoftwarePlanView(AccountingSectionView):
         return self.get(request, *args, **kwargs)
 
 
-class EditSoftwarePlanView(AccountingSectionView):
+class EditSoftwarePlanView(AccountingSectionView, AsyncHandlerMixin):
     template_name = 'accounting/plans.html'
     urlname = 'edit_software_plan'
     page_title = "Edit Software Plan"
@@ -366,17 +390,9 @@ class EditSoftwarePlanView(AccountingSectionView):
             'url': SoftwarePlanInterface.get_url(),
         }]
 
-    @property
-    def handler_slug(self):
-        return self.request.POST.get('handler')
-
-    def get_async_handler(self):
-        handler_class = dict([(h.slug, h) for h in self.async_handlers])[self.handler_slug]
-        return handler_class(self.request)
-
     def post(self, request, *args, **kwargs):
-        if self.handler_slug in [h.slug for h in self.async_handlers]:
-            return self.get_async_handler().get_response()
+        if self.response is not None:
+            return self.response
         if 'update_version' in request.POST:
             if self.software_plan_version_form.is_valid():
                 self.software_plan_version_form.save(request)
