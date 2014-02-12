@@ -405,8 +405,11 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
             'case_preload': [{'key': key, 'path': path} for key, path in form.case_preload.items()],
         })
         return "app_manager/form_view_careplan.html", context
-    elif isinstance(form, CommTrackForm):
-        return "app_manager/form_view_commtrack.html", context
+    elif isinstance(form, AdvancedForm):
+        context.update({
+            'show_custom_ref': toggle_enabled(toggles.APP_BUILDER_CUSTOM_PARENT_REF, request.user.username),
+        })
+        return "app_manager/form_view_advanced.html", context
     else:
         context.update({
             'is_user_registration': is_user_registration,
@@ -642,7 +645,7 @@ def get_module_view_context_and_template(app, module):
             "goal_sortElements": json.dumps(get_sort_elements(module.goal_details.short)),
             "task_sortElements": json.dumps(get_sort_elements(module.task_details.short)),
         }
-    elif isinstance(module, CommTrackModule):
+    elif isinstance(module, AdvancedModule):
         case_type = module.case_type
         return "app_manager/module_view_advanced.html", {
             'case_properties': sorted(builder.get_properties(case_type)),
