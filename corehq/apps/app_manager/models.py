@@ -3278,7 +3278,7 @@ class DeleteFormRecord(DeleteRecord):
     app_id = StringProperty()
     module_id = IntegerProperty()
     form_id = IntegerProperty()
-    form = SchemaProperty(Form)
+    form = SchemaProperty(FormBase)
 
     def undo(self):
         app = Application.get(self.app_id)
