@@ -1255,7 +1255,6 @@ class StockExportColumn(ComplexExportColumn):
             ).distinct()
         ))
 
-
     def get_headers(self):
         for product_id, section in self._column_tuples:
             yield "{product} ({section})".format(
@@ -1282,7 +1281,6 @@ class StockExportColumn(ComplexExportColumn):
                 # or on this report, then we don't have to catch this
                 pass
         return values
-
 
 
 def sync_location_supply_point(loc):
