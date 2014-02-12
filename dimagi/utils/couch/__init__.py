@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from collections import namedtuple
 from datetime import timedelta
 from dimagi.utils.couch.delete import delete
 from dimagi.utils.couch.safe_index import safe_index
@@ -31,6 +32,33 @@ class LockableMixIn(DocumentSchema):
         assert self.lock_date is not None
         self.lock_date = None
         self.save()
+
+
+class LockManager(namedtuple('ObjectLockTuple', 'obj lock')):
+    """
+    A context manager that can also act like a simple tuple
+    for dealing with an object and a lock
+
+    The two following examples are equivalent, except that the context manager
+    will release the lock even if an error is thrown in the body
+
+    >>> # as a tuple
+    >>> obj, lock = LockManager(obj, lock)
+    >>> # do stuff...
+    >>> if lock:
+    ...     lock.release()
+
+    >>> # as a context manager
+    >>> with LockManager(obj, lock) as obj:
+    ...     # do stuff...
+    """
+    def __enter__(self):
+        return self.obj
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.lock:
+            self.lock.release()
+
 
 class RedisLockableMixIn(object):
     @classmethod
@@ -139,20 +167,21 @@ class RedisLockableMixIn(object):
                     obj = cls.create_obj(*args, **kwargs)
                 else:
                     lock.release()
-                    return (None, None)
+                    return LockManager(None, None)
         except:
             lock.release()
             raise
         else:
             if _id:
-                return (obj, lock)
+                return LockManager(obj, lock)
             else:
                 obj_lock = cls.get_obj_lock(obj)
                 obj_lock.acquire()
                 # Refresh the object in case another thread has updated it
                 obj = cls.get_latest_obj(obj)
                 lock.release()
-                return (obj, obj_lock)
+                return LockManager(obj, obj_lock)
+
 
 class CouchDocLockableMixIn(RedisLockableMixIn):
     """
@@ -198,6 +227,14 @@ class CouchDocLockableMixIn(RedisLockableMixIn):
     >>> patient.last_visit = date(2014, 1, 26)
     >>> patient.save()
     >>> lock.release()
+
+    >>> # or using 'with' syntax
+
+    >>> with Patient.get_locked_obj("pid-1234", create=True) as patient:
+    ...     patient.last_visit = date(2014, 1, 24)
+    ...     patient.save()
+    ...
+    >>> # etc.
     """
 
     @classmethod
