@@ -29,7 +29,10 @@ from receiver.util import spoof_submission
 from couchforms.models import XFormInstance
 from casexml.apps.case.sharedmodels import IndexHoldingMixIn, CommCareCaseIndex, CommCareCaseAttachment
 from dimagi.utils.couch.database import get_db, SafeSaveDocument, iter_docs
-from dimagi.utils.couch import LooselyEqualDocumentSchema
+from dimagi.utils.couch import (
+    CouchDocLockableMixIn,
+    LooselyEqualDocumentSchema,
+)
 
 
 """
@@ -253,7 +256,8 @@ class CaseQueryMixin(object):
         return [prefix] + key
 
 
-class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQueryMixin):
+class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin,
+                   CaseQueryMixin, CouchDocLockableMixIn):
     """
     A case, taken from casexml.  This represents the latest
     representation of the case - the result of playing all
