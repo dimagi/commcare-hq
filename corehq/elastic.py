@@ -194,9 +194,14 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
     return ret_data
 
 
-def es_wrapper(index, domain=None, q=None, doc_type=None, fields=None, start_at=None, size=None):
+def es_wrapper(index, domain=None, q=None, doc_type=None, fields=None,
+        start_at=None, size=None, sort_by=None, order=None, return_count=False):
     """
     This is a flat wrapper for es_query.
+
+    To sort, specify the path to the relevant field
+    and the order ("asc" or "desc")
+    eg: sort_by=form.meta.timeStart, order="asc"
     """
     if index not in ES_URLS:
         msg = "%s is not a valid ES index.  Available options are: %s" % (
@@ -228,6 +233,11 @@ def es_wrapper(index, domain=None, q=None, doc_type=None, fields=None, start_at=
         filters.append(doc_type_filter)
     if not doc_type and not domain:
         filters.append(match_all)
+    filters.extend(ADD_TO_ES_FILTER.get(index, [])[:])
+    if sort_by:
+        assert(order in ["asc", "desc"]),\
+            'To sort, you must specify the order as "asc" or "desc"'
+        query["sort"] = [{sort_by: {"order": order}}]
 
     # make query
     res = es_query(
@@ -243,8 +253,14 @@ def es_wrapper(index, domain=None, q=None, doc_type=None, fields=None, start_at=
         msg = res['error']
         raise ESError(msg)
     if fields is not None:
-        return [r['fields'] for r in res['hits']['hits']]
-    return [r['_source'] for r in res['hits']['hits']]
+        hits = [r['fields'] for r in res['hits']['hits']]
+    else:
+        hits = [r['_source'] for r in res['hits']['hits']]
+
+    if return_count:
+        total = res['hits']['total']
+        return total, hits
+    return hits
 
 
 def stream_es_query(chunksize=100, **kwargs):
