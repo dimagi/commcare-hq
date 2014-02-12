@@ -106,6 +106,9 @@ def partial_escape(xpath):
 class ModuleNotFoundException(Exception):
     pass
 
+class IncompatibleFormTypeException(Exception):
+    pass
+
 
 class IndexedSchema(DocumentSchema):
     """
@@ -481,7 +484,20 @@ class FormBase(DocumentSchema):
     @classmethod
     def wrap(cls, data):
         data.pop('validation_cache', '')
-        return super(FormBase, cls).wrap(data)
+
+        if cls is FormBase:
+            doc_type = data['doc_type']
+            if doc_type == 'Form':
+                return Form.wrap(data)
+            elif doc_type == 'AdvancedForm':
+                return AdvancedForm.wrap(data)
+            else:
+                try:
+                    return CareplanForm.wrap(data)
+                except ValueError:
+                    raise ValueError('Unexpected doc_type for Form', doc_type)
+        else:
+            return super(FormBase, cls).wrap(data)
 
     @classmethod
     def generate_id(cls):
@@ -1209,9 +1225,12 @@ class Module(ModuleBase):
         form.source = attachment
         return form
 
-    def new_form_from_source(self, source):
-        self.forms.append(Form.wrap(source))
-        return self.get_form(-1)
+    def add_copied_form(self, from_module, form):
+        if isinstance(form, Form):
+            self.forms.append(form)
+            return self.get_form(-1)
+        else:
+            raise IncompatibleFormTypeException()
 
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.name, old_lang, new_lang)
@@ -1447,9 +1466,66 @@ class AdvancedModule(ModuleBase):
         form.source = attachment
         return form
 
-    def new_form_from_source(self, source):
-        self.forms.append(AdvancedForm.wrap(source))
-        return self.get_form(-1)
+    def add_copied_form(self, from_module, form):
+        if isinstance(form, AdvancedForm):
+            self.forms.append(form)
+            return self.get_form(-1)
+        elif isinstance(form, Form):
+            new_form = AdvancedForm(
+                name=form.name,
+                media_image=form.media_image,
+                media_audio=form.media_audio
+            )
+            form._parent = self
+            actions = form.active_actions()
+            open = actions.get('open_case', None)
+            update = actions.get('update_case', None)
+            close = actions.get('close_case', None)
+            preload = actions.get('case_preload', None)
+            subcases = actions.get('subcases', None)
+            case_type = from_module.case_type
+
+            def convert_preload(preload):
+                return dict(zip(preload.values(),preload.keys()))
+
+            base_action = None
+            if open:
+                base_action = AdvancedOpenCaseAction(
+                    case_type=case_type,
+                    case_tag='open_{}_0'.format(case_type),
+                    name_path=open.name_path,
+                    open_condition=open.condition,
+                    case_properties=update.update if update else {},
+                )
+                new_form.actions.open_cases.append(base_action)
+            elif update or preload or close:
+                base_action = LoadUpdateAction(
+                    case_type=case_type,
+                    case_tag='load_{}_0'.format(case_type),
+                    case_properties=update.update if update else {},
+                    preload=convert_preload(preload.preload) if preload else {}
+                )
+                if close:
+                    base_action.close_condition = close.condition
+                new_form.actions.load_update_cases.append(base_action)
+
+            if subcases:
+                for i, subcase in enumerate(subcases):
+                    open_subcase_action = AdvancedOpenCaseAction(
+                        case_type=subcase.case_type,
+                        case_tag='open_{}_{}'.format(subcase.case_type, i+1),
+                        name_path=subcase.case_name,
+                        open_condition=subcase.condition,
+                        case_properties=subcase.case_properties,
+                        repeat_context=subcase.repeat_context,
+                        parent_reference_id=subcase.reference_id,
+                        parent_tag=base_action.case_tag if base_action else ''
+                    )
+                    new_form.actions.open_cases.append(open_subcase_action)
+            self.forms.append(new_form)
+            return self.get_form(-1)
+        else:
+            raise IncompatibleFormTypeException()
 
     def get_case_types(self):
         case_types = set()
@@ -1718,6 +1794,9 @@ class CareplanModule(ModuleBase):
                 model='case'))
 
         return Detail(type=detail_type, columns=columns)
+
+    def add_copied_form(self, from_module, form):
+        raise IncompatibleFormTypeException()
 
     def requires_case_details(self):
         return True
@@ -2751,10 +2830,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         module = self.get_module(module_id)
         return module.new_form(name, lang, attachment)
 
-    def new_form_from_source(self, module_id, source):
-        module = self.get_module(module_id)
-        return module.new_form_from_source(source)
-
     @parse_int([1, 2])
     def delete_form(self, module_id, form_id):
         module = self.get_module(module_id)
@@ -2831,17 +2906,19 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         This is intentional.
 
         """
-        form = self.get_module(module_id).get_form(form_id)
-        copy_source = deepcopy(form.to_json())
-        if copy_source.has_key('unique_id'):
-            del copy_source['unique_id']
+        from_module = self.get_module(module_id)
+        form = from_module.get_form(form_id)
         if not form.source:
             raise BlankXFormError()
+        copy_source = deepcopy(form.to_json())
+        if 'unique_id' in copy_source:
+            del copy_source['unique_id']
 
-        copy_form = self.new_form_from_source(to_module_id, copy_source)
+        to_module = self.get_module(to_module_id)
+        copy_form = to_module.add_copied_form(from_module, FormBase.wrap(copy_source))
         save_xform(self, copy_form, form.source)
 
-        if self.modules[module_id]['case_type'] != self.modules[to_module_id]['case_type']:
+        if from_module['case_type'] != to_module['case_type']:
             raise ConflictingCaseTypeError()
 
     @cached_property

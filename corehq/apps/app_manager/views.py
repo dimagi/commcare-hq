@@ -66,9 +66,9 @@ from corehq.apps.reports import util as report_utils
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
 from corehq.apps.app_manager.models import Application, get_app, DetailColumn, Form, FormActions,\
     AppEditingError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, \
-    DeleteApplicationRecord, str_to_cls, validate_lang, SavedAppBuild, ParentSelect, Module, CareplanModule, \
-    CareplanForm, CareplanGoalForm, CareplanTaskForm, AdvancedModule, AdvancedForm, AdvancedFormActions, ModuleNotFoundException
-from corehq.apps.app_manager.models import DETAIL_TYPES, import_app as import_app_util, SortElement
+    DeleteApplicationRecord, str_to_cls, SavedAppBuild, ParentSelect, Module, CareplanModule, CareplanForm, AdvancedModule, AdvancedForm, AdvancedFormActions, \
+    IncompatibleFormTypeException, ModuleNotFoundException
+from corehq.apps.app_manager.models import import_app as import_app_util, SortElement
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST
 from django.contrib import messages
@@ -1002,6 +1002,10 @@ def copy_form(req, domain, app_id, module_id, form_id):
         # don't save!
         messages.error(req, _('We could not copy this form, because it is blank.'
                               'In order to copy this form, please add some questions first.'))
+    except IncompatibleFormTypeException:
+        # don't save!
+        messages.error(req, _('This form could not be copied because it '
+                              'is not compatible with the selected module.'))
     else:
         app.save()
 
