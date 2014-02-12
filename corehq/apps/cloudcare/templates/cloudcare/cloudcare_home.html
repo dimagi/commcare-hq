@@ -80,9 +80,6 @@
 </script>
     <script>
         $(function() {
-           $(window).on('keyup', function() {
-               window.mainView.router.view.dirty = true
-           });
            window.onbeforeunload = function() {
                if (window.mainView.router.view.dirty) {
                    return "You have unsaved changes. To stay on the page, press cancel. To discard changes and leave the page, press OK";
