@@ -13,7 +13,7 @@ function CareForm(doc) {
         } else {
             data[key] = amount;
         }
-    }
+    };
 
     self.by_village = function() {
         self.rc_suivi_de_reference();
@@ -27,12 +27,12 @@ function CareForm(doc) {
 
         // TODO: get village
         emit_array(['village'], [self.received_on], self.village_data);
-    }
+    };
 
     self.by_user = function() {
         if (isAS_Examen(self.doc)) {
             var exclude = ['case', 'meta'];
-            var not_containing = ['@', 'data_node', '#']
+            var not_containing = ['@', 'data_node', '#'];
             var total = 0, non_blank = 0;
             for (var key in self.form) {
                 if (self.form.hasOwnProperty(key) &&
@@ -72,7 +72,7 @@ function CareForm(doc) {
         }
 
         emit_array([self.form.meta.userID], [self.received_on], self.user_data);
-    }
+    };
 
     self.outcomes = function () {
         if (isAS_Accouchement(self.doc)) {
@@ -98,7 +98,7 @@ function CareForm(doc) {
         self.as_accouchement();
         emit_array([], [self.received_on], self.village_data);
 
-    }
+    };
 
     self.danger_signs = function (by_village) {
         if (isRC_Reference(self.doc)) {
@@ -106,7 +106,7 @@ function CareForm(doc) {
             _emit_danger_signs('danger_sign_count_accouchee', self.form.signe_danger_accouchee, by_village);
             _emit_danger_signs('danger_sign_count_birth', self.form.signe_danger_nne, by_village);
         }
-    }
+    };
 
     self.rc_suivi_de_reference = function () {
         if (isRC_SuiviDeReference(self.doc)) {
@@ -118,7 +118,7 @@ function CareForm(doc) {
                 self.village_data.reference_to_clinic_went = 1;
             }
         }
-    }
+    };
 
     self.rc_fermer_le_dossier = function () {
         if (isRC_FermerLeDossier(self.doc)) {
@@ -137,7 +137,7 @@ function CareForm(doc) {
                 self.village_data.child_death_7_days = 1;
             }
         }
-    }
+    };
 
     self.rc_reference = function () {
         if (isRC_Reference(self.doc)) {
@@ -152,7 +152,7 @@ function CareForm(doc) {
                 }
             }
         }
-    }
+    };
 
     self.as_completer_enregistrement = function() {
         if (isAS_CompleterEnregistrement(self.doc)) {
@@ -161,7 +161,7 @@ function CareForm(doc) {
                 self.village_data.high_risk_pregnancy = 1;
             }
         }
-    }
+    };
 
     self.as_contre_reference_aux_ralais = function () {
         if (isAS_ContreReferenceDuneFemmeEnceinte(self.doc) ||
@@ -173,7 +173,7 @@ function CareForm(doc) {
                 self.village_data['referrals_transport_'+self.form.moyen_transport] = 1;
             }
         }
-    }
+    };
 
     self.as_examen = function () {
         if (isAS_Examen(self.doc)) {
@@ -181,7 +181,7 @@ function CareForm(doc) {
                 self.village_data.anemic_pregnancy = 1;
             }
         }
-    }
+    };
 
     self.as_accouchement = function () {
         if (isAS_Accouchement(self.doc)) {
@@ -193,7 +193,7 @@ function CareForm(doc) {
                 self.add_data(self.village_data, 'maternal_death', 1);
             }
         }
-    }
+    };
 
     function _emit_danger_signs(key, danger_signs, by_village) {
         if (!danger_signs) {
