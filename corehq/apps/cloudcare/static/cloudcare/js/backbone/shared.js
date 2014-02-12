@@ -36,15 +36,15 @@ var Selectable = Backbone.View.extend({
         } else {
             this.select();
         }
-    }, 
+    },
     select: function (options) {
         if (!this.selected) {
             window.mainView.router.setView(this);
-	        this.selected = true;
-	        this.$el.addClass("active");
-	        if (typeof options === 'undefined' || !options.noEvents) {
-	            this.trigger("selected");
-	        }
+            this.selected = true;
+            this.$el.addClass("active");
+            if (typeof options === 'undefined' || !options.noEvents) {
+                this.trigger("selected");
+            }
         }
     }, 
     
