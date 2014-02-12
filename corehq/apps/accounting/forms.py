@@ -167,7 +167,7 @@ class SubscriptionForm(forms.Form):
     end_date = forms.DateField(label="End Date", widget=forms.DateInput(), required=False)
     delay_invoice_until = forms.DateField(label="Delay Invoice Until", widget=forms.DateInput(), required=False)
     plan_version = forms.ChoiceField(label="Plan Version")
-    domain = forms.ChoiceField(label=_("Project Space"))
+    domain = forms.CharField(label=_("Project Space"))
     salesforce_contract_id = forms.CharField(label=_("Salesforce Deployment ID"),
                                              max_length=80,
                                              required=False)
@@ -182,6 +182,7 @@ class SubscriptionForm(forms.Form):
         start_date_kwargs = dict(**css_class)
         end_date_kwargs = dict(**css_class)
         delay_invoice_until_kwargs = dict(**css_class)
+        domain_kwargs = {'css_class': 'input-xlarge'}
 
         if subscription is not None:
             self.fields['account'].choices = [(subscription.account.id, subscription.account.name)]
@@ -207,6 +208,7 @@ class SubscriptionForm(forms.Form):
                 delay_invoice_until_kwargs.update(disabled)
             self.fields['plan_version'].required = False
             self.fields['domain'].required = False
+            domain_kwargs.update(disabled)
         else:
             self.fields['account'].choices = [(account.id, account.name)
                                               for account in BillingAccount.objects.order_by('name')]
@@ -215,6 +217,7 @@ class SubscriptionForm(forms.Form):
             self.fields['plan_version'].choices = [(plan_version.id, str(plan_version))
                                                    for plan_version in SoftwarePlanVersion.objects.all()]
             self.fields['domain'].choices = [(domain, domain) for domain in Domain.get_all()]
+
         self.helper = FormHelper()
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
@@ -224,7 +227,7 @@ class SubscriptionForm(forms.Form):
                 crispy.Field('end_date', **end_date_kwargs),
                 crispy.Field('delay_invoice_until', **delay_invoice_until_kwargs),
                 crispy.Field('plan_version'),
-                crispy.Field('domain'),
+                crispy.Field('domain', **domain_kwargs),
                 'salesforce_contract_id',
             ),
             FormActions(

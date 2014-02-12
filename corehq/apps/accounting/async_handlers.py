@@ -1,4 +1,5 @@
 import json
+from corehq import Domain
 from corehq.apps.accounting.models import Feature, SoftwareProduct
 from corehq.apps.accounting.utils import fmt_feature_rate_dict, fmt_product_rate_dict, LazyEncoder
 from corehq.apps.hqwebapp.async_handler import BaseAsyncHandler, AsyncHandlerError
@@ -163,3 +164,17 @@ class Select2BillingInfoHandler(BaseSelect2AsyncHandler):
                         all_web_users)
         admins = filter(lambda x: x.username not in self.existing, admins)
         return [(a.username, "%s (%s)" % (a.full_name, a.username)) for a in admins]
+
+
+class Select2SubscriptionInfoHandler(BaseSelect2AsyncHandler):
+    slug = 'select2_billing'
+    allowed_actions = [
+        'domain'
+    ]
+
+    @property
+    def domain_response(self):
+        domain_names = [domain.name for domain in Domain.get_all()]
+        if self.search_string:
+            domain_names = filter(lambda x: x.lower().startswith(self.search_string.lower()), domain_names)
+        return [(name, name) for name in domain_names]
