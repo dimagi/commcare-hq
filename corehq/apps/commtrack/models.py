@@ -1243,13 +1243,17 @@ class StockExportColumn(ComplexExportColumn):
     """
     domain = StringProperty()
 
-    def get_headers(self):
-        # TODO filter by domain
-        self._column_tuples = sorted(list(StockState.objects.values_list(
+    @property
+    @memoized
+    def _column_tuples(self):
+        return sorted(list(StockState.objects.values_list(
             'product_id',
             'section_id'
         ).distinct()))
 
+
+    def get_headers(self):
+        # TODO filter by domain
         for product_id, section in self._column_tuples:
             yield "{product} ({section})".format(
                 product=Product.get(product_id).name,
@@ -1257,9 +1261,10 @@ class StockExportColumn(ComplexExportColumn):
             )
 
     def get_data(self, value):
-        req = RequisitionCase.get(value)
-        states = StockState.objects.filter(case_id=req._id)
+        states = StockState.objects.filter(case_id=value)
 
+        # use a list to make sure the stock states end up
+        # in the same order as the headers
         values = [None] * len(self._column_tuples)
 
         for state in states:
