@@ -582,8 +582,9 @@ class Outcomes(GenericTabularReport, CustomProjectReport, ProjectReportParameter
 
     @property
     def start_and_end_keys(self):
-        return ([self.datespan.startdate_param_utc],
-                [self.datespan.enddate_param_utc])
+        self.datespan.inclusive = False
+        return ([self.datespan.startdate_param],
+                [self.datespan.enddate_param])
 
     @property
     def headers(self):
