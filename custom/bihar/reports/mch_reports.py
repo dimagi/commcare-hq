@@ -17,6 +17,8 @@ class MCHBaseReport(CustomProjectReport, CaseListReport):
     asynchronous = True
     exportable = True
     emailable = False
+    fix_left_col = True
+    report_template_path = "bihar/reports/report.html"
 
     fields = [
         'corehq.apps.reports.fields.GroupField',
