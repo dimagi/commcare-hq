@@ -280,7 +280,8 @@ class EditSubscriptionView(AccountingSectionView):
 
     def post(self, request, *args, **kwargs):
         if 'set_subscription' in self.request.POST and self.subscription_form.is_valid():
-            self.subscription_form.update_subscription(self.subscription)
+            new_subscription = self.subscription_form.update_subscription(self.subscription)
+            return HttpResponseRedirect(reverse(self.urlname, args=(unicode(new_subscription.id),)))
         elif 'adjust_credit' in self.request.POST and self.credit_form.is_valid():
             self.credit_form.adjust_credit(subscription=self.subscription)
         elif 'cancel_subscription' in self.request.POST:
@@ -288,11 +289,7 @@ class EditSubscriptionView(AccountingSectionView):
         return self.get(request, *args, **kwargs)
 
     def cancel_subscription(self):
-        if self.subscription.date_start > datetime.date.today():
-            self.subscription.date_start = datetime.date.today()
-        self.subscription.date_end = datetime.date.today()
-        self.subscription.is_active = False
-        self.subscription.save()
+        self.subscription.cancel_subscription()
         self.subscription_canceled = True
 
 
