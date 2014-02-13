@@ -232,7 +232,7 @@ def custom_content_handler(reminder, handler, recipient, catch_up=False):
     else:
         message_offset = get_message_offset(case)
         try:
-            assert message_offset is None
+            assert message_offset is not None
         except:
             notify_exception(None,
                 message=("Couldn't calculate the message offset. Check that "
