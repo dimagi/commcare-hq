@@ -1400,13 +1400,19 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         else:
             view_name = 'couchforms/by_user'
 
-        return XFormInstance.view(view_name,
+        db = XFormInstance.get_db()
+        doc_ids = [r['id'] for r in db.view(view_name,
             startkey=[self.user_id],
             endkey=[self.user_id, {}],
             reduce=False,
-            include_docs=wrap,
-            wrapper=None if wrap else lambda x: x['id']
-        )
+            include_docs=False,
+        )]
+        if wrap:
+            for doc in iter_docs(db, doc_ids):
+                yield XFormInstance.wrap(doc)
+        else:
+            for id in doc_ids:
+                yield id
 
     @property
     def form_count(self):
