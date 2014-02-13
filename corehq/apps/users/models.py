@@ -1407,11 +1407,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             reduce=False,
             include_docs=False,
         )]
-        for doc in iter_docs(db, doc_ids):
-            if wrap:
+        if wrap:
+            for doc in iter_docs(db, doc_ids):
                 yield XFormInstance.wrap(doc)
-            else:
-                yield doc
+        else:
+            for id in doc_ids:
+                yield id
 
     @property
     def form_count(self):
