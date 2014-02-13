@@ -1247,9 +1247,9 @@ class StockExportColumn(ComplexExportColumn):
     @property
     @memoized
     def _column_tuples(self):
-        sp_ids = get_relevant_supply_point_ids(self.domain)
+        product_ids = [p._id for p in Product.by_domain(self.domain)]
         return sorted(list(
-            StockState.objects.filter(case_id__in=sp_ids).values_list(
+            StockState.objects.filter(product_id__in=product_ids).values_list(
                 'product_id',
                 'section_id'
             ).distinct()
@@ -1270,16 +1270,11 @@ class StockExportColumn(ComplexExportColumn):
         values = [None] * len(self._column_tuples)
 
         for state in states:
-            try:
-                state_index = self._column_tuples.index((
-                    state.product_id,
-                    state.section_id
-                ))
-                values[state_index] = state.stock_on_hand
-            except ValueError:
-                # TODO: if _column_tuples uses all cases on the domain
-                # or on this report, then we don't have to catch this
-                pass
+            state_index = self._column_tuples.index((
+                state.product_id,
+                state.section_id
+            ))
+            values[state_index] = state.stock_on_hand
         return values
 
 
