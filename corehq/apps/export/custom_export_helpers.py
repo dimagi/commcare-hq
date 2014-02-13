@@ -155,7 +155,7 @@ class CustomExportHelper(object):
             'DeidExportReport_name': DeidExportReport.name,
             'table_configuration': table_configuration,
             'domain': self.domain,
-            'commtrack_domain': self.project.commtrack_enabled,
+            'commtrack_domain': Domain.get_by_name(self.domain).commtrack_enabled,
             'helper': {
                 'back_url': self.ExportReport.get_url(domain=self.domain),
                 'export_title': self.export_title,
