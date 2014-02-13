@@ -482,6 +482,7 @@ class Subscription(models.Model):
     date_delay_invoicing = models.DateField(blank=True, null=True)
     date_created = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=False)
+    do_not_invoice = models.BooleanField(default=False)
 
     def cancel_subscription(self, adjustment_method=None, web_user=None, note=None):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
@@ -496,7 +497,8 @@ class Subscription(models.Model):
         )
 
     def change_plan(self, new_plan_version, date_start=None, date_end=None, date_delay_invoicing=None,
-                    salesforce_contract_id=None, note=None, web_user=None, adjustment_method=None):
+                    salesforce_contract_id=None, do_not_invoice=False,
+                    note=None, web_user=None, adjustment_method=None):
         """
         Changing a plan terminates the current subscription and creates a new subscription where the old plan
         left off.
@@ -532,6 +534,7 @@ class Subscription(models.Model):
                                                  date_delay_invoicing=date_delay_invoicing,
                                                  salesforce_contract_id=new_salesforce_contract_id,
                                                  is_active=new_is_active,
+                                                 do_not_invoice=do_not_invoice,
                                                  adjustment_method=adjustment_method,
                                                  note=note,
                                                  web_user=web_user
