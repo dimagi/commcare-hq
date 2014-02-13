@@ -686,8 +686,7 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
     description = ugettext_noop("Graphical representation of when forms are submitted.")
 
     fields = [
-        'corehq.apps.reports.fields.FilterUsersField',
-        'corehq.apps.reports.fields.GroupField',
+        'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
         'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
         'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
         'corehq.apps.reports.fields.DatespanField']
@@ -698,7 +697,8 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
     @memoized
     def activity_times(self):
         all_times = []
-        for user in self.users:
+        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
+        for user in users_data["combined_users"]:
             for form, info in self.all_relevant_forms.items():
                 key = make_form_couch_key(self.domain, user_id=user.get('user_id'),
                    xmlns=info['xmlns'], app_id=info['app_id'], by_submission_time=self.by_submission_time)
