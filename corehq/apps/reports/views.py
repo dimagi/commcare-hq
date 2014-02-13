@@ -801,7 +801,7 @@ def download_cases(request, domain):
         'user_filter': user_filter,
     }
     payload_func = SerializableFunction(generate_case_export_payload, **kwargs)
-    content_disposition = "attachment; filename={domain}_data.{ext}".format(domain=domain, ext=format.extension)
+    content_disposition = 'attachment; filename="{domain}_data.{ext}"'.format(domain=domain, ext=format.extension)
     mimetype = "%s" % format.mimetype
 
     def generate_payload(payload_func):
