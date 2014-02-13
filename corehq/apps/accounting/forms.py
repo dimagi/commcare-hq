@@ -246,6 +246,12 @@ class SubscriptionForm(forms.Form):
                 raise forms.ValidationError("A valid project space is required.")
         return domain_name
 
+    def clean_end_date(self):
+        if (self.cleaned_data['end_date'] is not None
+            and self.cleaned_data['start_date'] > self.cleaned_data['end_date']):
+            raise ValidationError("End date must be after start date.")
+        return self.cleaned_data['end_date']
+
     def create_subscription(self):
         account = BillingAccount.objects.get(id=self.cleaned_data['account'])
         domain = self.cleaned_data['domain']
@@ -254,11 +260,13 @@ class SubscriptionForm(forms.Form):
         date_end = self.cleaned_data['end_date']
         date_delay_invoicing = self.cleaned_data['delay_invoice_until']
         salesforce_contract_id = self.cleaned_data['salesforce_contract_id']
+        is_active = (date_start == datetime.date.today())
         return Subscription.new_domain_subscription(account, domain, plan_version,
                                                     date_start=date_start,
                                                     date_end=date_end,
                                                     date_delay_invoicing=date_delay_invoicing,
-                                                    salesforce_contract_id=salesforce_contract_id)
+                                                    salesforce_contract_id=salesforce_contract_id,
+                                                    is_active=is_active)
 
     def update_subscription(self, subscription):
         kwargs = {

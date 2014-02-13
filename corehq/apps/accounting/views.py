@@ -3,6 +3,8 @@ import datetime
 
 from django.conf import settings
 from django.contrib import messages
+from django.forms.forms import NON_FIELD_ERRORS
+from django.forms.util import ErrorList
 from django.utils import translation
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest
@@ -13,6 +15,7 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.accounting.forms import (BillingAccountForm, CreditForm, SubscriptionForm, CancelForm,
                                           PlanInformationForm, SoftwarePlanVersionForm, FeatureRateForm,
                                           ProductRateForm)
+from corehq.apps.accounting.exceptions import NewSubscriptionError
 from corehq.apps.accounting.interface import AccountingInterface, SubscriptionInterface, SoftwarePlanInterface
 from corehq.apps.accounting.models import (SoftwareProductType, Invoice, BillingAccount, CreditLine, Subscription,
                                            SoftwarePlanVersion, SoftwarePlan)
@@ -204,9 +207,14 @@ class NewSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
         if self.response is not None:
             return self.response
         if self.subscription_form.is_valid():
-            subscription = self.subscription_form.create_subscription()
-            return HttpResponseRedirect(
-                reverse(ManageBillingAccountView.urlname, args=(subscription.account.id,)))
+            try:
+                subscription = self.subscription_form.create_subscription()
+                return HttpResponseRedirect(
+                   reverse(ManageBillingAccountView.urlname, args=(subscription.account.id,)))
+            except NewSubscriptionError as e:
+                errors = ErrorList()
+                errors.extend([e.message])
+                self.subscription_form._errors.setdefault(NON_FIELD_ERRORS, errors)
         return self.get(request, *args, **kwargs)
 
 
