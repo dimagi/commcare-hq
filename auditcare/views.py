@@ -45,7 +45,7 @@ def auditAll(request, template="auditcare/index.html"):
 def export_all(request):
     auditEvents = AccessAudit.view("auditcare/by_date_access_events", descending=True, include_docs=True).all()
     response = HttpResponse()
-    response['Content-Disposition'] = 'attachment; filename=AuditAll.xls'
+    response['Content-Disposition'] = 'attachment; filename="AuditAll.xls"'
     writer = csv.UnicodeWriter(response)
     writer.writerow(['User', 'Access Type', 'Date'])
     for a in auditEvents:
