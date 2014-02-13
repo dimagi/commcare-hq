@@ -764,6 +764,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     def human_friendly_name(self):
         return self.full_name if self.full_name else self.username
 
+    @property
+    def name_in_filters(self):
+        return "%s <%s>" % (self.full_name, self.username) if self.full_name else self.username
+
     formatted_name = full_name
     name = full_name
 
