@@ -25,7 +25,7 @@ class DownloadBase(object):
     """
     
     def __init__(self, mimetype="text/plain", 
-                 content_disposition="attachment; filename=download.txt", 
+                 content_disposition='attachment; filename="download.txt"',
                  transfer_encoding=None, extras=None, download_id=None, 
                  cache_backend=SOIL_DEFAULT_CACHE):
         self.mimetype = mimetype
@@ -149,7 +149,7 @@ class CachedDownload(DownloadBase):
     """
     
     def __init__(self, cacheindex, mimetype="text/plain", 
-                 content_disposition="attachment; filename=download.txt", 
+                 content_disposition='attachment; filename="download.txt"',
                  transfer_encoding=None, extras=None, download_id=None, 
                  cache_backend=SOIL_DEFAULT_CACHE):
         super(CachedDownload, self).__init__(mimetype, content_disposition, 
@@ -177,7 +177,7 @@ class FileDownload(DownloadBase):
     """
     
     def __init__(self, filename, mimetype="text/plain", 
-                 content_disposition="attachment; filename=download.txt", 
+                 content_disposition='attachment; filename="download.txt"',
                  transfer_encoding=None, extras=None, download_id=None, cache_backend='default'):
         super(FileDownload, self).__init__(mimetype, content_disposition, 
                                              transfer_encoding, extras, download_id, cache_backend)
