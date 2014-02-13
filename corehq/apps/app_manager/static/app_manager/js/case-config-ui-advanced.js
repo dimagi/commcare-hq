@@ -88,11 +88,18 @@ var AdvancedCase = (function () {
 
         self.caseConfigViewModel = new CaseConfigViewModel(self, params);
 
-        self.applyAccordion = function () {
+        self.applyAccordion = function (type, index) {
             _.delay(function () {
                 var options = {header: '> div > h3', heightStyle: 'content', collapsible: true, autoFill: true};
-                $('#case-open-accordion').accordion("destroy").accordion(options);
-                $('#case-load-accordion').accordion("destroy").accordion(options);
+                if (index) {
+                    options.active = index;
+                }
+                if (!type || type === 'open') {
+                    $('#case-open-accordion').accordion("destroy").accordion(options);
+                }
+                if (!type || type === 'load') {
+                    $('#case-load-accordion').accordion("destroy").accordion(options);
+                }
             });
         };
 
@@ -275,7 +282,7 @@ var AdvancedCase = (function () {
                     show_product_stock: false
                 }, self.config));
                 if (index > 0) {
-                    $('#case-load-accordion').accordion('activate', index);
+                    self.config.applyAccordion('open', index);
                 }
             } else if (action.value === 'open') {
                 $('#case-load-accordion').accordion({active: false});
@@ -296,7 +303,7 @@ var AdvancedCase = (function () {
                     close_condition: DEFAULT_CONDITION('never')
                 }, self.config));
                 if (index > 0) {
-                    $('#case-open-accordion').accordion('activate', index);
+                    self.config.applyAccordion('load', index);
                 }
             }
         };
@@ -434,7 +441,8 @@ var AdvancedCase = (function () {
 
             self.case_type.subscribe(function (value) {
                 if (!value) {
-                    self.config.applyAccordion();
+                    var index = self.config.caseConfigViewModel.load_update_cases.indexOf(self);
+                    self.config.applyAccordion('load', index);
                 }
             }, null, 'beforeChange');
 
@@ -594,6 +602,13 @@ var AdvancedCase = (function () {
                     return true;
                 }
             };
+
+            self.case_type.subscribe(function (value) {
+                if (!value) {
+                    var index = self.config.caseConfigViewModel.open_cases.indexOf(self);
+                    self.config.applyAccordion('open', index);
+                }
+            }, null, 'beforeChange');
 
             self.disable_tag = ko.computed(function () {
                 return false;
