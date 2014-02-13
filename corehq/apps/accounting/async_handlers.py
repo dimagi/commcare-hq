@@ -174,7 +174,7 @@ class Select2SubscriptionInfoHandler(BaseSelect2AsyncHandler):
 
     @property
     def domain_response(self):
-        domain_names = [domain.name for domain in Domain.get_all()]
+        domain_names = [domain['key'] for domain in Domain.get_all(include_docs=False)]
         if self.search_string:
             domain_names = filter(lambda x: x.lower().startswith(self.search_string.lower()), domain_names)
         return [(name, name) for name in domain_names]
