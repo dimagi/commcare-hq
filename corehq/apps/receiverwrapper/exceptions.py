@@ -1,0 +1,2 @@
+class LocalSubmissionError(Exception):
+    pass

@@ -17,7 +17,7 @@
                     {% blocktrans with created_count=result.created_count %}
                         <strong>{{ created_count }}</strong> rows did
                         not match any existing cases and had new cases created
-                        for them.
+                        for them. If case_id's were used, these were ignored.
                     {% endblocktrans %}
                 </p>
             {% endif %}

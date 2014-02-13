@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, time
 
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
+from corehq.apps.users.util import WEIRD_USER_IDS
 
 from dimagi.utils.couch.database import get_db
 from corehq.couchapps.models import ReportsForm
@@ -240,7 +241,6 @@ def total_distinct_users(domains=None):
 
     res = es_query(q=q, facets=["form.meta.userID"], es_url=ES_URLS["forms"], size=0)
 
-    excluded_ids = ['commtrack-system', 'demo_user']
     user_ids = reduce(list.__add__, [CouchUser.ids_by_domain(d) for d in domains], [])
     terms = [t.get('term') for t in res["facets"]["form.meta.userID"]["terms"]]
-    return len(filter(lambda t: t and t not in excluded_ids and t in user_ids, terms))
+    return len(filter(lambda t: t and t not in WEIRD_USER_IDS and t in user_ids, terms))

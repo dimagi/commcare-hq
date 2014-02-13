@@ -163,17 +163,22 @@ def create_or_update_locations(domain, location_specs, log):
     users = {}
     for row in location_specs:
         username = row.get('username')
-        location_code = row.get('location-sms-code')
-        if username in users:
-            user_mapping = users[username]
+        try:
+            username = normalize_username(username, domain)
+        except ValidationError:
+            log['errors'].append("Username must be a valid email address: %s" % username)
         else:
-            user_mapping = UserLocMapping(username, domain, location_cache)
-            users[username] = user_mapping
+            location_code = row.get('location-sms-code')
+            if username in users:
+                user_mapping = users[username]
+            else:
+                user_mapping = UserLocMapping(username, domain, location_cache)
+                users[username] = user_mapping
 
-        if row.get('remove') == 'y':
-            user_mapping.to_remove.add(location_code)
-        else:
-            user_mapping.to_add.add(location_code)
+            if row.get('remove') == 'y':
+                user_mapping.to_remove.add(location_code)
+            else:
+                user_mapping.to_add.add(location_code)
 
     for username, mapping in users.iteritems():
         mapping.save()
@@ -240,7 +245,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
                 password = unicode(password)
             group_names = group_names or []
             try:
-                username = normalize_username(username, domain)
+                username = normalize_username(str(username), domain)
             except TypeError:
                 username = None
             except ValidationError:
@@ -362,7 +367,7 @@ def get_location_rows(domain):
         locations = user.locations
         for location in locations:
             mappings.append([
-                user.username,
+                user.raw_username,
                 location.site_code,
                 location.name
             ])

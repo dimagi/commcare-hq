@@ -103,7 +103,12 @@
 
     <div class="form-actions">
         <a id="save-button" class="btn disable-on-submit">{% trans "Save and Publish Later" %}</a>
-        <button type="submit" class="btn btn-primary disable-on-submit">{% trans "Publish Now" %}</button>
+        <button type="submit"
+                class="btn btn-primary disable-on-submit"
+                onclick="_gaq.push(['_trackEvent', 'Exchange', 'Publish Now', '?']);"
+        >
+            {% trans "Publish Now" %}
+        </button>
     </div>
 </form>
 {% endblock %}>

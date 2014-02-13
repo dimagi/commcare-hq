@@ -26,14 +26,7 @@ def block_type(form):
 
 
 def case_date_group(form):
-    return { 
-        'date': form.received_on,
-        'value': 1,
-        'group_by': [
-            form.domain,
-            form.form['case']['@case_id'],
-        ],
-    }
+    return form.received_on
 
 class BirthPreparedness(fluff.Calculator):
     """

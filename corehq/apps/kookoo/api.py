@@ -72,6 +72,12 @@ def initiate_outbound_call(call_log_entry, *args, **kwargs):
         session, responses = start_session(recipient.domain, recipient, app, module, form, case_id, yield_responses=True, session_type=XFORMS_SESSION_IVR)
         
         ivr_responses = []
+        if len(ivr_responses) == 0:
+            call_log_entry.error = True
+            call_log_entry.error_message = "No prompts seen in form. Please check that the form does not have errors."
+            call_log_entry.save()
+            return False
+
         for response in responses:
             ivr_responses.append(format_ivr_response(response.event.caption, app))
         

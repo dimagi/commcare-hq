@@ -1,14 +1,16 @@
 from collections import defaultdict
+from itertools import product
 from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpResponseNotFound
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
+from corehq.apps.commtrack.util import get_or_make_def_program
 
 from corehq.apps.domain.decorators import require_superuser, domain_admin_required, require_previewer, login_and_domain_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.management.commands import bootstrap_psi
-from corehq.apps.commtrack.models import Product
-from corehq.apps.commtrack.forms import ProductForm
+from corehq.apps.commtrack.models import Product, Program
+from corehq.apps.commtrack.forms import ProductForm, ProgramForm
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.locations.models import Location
 from dimagi.utils.decorators.memoized import memoized
@@ -71,7 +73,7 @@ class ProductListView(BaseCommTrackManageView):
     @property
     def page_context(self):
         return {
-            'product_list': {
+            'data_list': {
                 'page': self.page,
                 'limit': self.limit,
                 'total': self.total
@@ -84,12 +86,23 @@ class ProductListView(BaseCommTrackManageView):
 class FetchProductListView(ProductListView):
     urlname = 'commtrack_product_fetch'
 
+    def skip(self):
+        return (int(self.page) - 1) * int(self.limit)
+
     @property
     def product_data(self):
         data = []
-        products = Product.by_domain(self.domain)
+        products = Product.by_domain(domain=self.domain, limit=self.limit, skip=self.skip())
         for p in products:
+            if p.program_id:
+                program = Program.get(p.program_id)
+            else:
+                program = get_or_make_def_program(self.domain)
+                p.program_id = program.get_id
+                p.save()
+
             info = p._doc
+            info['program'] = program.name
             info['edit_url'] = reverse('commtrack_product_edit', kwargs={'domain': self.domain, 'prod_id': p._id})
             data.append(info)
         return data
@@ -98,7 +111,7 @@ class FetchProductListView(ProductListView):
         return HttpResponse(json.dumps({
             'success': True,
             'current_page': self.page,
-            'product_list': self.product_data,
+            'data_list': self.product_data,
         }), 'text/json')
 
 
@@ -314,3 +327,149 @@ def api_query_supply_point(request, domain):
 
         locs = sorted(itertools.chain(*(get_locs(loc_type) for loc_type in loc_types)), key=lambda e: e.name)[:LIMIT]
         return HttpResponse(json.dumps(map(loc_to_payload, locs)), 'text/json')
+
+
+class ProgramListView(BaseCommTrackManageView):
+    urlname = 'commtrack_program_list'
+    template_name = 'commtrack/manage/programs.html'
+    page_title = ugettext_noop("Manage Programs")
+
+    @property
+    def page_context(self):
+        return {}
+
+
+class FetchProgramListView(ProgramListView):
+    urlname = 'commtrack_program_fetch'
+
+    @property
+    def program_data(self):
+        data = []
+        programs = Program.by_domain(self.domain)
+        for p in programs:
+            info = p._doc
+            info['edit_url'] = reverse('commtrack_program_edit', kwargs={'domain': self.domain, 'prog_id': p._id})
+            data.append(info)
+        return data
+
+    def get(self, request, *args, **kwargs):
+        return HttpResponse(json.dumps({
+            'success': True,
+            'data_list': self.program_data,
+        }), 'text/json')
+
+
+class NewProgramView(BaseCommTrackManageView):
+    urlname = 'commtrack_program_new'
+    page_title = ugettext_noop("New Program")
+    template_name = 'commtrack/manage/program.html'
+
+    @property
+    @memoized
+    def program(self):
+        return Program(domain=self.domain)
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': ProgramListView.page_title,
+            'url': reverse(ProgramListView.urlname, args=[self.domain]),
+        }]
+
+    @property
+    @memoized
+    def new_program_form(self):
+        if self.request.method == 'POST':
+            return ProgramForm(self.program, self.request.POST)
+        return ProgramForm(self.program)
+
+    @property
+    def page_context(self):
+        return {
+            'program': self.program,
+            'form': self.new_program_form,
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.new_program_form.is_valid():
+            self.new_program_form.save()
+            messages.success(request, _("Program saved!"))
+            return HttpResponseRedirect(reverse(ProgramListView.urlname, args=[self.domain]))
+        return self.get(request, *args, **kwargs)
+
+
+class EditProgramView(NewProgramView):
+    urlname = 'commtrack_program_edit'
+    page_title = ugettext_noop("Edit Program")
+
+    DEFAULT_LIMIT = 10
+
+    @property
+    def page(self):
+        return self.request.GET.get('page', 1)
+
+    @property
+    def limit(self):
+        return self.request.GET.get('limit', self.DEFAULT_LIMIT)
+
+    @property
+    def total(self):
+        return len(Product.by_program_id(self.domain, self.program_id))
+
+    @property
+    def page_context(self):
+        return {
+            'program': self.program,
+            'data_list': {
+                'page': self.page,
+                'limit': self.limit,
+                'total': self.total
+            },
+            'pagination_limit_options': range(self.DEFAULT_LIMIT, 51, self.DEFAULT_LIMIT),
+            'form': self.new_program_form,
+        }
+
+    @property
+    def program_id(self):
+        try:
+            return self.kwargs['prog_id']
+        except KeyError:
+            raise Http404()
+
+    @property
+    @memoized
+    def program(self):
+        try:
+            return Program.get(self.program_id)
+        except ResourceNotFound:
+            raise Http404()
+
+    @property
+    def page_name(self):
+        return _("Edit %s") % self.program.name
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain, self.program_id])
+
+class FetchProductForProgramListView(EditProgramView):
+    urlname = 'commtrack_product_for_program_fetch'
+
+    def skip(self):
+        return (int(self.page) - 1) * int(self.limit)
+
+    @property
+    def product_data(self):
+        data = []
+        products = Product.by_program_id(domain=self.domain, prog_id=self.program_id, skip=self.skip(),
+                limit=self.limit)
+        for p in products:
+            data.append(p._doc)
+        return data
+
+    def get(self, request, *args, **kwargs):
+        return HttpResponse(json.dumps({
+            'success': True,
+            'current_page': self.page,
+            'data_list': self.product_data,
+        }), 'text/json')

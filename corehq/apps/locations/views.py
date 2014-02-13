@@ -6,8 +6,8 @@ from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.locations.models import Location
 from corehq.apps.locations.forms import LocationForm
-from corehq.apps.locations.util import load_locs_json, location_hierarchy_config
-from corehq.apps.commtrack.models import LocationType
+from corehq.apps.locations.util import load_locs_json, location_hierarchy_config, dump_locations
+from corehq.apps.commtrack.models import LocationType, Product, SupplyPointCase
 from corehq.apps.facilities.models import FacilityRegistry
 from django.core.urlresolvers import reverse
 from django.shortcuts import render
@@ -25,6 +25,8 @@ from soil import DownloadBase
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 from soil.heartbeat import heartbeat_enabled, is_alive
+from couchexport.models import Format
+from corehq.apps.consumption.shortcuts import get_default_consumption
 
 
 @domain_admin_required
@@ -82,6 +84,10 @@ class NewLocationView(BaseLocationView):
         return Location(domain=self.domain, parent=self.parent_id)
 
     @property
+    def consumption(self):
+        return None
+
+    @property
     @memoized
     def location_form(self):
         if self.request.method == 'POST':
@@ -93,6 +99,7 @@ class NewLocationView(BaseLocationView):
         return {
             'form': self.location_form,
             'location': self.location,
+            'consumption': self.consumption,
         }
 
     def post(self, request, *args, **kwargs):
@@ -115,11 +122,31 @@ class EditLocationView(NewLocationView):
         return self.kwargs['loc_id']
 
     @property
+    @memoized
     def location(self):
         try:
             return Location.get(self.location_id)
         except ResourceNotFound:
             raise Http404()
+
+    @property
+    @memoized
+    def supply_point(self):
+        return SupplyPointCase.get_by_location(self.location)
+
+    @property
+    def consumption(self):
+        consumptions = []
+        for product in Product.by_domain(self.domain):
+            consumption = get_default_consumption(
+                self.domain,
+                product._id,
+                self.location.location_type,
+                self.supply_point._id if self.supply_point else None,
+            )
+            if consumption:
+                consumptions.append((product.name, consumption))
+        return consumptions
 
     @property
     def page_name(self):
@@ -183,15 +210,12 @@ class LocationImportView(BaseLocationView):
 
         domain = args[0]
 
-        update_existing = bool(request.POST.get('update'))
-
         # stash this in soil to make it easier to pass to celery
         file_ref = expose_download(upload.read(),
                                    expiry=1*60*60)
         task = import_locations_async.delay(
             domain,
             file_ref.download_id,
-            update_existing
         )
         file_ref.set_task(task)
 
@@ -231,6 +255,13 @@ def location_importer_job_poll(request, domain, download_id, template="locations
     context['progress'] = download_data.get_progress()
     context['download_id'] = download_id
     return render_to_response(template, context_instance=context)
+
+
+def location_export(request, domain):
+    response = HttpResponse(mimetype=Format.from_format('xlsx').mimetype)
+    response['Content-Disposition'] = 'attachment; filename="locations.xlsx"'
+    dump_locations(response, domain)
+    return response
 
 
 @domain_admin_required # TODO: will probably want less restrictive permission

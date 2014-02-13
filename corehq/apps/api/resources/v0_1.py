@@ -214,7 +214,7 @@ class XFormInstanceResource(JsonResource, DomainSpecificResourceMixin):
     type = "form"
     id = fields.CharField(attribute='get_id', readonly=True, unique=True)
 
-    form = fields.DictField(attribute='get_form')
+    form = fields.DictField(attribute='form')
     type = fields.CharField(attribute='type')
     version = fields.CharField(attribute='version')
     uiversion = fields.CharField(attribute='uiversion')

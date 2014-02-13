@@ -1,13 +1,13 @@
-from .reports import MEGeneral, MEMedical, Nurse, Outcomes, DangerSigns, Referrals, HealthCenter
+from .reports import MandE, Nurse, Relais, Outcomes, DangerSigns, Referrals, HealthCenter
 
 CUSTOM_REPORTS = (
-    ('CARE Benin Reports', (
-        MEGeneral,
-        MEMedical,
+    ('CARE Benin Special Reports', (
+        MandE,
         Nurse,
-        Outcomes,
+        Relais,
         DangerSigns,
         Referrals,
         HealthCenter,
+        Outcomes,
     )),
 )

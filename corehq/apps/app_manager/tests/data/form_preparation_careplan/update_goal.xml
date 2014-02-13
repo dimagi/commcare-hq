@@ -47,8 +47,8 @@
 
             <bind nodeset="/data/count_tasks" calculate="count-selected(/data/child_tasks)"/>
 
-            <setvalue event="jr-insert" ref="/data/tasks_to_close/@index" value="/data/cur_count"/>
-            <setvalue event="jr-insert" ref="/data/cur_count" value="/data/cur_count + 1"/>
+            <bind nodeset="/data/cur_count" type="int" calculate="count(/data/tasks_to_close)"/>
+            <setvalue event="jr-insert" ref="/data/tasks_to_close/@index" value="int(/data/cur_count)"/>
 
             <bind nodeset="/data/close_goal" required="true()"/>
             <bind nodeset="/data/description_group" relevant="/data/close_goal = 'no'" required="true()"/>

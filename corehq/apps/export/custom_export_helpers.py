@@ -9,6 +9,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 USERNAME_TRANSFORM = 'corehq.apps.export.transforms.user_id_to_username'
 OWNERNAME_TRANSFORM = 'corehq.apps.export.transforms.owner_id_to_display'
+CASENAME_TRANSFORM = 'corehq.apps.export.transforms.case_id_to_case_name'
 
 
 class AbstractProperty(object):
@@ -187,6 +188,18 @@ class FormCustomExportHelper(CustomExportHelper):
             return any([q.startswith('form.#'), q.startswith('form.@'), q.startswith('form.case.'),
                         q.startswith('form.meta.'), q.startswith('form.subcase_')])
 
+        def generate_additional_columns():
+            ret = []
+            case_name_col = CustomColumn(slug='case_name', index='form.case.@case_id', display='info.case_name',
+                                     transform=CASENAME_TRANSFORM, show=True, selected=True)
+            matches = filter(case_name_col.match, column_conf)
+            if matches:
+                for match in matches:
+                    case_name_col.format_for_javascript(match)
+            elif filter(lambda col: col["index"] == case_name_col.index, column_conf):
+                ret.append(case_name_col.default_column())
+            return ret
+
         for col in column_conf:
             question = col["index"]
             if question in remaining_questions:
@@ -200,6 +213,7 @@ class FormCustomExportHelper(CustomExportHelper):
             if self.creating_new_export and (question in self.default_questions or question in current_questions):
                 col["selected"] = True
 
+        column_conf.extend(generate_additional_columns())
         column_conf.extend([
             ExportColumn(
                 index=q,
@@ -226,13 +240,15 @@ class FormCustomExportHelper(CustomExportHelper):
 
 class CustomColumn(object):
 
-    def __init__(self, slug, index, display, transform, is_sensitive=False, tag=None):
+    def __init__(self, slug, index, display, transform, is_sensitive=False, tag=None, show=False, selected=False):
         self.slug = slug
         self.index = index
         self.display = display
         self.transform = transform
         self.is_sensitive = is_sensitive
         self.tag = tag
+        self.show = show
+        self.selected = selected
 
     def match(self, col):
          return col['index'] == self.index and col['transform'] == self.transform
@@ -247,13 +263,13 @@ class CustomColumn(object):
         # to the existing export UI
         return {
             'index': self.index,
-            'selected': False,
+            'selected': self.selected,
             'display': self.display,
             'transform': self.transform,
             "is_sensitive": self.is_sensitive,
             'tag': self.tag,
             'special': self.slug,
-            'show': False,
+            'show': self.show,
         }
 
 

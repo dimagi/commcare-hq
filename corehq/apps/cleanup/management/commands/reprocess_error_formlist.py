@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand, CommandError
 from corehq.apps.cleanup.xforms import reprocess_form_cases
-from couchforms.models import get
+from couchforms import fetch_and_wrap_form
 import csv
 from corehq.apps.cleanup.management.commands.generate_form_case_consistency_list import HEADERS
 
@@ -28,7 +28,7 @@ class Command(BaseCommand):
                     continue
 
                 print 'reprocessing form %s in domain %s' % (doc_id, domain)
-                form = get(doc_id)
+                form = fetch_and_wrap_form(doc_id)
                 try:
                     reprocess_form_cases(form)
                 except AssertionError:

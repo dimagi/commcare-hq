@@ -58,30 +58,7 @@ class MultiFormDrilldownMixin(object):
     @property
     @memoized
     def all_relevant_forms(self):
-        selected_forms = FormsByApplicationFilter.get_value(self.request, self.domain)
-        if self.request.GET.get('%s_unknown' % FormsByApplicationFilter.slug) == 'yes':
-            return selected_forms
-
-        # filter this result by submissions within this time frame
-        key = make_form_couch_key(self.domain, by_submission_time=getattr(self, 'by_submission_time', True))
-        data = get_db().view('reports_forms/all_forms',
-            reduce=False,
-            startkey=key+[self.datespan.startdate_param_utc],
-            endkey=key+[self.datespan.enddate_param_utc],
-        ).all()
-
-        all_submitted_forms = set([FormsByApplicationFilter.make_xmlns_app_key(d['value']['xmlns'], d['value']['app_id'])
-                                   for d in data])
-        relevant_forms = all_submitted_forms.intersection(set(selected_forms.keys()))
-
-        all_submitted_xmlns = [d['value']['xmlns'] for d in data]
-        fuzzy_xmlns = set([k for k in selected_forms.keys()
-                           if (FormsByApplicationFilter.fuzzy_slug in k and
-                               FormsByApplicationFilter.split_xmlns_app_key(k, only_xmlns=True) in all_submitted_xmlns)])
-
-
-        relevant_forms = relevant_forms.union(fuzzy_xmlns)
-        return dict([(k, selected_forms[k]) for k in relevant_forms])
+        return FormsByApplicationFilter.get_value(self.request, self.domain)
 
 
 class CompletionOrSubmissionTimeMixin(object):
@@ -450,6 +427,29 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin):
     description = ugettext_noop("Statistics on time spent on a particular form.")
     is_cacheable = True
 
+    def get_user_link(self, user):
+
+        params = {
+            'select_mw': user.get('user_id'),
+            "form_unknown": self.request.GET.get("form_unknown", ''),
+            "form_unknown_xmlns": self.request.GET.get("form_unknown_xmlns", ''),
+            "form_status": self.request.GET.get("form_status", ''),
+            "form_app_id": self.request.GET.get("form_app_id", ''),
+            "form_module": self.request.GET.get("form_module", ''),
+            "form_xmlns": self.request.GET.get("form_xmlns", ''),
+            "startdate": self.request.GET.get("startdate", ''),
+            "enddate": self.request.GET.get("enddate", '')
+        }
+
+        from corehq.apps.reports.standard.inspect import SubmitHistory
+
+        user_link_template = '<a href="%(link)s">%(username)s</a>'
+        base_link = "%s%s" % (get_url_base(), SubmitHistory.get_url(domain=self.domain))
+        link = "{baselink}?{params}".format(baselink=base_link, params=urlencode(params))
+        user_link = user_link_template % {"link": link,
+                                          "username": user.get('username_in_report')}
+        return self.table_cell(user.get('raw_username'), user_link)
+
     @property
     @memoized
     def selected_xmlns(self):
@@ -745,10 +745,10 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
         chart.add_data(d)
 
         # mapping between numbers 0..6 and its day of the week label
-        day_names = "Sun Mon Tue Wed Thu Fri Sat".split(" ")
+        day_names = "Mon Tue Wed Thu Fri Sat Sun".split(" ")
         # the order, bottom-to-top, in which the days should appear
         # i.e. Sun, Sat, Fri, Thu, etc
-        days = (0, 6, 5, 4, 3, 2, 1)
+        days = (6, 5, 4, 3, 2, 1, 0)
 
         sizes=[]
         for d in days:
@@ -783,11 +783,6 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
     ]
     fix_left_col = True
     emailable = True
-
-    @property
-    def special_notice(self):
-        if self.domain_object.case_sharing_included():
-            return _('This report currently does not fully support case sharing. There might be inconsistencies in the cases modified and average cases modified columns.')
 
     @property
     def view_by(self):

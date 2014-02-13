@@ -1,3 +1,7 @@
+.detail-screen-table th {
+    border-top-width: 0;
+}
+
 .detail-screen-table td {
     word-wrap: break-word;
 }

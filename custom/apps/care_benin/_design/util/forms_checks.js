@@ -1,33 +1,17 @@
-function dateBreakdown(dateString, breakdown) {
-    var date = new Date(dateString);
-    var ret = new Array();
-    for (i in breakdown) {
-        var elem = breakdown[i];
-        if (elem === 'y') {
-            ret.push(date.getUTCFullYear());
-        } else if (elem === 'm') {
-            ret.push(date.getUTCMonth());
-        } else if (elem === 'd') {
-            ret.push(date.getUTCDay());
-        }
-    }
-    return ret;
-}
-
-var domain = 'project'
+var domain = 'project';
 function isCAREForm(doc) {
-    return (doc.doc_type === 'XFormInstance'
-        && doc.domain === domain
-        && doc.form && doc.form.meta);
+    return (doc.doc_type === 'XFormInstance' &&
+        doc.domain === domain &&
+        doc.form &&
+        doc.form.meta);
 }
 
 function isCARECase(doc) {
-    return (doc.doc_type === 'CommCareCase'
-        && doc.domain === domain);
+    return (doc.doc_type === 'CommCareCase' && doc.domain === domain);
 }
 
 function isCAREWomanCase(doc) {
-    return isCARECase(doc) && doc.type === 'Woman'
+    return isCARECase(doc) && doc.type === 'Woman';
 }
 
 function isRC_Enregistrement(doc) {
@@ -116,8 +100,9 @@ function isAS_CounselingLorsDeLaSortieDuCS(doc) {
     return checkNs(doc, "http://openrosa.org/formdesigner/cb780e6e3b40db0cff0e524741371466fc0210e0");
 }
 
+var ns_as_enregistrement_nouveau_ne = "http://openrosa.org/formdesigner/A4FCED7D-DC8B-470E-8FC6-D30ADE4131DE";
 function isAS_EnregistrementduNouveauNe(doc) {
-    return checkNs(doc, "http://openrosa.org/formdesigner/A4FCED7D-DC8B-470E-8FC6-D30ADE4131DE");
+    return checkNs(doc, ns_as_enregistrement_nouveau_ne);
 }
 
 var ns_as_surveillanceLorsDeLaSortieDuCS = "http://openrosa.org/formdesigner/fb01c7e9a965c32a6aa73bac222e4c79c8bae40";

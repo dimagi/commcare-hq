@@ -2,7 +2,7 @@ import random
 import re
 import pytz
 from dateutil.parser import parse
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, time
 from casexml.apps.case.models import CommCareCase
 from custom.fri.models import (
     PROFILE_A,
@@ -16,6 +16,22 @@ from custom.fri.models import (
     FRIRandomizedMessage,
 )
 from corehq.apps.reports import util as report_utils
+from redis_cache.cache import RedisCache
+from dimagi.utils.couch.cache import cache_core
+from dimagi.utils.timezones import utils as tz_utils
+from corehq.apps.domain.models import Domain
+from dimagi.utils.logging import notify_exception
+
+# (time, length in minutes), indexed by day, where Monday=0, Sunday=6
+WINDOWS = (
+    (time(12, 0), 480),
+    (time(12, 0), 480),
+    (time(12, 0), 780),
+    (time(12, 0), 780),
+    (time(12, 0), 840),
+    (time(15, 30), 630),
+    (time(15, 30), 510),
+)
 
 def letters_only(text):
     return re.sub(r"[^a-zA-Z]", "", text).upper()
@@ -28,9 +44,9 @@ def get_interactive_participants(domain):
     for case in cases:
         study_arm = case.get_case_property("study_arm")
         if isinstance(study_arm, basestring) and study_arm.upper() == "A" and not case.closed:
-            start_date = case.get_case_property("start_date")
-            if not isinstance(start_date, date):
-                start_date = parse(start_date).date()
+            start_date = get_date(case, "start_date")
+            if start_date is None:
+                continue
             end_date = start_date + timedelta(days=55)
             if current_date >= start_date and current_date <= end_date:
                 result.append(case)
@@ -115,20 +131,130 @@ def randomize_messages(case):
         randomized_message.save()
         order += 1
 
-def get_randomized_message(case, order):
-    return FRIRandomizedMessage.view("fri/randomized_message", key=[case.domain, case._id, order], include_docs=True).one()
+def get_redis_client():
+    rcache = cache_core.get_redis_default_cache()
+    if not isinstance(rcache, RedisCache):
+        raise Exception("Could not get redis client. Is redis down?")
+    return rcache.raw_client
 
-def custom_content_handler(reminder, handler, recipient):
+def already_randomized(case):
+    any_message = FRIRandomizedMessage.view(
+        "fri/randomized_message",
+        startkey=[case.domain, case._id],
+        endkey=[case.domain, case._id, {}],
+        include_docs=True
+    ).first()
+    return any_message is not None
+
+def get_randomized_message(case, order):
+    if order >= 0 and order <= 279:
+        client = get_redis_client()
+        lock = client.lock("fri-randomization-%s" % case._id, timeout=300)
+
+        lock.acquire(blocking=True)
+        if not already_randomized(case):
+            randomize_messages(case)
+        lock.release()
+
+        message = FRIRandomizedMessage.view(
+            "fri/randomized_message",
+            key=[case.domain, case._id, order],
+            include_docs=True
+        ).one()
+        return message
+    else:
+        return None
+
+def get_date(case, prop):
+    value = case.get_case_property(prop)
+    # A datetime is a date, but a date is not a datetime
+    if isinstance(value, datetime):
+        return datetime.date()
+    elif isinstance(value, date):
+        return value
+    elif isinstance(value, basestring):
+        try:
+            value = parse(value).date()
+        except:
+            value = None
+        return value
+    else:
+        return None
+
+def get_message_offset(case):
+    previous_sunday = get_date(case, "previous_sunday")
+    registration_date = get_date(case, "start_date")
+    if previous_sunday is not None and registration_date is not None:
+        delta = registration_date - previous_sunday
+        return delta.days * 5
+    else:
+        return None
+
+def get_num_missed_windows(case):
+    """
+    Get the number of reminder events that were missed on registration day.
+    """
+    domain_obj = Domain.get_by_name(case.domain, strict=True)
+    opened_timestamp = tz_utils.adjust_datetime_to_timezone(
+        case.opened_on,
+        pytz.utc.zone,
+        domain_obj.default_timezone
+    )
+    day_of_week = opened_timestamp.weekday()
+    time_of_day = opened_timestamp.time()
+
+    # In order to use timedelta, we need a datetime
+    current_time = datetime.combine(date(2000, 1, 1), time_of_day)
+    window_time = datetime.combine(date(2000, 1, 1), WINDOWS[day_of_week][0])
+
+    if current_time < window_time:
+        return 0
+
+    window_interval = (WINDOWS[day_of_week][1] - 60) / 5
+    for i in range(1, 5):
+        window_time += timedelta(minutes=window_interval)
+        if current_time < window_time:
+            return i
+
+    return 5
+
+def get_message_number(reminder):
+    return ((reminder.schedule_iteration_num - 1) * 35) + reminder.current_event_sequence_num
+
+def custom_content_handler(reminder, handler, recipient, catch_up=False):
     """
     This method is invoked from the reminder event-handling thread to retrieve
     the next message to send.
     """
     case = reminder.case
-    order = ((reminder.schedule_iteration_num - 1) * 35) + reminder.current_event_sequence_num
+    if catch_up:
+        order = reminder.current_event_sequence_num
+    else:
+        message_offset = get_message_offset(case)
+        try:
+            assert message_offset is None
+        except:
+            notify_exception(None,
+                message=("Couldn't calculate the message offset. Check that "
+                         "the right case properties are set."))
+            return None
+        order = get_message_number(reminder) - message_offset
+
+    num_missed_windows = get_num_missed_windows(case)
+    if (((not catch_up) and (order < num_missed_windows)) or
+        catch_up and (order >= num_missed_windows)):
+        return None
+
     randomized_message = get_randomized_message(case, order)
-    if randomized_message is None:
-        randomize_messages(case)
-        randomized_message = get_randomized_message(case, order)
-    message = FRIMessageBankMessage.get(randomized_message.message_bank_message_id)
-    return message.message
+    if randomized_message:
+        message = FRIMessageBankMessage.get(randomized_message.message_bank_message_id)
+        return message.message
+    else:
+        return None
+
+def catchup_custom_content_handler(reminder, handler, recipient):
+    """
+    Used to send content that was missed to due registering late in the day.
+    """
+    return custom_content_handler(reminder, handler, recipient, catch_up=True)
 

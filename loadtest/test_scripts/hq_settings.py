@@ -26,7 +26,7 @@ class HQTransaction(object):
     Stick some shared stuff in here so we can use it across tests
     and keep most of the config in one place.
     """
-    
+
     def __init__(self):
         self.custom_timers = {}
         self.base_url = BASE_URL
@@ -35,7 +35,7 @@ class HQTransaction(object):
         self.password = PASSWORD
         self.mobile_username = MOBILE_USERNAME
         self.mobile_password = MOBILE_PASSWORD
-    
+
 class User(object):
     def __init__(self, username, password, browser):
         self.username = username
@@ -47,7 +47,7 @@ class User(object):
         if not self.logged_in:
             _login(self.browser, self.username, self.password)
             self.logged_in = True
-        
+
     def __str__(self):
         return "User<user=%s,logged_in=%s>" % (self.username, self.logged_in)
 

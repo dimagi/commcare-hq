@@ -1,7 +1,7 @@
 from django.utils.translation import ugettext as _
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.standard.cases.basic import CaseListReport
-from corehq.apps.api.es import ReportCaseES
+from corehq.apps.api.es import CaseES
 
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
@@ -17,6 +17,8 @@ class MCHBaseReport(CustomProjectReport, CaseListReport):
     asynchronous = True
     exportable = True
     emailable = False
+    fix_left_col = True
+    report_template_path = "bihar/reports/report.html"
 
     fields = [
         'corehq.apps.reports.fields.GroupField',
@@ -34,7 +36,7 @@ class MCHBaseReport(CustomProjectReport, CaseListReport):
             if users_in_group:
                 or_stm = []
                 for user_id in users_in_group:
-                    or_stm.append({'term': {'opened_by': user_id}})
+                    or_stm.append({'term': {'owner_id': user_id}})
                 filters.append({"or": or_stm})
             else:
                 filters.append({'term': {'owner_id': group_id}})
@@ -44,7 +46,7 @@ class MCHBaseReport(CustomProjectReport, CaseListReport):
     @property
     @memoized
     def case_es(self):
-        return ReportCaseES(self.domain)
+        return CaseES(self.domain)
 
     @property
     @memoized

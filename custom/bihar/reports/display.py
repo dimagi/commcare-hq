@@ -5,7 +5,7 @@ from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
 from casexml.apps.case.models import CommCareCase
 from django.utils.translation import ugettext as _
 import logging
-from custom.bihar.calculations.utils.xmlns import BP, NEW, MTB_ABORT, DELIVERY, REGISTRATION
+from custom.bihar.calculations.utils.xmlns import BP, NEW, MTB_ABORT, DELIVERY, REGISTRATION, PNC
 from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.users.models import CommCareUser, CouchUser
 
@@ -26,6 +26,8 @@ class MCHDisplay(CaseDisplay):
 
         try:
             self.user = CommCareUser.get_by_user_id(case["user_id"])
+            if self.user is None:
+                self.user = CommCareUser.get_by_user_id(case["opened_by"])
         except CouchUser.AccountTypeError:
             # if we have web users submitting forms (e.g. via cloudcare) just don't bother
             # with the rest of this data.
@@ -40,7 +42,7 @@ class MCHDisplay(CaseDisplay):
                 setattr(self, "_asha_number", get_property(self.user.user_data, "partner_phone"))
 
             setattr(self, "_awc_code_name", "%s, %s" % (get_property(self.user.user_data, "awc-code"), get_property(self.user.user_data, "village")))
-            setattr(self, "_aww_name", get_property(self.user.user_data, "name") if get_property(self.user.user_data, "role").upper() == "AWW" else get_property(self.user.user_data, "partner_name"))
+            setattr(self, "_aww_name", self.user.full_name if get_property(self.user.user_data, "role").upper() == "AWW" else get_property(self.user.user_data, "partner_name"))
 
             if get_property(self.user.user_data, "role").upper() == "AWW":
                 setattr(self, "_aww_number", self.user.phone_numbers[0] if len(self.user.phone_numbers) > 0 else EMPTY_FIELD)
@@ -90,7 +92,12 @@ class MCHDisplay(CaseDisplay):
 
     def parse_date(self, date_string):
         if date_string != EMPTY_FIELD and date_string != '' and date_string is not None:
-            return self.report.date_to_json(CaseDisplay.parse_date(self, date_string))
+            try:
+                return str(self.report.date_to_json(CaseDisplay.parse_date(self, date_string)))
+            except AttributeError:
+                return _("Bad date format!")
+            except TypeError:
+                return _("Bad date format!")
         else:
             return EMPTY_FIELD
 
@@ -105,21 +112,31 @@ class MCHMotherDisplay(MCHDisplay):
         jsy_money = None
 
         for form in forms:
-            form_dict = form.get_form
+            form_dict = form.form
             form_xmlns = form_dict["@xmlns"]
 
             if NEW in form_xmlns:
                 setattr(self, "_caste", get_property(form_dict, "caste"))
             elif DELIVERY in form_xmlns:
-                setattr(self, "_home_sba_assist", get_property(form_dict, "home_sba_assist"))
+                if get_property(form_dict, "where_born") != 'home':
+                    setattr(self, "_home_sba_assist", get_property(form_dict, "where_born"))
+                else:
+                    setattr(self, "_home_sba_assist", get_property(form_dict, "home_sba_assist"))
+
                 setattr(self, "_delivery_nature", get_property(form_dict, "delivery_nature"))
                 setattr(self, "_discharge_date", get_property(form_dict, "discharge_date"))
                 setattr(self, "_jsy_money_date", get_property(form_dict, "jsy_money_date"))
                 setattr(self, "_delivery_complications", get_property(form_dict, "delivery_complications"))
-                setattr(self, "_family_planning_type", get_property(form_dict, "family_planing_type"))
-                setattr(self, "_all_pnc_on_time", get_property(form_dict, "all_pnc_on_time"))
+                setattr(self, "_family_planning_type", get_property(form_dict, "family_planning_type"))
+
                 jsy_money = get_property(form_dict, "jsy_money")
                 children_count = int(get_property(form_dict, "cast_num_children", 0))
+
+                if children_count == 0:
+                    setattr(self, "_num_children", 'still_birth')
+                else:
+                    setattr(self, "_num_children", children_count)
+
                 child_list = []
                 if children_count == 1 and "child_info" in form_dict:
                     child_list.append(form_dict["child_info"])
@@ -134,9 +151,11 @@ class MCHMotherDisplay(MCHDisplay):
                     setattr(self, "_breastfed_hour_%s" % (idx+1), get_property(child, "breastfed_hour"))
                     if case_child:
                         setattr(self, "_case_name_%s" % (idx+1), get_property(case_child, "name"))
-                        setattr(self, " _gender_%s" % (idx+1), get_property(case_child, "gender"))
+                        setattr(self, "_gender_%s" % (idx+1), get_property(case_child, "gender"))
             elif REGISTRATION in form_xmlns:
                 jsy_beneficiary = get_property(form_dict, "jsy_beneficiary")
+            elif PNC in form_xmlns:
+                setattr(self, "_all_pnc_on_time", get_property(form_dict['case']['update'], "all_pnc_on_time"))
 
             elif BP in form_xmlns:
                 if "bp1" in form_dict:
@@ -145,14 +164,21 @@ class MCHMotherDisplay(MCHDisplay):
                         if "anc%s" % i in bp:
                             anc = bp["anc%s" % i]
                             if "anc%s_blood_pressure" % i in anc:
+                                if anc["anc%s_blood_pressure" % i] == 'high_bloodpressure':
+                                    anc["anc%s_blood_pressure" % i] = 'high'
+
                                 setattr(self, "_blood_pressure_%s" % i, anc["anc%s_blood_pressure" % i])
                             if "anc%s_weight" % i in anc:
-                                setattr(self, "_weight_%s" % i, anc["anc%s_weight" % i])
+                                setattr(self, "_weight_%s" % i, str(anc["anc%s_weight" % i]))
                             if "anc%s_hemoglobin" % i in anc and i == 1:
-                                setattr(self, "_hemoglobin" % i, anc["anc%s_hemoglobin" % i])
-                setattr(self, "_anemia", get_property(form_dict, "anemia"))
+                                setattr(self, "_hemoglobin", anc["anc%s_hemoglobin" % i])
+                    setattr(self, "_anemia", get_property(bp, "anaemia"))
+
+                if "bp2" in form_dict:
+                    bp = form_dict["bp2"]
+                    setattr(self, "_rti_sti", get_property(bp, "rti_sti"))
+
                 setattr(self, "_complications", get_property(form_dict, "bp_complications"))
-                setattr(self, "_rti_sti", get_property(form_dict, "rti_sti"))
             elif MTB_ABORT in form_xmlns:
                 setattr(self, "_abortion_type", get_property(form_dict, "abortion_type"))
 
@@ -160,7 +186,6 @@ class MCHMotherDisplay(MCHDisplay):
             setattr(self, "_jsy_beneficiary", jsy_beneficiary)
         else:
             setattr(self, "_jsy_beneficiary", jsy_money)
-
         super(MCHMotherDisplay, self).__init__(report, case_dict)
 
     @property
@@ -190,7 +215,7 @@ class MCHMotherDisplay(MCHDisplay):
 
     @property
     def mcts_id(self):
-        return get_property(self.case, "mcts_id")
+        return get_property(self.case, "full_mcts_id")
 
     @property
     def dob_age(self):
@@ -203,7 +228,7 @@ class MCHMotherDisplay(MCHDisplay):
                 days = (date.today() - CaseDisplay.parse_date(self, mother_dob).date()).days
                 mother_dob = self.parse_date(mother_dob)
                 return "%s, %s" % (mother_dob, days/365)
-            except:
+            except AttributeError:
                 return _("Bad date format!")
         else:
             return EMPTY_FIELD
@@ -242,7 +267,7 @@ class MCHMotherDisplay(MCHDisplay):
 
     @property
     def tt_booster(self):
-        return self.parse_date(get_property(self.case, "tt_booster"))
+        return self.parse_date(get_property(self.case, "tt_booster_date"))
 
     @property
     def ifa_tablets(self):
@@ -270,11 +295,11 @@ class MCHMotherDisplay(MCHDisplay):
 
     @property
     def discharge_date(self):
-        return getattr(self, "_discharge_date", EMPTY_FIELD)
+        return self.parse_date(str(getattr(self, "_discharge_date", EMPTY_FIELD)))
 
     @property
     def jsy_money_date(self):
-        return getattr(self, "_jsy_money_date", EMPTY_FIELD)
+        return self.parse_date(str(getattr(self, "_jsy_money_date", EMPTY_FIELD)))
 
     @property
     def delivery_complications(self):
@@ -341,7 +366,10 @@ class MCHMotherDisplay(MCHDisplay):
         lmp = self.lmp
         anc_date_1 = self.anc_date_1
         if lmp != EMPTY_FIELD and anc_date_1 != EMPTY_FIELD:
-            return _("yes") if CaseDisplay.parse_date(self, self.anc_date_1) < (CaseDisplay.parse_date(self, self.lmp) + timedelta(days=12*7)) else _("no")
+            try:
+                return _("yes") if CaseDisplay.parse_date(self, self.anc_date_1) < (CaseDisplay.parse_date(self, self.lmp) + timedelta(days=12*7)) else _("no")
+            except AttributeError:
+                return _("Bad date format!")
         else:
             return EMPTY_FIELD
 
@@ -442,13 +470,16 @@ class MCHChildDisplay(MCHDisplay):
                     setattr(self, "_mobile_number_whose", number)
 
                 for form in forms:
-                    form_dict = form.get_form
+                    form_dict = form.form
                     form_xmlns = form_dict["@xmlns"]
 
                     if NEW in form_xmlns:
                         setattr(self, "_caste", get_property(form_dict, "caste"))
                     elif DELIVERY in form_xmlns:
-                        setattr(self, "_home_sba_assist", get_property(form_dict, "home_sba_assist"))
+                        if get_property(form_dict, "where_born") != 'home':
+                            setattr(self, "_home_sba_assist", get_property(form_dict, "where_born"))
+                        else:
+                            setattr(self, "_home_sba_assist", get_property(form_dict, "home_sba_assist"))
 
             except ResourceNotFound:
                 logging.error("ResourceNotFound: " + case_dict["indices"][0]["referenced_id"])
@@ -574,7 +605,7 @@ class MCHChildDisplay(MCHDisplay):
                 days = (date.today() - CaseDisplay.parse_date(self, dob).date()).days
                 dob = self.parse_date(dob)
                 return "%s, %s" % (dob, int(days/365.25))
-            except:
+            except AttributeError:
                 return _("Bad date format!")
         else:
             return EMPTY_FIELD

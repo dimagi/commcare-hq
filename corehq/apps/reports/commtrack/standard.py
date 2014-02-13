@@ -1,23 +1,91 @@
+from collections import deque
+from casexml.apps.case.models import CommCareCase
+from corehq.apps.api.es import CaseES
 from corehq.apps.commtrack.psi_hacks import is_psi_domain
+from corehq.apps.commtrack.util import supply_point_type_categories
 from corehq.apps.reports.commtrack.data_sources import StockStatusDataSource, ReportingStatusDataSource, is_timely
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.commtrack.psi_prototype import CommtrackReportMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.commtrack.models import Product, SupplyPointProductCase as SPPCase
+from corehq.apps.commtrack.models import Product, CommtrackConfig, CommtrackActionConfig
 from corehq.apps.reports.graph_models import PieChart, MultiBarChart, Axis
+from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin
 from dimagi.utils.couch.loosechange import map_reduce
 from datetime import datetime
 from corehq.apps.locations.models import Location
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop
+from corehq.apps.reports.standard.cases.basic import CaseListReport
+from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
+from casexml.apps.stock.models import StockState
+from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids
 
 def _enabled_hack(domain):
     return not is_psi_domain(domain)
 
+class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
+
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return project.commtrack_enabled
+
+    @property
+    @memoized
+    def config(self):
+        return CommtrackConfig.for_domain(self.domain)
+
+    @property
+    @memoized
+    def products(self):
+        prods = Product.by_domain(self.domain, wrap=False)
+        return sorted(prods, key=lambda p: p['name'])
+
+    def ordered_products(self, ordering):
+        return sorted(self.products, key=lambda p: (0, ordering.index(p['name'])) if p['name'] in ordering else (1, p['name']))
+
+    @property
+    def actions(self):
+        return sorted(action_config.name for action_config in self.config.actions)
+
+    def ordered_actions(self, ordering):
+        return sorted(self.actions, key=lambda a: (0, ordering.index(a)) if a in ordering else (1, a))
+
+    @property
+    def incr_actions(self):
+        """action types that increment/decrement stock"""
+        actions = [action_config for action_config in self.config.actions if action_config.action_type in ('receipts', 'consumption')]
+        if not any(a.action_type == 'consumption' for a in actions):
+            # add implicitly calculated consumption -- TODO find a way to refer to this more explicitly once we track different kinds of consumption (losses, etc.)
+            actions.append(CommtrackActionConfig(action_type='consumption', caption='Consumption'))
+        if is_psi_domain(self.domain):
+            ordering = ['sales', 'receipts', 'consumption']
+            actions.sort(key=lambda a: (0, ordering.index(a.action_name)) if a.action_name in ordering else (1, a.action_name))
+        return actions
+
+    @property
+    @memoized
+    def active_location(self):
+        loc_id = self.request_params.get('location_id')
+        if loc_id:
+            return Location.get(loc_id)
+
+    @property
+    @memoized
+    def program_id(self):
+        prog_id = self.request_params.get('program')
+        if prog_id != '':
+            return prog_id
+
+    @property
+    @memoized
+    def aggregate_by(self):
+        return self.request.GET.get('agg_type')
+
+
 class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Stock Status by Product')
     slug = 'current_stock_status'
-    fields = ['corehq.apps.reports.fields.AsyncLocationField']
+    fields = ['corehq.apps.reports.fields.AsyncLocationField',
+              'corehq.apps.reports.fields.SelectProgramField']
     exportable = True
     emailable = True
 
@@ -41,24 +109,39 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
         return self.prod_data
 
     def get_prod_data(self):
-        startkey = [self.domain, self.active_location._id if self.active_location else None]
-        product_cases = SPPCase.view('commtrack/product_cases', startkey=startkey, endkey=startkey + [{}], include_docs=True)
+        sp_ids = get_relevant_supply_point_ids(self.domain, self.active_location)
 
-        cases_by_product = map_reduce(lambda c: [(c.product,)], data=product_cases, include_docs=True)
-        products = Product.view('_all_docs', keys=cases_by_product.keys(), include_docs=True)
+        stock_states = StockState.objects.filter(case_id__in=sp_ids).order_by('product_id')
 
-        def status(case):
-            return case.current_stock_category if is_timely(case, 1000) else 'nonreporting'
+        product_grouping = {}
+        for state in stock_states:
+            status = state.stock_category()
+            if state.product_id in product_grouping:
+                product_grouping[state.product_id][status] += 1
+                product_grouping[state.product_id]['facility_count'] += 1
 
-        status_by_product = dict((p, map_reduce(lambda c: [(status(c),)], len, data=cases)) for p, cases in cases_by_product.iteritems())
+            else:
+                product_grouping[state.product_id] = {
+                    'obj': Product.get(state.product_id),
+                    'stockout': 0,
+                    'understock': 0,
+                    'overstock': 0,
+                    'adequate': 0,
+                    'nodata': 0,
+                    'facility_count': 1
+                }
+                product_grouping[state.product_id][status] = 1
 
-        cols = ['stockout', 'understock', 'adequate', 'overstock', 'nodata'] #'nonreporting', 'nodata']
-        for p in sorted(products, key=lambda p: p.name):
-            cases = cases_by_product.get(p._id, [])
-            results = status_by_product.get(p._id, {})
-            def val(key):
-                return results.get(key, 0) / float(len(cases))
-            yield [p.name, len(cases)] + [100. * val(key) for key in cols]
+        for product in product_grouping.values():
+            yield [
+                product['obj'].name,
+                product['facility_count'],
+                100.0 * product['stockout'] / product['facility_count'],
+                100.0 * product['understock'] / product['facility_count'],
+                100.0 * product['adequate'] / product['facility_count'],
+                100.0 * product['overstock'] / product['facility_count'],
+                100.0 * product['nodata'] / product['facility_count'],
+            ]
 
     @property
     def rows(self):
@@ -94,7 +177,8 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
 class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Inventory')
     slug = StockStatusDataSource.slug
-    fields = ['corehq.apps.reports.fields.AsyncLocationField']
+    fields = ['corehq.apps.reports.fields.AsyncLocationField',
+              'corehq.apps.reports.fields.SelectProgramField']
     exportable = True
     emailable = True
 
@@ -116,12 +200,14 @@ class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     @property
     def product_data(self):
         if getattr(self, 'prod_data', None) is None:
+            self.prod_data = []
             config = {
                 'domain': self.domain,
                 'location_id': self.request.GET.get('location_id'),
+                'program_id': self.request.GET.get('program'),
                 'aggregate': True
             }
-            self.prod_data = list(StockStatusDataSource(config).get_data())
+            self.prod_data = self.prod_data + list(StockStatusDataSource(config).get_data())
         return self.prod_data
 
     @property
@@ -150,7 +236,9 @@ class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
 class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Reporting Rate')
     slug = 'reporting_rate'
-    fields = ['corehq.apps.reports.fields.AsyncLocationField']
+    fields = ['corehq.apps.reports.fields.AsyncLocationField',
+              'corehq.apps.reports.fields.SelectProgramField',
+              'corehq.apps.reports.filters.dates.DatespanFilter',]
     exportable = True
     emailable = True
 
@@ -175,9 +263,11 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
         config = {
             'domain': self.domain,
             'location_id': self.request.GET.get('location_id'),
+            'program_id': self.request.GET.get('program'),
+            'start_date': self.request.GET.get('startdate'),
+            'end_date': self.request.GET.get('enddate'),
         }
         statuses = list(ReportingStatusDataSource(config).get_data())
-
         def child_loc(path):
             root = self.active_location
             ix = path.index(root._id) if root else -1
@@ -196,6 +286,7 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
 
         def status_tally(statuses):
             total = len(statuses)
+
             return map_reduce(lambda s: [(s,)],
                               lambda v: {'count': len(v), 'pct': len(v) / float(total)},
                               data=statuses)
@@ -234,3 +325,78 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
     def charts(self):
         if 'location_id' in self.request.GET: # hack: only get data if we're loading an actual report
             return [PieChart(None, _('Current Reporting'), self.master_pie_chart_data())]
+
+
+class RequisitionReport(CaseListReport):
+    name = ugettext_noop('Requisition Report')
+    slug = 'requisition_report'
+    fields = ['corehq.apps.reports.fields.AsyncLocationField', 'corehq.apps.reports.fields.SelectOpenCloseField']
+    exportable = True
+    emailable = True
+    asynchronous = True
+    default_case_type = "commtrack-requisition"
+
+
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return super(RequisitionReport, cls).show_in_navigation() and user and user.is_previewer()
+
+    @property
+    @memoized
+    def case_es(self):
+        return CaseES(self.domain)
+
+    @property
+    def headers(self):
+        return DataTablesHeader(*(DataTablesColumn(text) for text in [
+                    _('Requisition Unique ID'),
+                    _('Date Opened'),
+                    _('Date Closed'),
+                    _('Lead Time (Days)'),
+                    _('Status'),
+                ]))
+
+    @classmethod
+    def lead_time(self, closed_date, opened_date):
+        try:
+            closed_date = datetime.strptime(closed_date, "%Y-%m-%dT%H:%M:%SZ")
+            opened_date = datetime.strptime(opened_date, "%Y-%m-%dT%H:%M:%SZ")
+            days_rest_delta = (((closed_date - opened_date).seconds / 3600)*10)/24
+            return "%s.%s" % ((closed_date - opened_date).days, days_rest_delta)
+        except TypeError:
+            return _("---")
+
+    @property
+    def case_filter(self):
+        closed = self.request.GET.get('is_open')
+        location_id = self.request.GET.get('location_id')
+        filters = []
+        or_stmt = []
+
+        if closed:
+            filters.append({'term': {'closed': True if closed == 'closed' else False}})
+
+        if location_id:
+            location = Location.get(location_id)
+            if len(location.children) > 0:
+                descedants_ids = [loc._id for loc in location.descendants]
+                for loc_id in descedants_ids:
+                    or_stmt.append({'term': {'location_': loc_id}})
+                or_stmt = {'or': or_stmt}
+                filters.append(or_stmt)
+            else:
+                filters.append({'term': {'location_': location_id}})
+
+        return {'and': filters} if filters else {}
+
+    @property
+    def rows(self):
+       for row in self.get_data():
+            display = CaseDisplay(self, row['_case'])
+            yield [
+                display.case_id,
+                display._dateprop('opened_on', iso=False),
+                display._dateprop('closed_on', iso=False),
+                self.lead_time(display.case['closed_on'], display.case['opened_on']),
+                display.case['requisition_status']
+            ]

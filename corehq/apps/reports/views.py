@@ -1,65 +1,70 @@
-from datetime import datetime, timedelta, date
+import os
 import json
 import tempfile
 import re
+from datetime import datetime, timedelta, date
 from urllib2 import URLError
+
 from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth.decorators import permission_required
 from django.core.cache import cache
 from django.core.servers.basehttp import FileWrapper
-import os
+from django.core.urlresolvers import reverse
+from django.http import (HttpResponseRedirect, HttpResponse,
+    HttpResponseBadRequest, Http404, HttpResponseForbidden)
+from django.shortcuts import render
+from django.utils.safestring import mark_safe
+from django.utils.translation import ugettext as _
+from django.views.decorators.http import (require_http_methods,
+    require_POST, require_GET)
+
+from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.templatetags.case_tags import case_inline_display
+from couchdbkit.exceptions import ResourceNotFound
+from casexml.apps.case.xml import V2
+import couchexport
+from couchexport import views as couchexport_views
+from couchexport.export import SchemaMismatchException
+from couchexport.export import UnsupportedExportFormat
+from couchexport.models import Format, FakeSavedExportSchema, SavedBasicExport
+from couchexport.shortcuts import (export_data_shared, export_raw_data,
+    export_response)
+from couchexport.tasks import rebuild_schemas
+from couchexport.util import SerializableFunction
+import couchforms.views as couchforms_views
+from couchforms.filters import instances
+from couchforms.models import XFormInstance, doc_types
+from couchforms.templatetags.xform_tags import render_form
+from dimagi.utils.chunked import chunked
+from dimagi.utils.couch.bulk import wrapped_docs
+from dimagi.utils.couch.loosechange import parse_date
+from dimagi.utils.decorators.datespan import datespan_in_request
+from dimagi.utils.export import WorkBook
+from dimagi.utils.parsing import json_format_datetime, string_to_boolean
+from dimagi.utils.web import json_request, json_response
+from fields import FilterUsersField
+from soil import DownloadBase
+from soil.tasks import prepare_download
+
+from corehq.apps.domain.decorators import (login_and_domain_required,
+    login_or_digest)
 from corehq.apps.export.custom_export_helpers import CustomExportHelper
-from corehq.apps.reports import util
-from corehq.apps.reports.standard import inspect, export, ProjectReport
-from corehq.apps.reports.export import (
-    ApplicationBulkExportHelper,
-    CustomBulkExportHelper,
-    save_metadata_export_to_tempfile)
+from corehq.apps.groups.models import Group
+from corehq.apps.hqcase.export import export_cases_and_referrals
+from corehq.apps.reports.dispatcher import ProjectReportDispatcher
 from corehq.apps.reports.models import ReportConfig, ReportNotification
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.tasks import create_metadata_export
+from corehq.apps.reports import util
+from corehq.apps.reports.util import get_all_users_by_domain
+from corehq.apps.reports.standard import inspect, export, ProjectReport
+from corehq.apps.reports.export import (ApplicationBulkExportHelper,
+    CustomBulkExportHelper, save_metadata_export_to_tempfile)
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.export import export_users
-from corehq.apps.users.models import Permissions
-import couchexport
-from couchexport.export import UnsupportedExportFormat
-from couchexport.util import SerializableFunction
-from couchforms.models import XFormInstance
-from dimagi.utils.couch.bulk import wrapped_docs
-from dimagi.utils.couch.loosechange import parse_date
-from dimagi.utils.export import WorkBook
-from dimagi.utils.web import json_request, json_response
-from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404, HttpResponseForbidden
-from django.shortcuts import render
-from django.core.urlresolvers import reverse
-from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
-import couchforms.views as couchforms_views
-from django.contrib import messages
-from dimagi.utils.parsing import json_format_datetime, string_to_boolean
-from django.contrib.auth.decorators import permission_required
-from dimagi.utils.decorators.datespan import datespan_in_request
-from casexml.apps.case.models import CommCareCase
-from corehq.apps.hqcase.export import export_cases_and_referrals
 from corehq.apps.users.models import CommCareUser
-from couchexport.models import Format, FakeSavedExportSchema, SavedBasicExport
-from couchexport import views as couchexport_views
-from couchexport.shortcuts import export_data_shared, export_raw_data,\
-    export_response
-from django.views.decorators.http import (require_http_methods, require_POST,
-    require_GET)
-from couchforms.filters import instances
-from couchdbkit.exceptions import ResourceNotFound
-from fields import FilterUsersField
-from util import get_all_users_by_domain
-from corehq.apps.groups.models import Group
-from soil import DownloadBase
-from soil.tasks import prepare_download
-from django.utils.translation import ugettext as _
-from django.utils.safestring import mark_safe
-from dimagi.utils.chunked import chunked
-
-from casexml.apps.case.templatetags.case_tags import case_inline_display
-from couchforms.templatetags.xform_tags import render_form
-from corehq.apps.reports.dispatcher import ProjectReportDispatcher
+from corehq.apps.users.models import Permissions
 
 
 DATE_FORMAT = "%Y-%m-%d"
@@ -100,6 +105,7 @@ def saved_reports(request, domain, template="reports/reports_home.html"):
         return hasattr(rn, "_id") and rn._id and (not hasattr(rn, 'report_slug') or rn.report_slug != 'admin_domains')
 
     scheduled_reports = [rn for rn in ReportNotification.by_domain_and_owner(domain, user._id) if _is_valid(rn)]
+    scheduled_reports = sorted(scheduled_reports, key=lambda rn: rn.configs[0].name)
 
     context = dict(
         couch_user=request.couch_user,
@@ -286,7 +292,16 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
     else:
         if not next:
             next = export.ExcelExportReport.get_url(domain=domain)
-        resp = export_object.download_data(format, filter=filter)
+        try:
+            resp = export_object.download_data(format, filter=filter)
+        except SchemaMismatchException, e:
+            rebuild_schemas.delay(export_object.index)
+            messages.error(
+                request,
+                "Sorry, the export failed for %s, please try again later" \
+                    % export_object.name
+            )
+            return HttpResponseRedirect(next)
         if resp:
             return resp
         else:
@@ -381,7 +396,7 @@ def add_config(request, domain=None):
         POST['days'] = 30
     elif POST.get('days'):
         POST['days'] = int(POST['days'])
-  
+
     exclude_filters = ['startdate', 'enddate']
     for field in exclude_filters:
         POST['filters'].pop(field, None)
@@ -398,7 +413,13 @@ def add_config(request, domain=None):
     for field in config.properties().keys():
         if field in POST:
             setattr(config, field, POST[field])
-    
+
+    if POST.get('days') or date_range == 'lastmonth':  # remove start and end date if the date range is "last xx days"
+        if "start_date" in config:
+            delattr(config, "start_date")
+        if "end_date" in config:
+            delattr(config, "end_date")
+
     config.save()
 
     touch_saved_reports_views(request.couch_user, domain)
@@ -443,7 +464,7 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
                                   domain,
                                   user_id, request.couch_user,
                                   True,
-                                  notes=form.cleaned_data['notes']).content
+                                  notes=form.cleaned_data['notes'])[0].content
 
     subject = form.cleaned_data['subject'] or _("Email report from CommCare HQ")
 
@@ -590,7 +611,12 @@ def send_test_scheduled_report(request, domain, scheduled_report_id):
 
 
 def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
-                                  email=True):
+                                  email=True, attach_excel=False):
+    """
+    This function somewhat confusingly returns a tuple of: (response, excel_files)
+    If attach_excel is false, excel_files will always be an empty list.
+    """
+    # todo: clean up this API?
     from django.http import HttpRequest
     
     request = HttpRequest()
@@ -600,23 +626,33 @@ def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
     request.couch_user.current_domain = domain
 
     notification = ReportNotification.get(scheduled_report_id)
-
     return _render_report_configs(request, notification.configs,
                                   notification.domain,
                                   notification.owner_id,
                                   couch_user,
-                                  email)
+                                  email, attach_excel=attach_excel)
 
-def _render_report_configs(request, configs, domain, owner_id, couch_user, email, notes=None):
+def _render_report_configs(request, configs, domain, owner_id, couch_user, email, notes=None, attach_excel=False):
     from dimagi.utils.web import get_url_base
 
     report_outputs = []
+    excel_attachments = []
+    format = Format.from_format(request.GET.get('format') or Format.XLS_2007)
     for config in configs:
+        content, excel_file = config.get_report_content(attach_excel=attach_excel)
+        if excel_file:
+            excel_attachments.append({
+                'title': config.full_name + "." + format.extension,
+                'file_obj': excel_file,
+                'mimetype': format.mimetype
+            })
         report_outputs.append({
             'title': config.full_name,
             'url': config.url,
-            'content': config.get_report_content()
+            'content': content
         })
+
+    date_range = config.get_date_range()
 
     return render(request, "reports/report_email.html", {
         "reports": report_outputs,
@@ -625,16 +661,17 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
         "DNS_name": get_url_base(),
         "owner_name": couch_user.full_name or couch_user.get_email(),
         "email": email,
-        "notes": notes,
-        "startdate": config.start_date,
-        "enddate": config.end_date,
-    })
+        "notes": notes or getattr(config, "description", ""),
+        "startdate": date_range["startdate"] if date_range else "",
+        "enddate": date_range["enddate"] if date_range else "",
+    }), excel_attachments
 
 @login_and_domain_required
 @permission_required("is_superuser")
 def view_scheduled_report(request, domain, scheduled_report_id):
     return get_scheduled_report_response(
-        request.couch_user, domain, scheduled_report_id, email=False)
+        request.couch_user, domain, scheduled_report_id, email=False
+    )[0]
 
 
 @require_case_view_permission
@@ -644,11 +681,8 @@ def case_details(request, domain, case_id):
     timezone = util.get_timezone(request.couch_user.user_id, domain)
 
     try:
-        case = CommCareCase.get(case_id)
-    except ResourceNotFound:
-        case = None
-    
-    if case is None or case.doc_type != "CommCareCase" or case.domain != domain:
+        case = _get_case_or_404(domain, case_id)
+    except Http404:
         messages.info(request, "Sorry, we couldn't find that case. If you think this is a mistake please report an issue.")
         return HttpResponseRedirect(CaseListReport.get_url(domain=domain))
 
@@ -687,6 +721,24 @@ def case_details(request, domain, case_id):
                 case_details, args=[domain, case_id])
         },
     })
+
+@require_case_view_permission
+@login_and_domain_required
+@require_GET
+def case_xml(request, domain, case_id):
+    case = _get_case_or_404(domain, case_id)
+    version = request.GET.get('version', V2)
+    return HttpResponse(case.to_xml(version), content_type='text/xml')
+
+
+def _get_case_or_404(domain, case_id):
+    try:
+        case = CommCareCase.get(case_id)
+    except ResourceNotFound:
+        case = None
+    if case is None or case.doc_type != "CommCareCase" or case.domain != domain:
+        raise Http404
+    return case
 
 def generate_case_export_payload(domain, include_closed, format, group, user_filter, process=None):
     """
@@ -749,7 +801,7 @@ def download_cases(request, domain):
         'user_filter': user_filter,
     }
     payload_func = SerializableFunction(generate_case_export_payload, **kwargs)
-    content_disposition = "attachment; filename={domain}_data.{ext}".format(domain=domain, ext=format.extension)
+    content_disposition = 'attachment; filename="{domain}_data.{ext}"'.format(domain=domain, ext=format.extension)
     mimetype = "%s" % format.mimetype
 
     def generate_payload(payload_func):
@@ -795,10 +847,11 @@ def _get_form_or_404(id):
     except ResourceNotFound:
         raise Http404()
 
-    if xform_json.get('doc_type') not in ('XFormInstance',):
+    doc_type = doc_types().get(xform_json.get('doc_type'))
+    if not doc_type:
         raise Http404()
 
-    return XFormInstance.wrap(xform_json)
+    return doc_type.wrap(xform_json)
 
 
 @require_form_view_permission
@@ -808,7 +861,7 @@ def form_data(request, domain, instance_id):
     context = _get_form_context(request, domain, instance_id)
 
     try:
-        form_name = context['instance'].get_form["@name"]
+        form_name = context['instance'].form["@name"]
     except KeyError:
         form_name = "Untitled Form"
    

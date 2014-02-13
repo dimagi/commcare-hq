@@ -1,0 +1,11 @@
+{% extends "settings/base_template.html" %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+
+{% block main_column %}
+    {% if is_submitted %}
+        {% trans "Thank you for your submission." %}
+    {% else %}
+        {% crispy pro_bono_form %}
+    {% endif %}
+{% endblock %}

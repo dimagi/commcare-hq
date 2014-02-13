@@ -16,7 +16,7 @@
         var OPTIONS = {
             users: {{ users|JSON }},
             groups: {{ groups|JSON }},
-            receiverUrl: '{% url "receiver_post" domain %}',
+            receiverUrl: '{% url "receiver_secure_post" domain %}',
             enddate: '{{ datespan.enddate_param_utc }}',
             webUserID: '{{ request.couch_user.userID }}'
         };

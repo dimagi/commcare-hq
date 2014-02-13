@@ -49,13 +49,15 @@
                 <label class="control-label">{{ calcs|dict_lookup:calc_tag }}</label>
                 <div class="controls control-row">
                     <div class="pull-right" style="width: 200px;">
-                        <button class="btn btn-info load-calc-btn" data-calc-tag="{{ calc_tag }}">Load Property</button>
+                        <button class="btn btn-info load-calc-btn" data-calc-tag="{{ calc_tag }}">
+                            {% trans "Load Property" %}
+                        </button>
                         <div class="calc-error"></div>
                     </div>
                     <div id="calc-{{ calc_tag }}" 
                          class="well well-small calc-display" 
-                         style="margin: 0; margin-right: 210px"></div>
-                    
+                         style="margin: 0; margin-right: 210px">
+                     </div>
                 </div>
             </div>
         {% endfor %}

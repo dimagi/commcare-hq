@@ -167,7 +167,7 @@ class VaccinationClientList(ClientListBase):
 
     @property
     def rendered_report_title(self):
-        return '{title} ({count})'.format(title=_(self.config_item['title']), count=len(self.rows)) \
+        return u'{title} ({count})'.format(title=_(self.config_item['title']), count=len(self.rows)) \
             if self.config_item else super(VaccinationClientList, self).rendered_report_title
 
     @property

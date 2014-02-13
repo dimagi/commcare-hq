@@ -110,6 +110,7 @@ RECIPIENT_CHOICES = (
     (RECIPIENT_PARENT_CASE, "The case's parent case"),
     (RECIPIENT_SUBCASE, "The case's child case(s)"),
     (RECIPIENT_SURVEY_SAMPLE, "Survey Sample"),
+    (RECIPIENT_USER_GROUP, _("User Group")),
 )
 
 MATCH_TYPE_DISPLAY_CHOICES = (
@@ -151,8 +152,9 @@ def validate_date(value):
 
 def validate_time(value):
     time_regex = re.compile("^\d{1,2}:\d\d(:\d\d){0,1}$")
-    if time_regex.match(value) is None:
+    if not isinstance(value, basestring) or time_regex.match(value) is None:
         raise ValidationError("Times must be in hh:mm format.")
+    return parse(value).time()
 
 def validate_form_unique_id(form_unique_id, domain):
     try:
@@ -161,6 +163,28 @@ def validate_form_unique_id(form_unique_id, domain):
         assert app.domain == domain
     except Exception:
         raise ValidationError(_("Invalid form chosen."))
+
+def clean_group_id(group_id, expected_domain):
+    try:
+        assert group_id is not None
+        assert group_id != ""
+        group = Group.get(group_id)
+        assert group.doc_type == "Group"
+        assert group.domain == expected_domain
+        return group_id
+    except Exception:
+        raise ValidationError(_("Invalid selection."))
+
+def clean_case_group_id(group_id, expected_domain):
+    try:
+        assert group_id is not None
+        assert group_id != ""
+        group = CommCareCaseGroup.get(group_id)
+        assert group.doc_type == "CommCareCaseGroup"
+        assert group.domain == expected_domain
+        return group_id
+    except Exception:
+        raise ValidationError(_("Invalid selection."))
 
 # Used for validating the phone number from a UI. Returns the phone number if valid, otherwise raises a ValidationError.
 def validate_phone_number(value):
@@ -227,13 +251,15 @@ class EventListField(Field):
     initial = None
     widget = None
     help_text = None
+    validators = None
     
-    def __init__(self, required=True, label="", initial=[], widget=EventWidget(), help_text="", *args, **kwargs):
+    def __init__(self, required=True, label="", initial=None, widget=None, help_text="", *args, **kwargs):
         self.required = required
         self.label = label
-        self.initial = initial
-        self.widget = widget
+        self.initial = initial or []
+        self.widget = widget or EventWidget()
         self.help_text = help_text
+        self.validators = []
     
     def clean(self, value):
         # See clean_events() method in the form for validation
@@ -246,6 +272,7 @@ class ComplexCaseReminderForm(Form):
     _cchq_is_superuser = False
     _cchq_use_custom_content_handler = False
     _cchq_custom_content_handler = None
+    _cchq_domain = None
     use_custom_content_handler = BooleanField(required=False)
     custom_content_handler = TrimmedCharField(required=False)
     active = BooleanField(required=False)
@@ -281,6 +308,7 @@ class ComplexCaseReminderForm(Form):
     recipient_case_match_type = ChoiceField(choices=MATCH_TYPE_DISPLAY_CHOICES,required=False)
     recipient_case_match_value = CharField(required=False)
     force_surveys_to_use_triggered_case = BooleanField(required=False)
+    user_group_id = CharField(required=False)
 
     def __init__(self, *args, **kwargs):
         super(ComplexCaseReminderForm, self).__init__(*args, **kwargs)
@@ -459,16 +487,21 @@ class ComplexCaseReminderForm(Form):
             return value
         else:
             return None
-    
+
     def clean_sample_id(self):
         if self.cleaned_data.get("recipient") == RECIPIENT_SURVEY_SAMPLE:
             value = self.cleaned_data.get("sample_id")
-            if value is None or value == "":
-                raise ValidationError("Please select a Survey Sample.")
-            return value
+            return clean_case_group_id(value, self._cchq_domain)
         else:
             return None
-    
+
+    def clean_user_group_id(self):
+        if self.cleaned_data.get("recipient") == RECIPIENT_USER_GROUP:
+            value = self.cleaned_data.get("user_group_id")
+            return clean_group_id(value, self._cchq_domain)
+        else:
+            return None
+
     def clean_schedule_length(self):
         try:
             value = self.cleaned_data.get("schedule_length")
@@ -1811,27 +1844,15 @@ class OneTimeReminderForm(Form):
 
     def clean_case_group_id(self):
         if self.cleaned_data.get("recipient_type") == RECIPIENT_SURVEY_SAMPLE:
-            value = clean_selection(self.cleaned_data.get("case_group_id"))
-            try:
-                group = CommCareCaseGroup.get(value)
-                assert group.doc_type == "CommCareCaseGroup"
-                assert group.domain == self._cchq_domain
-            except Exception:
-                raise ValidationError(_("Invalid selection."))
-            return value
+            value = self.cleaned_data.get("case_group_id")
+            return clean_case_group_id(value, self._cchq_domain)
         else:
             return None
 
     def clean_user_group_id(self):
         if self.cleaned_data.get("recipient_type") == RECIPIENT_USER_GROUP:
-            value = clean_selection(self.cleaned_data.get("user_group_id"))
-            try:
-                group = Group.get(value)
-                assert group.doc_type == "Group"
-                assert group.domain == self._cchq_domain
-            except Exception:
-                raise ValidationError(_("Invalid selection."))
-            return value
+            value = self.cleaned_data.get("user_group_id")
+            return clean_group_id(value, self._cchq_domain)
         else:
             return None
 
@@ -1915,14 +1936,12 @@ class RecordListField(Field):
     help_text = None
     
     # When initialized, expects to be passed kwarg input_name, which is the first dot-separated name of all related records in the html form
-    
-    def __init__(self, required=True, label="", initial=[], widget=None, help_text="", *args, **kwargs):
-        self.required = required
-        self.label = label
-        self.initial = initial
-        self.widget = RecordListWidget(attrs={"input_name" : kwargs["input_name"]})
-        self.help_text = help_text
-    
+
+    def __init__(self, *args, **kwargs):
+        input_name = kwargs.pop('input_name')
+        kwargs['widget'] = RecordListWidget(attrs={"input_name" : input_name})
+        super(RecordListField, self).__init__(*args, **kwargs)
+
     def clean(self, value):
         return value
 

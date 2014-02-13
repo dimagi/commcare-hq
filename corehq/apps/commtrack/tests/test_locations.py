@@ -1,6 +1,5 @@
-from corehq.apps.commtrack.tests.util import CommTrackTest, make_loc
-from corehq.apps.locations.models import Location
-from corehq.apps.commtrack.models import CommTrackUser, SupplyPointCase
+from corehq.apps.commtrack.tests.util import CommTrackTest, make_loc, FIXED_USER
+from corehq.apps.commtrack.models import CommTrackUser
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.commtrack.helpers import make_supply_point
 from casexml.apps.case.tests.util import check_user_has_case
@@ -10,6 +9,11 @@ from mock import patch
 
 
 class LocationsTest(CommTrackTest):
+    user_definitions = [FIXED_USER]
+
+    def setUp(self):
+        super(LocationsTest, self).setUp()
+        self.user = self.users[0]
 
     def check_supply_point(self, user, sp, should_have=True):
         caseblock = CaseBlock(
@@ -27,17 +31,17 @@ class LocationsTest(CommTrackTest):
         )
 
     def test_location_assignment(self):
-        user = self.reporters['fixed']
+        user = self.user
 
         self.assertEqual(len(user.locations), 1)
         self.assertEqual(user.locations[0].name, 'loc1')
         self.check_supply_point(user, self.sp._id)
 
     def test_commtrack_user_has_multiple_locations(self):
-        user = self.reporters['fixed']
+        user = self.user
 
         loc = make_loc('secondloc')
-        sp = make_supply_point(self.domain, loc)
+        sp = make_supply_point(self.domain.name, loc)
         user.add_location(loc)
 
         self.check_supply_point(user, sp._id)
@@ -45,11 +49,11 @@ class LocationsTest(CommTrackTest):
         self.assertEqual(user.locations[1].name, 'secondloc')
 
     def test_locations_can_be_removed(self):
-        user = self.reporters['fixed']
+        user = self.user
 
         # can't test with the original since the user already owns it
         loc = make_loc('secondloc')
-        sp = make_supply_point(self.domain, loc)
+        sp = make_supply_point(self.domain.name, loc)
         user.add_location(loc)
 
         self.check_supply_point(user, sp._id)
@@ -60,11 +64,11 @@ class LocationsTest(CommTrackTest):
         self.assertEqual(len(user.locations), 1)
 
     def test_location_removal_only_submits_if_it_existed(self):
-        user = self.reporters['fixed']
+        user = self.user
 
         # can't test with the original since the user already owns it
         loc = make_loc('secondloc')
-        make_supply_point(self.domain, loc)
+        make_supply_point(self.domain.name, loc)
 
         with patch('corehq.apps.commtrack.models.CommTrackUser.submit_location_block') as submit_blocks:
             user.remove_location(loc)
@@ -72,19 +76,19 @@ class LocationsTest(CommTrackTest):
 
 
     def test_can_clear_locations(self):
-        user = self.reporters['fixed']
+        user = self.user
         user.clear_locations()
 
         self.assertEqual(len(user.locations), 0)
 
     def test_can_set_locations(self):
-        user = self.reporters['fixed']
+        user = self.user
 
         loc1 = make_loc('secondloc')
-        sp1 = make_supply_point(self.domain, loc1)
+        sp1 = make_supply_point(self.domain.name, loc1)
 
         loc2 = make_loc('thirdloc')
-        sp2 = make_supply_point(self.domain, loc2)
+        sp2 = make_supply_point(self.domain.name, loc2)
 
         user.set_locations([loc1, loc2])
 
@@ -100,25 +104,25 @@ class LocationsTest(CommTrackTest):
         this test mostly exists to make sure the one
         testing no submits doesn't silently stop actually working
         """
-        user = self.reporters['fixed']
+        user = self.user
 
         loc1 = make_loc('secondloc')
-        make_supply_point(self.domain, loc1)
+        make_supply_point(self.domain.name, loc1)
 
         with patch('corehq.apps.commtrack.models.CommTrackUser.submit_location_block') as submit_blocks:
             user.set_locations([loc1])
             self.assertEqual(submit_blocks.call_count, 1)
 
     def test_setting_existing_list_does_not_submit(self):
-        user = self.reporters['fixed']
+        user = self.user
 
         user.clear_locations()
 
         loc1 = make_loc('secondloc')
-        make_supply_point(self.domain, loc1)
+        make_supply_point(self.domain.name, loc1)
 
         loc2 = make_loc('thirdloc')
-        make_supply_point(self.domain, loc2)
+        make_supply_point(self.domain.name, loc2)
 
         user.add_location(loc1)
         user.add_location(loc2)
@@ -139,7 +143,7 @@ class LocationsTest(CommTrackTest):
         )
 
         loc = make_loc('someloc')
-        make_supply_point(self.domain, loc)
+        make_supply_point(self.domain.name, loc)
 
         user.commtrack_location = loc._id
         ct_user = CommTrackUser.wrap(user.to_json())

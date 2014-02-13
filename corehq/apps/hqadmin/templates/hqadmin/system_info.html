@@ -152,6 +152,7 @@
 
             <thead>
                 <tr>
+                    <th></th>
                     <th>Current Worker</th>
                     <th>Memcached Status</th>
                     <th>Redis Status</th>
@@ -161,6 +162,7 @@
             </thead>
             <tbody>
             <tr>
+                <td><img src="{% static 'hqwebapp/img/dm.jpg' %}" alt="dan's legacy"></td>
                 <td><strong>{{ current_system }}</strong></td>
                 <td>
                     {{ memcached_status }}

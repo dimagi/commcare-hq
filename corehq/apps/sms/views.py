@@ -11,6 +11,7 @@ from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadReque
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from corehq.apps.api.models import require_api_user_permission, PERMISSION_POST_SMS
+from corehq.apps.commtrack.models import AlertConfig
 from corehq.apps.sms.api import (
     send_sms,
     incoming,
@@ -24,9 +25,12 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CouchUser, Permissions
 from corehq.apps.users import models as user_models
 from corehq.apps.users.views.mobile.users import EditCommCareUserView
-from corehq.apps.sms.models import SMSLog, INCOMING, OUTGOING, ForwardingRule, CommConnectCase
+from corehq.apps.sms.models import (
+    SMSLog, INCOMING, OUTGOING, ForwardingRule, CommConnectCase,
+    LastReadMessage,
+)
 from corehq.apps.sms.mixin import MobileBackend, SMSBackend, BackendMapping, VerifiedNumber
-from corehq.apps.sms.forms import ForwardingRuleForm, BackendMapForm, InitiateAddSMSBackendForm, SMSSettingsForm
+from corehq.apps.sms.forms import ForwardingRuleForm, BackendMapForm, InitiateAddSMSBackendForm, SMSSettingsForm, SubscribeSMSForm
 from corehq.apps.sms.util import get_available_backends, get_contact
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest, domain_admin_required, require_superuser
@@ -117,7 +121,7 @@ def post(request, domain):
                  date = datetime.now(),
                  text = text)
     msg.save()
-    return HttpResponse('OK')     
+    return HttpResponse('OK')
 
 @require_api_user_permission(PERMISSION_POST_SMS)
 def sms_in(request):
@@ -359,7 +363,7 @@ def api_send_sms(request, domain):
 @require_superuser
 def list_forwarding_rules(request, domain):
     forwarding_rules = ForwardingRule.view("sms/forwarding_rule", key=[domain], include_docs=True).all()
-    
+
     context = {
         "domain" : domain,
         "forwarding_rules" : forwarding_rules,
@@ -374,7 +378,7 @@ def add_forwarding_rule(request, domain, forwarding_rule_id=None):
         forwarding_rule = ForwardingRule.get(forwarding_rule_id)
         if forwarding_rule.domain != domain:
             raise Http404
-    
+
     if request.method == "POST":
         form = ForwardingRuleForm(request.POST)
         if form.is_valid():
@@ -392,7 +396,7 @@ def add_forwarding_rule(request, domain, forwarding_rule_id=None):
             initial["keyword"] = forwarding_rule.keyword
             initial["backend_id"] = forwarding_rule.backend_id
         form = ForwardingRuleForm(initial=initial)
-    
+
     context = {
         "domain" : domain,
         "form" : form,
@@ -415,13 +419,13 @@ def _add_backend(request, backend_class_name, is_global, domain=None, backend_id
         raise Http404
     backend_classes = get_available_backends()
     backend_class = backend_classes[backend_class_name]
-    
+
     backend = None
     if backend_id is not None:
         backend = backend_class.get(backend_id)
         if not is_global and backend.domain != domain:
             raise Http404
-    
+
     ignored_fields = ["give_other_domains_access"]
     if request.method == "POST":
         form = backend_class.get_form_class()(request.POST)
@@ -733,7 +737,19 @@ def api_history(request, domain):
                            reduce=False).all()
     data.sort(key=lambda x : x.date)
     username_map = {}
+    last_sms = None
     for sms in data:
+        # Don't show outgoing SMS that haven't been processed yet
+        if sms.direction == OUTGOING and not sms.processed:
+            continue
+        # Filter SMS that are tied to surveys if necessary
+        if ((domain_obj.filter_surveys_from_chat and 
+             sms.xforms_session_couch_id)
+            and not
+            (domain_obj.show_invalid_survey_responses_in_chat and
+             sms.direction == INCOMING and
+             sms.invalid_survey_response)):
+            continue
         if sms.direction == INCOMING:
             if doc.doc_type == "CommCareCase" and domain_obj.custom_case_username:
                 sender = doc.get_case_property(domain_obj.custom_case_username)
@@ -753,12 +769,46 @@ def api_history(request, domain):
                 username_map[sms.chat_user_id] = sender
         else:
             sender = _("System")
+        last_sms = sms
         result.append({
             "sender" : sender,
             "text" : sms.text,
             "timestamp" : tz_utils.adjust_datetime_to_timezone(sms.date, pytz.utc.zone, timezone.zone).strftime("%I:%M%p %m/%d/%y").lower(),
             "utc_timestamp" : json_format_datetime(sms.date),
         })
+    if last_sms:
+        try:
+            entry, lock = LastReadMessage.get_locked_obj(
+                sms.domain,
+                request.couch_user._id,
+                sms.couch_recipient,
+                create=True
+            )
+            if (not entry.message_timestamp or
+                entry.message_timestamp < last_sms.date):
+                entry.message_id = last_sms._id
+                entry.message_timestamp = last_sms.date
+                entry.save()
+            lock.release()
+        except:
+            logging.exception("Could not create/save LastReadMessage for message %s" % last_sms._id)
+            # Don't let this block returning of the data
+            pass
+    return HttpResponse(json.dumps(result))
+
+@require_permission(Permissions.edit_data)
+def api_last_read_message(request, domain):
+    contact_id = request.GET.get("contact_id", None)
+    domain_obj = Domain.get_by_name(domain, strict=True)
+    if domain_obj.count_messages_as_read_by_anyone:
+        lrm = LastReadMessage.by_anyone(domain, contact_id)
+    else:
+        lrm = LastReadMessage.by_user(domain, request.couch_user._id, contact_id)
+    result = {
+        "message_timestamp" : None,
+    }
+    if lrm:
+        result["message_timestamp"] = json_format_datetime(lrm.message_timestamp)
     return HttpResponse(json.dumps(result))
 
 class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView):
@@ -881,20 +931,70 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
     def dispatch(self, request, *args, **kwargs):
         return super(DomainSmsGatewayListView, self).dispatch(request, *args, **kwargs)
 
+class SubscribeSMSView(BaseMessagingSectionView):
+    template_name = "sms/subscribe_sms.html"
+    urlname = 'subscribe_sms'
+    page_title = ugettext_noop("Subscribe SMS")
+
+    @property
+    def commtrack_settings(self):
+        return Domain.get_by_name(self.domain).commtrack_settings
+
+    @property
+    @memoized
+    def form(self):
+        if self.request.method == 'POST':
+             return SubscribeSMSForm(self.request.POST)
+
+        if self.commtrack_settings and self.commtrack_settings.alert_config:
+            alert_config = self.commtrack_settings.alert_config
+        else:
+            alert_config = AlertConfig()
+        initial = {
+            'stock_out_facilities': alert_config.stock_out_facilities,
+            'stock_out_commodities': alert_config.stock_out_commodities,
+            'stock_out_rates': alert_config.stock_out_rates,
+            'non_report': alert_config.non_report,
+        }
+
+        return SubscribeSMSForm(initial=initial)
+
+    @property
+    def page_context(self):
+        context = {
+            "form": self.form,
+            "domain": self.domain,
+        }
+        return context
+
+    def post(self, request, *args, **kwargs):
+        if self.form.is_valid():
+            self.form.save(self.commtrack_settings)
+            messages.success(request, _("Updated CommTrack settings."))
+            return HttpResponseRedirect(reverse(SubscribeSMSView.urlname, args=[self.domain]))
+        return self.get(request, *args, **kwargs)
+
 @domain_admin_required
 def sms_settings(request, domain):
     domain_obj = Domain.get_by_name(domain, strict=True)
     is_previewer = request.couch_user.is_previewer()
     if request.method == "POST":
-        form = SMSSettingsForm(request.POST)
-        form._cchq_is_previewer = is_previewer
+        form = SMSSettingsForm(request.POST, _cchq_is_previewer=is_previewer)
         if form.is_valid():
             domain_obj.use_default_sms_response = form.cleaned_data["use_default_sms_response"]
             domain_obj.default_sms_response = form.cleaned_data["default_sms_response"]
+            if settings.SMS_QUEUE_ENABLED:
+                domain_obj.restricted_sms_times = form.cleaned_data["restricted_sms_times_json"]
             if is_previewer:
                 domain_obj.custom_case_username = form.cleaned_data["custom_case_username"]
                 domain_obj.chat_message_count_threshold = form.cleaned_data["custom_message_count_threshold"]
                 domain_obj.custom_chat_template = form.cleaned_data["custom_chat_template"]
+                domain_obj.filter_surveys_from_chat = form.cleaned_data["filter_surveys_from_chat"]
+                domain_obj.show_invalid_survey_responses_in_chat = form.cleaned_data["show_invalid_survey_responses_in_chat"]
+                domain_obj.count_messages_as_read_by_anyone = form.cleaned_data["count_messages_as_read_by_anyone"]
+                if settings.SMS_QUEUE_ENABLED:
+                    domain_obj.sms_conversation_times = form.cleaned_data["sms_conversation_times_json"]
+                    domain_obj.sms_conversation_length = int(form.cleaned_data["sms_conversation_length"])
             domain_obj.save()
             messages.success(request, _("Changes Saved."))
     else:
@@ -907,6 +1007,12 @@ def sms_settings(request, domain):
             "custom_message_count_threshold" : domain_obj.chat_message_count_threshold,
             "use_custom_chat_template" : domain_obj.custom_chat_template is not None,
             "custom_chat_template" : domain_obj.custom_chat_template,
+            "restricted_sms_times" : domain_obj.restricted_sms_times,
+            "sms_conversation_times" : domain_obj.sms_conversation_times,
+            "sms_conversation_length" : domain_obj.sms_conversation_length,
+            "filter_surveys_from_chat" : domain_obj.filter_surveys_from_chat,
+            "show_invalid_survey_responses_in_chat" : domain_obj.show_invalid_survey_responses_in_chat,
+            "count_messages_as_read_by_anyone" : domain_obj.count_messages_as_read_by_anyone,
         }
         form = SMSSettingsForm(initial=initial)
 
@@ -914,6 +1020,6 @@ def sms_settings(request, domain):
         "domain" : domain,
         "form" : form,
         "is_previewer" : is_previewer,
+        "sms_queue_enabled" : settings.SMS_QUEUE_ENABLED,
     }
     return render(request, "sms/settings.html", context)
-

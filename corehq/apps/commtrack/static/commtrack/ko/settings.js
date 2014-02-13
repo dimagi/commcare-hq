@@ -29,7 +29,6 @@ function CommtrackSettingsViewModel() {
         {label: 'Receipts', value: 'receipts'},
         {label: 'Consumption', value: 'consumption'},
         {label: 'Stock out', value: 'stockout'},
-        {label: '# days stocked-out for', value: 'stockedoutfor'}
     ];
 
     this.load = function(data) {

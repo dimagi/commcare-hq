@@ -1,4 +1,4 @@
-  <suite version="1">
+  <suite descriptor="Suite File" version="1">
     <xform>
       <resource id="e63a67c26c5a68defa91fdfff47d2a4d18a67f11" version="1">
         <location authority="local">./modules-0/forms-0.xml</location>

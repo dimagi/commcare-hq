@@ -13,11 +13,11 @@ function CareCase(doc) {
         self.check_birth();
         self.referrals();
         self.danger_signs();
-        self.process_actions();
+        self.process_actions(false);
 
         emit_array([self.owner_id], [self.opened_on_date], self.data_open);
         emit_array([self.owner_id], [self.case.DA], self.data_dob);
-    }
+    };
 
     self.general = function () {
         if (self.status === 'enceinte') {
@@ -32,20 +32,24 @@ function CareCase(doc) {
                     self.data_dob.birth_cpn_4 = 1;
                 } else if (self.case.CPN2 === 'oui') {
                     self.data_dob.birth_cpn_2 = 1;
-                } else if (self.case.CPN1 = 'oui') {
+                } else if (self.case.CPN1 === 'oui') {
                     self.data_dob.birth_cpn_1 = 1;
                 } else if (count_matching_props(self.case, ['CPN1','CPN2','CPN3','CPN4'], 'non') === 4) {
                     self.data_dob.birth_cpn_0 = 1;
                 }
             }
         }
-    }
+    };
 
     self.outcomes = function () {
         if (self.case.closed) {
-            emit(['case_closed_'+self.status, self.case.closed_on], 1)
+            emit(['case_closed_'+self.status, self.case.closed_on], 1);
         }
-    }
+
+        self.check_birth();
+        self.process_actions(true);
+        emit_array([], [self.case.DA], self.data_dob);
+    };
 
     self.referrals = function () {
         if (self.case.RC_reference_ouverte === 'oui') {
@@ -53,7 +57,7 @@ function CareCase(doc) {
             _emit_referral(self.case.RC_acc_referee_quand);
             _emit_referral(self.case.RC_enc_referee_quand);
         }
-    }
+    };
 
     self.danger_signs = function () {
         var danger_signs_pregnant = ['connais_bebe_bouge_moins',
@@ -101,9 +105,9 @@ function CareCase(doc) {
         if (count_matching_props(self.case, danger_signs_newborn, 'oui') >= 3){
             self.data_open.danger_sign_knowledge_newborn = 1;
         }
-    }
+    };
 
-    self.process_actions = function () {
+    self.process_actions = function (outcomes_only) {
         var actions = self.case.actions;
         var forms_completed ={};
         var update_count = 0;
@@ -116,28 +120,48 @@ function CareCase(doc) {
                 update_count++;
             }
 
-            forms_completed[a.xform_xmlns] = new Date(a.date);
+            forms_completed[a.xform_xmlns] = {
+                date: new Date(a.date),
+                user_id: a.user_id
+            };
 
             // first update
             if (update_count === 1) {
-                if (properties.condition === 'enceinte') {
-                    self.data_open.newly_registered_pregnant = 1;
-                } else if (properties.condition === 'accouchee') {
-                    self.data_open.post_partum_registration = 1;
+                if (outcomes_only) {
+                    emit(['case_opened_'+properties.condition, self.opened_on_date], 1);
+                } else {
+                    if (properties.condition === 'enceinte') {
+                        self.data_open.newly_registered_pregnant = 1;
+                    } else if (properties.condition === 'accouchee') {
+                        self.data_open.post_partum_registration = 1;
+                    }
                 }
             }
         }
 
-        if (forms_completed[ns_as_accouchement] && self.case.DA) {
+        if (outcomes_only) {
+            return;
+        }
+
+        if (forms_completed[ns_as_enregistrement_nouveau_ne] && self.case.DA) {
             var data_nurse = {};
+            var followedUp = false;
             data_nurse.post_natal_followups_total = 1;
+
             if (forms_completed[ns_as_surveillanceLorsDeLaSortieDuCS]) {
                 data_nurse.post_natal_followups_sortie = 1;
-            } else if (forms_completed[ns_as_surveillanceA6h]) {
+                followedUp = true;
+            }
+            if (forms_completed[ns_as_surveillanceA6h]) {
                 data_nurse.post_natal_followups_6h = 1;
-            } else if (forms_completed[ns_as_surveillanceA15m]) {
+                followedUp = true;
+            }
+            if (forms_completed[ns_as_surveillanceA15m]) {
                 data_nurse.post_natal_followups_15m = 1;
-            } else {
+                followedUp = true;
+            }
+
+            if (!followedUp) {
                 data_nurse.post_natal_followups_none = 1;
             }
             emit_array([self.user_id], [self.case.DA], data_nurse);
@@ -145,32 +169,38 @@ function CareCase(doc) {
 
         var rc_ref = forms_completed[ns_rc_reference];
         if (rc_ref) {
-            var min = forms_completed[ns_as_contre_reference_dune_accouche];
+            var min = undefined;
+            if (forms_completed[ns_as_contre_reference_dune_accouche]) {
+                min = forms_completed[ns_as_contre_reference_dune_accouche].date;
+            }
             var f2 = forms_completed[ns_as_contre_reference_dune_femme_enceinte];
             var f3 = forms_completed[ns_as_contre_reference_dune_nouveau_ne];
-            if (f2 && (!min || f2 < min)) {
-                min = f2;
+            if (f2 && (!min || f2.date < min)) {
+                min = f2.date;
             }
-            if (f3 && (!min || f3 < min)) {
-                min = f3;
+            if (f3 && (!min || f3.date < min)) {
+                min = f3.date;
             }
 
             if (min) {
-                var val = min.getTime() - rc_ref.getTime();
-                emit([self.owner_id, 'ref_counter_ref_time', min], val)
+                var val = min.getTime() - rc_ref.date.getTime();
+                emit([self.owner_id, 'ref_counter_ref_time', min], val);
             }
 
             var suivi_ref = forms_completed[ns_rc_suivi_de_reference];
             if (suivi_ref) {
-                var val = suivi_ref.getTime() - rc_ref.getTime();
-                emit([self.user_id, 'ref_suiviref_time', suivi_ref], val)
+                var val = suivi_ref.date.getTime() - rc_ref.date.getTime();
+                emit([rc_ref.user_id, 'ref_suiviref_time', suivi_ref.date], val);
             }
         }
-    }
+    };
 
     self.check_birth = function () {
         // assume presence of DA means birth
         if (self.case.DA) {
+            if (self.case.condition === 'accouchee') {
+                self.data_dob.births_total = 1;
+            }
             if (self.case.VAT2 === 'oui') {
                 self.data_dob.birth_vat_2 = 1;
             }
@@ -181,6 +211,16 @@ function CareCase(doc) {
 
             if (self.case.lieu_acc) {
                 self.data_dob['birth_place_'+self.case.lieu_acc] = 1;
+            }
+
+            if (['clinique_privee',
+                'CS_arrondissement',
+                'CS_commune',
+                'CSA',
+                'hopital',
+                'hopital_zone',
+                'mat_isolee'].indexOf(self.case.lieu_acc) !== -1) {
+                self.data_dob.births_at_clinic = 1;
             }
 
             var data_dob_adj = {};
@@ -219,7 +259,7 @@ function CareCase(doc) {
 
             emit_array([self.owner_id], [adjusted_date], data_dob_adj);
         }
-    }
+    };
 
     function _emit_referral(date_str) {
         if (date_str.trim()) {

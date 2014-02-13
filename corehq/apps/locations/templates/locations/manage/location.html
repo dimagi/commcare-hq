@@ -42,15 +42,16 @@
             });
         });
 
-      $('#loc_form').submit(function() {
+      $("#loc_form :button[type='submit']").click(function(e) {
           if (loc_id != null && model.selected_locid() != model.orig_parent_id) {
-            $('#reparenting').modal();
-            return false;
+              e.preventDefault();
+              $('#reparenting').modal();
           }
-        });
-      $('#move_confirm').click(function() {
-          document.forms['loc_form'].submit();  // jquery method of submitting doesn't work
-        });
+      });
+      $('#move_confirm').click(function(e) {
+          e.preventDefault();
+          document.forms['loc_form'].submit();
+      });
 
       ko.applyBindings(model, $('#loc_form')[0]);
 
@@ -67,6 +68,20 @@
       {% include 'hqstyle/forms/basic_fieldset.html' with form=subform %}
     </div>
     {% endfor %}
+
+    {% if consumption %}
+      <legend>{% trans "Default consumption values" %}</legend>
+      {% for code, amount in consumption %}
+        <div class="control-group">
+          <label class="control-label">{{ code }}</label>
+          <div class="controls">
+            <span class="uneditable-input">
+              {{ amount }}
+            </span>
+          </div>
+        </div>
+      {% endfor %}
+    {% endif %}
 
     <div class="form-actions"><button type="submit" class="btn btn-primary">
         {% if location.get_id %}{% trans 'Update' %}{% else %}{% trans 'Create' %}{% endif %} {% trans 'Location' %}

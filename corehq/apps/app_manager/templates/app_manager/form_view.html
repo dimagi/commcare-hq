@@ -11,6 +11,7 @@
 
     {% if app.application_version == '2.0' %}
         <script src="{% static 'app_manager/js/case-knockout-bindings.js' %}"></script>
+        <script src="{% static 'app_manager/js/case-config-utils.js' %}"></script>
         <script src="{% static 'app_manager/js/case-config-ui-2.js' %}"></script>
     {% else %}
         <script src="{% static 'app_manager/js/ejs.min.js' %}"></script>
@@ -154,6 +155,7 @@
             /* form_requires needs to be a knockout observable so that
              its value can be read by another UI (form filtering) */
             var form_requires = ko.observable({{ form.requires|JSON }});
+            {% if form.source %}
             var caseConfig = new CaseConfig.CaseConfig({
                 home: $('#casexml_home'),
                 actions: {{ form.actions|JSON }},
@@ -182,6 +184,7 @@
                 {% endif %}
             });
             caseConfig.init();
+            {% endif %}
 
             // tag the 'preview in cloudcare' button with the right url
             // unfortunately, has to be done in javascript
@@ -222,6 +225,7 @@
         });
     </script>
 {% endblock %}
+
 {% block head %}
     {{ block.super }}
     <link href="{% static 'hqwebapp/js/lib/select2/select2.css' %}" rel="stylesheet"/>
@@ -325,7 +329,9 @@
 
     {% if edit %}
     <div class="btn-group">
-        <a href="./source/" class="btn btn-primary">
+        <a href="./source/" class="btn btn-primary" onclick="
+            _gaq.push(['_trackEvent', 'App Builder', 'Open Form', 'Edit Label']);
+        ">
             <i class="icon-pencil"></i>
             {% trans "Edit" %}
         </a>

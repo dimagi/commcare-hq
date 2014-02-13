@@ -230,3 +230,35 @@
   contingent_default: [{"condition": "{features.sense}='true'", "value": "Yes"}]
   values_txt: "This value will set whether the login screen uses customizable icons for login and demo mode options or uses the standard buttons with labels."
   since: "2.8"
+
+- name: "Saved Forms"
+  description: "Choose whether or not to display the 'Saved' button on the ODK home screen"
+  id: "cc-show-saved"
+  values: ["yes", "no"]
+  value_names: ["Enable", "Disable"]
+  default: "yes"
+  contingent_default: [{"condition": "{features.sense}='true'", "value": "no"}]
+  values_txt: "This will show or hide the 'Saved' button on the CommCare ODK home screen. Turning this off will prevent users from saving forms locally."
+  since: "2.11"
+  preview: true
+
+- name: "Incomplete Forms"
+  description: "Choose whether or not to display the 'Incomplete' button on the ODK home screen"
+  id: "cc-show-incomplete"
+  values: ["yes", "no"]
+  value_names: ["Enable", "Disable"]
+  default: "yes"
+  contingent_default: [{"condition": "{features.sense}='true'", "value": "no"}]
+  values_txt: "This will show or hide the 'Incomplete' button on the CommCare ODK home screen. Turning this off will prevent users from saving incomplete forms."
+  since: "2.11"
+  preview: true
+
+- name: "Auto-Resize Images"
+  description: "Automatically resizes images within forms. Choose full resize to scale to the available space on the screen, or horizontal resize to scale to the width of the screen"
+  id: "cc-resize-images"
+  values: ["full", "width", "none"]
+  value_names: ["Full Resize", "Horizontal Resize","None"]
+  default: "none"
+  values_txt: "This will determine how images you select for your questions will be resized to fit the screen. Horizontal will stretch/compress the image to fit perfectly horizontally while scaling to height to maintain the aspect ratio. Full Resize will try to be clever and find the ideal vertical/horizontal scaling for the screen."
+  since: "2.11"
+

@@ -4,21 +4,22 @@ from corehq.apps.reports.standard import (monitoring, inspect, export,
     deployments, sms, ivr)
 import corehq.apps.receiverwrapper.reports as receiverwrapper
 import phonelog.reports as phonelog
-from corehq.apps.reports.commtrack import psi_prototype
 from corehq.apps.reports.commtrack import standard as commtrack_reports
 from corehq.apps.reports.commtrack import maps as commtrack_maps
+from corehq.apps.reports.commconnect import system_overview
 import hashlib
 from dimagi.utils.modules import to_function
 import logging
 
-from django.utils.translation import ugettext_noop as _
+from django.utils.translation import ugettext_noop as _, ugettext_lazy
 
 def REPORTS(project):
     from corehq.apps.reports.standard.cases.basic import CaseListReport
+    from corehq.apps.reports.standard.cases.careplan import make_careplan_reports
     from corehq.apps.reports.standard.maps import DemoMapReport, DemoMapReport2, DemoMapCaseList
 
     reports = [
-        (_("Monitor Workers"), (
+        (ugettext_lazy("Monitor Workers"), (
             monitoring.WorkerActivityReport,
             monitoring.DailyFormStatsReport,
             monitoring.SubmissionsByFormReport,
@@ -27,45 +28,50 @@ def REPORTS(project):
             monitoring.FormCompletionVsSubmissionTrendsReport,
             monitoring.WorkerActivityTimes,
         )),
-        (_("Inspect Data"), (
+        (ugettext_lazy("Inspect Data"), (
             inspect.SubmitHistory, CaseListReport,
         )),
-        (_("Manage Deployments"), (
+        (ugettext_lazy("Manage Deployments"), (
             deployments.ApplicationStatusReport,
             receiverwrapper.SubmissionErrorReport,
             phonelog.FormErrorReport,
             phonelog.DeviceLogDetailsReport
         )),
-        (_("Demos for Previewers"), (
+        (ugettext_lazy("Demos for Previewers"), (
             DemoMapReport, DemoMapReport2, DemoMapCaseList,
         )),
     ]
     
     if project.commtrack_enabled:
-        reports.insert(0, (_("Commtrack"), (
-            commtrack_reports.ReportingRatesReport,
+        reports.insert(0, (ugettext_lazy("Commtrack"), (
+            # commtrack_reports.ReportingRatesReport,
             commtrack_reports.CurrentStockStatusReport,
             commtrack_reports.AggregateStockStatusReport,
-            psi_prototype.VisitReport,
-            psi_prototype.SalesAndConsumptionReport,
-            psi_prototype.CumulativeSalesAndConsumptionReport,
-            psi_prototype.StockOutReport,
-            psi_prototype.StockReportExport,
-            commtrack_maps.StockStatusMapReport,
-            commtrack_maps.ReportingStatusMapReport,
+            # commtrack_reports.RequisitionReport,
+            # commtrack_maps.StockStatusMapReport,
+            # commtrack_maps.ReportingStatusMapReport,
         )))
+
+    if project.has_careplan:
+        from corehq.apps.app_manager.models import CareplanConfig
+        config = CareplanConfig.for_domain(project.name)
+        if config:
+            cp_reports = tuple(make_careplan_reports(config))
+            reports.insert(0, (ugettext_lazy("Care Plans"), cp_reports))
 
     messaging_reports = (
         sms.MessagesReport,
         sms.MessageLogReport,
         ivr.CallLogReport,
         ivr.ExpectedCallbackReport,
+        system_overview.SystemOverviewReport,
+        system_overview.SystemUsersReport
     )
 
     messaging_reports += getattr(Domain.get_module_by_name(project.name), 'MESSAGING_REPORTS', ())
 
     messaging = (lambda project, user: (
-        _("Logs") if project.commtrack_enabled else _("Messaging")), messaging_reports)
+        ugettext_lazy("Logs") if project.commtrack_enabled else ugettext_lazy("Messaging")), messaging_reports)
 
     if project.commconnect_enabled:
         reports.insert(0, messaging)
@@ -75,7 +81,7 @@ def REPORTS(project):
     reports.extend(dynamic_reports(project))
 
     return reports
-    
+
 def dynamic_reports(project):
     """include any reports that can be configured/customized with static parameters for this domain"""
     for reportset in project.dynamic_reports:
@@ -113,7 +119,7 @@ from corehq.apps.data_interfaces.interfaces import CaseReassignmentInterface
 from corehq.apps.importer.base import ImportCases
 
 DATA_INTERFACES = (
-    (_("Export Data"), (
+    (ugettext_lazy("Export Data"), (
         export.ExcelExportReport,
         export.CaseExportReport,
         export.DeidExportReport,
@@ -121,7 +127,7 @@ DATA_INTERFACES = (
 )
 
 EDIT_DATA_INTERFACES = (
-    (_('Edit Data'), (
+    (ugettext_lazy('Edit Data'), (
         CaseReassignmentInterface,
         ImportCases
     )),
@@ -173,12 +179,27 @@ INDICATOR_ADMIN_INTERFACES = (
 
 from corehq.apps.announcements.interface import (
     ManageGlobalHQAnnouncementsInterface,
-    ManageReportAnnouncementsInterface)
+    ManageReportAnnouncementsInterface,
+)
 
 ANNOUNCEMENTS_ADMIN_INTERFACES = (
     (_("Manage Announcements"), (
         ManageGlobalHQAnnouncementsInterface,
-        ManageReportAnnouncementsInterface
+        ManageReportAnnouncementsInterface,
+    )),
+)
+
+from corehq.apps.accounting.interface import (
+    AccountingInterface,
+    SubscriptionInterface,
+    SoftwarePlanInterface,
+)
+
+ACCOUNTING_ADMIN_INTERFACES = (
+    (_("Accounting Admin"), (
+        AccountingInterface,
+        SubscriptionInterface,
+        SoftwarePlanInterface,
     )),
 )
 

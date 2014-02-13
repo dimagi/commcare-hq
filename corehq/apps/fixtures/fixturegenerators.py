@@ -1,11 +1,10 @@
 from collections import defaultdict
 from xml.etree import ElementTree
-from casexml.apps.case.xml import V2
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from corehq.apps.users.models import CommCareUser
-from couchdbkit.exceptions import ResourceNotFound
 
-def item_lists(user, version=V2, last_sync=None):
+
+def item_lists(user, version, last_sync):
     if isinstance(user, CommCareUser):
         pass
     elif hasattr(user, "_hq_user") and user._hq_user is not None:

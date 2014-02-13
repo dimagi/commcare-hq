@@ -7,6 +7,7 @@ from django.http import Http404
 import pytz
 from django.conf import settings
 from django.utils.importlib import import_module
+from django.utils import html, safestring
 
 from corehq.apps.announcements.models import ReportAnnouncement
 from corehq.apps.groups.models import Group
@@ -198,8 +199,33 @@ def get_username_from_forms(domain, user_id):
 
 
 def _report_user_dict(user):
-    user_report_attrs = ['user_id', 'username_in_report', 'raw_username', 'is_active']
-    return dict([(attr, getattr(user, attr)) for attr in user_report_attrs])
+    """
+    Accepts a user object or a dict such as that returned from elasticsearch
+    via CommCareUser.es_fakes
+    """
+    if not isinstance(user, dict):
+        user_report_attrs = ['user_id', 'username_in_report', 'raw_username', 'is_active']
+        return dict([(attr, getattr(user, attr)) for attr in user_report_attrs])
+    else:
+        username = user.get('username', '')
+        raw_username = (username.split("@")[0]
+                        if user.get('doc_type', '') == "CommCareUser"
+                        else username)
+        first = user.get('first_name', '')
+        last = user.get('last_name', '')
+        full_name = (u"%s %s" % (first, last)).strip()
+        def parts():
+            yield u'%s' % html.escape(raw_username)
+            if full_name:
+                yield u' "%s"' % html.escape(full_name)
+        username_in_report = safestring.mark_safe(''.join(parts()))
+        report_dict = {
+            'user_id': user.get('_id', ''),
+            'username_in_report': username_in_report,
+            'raw_username': raw_username,
+            'is_active': user.get('is_active', None),
+        }
+        return report_dict
 
 
 def format_datatables_data(text, sort_key, raw=None):
@@ -214,7 +240,7 @@ def app_export_filter(doc, app_id):
     if app_id:
         return (doc['app_id'] == app_id) if doc.has_key('app_id') else False
     elif app_id == '':
-        return not doc.has_key('app_id')
+        return (not doc['app_id']) if doc.has_key('app_id') else True
     else:
         return True
 

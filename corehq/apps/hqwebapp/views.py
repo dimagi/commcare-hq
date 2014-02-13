@@ -792,7 +792,7 @@ class CRUDPaginatedViewMixin(object):
         """
         raise NotImplementedError("You must implement get_deleted_item_data")
 
-
+@login_required
 def quick_find(request):
     query = request.GET.get('q')
     redirect = request.GET.get('redirect') != 'false'

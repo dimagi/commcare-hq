@@ -1,6 +1,5 @@
-from django.core.servers.basehttp import FileWrapper
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse, Http404, StreamingHttpResponse
 from django.utils.decorators import method_decorator
 from django.views.generic import View
 from dimagi.utils.django.cached_object import IMAGE_SIZE_ORDERING, OBJECT_ORIGINAL
@@ -80,11 +79,10 @@ class CaseAttachmentAPI(View):
             #default stream
             attachment_meta, attachment_stream = CommCareCase.fetch_case_attachment(case_id, attachment_key, attachment_src)#, filesize_limit=max_size, width_limit=max_width, height_limit=max_height)
 
-        wrapper = FileWrapper(attachment_stream)
         if attachment_meta is not None:
             mime_type = attachment_meta['content_type']
         else:
             mime_type = "plain/text"
-        response = HttpResponse(wrapper, mimetype=mime_type)
+        response = StreamingHttpResponse(streaming_content=attachment_stream, mimetype=mime_type)
         return response
 

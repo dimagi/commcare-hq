@@ -17,6 +17,7 @@
   collapse: true
   settings:
     - features.sense  # CommCare Sense
+    - hq.build_spec  # CommCare Version
     - properties.cc-autoup-freq  # Auto Update Frequency
     - properties.unsent-number-limit  # Unsent Form Limit
     - properties.server-tether  # Sync Mode
@@ -28,7 +29,6 @@
   id: app-settings-j2me-properties
   collapse: true
   settings:
-    - hq.build_spec  # CommCare Version
     - hq.platform  # J2ME Platform
     - hq.admin_password  # Admin Password
     - hq.show_user_registration  # Allow User Registration from Phone
@@ -53,6 +53,9 @@
   collapse: true
   settings:
     - properties.cc-days-form-retain # Days to Retain for Review
+    - properties.cc-show-saved
+    - properties.cc-show-incomplete
+    - properties.cc-resize-images
 
 - title: 'Advanced'
   id: app-settings-advanced
