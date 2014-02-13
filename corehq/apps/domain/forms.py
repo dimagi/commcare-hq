@@ -780,7 +780,7 @@ class ProBonoForm(forms.Form):
             }
             html_content = render_to_string("domain/email/pro_bono_application.html", params)
             text_content = render_to_string("domain/email/pro_bono_application.txt", params)
-            recipient = "infomation@dimagi.com"
+            recipient = "information@dimagi.com"
             send_HTML_email("Pro-Bono Application", recipient, html_content, text_content=text_content)
         except Exception:
             logging.error("Couldn't send pro-bono application email. "
