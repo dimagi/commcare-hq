@@ -322,7 +322,7 @@ cloudCare.FormListView = Backbone.View.extend({
         var self = this;
         var formView = new cloudCare.FormView({
             model: form,
-            language: self.options.language,
+            language: self.options.language
         });
         self._formViews[form.get("index")] = formView;
         formView.on("selected", function () {
