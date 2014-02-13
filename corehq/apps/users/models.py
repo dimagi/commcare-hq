@@ -16,7 +16,7 @@ from django.core.exceptions import ValidationError
 from django.template.loader import render_to_string
 from couchdbkit.ext.django.schema import *
 from couchdbkit.resource import ResourceNotFound
-from dimagi.utils.couch.database import get_safe_write_kwargs
+from dimagi.utils.couch.database import get_safe_write_kwargs, iter_docs
 from dimagi.utils.logging import notify_exception
 
 from dimagi.utils.decorators.memoized import memoized
@@ -1400,13 +1400,18 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         else:
             view_name = 'couchforms/by_user'
 
-        return XFormInstance.view(view_name,
+        db = XFormInstance.get_db()
+        doc_ids = [r['id'] for r in db.view(view_name,
             startkey=[self.user_id],
             endkey=[self.user_id, {}],
             reduce=False,
-            include_docs=wrap,
-            wrapper=None if wrap else lambda x: x['id']
-        )
+            include_docs=False,
+        )]
+        for doc in iter_docs(db, doc_ids):
+            if wrap:
+                yield XFormInstance.wrap(doc)
+            else:
+                yield doc
 
     @property
     def form_count(self):
