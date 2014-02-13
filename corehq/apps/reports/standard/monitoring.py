@@ -561,8 +561,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, Mu
     description = ugettext_noop("Time lag between when forms were completed and when forms were successfully "
                                 "sent to CommCare HQ.")
     
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.SelectMobileWorkerField',
+    fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
               'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
               'corehq.apps.reports.fields.DatespanField']
 
@@ -582,7 +581,8 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, Mu
         total = 0
         total_seconds = 0
         if self.all_relevant_forms:
-            for user in self.users:
+            users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
+            for user in users_data["combined_users"]:
                 if not user.get('user_id'):
                     # calling get_form_data with no user_id will return ALL form data which is not what we want
                     continue
