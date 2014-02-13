@@ -510,14 +510,7 @@ def get_apps_base_context(request, domain, app):
         edit = False
         timezone = None
 
-    if app:
-        for _lang in app.langs:
-            try:
-                SuccessMessage(app.success_message.get(_lang, ''), '').check_message()
-            except Exception as e:
-                messages.error(request, "Your success message is malformed: %s is not a keyword" % e)
-
-    return {
+    context = {
         'lang': lang,
         'langs': langs,
         'domain': domain,
@@ -526,6 +519,24 @@ def get_apps_base_context(request, domain, app):
         'URL_BASE': get_url_base(),
         'timezone': timezone,
     }
+
+    if app:
+        for _lang in app.langs:
+            try:
+                SuccessMessage(app.success_message.get(_lang, ''), '').check_message()
+            except Exception as e:
+                messages.error(request, "Your success message is malformed: %s is not a keyword" % e)
+
+        v2_app = app.application_version == APP_V2
+        context.update({
+            'show_care_plan': (v2_app
+                               and not app.has_careplan_module
+                               and toggle_enabled(toggles.APP_BUILDER_CAREPLAN, request.user.username)),
+            'show_advanced': (v2_app
+                               and toggle_enabled(toggles.APP_BUILDER_ADVANCED, request.user.username)),
+        })
+
+    return context
 
 
 @cache_control(no_cache=True, no_store=True)
@@ -717,13 +728,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         del app['use_commcare_sense']
         app.save()
 
-    v2_app = app and app.application_version == APP_V2
     context.update({
-        'show_care_plan': (v2_app
-                           and not (app and app.has_careplan_module)
-                           and toggle_enabled(toggles.APP_BUILDER_CAREPLAN, req.user.username)),
-        'show_advanced': (v2_app
-                           and toggle_enabled(toggles.APP_BUILDER_ADVANCED, req.user.username)),
         'module': module,
         'form': form,
     })
