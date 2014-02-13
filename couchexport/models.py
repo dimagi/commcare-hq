@@ -321,8 +321,9 @@ class ExportTable(DocumentSchema):
     def get_column_configuration(self, all_cols):
         selected_cols = set()
         for c in self.columns:
-            selected_cols.add(c.index)
-            yield c.to_config_format()
+            if c.doc_type == 'ExportColumn':
+                selected_cols.add(c.index)
+                yield c.to_config_format()
 
         for c in all_cols:
             if c not in selected_cols:
