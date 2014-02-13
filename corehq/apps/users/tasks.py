@@ -19,8 +19,9 @@ def bulk_upload_async(download_id, domain, user_specs, group_specs, location_spe
     cache.set(download_id, CachedDownload(temp_id, content_disposition="",
                                           mimetype="text/html"), expiry)
 
-@task(rate_limit=3)  # delete 3 docs per second so that cloudant has time reindex
-def tag_doc_as_deleted(doc, deletion_id):
-    doc.doc_type += DELETED_SUFFIX
-    doc['-deletion_id'] = deletion_id
-    doc.save()
+@task(rate_limit=2)  # limit this to two bulk saves a second so cloudant has time to reindex
+def tag_docs_as_deleted(cls, docs, deletion_id):
+    for doc in docs:
+        doc['doc_type'] += DELETED_SUFFIX
+        doc['-deletion_id'] = deletion_id
+    cls.get_db().bulk_save(docs)
