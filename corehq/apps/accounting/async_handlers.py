@@ -41,13 +41,13 @@ class FeatureRateAsyncHandler(BaseRateAsyncHandler):
 
     @property
     def create_response(self):
-        new_feature, is_new = Feature.objects.get_or_create(
+        if len(Feature.objects.filter(name=self.name)) > 0:
+            raise AsyncHandlerError("Feature '%s' already exists, and likely already "
+                                    "in this Software Plan Version." % self.name)
+        new_feature, _ = Feature.objects.get_or_create(
             name=self.name,
             feature_type=self.rate_type,
         )
-        if not is_new:
-            raise AsyncHandlerError("Feature '%s' already exists, and likely already "
-                                    "in this Software Plan Version." % new_feature.name)
         return fmt_feature_rate_dict(new_feature)
 
     @property
@@ -64,13 +64,13 @@ class SoftwareProductRateAsyncHandler(BaseRateAsyncHandler):
 
     @property
     def create_response(self):
-        new_product, is_new = SoftwareProduct.objects.get_or_create(
+        if len(SoftwareProduct.objects.filter(name=self.name)) > 0:
+            raise AsyncHandlerError("Product '%s' already exists, and likely already "
+                                    "in this Software Plan Version." % self.name)
+        new_product, _ = SoftwareProduct.objects.get_or_create(
             name=self.name,
             product_type=self.rate_type
         )
-        if not is_new:
-            raise AsyncHandlerError("Product '%s' already exists, and likely already "
-                                    "in this Software Plan Version." % new_product.name)
         return fmt_product_rate_dict(new_product)
 
     @property
