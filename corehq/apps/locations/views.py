@@ -259,10 +259,8 @@ def location_importer_job_poll(request, domain, download_id, template="locations
 
 def location_export(request, domain):
     response = HttpResponse(mimetype=Format.from_format('xlsx').mimetype)
-    response['Content-Disposition'] = 'attachment; filename=locations.xlsx'
-
+    response['Content-Disposition'] = 'attachment; filename="locations.xlsx"'
     dump_locations(response, domain)
-
     return response
 
 

@@ -80,7 +80,7 @@ require_can_edit_apps = require_permission(Permissions.edit_apps)
 
 
 def set_file_download(response, filename):
-    response["Content-Disposition"] = "attachment; filename=%s" % filename
+    response["Content-Disposition"] = 'attachment; filename="%s"' % filename
 
 
 def _encode_if_unicode(s):

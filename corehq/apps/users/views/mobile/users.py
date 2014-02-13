@@ -658,7 +658,7 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
 @require_can_edit_commcare_users
 def download_commcare_users(request, domain):
     response = HttpResponse(mimetype=Format.from_format('xlsx').mimetype)
-    response['Content-Disposition'] = 'attachment; filename=%s_users.xlsx' % domain
+    response['Content-Disposition'] = 'attachment; filename="%s_users.xlsx"' % domain
 
     try:
         dump_users_and_groups(response, domain)
