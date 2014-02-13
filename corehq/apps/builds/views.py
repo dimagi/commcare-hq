@@ -43,7 +43,7 @@ def get(request, version, build_number, path):
         raise Http404()
 
     response = HttpResponse(file)
-    response['Content-Disposition'] = "attachment; filename=%s" % path.split("/")[-1]
+    response['Content-Disposition'] = 'attachment; filename="%s"' % path.split("/")[-1]
     return response
 
 @require_GET

@@ -26,6 +26,7 @@ def get_reindex_commands(pillow_class_name):
                        'ptop_fast_reindex_unknownusers'],
         # groupstousers indexing must happen after all users are indexed
         'AppPillow': 'ptop_fast_reindex_apps',
+        'GroupPillow': 'ptop_fast_reindex_groups',
         'SMSPillow': 'ptop_fast_reindex_smslogs',
         'TCSMSPillow': 'ptop_fast_reindex_tc_smslogs',
         'ReportXFormPillow': 'ptop_fast_reindex_reportxforms',

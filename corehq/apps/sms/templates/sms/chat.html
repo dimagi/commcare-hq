@@ -227,43 +227,44 @@
                         }
                         request = $.ajax({
                             url : "{% url 'api_history' domain %}",
-                            data : payload
-                        });
-                        request.done(function(response, textStatus, jqXHR) {
-                            var chat_message = null;
-                            data = $.parseJSON(response);
-                            for(i = 0; i < data.length; i++) {
-                                chat_message = new ChatMessage(
-                                    data[i].sender,
-                                    data[i].text,
-                                    data[i].timestamp,
-                                    data[i].utc_timestamp,
-                                    self.first_update || self.is_focused
-                                );
-                                self.latest_message_utc_timestamp = data[i].utc_timestamp;
+                            data : payload,
+                            async : false,
+                            dataType : "json",
+                            success : function(data, textStatus, jqXHR) {
+                                var chat_message = null;
+                                for(i = 0; i < data.length; i++) {
+                                    chat_message = new ChatMessage(
+                                        data[i].sender,
+                                        data[i].text,
+                                        data[i].timestamp,
+                                        data[i].utc_timestamp,
+                                        self.first_update || self.is_focused
+                                    );
+                                    self.latest_message_utc_timestamp = data[i].utc_timestamp;
+                                    if(self.first_update) {
+                                        if((self.last_read_message_utc_timestamp == null) || (chat_message.utc_timestamp > self.last_read_message_utc_timestamp)) {
+                                            chat_message.set_seen_text(false);
+                                            chat_message.unread_message = true;
+                                        }
+                                    }
+                                    self.messages.push(chat_message);
+                                }
+                                if(!self.first_update && data.length > 0 && !self.is_focused) {
+                                    self.start_new_message_notification();
+                                }
+                                if(data.length > 0) {
+                                    scrollHeight = $("#chat_messages").prop("scrollHeight");
+                                    $("#chat_messages").scrollTop(scrollHeight);
+                                }
                                 if(self.first_update) {
-                                    if((self.last_read_message_utc_timestamp == null) || (chat_message.utc_timestamp > self.last_read_message_utc_timestamp)) {
-                                        chat_message.set_seen_text(false);
-                                        chat_message.unread_message = true;
+                                    self.first_update = false;
+                                } else {
+                                    self.message_count(self.message_count() + data.length);
+                                    if(self.message_count() >= self.message_count_threshold) {
+                                        $("#message_count").css("background-color", "#F00");
                                     }
                                 }
-                                self.messages.push(chat_message);
-                            }
-                            if(data.length > 0 && !self.is_focused) {
-                                self.start_new_message_notification();
-                            }
-                            if(data.length > 0) {
-                                scrollHeight = $("#chat_messages").prop("scrollHeight");
-                                $("#chat_messages").scrollTop(scrollHeight);
-                            }
-                            if(self.first_update) {
-                                self.first_update = false;
-                            } else {
-                                self.message_count(self.message_count() + data.length);
-                                if(self.message_count() >= self.message_count_threshold) {
-                                    $("#message_count").css("background-color", "#F00");
-                                }
-                            }
+                            },
                         });
                     };
                     self.send_message = function() {

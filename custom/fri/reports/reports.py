@@ -1,5 +1,6 @@
 import pytz
 import logging
+import cgi
 from datetime import datetime, time, timedelta
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
@@ -8,9 +9,9 @@ from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.util import format_datatables_data
-from custom.fri.models import FRISMSLog
+from custom.fri.models import FRISMSLog, PROFILE_DESC
 from custom.fri.reports.filters import InteractiveParticipantFilter, RiskProfileFilter
-from custom.fri.api import get_message_bank, add_metadata
+from custom.fri.api import get_message_bank, add_metadata, get_date
 from corehq.apps.sms.models import INCOMING, OUTGOING
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.models import CommCareCase
@@ -66,7 +67,7 @@ class MessageBankReport(FRIReport):
     def headers(self):
         cols = [
             DataTablesColumn(_("Message Text")),
-            DataTablesColumn(_("Message ID")),
+            DataTablesColumn(_("Risk Profile")),
         ]
         for case in self.interactive_participants:
             header_text = case.get_case_property("name_and_pid")
@@ -85,11 +86,16 @@ class MessageBankReport(FRIReport):
             data[case._id] = self.get_participant_message_counts(message_bank_messages, case)
 
         for entry in message_bank_messages:
-            if risk_profile and risk_profile != entry["message"].risk_profile:
+            msg_risk_profile = entry["message"].risk_profile
+            if risk_profile and risk_profile != msg_risk_profile:
                 continue
+            msg_risk_profile_desc = None
+            if msg_risk_profile:
+                msg_risk_profile_desc = PROFILE_DESC.get(msg_risk_profile)
+            msg_risk_profile_desc = msg_risk_profile_desc or "-"
             row = [
                 self._fmt(entry["message"].message),
-                self._fmt(entry["message"].fri_id or "-"),
+                self._fmt2(entry["message"].fri_id, msg_risk_profile_desc),
             ]
             for case in self.interactive_participants:
                 row.append(self._fmt(data[case._id][entry["message"]._id]))
@@ -110,7 +116,7 @@ class MessageBankReport(FRIReport):
             result[entry["message"]._id] = 0
         participant_messages = self.get_participant_messages(case)
         for sms in participant_messages:
-            if sms.chat_user_id is not None:
+            if sms.xforms_session_couch_id is None and sms.direction == OUTGOING:
                 if not sms.fri_message_bank_lookup_completed:
                     add_metadata(sms, message_bank_messages)
                 if sms.fri_message_bank_message_id in result:
@@ -119,6 +125,11 @@ class MessageBankReport(FRIReport):
 
     def _fmt(self, val):
         return format_datatables_data(val, val)
+
+    def _fmt2(self, val1, val2):
+        val1 = cgi.escape(val1, True)
+        val2 = cgi.escape(val2, True)
+        return self.table_cell(val1, '<span style="display: none;">%s</span><span>%s</span>' % (val1, val2))
 
 class MessageReport(FRIReport, DatespanMixin):
     name = ugettext_noop('Message Report')
@@ -320,7 +331,9 @@ class SurveyResponsesReport(FRIReport):
         for case in participants:
             pid = case.get_case_property("pid")
             study_arm = case.get_case_property("study_arm")
-            registration_date = case.get_case_property("registration_date")
+            registration_date = get_date(case, "start_date")
+            if registration_date is None:
+                continue
             first_survey_date = self.get_first_tuesday(registration_date)
             row = [
                 self._fmt(pid),
@@ -356,7 +369,9 @@ class SurveyResponsesReport(FRIReport):
         local_date = local_now.date()
 
         def filter_function(case):
-            registration_date = case.get_case_property("registration_date")
+            registration_date = get_date(case, "start_date")
+            if registration_date is None:
+                return False
             first_tuesday = self.get_first_tuesday(registration_date)
             end_date = first_tuesday + timedelta(days=56)
             return end_date >= local_date

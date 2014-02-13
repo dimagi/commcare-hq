@@ -104,6 +104,10 @@ def partial_escape(xpath):
     return mark_safe(force_unicode(xpath).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;'))
 
 
+class ModuleNotFoundException(Exception):
+    pass
+
+
 class IndexedSchema(DocumentSchema):
     """
     Abstract class.
@@ -2233,9 +2237,14 @@ class SavedAppBuild(ApplicationBase):
             'jar_path': self.get_jar_path(),
             'short_name': self.short_name
         })
-        if data['comment_from']:
-            comment_user = CouchUser.get(data['comment_from'])
-            data['comment_user_name'] = comment_user.full_name
+        comment_from = data['comment_from']
+        if comment_from:
+            try:
+                comment_user = CouchUser.get(comment_from)
+            except ResourceNotFound:
+                data['comment_user_name'] = comment_from
+            else:
+                data['comment_user_name'] = comment_user.full_name
 
         return data
 
@@ -2505,7 +2514,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     @parse_int([1])
     def get_module(self, i):
         self__modules = self.modules
-        return self__modules[i].with_id(i%len(self__modules), self)
+        try:
+            return self__modules[i].with_id(i%len(self__modules), self)
+        except IndexError:
+            raise ModuleNotFoundException()
 
     def get_user_registration(self):
         form = self.user_registration
@@ -2554,7 +2566,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @parse_int([1])
     def delete_module(self, module_id):
-        module = self.modules[module_id]
+        module = self.get_module(module_id)
         record = DeleteModuleRecord(
             domain=self.domain,
             app_id=self.id,

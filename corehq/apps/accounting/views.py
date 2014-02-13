@@ -17,7 +17,8 @@ from corehq.apps.accounting.interface import AccountingInterface, SubscriptionIn
 from corehq.apps.accounting.models import (SoftwareProductType, Invoice, BillingAccount, CreditLine, Subscription,
                                            SoftwarePlanVersion, SoftwarePlan)
 from corehq.apps.accounting.async_handlers import (FeatureRateAsyncHandler, Select2RateAsyncHandler,
-                                                   SoftwareProductRateAsyncHandler)
+                                                   SoftwareProductRateAsyncHandler, Select2BillingInfoHandler,
+                                                   Select2SubscriptionInfoHandler)
 from corehq.apps.accounting.user_text import PricingTable
 from corehq.apps.accounting.utils import LazyEncoder, fmt_feature_rate_dict, fmt_product_rate_dict
 from corehq.apps.domain.decorators import require_superuser
@@ -52,6 +53,25 @@ class BillingAccountsSectionView(AccountingSectionView):
         }]
 
 
+class AsyncHandlerMixin():
+    async_handlers = []
+
+    @property
+    def handler_slug(self):
+        return self.request.POST.get('handler')
+
+    def get_async_handler(self):
+        handler_class = dict([(h.slug, h) for h in self.async_handlers])[self.handler_slug]
+        return handler_class(self.request)
+
+    @property
+    @memoized
+    def response(self):
+        if self.handler_slug in [h.slug for h in self.async_handlers]:
+            return self.get_async_handler().get_response()
+        return None
+
+
 class NewBillingAccountView(BillingAccountsSectionView):
     page_title = 'New Billing Account'
     template_name = 'accounting/accounts_base.html'
@@ -82,10 +102,13 @@ class NewBillingAccountView(BillingAccountsSectionView):
             return self.get(request, *args, **kwargs)
 
 
-class ManageBillingAccountView(BillingAccountsSectionView):
+class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
     page_title = 'Manage Billing Account'
     template_name = 'accounting/accounts.html'
     urlname = 'manage_billing_account'
+    async_handlers = [
+        Select2BillingInfoHandler,
+    ]
 
     @property
     @memoized
@@ -130,6 +153,8 @@ class ManageBillingAccountView(BillingAccountsSectionView):
         return reverse(self.urlname, args=(self.args[0],))
 
     def post(self, request, *args, **kwargs):
+        if self.response is not None:
+            return self.response
         if 'account' in self.request.POST and self.account_form.is_valid():
             self.account_form.update_account_and_contacts(self.account)
         elif 'adjust_credit' in self.request.POST and self.credit_form.is_valid():
@@ -138,10 +163,13 @@ class ManageBillingAccountView(BillingAccountsSectionView):
         return self.get(request, *args, **kwargs)
 
 
-class NewSubscriptionView(AccountingSectionView):
+class NewSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
     page_title = 'New Subscription'
     template_name = 'accounting/subscriptions_base.html'
     urlname = 'new_subscription'
+    async_handlers = [
+        Select2SubscriptionInfoHandler,
+    ]
 
     @property
     @memoized
@@ -173,6 +201,8 @@ class NewSubscriptionView(AccountingSectionView):
         }]
 
     def post(self, request, *args, **kwargs):
+        if self.response is not None:
+            return self.response
         if self.subscription_form.is_valid():
             subscription = self.subscription_form.create_subscription()
             return HttpResponseRedirect(
@@ -256,7 +286,8 @@ class EditSubscriptionView(AccountingSectionView):
 
     def post(self, request, *args, **kwargs):
         if 'set_subscription' in self.request.POST and self.subscription_form.is_valid():
-            self.subscription_form.update_subscription(self.subscription)
+            new_subscription = self.subscription_form.update_subscription(self.subscription)
+            return HttpResponseRedirect(reverse(self.urlname, args=(unicode(new_subscription.id),)))
         elif 'adjust_credit' in self.request.POST and self.credit_form.is_valid():
             self.credit_form.adjust_credit(subscription=self.subscription)
         elif 'cancel_subscription' in self.request.POST:
@@ -264,11 +295,7 @@ class EditSubscriptionView(AccountingSectionView):
         return self.get(request, *args, **kwargs)
 
     def cancel_subscription(self):
-        if self.subscription.date_start > datetime.date.today():
-            self.subscription.date_start = datetime.date.today()
-        self.subscription.date_end = datetime.date.today()
-        self.subscription.is_active = False
-        self.subscription.save()
+        self.subscription.cancel_subscription()
         self.subscription_canceled = True
 
 
@@ -308,7 +335,7 @@ class NewSoftwarePlanView(AccountingSectionView):
         return self.get(request, *args, **kwargs)
 
 
-class EditSoftwarePlanView(AccountingSectionView):
+class EditSoftwarePlanView(AccountingSectionView, AsyncHandlerMixin):
     template_name = 'accounting/plans.html'
     urlname = 'edit_software_plan'
     page_title = "Edit Software Plan"
@@ -366,17 +393,9 @@ class EditSoftwarePlanView(AccountingSectionView):
             'url': SoftwarePlanInterface.get_url(),
         }]
 
-    @property
-    def handler_slug(self):
-        return self.request.POST.get('handler')
-
-    def get_async_handler(self):
-        handler_class = dict([(h.slug, h) for h in self.async_handlers])[self.handler_slug]
-        return handler_class(self.request)
-
     def post(self, request, *args, **kwargs):
-        if self.handler_slug in [h.slug for h in self.async_handlers]:
-            return self.get_async_handler().get_response()
+        if self.response is not None:
+            return self.response
         if 'update_version' in request.POST:
             if self.software_plan_version_form.is_valid():
                 self.software_plan_version_form.save(request)

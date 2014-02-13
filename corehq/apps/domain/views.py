@@ -430,8 +430,13 @@ class DomainSubscriptionView(DomainAccountingSettings):
 
     def _fmt_credit(self, credit_amount=None):
         if credit_amount is None:
-            return "--"
-        return _("USD %s") % credit_amount
+            return {
+                'amount': "--",
+            }
+        return {
+            'amount': _("USD %s") % credit_amount.quantize(Decimal(10) ** -2),
+            'is_visible': credit_amount != Decimal('0.0'),
+        }
 
     def _credit_grand_total(self, credit_lines):
         return sum([c.balance for c in credit_lines]) if credit_lines else Decimal('0.00')
@@ -870,7 +875,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
 
                     # set the license of every multimedia file that doesn't yet have a license set
                     if not m_file.license:
-                        m_file.update_or_add_license(self.domain, type=new_license)
+                        m_file.update_or_add_license(self.domain, type=new_license, should_save=False)
 
                     m_file.save()
 
@@ -1405,7 +1410,7 @@ class AdvancedCommTrackSettingsView(BaseCommTrackAdminView):
 class ProBonoView(DomainAccountingSettings):
     template_name = 'domain/pro_bono.html'
     urlname = 'pro_bono'
-    page_title = ugettext_noop("Pro Bono Application")
+    page_title = ugettext_noop("Pro-Bono Application")
     is_submitted = False
 
     @property
