@@ -8,7 +8,7 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.orgs.models import Organization
 from corehq.apps.reminders.models import CaseReminderHandler, RECIPIENT_SURVEY_SAMPLE, METHOD_SMS_SURVEY, METHOD_IVR_SURVEY
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, UserRole
 from couchexport.models import SavedExportSchema
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
@@ -69,6 +69,7 @@ class DomainDowngradeStatusHandler(BaseDowngradeHandler):
         privileges.INBOUND_SMS,
         privileges.DEIDENTIFIED_DATA,
         privileges.MOBILE_WORKER_CREATION,
+        privileges.ROLE_BASED_ACCESS,
     ]
 
     def _fmt_alert(self, message, details=None):
@@ -267,3 +268,72 @@ class DomainDowngradeStatusHandler(BaseDowngradeHandler):
                 "It seems that the plan %s did not have rate for Mobile Workers. This is problematic." %
                     self.new_plan_version.plan.name
                 )
+
+    @property
+    def response_role_based_access(self):
+        """
+        Alert the user if there are currently custom roles set up for the domain.
+        """
+        db = UserRole.get_db()
+        user_roles_query = db.view(
+            'users/roles_by_domain',
+            startkey=[self.domain.name],
+            endkey=[self.domain.name, {}],
+            reduce=False,
+        ).all()
+        user_role_ids = [r['id'] for r in user_roles_query]
+
+        EDIT_WEB_USERS = 'edit_web_users'
+        EDIT_CC_USERS = 'edit_commcare_users'
+        EDIT_APPS = 'edit_apps'
+        EDIT_DATA = 'edit_data'
+        VIEW_REPORTS = 'view_reports'
+
+        STD_ROLES = {
+            'Read Only': {
+                'on': [VIEW_REPORTS],
+                'off': [EDIT_DATA, EDIT_APPS, EDIT_CC_USERS, EDIT_WEB_USERS],
+            },
+            'Field Implementer': {
+                'on': [VIEW_REPORTS, EDIT_CC_USERS],
+                'off': [EDIT_DATA, EDIT_APPS, EDIT_WEB_USERS],
+            },
+            'App Editor': {
+                'on': [VIEW_REPORTS, EDIT_APPS],
+                'off': [EDIT_DATA, EDIT_WEB_USERS, EDIT_CC_USERS],
+            }
+        }
+
+        def _is_custom_role(doc):
+            role_name = doc['name']
+            if not role_name in STD_ROLES.keys():
+                return True
+            doc_perms = doc['permissions']
+            if len(doc_perms['view_report_list']) > 0:
+                return True
+            std_perms = STD_ROLES[role_name]
+            def _is_match(status, val):
+                return sum([doc_perms[k] == val for k in std_perms[status]]) == len(std_perms[status])
+            if not _is_match('on', True):
+                return True
+            if not _is_match('off', False):
+                return True
+            return False
+
+        custom_roles = []
+        for role_doc in iter_docs(db, user_role_ids):
+            if _is_custom_role(role_doc):
+                custom_roles.append(role_doc['name'])
+
+        num_roles = len(custom_roles)
+        if num_roles > 0:
+            return self._fmt_alert(
+                ungettext(
+                    "You have %(num_roles)d Custom Role configured for your project. If you "
+                    "select this plan, all users with that role will change to having the Read Only role.",
+                    "You have %(num_roles)d Custom Roles configured for your project . If you "
+                    "select this plan, all users with these roles will change to having the Read Only role.",
+                    num_roles
+                ) % {
+                    'num_roles': num_roles,
+                }, custom_roles)
