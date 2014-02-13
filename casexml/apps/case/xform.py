@@ -1,6 +1,7 @@
 import logging
 
 from couchdbkit.resource import ResourceNotFound
+import redis
 from casexml.apps.case.signals import cases_received
 from couchforms.models import XFormInstance
 from dimagi.utils.chunked import chunked
@@ -122,7 +123,10 @@ class CaseDbCache(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         for lock in self.locks:
             if lock:
-                lock.release()
+                try:
+                    lock.release()
+                except redis.ConnectionError:
+                    pass
 
     def validate_doc(self, doc):
         if self.domain and doc.domain != self.domain:
@@ -144,8 +148,12 @@ class CaseDbCache(object):
             if self.strip_history:
                 case_doc = CommCareCase.get_lite(case_id)
             elif self.lock:
-                case_doc, lock = CommCareCase.get_locked_obj(_id=case_id)
-                self.locks.append(lock)
+                try:
+                    case_doc, lock = CommCareCase.get_locked_obj(_id=case_id)
+                except redis.ConnectionError:
+                    case_doc = CommCareCase.get(case_id)
+                else:
+                    self.locks.append(lock)
             else:
                 case_doc = CommCareCase.get(case_id)
         except ResourceNotFound:
