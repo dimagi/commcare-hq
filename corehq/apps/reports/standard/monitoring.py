@@ -345,8 +345,7 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
     slug = "daily_form_stats"
     name = ugettext_noop("Daily Form Activity")
 
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-                'corehq.apps.reports.fields.GroupField',
+    fields = [  'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
                 'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
                 'corehq.apps.reports.fields.DatespanField']
 
@@ -383,11 +382,13 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
             endkey=key+[self.datespan.enddate_param_utc if self.by_submission_time else self.datespan.enddate_param]
         ).all()
 
-        user_map = dict([(user.get('user_id'), i) for (i, user) in enumerate(self.users)])
+        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
+        user_map = dict([(user.get('user_id'), i) for (i, user) in enumerate(users_data["combined_users"])])
         date_map = dict([(date.strftime(DATE_FORMAT), i+1) for (i,date) in enumerate(self.dates)])
-        rows = [[0]*(2+len(date_map)) for _tmp in range(len(self.users))]
+        rows = [[0]*(2+len(date_map)) for _tmp in range(len(users_data["combined_users"]))]
         total_row = [0]*(2+len(date_map))
 
+        user_ids = [user.get('user_id') for user in users_data["combined_users"]]
         for result in results:
             _tmp, _domain, date = result['key']
             date = dateutil.parser.parse(date)
@@ -396,12 +397,12 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
             date = date.isoformat()
             val = result['value']
             user_id = val.get("user_id")
-            if user_id in self.user_ids:
+            if user_id in user_ids:
                 date_key = date_map.get(date[0:10], None)
                 if date_key:
                     rows[user_map[user_id]][date_key] += 1
 
-        for i, user in enumerate(self.users):
+        for i, user in enumerate(users_data["combined_users"]):
             rows[i][0] = self.get_user_link(user)
             total = sum(rows[i][1:-1])
             rows[i][-1] = total
