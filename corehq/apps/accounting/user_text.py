@@ -11,7 +11,7 @@ DESC_BY_EDITION = {
     },
     Edition.STANDARD: {
         'name': _("Standard"),
-        'description': _("For projects with a medium set (up to 250) of mobile users that want to "
+        'description': _("For projects with a medium set (up to 100) of mobile users that want to "
                          "build in limited SMS workflows and have increased data security needs."),
     },
     Edition.PRO: {
