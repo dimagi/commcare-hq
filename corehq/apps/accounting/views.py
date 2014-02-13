@@ -17,7 +17,8 @@ from corehq.apps.accounting.interface import AccountingInterface, SubscriptionIn
 from corehq.apps.accounting.models import (SoftwareProductType, Invoice, BillingAccount, CreditLine, Subscription,
                                            SoftwarePlanVersion, SoftwarePlan)
 from corehq.apps.accounting.async_handlers import (FeatureRateAsyncHandler, Select2RateAsyncHandler,
-                                                   SoftwareProductRateAsyncHandler, Select2BillingInfoHandler)
+                                                   SoftwareProductRateAsyncHandler, Select2BillingInfoHandler,
+                                                   Select2SubscriptionInfoHandler)
 from corehq.apps.accounting.user_text import PricingTable
 from corehq.apps.accounting.utils import LazyEncoder, fmt_feature_rate_dict, fmt_product_rate_dict
 from corehq.apps.domain.decorators import require_superuser
@@ -162,10 +163,13 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
         return self.get(request, *args, **kwargs)
 
 
-class NewSubscriptionView(AccountingSectionView):
+class NewSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
     page_title = 'New Subscription'
     template_name = 'accounting/subscriptions_base.html'
     urlname = 'new_subscription'
+    async_handlers = [
+        Select2SubscriptionInfoHandler,
+    ]
 
     @property
     @memoized
@@ -197,6 +201,8 @@ class NewSubscriptionView(AccountingSectionView):
         }]
 
     def post(self, request, *args, **kwargs):
+        if self.response is not None:
+            return self.response
         if self.subscription_form.is_valid():
             subscription = self.subscription_form.create_subscription()
             return HttpResponseRedirect(
