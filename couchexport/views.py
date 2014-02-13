@@ -63,6 +63,6 @@ def download_saved_export(request, export_id):
     normalized_filename = unicodedata.normalize(
         'NFKD', unicode(export.configuration.filename),
     ).encode('ascii','ignore')
-    response['Content-Disposition'] = 'attachment; filename=%s' % normalized_filename
+    response['Content-Disposition'] = 'attachment; filename="%s"' % normalized_filename
 
     return response
