@@ -78,11 +78,13 @@ class DoNotInvoiceFilter(BaseSingleOptionFilter):
     slug = 'do_not_invoice'
     label = _('Do Not Invoice')
     default_text = _('All')
-    invoice = _('Send invoice')
-    do_not_invoice = _('Do not invoice')
+    invoice = "SEND_INVOICE"
+    invoice_userfacing = _('Send invoice')
+    do_not_invoice = "DO_NOT_INVOICE"
+    do_not_invoice_userfacing = _('Do not invoice')
     options = [
-        (invoice, invoice),
-        (do_not_invoice, do_not_invoice),
+        (invoice, invoice_userfacing),
+        (do_not_invoice, do_not_invoice_userfacing),
     ]
 
 
