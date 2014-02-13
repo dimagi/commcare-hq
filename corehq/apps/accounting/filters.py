@@ -74,6 +74,18 @@ class ActiveStatusFilter(BaseSingleOptionFilter):
     ]
 
 
+class DoNotInvoiceFilter(BaseSingleOptionFilter):
+    slug = 'do_not_invoice'
+    label = _('Do Not Invoice')
+    default_text = _('All')
+    invoice = _('Send invoice')
+    do_not_invoice = _('Do not invoice')
+    options = [
+        (invoice, invoice),
+        (do_not_invoice, do_not_invoice),
+    ]
+
+
 class DateRangeFilter(BaseReportFilter):
     template = 'reports/filters/daterange.html'
     default_days = 7
