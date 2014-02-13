@@ -1,4 +1,5 @@
 from corehq.apps.users.models import CommCareUser
+from corehq.elastic import es_query, ES_URLS
 from corehq.util import remove_dups
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext_noop
@@ -213,6 +214,43 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     label = ugettext_noop("Groups or Users")
     default_options = ["_all_mobile_workers"]
     placeholder = ugettext_noop("Start typing to specify the groups and users to include in the report. You can select multiple users and groups.")
+
+    @classmethod
+    def pull_users_from_es(cls, domain, request, initial_query=None, **kwargs):
+        emws = request.GET.getlist('emw')
+        user_ids = [u[3:] for u in filter(lambda s: s.startswith("u__"), emws)]
+        group_ids = [g[3:] for g in filter(lambda s: s.startswith("g__"), emws)]
+
+        if initial_query is None:
+            initial_query = {"match_all": {}}
+        q = {"query": initial_query}
+        doc_types_to_include = ["CommCareUser"]
+        if "t__2" in emws:  # Admin users selected
+            doc_types_to_include.append("AdminUser")
+        if "t__3" in emws:  # Unknown users selected
+            doc_types_to_include.append("UnknownUser")
+
+        query_filter = { "and": [{"terms": {"doc_type": doc_types_to_include}}, {"term": {"domain": domain}}]}
+        if "_all_mobile_workers" not in emws:
+            or_filter = {"or": [
+                {"terms": {"_id": user_ids}},
+                {"terms": {"__group_ids": group_ids}},
+            ]}
+
+            # for setting up an 'or' filter for non commcare users. This occurs when all mobile workers is not selected,
+            # but admin, demo, or unknown users are
+            other_doc_types = doc_types_to_include[:]
+            other_doc_types.remove("CommCareUser")
+            if doc_types_to_include:
+                or_filter["or"].append({"terms": {"doc_type": other_doc_types}})
+
+            query_filter["and"].append(or_filter)
+
+        if "t__1" in emws:  # Demo user selected
+            query_filter = {"or": [{"term": {"username": "demo_user"}}, query_filter]}
+
+        q["filter"] = query_filter
+        return es_query(es_url=ES_URLS["users"], q=q, **kwargs)
 
     @classmethod
     @memoized
