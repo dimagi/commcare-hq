@@ -16,7 +16,7 @@ from django.core.exceptions import ValidationError
 from django.template.loader import render_to_string
 from couchdbkit.ext.django.schema import *
 from couchdbkit.resource import ResourceNotFound
-from dimagi.utils.couch.database import get_safe_write_kwargs
+from dimagi.utils.couch.database import get_safe_write_kwargs, iter_docs
 from dimagi.utils.logging import notify_exception
 
 from dimagi.utils.decorators.memoized import memoized
@@ -1420,7 +1420,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         else:
             return 0
 
-    def get_cases(self, deleted=False, last_submitter=False):
+    def get_cases(self, deleted=False, last_submitter=False, wrap=True):
         if deleted:
             view_name = 'users/deleted_cases_by_user'
         elif last_submitter:
@@ -1428,12 +1428,15 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         else:
             view_name = 'case/by_owner'
 
-        return CommCareCase.view(view_name,
+        db = CommCareCase.get_db()
+        case_ids = [r["id"] for r in db.view(view_name,
             startkey=[self.user_id],
             endkey=[self.user_id, {}],
             reduce=False,
-            include_docs=True
-        )
+        )]
+        for doc in iter_docs(db, case_ids):
+            yield CommCareCase.wrap(doc) if wrap else doc
+
 
     @property
     def case_count(self):
