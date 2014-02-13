@@ -18,3 +18,4 @@ after_success:
  - coverage report
 services:
  - couchdb
+ - redis

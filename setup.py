@@ -14,7 +14,7 @@ setup(
         'couchforms==2.1.0',
         'couchexport',
         'decorator',
-        'dimagi-utils>=1.0.8',
+        'dimagi-utils>=1.0.9',
         'django==1.3.7',
         'requests==2.0.0',
         'django-digest',
