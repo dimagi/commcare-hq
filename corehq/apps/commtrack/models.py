@@ -29,7 +29,7 @@ from corehq.apps.commtrack.xmlutil import XML
 from corehq.apps.commtrack.exceptions import LinkedSupplyPointNotFoundError
 from couchexport.models import register_column_type, ComplexExportColumn
 from casexml.apps.stock.models import StockState
-from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids
+from dimagi.utils.dates import force_to_datetime
 
 from dimagi.utils.decorators.memoized import memoized
 
