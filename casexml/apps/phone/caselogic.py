@@ -111,10 +111,13 @@ class CaseSyncOperation(object):
             return set([c.case_id for c in cases])
         
         def _get_case(case_id):
-            return self._all_relevant_cases[case_id] \
-                if case_id in self._all_relevant_cases else CommCareCase.get(case_id)
-            
-        
+            if case_id in self._all_relevant_cases:
+                return self._all_relevant_cases[case_id]
+            else:
+                case = CommCareCase.get(case_id)
+                self._all_relevant_cases[case_id] = case
+                return case
+
         self.actual_relevant_cases = set(self._all_relevant_cases.values())
         
         
