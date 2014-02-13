@@ -19,6 +19,14 @@ from couchexport.properties import TimeStampProperty, JsonProperty
 from couchdbkit.consumer import Consumer
 from dimagi.utils.logging import notify_exception
 
+column_types = {}
+
+
+def register_column_type(cls):
+    column_types[cls.__name__] = cls
+    return cls
+
+
 class Format(object):
     """
     Supported formats go here.
@@ -222,6 +230,7 @@ class ExportSchema(Document, UnicodeMixIn):
     def get_new_docs(self, database=None):
         return iter_docs(self.get_new_ids(database))
 
+
 class ExportColumn(DocumentSchema):
     """
     A column configuration, for export
@@ -238,13 +247,22 @@ class ExportColumn(DocumentSchema):
     def wrap(self, data):
         if 'is_sensitive' not in data and data.get('transform', None):
             data['is_sensitive'] = True
-        return super(ExportColumn, self).wrap(data)
+
+        if 'doc_type' in data and \
+           self.__name__ == ExportColumn.__name__ and \
+           self.__name__ != data['doc_type']:
+            if data['doc_type'] in column_types:
+                return column_types[data['doc_type']].wrap(data)
+            else:
+                raise ResourceNotFound('Unknown column type: %s', data)
+        else:
+            return super(ExportColumn, self).wrap(data)
 
     def get_display(self):
-         return u'{primary}{extra}'.format(
-             primary=self.display,
-             extra=" [sensitive]" if self.is_sensitive else ''
-         )
+        return u'{primary}{extra}'.format(
+            primary=self.display,
+            extra=" [sensitive]" if self.is_sensitive else ''
+        )
 
     def to_config_format(self, selected=True):
         return {
@@ -256,6 +274,25 @@ class ExportColumn(DocumentSchema):
             "tag": self.tag,
             "show": self.show,
         }
+
+
+class ComplexExportColumn(ExportColumn):
+    """
+    A single column config that can represent multiple actual columns
+    in the excel sheet.
+    """
+    def get_headers(self):
+        """
+        Return a list of headers that this column contributes to
+        """
+        raise NotImplementedError()
+
+    def get_data(self, value):
+        """
+        Return a list of data values that correspond to the headers
+        """
+        raise NotImplementedError()
+
 
 class ExportTable(DocumentSchema):
     """
@@ -275,7 +312,7 @@ class ExportTable(DocumentSchema):
     @classmethod
     def default(cls, index):
         return cls(index=index, display="", columns=[])
-        
+
     @property
     @memoized
     def displays_by_index(self):
@@ -297,17 +334,21 @@ class ExportTable(DocumentSchema):
         from couchexport.export import FormattedRow
         headers = []
         for col in self.columns:
-            display = col.get_display()
-            if col.index == 'id':
-                id_len = len(
-                    filter(lambda part: part == '#', self.index.split('.'))
-                )
-                headers.append(display)
-                if id_len > 1:
-                    for i in range(id_len):
-                        headers.append('{id}__{i}'.format(id=display, i=i))
+            if issubclass(type(col), ComplexExportColumn):
+                for header in col.get_headers():
+                    headers.append(header)
             else:
-                headers.append(display)
+                display = col.get_display()
+                if col.index == 'id':
+                    id_len = len(
+                        filter(lambda part: part == '#', self.index.split('.'))
+                    )
+                    headers.append(display)
+                    if id_len > 1:
+                        for i in range(id_len):
+                            headers.append('{id}__{i}'.format(id=display, i=i))
+                else:
+                    headers.append(display)
         return FormattedRow(headers)
 
     @property
@@ -328,9 +369,14 @@ class ExportTable(DocumentSchema):
             try:
                 i = self.row_positions_by_index[column.index]
                 val = row_data[i]
-                yield column, val
             except KeyError:
-                yield column, ''
+                val = ''
+
+            if issubclass(type(column), ComplexExportColumn):
+                for value in column.get_data(val):
+                    yield column, value
+            else:
+                yield column, val
 
     def trim(self, data, doc, apply_transforms, global_transform):
         from couchexport.export import FormattedRow, Constant, transform_error_constant
