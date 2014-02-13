@@ -215,7 +215,6 @@ class DomainDowngradeStatusHandler(BaseDowngradeHandler):
         """
         De-id exports will be hidden
         """
-        print "DEID"
         startkey = json.dumps([self.domain.name, ""])[:-3]
         endkey = "%s{" % startkey
         num_deid_reports = SavedExportSchema.view("couchexport/saved_export_schemas",
@@ -223,8 +222,6 @@ class DomainDowngradeStatusHandler(BaseDowngradeHandler):
             endkey=endkey,
             include_docs=False,
         ).count()
-
-        print "num deid", num_deid_reports
         if num_deid_reports > 0:
             return self._fmt_alert(
                 ungettext(
