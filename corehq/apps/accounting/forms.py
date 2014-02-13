@@ -247,8 +247,10 @@ class SubscriptionForm(forms.Form):
         return domain_name
 
     def clean_end_date(self):
-        if self.cleaned_data['start_date'] > self.cleaned_data['end_date']:
+        if (self.cleaned_data['end_date'] is not None
+            and self.cleaned_data['start_date'] > self.cleaned_data['end_date']):
             raise ValidationError("End date must be after start date.")
+        return self.cleaned_data['end_date']
 
     def create_subscription(self):
         account = BillingAccount.objects.get(id=self.cleaned_data['account'])
