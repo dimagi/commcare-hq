@@ -420,8 +420,7 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
 class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin):
     name = ugettext_noop("Form Completion Time")
     slug = "completion_times"
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.GroupField',
+    fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
               'corehq.apps.reports.filters.forms.SingleFormByApplicationFilter',
               'corehq.apps.reports.fields.DatespanField']
 
@@ -509,7 +508,8 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin):
 
         durations = []
         totalcount = 0
-        for user in self.users:
+        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
+        for user in users_data["combined_users"]:
             stats = self.get_user_data(user.get('user_id'))
             rows.append([self.get_user_link(user),
                          stats['error_msg'] if stats['error_msg'] else _fmt_ts(stats['avg']),
