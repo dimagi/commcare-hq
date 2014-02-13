@@ -105,5 +105,5 @@ def export_raw_data(export_tag, filename=None):
     response = HttpResponse(f.getvalue())
     f.close()
     response['Content-Type'] = "application/zip"
-    response['Content-Disposition'] = "attachment; filename=%s.zip" % filename
+    response['Content-Disposition'] = 'attachment; filename="%s.zip"' % filename
     return response
