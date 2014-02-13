@@ -5,6 +5,7 @@ from couchdbkit.ext.django.schema import DateTimeProperty, StringProperty
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.accounting.downgrade import DomainDowngradeActionHandler
@@ -17,6 +18,7 @@ from corehq.apps.accounting.exceptions import (CreditLineError, AccountingError,
 from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES, assure_domain_instance, get_change_status, get_privileges
 
 global_logger = logging.getLogger(__name__)
+integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
 
 
 class BillingAccountType(object):
@@ -306,7 +308,8 @@ class FeatureRate(models.Model):
     monthly_fee = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2,
                                       verbose_name="Monthly Fee")
     monthly_limit = models.IntegerField(default=0,
-                                        verbose_name="Monthly Included Limit")
+                                        verbose_name="Monthly Included Limit",
+                                        validators=integer_field_validators)
     per_excess_fee = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2,
                                          verbose_name="Fee Per Excess of Limit")
     date_created = models.DateTimeField(auto_now_add=True)
