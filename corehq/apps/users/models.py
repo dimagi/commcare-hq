@@ -29,6 +29,7 @@ from corehq.apps.domain.utils import normalize_domain_name, domain_restricts_sup
 from corehq.apps.domain.models import LicenseAgreement
 from corehq.apps.users.util import normalize_username, user_data_from_registration_form, format_username, raw_username
 from corehq.apps.users.xml import group_fixture
+from corehq.apps.users.tasks import tag_doc_as_deleted
 from corehq.apps.sms.mixin import CommCareMobileContactMixin, VerifiedNumber, PhoneNumberInUseException, InvalidFormatException
 from corehq.elastic import es_wrapper
 from couchforms.models import XFormInstance
@@ -1462,13 +1463,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self.base_doc += suffix
             self['-deletion_id'] = deletion_id
         for form in self.get_forms():
-            form.doc_type += suffix
-            form['-deletion_id'] = deletion_id
-            form.save()
+            tag_doc_as_deleted.delay(form, deletion_id)
         for case in self.get_cases():
-            case.doc_type += suffix
-            case['-deletion_id'] = deletion_id
-            case.save()
+            tag_doc_as_deleted.delay(case, deletion_id)
 
         for phone_number in self.get_verified_numbers(True).values():
             phone_number.retire(deletion_id)
