@@ -30,17 +30,15 @@ class EmwfOptionsView(JSONResponseMixin, CacheableRequestMixIn, View):
         all_workers = [("_all_mobile_workers", _("[All mobile workers]"))]
         user_types = [("t__%s" % (i+1), "[%s]" % name)
                 for i, name in enumerate(HQUserType.human_readable[1:])]
-        group_options = [("g__%s" % g.get_id, "%s [group]" % g.name)
-                for g in Group.get_reporting_groups(self.domain)]
-        options = all_workers + user_types + group_options
+        options = all_workers + user_types
+        options += self.get_groups()
         options += self.get_users()
         return [{'id': id, 'text': text} for id, text in options]
 
-    # TODO: sort this
     def get_users(self):
         fields = ['_id', 'username', 'first_name', 'last_name']
-        users = es_wrapper('users', domain=self.domain,# doc_type='CommCareUser',
-            fields=fields, size=10, sort_by='username', order='asc')
+        users = es_wrapper('users', domain=self.domain, doc_type='CommCareUser',
+            fields=fields, start_at=0, size=10, sort_by='username', order='asc')
         def user_tuple(u):
             user = _report_user_dict(u)
             uid = "u__%s" % user['user_id']
@@ -49,4 +47,8 @@ class EmwfOptionsView(JSONResponseMixin, CacheableRequestMixIn, View):
         return map(user_tuple, users)
 
     def get_groups(self):
-        pass
+        fields = ['_id', 'name']
+        groups = es_wrapper('groups', domain=self.domain, doc_type='Group',
+            fields=fields, start_at=0, size=10, sort_by='name', order='asc')
+        return (("g__%s" % g['_id'], "%s [group]" % g['name'])
+            for g in groups)
