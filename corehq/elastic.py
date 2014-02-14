@@ -210,7 +210,7 @@ def es_wrapper(index, domain=None, q=None, doc_type=None, fields=None,
 
     # query components
     match_all = {"match_all": {}}
-    fuzzy_query = {"fuzzy_like_this": {"like_text": q}}
+    query_string = {"query_string": {"query": q}}
     doc_type_filter = {"term": {"doc_type": doc_type}}
     domain_filter = {"or": [
         {"term": {"domain.exact": domain}},
@@ -221,7 +221,7 @@ def es_wrapper(index, domain=None, q=None, doc_type=None, fields=None,
     query = {"query": {
         "filtered": {
             "filter": {"and": []},
-            "query": fuzzy_query if q else match_all
+            "query": query_string if q else match_all
         }
     }}
 
