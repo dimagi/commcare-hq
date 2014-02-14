@@ -26,11 +26,11 @@ from corehq.apps.accounting.user_text import PricingTable
 from corehq.apps.accounting.utils import LazyEncoder, fmt_feature_rate_dict, fmt_product_rate_dict
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq import toggles, privileges
-from django_prbac.decorators import requires_privilege
+from django_prbac.decorators import requires_privilege_raise404
 from toggle.decorators import require_toggle
 
 
-@requires_privilege(privileges.ACCOUNTING_ADMIN)
+@requires_privilege_raise404(privileges.ACCOUNTING_ADMIN)
 def accounting_default(request):
     return HttpResponseRedirect(AccountingInterface.get_url())
 
