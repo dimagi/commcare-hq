@@ -1101,17 +1101,15 @@ class EnterprisePlanContactForm(forms.Form):
             'company': self.cleaned_data['company_name'],
             'message': self.cleaned_data['message'],
             'domain': self.domain,
+            'email': self.web_user.email
         }
         html_content = render_to_string('accounting/enterprise_request_email.html', context)
         text_content = """
+        Email: %(email)s
         Name: %(name)s
         Company: %(company)s
         Domain: %(domain)s
         Message:
         %(message)s
         """ % context
-        send_HTML_email(subject, settings.SUPPORT_EMAIL, html_content, text_content,
-                        email_from=self.web_user.email)
-
-
-
+        send_HTML_email(subject, settings.SUPPORT_EMAIL, html_content, text_content)
