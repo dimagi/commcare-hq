@@ -803,16 +803,6 @@ class ProjectSettingsTab(UITab):
                 }
             ])
 
-            try:
-                # so that corehq is not dependent on the billing submodule
-                from hqbilling.views import EditProjectBillingInfoView
-                project_info.append({
-                    'title': _(EditProjectBillingInfoView.page_title),
-                    'url': reverse(EditProjectBillingInfoView.urlname, args=[self.domain])
-                })
-            except ImportError:
-                pass
-
         from corehq.apps.domain.views import EditMyProjectSettingsView
         project_info.append({
             'title': _(EditMyProjectSettingsView.page_title),
