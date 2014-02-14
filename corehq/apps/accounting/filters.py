@@ -74,17 +74,17 @@ class ActiveStatusFilter(BaseSingleOptionFilter):
     ]
 
 
+INVOICE = "SEND_INVOICE"
+DO_NOT_INVOICE = "DO_NOT_INVOICE"
+
+
 class DoNotInvoiceFilter(BaseSingleOptionFilter):
     slug = 'do_not_invoice'
     label = _('Do Not Invoice')
     default_text = _('All')
-    invoice = "SEND_INVOICE"
-    invoice_userfacing = _('Send invoice')
-    do_not_invoice = "DO_NOT_INVOICE"
-    do_not_invoice_userfacing = _('Do not invoice')
     options = [
-        (invoice, invoice_userfacing),
-        (do_not_invoice, do_not_invoice_userfacing),
+        (INVOICE, _('Send invoice')),
+        (DO_NOT_INVOICE, _('Do not invoice')),
     ]
 
 

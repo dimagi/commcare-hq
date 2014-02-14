@@ -154,7 +154,7 @@ class SubscriptionInterface(AddItemInterface):
                     or ((ActiveStatusFilter.get_value(self.request, self.domain) == ActiveStatusFilter.active)
                             == subscription.is_active))\
                 and (DoNotInvoiceFilter.get_value(self.request, self.domain) is None
-                    or ((DoNotInvoiceFilter.get_value(self.request, self.domain) == DoNotInvoiceFilter.do_not_invoice)
+                    or ((DoNotInvoiceFilter.get_value(self.request, self.domain) == DO_NOT_INVOICE)
                             == subscription.do_not_invoice)):
                 rows.append([subscription.subscriber.domain,
                              mark_safe('<a href="%s">%s</a>'
