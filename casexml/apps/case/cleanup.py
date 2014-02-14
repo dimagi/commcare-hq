@@ -11,13 +11,13 @@ def rebuild_case(case_id):
     rebuild a case afer archiving / deliting it
     """
 
-    not_found = False
     try:
         case = CommCareCase.get(case_id)
+        found = True
     except ResourceNotFound:
         case = CommCareCase()
         case._id = case_id
-        not_found = True
+        found = False
 
     # clear actions, xform_ids, and close state
     # todo: properties too?
@@ -32,7 +32,7 @@ def rebuild_case(case_id):
     filtered_forms = [f for f in forms if f.doc_type == "XFormInstance"]
     sorted_forms = sorted(filtered_forms, key=lambda f: f.received_on)
     for form in sorted_forms:
-        if not_found and case.domain is None:
+        if not found and case.domain is None:
             case.domain = form.domain
         assert form.domain == case.domain
 
@@ -43,7 +43,7 @@ def rebuild_case(case_id):
 
     case.xform_ids = [f._id for f in sorted_forms]
     if not case.xform_ids:
-        if not_found:
+        if not found:
             return None
         # there were no more forms. 'delete' the case
         case.doc_type = 'CommCareCase-Deleted'
