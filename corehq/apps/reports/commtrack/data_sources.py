@@ -144,7 +144,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                 )
                 return self.aggregated_data(aggregates)
             else:
-                return self.raw_cases(stock_states, slugs)
+                return self.raw_product_states(stock_states, slugs)
 
         # TODO still need to support programs
         # if self.program_id:
@@ -179,7 +179,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             }
 
 
-    def raw_cases(self, stock_states, slugs):
+    def raw_product_states(self, stock_states, slugs):
         def _slug_attrib(slug, attrib, product, output):
             if not slugs or slug in slugs:
                 if callable(attrib):
