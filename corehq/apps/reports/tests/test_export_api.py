@@ -40,6 +40,10 @@ def get_export_response(client, previous="", include_errors=False):
                   "format": "html",
                   "use_cache": False})
 
+def _content(streaming_response):
+    return ''.join(streaming_response.streaming_content)
+
+
 class ExportTest(TestCase):
     
     def _clear_docs(self):
@@ -67,7 +71,7 @@ class ExportTest(TestCase):
         time.sleep(1)
         resp = get_export_response(c)
         self.assertEqual(200, resp.status_code)
-        self.assertTrue(resp.content is not None)
+        self.assertTrue(_content(resp) is not None)
         self.assertTrue("X-CommCareHQ-Export-Token" in resp)
 
         # blow away the timestamp property to ensure we're testing the
@@ -91,7 +95,7 @@ class ExportTest(TestCase):
         time.sleep(1)
         resp = get_export_response(c)
         self.assertEqual(200, resp.status_code)
-        self.assertTrue(resp.content is not None)
+        self.assertTrue(_content(resp) is not None)
         self.assertTrue("X-CommCareHQ-Export-Token" in resp)
         prev_token = resp["X-CommCareHQ-Export-Token"]
         
@@ -103,14 +107,13 @@ class ExportTest(TestCase):
         time.sleep(1)
         resp = get_export_response(c, prev_token)
         self.assertEqual(200, resp.status_code)
-        self.assertTrue(resp.content is not None)
+        self.assertTrue(_content(resp) is not None)
         self.assertTrue("X-CommCareHQ-Export-Token" in resp)
-        prev_token = resp["X-CommCareHQ-Export-Token"]
-        
-        full_data = get_export_response(c).content
-        partial_data = get_export_response(c, prev_token).content
+
+        full_data = _content(get_export_response(c))
+        partial_data = _content(get_export_response(c, prev_token))
         self.assertTrue(len(full_data) > len(partial_data))
-        
+
     def testExportFilter(self):
         c = Client()
         c.login(**{'username': 'test', 'password': 'foobar'})
@@ -123,7 +126,7 @@ class ExportTest(TestCase):
         submit_form(f)
         resp = get_export_response(c)
         self.assertEqual(200, resp.status_code)
-        initial_content = resp.content
+        initial_content = _content(resp)
         
         # resubmit, assert same since it's a dupe
         submit_form(f)
@@ -132,12 +135,11 @@ class ExportTest(TestCase):
         # hack: check for the number of rows to ensure the new one 
         # didn't get added. They aren't exactly the same because the
         # duplicate adds to the schema.
+        content = _content(resp)
         self.assertEqual(initial_content.count("<tr>"), 
-                         resp.content.count("<tr>"))
+                         content.count("<tr>"))
         
         # unless we explicitly include errors
         resp = get_export_response(c, include_errors=True)
         self.assertEqual(200, resp.status_code)
-        self.assertTrue(len(resp.content) > len(initial_content))
-        
-        
+        self.assertTrue(len(_content(resp)) > len(initial_content))
