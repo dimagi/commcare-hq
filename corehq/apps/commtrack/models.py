@@ -1257,7 +1257,7 @@ class StockExportColumn(ComplexExportColumn):
 
     def get_headers(self):
         for product_id, section in self._column_tuples:
-            yield "{product} ({section})".format(
+            yield u"{product} ({section})".format(
                 product=Product.get(product_id).name,
                 section=section
             )
