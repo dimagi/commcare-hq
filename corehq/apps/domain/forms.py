@@ -772,11 +772,7 @@ class ProBonoForm(forms.Form):
     def process_submission(self):
         try:
             params = {
-                'contact_email': self.cleaned_data['contact_email'],
-                'organization': self.cleaned_data['organization'],
-                'project_overview': self.cleaned_data['project_overview'],
-                'pay_only_features_needed': self.cleaned_data['pay_only_features_needed'],
-                'duration_of_project': self.cleaned_data['duration_of_project'],
+                'pro_bono_form': self,
             }
             html_content = render_to_string("domain/email/pro_bono_application.html", params)
             text_content = render_to_string("domain/email/pro_bono_application.txt", params)

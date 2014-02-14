@@ -3,7 +3,8 @@
 
 {% block main_column %}
     {% if is_submitted %}
-        {% trans "Thank you for your submission." %}
+        <h4>{% trans "Thank you for your submission.  A representative will be in contact with you shortly." %}</h4>
+        {% include 'domain/pro_bono/submission.html' %}
     {% else %}
         {% crispy pro_bono_form %}
     {% endif %}
