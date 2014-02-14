@@ -72,7 +72,8 @@ class SyncBaseTest(TestCase):
         for i in l2:
             self.assertTrue(i in l1, "%s found in %s" % (i, l1))
     
-    def _testUpdate(self, sync_id, case_id_map, dependent_case_id_map={}):
+    def _testUpdate(self, sync_id, case_id_map, dependent_case_id_map=None):
+        dependent_case_id_map = dependent_case_id_map or {}
         sync_log = SyncLog.get(sync_id)
         
         # check case map
