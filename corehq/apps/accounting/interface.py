@@ -106,6 +106,7 @@ class SubscriptionInterface(AddItemInterface):
               'corehq.apps.accounting.interface.SubscriberFilter',
               'corehq.apps.accounting.interface.SalesforceContractIDFilter',
               'corehq.apps.accounting.interface.ActiveStatusFilter',
+              'corehq.apps.accounting.interface.DoNotInvoiceFilter',
               ]
     hide_filters = False
 
@@ -127,6 +128,7 @@ class SubscriptionInterface(AddItemInterface):
             DataTablesColumn("Salesforce Contract ID"),
             DataTablesColumn("Start Date"),
             DataTablesColumn("End Date"),
+            DataTablesColumn("Do Not Invoice"),
             DataTablesColumn("Action"),
         )
 
@@ -146,9 +148,14 @@ class SubscriptionInterface(AddItemInterface):
                 and (SubscriberFilter.get_value(self.request, self.domain) is None
                     or SubscriberFilter.get_value(self.request, self.domain) == subscription.subscriber.domain) \
                 and (SalesforceContractIDFilter.get_value(self.request, self.domain) is None
-                    or SalesforceContractIDFilter.get_value(self.request, self.domain) == subscription.salesforce_contract_id) \
+                    or (SalesforceContractIDFilter.get_value(self.request, self.domain)
+                            == subscription.salesforce_contract_id)) \
                 and (ActiveStatusFilter.get_value(self.request, self.domain) is None
-                    or (ActiveStatusFilter.get_value(self.request, self.domain) == ActiveStatusFilter.active) == subscription.is_active):
+                    or ((ActiveStatusFilter.get_value(self.request, self.domain) == ActiveStatusFilter.active)
+                            == subscription.is_active))\
+                and (DoNotInvoiceFilter.get_value(self.request, self.domain) is None
+                    or ((DoNotInvoiceFilter.get_value(self.request, self.domain) == DO_NOT_INVOICE)
+                            == subscription.do_not_invoice)):
                 rows.append([subscription.subscriber.domain,
                              mark_safe('<a href="%s">%s</a>'
                                        % (reverse(ManageBillingAccountView.urlname, args=(subscription.account.id,)),
@@ -158,6 +165,7 @@ class SubscriptionInterface(AddItemInterface):
                              subscription.salesforce_contract_id,
                              subscription.date_start,
                              subscription.date_end,
+                             subscription.do_not_invoice,
                              mark_safe('<a href="./%d" class="btn">Edit</a>' % subscription.id)])
 
         return rows
