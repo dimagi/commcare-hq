@@ -44,4 +44,4 @@ MAX_PRIVILEGES = [
 MOBILE_WORKER_CREATION = 'mobile_worker_creation'
 
 # Other privileges related specifically to accounting processes
-DIMAGI_OPERATIONS_TEAM = 'dimagi_operations_team'
+ACCOUNTING_ADMIN = 'accounting_admin'
