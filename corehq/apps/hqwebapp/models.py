@@ -6,6 +6,7 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop, ugettext_lazy
 from corehq import toggles, privileges
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
+from corehq.apps.accounting.models import BillingAccountAdmin
 from corehq.apps.domain.utils import get_adm_enabled_domains
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
@@ -823,16 +824,7 @@ class ProjectSettingsTab(UITab):
             from corehq.apps.domain.views import (
                 BasicCommTrackSettingsView,
                 AdvancedCommTrackSettingsView,
-                DomainSubscriptionView,
-                SelectPlanView,
             )
-
-            subscription = [
-                {
-                    'title': DomainSubscriptionView.page_title,
-                    'url': reverse(DomainSubscriptionView.urlname, args=[self.domain]),
-                },
-            ]
 
             if self.project.commtrack_enabled:
                 commtrack_settings = [
@@ -875,6 +867,24 @@ class ProjectSettingsTab(UITab):
                  ]}
             ])
             items.append((_('Project Administration'), administration))
+
+        user_is_billing_admin, billing_account = BillingAccountAdmin.get_admin_status_and_account(
+            self.couch_user, self.domain)
+        if user_is_billing_admin or self.couch_user.is_superuser:
+            from corehq.apps.domain.views import DomainSubscriptionView, EditExistingBillingAccountView
+            subscription = [
+                {
+                    'title': DomainSubscriptionView.page_title,
+                    'url': reverse(DomainSubscriptionView.urlname, args=[self.domain]),
+                },
+            ]
+            if billing_account is not None:
+                subscription.append(
+                    {
+                        'title':  EditExistingBillingAccountView.page_title,
+                        'url': reverse(EditExistingBillingAccountView.urlname, args=[self.domain]),
+                    },
+                )
             if toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, self.couch_user.username):
                 items.append((_('Subscription'), subscription))
 
@@ -889,6 +899,8 @@ class ProjectSettingsTab(UITab):
                 'url': reverse(EditInternalCalculationsView.urlname, args=[self.domain])
             }]
             items.append((_('Internal Data (Dimagi Only)'), internal_admin))
+
+
 
         return items
 

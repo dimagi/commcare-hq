@@ -9,6 +9,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.accounting.downgrade import DomainDowngradeActionHandler
+from corehq.apps.users.models import WebUser
 
 from django_prbac.models import Role
 from dimagi.utils.couch.database import SafeSaveDocument
@@ -150,6 +151,15 @@ class Currency(models.Model):
 class BillingAccountAdmin(models.Model):
     web_user = models.CharField(max_length=80, unique=True, db_index=True)
 
+    @classmethod
+    def get_admin_status_and_account(cls, web_user, domain):
+        if not isinstance(web_user, WebUser):
+            raise ValueError("web_user should be an instance of WebUser")
+        account = BillingAccount.get_account_by_domain(domain)
+        if account is None:
+            return web_user.is_domain_admin(domain), None
+        admin = account.billing_admins.filter(web_user=web_user.username)
+        return admin.count() > 0, account
 
 class BillingAccount(models.Model):
     """
@@ -186,29 +196,36 @@ class BillingAccount(models.Model):
         First try to grab the account used for the last subscription.
         If an account is not found, create it.
         """
+        is_new = False
+        account = cls.get_account_by_domain(domain)
+        if account is None:
+            is_new = True
+            account_type = account_type or BillingAccountType.INVOICE_GENERATED
+            account = BillingAccount(
+                name="Account for Project %s" % domain,
+                created_by=created_by,
+                created_by_domain=domain,
+                currency=Currency.get_default(),
+                account_type=account_type,
+            )
+            account.save()
+        return account, is_new
+
+    @classmethod
+    def get_account_by_domain(cls, domain):
         try:
             last_subscription = Subscription.objects.filter(subscriber__domain=domain).latest('date_end')
-            return last_subscription.account, False
+            return last_subscription.account
         except ObjectDoesNotExist:
             pass
-        account_type = account_type or BillingAccountType.INVOICE_GENERATED
         try:
-            return cls.objects.get(created_by_domain=domain), False
+            return cls.objects.get(created_by_domain=domain)
         except cls.DoesNotExist:
             pass
         except cls.MultipleObjectsReturned:
             global_logger.error("Multiple billing accounts showed up for the domain '%s'. The "
                                 "latest one was served, but you should reconcile very soon." % domain)
-            return cls.objects.filter(created_by_domain=domain).latest('date_created'), False
-        account = BillingAccount(
-            name="Account for Project %s" % domain,
-            created_by=created_by,
-            created_by_domain=domain,
-            currency=Currency.get_default(),
-            account_type=account_type,
-        )
-        account.save()
-        return account, True
+            return cls.objects.filter(created_by_domain=domain).latest('date_created')
 
 
 class BillingContactInfo(models.Model):

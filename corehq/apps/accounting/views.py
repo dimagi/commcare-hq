@@ -9,6 +9,7 @@ from django.utils import translation
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest
 from django.utils.decorators import method_decorator
+from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -54,25 +55,6 @@ class BillingAccountsSectionView(AccountingSectionView):
             'title': AccountingInterface.name,
             'url': AccountingInterface.get_url(),
         }]
-
-
-class AsyncHandlerMixin():
-    async_handlers = []
-
-    @property
-    def handler_slug(self):
-        return self.request.POST.get('handler')
-
-    def get_async_handler(self):
-        handler_class = dict([(h.slug, h) for h in self.async_handlers])[self.handler_slug]
-        return handler_class(self.request)
-
-    @property
-    @memoized
-    def response(self):
-        if self.handler_slug in [h.slug for h in self.async_handlers]:
-            return self.get_async_handler().get_response()
-        return None
 
 
 class NewBillingAccountView(BillingAccountsSectionView):
@@ -156,8 +138,8 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
         return reverse(self.urlname, args=(self.args[0],))
 
     def post(self, request, *args, **kwargs):
-        if self.response is not None:
-            return self.response
+        if self.async_response is not None:
+            return self.async_response
         if 'account' in self.request.POST and self.account_form.is_valid():
             self.account_form.update_account_and_contacts(self.account)
         elif 'adjust_credit' in self.request.POST and self.credit_form.is_valid():
@@ -204,8 +186,8 @@ class NewSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
         }]
 
     def post(self, request, *args, **kwargs):
-        if self.response is not None:
-            return self.response
+        if self.async_response is not None:
+            return self.async_response
         if self.subscription_form.is_valid():
             try:
                 subscription = self.subscription_form.create_subscription()
@@ -402,8 +384,8 @@ class EditSoftwarePlanView(AccountingSectionView, AsyncHandlerMixin):
         }]
 
     def post(self, request, *args, **kwargs):
-        if self.response is not None:
-            return self.response
+        if self.async_response is not None:
+            return self.async_response
         if 'update_version' in request.POST:
             if self.software_plan_version_form.is_valid():
                 self.software_plan_version_form.save(request)
