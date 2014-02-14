@@ -7,48 +7,79 @@ from django.views.generic import View
 
 from braces.views import JSONResponseMixin
 
+from corehq.apps.domain.decorators import LoginAndDomainMixin
 from corehq.apps.groups.models import Group
 from corehq.elastic import es_wrapper
+from dimagi.utils.decorators.memoized import memoized
 
 from ..cache import CacheableRequestMixIn
 from ..models import HQUserType
 from ..util import _report_user_dict, user_list
 
 
-# TODO: protect this view
-class EmwfOptionsView(JSONResponseMixin, CacheableRequestMixIn, View):
+class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
     """
     Paginated options for the ExpandedMobileWorkerFilter
     """
 
     def get(self, request, domain):
         self.domain = domain
-        self.q = self.request.GET.get('q', None)
-        return self.render_json_response(self.get_options())
+        q = self.request.GET.get('q', None)
+        self.q = '%s*' % q if q else None
+        self._init_counts()
+        return self.render_json_response({
+            'results': self.get_options(),
+            'total': self.total_results,
+        })
+
+    def _init_counts(self):
+        groups, _ = es_wrapper('groups', domain=self.domain, q=self.q,
+            doc_type='Group', size=100, return_count=True)
+        users, _ = es_wrapper('users', domain=self.domain, q=self.q,
+            size=1000, return_count=True)
+        self.group_start = len(self.basics)
+        self.user_start = self.group_start + groups
+        self.total_results = self.user_start + users
 
     def get_options(self):
-        all_workers = [("_all_mobile_workers", _("[All mobile workers]"))]
-        user_types = [("t__%s" % (i+1), "[%s]" % name)
-                for i, name in enumerate(HQUserType.human_readable[1:])]
-        options = all_workers + user_types
-        options += self.get_groups()
-        options += self.get_users()
+        page = int(self.request.GET.get('page', 1))
+        limit = int(self.request.GET.get('page_limit', 10))
+        start = limit*(page-1)
+        stop = start + limit
+
+        options = self.basics[start:stop]
+
+        g_start = max(0, start - self.group_start)
+        g_size = limit - len(options) if start < self.user_start else 0
+        options += self.get_groups(g_start, g_size) if g_size else []
+
+        u_start = max(0, start - self.user_start)
+        u_size = limit - len(options)
+        options += self.get_users(u_start, u_size) if u_size else []
+
         return [{'id': id, 'text': text} for id, text in options]
 
-    def get_users(self):
+    @property
+    @memoized
+    def basics(self):
+        return [("_all_mobile_workers", _("[All mobile workers]"))] + \
+            [("t__%s" % (i+1), "[%s]" % name)
+                for i, name in enumerate(HQUserType.human_readable[1:])]
+
+    def get_users(self, start, size):
         fields = ['_id', 'username', 'first_name', 'last_name']
-        users = es_wrapper('users', domain=self.domain, doc_type='CommCareUser',
-            fields=fields, start_at=0, size=10, sort_by='username', order='asc')
+        users = es_wrapper('users', domain=self.domain, q=self.q,
+            fields=fields, start_at=start, size=size, sort_by='username', order='asc')
         def user_tuple(u):
             user = _report_user_dict(u)
             uid = "u__%s" % user['user_id']
             name = "%s [user]" % user['username_in_report']
             return (uid, name)
-        return map(user_tuple, users)
+        return [user_tuple(u) for u in users]
 
-    def get_groups(self):
+    def get_groups(self, start, size):
         fields = ['_id', 'name']
-        groups = es_wrapper('groups', domain=self.domain, doc_type='Group',
-            fields=fields, start_at=0, size=10, sort_by='name', order='asc')
-        return (("g__%s" % g['_id'], "%s [group]" % g['name'])
-            for g in groups)
+        groups = es_wrapper('groups', domain=self.domain, q=self.q, doc_type='Group',
+            fields=fields, start_at=start, size=size, sort_by='name', order='asc')
+        return [("g__%s" % g['_id'], "%s [group]" % g['name'])
+            for g in groups]
