@@ -163,6 +163,9 @@ class Select2BillingInfoHandler(BaseSelect2AsyncHandler):
         admins = filter(lambda x: x.is_domain_admin and x.username != self.request.couch_user.username,
                         all_web_users)
         admins = filter(lambda x: x.username not in self.existing, admins)
+        if self.search_string:
+            admins = filter(lambda x: (x.username.lower().startswith(self.search_string.lower())
+                                       or self.search_string in x.full_name), admins)
         return [(a.username, "%s (%s)" % (a.full_name, a.username)) for a in admins]
 
 
