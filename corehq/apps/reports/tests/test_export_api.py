@@ -110,10 +110,6 @@ class ExportTest(TestCase):
         self.assertTrue(_content(resp) is not None)
         self.assertTrue("X-CommCareHQ-Export-Token" in resp)
 
-        full_data = _content(get_export_response(c))
-        partial_data = _content(get_export_response(c, prev_token))
-        self.assertTrue(len(full_data) > len(partial_data))
-
     def testExportFilter(self):
         c = Client()
         c.login(**{'username': 'test', 'password': 'foobar'})
