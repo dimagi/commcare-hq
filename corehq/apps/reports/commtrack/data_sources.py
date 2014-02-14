@@ -127,10 +127,16 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
     def get_data(self, slugs=None):
         sp_ids = get_relevant_supply_point_ids(self.domain, self.active_location)
         if len(sp_ids) == 1:
-            stock_states = StockState.objects.filter(case_id=sp_ids[0])
+            stock_states = StockState.objects.filter(
+                case_id=sp_ids[0],
+                section_id=STOCK_SECTION_TYPE
+            )
             return self.leaf_node_data(stock_states)
         else:
-            stock_states = StockState.objects.filter(case_id__in=sp_ids)
+            stock_states = StockState.objects.filter(
+                case_id__in=sp_ids,
+                section_id=STOCK_SECTION_TYPE
+            )
             if self.config.get('aggregate'):
                 aggregates = stock_states.values('product_id').annotate(
                     avg_consumption=Avg('daily_consumption'),
