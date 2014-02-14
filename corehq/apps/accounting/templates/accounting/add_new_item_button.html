@@ -3,10 +3,12 @@
 
 
 {% block main_column %}
-    <a href="{{ new_url_name }}" class="btn btn-primary" data-toggle="modal" style="margin-left:2px">
-        <i class="icon-white icon-plus">
-            Add New {{ item_name }}
-        </i>
-    </a>
+    <div class="well well-small" style="margin-bottom: 0px;">
+        <a href="{{ new_url_name }}" class="btn btn-success" data-toggle="modal" style="margin-left:2px">
+            <i class="icon-white icon-plus">
+                Add New {{ item_name }}
+            </i>
+        </a>
+    </div>
     {{ block.super }}
 {% endblock %}
