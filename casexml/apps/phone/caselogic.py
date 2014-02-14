@@ -114,7 +114,7 @@ class CaseSyncOperation(object):
             if case_id in self._all_relevant_cases:
                 return self._all_relevant_cases[case_id]
             else:
-                case = CommCareCase.get(case_id)
+                case = CommCareCase.get_with_rebuild(case_id)
                 self._all_relevant_cases[case_id] = case
                 return case
 

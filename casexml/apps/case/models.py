@@ -395,6 +395,17 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin, CaseQuery
         return super(CommCareCase, cls).get(id, **kwargs)
 
     @classmethod
+    def get_with_rebuild(cls, id):
+        try:
+            return cls.get(id)
+        except ResourceNotFound:
+            from casexml.apps.case.cleanup import rebuild_case
+            case = rebuild_case(id)
+            if case is None:
+                raise
+            return case
+
+    @classmethod
     def get_lite(cls, id):
         return cls.wrap(cls.get_db().view("case/get_lite", key=id,
                                           include_docs=False).one()['value'])

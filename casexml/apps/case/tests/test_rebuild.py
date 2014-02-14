@@ -1,3 +1,4 @@
+from couchdbkit.exceptions import ResourceNotFound
 from django.test import TestCase
 from casexml.apps.case.cleanup import rebuild_case
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
@@ -84,6 +85,38 @@ class CaseRebuildTest(TestCase):
         self.assertEqual(case.p1, 'p1-1') # original
         self.assertEqual(case.p2, 'p2-1') # updated (back!)
         self.assertEqual(case.p3, 'p3-2') # new
+
+    def testRebuildEmpty(self):
+        self.assertEqual(None, rebuild_case('notarealid'))
+        try:
+            CommCareCase.get_with_rebuild('notarealid')
+            self.fail('get with rebuild should still fail for unknown cases')
+        except ResourceNotFound:
+            pass
+
+    def testRebuildCreateCase(self):
+        case_id = post_util(create=True)
+        post_util(case_id=case_id, p1='p1', p2='p2')
+
+        # delete initial case
+        case = CommCareCase.get(case_id)
+        case.delete()
+
+        case = rebuild_case(case_id)
+        self.assertEqual(case.p1, 'p1')
+        self.assertEqual(case.p2, 'p2')
+        self.assertEqual(2, len(case.actions))  # create + update
+
+        case.delete()
+        try:
+            CommCareCase.get(case_id)
+            self.fail('get should fail on deleted cases')
+        except ResourceNotFound:
+            pass
+
+        case = CommCareCase.get_with_rebuild(case_id)
+        self.assertEqual(case.p1, 'p1')
+        self.assertEqual(case.p2, 'p2')
 
     def testReconcileActions(self):
         now = datetime.utcnow()
