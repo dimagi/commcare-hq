@@ -95,12 +95,14 @@ class StockState(models.Model):
     daily_consumption = models.DecimalField(max_digits=20, decimal_places=5, null=True)
     last_modified_date = models.DateTimeField()
 
+    @property
     def months_remaining(self):
         return utils.months_of_stock_remaining(
             self.stock_on_hand,
             self.daily_consumption
         )
 
+    @property
     def stock_category(self):
         return utils.stock_category(
             self.stock_on_hand,
