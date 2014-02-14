@@ -870,7 +870,7 @@ class ProjectSettingsTab(UITab):
         user_is_billing_admin, billing_account = BillingAccountAdmin.get_admin_status_and_account(
             self.couch_user, self.domain)
         if user_is_billing_admin or self.couch_user.is_superuser:
-            from corehq.apps.domain.views import DomainSubscriptionView
+            from corehq.apps.domain.views import DomainSubscriptionView, EditExistingBillingAccountView
             subscription = [
                 {
                     'title': DomainSubscriptionView.page_title,
@@ -878,7 +878,12 @@ class ProjectSettingsTab(UITab):
                 },
             ]
             if billing_account is not None:
-                print "add billing form!"
+                subscription.append(
+                    {
+                        'title':  EditExistingBillingAccountView.page_title,
+                        'url': reverse(EditExistingBillingAccountView.urlname, args=[self.domain]),
+                    },
+                )
             if toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, self.couch_user.username):
                 items.append((_('Subscription'), subscription))
 

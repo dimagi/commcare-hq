@@ -19,6 +19,7 @@ from django.utils.encoding import smart_str
 from django.contrib.auth.forms import PasswordResetForm
 from django.utils.safestring import mark_safe
 from django_countries import CountryField
+from django_countries.countries import COUNTRIES
 import phonenumbers
 from corehq.apps.accounting.models import BillingContactInfo, BillingAccountAdmin, SubscriptionAdjustmentMethod, Subscription, SoftwarePlanEdition
 from corehq.apps.app_manager.models import Application, FormBase
@@ -601,7 +602,7 @@ class ConfidentialPasswordResetForm(PasswordResetForm):
             return self.cleaned_data['email']
 
 
-class BillingAccountInfoForm(forms.ModelForm):
+class EditBillingAccountInfoForm(forms.ModelForm):
     billing_admins = forms.CharField(
         required=False,
         label=ugettext_noop("Other Billing Admins"),
@@ -609,21 +610,15 @@ class BillingAccountInfoForm(forms.ModelForm):
                                 "subscription and billing information. They will also receive billing-related "
                                 "emails from Dimagi.</p> <p>Your account is already a Billing Administrator.</p>")),
     )
-    plan_edition = forms.CharField(
-        widget=forms.HiddenInput,
-    )
 
     class Meta:
         model = BillingContactInfo
         fields = ['first_name', 'last_name', 'phone_number', 'emails', 'company_name', 'first_line',
                   'second_line', 'city', 'state_province_region', 'postal_code', 'country']
 
-    def __init__(self, account, domain, plan_version, current_subscription, creating_user,
-                 data=None, *args, **kwargs):
+    def __init__(self, account, domain, creating_user, data=None, *args, **kwargs):
         self.account = account
         self.domain = domain
-        self.plan_version = plan_version
-        self.current_subscription = current_subscription
         self.creating_user = creating_user
 
         try:
@@ -636,17 +631,14 @@ class BillingAccountInfoForm(forms.ModelForm):
         except BillingContactInfo.DoesNotExist:
             pass
 
-        super(BillingAccountInfoForm, self).__init__(data, *args, **kwargs)
+        super(EditBillingAccountInfoForm, self).__init__(data, *args, **kwargs)
 
-        self.fields['plan_edition'].initial = self.plan_version.plan.edition
         other_admins = self.account.billing_admins.exclude(web_user=self.creating_user).all()
         self.fields['billing_admins'].initial = ','.join([o.web_user for o in other_admins])
 
-        from corehq.apps.domain.views import DomainSubscriptionView
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
         self.helper.layout = crispy.Layout(
-            'plan_edition',
             crispy.Fieldset(
                 _("Billing Administrators"),
                 crispy.Field('billing_admins', css_class='input-xxlarge'),
@@ -670,16 +662,12 @@ class BillingAccountInfoForm(forms.ModelForm):
                              data_countryname=dict(COUNTRIES).get(self.current_country, '')),
             ),
             FormActions(
-                crispy.HTML('<a href="%(url)s" style="margin-right:5px;" class="btn">%(title)s</a>' % {
-                    'url': reverse(DomainSubscriptionView.urlname, args=[self.domain]),
-                    'title': _("Cancel"),
-                }),
                 StrictButton(
-                    _("Subscribe to Plan"),
+                    _("Update Billing Information"),
                     type="submit",
-                    css_class='btn btn-success',
+                    css_class='btn btn-primary',
                 ),
-            )
+            ),
         )
 
     def clean_billing_admins(self):
@@ -711,16 +699,74 @@ class BillingAccountInfoForm(forms.ModelForm):
             return "+%s%s" % (parsed_number.country_code, parsed_number.national_number)
 
     def save(self, commit=True):
-        try:
-            billing_contact_info = super(BillingAccountInfoForm, self).save(commit=False)
-            billing_contact_info.account = self.account
-            billing_contact_info.save()
+        billing_contact_info = super(EditBillingAccountInfoForm, self).save(commit=False)
+        billing_contact_info.account = self.account
+        billing_contact_info.save()
 
-            billing_admins = self.cleaned_data['billing_admins']
-            for admin in billing_admins:
-                if not self.account.billing_admins.filter(web_user=admin.web_user).exists():
-                    self.account.billing_admins.add(admin)
-            self.account.save()
+        billing_admins = self.cleaned_data['billing_admins']
+        for admin in billing_admins:
+            if not self.account.billing_admins.filter(web_user=admin.web_user).exists():
+                self.account.billing_admins.add(admin)
+        self.account.save()
+        return True
+
+
+class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
+    plan_edition = forms.CharField(
+        widget=forms.HiddenInput,
+    )
+
+    def __init__(self, account, domain, creating_user, plan_version, current_subscription, data=None, *args, **kwargs):
+        self.plan_version = plan_version
+        self.current_subscription = current_subscription
+        super(ConfirmNewSubscriptionForm, self).__init__(account, domain, creating_user, data=data, *args, **kwargs)
+
+        self.fields['plan_edition'].initial = self.plan_version.plan.edition
+
+        from corehq.apps.domain.views import DomainSubscriptionView
+        self.helper.layout = crispy.Layout(
+            'plan_edition',
+            crispy.Fieldset(
+                _("Billing Administrators"),
+                crispy.Field('billing_admins', css_class='input-xxlarge'),
+            ),
+            crispy.Fieldset(
+                _("Basic Information"),
+                'company_name',
+                'first_name',
+                'last_name',
+                crispy.Field('emails', css_class='input-xxlarge'),
+                'phone_number',
+            ),
+            crispy.Fieldset(
+                 _("Mailing Address"),
+                'first_line',
+                'second_line',
+                'city',
+                'state_province_region',
+                'postal_code',
+                crispy.Field('country', css_class="input-large",
+                             data_countryname=dict(COUNTRIES).get(self.current_country, ''))
+            ),
+            FormActions(
+                crispy.HTML('<a href="%(url)s" style="margin-right:5px;" class="btn">%(title)s</a>' % {
+                    'url': reverse(DomainSubscriptionView.urlname, args=[self.domain]),
+                    'title': _("Cancel"),
+                }),
+                StrictButton(
+                    _("Subscribe to Plan"),
+                    type="submit",
+                    css_class='btn btn-success',
+                ),
+            ),
+        )
+
+    def save(self, commit=True):
+        account_save_success = super(ConfirmNewSubscriptionForm, self).save(commit=False)
+        if not account_save_success:
+            return False
+
+        try:
             if self.current_subscription is not None:
                 if self.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY:
                     self.current_subscription.cancel_subscription(adjustment_method=SubscriptionAdjustmentMethod.USER,
