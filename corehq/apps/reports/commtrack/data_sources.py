@@ -7,7 +7,7 @@ from corehq.apps.reports.api import ReportDataSource
 from datetime import datetime
 from casexml.apps.stock.models import StockState, StockTransaction
 from django.db.models import Sum, Avg
-from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids
+from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, product_ids_filtered_by_program
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from casexml.apps.stock.utils import months_of_stock_remaining, stock_category
 
@@ -124,19 +124,36 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
     def slugs(self):
         return self._slug_attrib_map.keys()
 
+    def filter_by_program(self, stock_states):
+        return stock_states.filter(
+            product_id__in=product_ids_filtered_by_program(
+                self.domain,
+                self.program_id
+            )
+        )
+
     def get_data(self, slugs=None):
         sp_ids = get_relevant_supply_point_ids(self.domain, self.active_location)
+
         if len(sp_ids) == 1:
             stock_states = StockState.objects.filter(
                 case_id=sp_ids[0],
                 section_id=STOCK_SECTION_TYPE
             )
+
+            if self.program_id:
+                stock_states = self.filter_by_program(stock_states)
+
             return self.leaf_node_data(stock_states)
         else:
             stock_states = StockState.objects.filter(
                 case_id__in=sp_ids,
-                section_id=STOCK_SECTION_TYPE
+                section_id=STOCK_SECTION_TYPE,
             )
+
+            if self.program_id:
+                stock_states = self.filter_by_program(stock_states)
+
             if self.config.get('aggregate'):
                 aggregates = stock_states.values('product_id').annotate(
                     avg_consumption=Avg('daily_consumption'),
@@ -145,10 +162,6 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                 return self.aggregated_data(aggregates)
             else:
                 return self.raw_product_states(stock_states, slugs)
-
-        # TODO still need to support programs
-        # if self.program_id:
-        #    product_cases = filter(lambda c: Product.get(c.product).program_id == self.program_id, product_cases)
 
     def leaf_node_data(self, stock_states):
         for state in stock_states:
