@@ -1112,4 +1112,4 @@ class EnterprisePlanContactForm(forms.Form):
         Message:
         %(message)s
         """ % context
-        send_HTML_email(subject, settings.SUPPORT_EMAIL, html_content, text_content)
+        send_HTML_email(subject, settings.BILLING_EMAIL, html_content, text_content)

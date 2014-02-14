@@ -5,6 +5,7 @@ import re
 import io
 from PIL import Image
 import uuid
+import settings
 
 from django import forms
 from crispy_forms.bootstrap import FormActions, StrictButton
@@ -776,7 +777,8 @@ class ProBonoForm(forms.Form):
             }
             html_content = render_to_string("domain/email/pro_bono_application.html", params)
             text_content = render_to_string("domain/email/pro_bono_application.txt", params)
-            recipient = "billing-comm@dimagi.com"
+            recipient = settings.BILLING_EMAIL
+            send_HTML_email("Pro-Bono Application", recipient, html_content, text_content=text_content)
             send_HTML_email("Pro-Bono Application", recipient, html_content, text_content=text_content)
         except Exception:
             logging.error("Couldn't send pro-bono application email. "
