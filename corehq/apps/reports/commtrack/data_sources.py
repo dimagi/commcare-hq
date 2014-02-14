@@ -4,7 +4,7 @@ from corehq.apps.locations.models import Location
 from corehq.apps.commtrack.models import Product, SupplyPointCase
 from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.reports.api import ReportDataSource
-from datetime import datetime
+from datetime import datetime, timedelta
 from casexml.apps.stock.models import StockState, StockTransaction
 from django.db.models import Sum, Avg
 from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, product_ids_filtered_by_program
@@ -60,18 +60,21 @@ class CommtrackDataSourceMixin(object):
         if prog_id != '':
             return prog_id
 
-
     @property
     def start_date(self):
         date = self.config.get('start_date')
         if date:
             return datetime.strptime(date, '%Y-%m-%d').date()
+        else:
+            return (datetime.now() - timedelta(30)).date()
 
     @property
     def end_date(self):
         date = self.config.get('end_date')
         if date:
             return datetime.strptime(date, '%Y-%m-%d').date()
+        else:
+            return datetime.now().date()
 
 
 class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
