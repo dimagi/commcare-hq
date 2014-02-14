@@ -33,8 +33,8 @@ class Command(BaseCommand):
             logger.setLevel(logging.DEBUG)
 
         if fresh_start:
-            confirm_fresh_start = input("Are you sure you want to delete all Roles and start over? You can't do this"
-                                        " if accounting is already set up. Type 'yes' to continue.")
+            confirm_fresh_start = raw_input("Are you sure you want to delete all Roles and start over? You can't do this"
+                                            " if accounting is already set up. Type 'yes' to continue.")
             if confirm_fresh_start == 'yes':
                 self.flush_roles()
 

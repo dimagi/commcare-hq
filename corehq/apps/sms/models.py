@@ -14,6 +14,7 @@ from .mixin import CommCareMobileContactMixin, MobileBackend, PhoneNumberInUseEx
 from corehq.apps.sms import util as smsutil
 from dimagi.utils.couch.database import SafeSaveDocument
 from dimagi.utils.couch.undo import DELETED_SUFFIX
+from dimagi.utils.couch import CouchDocLockableMixIn
 
 INCOMING = "I"
 OUTGOING = "O"
@@ -211,6 +212,50 @@ class SMSLog(MessageLog):
 
         to_from = (self.direction == INCOMING) and "from" or "to"
         return "%s (%s %s)" % (str, to_from, self.phone_number)
+
+class LastReadMessage(Document, CouchDocLockableMixIn):
+    domain = StringProperty()
+    # _id of CouchUser who read it
+    read_by = StringProperty()
+    # _id of the CouchUser or CommCareCase who the message was sent to
+    # or from
+    contact_id = StringProperty()
+    # _id of the SMSLog entry
+    message_id = StringProperty()
+    # date of the SMSLog entry, stored here redundantly to prevent a lookup
+    message_timestamp = DateTimeProperty()
+
+    @classmethod
+    def get_obj(cls, domain, read_by, contact_id, *args, **kwargs):
+        return LastReadMessage.view(
+            "sms/last_read_message",
+            key=["by_user", domain, read_by, contact_id],
+            include_docs=True
+        ).one()
+
+    @classmethod
+    def create_obj(cls, domain, read_by, contact_id, *args, **kwargs):
+        obj = LastReadMessage(
+            domain=domain,
+            read_by=read_by,
+            contact_id=contact_id
+        )
+        obj.save()
+        return obj
+
+    @classmethod
+    def by_user(cls, domain, user_id, contact_id):
+        return cls.get_obj(domain, user_id, contact_id)
+
+    @classmethod
+    def by_anyone(cls, domain, contact_id):
+        return LastReadMessage.view(
+            "sms/last_read_message",
+            startkey=["by_anyone", domain, contact_id, {}],
+            endkey=["by_anyone", domain, contact_id],
+            descending=True,
+            include_docs=True
+        ).first()
 
 class CallLog(MessageLog):
     form_unique_id = StringProperty()

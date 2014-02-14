@@ -206,7 +206,7 @@ def submit_form(domain, parent, form_data, properties, existing, location_type, 
         forms = filter(None, [form, form.sub_forms.get(location_type)])
         for k, v in itertools.chain(*(f.errors.iteritems() for f in forms)):
             if k != '__all__':
-                message += '{0} {1}; {2}: {3}. '.format(
+                message += u'{0} {1}; {2}: {3}. '.format(
                     location_type, form_data.get('name', 'unknown'), k, v[0]
                 )
 

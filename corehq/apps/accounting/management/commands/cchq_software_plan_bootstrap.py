@@ -10,7 +10,10 @@ from optparse import make_option
 # Django imports
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand
-from corehq.apps.accounting.models import SoftwarePlan, SoftwareProductType, SoftwarePlanEdition, SoftwarePlanVisibility, SoftwareProduct, SoftwareProductRate, Feature, FeatureRate, FeatureType, SoftwarePlanVersion, DefaultProductPlan
+from corehq.apps.accounting.models import (SoftwarePlan, SoftwareProductType, SoftwarePlanEdition,
+                                           SoftwarePlanVisibility, SoftwareProduct, SoftwareProductRate, Feature,
+                                           FeatureRate, FeatureType, SoftwarePlanVersion, DefaultProductPlan,
+                                           Subscription)
 from django_prbac.models import Role
 
 logger = logging.getLogger(__name__)
@@ -25,16 +28,27 @@ class Command(BaseCommand):
         make_option('--verbose', action='store_true',  default=False,
                     help='Enable debug output'),
         make_option('--fresh-start', action='store_true',  default=False,
-                    help='Wipe all plans and start over. USE CAUTION.'),
+                    help='Wipe all plans and start over. USE CAUTION. Also instantiate plans.'),
         make_option('--flush', action='store_true',  default=False,
                     help='Wipe all plans and start over. USE CAUTION.'),
+        make_option('--force-reset', action='store_true',  default=False,
+                    help='Assign latest version of all DefaultProductPlans to current '
+                         'subscriptions and delete older versions.'),
     )
 
-    def handle(self, dry_run=False, verbose=False, fresh_start=False, flush=False, *args, **options):
+    def handle(self, dry_run=False, verbose=False, fresh_start=False, flush=False, force_reset=False, *args, **options):
         logging.info('Bootstrapping standard plans. Enterprise plans will have to be created via the admin UIs.')
 
         if verbose:
             logger.setLevel(logging.DEBUG)
+
+        if force_reset:
+            confirm_force_reset = raw_input("Are you sure you want to assign the latest default plan version to all"
+                                            "current subscriptions and remove the older versions? Type 'yes' to "
+                                            "continue.")
+            if confirm_force_reset == 'yes':
+                self.force_reset_subscription_versions()
+            return
 
         if fresh_start or flush:
             confirm_fresh_start = raw_input("Are you sure you want to delete all SoftwarePlans and start over? "
@@ -63,6 +77,23 @@ class Command(BaseCommand):
         SoftwareProduct.objects.all().delete()
         FeatureRate.objects.all().delete()
         Feature.objects.all().delete()
+
+    def force_reset_subscription_versions(self):
+        for default_plan in DefaultProductPlan.objects.all():
+            software_plan = default_plan.plan
+            latest_version = software_plan.get_version()
+            subscriptions_to_update = Subscription.objects.filter(plan_version__plan__pk=software_plan.pk).exclude(
+                plan_version=latest_version).all()
+            # assign latest version of software plan to all subscriptions referencing that software plan
+            logging.info('Updating %d subscriptions to latest version of %s.' %
+                         (len(subscriptions_to_update), software_plan.name))
+            for subscription in subscriptions_to_update:
+                subscription.plan_version = latest_version
+                subscription.save()
+            # delete all old versions of that software plan
+            versions_to_remove = software_plan.softwareplanversion_set.exclude(pk=latest_version.pk).all()
+            logging.info("Removing %d old versions." % len(versions_to_remove))
+            versions_to_remove.delete()
 
     def ensure_plans(self, dry_run=False):
         edition_to_features = self.ensure_features(dry_run=dry_run)
@@ -124,8 +155,24 @@ class Command(BaseCommand):
         logging.info('Ensuring Products and Product Rates')
 
         product = SoftwareProduct(name='%s %s' % (product_type, edition), product_type=product_type)
+
         product_rates = []
-        for product_rate in self.BOOTSTRAP_PRODUCT_RATES[edition]:
+        BOOTSTRAP_PRODUCT_RATES = {
+            SoftwarePlanEdition.COMMUNITY: [
+                SoftwareProductRate(),  # use all the defaults
+            ],
+            SoftwarePlanEdition.STANDARD: [
+                SoftwareProductRate(monthly_fee=Decimal('100.00')),
+            ],
+            SoftwarePlanEdition.PRO: [
+                SoftwareProductRate(monthly_fee=Decimal('500.00')),
+            ],
+            SoftwarePlanEdition.ADVANCED: [
+                SoftwareProductRate(monthly_fee=Decimal('1000.00')),
+            ],
+        }
+
+        for product_rate in BOOTSTRAP_PRODUCT_RATES[edition]:
             if dry_run:
                 logging.info("[DRY RUN] Creating Product: %s" % product)
                 logging.info("[DRY RUN] Corresponding product rate of $%d created." % product_rate.monthly_fee)
@@ -171,8 +218,26 @@ class Command(BaseCommand):
         logging.info('Ensuring Feature Rates')
 
         feature_rates = []
+        BOOTSTRAP_FEATURE_RATES = {
+            SoftwarePlanEdition.COMMUNITY: {
+                FeatureType.USER: FeatureRate(monthly_limit=50, per_excess_fee=Decimal('1.00')),
+                FeatureType.SMS: FeatureRate(monthly_limit=0),  # use defaults here
+            },
+            SoftwarePlanEdition.STANDARD: {
+                FeatureType.USER: FeatureRate(monthly_limit=100, per_excess_fee=Decimal('1.00')),
+                FeatureType.SMS: FeatureRate(monthly_limit=250),
+            },
+            SoftwarePlanEdition.PRO: {
+                FeatureType.USER: FeatureRate(monthly_limit=500, per_excess_fee=Decimal('1.00')),
+                FeatureType.SMS: FeatureRate(monthly_limit=500),
+            },
+            SoftwarePlanEdition.ADVANCED: {
+                FeatureType.USER: FeatureRate(monthly_limit=1000, per_excess_fee=Decimal('1.00')),
+                FeatureType.SMS: FeatureRate(monthly_limit=1000),
+            },
+        }
         for feature in features:
-            feature_rate = self.BOOTSTRAP_FEATURE_RATES[edition][feature.feature_type]
+            feature_rate = BOOTSTRAP_FEATURE_RATES[edition][feature.feature_type]
             if dry_run:
                 logging.info("[DRY RUN] Creating rate for feature '%s': %s" % (feature.name, feature_rate))
             else:
@@ -189,36 +254,4 @@ class Command(BaseCommand):
         SoftwarePlanEdition.ADVANCED: 'advanced_plan_v0',
     }
 
-    BOOTSTRAP_PRODUCT_RATES = {
-        SoftwarePlanEdition.COMMUNITY: [
-            SoftwareProductRate(),  # use all the defaults
-        ],
-        SoftwarePlanEdition.STANDARD: [
-            SoftwareProductRate(monthly_fee=Decimal('100.00')),
-        ],
-        SoftwarePlanEdition.PRO: [
-            SoftwareProductRate(monthly_fee=Decimal('500.00')),
-        ],
-        SoftwarePlanEdition.ADVANCED: [
-            SoftwareProductRate(monthly_fee=Decimal('1000.00')),
-        ],
-    }
 
-    BOOTSTRAP_FEATURE_RATES = {
-        SoftwarePlanEdition.COMMUNITY: {
-            FeatureType.USER: FeatureRate(monthly_limit=50, per_excess_fee=Decimal('1.00')),
-            FeatureType.SMS: FeatureRate(monthly_limit=0),  # use defaults here
-        },
-        SoftwarePlanEdition.STANDARD: {
-            FeatureType.USER: FeatureRate(monthly_limit=100, per_excess_fee=Decimal('1.00')),
-            FeatureType.SMS: FeatureRate(monthly_limit=250),
-        },
-        SoftwarePlanEdition.PRO: {
-            FeatureType.USER: FeatureRate(monthly_limit=500, per_excess_fee=Decimal('1.00')),
-            FeatureType.SMS: FeatureRate(monthly_limit=500),
-        },
-        SoftwarePlanEdition.ADVANCED: {
-            FeatureType.USER: FeatureRate(monthly_limit=1000, per_excess_fee=Decimal('1.00')),
-            FeatureType.SMS: FeatureRate(monthly_limit=1000),
-        },
-    }

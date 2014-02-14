@@ -75,28 +75,6 @@ class CommCareHqApi(Api):
     def top_level(self, request, api_name=None, **kwargs):
         return HttpResponseNotFound()
 
-        @property
-        def urls(self):
-            """
-            Exactly copied from https://github.com/toastdriven/django-tastypie/blob/v0.9.11/tastypie/api.py#L84
-            (BSD-licensed) and hotfixed for https://github.com/toastdriven/django-tastypie/issues/816
-            """
-            api_name_regex = re.escape(self.api_name)
-            
-            pattern_list = [
-                url(r"^(?P<api_name>%s)%s$" % (api_name_regex, trailing_slash()), self.wrap_view('top_level'), name="api_%s_top_level" % self.api_name),
-            ]
-            
-            for name in sorted(self._registry.keys()):
-                self._registry[name].api_name = self.api_name
-                pattern_list.append((r"^(?P<api_name>%s)/" % api_name_regex, include(self._registry[name].urls)))
-                
-            urlpatterns = self.override_urls() + patterns('',
-                *pattern_list
-            )
-            return urlpatterns
-    
-
 @inline
 def api_url_patterns():
     for version, resources in API_LIST:

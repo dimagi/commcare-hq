@@ -1,0 +1,12 @@
+{% extends "accounting/report_filter_actions.html" %}
+{% load url from future %}
+
+
+{% block main_column %}
+    <a href="{{ new_url_name }}" class="btn btn-primary" data-toggle="modal" style="margin-left:2px">
+        <i class="icon-white icon-plus">
+            Add New {{ item_name }}
+        </i>
+    </a>
+    {{ block.super }}
+{% endblock %}

@@ -25,6 +25,7 @@ urlpatterns = patterns('corehq.apps.sms.views',
     url(r'^chat_contacts/$', 'chat_contacts', name='chat_contacts'),
     url(r'^chat/(?P<contact_id>[\w-]+)/$', 'chat', name='sms_chat'),
     url(r'^api/history/$', 'api_history', name='api_history'),
+    url(r'^api/last_read_message/$', 'api_last_read_message', name='api_last_read_message'),
     url(r'^settings/$', 'sms_settings', name='sms_settings'),
     url(r'^subscribe_sms/$', SubscribeSMSView.as_view(), name=SubscribeSMSView.urlname),
 )

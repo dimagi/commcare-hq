@@ -664,15 +664,15 @@ class BillingAccountInfoForm(forms.ModelForm):
                 crispy.Field('country', css_class="input-large"),
             ),
             FormActions(
-                StrictButton(
-                    _("Subscribe to Plan"),
-                    type="submit",
-                    css_class='btn btn-primary',
-                ),
-                crispy.HTML('<a href="%(url)s" class="btn">%(title)s</a>' % {
+                crispy.HTML('<a href="%(url)s" style="margin-right:5px;" class="btn">%(title)s</a>' % {
                     'url': reverse(DomainSubscriptionView.urlname, args=[self.domain]),
                     'title': _("Cancel"),
                 }),
+                StrictButton(
+                    _("Subscribe to Plan"),
+                    type="submit",
+                    css_class='btn btn-success',
+                ),
             )
         )
 

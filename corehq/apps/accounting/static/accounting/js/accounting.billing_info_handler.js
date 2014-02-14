@@ -39,9 +39,7 @@ var AsyncSelect2Handler = function (field, multiple) {
                         };
                     },
                     results: function (data) {
-                        return {
-                            results: data
-                        };
+                        return data;
                     }
                 },
                 multiple: self.multiple,

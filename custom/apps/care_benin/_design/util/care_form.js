@@ -48,7 +48,7 @@ function CareForm(doc) {
             self.user_data.cpn_exam_answered = non_blank;
             self.user_data.cpn_exam_forms = 1;
 
-            if (self.form.classifier_anemie_severe === 'oui' || self.form.classifier_anemie_modere === 'oui') {
+            if (self.form.classifier_anemie_severe === 'accord' || self.form.classifier_anemie_modere === 'accord') {
 
                 self.user_data.pregnant_anemia = 1;
             }

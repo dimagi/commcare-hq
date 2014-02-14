@@ -1,27 +1,23 @@
 var SoftwarePlanVersionFormHandler = function (role, featureRates, productRates) {
     'use strict';
     var self = this;
-    console.log(role);
-    console.log(featureRates);
-    console.log(productRates);
 
-//    self.role = new RoleAsyncManager(Role, Select2RoleHandler, role);
-    self.featureRates = new RateAsyncManager(FeatureRate, Select2RateHandler, featureRates);
-    self.productRates = new RateAsyncManager(ProductRate, Select2RateHandler, productRates);
+    self.role = new PermissionsManager(role);
+    self.featureRates = new RateAsyncManager(FeatureRate, featureRates);
+    self.productRates = new RateAsyncManager(ProductRate, productRates);
 
     self.init = function () {
-//        self.role.init();
+        self.role.init();
         self.featureRates.init();
         self.productRates.init();
     };
 };
 
-var BaseAsyncManager = function (objClass, select2Class, options) {
+
+var RateAsyncManager = function (objClass, options) {
     'use strict';
     var self = this;
 
-    self.objClass = objClass;
-    self.select2Class = select2Class;
     self.handlerSlug = options.handlerSlug;
 
     self.error = ko.observable();
@@ -29,27 +25,52 @@ var BaseAsyncManager = function (objClass, select2Class, options) {
         return !! self.error();
     });
 
-    self.objects = ko.observableArray();
-    self.objectsValue = ko.computed(function () {
-        return JSON.stringify(_.map(self.objects(), function (obj){
+    self.objClass = objClass;
+    self.rates = ko.observableArray();
+    self.ratesString = ko.computed(function () {
+        return JSON.stringify(_.map(self.rates(), function (obj){
             return obj.asJSON();
         }));
     });
 
-    self.objectNames = ko.computed(function () {
-        return _.map(self.objects(), function(object) {
-            return object.name();
+    self.rateNames = ko.computed(function () {
+        return _.map(self.rates(), function(rate) {
+            return rate.name();
         });
     });
-    self.select2 = new self.select2Class(options.select2Options, self.objectNames);
+
+    self.select2 = new Select2RateHandler(options.select2Options, self.rateNames);
 
     self.init = function () {
         self.select2.init();
         var currentValue = $.parseJSON(options.currentValue || '[]');
-        self.objects(_.map(currentValue, function (data) {
+        self.rates(_.map(currentValue, function (data) {
             return new self.objClass(data);
         }));
 
+    };
+
+    self.rateType = ko.observable();
+
+    self.createNew = function () {
+        self.utils.sendToAsyncHandler('create', {
+            name: self.select2.value(),
+            rate_type: self.rateType()
+        }, self.addRate);
+    };
+
+    self.apply = function () {
+        self.utils.sendToAsyncHandler('apply', {
+            rate_id: self.select2.value()
+        }, self.addRate);
+    };
+
+    self.addRate = function (data) {
+        self.rates.push(new self.objClass(data));
+    };
+
+    self.removeRate = function (rate) {
+        self.rates.remove(rate);
     };
 
     self.utils = {
@@ -79,52 +100,113 @@ var BaseAsyncManager = function (objClass, select2Class, options) {
     }
 };
 
-var RateAsyncManager = function (objClass, select2Class, options) {
+var PermissionsManager = function (options) {
     'use strict';
-    BaseAsyncManager.call(this, objClass, select2Class, options);
     var self = this;
-    self.rateType = ko.observable();
 
-    self.createNew = function () {
-        self.utils.sendToAsyncHandler('create', {
-            name: self.select2.value(),
-            rate_type: self.rateType()
-        }, self.addRate);
-    };
+    self.existingRoles = ko.observableArray();
+    self.roleType = ko.observable(options.roleType);
+    self.isRoleTypeNew = ko.computed(function () {
+        return self.roleType() == 'new';
+    });
+    self.isRoleTypeExisting = ko.computed(function () {
+        return self.roleType() == 'existing';
+    });
 
-    self.apply = function () {
-        self.utils.sendToAsyncHandler('apply', {
-            rate_id: self.select2.value()
-        }, self.addRate);
-    };
+    self.new = new NewRoleManager(self.existingRoles, options.newPrivileges);
+    self.existing = new ExistingRoleManager(self.existingRoles, options.currentRoleSlug);
 
-    self.addRate = function (data) {
-        self.objects.push(new self.objClass(data));
-    };
-
-    self.removeRate = function (rate) {
-        self.objects.remove(rate);
+    self.init = function () {
+        $('[name="' + options.multiSelectField + '"]').width(770).height(200).multiselect({
+            sortable: false
+        });
+        self.existingRoles(_.map(options.existingRoles, function (data) {
+            return new Role(data);
+        }));
+        $('#id_new_role_slug').on('keyup change', function (event) {
+            var c = String.fromCharCode(event.keyCode);
+            if (c.match(/\w/)) {
+                var orig_val = $(this).val();
+                $(this).val(orig_val.replace(' ', '_').replace('-','_'));
+            }
+        });
+        $('#id_role_slug').select2();
+        $('#roles form').submit(function (e) {
+            if (self.new.hasMatchingRole() && self.isRoleTypeNew()) {
+                self.existing.roleSlug(self.new.matchingRole().slug());
+                $('#id_role_slug').select2('val', self.new.matchingRole().slug());
+            }
+        })
     };
 };
 
-RateAsyncManager.prototype = Object.create( BaseAsyncManager.prototype );
-RateAsyncManager.prototype.constructor = RateAsyncManager;
-
-
-var RoleAsyncManager = function (objClass, options) {
+var NewRoleManager = function (existingRoles, newPrivileges) {
     'use strict';
-    BaseAsyncManager.call(this, objClass, options);
     var self = this;
+
+    self.existingRoles = existingRoles;
+
+    self.privileges = ko.observableArray(newPrivileges);
+    self.matchingRole = ko.computed(function () {
+        // If the set of current privileges match the privileges of an existing role, return that existing role.
+        var existingRole = null;
+        _.each(self.existingRoles(), function (role) {
+            var isEquivalent = _.isEmpty(role.privilegeSlugs()) && _.isEmpty(self.privileges());
+            if (isEquivalent || (!_.isEmpty(role.privilegeSlugs())
+                    && _.isEmpty(_(role.privilegeSlugs()).difference(self.privileges()))
+                    && role.privilegeSlugs().length === self.privileges().length)) {
+                existingRole = role;
+            }
+        });
+        return existingRole;
+    });
+    self.matchingPrivileges = ko.computed(function () {
+        if (self.matchingRole()) {
+            return self.matchingRole().privileges();
+        }
+        return [];
+    });
+    self.allowCreate = ko.computed(function () {
+        return !_.isEmpty(self.privileges()) && _.isEmpty(self.matchingPrivileges());
+    });
+    self.hasMatchingRole = ko.computed(function () {
+        return !_.isNull(self.matchingRole());
+    });
 };
 
-RoleAsyncManager.prototype = Object.create( BaseAsyncManager.prototype );
-RoleAsyncManager.prototype.constructor = RoleAsyncManager;
 
-
-var BaseSelect2Handler = function (options, currentValue) {
+var ExistingRoleManager = function (existingRoles, currentRoleSlug) {
     'use strict';
     var self = this;
-    self.currentValue = currentValue;
+
+    self.existingRoles = existingRoles;
+
+    self.roleSlug = ko.observable(currentRoleSlug);
+    self.selectedRole = ko.computed(function () {
+        var selectedRole = null;
+        _.each(self.existingRoles(), function (role) {
+            if (role.slug() === self.roleSlug()) {
+                selectedRole = role;
+            }
+        });
+        return selectedRole;
+    });
+    self.selectedPrivileges = ko.computed(function () {
+        if (self.selectedRole()) {
+            return self.selectedRole().privileges();
+        }
+        return [];
+    });
+    self.hasNoPrivileges = ko.computed(function () {
+        return _.isEmpty(self.selectedPrivileges())
+    });
+};
+
+
+var BaseSelect2Handler = function (options, currentSelectionObj) {
+    'use strict';
+    var self = this;
+    self.currentSelection = currentSelectionObj;
     self.fieldName = options.fieldName;
     self.value = ko.observable();
 
@@ -171,7 +253,6 @@ var BaseSelect2Handler = function (options, currentValue) {
 
     self.init = function () {
         var fieldInput = self.utils.getField();
-        console.log(fieldInput);
         fieldInput.select2({
             minimumInputLength: 0,
             allowClear: true,
@@ -213,6 +294,7 @@ var Select2RateHandler = function (options, currentValue) {
     BaseSelect2Handler.call(this, options, currentValue);
 
     var self = this;
+    self.currentValue = currentValue;
     self.isNew = ko.observable(false);
     self.isExisting = ko.observable(false);
 
@@ -220,7 +302,7 @@ var Select2RateHandler = function (options, currentValue) {
         return 'select2_rate';
     };
 
-    self.getExtraData = function (getHandlerSlug) {
+    self.getExtraData = function (term) {
         return {
             existing: self.currentValue()
         }
@@ -266,36 +348,32 @@ Select2RateHandler.prototype = Object.create( BaseSelect2Handler.prototype );
 Select2RateHandler.prototype.constructor = Select2RateHandler;
 
 
-var Select2RoleHandler = function (options, currentValue) {
-    'use strict';
-    BaseSelect2Handler.call(this, options, value);
-
-    var self = this;
-    self.getHandlerSlug = function () {
-        return 'select2_role';
-    };
-};
-
-Select2RoleHandler.prototype = Object.create( BaseSelect2Handler.prototype );
-Select2RoleHandler.prototype.constructor = Select2RoleHandler;
-
 var Role = function (data) {
     'use strict';
     var self = this;
 
+    self.privileges = ko.observableArray(_.map(data.privileges, function (priv) {
+        return new Privilege(priv);
+    }));
+    self.privilegeSlugs = ko.computed(function () {
+        return _.map(self.privileges(), function (priv) {
+            return priv.slug();
+        });
+    });
+
     self.slug = ko.observable(data.slug);
     self.name = ko.observable(data.name);
     self.description = ko.observable(data.description);
-    self.parameters = ko.observable(data.parameters);
-
-    self.asJSON = function () {
-        var result = {};
-        _.each(['slug', 'name', 'description', 'parameters'], function (field) {
-            result[field] = self[field]();
-        });
-        return result;
-    };
 };
+
+
+var Privilege = function (data) {
+    'use strict';
+    var self = this;
+    self.slug = ko.observable(data[0]);
+    self.name = ko.observable(data[1]);
+};
+
 
 var FeatureRate = function (data) {
     'use strict';
@@ -318,6 +396,7 @@ var FeatureRate = function (data) {
         return result;
     };
 };
+
 
 var ProductRate = function (data) {
     'use strict';
