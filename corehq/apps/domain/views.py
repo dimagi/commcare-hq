@@ -36,7 +36,7 @@ from corehq.apps.domain.forms import (DomainGlobalSettingsForm, DomainMetadataFo
                                       BillingAccountInfoForm, ProBonoForm)
 from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.domain.utils import get_domained_url, normalize_domain_name
-from corehq.apps.hqwebapp.views import BaseSectionPageView
+from corehq.apps.hqwebapp.views import BaseSectionPageView, BasePageView
 from corehq.apps.orgs.models import Organization, OrgRequest, Team
 from corehq.apps.commtrack.util import all_sms_codes
 from corehq.apps.domain.forms import ProjectSettingsForm
@@ -1407,11 +1407,11 @@ class AdvancedCommTrackSettingsView(BaseCommTrackAdminView):
         return self.get(request, *args, **kwargs)
 
 
-class ProBonoView(DomainAccountingSettings):
-    template_name = 'domain/pro_bono.html'
-    urlname = 'pro_bono'
+class ProBonoMixin():
     page_title = ugettext_noop("Pro-Bono Application")
     is_submitted = False
+
+    url_name = None
 
     @property
     @memoized
@@ -1424,8 +1424,28 @@ class ProBonoView(DomainAccountingSettings):
     def page_context(self):
         return {
             'pro_bono_form': self.pro_bono_form,
-            'is_submitted': self.is_submitted
+            'is_submitted': self.is_submitted,
         }
+
+    @property
+    def page_url(self):
+        return self.url_name
+
+    def post(self, request, *args, **kwargs):
+        if self.pro_bono_form.is_valid():
+            self.pro_bono_form.process_submission()
+            self.is_submitted = True
+        return self.get(request, *args, **kwargs)
+
+
+class ProBonoStaticView(ProBonoMixin, BasePageView):
+    template_name = 'domain/pro_bono/static.html'
+    urlname = 'pro_bono_static'
+
+
+class ProBonoView(ProBonoMixin, DomainAccountingSettings):
+    template_name = 'domain/pro_bono/domain.html'
+    urlname = 'pro_bono'
 
     @property
     def parent_pages(self):
@@ -1436,11 +1456,9 @@ class ProBonoView(DomainAccountingSettings):
             }
         ]
 
-    def post(self, request, *args, **kwargs):
-        if self.pro_bono_form.is_valid():
-            self.pro_bono_form.process_submission()
-            self.is_submitted = True
-        return self.get(request, *args, **kwargs)
+    @property
+    def section_url(self):
+        return self.page_url
 
 
 @require_POST
