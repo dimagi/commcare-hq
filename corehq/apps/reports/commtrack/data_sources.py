@@ -127,10 +127,16 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
     def get_data(self, slugs=None):
         sp_ids = get_relevant_supply_point_ids(self.domain, self.active_location)
         if len(sp_ids) == 1:
-            stock_states = StockState.objects.filter(case_id=sp_ids[0])
+            stock_states = StockState.objects.filter(
+                case_id=sp_ids[0],
+                section_id=STOCK_SECTION_TYPE
+            )
             return self.leaf_node_data(stock_states)
         else:
-            stock_states = StockState.objects.filter(case_id__in=sp_ids)
+            stock_states = StockState.objects.filter(
+                case_id__in=sp_ids,
+                section_id=STOCK_SECTION_TYPE
+            )
             if self.config.get('aggregate'):
                 aggregates = stock_states.values('product_id').annotate(
                     avg_consumption=Avg('daily_consumption'),
@@ -138,7 +144,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                 )
                 return self.aggregated_data(aggregates)
             else:
-                return self.raw_cases(stock_states, slugs)
+                return self.raw_product_states(stock_states, slugs)
 
         # TODO still need to support programs
         # if self.program_id:
@@ -173,7 +179,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             }
 
 
-    def raw_cases(self, stock_states, slugs):
+    def raw_product_states(self, stock_states, slugs):
         def _slug_attrib(slug, attrib, product, output):
             if not slugs or slug in slugs:
                 if callable(attrib):
@@ -190,7 +196,6 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
 
 
 class StockStatusBySupplyPointDataSource(StockStatusDataSource):
-    
     def get_data(self):
         data = list(super(StockStatusBySupplyPointDataSource, self).get_data())
 

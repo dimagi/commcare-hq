@@ -48,7 +48,7 @@ def REPORTS(project):
             commtrack_reports.AggregateStockStatusReport,
             commtrack_reports.ReportingRatesReport,
             # commtrack_reports.RequisitionReport,
-            # commtrack_maps.StockStatusMapReport,
+            commtrack_maps.StockStatusMapReport,
             # commtrack_maps.ReportingStatusMapReport,
         )))
 
