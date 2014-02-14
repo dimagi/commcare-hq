@@ -5,6 +5,7 @@ from corehq.apps.domain.utils import legacy_domain_re
 
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
+from corehq.apps.domain.views import ProBonoStaticView
 from corehq.apps.orgs.urls import organizations_urls
 from corehq.apps.reports.urls import report_urls
 
@@ -112,6 +113,7 @@ urlpatterns = patterns('',
     url(r'^sms_in/$', 'corehq.apps.sms.views.sms_in', name='sms_in'),
     url(r'^unsubscribe/(?P<user_id>[\w-]+)/', 'corehq.apps.hqwebapp.views.unsubscribe', name='unsubscribe'),
     (r'^wisepill/', include('custom.apps.wisepill.urls')),
+    url(r'pro_bono/$', ProBonoStaticView.as_view(), name=ProBonoStaticView.urlname)
 ) + patterns('', *LOCAL_APP_URLS)
 
 # django rosetta support if configured
