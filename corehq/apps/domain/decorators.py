@@ -85,6 +85,12 @@ def login_and_domain_required(view_func):
     return _inner
 
 
+class LoginAndDomainMixin(object):
+    @method_decorator(login_and_domain_required)
+    def dispatch(self, *args, **kwargs):
+        return super(LoginAndDomainMixin, self).dispatch(*args, **kwargs)
+
+
 def login_or_digest_ex(allow_cc_users=False):
     def _outer(fn):
         def safe_fn(request, domain, *args, **kwargs):
