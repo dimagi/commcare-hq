@@ -105,12 +105,3 @@ domain_settings = patterns(
     url(r'^internal/calculations/$', EditInternalCalculationsView.as_view(), name=EditInternalCalculationsView.urlname),
     url(r'^internal/calculated_properties/$', 'calculated_properties', name='calculated_properties'),
 )
-
-try:
-    from hqbilling.views import EditProjectBillingInfoView
-    domain_settings += patterns(
-        'hqbilling.views',
-        url(r'^billing/$', EditProjectBillingInfoView.as_view(), name=EditProjectBillingInfoView.urlname),
-    )
-except ImportError:
-    pass
