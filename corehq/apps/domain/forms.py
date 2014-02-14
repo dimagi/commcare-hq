@@ -627,6 +627,11 @@ class BillingAccountInfoForm(forms.ModelForm):
         self.creating_user = creating_user
 
         try:
+            self.current_country = self.account.billingcontactinfo.country
+        except Exception:
+            self.current_country = None
+
+        try:
             kwargs['instance'] = self.account.billingcontactinfo
         except BillingContactInfo.DoesNotExist:
             pass
@@ -661,7 +666,8 @@ class BillingAccountInfoForm(forms.ModelForm):
                 'city',
                 'state_province_region',
                 'postal_code',
-                crispy.Field('country', css_class="input-large"),
+                crispy.Field('country', css_class="input-large",
+                             data_countryname=dict(COUNTRIES).get(self.current_country, '')),
             ),
             FormActions(
                 crispy.HTML('<a href="%(url)s" style="margin-right:5px;" class="btn">%(title)s</a>' % {
