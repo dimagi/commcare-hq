@@ -5,6 +5,7 @@ import zipfile
 from couchexport.models import Format, ExportSchema
 import tempfile
 import os
+from dimagi.utils.decorators.memoized import memoized
 from soil.util import expose_download
 from couchexport.export import SchemaMismatchException, ExportConfiguration
 
@@ -97,7 +98,14 @@ def Temp(tmp):
     cls = PathTemp if isinstance(tmp, basestring) else StringIOTemp
     return cls(tmp)
 
-class PathTemp(object):
+
+class TempBase(object):
+    @property
+    def file(self):
+        return open(self.path, 'rb')
+
+
+class PathTemp(TempBase):
     def __init__(self, path):
         self.path = path
 
@@ -106,7 +114,8 @@ class PathTemp(object):
         with open(self.path, 'rb') as f:
             return f.read()
 
-class StringIOTemp(object):
+
+class StringIOTemp(TempBase):
     def __init__(self, buffer):
         self.buffer = buffer
 
@@ -115,6 +124,7 @@ class StringIOTemp(object):
         return self.buffer.getvalue()
 
     @property
+    @memoized
     def path(self):
         fd, path = tempfile.mkstemp()
         with os.fdopen(fd, 'wb') as file:

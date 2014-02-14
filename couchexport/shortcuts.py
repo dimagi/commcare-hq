@@ -2,9 +2,10 @@ import logging
 from zipfile import ZipFile
 from django.core.servers.basehttp import FileWrapper
 from couchexport.models import FakeSavedExportSchema, SavedExportSchema
-from django.http import HttpResponse, HttpResponseNotFound
+from django.http import HttpResponse, HttpResponseNotFound, StreamingHttpResponse
 from StringIO import StringIO
 from unidecode import unidecode
+from couchexport.tasks import Temp, TempBase
 from couchexport.util import get_schema_index_view_keys
 from django.utils.translation import ugettext as _
 
@@ -44,7 +45,7 @@ def export_data_shared(export_tag, format=None, filename=None,
         max_column_size=max_column_size,
         separator=separator
     )
-    
+    tmp = Temp(tmp)
     if checkpoint:
         return export_response(tmp, format, filename, checkpoint)
     else: 
@@ -60,16 +61,17 @@ def export_response(file, format, filename, checkpoint=None):
     from couchexport.export import Format
     if not filename:
         filename = "NAMELESS EXPORT"
-        
+
     format = Format.from_format(format)
+    if isinstance(file, TempBase):
+        file = file.file
+
     if isinstance(file, StringIO):
-        payload = file.getvalue()
+        response = HttpResponse(file.getvalue(), mimetype=format.mimetype)
         # I don't know why we need to close the file. Keeping around.
         file.close()
     else:
-        payload = FileWrapper(file)
-
-    response = HttpResponse(payload, mimetype=format.mimetype)
+        response = StreamingHttpResponse(FileWrapper(file), mimetype=format.mimetype)
 
     if format.download:
         try:
