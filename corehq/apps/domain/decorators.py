@@ -8,7 +8,6 @@ from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponseForbidden
-from django.utils.decorators import method_decorator
 from django.utils.http import urlquote
 from django.utils.translation import ugettext as _
 
@@ -86,12 +85,6 @@ def login_and_domain_required(view_func):
     return _inner
 
 
-class LoginAndDomainMixin(object):
-    @method_decorator(login_and_domain_required)
-    def dispatch(self, *args, **kwargs):
-        return super(LoginAndDomainMixin, self).dispatch(*args, **kwargs)
-
-
 def login_or_digest_ex(allow_cc_users=False):
     def _outer(fn):
         def safe_fn(request, domain, *args, **kwargs):
@@ -102,7 +95,7 @@ def login_or_digest_ex(allow_cc_users=False):
                         return fn(request, domain, *args, **kwargs)
                     else:
                         return HttpResponseForbidden()
-        
+
                 return httpdigest(_inner)(request, domain, *args, **kwargs)
             else:
                 return login_and_domain_required(fn)(request, domain, *args, **kwargs)
@@ -152,7 +145,7 @@ def login_required(view_func):
         if not (user.is_authenticated() and user.is_active):
             return _redirect_for_login_or_domain(request,
                     REDIRECT_FIELD_NAME, login_url)
-        
+
         # User's login and domain have been validated - it's safe to call the view function
         return view_func(request, *args, **kwargs)
     return _inner

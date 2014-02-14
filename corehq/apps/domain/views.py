@@ -91,7 +91,13 @@ class DomainViewMixin(object):
         return domain
 
 
-class BaseDomainView(BaseSectionPageView, DomainViewMixin):
+class LoginAndDomainMixin(object):
+    @method_decorator(login_and_domain_required)
+    def dispatch(self, *args, **kwargs):
+        return super(LoginAndDomainMixin, self).dispatch(*args, **kwargs)
+
+
+class BaseDomainView(LoginAndDomainMixin, BaseSectionPageView, DomainViewMixin):
 
     @property
     def main_context(self):
@@ -100,10 +106,6 @@ class BaseDomainView(BaseSectionPageView, DomainViewMixin):
             'domain': self.domain,
         })
         return main_context
-
-    @method_decorator(login_and_domain_required)
-    def dispatch(self, request, *args, **kwargs):
-        return super(BaseDomainView, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized
