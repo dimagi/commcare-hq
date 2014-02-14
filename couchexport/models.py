@@ -1,5 +1,7 @@
 import hashlib
 from itertools import islice
+import os
+import tempfile
 from urllib2 import URLError
 from couchdbkit.ext.django.schema import Document, DictProperty,\
     DocumentSchema, StringProperty, SchemaListProperty, ListProperty,\
@@ -498,16 +500,17 @@ class FakeSavedExportSchema(BaseSavedExportSchema):
                 (tmp, checkpoint) = cached_data
                 return tmp, checkpoint
 
-        tmp = StringIO()
-        checkpoint = export(export_tag, tmp, format=format,
-            previous_export_id=previous_export_id,
-            filter=filter, max_column_size=max_column_size,
-            separator=separator, export_object=self, process=process)
+        fd, path = tempfile.mkstemp()
+        with os.fdopen(fd, 'wb') as tmp:
+            checkpoint = export(export_tag, tmp, format=format,
+                previous_export_id=previous_export_id,
+                filter=filter, max_column_size=max_column_size,
+                separator=separator, export_object=self, process=process)
 
         if checkpoint:
             if use_cache:
-                cache.set(cache_key, (tmp, checkpoint), CACHE_TIME)
-            return tmp, checkpoint
+                cache.set(cache_key, (path, checkpoint), CACHE_TIME)
+            return path, checkpoint
 
         return None, None # hacky empty case
 

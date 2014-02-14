@@ -27,7 +27,9 @@ def export_async(custom_export, download_id, format=None, filename=None, **kwarg
         ).save(expiry)
     else:
         try:
-            format = tmp.format
+            newformat = tmp.format
+            if isinstance(newformat, basestring):
+                format = newformat
         except AttributeError:
             pass
         if not filename:
@@ -150,4 +152,3 @@ def cache_file_to_be_served(tmp, checkpoint, download_id, format=None, filename=
                         content_disposition="",
                         mimetype="text/html",
                         download_id=download_id).save(expiry)
-        
