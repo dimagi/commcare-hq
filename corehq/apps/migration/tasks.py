@@ -36,12 +36,7 @@ def forms_for_users(user_ids, domain):
 
     for user_id in user_ids:
         user = CommCareUser.get_by_user_id(user_id, domain=domain)
-        forms = user.get_forms()
-
-        good_forms = []
-        for form in forms:
-            if check_form_domain(form, domain):
-                good_forms.append(form)
+        good_forms = [f for f in user.get_forms() if check_form_domain(f, domain)]
         all_forms.extend(good_forms)
 
     all_forms.sort(key=lambda form: form.received_on)

@@ -171,6 +171,8 @@ class SubscriptionForm(forms.Form):
     salesforce_contract_id = forms.CharField(label=_("Salesforce Deployment ID"),
                                              max_length=80,
                                              required=False)
+    do_not_invoice = forms.BooleanField(label=_("Do Not Invoice"),
+                                        required=False)
 
     # account_id is not referenced if subscription is not None
     def __init__(self, subscription, account_id, *args, **kwargs):
@@ -196,6 +198,7 @@ class SubscriptionForm(forms.Form):
             self.fields['plan_version'].initial = subscription.plan_version.id
             self.fields['domain'].initial = subscription.subscriber.domain
             self.fields['salesforce_contract_id'].initial = subscription.salesforce_contract_id
+            self.fields['do_not_invoice'].initial = subscription.do_not_invoice
             if (subscription.date_start is not None
                 and subscription.date_start <= datetime.date.today()):
                 start_date_kwargs.update(disabled)
@@ -229,6 +232,7 @@ class SubscriptionForm(forms.Form):
                 crispy.Field('plan_version'),
                 crispy.Field('domain', **domain_kwargs),
                 'salesforce_contract_id',
+                'do_not_invoice',
             ),
             FormActions(
                 crispy.ButtonHolder(
@@ -246,6 +250,12 @@ class SubscriptionForm(forms.Form):
                 raise forms.ValidationError("A valid project space is required.")
         return domain_name
 
+    def clean_end_date(self):
+        if (self.cleaned_data['end_date'] is not None
+            and self.cleaned_data['start_date'] > self.cleaned_data['end_date']):
+            raise ValidationError("End date must be after start date.")
+        return self.cleaned_data['end_date']
+
     def create_subscription(self):
         account = BillingAccount.objects.get(id=self.cleaned_data['account'])
         domain = self.cleaned_data['domain']
@@ -254,15 +264,20 @@ class SubscriptionForm(forms.Form):
         date_end = self.cleaned_data['end_date']
         date_delay_invoicing = self.cleaned_data['delay_invoice_until']
         salesforce_contract_id = self.cleaned_data['salesforce_contract_id']
+        is_active = (date_start == datetime.date.today())
+        do_not_invoice = self.cleaned_data['do_not_invoice']
         return Subscription.new_domain_subscription(account, domain, plan_version,
                                                     date_start=date_start,
                                                     date_end=date_end,
                                                     date_delay_invoicing=date_delay_invoicing,
-                                                    salesforce_contract_id=salesforce_contract_id)
+                                                    salesforce_contract_id=salesforce_contract_id,
+                                                    is_active=is_active,
+                                                    do_not_invoice=do_not_invoice)
 
     def update_subscription(self, subscription):
         kwargs = {
             'salesforce_contract_id': self.cleaned_data['salesforce_contract_id'],
+            'do_not_invoice': self.cleaned_data['do_not_invoice'],
         }
 
         if self.fields['start_date'].required:

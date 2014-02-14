@@ -5,9 +5,10 @@ from corehq.apps.commtrack.models import Product, SupplyPointCase
 from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.reports.api import ReportDataSource
 from datetime import datetime
-from casexml.apps.stock.models import StockState
+from casexml.apps.stock.models import StockState, StockTransaction
 from django.db.models import Sum, Avg
 from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids
+from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from casexml.apps.stock.utils import months_of_stock_remaining, stock_category
 
 # TODO make settings
@@ -18,8 +19,12 @@ REPORTING_PERIOD_ARGS = (1,)
 def is_timely(case, limit=0):
     return num_periods_late(case, REPORTING_PERIOD, *REPORTING_PERIOD_ARGS) <= limit
 
-def reporting_status(case, start_date, end_date):
-    last_reported = case.get_last_reported_date()
+def reporting_status(transaction, start_date, end_date):
+    if transaction:
+        last_reported = transaction.report.date.date()
+    else:
+        last_reported = None
+
     if last_reported and last_reported < start_date:
         return 'ontime'
     elif last_reported and start_date <= last_reported <= end_date:
@@ -219,39 +224,35 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
     """
 
     def get_data(self):
-        # TODO this doesn't work post SPP era
-        raise NotImplementedError('this report needs to be rewritten')
-        # startkey = [self.domain, self.active_location._id if self.active_location else None]
-        # product_cases = SPPCase.view('commtrack/product_cases',
-                                     # startkey=startkey,
-                                     # endkey=startkey + [{}],
-                                     # include_docs=True)
-        product_cases = []
+        sp_ids = get_relevant_supply_point_ids(
+            self.domain,
+            self.active_location
+        )
 
+        products = Product.by_domain(self.domain)
         if self.program_id:
-            product_cases = filter(lambda c: Product.get(c.product).program_id == self.program_id, product_cases)
-        def latest_case(cases):
-            # getting last report date should probably be moved to a util function in a case wrapper class
-            return max(cases, key=lambda c: c.get_last_reported_date() or datetime(2000, 1, 1).date())
-        cases_by_site = map_reduce(lambda c: [(tuple(c.location_),)],
-                                   lambda v: reporting_status(latest_case(v), self.start_date, self.end_date),
-                                   data=product_cases, include_docs=True)
+            products = filter(
+                lambda product: product.program_id == self.program_id, products
+            )
 
-        # TODO if aggregating, won't want to fetch all these locs (will only want to fetch aggregation sites)
-        locs = dict((loc._id, loc) for loc in Location.view(
-                '_all_docs',
-                keys=[path[-1] for path in cases_by_site.keys()],
-                include_docs=True))
+        for sp_id in sp_ids:
+            for product in products:
+                loc = SupplyPointCase.get(sp_id).location
+                last_transaction = StockTransaction.latest(
+                    sp_id,
+                    STOCK_SECTION_TYPE,
+                    product._id
+                )
 
-        for path, status in cases_by_site.iteritems():
-            loc = locs[path[-1]]
-
-            yield {
-                'loc_id': loc._id,
-                'loc_path': loc.path,
-                'name': loc.name,
-                'type': loc.location_type,
-                'reporting_status': status,
-                'geo': loc._geopoint,
-            }
-
+                yield {
+                    'loc_id': loc._id,
+                    'loc_path': loc.path,
+                    'name': loc.name,
+                    'type': loc.location_type,
+                    'reporting_status': reporting_status(
+                        last_transaction,
+                        self.start_date,
+                        self.end_date
+                    ),
+                    'geo': loc._geopoint,
+                }
