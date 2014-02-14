@@ -44,11 +44,11 @@ def REPORTS(project):
     
     if project.commtrack_enabled:
         reports.insert(0, (ugettext_lazy("Commtrack"), (
-            # commtrack_reports.ReportingRatesReport,
             commtrack_reports.CurrentStockStatusReport,
             commtrack_reports.AggregateStockStatusReport,
+            commtrack_reports.ReportingRatesReport,
             # commtrack_reports.RequisitionReport,
-            # commtrack_maps.StockStatusMapReport,
+            commtrack_maps.StockStatusMapReport,
             # commtrack_maps.ReportingStatusMapReport,
         )))
 

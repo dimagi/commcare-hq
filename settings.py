@@ -246,6 +246,7 @@ HQ_APPS = (
     'corehq.apps.api',
     'corehq.apps.indicators',
     'corehq.apps.cachehq',
+    'corehq.apps.toggle_ui',
     'corehq.couchapps',
     'custom.apps.wisepill',
     'custom.fri',
@@ -626,6 +627,11 @@ LOGGING = {
             'format': '%(asctime)s %(levelname)s %(module)s %(message)s'
         },
     },
+    'filters': {
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse'
+        }
+    },
     'handlers': {
         'pillowtop': {
             'level': 'INFO',
@@ -649,6 +655,7 @@ LOGGING = {
         },
         'mail_admins': {
             'level': 'ERROR',
+            'filters': ['require_debug_false'],
             'class': 'django.utils.log.AdminEmailHandler',
         },
         'sentry': {
@@ -920,6 +927,7 @@ PILLOWTOPS = {
         'corehq.pillows.domain.DomainPillow',
         'corehq.pillows.user.UserPillow',
         'corehq.pillows.application.AppPillow',
+        'corehq.pillows.group.GroupPillow',
         'corehq.pillows.sms.SMSPillow',
         'corehq.pillows.user.GroupToUserPillow',
         'corehq.pillows.user.UnknownUsersPillow',

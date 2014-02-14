@@ -84,7 +84,8 @@ def create_metadata_export(download_id, domain, format, filename, datespan=None,
 def daily_reports():    
     # this should get called every hour by celery
     reps = ReportNotification.view("reportconfig/all_notifications",
-                                   key=["daily", datetime.utcnow().hour, None],
+                                   startkey=["daily", datetime.utcnow().hour],
+                                   endkey=["daily", datetime.utcnow().hour, {}],
                                    reduce=False,
                                    include_docs=True).all()
     for rep in reps:

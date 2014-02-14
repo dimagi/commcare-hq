@@ -9,6 +9,7 @@ from django import forms
 from django.core.urlresolvers import reverse
 from django.forms.util import ErrorList
 from django.template.loader import render_to_string
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop, ugettext as _, ugettext
 
 from crispy_forms.bootstrap import FormActions, StrictButton, InlineField, InlineRadios
@@ -29,7 +30,7 @@ from corehq.apps.accounting.models import (BillingContactInfo, Currency, Softwar
                                            Subscription, Subscriber, CreditLine, SoftwareProductRate,
                                            FeatureRate, SoftwarePlanEdition, SoftwarePlanVisibility,
                                            BillingAccountAdmin, SoftwarePlan, Feature, FeatureType,
-                                           SoftwareProduct, SoftwareProductType)
+                                           SoftwareProduct, SoftwareProductType, CreditAdjustment)
 
 
 class BillingAccountForm(forms.Form):
@@ -106,7 +107,7 @@ class BillingAccountForm(forms.Form):
                 'city',
                 'region',
                 'postal_code',
-                'country',
+                crispy.Field('country', css_class="input-xlarge"),
             ) if account is not None else None,
             FormActions(
                 crispy.ButtonHolder(
@@ -166,10 +167,12 @@ class SubscriptionForm(forms.Form):
     end_date = forms.DateField(label="End Date", widget=forms.DateInput(), required=False)
     delay_invoice_until = forms.DateField(label="Delay Invoice Until", widget=forms.DateInput(), required=False)
     plan_version = forms.ChoiceField(label="Plan Version")
-    domain = forms.ChoiceField(label=_("Project Space"))
+    domain = forms.CharField(label=_("Project Space"))
     salesforce_contract_id = forms.CharField(label=_("Salesforce Deployment ID"),
                                              max_length=80,
                                              required=False)
+    do_not_invoice = forms.BooleanField(label=_("Do Not Invoice"),
+                                        required=False)
 
     # account_id is not referenced if subscription is not None
     def __init__(self, subscription, account_id, *args, **kwargs):
@@ -181,6 +184,7 @@ class SubscriptionForm(forms.Form):
         start_date_kwargs = dict(**css_class)
         end_date_kwargs = dict(**css_class)
         delay_invoice_until_kwargs = dict(**css_class)
+        domain_kwargs = {'css_class': 'input-xlarge'}
 
         if subscription is not None:
             self.fields['account'].choices = [(subscription.account.id, subscription.account.name)]
@@ -194,6 +198,7 @@ class SubscriptionForm(forms.Form):
             self.fields['plan_version'].initial = subscription.plan_version.id
             self.fields['domain'].initial = subscription.subscriber.domain
             self.fields['salesforce_contract_id'].initial = subscription.salesforce_contract_id
+            self.fields['do_not_invoice'].initial = subscription.do_not_invoice
             if (subscription.date_start is not None
                 and subscription.date_start <= datetime.date.today()):
                 start_date_kwargs.update(disabled)
@@ -206,6 +211,7 @@ class SubscriptionForm(forms.Form):
                 delay_invoice_until_kwargs.update(disabled)
             self.fields['plan_version'].required = False
             self.fields['domain'].required = False
+            domain_kwargs.update(disabled)
         else:
             self.fields['account'].choices = [(account.id, account.name)
                                               for account in BillingAccount.objects.order_by('name')]
@@ -214,6 +220,7 @@ class SubscriptionForm(forms.Form):
             self.fields['plan_version'].choices = [(plan_version.id, str(plan_version))
                                                    for plan_version in SoftwarePlanVersion.objects.all()]
             self.fields['domain'].choices = [(domain, domain) for domain in Domain.get_all()]
+
         self.helper = FormHelper()
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
@@ -223,8 +230,9 @@ class SubscriptionForm(forms.Form):
                 crispy.Field('end_date', **end_date_kwargs),
                 crispy.Field('delay_invoice_until', **delay_invoice_until_kwargs),
                 crispy.Field('plan_version'),
-                crispy.Field('domain'),
+                crispy.Field('domain', **domain_kwargs),
                 'salesforce_contract_id',
+                'do_not_invoice',
             ),
             FormActions(
                 crispy.ButtonHolder(
@@ -242,38 +250,67 @@ class SubscriptionForm(forms.Form):
                 raise forms.ValidationError("A valid project space is required.")
         return domain_name
 
+    def clean_end_date(self):
+        if (self.cleaned_data['end_date'] is not None
+            and self.cleaned_data['start_date'] > self.cleaned_data['end_date']):
+            raise ValidationError("End date must be after start date.")
+        return self.cleaned_data['end_date']
+
     def create_subscription(self):
         account = BillingAccount.objects.get(id=self.cleaned_data['account'])
+        domain = self.cleaned_data['domain']
+        plan_version = SoftwarePlanVersion.objects.get(id=self.cleaned_data['plan_version'])
         date_start = self.cleaned_data['start_date']
         date_end = self.cleaned_data['end_date']
         date_delay_invoicing = self.cleaned_data['delay_invoice_until']
-        plan_version_id = self.cleaned_data['plan_version']
-        domain = self.cleaned_data['domain']
-        subscription = Subscription(account=account,
-                                    date_start=date_start,
-                                    date_end=date_end,
-                                    date_delay_invoicing=date_delay_invoicing,
-                                    plan_version=SoftwarePlanVersion.objects.get(id=plan_version_id),
-                                    salesforce_contract_id=self.cleaned_data['salesforce_contract_id'],
-                                    subscriber=Subscriber.objects.get_or_create(domain=domain,
-                                                                                organization=None)[0])
-        subscription.save()
-        return subscription
+        salesforce_contract_id = self.cleaned_data['salesforce_contract_id']
+        is_active = (date_start == datetime.date.today())
+        do_not_invoice = self.cleaned_data['do_not_invoice']
+        return Subscription.new_domain_subscription(account, domain, plan_version,
+                                                    date_start=date_start,
+                                                    date_end=date_end,
+                                                    date_delay_invoicing=date_delay_invoicing,
+                                                    salesforce_contract_id=salesforce_contract_id,
+                                                    is_active=is_active,
+                                                    do_not_invoice=do_not_invoice)
 
     def update_subscription(self, subscription):
+        kwargs = {
+            'salesforce_contract_id': self.cleaned_data['salesforce_contract_id'],
+            'do_not_invoice': self.cleaned_data['do_not_invoice'],
+        }
+
         if self.fields['start_date'].required:
-            subscription.date_start = self.cleaned_data['start_date']
+            kwargs.update({
+                'date_start': self.cleaned_data['start_date'],
+            })
+
         if subscription.date_end is None or subscription.date_end > datetime.date.today():
-            subscription.date_end = self.cleaned_data['end_date']
+            kwargs.update({
+                'date_end': self.cleaned_data['end_date'],
+            })
+        else:
+           kwargs.update({
+                'date_end': subscription.date_end,
+            })
+
         if (subscription.date_delay_invoicing is None
             or subscription.date_delay_invoicing > datetime.date.today()):
-            subscription.date_delay_invoicing = self.cleaned_data['delay_invoice_until']
-        subscription.salesforce_contract_id = self.cleaned_data['salesforce_contract_id']
-        subscription.save()
+            kwargs.update({
+                'date_delay_invoicing': self.cleaned_data['delay_invoice_until'],
+            })
+        else:
+            kwargs.update({
+                'date_delay_invoicing': subscription.date_delay_invoicing,
+            })
+
+        new_plan_version = SoftwarePlanVersion.objects.get(id=self.cleaned_data['plan_version'])
+
+        return subscription.change_plan(new_plan_version, **kwargs)
 
 
 class CreditForm(forms.Form):
-    amount = forms.DecimalField(label=_("Amount %s") % Currency.get_default().symbol)
+    amount = forms.DecimalField()
     note = forms.CharField(required=False)
     rate_type = forms.ChoiceField()
     product_rate = forms.ChoiceField(required=False, label=_("Product Rate"))
@@ -286,6 +323,7 @@ class CreditForm(forms.Form):
             self.fields['feature_rate'].choices = self.get_feature_choices(id, is_account)
             self.fields['rate_type'].choices = self.get_rate_type_choices(self.fields['product_rate'].choices,
                                                                           self.fields['feature_rate'].choices)
+        self.fields['amount'].label = _("Amount (%s)") % self.get_currency_str(id, is_account)
         self.helper = FormHelper()
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
@@ -302,6 +340,25 @@ class CreditForm(forms.Form):
                 )
             )
         )
+
+    def get_currency_str(self, id, is_account):
+        account = BillingAccount.objects.get(id=id) \
+            if is_account else Subscription.objects.get(id=id).account
+        symbol = account.currency.symbol
+        if len(symbol) != 0:
+            return symbol
+        else:
+            return account.currency.code
+
+    def clean_amount(self):
+        amount = self.cleaned_data['amount']
+        field_metadata = CreditAdjustment._meta.get_field('amount')
+        if amount >= 10 ** (field_metadata.max_digits - field_metadata.decimal_places):
+            raise ValidationError(mark_safe('Amount over maximum size.  If you need support '
+                                            'for quantities this large, please '
+                                            '<a data-toggle="modal" data-target="#reportIssueModal" '
+                                            'href="#reportIssueModal">Report an Issue</a>.'))
+        return amount
 
     def get_subscriptions(self, id, is_account):
         return Subscription.objects.filter(account=BillingAccount.objects.get(id=id))\
@@ -734,7 +791,7 @@ class SoftwarePlanVersionForm(forms.Form):
             'existingRoles': list(self.existing_roles),
             'roleType': self['role_type'].value() or 'existing',
             'newPrivileges': self['privileges'].value(),
-            'currentRoleSlug': self.plan_version.role.slug,
+            'currentRoleSlug': self.plan_version.role.slug if self.plan_version is not None else None,
         }
 
     @property

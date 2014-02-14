@@ -5,6 +5,7 @@ from couchdbkit.ext.django.schema import DateTimeProperty, StringProperty
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.accounting.downgrade import DomainDowngradeActionHandler
@@ -14,9 +15,10 @@ from dimagi.utils.couch.database import SafeSaveDocument
 
 from corehq.apps.accounting.exceptions import (CreditLineError, AccountingError, SubscriptionAdjustmentError,
                                                SubscriptionDowngradeError, NewSubscriptionError)
-from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES, assure_domain_instance, get_change_status, get_privileges
+from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES, assure_domain_instance, get_change_status
 
 global_logger = logging.getLogger(__name__)
+integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
 
 
 class BillingAccountType(object):
@@ -306,7 +308,8 @@ class FeatureRate(models.Model):
     monthly_fee = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2,
                                       verbose_name="Monthly Fee")
     monthly_limit = models.IntegerField(default=0,
-                                        verbose_name="Monthly Included Limit")
+                                        verbose_name="Monthly Included Limit",
+                                        validators=integer_field_validators)
     per_excess_fee = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2,
                                          verbose_name="Fee Per Excess of Limit")
     date_created = models.DateTimeField(auto_now_add=True)
@@ -479,6 +482,7 @@ class Subscription(models.Model):
     date_delay_invoicing = models.DateField(blank=True, null=True)
     date_created = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=False)
+    do_not_invoice = models.BooleanField(default=False)
 
     def cancel_subscription(self, adjustment_method=None, web_user=None, note=None):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
@@ -492,8 +496,9 @@ class Subscription(models.Model):
             self, reason=SubscriptionAdjustmentReason.CANCEL, method=adjustment_method, note=note, web_user=web_user,
         )
 
-    def change_plan(self, new_plan_version, date_end=None, salesforce_contract_id=None, note=None,
-                    web_user=None, adjustment_method=None):
+    def change_plan(self, new_plan_version, date_start=None, date_end=None, date_delay_invoicing=None,
+                    salesforce_contract_id=None, do_not_invoice=False,
+                    note=None, web_user=None, adjustment_method=None):
         """
         Changing a plan terminates the current subscription and creates a new subscription where the old plan
         left off.
@@ -505,19 +510,11 @@ class Subscription(models.Model):
             self.subscriber.downgrade(new_plan_version, downgrades)
 
         today = datetime.date.today()
-        new_start_date = today if self.date_start < today else self.date_start
+        new_start_date = today if self.date_start <= today else (date_start or self.date_start)
 
-        new_subscription = Subscription(
-            account=self.account,
-            plan_version=new_plan_version,
-            subscriber=self.subscriber,
-            salesforce_contract_id=salesforce_contract_id or self.salesforce_contract_id,
-            date_start=new_start_date,
-            date_end=date_end,
-            date_delay_invoicing=self.date_delay_invoicing,
-            is_active=self.is_active,
-        )
-        new_subscription.save()
+        new_is_active = self.is_active
+        new_salesforce_contract_id = salesforce_contract_id \
+            if salesforce_contract_id is not None else self.salesforce_contract_id
 
         if self.date_start > today:
             self.date_start = today
@@ -528,9 +525,21 @@ class Subscription(models.Model):
         self.is_active = False
         self.save()
 
-        # record new subscription
-        SubscriptionAdjustment.record_adjustment(new_subscription,
-                                                 method=adjustment_method, note=note, web_user=web_user)
+        new_subscription =\
+            Subscription.new_domain_subscription(self.account,
+                                                 self.subscriber.domain,
+                                                 new_plan_version,
+                                                 date_start=new_start_date,
+                                                 date_end=date_end,
+                                                 date_delay_invoicing=date_delay_invoicing,
+                                                 salesforce_contract_id=new_salesforce_contract_id,
+                                                 is_active=new_is_active,
+                                                 do_not_invoice=do_not_invoice,
+                                                 adjustment_method=adjustment_method,
+                                                 note=note,
+                                                 web_user=web_user
+                                                 )
+
         # record transfer from old subscription
         SubscriptionAdjustment.record_adjustment(self, method=adjustment_method, note=note, web_user=web_user,
                                                  reason=adjustment_reason, related_subscription=new_subscription)

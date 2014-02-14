@@ -17,7 +17,7 @@ from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
 from casexml.apps.stock.models import StockState
-from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids
+from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, product_ids_filtered_by_program
 
 def _enabled_hack(domain):
     return not is_psi_domain(domain)
@@ -111,11 +111,21 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     def get_prod_data(self):
         sp_ids = get_relevant_supply_point_ids(self.domain, self.active_location)
 
-        stock_states = StockState.objects.filter(case_id__in=sp_ids).order_by('product_id')
+        stock_states = StockState.objects.filter(
+            case_id__in=sp_ids
+        ).order_by('product_id')
+
+        if self.program_id:
+            stock_states = stock_states.filter(
+                product_id__in=product_ids_filtered_by_program(
+                    self.domain,
+                    self.program_id
+                )
+            )
 
         product_grouping = {}
         for state in stock_states:
-            status = state.stock_category()
+            status = state.stock_category
             if state.product_id in product_grouping:
                 product_grouping[state.product_id][status] += 1
                 product_grouping[state.product_id]['facility_count'] += 1

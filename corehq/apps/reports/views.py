@@ -23,6 +23,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.templatetags.case_tags import case_inline_display
 from couchdbkit.exceptions import ResourceNotFound
 from casexml.apps.case.xml import V2
+from corehq.apps.reports.exportfilters import default_form_filter
 import couchexport
 from couchexport import views as couchexport_views
 from couchexport.export import SchemaMismatchException
@@ -275,7 +276,12 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
         # look more like a FormExportSchema
         if export_type == 'form':
             filter &= SerializableFunction(instances)
+
         export_object = FakeSavedExportSchema(index=export_tag)
+
+    if export_type == 'form':
+        _filter = filter
+        filter = SerializableFunction(default_form_filter, filter=_filter)
 
     if not filename:
         filename = export_object.name
@@ -801,7 +807,7 @@ def download_cases(request, domain):
         'user_filter': user_filter,
     }
     payload_func = SerializableFunction(generate_case_export_payload, **kwargs)
-    content_disposition = "attachment; filename={domain}_data.{ext}".format(domain=domain, ext=format.extension)
+    content_disposition = 'attachment; filename="{domain}_data.{ext}"'.format(domain=domain, ext=format.extension)
     mimetype = "%s" % format.mimetype
 
     def generate_payload(payload_func):

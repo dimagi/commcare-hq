@@ -772,15 +772,11 @@ class ProBonoForm(forms.Form):
     def process_submission(self):
         try:
             params = {
-                'contact_email': self.cleaned_data['contact_email'],
-                'organization': self.cleaned_data['organization'],
-                'project_overview': self.cleaned_data['project_overview'],
-                'pay_only_features_needed': self.cleaned_data['pay_only_features_needed'],
-                'duration_of_project': self.cleaned_data['duration_of_project'],
+                'pro_bono_form': self,
             }
             html_content = render_to_string("domain/email/pro_bono_application.html", params)
             text_content = render_to_string("domain/email/pro_bono_application.txt", params)
-            recipient = "infomation@dimagi.com"
+            recipient = "billing-comm@dimagi.com"
             send_HTML_email("Pro-Bono Application", recipient, html_content, text_content=text_content)
         except Exception:
             logging.error("Couldn't send pro-bono application email. "

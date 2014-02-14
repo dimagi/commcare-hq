@@ -1,9 +1,9 @@
-Contact email: {{ contact_email }}
+Contact email: {{ pro_bono_form.contact_email.value }}
 
-Organization: {{ organization }}
+Organization: {{ pro_bono_form.organization.value }}
 
-Project overview: {{ project_overview }}
+Project overview: {{ pro_bono_form.project_overview.value }}
 
-Pay only features needed: {{ pay_only_features_needed }}
+Pay only features needed: {{ pro_bono_form.pay_only_features_needed.value }}
 
-Duration of project: {{ duration_of_project }}
+Duration of project: {{ pro_bono_form.duration_of_project.value }}

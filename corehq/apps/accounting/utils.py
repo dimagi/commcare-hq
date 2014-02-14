@@ -70,10 +70,13 @@ def get_privileges(plan_version):
 
 
 def get_change_status(from_plan_version, to_plan_version):
-    from_privs = get_privileges(from_plan_version) if from_plan_version is not None else set(privileges.MAX_PRIVILEGES)
+    all_privs = set(privileges.MAX_PRIVILEGES)
+    from_privs = get_privileges(from_plan_version) if from_plan_version is not None else all_privs
     to_privs = get_privileges(to_plan_version)
-    downgraded_privs = from_privs.difference(to_privs)
+
+    downgraded_privs = all_privs.difference(to_privs)
     upgraded_privs = to_privs.difference(from_privs)
+
     from corehq.apps.accounting.models import SubscriptionAdjustmentReason as Reason
     if from_plan_version is None:
         adjustment_reason = Reason.CREATE

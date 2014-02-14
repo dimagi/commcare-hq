@@ -1,9 +1,13 @@
+from __future__ import division
 import time
 import requests
 from requests.auth import HTTPDigestAuth
 from hq_settings import HQTransaction
 from datetime import datetime
 import uuid
+import os
+from django.core.files.uploadedfile import UploadedFile
+from random import random, sample
 
 SUBMIT_TEMPLATE = """<?xml version='1.0'?>
 <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://www.commcarehq.org/loadtest">
@@ -18,7 +22,7 @@ SUBMIT_TEMPLATE = """<?xml version='1.0'?>
     %(extras)s
 </data>"""
 
-CASE_TEMPLATE = """
+CREATE_CASE_TEMPLATE = """
 <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="%(caseid)s"
         date_modified="%(moddate)s" user_id="multimechanize">
     <create>
@@ -32,7 +36,23 @@ CASE_TEMPLATE = """
 </case>
 """
 
+UPDATE_CASE_TEMPLATE = """
+<case xmlns="http://commcarehq.org/case/transaction/v2" case_id="%(caseid)s"
+        date_modified="%(moddate)s" user_id="multimechanize">
+    <update>
+        <prop1>val1</prop1>
+        <prop2>val2</prop2>
+    </update>
+</case>
+"""
+
 ISO_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
+
+with open(os.path.join(os.path.dirname(__file__), "data", "5kb.xml")) as f:
+    LONG_FORM_DATA = f.read()
+
+PIC_NAME = "picture"
+PIC_PATH = os.path.join(os.path.dirname(__file__), "data", "sphynx.jpg")
 
 
 def _format_datetime(time_t):
@@ -47,33 +67,83 @@ def _submission(extras=''):
         'extras': extras,
     }
 
+CASE_IDS = set()
 
-def _case_submission():
-    caseblock = CASE_TEMPLATE % {
+def _case_block(action="create"):
+    TMPL = {"create": CREATE_CASE_TEMPLATE,
+            "update": UPDATE_CASE_TEMPLATE}[action]
+    if action == 'create':
+        caseid = uuid.uuid4().hex
+    else:
+        caseid = sample(CASE_IDS, 1)[0]
+        CASE_IDS.remove(caseid)
+
+    caseblock = TMPL % {
         'moddate': _format_datetime(datetime.utcnow()),
-        'caseid': uuid.uuid4().hex,
+        'caseid': caseid,
     }
-    return _submission(extras=caseblock)
+    return caseblock, caseid
 
+def _attachmentFileStream(key):
+    attachment_path = PIC_PATH
+    attachment = open(attachment_path, 'rb')
+    uf = UploadedFile(attachment, key)
+    return uf
+
+def _prepAttachments():
+    attachment_block = '<attachment><%s src="%s" from="local"/></attachment>' %(PIC_NAME, PIC_PATH)
+    dict_attachments = {PIC_NAME: _attachmentFileStream(PIC_NAME)}
+    return attachment_block, dict_attachments
 
 class Transaction(HQTransaction):
-    
-    def run(self):
-        data = _case_submission()
-        start_timer = time.time()
-        url = '%s%s' % (self.base_url, '/a/%s/receiver/secure/' % self.domain)
-        resp = requests.post(url, data=data, headers={
+    """
+        Out of 15 forms: 5 should create a new case, 10 should update a case, and 12 should include multimedia
+    """
+
+    def _normal_submit(self, url, data):
+        return requests.post(url, data=data, headers={
             'content-type': 'text/xml',
             'content-length': len(data),
         }, auth=HTTPDigestAuth(self.mobile_username, self.mobile_password))
+
+    def _media_submit(self, url, data_dict):
+        return requests.post(url, files=data_dict, auth=HTTPDigestAuth(self.mobile_username, self.mobile_password))
+
+    def do_submission(self, url, include_image, case_action):
+        extras = LONG_FORM_DATA  # 5k filler
+
+        block, caseid = _case_block(action=case_action)
+        extras += block
+
+        if not include_image:
+            data = _submission(extras=extras)
+            submit_fn = self._normal_submit
+        else:
+            attachment_block, dict_attachments = _prepAttachments()
+            data = {"xml_submission_file": _submission(extras=attachment_block+extras)}
+            data.update(dict_attachments)
+            submit_fn = self._media_submit
+
+        start_timer = time.time()
+        resp = submit_fn(url, data)
+        return start_timer, resp, caseid
+    
+    def run(self):
+        include_image = random() < 12/15
+        if CASE_IDS:  # if there are no caseids to update, just create some
+            case_action = "update" if random() > 5/15 else "create"
+        else:
+            case_action = "create"
+        url = '%s%s' % (self.base_url, '/a/%s/receiver/secure/' % self.domain)
+        start_timer, resp, caseid = self.do_submission(url, include_image, case_action)
         latency = time.time() - start_timer
-        self.custom_timers['submission'] = latency  
+        self.custom_timers['submission'] = latency
         responsetext = resp.text
+        CASE_IDS.add(caseid)
         assert resp.status_code == 201, (
             "Bad HTTP Response", resp.status_code, url
         )
         assert "Thanks for submitting" in responsetext, "Bad response text"
-
 
 if __name__ == '__main__':
     trans = Transaction()
