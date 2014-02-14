@@ -24,13 +24,13 @@ from corehq.apps.accounting.async_handlers import (FeatureRateAsyncHandler, Sele
                                                    Select2SubscriptionInfoHandler)
 from corehq.apps.accounting.user_text import PricingTable
 from corehq.apps.accounting.utils import LazyEncoder, fmt_feature_rate_dict, fmt_product_rate_dict
-from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.hqwebapp.views import BaseSectionPageView
-from corehq import toggles
+from corehq import toggles, privileges
+from django_prbac.decorators import requires_privilege
 from toggle.decorators import require_toggle
 
 
-@require_superuser
+@requires_privilege(privileges.ACCOUNTING_ADMIN)
 def accounting_default(request):
     return HttpResponseRedirect(AccountingInterface.get_url())
 
