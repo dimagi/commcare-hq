@@ -4,11 +4,12 @@ from django.utils.safestring import mark_safe, mark_for_escaping
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop, ugettext_lazy
-from corehq import toggles
+from corehq import toggles, privileges
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.domain.utils import get_adm_enabled_domains
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
+from django_prbac.models import Role, UserRole
 import toggle
 
 from dimagi.utils.couch.database import get_db
@@ -1002,7 +1003,14 @@ class AccountingTab(UITab):
 
     @property
     def is_viewable(self):
-        return self.couch_user and self.couch_user.is_superuser
+        roles = Role.objects.filter(slug=privileges.ACCOUNTING_ADMIN)
+        if not roles:
+            return False
+        privilege = roles[0].instantiate({})
+        try:
+            return self._request.user.prbac_role.has_privilege(privilege)
+        except UserRole.DoesNotExist:
+            return False
 
 
 class SMSAdminTab(UITab):
@@ -1074,10 +1082,14 @@ class AdminTab(UITab):
             format_submenu_context(mark_for_escaping(_("Commands")), url=reverse("management_commands")),
 #            format_submenu_context(mark_for_escaping("HQ Announcements"),
 #                url=reverse("default_announcement_admin")),
-            format_submenu_context(AccountingTab.title, url=reverse('accounting_default')),
         ]
         try:
-            submenu_context.append(format_submenu_context(mark_for_escaping(_("Billing")),
+            if AccountingTab(self._request, self._current_url_name).is_viewable:
+                submenu_context.append(format_submenu_context(AccountingTab.title, url=reverse('accounting_default')))
+        except Exception:
+            pass
+        try:
+            submenu_context.append(format_submenu_context(mark_for_escaping(_("Old SMS Billing")),
                 url=reverse("billing_default")))
         except Exception:
             pass

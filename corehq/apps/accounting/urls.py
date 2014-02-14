@@ -4,7 +4,7 @@ from corehq.apps.accounting.views import *
 
 
 urlpatterns = patterns('corehq.apps.accounting.views',
-    url(r'^accounting_default/$', 'accounting_default', name='accounting_default'),
+    url(r'^$', 'accounting_default', name='accounting_default'),
     url(r'^accounts/(\d+)/$', ManageBillingAccountView.as_view(), name=ManageBillingAccountView.urlname),
     url(r'^accounts/new/$', NewBillingAccountView.as_view(), name=NewBillingAccountView.urlname),
     url(r'^subscriptions/(\d+)/$', EditSubscriptionView.as_view(), name=EditSubscriptionView.urlname),

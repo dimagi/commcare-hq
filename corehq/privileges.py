@@ -42,3 +42,6 @@ MAX_PRIVILEGES = [
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
 MOBILE_WORKER_CREATION = 'mobile_worker_creation'
+
+# Other privileges related specifically to accounting processes
+ACCOUNTING_ADMIN = 'accounting_admin'
