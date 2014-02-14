@@ -1,6 +1,7 @@
 import logging
 
 from couchdbkit.resource import ResourceNotFound
+import redis
 from casexml.apps.case.signals import cases_received
 from couchforms.models import XFormInstance
 from dimagi.utils.chunked import chunked
@@ -24,7 +25,14 @@ def process_cases(xform, config=None):
     """
 
     config = config or CaseProcessingConfig()
-    cases = get_or_update_cases(xform).values()
+    domain = get_and_check_xform_domain(xform)
+
+    with CaseDbCache(domain=domain, lock=True) as case_db:
+        return _process_cases(xform, config, case_db)
+
+
+def _process_cases(xform, config, case_db):
+    cases = get_or_update_cases(xform, case_db).values()
 
     if config.reconcile:
         for c in cases:
@@ -100,11 +108,25 @@ class CaseDbCache(object):
     so we can get the latest updates even if they haven't been saved
     to the database. Also provides some type checking safety.
     """
-    def __init__(self, domain=None, strip_history=False, deleted_ok=False):
+    def __init__(self, domain=None, strip_history=False, deleted_ok=False,
+                 lock=False):
         self.cache = {}
         self.domain = domain
         self.strip_history = strip_history
         self.deleted_ok = deleted_ok
+        self.lock = lock
+        self.locks = []
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        for lock in self.locks:
+            if lock:
+                try:
+                    lock.release()
+                except redis.ConnectionError:
+                    pass
 
     def validate_doc(self, doc):
         if self.domain and doc.domain != self.domain:
@@ -122,8 +144,18 @@ class CaseDbCache(object):
         if case_id in self.cache:
             return self.cache[case_id]
 
-        try: 
-            case_doc = CommCareCase.get(case_id, strip_history=self.strip_history)
+        try:
+            if self.strip_history:
+                case_doc = CommCareCase.get_lite(case_id)
+            elif self.lock:
+                try:
+                    case_doc, lock = CommCareCase.get_locked_obj(_id=case_id)
+                except redis.ConnectionError:
+                    case_doc = CommCareCase.get(case_id)
+                else:
+                    self.locks.append(lock)
+            else:
+                case_doc = CommCareCase.get(case_id)
         except ResourceNotFound:
             return None
 
@@ -168,7 +200,7 @@ def get_and_check_xform_domain(xform):
     return domain
 
 
-def get_or_update_cases(xform):
+def get_or_update_cases(xform, case_db):
     """
     Given an xform document, update any case blocks found within it,
     returning a dictionary mapping the case ids affected to the
@@ -176,9 +208,6 @@ def get_or_update_cases(xform):
     """
     case_updates = get_case_updates(xform)
 
-    domain = get_and_check_xform_domain(xform)
-
-    case_db = CaseDbCache(domain=domain)
     for case_update in case_updates:
         case_doc = _get_or_update_model(case_update, xform, case_db)
         if case_doc:
@@ -192,7 +221,7 @@ def get_or_update_cases(xform):
                 "XForm %s had a case block that wasn't able to create a case! "
                 "This usually means it had a missing ID" % xform.get_id
             )
-    
+
     # once we've gotten through everything, validate all indices
     def _validate_indices(case):
         if case.indices:
