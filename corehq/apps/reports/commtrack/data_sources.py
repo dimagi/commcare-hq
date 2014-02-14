@@ -154,10 +154,10 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
         for state in stock_states:
             product = Product.get(state.product_id)
             yield {
-                'category': state.stock_category(),
+                'category': state.stock_category,
                 'product_id': product._id,
                 'consumption': state.daily_consumption,
-                'months_remaining': state.months_remaining(),
+                'months_remaining': state.months_remaining,
                 'location_id': state.case_id,
                 'product_name': product.name,
                 'current_stock': state.stock_on_hand,
