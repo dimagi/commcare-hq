@@ -1,26 +1,14 @@
 import logging
 from zipfile import ZipFile
 from django.core.servers.basehttp import FileWrapper
+from couchexport.files import TempBase
 from couchexport.models import FakeSavedExportSchema, SavedExportSchema
 from django.http import HttpResponse, HttpResponseNotFound, StreamingHttpResponse
 from StringIO import StringIO
 from unidecode import unidecode
-from couchexport.tasks import Temp, TempBase
 from couchexport.util import get_schema_index_view_keys
 from django.utils.translation import ugettext as _
 
-def get_export_files(export_tag, format=None, previous_export_id=None, filter=None,
-                     use_cache=True, max_column_size=2000, separator='|'):
-    """This function only exists for backwards compatibility"""
-
-    return FakeSavedExportSchema(index=export_tag).get_export_files(
-        format=format,
-        previous_export_id=previous_export_id,
-        filter=filter,
-        use_cache=use_cache,
-        max_column_size=max_column_size,
-        separator=separator
-    )
 
 def export_data_shared(export_tag, format=None, filename=None,
                        previous_export_id=None, filter=None,
@@ -37,7 +25,7 @@ def export_data_shared(export_tag, format=None, filename=None,
     if not filename:
         filename = export_tag
     
-    tmp, checkpoint = FakeSavedExportSchema(index=export_tag).get_export_files(
+    files = FakeSavedExportSchema(index=export_tag).get_export_files(
         format=format,
         previous_export_id=previous_export_id,
         filter=filter,
@@ -45,12 +33,12 @@ def export_data_shared(export_tag, format=None, filename=None,
         max_column_size=max_column_size,
         separator=separator
     )
-    tmp = Temp(tmp)
-    if checkpoint:
-        return export_response(tmp, format, filename, checkpoint)
+    if files and files.checkpoint:
+        return export_response(files.file, format, filename, files.checkpoint)
     else: 
         return None
-    
+
+
 def export_response(file, format, filename, checkpoint=None):
     """
     Get an http response for an export

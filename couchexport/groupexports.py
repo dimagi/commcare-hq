@@ -3,9 +3,8 @@ from couchdbkit.exceptions import ResourceNotFound
 from datetime import datetime
 import os
 import json
-from couchexport.tasks import Temp, rebuild_schemas
+from couchexport.tasks import rebuild_schemas
 from couchexport.export import SchemaMismatchException
-from dimagi.utils.logging import notify_exception
 
 
 def export_for_group(export_id_or_group, output_dir):
@@ -19,13 +18,13 @@ def export_for_group(export_id_or_group, output_dir):
 
     for config, schema in config.all_exports:
         try:
-            tmp, _ = schema.get_export_files(format=config.format)
+            files = schema.get_export_files(format=config.format)
         except SchemaMismatchException, e:
             # fire off a delayed force update to prevent this from happening again
             rebuild_schemas.delay(config.index)
             continue
 
-        payload = Temp(tmp).payload
+        payload = files.file.payload
         if output_dir == "couch":
             saved = SavedBasicExport.view("couchexport/saved_exports", 
                                           key=json.dumps(config.index),
