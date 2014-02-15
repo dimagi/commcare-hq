@@ -580,7 +580,7 @@ var AdvancedCase = (function () {
     var OpenCaseAction = {
         mapping: function (self) {
             return {
-                include: ['case_type', 'name_path', 'case_tag', 'repeat_context', 'parent_tag', 'parent_reference_id', 'open_condition', 'close_condition'],
+                include: ['case_type', 'name_path', 'case_tag', 'parent_tag', 'parent_reference_id', 'open_condition', 'close_condition'],
                 case_properties: {
                     create: function (options) {
                         return CaseProperty.wrap(options.data,  self);
@@ -714,6 +714,7 @@ var AdvancedCase = (function () {
             var x = propertyArrayToDict(['name'], action.case_properties);
             action.case_properties = x[0];
             action.name_path = x[1].name;
+            action.repeat_context = self.repeat_context();
             return action;
         }
     };
