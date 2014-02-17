@@ -795,8 +795,8 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
 class ProBonoForm(forms.Form):
     contact_email = forms.CharField(label=_("Contact email"))
     organization = forms.CharField(required=False, label=_("Organization"))
-    project_overview = forms.CharField(widget=forms.Textarea, label="Project Overview")
-    pay_only_features_needed = forms.BooleanField(required=False, label="Pay only features needed")
+    project_overview = forms.CharField(widget=forms.Textarea, label="Project overview")
+    pay_only_features_needed = forms.CharField(widget=forms.Textarea, label="Pay only features needed")
     duration_of_project = forms.CharField(help_text=_("We grant pro-bono software plans for "
                                                       "12 months at a time. After 12 months "
                                                       "groups must reapply to renew their "
