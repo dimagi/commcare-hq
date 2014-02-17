@@ -1478,6 +1478,10 @@ class ProBonoMixin():
     url_name = None
 
     @property
+    def requesting_domain(self):
+        raise NotImplementedError
+
+    @property
     @memoized
     def pro_bono_form(self):
         if self.request.method == 'POST':
@@ -1497,7 +1501,7 @@ class ProBonoMixin():
 
     def post(self, request, *args, **kwargs):
         if self.pro_bono_form.is_valid():
-            self.pro_bono_form.process_submission()
+            self.pro_bono_form.process_submission(domain=self.requesting_domain)
             self.is_submitted = True
         return self.get(request, *args, **kwargs)
 
@@ -1506,10 +1510,18 @@ class ProBonoStaticView(ProBonoMixin, BasePageView):
     template_name = 'domain/pro_bono/static.html'
     urlname = 'pro_bono_static'
 
+    @property
+    def requesting_domain(self):
+        return None
+
 
 class ProBonoView(ProBonoMixin, DomainAccountingSettings):
     template_name = 'domain/pro_bono/domain.html'
     urlname = 'pro_bono'
+
+    @property
+    def requesting_domain(self):
+        return self.domain
 
     @property
     def parent_pages(self):
