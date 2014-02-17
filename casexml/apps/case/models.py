@@ -14,7 +14,7 @@ from django.utils.translation import ugettext as _
 from couchdbkit.ext.django.schema import *
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
 from PIL import Image
-from casexml.apps.case.exceptions import MissingServerDate
+from casexml.apps.case.exceptions import MissingServerDate, ReconciliationError
 from dimagi.utils.django.cached_object import CachedObject, OBJECT_ORIGINAL, OBJECT_SIZE_MAP, CachedImage, IMAGE_SIZE_ORDERING
 from casexml.apps.phone.xml import get_case_element
 from casexml.apps.case.signals import case_post_save
@@ -842,7 +842,6 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin,
 
         self.case_attachments = update_attachments
 
-
     def apply_close(self, close_action):
         self.closed = True
         self.closed_on = close_action.date
@@ -852,12 +851,17 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin,
         Runs through the action list and tries to reconcile things that seem
         off (for example, out-of-order submissions, duplicate actions, etc.).
 
-        This method fails hard if anything goes wrong so it's up to the caller
-        to deal with that. It will raise assertion errors if this happens.
+        This method raises a ReconciliationError if anything goes wrong.
         """
         def _check_preconditions():
+            error = None
             for a in self.actions:
-                assert a.server_date is not None and a.xform_id is not None
+                if a.server_date is None:
+                    error = u"Case {0} action server_date is None: {1}"
+                elif a.xform_id is None:
+                    error = u"Case {0} action xform_id is None: {1}"
+                if error:
+                    raise ReconciliationError(error.format(self.get_id, a))
 
         _check_preconditions()
 
@@ -865,7 +869,8 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin,
         # form timestamp as the modification date so we have to do something
         # fancier to deal with old data
         deduplicated_actions = list(set(self.actions))
-        def further_deduplicate(action_list):
+
+        def _further_deduplicate(action_list):
             def actions_match(a1, a2):
                 # if everything but the server_date match, the actions match.
                 # this will allow for multiple case blocks to be submitted
@@ -881,7 +886,10 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin,
             for a in action_list:
                 found_actions = [other for other in ret if actions_match(a, other)]
                 if found_actions:
-                    assert len(found_actions) == 1
+                    if len(found_actions) != 1:
+                        error = (u"Case {0} action conflicts "
+                                 u"with multiple other actions: {1}")
+                        raise ReconciliationError(error.format(self.get_id, a))
                     match = found_actions[0]
                     # when they disagree, choose the _earlier_ one as this is
                     # the one that is likely timestamped with the form's date
@@ -891,13 +899,17 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin,
                     ret.append(a)
             return ret
 
-        deduplicated_actions = further_deduplicate(deduplicated_actions)
+        deduplicated_actions = _further_deduplicate(deduplicated_actions)
         sorted_actions = sorted(
             deduplicated_actions,
             key=lambda a: (a.server_date, a.xform_id, _type_sort(a.action_type))
         )
         if sorted_actions:
-            assert sorted_actions[0].action_type == const.CASE_ACTION_CREATE
+            if sorted_actions[0].action_type != const.CASE_ACTION_CREATE:
+                error = u"Case {0} first action not create action: {1}"
+                raise ReconciliationError(
+                    error.format(self.get_id, sorted_actions[0])
+                )
         self.actions = sorted_actions
         if rebuild:
             self.rebuild()
@@ -918,9 +930,11 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin,
 
         actions = copy.deepcopy(list(self.actions))
         if strict:
-            assert actions[0].action_type == const.CASE_ACTION_CREATE, (
-                'first case action should be a create but was %s' % self.actions[0].action_type
-            )
+            if actions[0].action_type != const.CASE_ACTION_CREATE:
+                error = u"Case {0} first action not create action: {1}"
+                raise ReconciliationError(
+                    error.format(self.get_id, self.actions[0])
+                )
             actions.pop(0)
         else:
             actions = [a for a in actions if a.action_type != const.CASE_ACTION_CREATE]
