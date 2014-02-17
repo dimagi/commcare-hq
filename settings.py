@@ -286,6 +286,7 @@ HQ_APPS = (
     'custom.apps.crs_reports',
     'custom.hope',
     'custom.openlmis',
+    
     'custom.m4change'
 )
 
