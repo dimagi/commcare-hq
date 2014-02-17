@@ -43,7 +43,7 @@ class AccountingSectionView(BaseSectionPageView):
     def section_url(self):
         return reverse('accounting_default')
 
-    @method_decorator(require_toggle(toggles.ACCOUNTING_PREVIEW))
+    @method_decorator(requires_privilege_raise404(privileges.ACCOUNTING_ADMIN))
     def dispatch(self, request, *args, **kwargs):
         return super(AccountingSectionView, self).dispatch(request, *args, **kwargs)
 
