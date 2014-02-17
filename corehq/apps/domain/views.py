@@ -3,6 +3,7 @@ from decimal import Decimal
 import logging
 import dateutil
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
+from corehq.apps.accounting.decorators import require_billing_admin
 from corehq.apps.accounting.downgrade import DomainDowngradeStatusHandler
 from corehq.apps.accounting.forms import EnterprisePlanContactForm
 from corehq.apps.accounting.utils import get_change_status
@@ -398,8 +399,7 @@ def logo(request, domain):
 
 class DomainAccountingSettings(BaseAdminProjectSettingsView):
 
-    # todo replace decorator with require_billing_admin()
-    @method_decorator(require_toggle(toggles.ACCOUNTING_PREVIEW))
+    @method_decorator(require_billing_admin())
     def dispatch(self, request, *args, **kwargs):
         return super(DomainAccountingSettings, self).dispatch(request, *args, **kwargs)
 

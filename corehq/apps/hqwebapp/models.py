@@ -885,8 +885,7 @@ class ProjectSettingsTab(UITab):
                         'url': reverse(EditExistingBillingAccountView.urlname, args=[self.domain]),
                     },
                 )
-            if toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, self.couch_user.username):
-                items.append((_('Subscription'), subscription))
+            items.append((_('Subscription'), subscription))
 
         if self.couch_user.is_superuser:
             from corehq.apps.domain.views import EditInternalDomainInfoView, EditInternalCalculationsView
