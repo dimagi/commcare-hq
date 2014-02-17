@@ -292,12 +292,14 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         return context
 
     @classmethod
-    def pull_users_from_es(cls, domain, request, **kwargs):
+    def pull_users_from_es(cls, domain, request, initial_query=None, **kwargs):
         emws = request.GET.getlist('emw')
         user_ids = [u[3:] for u in filter(lambda s: s.startswith("u__"), emws)]
         group_ids = [g[3:] for g in filter(lambda s: s.startswith("g__"), emws)]
 
-        q = {"query": {"match_all": {}}}
+        if initial_query is None:
+            initial_query = {"match_all": {}}
+        q = {"query": initial_query}
         doc_types_to_include = ["CommCareUser"]
         if "t__2" in emws:  # Admin users selected
             doc_types_to_include.append("AdminUser")
