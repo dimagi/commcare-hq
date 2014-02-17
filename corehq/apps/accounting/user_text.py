@@ -2,7 +2,6 @@ from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop, ugettext_lazy as _
 from corehq.apps.accounting.models import SoftwarePlanEdition as Edition, SoftwareProductType as Product, FeatureType
-from corehq.apps.domain.views import ProBonoStaticView
 
 DESC_BY_EDITION = {
     Edition.COMMUNITY: {
@@ -329,6 +328,7 @@ class PricingTable(object):
     @classmethod
     def get_footer_by_product(cls, product, domain=None):
         ensure_product(product)
+        from corehq.apps.domain.views import ProBonoStaticView
         return (
             ugettext_noop(
                 mark_safe(
