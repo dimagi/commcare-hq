@@ -1,16 +1,24 @@
+from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext as _
+
+from corehq.apps.groups.hierarchy import (get_hierarchy,
+    get_user_data_from_hierarchy)
+from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import es_query, ES_URLS
 from corehq.util import remove_dups
 from dimagi.utils.decorators.memoized import memoized
-from django.utils.translation import ugettext_noop
-from django.utils.translation import ugettext as _
-from corehq.apps.groups.models import Group
-from corehq.apps.reports import util
 
-from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseReportFilter, BaseSingleOptionFilter, BaseSingleOptionTypeaheadFilter, BaseMultipleOptionFilter
-from corehq.apps.groups.hierarchy import (get_hierarchy,
-        get_user_data_from_hierarchy)
-from corehq.apps.reports.models import HQUserType, HQUserToggle
+from .. import util
+from ..models import HQUserType, HQUserToggle
+from .base import (
+    BaseDrilldownOptionFilter,
+    BaseMultipleOptionFilter,
+    BaseReportFilter,
+    BaseSingleOptionFilter,
+    BaseSingleOptionTypeaheadFilter,
+)
+from .api import group_tuple, user_tuple
 
 
 class LinkedUserFilter(BaseDrilldownOptionFilter):
@@ -213,8 +221,61 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     slug = "emw"
     label = ugettext_noop("Groups or Users")
     default_options = ["_all_mobile_workers"]
-    placeholder = ugettext_noop("Start typing to specify the groups and users to include in the report. You can select multiple users and groups.")
+    placeholder = ugettext_noop(
+        "Start typing to specify the groups and users to include in the report."
+        " You can select multiple users and groups.")
     is_cacheable = False
+
+    @property
+    @memoized
+    def selected(self):
+        init = self.request.GET.get(self.slug, '')
+        if not init:
+            return self.default_options
+
+        basics = dict(self.basics)
+        results = []
+        user_ids = []
+        group_ids = []
+        for item in init.split(','):
+            if item in basics:
+                results.append({'id': item, 'text': basics.get(item)})
+            else:
+                try:
+                    kind, key = item.split('__')
+                except ValueError:
+                    # badly formatted
+                    continue
+                if kind == 'u':
+                    user_ids.append(key)
+                elif kind == 'g':
+                    group_ids.append(key)
+                else:
+                    basic_ids.append(item)
+
+        selected = []
+        if group_ids:
+            q = {"query": {"filtered": {"filter": {
+                "ids": {"values": group_ids}
+            }}}}
+            res = es_query(
+                es_url=ES_URLS["groups"],
+                q=q,
+                fields=['_id', 'name'],
+            )
+            selected += [group_tuple(hit['fields']) for hit in res['hits']['hits']]
+        if user_ids:
+            q = {"query": {"filtered": {"filter": {
+                "ids": {"values": user_ids}
+            }}}}
+            res = es_query(
+                es_url=ES_URLS["users"],
+                q=q,
+                fields = ['_id', 'username', 'first_name', 'last_name'],
+            )
+            selected += [user_tuple(hit['fields']) for hit in res['hits']['hits']]
+        results.extend([{'id': id, 'text': text} for id, text in selected])
+        return results
 
     @property
     def filter_context(self):
@@ -298,13 +359,19 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         return ret
 
     @property
+    @memoized
+    def basics(self):
+        return [("_all_mobile_workers", _("[All mobile workers]"))] + \
+            [("t__%s" % (i+1), "[%s]" % name)
+                for i, name in enumerate(HQUserType.human_readable[1:])]
+
+    @property
     def options(self):
         # TODO: make this calc based on num users
         if False:
             return self.selected
         else:
-            user_type_opts = [("t__%s" % (i+1), "[%s]" % name) for i, name in enumerate(HQUserType.human_readable[1:])]
             # user_opts = [("u__%s" % u.get_id, "%s [user]" % u.name_in_filters) for u in util.user_list(self.domain)]
             user_opts = []
             group_opts = [("g__%s" % g.get_id, "%s [group]" % g.name) for g in Group.get_reporting_groups(self.domain)]
-            return [("_all_mobile_workers", _("[All mobile workers]"))] + user_type_opts + user_opts + group_opts
+            return self.basics + user_opts + group_opts

@@ -9,12 +9,23 @@ from braces.views import JSONResponseMixin
 
 from corehq.apps.domain.decorators import LoginAndDomainMixin
 from corehq.apps.groups.models import Group
-from corehq.elastic import es_wrapper
+from corehq.elastic import es_wrapper, es_query, ES_URLS
 from dimagi.utils.decorators.memoized import memoized
 
 from ..cache import CacheableRequestMixIn
 from ..models import HQUserType
 from ..util import _report_user_dict, user_list
+
+
+def user_tuple(u):
+    user = _report_user_dict(u)
+    uid = "u__%s" % user['user_id']
+    name = "%s [user]" % user['username_in_report']
+    return (uid, name)
+
+
+def group_tuple(g):
+    return ("g__%s" % g['_id'], "%s [group]" % g['name'])
 
 
 class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
@@ -70,16 +81,10 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
         fields = ['_id', 'username', 'first_name', 'last_name']
         users = es_wrapper('users', domain=self.domain, q=self.q,
             fields=fields, start_at=start, size=size, sort_by='username', order='asc')
-        def user_tuple(u):
-            user = _report_user_dict(u)
-            uid = "u__%s" % user['user_id']
-            name = "%s [user]" % user['username_in_report']
-            return (uid, name)
         return [user_tuple(u) for u in users]
 
     def get_groups(self, start, size):
         fields = ['_id', 'name']
         groups = es_wrapper('groups', domain=self.domain, q=self.q, doc_type='Group',
             fields=fields, start_at=start, size=size, sort_by='name', order='asc')
-        return [("g__%s" % g['_id'], "%s [group]" % g['name'])
-            for g in groups]
+        return [group_tuple(g) for g in groups]
