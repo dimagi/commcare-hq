@@ -7,8 +7,8 @@ from couchdbkit.ext.django.schema import Document, DictProperty,\
     DocumentSchema, StringProperty, SchemaListProperty, ListProperty,\
     StringListProperty, DateTimeProperty, SchemaProperty, BooleanProperty
 import json
-from StringIO import StringIO
 import couchexport
+from couchexport.files import ExportFiles
 from couchexport.transforms import identity
 from couchexport.util import SerializableFunctionProperty,\
     get_schema_index_view_keys, force_tag_to_list
@@ -73,6 +73,7 @@ class Format(object):
         if format not in cls.VALID_FORMATS:
             raise URLError("Unsupported export format: %s!" % format)
         return cls(format, **cls.FORMAT_DICT[format])
+
 
 class ExportSchema(Document, UnicodeMixIn):
     """
@@ -492,13 +493,12 @@ class FakeSavedExportSchema(BaseSavedExportSchema):
                 format, max_column_size)).hexdigest()
 
         # check cache, only supported for filterless queries, currently
-        cache_key = _build_cache_key(export_tag, previous_export_id,
-            format, max_column_size)
+        cache_key = _build_cache_key(export_tag, previous_export_id, format, max_column_size)
         if use_cache and filter is None:
             cached_data = cache.get(cache_key)
             if cached_data:
                 (tmp, checkpoint) = cached_data
-                return tmp, checkpoint
+                return ExportFiles(tmp, checkpoint)
 
         fd, path = tempfile.mkstemp()
         with os.fdopen(fd, 'wb') as tmp:
@@ -510,9 +510,9 @@ class FakeSavedExportSchema(BaseSavedExportSchema):
         if checkpoint:
             if use_cache:
                 cache.set(cache_key, (path, checkpoint), CACHE_TIME)
-            return path, checkpoint
+            return ExportFiles(path, checkpoint)
 
-        return None, None # hacky empty case
+        return None
 
 
 class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
@@ -656,39 +656,39 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
         
         # open the doc and the headers
         formatted_headers = list(self.get_table_headers())
-        tmp = StringIO()
-        writer.open(
-            formatted_headers,
-            tmp,
-            max_column_size=max_column_size,
-            table_titles=dict([
-                (table.index, table.display)
-                for table in self.tables if table.display
-            ])
-        )
-
-        total_docs = len(config.potentially_relevant_ids)
-        if process:
-            DownloadBase.set_progress(process, 0, total_docs)
-        for i, doc in config.enum_docs():
-            if self.transform and apply_transforms:
-                doc = self.transform(doc)
-            formatted_tables = self.trim(
-                format_tables(
-                    create_intermediate_tables(doc, updated_schema),
-                    separator="."
-                ),
-                doc,
-                apply_transforms=apply_transforms
+        fd, path = tempfile.mkstemp()
+        with os.fdopen(fd, 'wb') as tmp:
+            writer.open(
+                formatted_headers,
+                tmp,
+                max_column_size=max_column_size,
+                table_titles=dict([
+                    (table.index, table.display)
+                    for table in self.tables if table.display
+                ])
             )
-            writer.write(formatted_tables)
-            if process:
-                DownloadBase.set_progress(process, i + 1, total_docs)
 
-        writer.close()
-        # hacky way of passing back the new format
-        tmp.format = format
-        return tmp, export_schema_checkpoint
+            total_docs = len(config.potentially_relevant_ids)
+            if process:
+                DownloadBase.set_progress(process, 0, total_docs)
+            for i, doc in config.enum_docs():
+                if self.transform and apply_transforms:
+                    doc = self.transform(doc)
+                formatted_tables = self.trim(
+                    format_tables(
+                        create_intermediate_tables(doc, updated_schema),
+                        separator="."
+                    ),
+                    doc,
+                    apply_transforms=apply_transforms
+                )
+                writer.write(formatted_tables)
+                if process:
+                    DownloadBase.set_progress(process, i + 1, total_docs)
+
+            writer.close()
+
+        return ExportFiles(path, export_schema_checkpoint, format)
 
     def download_data(self, format="", previous_export=None, filter=None):
         """
@@ -696,8 +696,8 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
         If there is not data returns None.
         """
         from couchexport.shortcuts import export_response
-        tmp, _ = self.get_export_files(format, previous_export, filter)
-        return export_response(tmp, tmp.format, self.name)
+        files = self.get_export_files(format, previous_export, filter)
+        return export_response(files.file, files.format, self.name)
 
     def to_export_config(self):
         """

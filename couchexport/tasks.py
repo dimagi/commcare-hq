@@ -2,6 +2,7 @@ from celery.utils.log import get_task_logger
 from unidecode import unidecode
 from celery.task import task
 import zipfile
+from couchexport.files import Temp
 from couchexport.models import Format, ExportSchema
 import tempfile
 import os
@@ -13,7 +14,7 @@ logging = get_task_logger(__name__)
 @task
 def export_async(custom_export, download_id, format=None, filename=None, **kwargs):
     try:
-        tmp, checkpoint = custom_export.get_export_files(format=format, process=export_async, **kwargs)
+        export_files = custom_export.get_export_files(format=format, process=export_async, **kwargs)
     except SchemaMismatchException, e:
         # fire off a delayed force update to prevent this from happening again
         rebuild_schemas.delay(custom_export.index)
@@ -26,15 +27,11 @@ def export_async(custom_export, download_id, format=None, filename=None, **kwarg
             download_id=download_id
         ).save(expiry)
     else:
-        try:
-            newformat = tmp.format
-            if isinstance(newformat, basestring):
-                format = newformat
-        except AttributeError:
-            pass
+        if export_files.format is not None:
+            format = export_files.format
         if not filename:
             filename = custom_export.name
-        return cache_file_to_be_served(tmp, checkpoint, download_id, format, filename)
+        return cache_file_to_be_served(export_files.file, export_files.checkpoint, download_id, format, filename)
 
 @task
 def rebuild_schemas(index):
@@ -73,7 +70,7 @@ def bulk_export_async(bulk_export_helper, download_id,
 
         try:
             return cache_file_to_be_served(
-                tmp=path,
+                tmp=Temp(path),
                 checkpoint=bulk_export_helper,
                 download_id=download_id,
                 filename=filename,
@@ -85,7 +82,7 @@ def bulk_export_async(bulk_export_helper, download_id,
     else:
         export_object = bulk_export_helper.bulk_files[0]
         return cache_file_to_be_served(
-            tmp=export_object.generate_bulk_file(),
+            tmp=Temp(export_object.generate_bulk_file()),
             checkpoint=bulk_export_helper,
             download_id=download_id,
             filename=export_object.filename,
@@ -93,36 +90,10 @@ def bulk_export_async(bulk_export_helper, download_id,
             expiry=expiry
         )
 
-def Temp(tmp):
-    cls = PathTemp if isinstance(tmp, basestring) else StringIOTemp
-    return cls(tmp)
-
-class PathTemp(object):
-    def __init__(self, path):
-        self.path = path
-
-    @property
-    def payload(self):
-        with open(self.path, 'rb') as f:
-            return f.read()
-
-class StringIOTemp(object):
-    def __init__(self, buffer):
-        self.buffer = buffer
-
-    @property
-    def payload(self):
-        return self.buffer.getvalue()
-
-    @property
-    def path(self):
-        fd, path = tempfile.mkstemp()
-        with os.fdopen(fd, 'wb') as file:
-            file.write(self.buffer.getvalue())
-        return path
 
 def escape_quotes(s):
     return s.replace(r'"', r'\"')
+
 
 def cache_file_to_be_served(tmp, checkpoint, download_id, format=None, filename=None, expiry=10*60*60):
     """
@@ -138,7 +109,6 @@ def cache_file_to_be_served(tmp, checkpoint, download_id, format=None, filename=
 
         escaped_filename = escape_quotes('%s.%s' % (filename, format.extension))
 
-        tmp = Temp(tmp)
         payload = tmp.payload
         expose_download(payload, expiry,
                         mimetype=format.mimetype,
