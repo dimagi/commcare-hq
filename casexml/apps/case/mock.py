@@ -258,6 +258,9 @@ class CaseBlock(dict):
         dict_to_xml(case, self)
         return case
 
+    def as_string(self, format_datetime=date_to_xml_string):
+        return ElementTree.tostring(self.as_xml(format_datetime))
+
 
 class CaseBlockError(Exception):
     pass
