@@ -23,7 +23,7 @@ var Selectable = Backbone.View.extend({
             return;
         }
         if (this.selected) {
-            if (!jQuery.isEmptyObject(window.mainView.router.view.dirty)) {
+            if (window.mainView.router.view.dirty) {
                 var dialog = confirm("You have unsaved changes. To stay on the page, press cancel. To discard changes and leave the page, press OK");
                 if (dialog == true) {
                     this.deselect();
