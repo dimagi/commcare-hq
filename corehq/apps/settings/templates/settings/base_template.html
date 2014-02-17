@@ -1,10 +1,6 @@
 {% extends "hqwebapp/base_section.html" %}
 {% load hq_shared_tags %}
 
-{% block js %} {{ block.super }}
-    <script type="text/javascript" src="{% static 'hqwebapp/js-custom/hq.legacy.js' %}"></script>
-{% endblock %}
-
 {% block js-inline %} {{ block.super }}
     <script type="text/javascript">
         $(function () {

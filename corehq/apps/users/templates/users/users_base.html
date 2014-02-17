@@ -4,9 +4,6 @@
 
 {% block title %}{% trans "Settings &amp; Users" %}{% endblock %}
 
-{% block js %} {{ block.super }}
-    <script type="text/javascript" src="{% static 'hqwebapp/js-custom/hq.legacy.js' %}"></script>
-{% endblock %}
 {% block js-inline %} {{ block.super }}
     <script type="text/javascript">
         $(function () {
