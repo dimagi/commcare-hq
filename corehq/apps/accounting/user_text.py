@@ -207,7 +207,7 @@ class PricingTableFeatures(object):
             cls.ADDITIONAL_MOBILE_USER: {
                 Product.COMMCARE: _("Price per Additional Mobile User"),
                 Product.COMMCONNECT: _("Price per Additional Mobile User"),
-                Product.COMMTRACK: _("Price per Additional Mobile User")
+                Product.COMMTRACK: _("Price per Additional Facility")
             }[product],
             cls.JAVA_AND_ANDROID: _("Java Feature Phones and Android Phones"),
             cls.MULTIMEDIA_SUPPORT: _("Multimedia Support"),
