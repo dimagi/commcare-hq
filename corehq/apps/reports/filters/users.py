@@ -234,15 +234,16 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             return self.default_options
 
         basics = dict(self.basics)
-        results = []
+        selected = []
         user_ids = []
         group_ids = []
-        for item in init.split(','):
-            if item in basics:
-                results.append({'id': item, 'text': basics.get(item)})
+        selected_ids = init.split(',')
+        for s_id in selected_ids:
+            if s_id in basics:
+                selected.append((s_id, basics.get(s_id)))
             else:
                 try:
-                    kind, key = item.split('__')
+                    kind, key = s_id.split('__')
                 except ValueError:
                     # badly formatted
                     continue
@@ -251,9 +252,8 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
                 elif kind == 'g':
                     group_ids.append(key)
                 else:
-                    basic_ids.append(item)
+                    basic_ids.append(s_id)
 
-        selected = []
         if group_ids:
             q = {"query": {"filtered": {"filter": {
                 "ids": {"values": group_ids}
@@ -274,8 +274,12 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
                 fields = ['_id', 'username', 'first_name', 'last_name'],
             )
             selected += [user_tuple(hit['fields']) for hit in res['hits']['hits']]
-        results.extend([{'id': id, 'text': text} for id, text in selected])
-        return results
+
+        known_ids = dict(selected)
+        return [{'id': id, 'text': known_ids[id]}
+            for id in selected_ids
+            if id in known_ids
+        ]
 
     @property
     def filter_context(self):
