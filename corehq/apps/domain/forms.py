@@ -830,7 +830,8 @@ class ProBonoForm(forms.Form):
             html_content = render_to_string("domain/email/pro_bono_application.html", params)
             text_content = render_to_string("domain/email/pro_bono_application.txt", params)
             recipient = settings.BILLING_EMAIL
-            send_HTML_email("Pro-Bono Application", recipient, html_content, text_content=text_content)
+            send_HTML_email("Pro-Bono Application", recipient, html_content, text_content=text_content,
+                            email_from=settings.DEFAULT_FROM_EMAIL)
         except Exception:
             logging.error("Couldn't send pro-bono application email. "
                           "Contact: %s" % self.cleaned_data['contact_email']
