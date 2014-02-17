@@ -220,7 +220,7 @@ class BaseGroupedMobileWorkerFilter(BaseSingleOptionFilter):
 class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     slug = "emw"
     label = ugettext_noop("Groups or Users")
-    default_options = ["_all_mobile_workers"]
+    default_options = None
     placeholder = ugettext_noop(
         "Start typing to specify the groups and users to include in the report."
         " You can select multiple users and groups.")
@@ -231,7 +231,10 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     def selected(self):
         init = self.request.GET.get(self.slug, '')
         if not init:
-            return self.default_options
+            return [{
+                'id': '_all_mobile_workers',
+                'text': _("[All mobile workers]"),
+            }]
 
         basics = dict(self.basics)
         selected = []
@@ -371,11 +374,4 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
 
     @property
     def options(self):
-        # TODO: make this calc based on num users
-        if False:
-            return self.selected
-        else:
-            # user_opts = [("u__%s" % u.get_id, "%s [user]" % u.name_in_filters) for u in util.user_list(self.domain)]
-            user_opts = []
-            group_opts = [("g__%s" % g.get_id, "%s [group]" % g.name) for g in Group.get_reporting_groups(self.domain)]
-            return self.basics + user_opts + group_opts
+        return [('_all_mobile_workers', _("[All mobile workers]"))]
