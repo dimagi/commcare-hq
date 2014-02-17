@@ -224,7 +224,7 @@ class PricingTableFeatures(object):
             cls.DATA_EXPORT: _("Data Export"),
             cls.STANDARD_REPORTS: _("Standard Reports"),
             cls.CROSS_PROJECT_REPORTS: _("Cross-Project Reports"),
-            cls.CUSTOM_REPORTS: _("Custom Reports"),
+            cls.CUSTOM_REPORTS: _("Custom Reports Access"),
             cls.ADM: _('Active Data Management (<a href="http://www.commcarehq.org/tour/adm/">read more</a>)'),
             cls.OUTBOUND_SMS: _("Outbound Messaging"),
             cls.RULES_ENGINE: _("Rules Engine"),
