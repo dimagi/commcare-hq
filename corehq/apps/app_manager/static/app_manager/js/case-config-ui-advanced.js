@@ -195,9 +195,20 @@ var AdvancedCase = (function () {
         };
 
         self.load_update_cases = ko.observableArray(_(params.actions.load_update_cases).map(function (a) {
-            a.preload = propertyDictToArray([], a.preload, config);
-            a.case_properties = propertyDictToArray([], a.case_properties, config);
-            return LoadUpdateAction.wrap(a, config);
+            var preload = propertyDictToArray([], a.preload, config);
+            var case_properties = propertyDictToArray([], a.case_properties, config);
+            a.preload = [];
+            a.case_properties = [];
+            var action = LoadUpdateAction.wrap(a, config);
+            // add these after to avoid errors caused by 'action.suggestedProperties' being accessed
+            // before it is defined
+            _(case_properties).each(function (p) {
+                action.case_properties.push(CaseProperty.wrap(p, action));
+            });
+            _(preload).each(function (p) {
+                action.preload.push(CasePreloadProperty.wrap(p, action));
+            });
+            return action;
         }));
 
         self.open_cases = ko.observableArray(_(params.actions.open_cases).map(function (a) {
@@ -206,8 +217,15 @@ var AdvancedCase = (function () {
                 path: a.name_path,
                 required: true
             }];
-            a.case_properties = propertyDictToArray(required_properties, a.case_properties, config);
-            return OpenCaseAction.wrap(a, config);
+            var case_properties = propertyDictToArray(required_properties, a.case_properties, config);
+            a.case_properties = [];
+            var action = OpenCaseAction.wrap(a, config);
+            // add these after to avoid errors caused by 'action.suggestedProperties' being accessed
+            // before it is defined
+            _(case_properties).each(function (p) {
+                action.case_properties.push(CaseProperty.wrap(p, action));
+            });
+            return action;
         }));
 
         self.actionOptions = ko.computed(function () {
