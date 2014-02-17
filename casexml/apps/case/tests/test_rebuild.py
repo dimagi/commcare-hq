@@ -166,7 +166,6 @@ class CaseRebuildTest(TestCase):
         self._assertListEqual(original_actions, case.actions)
         self._assertListEqual(original_form_ids, case.xform_ids)
 
-
     def testArchivingOnlyForm(self):
         """
         Checks that archiving the only form associated with the case archives
@@ -282,12 +281,42 @@ class CaseRebuildTest(TestCase):
         self.assertEqual(f1, u1)
         self.assertEqual(f2, u2)
 
-        self.assertFalse(case.closed) # reopened!
+        self.assertFalse(case.closed)  # reopened!
         self.assertEqual('', case.closed_by)
         self.assertEqual(None, case.closed_on)
-        self.assertEqual(case.p1, 'p1-1') # original
-        self.assertEqual(case.p2, 'p2-2') # original
-        self.assertEqual(case.p3, 'p3-2') # new in second post
-        self.assertEqual(case.p4, 'p4-2') # loses third form update
+        self.assertEqual(case.p1, 'p1-1')  # original
+        self.assertEqual(case.p2, 'p2-2')  # original
+        self.assertEqual(case.p3, 'p3-2')  # new in second post
+        self.assertEqual(case.p4, 'p4-2')  # loses third form update
         # self.assertFalse('p5' in case._doc) # todo: should disappear entirely
         _reset(f3)
+
+
+class TestCheckActionOrder(TestCase):
+    def test(self):
+        case = CommCareCase(actions=[
+            CommCareCaseAction(server_date=datetime(2001, 01, 01, 00, 00, 00)),
+            CommCareCaseAction(server_date=datetime(2001, 01, 02, 00, 00, 00)),
+            CommCareCaseAction(server_date=datetime(2001, 01, 03, 00, 00, 00)),
+        ])
+        self.assertTrue(case.check_action_order())
+        case = CommCareCase(actions=[
+            CommCareCaseAction(server_date=datetime(2001, 01, 01, 00, 00, 00)),
+            CommCareCaseAction(server_date=datetime(2001, 01, 03, 00, 00, 00)),
+            CommCareCaseAction(server_date=datetime(2001, 01, 02, 00, 00, 00)),
+        ])
+        self.assertFalse(case.check_action_order())
+        case = CommCareCase(actions=[
+            CommCareCaseAction(server_date=datetime(2001, 01, 01, 00, 00, 00)),
+            CommCareCaseAction(server_date=None),
+            CommCareCaseAction(server_date=datetime(2001, 01, 02, 00, 00, 00)),
+            CommCareCaseAction(server_date=datetime(2001, 01, 03, 00, 00, 00)),
+        ])
+        self.assertTrue(case.check_action_order())
+        case = CommCareCase(actions=[
+            CommCareCaseAction(server_date=datetime(2001, 01, 01, 00, 00, 00)),
+            CommCareCaseAction(server_date=datetime(2001, 01, 03, 00, 00, 00)),
+            CommCareCaseAction(server_date=None),
+            CommCareCaseAction(server_date=datetime(2001, 01, 02, 00, 00, 00)),
+        ])
+        self.assertFalse(case.check_action_order())

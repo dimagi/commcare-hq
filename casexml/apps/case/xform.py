@@ -5,7 +5,11 @@ import redis
 from casexml.apps.case.signals import cases_received
 from couchforms.models import XFormInstance
 from dimagi.utils.chunked import chunked
-from casexml.apps.case.exceptions import IllegalCaseId, NoDomainProvided
+from casexml.apps.case.exceptions import (
+    IllegalCaseId,
+    NoDomainProvided,
+    ReconciliationError,
+)
 from casexml.apps.case import settings
 from dimagi.utils.couch.database import iter_docs
 
@@ -76,15 +80,21 @@ def _process_cases(xform, config, case_db):
             'for form %s: %s' % (xform._id, e)
         )
 
+    for case in cases:
+        if not case.check_action_order():
+            try:
+                case.reconcile_actions(rebuild=True)
+            except ReconciliationError:
+                pass
+        case.force_save()
+
     # set flags for indicator pillows and save
     xform.initial_processing_complete = True
-
     # if there are pillows or other _changes listeners competing to update
     # this form, override them. this will create a new entry in the feed
     # that they can re-pick up on
     xform.save(force_update=True)
-    for case in cases:
-        case.force_save()
+
     return cases
 
 
