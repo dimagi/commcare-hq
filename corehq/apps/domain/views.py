@@ -1,7 +1,10 @@
 import datetime
 from decimal import Decimal
 import logging
+import uuid
 import dateutil
+from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.xml import V2
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.decorators import require_billing_admin
 from corehq.apps.accounting.downgrade import DomainDowngradeStatusHandler
@@ -355,17 +358,30 @@ def drop_repeater(request, domain, repeater_id):
     messages.success(request, "Form forwarding stopped!")
     return HttpResponseRedirect(reverse(DomainForwardingOptionsView.urlname, args=[domain]))
 
+
 @require_POST
 @require_can_edit_web_users
 def test_repeater(request, domain):
     url = request.POST["url"]
+    repeater_type = request.POST['repeater_type']
     form = FormRepeaterForm({"url": url})
     if form.is_valid():
         url = form.cleaned_data["url"]
         # now we fake a post
-        fake_post = "<?xml version='1.0' ?><data id='test'><TestString>Test post from CommCareHQ on %s</TestString></data>" \
-                    % (datetime.datetime.utcnow())
+        def _stub(repeater_type):
+            if 'case' in repeater_type.lower():
+                return CaseBlock(
+                    case_id='test-case-%s' % uuid.uuid4().hex,
+                    create=True,
+                    case_type='test',
+                    case_name='test case',
+                    version=V2,
+                ).as_string()
+            else:
+                return "<?xml version='1.0' ?><data id='test'><TestString>Test post from CommCareHQ on %s</TestString></data>" % \
+                       (datetime.datetime.utcnow())
 
+        fake_post = _stub(repeater_type)
         try:
             resp = simple_post(fake_post, url)
             if 200 <= resp.status < 300:
