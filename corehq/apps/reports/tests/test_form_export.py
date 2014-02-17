@@ -72,31 +72,31 @@ class FormExportTest(TestCase):
         self.post_it()
 
         self.custom_export.include_errors = True
-        tmp, _ = self.custom_export.get_export_files()
-        data = json.loads(tmp.getvalue())
+        files = self.custom_export.get_export_files()
+        data = json.loads(files.file.payload)
         self.assertEqual(data['Export']['headers'], ['Name'])
         self.assertEqual(len(data['Export']['rows']), 2)
 
         self.custom_export.include_errors = False
-        tmp, _ = self.custom_export.get_export_files()
-        data = json.loads(tmp.getvalue())
+        files = self.custom_export.get_export_files()
+        data = json.loads(files.file.payload)
         self.assertEqual(data['Export']['headers'], ['Name'])
         self.assertEqual(len(data['Export']['rows']), 1)
 
     def test_exclude_unknown_users(self):
         self.post_it(form_id='good', user_id=self.couch_user._id)
-        tmp, _ = self.custom_export.get_export_files()
-        data = json.loads(tmp.getvalue())
+        files = self.custom_export.get_export_files()
+        data = json.loads(files.file.payload)
         self.assertEqual(len(data['Export']['rows']), 1)
 
         # posting from a non-real user shouldn't update
         self.post_it(form_id='bad', user_id='notarealuser')
-        tmp, _ = self.custom_export.get_export_files()
-        data = json.loads(tmp.getvalue())
+        files = self.custom_export.get_export_files()
+        data = json.loads(files.file.payload)
         self.assertEqual(len(data['Export']['rows']), 1)
 
         # posting from the real user should update
         self.post_it(form_id='stillgood', user_id=self.couch_user._id)
-        tmp, _ = self.custom_export.get_export_files()
-        data = json.loads(tmp.getvalue())
+        files = self.custom_export.get_export_files()
+        data = json.loads(files.file.payload)
         self.assertEqual(len(data['Export']['rows']), 2)

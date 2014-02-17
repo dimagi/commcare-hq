@@ -10,6 +10,7 @@ from corehq.apps.reports.models import (ReportNotification,
 from corehq.elastic import get_es, ES_URLS, stream_es_query, es_query
 from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
+from couchexport.files import Temp
 from couchexport.groupexports import export_for_group
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.logging import notify_exception
@@ -78,7 +79,7 @@ def create_metadata_export(download_id, domain, format, filename, datespan=None,
         def get_id(self):
             return '%s-form-metadata' % self.domain
 
-    return cache_file_to_be_served(tmp_path, FakeCheckpoint(domain), download_id, format, filename)
+    return cache_file_to_be_served(Temp(tmp_path), FakeCheckpoint(domain), download_id, format, filename)
 
 @periodic_task(run_every=crontab(hour="*", minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def daily_reports():    
