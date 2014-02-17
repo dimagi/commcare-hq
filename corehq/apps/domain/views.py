@@ -202,7 +202,8 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
     def basic_info_form(self):
         initial = {
             'default_timezone': self.domain_object.default_timezone,
-            'case_sharing': json.dumps(self.domain_object.case_sharing)
+            'case_sharing': json.dumps(self.domain_object.case_sharing),
+            'commtrack_enabled': self.domain_object.commtrack_enabled
         }
         if self.request.method == 'POST':
             if self.can_user_see_meta:
@@ -224,7 +225,6 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
                 'sms_case_registration_owner_id',
                 'sms_case_registration_user_id',
                 'default_sms_backend_id',
-                'commtrack_enabled',
                 'restrict_superusers',
                 'ota_restore_caching',
                 'secure_submissions',

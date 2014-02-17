@@ -262,6 +262,15 @@ class SubAreaMixin():
 class DomainGlobalSettingsForm(forms.Form):
     default_timezone = TimeZoneChoiceField(label=ugettext_noop("Default Timezone"), initial="UTC")
 
+    commtrack_enabled = BooleanField(
+        label=_("CommTrack Enabled"),
+        required=False,
+        help_text=_("CommTrack is a CommCareHQ module for logistics, inventory "
+                    "tracking, and supply chain management. It is still under "
+                    "active development. Do not enable for your domain unless "
+                    "you\'re actively piloting it.")
+    )
+
     def clean_default_timezone(self):
         data = self.cleaned_data['default_timezone']
         timezone_field = TimeZoneField()
@@ -271,6 +280,7 @@ class DomainGlobalSettingsForm(forms.Form):
     def save(self, request, domain):
         try:
             global_tz = self.cleaned_data['default_timezone']
+            domain.commtrack_enabled = self.cleaned_data.get('commtrack_enabled', False)
             domain.default_timezone = global_tz
             users = WebUser.by_domain(domain.name)
             for user in users:
@@ -334,14 +344,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         help_text=_("This SMS backend will be used if a contact has no "
                     "backend specified.")
     )
-    commtrack_enabled = BooleanField(
-        label=_("CommTrack Enabled"),
-        required=False,
-        help_text=_("CommTrack is a CommCareHQ module for logistics, inventory "
-                    "tracking, and supply chain management. It is still under "
-                    "active development. Do not enable for your domain unless "
-                    "you\'re actively piloting it.")
-    )
     call_center_enabled = BooleanField(
         label=_("Call Center Application"),
         required=False,
@@ -402,9 +404,8 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         user = kwargs.pop('user', None)
         domain = kwargs.pop('domain', None)
         super(DomainMetadataForm, self).__init__(*args, **kwargs)
+
         if not (user and user.is_previewer):
-            # commtrack is pre-release
-            self.fields['commtrack_enabled'].widget = forms.HiddenInput()
             self.fields['call_center_enabled'].widget = forms.HiddenInput()
             self.fields['call_center_case_owner'].widget = forms.HiddenInput()
             self.fields['call_center_case_type'].widget = forms.HiddenInput()
@@ -483,7 +484,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
             domain.sms_case_registration_owner_id = self.cleaned_data.get('sms_case_registration_owner_id')
             domain.sms_case_registration_user_id = self.cleaned_data.get('sms_case_registration_user_id')
             domain.default_sms_backend_id = self.cleaned_data.get('default_sms_backend_id')
-            domain.commtrack_enabled = self.cleaned_data.get('commtrack_enabled', False)
             domain.call_center_config.enabled = self.cleaned_data.get('call_center_enabled', False)
             if domain.call_center_config.enabled:
                 domain.internal.using_call_center = True
