@@ -108,7 +108,7 @@ def sub_git_info(git_dir, log_count=1):
             except ValueError:
                 k = "GitParseError"
                 v = prop
-            ret[k] = v
+            ret[k] = v.decode('utf-8')
         return ret
     commit_list = [parse_rev_block(s) for s in all_raw_revs]
 
