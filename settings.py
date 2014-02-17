@@ -320,6 +320,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'south',
     # 'weasyprint',
     'custom.apps.crs_reports',
+    'custom.m4change',
 
     # submodules with tests that run on travis
     'casexml.apps.case',
@@ -1034,7 +1035,9 @@ DOMAIN_MODULE_MAP = {
     'tc-test': 'custom.trialconnect',
     'trialconnect': 'custom.trialconnect',
 
-    'crs-remind': 'custom.apps.crs_reports'
+    'crs-remind': 'custom.apps.crs_reports',
+
+    'm4change': 'custom.m4change'
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True
