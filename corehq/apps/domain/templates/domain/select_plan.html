@@ -97,10 +97,8 @@
                     <!-- /ko -->
                 </tfoot>
             </table>
-                <ul class="pricing-footnotes">
-                    {% for footnote in pricing_table.footer %}
-                        <li>{{ footnote }}</li>
-                    {% endfor %}
+                <ul class="pricing-footnotes" data-bind="foreach: footer">
+                    <li data-bind="html: $data"></li>
                 </ul>
                 <div class="form-actions" data-bind="visible: isSubmitVisible">
                     <button type="submit" class="btn btn-primary btn-large">{% trans 'Next' %}</button>
