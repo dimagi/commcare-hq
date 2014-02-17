@@ -13,6 +13,7 @@ from corehq.apps.commtrack.xmlutil import XML, _
 from corehq.apps.commtrack.models import Product, CommtrackConfig, StockTransaction, CommTrackUser
 from corehq.apps.receiverwrapper.util import get_submit_url
 from receiver.util import spoof_submission
+from dimagi.utils import parsing as dateparse
 
 logger = logging.getLogger('commtrack.sms')
 
@@ -252,6 +253,75 @@ def looks_like_prod_code(code):
     except:
         return True
 
+
+def verify_transactions(transactions):
+    """
+    Make sure the transactions are all in a consistent state.
+    Specifically, they all need to have the same case id.
+    """
+    assert transactions and all(
+        tx.case_id == transactions[0].case_id for tx in transactions
+    )
+
+
+def convert_transactions_to_blocks(E, transactions):
+    """
+    Converts a list of StockTransactions (which in xml are entity items)
+    to lists inside of balance or transfer blocks, depending on their types
+    """
+
+    balances = []
+    transfers = []
+
+    verify_transactions(transactions)
+
+    for tx in transactions:
+        if tx.action in (
+            const.StockActions.STOCKONHAND, const.StockActions.STOCKOUT
+        ):
+            balances.append(tx)
+        else:
+            transfers.append(tx)
+
+    stock_blocks = []
+
+    if balances:
+        attr = {
+            'section-id': 'stock',
+            'entity-id': transactions[0].case_id
+        }
+        if transactions[0].date:
+            attr['date'] = transactions[0].date
+
+        stock_blocks.append(E.balance(
+            attr,
+            *[tx.to_xml() for tx in balances]
+        ))
+
+    if transfers:
+        attr = {
+            'section-id': 'stock',
+            'entity-id': transactions[0].case_id
+        }
+
+        if transactions[0].action == const.StockActions.RECEIPTS:
+            here, there = ('dest', 'src')
+        else:
+            here, there = ('src', 'dest')
+
+        attr[here] = transactions[0].case_id
+        # no 'there' for now
+        if transactions[0].subaction:
+            attr['type'] = transactions[0].subaction
+
+        stock_blocks.append(E.transfer(
+            attr,
+            *[tx.to_xml() for tx in transfers]
+        ))
+
+    return stock_blocks
+
+
 def to_instance(data):
     """convert the parsed sms stock report into an instance like what would be
     submitted from a commcare phone"""
@@ -270,6 +340,8 @@ def to_instance(data):
         'requisition': E.requisition,
     }[category]
 
+    stock_blocks = convert_transactions_to_blocks(E, transactions)
+
     root = factory(
         M.meta(
             M.userID(data['user']._id),
@@ -278,8 +350,10 @@ def to_instance(data):
             M.timeEnd(timestamp)
         ),
         E.location(data['location']._id),
-        *[tx.to_xml() for tx in transactions]
+        *stock_blocks
     )
+
+    #TODO make sure all transaction types/case ids are the same
 
     return root
 
