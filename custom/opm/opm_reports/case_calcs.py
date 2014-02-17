@@ -184,6 +184,7 @@ class IfaTablets(fluff.Calculator):
         for form in case.get_forms():
             if form.xmlns == BIRTH_PREP_XMLNS and is_equals(form, "pregnancy_month_%s", "ifa_receive_%s", start=0, end=3):
                 yield case_date(case)
+                break
 
 
 class Lactating(fluff.Calculator):
@@ -193,6 +194,7 @@ class Lactating(fluff.Calculator):
             if form.xmlns == DELIVERY_XMLNS:
                 if form.form.get('mother_preg_outcome') == '1':
                     yield case_date(case)
+                    break
 
 
 class Lmp(fluff.Calculator):
@@ -202,6 +204,7 @@ class Lmp(fluff.Calculator):
             if form.xmlns == PREG_REG_XMLNS:
                 if 'lmp_date' in form.form and form.form.get('lmp_date'):
                     yield case_date(case)
+                    break
 
 
 class LiveChildren(fluff.Calculator):
