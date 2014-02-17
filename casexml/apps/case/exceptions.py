@@ -1,12 +1,18 @@
+class CommCareCaseError(Exception):
+    """
+    Parent type for all case errors
+    """
+    pass
 
-class CaseLogicException(Exception):
+
+class CaseLogicException(CommCareCaseError):
     """
     A custom exception for when our case logic goes awry.
     """
     pass
 
 
-class IllegalCaseId(Exception):
+class IllegalCaseId(CommCareCaseError):
     """
     Raise when someone tries to use a case_id for a doc
     that the caller should not have access to
@@ -15,19 +21,27 @@ class IllegalCaseId(Exception):
     pass
 
 
-class NoDomainProvided(Exception):
+class NoDomainProvided(CommCareCaseError):
     pass
 
 
-class MissingServerDate(Exception):
+class ReconciliationError(CommCareCaseError):
+    """
+    Raise when a precondition fails for an attempted case reconciliation
+    """
     pass
 
 
-class RestoreException(ValueError):
+class MissingServerDate(ReconciliationError):
+    pass
+
+
+class RestoreException(ValueError, CommCareCaseError):
     """
     For stuff that goes wrong during restore
     """
     message = "unknown problem during OTA restore"
+
 
 class BadStateException(RestoreException):
     """
