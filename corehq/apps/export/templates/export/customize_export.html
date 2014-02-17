@@ -295,7 +295,7 @@
                                     index: column.index,
                                     display: column.display,
                                     transform: column.transform() || null, // it doesn't save '' well
-                                    is_sensitive: is_sensitive
+                                    is_sensitive: Boolean(is_sensitive)
                                 };
                             })
                         }
