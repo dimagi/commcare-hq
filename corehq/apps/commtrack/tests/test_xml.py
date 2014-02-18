@@ -29,6 +29,7 @@ from corehq.apps.commtrack.tests.data.balances import (
     transfer_first,
     create_requisition_xml,
     create_fulfillment_xml,
+    create_received_xml,
     receipts_enumerated,
     balance_enumerated,
     products_xml, long_date)
@@ -179,6 +180,7 @@ class CommTrackSubmissionTest(CommTrackTest):
 
     def check_stock_models(self, case, product_id, expected_soh, expected_qty, section_id):
         latest_trans = StockTransaction.latest(case._id, section_id, product_id)
+        self.assertIsNotNone(latest_trans)
         self.assertEqual(section_id, latest_trans.section_id)
         self.assertEqual(expected_soh, latest_trans.stock_on_hand)
         self.assertEqual(expected_qty, latest_trans.quantity)
@@ -320,7 +322,7 @@ class BugSubmissionsTest(CommTrackSubmissionTest):
 
 class CommTrackRequisitionTest(CommTrackSubmissionTest):
 
-    def test_create_and_fulfill_requisition(self):
+    def test_create_fulfill_and_receive_requisition(self):
         amounts = [(p._id, 50.0 + float(i*10)) for i, p in enumerate(self.products)]
         self.submit_xml_form(create_requisition_xml(amounts))
         req_cases = list(get_cases_in_domain(self.domain.name, type=const.REQUISITION_CASE_TYPE))
@@ -330,14 +332,21 @@ class CommTrackRequisitionTest(CommTrackSubmissionTest):
         self.assertEqual(const.SUPPLY_POINT_CASE_TYPE, index.referenced_type)
         self.assertEqual(self.sp._id, index.referenced_id)
         self.assertEqual('parent_id', index.identifier)
+
         for product, amt in amounts:
-            self.check_stock_models(req, product, amt, 0, 'stock')
+            self.check_stock_models(req, product, amt, 0, 'ct-request')
 
         self.submit_xml_form(create_fulfillment_xml(req, amounts))
 
         for product, amt in amounts:
-            self.check_stock_models(req, product, 0, -amt, 'stock')
+            self.check_stock_models(req, product, amt, amt, 'stock')
+        for product, amt in amounts:
+            self.check_product_stock(req, product, amt, amt, 'stock')
 
+        self.submit_xml_form(create_received_xml(req, amounts))
+
+        for product, amt in amounts:
+            self.check_stock_models(req, product, 0, -amt, 'stock')
         for product, amt in amounts:
             self.check_product_stock(self.sp, product, amt, amt, 'stock')
 

@@ -17,6 +17,7 @@ def is_commtrack_form(form):
 SUPPLY_POINT_CASE_TYPE = 'supply-point'
 REQUISITION_CASE_TYPE = 'commtrack-requisition'
 FULFILLMENT_CASE_TYPE = 'commtrack-fulfillment'
+RECEIVED_CASE_TYPE = 'commtrack-received'
 ORDER_CASE_TYPE = 'commtrack-order'
 
 # TODO eliminate
