@@ -61,7 +61,7 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^dodoma/', include(dodoma_reports)),
 
 
-    # Create and Manage Custom Exports
+    # export API
     url(r"^export/$", 'export_data'),
 
     # Download Exports

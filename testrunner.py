@@ -20,8 +20,9 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
         # without having to explicitly have them in INSTALLED_APPS
         # weird list/tuple type issues, so force everything to tuples
         settings.INSTALLED_APPS = tuple(settings.INSTALLED_APPS) + tuple(settings.TEST_APPS)
+        settings.CELERY_ALWAYS_EAGER = True
         return super(HqTestSuiteRunner, self).setup_test_environment(**kwargs)
-        
+
     def setup_databases(self, **kwargs):
         self.newdbname = self.get_test_db_name(settings.COUCH_DATABASE_NAME)
         print "overridding the couch settings!"

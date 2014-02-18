@@ -19,7 +19,6 @@ from corehq.apps.users.models import CommCareUser
 from dimagi.utils.couch.loosechange import map_reduce
 from couchforms.models import XFormInstance
 from dimagi.utils import parsing as dateparse
-from dimagi.utils.dates import force_to_date, force_to_datetime
 from datetime import datetime
 from copy import copy
 from django.dispatch import receiver
@@ -28,6 +27,9 @@ from corehq.apps.locations.models import Location
 from corehq.apps.commtrack.const import StockActions, RequisitionActions, RequisitionStatus, USER_LOCATION_OWNER_MAP_TYPE
 from corehq.apps.commtrack.xmlutil import XML
 from corehq.apps.commtrack.exceptions import LinkedSupplyPointNotFoundError
+from couchexport.models import register_column_type, ComplexExportColumn
+from casexml.apps.stock.models import StockState
+from dimagi.utils.dates import force_to_datetime
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -617,6 +619,11 @@ class StockTransaction(object):
                 return a
         return None
 
+    @property
+    def date(self):
+        if self.timestamp:
+            return dateparse.json_format_datetime(self.timestamp)
+
     @classmethod
     def from_xml(cls, config, timestamp, action_tag, action_node, product_node):
         action_type = action_node.attrib.get('type')
@@ -676,31 +683,9 @@ class StockTransaction(object):
         if not E:
             E = XML()
 
-        tx_type = 'balance' if self.action in (
-            StockActions.STOCKONHAND,
-            StockActions.STOCKOUT,
-        ) else 'transfer'
-
-        attr = {}
-        if self.timestamp:
-            attr['date'] = dateparse.json_format_datetime(self.timestamp)
-
-        attr['section-id'] = 'stock'
-        if tx_type == 'balance':
-            attr['entity-id'] = self.case_id
-        elif tx_type == 'transfer':
-            here, there = ('dest', 'src') if self.action == StockActions.RECEIPTS else ('src', 'dest')
-            attr[here] = self.case_id
-            # no 'there' for now
-            if self.subaction:
-                attr['type'] = self.subaction
-
-        return getattr(E, tx_type)(
-            E.entry(
-                id=self.product_id,
-                quantity=str(self.quantity if self.action != StockActions.STOCKOUT else 0),
-            ),
-            **attr
+        return E.entry(
+            id=self.product_id,
+            quantity=str(self.quantity if self.action != StockActions.STOCKOUT else 0),
         )
 
     @property
@@ -1230,6 +1215,50 @@ class CommTrackUser(CommCareUser):
             )
 
             self.submit_location_block(caseblock)
+
+
+@register_column_type
+class StockExportColumn(ComplexExportColumn):
+    """
+    A special column type for case exports. This will export a column
+    for each product/section combo on the provided domain.
+
+    See couchexport/models.
+    """
+    domain = StringProperty()
+
+    @property
+    @memoized
+    def _column_tuples(self):
+        product_ids = [p._id for p in Product.by_domain(self.domain)]
+        return sorted(list(
+            StockState.objects.filter(product_id__in=product_ids).values_list(
+                'product_id',
+                'section_id'
+            ).distinct()
+        ))
+
+    def get_headers(self):
+        for product_id, section in self._column_tuples:
+            yield u"{product} ({section})".format(
+                product=Product.get(product_id).name,
+                section=section
+            )
+
+    def get_data(self, value):
+        states = StockState.objects.filter(case_id=value)
+
+        # use a list to make sure the stock states end up
+        # in the same order as the headers
+        values = [None] * len(self._column_tuples)
+
+        for state in states:
+            state_index = self._column_tuples.index((
+                state.product_id,
+                state.section_id
+            ))
+            values[state_index] = state.stock_on_hand
+        return values
 
 
 def sync_location_supply_point(loc):

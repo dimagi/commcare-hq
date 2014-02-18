@@ -1,12 +1,16 @@
 import datetime
 from decimal import Decimal
 import logging
-from couchdbkit import ResourceNotFound
+import uuid
 import dateutil
+from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.xml import V2
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
+from corehq.apps.accounting.decorators import require_billing_admin
 from corehq.apps.accounting.downgrade import DomainDowngradeStatusHandler
 from corehq.apps.accounting.forms import EnterprisePlanContactForm
 from corehq.apps.accounting.utils import get_change_status
+from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from dimagi.utils.couch.resource_conflict import retry_resource
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -33,10 +37,10 @@ from corehq.apps.domain.decorators import (domain_admin_required,
     login_required, require_superuser, login_and_domain_required)
 from corehq.apps.domain.forms import (DomainGlobalSettingsForm, DomainMetadataForm, SnapshotSettingsForm,
                                       SnapshotApplicationForm, DomainDeploymentForm, DomainInternalForm,
-                                      BillingAccountInfoForm, ProBonoForm)
+                                      ConfirmNewSubscriptionForm, ProBonoForm, EditBillingAccountInfoForm)
 from corehq.apps.domain.models import Domain, LICENSES
-from corehq.apps.domain.utils import get_domained_url, normalize_domain_name
-from corehq.apps.hqwebapp.views import BaseSectionPageView
+from corehq.apps.domain.utils import normalize_domain_name
+from corehq.apps.hqwebapp.views import BaseSectionPageView, BasePageView
 from corehq.apps.orgs.models import Organization, OrgRequest, Team
 from corehq.apps.commtrack.util import all_sms_codes
 from corehq.apps.domain.forms import ProjectSettingsForm
@@ -91,7 +95,13 @@ class DomainViewMixin(object):
         return domain
 
 
-class BaseDomainView(BaseSectionPageView, DomainViewMixin):
+class LoginAndDomainMixin(object):
+    @method_decorator(login_and_domain_required)
+    def dispatch(self, *args, **kwargs):
+        return super(LoginAndDomainMixin, self).dispatch(*args, **kwargs)
+
+
+class BaseDomainView(LoginAndDomainMixin, BaseSectionPageView, DomainViewMixin):
 
     @property
     def main_context(self):
@@ -100,10 +110,6 @@ class BaseDomainView(BaseSectionPageView, DomainViewMixin):
             'domain': self.domain,
         })
         return main_context
-
-    @method_decorator(login_and_domain_required)
-    def dispatch(self, request, *args, **kwargs):
-        return super(BaseDomainView, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized
@@ -200,7 +206,8 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
     def basic_info_form(self):
         initial = {
             'default_timezone': self.domain_object.default_timezone,
-            'case_sharing': json.dumps(self.domain_object.case_sharing)
+            'case_sharing': json.dumps(self.domain_object.case_sharing),
+            'commtrack_enabled': self.domain_object.commtrack_enabled
         }
         if self.request.method == 'POST':
             if self.can_user_see_meta:
@@ -222,7 +229,6 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
                 'sms_case_registration_owner_id',
                 'sms_case_registration_user_id',
                 'default_sms_backend_id',
-                'commtrack_enabled',
                 'restrict_superusers',
                 'ota_restore_caching',
                 'secure_submissions',
@@ -352,17 +358,30 @@ def drop_repeater(request, domain, repeater_id):
     messages.success(request, "Form forwarding stopped!")
     return HttpResponseRedirect(reverse(DomainForwardingOptionsView.urlname, args=[domain]))
 
+
 @require_POST
 @require_can_edit_web_users
 def test_repeater(request, domain):
     url = request.POST["url"]
+    repeater_type = request.POST['repeater_type']
     form = FormRepeaterForm({"url": url})
     if form.is_valid():
         url = form.cleaned_data["url"]
         # now we fake a post
-        fake_post = "<?xml version='1.0' ?><data id='test'><TestString>Test post from CommCareHQ on %s</TestString></data>" \
-                    % (datetime.datetime.utcnow())
+        def _stub(repeater_type):
+            if 'case' in repeater_type.lower():
+                return CaseBlock(
+                    case_id='test-case-%s' % uuid.uuid4().hex,
+                    create=True,
+                    case_type='test',
+                    case_name='test case',
+                    version=V2,
+                ).as_string()
+            else:
+                return "<?xml version='1.0' ?><data id='test'><TestString>Test post from CommCareHQ on %s</TestString></data>" % \
+                       (datetime.datetime.utcnow())
 
+        fake_post = _stub(repeater_type)
         try:
             resp = simple_post(fake_post, url)
             if 200 <= resp.status < 300:
@@ -396,7 +415,7 @@ def logo(request, domain):
 
 class DomainAccountingSettings(BaseAdminProjectSettingsView):
 
-    @method_decorator(require_toggle(toggles.ACCOUNTING_PREVIEW))
+    @method_decorator(require_billing_admin())
     def dispatch(self, request, *args, **kwargs):
         return super(DomainAccountingSettings, self).dispatch(request, *args, **kwargs)
 
@@ -480,6 +499,57 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'plan': self.plan,
             'change_plan_url': reverse(SelectPlanView.urlname, args=[self.domain]),
         }
+
+
+class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin):
+    template_name = 'domain/update_billing_contact_info.html'
+    urlname = 'domain_update_billing_info'
+    page_title = ugettext_noop("Billing Contact Information")
+    async_handlers = [
+        Select2BillingInfoHandler,
+    ]
+
+    @property
+    @memoized
+    def account(self):
+        return BillingAccount.get_account_by_domain(self.domain)
+
+    @property
+    @memoized
+    def billing_info_form(self):
+        if self.request.method == 'POST':
+            return EditBillingAccountInfoForm(
+                self.account, self.domain, self.request.couch_user.username, data=self.request.POST
+            )
+        return EditBillingAccountInfoForm(self.account, self.domain, self.request.couch_user.username)
+
+    def dispatch(self, request, *args, **kwargs):
+        if self.account is None:
+            raise Http404()
+        return super(EditExistingBillingAccountView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        return {
+            'billing_account_info_form': self.billing_info_form,
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.async_response is not None:
+            return self.async_response
+        if self.billing_info_form.is_valid():
+            is_saved = self.billing_info_form.save()
+            if not is_saved:
+                messages.error(
+                    request, _("It appears that there was an issue updating your contact information. "
+                               "We've been notified of the issue. Please try submitting again, and if the problem "
+                               "persists, please try in a few hours."))
+            else:
+                messages.success(
+                    request, _("Billing contact information was successfully updated.")
+                )
+                return HttpResponseRedirect(reverse(EditExistingBillingAccountView.urlname, args=[self.domain]))
+        return self.get(request, *args, **kwargs)
 
 
 class SelectPlanView(DomainAccountingSettings):
@@ -639,7 +709,7 @@ class ConfirmSelectedPlanView(SelectPlanView):
         return super(ConfirmSelectedPlanView, self).get(request, *args, **kwargs)
 
 
-class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView):
+class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
     template_name = 'domain/confirm_billing_info.html'
     urlname = 'confirm_billing_account_info'
     step_title = ugettext_noop("Confirm Billing Information")
@@ -676,12 +746,12 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView):
     @memoized
     def billing_account_info_form(self):
         if self.request.method == 'POST' and self.is_form_post:
-            return BillingAccountInfoForm(
-                self.account, self.domain, self.selected_plan_version, self.current_subscription,
-                self.request.couch_user.username, data=self.request.POST
+            return ConfirmNewSubscriptionForm(
+                self.account, self.domain, self.request.couch_user.username,
+                self.selected_plan_version, self.current_subscription, data=self.request.POST
             )
-        return BillingAccountInfoForm(self.account, self.domain, self.selected_plan_version, self.current_subscription,
-                                      self.request.couch_user.username)
+        return ConfirmNewSubscriptionForm(self.account, self.domain, self.request.couch_user.username,
+                                          self.selected_plan_version, self.current_subscription)
 
     @property
     def page_context(self):
@@ -689,15 +759,9 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView):
             'billing_account_info_form': self.billing_account_info_form,
         }
 
-    @property
-    def async_handler(self):
-        return self.request.POST.get('handler')
-
     def post(self, request, *args, **kwargs):
-        if self.async_handler in [h.slug for h in self.async_handlers]:
-            slug_to_handler = dict([(h.slug, h) for h in self.async_handlers])
-            handler = slug_to_handler[self.async_handler](request)
-            return handler.get_response()
+        if self.async_response is not None:
+            return self.async_response
         if self.is_form_post and self.billing_account_info_form.is_valid():
             is_saved = self.billing_account_info_form.save()
             software_plan_name = DESC_BY_EDITION[self.selected_plan_version.plan.edition]['name'].encode('utf-8')
@@ -1407,11 +1471,11 @@ class AdvancedCommTrackSettingsView(BaseCommTrackAdminView):
         return self.get(request, *args, **kwargs)
 
 
-class ProBonoView(DomainAccountingSettings):
-    template_name = 'domain/pro_bono.html'
-    urlname = 'pro_bono'
+class ProBonoMixin():
     page_title = ugettext_noop("Pro-Bono Application")
     is_submitted = False
+
+    url_name = None
 
     @property
     @memoized
@@ -1424,8 +1488,28 @@ class ProBonoView(DomainAccountingSettings):
     def page_context(self):
         return {
             'pro_bono_form': self.pro_bono_form,
-            'is_submitted': self.is_submitted
+            'is_submitted': self.is_submitted,
         }
+
+    @property
+    def page_url(self):
+        return self.url_name
+
+    def post(self, request, *args, **kwargs):
+        if self.pro_bono_form.is_valid():
+            self.pro_bono_form.process_submission()
+            self.is_submitted = True
+        return self.get(request, *args, **kwargs)
+
+
+class ProBonoStaticView(ProBonoMixin, BasePageView):
+    template_name = 'domain/pro_bono/static.html'
+    urlname = 'pro_bono_static'
+
+
+class ProBonoView(ProBonoMixin, DomainAccountingSettings):
+    template_name = 'domain/pro_bono/domain.html'
+    urlname = 'pro_bono'
 
     @property
     def parent_pages(self):
@@ -1436,11 +1520,9 @@ class ProBonoView(DomainAccountingSettings):
             }
         ]
 
-    def post(self, request, *args, **kwargs):
-        if self.pro_bono_form.is_valid():
-            self.pro_bono_form.process_submission()
-            self.is_submitted = True
-        return self.get(request, *args, **kwargs)
+    @property
+    def section_url(self):
+        return self.page_url
 
 
 @require_POST

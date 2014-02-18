@@ -1,15 +1,13 @@
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.accounting.filters import *
 from corehq.apps.accounting.models import BillingAccount, Subscription, SoftwarePlan
-from corehq.apps.announcements.forms import HQAnnouncementForm
-from corehq.apps.announcements.models import HQAnnouncement
-from corehq.apps.crud.interface import BaseCRUDAdminInterface
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
+from corehq.apps.reports.generic import GenericTabularReport
 
 
-class AddItemInterface(BaseCRUDAdminInterface):
+class AddItemInterface(GenericTabularReport):
     base_template = 'accounting/add_new_item_button.html'
 
     item_name = None
@@ -86,9 +84,6 @@ class AccountingInterface(AddItemInterface):
     description = "List of all billing accounts"
     slug = "accounts"
 
-    document_class = HQAnnouncement
-    form_class = HQAnnouncementForm
-
     crud_item_type = "Billing Account"
 
 
@@ -106,6 +101,7 @@ class SubscriptionInterface(AddItemInterface):
               'corehq.apps.accounting.interface.SubscriberFilter',
               'corehq.apps.accounting.interface.SalesforceContractIDFilter',
               'corehq.apps.accounting.interface.ActiveStatusFilter',
+              'corehq.apps.accounting.interface.DoNotInvoiceFilter',
               ]
     hide_filters = False
 
@@ -127,6 +123,7 @@ class SubscriptionInterface(AddItemInterface):
             DataTablesColumn("Salesforce Contract ID"),
             DataTablesColumn("Start Date"),
             DataTablesColumn("End Date"),
+            DataTablesColumn("Do Not Invoice"),
             DataTablesColumn("Action"),
         )
 
@@ -146,9 +143,14 @@ class SubscriptionInterface(AddItemInterface):
                 and (SubscriberFilter.get_value(self.request, self.domain) is None
                     or SubscriberFilter.get_value(self.request, self.domain) == subscription.subscriber.domain) \
                 and (SalesforceContractIDFilter.get_value(self.request, self.domain) is None
-                    or SalesforceContractIDFilter.get_value(self.request, self.domain) == subscription.salesforce_contract_id) \
+                    or (SalesforceContractIDFilter.get_value(self.request, self.domain)
+                            == subscription.salesforce_contract_id)) \
                 and (ActiveStatusFilter.get_value(self.request, self.domain) is None
-                    or (ActiveStatusFilter.get_value(self.request, self.domain) == ActiveStatusFilter.active) == subscription.is_active):
+                    or ((ActiveStatusFilter.get_value(self.request, self.domain) == ActiveStatusFilter.active)
+                            == subscription.is_active))\
+                and (DoNotInvoiceFilter.get_value(self.request, self.domain) is None
+                    or ((DoNotInvoiceFilter.get_value(self.request, self.domain) == DO_NOT_INVOICE)
+                            == subscription.do_not_invoice)):
                 rows.append([subscription.subscriber.domain,
                              mark_safe('<a href="%s">%s</a>'
                                        % (reverse(ManageBillingAccountView.urlname, args=(subscription.account.id,)),
@@ -158,6 +160,7 @@ class SubscriptionInterface(AddItemInterface):
                              subscription.salesforce_contract_id,
                              subscription.date_start,
                              subscription.date_end,
+                             subscription.do_not_invoice,
                              mark_safe('<a href="./%d" class="btn">Edit</a>' % subscription.id)])
 
         return rows
@@ -173,9 +176,6 @@ class SubscriptionInterface(AddItemInterface):
     name = "Subscriptions"
     description = "List of all subscriptions"
     slug = "subscriptions"
-
-    document_class = HQAnnouncement
-    form_class = HQAnnouncementForm
 
     crud_item_type = "Subscription"
 
@@ -244,8 +244,5 @@ class SoftwarePlanInterface(AddItemInterface):
     name = "Software Plans"
     description = "List of all software plans"
     slug = "software_plans"
-
-    document_class = HQAnnouncement
-    form_class = HQAnnouncementForm
 
     crud_item_type = "Software_Plan"

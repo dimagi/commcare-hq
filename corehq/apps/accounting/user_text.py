@@ -11,7 +11,7 @@ DESC_BY_EDITION = {
     },
     Edition.STANDARD: {
         'name': _("Standard"),
-        'description': _("For projects with a medium set (up to 250) of mobile users that want to "
+        'description': _("For projects with a medium set (up to 100) of mobile users that want to "
                          "build in limited SMS workflows and have increased data security needs."),
     },
     Edition.PRO: {
@@ -101,6 +101,7 @@ class PricingTableCategories(object):
             cls.CORE: (
                 f.PRICING,
                 f.MOBILE_LIMIT,
+                f.ADDITIONAL_MOBILE_USER,
             ),
             cls.MOBILE: (
                 f.JAVA_AND_ANDROID,
@@ -153,6 +154,7 @@ class PricingTableFeatures(object):
     SOFTWARE_PLANS = 'software_plans'
     PRICING = 'pricing'
     MOBILE_LIMIT = 'mobile_limit'
+    ADDITIONAL_MOBILE_USER = 'additional_mobile_user'
     JAVA_AND_ANDROID = 'java_and_android'
     MULTIMEDIA_SUPPORT = 'multimedia_support'
 
@@ -198,9 +200,14 @@ class PricingTableFeatures(object):
             cls.SOFTWARE_PLANS: _("Software Plans"),
             cls.PRICING: _("Pricing*"),
             cls.MOBILE_LIMIT: {
-                Product.COMMCARE: _("Free Mobile Users**"),
-                Product.COMMCONNECT: _("Free Mobile Users**"),
-                Product.COMMTRACK: _("Free Facilities**")
+                Product.COMMCARE: _("Mobile Users"),
+                Product.COMMCONNECT: _("Mobile Users"),
+                Product.COMMTRACK: _("Facilities")
+            }[product],
+            cls.ADDITIONAL_MOBILE_USER: {
+                Product.COMMCARE: _("Price per Additional Mobile User"),
+                Product.COMMCONNECT: _("Price per Additional Mobile User"),
+                Product.COMMTRACK: _("Price per Additional Facility")
             }[product],
             cls.JAVA_AND_ANDROID: _("Java Feature Phones and Android Phones"),
             cls.MULTIMEDIA_SUPPORT: _("Multimedia Support"),
@@ -217,14 +224,14 @@ class PricingTableFeatures(object):
             cls.DATA_EXPORT: _("Data Export"),
             cls.STANDARD_REPORTS: _("Standard Reports"),
             cls.CROSS_PROJECT_REPORTS: _("Cross-Project Reports"),
-            cls.CUSTOM_REPORTS: _("Custom Reports"),
-            cls.ADM: _('Active Data Management (<a href="">read more</a>)'),
+            cls.CUSTOM_REPORTS: _("Custom Reports Access"),
+            cls.ADM: _('Active Data Management (<a href="http://www.commcarehq.org/tour/adm/">read more</a>)'),
             cls.OUTBOUND_SMS: _("Outbound Messaging"),
             cls.RULES_ENGINE: _("Rules Engine"),
             cls.ANDROID_GATEWAY: _("Android-based SMS Gateway"),
             cls.SMS_DATA_COLLECTION: _("SMS Data Collection"),
             cls.INBOUND_SMS: _("Inbound SMS (where available)"),
-            cls.INCLUDED_SMS_DIMAGI: _("Free Messages (Dimagi Gateway)***"),
+            cls.INCLUDED_SMS_DIMAGI: _("Free Messages (Dimagi Gateway)**"),
             cls.INCLUDED_SMS_CUSTOM: _("Messages (Your Gateway)"),
             cls.USER_GROUPS: _("User Groups"),
             cls.DATA_SECURITY_PRIVACY: _("Data Security and Privacy"),
@@ -250,6 +257,7 @@ class PricingTableFeatures(object):
             cls.SOFTWARE_PLANS: (Edition.COMMUNITY, Edition.STANDARD, Edition.PRO, Edition.ADVANCED, Edition.ENTERPRISE),
             cls.PRICING: (_("Free"), _("$100 /month"), _("$500 /month"), _("$1,000 /month"), _('(<a href="http://www.dimagi.com/collaborate/contact-us/" target="_blank">Contact Us</a>)')),
             cls.MOBILE_LIMIT: (_("50"), _("100"), _("500"), _("1,000"), _("Unlimited / Discounted Pricing")),
+            cls.ADDITIONAL_MOBILE_USER: (_("1 USD"), _("1 USD"), _("1 USD"), _("1 USD"), _("Unlimited / Discounted Pricing")),
             cls.JAVA_AND_ANDROID: (True, True, True, True, True),
             cls.MULTIMEDIA_SUPPORT: (True, True, True, True, True),
             cls.APP_BUILDER: (True, True, True, True, True),
@@ -268,7 +276,7 @@ class PricingTableFeatures(object):
             cls.ANDROID_GATEWAY: (False, True, True, True, True),
             cls.SMS_DATA_COLLECTION: (False, False, True, True, True),
             cls.INBOUND_SMS: (False, False, True, True, True),
-            cls.INCLUDED_SMS_DIMAGI: (False, _("250 /month"), _("500 /month"), _("1,000 /month"), _("2,000 /month")),
+            cls.INCLUDED_SMS_DIMAGI: (False, _("100 /month"), _("500 /month"), _("1,000 /month"), _("2,000 /month")),
             cls.INCLUDED_SMS_CUSTOM: (False, _("1 cent/SMS"), _("1 cent/SMS"), _("1 cent/SMS"), _("1 cent/SMS")),
             cls.USER_GROUPS: (True, True, True, True, True),
             cls.DATA_SECURITY_PRIVACY: (True, True, True, True, True),
@@ -315,29 +323,26 @@ class PricingTable(object):
             PricingTableCategories.SUPPORT,
         ),
     }
-    VISIT_WIKI_TEXT = ugettext_noop("Visit the wiki to learn more.")
+    VISIT_WIKI_TEXT = ugettext_noop("Visit the help site to learn more.")
 
     @classmethod
     def get_footer_by_product(cls, product, domain=None):
         ensure_product(product)
-        link_text = ugettext_noop('pro-bono form')
+        from corehq.apps.domain.views import ProBonoStaticView
         return (
             ugettext_noop(
                 mark_safe(
-                    ('*Local taxes and other country-specific fees not included. Dimagi provides pro-bono '
-                     'software plans on a needs basis. To learn more about this opportunity or see if your '
-                     'program qualifies, please fill out our <a href="%s">%s</a>.')
-                        % (reverse('pro_bono', args=[domain]), link_text)
-                ) if domain is not None else link_text
+                    _('*Local taxes and other country-specific fees not included. Dimagi provides pro-bono '
+                      'software plans on a needs basis. To learn more about this opportunity or see if your '
+                      'program qualifies, please fill out our <a href="%(url)s">pro-bono form</a>.') % {
+                          'url': (reverse('pro_bono', args=[domain]) if domain is
+                                  not None else reverse(ProBonoStaticView.urlname)),
+                      },
+                )
             ),
-            {
-                Product.COMMCARE: ugettext_noop("**1 USD/month for each additional mobile user"),
-                Product.COMMCONNECT: ugettext_noop("**1 USD/month for each additional mobile user"),
-                Product.COMMTRACK: ugettext_noop("**1 USD/month for each additional facility"),
-            }[product],
-            ugettext_noop("***Additional incoming and outgoing messages will be charged on a per-message fee, which "
-                          "depends on the telecommunications provider and country. Please note that this does not apply "
-                          "to the unlimited messages option, which falls under the category below."),
+            _("**Additional incoming and outgoing messages will be charged on a per-message fee, which "
+              "depends on the telecommunications provider and country. Please note that this does not apply "
+              "to the unlimited messages option, which falls under the category below."),
         )
 
 

@@ -100,7 +100,7 @@
                                 </label>
                                 <div class="controls">
                                     {% if edit %}
-                                        <textarea class="span3" name="success_message">{{ app.success_message|trans:langs }}</textarea>
+                                        <textarea class="span3" name="success_message">{{ app.success_message|clean_trans:langs }}</textarea>
                                     {% else %}
                                         <p>{{ app.success_message|trans:langs }}</p>
                                     {% endif %}

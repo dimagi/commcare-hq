@@ -5,18 +5,21 @@ from couchdbkit.ext.django.schema import DateTimeProperty, StringProperty
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.accounting.downgrade import DomainDowngradeActionHandler
+from corehq.apps.users.models import WebUser
 
 from django_prbac.models import Role
 from dimagi.utils.couch.database import SafeSaveDocument
 
 from corehq.apps.accounting.exceptions import (CreditLineError, AccountingError, SubscriptionAdjustmentError,
                                                SubscriptionDowngradeError, NewSubscriptionError)
-from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES, assure_domain_instance, get_change_status, get_privileges
+from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES, assure_domain_instance, get_change_status
 
 global_logger = logging.getLogger(__name__)
+integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
 
 
 class BillingAccountType(object):
@@ -148,6 +151,15 @@ class Currency(models.Model):
 class BillingAccountAdmin(models.Model):
     web_user = models.CharField(max_length=80, unique=True, db_index=True)
 
+    @classmethod
+    def get_admin_status_and_account(cls, web_user, domain):
+        if not isinstance(web_user, WebUser):
+            raise ValueError("web_user should be an instance of WebUser")
+        account = BillingAccount.get_account_by_domain(domain)
+        if account is None:
+            return web_user.is_domain_admin(domain), None
+        admin = account.billing_admins.filter(web_user=web_user.username)
+        return admin.count() > 0, account
 
 class BillingAccount(models.Model):
     """
@@ -184,29 +196,39 @@ class BillingAccount(models.Model):
         First try to grab the account used for the last subscription.
         If an account is not found, create it.
         """
+        is_new = False
+        account = cls.get_account_by_domain(domain)
+        if account is None:
+            is_new = True
+            account_type = account_type or BillingAccountType.INVOICE_GENERATED
+            account = BillingAccount(
+                name="Account for Project %s" % domain,
+                created_by=created_by,
+                created_by_domain=domain,
+                currency=Currency.get_default(),
+                account_type=account_type,
+            )
+            account.save()
+            billing_admin = BillingAccountAdmin.objects.get_or_create(web_user=created_by)[0]
+            account.billing_admins.add(billing_admin)
+            account.save()
+        return account, is_new
+
+    @classmethod
+    def get_account_by_domain(cls, domain):
         try:
             last_subscription = Subscription.objects.filter(subscriber__domain=domain).latest('date_end')
-            return last_subscription.account, False
+            return last_subscription.account
         except ObjectDoesNotExist:
             pass
-        account_type = account_type or BillingAccountType.INVOICE_GENERATED
         try:
-            return cls.objects.get(created_by_domain=domain), False
+            return cls.objects.get(created_by_domain=domain)
         except cls.DoesNotExist:
             pass
         except cls.MultipleObjectsReturned:
             global_logger.error("Multiple billing accounts showed up for the domain '%s'. The "
                                 "latest one was served, but you should reconcile very soon." % domain)
-            return cls.objects.filter(created_by_domain=domain).latest('date_created'), False
-        account = BillingAccount(
-            name="Account for Project %s" % domain,
-            created_by=created_by,
-            created_by_domain=domain,
-            currency=Currency.get_default(),
-            account_type=account_type,
-        )
-        account.save()
-        return account, True
+            return cls.objects.filter(created_by_domain=domain).latest('date_created')
 
 
 class BillingContactInfo(models.Model):
@@ -306,7 +328,8 @@ class FeatureRate(models.Model):
     monthly_fee = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2,
                                       verbose_name="Monthly Fee")
     monthly_limit = models.IntegerField(default=0,
-                                        verbose_name="Monthly Included Limit")
+                                        verbose_name="Monthly Included Limit",
+                                        validators=integer_field_validators)
     per_excess_fee = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2,
                                          verbose_name="Fee Per Excess of Limit")
     date_created = models.DateTimeField(auto_now_add=True)
@@ -479,6 +502,7 @@ class Subscription(models.Model):
     date_delay_invoicing = models.DateField(blank=True, null=True)
     date_created = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=False)
+    do_not_invoice = models.BooleanField(default=False)
 
     def cancel_subscription(self, adjustment_method=None, web_user=None, note=None):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
@@ -493,7 +517,8 @@ class Subscription(models.Model):
         )
 
     def change_plan(self, new_plan_version, date_start=None, date_end=None, date_delay_invoicing=None,
-                    salesforce_contract_id=None, note=None, web_user=None, adjustment_method=None):
+                    salesforce_contract_id=None, do_not_invoice=False,
+                    note=None, web_user=None, adjustment_method=None):
         """
         Changing a plan terminates the current subscription and creates a new subscription where the old plan
         left off.
@@ -529,6 +554,7 @@ class Subscription(models.Model):
                                                  date_delay_invoicing=date_delay_invoicing,
                                                  salesforce_contract_id=new_salesforce_contract_id,
                                                  is_active=new_is_active,
+                                                 do_not_invoice=do_not_invoice,
                                                  adjustment_method=adjustment_method,
                                                  note=note,
                                                  web_user=web_user

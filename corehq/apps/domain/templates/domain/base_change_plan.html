@@ -5,7 +5,7 @@
 <ol class="breadcrumb">
     {% for step in steps %}
     <li>
-        <a href="{{ step.url }}">{{ step.title }}</a>
+        <a href="{{ step.url }}" class="breadcrumb-{{ forloop.counter }}">{{ step.title }}</a>
         {% if not forloop.last %}<span class="divider">&gt;</span>{% endif %}
     </li>
     {% endfor %}

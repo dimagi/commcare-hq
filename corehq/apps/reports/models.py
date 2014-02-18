@@ -10,7 +10,7 @@ from corehq.apps.app_manager.models import get_app
 from corehq.apps.app_manager.util import ParentCasePropertyBuilder
 from corehq.apps.reports.display import xmlns_to_name
 from couchdbkit.ext.django.schema import *
-from corehq.apps.reports.exportfilters import form_matches_users, is_commconnect_form
+from corehq.apps.reports.exportfilters import form_matches_users, is_commconnect_form, default_form_filter
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
 from couchexport.models import SavedExportSchema, GroupExportConfiguration
 from couchexport.transforms import couch_to_excel_datetime, identity
@@ -548,6 +548,7 @@ class HQExportSchema(SavedExportSchema):
             self.domain = self.index[0]
         return self
 
+
 class FormExportSchema(HQExportSchema):
     doc_type = 'SavedExportSchema'
     app_id = StringProperty()
@@ -582,7 +583,6 @@ class FormExportSchema(HQExportSchema):
     def filter(self):
         user_ids = set(CouchUser.ids_by_domain(self.domain))
         user_ids.update(CouchUser.ids_by_domain(self.domain, is_active=False))
-
         def _top_level_filter(form):
             # careful, closures used
             return form_matches_users(form, user_ids) or is_commconnect_form(form)
@@ -592,7 +592,8 @@ class FormExportSchema(HQExportSchema):
             f.add(reports.util.app_export_filter, app_id=self.app_id)
         if not self.include_errors:
             f.add(couchforms.filters.instances)
-        return f
+        actual = SerializableFunction(default_form_filter, filter=f)
+        return actual
 
     @property
     def domain(self):

@@ -18,6 +18,14 @@
             '{% trans "Please enter a valid email." %}'
         );
         billingInfoHandler.init();
+        $('a.breadcrumb-2').click(function (e) {
+            e.preventDefault();
+            var url = $(this).attr('href');
+            var $navigateForm = $('<form method="post" style="display: none;" />').attr('action', url + 'confirm/');
+            $(this).after($navigateForm);
+            $navigateForm.append($('<input type="hidden" name="plan_edition" />').val('{{ plan.edition }}'));
+            $navigateForm.submit();
+        });
     </script>
 {% endblock %}
 
