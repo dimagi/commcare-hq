@@ -1496,6 +1496,7 @@ class CareplanModule(ModuleBase):
     """
     parent_select = SchemaProperty(ParentSelect)
 
+    display_separately = BooleanProperty(default=False)
     forms = SchemaListProperty(CareplanForm)
     goal_details = SchemaProperty(DetailPair)
     task_details = SchemaProperty(DetailPair)
