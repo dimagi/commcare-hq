@@ -1528,7 +1528,7 @@ class AdvancedModule(ModuleBase):
             raise IncompatibleFormTypeException()
 
     def get_case_types(self):
-        case_types = set()
+        case_types = set([self.case_type])
         for form in self.forms:
             for action in form.actions.get_all_actions():
                 case_types.add(action.case_type)
