@@ -213,10 +213,11 @@ class GroupResource(v0_4.GroupResource):
         always_return_data = True
 
     def serialize(self, request, data, format, options=None):
-        if 'error_message' in data.data:
-            data = {'error_message': data.data['error_message']}
-        elif not isinstance(data, dict) and request.method == 'POST':
-            data = {'id': data.obj._id}
+        if not isinstance(data, dict):
+            if 'error_message' in data.data:
+                data = {'error_message': data.data['error_message']}
+            elif request.method == 'POST':
+                data = {'id': data.obj._id}
         return self._meta.serializer.serialize(data, format, options)
 
     def patch_list(self, request=None, **kwargs):
@@ -271,7 +272,7 @@ class GroupResource(v0_4.GroupResource):
                 return self.create_response(request, updated_bundle, response_class=http.HttpCreated, location=location)
         except AssertionError as ex:
             bundle.data['error_message'] = ex.message
-            return self.create_response(request, bundle, response_class=http.HttpBadRequest)
+            return self.create_response(request, bundle.data, response_class=http.HttpBadRequest)
 
 
     def _update(self, bundle):
