@@ -5,6 +5,7 @@ import re
 import io
 from PIL import Image
 import uuid
+from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 import settings
 
 from django import forms
@@ -19,9 +20,7 @@ from django.forms.widgets import  Select
 from django.utils.encoding import smart_str
 from django.contrib.auth.forms import PasswordResetForm
 from django.utils.safestring import mark_safe
-from django_countries import CountryField
 from django_countries.countries import COUNTRIES
-import phonenumbers
 from corehq.apps.accounting.models import BillingContactInfo, BillingAccountAdmin, SubscriptionAdjustmentMethod, Subscription, SoftwarePlanEdition
 from corehq.apps.app_manager.models import Application, FormBase
 
@@ -681,10 +680,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
         return result
 
     def _parse_number(self, number, country):
-        try:
-            return phonenumbers.parse(number, country)
-        except phonenumbers.NumberParseException:
-            pass
+        return parse_phone_number(number, country, failhard=False)
 
     def clean_phone_number(self):
         data = self.cleaned_data['phone_number']
