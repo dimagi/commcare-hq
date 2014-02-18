@@ -1,4 +1,5 @@
 function(doc) {
+    // broken, needs update
     if (doc.doc_type == "CommCareCase" && doc.type == 'commtrack-requisition') {
         var leafLocation = doc.location_[doc.location_.length - 1];
         var getSupplyPointProductCaseId = function (doc) {

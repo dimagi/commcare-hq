@@ -331,7 +331,7 @@ class CommTrackRequisitionTest(CommTrackSubmissionTest):
         self.assertEqual(self.sp._id, index.referenced_id)
         self.assertEqual('parent_id', index.identifier)
         for product, amt in amounts:
-            self.check_stock_models(req, product, amt, 0, 'stock')
+            self.check_stock_models(req, product, amt, 0, 'ct-requested')
 
         self.submit_xml_form(create_fulfillment_xml(req, amounts))
 

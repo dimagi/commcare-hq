@@ -68,6 +68,8 @@ def send_notifications(xform, cases):
     # todo: if we wanted to include previously requested items we could do so
     # by either polling for other open requisitions here, or by ensuring that
     # they get touched by the commtrack case processing.
+
+    # likely broken, needs fixing
     requisitions = [RequisitionCase.wrap(case._doc) for case in cases if case.type == const.REQUISITION_CASE_TYPE]
 
     if requisitions:
@@ -103,6 +105,9 @@ def raise_events(xform, cases):
     for sp in supply_points:
         created = any(filter(lambda update: update.id == sp._id and update.creates_case(), case_updates))
         supply_point_modified.send(sender=None, supply_point=sp, created=created)
+
+    # anything that catches all these signals likely broken
+    # anything in openlmis integration is fine to leave broken.
     requisition_cases = [RequisitionCase.wrap(c._doc) for c in cases if c.type == const.REQUISITION_CASE_TYPE]
     if requisition_cases and requisition_cases[0].requisition_status == RequisitionStatus.APPROVED:
         requisition_approved.send(sender=None, requisitions=requisition_cases)
