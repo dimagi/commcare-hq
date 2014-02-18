@@ -205,6 +205,7 @@ class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
                     _('Total AMC'),
                     _('Remaining MOS'),
                     _('Stock Status'),
+                    _('Resupply Quantity Needed'),
                 ]))
 
     @property
@@ -239,7 +240,8 @@ class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
                     fmt(row[StockStatusDataSource.SLUG_CURRENT_STOCK]),
                     fmt(row[StockStatusDataSource.SLUG_CONSUMPTION], int),
                     fmt(row[StockStatusDataSource.SLUG_MONTHS_REMAINING], lambda k: '%.1f' % k),
-                    fmt(row[StockStatusDataSource.SLUG_CATEGORY], lambda k: statuses.get(k, k))
+                    fmt(row[StockStatusDataSource.SLUG_CATEGORY], lambda k: statuses.get(k, k)),
+                    fmt(row[StockStatusDataSource.SLUG_RESUPPLY_QUANTITY_NEEDED])
                 ]
 
 

@@ -94,6 +94,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
         consumption: The current monthly consumption rate
         months_remaining: The number of months remaining until stock out
         category: The status category. See casexml.apps.stock.models.StockState.stock_category
+        resupply_quantity_needed: Max amount - current amount
 
     """
     slug = 'agg_stock_status'
@@ -108,8 +109,9 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
     SLUG_STOCKOUT_SINCE = 'stockout_since'
     SLUG_STOCKOUT_DURATION = 'stockout_duration'
     SLUG_LAST_REPORTED = 'last_reported'
-
     SLUG_CATEGORY = 'category'
+    SLUG_RESUPPLY_QUANTITY_NEEDED = 'resupply_quantity_needed'
+
     _slug_attrib_map = {
         SLUG_PRODUCT_NAME: lambda s: Product.get(s.product_id).name,
         SLUG_PRODUCT_ID: lambda s: s.product_id,
@@ -122,6 +124,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
         # SLUG_STOCKOUT_SINCE: 'stocked_out_since',
         # SLUG_STOCKOUT_DURATION: 'stockout_duration_in_months',
         SLUG_LAST_REPORTED: 'last_modified_date',
+        SLUG_RESUPPLY_QUANTITY_NEEDED: 'resupply_quantity_needed',
     }
 
     def slugs(self):
@@ -169,15 +172,17 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
     def leaf_node_data(self, stock_states):
         for state in stock_states:
             product = Product.get(state.product_id)
+            print state.resupply_quantity_needed
             yield {
                 'category': state.stock_category,
                 'product_id': product._id,
-                'consumption': state.daily_consumption,
+                'consumption': state.daily_consumption * 30,
                 'months_remaining': state.months_remaining,
                 'location_id': state.case_id,
                 'product_name': product.name,
                 'current_stock': state.stock_on_hand,
-                'location_lineage': None
+                'location_lineage': None,
+                'resupply_quantity_needed': state.resupply_quantity_needed
             }
 
     def aggregated_data(self, stock_states):
@@ -191,7 +196,8 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                 'location_id': None,
                 'product_name': product.name,
                 'current_stock': state['total_stock'],
-                'location_lineage': None
+                'location_lineage': None,
+                'resupply_quantity_needed': None
             }
 
 
