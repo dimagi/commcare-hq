@@ -944,6 +944,7 @@ class RequisitionCase(CommCareCase):
         """
         For a given location, return the IDs of all open requisitions at that location.
         """
+        # broken, needs update
         results = cls.get_db().view('commtrack/requisitions',
             endkey=[domain, location_id, 'open'],
             startkey=[domain, location_id, 'open', {}],
@@ -974,6 +975,7 @@ class RequisitionCase(CommCareCase):
 
     @classmethod
     def get_display_config(cls):
+        # broken, needs update
         return [
             {
                 "layout": [

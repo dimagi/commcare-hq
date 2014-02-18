@@ -87,12 +87,17 @@ class StockRequisitionTest(object):
             'pr': 30,
         }
         # req loc1 pp 10 pq 20...
+        # this message should:
+        # 1. create requistion case with parent = supply point
+        # 2. add "balance" blocks of relevent amounts for each of the three products to a section called "ct-requested"
+        # more info here:
         handled = handle(self.user.get_verified_number(), 'req {loc} {report}'.format(
             loc='loc1',
             report=' '.join('%s %s' % (k, v) for k, v in amounts.items())
         ))
         self.assertTrue(handled)
 
+        # todo: this used to create three requisitions but should now only create one with 3 stock entities
         # make sure we got the updated requisitions
         reqs = RequisitionCase.open_for_location(self.domain.name, self.loc._id)
         self.assertEqual(3, len(reqs))
