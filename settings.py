@@ -598,6 +598,8 @@ FLUFF_PILLOW_TYPES_TO_SQL = {
 
 PREVIEWER_RE = '^$'
 
+MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
+
 try:
     #try to see if there's an environmental variable set for local_settings
     if os.environ.get('CUSTOMSETTINGS', None) == "demo":
