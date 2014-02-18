@@ -272,7 +272,7 @@ class GroupResource(v0_4.GroupResource):
                 return self.create_response(request, updated_bundle, response_class=http.HttpCreated, location=location)
         except AssertionError as ex:
             bundle.data['error_message'] = ex.message
-            return self.create_response(request, bundle.data, response_class=http.HttpBadRequest)
+            return self.create_response(request, bundle, response_class=http.HttpBadRequest)
 
 
     def _update(self, bundle):
