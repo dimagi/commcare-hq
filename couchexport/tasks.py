@@ -27,11 +27,14 @@ def export_async(custom_export, download_id, format=None, filename=None, **kwarg
             download_id=download_id
         ).save(expiry)
     else:
-        if export_files.format is not None:
-            format = export_files.format
-        if not filename:
-            filename = custom_export.name
-        return cache_file_to_be_served(export_files.file, export_files.checkpoint, download_id, format, filename)
+        if export_files:
+            if export_files.format is not None:
+                format = export_files.format
+            if not filename:
+                filename = custom_export.name
+            return cache_file_to_be_served(export_files.file, export_files.checkpoint, download_id, format, filename)
+        else:
+            return cache_file_to_be_served(None, None, download_id, format, filename)
 
 @task
 def rebuild_schemas(index):
