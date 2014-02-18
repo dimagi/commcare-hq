@@ -1,8 +1,12 @@
 import datetime
 from decimal import Decimal
 import logging
+import uuid
 import dateutil
+from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.xml import V2
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
+from corehq.apps.accounting.decorators import require_billing_admin
 from corehq.apps.accounting.downgrade import DomainDowngradeStatusHandler
 from corehq.apps.accounting.forms import EnterprisePlanContactForm
 from corehq.apps.accounting.utils import get_change_status
@@ -202,7 +206,8 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
     def basic_info_form(self):
         initial = {
             'default_timezone': self.domain_object.default_timezone,
-            'case_sharing': json.dumps(self.domain_object.case_sharing)
+            'case_sharing': json.dumps(self.domain_object.case_sharing),
+            'commtrack_enabled': self.domain_object.commtrack_enabled
         }
         if self.request.method == 'POST':
             if self.can_user_see_meta:
@@ -224,7 +229,6 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
                 'sms_case_registration_owner_id',
                 'sms_case_registration_user_id',
                 'default_sms_backend_id',
-                'commtrack_enabled',
                 'restrict_superusers',
                 'ota_restore_caching',
                 'secure_submissions',
@@ -354,17 +358,30 @@ def drop_repeater(request, domain, repeater_id):
     messages.success(request, "Form forwarding stopped!")
     return HttpResponseRedirect(reverse(DomainForwardingOptionsView.urlname, args=[domain]))
 
+
 @require_POST
 @require_can_edit_web_users
 def test_repeater(request, domain):
     url = request.POST["url"]
+    repeater_type = request.POST['repeater_type']
     form = FormRepeaterForm({"url": url})
     if form.is_valid():
         url = form.cleaned_data["url"]
         # now we fake a post
-        fake_post = "<?xml version='1.0' ?><data id='test'><TestString>Test post from CommCareHQ on %s</TestString></data>" \
-                    % (datetime.datetime.utcnow())
+        def _stub(repeater_type):
+            if 'case' in repeater_type.lower():
+                return CaseBlock(
+                    case_id='test-case-%s' % uuid.uuid4().hex,
+                    create=True,
+                    case_type='test',
+                    case_name='test case',
+                    version=V2,
+                ).as_string()
+            else:
+                return "<?xml version='1.0' ?><data id='test'><TestString>Test post from CommCareHQ on %s</TestString></data>" % \
+                       (datetime.datetime.utcnow())
 
+        fake_post = _stub(repeater_type)
         try:
             resp = simple_post(fake_post, url)
             if 200 <= resp.status < 300:
@@ -398,8 +415,8 @@ def logo(request, domain):
 
 class DomainAccountingSettings(BaseAdminProjectSettingsView):
 
-    # todo replace decorator with require_billing_admin()
-    @method_decorator(require_toggle(toggles.ACCOUNTING_PREVIEW))
+    @method_decorator(login_and_domain_required)
+    @method_decorator(require_billing_admin())
     def dispatch(self, request, *args, **kwargs):
         return super(DomainAccountingSettings, self).dispatch(request, *args, **kwargs)
 
@@ -1462,6 +1479,10 @@ class ProBonoMixin():
     url_name = None
 
     @property
+    def requesting_domain(self):
+        raise NotImplementedError
+
+    @property
     @memoized
     def pro_bono_form(self):
         if self.request.method == 'POST':
@@ -1481,7 +1502,7 @@ class ProBonoMixin():
 
     def post(self, request, *args, **kwargs):
         if self.pro_bono_form.is_valid():
-            self.pro_bono_form.process_submission()
+            self.pro_bono_form.process_submission(domain=self.requesting_domain)
             self.is_submitted = True
         return self.get(request, *args, **kwargs)
 
@@ -1490,10 +1511,18 @@ class ProBonoStaticView(ProBonoMixin, BasePageView):
     template_name = 'domain/pro_bono/static.html'
     urlname = 'pro_bono_static'
 
+    @property
+    def requesting_domain(self):
+        return None
+
 
 class ProBonoView(ProBonoMixin, DomainAccountingSettings):
     template_name = 'domain/pro_bono/domain.html'
     urlname = 'pro_bono'
+
+    @property
+    def requesting_domain(self):
+        return self.domain
 
     @property
     def parent_pages(self):

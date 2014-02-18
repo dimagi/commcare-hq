@@ -438,7 +438,7 @@ def archive_commcare_user(request, domain, user_id, is_active=False):
 def delete_commcare_user(request, domain, user_id):
     user = CommCareUser.get_by_user_id(user_id, domain)
     user.retire()
-    messages.success(request, "User %s and all their submissions have been permanently deleted" % user.username)
+    messages.success(request, "User %s has been deleted. All their submissions and cases will be permanently deleted in the next few minutes" % user.username)
     return HttpResponseRedirect(reverse('commcare_users', args=[domain]))
 
 @require_can_edit_commcare_users

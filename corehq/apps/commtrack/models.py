@@ -619,6 +619,11 @@ class StockTransaction(object):
                 return a
         return None
 
+    @property
+    def date(self):
+        if self.timestamp:
+            return dateparse.json_format_datetime(self.timestamp)
+
     @classmethod
     def from_xml(cls, config, timestamp, action_tag, action_node, product_node):
         action_type = action_node.attrib.get('type')
@@ -678,31 +683,9 @@ class StockTransaction(object):
         if not E:
             E = XML()
 
-        tx_type = 'balance' if self.action in (
-            StockActions.STOCKONHAND,
-            StockActions.STOCKOUT,
-        ) else 'transfer'
-
-        attr = {}
-        if self.timestamp:
-            attr['date'] = dateparse.json_format_datetime(self.timestamp)
-
-        attr['section-id'] = 'stock'
-        if tx_type == 'balance':
-            attr['entity-id'] = self.case_id
-        elif tx_type == 'transfer':
-            here, there = ('dest', 'src') if self.action == StockActions.RECEIPTS else ('src', 'dest')
-            attr[here] = self.case_id
-            # no 'there' for now
-            if self.subaction:
-                attr['type'] = self.subaction
-
-        return getattr(E, tx_type)(
-            E.entry(
-                id=self.product_id,
-                quantity=str(self.quantity if self.action != StockActions.STOCKOUT else 0),
-            ),
-            **attr
+        return E.entry(
+            id=self.product_id,
+            quantity=str(self.quantity if self.action != StockActions.STOCKOUT else 0),
         )
 
     @property

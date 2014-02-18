@@ -283,12 +283,17 @@ class SupplyPointSelectWidget(forms.Widget):
         super(SupplyPointSelectWidget, self).__init__(attrs)
         self.domain = domain
         self.id = id
+        if attrs:
+            self.is_admin = attrs.get('is_admin', False)
+        else:
+            self.is_admin = False
 
     def render(self, name, value, attrs=None):
         return get_template('locations/manage/partials/autocomplete_select_widget.html').render(Context({
                     'id': self.id,
                     'name': name,
                     'value': value or '',
+                    'is_admin': self.is_admin,
                     'query_url': reverse('corehq.apps.commtrack.views.api_query_supply_point', args=[self.domain]),
                 }))
 
@@ -301,8 +306,13 @@ class CommtrackUserForm(forms.Form):
         if 'domain' in kwargs:
             domain = kwargs['domain']
             del kwargs['domain']
+        if 'is_admin' in kwargs:
+            attrs = {'is_admin': kwargs['is_admin']}
+            del kwargs['is_admin']
+        else:
+            attrs = {'is_admin': False}
         super(CommtrackUserForm, self).__init__(*args, **kwargs)
-        self.fields['supply_point'].widget = SupplyPointSelectWidget(domain=domain)
+        self.fields['supply_point'].widget = SupplyPointSelectWidget(domain=domain, attrs=attrs)
         programs = Program.by_domain(domain, wrap=False)
         choices = list((prog['_id'], prog['name']) for prog in programs)
         choices.insert(0, ('', ''))

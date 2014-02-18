@@ -262,6 +262,15 @@ class SubAreaMixin():
 class DomainGlobalSettingsForm(forms.Form):
     default_timezone = TimeZoneChoiceField(label=ugettext_noop("Default Timezone"), initial="UTC")
 
+    commtrack_enabled = BooleanField(
+        label=_("CommTrack Enabled"),
+        required=False,
+        help_text=_("CommTrack is a CommCareHQ module for logistics, inventory "
+                    "tracking, and supply chain management. It is still under "
+                    "active development. Do not enable for your domain unless "
+                    "you\'re actively piloting it.")
+    )
+
     def clean_default_timezone(self):
         data = self.cleaned_data['default_timezone']
         timezone_field = TimeZoneField()
@@ -271,6 +280,7 @@ class DomainGlobalSettingsForm(forms.Form):
     def save(self, request, domain):
         try:
             global_tz = self.cleaned_data['default_timezone']
+            domain.commtrack_enabled = self.cleaned_data.get('commtrack_enabled', False)
             domain.default_timezone = global_tz
             users = WebUser.by_domain(domain.name)
             for user in users:
@@ -334,14 +344,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         help_text=_("This SMS backend will be used if a contact has no "
                     "backend specified.")
     )
-    commtrack_enabled = BooleanField(
-        label=_("CommTrack Enabled"),
-        required=False,
-        help_text=_("CommTrack is a CommCareHQ module for logistics, inventory "
-                    "tracking, and supply chain management. It is still under "
-                    "active development. Do not enable for your domain unless "
-                    "you\'re actively piloting it.")
-    )
     call_center_enabled = BooleanField(
         label=_("Call Center Application"),
         required=False,
@@ -402,9 +404,8 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         user = kwargs.pop('user', None)
         domain = kwargs.pop('domain', None)
         super(DomainMetadataForm, self).__init__(*args, **kwargs)
+
         if not (user and user.is_previewer):
-            # commtrack is pre-release
-            self.fields['commtrack_enabled'].widget = forms.HiddenInput()
             self.fields['call_center_enabled'].widget = forms.HiddenInput()
             self.fields['call_center_case_owner'].widget = forms.HiddenInput()
             self.fields['call_center_case_type'].widget = forms.HiddenInput()
@@ -483,7 +484,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
             domain.sms_case_registration_owner_id = self.cleaned_data.get('sms_case_registration_owner_id')
             domain.sms_case_registration_user_id = self.cleaned_data.get('sms_case_registration_user_id')
             domain.default_sms_backend_id = self.cleaned_data.get('default_sms_backend_id')
-            domain.commtrack_enabled = self.cleaned_data.get('commtrack_enabled', False)
             domain.call_center_config.enabled = self.cleaned_data.get('call_center_enabled', False)
             if domain.call_center_config.enabled:
                 domain.internal.using_call_center = True
@@ -795,8 +795,8 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
 class ProBonoForm(forms.Form):
     contact_email = forms.CharField(label=_("Contact email"))
     organization = forms.CharField(required=False, label=_("Organization"))
-    project_overview = forms.CharField(widget=forms.Textarea, label="Project Overview")
-    pay_only_features_needed = forms.BooleanField(required=False, label="Pay only features needed")
+    project_overview = forms.CharField(widget=forms.Textarea, label="Project overview")
+    pay_only_features_needed = forms.CharField(widget=forms.Textarea, label="Pay only features needed")
     duration_of_project = forms.CharField(help_text=_("We grant pro-bono software plans for "
                                                       "12 months at a time. After 12 months "
                                                       "groups must reapply to renew their "
@@ -822,7 +822,7 @@ class ProBonoForm(forms.Form):
             ),
         )
 
-    def process_submission(self):
+    def process_submission(self, domain=None):
         try:
             params = {
                 'pro_bono_form': self,
@@ -830,8 +830,11 @@ class ProBonoForm(forms.Form):
             html_content = render_to_string("domain/email/pro_bono_application.html", params)
             text_content = render_to_string("domain/email/pro_bono_application.txt", params)
             recipient = settings.BILLING_EMAIL
-            send_HTML_email("Pro-Bono Application", recipient, html_content, text_content=text_content)
-            send_HTML_email("Pro-Bono Application", recipient, html_content, text_content=text_content)
+            subject = "[Pro-Bono Application]"
+            if domain is not None:
+                subject = "%s %s" % (subject, domain)
+            send_HTML_email(subject, recipient, html_content, text_content=text_content,
+                            email_from=settings.DEFAULT_FROM_EMAIL)
         except Exception:
             logging.error("Couldn't send pro-bono application email. "
                           "Contact: %s" % self.cleaned_data['contact_email']

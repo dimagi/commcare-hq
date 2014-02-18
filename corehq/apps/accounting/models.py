@@ -209,6 +209,9 @@ class BillingAccount(models.Model):
                 account_type=account_type,
             )
             account.save()
+            billing_admin = BillingAccountAdmin.objects.get_or_create(web_user=created_by)[0]
+            account.billing_admins.add(billing_admin)
+            account.save()
         return account, is_new
 
     @classmethod

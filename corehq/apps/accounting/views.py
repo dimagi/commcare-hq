@@ -43,7 +43,7 @@ class AccountingSectionView(BaseSectionPageView):
     def section_url(self):
         return reverse('accounting_default')
 
-    @method_decorator(require_toggle(toggles.ACCOUNTING_PREVIEW))
+    @method_decorator(requires_privilege_raise404(privileges.ACCOUNTING_ADMIN))
     def dispatch(self, request, *args, **kwargs):
         return super(AccountingSectionView, self).dispatch(request, *args, **kwargs)
 
@@ -405,4 +405,9 @@ def pricing_table_json(request, product, locale):
     table = PricingTable.get_table_by_product(product)
     table_json = json.dumps(table, cls=LazyEncoder)
     translation.deactivate()
-    return HttpResponse(table_json, content_type='application/json')
+    response = HttpResponse(table_json, content_type='application/json')
+    response["Access-Control-Allow-Origin"] = "*"
+    response["Access-Control-Allow-Methods"] = "POST, GET, OPTIONS"
+    response["Access-Control-Max-Age"] = "1000"
+    response["Access-Control-Allow-Headers"] = "*"
+    return response

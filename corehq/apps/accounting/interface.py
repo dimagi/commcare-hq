@@ -1,15 +1,13 @@
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.accounting.filters import *
 from corehq.apps.accounting.models import BillingAccount, Subscription, SoftwarePlan
-from corehq.apps.announcements.forms import HQAnnouncementForm
-from corehq.apps.announcements.models import HQAnnouncement
-from corehq.apps.crud.interface import BaseCRUDAdminInterface
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
+from corehq.apps.reports.generic import GenericTabularReport
 
 
-class AddItemInterface(BaseCRUDAdminInterface):
+class AddItemInterface(GenericTabularReport):
     base_template = 'accounting/add_new_item_button.html'
 
     item_name = None
@@ -85,9 +83,6 @@ class AccountingInterface(AddItemInterface):
     name = "Billing Accounts"
     description = "List of all billing accounts"
     slug = "accounts"
-
-    document_class = HQAnnouncement
-    form_class = HQAnnouncementForm
 
     crud_item_type = "Billing Account"
 
@@ -182,9 +177,6 @@ class SubscriptionInterface(AddItemInterface):
     description = "List of all subscriptions"
     slug = "subscriptions"
 
-    document_class = HQAnnouncement
-    form_class = HQAnnouncementForm
-
     crud_item_type = "Subscription"
 
 
@@ -252,8 +244,5 @@ class SoftwarePlanInterface(AddItemInterface):
     name = "Software Plans"
     description = "List of all software plans"
     slug = "software_plans"
-
-    document_class = HQAnnouncement
-    form_class = HQAnnouncementForm
 
     crud_item_type = "Software_Plan"
