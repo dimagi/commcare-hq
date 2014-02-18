@@ -55,7 +55,7 @@ class CustomExportHelper(object):
         return any(
             col.doc_type == 'StockExportColumn'
             for col in self.custom_export.tables[0].columns
-        )
+        ) if self.custom_export.tables else False
 
     class DEID(object):
         options = (
