@@ -177,6 +177,7 @@ class SubscriptionForm(forms.Form):
     # account_id is not referenced if subscription is not None
     def __init__(self, subscription, account_id, *args, **kwargs):
         super(SubscriptionForm, self).__init__(*args, **kwargs)
+        self.subscription = subscription
 
         css_class = {'css_class': 'date-picker'}
         disabled = {'disabled': 'disabled'}
@@ -251,8 +252,10 @@ class SubscriptionForm(forms.Form):
         return domain_name
 
     def clean_end_date(self):
+        start_date = self.subscription.date_start \
+            if self.subscription is not None else self.cleaned_data['start_date']
         if (self.cleaned_data['end_date'] is not None
-            and self.cleaned_data['start_date'] > self.cleaned_data['end_date']):
+            and start_date > self.cleaned_data['end_date']):
             raise ValidationError("End date must be after start date.")
         return self.cleaned_data['end_date']
 
