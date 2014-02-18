@@ -868,26 +868,26 @@ class ProjectSettingsTab(UITab):
             ])
             items.append((_('Project Administration'), administration))
 
-        from corehq.apps.users.models import WebUser
-        if isinstance(self.couch_user, WebUser):
-            user_is_billing_admin, billing_account = BillingAccountAdmin.get_admin_status_and_account(
-                self.couch_user, self.domain)
-            if user_is_billing_admin or self.couch_user.is_superuser:
-                from corehq.apps.domain.views import DomainSubscriptionView, EditExistingBillingAccountView
-                subscription = [
-                    {
-                        'title': DomainSubscriptionView.page_title,
-                        'url': reverse(DomainSubscriptionView.urlname, args=[self.domain]),
-                    },
-                ]
-                if billing_account is not None:
-                    subscription.append(
-                        {
-                            'title':  EditExistingBillingAccountView.page_title,
-                            'url': reverse(EditExistingBillingAccountView.urlname, args=[self.domain]),
-                        },
-                    )
-                items.append((_('Subscription'), subscription))
+        # from corehq.apps.users.models import WebUser
+        # if isinstance(self.couch_user, WebUser):
+        #     user_is_billing_admin, billing_account = BillingAccountAdmin.get_admin_status_and_account(
+        #         self.couch_user, self.domain)
+        #     if user_is_billing_admin or self.couch_user.is_superuser:
+        #         from corehq.apps.domain.views import DomainSubscriptionView, EditExistingBillingAccountView
+        #         subscription = [
+        #             {
+        #                 'title': DomainSubscriptionView.page_title,
+        #                 'url': reverse(DomainSubscriptionView.urlname, args=[self.domain]),
+        #             },
+        #         ]
+        #         if billing_account is not None:
+        #             subscription.append(
+        #                 {
+        #                     'title':  EditExistingBillingAccountView.page_title,
+        #                     'url': reverse(EditExistingBillingAccountView.urlname, args=[self.domain]),
+        #                 },
+        #             )
+        #         items.append((_('Subscription'), subscription))
 
         if self.couch_user.is_superuser:
             from corehq.apps.domain.views import EditInternalDomainInfoView, EditInternalCalculationsView

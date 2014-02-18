@@ -1054,7 +1054,7 @@ class ManageProjectMediaView(BaseAdminProjectSettingsView):
             if '%s_license' % m_file._id in request.POST:
                 m_file.update_or_add_license(self.domain,
                                              type=request.POST.get('%s_license' % m_file._id, 'public'),
-                                             should_save=False)
+                                             should_save=True)
             m_file.save()
         messages.success(request, _("Multimedia updated successfully!"))
         return self.get(request, *args, **kwargs)
