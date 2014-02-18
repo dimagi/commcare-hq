@@ -2,24 +2,24 @@ UNDERSTOCK_THRESHOLD = 0.5  # months
 OVERSTOCK_THRESHOLD = 2.  # months
 
 
-def months_of_stock_remaining(stock, consumption):
+def months_of_stock_remaining(stock, daily_consumption):
     try:
-        return stock / consumption
+        return stock / (daily_consumption * 30)
     except (TypeError, ZeroDivisionError):
         return None
 
 
-def stock_category(stock, consumption):
+def stock_category(stock, daily_consumption):
     if stock is None:
         return 'nodata'
     elif stock == 0:
         return 'stockout'
-    elif consumption is None:
+    elif daily_consumption is None:
         return 'nodata'
-    elif consumption == 0:
+    elif daily_consumption == 0:
         return 'overstock'
 
-    months_left = months_of_stock_remaining(stock, consumption)
+    months_left = months_of_stock_remaining(stock, daily_consumption)
 
     if months_left is None:
         return 'nodata'
