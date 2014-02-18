@@ -190,7 +190,7 @@ class BaseEditUserView(BaseUserSettingsView):
             return CommtrackUserForm(self.request.POST, domain=self.domain)
         linked_loc = self.editable_user._obj.get('location_id')
         linked_prog = self.editable_user._obj.get('program_id')
-        return CommtrackUserForm(domain=self.domain, initial={'supply_point': linked_loc, 'program_id': linked_prog})
+        return CommtrackUserForm(domain=self.domain, is_admin=self.request.couch_user.is_domain_admin(self.domain), initial={'supply_point': linked_loc, 'program_id': linked_prog})
 
     def post(self, request, *args, **kwargs):
         if self.request.POST['form_type'] == "commtrack":
