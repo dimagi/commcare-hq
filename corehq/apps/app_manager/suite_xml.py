@@ -677,6 +677,7 @@ class SuiteGenerator(object):
                             value="./@id",
                             detail_select=self.get_detail_id_safe(module, 'product_short')
                         ))
+                        e.instances.append(Instance(id='products', src='jr://fixture/commtrack:products'))
                 yield e
 
     def get_indicator_instances(self, module):
@@ -823,6 +824,7 @@ class SuiteGenerator(object):
                         value="./@id",
                         detail_select=self.get_detail_id_safe(target_module, 'product_short')
                     ))
+                    e.instances.append(Instance(id='products', src='jr://fixture/commtrack:products'))
             except IndexError:
                 pass
 
