@@ -39,7 +39,7 @@ class Format(object):
     XLS_2007 = "xlsx"
     HTML = "html"
     JSON = "json"
-    
+
     FORMAT_DICT = {CSV: {"mimetype": "application/zip",
                          "extension": "zip",
                          "download": True},
@@ -58,15 +58,15 @@ class Format(object):
                    JSON: {"mimetype": "application/json",
                           "extension": "json",
                           "download": False}}
-    
+
     VALID_FORMATS = FORMAT_DICT.keys()
-    
+
     def __init__(self, slug, mimetype, extension, download):
         self.slug = slug
         self.mimetype = mimetype
         self.extension = extension
         self.download = download
-    
+
     @classmethod
     def from_format(cls, format):
         format = format.lower()
@@ -184,7 +184,7 @@ class ExportSchema(Document, UnicodeMixIn):
     @property
     def table_dict(self):
         return dict(self.tables)
-    
+
     def get_columns(self, index):
         return ['id'] + self.table_dict[index].data
 
@@ -604,22 +604,22 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
 
     def update_schema(self):
         """
-        Update the schema for this object to include the latest columns from 
+        Update the schema for this object to include the latest columns from
         any relevant docs.
-        
+
         Does NOT save the doc, just updates the in-memory object.
         """
         from couchexport.schema import build_latest_schema
         self.set_schema(build_latest_schema(self.index))
-        
+
     def set_schema(self, schema):
         """
         Set the schema for this object.
-        
+
         Does NOT save the doc, just updates the in-memory object.
         """
         self.schema_id = schema.get_id
-    
+
     def trim(self, document_table, doc, apply_transforms=True):
         for table_index, data in document_table:
             if self.tables_by_index.has_key(table_index):
@@ -653,7 +653,7 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
 
         # transform docs onto output and save
         writer = get_writer(format)
-        
+
         # open the doc and the headers
         formatted_headers = list(self.get_table_headers())
         fd, path = tempfile.mkstemp()
@@ -736,7 +736,7 @@ class ExportConfiguration(DocumentSchema):
     index = JsonProperty()
     name = StringProperty()
     format = StringProperty()
-    
+
     @property
     def filename(self):
         return "%s.%s" % (self.name, Format.from_format(self.format).extension)
@@ -752,7 +752,7 @@ class GroupExportConfiguration(Document):
     """
     full_exports = SchemaListProperty(ExportConfiguration)
     custom_export_ids = StringListProperty()
-    
+
     def get_custom_exports(self):
         for custom in list(self.custom_export_ids):
             custom_export = self._get_custom(custom)
@@ -776,8 +776,8 @@ class GroupExportConfiguration(Document):
     def saved_exports(self):
         if not hasattr(self, "_saved_exports"):
             self._saved_exports = \
-                [(export_config, 
-                  SavedBasicExport.view("couchexport/saved_exports", 
+                [(export_config,
+                  SavedBasicExport.view("couchexport/saved_exports",
                                         key=json.dumps(export_config.index),
                                         include_docs=True,
                                         reduce=False).one()) \
@@ -798,7 +798,7 @@ class GroupExportConfiguration(Document):
     @property
     def all_export_schemas(self):
         """
-        Return an iterator of ExportSchema-like objects that include the 
+        Return an iterator of ExportSchema-like objects that include the
         main configs + the custom export configs.
         """
         for full in self.full_exports:
@@ -820,9 +820,9 @@ class SavedBasicExport(Document):
     A cache of an export that lives in couch.
     Doesn't do anything smart, just works off an index
     """
-    configuration = SchemaProperty(ExportConfiguration) 
+    configuration = SchemaProperty(ExportConfiguration)
     last_updated = DateTimeProperty()
-    
+
     @property
     def size(self):
         try:

@@ -115,7 +115,7 @@ def cache_file_to_be_served(tmp, checkpoint, download_id, format=None, filename=
                         content_disposition='attachment; filename="%s"' % escaped_filename,
                         extras={'X-CommCareHQ-Export-Token': checkpoint.get_id},
                         download_id=download_id)
-        
+
     else:
         # this just gives you a link saying there wasn't anything there
         expose_download("Sorry, there wasn't any data.", expiry, 
