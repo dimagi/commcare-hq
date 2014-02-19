@@ -909,11 +909,14 @@ class RequisitionCase(CommCareCase):
 
     @memoized
     def get_location(self):
-        if self.location_:
-            return Location.get(self.location_[-1])
+        try:
+            return SupplyPointCase.get(self.indices[0].referenced_id).location
+        except ResourceNotFound:
+            return None
 
     @memoized
     def get_requester(self):
+        # TODO this never gets set
         if self.requested_by:
             return CommCareUser.get(self.requested_by)
         else:
@@ -935,6 +938,7 @@ class RequisitionCase(CommCareCase):
         """
         For a given location, return the IDs of all open requisitions at that location.
         """
+        # TODO this couch view is broken
         results = cls.get_db().view('commtrack/requisitions',
             endkey=[domain, location_id, 'open'],
             startkey=[domain, location_id, 'open', {}],
@@ -957,6 +961,7 @@ class RequisitionCase(CommCareCase):
 
     @classmethod
     def get_by_external_id(cls, domain, external_id):
+        # TODO: what is this?
         return cls.view('hqcase/by_domain_external_id',
             key=[domain, external_id],
             include_docs=True, reduce=False,
