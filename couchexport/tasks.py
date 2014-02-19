@@ -59,9 +59,9 @@ def bulk_export_async(bulk_export_helper, download_id,
     if bulk_export_helper.zip_export:
         filename = "%s_%s"% (domain, filename) if domain else filename
         _, path = tempfile.mkstemp()
-        os.close(_) 
+        os.close(_)
         zf = zipfile.ZipFile(path, 'w', zipfile.ZIP_DEFLATED)
-        try: 
+        try:
             for file in bulk_export_helper.bulk_files:
                 try:
                     bulk = file.generate_bulk_file()
@@ -107,7 +107,7 @@ def cache_file_to_be_served(tmp, checkpoint, download_id, format=None, filename=
         format = Format.from_format(format)
         try:
             filename = unidecode(filename)
-        except Exception: 
+        except Exception:
             pass
 
         escaped_filename = escape_quotes('%s.%s' % (filename, format.extension))
@@ -121,7 +121,7 @@ def cache_file_to_be_served(tmp, checkpoint, download_id, format=None, filename=
 
     else:
         # this just gives you a link saying there wasn't anything there
-        expose_download("Sorry, there wasn't any data.", expiry, 
+        expose_download("Sorry, there wasn't any data.", expiry,
                         content_disposition="",
                         mimetype="text/html",
                         download_id=download_id).save(expiry)

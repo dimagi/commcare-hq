@@ -24,7 +24,7 @@ def export_data_shared(export_tag, format=None, filename=None,
 
     if not filename:
         filename = export_tag
-    
+
     files = FakeSavedExportSchema(index=export_tag).get_export_files(
         format=format,
         previous_export_id=previous_export_id,
@@ -35,7 +35,7 @@ def export_data_shared(export_tag, format=None, filename=None,
     )
     if files and files.checkpoint:
         return export_response(files.file, format, filename, files.checkpoint)
-    else: 
+    else:
         return None
 
 
@@ -79,7 +79,7 @@ def export_response(file, format, filename, checkpoint=None):
     return response
 
 def export_raw_data(export_tag, filename=None):
-    # really this shouldn't be here, but keeping it for now                   
+    # really this shouldn't be here, but keeping it for now
     from couchforms.models import XFormInstance
     xform_instances = XFormInstance.view('couchexport/schema_index',
                                          include_docs=True,
