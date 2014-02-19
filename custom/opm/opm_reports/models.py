@@ -99,7 +99,7 @@ class OpmHealthStatusFluff(fluff.IndicatorDocument):
     save_direct_to_sql = True
 
     #aggregated field
-    beneficiaries_registered = case_calcs.MotherRegistered()
+    beneficiaries_registered = user_calcs.WomenRegistered()
     lmp = case_calcs.Lmp()
     lactating = case_calcs.Lactating()
     children = case_calcs.LiveChildren()
