@@ -155,7 +155,7 @@ def queue_outgoing_sms(msg, onerror=lambda: None):
 
 @task
 def store_billable(msg):
-    for _ in range(math.ceil(float(len(msg.text)) / 160)):
+    for _ in range(int(math.ceil(float(len(msg.text)) / 160))):
         SmsBillable.create(msg)
 
 
