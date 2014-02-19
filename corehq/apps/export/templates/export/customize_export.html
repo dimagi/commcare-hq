@@ -420,16 +420,6 @@
             </div>
             <div class="control-group">
                 <div class="controls">
-            {% if custom_export.type == 'form' %}
-                    <label class="checkbox">
-                        <input type="checkbox" id="include-errors-checkbox" data-bind="checked: custom_export.include_errors" />
-                        {% trans "Include duplicates and other unprocessed forms" %}
-                    </label>
-            {% endif %}
-                    <label class="checkbox">
-                        <input type="checkbox" id="presave-checkbox" data-bind="checked: presave" />
-                        {% trans "Save this report daily?" %}
-                    </label>
                     {% if commtrack_domain %}
                         <label class="checkbox">
                             <input type="checkbox" id="presave-checkbox" data-bind="checked: export_stock" />
@@ -438,11 +428,22 @@
                     {% endif %}
                     <label class="checkbox">
                         <input type="checkbox" id="transform-dates-checkbox" data-bind="checked: custom_export.transform_dates" />
-                        {% trans "Automatically convert dates for Excel?" %}
+                        {% trans "Automatically convert dates for Excel" %}
                     </label>
                     <label class="checkbox">
-                        <input type="checkbox" data-bind="checked: $root.show_deleted" /> {% trans "Show Deleted Questions and Advanced Properties" %}
+                        <input type="checkbox" data-bind="checked: $root.show_deleted" />
+                        {% trans "Show Deleted Questions and Advanced Properties" %}
                     </label>
+                    <label class="checkbox">
+                        <input type="checkbox" id="presave-checkbox" data-bind="checked: presave" />
+                        {% trans "Create a Daily Saved Export" %}
+                    </label>
+                {% if custom_export.type == 'form' %}
+                    <label class="checkbox">
+                        <input type="checkbox" id="include-errors-checkbox" data-bind="checked: custom_export.include_errors" />
+                        {% trans "Include duplicates and other unprocessed forms" %}
+                    </label>
+                {% endif %}
                 </div>
             </div>
         </fieldset>
