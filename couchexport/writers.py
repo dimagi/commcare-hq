@@ -293,8 +293,6 @@ class HtmlExportWriter(InMemoryExportWriter):
     """
     Write tables to HTML
     """
-
     def _close(self):
-        self.file.write(render_to_string("couchexport/html_export.html", {'tables': self.tables}))
-
-
+        rendered = render_to_string("couchexport/html_export.html", {'tables': self.tables}).encode('utf-8')
+        self.file.write(rendered)

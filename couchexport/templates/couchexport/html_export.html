@@ -1,8 +1,6 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+<!DOCTYPE HTML>
 <html>
 <body>
-
 {% for table_name, table in tables.items %}
     <h2>{{ table_name }}</h2>
     <table>
@@ -22,7 +20,6 @@
                 {% for cell in row %}
                     <td>{{ cell }}</td>
                 {% endfor %}
-
             </tr>
         {% endif %}
     {% endfor %}
