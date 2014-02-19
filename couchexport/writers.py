@@ -5,6 +5,8 @@ import zipfile
 import csv
 import json
 from django.template.loader import render_to_string
+import xlwt
+
 
 class UniqueHeaderGenerator(object):
     def __init__(self, max_column_size=None):
@@ -222,12 +224,6 @@ class Excel2003ExportWriter(ExportWriter):
     max_table_name_size = 31
     
     def _init(self):
-        try:
-            import xlwt
-        except ImportError:
-            raise Exception("It doesn't look like this machine is configured for "
-                            "excel export. To export to excel you have to run the "
-                            "command:  easy_install xlutils")
         self.book = xlwt.Workbook()
         self.tables = {}
         self.table_indices = {}
