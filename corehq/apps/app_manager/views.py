@@ -629,14 +629,17 @@ def get_module_view_context_and_template(app, module):
         defaults=('name', 'date-opened', 'status')
     )
 
-    def get_parent_modules_and_save(case_type):
-        parent_types = builder.get_parent_types(case_type)
-        modules = app.modules
+    def ensure_unique_ids():
         # make sure all modules have unique ids
+        modules = app.modules
         if any(not mod.unique_id for mod in modules):
             for mod in modules:
                 mod.get_or_create_unique_id()
             app.save()
+
+    def get_parent_modules(case_type):
+        parent_types = builder.get_parent_types(case_type)
+        modules = app.modules
         parent_module_ids = [mod.unique_id for mod in modules
                              if mod.case_type in parent_types]
         return [{
@@ -648,9 +651,10 @@ def get_module_view_context_and_template(app, module):
     def get_sort_elements(details):
         return [prop.values() for prop in details.sort_elements]
 
+    ensure_unique_ids()
     if isinstance(module, CareplanModule):
         return "app_manager/module_view_careplan.html", {
-            'parent_modules': get_parent_modules_and_save(CAREPLAN_GOAL),
+            'parent_modules': get_parent_modules(CAREPLAN_GOAL),
             'goal_case_properties': sorted(builder.get_properties(CAREPLAN_GOAL)),
             'task_case_properties': sorted(builder.get_properties(CAREPLAN_TASK)),
             "goal_sortElements": json.dumps(get_sort_elements(module.goal_details.short)),
@@ -667,7 +671,7 @@ def get_module_view_context_and_template(app, module):
     else:
         case_type = module.case_type
         return "app_manager/module_view.html", {
-            'parent_modules': get_parent_modules_and_save(case_type),
+            'parent_modules': get_parent_modules(case_type),
             'case_properties': sorted(builder.get_properties(case_type)),
             "sortElements": json.dumps(get_sort_elements(module.case_details.short))
         }
