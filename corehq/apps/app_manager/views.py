@@ -1073,10 +1073,23 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
         case_type = req.POST.get("case_type", None)
         if is_valid_case_type(case_type):
             # todo: something better than nothing when invalid
+            old_case_type = module["case_type"]
             module["case_type"] = case_type
             for cp_mod in (mod for mod in app.modules if isinstance(mod, CareplanModule)):
                 if cp_mod.unique_id != module.unique_id and cp_mod.parent_select.module_id == module.unique_id:
                     cp_mod.case_type = case_type
+
+            def rename_action_case_type(mod):
+                for form in mod.forms:
+                    for action in form.actions.get_all_actions():
+                        if action.case_type == old_case_type:
+                            action.case_type = case_type
+
+            rename_action_case_type(module)
+            for ad_mod in (mod for mod in app.modules if isinstance(mod, AdvancedModule)):
+                if ad_mod.unique_id != module.unique_id and ad_mod.case_type != old_case_type:
+                    # only apply change if the module's case_type does not reference the old value
+                    rename_action_case_type(ad_mod)
         else:
             return HttpResponseBadRequest("case type is improperly formatted")
     if should_edit("put_in_root"):
