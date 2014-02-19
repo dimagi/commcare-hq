@@ -1085,7 +1085,8 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
                         if action.case_type == old_case_type:
                             action.case_type = case_type
 
-            rename_action_case_type(module)
+            if isinstance(module, AdvancedModule):
+                rename_action_case_type(module)
             for ad_mod in (mod for mod in app.modules if isinstance(mod, AdvancedModule)):
                 if ad_mod.unique_id != module.unique_id and ad_mod.case_type != old_case_type:
                     # only apply change if the module's case_type does not reference the old value
