@@ -778,14 +778,16 @@ class GroupExportConfiguration(Document):
         return self._saved_exports_from_configs(self.all_configs)
 
     def _saved_exports_from_configs(self, configs):
-        def exports_from(config):
-            return SavedBasicExport.view(
-                "couchexport/saved_exports",
-                key=json.dumps(config.index),
-                include_docs=True,
-                reduce=False
-            ).one()
-        return [(config, exports_from(config)) for config in configs]
+        exports = SavedBasicExport.view(
+            "couchexport/saved_exports",
+            keys=[json.dumps(config.index) for config in configs],
+            include_docs=True,
+            reduce=False,
+        ).all()
+        export_map = dict((json.dumps(export.configuration.index), export)
+            for export in exports)
+        return [(config, export_map.get(json.dumps(config.index), None))
+            for config in configs]
 
     @property
     def all_configs(self):
