@@ -1,6 +1,7 @@
+import os
 import re
+import tempfile
 import zipfile
-from StringIO import StringIO
 import csv
 import json
 from django.template.loader import render_to_string
@@ -150,12 +151,13 @@ class CsvExportWriter(ExportWriter):
         
         
     def _init_table(self, table_index, table_title):
-        table_file = StringIO()
-        writer = csv.writer(table_file, dialect=csv.excel)
+        fd, path = tempfile.mkstemp()
+        file = os.fdopen(fd, 'wb')
+        writer = csv.writer(file, dialect=csv.excel)
         self.tables[table_index] = writer
-        self.table_files[table_index] = table_file
+        self.table_files[table_index] = (file, path)
         self.table_names[table_index] = table_title
-        
+
     def _write_row(self, sheet_index, row):
         def _encode_if_needed(val):
             return val.encode("utf8") if isinstance(val, unicode) else val
@@ -170,7 +172,9 @@ class CsvExportWriter(ExportWriter):
         """
         archive = zipfile.ZipFile(self.file, 'w', zipfile.ZIP_DEFLATED)
         for index, name in self.table_names.items():
-            archive.writestr("%s.csv" % name, self.table_files[index].getvalue())
+            tmpfile, path = self.table_files[index]
+            tmpfile.close()
+            archive.write(path, "%s.csv" % name)
         archive.close()
         self.file.seek(0)
 
