@@ -1,32 +1,39 @@
 import hashlib
-from couchdbkit import ResourceConflict, resource
 import datetime
-from django.http import HttpResponse, HttpResponseServerError, HttpResponseBadRequest, HttpResponseForbidden, HttpRequest
+import logging
+
+from couchdbkit import ResourceConflict, ResourceNotFound, resource
+from django.http import (
+    HttpRequest,
+    HttpResponse,
+    HttpResponseBadRequest,
+    HttpResponseForbidden,
+    HttpResponseServerError,
+)
+
 import couchforms
 from couchforms.const import MAGIC_PROPERTY, MULTIPART_FILENAME_ERROR
 from dimagi.utils.mixins import UnicodeMixIn
-
-try:
-    import simplejson
-except ImportError:
-    from django.utils import simplejson
-
-from couchforms.models import XFormInstance, XFormDuplicate, XFormError, XFormDeprecated,\
-    SubmissionErrorLog, DefaultAuthContext, doc_types
-import logging
+from couchforms.models import (
+    DefaultAuthContext,
+    SubmissionErrorLog,
+    XFormDeprecated,
+    XFormDuplicate,
+    XFormError,
+    XFormInstance,
+    doc_types,
+)
 from couchforms.signals import xform_saved
 from dimagi.utils.couch import uid
-import re
-from restkit.errors import ResourceNotFound
-from lxml import etree
 import xml2json
+
 
 class SubmissionError(Exception, UnicodeMixIn):
     """
-    When something especially bad goes wrong during a submission, this 
+    When something especially bad goes wrong during a submission, this
     exception gets raised.
     """
-    
+
     def __init__(self, error_log, *args, **kwargs):
         super(SubmissionError, self).__init__(*args, **kwargs)
         self.error_log = error_log
@@ -157,15 +164,10 @@ def post_xform_to_couch(instance, attachments=None, process=None):
             logging.error("Problem with form %s" % doc_id)
             logging.exception(e)
             # "rollback" by changing the doc_type to XFormError
-            try:
-                bad = XFormError.get(doc_id)
-                bad.problem = unicode(e)
-                bad.save()
-                return bad
-            except ResourceNotFound:
-                # no biggie, the failure must have been in getting it back
-                pass
-            raise
+            bad = XFormError.get(doc_id)
+            bad.problem = unicode(e)
+            bad.save()
+            return bad
     except ResourceConflict:
         # this is an update conflict, i.e. the uid in the form was the same.
         return _handle_id_conflict(instance, attachments, process=process)
@@ -207,7 +209,7 @@ def _handle_id_conflict(instance, attachments, process):
         # r=3 implied by class
         xfd = XFormDeprecated.get(doc_copy['id'])
         xfd.orig_id = conflict_id
-        xfd.doc_type=XFormDeprecated.__name__
+        xfd.doc_type = XFormDeprecated.__name__
         xfd.save()
 
         # after that delete the original document and resubmit.
