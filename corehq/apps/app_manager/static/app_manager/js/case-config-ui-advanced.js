@@ -246,12 +246,12 @@ var AdvancedCase = (function () {
             return options;
         });
 
-        self.renameCaseTag = function (oldTag, newTag) {
+        self.renameCaseTag = function (oldTag, newTag, parentOnly) {
             var actions = self.open_cases();
             actions = actions.concat(self.load_update_cases());
             for (var i = 0; i < actions.length; i++) {
                 var action = actions[i];
-                if (action.case_tag() === oldTag) {
+                if (!parentOnly && action.case_tag() === oldTag) {
                     action.case_tag(newTag);
                 }
                 if (action.parent_tag() === oldTag) {
@@ -496,6 +496,11 @@ var AdvancedCase = (function () {
                 }
             });
 
+            self.case_tag.extend({ withPrevious: 1 });
+            self.case_tag.subscribe(function (tag) {
+                self.config.caseConfigViewModel.renameCaseTag(self.case_tag.previous(), tag, true);
+            });
+
             self.close_case = ko.computed(ActionBase.close_case(self));
 
             self.validate = ko.computed(function () {
@@ -654,6 +659,11 @@ var AdvancedCase = (function () {
                         self.parent_tag('');
                     }
                 }
+            });
+
+            self.case_tag.extend({ withPrevious: 1 });
+            self.case_tag.subscribe(function (tag) {
+                self.config.caseConfigViewModel.renameCaseTag(self.case_tag.previous(), tag, true);
             });
 
             self.close_case = ko.computed(ActionBase.close_case(self));
