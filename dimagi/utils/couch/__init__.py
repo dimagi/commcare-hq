@@ -6,9 +6,11 @@ from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from couchdbkit.ext.django.schema import DateTimeProperty, DocumentSchema
 from couchdbkit.exceptions import ResourceConflict
+import redis
 import json
 
-LOCK_EXPIRATION = timedelta(hours = 1)
+LOCK_EXPIRATION = timedelta(hours=1)
+
 
 class LockableMixIn(DocumentSchema):
     lock_date = DateTimeProperty()
@@ -150,13 +152,25 @@ class RedisLockableMixIn(object):
         """
         create = kwargs.pop("create", False)
         _id = kwargs.get("_id", None)
+        degrade_gracefully = kwargs.get('degrade_gracefully')
 
         if _id:
             lock = cls.get_obj_lock_by_id(_id)
-            lock.acquire(blocking=True)
         else:
             lock = cls.get_class_lock(timeout_seconds=60)
+
+        def _release_lock():
+            if lock:
+                lock.release()
+
+        if degrade_gracefully:
+            try:
+                lock.acquire(blocking=True)
+            except redis.ConnectionError:
+                lock = None
+        else:
             lock.acquire(blocking=True)
+
         try:
             if _id:
                 obj = cls.get_obj_by_id(_id)
@@ -166,10 +180,10 @@ class RedisLockableMixIn(object):
                 if create:
                     obj = cls.create_obj(*args, **kwargs)
                 else:
-                    lock.release()
+                    _release_lock()
                     return LockManager(None, None)
         except:
-            lock.release()
+            _release_lock()
             raise
         else:
             if _id:
@@ -179,7 +193,7 @@ class RedisLockableMixIn(object):
                 obj_lock.acquire()
                 # Refresh the object in case another thread has updated it
                 obj = cls.get_latest_obj(obj)
-                lock.release()
+                _release_lock()
                 return LockManager(obj, obj_lock)
 
 
