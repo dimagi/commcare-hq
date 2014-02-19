@@ -52,7 +52,7 @@ class Format(object):
                    XLS_2007: {"mimetype": "application/vnd.ms-excel",
                               "extension": "xlsx",
                               "download": True},
-                   HTML: {"mimetype": "text/html",
+                   HTML: {"mimetype": "text/html; charset=utf-8",
                           "extension": "html",
                           "download": False},
                    JSON: {"mimetype": "application/json",
