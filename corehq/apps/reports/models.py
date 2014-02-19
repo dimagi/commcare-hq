@@ -691,21 +691,19 @@ class HQGroupExportConfiguration(GroupExportConfiguration):
                 yield _rewrap(custom_export)
 
     def exports_of_type(self, type):
-        exports = self.saved_exports
-        def is_type(export):
-            # this is inelegant, but the only place the type is specified
-            # is on the schema, referenced in the configuration's index
-            key, _ = export
-            schema = self.get_db().get(key.index[-1])
-            return schema.get('type', None) == type
-        return filter(is_type, exports)
+        return self._saved_exports_from_configs([
+            config for config, schema in self.all_exports if schema.type == type
+        ])
 
     @property
+    @memoized
     def form_exports(self):
         return self.exports_of_type('form')
 
     @property
+    @memoized
     def case_exports(self):
+        exports = self.exports_of_type('case')
         return self.exports_of_type('case')
 
     @classmethod

@@ -433,7 +433,6 @@ def add_config(request, domain=None):
 
 @login_and_domain_required
 @datespan_default
-# TODO: This looks relevant
 def email_report(request, domain, report_slug, report_type=ProjectReportDispatcher.prefix):
     from dimagi.utils.django.email import send_HTML_email
     from forms import EmailReportForm
