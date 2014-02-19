@@ -9,6 +9,7 @@ from django.utils.datastructures import SortedDict
 from couchdbkit.exceptions import PreconditionFailed
 from couchdbkit.ext.django.schema import *
 from couchdbkit.resource import ResourceNotFound
+from dimagi.utils.couch import CouchDocLockableMixIn
 
 from dimagi.utils.indicators import ComputedDocumentMixin
 from dimagi.utils.parsing import string_to_datetime
@@ -85,10 +86,11 @@ class XFormOperation(DocumentSchema):
     """
     user = StringProperty()
     date = DateTimeProperty(default=datetime.datetime.utcnow)
-    operation = StringProperty() # e.g. "archived", "unarchived"
+    operation = StringProperty()  # e.g. "archived", "unarchived"
 
 
-class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin):
+class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
+                    CouchDocLockableMixIn):
     """An XForms instance."""
     xmlns = StringProperty()
     received_on = DateTimeProperty()
