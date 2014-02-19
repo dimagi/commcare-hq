@@ -598,7 +598,7 @@
               },
               "time_ago_interval": 365.25,
               "calc_xpath": ".",
-              "field": "ledger:requested",
+              "field": "ledger:ct-requested",
               "model": "case",
               "advanced": ""
             },
@@ -613,7 +613,7 @@
               },
               "time_ago_interval": 365.25,
               "calc_xpath": ".",
-              "field": "ledger:approved",
+              "field": "ledger:ct-approved",
               "model": "case",
               "advanced": ""
             },
@@ -628,7 +628,7 @@
               },
               "time_ago_interval": 365.25,
               "calc_xpath": ".",
-              "field": "ledger:fulfilled",
+              "field": "ledger:stock",
               "model": "case",
               "advanced": ""
             }
