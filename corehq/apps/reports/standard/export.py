@@ -217,7 +217,7 @@ class ExcelExportReport(FormExportReportBase):
         context.update(
             forms=forms,
             edit=self.request.GET.get('edit') == 'true',
-            group_exports=groups
+            group_exports=[group.form_exports for group in groups],
         )
         return context
 
@@ -244,15 +244,17 @@ class CaseExportReport(ExportReport):
 
     @property
     def report_context(self):
+        context = super(CaseExportReport, self).report_context
         cases = get_db().view("hqcase/types_by_domain",
             startkey=[self.domain],
             endkey=[self.domain, {}],
             reduce=True,
             group=True,
             group_level=2).all()
-        context = super(CaseExportReport, self).report_context
+        groups = HQGroupExportConfiguration.by_domain(self.domain)
         context.update(
             case_types=[case['key'][1] for case in cases],
+            group_exports=[group.case_exports for group in groups],
         )
         return context
 

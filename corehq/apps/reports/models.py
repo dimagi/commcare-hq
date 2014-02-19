@@ -690,6 +690,24 @@ class HQGroupExportConfiguration(GroupExportConfiguration):
             if custom_export:
                 yield _rewrap(custom_export)
 
+    def exports_of_type(self, type):
+        exports = self.saved_exports
+        def is_type(export):
+            # this is inelegant, but the only place the type is specified
+            # is on the schema, referenced in the configuration's index
+            key, _ = export
+            schema = self.get_db().get(key.index[-1])
+            return schema.get('type', None) == type
+        return filter(is_type, exports)
+
+    @property
+    def form_exports(self):
+        return self.exports_of_type('form')
+
+    @property
+    def case_exports(self):
+        return self.exports_of_type('case')
+
     @classmethod
     def by_domain(cls, domain):
         return cache_core.cached_view(cls.get_db(), "groupexport/by_domain", key=domain, reduce=False, include_docs=True, wrapper=cls.wrap)

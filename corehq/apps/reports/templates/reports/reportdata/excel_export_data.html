@@ -316,8 +316,8 @@
 {% if group_exports %}
 <section>
     <h2>{% trans "Saved Export Files" %}</h2>
-    {% for group in group_exports %}
-    {% include "reports/partials/hqexport_group_table.html" %}
+    {% for exports in group_exports %}
+        {% include "reports/partials/hqexport_group_table.html" %}
     {% endfor %}
 </section>
 {% endif %}
@@ -340,7 +340,7 @@
 </section>
 
 </div>
-{% endblock %}
+{% endblock reportcontent %}
 
 {% block modals %}
 {{ block.super }}
