@@ -1,5 +1,8 @@
+import copy
+from django.http.response import HttpResponse
 from django.utils.translation import ugettext as _
 from corehq.apps.groups.models import Group
+from corehq.apps.reports.cache import request_cache
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.api.es import CaseES
 
@@ -9,6 +12,7 @@ from dimagi.utils.decorators.memoized import memoized
 from custom.bihar.reports.display import MCHMotherDisplay, MCHChildDisplay
 from dimagi.utils.timezones import utils as tz_utils
 import pytz
+from custom.bihar.reports.tasks import bihar_all_rows_task
 from custom.bihar.utils import get_all_owner_ids_from_group
 
 
@@ -16,9 +20,11 @@ class MCHBaseReport(CustomProjectReport, CaseListReport):
     ajax_pagination = True
     asynchronous = True
     exportable = True
+    exportable_all = True
     emailable = False
     fix_left_col = True
     report_template_path = "bihar/reports/report.html"
+    model = None
 
     fields = [
         'corehq.apps.reports.fields.GroupField',
@@ -58,11 +64,41 @@ class MCHBaseReport(CustomProjectReport, CaseListReport):
             (date, pytz.utc.zone, self.timezone.zone).strftime\
             ('%d/%m/%Y') if date else ""
 
+    @property
+    def get_all_rows(self):
+
+        query = self.build_query(case_type=self.case_type, filter=self.case_filter,
+                         status=self.case_status, owner_ids=self.case_owners)
+        query.__setitem__("size", self.total_records)
+        query_results = self.case_es.run_query(query)
+
+        case_displays = (self.model(self, self.get_case(case))
+                         for case in query_results['hits'].get('hits', []))
+        return self.get_cases(case_displays)
+
+
+    @property
+    @request_cache("export")
+    def export_response(self):
+        self.request.datespan = None
+        bihar_all_rows_task.delay(self.__class__, self.__getstate__())
+
+        return HttpResponse()
+
+    @property
+    def rows(self):
+
+        case_displays = (self.model(self, self.get_case(case))
+                         for case in self.es_results['hits'].get('hits', []))
+        return self.get_cases(case_displays)
+
+
 
 class MotherMCHRegister(MCHBaseReport):
     name = "Mother MCH register"
     slug = "mother_mch_register"
     default_case_type = "cc_bihar_pregnancy"
+    model = MCHMotherDisplay
 
     @property
     def headers(self):
@@ -163,11 +199,8 @@ class MotherMCHRegister(MCHBaseReport):
         )
         return headers
 
-    @property
-    def rows(self):
-        case_displays = (MCHMotherDisplay(self, self.get_case(case))
-                         for case in self.es_results['hits'].get('hits', []))
-
+    @classmethod
+    def get_cases(self, case_displays):
         for disp in case_displays:
             yield [
                 disp.chw_name,
@@ -240,11 +273,11 @@ class MotherMCHRegister(MCHBaseReport):
                 disp.status
             ]
 
-
 class ChildMCHRegister(MCHBaseReport):
     name = "Child MCH register"
     slug = "child_mch_register"
     default_case_type = "cc_bihar_newborn"
+    model = MCHChildDisplay
 
     @property
     def headers(self):
@@ -307,11 +340,9 @@ class ChildMCHRegister(MCHBaseReport):
         )
         return headers
 
-    @property
-    def rows(self):
-        case_displays = (MCHChildDisplay(self, self.get_case(case))
-                         for case in self.es_results['hits'].get('hits', []))
 
+    @classmethod
+    def get_cases(self, case_displays):
         for disp in case_displays:
             yield [
                 disp.chw_name,

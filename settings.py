@@ -996,6 +996,8 @@ ES_XFORM_FULL_INDEX_DOMAINS = [
 
 CUSTOM_MODULES = [
     'custom.apps.crs_reports',
+    'custom.bihar',
+
 ]
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"

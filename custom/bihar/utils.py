@@ -1,6 +1,8 @@
 from operator import attrgetter
 from django.utils.translation import ugettext_noop
 from corehq.apps.groups.models import Group
+from redis_cache.cache import RedisCache
+from dimagi.utils.couch.cache import cache_core
 
 ASHA_ROLE = ugettext_noop('ASHA')
 AWW_ROLE = ugettext_noop('AWW')
@@ -80,3 +82,9 @@ def get_groups_for_group(group):
 
     groups.sort(key=attrgetter('name'))
     return groups
+
+def get_redis_client():
+    rcache = cache_core.get_redis_default_cache()
+    if not isinstance(rcache, RedisCache):
+        raise Exception("Could not get redis client. Is redis down?")
+    return rcache.raw_client
