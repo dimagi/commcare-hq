@@ -773,16 +773,19 @@ class GroupExportConfiguration(Document):
                 pass
 
     @property
+    @memoized
     def saved_exports(self):
-        if not hasattr(self, "_saved_exports"):
-            self._saved_exports = \
-                [(export_config, 
-                  SavedBasicExport.view("couchexport/saved_exports", 
-                                        key=json.dumps(export_config.index),
-                                        include_docs=True,
-                                        reduce=False).one()) \
-                 for export_config in self.all_configs]
-        return self._saved_exports
+        return self._saved_exports_from_configs(self.all_configs)
+
+    def _saved_exports_from_configs(self, configs):
+        def exports_from(config):
+            return SavedBasicExport.view(
+                "couchexport/saved_exports",
+                key=json.dumps(config.index),
+                include_docs=True,
+                reduce=False
+            ).one()
+        return [(config, exports_from(config)) for config in configs]
 
     @property
     def all_configs(self):
@@ -807,6 +810,7 @@ class GroupExportConfiguration(Document):
             yield custom
 
     @property
+    @memoized
     def all_exports(self):
         """
         Returns an iterator of tuples consisting of the export config
