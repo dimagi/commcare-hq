@@ -764,14 +764,17 @@ class SuiteGenerator(object):
         def get_instances():
             yield Instance(id='casedb', src='jr://instance/casedb')
 
-            if form and any(action.parent_tag for action in form.actions.load_update_cases):
-                yield Instance(id='commcaresession', src='jr://instance/session')
-            elif form and module.get_app().commtrack_enabled:
-                try:
-                    if form.actions.load_update_cases[-1].show_product_stock:
-                        yield Instance(id='commcaresession', src='jr://instance/session')
-                except IndexError:
-                    pass
+            if form:
+                parent_select = any(action.parent_tag for action in form.actions.load_update_cases)
+                form_filter = any(form.form_filter for form in module.get_forms())
+                if parent_select or (form_filter and module.all_forms_require_a_case()):
+                    yield Instance(id='commcaresession', src='jr://instance/session')
+                elif module.get_app().commtrack_enabled:
+                    try:
+                        if form.actions.load_update_cases[-1].show_product_stock:
+                            yield Instance(id='commcaresession', src='jr://instance/session')
+                    except IndexError:
+                        pass
 
             for instance in self.get_indicator_instances(module):
                 yield instance
@@ -795,7 +798,7 @@ class SuiteGenerator(object):
         for action in form.actions.load_update_cases:
             if action.parent_tag:
                 parent_action = form.actions.actions_meta_by_tag[action.parent_tag]['action']
-                parent_filter = self.get_parent_filter(parent_action.parent_reference_id, parent_action.session_case_id)
+                parent_filter = self.get_parent_filter(parent_action.parent_reference_id, parent_action.case_session_var)
             else:
                 parent_filter = ''
 
@@ -803,7 +806,7 @@ class SuiteGenerator(object):
 
             target_module = get_target_module(action.case_type)
             e.datums.append(SessionDatum(
-                id=action.session_case_id,
+                id=action.case_session_var,
                 nodeset=(self.get_nodeset_xpath(action.case_type, target_module, False) + parent_filter),
                 value="./@case_id",
                 detail_select=self.get_detail_id_safe(target_module, 'case_short'),
@@ -897,7 +900,7 @@ class SuiteGenerator(object):
     @property
     def menus(self):
         # avoid circular dependency
-        from corehq.apps.app_manager.models import CareplanModule
+        from corehq.apps.app_manager.models import CareplanModule, AdvancedForm
         for module in self.modules:
             if isinstance(module, CareplanModule):
                 parent = self.get_module_by_id(module.parent_select.module_id)
@@ -934,8 +937,17 @@ class SuiteGenerator(object):
                         if module.all_forms_require_a_case() and \
                                 not module.put_in_root and \
                                 getattr(form, 'form_filter', None):
-                            command.relevant = dot_interpolate(
-                                    form.form_filter, SESSION_CASE_ID.case())
+                            if isinstance(form, AdvancedForm):
+                                try:
+                                    var = form.actions.load_update_cases[-1].case_session_var
+                                    case = CaseIDXPath(session_var(var)).case()
+                                except IndexError:
+                                    case = None
+                            else:
+                                case = SESSION_CASE_ID.case()
+
+                            if case:
+                                command.relevant = dot_interpolate(form.form_filter, case)
                         yield command
 
                     if hasattr(module, 'case_list') and module.case_list.show:

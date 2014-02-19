@@ -21,6 +21,8 @@ var AdvancedCase = (function () {
         self.caseType = params.caseType;
         self.reserved_words = params.reserved_words;
         self.moduleCaseTypes = params.moduleCaseTypes;
+        // `requires` is a ko observable so it can be read by another UI
+        self.requires = params.requires;
         self.commtrack = params.commtrack_enabled;
 
         self.setPropertiesMap = function (propertiesMap) {
@@ -43,6 +45,7 @@ var AdvancedCase = (function () {
                         COMMCAREHQ.app_manager.updateDOM(data.update);
                         self.caseConfigViewModel.ensureBlankProperties();
                         self.setPropertiesMap(data.propertiesMap);
+                        self.requires(self.caseConfigViewModel.load_update_cases().length > 0 ? 'case' : 'none');
                     }
                 });
             }

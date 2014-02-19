@@ -984,7 +984,7 @@ class XForm(WrappedNode):
 
         for action in form.actions.load_update_cases:
             check_case_type(action)
-            session_case_id = CaseIDXPath(session_var(action.session_case_id))
+            session_case_id = CaseIDXPath(session_var(action.case_session_var))
             if action.preload:
                 self.add_casedb()
                 for property, nodeset in action.preload.items():
@@ -1065,7 +1065,7 @@ class XForm(WrappedNode):
                 parent_meta = form.actions.actions_meta_by_tag.get(action.parent_tag)
                 reference_id = action.parent_reference_id or 'parent'
                 if parent_meta['type'] == 'load':
-                    ref = CaseIDXPath(session_var(parent_meta['action'].session_case_id))
+                    ref = CaseIDXPath(session_var(parent_meta['action'].case_session_var))
                 else:
                     path, _ = get_action_path(parent_meta['action'], create_subcase_node=False)
                     ref = self.resolve_path("%scase/@case_id" % path)

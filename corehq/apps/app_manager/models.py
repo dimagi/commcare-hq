@@ -278,7 +278,7 @@ class AdvancedAction(DocumentSchema):
         return set(self.case_properties.keys())
 
     @property
-    def session_case_id(self):
+    def case_session_var(self):
         return 'case_id_{}'.format(self.case_tag)
 
 
@@ -1329,11 +1329,20 @@ class Module(ModuleBase):
 
 class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
     form_type = 'advanced_form'
+    form_filter = StringProperty()
     actions = SchemaProperty(AdvancedFormActions)
 
     def add_stuff_to_xform(self, xform):
         super(AdvancedForm, self).add_stuff_to_xform(xform)
         xform.add_case_and_meta_advanced(self)
+
+    @property
+    def requires(self):
+        return 'case' if self.actions.load_update_cases else 'none'
+
+    def all_other_forms_require_a_case(self):
+        m = self.get_module()
+        return all([form.requires == 'case' for form in m.get_forms() if form.id != self.id])
 
     def check_actions(self):
         errors = []
@@ -1544,7 +1553,7 @@ class AdvancedModule(ModuleBase):
                 return True
 
     def all_forms_require_a_case(self):
-        return all(form.actions.load_update_cases for form in self.forms)
+        return all(form.requires == 'case' for form in self.forms)
 
     def get_details(self):
         return (

@@ -69,13 +69,16 @@
             var edit = {% if edit %}true{% else %}false{% endif %};
 
             {% if form.source %}
+            /* form_requires needs to be a knockout observable so that
+            its value can be read by another UI (form filtering) */
+            var form_requires = ko.observable({{ form.requires|JSON }});
             var caseConfig = new AdvancedCase.CaseConfig({
                 home: $('#casexml_home'),
                 actions: {{ form.actions|JSON }},
                 questions: {{ xform_questions|JSON }},
+                requires: form_requires,
                 edit: edit,
                 save_url: "{% url "corehq.apps.app_manager.views.edit_advanced_form_actions" app.domain app.id module.id nav_form.id %}",
-                requires: true,
                 caseType: {{ form.get_case_type|JSON }},
                 reserved_words: {{ case_reserved_words_json|JSON }},
                 moduleCaseTypes: {{ module_case_types|JSON }},
@@ -83,6 +86,20 @@
                 commtrack_enabled: {{ app.commtrack_enabled|JSON }}
             });
             caseConfig.init();
+            {% endif %}
+            {% if app.application_version == '2.0' %}
+                var putInRoot = {{ module.put_in_root|BOOL }};
+                var formFilter = {{ form.form_filter|JSON }};
+                var allOtherFormsRequireACase = {{ form.all_other_forms_require_a_case|BOOL }};
+                var formFilterAllowed = ko.computed(function () {
+                    return allOtherFormsRequireACase && form_requires() === 'case' && !putInRoot;
+                });
+                ko.applyBindings({
+                        formFilter: ko.observable(formFilter),
+                        formFilterAllowed: formFilterAllowed
+                    },
+                    $('#form-filter').get(0)
+                );
             {% endif %}
         });
     </script>
@@ -245,6 +262,7 @@
                     </div>
                 </div>
                 {% include "app_manager/partials/nav_menu_media.html" with item=form %}
+                {% include "app_manager/partials/form_filter.html" %}
             </form>
         </div>
         <div class="tab-pane" id="case-configuration">
