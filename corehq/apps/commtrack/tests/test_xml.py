@@ -7,7 +7,7 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig
 from casexml.apps.phone.tests.utils import synclog_id_from_restore_payload
-from corehq.apps.commtrack.models import ConsumptionConfig, StockRestoreConfig
+from corehq.apps.commtrack.models import ConsumptionConfig, StockRestoreConfig, RequisitionCase
 from corehq.apps.consumption.shortcuts import set_default_consumption_for_domain
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.stock import const as stockconst
@@ -322,28 +322,56 @@ class BugSubmissionsTest(CommTrackSubmissionTest):
 
 class CommTrackRequisitionTest(CommTrackSubmissionTest):
 
+    def setUp(self):
+        self.requisitions_enabled = True
+        super(CommTrackRequisitionTest, self).setUp()
+
+
     def test_create_fulfill_and_receive_requisition(self):
         amounts = [(p._id, 50.0 + float(i*10)) for i, p in enumerate(self.products)]
+
+        # Create a request
+        # ----------------
+
         self.submit_xml_form(create_requisition_xml(amounts))
         req_cases = list(get_cases_in_domain(self.domain.name, type=const.REQUISITION_CASE_TYPE))
         self.assertEqual(1, len(req_cases))
-        req = req_cases[0]
+        req = RequisitionCase.get(req_cases[0]._id)
         [index] = req.indices
+
+        self.assertEqual(req.requisition_status, 'requested')
         self.assertEqual(const.SUPPLY_POINT_CASE_TYPE, index.referenced_type)
         self.assertEqual(self.sp._id, index.referenced_id)
         self.assertEqual('parent_id', index.identifier)
+        self.assertEqual(req.get_next_action().keyword, 'fulfill')
 
         for product, amt in amounts:
             self.check_stock_models(req, product, amt, 0, 'ct-request')
 
+        # Mark it fulfilled
+        # -----------------
+
         self.submit_xml_form(create_fulfillment_xml(req, amounts))
+
+        req = RequisitionCase.get(req._id)
+
+        self.assertEqual(req.requisition_status, 'fulfilled')
+        self.assertEqual(req.get_next_action().keyword, 'rec')
 
         for product, amt in amounts:
             self.check_stock_models(req, product, amt, amt, 'stock')
         for product, amt in amounts:
             self.check_product_stock(req, product, amt, amt, 'stock')
 
+        # Mark it received
+        # ----------------
+
         self.submit_xml_form(create_received_xml(req, amounts))
+
+        req = RequisitionCase.get(req._id)
+
+        self.assertEqual(req.requisition_status, 'received')
+        self.assertIsNone(req.get_next_action())
 
         for product, amt in amounts:
             self.check_stock_models(req, product, 0, -amt, 'stock')

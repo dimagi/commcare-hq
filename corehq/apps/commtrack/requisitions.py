@@ -143,17 +143,19 @@ def get_notification_recipients(next_action, requisition):
     return [u for u in users if should_notify_user(u, next_action.action_type)]
 
 def get_notification_message(next_action, requisitions):
+    #TODO test these!
     templates = {
         RequisitionActions.APPROVAL: _('{name} has requested the following supplies: {summary}. please respond "{keyword} {loc}" to approve.'),
-        RequisitionActions.PACK: _('{name} should be supplied with the following supplies: {summary}. please respond "{keyword} {loc}" to confirm the order.'),
+        RequisitionActions.FULFILL: _('{name} should be supplied with the following supplies: {summary}. please respond "{keyword} {loc}" to confirm the order.'),
         RequisitionActions.RECEIPTS: _('your order of {summary} is ready to be picked up. please respond with a "{keyword}" message to report receipts.'),
     }
 
     # NOTE: it'd be weird if this was None but for now we won't fail hard
     guessed_location = requisitions[0].get_location()
     summary = ', '.join(r.sms_format() for r in requisitions)
-    return templates[next_action.action_type].format(
-        name=requisitions[0].get_requester().full_name,
+    requester = requisitions[0].get_requester()
+    return templates[next_action.action].format(
+        name=requester.full_name if requester else "Unknown",
         summary=summary,
         loc=guessed_location.site_code if guessed_location else "<loc code>",
         keyword=next_action.keyword,

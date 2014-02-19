@@ -92,12 +92,12 @@ class StockReportTest(CommTrackTest):
             self.assertEqual(0, trans.quantity)
             self.assertEqual(amt, trans.stock_on_hand)
 
-class StockRequisitionTest(object):
+class StockRequisitionTest(CommTrackTest):
     requisitions_enabled = True
     user_definitions = [ROAMING_USER]
+
     def setUp(self):
-        super(CommTrackTest, self).setUp()
-        self.user = self.users[0]
+        super(StockRequisitionTest, self).setUp()
 
 
     def testRequisition(self):
@@ -110,7 +110,7 @@ class StockRequisitionTest(object):
             'pr': 30,
         }
         # req loc1 pp 10 pq 20...
-        handled = handle(self.user.get_verified_number(), 'req {loc} {report}'.format(
+        handled = handle(self.users[0].get_verified_number(), 'req {loc} {report}'.format(
             loc='loc1',
             report=' '.join('%s %s' % (k, v) for k, v in amounts.items())
         ))

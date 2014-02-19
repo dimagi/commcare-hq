@@ -44,12 +44,12 @@ REQUISITION_ACTION_TYPES = [
     # request a product
     RequisitionActions.REQUEST,
 
-    # approve a requisition (it is allowed to be packed)
-    # using this is configurable and optional
+    # approve a requisition (it is allowed to be fulfilled)
+    # this is optional and depends on app config
     RequisitionActions.APPROVAL,
 
-    # pack a requisition (the order is ready)
-    RequisitionActions.PACK,
+    # fulfill a requisition (order is ready)
+    RequisitionActions.FULFILL,
 
     # receive the sock (closes the requisition)
     # NOTE: it's not totally clear if this is necessary or
@@ -194,12 +194,16 @@ def product_fixture_generator(user, version, last_sync):
 
 
 class CommtrackActionConfig(DocumentSchema):
-    action = StringProperty() # one of the base stock action types (see StockActions enum)
-    subaction = StringProperty() # (optional) to further distinguish different kinds of the base action
-        # (i.e., separately tracking consumption as 'dispensed' or 'lost'). note that when the system
-        # infers consumption/receipts from reported stock, it will be marked here as a subaction
-    _keyword = StringProperty() # sms code
-    caption = StringProperty() # display title
+    # one of the base stock action types (see StockActions enum)
+    action = StringProperty()
+    # (optional) to further distinguish different kinds of the base action
+    # (i.e., separately tracking consumption as 'dispensed' or 'lost'). note that when the system
+    # infers consumption/receipts from reported stock, it will be marked here as a subaction
+    subaction = StringProperty()
+    # sms code
+    _keyword = StringProperty()
+    # display title
+    caption = StringProperty()
 
     @classmethod
     def wrap(cls, data):
@@ -238,10 +242,12 @@ class CommtrackActionConfig(DocumentSchema):
     def is_requisition(self):
         return self.action in REQUISITION_ACTION_TYPES
 
+
 class LocationType(DocumentSchema):
     name = StringProperty()
     allowed_parents = StringListProperty()
     administrative = BooleanProperty()
+
 
 class CommtrackRequisitionConfig(DocumentSchema):
     # placeholder class for when this becomes fancier
@@ -253,15 +259,14 @@ class CommtrackRequisitionConfig(DocumentSchema):
 
     def get_sorted_actions(self):
         def _action_key(a):
-
             # intentionally fails hard if misconfigured.
-            const.ORDERED_REQUISITION_ACTIONS.index(a.action_type)
+            const.ORDERED_REQUISITION_ACTIONS.index(a.action)
 
         return sorted(self.actions, key=_action_key)
 
     def get_next_action(self, previous_action_type):
         sorted_actions = self.get_sorted_actions()
-        sorted_types = [a.action_type for a in sorted_actions]
+        sorted_types = [a.action for a in sorted_actions]
         next_index = sorted_types.index(previous_action_type) + 1
         return sorted_actions[next_index] if next_index < len(sorted_actions) else None
 
@@ -894,12 +899,12 @@ class RequisitionCase(CommCareCase):
     # the status can change, but once set - this one will not
     requested_on = DateTimeProperty()
     approved_on = DateTimeProperty()
-    packed_on = DateTimeProperty()
+    fulfilled_on = DateTimeProperty()
     received_on = DateTimeProperty()
 
     requested_by = StringProperty()
     approved_by = StringProperty()
-    packed_by = StringProperty()
+    fulfilled_by = StringProperty()
     received_by = StringProperty()
 
     @memoized
@@ -909,12 +914,15 @@ class RequisitionCase(CommCareCase):
 
     @memoized
     def get_requester(self):
-        return CommCareUser.get(self.requested_by)
+        if self.requested_by:
+            return CommCareUser.get(self.requested_by)
+        else:
+            return None
 
     def sms_format(self):
         # TODO needs fixed
         # return '%s:%s' % (self.get_product().code, self.get_default_value())
-        raise NotImplementedError()
+        return 'hey fix me please'
 
     def get_next_action(self):
         req_config = CommtrackConfig.for_domain(self.domain).requisition_config
