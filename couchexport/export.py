@@ -12,10 +12,10 @@ from datetime import datetime
 
 class ExportConfiguration(object):
     """
-    A representation of the configuration parameters for an export and 
+    A representation of the configuration parameters for an export and
     some functions to actually facilitate the export from this config.
     """
-    
+
     def __init__(self, database, schema_index, previous_export=None, filter=None,
                  disable_checkpoints=False, cleanup_fn=default_cleanup):
         self.database = database
@@ -121,7 +121,7 @@ def get_writer(format):
         return writers.Excel2007ExportWriter()
     else:
         raise UnsupportedExportFormat("Unsupported export format: %s!" % format)
-        
+
 def export_from_tables(tables, file, format, max_column_size=2000):
     tables = FormattedRow.wrap_all_rows(tables)
     writer = get_writer(format)
@@ -136,32 +136,32 @@ def export_raw(headers, data, file, format=Format.XLS_2007,
     Do a raw export from an in-memory representation of headers and data.
     Headers should be a list of (tablename, table) tuples with only one
     row (containing the headers) in the table.
-    
+
     data_table should have the same format but can support multiple rows
     per table if needed.
-    
+
     Example:
-    
+
     headers:
      (("employee", ("id", "name", "gender")),
       ("building", ("id", "name", "address")))
-    
+
     data:
      (("employee", (("1", "cory", "m"),
                     ("2", "christian", "m"),
                     ("3", "amelia", "f"))),
       ("building", (("1", "dimagi", "585 mass ave."),
                     ("2", "old dimagi", "529 main st."))))
-    
+
     """
     # transform docs onto output and save
     writer = get_writer(format)
-    
-    
+
+
     # format the headers the way the export likes them
     headers = FormattedRow.wrap_all_rows(headers)
     writer.open(headers, file, max_column_size=max_column_size)
-    
+
     # do the same for the data
     data = FormattedRow.wrap_all_rows(data)
     writer.write(data)
@@ -171,7 +171,7 @@ def export(schema_index, file, format=Format.XLS_2007,
            previous_export_id=None, filter=None,
            max_column_size=2000, separator='|', export_object=None, process=None):
     """
-    Exports data from couch documents matching a given tag to a file. 
+    Exports data from couch documents matching a given tag to a file.
     Returns true if it finds data, otherwise nothing
     """
     config, updated_schema, export_schema_checkpoint = get_export_components(schema_index,
@@ -369,10 +369,10 @@ def nice(column_name):
 
 class FormattedRow(object):
     """
-    Simple data structure to represent a row of an export. Just 
+    Simple data structure to represent a row of an export. Just
     a pairing of an id and the data.
-    
-    The id should be an iterable (compound ids are supported). 
+
+    The id should be an iterable (compound ids are supported).
     """
     def __init__(self, data, id=None, separator=".", id_index=0,
                  is_header_row=False):
@@ -465,11 +465,11 @@ def format_tables(tables, id_label='id', separator='.', include_headers=True,
             header_vals = [separator.join(key) for key in keys]
             new_table.append(FormattedRow(header_vals, id_key, separator,
                                           is_header_row=True))
-        
+
         if include_data:
             for id, row in sorted(table.items()):
                 values = [row[key] for key in keys]
                 new_table.append(FormattedRow(values, id, separator))
-        
+
         answ.append((separator.join(table_name), new_table))
     return answ

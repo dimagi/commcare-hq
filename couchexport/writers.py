@@ -41,7 +41,7 @@ class UniqueHeaderGenerator(object):
 
 class ExportWriter(object):
     max_table_name_size = 500
-    
+
     def open(self, header_table, file, max_column_size=2000, table_titles=None):
         """
         Create any initial files, headings, etc necessary.
@@ -101,7 +101,7 @@ class ExportWriter(object):
                     row.id = (self._current_primary_id,) + tuple(row.id[1:])
 
                 self.write_row(table_index, row)
-        
+
         self._current_primary_id += 1
 
     def write_row(self, table_index, headers):
@@ -145,13 +145,13 @@ class ExportWriter(object):
             return row
 
 class CsvExportWriter(ExportWriter):
-    
+
     def _init(self):
         self.tables = {}
         self.table_names = {}
         self.table_files = {}
-        
-        
+
+
     def _init_table(self, table_index, table_title):
         fd, path = tempfile.mkstemp()
         file = os.fdopen(fd, 'wb')
@@ -167,7 +167,7 @@ class CsvExportWriter(ExportWriter):
         row = map(_encode_if_needed, self.get_data(row))
         writer = self.tables[sheet_index]
         writer.writerow(row)
-        
+
     def _close(self):
         """
         Close any open file references, do any cleanup.
@@ -182,7 +182,7 @@ class CsvExportWriter(ExportWriter):
 
 class Excel2007ExportWriter(ExportWriter):
     max_table_name_size = 31
-    
+
     def _init(self):
         try:
             import openpyxl
@@ -190,19 +190,19 @@ class Excel2007ExportWriter(ExportWriter):
             raise Exception("It doesn't look like this machine is configured for "
                             "excel export. To export to excel you have to run the "
                             "command:  easy_install openpyxl")
-        
+
         self.book = openpyxl.workbook.Workbook(optimized_write=True)
         self.tables = {}
         self.table_indices = {}
-        
-        
+
+
     def _init_table(self, table_index, table_title):
         sheet = self.book.create_sheet()
         sheet.title = table_title
         self.tables[table_index] = sheet
         self.table_indices[table_index] = 0
 
-    
+
     def _write_row(self, sheet_index, row):
         sheet = self.tables[sheet_index]
         # Source: http://stackoverflow.com/questions/1707890/fast-way-to-filter-illegal-xml-unicode-chars-in-python
@@ -212,22 +212,22 @@ class Excel2007ExportWriter(ExportWriter):
         # row by referencing the cells will cause huge memory issues.
         # see: http://packages.python.org/openpyxl/optimized.html
         sheet.append([dirty_chars.sub(unicode('?'), unicode(v)) for v in self.get_data(row)])
-        
+
     def _close(self):
         """
         Close any open file references, do any cleanup.
         """
         self.book.save(self.file)
-        
+
 
 class Excel2003ExportWriter(ExportWriter):
     max_table_name_size = 31
-    
+
     def _init(self):
         self.book = xlwt.Workbook()
         self.tables = {}
         self.table_indices = {}
-        
+
     def _init_table(self, table_index, table_title):
         sheet = self.book.add_sheet(table_title)
         self.tables[table_index] = sheet
@@ -240,7 +240,7 @@ class Excel2003ExportWriter(ExportWriter):
         for i, val in enumerate(self.get_data(row)):
             sheet.write(row_index,i,unicode(val))
         self.table_indices[sheet_index] = row_index + 1
-    
+
     def _close(self):
         self.book.save(self.file)
 
@@ -248,22 +248,22 @@ class InMemoryExportWriter(ExportWriter):
     """
     Keeps tables in memory. Subclassed by other export writers.
     """
-    
+
     def _init(self):
         self.tables = {}
         self.table_names = {}
-    
+
     def _init_table(self, table_index, table_title):
         self.table_names[table_index] = table_title
         self.tables[table_index] = []
-        
+
     def _write_row(self, sheet_index, row):
         table = self.tables[sheet_index]
         # have to deal with primary ids
         row_data = [val for val in self.get_data(row)]
         table.append(row_data)
-        
-    def _close(self):                
+
+    def _close(self):
         pass
 
 class JsonExportWriter(InMemoryExportWriter):
@@ -285,16 +285,16 @@ class JsonExportWriter(InMemoryExportWriter):
         new_tables = {}
         for tablename, data in self.tables.items():
             new_tables[self.table_names[tablename]] = {"headers":data[0], "rows": data[1:]}
-    
+
         self.file.write(json.dumps(new_tables, cls=self.ConstantEncoder))
 
-        
+
 class HtmlExportWriter(InMemoryExportWriter):
     """
     Write tables to HTML
     """
-    
+
     def _close(self):
         self.file.write(render_to_string("couchexport/html_export.html", {'tables': self.tables}))
-        
-        
+
+

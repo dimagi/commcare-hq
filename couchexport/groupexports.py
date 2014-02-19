@@ -26,11 +26,11 @@ def export_for_group(export_id_or_group, output_dir):
 
         payload = files.file.payload
         if output_dir == "couch":
-            saved = SavedBasicExport.view("couchexport/saved_exports", 
+            saved = SavedBasicExport.view("couchexport/saved_exports",
                                           key=json.dumps(config.index),
                                           include_docs=True,
                                           reduce=False).one()
-            if not saved: 
+            if not saved:
                 saved = SavedBasicExport(configuration=config)
             else:
                 saved.configuration = config
