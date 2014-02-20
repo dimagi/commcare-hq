@@ -125,7 +125,6 @@ $(function () {
         self.serialize = function () {
             return log({
                 _id: self._id(),
-                name: self.name(),
                 tag: self.tag(),
                 view_link: self.view_link(),
                 fields: (function () {
@@ -199,7 +198,6 @@ $(function () {
 
         self.addDataType = function () {
             var dataType = makeDataType({
-                name: "",
                 tag: "",
                 fields: ko.observableArray([])
             }, self);

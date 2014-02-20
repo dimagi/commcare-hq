@@ -25,7 +25,7 @@ class FixtureDataType(Document):
     is_global = BooleanProperty(default=False)
     tag = StringProperty()
     # Remove 'name'. Kept only to prevent old_code from breaking for now
-    name = StringProperty()
+    # name = StringProperty()
     fields = SchemaListProperty(FixtureTypeField)
 
     @classmethod
