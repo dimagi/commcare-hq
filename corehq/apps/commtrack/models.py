@@ -875,8 +875,6 @@ DAYS_PER_MONTH = 365.2425 / 12.
 UNDERSTOCK_THRESHOLD = 0.5 # months
 OVERSTOCK_THRESHOLD = 2. # months
 
-DEFAULT_CONSUMPTION = 10. # per month
-
 
 class RequisitionCase(CommCareCase):
     """

@@ -5,6 +5,7 @@ TYPE_DOMAIN = 'domain'
 TYPE_PRODUCT = 'product'
 TYPE_SUPPLY_POINT_TYPE = 'supply-point-type'
 TYPE_SUPPLY_POINT = 'supply-point'
+DEFAULT_CONSUMPTION = 10.  # per month
 
 
 class DefaultConsumption(Document):
