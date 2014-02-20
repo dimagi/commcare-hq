@@ -703,7 +703,6 @@ class HQGroupExportConfiguration(GroupExportConfiguration):
     @property
     @memoized
     def case_exports(self):
-        exports = self.exports_of_type('case')
         return self.exports_of_type('case')
 
     @classmethod
