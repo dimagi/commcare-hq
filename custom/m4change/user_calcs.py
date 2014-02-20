@@ -1,3 +1,4 @@
+from datetime import datetime
 import fluff
 from custom.m4change.constants import BOOKING_FORMS, FOLLOW_UP_FORMS, BOOKING_AND_FOLLOW_UP_FORMS,\
     PNC_CHILD_IMMUNIZATION_AND_REG_HOME_DELIVERED_FORMS
@@ -178,7 +179,7 @@ class PostnatalClinicVisitWithin1DayOfDeliveryCalculator(fluff.Calculator):
         if case.type == "child":
             date_modified = case.modified_on
             date_delivery = case.date_delivery
-            dt = date_modified - date_delivery
+            dt = date_modified - datetime.combine(date_delivery, datetime.min.time())
             for form in case.get_forms():
                 if form.xmlns in PNC_CHILD_IMMUNIZATION_AND_REG_HOME_DELIVERED_FORMS and dt.days <= 1:
                     __update_value_for_date__(form.received_on, dates)
@@ -194,7 +195,7 @@ class PostnatalClinicVisitWithin3DaysOfDeliveryCalculator(fluff.Calculator):
         if case.type == "child":
             date_modified = case.modified_on
             date_delivery = case.date_delivery
-            dt = date_modified - date_delivery
+            dt = date_modified - datetime.combine(date_delivery, datetime.min.time())
             for form in case.get_forms():
                 if form.xmlns in PNC_CHILD_IMMUNIZATION_AND_REG_HOME_DELIVERED_FORMS and dt.days <= 3:
                     __update_value_for_date__(form.received_on, dates)
@@ -210,7 +211,7 @@ class PostnatalClinicVisitGreaterEqual7DaysOfDeliveryCalculator(fluff.Calculator
         if case.type == "child":
             date_modified = case.modified_on
             date_delivery = case.date_delivery
-            dt = date_modified - date_delivery
+            dt = date_modified - datetime.combine(date_delivery, datetime.min.time())
             for form in case.get_forms():
                 if form.xmlns in PNC_CHILD_IMMUNIZATION_AND_REG_HOME_DELIVERED_FORMS and dt.days >= 7:
                     __update_value_for_date__(form.received_on, dates)
