@@ -137,24 +137,24 @@
     <field>
       <header>
         <text>
-          <locale id="m1.product_short.case_name_1.header"/>
+          <locale id="m1.product_short.product_name_1.header"/>
         </text>
       </header>
       <template>
         <text>
-          <xpath function="case_name"/>
+          <xpath function="name"/>
         </text>
       </template>
       <sort type="string" order="1" direction="ascending">
         <text>
-          <xpath function="case_name"/>
+          <xpath function="name"/>
         </text>
       </sort>
     </field>
     <field>
       <header>
         <text>
-          <locale id="m1.product_short.case_ledger:stock_2.header"/>
+          <locale id="m1.product_short.product_ledger:stock_2.header"/>
         </text>
       </header>
       <template>
@@ -216,24 +216,24 @@
     <field>
       <header>
         <text>
-          <locale id="m2.product_short.case_name_1.header"/>
+          <locale id="m2.product_short.product_name_1.header"/>
         </text>
       </header>
       <template>
         <text>
-          <xpath function="case_name"/>
+          <xpath function="name"/>
         </text>
       </template>
       <sort type="string" order="1" direction="ascending">
         <text>
-          <xpath function="case_name"/>
+          <xpath function="name"/>
         </text>
       </sort>
     </field>
     <field>
       <header>
         <text>
-          <locale id="m2.product_short.case_ledger:ct-requested_2.header"/>
+          <locale id="m2.product_short.product_ledger:ct-requested_2.header"/>
         </text>
       </header>
       <template>
@@ -245,7 +245,7 @@
     <field>
       <header>
         <text>
-          <locale id="m2.product_short.case_ledger:ct-approved_3.header"/>
+          <locale id="m2.product_short.product_ledger:ct-approved_3.header"/>
         </text>
       </header>
       <template>
@@ -257,7 +257,7 @@
     <field>
       <header>
         <text>
-          <locale id="m2.product_short.case_ledger:stock_4.header"/>
+          <locale id="m2.product_short.product_ledger:stock_4.header"/>
         </text>
       </header>
       <template>

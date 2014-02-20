@@ -353,7 +353,8 @@ class PropertyXpathGenerator(BaseXpathGenerator):
     @property
     def xpath(self):
         parts = self.column.field.split('/')
-        parts[-1] = CASE_PROPERTY_MAP.get(parts[-1], parts[-1])
+        if self.column.model == 'case':
+            parts[-1] = CASE_PROPERTY_MAP.get(parts[-1], parts[-1])
         property = parts.pop()
         indexes = parts
 

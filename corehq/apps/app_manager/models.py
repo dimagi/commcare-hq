@@ -1474,7 +1474,7 @@ class AdvancedModule(ModuleBase):
                             format='plain',
                             header={(lang or 'en'): ugettext("Product")},
                             field='name',
-                            model='case',
+                            model='product',
                         ),
                     ],
                 ),

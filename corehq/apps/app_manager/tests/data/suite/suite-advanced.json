@@ -323,7 +323,7 @@
               "time_ago_interval": 365.25,
               "calc_xpath": ".",
               "field": "name",
-              "model": "case",
+              "model": "product",
               "advanced": ""
             },
             {
@@ -338,7 +338,7 @@
               "time_ago_interval": 365.25,
               "calc_xpath": ".",
               "field": "ledger:stock",
-              "model": "case",
+              "model": "product",
               "advanced": ""
             }
           ],
@@ -584,7 +584,7 @@
               "time_ago_interval": 365.25,
               "calc_xpath": ".",
               "field": "name",
-              "model": "case",
+              "model": "product",
               "advanced": ""
             },
             {
@@ -599,7 +599,7 @@
               "time_ago_interval": 365.25,
               "calc_xpath": ".",
               "field": "ledger:ct-requested",
-              "model": "case",
+              "model": "product",
               "advanced": ""
             },
             {
@@ -614,7 +614,7 @@
               "time_ago_interval": 365.25,
               "calc_xpath": ".",
               "field": "ledger:ct-approved",
-              "model": "case",
+              "model": "product",
               "advanced": ""
             },
             {
@@ -629,7 +629,7 @@
               "time_ago_interval": 365.25,
               "calc_xpath": ".",
               "field": "ledger:stock",
-              "model": "case",
+              "model": "product",
               "advanced": ""
             }
           ],
