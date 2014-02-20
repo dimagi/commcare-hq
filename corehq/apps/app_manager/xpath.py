@@ -69,7 +69,7 @@ class IndicatorXpath(XPath):
 class LedgerdbXpath(XPath):
 
     def ledger(self):
-        return LedgerXpath(u"instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('session')/session/data/%s]" % self)
+        return LedgerXpath(u"instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('commcaresession')/session/data/%s]" % self)
 
 
 class LedgerXpath(XPath):
