@@ -330,6 +330,7 @@ class CommTrackRequisitionTest(CommTrackSubmissionTest):
     def test_create_fulfill_and_receive_requisition(self):
         amounts = [(p._id, 50.0 + float(i*10)) for i, p in enumerate(self.products)]
 
+        # ----------------
         # Create a request
         # ----------------
 
@@ -343,11 +344,18 @@ class CommTrackRequisitionTest(CommTrackSubmissionTest):
         self.assertEqual(const.SUPPLY_POINT_CASE_TYPE, index.referenced_type)
         self.assertEqual(self.sp._id, index.referenced_id)
         self.assertEqual('parent_id', index.identifier)
+        # TODO: these types of tests probably belong elsewhere
         self.assertEqual(req.get_next_action().keyword, 'fulfill')
+        self.assertEqual(req.get_location()._id, self.sp.location._id)
+        self.assertEqual(len(RequisitionCase.open_for_location(
+            self.domain.name,
+            self.sp.location._id
+        )), 1)
 
         for product, amt in amounts:
             self.check_stock_models(req, product, amt, 0, 'ct-request')
 
+        # ----------------
         # Mark it fulfilled
         # -----------------
 
@@ -363,6 +371,7 @@ class CommTrackRequisitionTest(CommTrackSubmissionTest):
         for product, amt in amounts:
             self.check_product_stock(req, product, amt, amt, 'stock')
 
+        # ----------------
         # Mark it received
         # ----------------
 
@@ -372,6 +381,10 @@ class CommTrackRequisitionTest(CommTrackSubmissionTest):
 
         self.assertEqual(req.requisition_status, 'received')
         self.assertIsNone(req.get_next_action())
+        self.assertEqual(len(RequisitionCase.open_for_location(
+            self.domain.name,
+            self.sp.location._id
+        )), 0)
 
         for product, amt in amounts:
             self.check_stock_models(req, product, 0, -amt, 'stock')

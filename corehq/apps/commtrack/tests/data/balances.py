@@ -174,7 +174,7 @@ def create_received_xml(original_requisition, product_amounts):
     req_case_block = ElementTree.tostring(CaseBlock(
         req_id,
         version=V2,
-        create=True,
+        close=True,
         case_type=const.RECEIVED_CASE_TYPE,
         case_name='Some requisition',
         index={'parent_id': (const.REQUISITION_CASE_TYPE, '{sp_id}')},

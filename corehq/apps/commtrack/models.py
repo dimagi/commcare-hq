@@ -877,10 +877,10 @@ DAYS_PER_MONTH = 365.2425 / 12.
 
 # TODO make settings
 
-UNDERSTOCK_THRESHOLD = 0.5 # months
-OVERSTOCK_THRESHOLD = 2. # months
+UNDERSTOCK_THRESHOLD = 0.5  # months
+OVERSTOCK_THRESHOLD = 2.  # months
 
-DEFAULT_CONSUMPTION = 10. # per month
+DEFAULT_CONSUMPTION = 10.  # per month
 
 
 class RequisitionCase(CommCareCase):
@@ -892,16 +892,15 @@ class RequisitionCase(CommCareCase):
         # This is necessary otherwise syncdb will confuse this app with casexml
         app_label = "commtrack"
 
-    # supply_point = StringProperty() # todo, if desired
     requisition_status = StringProperty()
 
-    # this second field is added for auditing purposes
-    # the status can change, but once set - this one will not
+    # TODO none of these properties are supported on mobile currently
+    # we need to discuss what will be eventually so we know what we need
+    # to support here
     requested_on = DateTimeProperty()
     approved_on = DateTimeProperty()
     fulfilled_on = DateTimeProperty()
     received_on = DateTimeProperty()
-
     requested_by = StringProperty()
     approved_by = StringProperty()
     fulfilled_by = StringProperty()
@@ -916,11 +915,10 @@ class RequisitionCase(CommCareCase):
 
     @memoized
     def get_requester(self):
-        # TODO this never gets set
-        if self.requested_by:
-            return CommCareUser.get(self.requested_by)
-        else:
-            return None
+        # TODO this doesn't get set by mobile yet
+        # if self.requested_by:
+        #     return CommCareUser.get(self.requested_by)
+        return None
 
     def sms_format(self):
         # TODO needs fixed
@@ -938,10 +936,15 @@ class RequisitionCase(CommCareCase):
         """
         For a given location, return the IDs of all open requisitions at that location.
         """
-        # TODO this couch view is broken
-        results = cls.get_db().view('commtrack/requisitions',
-            endkey=[domain, location_id, 'open'],
-            startkey=[domain, location_id, 'open', {}],
+        try:
+            sp_id = Location.get(location_id).linked_supply_point()._id
+        except ResourceNotFound:
+            return []
+
+        results = cls.get_db().view(
+            'commtrack/requisitions',
+            endkey=[domain, sp_id, 'open'],
+            startkey=[domain, sp_id, 'open', {}],
             reduce=False,
             descending=True,
         )
