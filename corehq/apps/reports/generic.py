@@ -842,12 +842,6 @@ class GenericTabularReport(GenericReportView):
         2. cell['sort_key']
         3. str(cell)
         """
-        try:
-            import xlwt
-        except ImportError:
-            raise Exception("It doesn't look like this machine is configured for "
-                            "excel export. To export to excel you have to run the "
-                            "command:  easy_install xlutils")
         headers = self.headers
         formatted_rows = self.rows
 

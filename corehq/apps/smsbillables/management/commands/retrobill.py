@@ -1,5 +1,5 @@
-import phonenumbers
 from corehq import Domain
+from corehq.apps.sms.phonenumbers_helper import parse_phone_number, PhoneNumberParseException
 from corehq.apps.smsbillables.models import SmsBillable
 from django.core.management.base import LabelCommand
 from corehq.apps.sms.models import SMSLog
@@ -25,8 +25,8 @@ class Command(LabelCommand):
                 sms_log = SMSLog.get(sms_doc['id'])
                 try:
                     if sms_log.phone_number is not None:
-                        phonenumbers.parse(sms_log.phone_number)
-                except phonenumbers.NumberParseException:
+                        parse_phone_number(sms_log.phone_number)
+                except PhoneNumberParseException:
                     billables = SmsBillable.objects.filter(log_id=sms_log._id)
                     if len(billables) == 0:
                         SmsBillable.create(sms_log)

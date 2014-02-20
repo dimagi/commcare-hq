@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-02-17 14:25-0600\n"
+"POT-Creation-Date: 2014-02-18 16:44-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -235,10 +235,10 @@ msgid "All"
 msgstr ""
 
 #: corehq/apps/accounting/filters.py:16 corehq/apps/accounting/filters.py:160
-#: corehq/apps/accounting/forms.py:1061 corehq/apps/app_manager/forms.py:11
+#: corehq/apps/accounting/forms.py:1064 corehq/apps/app_manager/forms.py:11
 #: corehq/apps/app_manager/models.py:1096
 #: corehq/apps/app_manager/models.py:1434
-#: corehq/apps/app_manager/models.py:1483 corehq/apps/commtrack/models.py:858
+#: corehq/apps/app_manager/models.py:1483 corehq/apps/commtrack/models.py:841
 #: corehq/apps/domain/forms.py:99
 #: corehq/apps/domain/templates/domain/admin/commtrack_action_table.html:6
 #: corehq/apps/domain/templates/domain/partials/user_list.html:10
@@ -349,28 +349,28 @@ msgstr "सब-सेंटर चुनिए"
 msgid "Salesforce Deployment ID"
 msgstr "गृह भ्रमण की जानकारी"
 
-#: corehq/apps/accounting/forms.py:316
+#: corehq/apps/accounting/forms.py:319
 #: corehq/apps/accounting/templates/accounting/credits_tab.html:12
 #, fuzzy
 msgid "Product Rate"
 msgstr "सब-सेंटर चुनिए"
 
-#: corehq/apps/accounting/forms.py:317
+#: corehq/apps/accounting/forms.py:320
 #: corehq/apps/accounting/templates/accounting/credits_tab.html:13
 msgid "Feature Rate"
 msgstr ""
 
-#: corehq/apps/accounting/forms.py:326
+#: corehq/apps/accounting/forms.py:329
 #, python-format
 msgid "Amount (%s)"
 msgstr ""
 
-#: corehq/apps/accounting/forms.py:1065 corehq/apps/accounting/models.py:245
+#: corehq/apps/accounting/forms.py:1068 corehq/apps/accounting/models.py:248
 #, fuzzy
 msgid "Company / Organization"
 msgstr "गृह भ्रमण की जानकारी"
 
-#: corehq/apps/accounting/forms.py:1069 corehq/apps/hqadmin/views.py:424
+#: corehq/apps/accounting/forms.py:1072 corehq/apps/hqadmin/views.py:424
 #: corehq/apps/reminders/templates/reminders/partial/add_one_time_reminder.html:131
 #: corehq/apps/reminders/templates/reminders/partial/complex_message_table.html:40
 #: corehq/apps/reports/standard/sms.py:118
@@ -378,12 +378,12 @@ msgstr "गृह भ्रमण की जानकारी"
 msgid "Message"
 msgstr ""
 
-#: corehq/apps/accounting/forms.py:1086
+#: corehq/apps/accounting/forms.py:1089
 #, fuzzy
 msgid "Request Quote"
 msgstr "सब-सेंटर चुनिए"
 
-#: corehq/apps/accounting/forms.py:1092
+#: corehq/apps/accounting/forms.py:1095
 #: corehq/apps/domain/templates/domain/confirm_plan.html:85
 #: corehq/apps/domain/templates/domain/confirm_plan.html:108
 #, fuzzy
@@ -422,27 +422,27 @@ msgid ""
 "included."
 msgstr ""
 
-#: corehq/apps/accounting/models.py:234 corehq/apps/users/forms.py:107
+#: corehq/apps/accounting/models.py:237 corehq/apps/users/forms.py:107
 #, fuzzy
 msgid "First Name"
 msgstr "नाम"
 
-#: corehq/apps/accounting/models.py:237 corehq/apps/users/forms.py:108
+#: corehq/apps/accounting/models.py:240 corehq/apps/users/forms.py:108
 #, fuzzy
 msgid "Last Name"
 msgstr "टीम का नाम"
 
-#: corehq/apps/accounting/models.py:240
+#: corehq/apps/accounting/models.py:243
 msgid "Additional Contact Emails"
 msgstr ""
 
-#: corehq/apps/accounting/models.py:241
+#: corehq/apps/accounting/models.py:244
 msgid ""
 "We will email communications to the emails specified here and the emails of "
 "the Billing Administrators."
 msgstr ""
 
-#: corehq/apps/accounting/models.py:244
+#: corehq/apps/accounting/models.py:247
 #: corehq/apps/data_interfaces/views.py:228
 #: corehq/apps/reports/standard/ivr.py:34
 #: corehq/apps/reports/standard/sms.py:116
@@ -452,109 +452,109 @@ msgstr ""
 msgid "Phone Number"
 msgstr ""
 
-#: corehq/apps/accounting/models.py:246
+#: corehq/apps/accounting/models.py:249
 msgid "Address First Line"
 msgstr ""
 
-#: corehq/apps/accounting/models.py:247
+#: corehq/apps/accounting/models.py:250
 msgid "Address Second Line"
 msgstr ""
 
-#: corehq/apps/accounting/models.py:248 corehq/apps/domain/forms.py:501
+#: corehq/apps/accounting/models.py:251 corehq/apps/domain/forms.py:501
 #: corehq/apps/locations/util.py:72 submodules/payments/hqbilling/forms.py:70
 msgid "City"
 msgstr ""
 
-#: corehq/apps/accounting/models.py:249
+#: corehq/apps/accounting/models.py:252
 msgid "State / Province / Region"
 msgstr ""
 
-#: corehq/apps/accounting/models.py:250
+#: corehq/apps/accounting/models.py:253
 #: submodules/payments/hqbilling/forms.py:72
 #, fuzzy
 msgid "Postal Code"
 msgstr "कुल लाभार्थी"
 
-#: corehq/apps/accounting/models.py:251 corehq/apps/domain/forms.py:502
+#: corehq/apps/accounting/models.py:254 corehq/apps/domain/forms.py:502
 #: submodules/payments/hqbilling/forms.py:73
 msgid "Country"
 msgstr ""
 
-#: corehq/apps/accounting/models.py:610
+#: corehq/apps/accounting/models.py:613
 #, python-format
 msgid ""
 "Project '%s' currently has an active subscription. Please cancel the current "
 "subscription."
 msgstr ""
 
-#: corehq/apps/accounting/models.py:616
+#: corehq/apps/accounting/models.py:619
 #, python-format
 msgid ""
 "The end date for this subscription overlaps with the start date of the next "
 "subscription on %s. Please cancel this subscription first."
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:9
+#: corehq/apps/accounting/user_text.py:8
 #, fuzzy
 msgid "Community"
 msgstr "नाम"
 
-#: corehq/apps/accounting/user_text.py:10
+#: corehq/apps/accounting/user_text.py:9
 msgid ""
 "For projects in a pilot phase with a small group (up to 50) of mobile users "
 "that only need very basic CommCare features."
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:14
+#: corehq/apps/accounting/user_text.py:13
 msgid "Standard"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:15
+#: corehq/apps/accounting/user_text.py:14
 msgid ""
 "For projects with a medium set (up to 100) of mobile users that want to "
 "build in limited SMS workflows and have increased data security needs."
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:19
+#: corehq/apps/accounting/user_text.py:18
 msgid "Pro"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:20
+#: corehq/apps/accounting/user_text.py:19
 msgid ""
 "For projects with a large group (up to 500) of mobile users that want to "
 "build in comprehensive SMS workflows and have increased reporting needs."
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:24
+#: corehq/apps/accounting/user_text.py:23
 #: corehq/apps/app_manager/templates/app_manager/form_view.html:366
 #: corehq/apps/app_manager/templates/app_manager/module_view.html:206
 msgid "Advanced"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:25
+#: corehq/apps/accounting/user_text.py:24
 msgid ""
 "For projects scaling to an even larger group (up to 1,000) of mobile users "
 "that want the full CommCare feature set and dedicated support from Dimagi "
 "staff."
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:30
+#: corehq/apps/accounting/user_text.py:29
 msgid "Enterprise"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:31
+#: corehq/apps/accounting/user_text.py:30
 msgid ""
 "For projects scaling regionally or country wide (1,001+ people) that require "
 "the full CommCare feature set. Your organization will receive discounted "
 "pricing and dedicated enterprise-level support from Dimagi."
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:38
+#: corehq/apps/accounting/user_text.py:37
 #, fuzzy
 msgid "SMS Messages"
 msgstr "टीम का नाम"
 
-#: corehq/apps/accounting/user_text.py:39 corehq/apps/hqwebapp/models.py:706
+#: corehq/apps/accounting/user_text.py:38 corehq/apps/hqwebapp/models.py:706
 #: corehq/apps/reports/commconnect/system_overview.py:147
 #: corehq/apps/users/views/mobile/users.py:206
 #: corehq/apps/users/views/mobile/users.py:221
@@ -562,331 +562,334 @@ msgstr "टीम का नाम"
 msgid "Mobile Workers"
 msgstr "सब-सेंटर चुनिए"
 
+#: corehq/apps/accounting/user_text.py:53
 #: corehq/apps/accounting/user_text.py:54
-#: corehq/apps/accounting/user_text.py:55
+#: corehq/apps/accounting/user_text.py:203
 #: corehq/apps/accounting/user_text.py:204
-#: corehq/apps/accounting/user_text.py:205
 #, fuzzy
 msgid "Mobile Users"
 msgstr "सब-सेंटर चुनिए"
 
-#: corehq/apps/accounting/user_text.py:56
-#: corehq/apps/accounting/user_text.py:206
+#: corehq/apps/accounting/user_text.py:55
+#: corehq/apps/accounting/user_text.py:205
 #, fuzzy
 msgid "Facilities"
 msgstr "सरकारी अस्पताल"
 
-#: corehq/apps/accounting/user_text.py:58
+#: corehq/apps/accounting/user_text.py:57
 msgid "Monthly SMS"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:74
+#: corehq/apps/accounting/user_text.py:73
 msgid ""
 "https://wiki.commcarehq.org/display/commcarepublic/CommCare+Plan"
 "+Details#CommCarePlanDetails-Mobile"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:75
+#: corehq/apps/accounting/user_text.py:74
 msgid ""
 "https://wiki.commcarehq.org/display/commcarepublic/CommCare+Plan"
 "+Details#CommCarePlanDetails-Web"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:76
+#: corehq/apps/accounting/user_text.py:75
 msgid ""
 "https://wiki.commcarehq.org/display/commcarepublic/CommCare+Plan"
 "+Details#CommCarePlanDetails-Analytics"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:77
+#: corehq/apps/accounting/user_text.py:76
 msgid ""
 "https://wiki.commcarehq.org/display/commcarepublic/CommCare+Plan"
 "+Details#CommCarePlanDetails-SMS(CommConnect)"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:78
+#: corehq/apps/accounting/user_text.py:77
 msgid ""
 "https://wiki.commcarehq.org/display/commcarepublic/CommCare+Plan"
 "+Details#CommCarePlanDetails-UserManagementandSecurity"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:79
+#: corehq/apps/accounting/user_text.py:78
 msgid ""
 "https://wiki.commcarehq.org/display/commcarepublic/CommCare+Plan"
 "+Details#CommCarePlanDetails-Support"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:86
+#: corehq/apps/accounting/user_text.py:85
 #, fuzzy
 msgid "Mobile"
 msgstr "सब-सेंटर चुनिए"
 
-#: corehq/apps/accounting/user_text.py:87
+#: corehq/apps/accounting/user_text.py:86
 msgid "Web"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:88
+#: corehq/apps/accounting/user_text.py:87
 msgid "Analytics"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:90
+#: corehq/apps/accounting/user_text.py:89
 msgid "SMS (CommConnect)"
 msgstr ""
 
+#: corehq/apps/accounting/user_text.py:90
 #: corehq/apps/accounting/user_text.py:91
-#: corehq/apps/accounting/user_text.py:92
 msgid "SMS"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:94
+#: corehq/apps/accounting/user_text.py:93
 msgid "User Management and Security"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:95
+#: corehq/apps/accounting/user_text.py:94
 msgid "Support"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:201
+#: corehq/apps/accounting/user_text.py:200
 #, fuzzy
 msgid "Software Plans"
 msgstr "सब-सेंटर चुनिए"
 
-#: corehq/apps/accounting/user_text.py:202
+#: corehq/apps/accounting/user_text.py:201
 msgid "Pricing*"
 msgstr ""
 
+#: corehq/apps/accounting/user_text.py:208
 #: corehq/apps/accounting/user_text.py:209
-#: corehq/apps/accounting/user_text.py:210
-#: corehq/apps/accounting/user_text.py:211
 msgid "Price per Additional Mobile User"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:213
+#: corehq/apps/accounting/user_text.py:210
+msgid "Price per Additional Facility"
+msgstr ""
+
+#: corehq/apps/accounting/user_text.py:212
 msgid "Java Feature Phones and Android Phones"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:214
+#: corehq/apps/accounting/user_text.py:213
 msgid "Multimedia Support"
 msgstr ""
 
+#: corehq/apps/accounting/user_text.py:215
 #: corehq/apps/accounting/user_text.py:216
-#: corehq/apps/accounting/user_text.py:217
 #, fuzzy
 msgid "CommCare Application Builder"
 msgstr "लाभार्थी सूचि चुनिए"
 
-#: corehq/apps/accounting/user_text.py:218
+#: corehq/apps/accounting/user_text.py:217
 #, fuzzy
 msgid "CommTrack Application Builder"
 msgstr "लाभार्थी सूचि चुनिए"
 
-#: corehq/apps/accounting/user_text.py:220
+#: corehq/apps/accounting/user_text.py:219
 msgid ""
 "CommCare Exchange (<a href=\"http://www.commcarehq.org/exchange/\">visit the "
 "exchange</a>)"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:221
+#: corehq/apps/accounting/user_text.py:220
 msgid "API Access"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:222
+#: corehq/apps/accounting/user_text.py:221
 msgid "Lookup Tables"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:223
+#: corehq/apps/accounting/user_text.py:222
 msgid ""
 "Web-based Applications (<a href=\"https://confluence.dimagi.com/display/"
 "commcarepublic/CloudCare+-+Web+Data+Entry\">CloudCare</a>)"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:224
+#: corehq/apps/accounting/user_text.py:223
 msgid "Custom Branding"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:225
+#: corehq/apps/accounting/user_text.py:224
 #, fuzzy
 msgid "Data Export"
 msgstr "लाभार्थी सूचि चुनिए"
 
-#: corehq/apps/accounting/user_text.py:226
+#: corehq/apps/accounting/user_text.py:225
 msgid "Standard Reports"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:227
+#: corehq/apps/accounting/user_text.py:226
 #, fuzzy
 msgid "Cross-Project Reports"
 msgstr "सब-सेंटर चुनिए"
 
-#: corehq/apps/accounting/user_text.py:228
-#: custom/apps/crs_reports/__init__.py:7
-msgid "Custom Reports"
+#: corehq/apps/accounting/user_text.py:227
+msgid "Custom Reports Access"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:229
+#: corehq/apps/accounting/user_text.py:228
 msgid ""
 "Active Data Management (<a href=\"http://www.commcarehq.org/tour/adm/\">read "
 "more</a>)"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:230
+#: corehq/apps/accounting/user_text.py:229
 msgid "Outbound Messaging"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:231
+#: corehq/apps/accounting/user_text.py:230
 msgid "Rules Engine"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:232
+#: corehq/apps/accounting/user_text.py:231
 msgid "Android-based SMS Gateway"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:233
+#: corehq/apps/accounting/user_text.py:232
 #, fuzzy
 msgid "SMS Data Collection"
 msgstr "मुख्य नेवीगेशन"
 
-#: corehq/apps/accounting/user_text.py:234
+#: corehq/apps/accounting/user_text.py:233
 msgid "Inbound SMS (where available)"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:235
+#: corehq/apps/accounting/user_text.py:234
 msgid "Free Messages (Dimagi Gateway)**"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:236
+#: corehq/apps/accounting/user_text.py:235
 msgid "Messages (Your Gateway)"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:237
+#: corehq/apps/accounting/user_text.py:236
 #, fuzzy
 msgid "User Groups"
 msgstr "टीम का नाम"
 
-#: corehq/apps/accounting/user_text.py:238
+#: corehq/apps/accounting/user_text.py:237
 msgid "Data Security and Privacy"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:239
+#: corehq/apps/accounting/user_text.py:238
 msgid "Advanced Role-Based Access"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:240
+#: corehq/apps/accounting/user_text.py:239
 msgid "Bulk Case and User Management"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:241
+#: corehq/apps/accounting/user_text.py:240
 msgid "HIPAA Compliance Assurance"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:242
+#: corehq/apps/accounting/user_text.py:241
 msgid "De-identified Data"
 msgstr ""
 
+#: corehq/apps/accounting/user_text.py:243
 #: corehq/apps/accounting/user_text.py:244
-#: corehq/apps/accounting/user_text.py:245
 msgid ""
 "Community Support (<a href=\"https://groups.google.com/forum/?fromgroups#!"
 "forum/commcare-users\">visit commcare-users</a>)"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:246
+#: corehq/apps/accounting/user_text.py:245
 msgid ""
 "Community Support (<a href=\"https://groups.google.com/forum/?fromgroups#!"
 "forum/commtrack-users\">visit commtrack-users</a>)"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:248
+#: corehq/apps/accounting/user_text.py:247
 msgid "Direct Email Support"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:249
+#: corehq/apps/accounting/user_text.py:248
 msgid "Phone Support"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:250
+#: corehq/apps/accounting/user_text.py:249
 #, fuzzy
 msgid "Application Troubleshooting"
 msgstr "लाभार्थी सूचि चुनिए"
 
-#: corehq/apps/accounting/user_text.py:251
+#: corehq/apps/accounting/user_text.py:250
 msgid "Dedicated Support Staff"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:252
+#: corehq/apps/accounting/user_text.py:251
 msgid "Dedicated Enterprise Account Management"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:259
+#: corehq/apps/accounting/user_text.py:258
 msgid "Free"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:259
+#: corehq/apps/accounting/user_text.py:258
 msgid "$100 /month"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:259
+#: corehq/apps/accounting/user_text.py:258
 msgid "$500 /month"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:259
+#: corehq/apps/accounting/user_text.py:258
 msgid "$1,000 /month"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:259
+#: corehq/apps/accounting/user_text.py:258
 msgid ""
 "(<a href=\"http://www.dimagi.com/collaborate/contact-us/\" target=\"_blank"
 "\">Contact Us</a>)"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:260
+#: corehq/apps/accounting/user_text.py:259
 msgid "50"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:260
+#: corehq/apps/accounting/user_text.py:259
 msgid "100"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:260
+#: corehq/apps/accounting/user_text.py:259
 msgid "500"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:260
+#: corehq/apps/accounting/user_text.py:259
 msgid "1,000"
 msgstr ""
 
+#: corehq/apps/accounting/user_text.py:259
 #: corehq/apps/accounting/user_text.py:260
-#: corehq/apps/accounting/user_text.py:261
 msgid "Unlimited / Discounted Pricing"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:261
-msgid "1 USD"
-msgstr ""
+#: corehq/apps/accounting/user_text.py:260
+#, fuzzy
+msgid "1 USD /month"
+msgstr "टीम का नाम"
 
-#: corehq/apps/accounting/user_text.py:280
+#: corehq/apps/accounting/user_text.py:279
 #, fuzzy
 msgid "100 /month"
 msgstr "टीम का नाम"
 
-#: corehq/apps/accounting/user_text.py:280
+#: corehq/apps/accounting/user_text.py:279
 #, fuzzy
 msgid "500 /month"
 msgstr "टीम का नाम"
 
-#: corehq/apps/accounting/user_text.py:280
+#: corehq/apps/accounting/user_text.py:279
 msgid "1,000 /month"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:280
+#: corehq/apps/accounting/user_text.py:279
 msgid "2,000 /month"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:281
+#: corehq/apps/accounting/user_text.py:280
 msgid "1 cent/SMS"
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py:327
+#: corehq/apps/accounting/user_text.py:326
 msgid "Visit the help site to learn more."
 msgstr ""
 
@@ -924,12 +927,12 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/credits_tab.html:10
 #: corehq/apps/accounting/templates/accounting/subscriptions.html:12
-#: corehq/apps/hqwebapp/models.py:889
+#: corehq/apps/hqwebapp/models.py:890
 msgid "Subscription"
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/credits_tab.html:14
-#: corehq/apps/commtrack/models.py:1000
+#: corehq/apps/commtrack/models.py:983
 msgid "Balance"
 msgstr ""
 
@@ -1062,7 +1065,7 @@ msgid "Manage Supply Points"
 msgstr "मुख्य नेवीगेशन"
 
 #: corehq/apps/app_manager/models.py:1293 corehq/apps/commtrack/filters.py:36
-#: corehq/apps/commtrack/models.py:988
+#: corehq/apps/commtrack/models.py:971
 #: corehq/apps/commtrack/templates/commtrack/manage/products.html:104
 #: corehq/apps/commtrack/templates/commtrack/manage/program.html:75
 #: corehq/apps/reports/commtrack/standard.py:95
@@ -1338,7 +1341,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/module_view_careplan.html:113
 #: corehq/apps/app_manager/templates/app_manager/module_view_commtrack.html:122
 #: corehq/apps/grapevine/templates/grapevine/backend.html:5
-#: corehq/apps/hqwebapp/models.py:654 corehq/apps/hqwebapp/models.py:1162
+#: corehq/apps/hqwebapp/models.py:654 corehq/apps/hqwebapp/models.py:1163
 #: corehq/apps/mach/templates/mach/backend.html:5
 #: corehq/apps/megamobile/templates/megamobile/backend.html:5
 #: corehq/apps/sms/templates/sms/http_backend.html:33
@@ -1711,7 +1714,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/module_view.html:154
 #: corehq/apps/app_manager/templates/app_manager/module_view_commtrack.html:159
-#: corehq/apps/domain/forms.py:299 corehq/apps/domain/views.py:190
+#: corehq/apps/domain/forms.py:299 corehq/apps/domain/views.py:194
 #: corehq/apps/users/templates/users/edit_commcare_user.html:137
 msgid "Basic"
 msgstr ""
@@ -2444,8 +2447,8 @@ msgid "You must specify a name for the new project"
 msgstr ""
 
 #: corehq/apps/appstore/templates/appstore/appstore_base.html:8
-#: corehq/apps/domain/views.py:769 corehq/apps/hqwebapp/models.py:844
-#: corehq/apps/hqwebapp/models.py:1130
+#: corehq/apps/domain/views.py:786 corehq/apps/hqwebapp/models.py:844
+#: corehq/apps/hqwebapp/models.py:1131
 #: corehq/apps/hqwebapp/templatetags/hq_shared_tags.py:132
 #: corehq/apps/registration/templates/registration/domain_request.html:93
 msgid "CommCare Exchange"
@@ -2500,7 +2503,7 @@ msgstr ""
 
 #: corehq/apps/appstore/templates/appstore/appstore_base.html:331
 #: corehq/apps/domain/templates/domain/select_plan.html:41
-#: corehq/apps/domain/templates/domain/select_plan.html:106
+#: corehq/apps/domain/templates/domain/select_plan.html:104
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/pagination.html:36
 #: corehq/apps/reports/templates/reports/filters/drilldown_options.html:24
 msgid "Next"
@@ -2511,7 +2514,7 @@ msgid "Multimedia Files"
 msgstr ""
 
 #: corehq/apps/appstore/templates/appstore/media_files.html:42
-#: corehq/apps/domain/forms.py:797 corehq/apps/domain/views.py:1138
+#: corehq/apps/domain/forms.py:797 corehq/apps/domain/views.py:1155
 #: corehq/apps/reports/fields.py:317 corehq/apps/reports/filters/select.py:54
 #: corehq/apps/reports/standard/domains.py:273
 msgid "Organization"
@@ -2755,12 +2758,12 @@ msgstr "प्रसव पश्चात जटिलताए"
 msgid "CloudCare"
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/cloudcare/cloudcare_home.html:106
+#: corehq/apps/cloudcare/templates/cloudcare/cloudcare_home.html:115
 msgid ""
 "CloudCare submits REAL DATA that will create cases and show up in reports!"
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/cloudcare/cloudcare_home.html:112
+#: corehq/apps/cloudcare/templates/cloudcare/cloudcare_home.html:121
 msgid ""
 "\n"
 "                    You are using CloudCare as a Web User! Any data you "
@@ -2771,7 +2774,7 @@ msgid ""
 "                "
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/cloudcare/cloudcare_home.html:121
+#: corehq/apps/cloudcare/templates/cloudcare/cloudcare_home.html:130
 msgid ""
 "\n"
 "            Offline CloudCare is not running!\n"
@@ -2781,7 +2784,7 @@ msgid ""
 "        "
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/cloudcare/cloudcare_home.html:131
+#: corehq/apps/cloudcare/templates/cloudcare/cloudcare_home.html:140
 msgid ""
 "\n"
 "                    Sorry, it doesn't look like you have any CloudCare apps\n"
@@ -2792,7 +2795,7 @@ msgid ""
 "                "
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/cloudcare/cloudcare_home.html:142
+#: corehq/apps/cloudcare/templates/cloudcare/cloudcare_home.html:151
 msgid "Loading"
 msgstr ""
 
@@ -2821,7 +2824,7 @@ msgid "Application"
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/cloudcare/config.html:153
-#: corehq/apps/commtrack/models.py:880 corehq/apps/reports/fields.py:142
+#: corehq/apps/commtrack/models.py:863 corehq/apps/reports/fields.py:142
 #: corehq/apps/reports/filters/select.py:63
 #: corehq/apps/reports/standard/monitoring.py:794
 #: corehq/apps/reports/templates/reports/fields/select_mobile_worker.html:7
@@ -2943,7 +2946,7 @@ msgstr ""
 msgid "Form does not validate"
 msgstr ""
 
-#: corehq/apps/commtrack/models.py:862
+#: corehq/apps/commtrack/models.py:845
 #: corehq/apps/domain/templates/domain/admin/media_manager.html:22
 #: corehq/apps/hqadmin/reports.py:139
 #: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html:17
@@ -2954,27 +2957,27 @@ msgstr ""
 msgid "Type"
 msgstr ""
 
-#: corehq/apps/commtrack/models.py:866
+#: corehq/apps/commtrack/models.py:849
 #: corehq/apps/commtrack/templates/commtrack/manage/programs.html:63
 msgid "Code"
 msgstr ""
 
-#: corehq/apps/commtrack/models.py:876
+#: corehq/apps/commtrack/models.py:859
 #: corehq/apps/locations/templates/locations/manage/location.html:87
 #: corehq/apps/reports/fields.py:497
-#: corehq/apps/reports/commtrack/standard.py:263
+#: corehq/apps/reports/commtrack/standard.py:265
 #: corehq/apps/reports/filters/fixtures.py:103
 msgid "Location"
 msgstr ""
 
-#: corehq/apps/commtrack/models.py:982
+#: corehq/apps/commtrack/models.py:965
 msgid "Supply Point"
 msgstr ""
 
-#: corehq/apps/commtrack/models.py:994
+#: corehq/apps/commtrack/models.py:977
 #: corehq/apps/domain/templates/domain/partials/project_version_display.html:36
 #: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html:18
-#: corehq/apps/reports/commtrack/standard.py:366
+#: corehq/apps/reports/commtrack/standard.py:368
 #: corehq/apps/reports/standard/ivr.py:167
 #: corehq/apps/reports/standard/cases/basic.py:243
 #: corehq/apps/reports/standard/cases/careplan.py:109
@@ -2986,27 +2989,27 @@ msgstr ""
 msgid "Status"
 msgstr ""
 
-#: corehq/apps/commtrack/models.py:1010
+#: corehq/apps/commtrack/models.py:993
 msgid "Amount Requested"
 msgstr ""
 
-#: corehq/apps/commtrack/models.py:1014
+#: corehq/apps/commtrack/models.py:997
 msgid "Requested On"
 msgstr ""
 
-#: corehq/apps/commtrack/models.py:1021
+#: corehq/apps/commtrack/models.py:1004
 msgid "Amount Approved"
 msgstr ""
 
-#: corehq/apps/commtrack/models.py:1025
+#: corehq/apps/commtrack/models.py:1008
 msgid "Approved On"
 msgstr ""
 
-#: corehq/apps/commtrack/models.py:1032
+#: corehq/apps/commtrack/models.py:1015
 msgid "Amount Received"
 msgstr ""
 
-#: corehq/apps/commtrack/models.py:1036
+#: corehq/apps/commtrack/models.py:1019
 msgid "Received On"
 msgstr ""
 
@@ -3031,7 +3034,7 @@ msgid ""
 "\"{keyword}\" message to report receipts."
 msgstr ""
 
-#: corehq/apps/commtrack/sms.py:48
+#: corehq/apps/commtrack/sms.py:49
 msgid "timeStart"
 msgstr ""
 
@@ -3398,6 +3401,7 @@ msgstr "टीम का नाम"
 #: corehq/apps/facilities/templates/facilities/list_registries.html:50
 #: corehq/apps/hqwebapp/templates/hqwebapp/ko/value-or-none-ui.html:32
 #: corehq/apps/hqwebapp/templates/hqwebapp/ko/value-or-none-ui.html:53
+#: corehq/apps/locations/templates/locations/manage/partials/autocomplete_select_widget.html:48
 #: corehq/apps/prescriptions/templates/prescriptions/all.html:10
 #: corehq/apps/reminders/templates/reminders/partial/list_reminders.html:101
 #: corehq/apps/reports/templates/reports/reports_home.html:60
@@ -4020,7 +4024,7 @@ msgid ""
 "groups must reapply to renew their pro-bono subscription."
 msgstr ""
 
-#: corehq/apps/domain/forms.py:811 corehq/apps/domain/views.py:1459
+#: corehq/apps/domain/forms.py:811 corehq/apps/domain/views.py:1476
 #, fuzzy
 msgid "Pro-Bono Application"
 msgstr "लाभार्थी सूचि चुनिए"
@@ -4030,124 +4034,124 @@ msgstr "लाभार्थी सूचि चुनिए"
 msgid "Submit Pro-Bono Application"
 msgstr "लाभार्थी सूचि चुनिए"
 
-#: corehq/apps/domain/views.py:118 corehq/apps/hqwebapp/models.py:776
+#: corehq/apps/domain/views.py:122 corehq/apps/hqwebapp/models.py:776
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/global_navigation_bar.html:85
 msgid "Project Settings"
 msgstr ""
 
-#: corehq/apps/domain/views.py:252
+#: corehq/apps/domain/views.py:256
 msgid "Project settings saved!"
 msgstr ""
 
-#: corehq/apps/domain/views.py:254
+#: corehq/apps/domain/views.py:258
 msgid ""
 "There seems to have been an error saving your settings. Please try again!"
 msgstr ""
 
-#: corehq/apps/domain/views.py:261
+#: corehq/apps/domain/views.py:265
 msgid "Deployment"
 msgstr ""
 
-#: corehq/apps/domain/views.py:296
+#: corehq/apps/domain/views.py:300
 #, python-format
 msgid "The deployment information for project %s was successfully updated!"
 msgstr ""
 
-#: corehq/apps/domain/views.py:299 corehq/apps/domain/views.py:1238
+#: corehq/apps/domain/views.py:303 corehq/apps/domain/views.py:1255
 msgid "There seems to have been an error. Please try again!"
 msgstr ""
 
-#: corehq/apps/domain/views.py:307
+#: corehq/apps/domain/views.py:311
 msgid "My Timezone"
 msgstr ""
 
-#: corehq/apps/domain/views.py:345
+#: corehq/apps/domain/views.py:349
 msgid "Your project settings have been saved!"
 msgstr ""
 
-#: corehq/apps/domain/views.py:415
+#: corehq/apps/domain/views.py:432
 #: corehq/apps/domain/templates/domain/current_subscription.html:10
 msgid "Current Subscription"
 msgstr ""
 
-#: corehq/apps/domain/views.py:440
+#: corehq/apps/domain/views.py:457
 #, python-format
 msgid "USD %s"
 msgstr ""
 
-#: corehq/apps/domain/views.py:452
+#: corehq/apps/domain/views.py:469
 #, fuzzy, python-format
 msgid "USD %s /month"
 msgstr "टीम का नाम"
 
-#: corehq/apps/domain/views.py:491
+#: corehq/apps/domain/views.py:508
 #, fuzzy
 msgid "Billing Contact Information"
 msgstr "गृह भ्रमण की जानकारी"
 
-#: corehq/apps/domain/views.py:528
+#: corehq/apps/domain/views.py:545
 msgid ""
 "It appears that there was an issue updating your contact information. We've "
 "been notified of the issue. Please try submitting again, and if the problem "
 "persists, please try in a few hours."
 msgstr ""
 
-#: corehq/apps/domain/views.py:533
+#: corehq/apps/domain/views.py:550
 msgid "Billing contact information was successfully updated."
 msgstr ""
 
-#: corehq/apps/domain/views.py:542
+#: corehq/apps/domain/views.py:559
 #: corehq/apps/domain/templates/domain/current_subscription.html:20
 #, fuzzy
 msgid "Change Plan"
 msgstr "सब-सेंटर चुनिए"
 
-#: corehq/apps/domain/views.py:543
-#: corehq/apps/domain/templates/domain/select_plan.html:118
+#: corehq/apps/domain/views.py:560
+#: corehq/apps/domain/templates/domain/select_plan.html:116
 #, fuzzy
 msgid "Select Plan"
 msgstr "सब-सेंटर चुनिए"
 
-#: corehq/apps/domain/views.py:568
+#: corehq/apps/domain/views.py:585
 #, fuzzy, python-format
 msgid "1. Select a Plan%s"
 msgstr "सब-सेंटर चुनिए"
 
-#: corehq/apps/domain/views.py:594
+#: corehq/apps/domain/views.py:611
 #, fuzzy
 msgid "Contact Dimagi"
 msgstr "टीम का नाम"
 
-#: corehq/apps/domain/views.py:601
+#: corehq/apps/domain/views.py:618
 #, fuzzy
 msgid "2. Contact Dimagi"
 msgstr "टीम का नाम"
 
-#: corehq/apps/domain/views.py:627
+#: corehq/apps/domain/views.py:644
 msgid ""
 "Your request was sent to Dimagi. We will try our best to follow up in a "
 "timely manner."
 msgstr ""
 
-#: corehq/apps/domain/views.py:636
+#: corehq/apps/domain/views.py:653
 #, fuzzy
 msgid "Confirm Plan"
 msgstr "सब-सेंटर चुनिए"
 
-#: corehq/apps/domain/views.py:642
+#: corehq/apps/domain/views.py:659
 msgid "2. Confirm Plan"
 msgstr ""
 
-#: corehq/apps/domain/views.py:699
+#: corehq/apps/domain/views.py:716
 #, fuzzy
 msgid "Confirm Billing Information"
 msgstr "गृह भ्रमण की जानकारी"
 
-#: corehq/apps/domain/views.py:709
+#: corehq/apps/domain/views.py:726
 msgid "3. Confirm Billing Account"
 msgstr ""
 
-#: corehq/apps/domain/views.py:754
+#: corehq/apps/domain/views.py:771
 #, python-format
 msgid ""
 "It appears there was an issue subscribing your project to the %s Software "
@@ -4155,113 +4159,113 @@ msgid ""
 "someone will be contacting you shortly"
 msgstr ""
 
-#: corehq/apps/domain/views.py:759
+#: corehq/apps/domain/views.py:776
 #, python-format
 msgid "Your project has been successfully subscribed to the %s Software Plan."
 msgstr ""
 
-#: corehq/apps/domain/views.py:783
+#: corehq/apps/domain/views.py:800
 #, fuzzy
 msgid "Publish New Version"
 msgstr "लाभार्थी सूचि चुनिए"
 
-#: corehq/apps/domain/views.py:896
+#: corehq/apps/domain/views.py:913
 msgid "Cannot publish a project without applications to CommCare Exchange"
 msgstr ""
 
-#: corehq/apps/domain/views.py:903
+#: corehq/apps/domain/views.py:920
 msgid "You must agree to our eula to publish a project to Exchange"
 msgstr ""
 
-#: corehq/apps/domain/views.py:910
+#: corehq/apps/domain/views.py:927
 msgid ""
 "There are some problems with your form. Please address these issues and try "
 "again."
 msgstr ""
 
-#: corehq/apps/domain/views.py:994
+#: corehq/apps/domain/views.py:1011
 msgid "Version creation failed; please try again"
 msgstr ""
 
-#: corehq/apps/domain/views.py:996
+#: corehq/apps/domain/views.py:1013
 msgid ""
 "Created a new version of your app. This version will be posted to CommCare "
 "Exchange pending approval by admins."
 msgstr ""
 
-#: corehq/apps/domain/views.py:998
+#: corehq/apps/domain/views.py:1015
 msgid "Created a new version of your app."
 msgstr ""
 
-#: corehq/apps/domain/views.py:1005 corehq/apps/hqwebapp/models.py:848
+#: corehq/apps/domain/views.py:1022 corehq/apps/hqwebapp/models.py:848
 msgid "Multimedia Sharing"
 msgstr ""
 
-#: corehq/apps/domain/views.py:1042
+#: corehq/apps/domain/views.py:1059
 msgid "Multimedia updated successfully!"
 msgstr ""
 
-#: corehq/apps/domain/views.py:1051
+#: corehq/apps/domain/views.py:1068
 #: corehq/apps/export/templates/export/customize_export.html:47
 #: corehq/apps/users/templates/users/mobile/users_list.html:182
 msgid "Forms"
 msgstr ""
 
-#: corehq/apps/domain/views.py:1052
+#: corehq/apps/domain/views.py:1069
 #: corehq/apps/export/templates/export/customize_export.html:52
 #: corehq/apps/reports/commconnect/system_overview.py:148
 #: corehq/apps/users/templates/users/mobile/users_list.html:183
 msgid "Cases"
 msgstr ""
 
-#: corehq/apps/domain/views.py:1053
+#: corehq/apps/domain/views.py:1070
 #, fuzzy
 msgid "Form Stubs"
 msgstr "कुल जमा फार्म "
 
-#: corehq/apps/domain/views.py:1054
+#: corehq/apps/domain/views.py:1071
 #, fuzzy
 msgid "App Schema Changes"
 msgstr "टीम का नाम"
 
-#: corehq/apps/domain/views.py:1060 corehq/apps/hqwebapp/models.py:862
+#: corehq/apps/domain/views.py:1077 corehq/apps/hqwebapp/models.py:862
 msgid "Data Forwarding"
 msgstr ""
 
-#: corehq/apps/domain/views.py:1080
+#: corehq/apps/domain/views.py:1097
 #, fuzzy
 msgid "Forward Data"
 msgstr "नाम"
 
-#: corehq/apps/domain/views.py:1131
+#: corehq/apps/domain/views.py:1148
 #, fuzzy, python-format
 msgid "Forwarding set up to %s"
 msgstr "कुल लाभार्थी"
 
-#: corehq/apps/domain/views.py:1187 corehq/apps/hqwebapp/models.py:821
+#: corehq/apps/domain/views.py:1204 corehq/apps/hqwebapp/models.py:821
 #, fuzzy
 msgid "Project Information"
 msgstr "गृह भ्रमण की जानकारी"
 
-#: corehq/apps/domain/views.py:1235
+#: corehq/apps/domain/views.py:1252
 #, python-format
 msgid "The internal information for project %s was successfully updated!"
 msgstr ""
 
-#: corehq/apps/domain/views.py:1244
+#: corehq/apps/domain/views.py:1261
 #, fuzzy
 msgid "Calculated Properties"
 msgstr "ऑगनवाड़ी कोड़ संख्या नही मिली"
 
-#: corehq/apps/domain/views.py:1331
+#: corehq/apps/domain/views.py:1348
 msgid "Basic CommTrack Settings"
 msgstr ""
 
-#: corehq/apps/domain/views.py:1412
+#: corehq/apps/domain/views.py:1429
 msgid "Advanced CommTrack Settings"
 msgstr ""
 
-#: corehq/apps/domain/views.py:1453
+#: corehq/apps/domain/views.py:1470
 msgid "Settings updated!"
 msgstr ""
 
@@ -4533,7 +4537,7 @@ msgid ""
 "    to learn more</a> about each plan.\n"
 msgstr ""
 
-#: corehq/apps/domain/templates/domain/select_plan.html:128
+#: corehq/apps/domain/templates/domain/select_plan.html:126
 #, fuzzy
 msgid "Current Plan"
 msgstr "टीम का नाम"
@@ -4576,21 +4580,21 @@ msgstr ""
 msgid "This project was originally copied from "
 msgstr ""
 
-#: corehq/apps/domain/templates/domain/admin/add_form_repeater.html:11
+#: corehq/apps/domain/templates/domain/admin/add_form_repeater.html:12
 msgid "Test Link"
 msgstr ""
 
-#: corehq/apps/domain/templates/domain/admin/add_form_repeater.html:24
+#: corehq/apps/domain/templates/domain/admin/add_form_repeater.html:26
 #, fuzzy
 msgid "Success! Response is"
 msgstr "कुल जमा फार्म "
 
-#: corehq/apps/domain/templates/domain/admin/add_form_repeater.html:27
+#: corehq/apps/domain/templates/domain/admin/add_form_repeater.html:29
 #, fuzzy
 msgid "Failed! Response is"
 msgstr "कुल जमा फार्म "
 
-#: corehq/apps/domain/templates/domain/admin/add_form_repeater.html:48
+#: corehq/apps/domain/templates/domain/admin/add_form_repeater.html:50
 #, fuzzy
 msgid "Start Forwarding"
 msgstr "कुल लाभार्थी"
@@ -5476,7 +5480,7 @@ msgstr "गृह भ्रमण की जानकारी"
 msgid "ADMINREPORT"
 msgstr ""
 
-#: corehq/apps/hqadmin/reports.py:108 corehq/apps/hqwebapp/models.py:964
+#: corehq/apps/hqadmin/reports.py:108 corehq/apps/hqwebapp/models.py:965
 #, fuzzy
 msgid "User List"
 msgstr "ड्यू लिस्ट"
@@ -5517,7 +5521,7 @@ msgstr "लाभार्थी सूचि"
 msgid "No date"
 msgstr ""
 
-#: corehq/apps/hqadmin/reports.py:174 corehq/apps/hqwebapp/models.py:966
+#: corehq/apps/hqadmin/reports.py:174 corehq/apps/hqwebapp/models.py:967
 #, fuzzy
 msgid "Application List"
 msgstr "लाभार्थी सूचि चुनिए"
@@ -5644,27 +5648,27 @@ msgid "Visualize Project Spaces"
 msgstr "सब-सेंटर चुनिए"
 
 #: corehq/apps/hqadmin/templates/hqadmin/domain_faceted_report.html:100
-#: corehq/apps/hqwebapp/models.py:1156
+#: corehq/apps/hqwebapp/models.py:1157
 #: corehq/apps/orgs/templates/orgs/report_base.html:30
 msgid "Visualize Forms"
 msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/domain_faceted_report.html:102
-#: corehq/apps/hqwebapp/models.py:1157
+#: corehq/apps/hqwebapp/models.py:1158
 #: corehq/apps/orgs/templates/orgs/report_base.html:31
 #, fuzzy
 msgid "Visualize Cases"
 msgstr "कुल लाभार्थी"
 
 #: corehq/apps/hqadmin/templates/hqadmin/domain_faceted_report.html:104
-#: corehq/apps/hqwebapp/models.py:1158
+#: corehq/apps/hqwebapp/models.py:1159
 #: corehq/apps/orgs/templates/orgs/report_base.html:32
 #, fuzzy
 msgid "Visualize Users"
 msgstr "सब-सेंटर चुनिए"
 
 #: corehq/apps/hqadmin/templates/hqadmin/hqadmin_base_report.html:34
-#: corehq/apps/hqwebapp/models.py:943 corehq/apps/hqwebapp/models.py:1089
+#: corehq/apps/hqwebapp/models.py:944 corehq/apps/hqwebapp/models.py:1090
 msgid "Admin Reports"
 msgstr ""
 
@@ -5691,7 +5695,7 @@ msgid "Run"
 msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/mobile_user_reports.html:6
-#: corehq/apps/hqwebapp/models.py:980
+#: corehq/apps/hqwebapp/models.py:981
 #, fuzzy
 msgid "Mobile User Reports"
 msgstr "सब-सेंटर चुनिए"
@@ -6187,8 +6191,8 @@ msgstr ""
 msgid "Administer Indicators"
 msgstr "संकेतक"
 
-#: corehq/apps/hqwebapp/models.py:265 corehq/apps/hqwebapp/models.py:1088
-#: corehq/apps/hqwebapp/models.py:1149
+#: corehq/apps/hqwebapp/models.py:265 corehq/apps/hqwebapp/models.py:1089
+#: corehq/apps/hqwebapp/models.py:1150
 #: corehq/apps/orgs/templates/orgs/report_base.html:27
 #: corehq/apps/reports/templates/reports/reportdata/case_details.html:79
 msgid "Reports"
@@ -6270,8 +6274,8 @@ msgstr ""
 msgid "Message Log"
 msgstr ""
 
-#: corehq/apps/hqwebapp/models.py:574 corehq/apps/hqwebapp/models.py:1029
-#: corehq/apps/hqwebapp/models.py:1035 corehq/apps/hqwebapp/models.py:1109
+#: corehq/apps/hqwebapp/models.py:574 corehq/apps/hqwebapp/models.py:1030
+#: corehq/apps/hqwebapp/models.py:1036 corehq/apps/hqwebapp/models.py:1110
 #: corehq/apps/sms/views.py:817
 #: corehq/apps/sms/templates/sms/add_backend.html:53
 #: corehq/apps/sms/templates/sms/add_backend.html:74
@@ -6282,11 +6286,11 @@ msgstr ""
 msgid "SMS Connectivity"
 msgstr ""
 
-#: corehq/apps/hqwebapp/models.py:577 corehq/apps/hqwebapp/models.py:1039
+#: corehq/apps/hqwebapp/models.py:577 corehq/apps/hqwebapp/models.py:1040
 msgid "Add Connection"
 msgstr ""
 
-#: corehq/apps/hqwebapp/models.py:579 corehq/apps/hqwebapp/models.py:1041
+#: corehq/apps/hqwebapp/models.py:579 corehq/apps/hqwebapp/models.py:1042
 msgid "Edit Connection"
 msgstr ""
 
@@ -6457,155 +6461,155 @@ msgstr "कुल लाभार्थी"
 msgid "Project Administration"
 msgstr ""
 
-#: corehq/apps/hqwebapp/models.py:901
+#: corehq/apps/hqwebapp/models.py:902
 msgid "Internal Data (Dimagi Only)"
 msgstr ""
 
-#: corehq/apps/hqwebapp/models.py:909
+#: corehq/apps/hqwebapp/models.py:910
 msgid "My Settings"
 msgstr ""
 
-#: corehq/apps/hqwebapp/models.py:924
+#: corehq/apps/hqwebapp/models.py:925
 #, fuzzy
 msgid "Manage My Settings"
 msgstr "मुख्य नेवीगेशन"
 
-#: corehq/apps/hqwebapp/models.py:951
+#: corehq/apps/hqwebapp/models.py:952
 #, fuzzy
 msgid "View/Update Domain Information"
 msgstr "गृह भ्रमण की जानकारी"
 
-#: corehq/apps/hqwebapp/models.py:957
+#: corehq/apps/hqwebapp/models.py:958
 #, fuzzy
 msgid "Mass Email Users"
 msgstr "सब-सेंटर चुनिए"
 
-#: corehq/apps/hqwebapp/models.py:961
+#: corehq/apps/hqwebapp/models.py:962
 msgid "Administrative Reports"
 msgstr ""
 
-#: corehq/apps/hqwebapp/models.py:962
+#: corehq/apps/hqwebapp/models.py:963
 #: corehq/apps/reports/standard/domains.py:246
 #, fuzzy
 msgid "Project Space List"
 msgstr "सब-सेंटर चुनिए"
 
-#: corehq/apps/hqwebapp/models.py:968
+#: corehq/apps/hqwebapp/models.py:969
 msgid "Domain Activity Report"
 msgstr ""
 
-#: corehq/apps/hqwebapp/models.py:970
+#: corehq/apps/hqwebapp/models.py:971
 msgid "Message Logs Across All Domains"
 msgstr ""
 
-#: corehq/apps/hqwebapp/models.py:972
+#: corehq/apps/hqwebapp/models.py:973
 msgid "Global Statistics"
 msgstr ""
 
-#: corehq/apps/hqwebapp/models.py:974
+#: corehq/apps/hqwebapp/models.py:975
 msgid "CommCare Versions"
 msgstr ""
 
-#: corehq/apps/hqwebapp/models.py:976
+#: corehq/apps/hqwebapp/models.py:977
 msgid "Submissions & Error Statistics per Domain"
 msgstr ""
 
-#: corehq/apps/hqwebapp/models.py:978 corehq/apps/hqwebapp/models.py:1090
+#: corehq/apps/hqwebapp/models.py:979 corehq/apps/hqwebapp/models.py:1091
 msgid "System Info"
 msgstr ""
 
-#: corehq/apps/hqwebapp/models.py:983
+#: corehq/apps/hqwebapp/models.py:984
 msgid "Administrative Operations"
 msgstr ""
 
-#: corehq/apps/hqwebapp/models.py:992
+#: corehq/apps/hqwebapp/models.py:993
 #, fuzzy
 msgid "Global ADM Report Configuration"
 msgstr "गृह भ्रमण की जानकारी"
 
-#: corehq/apps/hqwebapp/models.py:1002
+#: corehq/apps/hqwebapp/models.py:1003
 #: submodules/payments/hqbilling/views.py:136
 msgid "Billing"
 msgstr ""
 
-#: corehq/apps/hqwebapp/models.py:1012
+#: corehq/apps/hqwebapp/models.py:1013
 msgid "Accounting"
 msgstr ""
 
-#: corehq/apps/hqwebapp/models.py:1036
+#: corehq/apps/hqwebapp/models.py:1037
 #: corehq/apps/sms/templates/sms/add_backend.html:56
 #: corehq/apps/sms/templates/sms/list_backends.html:40
 msgid "SMS Connections"
 msgstr ""
 
-#: corehq/apps/hqwebapp/models.py:1044
+#: corehq/apps/hqwebapp/models.py:1045
 #: corehq/apps/sms/templates/sms/backend_map.html:6
 #: corehq/apps/sms/templates/sms/backend_map.html:65
 #: corehq/apps/sms/templates/sms/backend_map.html:73
 msgid "SMS Country-Connection Map"
 msgstr ""
 
-#: corehq/apps/hqwebapp/models.py:1054 corehq/apps/hqwebapp/models.py:1110
+#: corehq/apps/hqwebapp/models.py:1055 corehq/apps/hqwebapp/models.py:1111
 #: corehq/apps/toggle_ui/templates/toggle/flags.html:7
 msgid "Feature Flags"
 msgstr ""
 
-#: corehq/apps/hqwebapp/models.py:1063
+#: corehq/apps/hqwebapp/models.py:1064
 msgid "Announcements"
 msgstr ""
 
-#: corehq/apps/hqwebapp/models.py:1073
+#: corehq/apps/hqwebapp/models.py:1074
 msgid "Admin"
 msgstr ""
 
-#: corehq/apps/hqwebapp/models.py:1091
+#: corehq/apps/hqwebapp/models.py:1092
 msgid "Management"
 msgstr ""
 
-#: corehq/apps/hqwebapp/models.py:1092
+#: corehq/apps/hqwebapp/models.py:1093
 msgid "ADM Reports & Columns"
 msgstr ""
 
-#: corehq/apps/hqwebapp/models.py:1094
+#: corehq/apps/hqwebapp/models.py:1095
 msgid "Commands"
 msgstr ""
 
-#: corehq/apps/hqwebapp/models.py:1104
+#: corehq/apps/hqwebapp/models.py:1105
 msgid "Old SMS Billing"
 msgstr ""
 
-#: corehq/apps/hqwebapp/models.py:1112
+#: corehq/apps/hqwebapp/models.py:1113
 msgid "Django Admin"
 msgstr ""
 
-#: corehq/apps/hqwebapp/models.py:1122
+#: corehq/apps/hqwebapp/models.py:1123
 msgid "Exchange"
 msgstr ""
 
-#: corehq/apps/hqwebapp/models.py:1131
+#: corehq/apps/hqwebapp/models.py:1132
 msgid "Publish this project"
 msgstr ""
 
-#: corehq/apps/hqwebapp/models.py:1155
+#: corehq/apps/hqwebapp/models.py:1156
 #: corehq/apps/orgs/templates/orgs/report_base.html:29
 #, fuzzy
 msgid "Projects Table"
 msgstr "सब-सेंटर चुनिए"
 
-#: corehq/apps/hqwebapp/models.py:1168
+#: corehq/apps/hqwebapp/models.py:1169
 #: corehq/apps/orgs/templates/orgs/orgs_team_members.html:85
 #: corehq/apps/orgs/templates/orgs/public.html:29
 #: corehq/apps/orgs/templates/orgs/partials/top_nav.html:7
 msgid "Projects"
 msgstr ""
 
-#: corehq/apps/hqwebapp/models.py:1169
+#: corehq/apps/hqwebapp/models.py:1170
 #: corehq/apps/orgs/templates/orgs/public.html:32
 #: corehq/apps/orgs/templates/orgs/partials/top_nav.html:10
 msgid "Teams"
 msgstr ""
 
-#: corehq/apps/hqwebapp/models.py:1170
+#: corehq/apps/hqwebapp/models.py:1171
 #: corehq/apps/orgs/templates/orgs/orgs_team_members.html:51
 #: corehq/apps/orgs/templates/orgs/public.html:35
 #: corehq/apps/orgs/templates/orgs/partials/top_nav.html:13
@@ -8926,80 +8930,84 @@ msgstr ""
 msgid "Stock Status"
 msgstr "गृह-भ्रमण कि स्थिति"
 
-#: corehq/apps/reports/commtrack/standard.py:229
-msgid "no data"
+#: corehq/apps/reports/commtrack/standard.py:208
+msgid "Resupply Quantity Needed"
 msgstr ""
 
 #: corehq/apps/reports/commtrack/standard.py:230
-msgid "stock-out"
+msgid "no data"
 msgstr ""
 
 #: corehq/apps/reports/commtrack/standard.py:231
-msgid "under-stock"
+msgid "stock-out"
 msgstr ""
 
 #: corehq/apps/reports/commtrack/standard.py:232
-msgid "adequate"
+msgid "under-stock"
 msgstr ""
 
 #: corehq/apps/reports/commtrack/standard.py:233
+msgid "adequate"
+msgstr ""
+
+#: corehq/apps/reports/commtrack/standard.py:234
 msgid "over-stock"
 msgstr ""
 
-#: corehq/apps/reports/commtrack/standard.py:247
+#: corehq/apps/reports/commtrack/standard.py:249
 msgid "Reporting Rate"
 msgstr ""
 
-#: corehq/apps/reports/commtrack/standard.py:264
-msgid "# Sites"
-msgstr ""
-
-#: corehq/apps/reports/commtrack/standard.py:265
-#: corehq/apps/reports/commtrack/standard.py:328
-msgid "On-time"
-msgstr ""
-
 #: corehq/apps/reports/commtrack/standard.py:266
-#: corehq/apps/reports/commtrack/standard.py:329
-#: custom/apps/crs_reports/fields.py:15 custom/apps/crs_reports/reports.py:81
-msgid "Late"
+msgid "# Sites"
 msgstr ""
 
 #: corehq/apps/reports/commtrack/standard.py:267
 #: corehq/apps/reports/commtrack/standard.py:330
+msgid "On-time"
+msgstr ""
+
+#: corehq/apps/reports/commtrack/standard.py:268
+#: corehq/apps/reports/commtrack/standard.py:331
+#: custom/apps/crs_reports/fields.py:15 custom/apps/crs_reports/reports.py:81
+msgid "Late"
+msgstr ""
+
+#: corehq/apps/reports/commtrack/standard.py:269
+#: corehq/apps/reports/commtrack/standard.py:332
 msgid "Non-reporting"
 msgstr ""
 
-#: corehq/apps/reports/commtrack/standard.py:337
+#: corehq/apps/reports/commtrack/standard.py:339
 msgid "Current Reporting"
 msgstr ""
 
-#: corehq/apps/reports/commtrack/standard.py:341
+#: corehq/apps/reports/commtrack/standard.py:343
 #, fuzzy
 msgid "Requisition Report"
 msgstr "कुल फार्म प्रस्तुतियाँ"
 
-#: corehq/apps/reports/commtrack/standard.py:362
+#: corehq/apps/reports/commtrack/standard.py:364
 #, fuzzy
 msgid "Requisition Unique ID"
 msgstr "कुल फार्म प्रस्तुतियाँ"
 
-#: corehq/apps/reports/commtrack/standard.py:363
+#: corehq/apps/reports/commtrack/standard.py:365
 #: submodules/casexml-src/casexml/apps/case/models.py:1040
 #: submodules/casexml-src/casexml/apps/case/templates/case/partials/single_case.html:52
 msgid "Date Opened"
 msgstr ""
 
-#: corehq/apps/reports/commtrack/standard.py:364
+#: corehq/apps/reports/commtrack/standard.py:366
 #, fuzzy
 msgid "Date Closed"
 msgstr "कुल लाभार्थी"
 
-#: corehq/apps/reports/commtrack/standard.py:365
+#: corehq/apps/reports/commtrack/standard.py:367
 msgid "Lead Time (Days)"
 msgstr ""
 
-#: corehq/apps/reports/commtrack/standard.py:377
+#: corehq/apps/reports/commtrack/standard.py:379
 msgid "---"
 msgstr ""
 
@@ -11942,6 +11950,10 @@ msgstr ""
 #: corehq/apps/users/views/mobile/users.py:684
 msgid ""
 "The following groups have no name. Please name them before continuing: {}"
+msgstr ""
+
+#: custom/apps/crs_reports/__init__.py:7
+msgid "Custom Reports"
 msgstr ""
 
 #: custom/apps/crs_reports/__init__.py:16
