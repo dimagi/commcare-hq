@@ -185,12 +185,14 @@ def submit_form(domain, parent, form_data, properties, existing, location_type, 
 
         if consumption and sp:
             for product_code, amount in consumption:
-                set_default_consumption_for_supply_point(
-                    domain,
-                    Product.get_by_code(domain, product_code)._id,
-                    sp._id,
-                    amount
-                )
+                # only set it if there is a non-negative/non-null value
+                if amount >= 0:
+                    set_default_consumption_for_supply_point(
+                        domain,
+                        Product.get_by_code(domain, product_code)._id,
+                        sp._id,
+                        amount
+                    )
         if existing:
             message = 'updated %s %s' % (location_type, loc.name)
         else:
