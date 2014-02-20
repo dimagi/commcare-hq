@@ -27,6 +27,7 @@ from django.template.context import RequestContext
 from soil.heartbeat import heartbeat_enabled, is_alive
 from couchexport.models import Format
 from corehq.apps.consumption.shortcuts import get_default_consumption
+from corehq.apps.consumption.models import DEFAULT_CONSUMPTION
 
 
 @domain_admin_required
@@ -144,7 +145,8 @@ class EditLocationView(NewLocationView):
                 self.location.location_type,
                 self.supply_point._id if self.supply_point else None,
             )
-            if consumption:
+            # don't show it if it's the global default
+            if consumption and consumption != DEFAULT_CONSUMPTION:
                 consumptions.append((product.name, consumption))
         return consumptions
 
