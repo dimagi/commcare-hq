@@ -678,6 +678,7 @@ class SuiteGenerator(object):
                             detail_select=self.get_detail_id_safe(module, 'product_short')
                         ))
                         e.instances.append(Instance(id='products', src='jr://fixture/commtrack:products'))
+                        e.instances.append(Instance(id='ledgerdb', src='jr://instance/ledgerdb'))
                 yield e
 
     def get_indicator_instances(self, module):
@@ -753,7 +754,7 @@ class SuiteGenerator(object):
                 )
             ))
 
-    def configure_entry_advanced_form(self, module, e, form=None, **kwargs):
+    def configure_entry_advanced_form(self, module, e, form, **kwargs):
         def case_sharing_requires_assertion(form):
             actions = form.actions.open_cases
             for action in actions:
@@ -764,17 +765,16 @@ class SuiteGenerator(object):
         def get_instances():
             yield Instance(id='casedb', src='jr://instance/casedb')
 
-            if form:
-                parent_select = any(action.parent_tag for action in form.actions.load_update_cases)
-                form_filter = any(form.form_filter for form in module.get_forms())
-                if parent_select or (form_filter and module.all_forms_require_a_case()):
-                    yield Instance(id='commcaresession', src='jr://instance/session')
-                elif module.get_app().commtrack_enabled:
-                    try:
-                        if form.actions.load_update_cases[-1].show_product_stock:
-                            yield Instance(id='commcaresession', src='jr://instance/session')
-                    except IndexError:
-                        pass
+            parent_select = any(action.parent_tag for action in form.actions.load_update_cases)
+            form_filter = any(form.form_filter for form in module.get_forms())
+            if parent_select or (form_filter and module.all_forms_require_a_case()):
+                yield Instance(id='commcaresession', src='jr://instance/session')
+            elif module.get_app().commtrack_enabled:
+                try:
+                    if form.actions.load_update_cases[-1].show_product_stock:
+                        yield Instance(id='commcaresession', src='jr://instance/session')
+                except IndexError:
+                    pass
 
             for instance in self.get_indicator_instances(module):
                 yield instance
@@ -828,10 +828,11 @@ class SuiteGenerator(object):
                         detail_select=self.get_detail_id_safe(target_module, 'product_short')
                     ))
                     e.instances.append(Instance(id='products', src='jr://fixture/commtrack:products'))
+                    e.instances.append(Instance(id='ledgerdb', src='jr://instance/ledgerdb'))
             except IndexError:
                 pass
 
-        if form and self.app.case_sharing and case_sharing_requires_assertion(form):
+        if self.app.case_sharing and case_sharing_requires_assertion(form):
             self.add_case_sharing_assertion(e)
 
     def configure_entry_careplan_form(self, module, e, form=None, **kwargs):
