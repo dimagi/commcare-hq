@@ -1225,12 +1225,28 @@ class Module(ModuleBase):
         form.source = attachment
         return form
 
-    def add_copied_form(self, from_module, form):
+    def add_insert_form(self, from_module, form, index=None, with_source=False):
         if isinstance(form, Form):
-            self.forms.append(form)
-            return self.get_form(-1)
+            new_form = form
+        elif isinstance(form, AdvancedForm) and not form.actions.get_all_actions():
+            new_form = Form(
+                name=form.name,
+                form_filter=form.form_filter,
+                media_image=form.media_image,
+                media_audio=form.media_audio
+            )
+            new_form._parent = self
+            form._parent = self
+            if with_source:
+                new_form.source = form.source
         else:
             raise IncompatibleFormTypeException()
+
+        if index:
+            self.forms.insert(index, new_form)
+        else:
+            self.forms.append(new_form)
+        return self.get_form(index or -1)
 
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.name, old_lang, new_lang)
@@ -1475,17 +1491,20 @@ class AdvancedModule(ModuleBase):
         form.source = attachment
         return form
 
-    def add_copied_form(self, from_module, form):
+    def add_insert_form(self, from_module, form, index=None, with_source=False):
         if isinstance(form, AdvancedForm):
-            self.forms.append(form)
-            return self.get_form(-1)
+            new_form = form
         elif isinstance(form, Form):
             new_form = AdvancedForm(
                 name=form.name,
+                form_filter=form.form_filter,
                 media_image=form.media_image,
                 media_audio=form.media_audio
             )
+            new_form._parent = self
             form._parent = self
+            if with_source:
+                new_form.source = form.source
             actions = form.active_actions()
             open = actions.get('open_case', None)
             update = actions.get('update_case', None)
@@ -1505,7 +1524,7 @@ class AdvancedModule(ModuleBase):
                     name_path=open.name_path,
                     open_condition=open.condition,
                     case_properties=update.update if update else {},
-                )
+                    )
                 new_form.actions.open_cases.append(base_action)
             elif update or preload or close:
                 base_action = LoadUpdateAction(
@@ -1531,10 +1550,14 @@ class AdvancedModule(ModuleBase):
                         parent_tag=base_action.case_tag if base_action else ''
                     )
                     new_form.actions.open_cases.append(open_subcase_action)
-            self.forms.append(new_form)
-            return self.get_form(-1)
         else:
             raise IncompatibleFormTypeException()
+
+        if index:
+            self.forms.insert(index, new_form)
+        else:
+            self.forms.append(new_form)
+        return self.get_form(index or -1)
 
     def get_case_types(self):
         case_types = set([self.case_type])
@@ -1804,8 +1827,15 @@ class CareplanModule(ModuleBase):
 
         return Detail(type=detail_type, columns=columns)
 
-    def add_copied_form(self, from_module, form):
-        raise IncompatibleFormTypeException()
+    def add_insert_form(self, from_module, form, index=None, with_source=False):
+        if isinstance(form, CareplanForm):
+            if index:
+                self.forms.insert(index, form)
+            else:
+                self.forms.append(form)
+            return self.get_form(index or -1)
+        else:
+            raise IncompatibleFormTypeException()
 
     def requires_case_details(self):
         return True
@@ -2884,14 +2914,14 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         This is intentional.
 
         """
-        forms = self.modules[to_module_id]['forms']
+        to_module = self.get_module(to_module_id)
+        from_module = self.get_module(from_module_id)
         try:
-            forms.insert(i, forms.pop(j) if to_module_id == from_module_id
-                         else self.modules[from_module_id]['forms'].pop(j))
+            form = from_module.forms.pop(j)
+            to_module.add_insert_form(from_module, form, index=i, with_source=True)
         except IndexError:
             raise RearrangeError()
-        self.modules[to_module_id]['forms'] = forms
-        if self.modules[to_module_id]['case_type'] != self.modules[from_module_id]['case_type']:
+        if to_module.case_type != from_module.case_type:
             raise ConflictingCaseTypeError()
 
     def scrub_source(self, source):
@@ -2924,7 +2954,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             del copy_source['unique_id']
 
         to_module = self.get_module(to_module_id)
-        copy_form = to_module.add_copied_form(from_module, FormBase.wrap(copy_source))
+        copy_form = to_module.add_insert_form(from_module, FormBase.wrap(copy_source))
         save_xform(self, copy_form, form.source)
 
         if from_module['case_type'] != to_module['case_type']:

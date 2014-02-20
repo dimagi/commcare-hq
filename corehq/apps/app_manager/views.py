@@ -1652,7 +1652,12 @@ def rearrange(req, domain, app_id, key):
                 messages.warning(req, CASE_TYPE_CONFLICT_MSG,  extra_tags="html")
         elif "modules" == key:
             app.rearrange_modules(i, j)
-    except RearrangeError:
+    except IncompatibleFormTypeException:
+        messages.error(req, _(
+            'The form can not be moved into the desired module.'
+        ))
+        return back_to_main(req, domain, app_id=app_id, module_id=module_id)
+    except RearrangeError, ModuleNotFoundException:
         messages.error(req, _(
             'Oops. '
             'Looks like you got out of sync with us. '
