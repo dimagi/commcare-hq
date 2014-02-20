@@ -5273,8 +5273,8 @@ msgid "Export stock columns?"
 msgstr "Exporter vers Excel"
 
 #: corehq/apps/export/templates/export/customize_export.html:441
-msgid "Automatically convert dates for Excel?"
-msgstr "Convertir automatiquement les dates pour Excel ?"
+msgid "Automatically convert dates for Excel"
+msgstr "Convertir automatiquement les dates pour Excel"
 
 #: corehq/apps/export/templates/export/customize_export.html:444
 msgid "Show Deleted Questions and Advanced Properties"
