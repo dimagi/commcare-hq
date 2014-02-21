@@ -286,7 +286,8 @@ HQ_APPS = (
     'custom.apps.crs_reports',
     'custom.hope',
     'custom.openlmis',
-    'custom.m4change'
+    'custom.m4change',
+    'custom.succeed'
 )
 
 TEST_APPS = ()
@@ -322,6 +323,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     # 'weasyprint',
     'custom.apps.crs_reports',
     'custom.m4change',
+    'custom.succeed'
 
     # submodules with tests that run on travis
     'casexml.apps.case',
@@ -815,6 +817,7 @@ COUCHDB_APPS = [
     'psi',
     'trialconnect',
     'accounting',
+    'succeed',
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
@@ -1042,7 +1045,8 @@ DOMAIN_MODULE_MAP = {
 
     'crs-remind': 'custom.apps.crs_reports',
 
-    'm4change': 'custom.m4change'
+    'm4change': 'custom.m4change',
+    'succeed': 'custom.succeed'
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True
