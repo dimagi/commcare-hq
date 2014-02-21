@@ -82,9 +82,3 @@ def get_groups_for_group(group):
 
     groups.sort(key=attrgetter('name'))
     return groups
-
-def get_redis_client():
-    rcache = cache_core.get_redis_default_cache()
-    if not isinstance(rcache, RedisCache):
-        raise Exception("Could not get redis client. Is redis down?")
-    return rcache.raw_client
