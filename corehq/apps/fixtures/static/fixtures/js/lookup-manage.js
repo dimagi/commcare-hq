@@ -11,7 +11,6 @@ ko.bindingHandlers.clickable = (function () {
 }());
 
 $(function () {
-    var el = $('#fixtures-ui');
     function log (x) {
         console.log(x);
         return x;
@@ -93,16 +92,6 @@ $(function () {
                 self.data_items()[i].fields.push({value: ko.observable(""), tag: field.tag});
             }
         };
-        self.removeField = function (field) {
-            var i,
-                index = self.fields.indexOf(field),
-                itemFields;
-            self.fields.remove(field);
-            for (i = 0; i < self.data_items().length; i += 1) {
-                itemFields = self.data_items()[i].fields;
-                itemFields.remove(itemFields()[index]);
-            }
-        };
         for (var i = 0; i < raw_fields.length; i += 1) {
             self.addField(undefined, undefined, {tag: raw_fields[i]});
         }
@@ -179,7 +168,7 @@ $(function () {
                 return;
             for (var i in self.selectedTables()) {
                 tables.push(self.selectedTables()[i]);
-                FixtureUrl = FixtureUrl + "table_id="+self.selectedTables()[i]+"&";
+                FixtureUrl = FixtureUrl + "table_id=" + self.selectedTables()[i] + "&";
             }
             $("#fixture-download").modal();
             if (tables.length > 0){
@@ -189,7 +178,7 @@ $(function () {
                 }).success(function (response) {
                     $("#downloading").hide();
                     $("#download-complete").show();
-                    $("#file-download-url").attr("href", FixtureFileDownloadUrl+"path="+response.path);
+                    $("#file-download-url").attr("href", FixtureFileDownloadUrl + "path=" + response.path);
                     console.log(response);
                 });
             }
@@ -237,6 +226,8 @@ $(function () {
                     $("#uploadForm")[0].submit();
                 };
     }
+
+    var el = $('#fixtures-ui');
     var app = new App();
     ko.applyBindings(app, el.get(0));
     el.show();
