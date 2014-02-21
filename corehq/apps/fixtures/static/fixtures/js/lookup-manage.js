@@ -194,8 +194,11 @@ $(function () {
             self.data_types.push(dataType);
         };
         self.removeDataType = function (dataType) {
-            self.data_types.destroy(dataType);
-            dataType.save();
+            if (confirm("Are you sure you want to delete the table '" + dataType.tag() + "'")){
+                    dataType.save();                 
+                    self.data_types.destroy(dataType);
+            }
+            return false;
         };
         self.loadData = function () {
             self.loading(self.loading() + 3);
