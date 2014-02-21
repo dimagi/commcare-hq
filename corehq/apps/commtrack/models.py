@@ -921,9 +921,24 @@ class RequisitionCase(CommCareCase):
         return None
 
     def sms_format(self):
-        # TODO needs fixed
-        # return '%s:%s' % (self.get_product().code, self.get_default_value())
-        return 'hey fix me please'
+        if self.requisition_status == RequisitionStatus.REQUESTED:
+            section = 'ct-request'
+        elif self.requisition_status == RequisitionStatus.APPROVED:
+            section = 'ct-approved'
+        else:
+            section = 'stock'
+
+        formatted_strings = []
+        states = StockState.objects.filter(
+            case_id=self._id,
+            section_id=section
+        )
+        for state in states:
+            product = Product.get(state.product_id)
+            formatted_strings.append(
+                '%s:%d' % (product.code, 55.5)
+            )
+        return ' '.join(formatted_strings)
 
     def get_next_action(self):
         req_config = CommtrackConfig.for_domain(self.domain).requisition_config
