@@ -296,7 +296,7 @@ def download_item_lists(request, domain, html_response=False):
           {u'clinics': {'field 2 : property 1': u'lang'}, u'growth_chart': {'field 2 : property 2': u'maxWeight'}}
     """
     type_field_properties = {}
-    get_field_prop_format = lambda x, y: "field " + str(x) +" : property " + str(y) 
+    get_field_prop_format = lambda x, y: "field " + str(x) + " : property " + str(y)
     for data_type in data_types_view:
         # Helpers to generate 'types' sheet
         type_field_properties[data_type.tag] = {}
@@ -320,17 +320,17 @@ def download_item_lists(request, domain, html_response=False):
         for item_row in FixtureDataItem.by_data_type(domain, data_type.get_id):
             data_items_boook_by_type[data_type.tag].append(item_row)
             group_len = len(item_row.get_groups())
-            max_groups = group_len if group_len>max_groups else max_groups
+            max_groups = group_len if group_len > max_groups else max_groups
             user_len = len(item_row.get_users())
-            max_users = user_len if user_len>max_users else max_users
+            max_users = user_len if user_len > max_users else max_users
             for field_key in item_row.fields:
                 max_combos = max_field_prop_combos[field_key]
                 cur_combo_len = len(item_row.fields[field_key].field_list)
                 max_combos = cur_combo_len if cur_combo_len > max_combos else max_combos
                 max_field_prop_combos[field_key] = max_combos
         item_helpers = {
-            "max_users": max_users, 
-            "max_groups": max_groups, 
+            "max_users": max_users,
+            "max_groups": max_groups,
             "max_field_prop_combos": max_field_prop_combos,
         }
         item_helpers_by_type[data_type.tag] = item_helpers
@@ -339,7 +339,7 @@ def download_item_lists(request, domain, html_response=False):
     types_sheet = {"headers": [], "rows": []}
     types_sheet["headers"] = ["UID", DELETE_HEADER, "table_id", 'is_global?']
     types_sheet["headers"].extend(["field %d" % x for x in range(1, max_fields + 1)])
-    field_prop_headers = []   
+    field_prop_headers = []
     for field_num, prop_num in enumerate(field_prop_count):
         if prop_num > 0:
             for c in range(0, prop_num):
@@ -384,9 +384,9 @@ def download_item_lists(request, domain, html_response=False):
                             "prop": property,
                             "count": x
                         })
-                    prop_headers.append("field: %(name)s %(count)s" %{
+                    prop_headers.append("field: %(name)s %(count)s" % {
                         "name": field.field_name,
-                        "count": x                        
+                        "count": x
                     })
                 field_headers.extend(prop_headers)
         item_sheet["headers"] = tuple(
@@ -409,7 +409,7 @@ def download_item_lists(request, domain, html_response=False):
                         for property in field.properties:
                             field_prop_vals.append(field_prop_combo.properties.get(property, None) or "")
                         field_prop_vals.append(field_prop_combo.field_value)
-                    padding_list_len = (max_field_prop_combos[field.field_name] - cur_combo_count)*(cur_prop_count + 1)
+                    padding_list_len = (max_field_prop_combos[field.field_name] - cur_combo_count) * (cur_prop_count + 1)
                     field_prop_vals.extend(empty_padding_list(padding_list_len))
                     # import pdb; pdb.set_trace();
                     field_vals.extend(field_prop_vals)
@@ -511,8 +511,8 @@ class UploadItemLists(TemplateView):
 def upload_fixture_api(request, domain, **kwargs):
     """
         Use following curl-command to test.
-        > curl -v --digest http://127.0.0.1:8000/a/gsid/fixtures/fixapi/ -u user@domain.com:password 
-                -F "file-to-upload=@hqtest_fixtures.xlsx" 
+        > curl -v --digest http://127.0.0.1:8000/a/gsid/fixtures/fixapi/ -u user@domain.com:password
+                -F "file-to-upload=@hqtest_fixtures.xlsx"
                 -F "replace=true"
     """
     response_codes = {"fail": 405, "warning": 402, "success": 200}
@@ -523,7 +523,7 @@ def upload_fixture_api(request, domain, **kwargs):
         "has_no_sheet": "Workbook does not have a sheet called {attr}",
         "unknown_fail": "Fixture upload couldn't succeed due to the following error: {attr}",
     }
-    
+
     def _return_response(code, message):
         resp_json = {}
         resp_json["code"] = code
@@ -550,7 +550,7 @@ def upload_fixture_api(request, domain, **kwargs):
         return _return_response(response_codes["fail"], error_messages["invalid_file"])
 
     try:
-        upload_resp = run_upload(request, domain, workbook, replace=replace) # error handle for other files
+        upload_resp = run_upload(request, domain, workbook, replace=replace)  # error handle for other files
     except WorksheetNotFound as e:
         error_message = error_messages["has_no_sheet"].format(attr=e.title)
         return _return_response(response_codes["fail"], error_message)
@@ -581,7 +581,7 @@ def upload_fixture_api(request, domain, **kwargs):
     if num_unknown_groups:
         resp_json["message"] += "%s %s" % (warn_groups, upload_resp["unknown_groups"])
     if num_unknown_users:
-        resp_json["message"] += "%s%s%s" % (("and following " if num_unknown_groups else "" ), warn_users, upload_resp["unknown_users"])
+        resp_json["message"] += "%s%s%s" % (("and following " if num_unknown_groups else ""), warn_users, upload_resp["unknown_users"])
 
     return HttpResponse(json.dumps(resp_json), mimetype="application/json")
 
@@ -654,9 +654,9 @@ def run_upload(request, domain, workbook, replace=False):
                 else:
                     property_list = []
                 field_with_prop = FixtureTypeField(
-                    field_name =field,
-                    properties =property_list
-                    )
+                    field_name=field,
+                    properties=property_list
+                )
                 type_fields_with_properties.append(field_with_prop)
 
             new_data_type = FixtureDataType(
@@ -693,28 +693,28 @@ def run_upload(request, domain, workbook, replace=False):
                 # Check that type definitions in 'types' sheet vs corresponding columns in the item-sheet MATCH
                 item_fields_list = di['field'].keys()
                 not_in_sheet, not_in_types = diff_lists(item_fields_list, data_type.fields_without_attributes)
-                if len(not_in_sheet)>0:
+                if len(not_in_sheet) > 0:
                     error_message = failure_messages["has_no_field_column"].format(tag=tag, field=not_in_sheet[0])
                     raise ExcelMalformatException(_(error_message))
-                if len(not_in_types)>0:
+                if len(not_in_types) > 0:
                     error_message = failure_messages["has_extra_column"].format(tag=tag, field=not_in_types[0])
                     raise ExcelMalformatException(_(error_message))
 
                 # check that properties in 'types' sheet vs item-sheet MATCH
                 for field in data_type.fields:
-                    if len(field.properties)>0:
+                    if len(field.properties) > 0:
                         sheet_props = di.get(field.field_name, {})
                         sheet_props_list = sheet_props.keys()
                         type_props = field.properties
                         not_in_sheet, not_in_types = diff_lists(sheet_props_list, type_props)
-                        if len(not_in_sheet)>0:
+                        if len(not_in_sheet) > 0:
                             error_message = failure_messages["sheet_has_no_property"].format(
                                 tag=tag,
                                 property=not_in_sheet[0],
                                 field=field.field_name
                             )
                             raise ExcelMalformatException(_(error_message))
-                        if len(not_in_types)>0:
+                        if len(not_in_types) > 0:
                             error_message = failure_messages["sheet_has_extra_property"].format(
                                 tag=tag,
                                 property=not_in_types[0],
@@ -787,7 +787,7 @@ def run_upload(request, domain, workbook, replace=False):
                     old_data_item.fields = item_fields   
                     if old_data_item.domain != domain:
                         old_data_item = new_data_item
-                        messages.error(request, _("'%(UID)s' is not a valid UID. But the new item is created.") % {'UID': di['UID'] })
+                        messages.error(request, _("'%(UID)s' is not a valid UID. But the new item is created.") % {'UID': di['UID']})
                     assert old_data_item.doc_type == FixtureDataItem._doc_type
                     assert old_data_item.data_type_id == data_type.get_id
                     if di[DELETE_HEADER] == "Y" or di[DELETE_HEADER] == "y":
