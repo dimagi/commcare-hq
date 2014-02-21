@@ -781,10 +781,28 @@ class SuiteGenerator(object):
 
         e.instances.extend(get_instances())
 
-        def get_target_module(case_type, with_product_details=False):
-            if module.case_type == case_type:
-                return module
+        def get_target_module(case_type, module_id, with_product_details=False):
+            if module_id:
+                if module_id == module.unique_id:
+                    return module
+
+                try:
+                    target = module.get_app().get_module_by_unique_id(module_id)
+                    if target.case_type != case_type:
+                        raise ParentModuleReferenceError(
+                            "Module with ID %s has incorrect case type" % module_id
+                        )
+                    if with_product_details and not hasattr(target, 'product_details'):
+                        raise ParentModuleReferenceError(
+                            "Module with ID %s has no product details configuration" % module_id
+                        )
+                    return target
+                except KeyError as ex:
+                    raise ParentModuleReferenceError(ex.message)
             else:
+                if case_type == module.case_type:
+                    return module
+
                 target_modules = [mod for mod in module.get_app().modules
                                       if mod.case_type == case_type and
                                          (not with_product_details or hasattr(mod, 'product_details'))]
@@ -804,7 +822,7 @@ class SuiteGenerator(object):
 
             referenced_by = form.actions.actions_meta_by_parent_tag.get(action.case_tag)
 
-            target_module = get_target_module(action.case_type)
+            target_module = get_target_module(action.case_type, action.details_module)
             e.datums.append(SessionDatum(
                 id=action.case_session_var,
                 nodeset=(self.get_nodeset_xpath(action.case_type, target_module, False) + parent_filter),
@@ -820,7 +838,7 @@ class SuiteGenerator(object):
             try:
                 last_action = form.actions.load_update_cases[-1]
                 if last_action.show_product_stock:
-                    target_module = get_target_module(last_action.case_type, True)
+                    target_module = get_target_module(action.case_type, last_action.details_module, True)
                     e.datums.append(SessionDatum(
                         id='throwaway',
                         nodeset="instance('products')/products/product",

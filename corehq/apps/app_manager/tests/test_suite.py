@@ -60,6 +60,14 @@ class SuiteTest(TestCase, TestFileMixin):
     def test_advanced_suite(self):
         self._test_generic_suite('suite-advanced')
 
+    def test_advanced_suite_details(self):
+        app = Application.wrap(self.get_json('suite-advanced'))
+        clinic_module_id = app.get_module(0).unique_id
+        other_module_id = app.get_module(1).unique_id
+        app.get_module(1).get_form(0).actions.load_update_cases[0].details_module = clinic_module_id
+        app.get_module(1).get_form(1).actions.load_update_cases[0].details_module = other_module_id
+        self.assertXmlEqual(self.get_xml('suite-advanced-details'), app.create_suite())
+
     def test_advanced_suite_commtrack(self):
         app = Application.wrap(self.get_json('suite-advanced'))
         app.commtrack_enabled = True

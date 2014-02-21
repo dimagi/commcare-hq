@@ -19,6 +19,7 @@ var AdvancedCase = (function () {
         self.edit = params.edit;
         self.save_url = params.save_url;
         self.caseType = params.caseType;
+        self.module_id = params.module_id;
         self.reserved_words = params.reserved_words;
         self.moduleCaseTypes = params.moduleCaseTypes;
         // `requires` is a ko observable so it can be read by another UI
@@ -60,6 +61,36 @@ var AdvancedCase = (function () {
         self.caseTypes = _.unique(_(self.moduleCaseTypes).map(function (moduleCaseType) {
             return moduleCaseType.case_type;
         }));
+
+        self.case_supports_products = function (case_type) {
+            for (var i = 0; i < self.moduleCaseTypes.length; i++) {
+                if (self.moduleCaseTypes[i].case_type === case_type &&
+                    self.moduleCaseTypes[i].module_type === 'AdvancedModule') {
+                    return true;
+                }
+            }
+        };
+
+        self.module = (function () {
+            var mod = _.findWhere(self.moduleCaseTypes, {id: self.module_id});
+            mod.module_name = '* ' + mod.module_name;
+            return mod;
+        }());
+
+        self.getModulesForCaseType = function (caseType, supportProducts) {
+            var filter = {case_type: caseType};
+            if (supportProducts) {
+                filter.module_type = 'AdvancedModule';
+            }
+            var modules = _.where(self.moduleCaseTypes, filter);
+            if (caseType === self.caseType) {
+                modules = _.reject(modules, function(mod) {
+                    return mod.id === self.module_id;
+                });
+                modules.splice(0, 0, self.module);
+            }
+            return modules;
+        };
 
         var questionMap = {};
         _(self.questions).each(function (question) {
@@ -129,33 +160,6 @@ var AdvancedCase = (function () {
 
         self.config = config;
         self.edit = ko.observable(self.config.edit);
-        self.moduleCaseTypes = config.moduleCaseTypes;
-        self.caseTypes = _.unique(_(self.moduleCaseTypes).map(function (moduleCaseType) {
-            return moduleCaseType.case_type;
-        }));
-
-        self.getCaseTypeLabel = function (caseType) {
-            var module_names = [], label;
-            for (var i = 0; i < self.moduleCaseTypes.length; i++) {
-                if (self.moduleCaseTypes[i].case_type === caseType) {
-                    module_names.push(self.moduleCaseTypes[i].module_name);
-                }
-            }
-            label = module_names.join(', ');
-            if (caseType === self.config.caseType) {
-                label = '*' + label;
-            }
-            return label + ' (' + caseType + ')';
-        };
-
-        self.case_supports_products = function (case_type) {
-            for (var i = 0; i < self.moduleCaseTypes.length; i++) {
-                if (self.moduleCaseTypes[i].case_type === case_type &&
-                    self.moduleCaseTypes[i].module_type === 'AdvancedModule') {
-                    return true;
-                }
-            }
-        };
 
         self.getCaseTags = function (type, action) {
             var tags = [];
@@ -295,6 +299,7 @@ var AdvancedCase = (function () {
                 var index = self.load_update_cases().length;
                 self.load_update_cases.push(LoadUpdateAction.wrap({
                     case_type: config.caseType,
+                    details_module: null,
                     case_tag: 'load_' + config.caseType + index,
                     parent_tag: '',
                     preload: [],
@@ -432,7 +437,7 @@ var AdvancedCase = (function () {
     var LoadUpdateAction = {
         mapping: function (self) {
             return {
-                include: ['case_type', 'case_tag', 'parent_tag', 'close_condition', 'show_product_stock'],
+                include: ['case_type', 'details_module', 'case_tag', 'parent_tag', 'close_condition', 'show_product_stock'],
                 preload: {
                     create: function (options) {
                         return CasePreloadProperty.wrap(options.data,  self);
@@ -459,6 +464,10 @@ var AdvancedCase = (function () {
                     return false;
                 }
             };
+
+            self.available_modules = ko.computed(function () {
+                return config.getModulesForCaseType(self.case_type(), self.show_product_stock());
+            });
 
             self.case_type.subscribe(function (value) {
                 if (!value) {
@@ -569,7 +578,7 @@ var AdvancedCase = (function () {
             var add_circular = function() {
                 // hacky way to prevent trying to access caseConfigViewModel before it is defined
                 self.allow_product_stock = ko.computed(function () {
-                    var supported = self.config.caseConfigViewModel.case_supports_products(self.case_type());
+                    var supported = self.config.case_supports_products(self.case_type());
                     var loadupdatecases = self.config.caseConfigViewModel.load_update_cases;
                     return supported && loadupdatecases.indexOf(self) === loadupdatecases().length - 1;
                 });

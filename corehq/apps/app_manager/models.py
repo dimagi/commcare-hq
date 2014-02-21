@@ -283,6 +283,7 @@ class AdvancedAction(DocumentSchema):
 
 
 class LoadUpdateAction(AdvancedAction):
+    details_module = StringProperty()
     preload = DictProperty()
     show_product_stock = BooleanProperty(default=False)
 
@@ -1206,7 +1207,7 @@ class Module(ModuleBase):
                 model='case',
             )]
         )
-        return Module(
+        module = Module(
             name={(lang or 'en'): name or ugettext("Untitled Module")},
             forms=[],
             case_type='',
@@ -1215,6 +1216,8 @@ class Module(ModuleBase):
                 long=Detail(detail.to_json()),
             ),
         )
+        module.get_or_create_unique_id()
+        return module
 
     def new_form(self, name, lang, attachment=''):
         form = Form(
@@ -1459,7 +1462,7 @@ class AdvancedModule(ModuleBase):
             )]
         )
 
-        return AdvancedModule(
+        module = AdvancedModule(
             name={(lang or 'en'): name or ugettext("Untitled Module")},
             forms=[],
             case_type='',
@@ -1481,6 +1484,8 @@ class AdvancedModule(ModuleBase):
                 long=Detail(),
             ),
         )
+        module.get_or_create_unique_id()
+        return module
 
     def new_form(self, name, lang, attachment=''):
         form = AdvancedForm(
@@ -1558,14 +1563,6 @@ class AdvancedModule(ModuleBase):
         else:
             self.forms.append(new_form)
         return self.get_form(index or -1)
-
-    def get_case_types(self):
-        case_types = set([self.case_type])
-        for form in self.forms:
-            for action in form.actions.get_all_actions():
-                case_types.add(action.case_type)
-
-        return case_types
 
     def requires_case_details(self):
         if self.case_list.show:
@@ -1778,7 +1775,7 @@ class CareplanModule(ModuleBase):
     @classmethod
     def new_module(cls, app, name, lang, target_module_id, target_case_type):
         lang = lang or 'en'
-        return CareplanModule(
+        module = CareplanModule(
             name={lang: name or ugettext("Care Plan")},
             parent_select=ParentSelect(
                 active=True,
@@ -1795,6 +1792,8 @@ class CareplanModule(ModuleBase):
                 long=cls._get_detail(lang, 'task_long'),
             )
         )
+        module.get_or_create_unique_id()
+        return module
 
     @classmethod
     def _get_detail(cls, lang, detail_type):
@@ -2812,6 +2811,14 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if not form.source:
             form.source = load_form_template('register_user.xhtml')
         return form
+
+    def get_module_by_unique_id(self, unique_id):
+        def matches(module):
+            return module.get_or_create_unique_id() == unique_id
+        for obj in self.get_modules():
+            if matches(obj):
+                return obj
+        raise KeyError("Module in app '%s' with unique id '%s' not found" % (self.id, unique_id))
 
     def get_forms(self, bare=True):
         if self.show_user_registration:

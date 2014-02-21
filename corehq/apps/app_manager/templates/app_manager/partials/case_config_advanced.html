@@ -23,15 +23,24 @@
     <div>
             <div>
                 <i class="icon-ok"></i>
-                {% trans "Select case module:" %}
+                {% trans "Select case type:" %}
                 <span class="control-group" data-bind="css: {warning: validate()}">
                     <select data-bind="
                         options: config.caseTypes,
-                        optionsText: $parent.getCaseTypeLabel,
                         value: case_type,
-                        optionsCaption: 'Choose a Module...',
+                        optionsCaption: 'Choose a Case Type...',
                         edit: $root.edit"
                     ></select>
+                    <!-- ko if: actionType == 'load'-->
+                    &nbsp;
+                    {% trans "Case list:" %}
+                    <select data-bind="optstr: available_modules,
+                        optstrValue: 'id',
+                        optstrText: 'module_name',
+                        value: details_module,
+                        edit: $root.edit">
+                    </select>
+                    <!-- /ko -->
                     &nbsp;
                     {% trans "Case Tag:" %}
                     <input type="text" class="input-medium" data-bind="value: case_tag, disable: disable_tag" />
