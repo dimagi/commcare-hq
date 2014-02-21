@@ -32,8 +32,8 @@ class EditDataInterfaceDispatcher(ReportDispatcher):
     def bulk_dispatch(self, request, *args, **kwargs):
         return super(EditDataInterfaceDispatcher, self).dispatch(request, *args, **kwargs)
 
-    def permissions_check(self, report, request, domain=None):
-        if toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, request.user.username):
+    def permissions_check(self, report, request, domain=None, is_navigation_check=False):
+        if is_navigation_check and toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, request.user.username):
             from corehq.apps.importer.base import ImportCases
             if report.split('.')[-1] in [ImportCases.__name__]:
                 try:

@@ -55,7 +55,7 @@ class ReportDispatcher(View):
         """
         return {}
 
-    def permissions_check(self, report, request, domain=None):
+    def permissions_check(self, report, request, domain=None, is_navigation_check=False):
         """
             Override this method to check for appropriate permissions based on the report model
             and other arguments.
@@ -168,7 +168,7 @@ class ReportDispatcher(View):
             report_contexts = []
             for report in report_group:
                 class_name = report.__module__ + '.' + report.__name__
-                if not dispatcher.permissions_check(class_name, request, domain=domain):
+                if not dispatcher.permissions_check(class_name, request, domain=domain, is_navigation_check=True):
                     continue
                 if report.show_in_navigation(
                         domain=domain, project=project, user=couch_user):
@@ -214,7 +214,7 @@ class ProjectReportDispatcher(ReportDispatcher):
     def dispatch(self, request, *args, **kwargs):
         return super(ProjectReportDispatcher, self).dispatch(request, *args, **kwargs)
 
-    def permissions_check(self, report, request, domain=None):
+    def permissions_check(self, report, request, domain=None, is_navigation_check=False):
         if domain is None:
             return False
         return request.couch_user.can_view_report(domain, report)
@@ -234,7 +234,7 @@ class AdminReportDispatcher(ReportDispatcher):
     prefix = 'admin_report'
     map_name = 'ADMIN_REPORTS'
 
-    def permissions_check(self, report, request, domain=None):
+    def permissions_check(self, report, request, domain=None, is_navigation_check=False):
         return hasattr(request, 'couch_user') and request.user.has_perm("is_superuser")
 
 
