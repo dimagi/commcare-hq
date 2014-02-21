@@ -1,0 +1,94 @@
+{% extends 'hqwebapp/base_page.html' %}
+{% load url from future %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load timezone_tags %}
+
+{% block title %}{% trans "Edit Feature Flag: " %}{{ toggle.slug }}{% endblock %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static 'hqwebapp/js/main.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
+    <script src="{% static 'formdesigner/js/lib/underscore-1.5.2.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+<script>
+    $(function(){
+        function ToggleView() {
+            var self = this;
+            self.users = ko.observableArray();
+
+            self.init = function (user_list) {
+                self.users.removeAll();
+                _(user_list).each(function (user) {
+                    self.users.push({
+                        value: ko.observable(user)
+                    });
+                });
+            };
+
+            self.addUser = function () {
+                self.users.push({
+                    value: ko.observable()
+                });
+                self.change();
+            };
+
+            self.removeUser = function (user) {
+                self.users.remove(user);
+                self.change();
+            };
+
+            self.change = function () {
+                self.saveButton.fire('change');
+            };
+
+            self.saveButton = COMMCAREHQ.SaveButton.init({
+                unsavedMessage: "You have unchanged changes",
+                save: function () {
+                    var users = _.map(self.users(), function (user) {
+                        return user.value();
+                    });
+                    console.log(users);
+                    self.saveButton.ajax({
+                        type: 'post',
+                        url: "{% url "edit_toggle" toggle.slug %}",
+                        data: {
+                            user_list: JSON.stringify(users)
+                        },
+                        dataType: 'json',
+                        success: function (data) {
+                            self.init(data.user_list);
+                        }
+                    });
+                }
+            });
+        }
+
+        var home = $('#toggle_editing_ko');
+        var view = new ToggleView();
+        view.init({{ toggle.enabled_users|JSON }});
+        ko.applyBindings(view, home.get(0));
+        home.on('change', 'input', view.change);
+    });
+</script>
+{% endblock %}
+
+{% block page_content %}
+    <div id="toggle_editing_ko">
+        <div data-bind="saveButton: saveButton"></div>
+        <h4>{% trans "Enabled users" %}</h4>
+        <!-- ko foreach: users -->
+        <div class="row">
+            <div class="span1">
+                <a href="#" class="btn btn-danger" data-bind="click: $parent.removeUser"><i class="icon-trash"></i></a>
+            </div>
+            <div class="span6">
+                <input type="text" data-bind="value: value">
+            </div>
+        </div>
+        <!-- /ko -->
+        <button class="btn btn-success" data-bind="click: addUser"><i class="icon-plus"></i> {% trans "Add User" %}</button>
+    </div>
+{% endblock %}

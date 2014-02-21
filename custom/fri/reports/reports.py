@@ -1,14 +1,17 @@
 import pytz
 import logging
+import cgi
+from datetime import datetime, time, timedelta
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
+from corehq.apps.domain.models import Domain
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.util import format_datatables_data
-from custom.fri.models import FRISMSLog
+from custom.fri.models import FRISMSLog, PROFILE_DESC
 from custom.fri.reports.filters import InteractiveParticipantFilter, RiskProfileFilter
-from custom.fri.api import get_message_bank, add_metadata
+from custom.fri.api import get_message_bank, add_metadata, get_date
 from corehq.apps.sms.models import INCOMING, OUTGOING
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.models import CommCareCase
@@ -19,8 +22,18 @@ from custom.fri.api import get_interactive_participants
 from django.core.urlresolvers import reverse
 from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
 
+RESPONSE_NOT_APPLICABLE = 1
+NO_RESPONSE = 2
+
 class FRIReport(CustomProjectReport, GenericTabularReport):
     _interactive_participants = None
+    _domain_obj = None
+
+    @property
+    def domain_obj(self):
+        if not self._domain_obj:
+            self._domain_obj = Domain.get_by_name(self.domain, strict=True)
+        return self._domain_obj
 
     @property
     def interactive_participants(self):
@@ -54,7 +67,7 @@ class MessageBankReport(FRIReport):
     def headers(self):
         cols = [
             DataTablesColumn(_("Message Text")),
-            DataTablesColumn(_("Message ID")),
+            DataTablesColumn(_("Risk Profile")),
         ]
         for case in self.interactive_participants:
             header_text = case.get_case_property("name_and_pid")
@@ -73,11 +86,16 @@ class MessageBankReport(FRIReport):
             data[case._id] = self.get_participant_message_counts(message_bank_messages, case)
 
         for entry in message_bank_messages:
-            if risk_profile and risk_profile != entry["message"].risk_profile:
+            msg_risk_profile = entry["message"].risk_profile
+            if risk_profile and risk_profile != msg_risk_profile:
                 continue
+            msg_risk_profile_desc = None
+            if msg_risk_profile:
+                msg_risk_profile_desc = PROFILE_DESC.get(msg_risk_profile)
+            msg_risk_profile_desc = msg_risk_profile_desc or "-"
             row = [
                 self._fmt(entry["message"].message),
-                self._fmt(entry["message"].fri_id or "-"),
+                self._fmt2(entry["message"].fri_id, msg_risk_profile_desc),
             ]
             for case in self.interactive_participants:
                 row.append(self._fmt(data[case._id][entry["message"]._id]))
@@ -98,7 +116,7 @@ class MessageBankReport(FRIReport):
             result[entry["message"]._id] = 0
         participant_messages = self.get_participant_messages(case)
         for sms in participant_messages:
-            if sms.chat_user_id is not None:
+            if sms.xforms_session_couch_id is None and sms.direction == OUTGOING:
                 if not sms.fri_message_bank_lookup_completed:
                     add_metadata(sms, message_bank_messages)
                 if sms.fri_message_bank_message_id in result:
@@ -107,6 +125,11 @@ class MessageBankReport(FRIReport):
 
     def _fmt(self, val):
         return format_datatables_data(val, val)
+
+    def _fmt2(self, val1, val2):
+        val1 = cgi.escape(val1, True)
+        val2 = cgi.escape(val2, True)
+        return self.table_cell(val1, '<span style="display: none;">%s</span><span>%s</span>' % (val1, val2))
 
 class MessageReport(FRIReport, DatespanMixin):
     name = ugettext_noop('Message Report')
@@ -275,4 +298,122 @@ class PHEDashboardReport(FRIReport):
     def _open_chat_action(self, case_id):
         url = reverse("sms_chat", args=[self.domain, case_id])
         return "window.open('%s', '_blank', 'location=no,menubar=no,scrollbars=no,status=no,toolbar=no,height=400,width=400');" % url
+
+class SurveyResponsesReport(FRIReport):
+    name = ugettext_noop("Survey Responses")
+    slug = "fri_survey_responses"
+    description = ugettext_noop("Shows information pertaining to survey responses.")
+    emailable = False
+
+    @property
+    def headers(self):
+        cols = [
+            DataTablesColumn(_("PID")),
+            DataTablesColumn(_("Name")),
+            DataTablesColumn(_("Arm")),
+            DataTablesColumn(_("Week 1")),
+            DataTablesColumn(_("Week 2")),
+            DataTablesColumn(_("Week 3")),
+            DataTablesColumn(_("Week 4")),
+            DataTablesColumn(_("Week 5")),
+            DataTablesColumn(_("Week 6")),
+            DataTablesColumn(_("Week 7")),
+            DataTablesColumn(_("Week 8")),
+        ]
+        header = DataTablesHeader(*cols)
+        header.custom_sort = [[0, "asc"]]
+        return header
+
+    @property
+    def rows(self):
+        participants = self.get_participants()
+        result = []
+        for case in participants:
+            pid = case.get_case_property("pid")
+            study_arm = case.get_case_property("study_arm")
+            registration_date = get_date(case, "start_date")
+            if registration_date is None:
+                continue
+            first_survey_date = self.get_first_tuesday(registration_date)
+            row = [
+                self._fmt(pid),
+                self._fmt(case.name),
+                self._fmt(study_arm),
+            ]
+            for i in range(8):
+                next_survey_date = first_survey_date + timedelta(days=7*i)
+                response = self.get_first_survey_response(case, next_survey_date)
+                if response == RESPONSE_NOT_APPLICABLE:
+                    row.append(self._fmt("-"))
+                elif response == NO_RESPONSE:
+                    row.append(self._fmt(_("No Response")))
+                else:
+                    response_timestamp = tz_utils.adjust_datetime_to_timezone(
+                        response.date, pytz.utc.zone, self.domain_obj.default_timezone)
+                    row.append(self._fmt_timestamp(response_timestamp))
+            result.append(row)
+        return result
+
+    def get_first_tuesday(self, dt):
+        while dt.weekday() != 1:
+            dt = dt + timedelta(days=1)
+        return dt
+
+    def get_participants(self):
+        result = CommCareCase.view("hqcase/types_by_domain",
+                                   key=[self.domain, "participant"],
+                                   include_docs=True,
+                                   reduce=False).all()
+        local_now = tz_utils.adjust_datetime_to_timezone(
+            datetime.utcnow(), pytz.utc.zone, self.domain_obj.default_timezone)
+        local_date = local_now.date()
+
+        def filter_function(case):
+            registration_date = get_date(case, "start_date")
+            if registration_date is None:
+                return False
+            first_tuesday = self.get_first_tuesday(registration_date)
+            end_date = first_tuesday + timedelta(days=56)
+            return end_date >= local_date
+
+        result = filter(filter_function, result)
+        return result
+
+    def get_first_survey_response(self, case, dt):
+        timestamp_start = datetime.combine(dt, time(20, 45))
+        timestamp_start = tz_utils.adjust_datetime_to_timezone(
+            timestamp_start, self.domain_obj.default_timezone, pytz.utc.zone)
+        timestamp_start = timestamp_start.replace(tzinfo=None)
+        timestamp_start = json_format_datetime(timestamp_start)
+
+        timestamp_end = datetime.combine(dt + timedelta(days=1), time(11, 0))
+        timestamp_end = tz_utils.adjust_datetime_to_timezone(
+            timestamp_end, self.domain_obj.default_timezone, pytz.utc.zone)
+        timestamp_end = timestamp_end.replace(tzinfo=None)
+        if timestamp_end > datetime.utcnow():
+            return RESPONSE_NOT_APPLICABLE
+        timestamp_end = json_format_datetime(timestamp_end)
+
+        all_inbound = FRISMSLog.view(
+            "sms/by_recipient",
+            startkey=["CommCareCase", case._id, "SMSLog", INCOMING, timestamp_start],
+            endkey=["CommCareCase", case._id, "SMSLog", INCOMING, timestamp_end],
+            reduce=False,
+            include_docs=True
+        ).all()
+
+        survey_responses = filter(lambda s: s.xforms_session_couch_id is not None, all_inbound)
+        if len(survey_responses) > 0:
+            return survey_responses[0]
+        else:
+            return NO_RESPONSE
+
+    def _fmt(self, val):
+        return format_datatables_data(val, val)
+
+    def _fmt_timestamp(self, timestamp):
+        return self.table_cell(
+            timestamp,
+            timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+        )
 

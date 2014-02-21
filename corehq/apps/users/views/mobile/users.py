@@ -56,7 +56,7 @@ class EditCommCareUserView(BaseFullEditUserView):
             if user.is_deleted():
                 self.template_name = "users/deleted_account.html"
             return user
-        except (ResourceNotFound, CouchUser.AccountTypeError):
+        except (ResourceNotFound, CouchUser.AccountTypeError, KeyError):
             raise Http404()
 
     @property
@@ -438,7 +438,7 @@ def archive_commcare_user(request, domain, user_id, is_active=False):
 def delete_commcare_user(request, domain, user_id):
     user = CommCareUser.get_by_user_id(user_id, domain)
     user.retire()
-    messages.success(request, "User %s and all their submissions have been permanently deleted" % user.username)
+    messages.success(request, "User %s has been deleted. All their submissions and cases will be permanently deleted in the next few minutes" % user.username)
     return HttpResponseRedirect(reverse('commcare_users', args=[domain]))
 
 @require_can_edit_commcare_users
@@ -658,7 +658,7 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
 @require_can_edit_commcare_users
 def download_commcare_users(request, domain):
     response = HttpResponse(mimetype=Format.from_format('xlsx').mimetype)
-    response['Content-Disposition'] = 'attachment; filename=%s_users.xlsx' % domain
+    response['Content-Disposition'] = 'attachment; filename="%s_users.xlsx"' % domain
 
     try:
         dump_users_and_groups(response, domain)

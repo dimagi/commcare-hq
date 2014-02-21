@@ -7,6 +7,7 @@ import hashlib
 from couchdbkit.exceptions import ResourceConflict
 from couchdbkit.ext.django.schema import *
 from couchdbkit.schema import LazyDict
+from dimagi.utils.couch.resource_conflict import retry_resource
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 import magic
@@ -74,7 +75,8 @@ class CommCareMultimedia(SafeSaveDocument):
     def license(self):
         return self.licenses[0] if self.licenses else None
 
-    def update_or_add_license(self, domain, type="", author="", attribution_notes="", org=""):
+    @retry_resource(3)
+    def update_or_add_license(self, domain, type="", author="", attribution_notes="", org="", should_save=True):
         for license in self.licenses:
             if license.domain == domain:
                 license.type = type or license.type
@@ -87,7 +89,8 @@ class CommCareMultimedia(SafeSaveDocument):
                                         attribution_notes=attribution_notes, organization=org)
             self.licenses.append(license)
 
-        self.save()
+        if should_save:
+            self.save()
 
     def url(self):
         return reverse("hqmedia_download", args=[self.doc_type, self._id])

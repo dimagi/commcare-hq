@@ -6,7 +6,7 @@ import sys, os
 from django.contrib import messages
 
 # odd celery fix
-import djcelery;
+import djcelery
 
 djcelery.setup_loader()
 
@@ -181,6 +181,7 @@ HQ_APPS = (
     'hqscripts',
     'casexml.apps.case',
     'casexml.apps.phone',
+    'casexml.apps.stock',
     'corehq.apps.cleanup',
     'corehq.apps.cloudcare',
     'corehq.apps.smsbillables',
@@ -195,6 +196,7 @@ HQ_APPS = (
     'corehq.apps.hqmedia',
     'corehq.apps.locations',
     'corehq.apps.commtrack',
+    'corehq.apps.consumption',
     'couchforms',
     'couchexport',
     'couchlog',
@@ -228,6 +230,7 @@ HQ_APPS = (
     'corehq.apps.ivr',
     'corehq.apps.tropo',
     'corehq.apps.twilio',
+    'corehq.apps.megamobile',
     'corehq.apps.kookoo',
     'corehq.apps.sislog',
     'corehq.apps.yo',
@@ -243,6 +246,7 @@ HQ_APPS = (
     'corehq.apps.api',
     'corehq.apps.indicators',
     'corehq.apps.cachehq',
+    'corehq.apps.toggle_ui',
     'corehq.couchapps',
     'custom.apps.wisepill',
     'custom.fri',
@@ -282,6 +286,8 @@ HQ_APPS = (
     'custom.apps.crs_reports',
     'custom.hope',
     'custom.openlmis',
+    
+    'custom.m4change'
 )
 
 TEST_APPS = ()
@@ -299,6 +305,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'corehq.apps.sislog',
     'corehq.apps.telerivet',
     'corehq.apps.tropo',
+    'corehq.apps.megamobile',
     'corehq.apps.yo',
     'crispy_forms',
     'django_extensions',
@@ -315,6 +322,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'south',
     # 'weasyprint',
     'custom.apps.crs_reports',
+    'custom.m4change',
 
     # submodules with tests that run on travis
     'casexml.apps.case',
@@ -398,6 +406,7 @@ SERVER_EMAIL = 'commcarehq-noreply@dimagi.com' #the physical server emailing - d
 DEFAULT_FROM_EMAIL = 'commcarehq-noreply@dimagi.com'
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 CCHQ_BUG_REPORT_EMAIL = 'commcarehq-bug-reports@dimagi.com'
+BILLING_EMAIL = 'billing-comm@dimagi.com'
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 
 SERVER_ENVIRONMENT = 'localdev'
@@ -583,11 +592,17 @@ IVR_OUTBOUND_RETRIES = 3
 IVR_OUTBOUND_RETRY_INTERVAL = 10
 
 # List of Fluff pillow classes that ctable should process diffs for
+# deprecated - use IndicatorDocument.save_direct_to_sql
 FLUFF_PILLOW_TYPES_TO_SQL = {
     'UnicefMalawiFluff': 'SQL',
     'MalariaConsortiumFluff': 'SQL',
     'CareSAFluff': 'SQL',
+    'AncHmisCaseFluff': 'SQL',
 }
+
+PREVIEWER_RE = '^$'
+
+MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
 
 try:
     #try to see if there's an environmental variable set for local_settings
@@ -615,6 +630,11 @@ LOGGING = {
             'format': '%(asctime)s %(levelname)s %(module)s %(message)s'
         },
     },
+    'filters': {
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse'
+        }
+    },
     'handlers': {
         'pillowtop': {
             'level': 'INFO',
@@ -638,6 +658,7 @@ LOGGING = {
         },
         'mail_admins': {
             'level': 'ERROR',
+            'filters': ['require_debug_false'],
             'class': 'django.utils.log.AdminEmailHandler',
         },
         'sentry': {
@@ -737,6 +758,7 @@ COUCHDB_APPS = [
     'cleanup',
     'cloudcare',
     'commtrack',
+    'consumption',
     'couch',
     # This is necessary for abstract classes in dimagi.utils.couch.undo; otherwise breaks tests
     'couchdbkit_aggregate',
@@ -866,6 +888,7 @@ SMS_LOADED_BACKENDS = [
     "corehq.apps.sms.backend.test.TestBackend",
     "corehq.apps.grapevine.api.GrapevineBackend",
     "corehq.apps.twilio.models.TwilioBackend",
+    "corehq.apps.megamobile.api.MegamobileBackend",
 ]
 
 # These are functions that can be called to retrieve custom content in a reminder event.
@@ -907,7 +930,10 @@ PILLOWTOPS = {
         'corehq.pillows.domain.DomainPillow',
         'corehq.pillows.user.UserPillow',
         'corehq.pillows.application.AppPillow',
+        'corehq.pillows.group.GroupPillow',
         'corehq.pillows.sms.SMSPillow',
+        'corehq.pillows.user.GroupToUserPillow',
+        'corehq.pillows.user.UnknownUsersPillow',
     ],
     'core_ext': [
         'corehq.pillows.reportcase.ReportCasePillow',
@@ -924,6 +950,7 @@ PILLOWTOPS = {
         'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
         'custom.reports.care_sa.models.CareSAFluffPillow',
         'custom.reports.mc.models.MalariaConsortiumFluffPillow',
+        'custom.m4change.models.AncHmisCaseFluffPillow',
     ],
     'mvp': [
         'corehq.apps.indicators.pillows.FormIndicatorPillow',
@@ -932,9 +959,6 @@ PILLOWTOPS = {
     'trialconnect': [
         'custom.trialconnect.smspillow.TCSMSPillow',
     ],
-    'commtrack': [
-        'corehq.pillows.commtrack.ConsumptionRatePillow',
-    ]
 }
 
 for k, v in  LOCAL_PILLOWTOPS.items():
@@ -1017,7 +1041,9 @@ DOMAIN_MODULE_MAP = {
     'tc-test': 'custom.trialconnect',
     'trialconnect': 'custom.trialconnect',
 
-    'crs-remind': 'custom.apps.crs_reports'
+    'crs-remind': 'custom.apps.crs_reports',
+
+    'm4change': 'custom.m4change'
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True

@@ -66,7 +66,8 @@ from corehq.apps.reports import util as report_utils
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
 from corehq.apps.app_manager.models import Application, get_app, DetailColumn, Form, FormActions,\
     AppEditingError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, \
-    DeleteApplicationRecord, str_to_cls, validate_lang, SavedAppBuild, ParentSelect, Module, CareplanModule, CareplanForm, CareplanGoalForm, CareplanTaskForm, CommTrackModule, CommTrackForm
+    DeleteApplicationRecord, str_to_cls, validate_lang, SavedAppBuild, ParentSelect, Module, CareplanModule, \
+    CareplanForm, CareplanGoalForm, CareplanTaskForm, CommTrackModule, CommTrackForm, ModuleNotFoundException
 from corehq.apps.app_manager.models import DETAIL_TYPES, import_app as import_app_util, SortElement
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST
@@ -79,7 +80,7 @@ require_can_edit_apps = require_permission(Permissions.edit_apps)
 
 
 def set_file_download(response, filename):
-    response["Content-Disposition"] = "attachment; filename=%s" % filename
+    response["Content-Disposition"] = 'attachment; filename="%s"' % filename
 
 
 def _encode_if_unicode(s):
@@ -678,7 +679,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
             module = app.get_module(module_id)
         if form_id:
             form = module.get_form(form_id)
-    except IndexError:
+    except ModuleNotFoundException:
         return bail(req, domain, app_id)
 
     context = get_apps_base_context(req, domain, app)
@@ -808,7 +809,8 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None,
         'edit': True,
         'nav_form': form if not is_user_registration else '',
         'formdesigner': True,
-        'multimedia_object_map': app.get_object_map()
+        'multimedia_object_map': app.get_object_map(),
+        'sessionid': req.COOKIES.get('sessionid')
     })
     return render(req, 'app_manager/form_designer.html', context)
 
@@ -948,7 +950,10 @@ def undo_delete_app(request, domain, record_id):
 def delete_module(req, domain, app_id, module_id):
     "Deletes a module from an app"
     app = get_app(domain, app_id)
-    record = app.delete_module(module_id)
+    try:
+        record = app.delete_module(module_id)
+    except ModuleNotFoundException:
+        return bail(req, domain, app_id)
     messages.success(req,
         'You have deleted a module. <a href="%s" class="post-link">Undo</a>' % reverse('undo_delete_module', args=[domain, record.get_id]),
         extra_tags='html'

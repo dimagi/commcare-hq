@@ -17,4 +17,3 @@ class XMLParsingTest(TestCase):
             _parse_xml(unicode(xml_data))
         except:    
             self.fail("Parsing unicode data shouldn't fail!")
-        

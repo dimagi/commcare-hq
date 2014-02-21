@@ -94,6 +94,7 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
         parent_external_id = fields_to_update.pop('parent_external_id', None)
         parent_type = fields_to_update.pop('parent_type', config.case_type)
         parent_ref = fields_to_update.pop('parent_ref', 'parent')
+        to_close = fields_to_update.pop('close', False)
 
         if any([lookup_id and lookup_id in ids_seen for lookup_id in [search_id, parent_id, parent_external_id]]):
             # clear out the queue to make sure we've processed any potential
@@ -190,6 +191,8 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
                 extras['external_id'] = external_id
             if uploaded_owner_id:
                 extras['owner_id'] = owner_id
+            if to_close == 'yes':
+                extras['close'] = True
 
             try:
                 caseblock = CaseBlock(

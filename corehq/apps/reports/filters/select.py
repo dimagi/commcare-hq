@@ -81,7 +81,7 @@ class YearFilter(BaseSingleOptionFilter):
     @property
     def options(self):
         start_year = getattr(settings, 'START_YEAR', 2008)
-        years = [(y, y) for y in range(start_year, datetime.datetime.utcnow().year + 1)]
+        years = [(unicode(y), y) for y in range(start_year, datetime.datetime.utcnow().year + 1)]
         years.reverse()
         return years
 

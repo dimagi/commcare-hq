@@ -1,6 +1,7 @@
 from couchdbkit import Database
 from django.core.management.base import LabelCommand, CommandError
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.util import reverse_indices
 from couchforms.models import XFormInstance
 
 
@@ -16,11 +17,26 @@ class Command(LabelCommand):
         case_id = args[1]
         domain = args[2] if len(args) > 2 else None
 
-        print 'getting case'
-        case = CommCareCase.wrap(sourcedb.get(case_id))
-        if domain is not None:
-            case.domain = domain
-        case.save(force_update=True)
+        def _migrate_case(case_id):
+            print 'getting case %s' % case_id
+            case = CommCareCase.wrap(sourcedb.get(case_id))
+            original_domain = case.domain
+            if domain is not None:
+                case.domain = domain
+            case.save(force_update=True)
+            return case, original_domain
+
+        case, orig_domain = _migrate_case(case_id)
+        print 'copying %s parent cases' % len(case.indices)
+        for index in case.indices:
+            _migrate_case(index.referenced_id)
+
+        # hack, set the domain back to make sure we get the reverse indices correctly
+        case.domain = orig_domain
+        child_indices = reverse_indices(sourcedb, case)
+        print 'copying %s child cases' % len(child_indices)
+        for index in child_indices:
+            _migrate_case(index.referenced_id)
 
         print 'copying %s xforms' % len(case.xform_ids)
 

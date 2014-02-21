@@ -24,6 +24,7 @@ from dimagi.utils.modules import to_function
 from dimagi.utils.web import json_request, json_response
 from dimagi.utils.parsing import string_to_boolean
 from corehq.apps.reports.cache import CacheableRequestMixIn, request_cache
+from django.utils.translation import ugettext
 
 CHART_SPAN_MAP = {1: '10', 2: '6', 3: '4', 4: '3', 5: '2', 6: '2'}
 
@@ -271,7 +272,7 @@ class GenericReportView(CacheableRequestMixIn):
     @property
     @memoized
     def rendered_report_title(self):
-        return self.name
+        return ugettext(self.name)
 
     @property
     @memoized
@@ -841,12 +842,6 @@ class GenericTabularReport(GenericReportView):
         2. cell['sort_key']
         3. str(cell)
         """
-        try:
-            import xlwt
-        except ImportError:
-            raise Exception("It doesn't look like this machine is configured for "
-                            "excel export. To export to excel you have to run the "
-                            "command:  easy_install xlutils")
         headers = self.headers
         formatted_rows = self.rows
 
@@ -1020,14 +1015,18 @@ class ElasticTabularReport(GenericTabularReport):
             return 0
 
 
-class ElasticProjectInspectionReport(ProjectInspectionReportParamsMixin, ElasticTabularReport):
+class GetParamsMixin(object):
     @property
     def shared_pagination_GET_params(self):
         """
         Override the params and applies all the params of the originating view to the GET
         so as to get sorting working correctly with the context of the GET params
         """
-        ret = super(ElasticTabularReport, self).shared_pagination_GET_params
+        ret = super(GetParamsMixin, self).shared_pagination_GET_params
         for k, v in self.request.GET.iterlists():
             ret.append(dict(name=k, value=v))
         return ret
+
+
+class ElasticProjectInspectionReport(GetParamsMixin, ProjectInspectionReportParamsMixin, ElasticTabularReport):
+    pass

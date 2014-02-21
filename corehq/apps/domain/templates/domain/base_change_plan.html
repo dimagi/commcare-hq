@@ -1,0 +1,18 @@
+{% extends "settings/base_template.html" %}
+{% load i18n %}
+
+{% block main_column %}
+<ol class="breadcrumb">
+    {% for step in steps %}
+    <li>
+        <a href="{{ step.url }}" class="breadcrumb-{{ forloop.counter }}">{{ step.title }}</a>
+        {% if not forloop.last %}<span class="divider">&gt;</span>{% endif %}
+    </li>
+    {% endfor %}
+</ol>
+<div class="page-header">
+  <h2>{{ step_title }}</h2>
+</div>
+{% block form_content %}
+{% endblock %}
+{% endblock %}

@@ -20,6 +20,7 @@ from redis_cache.cache import RedisCache
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.timezones import utils as tz_utils
 from corehq.apps.domain.models import Domain
+from dimagi.utils.logging import notify_exception
 
 # (time, length in minutes), indexed by day, where Monday=0, Sunday=6
 WINDOWS = (
@@ -43,9 +44,9 @@ def get_interactive_participants(domain):
     for case in cases:
         study_arm = case.get_case_property("study_arm")
         if isinstance(study_arm, basestring) and study_arm.upper() == "A" and not case.closed:
-            start_date = case.get_case_property("start_date")
-            if not isinstance(start_date, date):
-                start_date = parse(start_date).date()
+            start_date = get_date(case, "start_date")
+            if start_date is None:
+                continue
             end_date = start_date + timedelta(days=55)
             if current_date >= start_date and current_date <= end_date:
                 result.append(case)
@@ -166,15 +167,28 @@ def get_randomized_message(case, order):
 
 def get_date(case, prop):
     value = case.get_case_property(prop)
-    if not isinstance(value, date):
-        value = parse(value).date()
-    return value
+    # A datetime is a date, but a date is not a datetime
+    if isinstance(value, datetime):
+        return datetime.date()
+    elif isinstance(value, date):
+        return value
+    elif isinstance(value, basestring):
+        try:
+            value = parse(value).date()
+        except:
+            value = None
+        return value
+    else:
+        return None
 
 def get_message_offset(case):
     previous_sunday = get_date(case, "previous_sunday")
-    registration_date = get_date(case, "registration_date")
-    delta = registration_date - previous_sunday
-    return delta.days * 5
+    registration_date = get_date(case, "start_date")
+    if previous_sunday is not None and registration_date is not None:
+        delta = registration_date - previous_sunday
+        return delta.days * 5
+    else:
+        return None
 
 def get_num_missed_windows(case):
     """
@@ -216,7 +230,15 @@ def custom_content_handler(reminder, handler, recipient, catch_up=False):
     if catch_up:
         order = reminder.current_event_sequence_num
     else:
-        order = get_message_number(reminder) - get_message_offset(case)
+        message_offset = get_message_offset(case)
+        try:
+            assert message_offset is not None
+        except:
+            notify_exception(None,
+                message=("Couldn't calculate the message offset. Check that "
+                         "the right case properties are set."))
+            return None
+        order = get_message_number(reminder) - message_offset
 
     num_missed_windows = get_num_missed_windows(case)
     if (((not catch_up) and (order < num_missed_windows)) or

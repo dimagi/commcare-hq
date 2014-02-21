@@ -5,15 +5,21 @@ from couchdbkit.ext.django.schema import DateTimeProperty, StringProperty
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.utils.translation import ugettext_lazy as _
+from corehq.apps.accounting.downgrade import DomainDowngradeActionHandler
+from corehq.apps.users.models import WebUser
 
 from django_prbac.models import Role
 from dimagi.utils.couch.database import SafeSaveDocument
 
-from corehq.apps.accounting.exceptions import CreditLineError, AccountingError
-from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES, assure_domain_instance
+from corehq.apps.accounting.exceptions import (CreditLineError, AccountingError, SubscriptionAdjustmentError,
+                                               SubscriptionDowngradeError, NewSubscriptionError)
+from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES, assure_domain_instance, get_change_status
 
 global_logger = logging.getLogger(__name__)
+integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
 
 
 class BillingAccountType(object):
@@ -97,6 +103,34 @@ class CreditAdjustmentReason(object):
     )
 
 
+class SubscriptionAdjustmentReason(object):
+    CREATE = "CREATE"
+    MODIFY = "MODIFY"
+    CANCEL = "CANCEL"
+    UPGRADE = "UPGRADE"
+    DOWNGRADE = "DOWNGRADE"
+    SWITCH = "SWITCH"
+    CHOICES = (
+        (CREATE, "A new subscription created from scratch."),
+        (MODIFY, "Some part of the subscription was modified...likely a date."),
+        (CANCEL, "The subscription was cancelled with no followup subscription."),
+        (UPGRADE, "The subscription was upgraded to the related subscription."),
+        (DOWNGRADE, "The subscription was downgraded to the related subscription."),
+        (SWITCH, "The plan was changed to the related subscription and was neither an upgrade or downgrade.")
+    )
+
+
+class SubscriptionAdjustmentMethod(object):
+    USER = "USER"
+    INTERNAL = "INTERNAL"
+    TASK = "TASK"
+    CHOICES = (
+        (USER, "This modification was made through a public UI."),
+        (INTERNAL, "This modification was made through an internal UI."),
+        (TASK, "The subscription was modified by a task (like an invoice)."),
+    )
+
+
 class Currency(models.Model):
     """
     Keeps track of the current conversion rates so that we don't have to poll the free, but rate limited API
@@ -117,12 +151,21 @@ class Currency(models.Model):
 class BillingAccountAdmin(models.Model):
     web_user = models.CharField(max_length=80, unique=True, db_index=True)
 
+    @classmethod
+    def get_admin_status_and_account(cls, web_user, domain):
+        if not isinstance(web_user, WebUser):
+            raise ValueError("web_user should be an instance of WebUser")
+        account = BillingAccount.get_account_by_domain(domain)
+        if account is None:
+            return web_user.is_domain_admin(domain), None
+        admin = account.billing_admins.filter(web_user=web_user.username)
+        return admin.count() > 0, account
 
 class BillingAccount(models.Model):
     """
     The key model that links a Subscription to its financial source and methods of payment.
     """
-    name = models.CharField(max_length=40, db_index=True)
+    name = models.CharField(max_length=200, db_index=True)
     salesforce_account_id = models.CharField(
         db_index=True,
         max_length=80,
@@ -131,7 +174,8 @@ class BillingAccount(models.Model):
         help_text="This is how we link to the salesforce account",
     )
     created_by = models.CharField(max_length=80)
-    date_created = models.DateField(auto_now_add=True)
+    created_by_domain = models.CharField(max_length=25, null=True, blank=True)
+    date_created = models.DateTimeField(auto_now_add=True)
     billing_admins = models.ManyToManyField(BillingAccountAdmin, null=True)
     currency = models.ForeignKey(Currency, on_delete=models.PROTECT)
     is_auto_invoiceable = models.BooleanField(default=False)
@@ -147,40 +191,67 @@ class BillingAccount(models.Model):
         return 0.0
 
     @classmethod
-    def get_or_create_account_by_domain(cls, domain, created_by=None):
+    def get_or_create_account_by_domain(cls, domain, created_by=None, account_type=None):
         """
         First try to grab the account used for the last subscription.
         If an account is not found, create it.
         """
+        is_new = False
+        account = cls.get_account_by_domain(domain)
+        if account is None:
+            is_new = True
+            account_type = account_type or BillingAccountType.INVOICE_GENERATED
+            account = BillingAccount(
+                name="Account for Project %s" % domain,
+                created_by=created_by,
+                created_by_domain=domain,
+                currency=Currency.get_default(),
+                account_type=account_type,
+            )
+            account.save()
+            billing_admin = BillingAccountAdmin.objects.get_or_create(web_user=created_by)[0]
+            account.billing_admins.add(billing_admin)
+            account.save()
+        return account, is_new
+
+    @classmethod
+    def get_account_by_domain(cls, domain):
         try:
             last_subscription = Subscription.objects.filter(subscriber__domain=domain).latest('date_end')
-            return last_subscription.account, False
+            return last_subscription.account
         except ObjectDoesNotExist:
             pass
-        account = BillingAccount(
-            name=domain,
-            created_by=created_by,
-            date_created=datetime.date.today(),
-            currency=Currency.get_default(),
-            account_type=BillingAccountType.INVOICE_GENERATED,
-        )
-        account.save()
-        return account, True
+        try:
+            return cls.objects.get(created_by_domain=domain)
+        except cls.DoesNotExist:
+            pass
+        except cls.MultipleObjectsReturned:
+            global_logger.error("Multiple billing accounts showed up for the domain '%s'. The "
+                                "latest one was served, but you should reconcile very soon." % domain)
+            return cls.objects.filter(created_by_domain=domain).latest('date_created')
 
 
 class BillingContactInfo(models.Model):
     account = models.OneToOneField(BillingAccount, primary_key=True, null=False)
-    first_name = models.CharField(max_length=50, null=True)
-    last_name = models.CharField(max_length=50, null=True)
-    emails = models.CharField(max_length=200, null=True)
-    phone_number = models.CharField(max_length=20, null=True)
-    company_name = models.CharField(max_length=50, null=True)
-    first_line = models.CharField(max_length=50, null=False)
-    second_line = models.CharField(max_length=50, null=True)
-    city = models.CharField(max_length=50, null=False)
-    state_province_region = models.CharField(max_length=50, null=False)
-    postal_code = models.CharField(max_length=20, null=False)
-    country = models.CharField(max_length=50, null=False)
+    first_name = models.CharField(
+        max_length=50, null=True, blank=True, verbose_name=_("First Name")
+    )
+    last_name = models.CharField(
+        max_length=50, null=True, blank=True, verbose_name=_("Last Name")
+    )
+    emails = models.CharField(
+        max_length=200, null=True, blank=True, verbose_name=_("Additional Contact Emails"),
+        help_text=_("We will email communications to the emails specified here and the emails "
+                    "of the Billing Administrators.")
+    )
+    phone_number = models.CharField(max_length=20, null=True, blank=True, verbose_name=_("Phone Number"))
+    company_name = models.CharField(max_length=50, null=True, blank=True, verbose_name=_("Company / Organization"))
+    first_line = models.CharField(max_length=50, null=False, verbose_name=_("Address First Line"))
+    second_line = models.CharField(max_length=50, null=True, blank=True, verbose_name=_("Address Second Line"))
+    city = models.CharField(max_length=50, null=False, verbose_name=_("City"))
+    state_province_region = models.CharField(max_length=50, null=False, verbose_name=_("State / Province / Region"))
+    postal_code = models.CharField(max_length=20, null=False, verbose_name=_("Postal Code"))
+    country = models.CharField(max_length=50, null=False, verbose_name=_("Country"))
 
 
 class SoftwareProduct(models.Model):
@@ -193,6 +264,12 @@ class SoftwareProduct(models.Model):
     def __str__(self):
         return "Software Product '%s' of type '%s'" % (self.name, self.product_type)
 
+    def get_rate(self, default_instance=True):
+        try:
+            return self.softwareproductrate_set.filter(is_active=True).latest('date_created')
+        except SoftwareProductRate.DoesNotExist:
+            return SoftwareProductRate() if default_instance else None  # the defaults
+
 
 class SoftwareProductRate(models.Model):
     """
@@ -201,8 +278,19 @@ class SoftwareProductRate(models.Model):
     """
     product = models.ForeignKey(SoftwareProduct, on_delete=models.PROTECT)
     monthly_fee = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2)
-    date_created = models.DateField(auto_now_add=True)
+    date_created = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return '%s @ $%s /month' % (self.product.name, self.monthly_fee)
+
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__) or not self.product.pk == other.product.pk:
+            return False
+        for field in ['monthly_fee', 'is_active']:
+            if not getattr(self, field) == getattr(other, field):
+                return False
+        return True
 
     @classmethod
     def new_rate(cls, product_name, monthly_fee, save=True):
@@ -224,6 +312,12 @@ class Feature(models.Model):
     def __str__(self):
         return "Feature '%s' of type '%s'" % (self.name, self.feature_type)
 
+    def get_rate(self, default_instance=True):
+        try:
+            return self.featurerate_set.filter(is_active=True).latest('date_created')
+        except FeatureRate.DoesNotExist:
+            return FeatureRate() if default_instance else None  # the defaults
+
 
 class FeatureRate(models.Model):
     """
@@ -231,16 +325,28 @@ class FeatureRate(models.Model):
     Once created, Feature Rates cannot be modified. Instead, a new Feature Rate must be created.
     """
     feature = models.ForeignKey(Feature, on_delete=models.PROTECT)
-    monthly_fee = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2)
-    monthly_limit = models.IntegerField(default=0)
-    per_excess_fee = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2)
-    date_created = models.DateField(auto_now_add=True)
+    monthly_fee = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2,
+                                      verbose_name="Monthly Fee")
+    monthly_limit = models.IntegerField(default=0,
+                                        verbose_name="Monthly Included Limit",
+                                        validators=integer_field_validators)
+    per_excess_fee = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2,
+                                         verbose_name="Fee Per Excess of Limit")
+    date_created = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
 
     def __str__(self):
-        return 'Feature Rate: $%s /month, $%s /excess, limit: %d' % (
-            self.monthly_fee, self.per_excess_fee, self.monthly_limit
+        return '%s @ $%s /month, $%s /excess, limit: %d' % (
+            self.feature.name, self.monthly_fee, self.per_excess_fee, self.monthly_limit
         )
+
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__) or not self.feature.pk == other.feature.pk:
+            return False
+        for field in ['monthly_fee', 'monthly_limit', 'per_excess_fee', 'is_active']:
+            if not getattr(self, field) == getattr(other, field):
+                return False
+        return True
 
     @classmethod
     def new_rate(cls, feature_name, feature_type,
@@ -279,10 +385,11 @@ class SoftwarePlan(models.Model):
         choices=SoftwarePlanVisibility.CHOICES,
     )
 
-    @classmethod
-    def get_latest_version(cls, **kwargs):
-        plan = cls.objects.get(**kwargs)
-        return plan.softwareplanversion_set.latest('date_created')
+    def get_version(self):
+        try:
+            return self.softwareplanversion_set.filter(is_active=True).latest('date_created')
+        except SoftwarePlanVersion.DoesNotExist:
+            return None
 
 
 class DefaultProductPlan(models.Model):
@@ -291,16 +398,23 @@ class DefaultProductPlan(models.Model):
     The latest SoftwarePlanVersion that's linked to this plan will be the one used to create a new subscription if
     nothing is found for that domain.
     """
-    product_type = models.CharField(max_length=25, choices=SoftwareProductType.CHOICES, unique=True)
+    product_type = models.CharField(max_length=25, choices=SoftwareProductType.CHOICES)
+    edition = models.CharField(
+        default=SoftwarePlanEdition.COMMUNITY,
+        choices=SoftwarePlanEdition.CHOICES,
+        max_length=25,
+    )
     plan = models.ForeignKey(SoftwarePlan, on_delete=models.PROTECT)
 
     @classmethod
-    def get_default_plan_by_domain(cls, domain):
+    def get_default_plan_by_domain(cls, domain, edition=None):
         domain = assure_domain_instance(domain)
+        edition = edition or SoftwarePlanEdition.COMMUNITY
         product_type = SoftwareProductType.get_type_by_domain(domain)
         try:
-            default_product_plan = DefaultProductPlan.objects.get(product_type=product_type)
-            return default_product_plan.plan.softwareplanversion_set.latest('date_created')
+            default_product_plan = DefaultProductPlan.objects.get(product_type=product_type,
+                                                                  edition=edition)
+            return default_product_plan.plan.get_version()
         except DefaultProductPlan.DoesNotExist:
             raise AccountingError("No default product plan was set up, did you forget to bootstrap plans?")
 
@@ -314,12 +428,34 @@ class SoftwarePlanVersion(models.Model):
     plan = models.ForeignKey(SoftwarePlan, on_delete=models.PROTECT)
     product_rates = models.ManyToManyField(SoftwareProductRate, blank=True)
     feature_rates = models.ManyToManyField(FeatureRate, blank=True)
-    date_created = models.DateField(auto_now_add=True)
+    date_created = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
     role = models.ForeignKey(Role)
 
     def __str__(self):
         return "Software Plan Version For Plan '%s' with Role '%s'" % (self.plan.name, self.role.slug)
+
+    @property
+    def user_facing_description(self):
+        from corehq.apps.accounting.user_text import DESC_BY_EDITION, FEATURE_TYPE_TO_NAME
+        product = self.product_rates.get()
+        desc = {
+            'name': self.plan.name,
+            'description': self.plan.description,
+        }
+        if self.plan.visibility == SoftwarePlanVisibility.PUBLIC:
+            try:
+                desc = DESC_BY_EDITION[self.plan.edition]
+            except KeyError:
+                pass
+        desc.update({
+            'monthly_fee': 'USD %s' % product.monthly_fee,
+            'rates': [{'name': FEATURE_TYPE_TO_NAME[r.feature.feature_type],
+                       'included': 'Infinite' if r.monthly_limit == -1 else r.monthly_limit}
+                      for r in self.feature_rates.all()],
+            'edition': self.plan.edition,
+        })
+        return desc
 
 
 class SubscriberManager(models.Manager):
@@ -345,6 +481,14 @@ class Subscriber(models.Model):
             return "ORGANIZATION %s" % self.organization
         return "DOMAIN %s" % self.domain
 
+    def downgrade(self, new_plan_version, downgraded_privileges):
+        if self.organization is not None:
+            raise SubscriptionDowngradeError("Only domain downgrades are possible.")
+
+        downgrade_handler = DomainDowngradeActionHandler(self.domain, new_plan_version, downgraded_privileges)
+        if not downgrade_handler.get_response():
+            raise SubscriptionDowngradeError("The downgrade was not successful.")
+
 
 class Subscription(models.Model):
     """
@@ -357,8 +501,71 @@ class Subscription(models.Model):
     date_start = models.DateField()
     date_end = models.DateField(blank=True, null=True)
     date_delay_invoicing = models.DateField(blank=True, null=True)
-    date_created = models.DateField(auto_now_add=True)
+    date_created = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=False)
+    do_not_invoice = models.BooleanField(default=False)
+
+    def cancel_subscription(self, adjustment_method=None, web_user=None, note=None):
+        adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
+        today = datetime.date.today()
+        if self.date_end is not None and today > self.date_end:
+            raise SubscriptionAdjustmentError("The end date for this subscription already passed.")
+        self.date_end = today
+        self.is_active = False
+        self.save()
+        SubscriptionAdjustment.record_adjustment(
+            self, reason=SubscriptionAdjustmentReason.CANCEL, method=adjustment_method, note=note, web_user=web_user,
+        )
+
+    def change_plan(self, new_plan_version, date_start=None, date_end=None, date_delay_invoicing=None,
+                    salesforce_contract_id=None, do_not_invoice=False,
+                    note=None, web_user=None, adjustment_method=None):
+        """
+        Changing a plan terminates the current subscription and creates a new subscription where the old plan
+        left off.
+        """
+        adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
+
+        adjustment_reason, downgrades, upgrades = get_change_status(self.plan_version, new_plan_version)
+        if adjustment_reason == SubscriptionAdjustmentReason.DOWNGRADE:
+            self.subscriber.downgrade(new_plan_version, downgrades)
+
+        today = datetime.date.today()
+        new_start_date = today if self.date_start <= today else (date_start or self.date_start)
+
+        new_is_active = self.is_active
+        new_salesforce_contract_id = salesforce_contract_id \
+            if salesforce_contract_id is not None else self.salesforce_contract_id
+
+        if self.date_start > today:
+            self.date_start = today
+        if self.date_end is None or self.date_end > today:
+            self.date_end = today
+        if self.date_delay_invoicing is not None and self.date_delay_invoicing > today:
+            self.date_delay_invoicing = today
+        self.is_active = False
+        self.save()
+
+        new_subscription =\
+            Subscription.new_domain_subscription(self.account,
+                                                 self.subscriber.domain,
+                                                 new_plan_version,
+                                                 date_start=new_start_date,
+                                                 date_end=date_end,
+                                                 date_delay_invoicing=date_delay_invoicing,
+                                                 salesforce_contract_id=new_salesforce_contract_id,
+                                                 is_active=new_is_active,
+                                                 do_not_invoice=do_not_invoice,
+                                                 adjustment_method=adjustment_method,
+                                                 note=note,
+                                                 web_user=web_user
+                                                 )
+
+        # record transfer from old subscription
+        SubscriptionAdjustment.record_adjustment(self, method=adjustment_method, note=note, web_user=web_user,
+                                                 reason=adjustment_reason, related_subscription=new_subscription)
+
+        return new_subscription
 
     @classmethod
     def _get_plan_by_subscriber(cls, subscriber):
@@ -371,8 +578,7 @@ class Subscription(models.Model):
             current_subscription = active_subscriptions.latest('date_created')
             return current_subscription.plan_version, current_subscription
         except Subscription.DoesNotExist:
-            global_logger.error("A Subscriber object exists without a Subscription for the domain '%s'. "
-                                "This seems strange." % subscriber)
+            pass
         return None, None
 
     @classmethod
@@ -395,6 +601,43 @@ class Subscription(models.Model):
         if plan_version is None:
             plan_version =  DefaultProductPlan.get_default_plan_by_domain(domain)
         return plan_version, subscription
+    
+    @classmethod
+    def new_domain_subscription(cls, account, domain, plan_version, date_start=None, adjustment_method=None,
+                                note=None, web_user=None, **kwargs):
+        subscriber = Subscriber.objects.get_or_create(domain=domain, organization=None)[0]
+        today = datetime.date.today()
+        future_subscriptions = Subscription.objects.filter(
+            models.Q(subscriber=subscriber, date_end__gt=today) | models.Q(subscriber=subscriber, date_end__exact=None)
+        )
+        if future_subscriptions.filter(is_active=True).count() > 0:
+            raise NewSubscriptionError(_("Project '%s' currently has an active subscription. "
+                                         "Please cancel the current subscription.") % domain)
+        try:
+            next_subscription = future_subscriptions.filter(date_start__gt=today).order_by('date_start')[0]
+            date_end = kwargs.get('date_end')
+            if date_end is None or date_end > next_subscription.date_start:
+                raise NewSubscriptionError(_("The end date for this subscription overlaps with the start date "
+                                             "of the next subscription on %s. Please cancel this subscription first.")
+                                           % next_subscription.date_start)
+        except (Subscription.DoesNotExist, IndexError):
+            pass
+
+        downgrades = get_change_status(None, plan_version)[1]
+        if downgrades:
+            subscriber.downgrade(plan_version, downgrades)
+
+        adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
+        subscription = Subscription(
+            account=account,
+            plan_version=plan_version,
+            subscriber=subscriber,
+            date_start=date_start or datetime.date.today(),
+            **kwargs
+        )
+        subscription.save()
+        SubscriptionAdjustment.record_adjustment(subscription, method=adjustment_method, note=note, web_user=web_user)
+        return subscription
 
 
 class Invoice(models.Model):
@@ -408,7 +651,7 @@ class Invoice(models.Model):
     balance = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
     date_due = models.DateField(db_index=True)
     date_paid = models.DateField(blank=True, null=True)
-    date_created = models.DateField(auto_now_add=True)
+    date_created = models.DateTimeField(auto_now_add=True)
     date_received = models.DateField(blank=True, db_index=True, null=True)
     date_start = models.DateField()
     date_end = models.DateField()
@@ -455,6 +698,49 @@ class Invoice(models.Model):
         current_total = self.get_total()
         credit_lines = CreditLine.get_credits_for_invoice(self)
         CreditLine.apply_credits_toward_balance(credit_lines, current_total, dict(invoice=self))
+
+
+class SubscriptionAdjustment(models.Model):
+    """
+    A record of any adjustments made to a subscription, so we always have a paper trail.
+    Things that cannot be modified after a subscription is created:
+    - account
+    - plan
+    - subscriber
+    Things that have limited modification abilities:
+    - dates if the current date is today or earlier
+    All other modifications require cancelling the current subscription and creating a new one.
+
+    Note: related_subscription is the subscription to be filled in when the subscription is upgraded / downgraded.
+    """
+    subscription = models.ForeignKey(Subscription, on_delete=models.PROTECT)
+    reason = models.CharField(max_length=50, default=SubscriptionAdjustmentReason.CREATE,
+                              choices=SubscriptionAdjustmentReason.CHOICES)
+    method = models.CharField(max_length=50, default=SubscriptionAdjustmentMethod.INTERNAL,
+                              choices=SubscriptionAdjustmentMethod.CHOICES)
+    note = models.TextField(null=True)
+    web_user = models.CharField(max_length=80, null=True)
+    invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT, null=True)
+    related_subscription = models.ForeignKey(Subscription, on_delete=models.PROTECT, null=True,
+                                             related_name='subscriptionadjustment_related')
+    date_created = models.DateField(auto_now_add=True)
+    new_date_start = models.DateField()
+    new_date_end = models.DateField(blank=True, null=True)
+    new_date_delay_invoicing = models.DateField(blank=True, null=True)
+    new_salesforce_contract_id = models.CharField(blank=True, null=True, max_length=80)
+
+    @classmethod
+    def record_adjustment(cls, subscription, **kwargs):
+        adjustment = SubscriptionAdjustment(
+            subscription=subscription,
+            new_date_start=subscription.date_start,
+            new_date_end=subscription.date_end,
+            new_date_delay_invoicing=subscription.date_delay_invoicing,
+            new_salesforce_contract_id=subscription.salesforce_contract_id,
+            **kwargs
+        )
+        adjustment.save()
+        return adjustment
 
 
 class BillingRecord(models.Model):
@@ -542,7 +828,7 @@ class CreditLine(models.Model):
     subscription = models.ForeignKey(Subscription, on_delete=models.PROTECT, null=True, blank=True)
     product_rate = models.ForeignKey(SoftwareProductRate, on_delete=models.PROTECT, null=True, blank=True)
     feature_rate = models.ForeignKey(FeatureRate, on_delete=models.PROTECT, null=True, blank=True)
-    date_created = models.DateField(auto_now_add=True)
+    date_created = models.DateTimeField(auto_now_add=True)
     balance = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
 
     def adjust_credit_balance(self, amount, is_new=False, note=None, line_item=None, invoice=None):
@@ -656,7 +942,7 @@ class CreditAdjustment(models.Model):
     line_item = models.ForeignKey(LineItem, on_delete=models.PROTECT, null=True)
     invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT, null=True)
     # todo payment_method = models.ForeignKey(PaymentMethod)
-    date_created = models.DateField(auto_now_add=True)
+    date_created = models.DateTimeField(auto_now_add=True)
     web_user = models.CharField(max_length=80, null=True)
 
     def clean(self):

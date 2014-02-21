@@ -6,9 +6,9 @@
     <TimeEnd>2010-06-29T13:55:50.137</TimeEnd>
     <username>demo_user</username>
     <userID>demo_user</userID>
-    <uid>demo-someotheruid</uid>
+    <instanceID>{instanceID}</instanceID>
 </meta>
-<case xmlns="http://commcarehq.org/case/transaction/v2" case_id="asdfp" user_id="demo_user" date_modified="2010-06-29T13:42:50">
+<case xmlns="http://commcarehq.org/case/transaction/v2" case_id="{case_id}" user_id="demo_user" date_modified="2010-06-29T13:42:50">
     <create>
         <case_type>test_case_type</case_type>
         <owner_id>demo_user</owner_id>

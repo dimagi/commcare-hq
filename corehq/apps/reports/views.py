@@ -22,6 +22,8 @@ from django.views.decorators.http import (require_http_methods,
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.templatetags.case_tags import case_inline_display
 from couchdbkit.exceptions import ResourceNotFound
+from casexml.apps.case.xml import V2
+from corehq.apps.reports.exportfilters import default_form_filter
 import couchexport
 from couchexport import views as couchexport_views
 from couchexport.export import SchemaMismatchException
@@ -165,12 +167,11 @@ def export_data(req, domain):
     errors_filter = instances if not include_errors else None
 
     kwargs['filter'] = couchexport.util.intersect_functions(filter, errors_filter)
-
     if kwargs['format'] == 'raw':
         resp = export_raw_data([domain, export_tag], filename=export_tag)
     else:
         try:
-            resp = export_data_shared([domain,export_tag], **kwargs)
+            resp = export_data_shared([domain, export_tag], **kwargs)
         except UnsupportedExportFormat as e:
             return HttpResponseBadRequest(e)
     if resp:
@@ -274,7 +275,12 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
         # look more like a FormExportSchema
         if export_type == 'form':
             filter &= SerializableFunction(instances)
+
         export_object = FakeSavedExportSchema(index=export_tag)
+
+    if export_type == 'form':
+        _filter = filter
+        filter = SerializableFunction(default_form_filter, filter=_filter)
 
     if not filename:
         filename = export_object.name
@@ -680,11 +686,8 @@ def case_details(request, domain, case_id):
     timezone = util.get_timezone(request.couch_user.user_id, domain)
 
     try:
-        case = CommCareCase.get(case_id)
-    except ResourceNotFound:
-        case = None
-    
-    if case is None or case.doc_type != "CommCareCase" or case.domain != domain:
+        case = _get_case_or_404(domain, case_id)
+    except Http404:
         messages.info(request, "Sorry, we couldn't find that case. If you think this is a mistake please report an issue.")
         return HttpResponseRedirect(CaseListReport.get_url(domain=domain))
 
@@ -723,6 +726,24 @@ def case_details(request, domain, case_id):
                 case_details, args=[domain, case_id])
         },
     })
+
+@require_case_view_permission
+@login_and_domain_required
+@require_GET
+def case_xml(request, domain, case_id):
+    case = _get_case_or_404(domain, case_id)
+    version = request.GET.get('version', V2)
+    return HttpResponse(case.to_xml(version), content_type='text/xml')
+
+
+def _get_case_or_404(domain, case_id):
+    try:
+        case = CommCareCase.get(case_id)
+    except ResourceNotFound:
+        case = None
+    if case is None or case.doc_type != "CommCareCase" or case.domain != domain:
+        raise Http404
+    return case
 
 def generate_case_export_payload(domain, include_closed, format, group, user_filter, process=None):
     """
@@ -785,7 +806,7 @@ def download_cases(request, domain):
         'user_filter': user_filter,
     }
     payload_func = SerializableFunction(generate_case_export_payload, **kwargs)
-    content_disposition = "attachment; filename={domain}_data.{ext}".format(domain=domain, ext=format.extension)
+    content_disposition = 'attachment; filename="{domain}_data.{ext}"'.format(domain=domain, ext=format.extension)
     mimetype = "%s" % format.mimetype
 
     def generate_payload(payload_func):

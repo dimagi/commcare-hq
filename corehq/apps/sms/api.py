@@ -1,6 +1,7 @@
 import logging
 from django.conf import settings
 from celery.task import task
+import math
 
 from dimagi.utils.modules import to_function
 from corehq.apps.sms.util import clean_phone_number, create_billable_for_sms, format_message_list, clean_text
@@ -154,7 +155,8 @@ def queue_outgoing_sms(msg, onerror=lambda: None):
 
 @task
 def store_billable(msg):
-    SmsBillable.create(msg)
+    for _ in range(int(math.ceil(float(len(msg.text)) / 160))):
+        SmsBillable.create(msg)
 
 
 def send_message_via_backend(msg, backend=None, onerror=lambda: None):
@@ -254,7 +256,9 @@ def process_sms_registration(msg):
     
     return registration_processed
 
-def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None, backend_message_id=None, delay=True):
+def incoming(phone_number, text, backend_api, timestamp=None, 
+             domain_scope=None, backend_message_id=None, delay=True,
+             backend_attributes=None):
     """
     entry point for incoming sms
 
@@ -277,6 +281,9 @@ def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None,
         backend_api = backend_api,
         backend_message_id = backend_message_id,
     )
+    if backend_attributes:
+        for k, v in backend_attributes.items():
+            setattr(msg, k, v)
     if settings.SMS_QUEUE_ENABLED:
         msg.processed = False
         msg.datetime_to_process = datetime.utcnow()

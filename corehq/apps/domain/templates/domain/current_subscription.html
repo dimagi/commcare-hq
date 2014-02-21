@@ -7,20 +7,25 @@
 <div class="row">
     <div class="span12">
         <article>
-            <div class="page-header">
-                <h1>{% trans 'Current Subscription' %}</h1>
-            </div>
+            <h2>{% trans 'Current Subscription' %}</h2>
             <div class="form form-horizontal">
                 <div class="control-group">
                     <label class="control-label">{% trans 'Plan' %}</label>
                     <div class="controls">
-                        <p class="control-group-text">
-                            <span class="{{ plan.css_class }}">{{ plan.name }}</span>
-                            <a class="btn" href="{{ change_plan_url }}">{% trans "Change Plan" %}</a>
-                        </p>
-                        <span class="alert alert-info">
-                            <i class="icon-info-sign"></i> {{ plan.description }}
-                        </span>
+                        <div class="{{ plan.css_class }}">
+                            <h4>{{ plan.name }}</h4>
+                            <p><i class="icon-info-sign"></i> {{ plan.description }}</p>
+                        </div>
+                        {% if plan.is_dimagi_subscription %}
+                            <div class="alert alert-info">
+                            {% blocktrans %}
+                                <strong>Note:</strong> This is a Dimagi-owned subscription.
+                            {% endblocktrans %}
+                            </div>
+                        {% endif %}
+                        <a class="btn btn-primary" style="margin-top:10px;" href="{{ change_plan_url }}">
+                            {% trans "Change Plan" %}
+                        </a>
                     </div>
                 </div>
                 {% for product in plan.products %}
@@ -31,20 +36,20 @@
                             <p class="control-group-text">{{ product.monthly_fee }}</p>
                         </div>
                     </div>
-                    {% if product.credit %}
+                    {% if product.credit and product.credit.is_visible %}
                         <div class="control-group">
                             <label class="control-label">{% trans 'Plan Credit' %}</label>
                             <div class="controls">
-                                <p class="control-group-text">{{ product.credit }}</p>
+                                <p class="control-group-text">{{ product.credit.amount }}</p>
                             </div>
                         </div>
                     {% endif %}
                 {% endfor %}
-                {% if plan.subscription_credit %}
+                {% if plan.subscription_credit and plan.subscription_credit.is_visible %}
                     <div class="control-group">
                         <label class="control-label">{% trans 'General Credit' %}</label>
                         <div class="controls">
-                            <p class="control-group-text">{{ plan.subscription_credit }}</p>
+                            <p class="control-group-text">{{ plan.subscription_credit.amount }}</p>
                         </div>
                     </div>
                 {% endif %}
@@ -54,7 +59,7 @@
                 <thead>
                     <tr>
                         <th>{% trans "Feature" %}</th>
-                        <th>{% trans "Usage" %}</th>
+                        <th>{% trans "Current Use" %}</th>
                         <th>{% trans "Remaining" %}</th>
                         <th>{% trans "Credits Available" %}</th>
                     </tr>
@@ -65,7 +70,7 @@
                             <td>{{ feature.name }}</td>
                             <td>{{ feature.usage }}</td>
                             <td>{{ feature.remaining }}</td>
-                            <td>{{ feature.credit }}</td>
+                            <td>{{ feature.credit.amount }}</td>
                         </tr>
                     {% endfor %}
                 </tbody>

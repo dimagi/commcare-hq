@@ -15,7 +15,7 @@ from corehq.apps.users.models import Permissions
 from couchexport.models import SavedExportSchema, ExportSchema
 from couchexport.schema import build_latest_schema
 from dimagi.utils.decorators.memoized import memoized
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from dimagi.utils.web import json_response
 
 require_form_export_permission = require_permission(
@@ -120,13 +120,13 @@ class BaseCreateCustomExportView(BaseExportView):
 
 class CreateCustomFormExportView(BaseCreateCustomExportView):
     urlname = 'custom_export_form'
-    page_title = ugettext_noop("Create Custom Form Export")
+    page_title = ugettext_lazy("Create Custom Form Export")
     export_type = 'form'
 
 
 class CreateCustomCaseExportView(BaseCreateCustomExportView):
     urlname = 'custom_export_case'
-    page_title = ugettext_noop("Create Custom Case Export")
+    page_title = ugettext_lazy("Create Custom Case Export")
     export_type = 'case'
 
 

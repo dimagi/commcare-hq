@@ -74,6 +74,20 @@ class ActiveStatusFilter(BaseSingleOptionFilter):
     ]
 
 
+INVOICE = "SEND_INVOICE"
+DO_NOT_INVOICE = "DO_NOT_INVOICE"
+
+
+class DoNotInvoiceFilter(BaseSingleOptionFilter):
+    slug = 'do_not_invoice'
+    label = _('Do Not Invoice')
+    default_text = _('All')
+    options = [
+        (INVOICE, _('Send invoice')),
+        (DO_NOT_INVOICE, _('Do not invoice')),
+    ]
+
+
 class DateRangeFilter(BaseReportFilter):
     template = 'reports/filters/daterange.html'
     default_days = 7
@@ -115,7 +129,10 @@ class DateRangeFilter(BaseReportFilter):
 
     @property
     def datespan(self):
-        datespan = DateSpan.since(self.default_days, format="%Y-%m-%d", timezone=self.timezone)
+        datespan = DateSpan.since(self.default_days,
+                                  enddate=datetime.date.today(),
+                                  format="%Y-%m-%d",
+                                  timezone=self.timezone)
         if self.get_start_date(self.request) is not None:
             datespan.startdate = self.get_start_date(self.request)
         if self.get_end_date(self.request) is not None:

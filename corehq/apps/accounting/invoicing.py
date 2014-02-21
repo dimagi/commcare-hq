@@ -1,7 +1,6 @@
 import calendar
 from decimal import Decimal
 import datetime
-from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import ProtectedError
 
 from django.utils.translation import ugettext as _
@@ -10,7 +9,9 @@ from dimagi.utils.decorators.memoized import memoized
 
 from corehq import Domain
 from corehq.apps.accounting.exceptions import LineItemError, InvoiceError
-from corehq.apps.accounting.models import LineItem, FeatureType, Invoice, SoftwareProductType, DefaultProductPlan, Subscriber, Subscription, BillingAccount, Currency, BillingAccountType
+from corehq.apps.accounting.models import (LineItem, FeatureType, Invoice, DefaultProductPlan, Subscriber,
+                                           Subscription, BillingAccount, SubscriptionAdjustment,
+                                           SubscriptionAdjustmentMethod)
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.users.models import CommCareUser
 
@@ -133,6 +134,12 @@ class CommunityInvoiceFactory(InvoiceFactory):
                 self.account.delete()
             except ProtectedError:
                 pass
+        else:
+            SubscriptionAdjustment.record_adjustment(
+                self.subscription,
+                method=SubscriptionAdjustmentMethod.TASK,
+                invoice=invoice,
+            )
         return invoice
 
 

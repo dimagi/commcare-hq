@@ -16,7 +16,8 @@ from django.core.exceptions import ValidationError
 from django.template.loader import render_to_string
 from couchdbkit.ext.django.schema import *
 from couchdbkit.resource import ResourceNotFound
-from dimagi.utils.couch.database import get_safe_write_kwargs
+from dimagi.utils.chunked import chunked
+from dimagi.utils.couch.database import get_safe_write_kwargs, iter_docs
 from dimagi.utils.logging import notify_exception
 
 from dimagi.utils.decorators.memoized import memoized
@@ -29,6 +30,7 @@ from corehq.apps.domain.utils import normalize_domain_name, domain_restricts_sup
 from corehq.apps.domain.models import LicenseAgreement
 from corehq.apps.users.util import normalize_username, user_data_from_registration_form, format_username, raw_username
 from corehq.apps.users.xml import group_fixture
+from corehq.apps.users.tasks import tag_docs_as_deleted
 from corehq.apps.sms.mixin import CommCareMobileContactMixin, VerifiedNumber, PhoneNumberInUseException, InvalidFormatException
 from corehq.elastic import es_wrapper
 from couchforms.models import XFormInstance
@@ -920,14 +922,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             include_docs=True,
         )
 
-
     def is_previewer(self):
-        try:
-            from django.conf.settings import PREVIEWER_RE
-        except ImportError:
-            return self.is_superuser
-        else:
-            return self.is_superuser or re.compile(PREVIEWER_RE).match(self.username)
+        from django.conf import settings
+        return (self.is_superuser or
+                re.compile(settings.PREVIEWER_RE).match(self.username))
 
     def sync_from_django_user(self, django_user):
         if not django_user:
@@ -1398,19 +1396,25 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         user._hq_user = self # don't tell anyone that we snuck this here
         return user
 
-    def get_forms(self, deleted=False, wrap=True):
+    def get_forms(self, deleted=False, wrap=True, include_docs=False):
         if deleted:
             view_name = 'users/deleted_forms_by_user'
         else:
             view_name = 'couchforms/by_user'
 
-        return XFormInstance.view(view_name,
+        db = XFormInstance.get_db()
+        doc_ids = [r['id'] for r in db.view(view_name,
             startkey=[self.user_id],
             endkey=[self.user_id, {}],
             reduce=False,
-            include_docs=wrap,
-            wrapper=None if wrap else lambda x: x['id']
-        )
+            include_docs=False,
+        )]
+        if wrap or include_docs:
+            for doc in iter_docs(db, doc_ids):
+                yield XFormInstance.wrap(doc) if wrap else doc
+        else:
+            for id in doc_ids:
+                yield id
 
     @property
     def form_count(self):
@@ -1424,7 +1428,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         else:
             return 0
 
-    def get_cases(self, deleted=False, last_submitter=False):
+    def get_cases(self, deleted=False, last_submitter=False, wrap=True):
         if deleted:
             view_name = 'users/deleted_cases_by_user'
         elif last_submitter:
@@ -1432,12 +1436,15 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         else:
             view_name = 'case/by_owner'
 
-        return CommCareCase.view(view_name,
+        db = CommCareCase.get_db()
+        case_ids = [r["id"] for r in db.view(view_name,
             startkey=[self.user_id],
             endkey=[self.user_id, {}],
             reduce=False,
-            include_docs=True
-        )
+        )]
+        for doc in iter_docs(db, case_ids):
+            yield CommCareCase.wrap(doc) if wrap else doc
+
 
     @property
     def case_count(self):
@@ -1465,14 +1472,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         if not self.base_doc.endswith(suffix):
             self.base_doc += suffix
             self['-deletion_id'] = deletion_id
-        for form in self.get_forms():
-            form.doc_type += suffix
-            form['-deletion_id'] = deletion_id
-            form.save()
-        for case in self.get_cases():
-            case.doc_type += suffix
-            case['-deletion_id'] = deletion_id
-            case.save()
+        for formlist in chunked(self.get_forms(wrap=False, include_docs=True), 50):
+            tag_docs_as_deleted.delay(XFormInstance, formlist, deletion_id)
+        for caselist in chunked(self.get_cases(wrap=False), 50):
+            tag_docs_as_deleted.delay(CommCareCase, caselist, deletion_id)
 
         for phone_number in self.get_verified_numbers(True).values():
             phone_number.retire(deletion_id)

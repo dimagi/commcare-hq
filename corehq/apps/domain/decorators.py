@@ -95,7 +95,7 @@ def login_or_digest_ex(allow_cc_users=False):
                         return fn(request, domain, *args, **kwargs)
                     else:
                         return HttpResponseForbidden()
-        
+
                 return httpdigest(_inner)(request, domain, *args, **kwargs)
             else:
                 return login_and_domain_required(fn)(request, domain, *args, **kwargs)
@@ -145,7 +145,7 @@ def login_required(view_func):
         if not (user.is_authenticated() and user.is_active):
             return _redirect_for_login_or_domain(request,
                     REDIRECT_FIELD_NAME, login_url)
-        
+
         # User's login and domain have been validated - it's safe to call the view function
         return view_func(request, *args, **kwargs)
     return _inner

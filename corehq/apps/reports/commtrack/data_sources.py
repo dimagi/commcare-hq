@@ -1,11 +1,15 @@
-from corehq.apps.commtrack.util import supply_point_type_categories, num_periods_late
+from corehq.apps.commtrack.util import num_periods_late
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import Location
-from corehq.apps.commtrack.models import Product, SupplyPointProductCase as SPPCase
+from corehq.apps.commtrack.models import Product, SupplyPointCase
 from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.reports.api import ReportDataSource
-import corehq.apps.locations.util as loc_util
-from datetime import datetime
+from datetime import datetime, timedelta
+from casexml.apps.stock.models import StockState, StockTransaction
+from django.db.models import Sum, Avg
+from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, product_ids_filtered_by_program
+from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
+from casexml.apps.stock.utils import months_of_stock_remaining, stock_category
 
 # TODO make settings
 REPORTING_PERIOD = 'weekly'
@@ -15,11 +19,15 @@ REPORTING_PERIOD_ARGS = (1,)
 def is_timely(case, limit=0):
     return num_periods_late(case, REPORTING_PERIOD, *REPORTING_PERIOD_ARGS) <= limit
 
-def reporting_status(case, start_date, end_date):
-    last_reported = getattr(case, 'last_reported', None)
-    if last_reported and last_reported.date() < start_date:
+def reporting_status(transaction, start_date, end_date):
+    if transaction:
+        last_reported = transaction.report.date.date()
+    else:
+        last_reported = None
+
+    if last_reported and last_reported < start_date:
         return 'ontime'
-    elif last_reported and start_date <= last_reported.date() <= end_date:
+    elif last_reported and start_date <= last_reported <= end_date:
         return 'late'
     else:
         return 'nonreporting'
@@ -52,18 +60,21 @@ class CommtrackDataSourceMixin(object):
         if prog_id != '':
             return prog_id
 
-
     @property
     def start_date(self):
         date = self.config.get('start_date')
         if date:
             return datetime.strptime(date, '%Y-%m-%d').date()
+        else:
+            return (datetime.now() - timedelta(30)).date()
 
     @property
     def end_date(self):
         date = self.config.get('end_date')
         if date:
             return datetime.strptime(date, '%Y-%m-%d').date()
+        else:
+            return datetime.now().date()
 
 
 class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
@@ -82,7 +93,8 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
         current_stock: The current stock level
         consumption: The current monthly consumption rate
         months_remaining: The number of months remaining until stock out
-        category: The status category. See corehq.apps.commtrack.models.SupplyPointProductCase#stock_category
+        category: The status category. See casexml.apps.stock.models.StockState.stock_category
+        resupply_quantity_needed: Max amount - current amount
 
     """
     slug = 'agg_stock_status'
@@ -94,92 +106,118 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
     SLUG_CURRENT_STOCK = 'current_stock'
     SLUG_LOCATION_ID = 'location_id'
     SLUG_LOCATION_LINEAGE = 'location_lineage'
-
+    SLUG_STOCKOUT_SINCE = 'stockout_since'
+    SLUG_STOCKOUT_DURATION = 'stockout_duration'
+    SLUG_LAST_REPORTED = 'last_reported'
     SLUG_CATEGORY = 'category'
+    SLUG_RESUPPLY_QUANTITY_NEEDED = 'resupply_quantity_needed'
+
     _slug_attrib_map = {
-        SLUG_PRODUCT_NAME: 'name',
-        SLUG_PRODUCT_ID: 'product',
-        SLUG_LOCATION_ID: lambda p: p.location_[-1],
-        SLUG_LOCATION_LINEAGE: lambda p: list(reversed(p.location_[:-1])),
-        SLUG_CURRENT_STOCK: 'current_stock_level',
-        SLUG_CONSUMPTION: 'monthly_consumption',
-        SLUG_MONTHS_REMAINING: 'months_until_stockout',
-        SLUG_CATEGORY: 'current_stock_category',
+        SLUG_PRODUCT_NAME: lambda s: Product.get(s.product_id).name,
+        SLUG_PRODUCT_ID: lambda s: s.product_id,
+        SLUG_LOCATION_ID: lambda s: SupplyPointCase.get(s.case_id).location_[-1],
+        # SLUG_LOCATION_LINEAGE: lambda p: list(reversed(p.location_[:-1])),
+        SLUG_CURRENT_STOCK: 'stock_on_hand',
+        SLUG_CONSUMPTION: lambda s: s.daily_consumption * 30 if s.daily_consumption else None,
+        SLUG_MONTHS_REMAINING: 'months_remaining',
+        SLUG_CATEGORY: 'stock_category',
+        # SLUG_STOCKOUT_SINCE: 'stocked_out_since',
+        # SLUG_STOCKOUT_DURATION: 'stockout_duration_in_months',
+        SLUG_LAST_REPORTED: 'last_modified_date',
+        SLUG_RESUPPLY_QUANTITY_NEEDED: 'resupply_quantity_needed',
     }
 
     def slugs(self):
         return self._slug_attrib_map.keys()
 
+    def filter_by_program(self, stock_states):
+        return stock_states.filter(
+            product_id__in=product_ids_filtered_by_program(
+                self.domain,
+                self.program_id
+            )
+        )
+
     def get_data(self, slugs=None):
-        startkey = [self.domain, self.active_location._id if self.active_location else None]
-        if self.active_product:
-            startkey.append(self.active_product['_id'])
+        sp_ids = get_relevant_supply_point_ids(self.domain, self.active_location)
 
-        product_cases = SPPCase.view('commtrack/product_cases', startkey=startkey, endkey=startkey + [{}], include_docs=True)
-        if self.program_id:
-            product_cases = filter(lambda c: Product.get(c.product).program_id == self.program_id, product_cases)
-        if self.config.get('aggregate'):
-            return self.aggregate_cases(product_cases, slugs)
+        if len(sp_ids) == 1:
+            stock_states = StockState.objects.filter(
+                case_id=sp_ids[0],
+                section_id=STOCK_SECTION_TYPE
+            )
+
+            if self.program_id:
+                stock_states = self.filter_by_program(stock_states)
+
+            return self.leaf_node_data(stock_states)
         else:
-            return self.raw_cases(product_cases, slugs)
+            stock_states = StockState.objects.filter(
+                case_id__in=sp_ids,
+                section_id=STOCK_SECTION_TYPE,
+            )
 
-    def raw_cases(self, product_cases, slugs):
+            if self.program_id:
+                stock_states = self.filter_by_program(stock_states)
+
+            if self.config.get('aggregate'):
+                aggregates = stock_states.values('product_id').annotate(
+                    avg_consumption=Avg('daily_consumption'),
+                    total_stock=Sum('stock_on_hand')
+                )
+                return self.aggregated_data(aggregates)
+            else:
+                return self.raw_product_states(stock_states, slugs)
+
+    def leaf_node_data(self, stock_states):
+        for state in stock_states:
+            product = Product.get(state.product_id)
+            print state.resupply_quantity_needed
+            yield {
+                'category': state.stock_category,
+                'product_id': product._id,
+                'consumption': state.daily_consumption * 30,
+                'months_remaining': state.months_remaining,
+                'location_id': state.case_id,
+                'product_name': product.name,
+                'current_stock': state.stock_on_hand,
+                'location_lineage': None,
+                'resupply_quantity_needed': state.resupply_quantity_needed
+            }
+
+    def aggregated_data(self, stock_states):
+        for state in stock_states:
+            product = Product.get(state['product_id'])
+            yield {
+                'category': stock_category(state['total_stock'], state['avg_consumption']),
+                'product_id': product._id,
+                'consumption': state['avg_consumption'],
+                'months_remaining': months_of_stock_remaining(state['total_stock'], state['avg_consumption']),
+                'location_id': None,
+                'product_name': product.name,
+                'current_stock': state['total_stock'],
+                'location_lineage': None,
+                'resupply_quantity_needed': None
+            }
+
+
+    def raw_product_states(self, stock_states, slugs):
         def _slug_attrib(slug, attrib, product, output):
             if not slugs or slug in slugs:
                 if callable(attrib):
                     output[slug] = attrib(product)
                 else:
-                    output[slug] = getattr(product, attrib)
+                    output[slug] = getattr(product, attrib, '')
 
-        for product in product_cases:
+        for state in stock_states:
             out = {}
             for slug, attrib in self._slug_attrib_map.items():
-                _slug_attrib(slug, attrib, product, out)
+                _slug_attrib(slug, attrib, state, out)
 
             yield out
 
-    def aggregate_cases(self, product_cases, slugs):
-        cases_by_product = map_reduce(lambda c: [(c.product,)], data=product_cases, include_docs=True)
-        products = Product.view('_all_docs', keys=cases_by_product.keys(), include_docs=True)
-
-        def _sum(vals):
-            return sum(vals) if vals else None
-
-        def aggregate_product(cases):
-            data = [(c.current_stock_level, c.monthly_consumption) for c in cases if is_timely(c, 1000)]
-            total_stock = _sum([d[0] for d in data if d[0] is not None])
-            total_consumption = _sum([d[1] for d in data if d[1] is not None])
-            # exclude stock values w/o corresponding consumption figure from total months left calculation
-            consumable_stock = _sum([d[0] for d in data if d[0] is not None and d[1] is not None])
-
-            return {
-                'total_stock': total_stock,
-                'total_consumption': total_consumption,
-                'consumable_stock': consumable_stock,
-            }
-
-        status_by_product = dict((p, aggregate_product(cases)) for p, cases in cases_by_product.iteritems())
-        for p in sorted(products, key=lambda p: p.name):
-            stats = status_by_product[p._id]
-
-            months_left = SPPCase.months_of_stock_remaining(stats['consumable_stock'], stats['total_consumption'])
-            category = SPPCase.stock_category(stats['total_stock'], stats['total_consumption'], stats['consumable_stock'])
-
-            full_output = {
-                self.SLUG_PRODUCT_NAME: p.name,
-                self.SLUG_PRODUCT_ID: p._id,
-                self.SLUG_LOCATION_ID: self.active_location._id if self.active_location else None,
-                self.SLUG_LOCATION_LINEAGE: self.active_location.lineage if self.active_location else None,
-                self.SLUG_CURRENT_STOCK: stats['total_stock'],
-                self.SLUG_CONSUMPTION: stats['total_consumption'],
-                self.SLUG_MONTHS_REMAINING: months_left,
-                self.SLUG_CATEGORY: category,
-            }
-
-            yield dict((slug, full_output['slug']) for slug in slugs) if slugs else full_output
 
 class StockStatusBySupplyPointDataSource(StockStatusDataSource):
-    
     def get_data(self):
         data = list(super(StockStatusBySupplyPointDataSource, self).get_data())
 
@@ -214,35 +252,35 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
     """
 
     def get_data(self):
-        startkey = [self.domain, self.active_location._id if self.active_location else None]
-        product_cases = SPPCase.view('commtrack/product_cases',
-                                     startkey=startkey,
-                                     endkey=startkey + [{}],
-                                     include_docs=True)
+        sp_ids = get_relevant_supply_point_ids(
+            self.domain,
+            self.active_location
+        )
+
+        products = Product.by_domain(self.domain)
         if self.program_id:
-            product_cases = filter(lambda c: Product.get(c.product).program_id == self.program_id, product_cases)
-        def latest_case(cases):
-            # getting last report date should probably be moved to a util function in a case wrapper class
-            return max(cases, key=lambda c: getattr(c, 'last_reported', datetime(2000, 1, 1)).date())
-        cases_by_site = map_reduce(lambda c: [(tuple(c.location_),)],
-                                   lambda v: reporting_status(latest_case(v), self.start_date, self.end_date),
-                                   data=product_cases, include_docs=True)
+            products = filter(
+                lambda product: product.program_id == self.program_id, products
+            )
 
-        # TODO if aggregating, won't want to fetch all these locs (will only want to fetch aggregation sites)
-        locs = dict((loc._id, loc) for loc in Location.view(
-                '_all_docs',
-                keys=[path[-1] for path in cases_by_site.keys()],
-                include_docs=True))
+        for sp_id in sp_ids:
+            for product in products:
+                loc = SupplyPointCase.get(sp_id).location
+                last_transaction = StockTransaction.latest(
+                    sp_id,
+                    STOCK_SECTION_TYPE,
+                    product._id
+                )
 
-        for path, status in cases_by_site.iteritems():
-            loc = locs[path[-1]]
-
-            yield {
-                'loc_id': loc._id,
-                'loc_path': loc.path,
-                'name': loc.name,
-                'type': loc.location_type,
-                'reporting_status': status,
-                'geo': loc._geopoint,
-            }
-
+                yield {
+                    'loc_id': loc._id,
+                    'loc_path': loc.path,
+                    'name': loc.name,
+                    'type': loc.location_type,
+                    'reporting_status': reporting_status(
+                        last_transaction,
+                        self.start_date,
+                        self.end_date
+                    ),
+                    'geo': loc._geopoint,
+                }

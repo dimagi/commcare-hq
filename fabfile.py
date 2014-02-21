@@ -264,7 +264,7 @@ def production():
 
         # for now, we'll have touchforms run on both hqdb0 and hqdjango0
         # will remove hqdjango0 once we verify it works well on hqdb0
-        'formsplayer': ['hqtouch0.internal.commcarehq.org', 'hqdb0.internal.commcarehq.org'],
+        'formsplayer': ['hqtouch0.internal.commcarehq.org'],
         'lb': [],
         'staticfiles': PROD_PROXIES,
         # having deploy here makes it so that
@@ -977,6 +977,7 @@ def set_celery_supervisorconf():
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_periodic.conf')
     if env.sms_queue_enabled:
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_sms_queue.conf')
+    _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_doc_deletion_queue.conf')
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_flower.conf')
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_couchdb_lucene.conf') #to be deprecated
 
