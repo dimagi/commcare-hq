@@ -522,6 +522,11 @@ class MessagingTab(UITab):
 
     @property
     def is_viewable(self):
+        if toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, self.couch_user.username):
+            try:
+                ensure_request_has_privilege(self._request, privileges.OUTBOUND_SMS)
+            except PermissionDenied:
+                return False
         return (self.project and not
                 (self.project.is_snapshot or
                  self.couch_user.is_commcare_user()))
