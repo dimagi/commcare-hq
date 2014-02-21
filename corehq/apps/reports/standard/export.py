@@ -1,9 +1,13 @@
 from collections import defaultdict
 import json
 import logging
+import toggle
 
 from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.http import Http404
+from django_prbac.exceptions import PermissionDenied
+from django_prbac.utils import ensure_request_has_privilege
+from corehq import toggles, privileges
 
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 
@@ -42,6 +46,15 @@ class FormExportReportBase(ExportReport, DatespanMixin):
               'corehq.apps.reports.fields.GroupField',
               'corehq.apps.reports.fields.DatespanField']
 
+    @property
+    def can_view_deid(self):
+        if toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, self.request.user.username):
+            try:
+                ensure_request_has_privilege(self.request, privileges.DEIDENTIFIED_DATA)
+            except PermissionDenied:
+                return False
+        return True
+
     def get_saved_exports(self):
         # add saved exports. because of the way in which the key is stored
         # (serialized json) this is a little bit hacky, but works.
@@ -50,8 +63,9 @@ class FormExportReportBase(ExportReport, DatespanMixin):
         exports = FormExportSchema.view("couchexport/saved_export_schemas",
             startkey=startkey, endkey=endkey,
             include_docs=True)
-
         exports = filter(lambda x: x.type == "form", exports)
+        if not self.can_view_deid:
+            exports = filter(lambda x: not x.is_safe, exports)
         return exports
 
     @property
