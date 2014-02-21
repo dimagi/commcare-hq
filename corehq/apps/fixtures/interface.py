@@ -46,8 +46,6 @@ class FixtureViewInterface(GenericTabularReport, FixtureInterface):
     report_template_path = 'fixtures/view_table.html'
 
     fields = ['corehq.apps.fixtures.interface.FixtureSelectField']
-    asynchronous = False
-    ajax_pagination = False
 
     @property
     def report_context(self):
@@ -76,10 +74,6 @@ class FixtureEditInterface(FixtureInterface):
 
     report_template_path = 'fixtures/manage_tables.html'
 
-    asynchronous = False
-    ajax_pagination = True
-    user_datatables = False
-
     @property
     def report_context(self):
         context = super(FixtureInterface, self).report_context
@@ -90,11 +84,3 @@ class FixtureEditInterface(FixtureInterface):
     def data_types(self):
         fdts = list(FixtureDataType.by_domain(self.domain))
         return fdts
-
-    # @property
-    # def default_option(self):
-    #     return self.field_opts[-1].tag
-
-    # def update_params(self):
-    #     self.selected = self.request.GET.get(self.slug, '')
-    #     self.options = [{'val': _id_from_doc(f), 'text': f.tag} for f in [fo for fo in self.field_opts if fo != self.selected]]
