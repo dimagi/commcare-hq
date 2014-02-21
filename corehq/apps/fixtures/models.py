@@ -10,15 +10,19 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, D
 from dimagi.utils.couch.bulk import CouchTransaction
 from dimagi.utils.couch.database import get_db
 
+
 class FixtureTypeCheckError(Exception):
     pass
+
 
 class FixtureVersionError(Exception):
     pass
 
+
 class FixtureTypeField(DocumentSchema):
     field_name = StringProperty()
     properties = StringListProperty()
+
 
 class FixtureDataType(Document):
     domain = StringProperty()
@@ -87,6 +91,7 @@ class FieldList(DocumentSchema):
         List of fields for different combinations of properties
     """
     field_list = SchemaListProperty(FixtureItemField)
+
 
 class FixtureDataItem(Document):
     """
@@ -273,7 +278,6 @@ class FixtureDataItem(Document):
     def by_user(cls, user, wrap=True, domain=None):
         group_ids = Group.by_user(user, wrap=False)
 
-
         if isinstance(user, dict):
             user_id = user.get('user_id')
             user_domain = domain
@@ -368,12 +372,14 @@ class FixtureDataItem(Document):
         self.delete_ownerships(transaction)
         transaction.delete(self)
 
+
 def _id_from_doc(doc_or_doc_id):
     if isinstance(doc_or_doc_id, basestring):
         doc_id = doc_or_doc_id
     else:
         doc_id = doc_or_doc_id.get_id if doc_or_doc_id else None
     return doc_id
+
 
 class FixtureOwnership(Document):
     domain = StringProperty()

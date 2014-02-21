@@ -7,6 +7,7 @@ from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext_noop
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 
+
 class FixtureInterface(GenericReportView):
     # overriding properties from GenericReportView
     section_name = ugettext_noop("Lookup Tables")
@@ -16,6 +17,7 @@ class FixtureInterface(GenericReportView):
     exportable = False
     needs_filters = False
     # hide_filters = True
+
 
 class FixtureSelectField(ReportSelectField):
     slug = "table_id"
@@ -37,6 +39,7 @@ class FixtureSelectField(ReportSelectField):
     def update_params(self):
         self.selected = self.request.GET.get(self.slug, '')
         self.options = [{'val': _id_from_doc(f), 'text': f.tag} for f in [fo for fo in self.field_opts if fo != self.selected]]
+
 
 class FixtureViewInterface(GenericTabularReport, FixtureInterface):
     name = ugettext_noop("View Tables")
