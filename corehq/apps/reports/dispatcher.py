@@ -1,13 +1,18 @@
-from dimagi.utils.decorators.memoized import memoized
+import toggle
+from django.utils.decorators import method_decorator
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect, HttpResponseBadRequest
 from django.views.generic.base import View
 from django.utils.translation import ugettext
 from corehq.apps.domain.decorators import login_and_domain_required, cls_to_view
 from dimagi.utils.decorators.datespan import datespan_in_request
+from django_prbac.exceptions import PermissionDenied
+from django_prbac.utils import ensure_request_has_privilege
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.reports.exceptions import BadRequestError
+from corehq import privileges, toggles
+from corehq.apps.accounting.decorators import requires_privilege_alert
 
 datespan_default = datespan_in_request(
     from_param="startdate",
@@ -223,6 +228,18 @@ class ProjectReportDispatcher(ReportDispatcher):
 class CustomProjectReportDispatcher(ProjectReportDispatcher):
     prefix = 'custom_project_report'
     map_name = 'CUSTOM_REPORTS'
+
+    @method_decorator(requires_privilege_alert(privileges.CUSTOM_REPORTS))
+    def dispatch(self, request, *args, **kwargs):
+        return super(CustomProjectReportDispatcher, self).dispatch(request, *args, **kwargs)
+
+    def permissions_check(self, report, request, domain=None, is_navigation_check=False):
+        if is_navigation_check and toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, request.user.username):
+            try:
+                ensure_request_has_privilege(request, privileges.CUSTOM_REPORTS)
+            except PermissionDenied:
+                return False
+        return super(CustomProjectReportDispatcher, self).permissions_check(report, request, domain)
 
 
 class BasicReportDispatcher(ReportDispatcher):
