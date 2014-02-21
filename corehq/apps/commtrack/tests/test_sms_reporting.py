@@ -13,6 +13,30 @@ class StockReportTest(CommTrackTest):
     def setUp(self):
         super(StockReportTest, self).setUp()
 
+    def testStockReceipt(self):
+        amounts = {
+            'pp': 10,
+            'pq': 20,
+            'pr': 30,
+        }
+
+        # r loc1 pp 10 pq 20...
+        handled = handle(self.users[0].get_verified_number(), 'r {loc} {report}'.format(
+            loc='loc1',
+            report=' '.join('%s %s' % (k, v) for k, v in amounts.items())
+        ))
+        self.assertTrue(handled)
+        forms = list(self.get_commtrack_forms())
+        self.assertEqual(1, len(forms))
+        self.assertEqual(_get_location_from_sp(self.sp), _get_location_from_form(forms[0]))
+
+        self.assertEqual(1, StockReport.objects.count())
+        for report in StockReport.objects.all():
+            self.assertEqual(forms[0]._id, report.form_id)
+            self.assertEqual('transfer', report.type)
+            self.assertEqual(3, report.stocktransaction_set.count())
+            self.assertEqual(self.sp._id, report.stocktransaction_set.all()[0].case_id)
+
 
     def testStockReportRoaming(self):
         self.assertEqual(0, len(self.get_commtrack_forms()))
@@ -31,12 +55,11 @@ class StockReportTest(CommTrackTest):
         self.assertEqual(1, len(forms))
         self.assertEqual(_get_location_from_sp(self.sp), _get_location_from_form(forms[0]))
 
-        # todo: right now this makes one report per balance when really they should all be in the same one
-        self.assertEqual(3, StockReport.objects.count())
-        for report in StockReport.objects.all():
-            self.assertEqual(forms[0]._id, report.form_id)
-            self.assertEqual('balance', report.type)
-            self.assertEqual(1, report.stocktransaction_set.count())
+        self.assertEqual(1, StockReport.objects.count())
+        report = StockReport.objects.all()[0]
+        self.assertEqual(forms[0]._id, report.form_id)
+        self.assertEqual('balance', report.type)
+        self.assertEqual(3, report.stocktransaction_set.count())
 
         for code, amt in amounts.items():
             [product] = filter(lambda p: p.code_ == code, self.products)

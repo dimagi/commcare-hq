@@ -247,6 +247,7 @@ HQ_APPS = (
     'corehq.apps.api',
     'corehq.apps.indicators',
     'corehq.apps.cachehq',
+    'corehq.apps.toggle_ui',
     'corehq.couchapps',
     'custom.apps.wisepill',
     'custom.fri',
@@ -286,6 +287,7 @@ HQ_APPS = (
     'custom.apps.crs_reports',
     'custom.hope',
     'custom.openlmis',
+    'custom.m4change'
 )
 
 TEST_APPS = ()
@@ -320,6 +322,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'south',
     # 'weasyprint',
     'custom.apps.crs_reports',
+    'custom.m4change',
 
     # submodules with tests that run on travis
     'casexml.apps.case',
@@ -403,6 +406,7 @@ SERVER_EMAIL = 'commcarehq-noreply@dimagi.com' #the physical server emailing - d
 DEFAULT_FROM_EMAIL = 'commcarehq-noreply@dimagi.com'
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 CCHQ_BUG_REPORT_EMAIL = 'commcarehq-bug-reports@dimagi.com'
+BILLING_EMAIL = 'billing-comm@dimagi.com'
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 
 SERVER_ENVIRONMENT = 'localdev'
@@ -597,9 +601,12 @@ FLUFF_PILLOW_TYPES_TO_SQL = {
     'OpmUserFluff': 'SQL',
     'OpmFormFluff': 'SQL',
     'OpmHealthStatusFluff': 'SQL',
+    'AncHmisCaseFluff': 'SQL',
 }
 
 PREVIEWER_RE = '^$'
+
+MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
 
 try:
     #try to see if there's an environmental variable set for local_settings
@@ -627,6 +634,11 @@ LOGGING = {
             'format': '%(asctime)s %(levelname)s %(module)s %(message)s'
         },
     },
+    'filters': {
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse'
+        }
+    },
     'handlers': {
         'pillowtop': {
             'level': 'INFO',
@@ -650,6 +662,7 @@ LOGGING = {
         },
         'mail_admins': {
             'level': 'ERROR',
+            'filters': ['require_debug_false'],
             'class': 'django.utils.log.AdminEmailHandler',
         },
         'sentry': {
@@ -921,6 +934,7 @@ PILLOWTOPS = {
         'corehq.pillows.domain.DomainPillow',
         'corehq.pillows.user.UserPillow',
         'corehq.pillows.application.AppPillow',
+        'corehq.pillows.group.GroupPillow',
         'corehq.pillows.sms.SMSPillow',
         'corehq.pillows.user.GroupToUserPillow',
         'corehq.pillows.user.UnknownUsersPillow',
@@ -941,6 +955,7 @@ PILLOWTOPS = {
         'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
         'custom.reports.care_sa.models.CareSAFluffPillow',
         'custom.reports.mc.models.MalariaConsortiumFluffPillow',
+        'custom.m4change.models.AncHmisCaseFluffPillow',
     ],
     'mvp': [
         'corehq.apps.indicators.pillows.FormIndicatorPillow',
@@ -1032,7 +1047,9 @@ DOMAIN_MODULE_MAP = {
     'tc-test': 'custom.trialconnect',
     'trialconnect': 'custom.trialconnect',
 
-    'crs-remind': 'custom.apps.crs_reports'
+    'crs-remind': 'custom.apps.crs_reports',
+
+    'm4change': 'custom.m4change'
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True

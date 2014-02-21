@@ -1,22 +1,24 @@
 from django.http import HttpResponseBadRequest, HttpResponseForbidden
 from casexml.apps.case import get_case_updates
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.xform import is_device_report
 from corehq.apps.domain.decorators import login_or_digest_ex
-from corehq.apps.receiverwrapper.auth import AuthContext
+from corehq.apps.receiverwrapper.auth import AuthContext, WaivedAuthContext
 from couchforms import convert_xform_to_json
 import receiver
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 
 
-def _process_form(request, domain, app_id, user_id, authenticated):
+def _process_form(request, domain, app_id, user_id, authenticated,
+                  auth_cls=AuthContext):
     instance, attachments = receiver.get_instance_and_attachment(request)
     return receiver.SubmissionPost(
         instance=instance,
         attachments=attachments,
         domain=domain,
         app_id=app_id,
-        auth_context=AuthContext(
+        auth_context=auth_cls(
             domain=domain,
             user_id=user_id,
             authenticated=authenticated,
@@ -48,6 +50,17 @@ def _noauth_post(request, domain, app_id=None):
     form_json = convert_xform_to_json(instance)
     case_updates = get_case_updates(form_json)
 
+    def form_ok(form_json):
+        try:
+            # require new-style meta/userID (reject Meta/chw_id)
+            if form_json['meta']['userID'] == 'demo_user':
+                return True
+        except (KeyError, ValueError):
+            pass
+        if is_device_report(form_json):
+            return True
+        return False
+
     def case_block_ok(case_updates):
         case_ids = set()
         for case_update in case_updates:
@@ -74,10 +87,17 @@ def _noauth_post(request, domain, app_id=None):
                 return False
         return True
 
-    if not case_block_ok(case_updates):
+    if not (form_ok(form_json) and case_block_ok(case_updates)):
         return HttpResponseForbidden()
 
-    return post(request, domain, app_id)
+    return _process_form(
+        request=request,
+        domain=domain,
+        app_id=app_id,
+        user_id=None,
+        authenticated=False,
+        auth_cls=WaivedAuthContext,
+    )
 
 
 @login_or_digest_ex(allow_cc_users=True)

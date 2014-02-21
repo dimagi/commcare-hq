@@ -295,7 +295,7 @@
                                     index: column.index,
                                     display: column.display,
                                     transform: column.transform() || null, // it doesn't save '' well
-                                    is_sensitive: is_sensitive
+                                    is_sensitive: Boolean(is_sensitive)
                                 };
                             })
                         }
@@ -320,7 +320,8 @@
                 self.output = ko.computed(function () {
                     var output = ko.mapping.toJS({
                         custom_export: self.custom_export,
-                        presave: self.presave
+                        presave: self.presave,
+                        export_stock: self.export_stock
                     });
                     output.custom_export.tables = self.make_tables();
                     return JSON.stringify(output);
@@ -382,6 +383,7 @@
                 custom_export: {{ custom_export|JSON }},
                 table_configuration: {{ table_configuration|JSON }},
                 presave: {{ presave|JSON }},
+                export_stock: {{ export_stock|JSON }},
                 deid_options: {{ deid_options|JSON }},
                 urls: {
                     save: {{ request.get_full_path|safe|JSON }}
@@ -428,6 +430,12 @@
                         <input type="checkbox" id="presave-checkbox" data-bind="checked: presave" />
                         {% trans "Save this report daily?" %}
                     </label>
+                    {% if commtrack_domain %}
+                        <label class="checkbox">
+                            <input type="checkbox" id="presave-checkbox" data-bind="checked: export_stock" />
+                            {% trans "Export stock columns?" %}
+                        </label>
+                    {% endif %}
                     <label class="checkbox">
                         <input type="checkbox" id="transform-dates-checkbox" data-bind="checked: custom_export.transform_dates" />
                         {% trans "Automatically convert dates for Excel?" %}

@@ -5,6 +5,7 @@ from corehq.apps.domain.utils import legacy_domain_re
 
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
+from corehq.apps.domain.views import ProBonoStaticView
 from corehq.apps.orgs.urls import organizations_urls
 from corehq.apps.reports.urls import report_urls
 
@@ -81,6 +82,7 @@ urlpatterns = patterns('',
     (r'^hq/admin/', include('corehq.apps.hqadmin.urls')),
     (r'^hq/prescriptions/', include('corehq.apps.prescriptions.urls')),
     (r'^hq/reports/', include(report_urls)),
+    (r'^hq/flags/', include('corehq.apps.toggle_ui.urls')),
     (r'^couchlog/', include('couchlog.urls')),
     (r'^formtranslate/', include('formtranslate.urls')),
     (r'^unicel/', include('corehq.apps.unicel.urls')),
@@ -106,11 +108,13 @@ urlpatterns = patterns('',
     url(r'^apache_license/$', 'corehq.apps.hqwebapp.views.apache_license', name='apache_license'),
     url(r'^bsd_license_basic/$', TemplateView.as_view(template_name='bsd_license.html'), name='bsd_license_basic'),
     url(r'^bsd_license/$', 'corehq.apps.hqwebapp.views.bsd_license', name='bsd_license'),
+    url(r'^product_agreement/$', 'corehq.apps.hqwebapp.views.product_agreement', name='product_agreement'),
     url(r'^exchange/cda_basic/$', TemplateView.as_view(template_name='cda.html'), name='cda_basic'),
     url(r'^exchange/cda/$', 'corehq.apps.hqwebapp.views.cda', name='cda'),
     url(r'^sms_in/$', 'corehq.apps.sms.views.sms_in', name='sms_in'),
     url(r'^unsubscribe/(?P<user_id>[\w-]+)/', 'corehq.apps.hqwebapp.views.unsubscribe', name='unsubscribe'),
     (r'^wisepill/', include('custom.apps.wisepill.urls')),
+    url(r'pro_bono/$', ProBonoStaticView.as_view(), name=ProBonoStaticView.urlname)
 ) + patterns('', *LOCAL_APP_URLS)
 
 # django rosetta support if configured

@@ -151,7 +151,7 @@ def process_sms(message_id):
             and msg.datetime_to_process < utcnow):
             if recipient_block:
                 recipient_lock = get_lock(client, 
-                    "sms-queue-recipient-%s" % msg.couch_recipient)
+                    "sms-queue-recipient-phone-%s" % msg.phone_number)
                 recipient_lock.acquire(blocking=True)
 
             if msg.direction == OUTGOING:

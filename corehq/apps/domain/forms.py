@@ -5,6 +5,8 @@ import re
 import io
 from PIL import Image
 import uuid
+from corehq.apps.sms.phonenumbers_helper import parse_phone_number
+import settings
 
 from django import forms
 from crispy_forms.bootstrap import FormActions, StrictButton
@@ -18,8 +20,7 @@ from django.forms.widgets import  Select
 from django.utils.encoding import smart_str
 from django.contrib.auth.forms import PasswordResetForm
 from django.utils.safestring import mark_safe
-from django_countries import CountryField
-import phonenumbers
+from django_countries.countries import COUNTRIES
 from corehq.apps.accounting.models import BillingContactInfo, BillingAccountAdmin, SubscriptionAdjustmentMethod, Subscription, SoftwarePlanEdition
 from corehq.apps.app_manager.models import Application, FormBase
 
@@ -260,6 +261,15 @@ class SubAreaMixin():
 class DomainGlobalSettingsForm(forms.Form):
     default_timezone = TimeZoneChoiceField(label=ugettext_noop("Default Timezone"), initial="UTC")
 
+    commtrack_enabled = BooleanField(
+        label=_("CommTrack Enabled"),
+        required=False,
+        help_text=_("CommTrack is a CommCareHQ module for logistics, inventory "
+                    "tracking, and supply chain management. It is still under "
+                    "active development. Do not enable for your domain unless "
+                    "you\'re actively piloting it.")
+    )
+
     def clean_default_timezone(self):
         data = self.cleaned_data['default_timezone']
         timezone_field = TimeZoneField()
@@ -269,6 +279,7 @@ class DomainGlobalSettingsForm(forms.Form):
     def save(self, request, domain):
         try:
             global_tz = self.cleaned_data['default_timezone']
+            domain.commtrack_enabled = self.cleaned_data.get('commtrack_enabled', False)
             domain.default_timezone = global_tz
             users = WebUser.by_domain(domain.name)
             for user in users:
@@ -332,14 +343,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         help_text=_("This SMS backend will be used if a contact has no "
                     "backend specified.")
     )
-    commtrack_enabled = BooleanField(
-        label=_("CommTrack Enabled"),
-        required=False,
-        help_text=_("CommTrack is a CommCareHQ module for logistics, inventory "
-                    "tracking, and supply chain management. It is still under "
-                    "active development. Do not enable for your domain unless "
-                    "you\'re actively piloting it.")
-    )
     call_center_enabled = BooleanField(
         label=_("Call Center Application"),
         required=False,
@@ -400,9 +403,8 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         user = kwargs.pop('user', None)
         domain = kwargs.pop('domain', None)
         super(DomainMetadataForm, self).__init__(*args, **kwargs)
+
         if not (user and user.is_previewer):
-            # commtrack is pre-release
-            self.fields['commtrack_enabled'].widget = forms.HiddenInput()
             self.fields['call_center_enabled'].widget = forms.HiddenInput()
             self.fields['call_center_case_owner'].widget = forms.HiddenInput()
             self.fields['call_center_case_type'].widget = forms.HiddenInput()
@@ -481,7 +483,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
             domain.sms_case_registration_owner_id = self.cleaned_data.get('sms_case_registration_owner_id')
             domain.sms_case_registration_user_id = self.cleaned_data.get('sms_case_registration_user_id')
             domain.default_sms_backend_id = self.cleaned_data.get('default_sms_backend_id')
-            domain.commtrack_enabled = self.cleaned_data.get('commtrack_enabled', False)
             domain.call_center_config.enabled = self.cleaned_data.get('call_center_enabled', False)
             if domain.call_center_config.enabled:
                 domain.internal.using_call_center = True
@@ -601,7 +602,7 @@ class ConfidentialPasswordResetForm(PasswordResetForm):
             return self.cleaned_data['email']
 
 
-class BillingAccountInfoForm(forms.ModelForm):
+class EditBillingAccountInfoForm(forms.ModelForm):
     billing_admins = forms.CharField(
         required=False,
         label=ugettext_noop("Other Billing Admins"),
@@ -609,37 +610,117 @@ class BillingAccountInfoForm(forms.ModelForm):
                                 "subscription and billing information. They will also receive billing-related "
                                 "emails from Dimagi.</p> <p>Your account is already a Billing Administrator.</p>")),
     )
-    plan_edition = forms.CharField(
-        widget=forms.HiddenInput,
-    )
 
     class Meta:
         model = BillingContactInfo
         fields = ['first_name', 'last_name', 'phone_number', 'emails', 'company_name', 'first_line',
                   'second_line', 'city', 'state_province_region', 'postal_code', 'country']
 
-    def __init__(self, account, domain, plan_version, current_subscription, creating_user,
-                 data=None, *args, **kwargs):
+    def __init__(self, account, domain, creating_user, data=None, *args, **kwargs):
         self.account = account
         self.domain = domain
-        self.plan_version = plan_version
-        self.current_subscription = current_subscription
         self.creating_user = creating_user
+
+        try:
+            self.current_country = self.account.billingcontactinfo.country
+        except Exception:
+            self.current_country = None
 
         try:
             kwargs['instance'] = self.account.billingcontactinfo
         except BillingContactInfo.DoesNotExist:
             pass
 
-        super(BillingAccountInfoForm, self).__init__(data, *args, **kwargs)
+        super(EditBillingAccountInfoForm, self).__init__(data, *args, **kwargs)
 
-        self.fields['plan_edition'].initial = self.plan_version.plan.edition
         other_admins = self.account.billing_admins.exclude(web_user=self.creating_user).all()
         self.fields['billing_admins'].initial = ','.join([o.web_user for o in other_admins])
 
-        from corehq.apps.domain.views import DomainSubscriptionView
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _("Billing Administrators"),
+                crispy.Field('billing_admins', css_class='input-xxlarge'),
+            ),
+            crispy.Fieldset(
+                _("Basic Information"),
+                'company_name',
+                'first_name',
+                'last_name',
+                crispy.Field('emails', css_class='input-xxlarge'),
+                'phone_number',
+            ),
+            crispy.Fieldset(
+                 _("Mailing Address"),
+                'first_line',
+                'second_line',
+                'city',
+                'state_province_region',
+                'postal_code',
+                crispy.Field('country', css_class="input-large",
+                             data_countryname=dict(COUNTRIES).get(self.current_country, '')),
+            ),
+            FormActions(
+                StrictButton(
+                    _("Update Billing Information"),
+                    type="submit",
+                    css_class='btn btn-primary',
+                ),
+            ),
+        )
+
+    def clean_billing_admins(self):
+        data = self.cleaned_data['billing_admins']
+        all_admins = data.split(',')
+        result = []
+        for admin in all_admins:
+            result.append(BillingAccountAdmin.objects.get_or_create(web_user=admin)[0])
+        result.append(BillingAccountAdmin.objects.get_or_create(web_user=self.creating_user)[0])
+        return result
+
+    def _parse_number(self, number, country):
+        return parse_phone_number(number, country, failhard=False)
+
+    def clean_phone_number(self):
+        data = self.cleaned_data['phone_number']
+        parsed_number = None
+        if data:
+            for country in ["US", "GB", None]:
+                parsed_number = self._parse_number(data, country)
+                if parsed_number is not None:
+                    break
+            if parsed_number is None:
+                raise forms.ValidationError(_("It looks like this phone number is invalid. "
+                                              "Did you forget the country code?"))
+            return "+%s%s" % (parsed_number.country_code, parsed_number.national_number)
+
+    def save(self, commit=True):
+        billing_contact_info = super(EditBillingAccountInfoForm, self).save(commit=False)
+        billing_contact_info.account = self.account
+        billing_contact_info.save()
+
+        billing_admins = self.cleaned_data['billing_admins']
+        for admin in billing_admins:
+            if not self.account.billing_admins.filter(web_user=admin.web_user).exists():
+                self.account.billing_admins.add(admin)
+        self.account.save()
+        return True
+
+
+class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
+    plan_edition = forms.CharField(
+        widget=forms.HiddenInput,
+    )
+
+    def __init__(self, account, domain, creating_user, plan_version, current_subscription, data=None, *args, **kwargs):
+        self.plan_version = plan_version
+        self.current_subscription = current_subscription
+        super(ConfirmNewSubscriptionForm, self).__init__(account, domain, creating_user, data=data, *args, **kwargs)
+
+        self.fields['plan_edition'].initial = self.plan_version.plan.edition
+
+        from corehq.apps.domain.views import DomainSubscriptionView
         self.helper.layout = crispy.Layout(
             'plan_edition',
             crispy.Fieldset(
@@ -661,7 +742,8 @@ class BillingAccountInfoForm(forms.ModelForm):
                 'city',
                 'state_province_region',
                 'postal_code',
-                crispy.Field('country', css_class="input-large"),
+                crispy.Field('country', css_class="input-large",
+                             data_countryname=dict(COUNTRIES).get(self.current_country, ''))
             ),
             FormActions(
                 crispy.HTML('<a href="%(url)s" style="margin-right:5px;" class="btn">%(title)s</a>' % {
@@ -673,48 +755,15 @@ class BillingAccountInfoForm(forms.ModelForm):
                     type="submit",
                     css_class='btn btn-success',
                 ),
-            )
+            ),
         )
 
-    def clean_billing_admins(self):
-        data = self.cleaned_data['billing_admins']
-        all_admins = data.split(',')
-        result = []
-        for admin in all_admins:
-            result.append(BillingAccountAdmin.objects.get_or_create(web_user=admin)[0])
-        result.append(BillingAccountAdmin.objects.get_or_create(web_user=self.creating_user)[0])
-        return result
-
-    def _parse_number(self, number, country):
-        try:
-            return phonenumbers.parse(number, country)
-        except phonenumbers.NumberParseException:
-            pass
-
-    def clean_phone_number(self):
-        data = self.cleaned_data['phone_number']
-        parsed_number = None
-        if data:
-            for country in ["US", "GB", None]:
-                parsed_number = self._parse_number(data, country)
-                if parsed_number is not None:
-                    break
-            if parsed_number is None:
-                raise forms.ValidationError(_("It looks like this phone number is invalid. "
-                                              "Did you forget the country code?"))
-            return "+%s%s" % (parsed_number.country_code, parsed_number.national_number)
-
     def save(self, commit=True):
-        try:
-            billing_contact_info = super(BillingAccountInfoForm, self).save(commit=False)
-            billing_contact_info.account = self.account
-            billing_contact_info.save()
+        account_save_success = super(ConfirmNewSubscriptionForm, self).save(commit=False)
+        if not account_save_success:
+            return False
 
-            billing_admins = self.cleaned_data['billing_admins']
-            for admin in billing_admins:
-                if not self.account.billing_admins.filter(web_user=admin.web_user).exists():
-                    self.account.billing_admins.add(admin)
-            self.account.save()
+        try:
             if self.current_subscription is not None:
                 if self.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY:
                     self.current_subscription.cancel_subscription(adjustment_method=SubscriptionAdjustmentMethod.USER,
@@ -742,8 +791,8 @@ class BillingAccountInfoForm(forms.ModelForm):
 class ProBonoForm(forms.Form):
     contact_email = forms.CharField(label=_("Contact email"))
     organization = forms.CharField(required=False, label=_("Organization"))
-    project_overview = forms.CharField(widget=forms.Textarea, label="Project Overview")
-    pay_only_features_needed = forms.BooleanField(required=False, label="Pay only features needed")
+    project_overview = forms.CharField(widget=forms.Textarea, label="Project overview")
+    pay_only_features_needed = forms.CharField(widget=forms.Textarea, label="Pay only features needed")
     duration_of_project = forms.CharField(help_text=_("We grant pro-bono software plans for "
                                                       "12 months at a time. After 12 months "
                                                       "groups must reapply to renew their "
@@ -769,19 +818,19 @@ class ProBonoForm(forms.Form):
             ),
         )
 
-    def process_submission(self):
+    def process_submission(self, domain=None):
         try:
             params = {
-                'contact_email': self.cleaned_data['contact_email'],
-                'organization': self.cleaned_data['organization'],
-                'project_overview': self.cleaned_data['project_overview'],
-                'pay_only_features_needed': self.cleaned_data['pay_only_features_needed'],
-                'duration_of_project': self.cleaned_data['duration_of_project'],
+                'pro_bono_form': self,
             }
             html_content = render_to_string("domain/email/pro_bono_application.html", params)
             text_content = render_to_string("domain/email/pro_bono_application.txt", params)
-            recipient = "infomation@dimagi.com"
-            send_HTML_email("Pro-Bono Application", recipient, html_content, text_content=text_content)
+            recipient = settings.BILLING_EMAIL
+            subject = "[Pro-Bono Application]"
+            if domain is not None:
+                subject = "%s %s" % (subject, domain)
+            send_HTML_email(subject, recipient, html_content, text_content=text_content,
+                            email_from=settings.DEFAULT_FROM_EMAIL)
         except Exception:
             logging.error("Couldn't send pro-bono application email. "
                           "Contact: %s" % self.cleaned_data['contact_email']

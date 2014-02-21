@@ -81,6 +81,12 @@ class Site(object):
 
 
     def process_form(self, form, username):
+        try:
+            day = self.week.index(form.form['date_form_completed'])
+        except ValueError:
+            msg = "Form %s created outside of report period. Ignoring." % form._id
+            logging.info(msg)
+            return
 
         def get_or_None(obj, *args):
             val = obj
@@ -90,8 +96,6 @@ class Site(object):
                 except KeyError:
                     return None
             return val
-
-        day = self.week.index(form.form['date_form_completed'])
 
         strategies = len(form.form.get('strategies_used').split())
 

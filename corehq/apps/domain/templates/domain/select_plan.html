@@ -28,7 +28,7 @@
 <p>
 {% blocktrans %}
     Hovering over the <i class="icon-info-sign"></i> icon will provide use cases for each plan. You may also
-    <a href="https://wiki.commcarehq.org/display/commcarepublic/CommCare+Plan+Details">visit the wiki
+    <a href="https://wiki.commcarehq.org/display/commcarepublic/CommCare+Plan+Details" target="_blank">visit the Help Site
     to learn more</a> about each plan.
 {% endblocktrans %}
 </p>
@@ -97,10 +97,8 @@
                     <!-- /ko -->
                 </tfoot>
             </table>
-                <ul class="pricing-footnotes">
-                    {% for footnote in pricing_table.footer %}
-                        <li>{{ footnote }}</li>
-                    {% endfor %}
+                <ul class="pricing-footnotes" data-bind="foreach: footer">
+                    <li data-bind="html: $data"></li>
                 </ul>
                 <div class="form-actions" data-bind="visible: isSubmitVisible">
                     <button type="submit" class="btn btn-primary btn-large">{% trans 'Next' %}</button>

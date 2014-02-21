@@ -1,5 +1,28 @@
 import json
 from django.http import HttpResponse, HttpRequest
+from dimagi.utils.decorators.memoized import memoized
+
+
+class AsyncHandlerMixin(object):
+    """
+    To be mixed in with a TemplateView.
+    todo write better documentation on this (biyeun)
+    """
+    async_handlers = []
+
+    @property
+    def handler_slug(self):
+        return self.request.POST.get('handler')
+
+    def get_async_handler(self):
+        handler_class = dict([(h.slug, h) for h in self.async_handlers])[self.handler_slug]
+        return handler_class(self.request)
+
+    @property
+    @memoized
+    def async_response(self):
+        if self.handler_slug in [h.slug for h in self.async_handlers]:
+            return self.get_async_handler().get_response()
 
 
 class AsyncHandlerError(Exception):

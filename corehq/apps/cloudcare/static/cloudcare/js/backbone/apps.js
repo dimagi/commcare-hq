@@ -8,7 +8,7 @@ cloudCare.dispatch = _.extend({}, Backbone.Events);
 cloudCare.AppNavigation = Backbone.Router.extend({
 
     initialize: function() {
-        // _.bindAll(this);
+        _.bindAll(this, 'setView');
     },
 
     routes: {
@@ -20,8 +20,10 @@ cloudCare.AppNavigation = Backbone.Router.extend({
         "view/:app/:module/:form/case/:case":        "app:module:form:case",
         "view/:app/:module/:form/case/:case/enter/": "app:module:form:case:enter",
         "":                                          "clear"
-    }
-
+    },
+    setView: function (view) {
+        this.view = view;
+    },
 });
 
 

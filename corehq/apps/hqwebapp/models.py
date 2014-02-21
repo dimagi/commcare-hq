@@ -4,11 +4,13 @@ from django.utils.safestring import mark_safe, mark_for_escaping
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop, ugettext_lazy
-from corehq import toggles
+from corehq import toggles, privileges
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
+from corehq.apps.accounting.models import BillingAccountAdmin
 from corehq.apps.domain.utils import get_adm_enabled_domains
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
+from django_prbac.models import Role, UserRole
 import toggle
 
 from dimagi.utils.couch.database import get_db
@@ -803,16 +805,6 @@ class ProjectSettingsTab(UITab):
                 }
             ])
 
-            try:
-                # so that corehq is not dependent on the billing submodule
-                from hqbilling.views import EditProjectBillingInfoView
-                project_info.append({
-                    'title': _(EditProjectBillingInfoView.page_title),
-                    'url': reverse(EditProjectBillingInfoView.urlname, args=[self.domain])
-                })
-            except ImportError:
-                pass
-
         from corehq.apps.domain.views import EditMyProjectSettingsView
         project_info.append({
             'title': _(EditMyProjectSettingsView.page_title),
@@ -832,16 +824,7 @@ class ProjectSettingsTab(UITab):
             from corehq.apps.domain.views import (
                 BasicCommTrackSettingsView,
                 AdvancedCommTrackSettingsView,
-                DomainSubscriptionView,
-                SelectPlanView,
             )
-
-            subscription = [
-                {
-                    'title': DomainSubscriptionView.page_title,
-                    'url': reverse(DomainSubscriptionView.urlname, args=[self.domain]),
-                },
-            ]
 
             if self.project.commtrack_enabled:
                 commtrack_settings = [
@@ -884,7 +867,26 @@ class ProjectSettingsTab(UITab):
                  ]}
             ])
             items.append((_('Project Administration'), administration))
-            if toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, self.couch_user.username):
+
+        from corehq.apps.users.models import WebUser
+        if isinstance(self.couch_user, WebUser):
+            user_is_billing_admin, billing_account = BillingAccountAdmin.get_admin_status_and_account(
+                self.couch_user, self.domain)
+            if user_is_billing_admin or self.couch_user.is_superuser:
+                from corehq.apps.domain.views import DomainSubscriptionView, EditExistingBillingAccountView
+                subscription = [
+                    {
+                        'title': DomainSubscriptionView.page_title,
+                        'url': reverse(DomainSubscriptionView.urlname, args=[self.domain]),
+                    },
+                ]
+                if billing_account is not None:
+                    subscription.append(
+                        {
+                            'title':  EditExistingBillingAccountView.page_title,
+                            'url': reverse(EditExistingBillingAccountView.urlname, args=[self.domain]),
+                        },
+                    )
                 items.append((_('Subscription'), subscription))
 
         if self.couch_user.is_superuser:
@@ -898,6 +900,8 @@ class ProjectSettingsTab(UITab):
                 'url': reverse(EditInternalCalculationsView.urlname, args=[self.domain])
             }]
             items.append((_('Internal Data (Dimagi Only)'), internal_admin))
+
+
 
         return items
 
@@ -1012,7 +1016,14 @@ class AccountingTab(UITab):
 
     @property
     def is_viewable(self):
-        return self.couch_user and self.couch_user.is_superuser
+        roles = Role.objects.filter(slug=privileges.ACCOUNTING_ADMIN)
+        if not roles:
+            return False
+        privilege = roles[0].instantiate({})
+        try:
+            return self._request.user.prbac_role.has_privilege(privilege)
+        except UserRole.DoesNotExist:
+            return False
 
 
 class SMSAdminTab(UITab):
@@ -1040,6 +1051,14 @@ class SMSAdminTab(UITab):
     def is_viewable(self):
         return self.couch_user and self.couch_user.is_superuser
 
+class FeatureFlagsTab(UITab):
+    title = ugettext_noop("Feature Flags")
+    view = "toggle_list"
+
+    @property
+    def is_viewable(self):
+        return self.couch_user and self.couch_user.is_superuser
+
 
 class AnnouncementsTab(UITab):
     title = ugettext_noop("Announcements")
@@ -1061,6 +1080,7 @@ class AdminTab(UITab):
         SMSAdminTab,
         AnnouncementsTab,
         AccountingTab,
+        FeatureFlagsTab
     )
 
     @property
@@ -1075,15 +1095,20 @@ class AdminTab(UITab):
             format_submenu_context(mark_for_escaping(_("Commands")), url=reverse("management_commands")),
 #            format_submenu_context(mark_for_escaping("HQ Announcements"),
 #                url=reverse("default_announcement_admin")),
-            format_submenu_context(AccountingTab.title, url=reverse('accounting_default')),
         ]
         try:
-            submenu_context.append(format_submenu_context(mark_for_escaping(_("Billing")),
+            if AccountingTab(self._request, self._current_url_name).is_viewable:
+                submenu_context.append(format_submenu_context(AccountingTab.title, url=reverse('accounting_default')))
+        except Exception:
+            pass
+        try:
+            submenu_context.append(format_submenu_context(mark_for_escaping(_("Old SMS Billing")),
                 url=reverse("billing_default")))
         except Exception:
             pass
         submenu_context.extend([
             format_submenu_context(_("SMS Connectivity"), url=reverse("default_sms_admin_interface")),
+            format_submenu_context(_("Feature Flags"), url=reverse("toggle_list")),
             format_submenu_context(None, is_divider=True),
             format_submenu_context(_("Django Admin"), url="/admin")
         ])
