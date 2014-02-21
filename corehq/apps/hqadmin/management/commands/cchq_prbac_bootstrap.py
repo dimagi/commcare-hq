@@ -133,6 +133,7 @@ class Command(BaseCommand):
         privileges.CUSTOM_SMS_GATEWAY,
         privileges.ROLE_BASED_ACCESS,
         privileges.BULK_CASE_AND_USER_MANAGEMENT,
+        privileges.ALLOW_EXCESS_USERS,
     ]
 
     pro_plan_features = standard_plan_features + [

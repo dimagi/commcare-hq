@@ -22,6 +22,8 @@ DEIDENTIFIED_DATA = 'deidentified_data'
 
 HIPAA_COMPLIANCE_ASSURANCE = 'hipaa_compliance_assurance'
 
+ALLOW_EXCESS_USERS = 'allow_excess_users'
+
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
     API_ACCESS,
@@ -38,6 +40,7 @@ MAX_PRIVILEGES = [
     BULK_CASE_AND_USER_MANAGEMENT,
     DEIDENTIFIED_DATA,
     HIPAA_COMPLIANCE_ASSURANCE,
+    ALLOW_EXCESS_USERS,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
