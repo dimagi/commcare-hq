@@ -380,7 +380,7 @@ class LedgerXpathGenerator(BaseXpathGenerator):
         session_case_id = 'case_id_case_{}'.format(self.module.case_type)
         section = self.column.field_property
 
-        return "if({0} = 0 or {1} = 0 or {2} = 0, 0, {3})".format(
+        return "if({0} = 0 or {1} = 0 or {2} = 0, '', {3})".format(
             LedgerdbXpath(session_case_id).ledger().count(),
             LedgerdbXpath(session_case_id).ledger().section(section).count(),
             LedgerdbXpath(session_case_id).ledger().section(section).entry(u'current()/@id').count(),
