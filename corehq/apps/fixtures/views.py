@@ -336,8 +336,6 @@ def download_file(request, domain):
 
 class UploadItemLists(TemplateView):
 
-    template_name = 'fixtures/upload_item_lists.html'
-
     def get_context_data(self, **kwargs):
         """TemplateView automatically calls this to render the view (on a get)"""
         return {
