@@ -333,6 +333,8 @@ def download_file(request, domain):
         response = export_response(open(path), format, "%s_fixtures" % domain)
         return response
     except IOError:
+        notify_exception(request)
+        messages.error(request, _("Sorry, Something went wrong with your download! Please try again. If you see this repeatedly please report an issue "))
         return HttpResponseRedirect(reverse("fixture_interface_dispatcher", args=[], kwargs={'domain': domain, 'report_slug': 'edit_lookup_tables'}))
 
 
