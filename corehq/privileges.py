@@ -16,7 +16,8 @@ REMINDERS_FRAMEWORK = 'reminders_framework'
 CUSTOM_SMS_GATEWAY = 'custom_sms_gateway'
 INBOUND_SMS = 'inbound_sms'
 
-BULK_CASE_AND_USER_MANAGEMENT = 'bulk_case_and_user_management'
+BULK_CASE_MANAGEMENT = 'bulk_case_management'
+BULK_USER_MANAGEMENT = 'bulk_user_management'
 
 DEIDENTIFIED_DATA = 'deidentified_data'
 
@@ -37,7 +38,8 @@ MAX_PRIVILEGES = [
     REMINDERS_FRAMEWORK,
     CUSTOM_SMS_GATEWAY,
     INBOUND_SMS,
-    BULK_CASE_AND_USER_MANAGEMENT,
+    BULK_CASE_MANAGEMENT,
+    BULK_USER_MANAGEMENT,
     DEIDENTIFIED_DATA,
     HIPAA_COMPLIANCE_ASSURANCE,
     ALLOW_EXCESS_USERS,

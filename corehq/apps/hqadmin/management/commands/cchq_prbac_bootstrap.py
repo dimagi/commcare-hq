@@ -16,6 +16,9 @@ from django_prbac.models import Grant, Role
 
 logger = logging.getLogger(__name__)
 
+
+BULK_CASE_AND_USER_MANAGEMENT = 'bulk_case_and_user_management'
+
 class Command(BaseCommand):
     help = 'Populate a fresh database with some sample roles and grants'
 
@@ -44,6 +47,10 @@ class Command(BaseCommand):
         for (plan_role_slug, privs) in self.BOOTSTRAP_GRANTS.items():
             for priv_role_slug in privs:
                 self.ensure_grant(plan_role_slug, priv_role_slug, dry_run=dry_run)
+
+        for old_priv in self.OLD_PRIVILEGES:
+            for plan_role_slug in self.BOOTSTRAP_GRANTS.keys():
+                self.remove_grant(plan_role_slug, old_priv)
 
     def flush_roles(self):
         logger.info('Flushing ALL Roles...')
@@ -89,6 +96,17 @@ class Command(BaseCommand):
                     to_role=priv,
                 )
 
+    def remove_grant(self, grantee_slug, priv_slug, dry_run=False):
+        grants = Grant.objects.filter(from_role__slug=grantee_slug,
+                                      to_role__slug=priv_slug)
+        if dry_run:
+            if grants:
+                logger.info("[DRY RUN] Removing privilege %s => %s", grantee_slug, priv_slug)
+        else:
+            if grants:
+                grants.delete()
+                logger.info("Removing privilege %s => %s", grantee_slug, priv_slug)
+
     BOOTSTRAP_PRIVILEGES = [
         Role(slug=privileges.API_ACCESS, name='API Access', description=''),
         Role(slug=privileges.LOOKUP_TABLES, name='Lookup Tables', description=''),
@@ -108,9 +126,11 @@ class Command(BaseCommand):
              description='Ability to set up telerivet gateway on the "SMS Connectivity" page (inbound or outbound).',
         ),
         Role(slug=privileges.INBOUND_SMS, name='Inbound SMS (where available)', description=''),
-        Role(slug=privileges.BULK_CASE_AND_USER_MANAGEMENT, name='Bulk Case and User Management', description=''),
+        Role(slug=privileges.BULK_CASE_MANAGEMENT, name='Bulk Case Management', description=''),
+        Role(slug=privileges.BULK_USER_MANAGEMENT, name='Bulk User Management', description=''),
         Role(slug=privileges.DEIDENTIFIED_DATA, name='De-identified Data', description=''),
         Role(slug=privileges.HIPAA_COMPLIANCE_ASSURANCE, name='HIPAA Compliance Assurance', description=''),
+        Role(slug=privileges.ALLOW_EXCESS_USERS, name='Can Add Users Above Limit', description=''),
     ]
 
     BOOTSTRAP_PLANS = [
@@ -132,7 +152,8 @@ class Command(BaseCommand):
         privileges.REMINDERS_FRAMEWORK,
         privileges.CUSTOM_SMS_GATEWAY,
         privileges.ROLE_BASED_ACCESS,
-        privileges.BULK_CASE_AND_USER_MANAGEMENT,
+        privileges.BULK_USER_MANAGEMENT,
+        privileges.BULK_CASE_MANAGEMENT,
         privileges.ALLOW_EXCESS_USERS,
     ]
 
@@ -150,6 +171,10 @@ class Command(BaseCommand):
     ]
 
     enterprise_plan_features = advanced_plan_features + []
+
+    OLD_PRIVILEGES = [
+        BULK_CASE_AND_USER_MANAGEMENT,
+    ]
 
     BOOTSTRAP_GRANTS = {
         'community_plan_v0': community_plan_features,
