@@ -22,6 +22,17 @@ def get_indicator_model(name, indicator_doc):
             primary_key=True),
     ]
 
+    try:
+        flat_fields = indicator_doc._flat_fields
+        for flat_name in flat_fields.keys():
+            columns.append(sqlalchemy.Column(
+                flat_name,
+                sqlalchemy.String,
+                nullable=True
+            ))
+    except AttributeError:
+        pass
+
     group_types = indicator_doc.get_group_types()
     for group_name in indicator_doc.get_group_names():
         columns.append(sqlalchemy.Column(

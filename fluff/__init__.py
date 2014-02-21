@@ -563,6 +563,12 @@ class IndicatorDocument(schema.Document):
             row = rows.setdefault(rowkey, {})
             row[col_name] = col_value
 
+        flat_keys = None
+        try:
+            flat_keys = self._flat_fields.keys()
+        except AttributeError:
+            pass
+
         for change in diff['indicator_changes']:
             name = '{0}_{1}'.format(change['calculator'], change['emitter'])
             for value_dict in change['values']:
@@ -574,6 +580,8 @@ class IndicatorDocument(schema.Document):
                     set_row_val(key, name, value)
                 else:
                     set_row_val(default_key + (date,), name, value)
+                for flat_key in flat_keys:
+                    set_row_val(default_key + (date,), flat_key, self[flat_key])
 
         types = self.get_group_types()
         types['date'] = 'date'
