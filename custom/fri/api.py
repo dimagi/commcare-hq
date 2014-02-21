@@ -33,6 +33,14 @@ WINDOWS = (
     (time(15, 30), 510),
 )
 
+OFF_DAYS = [
+    date(2014, 12, 25),
+]
+
+MSG_ID_OPENING = "OPENING"
+MSG_ID_CLOSING = "CLOSING"
+MSG_ID_CLOSED = "CLOSED"
+
 def letters_only(text):
     return re.sub(r"[^a-zA-Z]", "", text).upper()
 
@@ -257,4 +265,26 @@ def catchup_custom_content_handler(reminder, handler, recipient):
     Used to send content that was missed to due registering late in the day.
     """
     return custom_content_handler(reminder, handler, recipient, catch_up=True)
+
+def shift_custom_content_handler(reminder, handler, recipient):
+    # This is a bit complex / coupled with the reminder schedule, but is
+    # the easiest way to do this without cluttering the reminders ui with
+    # advanced features
+    message_type = reminder.current_event_sequence_num % 3
+    is_opening = message_type == 2
+    is_closing = message_type == 0
+    is_closed = message_type == 1
+    # Monday=0, Sunday=6
+    curr_day_num = (reminder.current_event_sequence_num + 1) / 3
+    curr_day_num = (curr_day_num + 5) % 7
+    next_day_num = (curr_day_num + 1) % 7
+
+    if is_opening:
+        msg = FRIExtraMessage.view("fri/extra_message",
+                                   key=[reminder.domain,MSG_ID_OPENING],
+                                   include_docs=True).one()
+        if msg:
+            message = msg.message
+        else:
+            message = None
 
