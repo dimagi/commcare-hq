@@ -9,6 +9,8 @@ from django.http import HttpResponseRedirect, Http404, HttpResponse
 from django.shortcuts import render
 
 from django.utils.translation import ugettext as _, ugettext_noop
+from corehq import privileges
+from corehq.apps.accounting.decorators import requires_privilege_alert
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import get_case_properties
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
@@ -82,6 +84,7 @@ def get_project_time_info(domain):
 def default(request, domain):
     return HttpResponseRedirect(reverse('list_reminders', args=[domain]))
 
+@requires_privilege_alert(privileges.OUTBOUND_SMS)
 @reminders_permission
 def list_reminders(request, domain, reminder_type=REMINDER_TYPE_DEFAULT):
     all_handlers = CaseReminderHandler.get_handlers(domain=domain).all()
@@ -133,6 +136,7 @@ def list_reminders(request, domain, reminder_type=REMINDER_TYPE_DEFAULT):
         'timezone_now' : timezone_now,
     })
 
+@requires_privilege_alert(privileges.OUTBOUND_SMS)
 @reminders_permission
 def add_reminder(request, domain, handler_id=None, template="reminders/partial/add_reminder.html"):
 
@@ -198,6 +202,7 @@ def render_one_time_reminder_form(request, domain, form, handler_id):
 
     return render(request, "reminders/partial/add_one_time_reminder.html", context)
 
+@requires_privilege_alert(privileges.OUTBOUND_SMS)
 @reminders_permission
 def add_one_time_reminder(request, domain, handler_id=None):
     if handler_id:
@@ -263,6 +268,7 @@ def add_one_time_reminder(request, domain, handler_id=None):
 
     return render_one_time_reminder_form(request, domain, form, handler_id)
 
+@requires_privilege_alert(privileges.OUTBOUND_SMS)
 @reminders_permission
 def copy_one_time_reminder(request, domain, handler_id):
     handler = CaseReminderHandler.get(handler_id)
@@ -277,6 +283,7 @@ def copy_one_time_reminder(request, domain, handler_id):
     }
     return render_one_time_reminder_form(request, domain, OneTimeReminderForm(initial=initial), None)
 
+@requires_privilege_alert(privileges.OUTBOUND_SMS)
 @reminders_permission
 def delete_reminder(request, domain, handler_id):
     handler = CaseReminderHandler.get(handler_id)
@@ -286,6 +293,7 @@ def delete_reminder(request, domain, handler_id):
     view_name = "one_time_reminders" if handler.reminder_type == REMINDER_TYPE_ONE_TIME else "list_reminders"
     return HttpResponseRedirect(reverse(view_name, args=[domain]))
 
+@requires_privilege_alert(privileges.OUTBOUND_SMS)
 @reminders_permission
 def scheduled_reminders(request, domain, template="reminders/partial/scheduled_reminders.html"):
     timezone = Domain.get_by_name(domain).default_timezone
@@ -356,6 +364,7 @@ def get_events_scheduling_info(events):
         })
     return result
 
+@requires_privilege_alert(privileges.OUTBOUND_SMS)
 @reminders_permission
 def add_complex_reminder_schedule(request, domain, handler_id=None):
     if handler_id:
@@ -729,6 +738,7 @@ class EditScheduledReminderView(CreateScheduledReminderView):
         self.schedule_form.save(self.reminder_handler)
 
 
+@requires_privilege_alert(privileges.OUTBOUND_SMS)
 @reminders_permission
 def manage_keywords(request, domain):
     context = {
@@ -737,6 +747,8 @@ def manage_keywords(request, domain):
     }
     return render(request, "reminders/partial/manage_keywords.html", context)
 
+
+@requires_privilege_alert(privileges.OUTBOUND_SMS)
 @reminders_permission
 def add_keyword(request, domain, keyword_id=None):
     sk = None
@@ -855,6 +867,8 @@ def add_keyword(request, domain, keyword_id=None):
     
     return render(request, "reminders/partial/add_keyword.html", context)
 
+
+@requires_privilege_alert(privileges.OUTBOUND_SMS)
 @reminders_permission
 def delete_keyword(request, domain, keyword_id):
     s = SurveyKeyword.get(keyword_id)
@@ -863,6 +877,8 @@ def delete_keyword(request, domain, keyword_id):
     s.retire()
     return HttpResponseRedirect(reverse("manage_keywords", args=[domain]))
 
+
+@requires_privilege_alert(privileges.OUTBOUND_SMS)
 @reminders_permission
 def add_survey(request, domain, survey_id=None):
     survey = None
@@ -1093,6 +1109,8 @@ def add_survey(request, domain, survey_id=None):
     }
     return render(request, "reminders/partial/add_survey.html", context)
 
+
+@requires_privilege_alert(privileges.OUTBOUND_SMS)
 @reminders_permission
 def survey_list(request, domain):
     context = {
@@ -1101,6 +1119,8 @@ def survey_list(request, domain):
     }
     return render(request, "reminders/partial/survey_list.html", context)
 
+
+@requires_privilege_alert(privileges.OUTBOUND_SMS)
 @reminders_permission
 def add_sample(request, domain, sample_id=None):
     sample = None
@@ -1198,6 +1218,8 @@ def add_sample(request, domain, sample_id=None):
     }
     return render(request, "reminders/partial/add_sample.html", context)
 
+
+@requires_privilege_alert(privileges.OUTBOUND_SMS)
 @reminders_permission
 def sample_list(request, domain):
     context = {
@@ -1206,6 +1228,8 @@ def sample_list(request, domain):
     }
     return render(request, "reminders/partial/sample_list.html", context)
 
+
+@requires_privilege_alert(privileges.OUTBOUND_SMS)
 @reminders_permission
 def edit_contact(request, domain, sample_id, case_id):
     case = CommCareCase.get(case_id)
@@ -1237,6 +1261,8 @@ def edit_contact(request, domain, sample_id, case_id):
     }
     return render(request, "reminders/partial/edit_contact.html", context)
 
+
+@requires_privilege_alert(privileges.OUTBOUND_SMS)
 @reminders_permission
 def reminders_in_error(request, domain):
     handler_map = {}
