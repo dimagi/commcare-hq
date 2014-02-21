@@ -9,14 +9,12 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, D
 
 
 class FixtureInterface(GenericReportView):
-    # overriding properties from GenericReportView
     section_name = ugettext_noop("Lookup Tables")
     base_template = 'fixtures/fixtures_base.html'
     asynchronous = False
     dispatcher = FixtureInterfaceDispatcher
     exportable = False
     needs_filters = False
-    # hide_filters = True
 
 
 class FixtureSelectField(ReportSelectField):
@@ -76,7 +74,6 @@ class FixtureEditInterface(FixtureInterface):
     name = ugettext_noop("Manage Tables")
     slug = "edit_lookup_tables"
 
-    base_template = "fixtures/fixtures_base.html"
     report_template_path = 'fixtures/manage_tables.html'
 
     asynchronous = False

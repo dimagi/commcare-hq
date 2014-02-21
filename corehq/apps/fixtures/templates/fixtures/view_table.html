@@ -3,14 +3,6 @@
 {% load report_tags %}
 {% load i18n %}
 
-{% block js %}{{ block.super }}
-    {% if charts %}
-    <link href="{% static 'hqwebapp/js/lib/nvd3/nv.d3.css' %}" rel="stylesheet">
-    <script src="{% static 'hqwebapp/js/lib/nvd3/lib/d3.v2.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/nvd3/nv.d3.min.js' %}"></script>
-    {% endif %}
-{% endblock %}
-
 {% block main_column %}
 {% block reportcontent %}
 {% block reporttable %}
@@ -22,76 +14,72 @@
             </div>
         </fieldset>
     {% endfor %}
-                            {% block report_filter_actions %}
-                            <button type="submit" class="btn btn-primary"
-                                    data-loading-text="Generating Report..."
-                                    data-standard-text="Apply">
-                                Apply
-                            </button>
-                            {% endblock %}
-    </select>
+    {% block report_filter_actions %}
+    <button type="submit" class="btn btn-primary" data-standard-text="Apply">
+        Apply
+    </button>
+    {% endblock %}
 </form>
-    <table id="report_table_{{ report.slug }}" class="table table-striped datatable" {% if pagination.filter %} data-filter="true"{% endif %}>
-        <thead>
-        {%  if report_table.headers.complex %}
-            {{ report_table.headers.render_html|safe }}
-        {% else %}
-            {# This method is depricated and will likely be removed once Legacy Custom Reports are moved over. #}
-            <tr>
-                {% for header in report_table.headers %}
-                    <th {% if not report_table.pagination.is_on %}data-sort="{{ header.sort_type }}" data-sortdir="{{ header.sort_direction }}"{% endif %} {% if header.css_class %}class="{{ header.css_class }}"{% endif %}>
-                        <i class="icon-white"></i>
-                        {% if header.html %}{{ header.html }}{% else %}{{ header|linebreaksbr }}{% endif %}
-                        {% if header.help_text %}
-                            <i class="icon-white icon-question-sign header-tooltip" title="{{ header.help_text }}"></i>
-                        {% endif %}
-                    </th>
+<table id="report_table_{{ report.slug }}" class="table table-striped datatable" {% if pagination.filter %} data-filter="true"{% endif %}>
+    <thead>
+    {%  if report_table.headers.complex %}
+        {{ report_table.headers.render_html|safe }}
+    {% else %}
+        {# This method is depricated and will likely be removed once Legacy Custom Reports are moved over. #}
+        <tr>
+            {% for header in report_table.headers %}
+                <th {% if not report_table.pagination.is_on %}data-sort="{{ header.sort_type }}" data-sortdir="{{ header.sort_direction }}"{% endif %} {% if header.css_class %}class="{{ header.css_class }}"{% endif %}>
+                    <i class="icon-white"></i>
+                    {% if header.html %}{{ header.html }}{% else %}{{ header|linebreaksbr }}{% endif %}
+                    {% if header.help_text %}
+                        <i class="icon-white icon-question-sign header-tooltip" title="{{ header.help_text }}"></i>
+                    {% endif %}
+                </th>
+            {% endfor %}
+        </tr>
+    {% endif %}
+    </thead>
+    <tbody>
+    {% block tabular-body %}
+    {% if report_table.pagination.is_on %}
+        <tr>
+            <td colspan="{{ report_table.headers.header|length }}" class="dataTables_empty">
+                {% trans "Fetching additional data, please wait..." %}
+            </td>
+        </tr>
+    {% endif %}
+    {% for row in report_table.rows %}
+        <tr>
+            {% for col in row %}
+                {% include 'reports/async/partials/tabular_cell.html' %}
+            {% endfor %}
+        </tr>
+    {% endfor %}
+    {% endblock %}
+    </tbody>
+    {% if report_table.total_row and report_table.rows %}
+        <tfoot>
+        <tr>
+            {% for col in report_table.total_row %}
+                <td>{% if col.html != None %}{{ col.html|safe }}{% else %}{{ col|safe }}{% endif %}</td>
+            {% endfor %}
+        </tr>
+        </tfoot>
+    {% endif %}
+    {% if report_table.statistics_rows and report_table.rows %}
+        <tfoot>
+            {% for stats in report_table.statistics_rows %}
+                <tr>
+                {% for col in stats %}
+                    {% ifequal forloop.counter0 0 %}<th>{% else %}<td{% if col.css_class %} class="{{ col.css_class }}"{% endif %}>{% endifequal %}
+                        {% if col.html != None %}{{ col.html|safe }}{% else %}{{ col|safe }}{% endif %}
+                    {% ifequal forloop.counter0 0 %}</th>{% else %}</td>{% endifequal %}
                 {% endfor %}
-            </tr>
-        {% endif %}
-        </thead>
-        <tbody>
-        {% block tabular-body %}
-        {% if report_table.pagination.is_on %}
-            <tr>
-                <td colspan="{{ report_table.headers.header|length }}" class="dataTables_empty">
-                    {% trans "Fetching additional data, please wait..." %}
-                </td>
-            </tr>
-        {% endif %}
-        {% for row in report_table.rows %}
-            <tr>
-                {% for col in row %}
-                    {% include 'reports/async/partials/tabular_cell.html' %}
-                {% endfor %}
-            </tr>
-        {% endfor %}
-        {% endblock %}
-        </tbody>
-        {% if report_table.total_row and report_table.rows %}
-            <tfoot>
-            <tr>
-                {% for col in report_table.total_row %}
-                    <td>{% if col.html != None %}{{ col.html|safe }}{% else %}{{ col|safe }}{% endif %}</td>
-                {% endfor %}
-            </tr>
-            </tfoot>
-        {% endif %}
-        {% if report_table.statistics_rows and report_table.rows %}
-            <tfoot>
-                {% for stats in report_table.statistics_rows %}
-                    <tr>
-                    {% for col in stats %}
-                        {% ifequal forloop.counter0 0 %}<th>{% else %}<td{% if col.css_class %} class="{{ col.css_class }}"{% endif %}>{% endifequal %}
-                            {% if col.html != None %}{{ col.html|safe }}{% else %}{{ col|safe }}{% endif %}
-                        {% ifequal forloop.counter0 0 %}</th>{% else %}</td>{% endifequal %}
-                    {% endfor %}
-                    </tr>
-                {% endfor %}
-            </tfoot>
-
-        {% endif %}
-    </table>
+                </tr>
+            {% endfor %}
+        </tfoot>
+    {% endif %}
+</table>
 {% endblock %}
 {% block posttable %}{% endblock %}
 {% endblock %}
@@ -126,7 +114,6 @@
                 standardHQReport.handleTabularReportCookies(reportTables);
             }
             reportTables.render();
-
         {% endif %}
 
         $(function() {
@@ -136,9 +123,4 @@
             });
         });
     </script>
-    {% for chart in charts %}
-        {% with id=forloop.counter|stringformat:"s" slug=report.slug %}
-            {% include chart.template_partial with chart=chart chart_id='chart_'|add:slug|add:'_'|add:id %}
-        {% endwith %}
-    {% endfor %}
 {% endblock %}
