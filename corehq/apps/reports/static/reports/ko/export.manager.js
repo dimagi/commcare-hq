@@ -4,6 +4,7 @@ var ExportManager = function (o) {
     self.export_type = o.export_type || "form";
     self.is_custom = o.is_custom || false;
 
+    self.format = o.format || "csv";
     self.domain = o.domain;
     self.downloadUrl = o.downloadUrl;
     self.bulkDownloadUrl = o.bulkDownloadUrl;
@@ -175,7 +176,8 @@ var ExportManager = function (o) {
             "?"+self.exportFilters+
             '&export_tag=["'+self.domain+'","'+$button.data('xmlns')+'","'+$button.data('formname')+'"]' +
             '&filename='+$button.data('formname') +
-            '&async=true';
+            '&async=true' +
+            '&format=' + self.format;
         if (!self.is_custom)
             downloadUrl = downloadUrl+'&app_id='+$button.data('appid');
 
