@@ -856,6 +856,10 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin,
         self.closed = True
         self.closed_on = close_action.date
 
+    def check_action_order(self):
+        action_dates = [a.server_date for a in self.actions if a.server_date]
+        return action_dates == sorted(action_dates)
+
     def reconcile_actions(self, rebuild=False):
         """
         Runs through the action list and tries to reconcile things that seem
