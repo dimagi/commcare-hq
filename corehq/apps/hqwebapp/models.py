@@ -562,6 +562,50 @@ class MessagingTab(UITab):
             keyword_list_url = reverse('manage_keywords', args=[self.domain])
 
         from corehq.apps.sms.views import SubscribeSMSView
+        reminders_urls = [
+            {
+                'title': _("Reminders"),
+                'url': reminders_list_url,
+                'subpages': [
+                    {
+                        'title': reminder_subtitle,
+                        'urlname': edit_reminder_urlname
+                    },
+                    {
+                        'title': _("Schedule Reminder"),
+                        'urlname': new_reminder_urlname,
+                    },
+                    {
+                        'title': _("Schedule Multi Event Reminder"),
+                        'urlname': 'create_complex_reminder_schedule',
+                    },
+                ],
+            },
+            {
+                'title': _("Reminder Calendar"),
+                'url': reverse('scheduled_reminders', args=[self.domain])
+            },
+        ]
+        can_use_survey = can_use_survey_reminders(self._request)
+        if can_use_survey:
+            reminders_urls.append({
+                'title': _("Keywords"),
+                'url': keyword_list_url,
+                'subpages': [
+                {
+                    'title': keyword_subtitle,
+                    'urlname': 'edit_keyword'
+                },
+                {
+                    'title': _("New Keyword"),
+                    'urlname': 'add_keyword',
+                },
+                ],
+            })
+        reminders_urls.append({
+            'title': _("Reminders in Error"),
+            'url': reverse('reminders_in_error', args=[self.domain])
+        })
 
         items = [
             (_("Messages"), [
@@ -588,33 +632,7 @@ class MessagingTab(UITab):
                       'urlname': 'edit_domain_backend'},
                  ]},
             ]),
-            (_("Data Collection and Reminders"), [
-                {'title': _("Reminders"),
-                 'url': reminders_list_url,
-                 'subpages': [
-                     {'title': reminder_subtitle,
-                      'urlname': edit_reminder_urlname},
-                     {'title': _("Schedule Reminder"),
-                      'urlname': new_reminder_urlname},
-                     {'title': _("Schedule Multi Event Reminder"),
-                      'urlname': 'create_complex_reminder_schedule'},
-                 ]},
-                {'title': _("Reminder Calendar"),
-                 'url': reverse('scheduled_reminders', args=[self.domain])},
-
-                {'title': _("Keywords"),
-                 'url': keyword_list_url,
-                 'subpages': [
-                     {'title': keyword_subtitle,
-                      'urlname': 'edit_keyword'},
-                     {'title': _("New Keyword"),
-                      'urlname': 'add_keyword'},
-                 ]},
-                #{'title': _("User Registration"),
-                 #'url': ...},
-                {'title': _("Reminders in Error"),
-                 'url': reverse('reminders_in_error', args=[self.domain])},
-            ]),
+            (_("Data Collection and Reminders"), reminders_urls),
         ]
         if self.project.commtrack_enabled:
             items.append(
@@ -629,7 +647,7 @@ class MessagingTab(UITab):
                  'url': reverse('chat_contacts', args=[self.domain])}
             )
 
-        if self.project.survey_management_enabled and can_use_survey_reminders(self._request):
+        if self.project.survey_management_enabled and can_use_survey:
             def sample_title(form=None, **context):
                 return form['name'].value
 
