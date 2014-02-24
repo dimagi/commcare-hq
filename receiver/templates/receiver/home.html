@@ -1,0 +1,39 @@
+{% load url from future %}
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="https://github.com/joshuaclayton/blueprint-css/raw/master/blueprint/screen.css" type="text/css" media="screen, projection">
+    <link rel="stylesheet" href="https://github.com/joshuaclayton/blueprint-css/raw/master/blueprint/print.css" type="text/css" media="print">
+    <!--[if lt IE 8]><link rel="stylesheet" href="https://github.com/joshuaclayton/blueprint-css/raw/master/blueprint/ie.css" type="text/css" media="screen, projection"><![endif]-->    
+</head>
+<body>
+<div class="container">
+    <h1>Receiver Home</h1>
+    <p>Your application is working. <strong>Post your xforms to http://[server root]{% url 'receiver_post' %}</strong></p>
+    <p>After submitting you should be able to see and download data below</p>
+{% if forms %}    
+    <table>
+        <thead>
+            <tr>
+                <th>XMLNS</th>
+                <th># Forms</th>
+                <th>Export</th>
+            </tr>
+        </thead>
+        <tbody>
+{% for xmlns, count in forms.items %} 
+            <tr>
+                <td>{{ xmlns }}</td>
+                <td>{{ count }}</td>
+                <td><a href="{% url 'model_download_excel' %}?export_tag={{xmlns}}">download</a></td>
+            </tr>
+{% endfor %}        
+        </tbody>
+        
+    </table>
+{% else %}
+<p class="notice">Sorry, there isn't any form data yet. Post forms to see data.</p>
+{% endif %}
+</div>
+</body>
+</html>
