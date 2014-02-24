@@ -392,9 +392,10 @@ class CommTrackRequisitionTest(CommTrackSubmissionTest):
         )
 
         for product, amt in amounts:
+            # we are expecting two separate blocks to have come with the same
+            # values
             self.check_stock_models(req, product, amt, amt, 'stock')
-        for product, amt in amounts:
-            self.check_product_stock(req, product, amt, amt, 'stock')
+            self.check_stock_models(req, product, amt, 0, 'ct-fulfilled')
 
         # ----------------
         # Mark it received
@@ -413,8 +414,7 @@ class CommTrackRequisitionTest(CommTrackSubmissionTest):
 
         for product, amt in amounts:
             self.check_stock_models(req, product, 0, -amt, 'stock')
-        for product, amt in amounts:
-            self.check_product_stock(self.sp, product, amt, amt, 'stock')
+            self.check_stock_models(self.sp, product, amt, amt, 'stock')
 
 
 class CommTrackSyncTest(CommTrackSubmissionTest):

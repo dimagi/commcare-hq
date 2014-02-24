@@ -162,6 +162,9 @@ def create_fulfillment_xml(original_requisition, product_amounts):
         <ns0:transfer xmlns:ns0="http://commcarehq.org/ledger/v1" dest="{req_id}" date="{long_date}" section-id="stock">
             {product_block}
         </ns0:transfer>
+        <ns0:balance xmlns:ns0="http://commcarehq.org/ledger/v1" date="{long_date}" entity-id="{req_id}" section-id="ct-fulfilled">
+            {product_block}
+        </ns0:balance>
     """.format(
         req_id=req_id,
         case_block=req_case_block,
