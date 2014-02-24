@@ -749,7 +749,7 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
         if self.current_subscription:
             return self.current_subscription.account
         account, self.is_new = BillingAccount.get_or_create_account_by_domain(
-            self.domain, created_by=self.request.couch_user.email, account_type=BillingAccountType.USER_CREATED,
+            self.domain, created_by=self.request.couch_user.username, account_type=BillingAccountType.USER_CREATED,
         )
         return account
 
