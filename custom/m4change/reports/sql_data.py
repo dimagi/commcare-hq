@@ -1,5 +1,6 @@
 from django.utils.translation import ugettext as _
 from sqlagg import SumColumn
+from corehq.apps.locations.models import Location
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
 
 
@@ -7,16 +8,20 @@ class AncHmisCaseSqlData(SqlData):
 
     table_name = "fluff_AncHmisCaseFluff"
 
-    def __init__(self, domain, datespan):
+    def __init__(self, domain, datespan, location_id):
         self.domain = domain
         self.datespan = datespan
+        self.parent_location = Location.get(location_id)
+        self.location_ids = [location_id] + [location.get_id for location in self.parent_location.descendants]
+        self.location_ids = "','".join(self.location_ids)
 
     @property
     def filter_values(self):
         return dict(
             domain=self.domain,
             startdate=self.datespan.startdate_utc.date(),
-            enddate=self.datespan.enddate_utc.date()
+            enddate=self.datespan.enddate_utc.date(),
+            location_ids=self.location_ids
         )
 
     @property
@@ -49,7 +54,7 @@ class AncHmisCaseSqlData(SqlData):
 
     @property
     def group_by(self):
-        return ['domain']
+        return ['domain','location_id']
 
 
 
