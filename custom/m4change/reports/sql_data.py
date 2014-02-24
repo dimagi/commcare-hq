@@ -49,7 +49,7 @@ class AncHmisCaseSqlData(SqlData):
 
     @property
     def group_by(self):
-        return ['domain']
+        return ['domain','location_id']
 
 
 
