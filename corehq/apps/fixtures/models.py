@@ -32,7 +32,7 @@ class FixtureDataType(Document):
 
     @classmethod
     def wrap(cls, obj):
-        if obj["fields"] and isinstance(obj['fields'][0], str):
+        if obj["fields"] and isinstance(obj['fields'][0], basestring):
             obj['fields'] = [{'field_name': f, 'properties': []} for f in obj['fields']]
         return super(FixtureDataType, cls).wrap(obj)
 
@@ -93,12 +93,6 @@ class FieldList(DocumentSchema):
 
 class FixtureDataItem(Document):
     """
-    Previously following        
-        domain = StringProperty()
-        data_type_id = StringProperty()
-        fields = DictProperty()
-        sort_key = IntegerProperty()
-
     Example old Item:
         domain = "hq-domain"
         data_type_id = <id of state FixtureDataType>
@@ -138,7 +132,7 @@ class FixtureDataItem(Document):
         is_of_new_type = False
         fields_dict = {}        
         for field in obj['fields']:
-            if obj['fields'][field] is not None and type(obj['fields'][field]) != str:
+            if obj['fields'][field] is not None and not isinstance(obj['fields'][field], basestring):
                 is_of_new_type = True
                 break
             fields_dict[field] = {
