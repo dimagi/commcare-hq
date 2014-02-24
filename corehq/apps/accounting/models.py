@@ -8,6 +8,7 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+from corehq import toggles
 from corehq.apps.accounting.downgrade import DomainDowngradeActionHandler
 from corehq.apps.users.models import WebUser
 
@@ -17,6 +18,7 @@ from dimagi.utils.couch.database import SafeSaveDocument
 from corehq.apps.accounting.exceptions import (CreditLineError, AccountingError, SubscriptionAdjustmentError,
                                                SubscriptionDowngradeError, NewSubscriptionError)
 from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES, assure_domain_instance, get_change_status
+import toggle
 
 global_logger = logging.getLogger(__name__)
 integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
@@ -481,9 +483,21 @@ class Subscriber(models.Model):
             return "ORGANIZATION %s" % self.organization
         return "DOMAIN %s" % self.domain
 
-    def downgrade(self, new_plan_version, downgraded_privileges):
+    def downgrade(self, downgraded_privileges=None, new_plan_version=None, web_user=None):
+        # don't actually perform downgrades until march 1st.
+        if web_user is None or not toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, web_user):
+            return
+
         if self.organization is not None:
             raise SubscriptionDowngradeError("Only domain downgrades are possible.")
+
+        if new_plan_version is None:
+            new_plan_version = DefaultProductPlan.get_default_plan_by_domain(self.domain)
+
+        if downgraded_privileges is None:
+            downgraded_privileges = get_change_status(None, new_plan_version)[1]
+        if not downgraded_privileges:
+            return
 
         downgrade_handler = DomainDowngradeActionHandler(self.domain, new_plan_version, downgraded_privileges)
         if not downgrade_handler.get_response():
@@ -510,6 +524,7 @@ class Subscription(models.Model):
         today = datetime.date.today()
         if self.date_end is not None and today > self.date_end:
             raise SubscriptionAdjustmentError("The end date for this subscription already passed.")
+        self.subscriber.downgrade(web_user=web_user)
         self.date_end = today
         self.is_active = False
         self.save()
@@ -527,8 +542,8 @@ class Subscription(models.Model):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
         adjustment_reason, downgrades, upgrades = get_change_status(self.plan_version, new_plan_version)
-        if adjustment_reason == SubscriptionAdjustmentReason.DOWNGRADE:
-            self.subscriber.downgrade(new_plan_version, downgrades)
+        self.subscriber.downgrade(downgraded_privileges=downgrades, new_plan_version=new_plan_version,
+                                  web_user=web_user)
 
         today = datetime.date.today()
         new_start_date = today if self.date_start <= today else (date_start or self.date_start)
@@ -623,9 +638,7 @@ class Subscription(models.Model):
         except (Subscription.DoesNotExist, IndexError):
             pass
 
-        downgrades = get_change_status(None, plan_version)[1]
-        if downgrades:
-            subscriber.downgrade(plan_version, downgrades)
+        subscriber.downgrade(new_plan_version=plan_version, web_user=web_user)
 
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
         subscription = Subscription(

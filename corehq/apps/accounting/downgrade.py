@@ -46,14 +46,62 @@ class DomainDowngradeActionHandler(BaseDowngradeHandler):
     This carries out the downgrade action based on each privilege.
 
     Each response should return a boolean.
-
-    # todo implement
     """
+    supported_privileges = [
+        privileges.OUTBOUND_SMS,
+        privileges.INBOUND_SMS,
+    ]
 
     def get_response(self):
         response = super(DomainDowngradeActionHandler, self).get_response()
         return len(filter(lambda x: not x, response)) == 0
 
+
+    @property
+    @memoized
+    def _active_reminders(self):
+        db = CaseReminderHandler.get_db()
+        key = [self.domain.name]
+        reminder_rules = db.view(
+            'reminders/handlers_by_reminder_type',
+            startkey=key,
+            endkey=key+[{}],
+            reduce=False
+        ).all()
+        active_reminders = []
+        for reminder_doc in iter_docs(db, [r['id'] for r in reminder_rules]):
+            if reminder_doc['active']:
+                active_reminders.append(CaseReminderHandler.wrap(reminder_doc))
+        return active_reminders
+
+    @property
+    def response_outbound_sms(self):
+        """
+        Reminder rules will be deactivated.
+        """
+        try:
+            for reminder in self._active_reminders:
+                reminder.active = False
+                reminder.save()
+        except Exception:
+            logging.exception("Failed to downgrade outbound sms for domain %s." % self.domain.name)
+            return False
+        return True
+
+    @property
+    def response_inbound_sms(self):
+        """
+        All Reminder rules utilizing "survey" will be deactivated.
+        """
+        try:
+            surveys = filter(lambda x: x.method in [METHOD_IVR_SURVEY, METHOD_SMS_SURVEY], self._active_reminders)
+            for survey in surveys:
+                survey.active = False
+                survey.save()
+        except Exception:
+            logging.exception("Failed to downgrade outbound sms for domain %s." % self.domain.name)
+            return False
+        return True
 
 class DomainDowngradeStatusHandler(BaseDowngradeHandler):
     """
