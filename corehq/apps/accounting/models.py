@@ -459,6 +459,17 @@ class SoftwarePlanVersion(models.Model):
         })
         return desc
 
+    @property
+    def user_limit(self):
+        user_features = self.feature_rates.filter(feature__feature_type=FeatureType.USER)
+        try:
+            user_limit = user_features.order_by('monthly_limit')[0].monthly_limit
+            if not user_limit == -1:
+                user_limit = user_features.order_by('-monthly_limit')[0].monthly_limit
+        except IndexError:
+            user_limit = -1
+        return user_limit
+
 
 class SubscriberManager(models.Manager):
 
