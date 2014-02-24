@@ -990,78 +990,55 @@ class RequisitionCase(CommCareCase):
 
     @classmethod
     def get_display_config(cls):
-        # TODO implement or delete
-        raise NotImplementedError()
-
-        """
         return [
             {
                 "layout": [
-                    [
-                        {
-                            "name": _("Supply Point"),
-                            "expr": "supply_point_name"
-                        }
-                    ],
-                    [
-                        {
-                            "name": _("Product"),
-                            "expr": "product_name"
-                        }
-                    ],
                     [
                         {
                             "name": _("Status"),
                             "expr": "requisition_status"
                         }
                     ],
-                    [
-                        {
-                            "name": _("Balance"),
-                            "expr": "balance"
-                        }
-                    ]
                 ]
             },
             {
                 "layout": [
                     [
                         {
-                            "name": _("Amount Requested"),
-                            "expr": "amount_requested",
-                        },
-                        {
                             "name": _("Requested On"),
                             "expr": "requested_on",
                             "parse_date": True
+                        },
+                        {
+                            "name": _("requested_by"),
+                            "expr": "requested_by"
                         }
                     ],
                     [
-                        {
-                            "name": _("Amount Approved"),
-                            "expr": "amount_approved",
-                        },
                         {
                             "name": _("Approved On"),
                             "expr": "approved_on",
                             "parse_date": True
+                        },
+                        {
+                            "name": _("approved_by"),
+                            "expr": "approved_by"
                         }
                     ],
                     [
                         {
-                            "name": _("Amount Received"),
-                            "expr": "amount_Received"
-                        },
-                        {
                             "name": _("Received On"),
                             "expr": "received_on",
                             "parse_date": True
+                        },
+                        {
+                            "name": _("received_by"),
+                            "expr": "received_by"
                         }
                     ]
                 ]
             }
         ]
-        """
 
 
 class StockReport(object):
