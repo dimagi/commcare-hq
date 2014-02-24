@@ -48,8 +48,8 @@ simplejson==2.6.1
 GitPython==0.3.2.RC1
 gitdb==0.5.4
 sh==1.09
-#-e git+git://github.com/SiteSupport/gevent.git@1.0rc2#egg=gevent
-gevent==0.13.8
+gevent==1.0
+greenlet==0.4.2
 rawes==0.4.0
 numpy==1.7.1
 six==1.4.1
