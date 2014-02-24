@@ -36,7 +36,8 @@ class FixtureSelectField(ReportSelectField):
 
     def update_params(self):
         self.selected = self.request.GET.get(self.slug, '')
-        self.options = [{'val': _id_from_doc(f), 'text': f.tag} for f in [fo for fo in self.field_opts if fo != self.selected]]
+        unselected_list = [fo for fo in self.field_opts if fo != self.selected]
+        self.options = [{'val': _id_from_doc(f), 'text': f.tag} for f in unselected_list]
 
 
 class FixtureViewInterface(GenericTabularReport, FixtureInterface):
