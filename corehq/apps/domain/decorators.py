@@ -13,14 +13,16 @@ from django.utils.translation import ugettext as _
 
 # External imports
 from django_digest.decorators import httpdigest
+from django_prbac.exceptions import PermissionDenied
 from django_prbac.models import Role
+from django_prbac.utils import ensure_request_has_privilege
 import toggle.shortcuts
 
 # CCHQ imports
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.users.models import CouchUser, PublicUser
-from corehq import toggles
+from corehq import toggles, privileges
 
 ########################################################################################################
 
@@ -32,6 +34,12 @@ def load_domain(req, domain):
     domain_name = normalize_domain_name(domain)
     domain = Domain.get_by_name(domain_name)
     req.project = domain
+    req.can_see_organization = True
+    if toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, req.user.username):
+        try:
+            ensure_request_has_privilege(req, privileges.CROSS_PROJECT_REPORTS)
+        except PermissionDenied:
+            req.can_see_organization = False
     return domain_name, domain
 
 ########################################################################################################
