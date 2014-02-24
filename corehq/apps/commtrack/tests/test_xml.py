@@ -384,7 +384,7 @@ class CommTrackRequisitionTest(CommTrackSubmissionTest):
                 [req]
             ),
             const.notification_template(req.get_next_action().action).format(
-                name='Unknown',  # currently not storing requester
+                name='Unknown',  # TODO currently not storing requester
                 summary='pp:55 pq:55 pr:55',
                 loc=self.sp.location.site_code,
                 keyword=req.get_next_action().keyword
