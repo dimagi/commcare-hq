@@ -1047,7 +1047,8 @@ DOMAIN_MODULE_MAP = {
 
     'crs-remind': 'custom.apps.crs_reports',
 
-    'm4change': 'custom.m4change'
+    'm4change': 'custom.m4change',
+    'test-pathfinder': 'custom.m4change'
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True
