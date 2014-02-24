@@ -98,12 +98,6 @@ def send_notifications(xform, cases):
 
 
 def raise_events(xform, cases):
-    supply_points = [SupplyPointCase.wrap(c._doc) for c in cases if c.type == const.SUPPLY_POINT_CASE_TYPE]
-    case_updates = get_case_updates(xform)
-    # TODO this logic is no longer being called for sp's with no stock
-    for sp in supply_points:
-        created = any(filter(lambda update: update.id == sp._id and update.creates_case(), case_updates))
-        supply_point_modified.send(sender=None, supply_point=sp, created=created)
     requisition_cases = [RequisitionCase.wrap(c._doc) for c in cases if c.type == const.REQUISITION_CASE_TYPE]
     if requisition_cases and requisition_cases[0].requisition_status == RequisitionStatus.APPROVED:
         requisition_approved.send(sender=None, requisitions=requisition_cases)
@@ -114,9 +108,18 @@ def raise_events(xform, cases):
         requisition_modified.send(sender=None, cases=requisition_cases)
 
 
+def raise_supply_point_events(xform, cases):
+    supply_points = [SupplyPointCase.wrap(c._doc) for c in cases if c.type == const.SUPPLY_POINT_CASE_TYPE]
+    case_updates = get_case_updates(xform)
+    for sp in supply_points:
+        created = any(filter(lambda update: update.id == sp._id and update.creates_case(), case_updates))
+        supply_point_modified.send(sender=None, supply_point=sp, created=created)
+
+
 def supply_point_processing(sender, xform, cases, **kwargs):
     if is_supply_point_form(xform):
         attach_locations(xform, cases)
+        raise_supply_point_events(xform, cases)
 
 cases_received.connect(supply_point_processing)
 
