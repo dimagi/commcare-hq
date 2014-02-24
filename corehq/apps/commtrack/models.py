@@ -965,18 +965,6 @@ class RequisitionCase(CommCareCase):
         )
         return [r['id'] for r in results]
 
-    def to_full_dict(self):
-        # TODO verify if this needs fixed or just deleted
-        raise NotImplementedError()
-
-        # data = super(RequisitionCase, self).to_full_dict()
-        # sp = self.get_supply_point_case()
-        # product = self.get_product_case()
-        # data['supply_point_name'] = sp['name'] if sp else ''
-        # data['product_name'] = product['name'] if product else ''
-        # data['balance'] = self.get_default_value()
-        # return data
-
     @classmethod
     def get_by_external_id(cls, domain, external_id):
         # only used by openlmis
