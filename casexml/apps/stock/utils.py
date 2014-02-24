@@ -1,11 +1,13 @@
+from decimal import Decimal
+
 UNDERSTOCK_THRESHOLD = 0.5  # months
 OVERSTOCK_THRESHOLD = 2.  # months
 
 
 def months_of_stock_remaining(stock, daily_consumption):
-    try:
-        return stock / (daily_consumption * 30)
-    except (TypeError, ZeroDivisionError):
+    if daily_consumption:
+        return stock / Decimal((daily_consumption * 30))
+    else:
         return None
 
 
