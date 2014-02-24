@@ -1,7 +1,7 @@
 from django.db.models import signals
 import os
 from couchdbkit.ext.django.loading import get_db
-from pillowtop.utils import import_pillows
+from pillowtop.utils import get_all_pillows
 from dimagi.utils.couch import sync_docs
 
 
@@ -10,7 +10,7 @@ FLUFF = 'fluff'
 
 def sync_design_docs(temp=None):
     dir = os.path.abspath(os.path.dirname(__file__))
-    for pillow in import_pillows(instantiate=False):
+    for pillow in get_all_pillows(instantiate=False):
         if hasattr(pillow, 'indicator_class'):
             app_label = pillow.indicator_class._meta.app_label
             db = get_db(app_label)
@@ -26,7 +26,7 @@ def catch_signal(app, **kwargs):
 
 
 def copy_designs(temp='tmp', delete=True):
-    for pillow in import_pillows(instantiate=False):
+    for pillow in get_all_pillows(instantiate=False):
         if hasattr(pillow, 'indicator_class'):
             app_label = pillow.indicator_class._meta.app_label
             db = get_db(app_label)
