@@ -1,53 +1,15 @@
-ko.bindingHandlers.clickable = (function () {
-    function Clickable() {
-        var self = this;
-        self.init = function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
-            $(element).css({cursor: 'pointer'});
-            return Clickable.prototype.init(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
-        }
-    }
-    Clickable.prototype = ko.bindingHandlers.click;
-    return new Clickable();
-}());
-
 $(function () {
+    "use strict";
     function log (x) {
-        console.log(x);
         return x;
-    }
-    function makeEditable(o) {
-        o.saveState = ko.observable('saved');
-        o.editing = ko.observable(false);
-        o.startEditing = function () {
-            o.editing(true);
-            try {
-                o._backup = o.serialize();
-            } catch (e) {
-
-            }
-        };
-        o.stopEdit = function () {
-            o.editing(false);
-        };
-        o.cancelEdit = function () {
-            o.editing(false);
-            o.cancel();
-        };
-        o.saveEdit = function () {
-            o.editing(false);
-            o.save();
-        };
-        return o;
     }
     function makeDataType(o, app) {
         var self = ko.mapping.fromJS(o),
             raw_fields = self.fields();
-        self.fields = ko.observableArray([]);
-        self.data_items = ko.observableArray([]);
+        self.fields = ko.observableArray();
         self.view_link = ko.computed(function(){
             return TableViewUrl + "?table_id="+self._id();
         }, self);
-        makeEditable(self);
         if (!o._id) {
             self._id = ko.observable();
         }
@@ -80,17 +42,9 @@ $(function () {
                         var oldTag = field.tag;
                         field.tag(tag);
                     }
-                    // all the items have a pointer to this field, so the tag name changes automatically
-                    // but they still need to be saved
-                    for (j = 0; j < self.data_items().length; j += 1) {
-                        self.data_items()[i].save();
-                    }
                 }
             });
             self.fields.push(field);
-            for (i = 0; i < self.data_items().length; i += 1) {
-                self.data_items()[i].fields.push({value: ko.observable(""), tag: field.tag});
-            }
         };
         for (var i = 0; i < raw_fields.length; i += 1) {
             self.addField(undefined, undefined, {tag: raw_fields[i]});
@@ -99,7 +53,7 @@ $(function () {
         self.save = function () {
             $.ajax({
                 type: self._id() ? (self._destroy ? 'delete' : 'put') : 'post',
-                url: 'data-types/' + (self._id() || ''),
+                url: DataTypeUrl + (self._id() || ''),
                 data: JSON.stringify(self.serialize()),
                 dataType: 'json',
                 success: function (data) {
@@ -179,7 +133,6 @@ $(function () {
                     $("#downloading").hide();
                     $("#download-complete").show();
                     $("#file-download-url").attr("href", FixtureFileDownloadUrl + "path=" + response.path);
-                    console.log(response);
                 });
             }
             
@@ -203,7 +156,7 @@ $(function () {
         self.loadData = function () {
             self.loading(self.loading() + 3);
             $.ajax({
-                url: 'data-types/',
+                url: DataTypeUrl,
                 type: 'get',
                 dataType: 'json',
                 success: function (data) {
@@ -218,16 +171,16 @@ $(function () {
         };
     }
     function FileUpload() {
-                this.file = ko.observable();
-                var self = this;
-                self.uploadExcels = function(element, event) {
-                    $("#uploadModal").modal({
-                        keyboard: false,
-                        backdrop: 'static'
-                    });
-                    $("#uploading").show();
-                    $("#uploadForm")[0].submit();
-                };
+        this.file = ko.observable();
+        var self = this;
+        self.uploadExcels = function(element, event) {
+            $("#uploadModal").modal({
+                keyboard: false,
+                backdrop: 'static'
+            });
+            $("#uploading").show();
+            $("#uploadForm")[0].submit();
+        };
     }
 
     var el = $('#fixtures-ui');
