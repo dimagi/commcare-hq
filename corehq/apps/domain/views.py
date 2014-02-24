@@ -799,7 +799,7 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
                 messages.error(
                     request, _("It appears there was an issue subscribing your project to the %s Software Plan. You "
                                "may try resubmitting, but if that doesn't work, rest assured someone will be "
-                               "contacting you shortly") % software_plan_name)
+                               "contacting you shortly.") % software_plan_name)
             else:
                 messages.success(
                     request, _("Your project has been successfully subscribed to the %s Software Plan."
