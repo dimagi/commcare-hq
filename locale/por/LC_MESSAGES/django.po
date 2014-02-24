@@ -10256,7 +10256,7 @@ msgstr ""
 msgid ""
 "Welcome to CommCareHQ! Is this phone used by %(name)s? If yes, reply "
 "'123'%(replyto)s to start using SMS with CommCareHQ."
-msgstr ""
+msgstr "Bem-vindo ao CommCareHQ! Sera que este telefone e usado por %(name)s? Se sim, responde '123'%(replyto)s para comecar a usar o SMS com CommCareHQ."
 
 #: corehq/apps/sms/views.py:56
 msgid "Yesterday"
