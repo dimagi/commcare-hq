@@ -17,6 +17,8 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.http import require_POST
 from django.contrib import messages
+from corehq import toggles, privileges
+from corehq.apps.accounting.decorators import requires_privilege_alert
 from corehq.elastic import es_query, ES_URLS, ADD_TO_ES_FILTER
 
 from couchexport.models import Format
@@ -34,6 +36,9 @@ from dimagi.utils.html import format_html
 from dimagi.utils.decorators.view import get_file
 from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound, JSONReaderError, HeaderValueError
 from corehq.apps.commtrack.models import CommTrackUser
+from django_prbac.exceptions import PermissionDenied
+from django_prbac.utils import ensure_request_has_privilege
+import toggle
 
 DEFAULT_USER_LIST_LIMIT = 10
 
@@ -226,6 +231,15 @@ class ListCommCareUsersView(BaseUserSettingsView):
     def dispatch(self, request, *args, **kwargs):
         return super(ListCommCareUsersView, self).dispatch(request, *args, **kwargs)
 
+    @property
+    def can_bulk_edit_users(self):
+        if toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, self.couch_user.username):
+            try:
+                ensure_request_has_privilege(self.request, privileges.BULK_USER_MANAGEMENT)
+            except PermissionDenied:
+                return False
+        return True
+
     def _escape_val_error(self, expression, default):
         try:
             return expression()
@@ -302,6 +316,7 @@ class ListCommCareUsersView(BaseUserSettingsView):
             'show_case_sharing': self.show_case_sharing,
             'pagination_limit_options': range(self.DEFAULT_LIMIT, 51, self.DEFAULT_LIMIT),
             'query': self.query,
+            'can_bulk_edit_users': self.can_bulk_edit_users,
         }
 
 
@@ -541,6 +556,10 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
     template_name = 'users/upload_commcare_users.html'
     urlname = 'upload_commcare_users'
     page_title = ugettext_noop("Bulk Upload Mobile Workers")
+
+    @method_decorator(requires_privilege_alert(privileges.BULK_USER_MANAGEMENT))
+    def dispatch(self, request, *args, **kwargs):
+        return super(UploadCommCareUsers, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_context(self):

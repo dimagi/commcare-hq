@@ -18,7 +18,10 @@ from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 
-from corehq import toggles
+from corehq import toggles, privileges
+from django_prbac.exceptions import PermissionDenied
+from django_prbac.utils import ensure_request_has_privilege
+import toggle
 from toggle.decorators import require_toggle
 
 from corehq.apps.accounting.models import (Subscription, CreditLine, SoftwarePlanVisibility, SoftwareProductType,
@@ -202,6 +205,16 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
         return ['project_type']
 
     @property
+    def can_use_custom_logo(self):
+        if toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, self.request.user.username):
+            try:
+                ensure_request_has_privilege(self.request, privileges.CUSTOM_BRANDING)
+            except PermissionDenied:
+                return False
+        # todo return true here after march 1
+        return self.can_user_see_meta
+
+    @property
     @memoized
     def basic_info_form(self):
         initial = {
@@ -241,8 +254,9 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
                 'call_center_case_type': self.domain_object.call_center_config.case_type,
             })
 
-            return DomainMetadataForm(user=self.request.couch_user, domain=self.domain_object.name, initial=initial)
-        return DomainGlobalSettingsForm(initial=initial)
+            return DomainMetadataForm(can_use_custom_logo=self.can_use_custom_logo,
+                                      user=self.request.couch_user, domain=self.domain_object.name, initial=initial)
+        return DomainGlobalSettingsForm(initial=initial, can_use_custom_logo=self.can_use_custom_logo)
 
     @property
     def page_context(self):

@@ -10,7 +10,10 @@ from corehq.apps.accounting.models import BillingAccountAdmin
 from corehq.apps.domain.utils import get_adm_enabled_domains
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
+from corehq.apps.reminders.util import can_use_survey_reminders
+from django_prbac.exceptions import PermissionDenied
 from django_prbac.models import Role, UserRole
+from django_prbac.utils import ensure_request_has_privilege
 import toggle
 
 from dimagi.utils.couch.database import get_db
@@ -504,6 +507,11 @@ class CloudcareTab(UITab):
 
     @property
     def is_viewable(self):
+        if toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, self.couch_user.username):
+            try:
+                ensure_request_has_privilege(self._request, privileges.CLOUDCARE)
+            except PermissionDenied:
+                return False
         return (self.domain
                 and (self.couch_user.can_edit_data() or self.couch_user.is_commcare_user())
                 and not self.project.commconnect_enabled)
@@ -515,6 +523,11 @@ class MessagingTab(UITab):
 
     @property
     def is_viewable(self):
+        if toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, self.couch_user.username):
+            try:
+                ensure_request_has_privilege(self._request, privileges.OUTBOUND_SMS)
+            except PermissionDenied:
+                return False
         return (self.project and not
                 (self.project.is_snapshot or
                  self.couch_user.is_commcare_user()))
@@ -616,7 +629,7 @@ class MessagingTab(UITab):
                  'url': reverse('chat_contacts', args=[self.domain])}
             )
 
-        if self.project.survey_management_enabled:
+        if self.project.survey_management_enabled and can_use_survey_reminders(self._request):
             def sample_title(form=None, **context):
                 return form['name'].value
 

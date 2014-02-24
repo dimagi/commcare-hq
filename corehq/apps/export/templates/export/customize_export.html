@@ -479,7 +479,9 @@
                                 {% trans "Question" %}
                             </th>
                             <th>{% trans "Display" %}</th>
+                            {% if helper.allow_deid %}
                             <th class="deid-column" data-bind="visible: $root.showDeidColumn()">{% trans "Sensitivity" %}</th>
+                            {% endif %}
                         </tr>
                         </thead>
                         <tbody data-bind="sortable: column_configuration">
@@ -496,6 +498,7 @@
 
                                 </td>
                                 <td><input class="input-xlarge" type="text" data-bind="value: display" /></td>
+                                {% if helper.allow_deid %}
                                 <td class="deid-column" data-bind="visible: $root.showDeidColumn()">
                                     <select data-bind="
                                         value: transform || '',
@@ -505,6 +508,7 @@
                                         <option data-bind="value: value, text: label"></option>
                                     </select>
                                 </td>
+                                {% endif %}
                             </tr>
                         </tbody>
                     </table>
