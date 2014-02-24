@@ -300,8 +300,9 @@ class SubmissionPost(object):
                  auth_context=None, domain=None, app_id=None, path=None,
                  location=None, submit_ip=None, openrosa_headers=None,
                  last_sync_token=None, received_on=None, date_header=None):
-        assert domain
-        assert instance and not isinstance(instance, HttpRequest), instance
+        assert domain, domain
+        assert instance, instance
+        assert not isinstance(instance, HttpRequest), instance
         # get_location has good default
         self.domain = domain
         self.app_id = app_id
