@@ -11,6 +11,7 @@ from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadReque
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from corehq import privileges
+from corehq.apps.reminders.util import can_use_survey_reminders
 from corehq.apps.accounting.decorators import requires_privilege_alert, requires_privilege_plaintext_response
 from corehq.apps.api.models import require_api_user_permission, PERMISSION_POST_SMS
 from corehq.apps.commtrack.models import AlertConfig
@@ -1044,5 +1045,6 @@ def sms_settings(request, domain):
         "form" : form,
         "is_previewer" : is_previewer,
         "sms_queue_enabled" : settings.SMS_QUEUE_ENABLED,
+        'can_use_survey': can_use_survey_reminders(request),
     }
     return render(request, "sms/settings.html", context)

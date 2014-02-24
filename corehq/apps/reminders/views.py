@@ -9,7 +9,7 @@ from django.http import HttpResponseRedirect, Http404, HttpResponse
 from django.shortcuts import render
 
 from django.utils.translation import ugettext as _, ugettext_noop
-from corehq import privileges
+from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_alert
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import get_case_properties
@@ -54,13 +54,17 @@ from corehq.apps.reminders.models import (
     RECIPIENT_USER_GROUP,
     RECIPIENT_SENDER,
     RECIPIENT_OWNER,
+    METHOD_IVR_SURVEY,
 )
 from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CommCareUser, Permissions, CouchUser
 from dimagi.utils.decorators.memoized import memoized
+from django_prbac.exceptions import PermissionDenied
+from django_prbac.utils import ensure_request_has_privilege
 from .models import UI_SIMPLE_FIXED, UI_COMPLEX
-from .util import get_form_list, get_sample_list, get_recipient_name, get_form_name
+import toggle
+from .util import get_form_list, get_sample_list, get_recipient_name, get_form_name, can_use_survey_reminders
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.util import register_sms_contact, update_contact
 from corehq.apps.domain.models import Domain, DomainCounter
@@ -378,7 +382,7 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
     sample_list = get_sample_list(domain)
     
     if request.method == "POST":
-        form = ComplexCaseReminderForm(request.POST)
+        form = ComplexCaseReminderForm(request.POST, can_user_survey=can_use_survey_reminders(request))
         form._cchq_is_superuser = request.couch_user.is_superuser
         form._cchq_use_custom_content_handler = (h is not None and h.custom_content_handler is not None)
         form._cchq_custom_content_handler = h.custom_content_handler if h is not None else None
@@ -483,7 +487,7 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
                 "active" : True,
             }
         
-        form = ComplexCaseReminderForm(initial=initial)
+        form = ComplexCaseReminderForm(initial=initial, can_use_survey=can_use_survey_reminders(request))
     
     return render(request, "reminders/partial/add_complex_reminder.html", {
         "domain":       domain,
@@ -493,6 +497,7 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
         "sample_list":  sample_list,
         "is_superuser" : request.couch_user.is_superuser,
         "user_groups": Group.by_domain(domain),
+        'can_use_survey': can_use_survey_reminders(request),
     })
 
 
@@ -695,12 +700,14 @@ class EditScheduledReminderView(CreateScheduledReminderView):
                 is_previewer=self.is_previewer,
                 domain=self.domain,
                 is_edit=True,
+                can_use_survey=can_use_survey_reminders(self.request),
             )
         return self.reminder_form_class(
             initial=initial,
             is_previewer=self.is_previewer,
             domain=self.domain,
             is_edit=True,
+            can_use_survey=can_use_survey_reminders(self.request),
         )
 
     @property
@@ -878,7 +885,7 @@ def delete_keyword(request, domain, keyword_id):
     return HttpResponseRedirect(reverse("manage_keywords", args=[domain]))
 
 
-@requires_privilege_alert(privileges.OUTBOUND_SMS)
+@requires_privilege_alert(privileges.INBOUND_SMS)
 @reminders_permission
 def add_survey(request, domain, survey_id=None):
     survey = None
@@ -1110,7 +1117,7 @@ def add_survey(request, domain, survey_id=None):
     return render(request, "reminders/partial/add_survey.html", context)
 
 
-@requires_privilege_alert(privileges.OUTBOUND_SMS)
+@requires_privilege_alert(privileges.INBOUND_SMS)
 @reminders_permission
 def survey_list(request, domain):
     context = {
@@ -1120,7 +1127,7 @@ def survey_list(request, domain):
     return render(request, "reminders/partial/survey_list.html", context)
 
 
-@requires_privilege_alert(privileges.OUTBOUND_SMS)
+@requires_privilege_alert(privileges.INBOUND_SMS)
 @reminders_permission
 def add_sample(request, domain, sample_id=None):
     sample = None
@@ -1219,7 +1226,7 @@ def add_sample(request, domain, sample_id=None):
     return render(request, "reminders/partial/add_sample.html", context)
 
 
-@requires_privilege_alert(privileges.OUTBOUND_SMS)
+@requires_privilege_alert(privileges.INBOUND_SMS)
 @reminders_permission
 def sample_list(request, domain):
     context = {
@@ -1328,9 +1335,15 @@ class RemindersListView(BaseMessagingSectionView):
         return reverse(self.urlname, args=[self.domain])
 
     @property
+    def can_use_survey(self):
+        return can_use_survey_reminders(self.request)
+
+    @property
     def reminders(self):
         all_handlers = CaseReminderHandler.get_handlers(domain=self.domain).all()
         all_handlers = filter(lambda x : x.reminder_type == REMINDER_TYPE_DEFAULT, all_handlers)
+        if not self.can_use_survey:
+            all_handlers = filter(lambda x: x.method in [METHOD_IVR_SURVEY, METHOD_SMS_SURVEY], all_handlers)
         for handler in all_handlers:
             yield self._fmt_reminder_data(handler)
 

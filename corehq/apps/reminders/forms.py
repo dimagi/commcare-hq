@@ -310,7 +310,7 @@ class ComplexCaseReminderForm(Form):
     force_surveys_to_use_triggered_case = BooleanField(required=False)
     user_group_id = CharField(required=False)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, can_use_survey=None, *args, **kwargs):
         super(ComplexCaseReminderForm, self).__init__(*args, **kwargs)
         if "initial" in kwargs:
             initial = kwargs["initial"]
@@ -335,6 +335,13 @@ class ComplexCaseReminderForm(Form):
                 self.initial["start_choice"] = START_IMMEDIATELY
             else:
                 self.initial["start_choice"] = START_ON_DATE
+
+        if not can_use_survey:
+            print "can't use survey"
+            self.fields['method'].choices = (
+                ('sms', 'SMS'),
+                ('callback', 'SMS expecting callback'),
+            )
         
         enable_advanced_time_choices = False
         # Populate events
@@ -824,7 +831,6 @@ class BaseScheduleCaseReminderForm(forms.Form):
         label="Send",
         choices=(
             (METHOD_SMS, "SMS"),
-            (METHOD_SMS_SURVEY, "SMS Survey"),
         ),
     )
 
@@ -915,7 +921,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
         label=_("For Surveys, force answers to affect case sending the survey."),
     )
 
-    def __init__(self, data=None, is_previewer=False, domain=None, is_edit=False, *args, **kwargs):
+    def __init__(self, data=None, is_previewer=False, domain=None, is_edit=False, can_use_survey=False, *args, **kwargs):
         self.initial_event = {
             'day_num': 1,
             'fire_time_type': FIRE_TIME_DEFAULT,
@@ -936,12 +942,18 @@ class BaseScheduleCaseReminderForm(forms.Form):
         self.domain = domain
         self.is_edit = is_edit
 
+        if can_use_survey:
+            method_choices = copy.copy(self.fields['method'].choices)
+            method_choices.append((METHOD_SMS_SURVEY, "SMS Survey"))
+            self.fields['method'].choices = method_choices
+
         if is_previewer:
             method_choices = copy.copy(self.fields['method'].choices)
             method_choices.extend([
-                (METHOD_IVR_SURVEY, "IVR Survey"),
                 (METHOD_SMS_CALLBACK, "SMS Expecting Callback"),
             ])
+            if can_use_survey:
+                method_choices.append((METHOD_IVR_SURVEY, "IVR Survey"))
             self.fields['method'].choices = method_choices
 
         from corehq.apps.reminders.views import RemindersListView
