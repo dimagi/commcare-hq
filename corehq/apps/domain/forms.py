@@ -624,7 +624,8 @@ class EditBillingAccountInfoForm(forms.ModelForm):
         try:
             self.current_country = self.account.billingcontactinfo.country
         except Exception:
-            self.current_country = None
+            initial = kwargs.get('initial')
+            self.current_country = initial.get('country') if initial is not None else None
 
         try:
             kwargs['instance'] = self.account.billingcontactinfo
@@ -780,6 +781,9 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                     web_user=self.creating_user, adjustment_method=SubscriptionAdjustmentMethod.USER
                 )
                 subscription.is_active = True
+                if subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE:
+                    # this point can only be reached if the initiating user was a superuser
+                    subscription.do_not_invoice = True
                 subscription.save()
             return True
         except Exception:

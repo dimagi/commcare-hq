@@ -28,7 +28,7 @@ class FixtureTest(CommTrackTest, TestFileMixin):
         products = ''
         product_list = Product.by_domain(user.domain)
         self._initialize_product_names(len(product_list))
-        for product in product_list:
+        for i, product in enumerate(product_list):
             product_id = product._id
             product_name  = self.product_names.next()
             product_unit = self._random_string(20)
@@ -36,7 +36,7 @@ class FixtureTest(CommTrackTest, TestFileMixin):
             product_description = self._random_string(20)
             product_category = self._random_string(20)
             product_program_id = self._random_string(20)
-            product_cost = float('%g' % random.uniform(1, 100))
+            product_cost = 0 if i == 0 else float('%g' % random.uniform(1, 100))
 
             products += '''
                 <product id="{id}">

@@ -1768,6 +1768,7 @@ class CareplanModule(ModuleBase):
     """
     parent_select = SchemaProperty(ParentSelect)
 
+    display_separately = BooleanProperty(default=False)
     forms = SchemaListProperty(CareplanForm)
     goal_details = SchemaProperty(DetailPair)
     task_details = SchemaProperty(DetailPair)
@@ -2994,6 +2995,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         return xmlns_map
 
     def get_questions(self, xmlns):
+        if xmlns == "http://code.javarosa.org/devicereport":
+            return []
         forms = self.get_xmlns_map()[xmlns]
         if len(forms) != 1:
             logging.error('App %s in domain %s has %s forms with xmlns %s' % (
