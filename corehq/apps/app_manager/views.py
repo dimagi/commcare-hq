@@ -1022,7 +1022,7 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
     """
     attributes = {
         "all": None,
-        "case_type": None, "put_in_root": None,
+        "case_type": None, "put_in_root": None, "display_separately": None,
         "name": None, "case_label": None, "referral_label": None,
         'media_image': None, 'media_audio': None,
         "case_list": ('case_list-show', 'case_list-label'),
@@ -1061,6 +1061,8 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
             return HttpResponseBadRequest("case type is improperly formatted")
     if should_edit("put_in_root"):
         module["put_in_root"] = json.loads(req.POST.get("put_in_root"))
+    if should_edit("display_separately"):
+        module["display_separately"] = json.loads(req.POST.get("display_separately"))
     if should_edit("parent_module"):
         parent_module = req.POST.get("parent_module")
         module.parent_select.module_id = parent_module
