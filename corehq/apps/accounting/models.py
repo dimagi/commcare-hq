@@ -11,6 +11,7 @@ from django.utils.translation import ugettext_lazy as _
 from corehq import toggles
 from corehq.apps.accounting.downgrade import DomainDowngradeActionHandler
 from corehq.apps.users.models import WebUser
+from dimagi.utils.decorators.memoized import memoized
 
 from django_prbac.models import Role
 from dimagi.utils.couch.database import SafeSaveDocument
@@ -162,6 +163,7 @@ class BillingAccountAdmin(models.Model):
             return web_user.is_domain_admin(domain), None
         admin = account.billing_admins.filter(web_user=web_user.username)
         return admin.count() > 0, account
+
 
 class BillingAccount(models.Model):
     """
@@ -460,15 +462,28 @@ class SoftwarePlanVersion(models.Model):
         return desc
 
     @property
-    def user_limit(self):
+    @memoized
+    def user_feature(self):
         user_features = self.feature_rates.filter(feature__feature_type=FeatureType.USER)
         try:
-            user_limit = user_features.order_by('monthly_limit')[0].monthly_limit
-            if not user_limit == -1:
-                user_limit = user_features.order_by('-monthly_limit')[0].monthly_limit
+            user_feature = user_features.order_by('monthly_limit')[0]
+            if not user_feature.monthly_limit == -1:
+                user_feature = user_features.order_by('-monthly_limit')[0]
+            return user_feature
         except IndexError:
-            user_limit = -1
-        return user_limit
+            pass
+
+
+    @property
+    def user_limit(self):
+        if self.user_feature is not None:
+            return self.user_feature.monthly_limit
+        return -1
+
+    @property
+    def user_fee(self):
+        if self.user_feature is not None:
+            return "USD %d" % self.user_feature.per_excess_fee
 
 
 class SubscriberManager(models.Manager):
