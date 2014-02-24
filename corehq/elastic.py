@@ -35,7 +35,7 @@ ES_URLS = {
 ADD_TO_ES_FILTER = {
     "forms": [
         {"term": {"doc_type": "xforminstance"}},
-        {"not": {"missing": {"field": "xmlns"}}},
+        # {"not": {"missing": {"field": "xmlns"}}},
         {"not": {"missing": {"field": "form.meta.userID"}}},
     ],
     "users": [
@@ -187,6 +187,10 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
         return q
 
     es_url = es_url or DOMAIN_INDEX + '/hqdomain/_search'
+
+    print es_url
+    import json
+    print json.dumps(q)
 
     es = get_es()
     ret_data = es.get(es_url, data=q)

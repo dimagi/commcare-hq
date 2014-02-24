@@ -2,6 +2,7 @@ import copy
 from casexml.apps.case.xform import extract_case_blocks, get_case_ids_from_form
 from corehq.pillows.mappings.xform_mapping import XFORM_MAPPING, XFORM_INDEX
 from .base import HQPillow
+from couchforms.const import RESERVED_WORDS
 from couchforms.models import XFormInstance
 from dateutil import parser
 
@@ -68,6 +69,9 @@ class XFormPillow(HQPillow):
                         case_dict[object_key] = None
 
             doc_ret["__retrieved_case_ids"] = list(get_case_ids_from_form(doc_dict))
+            form_props = ["%s:%s" % (k, v) for k, v in doc_ret['form'].iteritems() if k not in RESERVED_WORDS]
+            print form_props
+            doc_ret["__props_for_querying"] = form_props
             return doc_ret
 
 

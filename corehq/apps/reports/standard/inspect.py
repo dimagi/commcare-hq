@@ -38,7 +38,8 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
     fields = [
               'corehq.apps.reports.fields.CombinedSelectUsersField',
               'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
-              'corehq.apps.reports.fields.DatespanField']
+              'corehq.apps.reports.fields.DatespanField',
+              'corehq.apps.reports.filters.forms.CustomPropsFilter']
     ajax_pagination = True
     filter_users_field_class = StrongFilterUsersField
     include_inactive = True
@@ -88,6 +89,11 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
             else:
                 ids = filter(None, [user['user_id'] for user in self.get_admins_and_demo_users()])
                 q["filter"]["and"].append({"not": {"terms": {"form.meta.userID": ids}}})
+
+            for cp in self.request.GET.get('custom_props', "").split(","):
+                print cp
+                q["filter"]["and"].append({"term": {"__props_for_querying": cp.lower()}})
+
 
             q["sort"] = self.get_sorting_block() if self.get_sorting_block() else [{"form.meta.timeEnd" : {"order": "desc"}}]
             self.es_response = es_query(params={"domain.exact": self.domain}, q=q, es_url=XFORM_INDEX + '/xform/_search',
