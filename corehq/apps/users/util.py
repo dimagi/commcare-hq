@@ -7,6 +7,9 @@ from couchdbkit.resource import ResourceNotFound
 
 from dimagi.utils.couch.database import get_db
 from django.core.cache import cache
+from django_prbac.exceptions import PermissionDenied
+from django_prbac.utils import ensure_request_has_privilege
+import toggle
 
 
 WEIRD_USER_IDS = ['commtrack-system', 'demo_user']
@@ -118,3 +121,18 @@ def user_data_from_registration_form(xform):
         for item in items:
             user_data[item["@key"]] = item["#text"]
     return user_data
+
+
+def can_add_extra_mobile_workers(request):
+    from corehq.apps.users.models import CommCareUser
+    num_web_users = CommCareUser.total_by_domain(request.domain)
+    user_limit = request.plan.user_limit
+    extra_users_allowed = True
+    if toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, request.user.username):
+        try:
+            ensure_request_has_privilege(request, privileges.ALLOW_EXCESS_USERS)
+        except PermissionDenied:
+            extra_users_allowed = False
+    return ((user_limit == -1)
+            or (num_web_users < user_limit)
+            or (num_web_users >= user_limit and extra_users_allowed))

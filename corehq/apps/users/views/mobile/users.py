@@ -19,6 +19,7 @@ from django.views.decorators.http import require_POST
 from django.contrib import messages
 from corehq import toggles, privileges
 from corehq.apps.accounting.decorators import requires_privilege_alert
+from corehq.apps.users.util import can_add_extra_mobile_workers
 from corehq.elastic import es_query, ES_URLS, ADD_TO_ES_FILTER
 
 from couchexport.models import Format
@@ -240,6 +241,15 @@ class ListCommCareUsersView(BaseUserSettingsView):
                 return False
         return True
 
+    @property
+    def can_add_extra_users(self):
+        return can_add_extra_mobile_workers(self.request)
+
+    @property
+    def can_edit_user_archive(self):
+        return self.couch_user.can_edit_commcare_users and (
+            (self.show_inactive and self.can_add_extra_users) or not self.show_inactive)
+
     def _escape_val_error(self, expression, default):
         try:
             return expression()
@@ -317,6 +327,8 @@ class ListCommCareUsersView(BaseUserSettingsView):
             'pagination_limit_options': range(self.DEFAULT_LIMIT, 51, self.DEFAULT_LIMIT),
             'query': self.query,
             'can_bulk_edit_users': self.can_bulk_edit_users,
+            'can_add_extra_users': self.can_add_extra_users,
+            'can_edit_user_archive': self.can_edit_user_archive,
         }
 
 
@@ -437,6 +449,12 @@ def set_commcare_user_group(request, domain):
 
 @require_can_edit_commcare_users
 def archive_commcare_user(request, domain, user_id, is_active=False):
+    can_add_extra_users = can_add_extra_mobile_workers(request)
+    if not can_add_extra_users and is_active:
+        return HttpResponse(json.dumps({
+            'success': False,
+            'message': _("You are not allowed to add additional mobile workers"),
+        }))
     user = CommCareUser.get_by_user_id(user_id, domain)
     user.is_active = is_active
     user.save()
@@ -533,6 +551,11 @@ class CreateCommCareUserView(BaseManageCommCareUserView):
             'form': self.new_commcare_user_form,
             'only_numeric': self.password_format == 'n',
         }
+
+    def dispatch(self, request, *args, **kwargs):
+        if not can_add_extra_mobile_workers(request):
+            return HttpResponseRedirect(reverse(ListCommCareUsersView.urlname, args=[self.domain]))
+        return super(CreateCommCareUserView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         if self.new_commcare_user_form.is_valid():
