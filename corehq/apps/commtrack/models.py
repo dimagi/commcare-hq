@@ -969,25 +969,31 @@ class RequisitionCase(CommCareCase):
         # TODO verify if this needs fixed or just deleted
         raise NotImplementedError()
 
-        #data = super(RequisitionCase, self).to_full_dict()
-        #sp = self.get_supply_point_case()
-        #product = self.get_product_case()
-        #data['supply_point_name'] = sp['name'] if sp else ''
-        #data['product_name'] = product['name'] if product else ''
-        #data['balance'] = self.get_default_value()
-        #return data
+        # data = super(RequisitionCase, self).to_full_dict()
+        # sp = self.get_supply_point_case()
+        # product = self.get_product_case()
+        # data['supply_point_name'] = sp['name'] if sp else ''
+        # data['product_name'] = product['name'] if product else ''
+        # data['balance'] = self.get_default_value()
+        # return data
 
     @classmethod
     def get_by_external_id(cls, domain, external_id):
-        # TODO: what is this?
-        return cls.view('hqcase/by_domain_external_id',
-            key=[domain, external_id],
-            include_docs=True, reduce=False,
-            classes={'CommCareCase': RequisitionCase}
-        ).all()
+        # only used by openlmis
+        raise NotImplementedError()
+
+        # return cls.view('hqcase/by_domain_external_id',
+        #     key=[domain, external_id],
+        #     include_docs=True, reduce=False,
+        #     classes={'CommCareCase': RequisitionCase}
+        # ).all()
 
     @classmethod
     def get_display_config(cls):
+        # TODO implement or delete
+        raise NotImplementedError()
+
+        """
         return [
             {
                 "layout": [
@@ -1055,6 +1061,7 @@ class RequisitionCase(CommCareCase):
                 ]
             }
         ]
+        """
 
 
 class StockReport(object):
