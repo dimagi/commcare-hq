@@ -104,8 +104,11 @@ class StockState(models.Model):
 
     @property
     def resupply_quantity_needed(self):
-        needed_quantity = int(self.daily_consumption * 30 * Decimal(utils.OVERSTOCK_THRESHOLD))
-        return int(max(needed_quantity - self.stock_on_hand, 0))
+        if self.daily_consumption is not None:
+            needed_quantity = int(self.daily_consumption * 30 * Decimal(utils.OVERSTOCK_THRESHOLD))
+            return int(max(needed_quantity - self.stock_on_hand, 0))
+        else:
+            return None
 
     @property
     def stock_category(self):
