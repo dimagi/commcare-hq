@@ -922,7 +922,7 @@ class RequisitionCase(CommCareCase):
 
     def sms_format(self):
         if self.requisition_status == RequisitionStatus.REQUESTED:
-            section = 'ct-request'
+            section = 'ct-requested'
         elif self.requisition_status == RequisitionStatus.APPROVED:
             section = 'ct-approved'
         else:

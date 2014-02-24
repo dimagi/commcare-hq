@@ -139,7 +139,7 @@ def create_requisition_xml(product_amounts):
     ).as_xml())
     return """
         %(case_block)s
-        <ns0:balance xmlns:ns0="http://commcarehq.org/ledger/v1" date="{long_date}" entity-id="%(req_id)s" section-id="ct-request">
+        <ns0:balance xmlns:ns0="http://commcarehq.org/ledger/v1" date="{long_date}" entity-id="%(req_id)s" section-id="ct-requested">
             %(product_block)s
         </ns0:balance>
     """ % {'req_id': req_id, 'case_block': req_case_block, 'product_block': products_xml(product_amounts)}

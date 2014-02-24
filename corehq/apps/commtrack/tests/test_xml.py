@@ -366,7 +366,7 @@ class CommTrackRequisitionTest(CommTrackSubmissionTest):
         )
 
         for product, amt in amounts:
-            self.check_stock_models(req, product, amt, 0, 'ct-request')
+            self.check_stock_models(req, product, amt, 0, 'ct-requested')
 
         # ----------------
         # Mark it fulfilled
