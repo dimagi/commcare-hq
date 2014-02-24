@@ -4,6 +4,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 
 from couchdbkit.resource import ResourceNotFound
+from corehq import toggles, privileges
 
 from dimagi.utils.couch.database import get_db
 from django.core.cache import cache
@@ -125,14 +126,16 @@ def user_data_from_registration_form(xform):
 
 def can_add_extra_mobile_workers(request):
     from corehq.apps.users.models import CommCareUser
+    from corehq.apps.accounting.models import BillingAccount
     num_web_users = CommCareUser.total_by_domain(request.domain)
     user_limit = request.plan.user_limit
-    extra_users_allowed = True
+    if user_limit == -1 or num_web_users < user_limit:
+        return True
     if toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, request.user.username):
         try:
             ensure_request_has_privilege(request, privileges.ALLOW_EXCESS_USERS)
         except PermissionDenied:
-            extra_users_allowed = False
-    return ((user_limit == -1)
-            or (num_web_users < user_limit)
-            or (num_web_users >= user_limit and extra_users_allowed))
+            account = BillingAccount.get_account_by_domain(request.domain)
+            if account is None or account.billingcontactinfo is None:
+                return False
+    return True
