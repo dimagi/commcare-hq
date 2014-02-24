@@ -1,4 +1,5 @@
 import hashlib
+from django.db import IntegrityError
 from pillowtop.listener import BasicPillow
 from couchforms.models import XFormInstance
 from phonelog.models import UserLog, Log
@@ -21,17 +22,19 @@ class PhoneLogPillow(BasicPillow):
             u.save()
 
         domain = doc_dict.get('domain')
-        logs = (form.get('log_subreport', {}) or {}).get('logs', [])
+        logs = (form.get('log_subreport', {}) or {}).get('log', [])
         logged_in_user = 'unknown'
         for log in force_list(logs):
             if log["type"] == 'login':
                 logged_in_user = log["msg"].split('-')[1]
 
             uuid = hashlib.md5(log["type"] + log["@date"]).hexdigest()
-            l, _ = Log.get_or_create(id=uuid, xform_id=xform_id, domain=domain,
-                                     type=log["type"], msg=log["msg"],
-                                     date=dparser.parse(log["@date"]),
-                                     app_version=form.get('app_version'),
-                                     device_id=form.get('device_id'),
-                                     username=logged_in_user)
-            l.save()
+            try:
+                l, _ = Log.objects.get_or_create(id=uuid, xform_id=xform_id, domain=domain,
+                                         type=log["type"], msg=log["msg"],
+                                         date=dparser.parse(log["@date"]),
+                                         app_version=form.get('app_version'),
+                                         device_id=form.get('device_id'),
+                                         username=logged_in_user)
+            except IntegrityError:
+                pass
