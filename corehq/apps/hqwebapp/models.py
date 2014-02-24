@@ -819,7 +819,13 @@ class ProjectSettingsTab(UITab):
             'url': reverse(EditMyProjectSettingsView.urlname, args=[self.domain])
         })
 
-        if user_is_admin:
+        can_view_orgs = user_is_admin
+        if toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, self.couch_user.username):
+            try:
+                ensure_request_has_privilege(self._request, privileges.CROSS_PROJECT_REPORTS)
+            except PermissionDenied:
+                can_view_orgs = False
+        if can_view_orgs:
             from corehq.apps.domain.views import OrgSettingsView
             project_info.append({
                 'title': _(OrgSettingsView.page_title),

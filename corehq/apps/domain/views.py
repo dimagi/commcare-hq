@@ -6,7 +6,7 @@ import dateutil
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
-from corehq.apps.accounting.decorators import require_billing_admin
+from corehq.apps.accounting.decorators import require_billing_admin, requires_privilege_alert
 from corehq.apps.accounting.downgrade import DomainDowngradeStatusHandler
 from corehq.apps.accounting.forms import EnterprisePlanContactForm
 from corehq.apps.accounting.utils import get_change_status
@@ -1178,10 +1178,15 @@ class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
             return HttpResponseRedirect(reverse(DomainForwardingOptionsView.urlname, args=[self.domain]))
         return self.get(request, *args, **kwargs)
 
+
 class OrgSettingsView(BaseAdminProjectSettingsView):
     template_name = 'domain/orgs_settings.html'
     urlname = 'domain_org_settings'
     page_title = ugettext_noop("Organization")
+
+    @method_decorator(requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS))
+    def dispatch(self, request, *args, **kwargs):
+        return super(OrgSettingsView, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_context(self):
