@@ -27,3 +27,35 @@ class AncHmisCaseFluff(fluff.IndicatorDocument):
 
 
 AncHmisCaseFluffPillow = AncHmisCaseFluff.pillow()
+
+
+class ImmunizationHmisCaseFluff(fluff.IndicatorDocument):
+    document_class = CommCareCase
+    domains = ('m4change',)
+    group_by = ('domain',)
+    save_direct_to_sql = True
+
+    opv_0 = user_calcs.PncImmunizationCalculator("opv_0")
+    hep_b_0 = user_calcs.PncImmunizationCalculator("hep_b_0")
+    bcg = user_calcs.PncImmunizationCalculator("bcg")
+    opv_1 = user_calcs.PncImmunizationCalculator("opv_1")
+    hep_b_1 = user_calcs.PncImmunizationCalculator("hep_b_1")
+    penta_1 = user_calcs.PncImmunizationCalculator("penta_1")
+    dpt_1 = user_calcs.PncImmunizationCalculator("dpt_1")
+    pcv_1 = user_calcs.PncImmunizationCalculator("pcv_1")
+    opv_2 = user_calcs.PncImmunizationCalculator("opv_2")
+    hep_b_2 = user_calcs.PncImmunizationCalculator("hep_b_2")
+    penta_2 = user_calcs.PncImmunizationCalculator("penta_2")
+    dpt_2 = user_calcs.PncImmunizationCalculator("dpt_2")
+    pcv_2 = user_calcs.PncImmunizationCalculator("pcv_2")
+    opv_3 = user_calcs.PncImmunizationCalculator("opv_3")
+    penta_3 = user_calcs.PncImmunizationCalculator("penta_3")
+    dpt_3 = user_calcs.PncImmunizationCalculator("dpt_3")
+    pcv_3 = user_calcs.PncImmunizationCalculator("pcv_3")
+    measles_1 = user_calcs.PncImmunizationCalculator("measles_1")
+    fully_immunized = user_calcs.PncFullImmunizationCalculator()
+    yellow_fever = user_calcs.PncImmunizationCalculator("yellow_fever")
+    measles_2 = user_calcs.PncImmunizationCalculator("measles_2")
+    conjugate_csm = user_calcs.PncImmunizationCalculator("conjugate_csm")
+
+ImmunizationHmisCaseFluffPillow = ImmunizationHmisCaseFluff.pillow()
