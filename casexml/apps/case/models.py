@@ -376,12 +376,22 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin,
             }.items()),
             #reorganized
             "indices": self.get_index_map(),
+            "attachments": self.get_attachment_map(),
         }
         if not lite:
             ret.update({
                 "reverse_indices": self.get_index_map(True),
             })
         return ret
+
+    @memoized
+    def get_attachment_map(self):
+        return dict([
+            (name, {
+                'url': self.get_attachment_server_url(att.attachment_key),
+                'mime': att.attachment_from
+            }) for name, att in self.case_attachments.items()
+        ])
 
     @memoized
     def get_index_map(self, reversed=False):
