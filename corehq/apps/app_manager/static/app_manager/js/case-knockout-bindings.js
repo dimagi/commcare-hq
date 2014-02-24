@@ -72,6 +72,7 @@ ko.bindingHandlers.accordion = {
     }
 };
 
+// Originally from http://stackoverflow.com/a/17998880
 ko.extenders.withPrevious = function (target) {
     // Define new properties for previous value and whether it's changed
     target.previous = ko.observable();
