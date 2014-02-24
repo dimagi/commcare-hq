@@ -7,7 +7,7 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig
 from casexml.apps.phone.tests.utils import synclog_id_from_restore_payload
-from corehq.apps.commtrack.models import ConsumptionConfig, StockRestoreConfig, RequisitionCase
+from corehq.apps.commtrack.models import ConsumptionConfig, StockRestoreConfig, RequisitionCase, Product
 from corehq.apps.consumption.shortcuts import set_default_consumption_for_domain
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.stock import const as stockconst
@@ -327,6 +327,16 @@ class CommTrackRequisitionTest(CommTrackSubmissionTest):
         self.requisitions_enabled = True
         super(CommTrackRequisitionTest, self).setUp()
 
+    def expected_notification_message(self, req, amounts):
+        summary = sorted(
+            ['%s:%d' % (str(Product.get(p).code), amt) for p, amt in amounts]
+        )
+        return const.notification_template(req.get_next_action().action).format(
+            name='Unknown',  # TODO currently not storing requester
+            summary=' '.join(summary),
+            loc=self.sp.location.site_code,
+            keyword=req.get_next_action().keyword
+        )
 
     def test_create_fulfill_and_receive_requisition(self):
         amounts = [(p._id, 50.0 + float(i*10)) for i, p in enumerate(self.products)]
@@ -357,12 +367,7 @@ class CommTrackRequisitionTest(CommTrackSubmissionTest):
                 req.get_next_action(),
                 [req]
             ),
-            const.notification_template(req.get_next_action().action).format(
-                name='Unknown',  # currently not storing requester
-                summary='pp:55 pq:55 pr:55',
-                loc=self.sp.location.site_code,
-                keyword=req.get_next_action().keyword
-            )
+            self.expected_notification_message(req, amounts)
         )
 
         for product, amt in amounts:
@@ -383,12 +388,7 @@ class CommTrackRequisitionTest(CommTrackSubmissionTest):
                 req.get_next_action(),
                 [req]
             ),
-            const.notification_template(req.get_next_action().action).format(
-                name='Unknown',  # TODO currently not storing requester
-                summary='pp:55 pq:55 pr:55',
-                loc=self.sp.location.site_code,
-                keyword=req.get_next_action().keyword
-            )
+            self.expected_notification_message(req, amounts)
         )
 
         for product, amt in amounts:

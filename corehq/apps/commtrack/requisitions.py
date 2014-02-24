@@ -144,7 +144,7 @@ def get_notification_recipients(next_action, requisition):
 def get_notification_message(next_action, requisitions):
     # NOTE: it'd be weird if this was None but for now we won't fail hard
     guessed_location = requisitions[0].get_location()
-    summary = ', '.join(r.sms_format() for r in requisitions)
+    summary = ', '.join(sorted(r.sms_format() for r in requisitions))
     requester = requisitions[0].get_requester()
     return notification_template(next_action.action).format(
         name=requester.full_name if requester else "Unknown",

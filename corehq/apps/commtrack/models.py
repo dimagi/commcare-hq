@@ -936,7 +936,7 @@ class RequisitionCase(CommCareCase):
         for state in states:
             product = Product.get(state.product_id)
             formatted_strings.append(
-                '%s:%d' % (product.code, 55.5)
+                '%s:%d' % (product.code, state.stock_on_hand)
             )
         return ' '.join(formatted_strings)
 
