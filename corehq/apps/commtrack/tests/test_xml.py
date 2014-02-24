@@ -18,6 +18,7 @@ from casexml.apps.case.tests.util import check_xml_line_by_line, check_user_has_
 from corehq.apps.hqcase.utils import get_cases_in_domain
 from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.apps.commtrack.tests.util import make_loc, make_supply_point
+from corehq.apps.commtrack.requisitions import get_notification_message
 from corehq.apps.commtrack.tests.data.balances import (
     balance_ota_block,
     submission_wrap,
@@ -351,6 +352,18 @@ class CommTrackRequisitionTest(CommTrackSubmissionTest):
             self.domain.name,
             self.sp.location._id
         )), 1)
+        self.assertEqual(
+            get_notification_message(
+                req.get_next_action(),
+                [req]
+            ),
+            const.notification_template(req.get_next_action().action).format(
+                name='Unknown',  # currently not storing requester
+                summary='pp:55 pq:55 pr:55',
+                loc=self.sp.location.site_code,
+                keyword=req.get_next_action().keyword
+            )
+        )
 
         for product, amt in amounts:
             self.check_stock_models(req, product, amt, 0, 'ct-request')
@@ -365,6 +378,18 @@ class CommTrackRequisitionTest(CommTrackSubmissionTest):
 
         self.assertEqual(req.requisition_status, 'fulfilled')
         self.assertEqual(req.get_next_action().keyword, 'rec')
+        self.assertEqual(
+            get_notification_message(
+                req.get_next_action(),
+                [req]
+            ),
+            const.notification_template(req.get_next_action().action).format(
+                name='Unknown',  # currently not storing requester
+                summary='pp:55 pq:55 pr:55',
+                loc=self.sp.location.site_code,
+                keyword=req.get_next_action().keyword
+            )
+        )
 
         for product, amt in amounts:
             self.check_stock_models(req, product, amt, amt, 'stock')

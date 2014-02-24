@@ -6,7 +6,7 @@ Created on Feb 28, 2013
 from copy import copy
 from datetime import datetime
 from casexml.apps.case.mock import CaseBlock
-from corehq.apps.commtrack.const import RequisitionActions, RequisitionStatus, UserRequisitionRoles
+from corehq.apps.commtrack.const import RequisitionActions, RequisitionStatus, UserRequisitionRoles, notification_template
 import uuid
 from corehq.apps.commtrack.models import RequisitionCase
 from corehq.apps.users.cases import get_owning_users, get_owner_id
@@ -16,7 +16,6 @@ from corehq.apps.commtrack import const
 from xml.etree import ElementTree
 from corehq.apps.hqcase.utils import submit_case_blocks
 from dimagi.utils.parsing import json_format_datetime
-from django.utils.translation import ugettext as _
 
 class RequisitionState(object):
     """
@@ -143,18 +142,11 @@ def get_notification_recipients(next_action, requisition):
     return [u for u in users if should_notify_user(u, next_action.action_type)]
 
 def get_notification_message(next_action, requisitions):
-    #TODO test these!
-    templates = {
-        RequisitionActions.APPROVAL: _('{name} has requested the following supplies: {summary}. please respond "{keyword} {loc}" to approve.'),
-        RequisitionActions.FULFILL: _('{name} should be supplied with the following supplies: {summary}. please respond "{keyword} {loc}" to confirm the order.'),
-        RequisitionActions.RECEIPTS: _('your order of {summary} is ready to be picked up. please respond with a "{keyword}" message to report receipts.'),
-    }
-
     # NOTE: it'd be weird if this was None but for now we won't fail hard
     guessed_location = requisitions[0].get_location()
     summary = ', '.join(r.sms_format() for r in requisitions)
     requester = requisitions[0].get_requester()
-    return templates[next_action.action].format(
+    return notification_template(next_action.action).format(
         name=requester.full_name if requester else "Unknown",
         summary=summary,
         loc=guessed_location.site_code if guessed_location else "<loc code>",

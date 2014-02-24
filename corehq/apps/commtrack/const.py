@@ -106,3 +106,12 @@ def get_commtrack_user_id(domain):
     return COMMTRACK_USERNAME
 
 USER_LOCATION_OWNER_MAP_TYPE = 'user-owner-mapping-case'
+
+def notification_template(action):
+    # this had to be a method to do translations
+    from django.utils.translation import ugettext as _
+    return {
+        RequisitionActions.APPROVAL: _('{name} has requested the following supplies: {summary}. please respond "{keyword} {loc}" to approve.'),
+        RequisitionActions.FULFILL: _('{name} should be supplied with the following supplies: {summary}. please respond "{keyword} {loc}" to confirm the order.'),
+        RequisitionActions.RECEIPTS: _('your order of {summary} is ready to be picked up. please respond with a "{keyword}" message to report receipts.'),
+    }[action]
