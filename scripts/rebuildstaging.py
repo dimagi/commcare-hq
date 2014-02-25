@@ -28,44 +28,17 @@ import sh
 import sys
 import gevent
 
+from sh_verbose import ShVerbose
+from gitutils import (
+    OriginalBranch,
+    get_git,
+    git_check_merge,
+    print_merge_details,
+)
+
 from gevent import monkey
 monkey.patch_httplib()
 
-
-def get_git(path=None):
-    return sh.git.bake('--no-pager', _cwd=path)
-
-
-def git_current_branch(git):
-    return sh.grep(git.branch('--no-color'), '^* ').strip()[2:]
-
-
-def git_check_merge(branch1, branch2, git):
-    """
-    returns True if branch1 would auto-merge cleanly into branch2,
-    False if the merge requires human assistance
-
-    Thanks to http://stackoverflow.com/a/501461/240553
-
-    """
-    with ShVerbose(False):
-        orig_branch = git_current_branch(git)
-        git.checkout(branch2)
-        is_behind = git.log('{0}..{1}'.format(branch2, branch1),
-                            max_count=1).strip()
-        if is_behind:
-            try:
-                git.merge('--no-commit', '--no-ff', branch1).strip()
-            except sh.ErrorReturnCode_1:
-                # git merge returns 1 when there's a conflict
-                return False
-            else:
-                return True
-            finally:
-                git.merge('--abort')
-                git.checkout(orig_branch)
-        else:
-            return True
 
 class BranchConfig(jsonobject.JsonObject):
     trunk = jsonobject.StringProperty()
@@ -104,29 +77,29 @@ def sync_local_copies(config):
 
     for path, config in base_config.span_configs():
         git = get_git(path)
-
-        for branch in [config.trunk] + config.branches:
-            git.checkout(branch)
-            unpushed = _count_commits('origin/{0}..{0}'.format(branch))
-            unpulled = _count_commits('{0}..origin/{0}'.format(branch))
-            if unpulled or unpushed:
-                print ("  [{cwd}] {branch}: "
-                       "{unpushed} ahead and {unpulled} behind origin").format(
-                    cwd=path,
-                    branch=branch,
-                    unpushed=unpushed,
-                    unpulled=unpulled,
-                )
-            else:
-                print "  [{cwd}] {branch}: Everything up-to-date.".format(
-                    cwd=path,
-                    branch=branch,
-                )
-            if unpushed:
-                unpushed_branches.append((path, branch))
-            elif unpulled:
-                print "  Fastforwarding your branch to origin"
-                git.merge('--ff-only', 'origin/{0}'.format(branch))
+        with OriginalBranch(git):
+            for branch in [config.trunk] + config.branches:
+                git.checkout(branch)
+                unpushed = _count_commits('origin/{0}..{0}'.format(branch))
+                unpulled = _count_commits('{0}..origin/{0}'.format(branch))
+                if unpulled or unpushed:
+                    print ("  [{cwd}] {branch}: {unpushed} ahead "
+                           "and {unpulled} behind origin").format(
+                        cwd=path,
+                        branch=branch,
+                        unpushed=unpushed,
+                        unpulled=unpulled,
+                    )
+                else:
+                    print "  [{cwd}] {branch}: Everything up-to-date.".format(
+                        cwd=path,
+                        branch=branch,
+                    )
+                if unpushed:
+                    unpushed_branches.append((path, branch))
+                elif unpulled:
+                    print "  Fastforwarding your branch to origin"
+                    git.merge('--ff-only', 'origin/{0}'.format(branch))
     if unpushed_branches:
         print "The following branches have commits that need to be pushed:"
         for path, branch in unpushed_branches:
@@ -141,20 +114,20 @@ def check_merges(config):
     base_config = config
     for path, config in base_config.span_configs():
         git = get_git(path)
-
-        git.checkout(config.trunk)
-        for branch in config.branches:
-            git.checkout(branch)
-            print "  [{cwd}] {trunk} => {branch}".format(
-                cwd=format_cwd(path),
-                trunk=config.trunk,
-                branch=branch,
-            ),
-            if not git_check_merge(config.trunk, branch, git=git):
-                merge_conflicts.append((path, config.trunk, branch))
-                print "FAIL"
-            else:
-                print "ok"
+        with OriginalBranch(git):
+            git.checkout(config.trunk)
+            for branch in config.branches:
+                git.checkout(branch)
+                print "  [{cwd}] {trunk} => {branch}".format(
+                    cwd=format_cwd(path),
+                    trunk=config.trunk,
+                    branch=branch,
+                ),
+                if not git_check_merge(config.trunk, branch, git=git):
+                    merge_conflicts.append((path, config.trunk, branch))
+                    print "FAIL"
+                else:
+                    print "ok"
     if merge_conflicts:
         print "You must fix the following merge conflicts before rebuilding:"
         for cwd, trunk, branch in merge_conflicts:
@@ -163,6 +136,8 @@ def check_merges(config):
                 branch=branch,
                 trunk=trunk,
             )
+            git = get_git(cwd)
+            print_merge_details(branch, trunk, git)
         exit(1)
     else:
         print "No merge conflicts"
@@ -171,68 +146,32 @@ def check_merges(config):
 def rebuild_staging(config):
     for path, config in config.span_configs():
         git = get_git(path)
-        git.checkout(config.trunk)
-        git.checkout('-B', config.name, config.trunk)
-        for branch in config.branches:
-            print "  [{cwd}] Merging {branch} into {name}".format(
+        with OriginalBranch(git):
+            git.checkout(config.trunk)
+            git.checkout('-B', config.name, config.trunk)
+            for branch in config.branches:
+                print "  [{cwd}] Merging {branch} into {name}".format(
+                    cwd=path,
+                    branch=branch,
+                    name=config.name
+                )
+                git.merge(branch, '--no-edit')
+            if config.submodules:
+                for submodule in config.submodules:
+                    git.add(submodule)
+                git.commit('-m', "update submodule refs", '--no-edit')
+            # stupid safety check
+            assert config.name != 'master'
+            print "  [{cwd}] Force pushing to origin {name}".format(
                 cwd=path,
-                branch=branch,
-                name=config.name
+                name=config.name,
             )
-            git.merge(branch, '--no-edit')
-        if config.submodules:
-            for submodule in config.submodules:
-                git.add(submodule)
-            git.commit('-m', "update submodule refs", '--no-edit')
-        # stupid safety check
-        assert config.name != 'master'
-        print "  [{cwd}] Force pushing to origin {name}".format(
-            cwd=path,
-            name=config.name,
-        )
-        git.push('origin', config.name, '--force')
+            git.push('origin', config.name, '--force')
 
 
 def format_cwd(cwd):
     return os.path.join(cwd) if cwd else '.'
 
-_original_init = sh.RunningCommand.__init__
-
-
-def _verbose_init(self, cmd, call_args, stdin, stdout, stderr):
-    print u"[{cwd}]$ {command}".format(
-        cwd=format_cwd(call_args['cwd']),
-        command=' '.join(cmd[0].rsplit('/', 1)[1:] + cmd[1:]),
-    )
-    try:
-        _original_init(self, cmd, call_args, stdin, stdout, stderr)
-    except sh.ErrorReturnCode as e:
-        sys.stdout.write(e.stdout)
-        sys.stderr.write(e.stderr)
-        raise
-    else:
-        sys.stdout.write(self.stdout)
-        sys.stderr.write(self.stderr)
-
-
-def patch_sh_verbose():
-
-    sh.RunningCommand.__init__ = _verbose_init
-
-
-class ShVerbose(object):
-    def __init__(self, verbose=True):
-        self.verbose = verbose
-        self.start_init = None
-
-    def __enter__(self):
-        # record whatever the current __init__ is so we can reset it later
-        self.start_init = sh.RunningCommand.__init__
-        sh.RunningCommand.__init__ = (_verbose_init if self.verbose
-                                      else _original_init)
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        sh.RunningCommand.__init__ = self.start_init
 
 if __name__ == '__main__':
     from sys import stdin
