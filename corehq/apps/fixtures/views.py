@@ -33,7 +33,12 @@ from dimagi.utils.web import json_response
 from dimagi.utils.decorators.view import get_file
 
 
-require_can_edit_fixtures = require_permission(Permissions.edit_data)
+require_can_edit_fixtures = lambda *args, **kwargs: (
+    require_permission(Permissions.edit_data)(
+        requires_privilege_alert(privileges.LOOKUP_TABLES)(*args, **kwargs)
+    )
+)
+
 
 def strip_json(obj, disallow_basic=None, disallow=None):
     disallow = disallow or []
@@ -57,7 +62,6 @@ def _to_kwargs(req):
     # version dependent
     return dict((str(k), v) for k, v in json.load(req).items())
 
-@requires_privilege_alert(privileges.LOOKUP_TABLES)
 @require_can_edit_fixtures
 def data_types(request, domain, data_type_id):
     
@@ -108,7 +112,6 @@ def prepare_user(user):
     user.username = user.raw_username
     return strip_json(user, disallow=['password'])
 
-@requires_privilege_alert(privileges.LOOKUP_TABLES)
 @require_can_edit_fixtures
 def data_items(request, domain, data_type_id, data_item_id):
 
@@ -199,19 +202,16 @@ def data_item_users(request, domain, data_type_id, data_item_id, user_id):
     else:
         return HttpResponseBadRequest()
 
-@requires_privilege_alert(privileges.LOOKUP_TABLES)
 @require_can_edit_fixtures
 def groups(request, domain):
     groups = Group.by_domain(domain)
     return json_response(map(strip_json, groups))
 
-@requires_privilege_alert(privileges.LOOKUP_TABLES)
 @require_can_edit_fixtures
 def users(request, domain):
     users = CommCareUser.by_domain(domain)
     return json_response(map(prepare_user, users))
 
-@requires_privilege_alert(privileges.LOOKUP_TABLES)
 @require_can_edit_fixtures
 def view(request, domain, template='fixtures/view.html'):
     return render(request, template, {
@@ -219,7 +219,6 @@ def view(request, domain, template='fixtures/view.html'):
     })
 
 DELETE_HEADER = "Delete(Y/N)"
-@requires_privilege_alert(privileges.LOOKUP_TABLES)
 @require_can_edit_fixtures
 def download_item_lists(request, domain):
     data_types = FixtureDataType.by_domain(domain)
@@ -343,7 +342,6 @@ class UploadItemLists(TemplateView):
 
         return HttpResponseRedirect(reverse('fixture_view', args=[self.domain]))
 
-    @method_decorator(requires_privilege_alert(privileges.LOOKUP_TABLES))
     @method_decorator(require_can_edit_fixtures)
     def dispatch(self, request, domain, *args, **kwargs):
         self.domain = domain
