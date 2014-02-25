@@ -163,38 +163,52 @@ var ExportManager = function (o) {
         self.downloadExport(downloadUrl);
     };
 
-    self.requestDownload = function(data, event) {
+    self._requestDownload = function(options) {
         var $button = $(event.srcElement || event.currentTarget);
-        var modalTitle = $button.data('formname') || $button.data('xmlns');
         var downloadUrl = self.downloadUrl || $button.data('dlocation');
-
-        if ($button.data('modulename'))
-            modalTitle  = $button.data('modulename')+" > "+modalTitle;
-        resetModal("'"+modalTitle+"'", true);
-
+        resetModal("'" + options.modalTitle + "'", true);
         downloadUrl = downloadUrl +
-            "?"+self.exportFilters+
-            '&export_tag=["'+self.domain+'","'+$button.data('xmlns')+'","'+$button.data('formname')+'"]' +
-            '&filename='+$button.data('formname') +
+            "?" + self.exportFilters +
             '&async=true' +
-            '&format=' + self.format;
-        if (!self.is_custom)
-            downloadUrl = downloadUrl+'&app_id='+$button.data('appid');
+            '&format=' + self.format +
+            '&export_tag=["'+self.domain+'","'+$button.data('xmlns')+'","'+$button.data('formname')+'"]' +
+            '&filename='+$button.data('formname');
 
+        for (var k in options.downloadParams) {
+            if (options.downloadParams.hasOwnProperty(k)) {
+                var v = options.downloadParams[k];
+                downloadUrl += '&' + k + '=' + v;
+            }
+        }
         self.downloadExport(downloadUrl);
     };
 
-    self.requestCaseDownload = function(data, event) {
+    self.requestDownload = function(data, event) {
         var $button = $(event.srcElement || event.currentTarget);
-        var downloadUrl = self.downloadUrl || $button.data('dlocation');
-        var modalTitle = "Case List";
-        resetModal(modalTitle, true);
+        var modalTitle = $button.data('formname') || $button.data('xmlns');
+        if ($button.data('modulename')) {
+            modalTitle  = $button.data('modulename') + " > " + modalTitle;
+        }
+        var downloadParams = {
+            export_tag: ["'+self.domain+'","'+$button.data('xmlns')+'","'+$button.data('formname')+'"],
+            filename: $button.data('formname')
+        }
+        if (!self.is_custom) {
+            downloadParams.app_id = $button.data('appid');
+        }
+        return self._requestDownload({
+            modalTitle: modalTitle,
+            downloadParams: downloadParams
+        });
+    };
 
-        downloadUrl += '?'+self.exportFilters;
-        downloadUrl += '&include_closed=' + $('#include-closed-select').val();
-        downloadUrl += '&async=true'
-
-        self.downloadExport(downloadUrl);
+    self.requestCaseDownload = function(data, event) {
+        return self._requestDownload({
+            modalTitle: "Case List",
+            downloadParams: {
+                include_closed: $('#include-closed-select').val()
+            }
+        });
     };
 
     self.checkCustomSheetNameLength = function(data, event) {
@@ -306,5 +320,3 @@ ko.bindingHandlers.updateCustomSheetName = {
         }
     }
 };
-
-
