@@ -45,8 +45,8 @@ class OpmCaseSqlData(SqlData):
         return dict(
             domain=self.domain,
             user_id=self.user_id,
-            startdate=self.datespan.startdate_utc.date(),
-            enddate=self.datespan.enddate_utc.date()
+            startdate=str(self.datespan.startdate_utc.date()),
+            enddate=str(self.datespan.enddate_utc.date())
         )
 
     @property
@@ -58,7 +58,7 @@ class OpmCaseSqlData(SqlData):
         filters = [
             "domain = :domain",
             "user_id = :user_id",
-            "date between :startdate and :enddate"
+            "(opened_on <= :enddate AND (closed_on >= :enddate OR closed_on = '')) OR (opened_on <= :enddate AND (closed_on >= :startdate or closed_on <= :enddate))"
         ]
 
         return filters
@@ -134,6 +134,55 @@ class OpmFormSqlData(SqlData):
         else:
             return None
 
+class OpmHealthStatusBasicInfoSqlData(SqlData):
+
+    table_name = 'fluff_OpmHealthStatusBasicInfoFluff'
+
+    def __init__(self, domain, user_id, datespan):
+        self.domain = domain
+        self.user_id = user_id
+        self.datespan = datespan
+
+    @property
+    def filter_values(self):
+        return dict(
+            domain=self.domain,
+            user_id=self.user_id,
+            startdate=str(self.datespan.startdate_utc.date()),
+            enddate=str(self.datespan.enddate_utc.date())
+        )
+
+    @property
+    def group_by(self):
+        return ['user_id']
+
+    @property
+    def filters(self):
+        filters = [
+            "domain = :domain",
+            "user_id = :user_id",
+            "(opened_on <= :enddate AND (closed_on >= :enddate OR closed_on = '')) OR (opened_on <= :enddate AND (closed_on >= :startdate or closed_on <= :enddate))"
+        ]
+
+        return filters
+
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn('# of Beneficiaries Registered', SumColumn('beneficiaries_registered_total')),
+            DatabaseColumn('# of Pregnant Women Registered', SumColumn('lmp_total')),
+            DatabaseColumn('# of Lactating Mothers Registered', SumColumn('lactating_total')),
+            DatabaseColumn('# of Children Between 0 and 3 Years of Age Registered', SumColumn('children_total')),
+        ]
+
+    @property
+    def data(self):
+        if self.user_id in super(OpmHealthStatusBasicInfoSqlData, self).data:
+            return super(OpmHealthStatusBasicInfoSqlData, self).data[self.user_id]
+        else:
+            return None
+
 class OpmHealthStatusSqlData(SqlData):
 
     table_name = 'fluff_OpmHealthStatusFluff'
@@ -166,14 +215,9 @@ class OpmHealthStatusSqlData(SqlData):
 
         return filters
 
-
     @property
     def columns(self):
         return [
-            DatabaseColumn('# of Beneficiaries Registered', SumColumn('beneficiaries_registered_total')),
-            DatabaseColumn('# of Pregnant Women Registered', SumColumn('lmp_total')),
-            DatabaseColumn('# of Lactating Mothers Registered', SumColumn('lactating_total')),
-            DatabaseColumn('# of Children Between 0 and 3 Years of Age Registered', SumColumn('children_total')),
             DatabaseColumn('# of Beneficiaries Attending VHND Monthly', SumColumn('vhnd_monthly_total')),
             DatabaseColumn('# of Pregnant Women Who Have Received at least 30 IFA Tablets', SumColumn('ifa_tablets_total')),
             DatabaseColumn('# of Pregnant Women Whose Weight Gain Was Monitored At Least Once', SumColumn('weight_once_total')),
@@ -468,8 +512,9 @@ class HealthStatusReport(DatespanMixin, BaseReport, SummingSqlTabularReport):
         return CommCareUser.by_domain(DOMAIN)
 
     def get_row_data(self, row):
+        basic_info = OpmHealthStatusBasicInfoSqlData(DOMAIN, row._id, self.datespan)
         sql_data = OpmHealthStatusSqlData(DOMAIN, row._id, self.datespan)
-        return self.model(row, self, sql_data.data)
+        return self.model(row, self, basic_info.data, sql_data.data)
 
     @property
     def export_table(self):

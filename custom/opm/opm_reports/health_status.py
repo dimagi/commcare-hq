@@ -69,7 +69,7 @@ class HealthStatus(object):
 
 
 
-    def __init__(self, worker, report, sql_data=None):
+    def __init__(self, worker, report, basic_info=None, sql_data=None):
 
         # make sure worker passes the filters
         report.filter(
@@ -79,14 +79,25 @@ class HealthStatus(object):
         )
 
         self.awc = worker.user_data.get('awc', "Invalid AWC name")
-        if sql_data:
-            ben = sql_data.get('beneficiaries_registered_total', 0)
-            child_num = sql_data.get('children_total', 0)
-            mother_num = sql_data.get('lactating_total', 0)
+        if basic_info:
+            ben = basic_info.get('beneficiaries_registered_total', 0)
+            child_num = basic_info.get('children_total', 0)
+            mother_num = basic_info.get('lactating_total', 0)
             self.beneficiaries_registered = normal_format(ben)
-            self.pregnant_women = format_percent(sql_data.get('lmp_total', 0), calc_percentage(sql_data.get('lmp_total', 0), ben))
+            self.pregnant_women = format_percent(basic_info.get('lmp_total', 0), calc_percentage(basic_info.get('lmp_total', 0), ben))
             self.mother = format_percent(mother_num, calc_percentage(mother_num, ben))
             self.children = normal_format(child_num)
+        else:
+            ben = 0
+            child_num = 0
+            mother_num = 0
+            self.beneficiaries_registered = format_percent(0, 0)
+            self.pregnant_women = format_percent(0, 0)
+            self.mother = format_percent(0, 0)
+            self.children = format_percent(0, 0)
+
+
+        if sql_data:
             self.vhnd_monthly = format_percent(sql_data.get('vhnd_monthly_total', 0), calc_percentage(sql_data.get('vhnd_monthly_total', 0), ben))
             self.ifa_tablets = format_percent(sql_data.get('ifa_tablets_total', 0), calc_percentage(sql_data.get('ifa_tablets_total', 0), ben))
             self.weight_once = format_percent(sql_data.get('weight_once_total', 0), calc_percentage(sql_data.get('weight_once_total', 0), ben))
@@ -116,10 +127,6 @@ class HealthStatus(object):
             self.breastfed = format_percent(sql_data.get('excbreastfed_total', 0), calc_percentage(sql_data.get('excbreastfed_total', 0), mother_num))
             self.measles_vaccine = format_percent(sql_data.get('measlesvacc_total', 0), calc_percentage(sql_data.get('measlesvacc_total', 0), child_num))
         else:
-            self.beneficiaries_registered = format_percent(0, 0)
-            self.pregnant_women = format_percent(0, 0)
-            self.mother = format_percent(0, 0)
-            self.children = format_percent(0, 0)
             self.vhnd_monthly = format_percent(0, 0)
             self.ifa_tablets = format_percent(0, 0)
             self.weight_once = format_percent(0, 0)
