@@ -36,7 +36,8 @@ def requires_privilege_alert(slug, **assignment):
             try:
                 return requires_privilege(slug, **assignment)(fn)(request, *args, **kwargs)
             except PermissionDenied:
-                if toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, request.user.username):
+                if (hasattr(request, 'user')
+                    and toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, request.user.username)):
                     messaged_slugs = [m.extra_tags for m in messages.get_messages(request)]
                     if slug not in messaged_slugs:
                         messages.info(request, "You will soon lose access to this feature %s" % slug, extra_tags=slug)
