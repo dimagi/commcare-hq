@@ -491,12 +491,11 @@ class Test(TestCase):
         current.save_to_sql(self.engine)
         expected = [
             (u'123', date(2012, 9, 24), u'2012-09-23', u'2013-09-23', u'mock', u'test_owner', 3, None, None, None, None, None, 1, None),
-            (u'123', date(2013, 1, 1), None, None, u'abc', u'123', None, None, 2, None, 1, None, None, None),
-            (u'123', date(1, 1, 1), None, None, u'abc', u'xyz', None, None, None, 1, None, None, None, None),
-            (u'123', date(2013, 1, 1), u'2012-09-23', u'2013-09-23', u'mock', u'test_owner', None, None, None, None, None, None, None, None),
+            (u'123', date(2013, 1, 1), u'2012-09-23', u'2013-09-23', u'abc', u'123', None, None, 2, None, 1, None, None, None),
+            (u'123', date(1, 1, 1), u'2012-09-23', u'2013-09-23', u'abc', u'xyz', None, None, None, 1, None, None, None, None),
             (u'123', date(2012, 9, 23), u'2012-09-23', u'2013-09-23', u'mock', u'test_owner', 2, None, None, None, None, None, 1, None),
             (u'123', date(1, 1, 1), u'2012-09-23', u'2013-09-23', u'mock', u'test_owner', None, None, None, None, None, 2, None, 1),
-            (u'123', date(2013, 1, 1), None, None, u'abc', u'xyz', None, 3, None, None, None, None, None, None),
+            (u'123', date(2013, 1, 1), u'2012-09-23', u'2013-09-23', u'abc', u'xyz', None, 3, None, None, None, None, None, None),
         ]
 
         with self.engine.begin() as connection:

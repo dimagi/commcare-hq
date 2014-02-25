@@ -577,11 +577,11 @@ class IndicatorDocument(schema.Document):
                 date = value_dict['date']
                 if group_by:
                     key = (self.id,) + tuple(group_by) + (date,)
-                    set_row_val(key, name, value)
                 else:
-                    set_row_val(default_key + (date,), name, value)
+                    key = default_key + (date,)
+                set_row_val(key, name, value)
                 for flat_key in flat_keys:
-                    set_row_val(default_key + (date,), flat_key, self[flat_key])
+                    set_row_val(key, flat_key, self[flat_key])
 
         types = self.get_group_types()
         types['date'] = 'date'
