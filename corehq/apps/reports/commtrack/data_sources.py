@@ -172,7 +172,6 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
     def leaf_node_data(self, stock_states):
         for state in stock_states:
             product = Product.get(state.product_id)
-            print state.resupply_quantity_needed
             yield {
                 'category': state.stock_category,
                 'product_id': product._id,

@@ -252,6 +252,8 @@ class DomainDowngradeStatusHandler(BaseDowngradeHandler):
         try:
             user_rate = self.new_plan_version.feature_rates.filter(
                 feature__feature_type=FeatureType.USER).latest('date_created')
+            if user_rate.monthly_limit == -1:
+                return
             num_allowed = user_rate.monthly_limit
             num_extra = num_users - num_allowed
             if num_extra > 0:

@@ -528,12 +528,7 @@ class MessagingTab(UITab):
         def keyword_subtitle(keyword=None, **context):
             return keyword.keyword
 
-        if self.couch_user.username in [
-            'rhartford@dimagi.com',
-            'sshah@dimagi.com',
-            'biyeun@dimagi.com',
-            'rhartford+15@dimagi.com',
-        ]:
+        if toggle.shortcuts.toggle_enabled(toggles.REMINDERS_UI_PREVIEW, self.couch_user.username):
             from corehq.apps.sms.views import DomainSmsGatewayListView
             from corehq.apps.reminders.views import (
                 EditScheduledReminderView,

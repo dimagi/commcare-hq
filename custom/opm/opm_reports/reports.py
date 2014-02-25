@@ -43,6 +43,7 @@ class BaseReport(MonthYearMixin, GenericTabularReport, CustomProjectReport):
     default_rows = 50
     printable = True
     exportable = True
+    export_format_override = "csv"
 
     @property
     def fields(self):

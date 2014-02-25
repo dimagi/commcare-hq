@@ -450,7 +450,8 @@ class SoftwarePlanVersion(models.Model):
                 pass
         desc.update({
             'monthly_fee': 'USD %s' % product.monthly_fee,
-            'rates': [{'name': FEATURE_TYPE_TO_NAME[r.feature.feature_type], 'included': r.monthly_limit}
+            'rates': [{'name': FEATURE_TYPE_TO_NAME[r.feature.feature_type],
+                       'included': 'Infinite' if r.monthly_limit == -1 else r.monthly_limit}
                       for r in self.feature_rates.all()],
             'edition': self.plan.edition,
         })
