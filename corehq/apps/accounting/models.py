@@ -874,11 +874,11 @@ class InvoicePdf(SafeSaveDocument):
     invoice_id = StringProperty()
     date_created = DateTimeProperty()
 
-    def generate_pdf(self, invoice):
+    def generate_pdf(self, billing_record):
         # todo generate pdf
-        invoice.pdf_data_id = self._id
+        billing_record.pdf_data_id = self._id
         # self.put_attachment(pdf_data)
-        self.invoice_id = invoice.id
+        self.invoice_id = billing_record.invoice.id
         self.date_created = datetime.datetime.now()
 
 
