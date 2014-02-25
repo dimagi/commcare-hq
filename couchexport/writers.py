@@ -66,7 +66,8 @@ class ExportWriter(object):
 
     def add_table(self, table_index, headers, table_title=None):
         def _clean_name(name):
-            return re.sub(r"[[\\?*/:\]]", "-", name)
+            return re.sub(r"[\n]", '', re.sub(r"[[\\?*/:\]]", "-", name))
+
         table_title_truncated = _clean_name(
             self.table_name_generator.next_unique(table_title or table_index)
         )
