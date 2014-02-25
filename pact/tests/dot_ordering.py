@@ -3,6 +3,7 @@ import os
 from datetime import datetime, timedelta
 
 from django.test import TestCase
+from django.conf import settings
 import simplejson
 
 from casexml.apps.case.models import CommCareCase
@@ -31,6 +32,7 @@ CTSIMS_ID = 'ff6c662bfc2a448dadc9084056a4abdf'
 
 class dotsOrderingTests(TestCase):
     def setUp(self):
+        settings.TIME_ZONE = 'UTC'
         for doc in XFormInstance.get_db().view('couchforms/by_xmlns', reduce=False,
                                                include_docs=True).all():
             # purge all xforms prior to start
