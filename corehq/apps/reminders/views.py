@@ -219,7 +219,7 @@ def add_one_time_reminder(request, domain, handler_id=None):
     timezone = report_utils.get_timezone(None, domain) # Use project timezone only
 
     if request.method == "POST":
-        form = OneTimeReminderForm(request.POST)
+        form = OneTimeReminderForm(request.POST, can_use_survey=can_use_survey_reminders(request))
         form._cchq_domain = domain
         if form.is_valid():
             content_type = form.cleaned_data.get("content_type")
@@ -268,7 +268,7 @@ def add_one_time_reminder(request, domain, handler_id=None):
         else:
             initial = {}
 
-        form = OneTimeReminderForm(initial=initial)
+        form = OneTimeReminderForm(initial=initial, can_use_survey=can_use_survey_reminders(request))
 
     return render_one_time_reminder_form(request, domain, form, handler_id)
 
@@ -382,7 +382,7 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
     sample_list = get_sample_list(domain)
     
     if request.method == "POST":
-        form = ComplexCaseReminderForm(request.POST, can_user_survey=can_use_survey_reminders(request))
+        form = ComplexCaseReminderForm(request.POST, can_use_survey=can_use_survey_reminders(request))
         form._cchq_is_superuser = request.couch_user.is_superuser
         form._cchq_use_custom_content_handler = (h is not None and h.custom_content_handler is not None)
         form._cchq_custom_content_handler = h.custom_content_handler if h is not None else None
@@ -755,7 +755,7 @@ def manage_keywords(request, domain):
     return render(request, "reminders/partial/manage_keywords.html", context)
 
 
-@requires_privilege_alert(privileges.OUTBOUND_SMS)
+@requires_privilege_alert(privileges.INBOUND_SMS)
 @reminders_permission
 def add_keyword(request, domain, keyword_id=None):
     sk = None

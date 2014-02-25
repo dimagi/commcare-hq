@@ -578,8 +578,8 @@
                             {% if can_use_survey %}
                             <option value="survey" class="for_case_criteria for_on_datetime" {% if form.method.value == "survey" %}selected="selected"{% endif %}>SMS survey</option>
                             <option value="ivr_survey" class="for_case_criteria" {% if form.method.value == "ivr_survey" %}selected="selected"{% endif %}>IVR survey</option>
-                            {% endif %}
                             <option value="callback" class="for_case_criteria" {% if form.method.value == "callback" %}selected="selected"{% endif %}>SMS expecting callback</option>
+                            {% endif %}
                         </select>
                     </td>
                     <td></td>

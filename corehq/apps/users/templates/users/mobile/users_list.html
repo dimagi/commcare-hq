@@ -38,6 +38,7 @@
                 show_inactive: {{ show_inactive|yesno:"true,false" }},
                 more_columns: {{ more_columns|yesno:"true,false" }},
                 list_url: '{% url "user_list" domain %}',
+                can_archive: {{ can_add_extra_users|BOOL }}
             });
         });
     </script>
@@ -103,12 +104,49 @@
 </header>
 <div id="commcare-users-list">
 
+
     <div class="row-fluid">
         <div class="span12">
+            {% if not can_add_extra_users %}
+                <div class="alert">
+                    {% url 'domain_select_plan' domain as change_plan_url %}
+                    <p>
+                    {% blocktrans with request.plan.user_limit as u %}
+                        <strong>Mobile Worker Limit Reached:</strong> You have reached the limit of {{ u }}
+                        Mobile Workers included with your plan. You may no longer add new Mobile Workers until you
+                        confirm your project's billing information.
+                    {% endblocktrans %}
+                    </p>
+                    <p>
+                        {% blocktrans with request.plan.user_fee as u %}
+                        There will be an additional charge of {{ u }} per month per additional Mobile Worker over this limit.
+                        {% endblocktrans %}
+                    </p>
+                    {% if show_inactive %}
+                    <p>
+                        {% blocktrans %}
+                        You may not Un-Archive any Mobile Workers until you Archive or delete existing Mobile Workers or
+                        confirm your project's billing information.
+                        {% endblocktrans %}
+                    </p>
+                    {% endif %}
+                    <p>
+                    {% if is_billing_admin %}
+                        <a href="{% url 'extra_users_confirm_billing' domain %}" class="btn btn-primary">{% trans 'Confirm Billing Information' %}</a>
+                    {% else %}
+                        {% blocktrans %}
+                            Note: You must be a Billing Admin to confirm your Billing Information.
+                        {% endblocktrans %}
+                    {% endif %}
+                    </p>
+                </div>
+            {% endif %}
             <div class="btn-toolbar">
+                {% if can_add_extra_users %}
                 <a class="btn btn-success" href="{% url "add_commcare_account" domain %}">
                     <i class="icon icon-white icon-plus"></i> {% trans "New Mobile Worker" %}
                 </a>
+                {% endif %}
                 {% if can_bulk_edit_users %}
                     {% trans "or" %}
                     <a class="btn" href="{% url "upload_commcare_users" domain %}">
@@ -191,7 +229,7 @@
                         <th data-bind="visible: !more_columns()">
                             <a href="#" data-bind="click: show_more_columns">{% trans "More..." %}</a>
                         </th>
-                        {% if couch_user.can_edit_commcare_users %}
+                        {% if can_edit_user_archive %}
                             <th class="help_popover" data-help-key="Archive User">
                                 <a href="#">{% trans "Archive" %} <i class="icon icon-question-sign"></i></a>
                             </th>
@@ -202,7 +240,7 @@
                     <tr>
                         <td data-bind="text: $parent.get_user_index($index)"></td>
                         {% include 'users/mobile/partials/base_users_table.html' %}
-                    {% if couch_user.can_edit_commcare_users %}
+                    {% if can_edit_user_archive %}
                         <td data-bind="visible: !archive_action_complete">
                             <a href="#" data-toggle="modal"
                                 class="btn {% if not show_inactive %}btn-inverse{% endif %}"
@@ -218,6 +256,14 @@
                                 </div>
                                 <div class="modal-body">
                                     <p data-bind="text: archive_action_desc"></p>
+                                    {% if show_inactive and can_add_extra_users %}
+                                    <p>
+                                        {% blocktrans %}
+                                        You may not Un-Archive this Mobile Worker until you
+                                        <a href="{{ change_plan_url }}">upgrade</a> your project's plan.
+                                        {% endblocktrans %}
+                                     </p>
+                                    {% endif %}
                                 </div>
                                 <div class="modal-footer">
                                     <a href="#" class="btn btn-warning"
