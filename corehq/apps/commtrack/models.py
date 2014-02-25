@@ -1030,6 +1030,12 @@ class RequisitionCase(CommCareCase):
         ]
 
 
+class RequisitionTransaction(StockTransaction):
+    @property
+    def category(self):
+        return 'requisition'
+
+
 class StockReport(object):
     """
     This is a wrapper around the couch xform doc that gets associated with

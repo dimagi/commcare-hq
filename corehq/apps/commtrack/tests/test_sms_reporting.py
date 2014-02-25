@@ -1,17 +1,28 @@
 from datetime import datetime
 from casexml.apps.stock.models import StockReport, StockTransaction, StockState
-from corehq.apps.commtrack.const import RequisitionStatus
+from corehq.apps.commtrack import const
 from corehq.apps.commtrack.models import RequisitionCase
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack.tests.util import CommTrackTest, bootstrap_user, FIXED_USER, ROAMING_USER
 from corehq.apps.commtrack.sms import handle, SMSError
 
 
-class StockReportTest(CommTrackTest):
-    user_definitions = [ROAMING_USER, FIXED_USER]
-
+class SMSTests(CommTrackTest):
     def setUp(self):
-        super(StockReportTest, self).setUp()
+        super(SMSTests, self).setUp()
+
+    def check_stock(self, code, amount):
+        [product] = filter(lambda p: p.code_ == code, self.products)
+        state = StockState.objects.get(
+            product_id=product._id,
+            case_id=self.sp._id,
+            section_id='stock'
+        )
+        self.assertEqual(amount, state.stock_on_hand)
+
+
+class StockReportTest(SMSTests):
+    user_definitions = [ROAMING_USER, FIXED_USER]
 
     def testStockReportRoaming(self):
         self.assertEqual(0, len(self.get_commtrack_forms()))
@@ -66,15 +77,6 @@ class StockReportTest(CommTrackTest):
             self.assertEqual(self.sp._id, trans.case_id)
             self.assertEqual(0, trans.quantity)
             self.assertEqual(amt, trans.stock_on_hand)
-
-    def check_stock(self, code, amount):
-        [product] = filter(lambda p: p.code_ == code, self.products)
-        state = StockState.objects.get(
-            product_id=product._id,
-            case_id=self.sp._id,
-            section_id='stock'
-        )
-        self.assertEqual(amount, state.stock_on_hand)
 
     def check_form_type(self, expected_type, subtype=None):
         [report] = StockReport.objects.filter(type='transfer')
@@ -188,15 +190,12 @@ class StockReportTest(CommTrackTest):
             self.check_stock(code, expected_amount)
 
 
-class StockRequisitionTest(object):
+class StockRequisitionTest(SMSTests):
     requisitions_enabled = True
     user_definitions = [ROAMING_USER]
 
-    def setUp(self):
-        super(StockRequisitionTest, self).setUp()
-
-
     def testRequisition(self):
+        # confirm we have a clean start
         self.assertEqual(0, len(RequisitionCase.open_for_location(self.domain.name, self.loc._id)))
         self.assertEqual(0, len(self.get_commtrack_forms()))
 
@@ -210,28 +209,34 @@ class StockRequisitionTest(object):
             loc='loc1',
             report=' '.join('%s %s' % (k, v) for k, v in amounts.items())
         ))
+
         self.assertTrue(handled)
 
         # make sure we got the updated requisitions
+        print "loc: %s" % self.loc._id
         reqs = RequisitionCase.open_for_location(self.domain.name, self.loc._id)
-        self.assertEqual(3, len(reqs))
+        self.assertEqual(1, len(reqs))
 
-        forms = list(self.get_commtrack_forms())
-        self.assertEqual(1, len(forms))
+        # TODO mad duplication, yo!
+        req = RequisitionCase.get(reqs[0])
+        [index] = req.indices
 
-        self.assertEqual(self.sp.location_, forms[0].location_)
+        self.assertEqual(req.requisition_status, 'requested')
+        self.assertEqual(const.SUPPLY_POINT_CASE_TYPE, index.referenced_type)
+        self.assertEqual(self.sp._id, index.referenced_id)
+        self.assertEqual('parent_id', index.identifier)
+
+        # TODO should these work?
+        # forms = list(self.get_commtrack_forms())
+        # self.assertEqual(1, len(forms))
+        # self.assertEqual(self.sp.location_, forms[0].location_)
+
         # check updated status
         for code, amt in amounts.items():
-            spp = CommCareCase.get(self.spps[code]._id)
-            # make sure the index was created
-            [req_ref] = spp.reverse_indices
-            req_case = RequisitionCase.get(req_ref.referenced_id)
-            self.assertEqual(str(amt), req_case.amount_requested)
-            self.assertEqual(self.user._id, req_case.requested_by)
-            self.assertEqual(req_case.location_, self.sp.location_)
-            self.assertTrue(req_case._id in reqs)
-            self.assertEqual(spp._id, req_case.get_product_case()._id)
+            self.check_stock(code, amt)
 
+
+    """
     def testApprovalBadLocations(self):
         self.testRequisition()
 
@@ -341,6 +346,7 @@ class StockRequisitionTest(object):
 
         # should still be no open requisitions
         self.assertEqual(0, len(RequisitionCase.open_for_location(self.domain.name, self.loc._id)))
+    """
 
 def _get_location_from_form(form):
     return form.form['location']

@@ -10,10 +10,11 @@ from dimagi.utils.parsing import json_format_datetime
 from datetime import datetime
 from corehq.apps.commtrack.util import get_supply_point
 from corehq.apps.commtrack.xmlutil import XML, _
-from corehq.apps.commtrack.models import Product, CommtrackConfig, StockTransaction, CommTrackUser
+from corehq.apps.commtrack.models import Product, CommtrackConfig, StockTransaction, CommTrackUser, RequisitionTransaction
 from corehq.apps.receiverwrapper.util import get_submit_url
 from receiver.util import spoof_submission
 from dimagi.utils import parsing as dateparse
+from corehq.apps.receiverwrapper import submit_form_locally
 
 logger = logging.getLogger('commtrack.sms')
 
@@ -44,16 +45,22 @@ def process(domain, data):
     import pprint
     logger.debug(pprint.pformat(data))
 
-    xmlroot = to_instance(data)
+    xml = to_instance(data)
 
-    submit_time = xmlroot.find('.//%s' % _('timeStart', const.META_XMLNS)).text
-    submission = etree.tostring(xmlroot, encoding='utf-8', pretty_print=True)
+    # TODO this is bad please stop
+    if not isinstance(xml, str):
+        submission = etree.tostring(xml, encoding='utf-8', pretty_print=True)
+    else:
+        submission = xml
+
     logger.debug(submission)
 
-    # submit it
-    spoof_submission(get_submit_url(domain), submission,
-                     headers={'HTTP_X_SUBMIT_TIME': submit_time},
-                     hqsubmission=False)
+    # TODO are you sure we didn't lose any information making this change?
+    submit_form_locally(
+        instance=submission,
+        domain=domain,
+    )
+
 
 class StockReportParser(object):
     """a helper object for parsing raw stock report texts"""
@@ -98,16 +105,18 @@ class StockReportParser(object):
             # single action stock report
             # TODO: support single-action by product, as well as by action?
             _tx = self.single_action_transactions(action, args, self.transaction_factory(StockTransaction))
-
         elif action and action.type == 'req':
-            # requisition
-            if action.action in [RequisitionActions.APPROVAL, RequisitionActions.PACK]:
-                _tx = self.requisition_bulk_action(action, args)
-            else:
-                _tx = self.single_action_transactions(action, args, self.transaction_factory(Requisition))
-
-        # multiple action stock report
+            # requisitions
+            # if action.action in [RequisitionActions.APPROVAL, RequisitionActions.PACK]:
+            #     _tx = self.requisition_bulk_action(action, args)
+            # else:
+            _tx = self.single_action_transactions(
+                action,
+                args,
+                self.transaction_factory(RequisitionTransaction)
+            )
         elif self.C.multiaction_enabled and action_keyword == self.C.multiaction_keyword:
+            # multiple action stock report
             _tx = self.multiple_action_transactions(args, self.transaction_factory(StockTransaction))
 
         else:
@@ -277,7 +286,9 @@ def convert_transactions_to_blocks(E, transactions):
 
     for tx in transactions:
         if tx.action in (
-            const.StockActions.STOCKONHAND, const.StockActions.STOCKOUT
+            const.StockActions.STOCKONHAND,
+            const.StockActions.STOCKOUT,
+            const.RequisitionActions.REQUEST
         ):
             balances.append(tx)
         else:
@@ -335,27 +346,58 @@ def to_instance(data):
 
     transactions = data['transactions']
     category = set(tx.category for tx in transactions).pop()
-    factory = {
-        'stock': E.stock_report,
-        'requisition': E.requisition,
-    }[category]
-
     stock_blocks = convert_transactions_to_blocks(E, transactions)
 
-    root = factory(
-        M.meta(
-            M.userID(data['user']._id),
-            M.deviceID(deviceID),
-            M.timeStart(timestamp),
-            M.timeEnd(timestamp)
-        ),
-        E.location(data['location']._id),
-        *stock_blocks
-    )
+    if category == 'stock':
+        #TODO make sure all transaction types/case ids are the same
 
-    #TODO make sure all transaction types/case ids are the same
+        root = E.stock_report(
+            M.meta(
+                M.userID(data['user']._id),
+                M.deviceID(deviceID),
+                M.timeStart(timestamp),
+                M.timeEnd(timestamp)
+            ),
+            E.location(data['location']._id),
+            *stock_blocks
+        )
+        return root
+    else:
+        import uuid
+        from xml.etree import ElementTree
+        from casexml.apps.case.mock import CaseBlock
+        from casexml.apps.case.xml import V2
 
-    return root
+        req_id = uuid.uuid4().hex
+        req_case_block = ElementTree.tostring(CaseBlock(
+            req_id,
+            version=V2,
+            create=True,
+            case_type=const.REQUISITION_CASE_TYPE,
+            case_name='Some requisition', # TODO bad
+            index={'parent_id': (
+                const.SUPPLY_POINT_CASE_TYPE,
+                data['location'].linked_supply_point()._id
+            )},
+            update={'requisition_status': 'requested'},
+        ).as_xml())
+        # TODO: most of this needs real values..
+        return """
+            <data uiVersion="1" version="33" name="New Form" xmlns="http://commtrack.org/test_form_submission">
+                <meta>
+                    <deviceID>351746051189879</deviceID>
+                    <timeStart>2013-12-10T17:08:46.215-05</timeStart>
+                    <timeEnd>2013-12-10T17:08:57.887-05</timeEnd>
+                    <userID>{user_id}</userID>
+                </meta>
+                %(case_block)s
+                %(stock_blocks)s
+            </data>
+        """ % {
+            'case_block': req_case_block,
+            'stock_blocks': etree.tostring(stock_blocks[0]),
+            'user_id': data['user']._id
+        }
 
 def truncate(text, maxlen, ellipsis='...'):
     if len(text) > maxlen:
