@@ -76,6 +76,20 @@ class StockReportTest(CommTrackTest):
         )
         self.assertEqual(amount, state.stock_on_hand)
 
+    def check_form_type(self, expected_type, subtype=None):
+        [report] = StockReport.objects.filter(type='transfer')
+        transaction = report.stocktransaction_set.all()[0]
+        self.assertEqual(
+            transaction.type,
+            expected_type
+        )
+        if subtype:
+            self.assertEqual(
+                transaction.subtype,
+                subtype
+            )
+
+
     def testStockReceipt(self):
         original_amounts = {
             'pp': 10,
@@ -102,6 +116,8 @@ class StockReportTest(CommTrackTest):
         ))
 
         self.assertTrue(handled)
+
+        self.check_form_type('receipts')
 
         for code in original_amounts.keys():
             expected_amount = original_amounts[code] + received_amounts[code]
@@ -132,6 +148,41 @@ class StockReportTest(CommTrackTest):
         ))
 
         self.assertTrue(handled)
+
+        self.check_form_type('consumption', 'loss')
+
+        for code in original_amounts.keys():
+            expected_amount = original_amounts[code] - lost_amounts[code]
+            self.check_stock(code, expected_amount)
+
+    def testStockConsumption(self):
+        original_amounts = {
+            'pp': 10,
+            'pq': 20,
+            'pr': 30,
+        }
+
+        # First submit an soh so we can make sure consumption functions properly
+        handle(self.users[0].get_verified_number(), 'soh {loc} {report}'.format(
+            loc='loc1',
+            report=' '.join('%s %s' % (k, v) for k, v in original_amounts.items())
+        ))
+
+        lost_amounts = {
+            'pp': 1,
+            'pq': 2,
+            'pr': 3,
+        }
+
+        handled = handle(self.users[0].get_verified_number(), 'c {loc} {report}'.format(
+            loc='loc1',
+            report=' '.join('%s %s' % (k, v) for k, v in lost_amounts.items())
+        ))
+
+        self.assertTrue(handled)
+
+        # this is the only difference from losses..
+        self.check_form_type('consumption')
 
         for code in original_amounts.keys():
             expected_amount = original_amounts[code] - lost_amounts[code]
