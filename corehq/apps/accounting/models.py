@@ -10,7 +10,7 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from corehq import toggles
 from corehq.apps.accounting.downgrade import DomainDowngradeActionHandler
-from corehq.apps.accounting.forms import is_active_subscription
+from corehq.apps.accounting.utils import is_active_subscription
 from corehq.apps.users.models import WebUser
 from dimagi.utils.decorators.memoized import memoized
 
