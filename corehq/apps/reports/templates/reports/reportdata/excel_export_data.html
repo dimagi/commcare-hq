@@ -321,6 +321,20 @@
     {% endfor %}
 </section>
 {% endif %}
+
+{# notify of a UI change #}
+{# added 2014-02-25, remove eventually #}
+{% if has_case_exports %}
+<div class="alert alert-info">
+    Looking for your saved case exports? They've been moved to the
+    <a href="{% url "data_interface_dispatcher" domain "case_export" %}">
+        Export Cases
+    </a>
+    page.
+</div>
+{% endif %}
+
+
 {% endif %}
 <section id="all-forms-metadata">
     <h2>{% trans "Export all Forms' Metadata" %}</h2>
