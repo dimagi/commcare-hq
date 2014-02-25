@@ -596,6 +596,7 @@ FLUFF_PILLOW_TYPES_TO_SQL = {
     'MalariaConsortiumFluff': 'SQL',
     'CareSAFluff': 'SQL',
     'AncHmisCaseFluff': 'SQL',
+    'ImmunizationHmisCaseFluff': 'SQL',
 }
 
 PREVIEWER_RE = '^$'
@@ -955,6 +956,7 @@ PILLOWTOPS = {
         'custom.reports.care_sa.models.CareSAFluffPillow',
         'custom.reports.mc.models.MalariaConsortiumFluffPillow',
         'custom.m4change.models.AncHmisCaseFluffPillow',
+        'custom.m4change.models.ImmunizationHmisCaseFluffPillow',
     ],
     'mvp': [
         'corehq.apps.indicators.pillows.FormIndicatorPillow',
