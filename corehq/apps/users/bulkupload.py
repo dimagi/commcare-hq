@@ -1,5 +1,10 @@
 from StringIO import StringIO
-from couchdbkit.exceptions import MultipleResultsFound, ResourceNotFound
+import logging
+from couchdbkit.exceptions import (
+    BulkSaveError,
+    MultipleResultsFound,
+    ResourceNotFound,
+)
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
 from corehq.apps.groups.models import Group
@@ -341,7 +346,19 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
 
             ret["rows"].append(status_row)
     finally:
-        group_memoizer.save_all()
+        try:
+            group_memoizer.save_all()
+        except BulkSaveError as e:
+            _error_message = (
+                "Oops! We were not able to save some of your group changes. "
+                "Please make sure no one else is editing your groups "
+                "and try again."
+            )
+            logging.exception((
+                'BulkSaveError saving groups. '
+                'User saw error message "%s". Errors: %s'
+            ) % (_error_message, e.errors))
+            ret['errors'].append(_error_message)
 
     create_or_update_locations(domain, location_specs, log=ret)
 

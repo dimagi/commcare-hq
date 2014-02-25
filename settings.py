@@ -286,6 +286,7 @@ HQ_APPS = (
     'custom.apps.crs_reports',
     'custom.hope',
     'custom.openlmis',
+    'custom.m4change'
 )
 
 TEST_APPS = ()
@@ -320,6 +321,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'south',
     # 'weasyprint',
     'custom.apps.crs_reports',
+    'custom.m4change',
 
     # submodules with tests that run on travis
     'casexml.apps.case',
@@ -403,6 +405,7 @@ SERVER_EMAIL = 'commcarehq-noreply@dimagi.com' #the physical server emailing - d
 DEFAULT_FROM_EMAIL = 'commcarehq-noreply@dimagi.com'
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 CCHQ_BUG_REPORT_EMAIL = 'commcarehq-bug-reports@dimagi.com'
+BILLING_EMAIL = 'billing-comm@dimagi.com'
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 
 SERVER_ENVIRONMENT = 'localdev'
@@ -597,9 +600,13 @@ FLUFF_PILLOW_TYPES_TO_SQL = {
     'OpmUserFluff': 'SQL',
     'OpmFormFluff': 'SQL',
     'OpmHealthStatusFluff': 'SQL',
+    'OpmHealthStatusBasicInfoFluff': 'SQL',
+    'AncHmisCaseFluff': 'SQL',
 }
 
 PREVIEWER_RE = '^$'
+
+MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
 
 try:
     #try to see if there's an environmental variable set for local_settings
@@ -944,10 +951,12 @@ PILLOWTOPS = {
         'custom.opm.opm_reports.models.OpmCaseFluffPillow',
         'custom.opm.opm_reports.models.OpmUserFluffPillow',
         'custom.opm.opm_reports.models.OpmFormFluffPillow',
+        'custom.opm.opm_reports.models.OpmHealthStatusBasicInfoFluffPillow',
         'custom.opm.opm_reports.models.OpmHealthStatusFluffPillow',
         'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
         'custom.reports.care_sa.models.CareSAFluffPillow',
         'custom.reports.mc.models.MalariaConsortiumFluffPillow',
+        'custom.m4change.models.AncHmisCaseFluffPillow',
     ],
     'mvp': [
         'corehq.apps.indicators.pillows.FormIndicatorPillow',
@@ -1039,7 +1048,9 @@ DOMAIN_MODULE_MAP = {
     'tc-test': 'custom.trialconnect',
     'trialconnect': 'custom.trialconnect',
 
-    'crs-remind': 'custom.apps.crs_reports'
+    'crs-remind': 'custom.apps.crs_reports',
+
+    'm4change': 'custom.m4change'
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True

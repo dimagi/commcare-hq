@@ -1,7 +1,5 @@
 from datetime import datetime
 
-# Introduced in Django 1.4, but we are on 1.3 # from django.utils.timezone import now
-from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.test.client import Client
 
@@ -38,5 +36,3 @@ class TestAppStructureRepeater(TestCase):
         
         application.delete()
         app_structure_repeater.delete()
-        
-        

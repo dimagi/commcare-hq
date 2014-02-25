@@ -9,6 +9,7 @@ from django.utils import translation
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest
 from django.utils.decorators import method_decorator
+from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -24,13 +25,13 @@ from corehq.apps.accounting.async_handlers import (FeatureRateAsyncHandler, Sele
                                                    Select2SubscriptionInfoHandler)
 from corehq.apps.accounting.user_text import PricingTable
 from corehq.apps.accounting.utils import LazyEncoder, fmt_feature_rate_dict, fmt_product_rate_dict
-from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.hqwebapp.views import BaseSectionPageView
-from corehq import toggles
+from corehq import toggles, privileges
+from django_prbac.decorators import requires_privilege_raise404
 from toggle.decorators import require_toggle
 
 
-@require_superuser
+@requires_privilege_raise404(privileges.ACCOUNTING_ADMIN)
 def accounting_default(request):
     return HttpResponseRedirect(AccountingInterface.get_url())
 
@@ -42,7 +43,7 @@ class AccountingSectionView(BaseSectionPageView):
     def section_url(self):
         return reverse('accounting_default')
 
-    @method_decorator(require_toggle(toggles.ACCOUNTING_PREVIEW))
+    @method_decorator(requires_privilege_raise404(privileges.ACCOUNTING_ADMIN))
     def dispatch(self, request, *args, **kwargs):
         return super(AccountingSectionView, self).dispatch(request, *args, **kwargs)
 
@@ -54,25 +55,6 @@ class BillingAccountsSectionView(AccountingSectionView):
             'title': AccountingInterface.name,
             'url': AccountingInterface.get_url(),
         }]
-
-
-class AsyncHandlerMixin():
-    async_handlers = []
-
-    @property
-    def handler_slug(self):
-        return self.request.POST.get('handler')
-
-    def get_async_handler(self):
-        handler_class = dict([(h.slug, h) for h in self.async_handlers])[self.handler_slug]
-        return handler_class(self.request)
-
-    @property
-    @memoized
-    def response(self):
-        if self.handler_slug in [h.slug for h in self.async_handlers]:
-            return self.get_async_handler().get_response()
-        return None
 
 
 class NewBillingAccountView(BillingAccountsSectionView):
@@ -156,8 +138,8 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
         return reverse(self.urlname, args=(self.args[0],))
 
     def post(self, request, *args, **kwargs):
-        if self.response is not None:
-            return self.response
+        if self.async_response is not None:
+            return self.async_response
         if 'account' in self.request.POST and self.account_form.is_valid():
             self.account_form.update_account_and_contacts(self.account)
         elif 'adjust_credit' in self.request.POST and self.credit_form.is_valid():
@@ -204,8 +186,8 @@ class NewSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
         }]
 
     def post(self, request, *args, **kwargs):
-        if self.response is not None:
-            return self.response
+        if self.async_response is not None:
+            return self.async_response
         if self.subscription_form.is_valid():
             try:
                 subscription = self.subscription_form.create_subscription()
@@ -402,8 +384,8 @@ class EditSoftwarePlanView(AccountingSectionView, AsyncHandlerMixin):
         }]
 
     def post(self, request, *args, **kwargs):
-        if self.response is not None:
-            return self.response
+        if self.async_response is not None:
+            return self.async_response
         if 'update_version' in request.POST:
             if self.software_plan_version_form.is_valid():
                 self.software_plan_version_form.save(request)
@@ -423,4 +405,9 @@ def pricing_table_json(request, product, locale):
     table = PricingTable.get_table_by_product(product)
     table_json = json.dumps(table, cls=LazyEncoder)
     translation.deactivate()
-    return HttpResponse(table_json, content_type='application/json')
+    response = HttpResponse(table_json, content_type='application/json')
+    response["Access-Control-Allow-Origin"] = "*"
+    response["Access-Control-Allow-Methods"] = "POST, GET, OPTIONS"
+    response["Access-Control-Max-Age"] = "1000"
+    response["Access-Control-Allow-Headers"] = "*"
+    return response

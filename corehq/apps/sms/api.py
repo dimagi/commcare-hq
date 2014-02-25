@@ -1,6 +1,7 @@
 import logging
 from django.conf import settings
 from celery.task import task
+import math
 
 from dimagi.utils.modules import to_function
 from corehq.apps.sms.util import clean_phone_number, create_billable_for_sms, format_message_list, clean_text
@@ -154,7 +155,8 @@ def queue_outgoing_sms(msg, onerror=lambda: None):
 
 @task
 def store_billable(msg):
-    SmsBillable.create(msg)
+    for _ in range(int(math.ceil(float(len(msg.text)) / 160))):
+        SmsBillable.create(msg)
 
 
 def send_message_via_backend(msg, backend=None, onerror=lambda: None):

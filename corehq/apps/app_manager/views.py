@@ -679,7 +679,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
             module = app.get_module(module_id)
         if form_id:
             form = module.get_form(form_id)
-    except IndexError:
+    except ModuleNotFoundException:
         return bail(req, domain, app_id)
 
     context = get_apps_base_context(req, domain, app)
@@ -953,7 +953,7 @@ def delete_module(req, domain, app_id, module_id):
     try:
         record = app.delete_module(module_id)
     except ModuleNotFoundException:
-        raise Http404()
+        return bail(req, domain, app_id)
     messages.success(req,
         'You have deleted a module. <a href="%s" class="post-link">Undo</a>' % reverse('undo_delete_module', args=[domain, record.get_id]),
         extra_tags='html'

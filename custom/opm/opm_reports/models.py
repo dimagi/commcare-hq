@@ -40,6 +40,8 @@ class OpmCaseFluff(fluff.IndicatorDocument):
     block = case_property('block_name')
     village = case_property('village_name')
 
+    opened_on = flat_field(lambda case: case.opened_on)
+    closed_on = flat_field(lambda case: case.closed_on)
     # Okay, I lied, there's one aggregated field:
     women_registered = user_calcs.WomenRegistered()
     children_registered = user_calcs.ChildrenRegistered()
@@ -91,6 +93,24 @@ class OpmFormFluff(fluff.IndicatorDocument):
     service_forms = user_calcs.ServiceForms()
     growth_monitoring = user_calcs.GrowthMonitoring()
 
+
+class OpmHealthStatusBasicInfoFluff(fluff.IndicatorDocument):
+
+    document_class = CommCareCase
+    domains = ('opm',)
+    group_by = ('domain', 'user_id')
+    save_direct_to_sql = True
+
+
+    opened_on = flat_field(lambda case: case.opened_on)
+    closed_on = flat_field(lambda case: case.closed_on)
+
+    beneficiaries_registered = user_calcs.WomenRegistered()
+    lmp = case_calcs.Lmp()
+    lactating = case_calcs.Lactating()
+    children = case_calcs.LiveChildren()
+
+
 class OpmHealthStatusFluff(fluff.IndicatorDocument):
 
     document_class = CommCareCase
@@ -99,10 +119,6 @@ class OpmHealthStatusFluff(fluff.IndicatorDocument):
     save_direct_to_sql = True
 
     #aggregated field
-    beneficiaries_registered = user_calcs.WomenRegistered()
-    lmp = case_calcs.Lmp()
-    lactating = case_calcs.Lactating()
-    children = case_calcs.LiveChildren()
     vhnd_monthly = case_calcs.VhndMonthly()
     ifa_tablets = case_calcs.IfaTablets()
     weight_once = case_calcs.Weight()
@@ -133,4 +149,5 @@ class OpmHealthStatusFluff(fluff.IndicatorDocument):
 OpmCaseFluffPillow = OpmCaseFluff.pillow()
 OpmUserFluffPillow = OpmUserFluff.pillow()
 OpmFormFluffPillow = OpmFormFluff.pillow()
+OpmHealthStatusBasicInfoFluffPillow = OpmHealthStatusBasicInfoFluff.pillow()
 OpmHealthStatusFluffPillow = OpmHealthStatusFluff.pillow()
