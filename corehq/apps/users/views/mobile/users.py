@@ -18,12 +18,16 @@ from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.http import require_POST
 from django.contrib import messages
 from corehq import toggles, privileges
-from corehq.apps.accounting.decorators import requires_privilege_alert
+from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
+from corehq.apps.accounting.decorators import requires_privilege_alert, require_billing_admin
+from corehq.apps.accounting.models import BillingAccount, BillingAccountType, BillingAccountAdmin
+from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.users.util import can_add_extra_mobile_workers
 from corehq.elastic import es_query, ES_URLS, ADD_TO_ES_FILTER
 
 from couchexport.models import Format
-from corehq.apps.users.forms import CommCareAccountForm, UpdateCommCareUserInfoForm, CommtrackUserForm, MultipleSelectionForm
+from corehq.apps.users.forms import (CommCareAccountForm, UpdateCommCareUserInfoForm, CommtrackUserForm,
+                                     MultipleSelectionForm, ConfirmExtraUserChargesForm)
 from corehq.apps.users.models import CommCareUser, UserRole, CouchUser
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.models import Domain
@@ -250,6 +254,11 @@ class ListCommCareUsersView(BaseUserSettingsView):
         return self.couch_user.can_edit_commcare_users and (
             (self.show_inactive and self.can_add_extra_users) or not self.show_inactive)
 
+    @property
+    def is_billing_admin(self):
+        return (BillingAccountAdmin.get_admin_status_and_account(self.couch_user, self.domain)[0]
+                or self.couch_user.is_superuser)
+
     def _escape_val_error(self, expression, default):
         try:
             return expression()
@@ -329,6 +338,7 @@ class ListCommCareUsersView(BaseUserSettingsView):
             'can_bulk_edit_users': self.can_bulk_edit_users,
             'can_add_extra_users': self.can_add_extra_users,
             'can_edit_user_archive': self.can_edit_user_archive,
+            'is_billing_admin': self.is_billing_admin,
         }
 
 
@@ -429,6 +439,62 @@ class AsyncListCommCareUsersView(ListCommCareUsersView):
             'current_page': self.users_list_page,
             'users_list': self.users_list,
         }))
+
+
+class ConfirmBillingAccountForExtraUsersView(BaseUserSettingsView, AsyncHandlerMixin):
+    urlname = 'extra_users_confirm_billing'
+    template_name = 'users/extra_users_confirm_billing.html'
+    page_title = ugettext_noop("Confirm Billing Information")
+    async_handlers = [
+        Select2BillingInfoHandler,
+    ]
+
+    @property
+    @memoized
+    def account(self):
+        account = BillingAccount.get_or_create_account_by_domain(
+            self.domain, created_by=self.couch_user.username, account_type=BillingAccountType.USER_CREATED,
+        )[0]
+        return account
+
+    @property
+    @memoized
+    def billing_info_form(self):
+        if self.request.method == 'POST':
+            return ConfirmExtraUserChargesForm(
+                self.account, self.domain, self.request.couch_user.username, data=self.request.POST
+            )
+        return ConfirmExtraUserChargesForm(self.account, self.domain, self.request.couch_user.username)
+
+    @property
+    def page_context(self):
+        return {
+            'billing_info_form': self.billing_info_form,
+        }
+
+    @method_decorator(require_billing_admin())
+    def dispatch(self, request, *args, **kwargs):
+        if self.account.date_confirmed_extra_charges is not None:
+            return HttpResponseRedirect(reverse(CreateCommCareUserView.urlname, args=[self.domain]))
+        return super(ConfirmBillingAccountForExtraUsersView, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        if self.async_response is not None:
+            return self.async_response
+        if self.billing_info_form.is_valid():
+            is_saved = self.billing_info_form.save()
+            if not is_saved:
+                messages.error(
+                    request, _("It appears that there was an issue updating your contact information. "
+                               "We've been notified of the issue. Please try submitting again, and if the problem "
+                               "persists, please try in a few hours."))
+            else:
+                messages.success(
+                    request, _("Billing contact information was successfully confirmed. "
+                               "You may now add additional Mobile Workers.")
+                )
+                return HttpResponseRedirect(reverse(CreateCommCareUserView.urlname, args=[self.domain]))
+        return self.get(request, *args, **kwargs)
 
 
 # this was originally written with a GET, which is wrong

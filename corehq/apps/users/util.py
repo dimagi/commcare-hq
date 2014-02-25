@@ -136,6 +136,6 @@ def can_add_extra_mobile_workers(request):
             ensure_request_has_privilege(request, privileges.ALLOW_EXCESS_USERS)
         except PermissionDenied:
             account = BillingAccount.get_account_by_domain(request.domain)
-            if account is None or account.billingcontactinfo is None:
+            if account is None or account.date_confirmed_extra_charges is None:
                 return False
     return True

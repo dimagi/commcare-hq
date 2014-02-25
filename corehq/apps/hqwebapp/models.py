@@ -727,7 +727,7 @@ class ProjectUsersTab(UITab):
                 else:
                     return None
 
-            from corehq.apps.users.views.mobile import EditCommCareUserView
+            from corehq.apps.users.views.mobile import EditCommCareUserView, ConfirmBillingAccountForExtraUsersView
             mobile_users_menu = [
                 {'title': _('Mobile Workers'),
                  'url': reverse('commcare_users', args=[self.domain]),
@@ -741,6 +741,8 @@ class ProjectUsersTab(UITab):
                       'urlname': 'upload_commcare_users'},
                      {'title': _('Transfer Mobile Workers'),
                       'urlname': 'user_domain_transfer'},
+                     {'title': ConfirmBillingAccountForExtraUsersView.page_title,
+                      'urlname': ConfirmBillingAccountForExtraUsersView.urlname},
                  ]},
                 {'title': _('Groups'),
                  'url': reverse('all_groups', args=[self.domain]),
