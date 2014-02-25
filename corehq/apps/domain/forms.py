@@ -5,6 +5,7 @@ import re
 import io
 from PIL import Image
 import uuid
+from django.utils.functional import lazy
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 import settings
 
@@ -123,7 +124,7 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
         help_text=ugettext_noop("e.g. MCH, HIV, etc."))
     license = ChoiceField(label=ugettext_noop("License"), required=True, choices=LICENSES.items(),
         widget=Select(attrs={'class': 'input-xxlarge'}),
-        help_text=render_to_string('domain/partials/license_explanations.html',
+        help_text=lazy(render_to_string)('domain/partials/license_explanations.html',
             {'extra': ugettext_noop("All un-licensed multimedia files in your project will be given this license")}))
     description = CharField(label=ugettext_noop("Long Description"), required=False, widget=forms.Textarea,
         help_text=ugettext_noop("A high-level overview of your project as a whole"))
@@ -139,7 +140,7 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
     video = CharField(label=ugettext_noop("Youtube Video"), required=False,
         help_text=ugettext_noop("An optional youtube clip to tell users about your app. Please copy and paste a URL to a youtube video"))
     cda_confirmed = BooleanField(required=False, label=ugettext_noop("Content Distribution Agreement"),
-        help_text=render_to_string('domain/partials/cda_modal.html'))
+        help_text=lazy(render_to_string)('domain/partials/cda_modal.html'))
 
     def __init__(self, *args, **kw):
         super(SnapshotSettingsForm, self).__init__(*args, **kw)
