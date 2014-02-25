@@ -249,7 +249,9 @@ class CaseExportReport(ExportReport):
     icon = "icon-share"
 
     def get_filter_params(self):
-        return self.request.GET.copy()
+        params = self.request.GET.copy()
+        params['format'] = 'csv'
+        return params
 
     def get_saved_exports(self):
         startkey = json.dumps([self.domain, ""])[:-3]
