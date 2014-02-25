@@ -636,12 +636,20 @@ class Subscription(models.Model):
         """
         Returns SoftwarePlanVersion, Subscription for the given domain.
         """
-        domain = assure_domain_instance(domain)
+        domain_obj = assure_domain_instance(domain)
+        if domain_obj is None:
+            # need more info to troubleshoot this further
+            logging.error("Tried to fetch a subscription for a domain that was not properly located. "
+                          "Domain name is %s." % domain)
+            plan_version = DefaultProductPlan.objects.get(edition=SoftwarePlanEdition.COMMUNITY,
+                                                          product_type=SoftwareProductType.COMMCARE).plan.get_version()
+            return plan_version, None
+        domain = domain_obj
         subscriber = Subscriber.objects.safe_get(domain=domain.name, organization=None)
         plan_version, subscription = (cls._get_plan_by_subscriber(subscriber) if subscriber
                                       else cls.get_subscribed_plan_by_organization(domain.organization))
         if plan_version is None:
-            plan_version =  DefaultProductPlan.get_default_plan_by_domain(domain)
+            plan_version = DefaultProductPlan.get_default_plan_by_domain(domain)
         return plan_version, subscription
     
     @classmethod
