@@ -5,7 +5,6 @@ import re
 import io
 from PIL import Image
 import uuid
-from django.utils.functional import lazy
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 import settings
 
@@ -123,9 +122,7 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
     project_type = CharField(label=ugettext_noop("Project Category"), required=True,
         help_text=ugettext_noop("e.g. MCH, HIV, etc."))
     license = ChoiceField(label=ugettext_noop("License"), required=True, choices=LICENSES.items(),
-        widget=Select(attrs={'class': 'input-xxlarge'}),
-        help_text=lazy(render_to_string)('domain/partials/license_explanations.html',
-            {'extra': ugettext_noop("All un-licensed multimedia files in your project will be given this license")}))
+        widget=Select(attrs={'class': 'input-xxlarge'}))
     description = CharField(label=ugettext_noop("Long Description"), required=False, widget=forms.Textarea,
         help_text=ugettext_noop("A high-level overview of your project as a whole"))
     short_description = CharField(label=ugettext_noop("Short Description"), required=False,
@@ -139,8 +136,7 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
         help_text=ugettext_noop("An optional image to show other users your logo or what your app looks like"))
     video = CharField(label=ugettext_noop("Youtube Video"), required=False,
         help_text=ugettext_noop("An optional youtube clip to tell users about your app. Please copy and paste a URL to a youtube video"))
-    cda_confirmed = BooleanField(required=False, label=ugettext_noop("Content Distribution Agreement"),
-        help_text=lazy(render_to_string)('domain/partials/cda_modal.html'))
+    cda_confirmed = BooleanField(required=False, label=ugettext_noop("Content Distribution Agreement"))
 
     def __init__(self, *args, **kw):
         super(SnapshotSettingsForm, self).__init__(*args, **kw)
@@ -155,6 +151,13 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
             'share_reminders',
             'license',
             'cda_confirmed',]
+        self.fields['license'].help_text = \
+            render_to_string('domain/partials/license_explanations.html', {
+                'extra': _("All un-licensed multimedia files in "
+                           "your project will be given this license")
+            })
+        self.fields['cda_confirmed'].help_text = \
+            render_to_string('domain/partials/cda_modal.html')
 
     def clean_cda_confirmed(self):
         data_cda = self.cleaned_data['cda_confirmed']
