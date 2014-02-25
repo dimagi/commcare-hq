@@ -17,6 +17,12 @@ from dimagi.utils.parsing import json_format_date
 WEEK = timedelta(days=7)
 
 
+def flat_field(fn):
+    def getter(item):
+        return unicode(fn(item) or "")
+    return fluff.FlatField(getter)
+
+
 class Base0(fluff.Calculator):
     @fluff.filter_by
     def base_0_filter(self):
@@ -78,10 +84,12 @@ class Test(TestCase):
         MockDoc.set_db(self.fakedb)
 
         create_update_indicator_table(MockIndicatorsSql, None)
+        create_update_indicator_table(MockIndicatorsSqlWithFlatFields, None)
 
     def tearDown(self):
         with self.engine.begin() as connection:
             MockIndicatorsSql()._table.drop(connection, checkfirst=True)
+            MockIndicatorsSqlWithFlatFields()._table.drop(connection, checkfirst=True)
 
     def test_calculator_base_classes(self):
         # Base0
@@ -468,6 +476,35 @@ class Test(TestCase):
             for row in rows:
                 self.assertIn(row, expected)
 
+    def test_save_to_sql_flat_fields(self):
+        actions = [dict(date="2012-09-23", x=2), dict(date="2012-09-24", x=3)]
+        doc = dict(
+            actions=actions,
+            opened_on="2012-09-23",
+            closed_on="2013-09-23",
+            get_id="123",
+            domain="mock",
+            owner_id="test_owner"
+        )
+        current = MockIndicatorsSqlWithFlatFields(_id='234')
+        current.calculate(MockDoc.wrap(doc))
+        current.save_to_sql(self.engine)
+        expected = [
+            (u'123', date(2012, 9, 24), u'2012-09-23', u'2013-09-23', u'mock', u'test_owner', 3, None, None, None, None, None, 1, None),
+            (u'123', date(2013, 1, 1), None, None, u'abc', u'123', None, None, 2, None, 1, None, None, None),
+            (u'123', date(1, 1, 1), None, None, u'abc', u'xyz', None, None, None, 1, None, None, None, None),
+            (u'123', date(2013, 1, 1), u'2012-09-23', u'2013-09-23', u'mock', u'test_owner', None, None, None, None, None, None, None, None),
+            (u'123', date(2012, 9, 23), u'2012-09-23', u'2013-09-23', u'mock', u'test_owner', 2, None, None, None, None, None, 1, None),
+            (u'123', date(1, 1, 1), u'2012-09-23', u'2013-09-23', u'mock', u'test_owner', None, None, None, None, None, 2, None, 1),
+            (u'123', date(2013, 1, 1), None, None, u'abc', u'xyz', None, 3, None, None, None, None, None, None),
+        ]
+
+        with self.engine.begin() as connection:
+            rows = connection.execute(sqlalchemy.select([current._table]))
+            self.assertEqual(rows.rowcount, len(expected))
+            for row in rows:
+                self.assertIn(row, expected)
+
 
 class MockDoc(Document):
     _doc_type = "Mock"
@@ -546,6 +583,21 @@ class MockIndicatorsSql(fluff.IndicatorDocument):
     domains = ('mock',)
     save_direct_to_sql = True
 
+    value_week = ValueCalculator(window=WEEK)
+
+    class Meta:
+        app_label = 'Mock'
+
+class MockIndicatorsSqlWithFlatFields(fluff.IndicatorDocument):
+
+    document_class = MockDoc
+    group_by = ('domain', 'owner_id')
+    group_by_type_map = {'domain': fluff.TYPE_STRING}
+    domains = ('mock',)
+    save_direct_to_sql = True
+
+    opened_on = flat_field(lambda case: case['opened_on'])
+    closed_on = flat_field(lambda case: case['closed_on'])
     value_week = ValueCalculator(window=WEEK)
 
     class Meta:
