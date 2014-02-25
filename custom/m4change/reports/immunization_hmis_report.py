@@ -25,8 +25,6 @@ class ImmunizationHmisReport(MonthYearMixin, CustomProjectReport, CaseListReport
     @property
     def rows(self):
         self.form_sql_data = ImmunizationHmisCaseSqlData(domain=DOMAIN, datespan=self.datespan)
-
-        print(self.form_sql_data.data[DOMAIN])
         data = self.form_sql_data.data[DOMAIN]
 
         report_rows = [
