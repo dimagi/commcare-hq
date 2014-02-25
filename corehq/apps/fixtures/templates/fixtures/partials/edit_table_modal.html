@@ -1,14 +1,15 @@
+{% load i18n %}
 <div data-bind="modal: editing">
     <div class="modal-header">
         <a class="close" data-bind="click: cancelEdit">×</a>
-        <h3>Edit Data Type "<span data-bind="text: tag"></span>"</h3>
+        <h3>{% trans "Edit Data Type" %} "<span data-bind="text: tag"></span>"</h3>
     </div>
     <div class="modal-body">
         <div class="control-group">
-            <label class="control-label">Tag</label>
+            <label class="control-label">{% trans "Tag" %}</label>
             <input type="text" class="control" data-bind="value: tag"/>
         </div>
-        <h4>Fields</h4>
+        <h4>{% trans "Fields" %}</h4>
         <div>
             <ul class="unstyled" data-bind="foreach: fields">
                 <li>
@@ -20,13 +21,13 @@
             </ul>
             <button class="btn btn-primary btn-mini" data-bind="click: addField">
                 <i class="icon-white icon-plus"></i>
-                Add Field
+                {% trans "Add Field" %}
             </button>
         </div>
     </div>
     <div class="modal-footer">
         <button class="btn btn-primary" data-bind="click: saveEdit">
-            Save
+            {% trans "Save" %}
         </button>
     </div>
 </div>
