@@ -33,6 +33,16 @@ WINDOWS = (
     (time(15, 30), 510),
 )
 
+WEEKDAYS = (
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+)
+
 OFF_DAYS = [
     date(2014, 12, 25),
 ]
@@ -40,6 +50,7 @@ OFF_DAYS = [
 MSG_ID_OPENING = "OPENING"
 MSG_ID_CLOSING = "CLOSING"
 MSG_ID_CLOSED = "CLOSED"
+MSG_ID_REOPEN = "REOPEN"
 
 def letters_only(text):
     return re.sub(r"[^a-zA-Z]", "", text).upper()
@@ -279,12 +290,23 @@ def shift_custom_content_handler(reminder, handler, recipient):
     curr_day_num = (curr_day_num + 5) % 7
     next_day_num = (curr_day_num + 1) % 7
 
+    message = None
     if is_opening:
-        msg = FRIExtraMessage.view("fri/extra_message",
-                                   key=[reminder.domain,MSG_ID_OPENING],
-                                   include_docs=True).one()
+        msg = FRIExtraMessage.get_by_message_id(reminder.domain, MSG_ID_OPENING)
         if msg:
             message = msg.message
-        else:
-            message = None
+            closing_datetime = datetime.combine(date(2000, 1, 1), WINDOWS[curr_day_num][0])
+            closing_datetime += timedelta(minutes=WINDOWS[curr_day_num][1])
+            closing_time = closing_datetime.time().strftime("%I:%M %p")
+            message = "%s %s" % (message, closing_time)
+    elif is_closing:
+        msg = FRIExtraMessage.get_by_message_id(reminder.domain, MSG_ID_CLOSING)
+        if msg:
+            message = msg.message
+    elif is_closed:
+        tomorrow_time = "%s at %s" % (
+            WEEKDAYS[next_day_num],
+            WINDOWS[next_day_num][0].strftime("%I:%M %p"),
+        )
+        
 

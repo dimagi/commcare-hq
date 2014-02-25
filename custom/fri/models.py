@@ -49,6 +49,12 @@ class FRIExtraMessage(Document):
     message_id = StringProperty()
     message = StringProperty()
 
+    @classmethod
+    def get_by_message_id(domain, message_id):
+        return FRIExtraMessage.view("fri/extra_message",
+                                    key=[domain, message_id],
+                                    include_docs=True).one()
+
 class FRISMSLog(SMSLog):
     fri_message_bank_lookup_completed = BooleanProperty(default=False)
     fri_message_bank_message_id = StringProperty()
