@@ -160,6 +160,7 @@ class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResourc
     # Fields that v0.2 assumed were pre-transformed but we are now operating on straight CommCareCase objects again
     date_modified = fields.CharField(attribute='modified_on', default="1900-01-01")
     server_date_modified = fields.CharField(attribute='server_modified_on', default="1900-01-01")
+    server_date_opened = fields.CharField(attribute='server_opened_on', default="1900-01-01")
 
     def case_es(self, domain):
         return MOCK_CASE_ES or CaseES(domain)
