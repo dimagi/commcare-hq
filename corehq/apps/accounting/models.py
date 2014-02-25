@@ -183,6 +183,7 @@ class BillingAccount(models.Model):
     billing_admins = models.ManyToManyField(BillingAccountAdmin, null=True)
     currency = models.ForeignKey(Currency, on_delete=models.PROTECT)
     is_auto_invoiceable = models.BooleanField(default=False)
+    date_confirmed_extra_charges = models.DateTimeField(null=True, blank=True)
     account_type = models.CharField(
         max_length=25,
         default=BillingAccountType.CONTRACT,
