@@ -1,19 +1,20 @@
 function(doc) {
     if (doc.doc_type == "CommCareCase" && doc.type == 'commtrack-requisition') {
-        var leafLocation = doc.location_[doc.location_.length - 1];
-        var getSupplyPointProductCaseId = function (doc) {
+        var getSupplyPointCaseId = function (doc) {
             for (var i = 0; i < doc.indices.length; i++) {
-                if (doc.indices[i].identifier === 'parent') {
+                if (doc.indices[i].identifier === 'parent_id') {
                     return doc.indices[i].referenced_id;
                 }
             }
         }
-        var sppId = getSupplyPointProductCaseId(doc);
-        if (sppId) {
+
+        var spId = getSupplyPointCaseId(doc);
+
+        if (spId) {
             if (!doc.closed) {
-                emit([doc.domain, leafLocation, 'open', sppId, doc.server_modified_on], null);
+                emit([doc.domain, spId, 'open', doc.server_modified_on], null);
             }
-            emit([doc.domain, leafLocation, 'all', sppId, doc.server_modified_on], null);
+            emit([doc.domain, spId, 'all', doc.server_modified_on], null);
         }
     }
 }

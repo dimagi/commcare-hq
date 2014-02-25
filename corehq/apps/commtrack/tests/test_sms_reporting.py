@@ -89,7 +89,6 @@ class StockReportTest(CommTrackTest):
                 subtype
             )
 
-
     def testStockReceipt(self):
         original_amounts = {
             'pp': 10,
@@ -192,9 +191,9 @@ class StockReportTest(CommTrackTest):
 class StockRequisitionTest(object):
     requisitions_enabled = True
     user_definitions = [ROAMING_USER]
+
     def setUp(self):
-        super(CommTrackTest, self).setUp()
-        self.user = self.users[0]
+        super(StockRequisitionTest, self).setUp()
 
 
     def testRequisition(self):
@@ -207,7 +206,7 @@ class StockRequisitionTest(object):
             'pr': 30,
         }
         # req loc1 pp 10 pq 20...
-        handled = handle(self.user.get_verified_number(), 'req {loc} {report}'.format(
+        handled = handle(self.users[0].get_verified_number(), 'req {loc} {report}'.format(
             loc='loc1',
             report=' '.join('%s %s' % (k, v) for k, v in amounts.items())
         ))

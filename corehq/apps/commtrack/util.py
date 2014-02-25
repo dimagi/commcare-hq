@@ -136,6 +136,7 @@ def bootstrap_commtrack_settings_if_necessary(domain, requisitions_enabled=False
 
     return c
 
+
 def get_default_requisition_config():
     return CommtrackRequisitionConfig(
         enabled=True,
@@ -145,15 +146,16 @@ def get_default_requisition_config():
                 keyword='req',
                 caption='Request',
             ),
+            # TODO not tested yet, so not included
+            # CommtrackActionConfig(
+            #    action=RequisitionActions.APPROVAL,
+            #    keyword='approve',
+            #    caption='Approved',
+            # ),
             CommtrackActionConfig(
-                action=RequisitionActions.APPROVAL,
-                keyword='approve',
-                caption='Approved',
-            ),
-            CommtrackActionConfig(
-                action=RequisitionActions.PACK,
-                keyword='pack',
-                caption='Packed',
+                action=RequisitionActions.FULFILL,
+                keyword='fulfill',
+                caption='Fulfilled',
             ),
             CommtrackActionConfig(
                 action=RequisitionActions.RECEIPTS,
