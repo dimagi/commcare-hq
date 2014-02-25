@@ -48,7 +48,8 @@ def get_per_domain_context(project, request=None):
         pass
 
     if project and project.has_custom_logo:
-        if toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, request.user.username):
+        if (hasattr(request, 'user') and
+                toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, request.user.username)):
             try:
                 ensure_request_has_privilege(request, privileges.CUSTOM_BRANDING)
                 logo_url = reverse('logo', args=[project.name])
