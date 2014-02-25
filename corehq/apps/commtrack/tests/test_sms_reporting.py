@@ -1,5 +1,5 @@
 from datetime import datetime
-from casexml.apps.stock.models import StockReport, StockTransaction
+from casexml.apps.stock.models import StockReport, StockTransaction, StockState
 from corehq.apps.commtrack.const import RequisitionStatus
 from corehq.apps.commtrack.models import RequisitionCase
 from casexml.apps.case.models import CommCareCase
@@ -12,31 +12,6 @@ class StockReportTest(CommTrackTest):
 
     def setUp(self):
         super(StockReportTest, self).setUp()
-
-    def testStockReceipt(self):
-        amounts = {
-            'pp': 10,
-            'pq': 20,
-            'pr': 30,
-        }
-
-        # r loc1 pp 10 pq 20...
-        handled = handle(self.users[0].get_verified_number(), 'r {loc} {report}'.format(
-            loc='loc1',
-            report=' '.join('%s %s' % (k, v) for k, v in amounts.items())
-        ))
-        self.assertTrue(handled)
-        forms = list(self.get_commtrack_forms())
-        self.assertEqual(1, len(forms))
-        self.assertEqual(_get_location_from_sp(self.sp), _get_location_from_form(forms[0]))
-
-        self.assertEqual(1, StockReport.objects.count())
-        for report in StockReport.objects.all():
-            self.assertEqual(forms[0]._id, report.form_id)
-            self.assertEqual('transfer', report.type)
-            self.assertEqual(3, report.stocktransaction_set.count())
-            self.assertEqual(self.sp._id, report.stocktransaction_set.all()[0].case_id)
-
 
     def testStockReportRoaming(self):
         self.assertEqual(0, len(self.get_commtrack_forms()))
@@ -91,6 +66,77 @@ class StockReportTest(CommTrackTest):
             self.assertEqual(self.sp._id, trans.case_id)
             self.assertEqual(0, trans.quantity)
             self.assertEqual(amt, trans.stock_on_hand)
+
+    def check_stock(self, code, amount):
+        [product] = filter(lambda p: p.code_ == code, self.products)
+        state = StockState.objects.get(
+            product_id=product._id,
+            case_id=self.sp._id,
+            section_id='stock'
+        )
+        self.assertEqual(amount, state.stock_on_hand)
+
+    def testStockReceipt(self):
+        original_amounts = {
+            'pp': 10,
+            'pq': 20,
+            'pr': 30,
+        }
+
+        # First submit an soh so we can make sure receipts functions
+        # differently than soh
+        handle(self.users[0].get_verified_number(), 'soh {loc} {report}'.format(
+            loc='loc1',
+            report=' '.join('%s %s' % (k, v) for k, v in original_amounts.items())
+        ))
+
+        received_amounts = {
+            'pp': 1,
+            'pq': 2,
+            'pr': 3,
+        }
+
+        handled = handle(self.users[0].get_verified_number(), 'r {loc} {report}'.format(
+            loc='loc1',
+            report=' '.join('%s %s' % (k, v) for k, v in received_amounts.items())
+        ))
+
+        self.assertTrue(handled)
+
+        for code in original_amounts.keys():
+            expected_amount = original_amounts[code] + received_amounts[code]
+            self.check_stock(code, expected_amount)
+
+    def testStockLosses(self):
+        original_amounts = {
+            'pp': 10,
+            'pq': 20,
+            'pr': 30,
+        }
+
+        # First submit an soh so we can make sure losses functions properly
+        handle(self.users[0].get_verified_number(), 'soh {loc} {report}'.format(
+            loc='loc1',
+            report=' '.join('%s %s' % (k, v) for k, v in original_amounts.items())
+        ))
+
+        lost_amounts = {
+            'pp': 1,
+            'pq': 2,
+            'pr': 3,
+        }
+
+        handled = handle(self.users[0].get_verified_number(), 'l {loc} {report}'.format(
+            loc='loc1',
+            report=' '.join('%s %s' % (k, v) for k, v in lost_amounts.items())
+        ))
+
+        self.assertTrue(handled)
+
+        for code in original_amounts.keys():
+            expected_amount = original_amounts[code] - lost_amounts[code]
+            self.check_stock(code, expected_amount)
+
 
 class StockRequisitionTest(object):
     requisitions_enabled = True
