@@ -938,7 +938,7 @@ class RequisitionCase(CommCareCase):
             formatted_strings.append(
                 '%s:%d' % (product.code, state.stock_on_hand)
             )
-        return ' '.join(formatted_strings)
+        return ' '.join(sorted(formatted_strings))
 
     def get_next_action(self):
         req_config = CommtrackConfig.for_domain(self.domain).requisition_config
