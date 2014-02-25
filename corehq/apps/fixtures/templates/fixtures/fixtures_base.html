@@ -19,7 +19,7 @@
     {% endblock %}
 {% endblock %}
 
-{% block title %}{{ report.title|default:"Project Reports"|safe }}{% endblock %}
+{% block title %}{% trans report.title|default:"Project Reports"|safe %}{% endblock %}
 
 {% block page-title %}
     <ul class="breadcrumb">

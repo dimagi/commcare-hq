@@ -19,7 +19,7 @@ class FixtureInterface(GenericReportView):
 
 class FixtureSelectField(ReportSelectField):
     slug = "table_id"
-    name = "Select a Table"
+    name = ugettext_noop("Select a Table")
     cssId = "select_table"
     cssClasses = "span2"
 
