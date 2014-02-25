@@ -9,6 +9,7 @@ from corehq.apps.reports.generic import GenericTabularReport
 
 class AddItemInterface(GenericTabularReport):
     base_template = 'accounting/add_new_item_button.html'
+    exportable = True
 
     item_name = None
     new_item_view = None
