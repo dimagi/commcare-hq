@@ -187,7 +187,8 @@ def product_fixture_generator(user, version, last_sync):
                           'cost']
         for product_field in product_fields:
             field = ElementTree.Element(product_field)
-            field.text = unicode(getattr(product_data, product_field) or '')
+            val = getattr(product_data, product_field, None)
+            field.text = unicode(val if val is not None else '')
             product.append(field)
 
     return [root]

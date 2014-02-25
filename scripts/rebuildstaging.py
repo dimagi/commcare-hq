@@ -26,6 +26,10 @@ import os
 import jsonobject
 import sh
 import sys
+import gevent
+
+from gevent import monkey
+monkey.patch_httplib()
 
 
 def get_git(path=None):
@@ -82,10 +86,12 @@ class BranchConfig(jsonobject.JsonObject):
 
 
 def fetch_remote(base_config):
+    jobs = []
     for path in set(path for path, _ in base_config.span_configs()):
         git = get_git(path)
         print "  [{cwd}] fetching all".format(cwd=path)
-        git.fetch('--all')
+        jobs.append(gevent.spawn(git.fetch, '--all'))
+    gevent.joinall(jobs)
     print "All branches fetched"
 
 

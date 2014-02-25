@@ -5,6 +5,7 @@ import re
 import io
 from PIL import Image
 import uuid
+from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 import settings
 
 from django import forms
@@ -19,9 +20,7 @@ from django.forms.widgets import  Select
 from django.utils.encoding import smart_str
 from django.contrib.auth.forms import PasswordResetForm
 from django.utils.safestring import mark_safe
-from django_countries import CountryField
 from django_countries.countries import COUNTRIES
-import phonenumbers
 from corehq.apps.accounting.models import BillingContactInfo, BillingAccountAdmin, SubscriptionAdjustmentMethod, Subscription, SoftwarePlanEdition
 from corehq.apps.app_manager.models import Application, FormBase
 
@@ -270,6 +269,25 @@ class DomainGlobalSettingsForm(forms.Form):
                     "active development. Do not enable for your domain unless "
                     "you\'re actively piloting it.")
     )
+    logo = ImageField(
+        label=_("Custom Logo"),
+        required=False,
+        help_text=_("Upload a custom image to display instead of the "
+                    "CommCare HQ logo.  It will be automatically resized to "
+                    "a height of 32 pixels.")
+    )
+    delete_logo = BooleanField(
+        label=_("Delete Logo"),
+        required=False,
+        help_text=_("Delete your custom logo and use the standard one.")
+    )
+
+    def __init__(self, can_use_custom_logo=False, *args, **kwargs):
+        super(DomainGlobalSettingsForm, self).__init__(*args, **kwargs)
+        self.can_use_custom_logo = can_use_custom_logo
+        if not self.can_use_custom_logo:
+            del self.fields['logo']
+            del self.fields['delete_logo']
 
     def clean_default_timezone(self):
         data = self.cleaned_data['default_timezone']
@@ -279,6 +297,22 @@ class DomainGlobalSettingsForm(forms.Form):
 
     def save(self, request, domain):
         try:
+            if self.can_use_custom_logo:
+                logo = self.cleaned_data['logo']
+                if logo:
+
+                    input_image = Image.open(io.BytesIO(logo.read()))
+                    input_image.load()
+                    input_image.thumbnail(LOGO_SIZE)
+                    # had issues trying to use a BytesIO instead
+                    tmpfilename = "/tmp/%s_%s" % (uuid.uuid4(), logo.name)
+                    input_image.save(tmpfilename, 'PNG')
+
+                    with open(tmpfilename) as tmpfile:
+                        domain.put_attachment(tmpfile, name=LOGO_ATTACHMENT)
+                elif self.cleaned_data['delete_logo']:
+                    domain.delete_attachment(LOGO_ATTACHMENT)
+
             global_tz = self.cleaned_data['default_timezone']
             domain.commtrack_enabled = self.cleaned_data.get('commtrack_enabled', False)
             domain.default_timezone = global_tz
@@ -380,18 +414,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
             "you are an advanced user."
         )
     )
-    logo = ImageField(
-        label=_("Custom Logo"),
-        required=False,
-        help_text=_("Upload a custom image to display instead of the "
-                    "CommCare HQ logo.  It will be automatically resized to "
-                    "a height of 32 pixels.")
-    )
-    delete_logo = BooleanField(
-        label=_("Delete Logo"),
-        required=False,
-        help_text=_("Delete your custom logo and use the standard one.")
-    )
     secure_submissions = BooleanField(
         label=_("Only accept secure submissions"),
         required=False,
@@ -400,7 +422,8 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
                     "must be using secure submissions."),
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, can_use_custom_logo=False, *args, **kwargs):
+        self.can_use_custom_logo = can_use_custom_logo
         user = kwargs.pop('user', None)
         domain = kwargs.pop('domain', None)
         super(DomainMetadataForm, self).__init__(*args, **kwargs)
@@ -458,21 +481,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         if not res:
             return False
         try:
-            logo = self.cleaned_data['logo']
-            if logo:
-
-                input_image = Image.open(io.BytesIO(logo.read()))
-                input_image.load()
-                input_image.thumbnail(LOGO_SIZE)
-                # had issues trying to use a BytesIO instead
-                tmpfilename = "/tmp/%s_%s" % (uuid.uuid4(), logo.name)
-                input_image.save(tmpfilename, 'PNG')
-               
-                with open(tmpfilename) as tmpfile:
-                    domain.put_attachment(tmpfile, name=LOGO_ATTACHMENT)
-            elif self.cleaned_data['delete_logo']:
-                domain.delete_attachment(LOGO_ATTACHMENT)
-
             domain.project_type = self.cleaned_data['project_type']
             domain.customer_type = self.cleaned_data['customer_type']
             domain.is_test = self.cleaned_data['is_test']
@@ -625,7 +633,8 @@ class EditBillingAccountInfoForm(forms.ModelForm):
         try:
             self.current_country = self.account.billingcontactinfo.country
         except Exception:
-            self.current_country = None
+            initial = kwargs.get('initial')
+            self.current_country = initial.get('country') if initial is not None else None
 
         try:
             kwargs['instance'] = self.account.billingcontactinfo
@@ -681,10 +690,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
         return result
 
     def _parse_number(self, number, country):
-        try:
-            return phonenumbers.parse(number, country)
-        except phonenumbers.NumberParseException:
-            pass
+        return parse_phone_number(number, country, failhard=False)
 
     def clean_phone_number(self):
         data = self.cleaned_data['phone_number']
@@ -784,6 +790,9 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                     web_user=self.creating_user, adjustment_method=SubscriptionAdjustmentMethod.USER
                 )
                 subscription.is_active = True
+                if subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE:
+                    # this point can only be reached if the initiating user was a superuser
+                    subscription.do_not_invoice = True
                 subscription.save()
             return True
         except Exception:

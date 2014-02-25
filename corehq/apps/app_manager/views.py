@@ -679,7 +679,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
             module = app.get_module(module_id)
         if form_id:
             form = module.get_form(form_id)
-    except IndexError:
+    except ModuleNotFoundException:
         return bail(req, domain, app_id)
 
     context = get_apps_base_context(req, domain, app)
@@ -953,7 +953,7 @@ def delete_module(req, domain, app_id, module_id):
     try:
         record = app.delete_module(module_id)
     except ModuleNotFoundException:
-        raise Http404()
+        return bail(req, domain, app_id)
     messages.success(req,
         'You have deleted a module. <a href="%s" class="post-link">Undo</a>' % reverse('undo_delete_module', args=[domain, record.get_id]),
         extra_tags='html'
@@ -1022,7 +1022,7 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
     """
     attributes = {
         "all": None,
-        "case_type": None, "put_in_root": None,
+        "case_type": None, "put_in_root": None, "display_separately": None,
         "name": None, "case_label": None, "referral_label": None,
         'media_image': None, 'media_audio': None,
         "case_list": ('case_list-show', 'case_list-label'),
@@ -1061,6 +1061,8 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
             return HttpResponseBadRequest("case type is improperly formatted")
     if should_edit("put_in_root"):
         module["put_in_root"] = json.loads(req.POST.get("put_in_root"))
+    if should_edit("display_separately"):
+        module["display_separately"] = json.loads(req.POST.get("display_separately"))
     if should_edit("parent_module"):
         parent_module = req.POST.get("parent_module")
         module.parent_select.module_id = parent_module
