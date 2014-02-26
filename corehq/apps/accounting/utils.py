@@ -4,7 +4,9 @@ import json
 from django.utils.encoding import force_unicode
 from django.utils.functional import Promise
 from corehq import Domain, privileges
+from corehq.apps.accounting.exceptions import AccountingError
 from dimagi.utils.dates import add_months
+from django_prbac.models import Role
 
 
 EXCHANGE_RATE_DECIMAL_PLACES = 9
@@ -102,3 +104,18 @@ class LazyEncoder(json.JSONEncoder):
 def is_active_subscription(date_start, date_end):
     today = datetime.date.today()
     return (date_start is None or date_start <= today) and (date_end is None or today <= date_end)
+
+
+def domain_has_privilege(domain, privilege_slug, **assignment):
+    from corehq.apps.accounting.models import Subscription
+    try:
+        plan_version = Subscription.get_subscribed_plan_by_domain(domain)[0]
+        roles = Role.objects.filter(slug=privilege_slug)
+        if not roles:
+            return False
+        privilege = roles[0].instantiate(assignment)
+        if plan_version.role.has_privilege(privilege):
+            return True
+    except AccountingError:
+        pass
+    return False
