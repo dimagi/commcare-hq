@@ -8,6 +8,14 @@ from django_prbac.exceptions import PermissionDenied
 import toggle
 
 
+def is_accounting_previewer(request):
+    return (
+        (hasattr(request, 'user') and toggle.shortcuts.toggle_enabled(
+            toggles.ACCOUNTING_PREVIEW, request.user.username))
+        or hasattr(request, 'domain') and toggle.shortcuts.toggle_enabled(
+            toggles.ACCOUNTING_PREVIEW, request.domain))
+
+
 def require_billing_admin():
     def decorate(fn):
         """
@@ -36,8 +44,7 @@ def requires_privilege_alert(slug, **assignment):
             try:
                 return requires_privilege(slug, **assignment)(fn)(request, *args, **kwargs)
             except PermissionDenied:
-                if (hasattr(request, 'user')
-                    and toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, request.user.username)):
+                if is_accounting_previewer(request):
                     messaged_slugs = [m.extra_tags for m in messages.get_messages(request)]
                     if slug not in messaged_slugs:
                         messages.info(request, "You will soon lose access to this feature %s" % slug, extra_tags=slug)
@@ -53,8 +60,7 @@ def requires_privilege_plaintext_response(slug, http_status_code=None, **assignm
     """
     def decorate(fn):
         def wrapped(request, *args, **kwargs):
-            if (not hasattr(request, 'user') or
-                    not toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, request.user.username)):
+            if not is_accounting_previewer(request):
                 return fn(request, *args, **kwargs)
             try:
                 return requires_privilege(slug, **assignment)(fn)(request, *args, **kwargs)
@@ -83,8 +89,7 @@ def requires_privilege_json_response(slug, http_status_code=None, get_response=N
 
     def decorate(fn):
         def wrapped(request, *args, **kwargs):
-            if (not hasattr(request, 'user') or
-                    not toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, request.user.username)):
+            if not is_accounting_previewer(request):
                 return fn(request, *args, **kwargs)
             try:
                 return requires_privilege(slug, **assignment)(fn)(request, *args, **kwargs)
