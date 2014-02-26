@@ -6,7 +6,7 @@ import dateutil
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
-from corehq.apps.accounting.decorators import require_billing_admin
+from corehq.apps.accounting.decorators import require_billing_admin, requires_privilege_alert
 from corehq.apps.accounting.downgrade import DomainDowngradeStatusHandler
 from corehq.apps.accounting.forms import EnterprisePlanContactForm
 from corehq.apps.accounting.utils import get_change_status
@@ -18,7 +18,10 @@ from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 
-from corehq import toggles
+from corehq import toggles, privileges
+from django_prbac.exceptions import PermissionDenied
+from django_prbac.utils import ensure_request_has_privilege
+import toggle
 from toggle.decorators import require_toggle
 
 from corehq.apps.accounting.models import (Subscription, CreditLine, SoftwarePlanVisibility, SoftwareProductType,
@@ -202,6 +205,16 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
         return ['project_type']
 
     @property
+    def can_use_custom_logo(self):
+        if toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, self.request.user.username):
+            try:
+                ensure_request_has_privilege(self.request, privileges.CUSTOM_BRANDING)
+            except PermissionDenied:
+                return False
+        # todo return true here after march 1
+        return self.can_user_see_meta
+
+    @property
     @memoized
     def basic_info_form(self):
         initial = {
@@ -241,8 +254,9 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
                 'call_center_case_type': self.domain_object.call_center_config.case_type,
             })
 
-            return DomainMetadataForm(user=self.request.couch_user, domain=self.domain_object.name, initial=initial)
-        return DomainGlobalSettingsForm(initial=initial)
+            return DomainMetadataForm(can_use_custom_logo=self.can_use_custom_logo,
+                                      user=self.request.couch_user, domain=self.domain_object.name, initial=initial)
+        return DomainGlobalSettingsForm(initial=initial, can_use_custom_logo=self.can_use_custom_logo)
 
     @property
     def page_context(self):
@@ -415,6 +429,7 @@ def logo(request, domain):
 
 class DomainAccountingSettings(BaseAdminProjectSettingsView):
 
+    @method_decorator(login_and_domain_required)
     @method_decorator(require_billing_admin())
     def dispatch(self, request, *args, **kwargs):
         return super(DomainAccountingSettings, self).dispatch(request, *args, **kwargs)
@@ -440,6 +455,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'features': self.get_feature_summary(plan_version, subscription),
             'subscription_credit': None,
             'css_class': "label-plan %s" % plan_version.plan.edition.lower(),
+            'is_dimagi_subscription': subscription.do_not_invoice if subscription is not None else False,
         }
         info.update(plan_version.user_facing_description)
         if subscription is not None:
@@ -704,7 +720,7 @@ class ConfirmSelectedPlanView(SelectPlanView):
         return HttpResponseRedirect(reverse(SelectPlanView.urlname, args=[self.domain]))
 
     def post(self, request, *args, **kwargs):
-        if self.edition == SoftwarePlanEdition.ENTERPRISE:
+        if self.edition == SoftwarePlanEdition.ENTERPRISE and not self.request.couch_user.is_superuser:
             return HttpResponseRedirect(reverse(SelectedEnterprisePlanView.urlname, args=[self.domain]))
         return super(ConfirmSelectedPlanView, self).get(request, *args, **kwargs)
 
@@ -733,7 +749,7 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
         if self.current_subscription:
             return self.current_subscription.account
         account, self.is_new = BillingAccount.get_or_create_account_by_domain(
-            self.domain, created_by=self.request.couch_user.email, account_type=BillingAccountType.USER_CREATED,
+            self.domain, created_by=self.request.couch_user.username, account_type=BillingAccountType.USER_CREATED,
         )
         return account
 
@@ -745,13 +761,25 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
     @property
     @memoized
     def billing_account_info_form(self):
+        initial = None
+        if self.edition == SoftwarePlanEdition.ENTERPRISE and self.request.couch_user.is_superuser:
+            initial = {
+                'company_name': "Dimagi",
+                'first_line': "585 Massachusetts Ave",
+                'second_line': "Suite 3",
+                'city': "Cambridge",
+                'state_province_region': "MA",
+                'postal_code': "02139",
+                'country': "US",
+
+            }
         if self.request.method == 'POST' and self.is_form_post:
             return ConfirmNewSubscriptionForm(
                 self.account, self.domain, self.request.couch_user.username,
-                self.selected_plan_version, self.current_subscription, data=self.request.POST
+                self.selected_plan_version, self.current_subscription, data=self.request.POST, initial=initial
             )
         return ConfirmNewSubscriptionForm(self.account, self.domain, self.request.couch_user.username,
-                                          self.selected_plan_version, self.current_subscription)
+                                          self.selected_plan_version, self.current_subscription, initial=initial)
 
     @property
     def page_context(self):
@@ -762,6 +790,8 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:
             return self.async_response
+        if self.edition == SoftwarePlanEdition.ENTERPRISE and not self.request.couch_user.is_superuser:
+            return HttpResponseRedirect(reverse(SelectedEnterprisePlanView.urlname, args=[self.domain]))
         if self.is_form_post and self.billing_account_info_form.is_valid():
             is_saved = self.billing_account_info_form.save()
             software_plan_name = DESC_BY_EDITION[self.selected_plan_version.plan.edition]['name'].encode('utf-8')
@@ -769,7 +799,7 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
                 messages.error(
                     request, _("It appears there was an issue subscribing your project to the %s Software Plan. You "
                                "may try resubmitting, but if that doesn't work, rest assured someone will be "
-                               "contacting you shortly") % software_plan_name)
+                               "contacting you shortly.") % software_plan_name)
             else:
                 messages.success(
                     request, _("Your project has been successfully subscribed to the %s Software Plan."
@@ -1148,10 +1178,15 @@ class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
             return HttpResponseRedirect(reverse(DomainForwardingOptionsView.urlname, args=[self.domain]))
         return self.get(request, *args, **kwargs)
 
+
 class OrgSettingsView(BaseAdminProjectSettingsView):
     template_name = 'domain/orgs_settings.html'
     urlname = 'domain_org_settings'
     page_title = ugettext_noop("Organization")
+
+    @method_decorator(requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS))
+    def dispatch(self, request, *args, **kwargs):
+        return super(OrgSettingsView, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_context(self):
@@ -1478,6 +1513,10 @@ class ProBonoMixin():
     url_name = None
 
     @property
+    def requesting_domain(self):
+        raise NotImplementedError
+
+    @property
     @memoized
     def pro_bono_form(self):
         if self.request.method == 'POST':
@@ -1497,7 +1536,7 @@ class ProBonoMixin():
 
     def post(self, request, *args, **kwargs):
         if self.pro_bono_form.is_valid():
-            self.pro_bono_form.process_submission()
+            self.pro_bono_form.process_submission(domain=self.requesting_domain)
             self.is_submitted = True
         return self.get(request, *args, **kwargs)
 
@@ -1506,10 +1545,18 @@ class ProBonoStaticView(ProBonoMixin, BasePageView):
     template_name = 'domain/pro_bono/static.html'
     urlname = 'pro_bono_static'
 
+    @property
+    def requesting_domain(self):
+        return None
+
 
 class ProBonoView(ProBonoMixin, DomainAccountingSettings):
     template_name = 'domain/pro_bono/domain.html'
     urlname = 'pro_bono'
+
+    @property
+    def requesting_domain(self):
+        return self.domain
 
     @property
     def parent_pages(self):

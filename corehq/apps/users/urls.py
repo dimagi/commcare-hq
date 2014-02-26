@@ -1,7 +1,7 @@
 #from django.conf.urls.defaults import patterns, url
 from corehq.apps.users.views import DefaultProjectUserSettingsView, EditWebUserView, EditMyAccountDomainView, ListWebUsersView, InviteWebUserView
 from corehq.apps.users.views.mobile.groups import EditGroupsView, EditGroupMembersView
-from corehq.apps.users.views.mobile.users import UploadCommCareUsers, EditCommCareUserView, ListCommCareUsersView, AsyncListCommCareUsersView, CreateCommCareUserView
+from corehq.apps.users.views.mobile.users import UploadCommCareUsers, EditCommCareUserView, ListCommCareUsersView, AsyncListCommCareUsersView, CreateCommCareUserView, ConfirmBillingAccountForExtraUsersView
 from django.conf.urls.defaults import *
 from corehq.apps.domain.utils import grandfathered_domain_re
 
@@ -51,6 +51,8 @@ patterns("corehq.apps.users.views.mobile.users",
     url(r'^commcare/download/$', 'download_commcare_users', name='download_commcare_users'),
     url(r'^commcare/set_group/$', 'set_commcare_user_group', name='set_commcare_user_group'),
     url(r'^commcare/add_commcare_account/$', CreateCommCareUserView.as_view(), name=CreateCommCareUserView.urlname),
+    url(r'^commcare/confirm_charges/$', ConfirmBillingAccountForExtraUsersView.as_view(),
+        name=ConfirmBillingAccountForExtraUsersView.urlname),
 ) +\
 patterns("corehq.apps.users.views.mobile.groups",
     url(r'^groups/$', EditGroupsView.as_view(), name=EditGroupsView.urlname),

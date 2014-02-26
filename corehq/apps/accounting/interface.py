@@ -9,6 +9,7 @@ from corehq.apps.reports.generic import GenericTabularReport
 
 class AddItemInterface(GenericTabularReport):
     base_template = 'accounting/add_new_item_button.html'
+    exportable = True
 
     item_name = None
     new_item_view = None
@@ -58,8 +59,7 @@ class AccountingInterface(AddItemInterface):
     def rows(self):
         rows = []
         for account in BillingAccount.objects.all():
-            if DateCreatedFilter.get_start_date(self.request).date() <= account.date_created.date() \
-                and DateCreatedFilter.get_end_date(self.request).date() >= account.date_created.date() \
+            if DateCreatedFilter.date_passes_filter(self.request, account.date_created.date()) \
                 and (NameFilter.get_value(self.request, self.domain) is None
                      or NameFilter.get_value(self.request, self.domain) == account.name) \
                 and (SalesforceAccountIDFilter.get_value(self.request, self.domain) is None
@@ -132,14 +132,10 @@ class SubscriptionInterface(AddItemInterface):
         from corehq.apps.accounting.views import ManageBillingAccountView
         rows = []
         for subscription in Subscription.objects.all():
-            if (subscription.date_start is None
-                    or (StartDateFilter.get_start_date(self.request).date() <= subscription.date_start
-                        and StartDateFilter.get_end_date(self.request).date() >= subscription.date_start)) \
-                and (subscription.date_end is None
-                        or (EndDateFilter.get_start_date(self.request).date() <= subscription.date_end
-                            and EndDateFilter.get_end_date(self.request).date() >= subscription.date_end)) \
-                and (DateCreatedFilter.get_start_date(self.request).date() <= subscription.date_created.date()
-                    and DateCreatedFilter.get_end_date(self.request).date() >= subscription.date_created.date()) \
+            if StartDateFilter.date_passes_filter(self.request, subscription.date_start) \
+                and EndDateFilter.date_passes_filter(self.request, subscription.date_end) \
+                and (subscription.date_created is None
+                     or DateCreatedFilter.date_passes_filter(self.request, subscription.date_created.date())) \
                 and (SubscriberFilter.get_value(self.request, self.domain) is None
                     or SubscriberFilter.get_value(self.request, self.domain) == subscription.subscriber.domain) \
                 and (SalesforceContractIDFilter.get_value(self.request, self.domain) is None

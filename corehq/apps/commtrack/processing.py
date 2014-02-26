@@ -69,6 +69,11 @@ def process_stock(xform):
     for report in stock_reports:
         report.create_models()
 
+    # TODO make this a signal
+    from corehq.apps.commtrack.signals import send_notifications, raise_events
+    send_notifications(xform, relevant_cases)
+    raise_events(xform, relevant_cases)
+
 def unpack_commtrack(xform, config):
     xml = xform.get_xml_element()
 

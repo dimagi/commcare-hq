@@ -4,4 +4,5 @@ from dimagi.utils.django.fields import TrimmedCharField
 
 class MegamobileBackendForm(BackendForm):
     api_account_name = TrimmedCharField()
+    source_identifier = TrimmedCharField()
 

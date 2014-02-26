@@ -325,7 +325,11 @@ class DomainMembership(Membership):
         if self.is_admin:
             return AdminUserRole(self.domain)
         elif self.role_id:
-            return UserRole.get(self.role_id)
+            try:
+                return UserRole.get(self.role_id)
+            except ResourceNotFound:
+                logging.exception('no role with id %s found in domain %s' % (self.role_id, self.domain))
+                return None
         else:
             return None
 

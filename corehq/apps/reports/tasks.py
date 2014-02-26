@@ -82,7 +82,7 @@ def create_metadata_export(download_id, domain, format, filename, datespan=None,
     return cache_file_to_be_served(Temp(tmp_path), FakeCheckpoint(domain), download_id, format, filename)
 
 @periodic_task(run_every=crontab(hour="*", minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
-def daily_reports():    
+def daily_reports():
     # this should get called every hour by celery
     reps = ReportNotification.view("reportconfig/all_notifications",
                                    startkey=["daily", datetime.utcnow().hour],
@@ -93,7 +93,7 @@ def daily_reports():
         send_report.delay(rep._id)
 
 @periodic_task(run_every=crontab(hour="*", minute="1", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
-def weekly_reports():    
+def weekly_reports():
     # this should get called every hour by celery
     now = datetime.utcnow()
     reps = ReportNotification.view("reportconfig/all_notifications",
@@ -114,7 +114,7 @@ def monthly_reports():
         send_report.delay(rep._id)
 
 @periodic_task(run_every=crontab(hour=[22], minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
-def saved_exports():    
+def saved_exports():
     for group_config in HQGroupExportConfiguration.view("groupexport/by_domain", reduce=False,
                                                         include_docs=True).all():
         export_for_group(group_config, "couch")

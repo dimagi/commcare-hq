@@ -127,8 +127,17 @@
             </table>
         {% endif %}
 
+        {% if group_exports %}
+        <section>
+            <h2>{% trans "Saved Export Files" %}</h2>
+            {% for exports in group_exports %}
+                {% include "reports/partials/hqexport_group_table.html" %}
+            {% endfor %}
+        </section>
+        {% endif %}
+
     </div>
-{% endblock %}
+{% endblock reportcontent %}
 
 {% block modals %}
 {{ block.super }}

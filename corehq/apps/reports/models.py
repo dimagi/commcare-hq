@@ -63,7 +63,7 @@ class HQToggle(object):
     type = None
     show = False
     name = None
-    
+
     def __init__(self, type, show, name):
         self.type = type
         self.name = name
@@ -79,7 +79,7 @@ class HQToggle(object):
 
 
 class HQUserToggle(HQToggle):
-    
+
     def __init__(self, type, show):
         name = _(HQUserType.human_readable[type])
         super(HQUserToggle, self).__init__(type, show, name)
@@ -204,7 +204,7 @@ class ReportConfig(Document):
 
         for key in self._extra_json_properties:
             json[key] = getattr(self, key)
-        
+
         return json
 
     @property
@@ -223,7 +223,7 @@ class ReportConfig(Document):
 
     def get_date_range(self):
         """Duplicated in reports.config.js"""
-        
+
         date_range = self.date_range
 
         # allow old report email notifications to represent themselves as a
@@ -290,7 +290,7 @@ class ReportConfig(Document):
     def url(self):
         try:
             from django.core.urlresolvers import reverse
-            
+
             return reverse(self._dispatcher.name(), kwargs=self.view_kwargs) \
                     + '?' + self.query_string
         except Exception:
@@ -408,7 +408,7 @@ class ReportNotification(Document):
             return False
         except AttributeError:
             return True
-        
+
     @classmethod
     def by_domain_and_owner(cls, domain, owner_id, stale=True, **kwargs):
         if stale:
@@ -694,6 +694,21 @@ class HQGroupExportConfiguration(GroupExportConfiguration):
             custom_export = self._get_custom(custom)
             if custom_export:
                 yield _rewrap(custom_export)
+
+    def exports_of_type(self, type):
+        return self._saved_exports_from_configs([
+            config for config, schema in self.all_exports if schema.type == type
+        ])
+
+    @property
+    @memoized
+    def form_exports(self):
+        return self.exports_of_type('form')
+
+    @property
+    @memoized
+    def case_exports(self):
+        return self.exports_of_type('case')
 
     @classmethod
     def by_domain(cls, domain):

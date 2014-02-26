@@ -9,6 +9,8 @@ from django.views.decorators.http import require_POST
 from django.shortcuts import render
 from django.contrib import messages
 from django.utils.translation import ugettext as _
+from corehq import privileges
+from corehq.apps.accounting.decorators import requires_privilege_alert
 
 from corehq.apps.announcements.models import Notification
 from corehq.apps.domain.decorators import require_superuser
@@ -52,6 +54,8 @@ class MainNotification(Notification):
     def template(self):
         return 'orgs/partials/main_notification.html'
 
+
+@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_member_required
 def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None, add_form=None, invite_member_form=None,
                  add_team_form=None, update_form=None, tab=None):
@@ -106,6 +110,8 @@ def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None, add
                 user_domains=user_domains, req_domains=req_domains))
     return render(request, template, ctxt)
 
+
+@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_member_required
 def orgs_members(request, org, template="orgs/orgs_members.html"):
     class MembersNotification(Notification):
@@ -123,6 +129,8 @@ def orgs_members(request, org, template="orgs/orgs_members.html"):
 
     return render(request, template, ctxt)
 
+
+@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_member_required
 def orgs_teams(request, org, template="orgs/orgs_teams.html"):
     class TeamsNotification(Notification):
@@ -144,12 +152,16 @@ def get_data(request, org):
     organization = Organization.get_by_name(org)
     return json_response(organization)
 
+
+@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_admin_required
 @require_POST
 def orgs_new_project(request, org):
     from corehq.apps.registration.views import register_domain
     return register_domain(request)
 
+
+@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_admin_required
 @require_POST
 def orgs_update_info(request, org):
@@ -170,6 +182,8 @@ def orgs_update_info(request, org):
     else:
         return orgs_landing(request, org, update_form=form)
 
+
+@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_admin_required
 @require_POST
 def orgs_update_project(request, org):
@@ -188,6 +202,8 @@ def orgs_update_project(request, org):
 
     return HttpResponseRedirect(reverse("orgs_landing", args=(org, )))
 
+
+@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_admin_required
 @require_POST
 def orgs_update_team(request, org):
@@ -204,6 +220,8 @@ def orgs_update_team(request, org):
 
     return HttpResponseRedirect(reverse('orgs_team_members', args=(org, team_id)))
 
+
+@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_admin_required
 @require_POST
 def orgs_add_project(request, org):
@@ -221,6 +239,8 @@ def orgs_add_project(request, org):
         return orgs_landing(request, org, add_form=form)
     return HttpResponseRedirect(reverse('orgs_landing', args=[org]))
 
+
+@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_admin_required
 @require_POST
 def orgs_remove_project(request, org):
@@ -238,6 +258,8 @@ def orgs_remove_project(request, org):
                                                    {"org": org, "dom": domain}), extra_tags="html")
     return HttpResponseRedirect(reverse(request.POST.get('redirect_url', 'orgs_landing'), args=(org,)))
 
+
+@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_admin_required
 @require_POST
 def invite_member(request, org):
@@ -291,6 +313,8 @@ def accept_invitation(request, org, invitation_id):
     # todo, why wasn't this a TemplateView?
     return OrgInvitationView()(request, invitation_id, organization=org)
 
+
+@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_admin_required
 @require_POST
 def orgs_add_team(request, org):
@@ -310,11 +334,15 @@ def orgs_add_team(request, org):
     messages.success(request, "Team Added!")
     return HttpResponseRedirect(reverse('orgs_teams', args=[org]))
 
+
+@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_member_required
 def orgs_logo(request, org, template="orgs/orgs_logo.html"):
     image, type = request.organization.get_logo()
     return HttpResponse(image, content_type=type if image else 'image/gif')
 
+
+@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_member_required
 def orgs_team_members(request, org, team_id, template="orgs/orgs_team_members.html"):
     class TeamMembersNotification(Notification):
@@ -350,6 +378,8 @@ def orgs_team_members(request, org, team_id, template="orgs/orgs_team_members.ht
                      team_domains=team_domains, nondomains=nondomains))
     return render(request, template, ctxt)
 
+
+@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_admin_required
 @require_POST
 def join_team(request, org, team_id):
@@ -362,6 +392,8 @@ def join_team(request, org, team_id):
         user.save()
     return HttpResponseRedirect(reverse(request.POST.get('redirect_url', 'orgs_team_members'), args=(org, team_id)))
 
+
+@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_admin_required
 @require_POST
 def leave_team(request, org, team_id):
@@ -376,6 +408,8 @@ def leave_team(request, org, team_id):
                                                    {"team_id": team_id, "org": org, "user": user}), extra_tags="html")
     return HttpResponseRedirect(reverse(request.POST.get('redirect_url', 'orgs_team_members'), args=(org, team_id)))
 
+
+@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_admin_required
 @require_POST
 def delete_team(request, org):
@@ -395,12 +429,16 @@ def delete_team(request, org):
 
     return HttpResponseRedirect(reverse("orgs_teams", args=(org, )))
 
+
+@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_admin_required
 def undo_delete_team(request, org, record_id):
     record = DeleteTeamRecord.get(record_id)
     record.undo()
     return HttpResponseRedirect(reverse('orgs_team_members', args=[org, record.doc_id]))
 
+
+@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_admin_required
 @require_POST
 def add_domain_to_team(request, org, team_id):
@@ -418,6 +456,7 @@ def add_domain_to_team(request, org, team_id):
     return HttpResponseRedirect(reverse(request.POST.get('redirect_url', 'orgs_team_members'), args=(org, team_id)))
 
 
+@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_admin_required
 @require_POST
 def remove_domain_from_team(request, org, team_id):
@@ -433,6 +472,7 @@ def remove_domain_from_team(request, org, team_id):
     return HttpResponseRedirect(reverse(request.POST.get('redirect_url', 'orgs_team_members'), args=(org, team_id)))
 
 
+@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_admin_required
 @require_POST
 def set_team_permission_for_domain(request, org, team_id):
@@ -448,6 +488,8 @@ def set_team_permission_for_domain(request, org, team_id):
         return json_response(UserRole.get(dm.role_id).name if not dm.is_admin else 'Admin')
     return HttpResponseRedirect(reverse('orgs_team_members', args=(org, team_id)))
 
+
+@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_admin_required
 @require_POST
 def add_all_to_team(request, org, team_id):
@@ -458,6 +500,7 @@ def add_all_to_team(request, org, team_id):
     return HttpResponseRedirect(reverse(request.POST.get('redirect_url', 'orgs_team_members'), args=(org, team_id)))
 
 
+@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_admin_required
 @require_POST
 def remove_all_from_team(request, org, team_id):
@@ -472,6 +515,8 @@ def remove_all_from_team(request, org, team_id):
 def search_orgs(request):
     return json_response([{'title': o.title, 'name': o.name} for o in Organization.get_all()])
 
+
+@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_admin_required
 @require_POST
 def seen_request(request, org):
@@ -482,6 +527,8 @@ def seen_request(request, org):
         org_req.save()
     return HttpResponseRedirect(reverse("orgs_landing", args=[org]))
 
+
+@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_admin_required
 @require_POST
 def remove_member(request, org):
@@ -497,12 +544,16 @@ def remove_member(request, org):
         ), extra_tags="html")
     return HttpResponseRedirect(reverse("orgs_members", args=[org]))
 
+
+@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_admin_required
 def undo_remove_member(request, org, record_id):
     record = OrgRemovalRecord.get(record_id)
     record.undo()
     return HttpResponseRedirect(reverse('orgs_members', args=[org]))
 
+
+@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_admin_required
 def set_admin(request, org):
     member_id = request.POST.get("member_id", None)
@@ -533,6 +584,8 @@ def public(request, org, template='orgs/public.html'):
             ctxt["snapshots"].append(dom.published_snapshot())
     return render(request, template, ctxt)
 
+
+@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_member_required
 def base_report(request, org, template='orgs/report_base.html'):
     ctxt = base_context(request, request.organization)
@@ -552,6 +605,7 @@ def base_report(request, org, template='orgs/report_base.html'):
     return render(request, template, ctxt)
 
 
+@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_member_required
 @datespan_in_request(from_param="startdate", to_param="enddate")
 def stats(request, org, stat_slug, template='orgs/stats.html'):
@@ -575,6 +629,8 @@ def stats(request, org, stat_slug, template='orgs/stats.html'):
     })
     return render(request, template, ctxt)
 
+
+@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_member_required
 @datespan_in_request(from_param="startdate", to_param="enddate")
 def stats_data(request, org):
