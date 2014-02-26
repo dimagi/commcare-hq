@@ -558,6 +558,10 @@ class FormBase(DocumentSchema):
             'form_name': self.default_name()
         }
 
+    @property
+    def has_fixtures(self):
+        return 'src="jr://fixture/item-list:' in self.source
+
 
 class IndexedFormBase(FormBase, IndexedSchema):
     def get_app(self):
