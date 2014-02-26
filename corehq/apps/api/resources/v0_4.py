@@ -118,11 +118,12 @@ class RepeaterResource(JsonResource, DomainSpecificResourceMixin):
         return bundle
 
     class Meta(CustomResourceMeta):
+        authentication = v0_1.DomainAdminAuthentication()
         object_class = Repeater
         resource_name = 'data-forwarding'
         detail_allowed_methods = ['get', 'put', 'delete']
         list_allowed_methods = ['get', 'post']
-        authorization = v0_1.DomainAdminAuthorization
+
 
 
 def group_by_dict(objs, fn):

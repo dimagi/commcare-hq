@@ -91,27 +91,26 @@ class RequirePermissionAuthentication(LoginAndDomainAuthentication):
             return response
 
 
-class DomainAdminAuthorization(Authorization):
-    # todo: this class doesn't work at all!
-    # is_authorized was removed from tastypie long before our current version
+class DomainAdminAuthentication(LoginAndDomainAuthentication):
 
-    def is_authorized(self, request, object=None, **kwargs):
-        PASSED_AUTHORIZATION = 'is_authorized'
+    def is_authenticated(self, request, **kwargs):
+        PASSED_AUTH = 'is_authenticated'
 
         @api_auth
         @domain_admin_required
+        @login_or_digest
         def dummy(request, domain, **kwargs):
-            return PASSED_AUTHORIZATION
+            return PASSED_AUTH
 
         if not kwargs.has_key('domain'):
             kwargs['domain'] = request.domain
 
         response = dummy(request, **kwargs)
-
-        if response == PASSED_AUTHORIZATION:
+        if response == PASSED_AUTH:
             return True
         else:
             return response
+
 
 class CustomResourceMeta(object):
     authorization = ReadOnlyAuthorization()
