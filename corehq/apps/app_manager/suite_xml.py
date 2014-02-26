@@ -4,6 +4,8 @@ from django.core.urlresolvers import reverse
 from eulxml.xmlmap.fields import StringListField
 from lxml import etree
 from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, NodeField
+import toggle
+from corehq import toggles
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK
 from corehq.apps.hqmedia.models import HQMediaMapItem
@@ -759,6 +761,20 @@ class SuiteGenerator(object):
             assertion.text.append(Text(locale_id='case_sharing.exactly_one_group'))
             e.assertions.append(assertion)
 
+        def add_fixtures_assertion(form, e):
+            if form.has_fixtures and toggle.shortcuts.toggle_enabled(
+                    toggles.ACCOUNTING_PREVIEW, self.app.domain):
+                e.instances.append(Instance(
+                    id='accountinglt', src='jr://fixture/accounting:lt'
+                ))
+                assertion = Assertion(
+                    test="count(instance('accountinglt')/lt_no_support) = 0"
+                )
+                assertion.text.append(Text(
+                    locale_id='accounting.lookup_tables_not_supported'
+                ))
+                e.assertions.append(assertion)
+
         for module in self.modules:
             for form in module.get_forms():
                 e = Entry()
@@ -776,6 +792,7 @@ class SuiteGenerator(object):
 
                 if self.app.case_sharing and case_sharing_requires_assertion(form):
                     add_case_sharing_assertion(e)
+                add_fixtures_assertion(form, e)
                 yield e
             if isinstance(module, Module) and module.case_list.show:
                 e = Entry(

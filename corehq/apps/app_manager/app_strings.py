@@ -110,6 +110,10 @@ class AppStringsBase(object):
             messages['case_sharing.exactly_one_group'] = \
                 (u'The case sharing settings for your user are incorrect. '
                  u'This user must be in exactly one case sharing group. Please contact your supervisor.')
+        if 'accounting.lookup_tables_not_supported' not in messages:
+            messages['accounting.lookup_tables_not_supported'] = \
+                (u'Your project does not support the Lookup Tables feature '
+                 u'used in this form. Please contact your supervisor.')
 
         return commcare_translations.dumps(messages).encode('utf-8')
 

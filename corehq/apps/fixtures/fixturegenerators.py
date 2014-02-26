@@ -1,9 +1,12 @@
 from collections import defaultdict
 from xml.etree import ElementTree
 from django.conf import settings
+from corehq import toggles, privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.modules import to_function
+import toggle
 
 
 def hq_fixtures(user, version, last_sync):
@@ -19,6 +22,13 @@ def hq_fixtures(user, version, last_sync):
 
 def item_lists(user, version, last_sync):
     assert isinstance(user, CommCareUser)
+
+    # for accounting
+    if toggle.shortcuts.toggle_enabled(
+            toggles.ACCOUNTING_PREVIEW, user.domain) and not domain_has_privilege(
+            user.domain, privileges.LOOKUP_TABLES):
+        return []
+
     all_types = dict([(t._id, t) for t in FixtureDataType.by_domain(user.domain)])
     global_types = dict([(id, t) for id, t in all_types.items() if t.is_global])
 
