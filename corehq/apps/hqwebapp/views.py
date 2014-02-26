@@ -27,6 +27,7 @@ from django.core.urlresolvers import reverse
 from django.core.mail.message import EmailMessage
 from django.template import loader
 from django.template.context import RequestContext
+from restkit import Resource
 
 from corehq.apps.announcements.models import Notification
 from corehq.apps.app_manager.models import BUG_REPORTS_DOMAIN
@@ -75,10 +76,27 @@ def couch_check():
 
 
 def hb_check():
-    try:
-        hb = heartbeat.is_alive()
-    except:
-        hb = False
+    celery_monitoring = getattr(settings, 'CELERY_FLOWER_URL', None)
+    if celery_monitoring:
+        try:
+            cresource = Resource(celery_monitoring, timeout=3)
+            t = cresource.get("api/workers").body_string()
+            all_workers = json.loads(t)
+            bad_workers = []
+            for hostname, w in all_workers.items():
+                if not w['status']:
+                    bad_workers.append('* {} celery worker down'.format(hostname))
+            if bad_workers:
+                return '\n'.join(bad_workers)
+            else:
+                hb = True
+        except:
+            hb = False
+    else:
+        try:
+            hb = heartbeat.is_alive()
+        except:
+            hb = False
     return hb
 
 
@@ -236,7 +254,10 @@ def server_up(req):
             check_results = check_info['check_func']()
             if not check_results:
                 failed = True
-                message.append(check_info['message'])
+                if isinstance(check_results, basestring):
+                    message.append(check_results)
+                else:
+                    message.append(check_info['message'])
     if failed:
         return HttpResponse('<br>'.join(message), status=500)
     else:
