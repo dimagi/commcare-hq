@@ -47,7 +47,7 @@
     </div>
 
     <div class="hq-generic-report form-horizontal">
-        <h2>{% trans "Saved Custom Exports" %}</h2>
+        <h2>{% trans "Custom Exports" %}</h2>
 
         {% if saved_exports %}
         <table class="export_data table table-striped">
@@ -96,7 +96,7 @@
         {% endif %}
 
         {% if case_types %}
-            <h2>{% trans "Export cases" %}</h2>
+            <h2>{% trans "Export Cases" %}</h2>
             <table class="export_data table table-striped">
                 <thead>
                 <tr>
@@ -129,7 +129,7 @@
 
         {% if group_exports %}
         <section>
-            <h2>{% trans "Saved Export Files" %}</h2>
+            <h2>{% trans "Daily Saved Exports" %}</h2>
             {% for exports in group_exports %}
                 {% include "reports/partials/hqexport_group_table.html" %}
             {% endfor %}

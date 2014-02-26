@@ -10721,8 +10721,8 @@ msgstr "dossiers et tous les travailleurs mobiles."
 
 #: corehq/apps/reports/templates/reports/reportdata/case_export_data.html:50
 #: corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:159
-msgid "Saved Custom Exports"
-msgstr "Exportations personnalisées enregistrées"
+msgid "Custom Exports"
+msgstr "Exportations personnalisées"
 
 #: corehq/apps/reports/templates/reports/reportdata/case_export_data.html:94
 #: corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:165
@@ -10737,7 +10737,7 @@ msgstr ""
 "dessous pour en générer un."
 
 #: corehq/apps/reports/templates/reports/reportdata/case_export_data.html:99
-msgid "Export cases"
+msgid "Export Cases"
 msgstr "Exporter les dossiers"
 
 #: corehq/apps/reports/templates/reports/reportdata/case_export_data.html:104
@@ -10831,7 +10831,7 @@ msgstr ""
 "cette période."
 
 #: corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:173
-msgid "Export full forms"
+msgid "Export Full Forms"
 msgstr "Exporter les formulaires complets"
 
 #: corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:183
