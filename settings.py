@@ -417,7 +417,7 @@ FIXTURE_GENERATORS = [
     "corehq.apps.fixtures.fixturegenerators.item_lists",
     "corehq.apps.reportfixtures.fixturegenerators.indicators",
     "custom.bihar.reports.indicators.fixtures.generator",
-    "corehq.apps.commtrack.models.product_fixture_generator",
+    "corehq.apps.commtrack.fixtures.product_fixture_generator",
 ]
 
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
