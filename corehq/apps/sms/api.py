@@ -192,8 +192,7 @@ def send_message_via_backend(msg, backend=None, onerror=lambda: None):
         except Exception:
             pass
         msg.save()
-        if msg.processed:
-            store_billable.delay(msg)
+        store_billable.delay(msg)
         return True
     except Exception:
         onerror()
