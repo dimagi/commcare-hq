@@ -16,12 +16,13 @@ from tastypie.throttle import CacheThrottle
 
 # External imports
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.users.decorators import require_permission
 from couchforms.models import XFormInstance
 
 # CCHQ imports
 from corehq.apps.domain.decorators import login_or_digest, domain_admin_required
 from corehq.apps.groups.models import Group
-from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.models import CommCareUser, WebUser, Permissions
 
 # API imports
 from corehq.apps.api.serializers import CustomXMLSerializer, XFormInstanceSerializer
@@ -40,8 +41,10 @@ def api_auth(view_func):
                                 status=401)
     return _inner
 
+
 class LoginAndDomainAuthentication(Authentication):
     def is_authenticated(self, request, **kwargs):
+        print 'is authenticated'
         PASSED_AUTH = 'is_authenticated'
 
         @api_auth
@@ -63,7 +66,34 @@ class LoginAndDomainAuthentication(Authentication):
     def get_identifier(self, request):
         return request.couch_user.username
 
+
+class RequirePermissionAuthentication(LoginAndDomainAuthentication):
+    def __init__(self, permission, *args, **kwargs):
+        super(RequirePermissionAuthentication, self).__init__(*args, **kwargs)
+        self.permission = permission
+
+    def is_authenticated(self, request, **kwargs):
+        PASSED_AUTH = 'is_authenticated'
+
+        @api_auth
+        @require_permission(self.permission)
+        @login_or_digest
+        def dummy(request, domain, **kwargs):
+            return PASSED_AUTH
+
+        if not kwargs.has_key('domain'):
+            kwargs['domain'] = request.domain
+
+        response = dummy(request, **kwargs)
+        if response == PASSED_AUTH:
+            return True
+        else:
+            return response
+
+
 class DomainAdminAuthorization(Authorization):
+    # todo: this class doesn't work at all!
+    # is_authorized was removed from tastypie long before our current version
 
     def is_authorized(self, request, object=None, **kwargs):
         PASSED_AUTHORIZATION = 'is_authorized'
@@ -120,6 +150,7 @@ class CommCareUserResource(UserResource):
     user_data = fields.DictField(attribute='user_data')
 
     class Meta(UserResource.Meta):
+        authentication = RequirePermissionAuthentication(Permissions.edit_commcare_users)
         object_class = CommCareUser
         resource_name = 'user'
 
@@ -150,6 +181,7 @@ class WebUserResource(UserResource):
         return bundle.obj.is_domain_admin(bundle.request.domain)
 
     class Meta(UserResource.Meta):
+        authentication = RequirePermissionAuthentication(Permissions.edit_web_users)
         object_class = WebUser
         resource_name = 'web-user'
 
@@ -204,7 +236,8 @@ class CommCareCaseResource(JsonResource, DomainSpecificResourceMixin):
 
 
     class Meta(CustomResourceMeta):
-        object_class = CommCareCase    
+        authentication = RequirePermissionAuthentication(Permissions.edit_data)
+        object_class = CommCareCase
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
         resource_name = 'case'
@@ -226,6 +259,7 @@ class XFormInstanceResource(JsonResource, DomainSpecificResourceMixin):
         return get_object_or_not_exist(XFormInstance, kwargs['pk'], kwargs['domain'])
 
     class Meta(CustomResourceMeta):
+        authentication = RequirePermissionAuthentication(Permissions.edit_data)
         object_class = XFormInstance        
         list_allowed_methods = []
         detail_allowed_methods = ['get']

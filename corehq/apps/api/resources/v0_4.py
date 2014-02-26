@@ -5,6 +5,7 @@ from django.http import HttpResponseForbidden, HttpResponse, HttpResponseBadRequ
 from tastypie import fields
 from tastypie.bundle import Bundle
 from tastypie.authentication import Authentication
+from corehq.apps.api.resources.v0_1 import CustomResourceMeta, RequirePermissionAuthentication
 
 from couchforms.models import XFormInstance
 from casexml.apps.case.models import CommCareCase
@@ -18,7 +19,7 @@ from corehq.apps.receiverwrapper.models import Repeater, repeater_types
 from corehq.apps.groups.models import Group
 from corehq.apps.cloudcare.api import ElasticCaseQuery
 from corehq.apps.users.util import format_username
-from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.apps.users.models import CouchUser, CommCareUser, Permissions
 
 from corehq.apps.api.resources import v0_1, v0_3, JsonResource, DomainSpecificResourceMixin, dict_object, SimpleSortableResourceMixin
 from corehq.apps.api.es import XFormES, CaseES, ESQuerySet, es_search
@@ -116,7 +117,7 @@ class RepeaterResource(JsonResource, DomainSpecificResourceMixin):
         bundle = self.full_hydrate(bundle)
         return bundle
 
-    class Meta(v0_1.CustomResourceMeta):
+    class Meta(CustomResourceMeta):
         object_class = Repeater
         resource_name = 'data-forwarding'
         detail_allowed_methods = ['get', 'put', 'delete']
@@ -209,9 +210,11 @@ class GroupResource(JsonResource, DomainSpecificResourceMixin):
         groups = Group.by_domain(domain)
         return groups
 
-    class Meta(v0_3.XFormInstanceResource.Meta):
+    class Meta(CustomResourceMeta):
+        authentication = RequirePermissionAuthentication(Permissions.edit_commcare_users)
         object_class = Group
         list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
         resource_name = 'group'
 
 
@@ -260,7 +263,7 @@ class SingleSignOnResource(JsonResource, DomainSpecificResourceMixin):
     def get_detail(self, bundle, **kwargs):
         return HttpResponseForbidden()
 
-    class Meta(v0_1.CustomResourceMeta):
+    class Meta(CustomResourceMeta):
         authentication = Authentication()
         resource_name = 'sso'
         detail_allowed_methods = []
@@ -321,7 +324,8 @@ class ApplicationResource(JsonResource, DomainSpecificResourceMixin):
     def obj_get(self, bundle, **kwargs):
         return get_object_or_not_exist(Application, kwargs['domain'], kwargs['pk'])
 
-    class Meta(v0_1.CustomResourceMeta):
+    class Meta(CustomResourceMeta):
+        authentication = RequirePermissionAuthentication(Permissions.edit_apps)
         object_class = Application
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
