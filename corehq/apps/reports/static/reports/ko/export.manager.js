@@ -189,10 +189,7 @@ var ExportManager = function (o) {
         if ($button.data('modulename')) {
             modalTitle  = $button.data('modulename') + " > " + modalTitle;
         }
-        var downloadParams = {
-            export_tag: ["'+self.domain+'","'+$button.data('xmlns')+'","'+$button.data('formname')+'"],
-            filename: $button.data('formname')
-        }
+        var downloadParams = {};
         if (!self.is_custom) {
             downloadParams.app_id = $button.data('appid');
         }
