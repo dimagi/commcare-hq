@@ -44,7 +44,6 @@ def api_auth(view_func):
 
 class LoginAndDomainAuthentication(Authentication):
     def is_authenticated(self, request, **kwargs):
-        print 'is authenticated'
         PASSED_AUTH = 'is_authenticated'
 
         @api_auth
