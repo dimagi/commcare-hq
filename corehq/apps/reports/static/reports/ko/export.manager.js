@@ -167,11 +167,15 @@ var ExportManager = function (o) {
         var $button = $(event.srcElement || event.currentTarget);
         var downloadUrl = self.downloadUrl || $button.data('dlocation');
         resetModal("'" + options.modalTitle + "'", true);
+        var format = self.format;
+        if ($button.data('format')) {
+            format = $button.data('format');
+        }
         downloadUrl = downloadUrl +
             "?" + self.exportFilters +
             '&async=true' +
-            '&format=' + self.format +
             '&export_tag=["'+self.domain+'","'+$button.data('xmlns')+'","'+$button.data('formname')+'"]' +
+            '&format=' + format +
             '&filename='+$button.data('formname');
 
         for (var k in options.downloadParams) {
@@ -189,10 +193,7 @@ var ExportManager = function (o) {
         if ($button.data('modulename')) {
             modalTitle  = $button.data('modulename') + " > " + modalTitle;
         }
-        var downloadParams = {
-            export_tag: ["'+self.domain+'","'+$button.data('xmlns')+'","'+$button.data('formname')+'"],
-            filename: $button.data('formname')
-        }
+        var downloadParams = {};
         if (!self.is_custom) {
             downloadParams.app_id = $button.data('appid');
         }

@@ -1,4 +1,4 @@
-from corehq.apps.accounting.forms import is_active_subscription
+from corehq.apps.accounting.utils import is_active_subscription
 from corehq.apps.accounting.models import Subscription
 from django.core.management import BaseCommand
 from optparse import make_option

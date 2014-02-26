@@ -22,7 +22,7 @@ from dimagi.utils.django.email import send_HTML_email
 from django_prbac.models import Role, Grant
 
 from corehq.apps.accounting.async_handlers import (FeatureRateAsyncHandler, SoftwareProductRateAsyncHandler)
-from corehq.apps.accounting.utils import fmt_feature_rate_dict, fmt_product_rate_dict
+from corehq.apps.accounting.utils import is_active_subscription
 from corehq.apps.hqwebapp.crispy import BootstrapMultiField
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
@@ -159,11 +159,6 @@ class BillingAccountForm(forms.Form):
         contact_info.postal_code = self.cleaned_data['postal_code']
         contact_info.country = self.cleaned_data['country']
         contact_info.save()
-
-
-def is_active_subscription(date_start, date_end):
-    today = datetime.date.today()
-    return (date_start is None or date_start <= today) and (date_end is None or today <= date_end)
 
 
 class SubscriptionForm(forms.Form):
@@ -311,10 +306,6 @@ class SubscriptionForm(forms.Form):
             kwargs.update({
                 'date_delay_invoicing': subscription.date_delay_invoicing,
             })
-
-        kwargs.update({
-            'is_active': is_active_subscription(kwargs.get('date_start'), kwargs.get('date_end')),
-        })
 
         new_plan_version = SoftwarePlanVersion.objects.get(id=self.cleaned_data['plan_version'])
 
