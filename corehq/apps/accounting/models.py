@@ -10,6 +10,7 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from corehq import toggles
 from corehq.apps.accounting.downgrade import DomainDowngradeActionHandler
+from corehq.apps.accounting.utils import is_active_subscription
 from corehq.apps.users.models import WebUser
 from dimagi.utils.decorators.memoized import memoized
 
@@ -575,7 +576,7 @@ class Subscription(models.Model):
         today = datetime.date.today()
         new_start_date = today if self.date_start <= today else (date_start or self.date_start)
 
-        new_is_active = self.is_active
+        new_is_active = is_active_subscription(new_start_date, date_end)
         new_salesforce_contract_id = salesforce_contract_id \
             if salesforce_contract_id is not None else self.salesforce_contract_id
 
