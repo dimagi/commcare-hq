@@ -312,10 +312,6 @@ class SubscriptionForm(forms.Form):
                 'date_delay_invoicing': subscription.date_delay_invoicing,
             })
 
-        kwargs.update({
-            'is_active': is_active_subscription(kwargs.get('date_start'), kwargs.get('date_end')),
-        })
-
         new_plan_version = SoftwarePlanVersion.objects.get(id=self.cleaned_data['plan_version'])
 
         return subscription.change_plan(new_plan_version, **kwargs)
