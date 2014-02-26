@@ -3,9 +3,11 @@ from tastypie import fields
 from casexml.apps.case.models import CommCareCase
 
 from corehq.apps.cloudcare.api import get_filtered_cases, get_filters_from_request, api_closed_to_status
-from corehq.apps.api.resources.v0_1 import CustomResourceMeta
+from corehq.apps.api.resources.v0_1 import CustomResourceMeta, RequirePermissionAuthentication
 from corehq.apps.api.util import get_object_or_not_exist
 from corehq.apps.api.resources import JsonResource, DomainSpecificResourceMixin, dict_object
+from corehq.apps.users.models import Permissions
+
 
 class CommCareCaseResource(JsonResource, DomainSpecificResourceMixin):
     type = "case"
@@ -44,7 +46,8 @@ class CommCareCaseResource(JsonResource, DomainSpecificResourceMixin):
                                   filters=filters))
 
     class Meta(CustomResourceMeta):
-        object_class = CommCareCase    
+        authentication = RequirePermissionAuthentication(Permissions.edit_data)
+        object_class = CommCareCase
         resource_name = 'case'
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
