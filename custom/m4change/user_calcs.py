@@ -38,6 +38,40 @@ class PncFullImmunizationCalculator(fluff.Calculator):
                 yield[case.date_modified, 1]
             yield[case.date_modified, 0]
 
+class PncAttendanceWithin6WeeksCalculator(fluff.Calculator):
+
+    @fluff.date_emitter
+    def total(self, case):
+        date_delivery = case.date_delivery
+        for form in case.get_forms():
+            date_received_on = form.received_on
+            if form.xmlns in PNC_CHILD_IMMUNIZATION_AND_REG_HOME_DELIVERED_FORMS and (form.date_received_on - date_delivery) < 42:
+                yield [date_received_on, 1]
+            yield [date_received_on, 0]
+
+
+class Anc4VisitsCalculator(fluff.Calculator):
+
+    @fluff.date_emitter
+    def total(self, case):
+        visits = []
+        for form in case.get_forms():
+            if form.xmlns in BOOKING_AND_FOLLOW_UP_FORMS:
+                if form.received_on not in visits:
+                    visits.append(form.received_on)
+        if len(visits) >= 4:
+            yield [case.modified_on.date(), 1]
+
+
+class AncRegistrationCalculator(fluff.Calculator):
+
+    @fluff.date_emitter
+    def total(self, case):
+        dates = dict()
+        for form in case.get_forms():
+            if form.xmlns in BOOKING_FORMS:
+                yield [case.modified_on.date(), 1]
+        yield [case.modified_on.date(), 1]
 
 class AncAntenatalAttendanceCalculator(fluff.Calculator):
 

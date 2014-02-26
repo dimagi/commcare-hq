@@ -72,3 +72,16 @@ class ImmunizationHmisCaseFluff(fluff.IndicatorDocument):
     conjugate_csm = user_calcs.PncImmunizationCalculator("conjugate_csm")
 
 ImmunizationHmisCaseFluffPillow = ImmunizationHmisCaseFluff.pillow()
+
+
+class ProjectIndicatorsCaseFluff(fluff.IndicatorDocument):
+    document_class = CommCareCase
+    domains = ('m4change',)
+    group_by = ('domain',)
+    save_direct_to_sql = True
+
+    women_registered_anc = user_calcs.AncRegistrationCalculator()
+    women_having_4_anc_visits = user_calcs.Anc4VisitsCalculator()
+    women_delivering_within_6_weeks_attending_pnc = user_calcs.PncAttendanceWithin6WeeksCalculator()
+
+ProjectIndicatorsCaseFluffPillow = ProjectIndicatorsCaseFluff.pillow()
