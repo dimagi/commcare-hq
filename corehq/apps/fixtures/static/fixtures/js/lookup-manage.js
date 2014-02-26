@@ -132,7 +132,7 @@ $(function () {
                 }).success(function (response) {
                     $("#downloading").hide();
                     $("#download-complete").show();
-                    $("#file-download-url").attr("href", FixtureFileDownloadUrl + "path=" + response.path);
+                    $("#file-download-url").attr("href", FixtureFileDownloadUrl + "download_id=" + response.download_id);
                 });
             }
             
