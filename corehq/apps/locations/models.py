@@ -59,6 +59,10 @@ class Location(Document):
         ).all()])
         return (cls.wrap(l) for l in iter_docs(cls.get_db(), list(relevant_ids)))
 
+    @classmethod
+    def root_locations(cls, domain):
+        return root_locations(domain)
+
     @property
     def is_root(self):
         return not self.lineage
