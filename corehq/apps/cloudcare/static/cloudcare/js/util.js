@@ -85,7 +85,8 @@ var showSuccess = function (message, location, autoHideTime) {
 };
 
 var _show = function (message, location, autoHideTime, classes) {
-    var alert = $("<div />").addClass(classes).text(message);
+    var alert = $("<div />");
+    alert.addClass(classes).text(message);
     alert.append($("<a />").addClass("close").attr("data-dismiss", "alert").html("&times;"));
     location.append(alert);
     if (autoHideTime) {

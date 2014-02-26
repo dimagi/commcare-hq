@@ -8,3 +8,5 @@ PRBAC_DEMO = 'prbacdemo'
 ACCOUNTING_PREVIEW = 'accounting_preview'
 
 OFFLINE_CLOUDCARE = 'offline-cloudcare'
+
+REMINDERS_UI_PREVIEW = 'reminders_ui_preview'

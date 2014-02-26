@@ -122,9 +122,7 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
     project_type = CharField(label=ugettext_noop("Project Category"), required=True,
         help_text=ugettext_noop("e.g. MCH, HIV, etc."))
     license = ChoiceField(label=ugettext_noop("License"), required=True, choices=LICENSES.items(),
-        widget=Select(attrs={'class': 'input-xxlarge'}),
-        help_text=render_to_string('domain/partials/license_explanations.html',
-            {'extra': ugettext_noop("All un-licensed multimedia files in your project will be given this license")}))
+        widget=Select(attrs={'class': 'input-xxlarge'}))
     description = CharField(label=ugettext_noop("Long Description"), required=False, widget=forms.Textarea,
         help_text=ugettext_noop("A high-level overview of your project as a whole"))
     short_description = CharField(label=ugettext_noop("Short Description"), required=False,
@@ -138,8 +136,7 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
         help_text=ugettext_noop("An optional image to show other users your logo or what your app looks like"))
     video = CharField(label=ugettext_noop("Youtube Video"), required=False,
         help_text=ugettext_noop("An optional youtube clip to tell users about your app. Please copy and paste a URL to a youtube video"))
-    cda_confirmed = BooleanField(required=False, label=ugettext_noop("Content Distribution Agreement"),
-        help_text=render_to_string('domain/partials/cda_modal.html'))
+    cda_confirmed = BooleanField(required=False, label=ugettext_noop("Content Distribution Agreement"))
 
     def __init__(self, *args, **kw):
         super(SnapshotSettingsForm, self).__init__(*args, **kw)
@@ -154,6 +151,13 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
             'share_reminders',
             'license',
             'cda_confirmed',]
+        self.fields['license'].help_text = \
+            render_to_string('domain/partials/license_explanations.html', {
+                'extra': _("All un-licensed multimedia files in "
+                           "your project will be given this license")
+            })
+        self.fields['cda_confirmed'].help_text = \
+            render_to_string('domain/partials/cda_modal.html')
 
     def clean_cda_confirmed(self):
         data_cda = self.cleaned_data['cda_confirmed']
@@ -269,6 +273,25 @@ class DomainGlobalSettingsForm(forms.Form):
                     "active development. Do not enable for your domain unless "
                     "you\'re actively piloting it.")
     )
+    logo = ImageField(
+        label=_("Custom Logo"),
+        required=False,
+        help_text=_("Upload a custom image to display instead of the "
+                    "CommCare HQ logo.  It will be automatically resized to "
+                    "a height of 32 pixels.")
+    )
+    delete_logo = BooleanField(
+        label=_("Delete Logo"),
+        required=False,
+        help_text=_("Delete your custom logo and use the standard one.")
+    )
+
+    def __init__(self, can_use_custom_logo=False, *args, **kwargs):
+        super(DomainGlobalSettingsForm, self).__init__(*args, **kwargs)
+        self.can_use_custom_logo = can_use_custom_logo
+        if not self.can_use_custom_logo:
+            del self.fields['logo']
+            del self.fields['delete_logo']
 
     def clean_default_timezone(self):
         data = self.cleaned_data['default_timezone']
@@ -278,6 +301,22 @@ class DomainGlobalSettingsForm(forms.Form):
 
     def save(self, request, domain):
         try:
+            if self.can_use_custom_logo:
+                logo = self.cleaned_data['logo']
+                if logo:
+
+                    input_image = Image.open(io.BytesIO(logo.read()))
+                    input_image.load()
+                    input_image.thumbnail(LOGO_SIZE)
+                    # had issues trying to use a BytesIO instead
+                    tmpfilename = "/tmp/%s_%s" % (uuid.uuid4(), logo.name)
+                    input_image.save(tmpfilename, 'PNG')
+
+                    with open(tmpfilename) as tmpfile:
+                        domain.put_attachment(tmpfile, name=LOGO_ATTACHMENT)
+                elif self.cleaned_data['delete_logo']:
+                    domain.delete_attachment(LOGO_ATTACHMENT)
+
             global_tz = self.cleaned_data['default_timezone']
             domain.commtrack_enabled = self.cleaned_data.get('commtrack_enabled', False)
             domain.default_timezone = global_tz
@@ -379,18 +418,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
             "you are an advanced user."
         )
     )
-    logo = ImageField(
-        label=_("Custom Logo"),
-        required=False,
-        help_text=_("Upload a custom image to display instead of the "
-                    "CommCare HQ logo.  It will be automatically resized to "
-                    "a height of 32 pixels.")
-    )
-    delete_logo = BooleanField(
-        label=_("Delete Logo"),
-        required=False,
-        help_text=_("Delete your custom logo and use the standard one.")
-    )
     secure_submissions = BooleanField(
         label=_("Only accept secure submissions"),
         required=False,
@@ -399,7 +426,8 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
                     "must be using secure submissions."),
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, can_use_custom_logo=False, *args, **kwargs):
+        self.can_use_custom_logo = can_use_custom_logo
         user = kwargs.pop('user', None)
         domain = kwargs.pop('domain', None)
         super(DomainMetadataForm, self).__init__(*args, **kwargs)
@@ -457,21 +485,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         if not res:
             return False
         try:
-            logo = self.cleaned_data['logo']
-            if logo:
-
-                input_image = Image.open(io.BytesIO(logo.read()))
-                input_image.load()
-                input_image.thumbnail(LOGO_SIZE)
-                # had issues trying to use a BytesIO instead
-                tmpfilename = "/tmp/%s_%s" % (uuid.uuid4(), logo.name)
-                input_image.save(tmpfilename, 'PNG')
-               
-                with open(tmpfilename) as tmpfile:
-                    domain.put_attachment(tmpfile, name=LOGO_ATTACHMENT)
-            elif self.cleaned_data['delete_logo']:
-                domain.delete_attachment(LOGO_ATTACHMENT)
-
             domain.project_type = self.cleaned_data['project_type']
             domain.customer_type = self.cleaned_data['customer_type']
             domain.is_test = self.cleaned_data['is_test']
@@ -624,7 +637,8 @@ class EditBillingAccountInfoForm(forms.ModelForm):
         try:
             self.current_country = self.account.billingcontactinfo.country
         except Exception:
-            self.current_country = None
+            initial = kwargs.get('initial')
+            self.current_country = initial.get('country') if initial is not None else None
 
         try:
             kwargs['instance'] = self.account.billingcontactinfo
@@ -780,6 +794,9 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                     web_user=self.creating_user, adjustment_method=SubscriptionAdjustmentMethod.USER
                 )
                 subscription.is_active = True
+                if subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE:
+                    # this point can only be reached if the initiating user was a superuser
+                    subscription.do_not_invoice = True
                 subscription.save()
             return True
         except Exception:

@@ -13,7 +13,6 @@ class AncHmisReport(MonthYearMixin, CustomProjectReport, CaseListReport):
     emailable = False
     name = "Facility ANC HMIS Report"
     slug = "facility_anc_hmis_report"
-    base_template = "reports/report.html"
     default_rows = 25
 
     @property

@@ -47,7 +47,7 @@ class Beneficiary(object):
             return case.get_case_property(property)
 
         account = case_data('bank_account_number')
-        self.account_number = str(account) if account else ''
+        self.account_number = unicode(account) if account else ''
 
         # fake cases will have accounts beginning with 111
         if re.match(r'^111', self.account_number):

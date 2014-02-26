@@ -161,6 +161,11 @@ class BillingAccountForm(forms.Form):
         contact_info.save()
 
 
+def is_active_subscription(date_start, date_end):
+    today = datetime.date.today()
+    return (date_start is None or date_start <= today) and (date_end is None or today <= date_end)
+
+
 class SubscriptionForm(forms.Form):
     account = forms.ChoiceField(label=_("Billing Account"))
     start_date = forms.DateField(label="Start Date", widget=forms.DateInput())
@@ -267,7 +272,7 @@ class SubscriptionForm(forms.Form):
         date_end = self.cleaned_data['end_date']
         date_delay_invoicing = self.cleaned_data['delay_invoice_until']
         salesforce_contract_id = self.cleaned_data['salesforce_contract_id']
-        is_active = (date_start == datetime.date.today())
+        is_active = is_active_subscription(date_start, date_end)
         do_not_invoice = self.cleaned_data['do_not_invoice']
         return Subscription.new_domain_subscription(account, domain, plan_version,
                                                     date_start=date_start,
@@ -306,6 +311,10 @@ class SubscriptionForm(forms.Form):
             kwargs.update({
                 'date_delay_invoicing': subscription.date_delay_invoicing,
             })
+
+        kwargs.update({
+            'is_active': is_active_subscription(kwargs.get('date_start'), kwargs.get('date_end')),
+        })
 
         new_plan_version = SoftwarePlanVersion.objects.get(id=self.cleaned_data['plan_version'])
 

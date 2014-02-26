@@ -16,6 +16,13 @@
                             <h4>{{ plan.name }}</h4>
                             <p><i class="icon-info-sign"></i> {{ plan.description }}</p>
                         </div>
+                        {% if plan.is_dimagi_subscription %}
+                            <div class="alert alert-info">
+                            {% blocktrans %}
+                                <strong>Note:</strong> This is a Dimagi-owned subscription.
+                            {% endblocktrans %}
+                            </div>
+                        {% endif %}
                         <a class="btn btn-primary" style="margin-top:10px;" href="{{ change_plan_url }}">
                             {% trans "Change Plan" %}
                         </a>

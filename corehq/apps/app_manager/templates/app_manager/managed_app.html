@@ -132,7 +132,9 @@
             </a>
         </li>
         <li class="divider"></li>
-        <li {% if not module and not form and not release_manager %}class="app-name-div active"{% endif %}>
+        <li {% if not module and not form and not release_manager %}class="app-name-div
+                {% if not copy_app_form or not copy_app_form.is_bound %}active{% endif %}"
+            {% endif %}>
             <a href="{% url "view_app" domain app.id %}?edit={{ edit|BOOL }}#app-settings" data-toggle="tab">
                 <i class="icon-cog"></i>
                 {% trans "Settings" %}
@@ -288,7 +290,7 @@
                              <div class="modal-body">
                                  <input type="hidden" name="module_type" value="careplan" />
                                  <div class="control-group">
-                                     <label class="control-label" for="target_module_id">{% trans "Select the target module for the careplan" %}</label>
+                                     <label class="control-label" for="target_module_id">{% trans "Select the module to attach the careplan to" %}</label>
                                      <div class="controls">
                                          <select name="target_module_id" class="input">
                                              {% for module in app.get_modules %}
@@ -323,7 +325,7 @@
     {% endif %}
     {% if edit %}
         <li class="nav-header">Actions</li>
-        <li>
+        <li class="app-name-div{% if copy_app_form and copy_app_form.is_bound %} active{% endif %}">
             <a href="{% url "view_app" domain app.id %}copy/?edit={{ edit|BOOL }}#copy" data-toggle="tab">
                 <i class="icon-copy"></i>
                 {% trans "Copy Application" %}
