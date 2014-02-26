@@ -1,12 +1,13 @@
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
+
 from corehq.apps.locations.models import Location
-from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.fields import AsyncLocationField
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin
 from corehq.apps.reports.standard.cases.basic import CaseListReport
+from custom.m4change.reports.reports import M4ChangeReport
 from custom.m4change.reports.sql_data import AncHmisCaseSqlData
 from custom.m4change.constants import DOMAIN
 
@@ -21,7 +22,8 @@ def __get_row__(row_data, form_data, key):
                                           + rows.get("attendance_after_20_weeks_total")
     return rows
 
-class AncHmisReport(MonthYearMixin, CustomProjectReport, CaseListReport, ReportDataSource):
+
+class AncHmisReport(MonthYearMixin, CustomProjectReport, CaseListReport, M4ChangeReport):
     ajax_pagination = False
     asynchronous = True
     exportable = True
@@ -36,7 +38,31 @@ class AncHmisReport(MonthYearMixin, CustomProjectReport, CaseListReport, ReportD
         YearFilter
     ]
 
-    def __get_initial_row_data__(self):
+    @classmethod
+    def get_report_data(cls, config):
+        if 'location_id' not in config:
+            raise KeyError(_("Parameter 'location_id' is missing"))
+        if 'datespan' not in config:
+            raise KeyError(_("Parameter 'datespan' is missing"))
+
+        location_id = config.get('location_id', None)
+        form_sql_data = AncHmisCaseSqlData(domain=DOMAIN, datespan=config.get('datespan', None))
+        form_data = form_sql_data.data
+        top_location = Location.get(location_id)
+        locations = [top_location.get_id] + [descendant.get_id for descendant in top_location.descendants]
+        row_data = AncHmisReport.get_initial_row_data()
+
+        for location_id in locations:
+            key = (DOMAIN, location_id)
+            if key in form_sql_data.data:
+                report_rows = __get_row__(row_data, form_data, key)
+                for key in report_rows:
+                    row_data.get(key)["value"] += report_rows.get(key)
+        return row_data
+
+
+    @classmethod
+    def get_initial_row_data(self):
         return {
             "attendance_total": {
                 "hmis_code": "03", "label": _("Antenatal Attendance - Total"), "value": 0
@@ -97,20 +123,10 @@ class AncHmisReport(MonthYearMixin, CustomProjectReport, CaseListReport, ReportD
 
     @property
     def rows(self):
-        location_id = self.request.GET.get('location_id', None)
-        self.form_sql_data = AncHmisCaseSqlData(domain=DOMAIN,
-                                                datespan=self.datespan)
-        form_data = self.form_sql_data.data
-        top_location = Location.get(location_id)
-        locations = [top_location.get_id] + [descendant.get_id for descendant in top_location.descendants]
-        row_data = self.__get_initial_row_data__()
-
-        for location_id in locations:
-            key = (DOMAIN, location_id)
-            if key in self.form_sql_data.data:
-                report_rows = __get_row__(row_data, form_data, key)
-                for key in report_rows:
-                    row_data.get(key)["value"] += report_rows.get(key)
+        row_data = AncHmisReport.get_report_data({
+            'location_id': self.request.GET.get('location_id', None),
+            'datespan': self.datespan
+        })
 
         for key in row_data:
             yield [
@@ -118,7 +134,6 @@ class AncHmisReport(MonthYearMixin, CustomProjectReport, CaseListReport, ReportD
                 row_data.get(key).get("label"),
                 row_data.get(key).get("value")
             ]
-
 
     @property
     @memoized
