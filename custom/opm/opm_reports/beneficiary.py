@@ -59,7 +59,7 @@ class Beneficiary(object):
             return getattr(self.fluff_doc, attr, '')
 
         account = fluff_attr('account_number')
-        self.account_number = str(account) if account else ''
+        self.account_number = unicode(account) if account else ''
         # fake cases will have accounts beginning with 111
         if re.match(r'^111', self.account_number):
             raise InvalidRow
