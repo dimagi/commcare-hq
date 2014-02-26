@@ -3,13 +3,7 @@ Fluff calculators that pertain to specific cases/beneficiaries (mothers)
 These are used in the Incentive Payment Report
 """
 import re
-from datetime import datetime, date, timedelta
-
-from couchdbkit.exceptions import ResourceNotFound
-from corehq.apps.fixtures.models import FixtureDataItem
-
 from .constants import *
-from .models import OpmCaseFluff, OpmUserFluff, OpmFormFluff
 
 
 class Beneficiary(object):

@@ -4,7 +4,6 @@ Takes a CommCareUser and points to the appropriate fluff indicators
 for each field.
 """
 
-from ..opm_tasks.models import OpmReportSnapshot
 from .constants import *
 
 class Worker(object):

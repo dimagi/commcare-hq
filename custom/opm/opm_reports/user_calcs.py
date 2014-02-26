@@ -2,8 +2,6 @@
 Fluff calculators that pertain to specific users (workers).
 These are used in the Incentive Payment Report
 """
-import datetime
-
 import fluff
 from couchforms.models import XFormInstance
 from corehq.apps.users.models import CommCareUser, CommCareCase

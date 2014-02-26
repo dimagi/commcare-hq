@@ -4,7 +4,7 @@ These are used in the Beneficiary Payment Report
 """
 import datetime
 
-from corehq.apps.users.models import CommCareUser, CommCareCase
+from corehq.apps.users.models import CommCareCase
 import fluff
 
 from .constants import *
