@@ -1,6 +1,6 @@
 from collections import defaultdict
 
-from django.core.urlresolvers import NoReverseMatch, reverse
+from django.core.urlresolvers import reverse
 from django.http import HttpResponseForbidden, HttpResponse, HttpResponseBadRequest
 from tastypie import fields
 from tastypie.bundle import Bundle
@@ -19,7 +19,7 @@ from corehq.apps.receiverwrapper.models import Repeater, repeater_types
 from corehq.apps.groups.models import Group
 from corehq.apps.cloudcare.api import ElasticCaseQuery
 from corehq.apps.users.util import format_username
-from corehq.apps.users.models import CouchUser, CommCareUser, Permissions
+from corehq.apps.users.models import CouchUser, Permissions
 
 from corehq.apps.api.resources import v0_1, v0_3, JsonResource, DomainSpecificResourceMixin, dict_object, SimpleSortableResourceMixin
 from corehq.apps.api.es import XFormES, CaseES, ESQuerySet, es_search
@@ -399,9 +399,10 @@ class HOPECaseResource(CommCareCaseResource):
         if 'size' in query:
             del query['size']
 
-        return ESQuerySet(payload = query,
-                          model = HOPECase,
-                          es_client = self.case_es(domain)).order_by('server_modified_on') # Not that CaseES is used only as an ES client, for `run_query` against the proper index
+        # Note that CaseES is used only as an ES client, for `run_query` against the proper index
+        return ESQuerySet(payload=query,
+                          model=HOPECase,
+                          es_client=self.case_es(domain)).order_by('server_modified_on')
 
     class Meta(CommCareCaseResource.Meta):
         resource_name = 'hope-case'
