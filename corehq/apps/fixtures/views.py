@@ -35,6 +35,9 @@ from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 from dimagi.utils.decorators.view import get_file
 
+from soil import CachedDownload, DownloadBase
+from soil.util import expose_download
+
 
 require_can_edit_fixtures = lambda *args, **kwargs: (
     require_permission(Permissions.edit_data)(
@@ -323,15 +326,22 @@ def download_item_lists(request, domain, html_response=False):
     with os.fdopen(fd, 'w') as temp:
         export_raw(tuple(header_groups), tuple(value_groups), temp)
     format = Format.XLS_2007
-    return json_response({"path": path})
+
+    fl = open(path, 'r')
+    fileref = expose_download(
+        fl.read(),
+        60 * 10,
+        mimetype=Format.from_format(format).mimetype,
+        content_disposition='attachment; filename="%s_fixtures.xlsx"' % domain,
+    )
+    return json_response({"download_id": fileref.download_id})
 
 @require_can_edit_fixtures
 def download_file(request, domain):
-    path = request.GET.get("path")
-    format = Format.XLS_2007
+    download_id = request.GET.get("download_id")
     try:
-        response = export_response(open(path), format, "%s_fixtures" % domain)
-        return response
+        dw = CachedDownload.get(download_id)
+        return dw.toHttpResponse()
     except IOError:
         notify_exception(request)
         messages.error(request, _("Sorry, Something went wrong with your download! Please try again. If you see this repeatedly please report an issue "))
