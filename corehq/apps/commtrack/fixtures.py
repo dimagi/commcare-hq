@@ -1,13 +1,10 @@
 from xml.etree import ElementTree
-from corehq import Domain
 from .models import Product
 
 
 def product_fixture_generator(user, version, last_sync):
-    if not user.domain:
-        return []
-    domain = Domain.get_by_name(user.domain)
-    if not domain or not Domain.get_by_name(user.domain).commtrack_enabled:
+    project = user.project
+    if not project or not project.commtrack_enabled:
         return []
 
     root = ElementTree.Element('fixture',

@@ -18,13 +18,7 @@ def hq_fixtures(user, version, last_sync):
 
 
 def item_lists(user, version, last_sync):
-    if isinstance(user, CommCareUser):
-        pass
-    elif hasattr(user, "_hq_user") and user._hq_user is not None:
-        user = user._hq_user
-    else:
-        return []
-
+    assert isinstance(user, CommCareUser)
     all_types = dict([(t._id, t) for t in FixtureDataType.by_domain(user.domain)])
     global_types = dict([(id, t) for id, t in all_types.items() if t.is_global])
 

@@ -1237,6 +1237,11 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                             (self.username, str(result[1]))
                 )
 
+    @property
+    @memoized
+    def project(self):
+        return Domain.get_by_name(self.domain)
+
     def is_domain_admin(self, domain=None):
         # cloudcare workaround
         return False
