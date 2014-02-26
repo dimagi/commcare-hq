@@ -64,6 +64,7 @@ class Command(BaseCommand):
                 SoftwarePlanEdition.STANDARD,
                 SoftwarePlanEdition.PRO,
                 SoftwarePlanEdition.ADVANCED,
+                SoftwarePlanEdition.ENTERPRISE,
             ]
             self.feature_types = [f[0] for f in FeatureType.CHOICES]
             self.ensure_plans(dry_run=dry_run)
@@ -114,23 +115,25 @@ class Command(BaseCommand):
                     name='%s Edition' % product.name, edition=edition, visibility=SoftwarePlanVisibility.PUBLIC
                 )
                 if dry_run:
-                    logging.info("[DRY RUN] Creating Software Plan: %s" % software_plan)
+                    logging.info("[DRY RUN] Creating Software Plan: %s" % software_plan.name)
                 else:
                     try:
                         software_plan = SoftwarePlan.objects.get(name=software_plan.name)
                         logging.info("Plan '%s' already exists. Using existing plan to add version."
                                      % software_plan.name)
-                    except ObjectDoesNotExist:
+                    except SoftwarePlan.DoesNotExist:
                         software_plan.save()
-                        logging.info("Creating Software Plan: %s" % software_plan)
+                        logging.info("Creating Software Plan: %s" % software_plan.name)
 
-                    software_plan_version.plan = software_plan
-                    software_plan_version.save()
-                    for product_rate in product_rates:
-                        software_plan_version.product_rates.add(product_rate)
-                    for feature_rate in feature_rates:
-                        software_plan_version.feature_rates.add(feature_rate)
-                    software_plan_version.save()
+                        software_plan_version.plan = software_plan
+                        software_plan_version.save()
+                        for product_rate in product_rates:
+                            product_rate.save()
+                            software_plan_version.product_rates.add(product_rate)
+                        for feature_rate in feature_rates:
+                            feature_rate.save()
+                            software_plan_version.feature_rates.add(feature_rate)
+                        software_plan_version.save()
 
                 default_product_plan = DefaultProductPlan(product_type=product.product_type, edition=edition)
                 if dry_run:
@@ -155,6 +158,8 @@ class Command(BaseCommand):
         logging.info('Ensuring Products and Product Rates')
 
         product = SoftwareProduct(name='%s %s' % (product_type, edition), product_type=product_type)
+        if edition == SoftwarePlanEdition.ENTERPRISE:
+            product.name = "Dimagi Only %s" % product.name
 
         product_rates = []
         BOOTSTRAP_PRODUCT_RATES = {
@@ -170,6 +175,9 @@ class Command(BaseCommand):
             SoftwarePlanEdition.ADVANCED: [
                 SoftwareProductRate(monthly_fee=Decimal('1000.00')),
             ],
+            SoftwarePlanEdition.ENTERPRISE: [
+                SoftwareProductRate(monthly_fee=Decimal('0.00')),
+            ],
         }
 
         for product_rate in BOOTSTRAP_PRODUCT_RATES[edition]:
@@ -180,12 +188,11 @@ class Command(BaseCommand):
                 try:
                     product = SoftwareProduct.objects.get(name=product.name)
                     logging.info("Product '%s' already exists. Using existing product to add rate." % product.name)
-                except ObjectDoesNotExist:
+                except SoftwareProduct.DoesNotExist:
                     product.save()
                     logging.info("Creating Product: %s" % product)
-                product_rate.product = product
-                product_rate.save()
                 logging.info("Corresponding product rate of $%d created." % product_rate.monthly_fee)
+            product_rate.product = product
             product_rates.append(product_rate)
         return product, product_rates
 
@@ -199,6 +206,8 @@ class Command(BaseCommand):
         for edition in self.editions:
             for feature_type in self.feature_types:
                 feature = Feature(name='%s %s' % (feature_type, edition), feature_type=feature_type)
+                if edition == SoftwarePlanEdition.ENTERPRISE:
+                    feature.name = "Dimagi Only %s" % feature.name
                 if dry_run:
                     logging.info("[DRY RUN] Creating Feature: %s" % feature)
                 else:
@@ -235,14 +244,17 @@ class Command(BaseCommand):
                 FeatureType.USER: FeatureRate(monthly_limit=1000, per_excess_fee=Decimal('1.00')),
                 FeatureType.SMS: FeatureRate(monthly_limit=1000),
             },
+            SoftwarePlanEdition.ENTERPRISE: {
+                FeatureType.USER: FeatureRate(monthly_limit=-1, per_excess_fee=Decimal('0.00')),
+                FeatureType.SMS: FeatureRate(monthly_limit=-1),
+            },
         }
         for feature in features:
             feature_rate = BOOTSTRAP_FEATURE_RATES[edition][feature.feature_type]
+            feature_rate.feature = feature
             if dry_run:
                 logging.info("[DRY RUN] Creating rate for feature '%s': %s" % (feature.name, feature_rate))
             else:
-                feature_rate.feature = feature
-                feature_rate.save()
                 logging.info("Creating rate for feature '%s': %s" % (feature.name, feature_rate))
             feature_rates.append(feature_rate)
         return feature_rates
@@ -252,6 +264,7 @@ class Command(BaseCommand):
         SoftwarePlanEdition.STANDARD: 'standard_plan_v0',
         SoftwarePlanEdition.PRO: 'pro_plan_v0',
         SoftwarePlanEdition.ADVANCED: 'advanced_plan_v0',
+        SoftwarePlanEdition.ENTERPRISE: 'enterprise_plan_v0',
     }
 
 

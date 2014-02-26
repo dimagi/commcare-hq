@@ -793,20 +793,27 @@ class SuiteGenerator(object):
         from corehq.apps.app_manager.models import CareplanModule
         for module in self.modules:
             if isinstance(module, CareplanModule):
-                parent = self.get_module_by_id(module.parent_select.module_id)
-                create_goal_form = module.get_form_by_type(CAREPLAN_GOAL, 'create')
-                create_menu = Menu(
-                    id=self.id_strings.menu(parent),
-                    locale_id=self.id_strings.module_locale(parent),
-                )
-                create_menu.commands.append(Command(id=self.id_strings.form_command(create_goal_form)))
-                yield create_menu
-
                 update_menu = Menu(
                     id=self.id_strings.menu(module),
-                    root=self.id_strings.menu(parent),
                     locale_id=self.id_strings.module_locale(module),
                 )
+
+                if not module.display_separately:
+                    parent = self.get_module_by_id(module.parent_select.module_id)
+                    create_goal_form = module.get_form_by_type(CAREPLAN_GOAL, 'create')
+                    create_menu = Menu(
+                        id=self.id_strings.menu(parent),
+                        locale_id=self.id_strings.module_locale(parent),
+                    )
+                    create_menu.commands.append(Command(id=self.id_strings.form_command(create_goal_form)))
+                    yield create_menu
+
+                    update_menu.root = self.id_strings.menu(parent)
+                else:
+                    update_menu.commands.extend([
+                        Command(id=self.id_strings.form_command(module.get_form_by_type(CAREPLAN_GOAL, 'create'))),
+                    ])
+
                 update_menu.commands.extend([
                     Command(id=self.id_strings.form_command(module.get_form_by_type(CAREPLAN_GOAL, 'update'))),
                     Command(id=self.id_strings.form_command(module.get_form_by_type(CAREPLAN_TASK, 'create'))),

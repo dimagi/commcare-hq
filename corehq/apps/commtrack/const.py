@@ -1,27 +1,20 @@
-from casexml.apps.stock import const as stockconst
-
 COMMTRACK_USERNAME = 'commtrack-system'
 
 COMMTRACK_SUPPLY_POINT_XMLNS = 'http://commtrack.org/supply_point'
 
 META_XMLNS = 'http://openrosa.org/jr/xforms'
 
-def is_commtrack_form(form):
-    return form.xmlns in [
-        COMMTRACK_SUPPLY_POINT_XMLNS,
-        # xml with COMMTRACK_REPORT_XMLNS can now be embedded in any xform
-        # COMMTRACK_REPORT_XMLNS,
-    ]
+
+def is_supply_point_form(form):
+    return form.xmlns == COMMTRACK_SUPPLY_POINT_XMLNS
 
 
 SUPPLY_POINT_CASE_TYPE = 'supply-point'
 REQUISITION_CASE_TYPE = 'commtrack-requisition'
 FULFILLMENT_CASE_TYPE = 'commtrack-fulfillment'
+RECEIVED_CASE_TYPE = 'commtrack-received'
 ORDER_CASE_TYPE = 'commtrack-order'
 
-# TODO eliminate
-SUPPLY_POINT_PRODUCT_CASE_TYPE = 'supply-point-product' 
-COMMTRACK_SUPPLY_POINT_PRODUCT_XMLNS = 'http://openrosa.org/commtrack/supply_point_product'
 
 def is_commtrack_case(case):
     return case.type in [
@@ -50,7 +43,7 @@ StockActions = enum(
 RequisitionActions = enum(
     REQUEST='request',
     APPROVAL='approval',
-    PACK='pack',
+    FULFILL='fulfill',
     RECEIPTS='requisition-receipts',
 )
 
@@ -58,7 +51,7 @@ RequisitionActions = enum(
 ORDERED_REQUISITION_ACTIONS = (
     RequisitionActions.REQUEST,
     RequisitionActions.APPROVAL,
-    RequisitionActions.PACK,
+    RequisitionActions.FULFILL,
     RequisitionActions.RECEIPTS,
 )
 
@@ -73,7 +66,7 @@ class UserRequisitionRoles(object):
         return {
             RequisitionActions.REQUEST: cls.REQUESTER,
             RequisitionActions.APPROVAL: cls.APPROVER,
-            RequisitionActions.PACK: cls.SUPPLIER,
+            RequisitionActions.FULFILL: cls.SUPPLIER,
             RequisitionActions.RECEIPTS: cls.RECEIVER,
         }[action_type]
 
@@ -82,11 +75,11 @@ class RequisitionStatus(object):
     """a const for our requisition status choices"""
     REQUESTED = "requested"
     APPROVED = "approved"
-    PACKED = "packed"
+    FULFILLED = "fulfilled"
     RECEIVED = "received"
     CANCELED = "canceled"
-    CHOICES = [REQUESTED, APPROVED, PACKED, RECEIVED, CANCELED]
-    CHOICES_PENDING = [REQUESTED, APPROVED, PACKED]
+    CHOICES = [REQUESTED, APPROVED, FULFILLED, RECEIVED, CANCELED]
+    CHOICES_PENDING = [REQUESTED, APPROVED, FULFILLED]
     CHOICES_CLOSED = [RECEIVED, CANCELED]
 
     @classmethod
@@ -94,7 +87,7 @@ class RequisitionStatus(object):
         return {
             RequisitionActions.REQUEST: cls.REQUESTED,
             RequisitionActions.APPROVAL: cls.APPROVED,
-            RequisitionActions.PACK: cls.PACKED,
+            RequisitionActions.FULFILL: cls.FULFILLED,
             RequisitionActions.RECEIPTS: cls.RECEIVED,
         }[type]
 
@@ -103,7 +96,7 @@ class RequisitionStatus(object):
         return {
             cls.REQUESTED: RequisitionActions.REQUEST,
             cls.APPROVED: RequisitionActions.APPROVAL,
-            cls.PACKED: RequisitionActions.PACK,
+            cls.FULFILLED: RequisitionActions.FULFILL,
             cls.RECEIVED: RequisitionActions.RECEIPTS,
         }[status]
 
@@ -113,3 +106,12 @@ def get_commtrack_user_id(domain):
     return COMMTRACK_USERNAME
 
 USER_LOCATION_OWNER_MAP_TYPE = 'user-owner-mapping-case'
+
+def notification_template(action):
+    # this had to be a method to do translations
+    from django.utils.translation import ugettext as _
+    return {
+        RequisitionActions.APPROVAL: _('{name} has requested the following supplies: {summary}. please respond "{keyword} {loc}" to approve.'),
+        RequisitionActions.FULFILL: _('{name} should be supplied with the following supplies: {summary}. please respond "{keyword} {loc}" to confirm the order.'),
+        RequisitionActions.RECEIPTS: _('your order of {summary} is ready to be picked up. please respond with a "{keyword}" message to report receipts.'),
+    }[action]

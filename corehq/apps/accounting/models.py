@@ -8,8 +8,10 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+from corehq import toggles
 from corehq.apps.accounting.downgrade import DomainDowngradeActionHandler
 from corehq.apps.users.models import WebUser
+from dimagi.utils.decorators.memoized import memoized
 
 from django_prbac.models import Role
 from dimagi.utils.couch.database import SafeSaveDocument
@@ -17,6 +19,7 @@ from dimagi.utils.couch.database import SafeSaveDocument
 from corehq.apps.accounting.exceptions import (CreditLineError, AccountingError, SubscriptionAdjustmentError,
                                                SubscriptionDowngradeError, NewSubscriptionError)
 from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES, assure_domain_instance, get_change_status
+import toggle
 
 global_logger = logging.getLogger(__name__)
 integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
@@ -161,6 +164,7 @@ class BillingAccountAdmin(models.Model):
         admin = account.billing_admins.filter(web_user=web_user.username)
         return admin.count() > 0, account
 
+
 class BillingAccount(models.Model):
     """
     The key model that links a Subscription to its financial source and methods of payment.
@@ -179,6 +183,7 @@ class BillingAccount(models.Model):
     billing_admins = models.ManyToManyField(BillingAccountAdmin, null=True)
     currency = models.ForeignKey(Currency, on_delete=models.PROTECT)
     is_auto_invoiceable = models.BooleanField(default=False)
+    date_confirmed_extra_charges = models.DateTimeField(null=True, blank=True)
     account_type = models.CharField(
         max_length=25,
         default=BillingAccountType.CONTRACT,
@@ -450,11 +455,36 @@ class SoftwarePlanVersion(models.Model):
                 pass
         desc.update({
             'monthly_fee': 'USD %s' % product.monthly_fee,
-            'rates': [{'name': FEATURE_TYPE_TO_NAME[r.feature.feature_type], 'included': r.monthly_limit}
+            'rates': [{'name': FEATURE_TYPE_TO_NAME[r.feature.feature_type],
+                       'included': 'Infinite' if r.monthly_limit == -1 else r.monthly_limit}
                       for r in self.feature_rates.all()],
             'edition': self.plan.edition,
         })
         return desc
+
+    @property
+    @memoized
+    def user_feature(self):
+        user_features = self.feature_rates.filter(feature__feature_type=FeatureType.USER)
+        try:
+            user_feature = user_features.order_by('monthly_limit')[0]
+            if not user_feature.monthly_limit == -1:
+                user_feature = user_features.order_by('-monthly_limit')[0]
+            return user_feature
+        except IndexError:
+            pass
+
+
+    @property
+    def user_limit(self):
+        if self.user_feature is not None:
+            return self.user_feature.monthly_limit
+        return -1
+
+    @property
+    def user_fee(self):
+        if self.user_feature is not None:
+            return "USD %d" % self.user_feature.per_excess_fee
 
 
 class SubscriberManager(models.Manager):
@@ -480,9 +510,21 @@ class Subscriber(models.Model):
             return "ORGANIZATION %s" % self.organization
         return "DOMAIN %s" % self.domain
 
-    def downgrade(self, new_plan_version, downgraded_privileges):
+    def downgrade(self, downgraded_privileges=None, new_plan_version=None, web_user=None):
+        # don't actually perform downgrades until march 1st.
+        if web_user is None or not toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, web_user):
+            return
+
         if self.organization is not None:
             raise SubscriptionDowngradeError("Only domain downgrades are possible.")
+
+        if new_plan_version is None:
+            new_plan_version = DefaultProductPlan.get_default_plan_by_domain(self.domain)
+
+        if downgraded_privileges is None:
+            downgraded_privileges = get_change_status(None, new_plan_version)[1]
+        if not downgraded_privileges:
+            return
 
         downgrade_handler = DomainDowngradeActionHandler(self.domain, new_plan_version, downgraded_privileges)
         if not downgrade_handler.get_response():
@@ -509,6 +551,7 @@ class Subscription(models.Model):
         today = datetime.date.today()
         if self.date_end is not None and today > self.date_end:
             raise SubscriptionAdjustmentError("The end date for this subscription already passed.")
+        self.subscriber.downgrade(web_user=web_user)
         self.date_end = today
         self.is_active = False
         self.save()
@@ -526,8 +569,8 @@ class Subscription(models.Model):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
         adjustment_reason, downgrades, upgrades = get_change_status(self.plan_version, new_plan_version)
-        if adjustment_reason == SubscriptionAdjustmentReason.DOWNGRADE:
-            self.subscriber.downgrade(new_plan_version, downgrades)
+        self.subscriber.downgrade(downgraded_privileges=downgrades, new_plan_version=new_plan_version,
+                                  web_user=web_user)
 
         today = datetime.date.today()
         new_start_date = today if self.date_start <= today else (date_start or self.date_start)
@@ -593,12 +636,20 @@ class Subscription(models.Model):
         """
         Returns SoftwarePlanVersion, Subscription for the given domain.
         """
-        domain = assure_domain_instance(domain)
+        domain_obj = assure_domain_instance(domain)
+        if domain_obj is None:
+            # need more info to troubleshoot this further
+            logging.error("Tried to fetch a subscription for a domain that was not properly located. "
+                          "Domain name is %s." % domain)
+            plan_version = DefaultProductPlan.objects.get(edition=SoftwarePlanEdition.COMMUNITY,
+                                                          product_type=SoftwareProductType.COMMCARE).plan.get_version()
+            return plan_version, None
+        domain = domain_obj
         subscriber = Subscriber.objects.safe_get(domain=domain.name, organization=None)
         plan_version, subscription = (cls._get_plan_by_subscriber(subscriber) if subscriber
                                       else cls.get_subscribed_plan_by_organization(domain.organization))
         if plan_version is None:
-            plan_version =  DefaultProductPlan.get_default_plan_by_domain(domain)
+            plan_version = DefaultProductPlan.get_default_plan_by_domain(domain)
         return plan_version, subscription
     
     @classmethod
@@ -622,9 +673,7 @@ class Subscription(models.Model):
         except (Subscription.DoesNotExist, IndexError):
             pass
 
-        downgrades = get_change_status(None, plan_version)[1]
-        if downgrades:
-            subscriber.downgrade(plan_version, downgrades)
+        subscriber.downgrade(new_plan_version=plan_version, web_user=web_user)
 
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
         subscription = Subscription(

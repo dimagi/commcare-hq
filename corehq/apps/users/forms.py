@@ -1,6 +1,8 @@
-from crispy_forms.bootstrap import FormActions
+from crispy_forms.bootstrap import FormActions, StrictButton
 from crispy_forms.helper import FormHelper
+from crispy_forms import layout as crispy
 from crispy_forms.layout import ButtonHolder, Div, Fieldset, HTML, Layout, Submit
+import datetime
 from django import forms
 from django.core.validators import EmailValidator, email_re
 from django.core.urlresolvers import reverse
@@ -9,6 +11,8 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from django.template.loader import get_template
 from django.template import Context
+from django_countries.countries import COUNTRIES
+from corehq.apps.domain.forms import EditBillingAccountInfoForm
 from corehq.apps.locations.models import Location
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
@@ -325,3 +329,71 @@ class CommtrackUserForm(forms.Form):
             loc = Location.get(location_id)
             commtrack_user.clear_locations()
             commtrack_user.add_location(loc)
+
+
+class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
+    confirm_product_agreement = forms.BooleanField(
+        required=True,
+    )
+
+    def __init__(self, account, domain, creating_user, data=None, *args, **kwargs):
+        super(ConfirmExtraUserChargesForm, self).__init__(account, domain, creating_user, data=data, *args, **kwargs)
+        self.fields['confirm_product_agreement'].label = _(
+            'I have read and agree to the <a href="%(pa_url)s" target="_blank">'
+            'Software Product Subscription Agreement</a>.'
+        ) % {'pa_url': reverse('product_agreement')}
+
+        from corehq.apps.users.views.mobile import ListCommCareUsersView
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _("Billing Administrators"),
+                crispy.Field('billing_admins', css_class='input-xxlarge'),
+            ),
+            crispy.Fieldset(
+                _("Basic Information"),
+                'company_name',
+                'first_name',
+                'last_name',
+                crispy.Field('emails', css_class='input-xxlarge'),
+                'phone_number',
+            ),
+            crispy.Fieldset(
+                 _("Mailing Address"),
+                'first_line',
+                'second_line',
+                'city',
+                'state_province_region',
+                'postal_code',
+                crispy.Field('country', css_class="input-large",
+                             data_countryname=dict(COUNTRIES).get(self.current_country, '')),
+            ),
+            crispy.Field('confirm_product_agreement'),
+            FormActions(
+                crispy.HTML(
+                    '<a href="%(user_list_url)s" class="btn">%(text)s</a>' % {
+                        'user_list_url': reverse(ListCommCareUsersView.urlname, args=[self.domain]),
+                        'text': _("Back to Mobile Workers List")
+                    }
+                ),
+                StrictButton(
+                    _("Confirm Billing Information"),
+                    type="submit",
+                    css_class='btn btn-primary disabled',
+                    disabled="disabled",
+                    css_id="submit-button-pa",
+                ),
+                crispy.HTML(
+                    '<p class="help-inline" id="submit-button-help-qa" style="vertical-align: '
+                    'top; margin-top: 5px; margin-bottom: 0px;">%s</p>' % _("Please agree to the Product Subscription "
+                                                                            "Agreement above before continuing.")
+                ),
+            ),
+        )
+
+    def save(self, commit=True):
+        account_save_success = super(ConfirmExtraUserChargesForm, self).save(commit=False)
+        if not account_save_success:
+            return False
+        self.account.date_confirmed_extra_charges = datetime.datetime.today()
+        self.account.save()
+        return True

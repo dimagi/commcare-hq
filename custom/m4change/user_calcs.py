@@ -1,3 +1,4 @@
+from datetime import datetime
 import fluff
 from custom.m4change.constants import BOOKING_FORMS, FOLLOW_UP_FORMS, BOOKING_AND_FOLLOW_UP_FORMS,\
     PNC_CHILD_IMMUNIZATION_AND_REG_HOME_DELIVERED_FORMS
@@ -8,6 +9,34 @@ def __update_value_for_date__(date, dates):
         dates[date] = 1
     else:
         dates[date] += 1
+
+
+class PncImmunizationCalculator(fluff.Calculator):
+    def __init__(self, value):
+        super(PncImmunizationCalculator, self).__init__()
+        self.immunization_given_value = value
+
+    @fluff.date_emitter
+    def total(self, case):
+        if case.type == "child":
+            if self.immunization_given_value in case.immunization_given:
+                return[case.date_modified, 1]
+            for form in case.get_forms():
+                if form.xmlns in PNC_CHILD_IMMUNIZATION_AND_REG_HOME_DELIVERED_FORMS and self.immunization_given_value in form.form.get("immunization_given", ""):
+                    return[case.date_modified, 1]
+            return[case.date_modified, 0]
+
+class PncFullImmunizationCalculator(fluff.Calculator):
+
+    @fluff.date_emitter
+    def total(self, case):
+        if case.type == "child":
+            full_immunization_values = ['opv_0', 'hep_b_0', 'bcg', 'opv_1', 'hep_b_1', 'penta_1', 'dpt_1',
+                                        'pcv_1', 'opv_2','hep_b_2', 'penta_2', 'dpt_2', 'pcv_2', 'opv_3', 'penta_3',
+                                        'dpt_3', 'pcv_3', 'measles_1', 'yellow_fever', 'measles_2', 'conjugate_csm']
+            if all(value in case.immunization_given for value in full_immunization_values):
+                return[case.date_modified, 1]
+            return[case.date_modified, 0]
 
 
 class AncAntenatalAttendanceCalculator(fluff.Calculator):
@@ -178,7 +207,7 @@ class PostnatalClinicVisitWithin1DayOfDeliveryCalculator(fluff.Calculator):
         if case.type == "child":
             date_modified = case.modified_on
             date_delivery = case.date_delivery
-            dt = date_modified - date_delivery
+            dt = date_modified - datetime.combine(date_delivery, datetime.min.time())
             for form in case.get_forms():
                 if form.xmlns in PNC_CHILD_IMMUNIZATION_AND_REG_HOME_DELIVERED_FORMS and dt.days <= 1:
                     __update_value_for_date__(form.received_on, dates)
@@ -194,7 +223,7 @@ class PostnatalClinicVisitWithin3DaysOfDeliveryCalculator(fluff.Calculator):
         if case.type == "child":
             date_modified = case.modified_on
             date_delivery = case.date_delivery
-            dt = date_modified - date_delivery
+            dt = date_modified - datetime.combine(date_delivery, datetime.min.time())
             for form in case.get_forms():
                 if form.xmlns in PNC_CHILD_IMMUNIZATION_AND_REG_HOME_DELIVERED_FORMS and dt.days <= 3:
                     __update_value_for_date__(form.received_on, dates)
@@ -210,7 +239,7 @@ class PostnatalClinicVisitGreaterEqual7DaysOfDeliveryCalculator(fluff.Calculator
         if case.type == "child":
             date_modified = case.modified_on
             date_delivery = case.date_delivery
-            dt = date_modified - date_delivery
+            dt = date_modified - datetime.combine(date_delivery, datetime.min.time())
             for form in case.get_forms():
                 if form.xmlns in PNC_CHILD_IMMUNIZATION_AND_REG_HOME_DELIVERED_FORMS and dt.days >= 7:
                     __update_value_for_date__(form.received_on, dates)

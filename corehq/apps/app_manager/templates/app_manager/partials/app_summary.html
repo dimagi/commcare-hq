@@ -22,11 +22,12 @@
                             <ol>
                                 {% for question in form.questions %}
                                     <li>
-                                        <span class="label">{{ question.tag }}</span> {{ question.label }}
+                                        <span class="label">{{ question.tag }}</span>
+                                        <span class="label label-info">{{ question.value }}</span> {{ question.label }}
                                         {% if question.options %}
                                             <ol>
                                                 {% for option in question.options %}
-                                                    <li>{{ option.label }}</li>
+                                                    <li><span class="label label-info">{{ option.value }}</span> {{ option.label }}</li>
                                                 {% endfor %}
                                             </ol>
                                         {% endif %}

@@ -315,12 +315,26 @@
 </section>
 {% if group_exports %}
 <section>
-    <h2>{% trans "Saved Export Files" %}</h2>
-    {% for group in group_exports %}
-    {% include "reports/partials/hqexport_group_table.html" %}
+    <h2>{% trans "Daily Saved Exports" %}</h2>
+    {% for exports in group_exports %}
+        {% include "reports/partials/hqexport_group_table.html" %}
     {% endfor %}
 </section>
 {% endif %}
+
+{# notify of a UI change #}
+{# added 2014-02-25, remove eventually #}
+{% if has_case_exports %}
+<div class="alert alert-info">
+    Looking for your saved case exports? They've been moved to the
+    <a href="{% url "data_interface_dispatcher" domain "case_export" %}">
+        Export Cases
+    </a>
+    page.
+</div>
+{% endif %}
+
+
 {% endif %}
 <section id="all-forms-metadata">
     <h2>{% trans "Export all Forms' Metadata" %}</h2>
@@ -340,7 +354,7 @@
 </section>
 
 </div>
-{% endblock %}
+{% endblock reportcontent %}
 
 {% block modals %}
 {{ block.super }}
