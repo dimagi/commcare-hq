@@ -227,11 +227,16 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         " You can select multiple users and groups.")
     is_cacheable = False
 
+    @classmethod
+    def ids_in_request(cls, request):
+        raw = request.REQUEST.get(cls.slug, '')
+        return raw.split(',') if raw else []
+
     @property
     @memoized
     def selected(self):
-        init = self.request.GET.get(self.slug, '')
-        if not init:
+        selected_ids = self.ids_in_request(self.request)
+        if not selected_ids:
             return [{
                 'id': '_all_mobile_workers',
                 'text': _("[All mobile workers]"),
@@ -241,7 +246,6 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         selected = []
         user_ids = []
         group_ids = []
-        selected_ids = init.split(',')
         for s_id in selected_ids:
             if s_id in basics:
                 selected.append((s_id, basics.get(s_id)))
@@ -294,7 +298,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
 
     @classmethod
     def pull_users_from_es(cls, domain, request, initial_query=None, **kwargs):
-        emws = request.GET.getlist('emw')
+        emws = cls.ids_in_request(request)
         user_ids = [u[3:] for u in filter(lambda s: s.startswith("u__"), emws)]
         group_ids = [g[3:] for g in filter(lambda s: s.startswith("g__"), emws)]
 
@@ -332,7 +336,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     @classmethod
     @memoized
     def pull_users_and_groups(cls, domain, request, simplified_users=False, combined=False, CommCareUser=CommCareUser):
-        emws = request.GET.getlist('emw')
+        emws = cls.ids_in_request(request)
 
         users = []
         user_ids = [u[3:] for u in filter(lambda s: s.startswith("u__"), emws)]
