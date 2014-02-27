@@ -413,11 +413,15 @@ OPENROSA_VERSION = "1.0"
 
 # OTA restore fixture generators
 FIXTURE_GENERATORS = [
+    "corehq.apps.fixtures.fixturegenerators.hq_fixtures",
+]
+
+HQ_FIXTURE_GENERATORS = [
     "corehq.apps.users.fixturegenerators.user_groups",
     "corehq.apps.fixtures.fixturegenerators.item_lists",
     "corehq.apps.reportfixtures.fixturegenerators.indicators",
     "custom.bihar.reports.indicators.fixtures.generator",
-    "corehq.apps.commtrack.models.product_fixture_generator",
+    "corehq.apps.commtrack.fixtures.product_fixture_generator",
 ]
 
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
