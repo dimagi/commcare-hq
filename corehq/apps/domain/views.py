@@ -1487,6 +1487,7 @@ class AdvancedCommTrackSettingsView(BaseCommTrackAdminView):
         if self.commtrack_settings_form.is_valid():
             data = self.commtrack_settings_form.cleaned_data
             self.commtrack_settings.use_auto_consumption = bool(data.get('use_auto_consumption'))
+            self.commtrack_settings.sync_location_fixtures = bool(data.get('sync_location_fixtures'))
 
             fields = ('emergency_level', 'understock_threshold', 'overstock_threshold')
             for field in fields:
