@@ -1,5 +1,6 @@
 from couchdbkit.ext.django.testrunner import CouchDbKitTestSuiteRunner
 from django.conf import settings
+from corehq.apps.accounting.generator import instantiate_accounting_for_tests, teardown_accounting_for_tests
 import settingshelper
 
 
@@ -39,7 +40,9 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
             setattr(settings, setting, value)
             print "set %s settting to %s" % (setting, value)
 
-        return super(HqTestSuiteRunner, self).setup_databases(**kwargs)
+        result = super(HqTestSuiteRunner, self).setup_databases(**kwargs)
+        instantiate_accounting_for_tests()
+        return result
 
     def run_tests(self, test_labels, extra_tests=None, **kwargs):
         if not test_labels:

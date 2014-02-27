@@ -5,11 +5,16 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.test import TestCase
 
 from corehq.apps.sms.models import INCOMING, OUTGOING
-from corehq.apps.smsbillables.models import (SmsGatewayFee, SmsGatewayFeeCriteria, SmsUsageFee, SmsUsageFeeCriteria,
-                                             SmsBillable)
+from corehq.apps.smsbillables.models import (
+    SmsGatewayFee, SmsGatewayFeeCriteria, SmsUsageFee, SmsUsageFeeCriteria,
+    SmsBillable,
+)
 from corehq.apps.accounting import generator, tasks, utils
-from corehq.apps.accounting.models import (Invoice, FeatureType, LineItem, Subscriber, DefaultProductPlan,
-                                           CreditAdjustment, CreditLine, SubscriptionAdjustment)
+from corehq.apps.accounting.models import (
+    Invoice, FeatureType, LineItem, Subscriber, DefaultProductPlan,
+    CreditAdjustment, CreditLine, SubscriptionAdjustment, SoftwareProductType,
+    SoftwarePlanEdition,
+)
 
 
 class BaseInvoiceTestCase(TestCase):
@@ -19,14 +24,17 @@ class BaseInvoiceTestCase(TestCase):
         self.billing_contact = generator.arbitrary_web_user()
         self.dimagi_user = generator.arbitrary_web_user(is_dimagi=True)
         self.currency = generator.init_default_currency()
-        self.account = generator.billing_account(self.dimagi_user, self.billing_contact)
+        self.account = generator.billing_account(
+            self.dimagi_user, self.billing_contact)
         self.domain = generator.arbitrary_domain()
 
-        generator.instantiate_subscribable_plans()
-        generator.instantiate_community_plans()
         self.subscription, self.subscription_length = generator.generate_domain_subscription_from_date(
             generator.get_start_date(), self.account, self.domain.name, min_num_months=self.min_subscription_length,
         )
+        self.community_plan = DefaultProductPlan.objects.get(
+            product_type=SoftwareProductType.COMMCARE,
+            edition=SoftwarePlanEdition.COMMUNITY
+        ).plan.get_version()
 
     def tearDown(self):
         self.billing_contact.delete()
@@ -40,7 +48,6 @@ class BaseInvoiceTestCase(TestCase):
         SubscriptionAdjustment.objects.all().delete()
         Invoice.objects.all().delete()
         generator.delete_all_subscriptions()
-        generator.delete_all_plans()
         generator.delete_all_accounts()
 
 
@@ -349,7 +356,7 @@ class TestUserLineItem(BaseInvoiceTestCase):
         self.assertIsNone(user_line_item.base_description)
         self.assertEqual(user_line_item.base_cost, Decimal('0.0000'))
 
-        num_to_charge = num_active - generator.MAX_COMMUNITY_USERS
+        num_to_charge = num_active - self.community_plan.user_limit
         self.assertIsNotNone(user_line_item.unit_description)
         self.assertEqual(user_line_item.quantity, num_to_charge)
         self.assertEqual(user_line_item.unit_cost, self.user_rate.per_excess_fee)
