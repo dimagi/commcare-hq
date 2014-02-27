@@ -3,10 +3,35 @@ $(function () {
     function log (x) {
         return x;
     }
+    function makeEditable(o) {
+        o.saveState = ko.observable('saved');
+        o.editing = ko.observable(false);
+        o.startEditing = function () {
+            o.editing(true);
+            try {
+                o._backup = o.serialize();
+            } catch (e) {
+
+            }
+        };
+        o.stopEdit = function () {
+            o.editing(false);
+        };
+        o.cancelEdit = function () {
+            o.editing(false);
+            o.cancel();
+        };
+        o.saveEdit = function () {
+            o.editing(false);
+            o.save();
+        };
+        return o;
+    }
     function makeDataType(o, app) {
         var self = ko.mapping.fromJS(o),
             raw_fields = self.fields();
-        self.fields = ko.observableArray();
+        self.fields = ko.observableArray([]);
+        makeEditable(self);
         self.view_link = ko.computed(function(){
             return TableViewUrl + "?table_id="+self._id();
         }, self);
@@ -19,11 +44,18 @@ $(function () {
             if (o) {
                 field = {
                     tag: ko.observable(o.tag),
+                    with_props: ko.observable(o.with_props),
+                    original_tag: o.tag,
+                    is_new: false,
+                    remove: ko.observable(false),
                     editing: ko.observable(false)
                 };
             } else {
                 field = {
                     tag: ko.observable(""),
+                    with_props: ko.observable(false),
+                    is_new: true,
+                    remove: ko.observable(false),
                     editing: ko.observable(true)
                 };
             }
@@ -40,20 +72,22 @@ $(function () {
                     }
                     if (noRepeats) {
                         var oldTag = field.tag;
-                        field.tag(tag);
+                        field.tag(tag);log(field);
                     }
                 }
             });
             self.fields.push(field);
         };
         for (var i = 0; i < raw_fields.length; i += 1) {
-            self.addField(undefined, undefined, {tag: raw_fields[i]});
+            var tag = raw_fields[i].field_name();
+            var with_props = (raw_fields[i].properties().length == 0) ? false : true; console.log(with_props);
+            self.addField(undefined, undefined, {tag: tag, with_props: with_props});
         }
 
         self.save = function () {
             $.ajax({
                 type: self._id() ? (self._destroy ? 'delete' : 'put') : 'post',
-                url: DataTypeUrl + (self._id() || ''),
+                url: UpdateTableUrl,
                 data: JSON.stringify(self.serialize()),
                 dataType: 'json',
                 success: function (data) {
@@ -72,8 +106,28 @@ $(function () {
                 view_link: self.view_link(),
                 fields: (function () {
                     var fields = [], i;
+                    console.log(self.fields());
                     for (i = 0; i < self.fields().length; i += 1) {
-                        fields.push(self.fields()[i].tag());
+                        var field = self.fields()[i];
+                        var patch; var patch_dict = new Object;
+                        if (field.is_new) {
+                            patch = {"is_new": 1};
+                            patch_dict[field.tag()] = patch;
+                        }
+                        else if (field.remove()) {
+                            patch = {"remove": 1};
+                            patch_dict[field.tag()] = patch;
+                        }
+                        else if (field.tag() !== field.original_tag){
+                            patch = {"update": field.tag()};
+                            patch_dict[field.original_tag] = patch;
+                        }
+                        else {
+                            patch = {};
+                            patch_dict[field.tag()] = patch;
+                        }
+                        console.log(patch_dict);
+                        fields.push(patch_dict);
                     }
                     return fields;
                 }())

@@ -113,6 +113,14 @@ def data_types(request, domain, data_type_id):
 
     return HttpResponseBadRequest()
 
+
+@require_can_edit_fixtures
+def update_tables(request, domain):
+    print "\n################\n"
+    print _to_kwargs(request)
+    return json_response({})
+
+
 @require_can_edit_fixtures
 def data_table(request, domain):
     sheets = download_item_lists(request, domain, html_response=True)
