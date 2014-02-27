@@ -1,7 +1,6 @@
 from collections import defaultdict
 import json
 import logging
-import toggle
 
 from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.http import Http404
@@ -48,7 +47,7 @@ class FormExportReportBase(ExportReport, DatespanMixin):
 
     @property
     def can_view_deid(self):
-        if toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, self.request.user.username):
+        if toggles.ACCOUNTING_PREVIEW.enabled(self.request.user.username):
             try:
                 ensure_request_has_privilege(self.request, privileges.DEIDENTIFIED_DATA)
             except PermissionDenied:

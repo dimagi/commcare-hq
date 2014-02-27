@@ -5,16 +5,15 @@ from django.contrib import messages
 from django.http import Http404, HttpResponse
 from django_prbac.decorators import requires_privilege
 from django_prbac.exceptions import PermissionDenied
-import toggle
 
 
 def is_accounting_previewer(request):
     return (
-        (hasattr(request, 'user') and toggle.shortcuts.toggle_enabled(
-            toggles.ACCOUNTING_PREVIEW, request.user.username))
-        or hasattr(request, 'domain') and toggle.shortcuts.toggle_enabled(
-            toggles.ACCOUNTING_PREVIEW, request.domain,
-            namespace=toggles.NAMESPACE_DOMAIN))
+        (hasattr(request, 'user') and toggles.ACCOUNTING_PREVIEW.enabled(request.user.username))
+        or hasattr(request, 'domain') and toggles.ACCOUNTING_PREVIEW.enabled(
+            request.domain,
+            namespace=toggles.NAMESPACE_DOMAIN)
+    )
 
 
 def require_billing_admin():

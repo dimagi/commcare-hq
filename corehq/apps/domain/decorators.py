@@ -16,7 +16,6 @@ from django_digest.decorators import httpdigest
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.models import Role
 from django_prbac.utils import ensure_request_has_privilege
-import toggle.shortcuts
 
 # CCHQ imports
 from corehq.apps.domain.models import Domain
@@ -35,7 +34,7 @@ def load_domain(req, domain):
     domain = Domain.get_by_name(domain_name)
     req.project = domain
     req.can_see_organization = True
-    if toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, req.user.username):
+    if toggles.ACCOUNTING_PREVIEW.enabled(req.user.username):
         try:
             ensure_request_has_privilege(req, privileges.CROSS_PROJECT_REPORTS)
         except PermissionDenied:

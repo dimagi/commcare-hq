@@ -72,7 +72,6 @@ from corehq.apps.app_manager.models import DETAIL_TYPES, import_app as import_ap
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST
 from django.contrib import messages
-from toggle import toggle_enabled
 
 logger = logging.getLogger(__name__)
 
@@ -402,7 +401,7 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
     else:
         context.update({
             'is_user_registration': is_user_registration,
-            'show_custom_ref': toggle_enabled(toggles.APP_BUILDER_CUSTOM_PARENT_REF, request.user.username),
+            'show_custom_ref': toggles.APP_BUILDER_CUSTOM_PARENT_REF.enabled(request.user.username),
         })
         return "app_manager/form_view.html", context
 
@@ -536,7 +535,7 @@ def paginate_releases(request, domain, app_id):
         wrapper=lambda x: SavedAppBuild.wrap(x['value']).to_saved_build_json(timezone),
     ).all()
     for app in saved_apps:
-        app['include_media'] = toggle_enabled(toggles.APP_BUILDER_INCLUDE_MULTIMEDIA_ODK, request.user.username)
+        app['include_media'] = toggles.APP_BUILDER_INCLUDE_MULTIMEDIA_ODK.enabled(request.user.username)
     return json_response(saved_apps)
 
 
@@ -710,9 +709,9 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
     context.update({
         'show_care_plan': (v2_app
                            and not (app and app.has_careplan_module)
-                           and toggle_enabled(toggles.APP_BUILDER_CAREPLAN, req.user.username)),
+                           and toggles.APP_BUILDER_CAREPLAN.enabled(req.user.username)),
         'show_commtrack': (v2_app
-                           and toggle_enabled(toggles.APP_BUILDER_COMMTRACK, req.user.username)),
+                           and toggles.APP_BUILDER_COMMTRACK.enabled(req.user.username)),
         'module': module,
         'form': form,
     })

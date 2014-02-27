@@ -6,7 +6,6 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
-import toggle
 
 require_can_edit_data = require_permission(Permissions.edit_data)
 
@@ -26,7 +25,7 @@ class DataInterfaceDispatcher(ProjectReportDispatcher):
         return super(DataInterfaceDispatcher, self).dispatch(request, *args, **kwargs)
 
     def permissions_check(self, report, request, domain=None, is_navigation_check=False):
-        if is_navigation_check and toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, request.user.username):
+        if is_navigation_check and toggles.ACCOUNTING_PREVIEW.enabled(request.user.username):
             from corehq.apps.reports.standard.export import DeidExportReport
             if report.split('.')[-1] in [DeidExportReport.__name__]:
                 try:
@@ -53,7 +52,7 @@ class EditDataInterfaceDispatcher(ReportDispatcher):
         return super(EditDataInterfaceDispatcher, self).dispatch(request, *args, **kwargs)
 
     def permissions_check(self, report, request, domain=None, is_navigation_check=False):
-        if is_navigation_check and toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, request.user.username):
+        if is_navigation_check and toggles.ACCOUNTING_PREVIEW.enabled(request.user.username):
             from corehq.apps.importer.base import ImportCases
             if report.split('.')[-1] in [ImportCases.__name__]:
                 try:

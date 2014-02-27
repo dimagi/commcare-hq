@@ -28,7 +28,6 @@ from corehq.apps.accounting.utils import LazyEncoder, fmt_feature_rate_dict, fmt
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq import toggles, privileges
 from django_prbac.decorators import requires_privilege_raise404
-from toggle.decorators import require_toggle
 
 
 @requires_privilege_raise404(privileges.ACCOUNTING_ADMIN)

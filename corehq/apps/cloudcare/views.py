@@ -23,7 +23,6 @@ from corehq.apps.cloudcare.api import look_up_app_json, get_cloudcare_apps, get_
 from dimagi.utils.parsing import string_to_boolean
 from django.conf import settings
 from corehq.apps.cloudcare import touchforms_api
-from toggle import toggle_enabled
 from touchforms.formplayer.api import DjangoAuth
 from django.core.urlresolvers import reverse
 from casexml.apps.phone.fixtures import generator
@@ -137,7 +136,7 @@ def cloudcare_main(request, domain, urlPath):
        "apps_raw": apps,
        "preview": preview,
        "maps_api_key": settings.GMAPS_API_KEY,
-       'offline_enabled': toggle_enabled(toggles.OFFLINE_CLOUDCARE, request.user.username),
+       'offline_enabled': toggles.OFFLINE_CLOUDCARE.enabled(request.user.username),
     }
     context.update(_url_context())
     return render(request, "cloudcare/cloudcare_home.html", context)

@@ -3,7 +3,6 @@ import json
 import re
 import urllib
 from corehq.apps.accounting.decorators import requires_privilege_alert
-import toggle
 from django.utils.decorators import method_decorator
 from corehq import Domain, toggles, privileges
 from corehq.apps.domain.views import BaseDomainView
@@ -355,7 +354,7 @@ class ListWebUsersView(BaseUserSettingsView):
 
     @property
     def can_edit_roles(self):
-        if toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, self.couch_user.username):
+        if toggles.ACCOUNTING_PREVIEW.enabled(self.couch_user.username):
             try:
                 ensure_request_has_privilege(self.request, privileges.ROLE_BASED_ACCESS)
             except PermissionDenied:
