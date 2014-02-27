@@ -7,7 +7,7 @@ TOGGLE_ID_PREFIX = 'hqFeatureToggle'
 
 class Toggle(Document):
     """
-    A very simple implementation of a feature toggle. Just a list of usernames
+    A very simple implementation of a feature toggle. Just a list of items
     attached to a slug.
     """
     slug = StringProperty()
