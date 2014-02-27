@@ -7,7 +7,7 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.decorators import require_billing_admin, requires_privilege_alert
-from corehq.apps.accounting.downgrade import DomainDowngradeStatusHandler
+from corehq.apps.accounting.subscription_changes import DomainDowngradeStatusHandler
 from corehq.apps.accounting.forms import EnterprisePlanContactForm
 from corehq.apps.accounting.utils import get_change_status
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin

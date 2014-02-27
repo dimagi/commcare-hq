@@ -8,7 +8,7 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.orgs.models import Organization
 from corehq.apps.reminders.models import CaseReminderHandler, METHOD_SMS_SURVEY, METHOD_IVR_SURVEY
-from corehq.apps.users.models import CommCareUser, UserRole
+from corehq.apps.users.models import CommCareUser, UserRole, WebUser
 from couchexport.models import SavedExportSchema
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
@@ -16,20 +16,20 @@ from dimagi.utils.decorators.memoized import memoized
 global_logger = logging.getLogger(__name__)
 
 
-class BaseDowngradeHandler(object):
+class BaseModifySubscriptionHandler(object):
     supported_privileges = []
 
-    def __init__(self, domain, new_plan_version, downgraded_privileges):
-        if isinstance(downgraded_privileges, set):
-            downgraded_privileges = list(downgraded_privileges)
+    def __init__(self, domain, new_plan_version, changed_privs):
+        if isinstance(changed_privs, set):
+            changed_privs = list(changed_privs)
         if not isinstance(domain, Domain):
             domain = Domain.get_by_name(domain)
         self.domain = domain
 
         # plan dependent privilege
-        downgraded_privileges.append(privileges.MOBILE_WORKER_CREATION)
+        changed_privs.append(privileges.MOBILE_WORKER_CREATION)
 
-        self.privileges = filter(lambda x: x in self.supported_privileges, downgraded_privileges)
+        self.privileges = filter(lambda x: x in self.supported_privileges, changed_privs)
         self.new_plan_version = new_plan_version
 
     def get_response(self):
@@ -41,7 +41,13 @@ class BaseDowngradeHandler(object):
         return response
 
 
-class DomainDowngradeActionHandler(BaseDowngradeHandler):
+class BaseModifySubscriptionActionHandler(BaseModifySubscriptionHandler):
+    def get_response(self):
+        response = super(BaseModifySubscriptionActionHandler, self).get_response()
+        return len(filter(lambda x: not x, response)) == 0
+
+
+class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
     """
     This carries out the downgrade action based on each privilege.
 
@@ -50,12 +56,8 @@ class DomainDowngradeActionHandler(BaseDowngradeHandler):
     supported_privileges = [
         privileges.OUTBOUND_SMS,
         privileges.INBOUND_SMS,
+        privileges.ROLE_BASED_ACCESS,
     ]
-
-    def get_response(self):
-        response = super(DomainDowngradeActionHandler, self).get_response()
-        return len(filter(lambda x: not x, response)) == 0
-
 
     @property
     @memoized
@@ -103,7 +105,54 @@ class DomainDowngradeActionHandler(BaseDowngradeHandler):
             return False
         return True
 
-class DomainDowngradeStatusHandler(BaseDowngradeHandler):
+    @property
+    def response_role_based_access(self):
+        """
+        Perform Role Based Access Downgrade
+        - Archive custom roles.
+        - Set user roles using custom roles to Read Only.
+        - Reset initial roles to standard permissions.
+        """
+        custom_roles = [r.get_id for r in UserRole.get_custom_roles_by_domain(self.domain.name)]
+        if not custom_roles:
+            return True
+        read_only_role = UserRole.get_read_only_role_by_domain(self.domain.name)
+        web_users = WebUser.by_domain(self.domain.name)
+        for web_user in web_users:
+            if web_user.get_domain_membership(self.domain.name).role_id in custom_roles:
+                web_user.set_role(self.domain.name, read_only_role.get_qualified_id())
+                web_user.save()
+        for cc_user in CommCareUser.by_domain(self.domain.name):
+            if cc_user.get_domain_membership(self.domain.name).role_id in custom_roles:
+                cc_user.set_role(self.domain.name, 'none')
+                cc_user.save()
+        UserRole.archive_custom_roles_for_domain(self.domain.name)
+        UserRole.reset_initial_roles_for_domain(self.domain.name)
+        return True
+
+
+class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
+    """
+    This carries out the upgrade action based on each privilege.
+
+    Each response should return a boolean.
+    """
+    supported_privileges = [
+        privileges.ROLE_BASED_ACCESS,
+    ]
+
+    @property
+    def response_role_based_access(self):
+        """
+        Perform Role Based Access Upgrade
+        - Un-archive custom roles.
+        """
+        UserRole.unarchive_roles_for_domain(self.domain.name)
+        return True
+
+
+
+class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
     """
     This returns a list of alerts for the user if their current domain is using features that
     will be removed during the downgrade.
@@ -329,57 +378,7 @@ class DomainDowngradeStatusHandler(BaseDowngradeHandler):
         """
         Alert the user if there are currently custom roles set up for the domain.
         """
-        db = UserRole.get_db()
-        user_roles_query = db.view(
-            'users/roles_by_domain',
-            startkey=[self.domain.name],
-            endkey=[self.domain.name, {}],
-            reduce=False,
-        ).all()
-        user_role_ids = [r['id'] for r in user_roles_query]
-
-        EDIT_WEB_USERS = 'edit_web_users'
-        EDIT_CC_USERS = 'edit_commcare_users'
-        EDIT_APPS = 'edit_apps'
-        EDIT_DATA = 'edit_data'
-        VIEW_REPORTS = 'view_reports'
-
-        STD_ROLES = {
-            'Read Only': {
-                'on': [VIEW_REPORTS],
-                'off': [EDIT_DATA, EDIT_APPS, EDIT_CC_USERS, EDIT_WEB_USERS],
-            },
-            'Field Implementer': {
-                'on': [VIEW_REPORTS, EDIT_CC_USERS],
-                'off': [EDIT_DATA, EDIT_APPS, EDIT_WEB_USERS],
-            },
-            'App Editor': {
-                'on': [VIEW_REPORTS, EDIT_APPS],
-                'off': [EDIT_DATA, EDIT_WEB_USERS, EDIT_CC_USERS],
-            }
-        }
-
-        def _is_custom_role(doc):
-            role_name = doc['name']
-            if not role_name in STD_ROLES.keys():
-                return True
-            doc_perms = doc['permissions']
-            if len(doc_perms['view_report_list']) > 0:
-                return True
-            std_perms = STD_ROLES[role_name]
-            def _is_match(status, val):
-                return sum([doc_perms[k] == val for k in std_perms[status]]) == len(std_perms[status])
-            if not _is_match('on', True):
-                return True
-            if not _is_match('off', False):
-                return True
-            return False
-
-        custom_roles = []
-        for role_doc in iter_docs(db, user_role_ids):
-            if _is_custom_role(role_doc):
-                custom_roles.append(role_doc['name'])
-
+        custom_roles = [r.name for r in UserRole.get_custom_roles_by_domain(self.domain.name)]
         num_roles = len(custom_roles)
         if num_roles > 0:
             return self._fmt_alert(
