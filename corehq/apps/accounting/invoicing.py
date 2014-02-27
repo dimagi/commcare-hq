@@ -1,6 +1,7 @@
 import calendar
 from decimal import Decimal
 import datetime
+import os
 from django.db.models import ProtectedError
 
 from django.utils.translation import ugettext as _
@@ -15,7 +16,9 @@ from corehq.apps.accounting.models import (LineItem, FeatureType, Invoice, Defau
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.users.models import CommCareUser
 
+from reportlab.lib.units import inch
 from reportlab.pdfgen.canvas import Canvas
+
 
 DEFAULT_DAYS_UNTIL_DUE = 10
 
@@ -387,13 +390,20 @@ class SmsLineItemFactory(FeatureLineItemFactory):
         return details
 
 
-class InvoiceTemplate(object):
+LOGO_FILENAME = 'corehq/apps/accounting/static/accounting/media/Dimagi-Logo-RGB.jpg'
 
-    def __init__(self, filename):
-        self.filename = filename
+
+class InvoiceTemplate(object):
+    def __init__(self, filename, logo_filename=LOGO_FILENAME):
+        self.canvas = Canvas(filename)
+        self.logo_filename = os.path.join(os.getcwd(), logo_filename)
 
     def get_pdf(self):
-        self.canvas = Canvas(self.filename)
+        self.draw_logo()
 
         self.canvas.showPage()
         self.canvas.save()
+
+    def draw_logo(self):
+        self.canvas.drawImage(self.logo_filename, inch * 0.5, inch * 2.5,
+                              width=inch * 1.5, preserveAspectRatio=True)
