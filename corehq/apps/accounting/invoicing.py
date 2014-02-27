@@ -15,6 +15,8 @@ from corehq.apps.accounting.models import (LineItem, FeatureType, Invoice, Defau
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.users.models import CommCareUser
 
+from reportlab.pdfgen.canvas import Canvas
+
 DEFAULT_DAYS_UNTIL_DUE = 10
 
 
@@ -383,3 +385,15 @@ class SmsLineItemFactory(FeatureLineItemFactory):
                 [billable.phone_number, billable.direction, gateway_api, total_fee]
             )
         return details
+
+
+class InvoiceTemplate(object):
+
+    def __init__(self, filename):
+        self.filename = filename
+
+    def get_pdf(self):
+        self.canvas = Canvas(self.filename)
+
+        self.canvas.showPage()
+        self.canvas.save()
