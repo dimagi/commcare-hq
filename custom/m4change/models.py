@@ -5,7 +5,7 @@ from custom.m4change import user_calcs
 from custom.m4change.constants import DOMAIN
 
 
-def __get_case_location_id__(case):
+def _get_case_location_id(case):
     user = CommCareUser.get_by_user_id(userID=case.user_id, domain=DOMAIN)
     if user is not None and 'location_id' in user:
         return user.location_id
@@ -18,7 +18,7 @@ class AncHmisCaseFluff(fluff.IndicatorDocument):
     domains = ('m4change',)
     group_by = (
                 'domain',
-                fluff.AttributeGetter('location_id', getter_function=__get_case_location_id__),
+                fluff.AttributeGetter('location_id', getter_function=_get_case_location_id),
     )
     save_direct_to_sql = True
 

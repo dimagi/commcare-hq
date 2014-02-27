@@ -12,9 +12,9 @@ from custom.m4change.reports.sql_data import AncHmisCaseSqlData
 from custom.m4change.constants import DOMAIN
 
 
-def __get_row__(row_data, form_data, key):
+def _get_row(row_data, form_data, key):
     data = form_data.get(key)
-    rows = {key: data.get(key, 0) for key in row_data}
+    rows = dict([(row_key, data.get(row_key, 0)) for row_key in row_data])
     for key in rows:
         if rows.get(key) == None:
             rows[key] = 0
@@ -55,7 +55,7 @@ class AncHmisReport(MonthYearMixin, CustomProjectReport, CaseListReport, M4Chang
         for location_id in locations:
             key = (DOMAIN, location_id)
             if key in form_sql_data.data:
-                report_rows = __get_row__(row_data, form_data, key)
+                report_rows = _get_row(row_data, form_data, key)
                 for key in report_rows:
                     row_data.get(key)["value"] += report_rows.get(key)
         return row_data

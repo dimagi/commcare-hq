@@ -25,7 +25,7 @@ def generator(user, version, last_sync):
         AncHmisReport,
     ]
 
-    if DOMAIN in user.domains:
+    if user.domain == DOMAIN:
         startdate = datetime.utcnow().today() - timedelta(days=30)
         enddate = datetime.utcnow().today()
         return ReportFixtureProvider('reports:m4change-mobile', user, hard_coded_reports, startdate, enddate).to_fixture()
@@ -117,22 +117,17 @@ class ReportFixtureProvider(object):
             _reports_to_fixture(report_data, facility_id, facility_element)
             return facility_element
 
-        current_language = translation.get_language()
-        translation.activate('hin')
-        try:
-            root = ElementTree.Element('fixture', attrib={
-                'user_id': self.user._id,
-                'startdate': self.startdate.strftime('%Y-%m-%d'),
-                'enddate': self.enddate.strftime('%Y-%m-%d')
-            })
+        root = ElementTree.Element('fixture', attrib={
+            'user_id': self.user._id,
+            'startdate': self.startdate.strftime('%Y-%m-%d'),
+            'enddate': self.enddate.strftime('%Y-%m-%d')
+        })
 
-            user_location = Location.get(self.user.location_id)
-            locations =  [user_location] + [descendant for descendant in user_location.descendants]
-            for location in locations:
-                root.append(_facility_to_fixture(location))
-            return root
-        finally:
-            translation.activate(current_language)
+        user_location = Location.get(self.user.location_id)
+        locations =  [user_location] + [descendant for descendant in user_location.descendants]
+        for location in locations:
+            root.append(_facility_to_fixture(location))
+        return root
 
     def to_string(self):
         return ElementTree.tostring(self.to_fixture(), encoding="utf-8")
