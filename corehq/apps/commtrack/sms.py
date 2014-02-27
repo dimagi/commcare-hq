@@ -15,6 +15,7 @@ from corehq.apps.receiverwrapper.util import get_submit_url
 from receiver.util import spoof_submission
 from dimagi.utils import parsing as dateparse
 from corehq.apps.receiverwrapper import submit_form_locally
+from corehq.apps.commtrack.models import RequisitionCase
 import uuid
 
 logger = logging.getLogger('commtrack.sms')
@@ -81,6 +82,18 @@ class StockReportParser(object):
 
         self.C = domain.commtrack_settings
 
+    def get_req_id(self):
+        reqs = RequisitionCase.open_for_location(
+            self.location['location'].domain,
+            self.location['location']._id
+        )
+        if reqs:
+            # only support one open requisition per location
+            assert(len(reqs) == 1)
+            return reqs[0]
+        else:
+            return uuid.uuid4().hex
+
     # TODO sms parsing could really use unit tests
     def parse(self, text):
         """take in a text and return the parsed stock transactions"""
@@ -113,16 +126,7 @@ class StockReportParser(object):
             RequisitionActions.FULFILL,
             RequisitionActions.RECEIPTS
         ]:
-            from corehq.apps.commtrack.models import RequisitionCase
-            reqs = RequisitionCase.open_for_location(
-                self.location['location'].domain,
-                self.location['location']._id
-            )
-            if reqs:
-                self.case_id = reqs[0]
-            else:
-                self.case_id = uuid.uuid4().hex
-
+            self.case_id = self.get_req_id()
             _tx = self.single_action_transactions(
                 action,
                 args,
@@ -232,6 +236,7 @@ class StockReportParser(object):
 
             raise SMSError('do not recognize keyword "%s"' % keyword)
 
+    # TODO determine if this is needed for anything, fix or delete
     def requisition_bulk_action(self, action, args):
         if args:
             raise SMSError('extra arguments at end')
