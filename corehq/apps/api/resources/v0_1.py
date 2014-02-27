@@ -75,8 +75,7 @@ class RequirePermissionAuthentication(LoginAndDomainAuthentication):
         PASSED_AUTH = 'is_authenticated'
 
         @api_auth
-        @require_permission(self.permission)
-        @login_or_digest
+        @require_permission(self.permission, login_decorator=login_or_digest)
         def dummy(request, domain, **kwargs):
             return PASSED_AUTH
 
