@@ -156,7 +156,7 @@
 
 {#    CUSTOM EXPORTS #}
 <section id="custom-form-export">
-<h2>{% trans "Saved Custom Exports" %}</h2>
+<h2>{% trans "Custom Exports" %}</h2>
 {% if saved_exports %}
     {% include 'reports/partials/bulk_export_notice.html' %}
     {% include "reports/partials/saved_custom_exports.html" with allow_edit="yes" %}
@@ -170,7 +170,7 @@
 {# EXPORTS #}
 {% if forms %}
 <section id="full-form-export">
-    <h2>{% trans "Export full forms" %}</h2>
+    <h2>{% trans "Export Full Forms" %}</h2>
     {% include 'reports/partials/bulk_export_notice.html' %}
     <table class="export_data table table-striped">
         <thead>
