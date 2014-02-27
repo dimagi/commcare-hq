@@ -9,10 +9,10 @@ from django_prbac.exceptions import PermissionDenied
 
 def is_accounting_previewer(request):
     return (
-        (hasattr(request, 'user') and toggles.ACCOUNTING_PREVIEW.enabled(request.user.username))
-        or hasattr(request, 'domain') and toggles.ACCOUNTING_PREVIEW.enabled(
-            request.domain,
-            namespace=toggles.NAMESPACE_DOMAIN)
+        (hasattr(request, 'user') and toggles.ACCOUNTING_PREVIEW.enabled(
+            request.user.username))
+        or (hasattr(request, 'domain') and toggles.ACCOUNTING_PREVIEW.enabled(
+            request.domain, namespace=toggles.NAMESPACE_DOMAIN))
     )
 
 
