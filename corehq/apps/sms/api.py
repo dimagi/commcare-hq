@@ -156,8 +156,9 @@ def queue_outgoing_sms(msg, onerror=lambda: None):
 
 @task
 def store_billable(msg):
-    for _ in range(int(math.ceil(float(len(msg.text)) / 160))):
-        SmsBillable.create(msg)
+    if not SmsBillable.objects.filter(log_id=msg._id).exists():
+        for _ in range(int(math.ceil(float(len(msg.text)) / 160))):
+            SmsBillable.create(msg)
 
 
 def send_message_via_backend(msg, backend=None, onerror=lambda: None):
