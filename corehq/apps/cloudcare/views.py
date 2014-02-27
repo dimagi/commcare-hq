@@ -283,7 +283,6 @@ def get_apps_api(request, domain):
 def get_app_api(request, domain, app_id):
     return json_response(look_up_app_json(domain, app_id))
 
-@requires_privilege_plaintext_response(privileges.LOOKUP_TABLES)
 @cloudcare_api
 @cache_page(60 * 30)
 def get_fixtures(request, domain, user_id, fixture_id=None):
