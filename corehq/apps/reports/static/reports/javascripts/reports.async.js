@@ -41,19 +41,32 @@ var HQAsyncReport = function (o) {
     };
 
     var urlSerialize = function (filters) {
-        var params = {};
-        for (var i=0; i<filters.length; i++) {
-            var filter = filters[i];
-            if (filter.name) {
-                if ($(filter).attr('ajax-select2')) {
-                    var vals = $(filter).val().split(',');
-                    params[filter.name] = vals;
-                } else {
-                    params[filter.name] = $(filter).val();
+        // pulled chiefly from the jquery serialize and serializeArray functions
+        var rCRLF = /\r?\n/g,
+            rinput = /^(?:color|date|datetime|email|hidden|month|number|password|range|search|tel|text|time|url|week)$/i,
+            rselectTextarea = /^(?:select|textarea)/i
+        return jQuery.param($(filters).map(function(){
+                return this.elements ? jQuery.makeArray( this.elements ) : this;
+        })
+        .filter(function(){
+                return this.name && !this.disabled &&
+                        ( this.checked || rselectTextarea.test( this.nodeName ) ||
+                                rinput.test( this.type ) );
+        })
+        .map(function( i, elem ){
+                var val = jQuery( this ).val();
+                if (val === null) {
+                    return null;
                 }
-            }
-        }
-        return $.param(params, true);
+                if (elem.getAttribute('data-ajax-select2')) {
+                    val = val.split(',');
+                }
+                return jQuery.isArray( val ) ?
+                    jQuery.map( val, function( val, i ){
+                        return { name: elem.name, value: val.replace( rCRLF, "\r\n" ) };
+                    }) :
+                    { name: elem.name, value: val.replace( rCRLF, "\r\n" ) };
+        }).get(), true);
     };
 
     self.init = function () {
