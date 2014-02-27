@@ -20,11 +20,11 @@ class PncImmunizationCalculator(fluff.Calculator):
     def total(self, case):
         if case.type == "child":
             if self.immunization_given_value in case.immunization_given:
-                yield[case.date_modified, 1]
+                yield[case.modified_on, 1]
             for form in case.get_forms():
                 if form.xmlns in PNC_CHILD_IMMUNIZATION_AND_REG_HOME_DELIVERED_FORMS and self.immunization_given_value in form.form.get("immunization_given", ""):
-                    yield[case.date_modified, 1]
-            yield[case.date_modified, 0]
+                    yield[case.modified_on, 1]
+            yield[case.modified_on, 0]
 
 class PncFullImmunizationCalculator(fluff.Calculator):
 
@@ -35,19 +35,20 @@ class PncFullImmunizationCalculator(fluff.Calculator):
                                         'pcv_1', 'opv_2','hep_b_2', 'penta_2', 'dpt_2', 'pcv_2', 'opv_3', 'penta_3',
                                         'dpt_3', 'pcv_3', 'measles_1', 'yellow_fever', 'measles_2', 'conjugate_csm']
             if all(value in case.immunization_given for value in full_immunization_values):
-                yield[case.date_modified, 1]
-            yield[case.date_modified, 0]
+                yield[case.modified_on, 1]
+            yield[case.modified_on, 0]
 
 class PncAttendanceWithin6WeeksCalculator(fluff.Calculator):
 
     @fluff.date_emitter
     def total(self, case):
-        date_delivery = case.date_delivery
-        for form in case.get_forms():
-            date_received_on = form.received_on
-            if form.xmlns in PNC_CHILD_IMMUNIZATION_AND_REG_HOME_DELIVERED_FORMS and (form.date_received_on - date_delivery) < 42:
-                yield [date_received_on, 1]
-            yield [date_received_on, 0]
+        if case.type == "child":
+            date_delivery = case.date_delivery
+            for form in case.get_forms():
+                date_received_on = form.received_on
+                if form.xmlns in PNC_CHILD_IMMUNIZATION_AND_REG_HOME_DELIVERED_FORMS and (form.date_received_on - date_delivery) < 42:
+                    yield [date_received_on, 1]
+                yield [date_received_on, 0]
 
 
 class Anc4VisitsCalculator(fluff.Calculator):
