@@ -3,10 +3,14 @@ from django.core.cache import cache
 from .models import Toggle
 
 
-def toggle_enabled(slug, username, check_cache=True):
+def toggle_enabled(slug, username, check_cache=True, namespace=None):
     """
     Given a toggle and a username, whether the toggle is enabled for that user
     """
+    username = '{namespace}:{username}'.format(
+        namespace=namespace, username=username
+    ) if namespace is not None else username
+    
     cache_key = 'toggle-{slug}:{username}'.format(slug=slug, username=username)
     if check_cache:
         from_cache = cache.get(cache_key)
