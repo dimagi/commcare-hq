@@ -1,5 +1,4 @@
 import json
-import toggle
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
 from corehq import toggles, privileges
@@ -191,7 +190,7 @@ class FormCustomExportHelper(CustomExportHelper):
 
     @property
     def allow_deid(self):
-        if toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, self.request.user.username):
+        if toggles.ACCOUNTING_PREVIEW.enabled(self.request.user.username):
             try:
                 ensure_request_has_privilege(self.request, privileges.DEIDENTIFIED_DATA)
             except PermissionDenied:

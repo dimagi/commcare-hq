@@ -43,7 +43,6 @@ from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound, JSONReader
 from corehq.apps.commtrack.models import CommTrackUser
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
-import toggle
 
 DEFAULT_USER_LIST_LIMIT = 10
 
@@ -238,7 +237,7 @@ class ListCommCareUsersView(BaseUserSettingsView):
 
     @property
     def can_bulk_edit_users(self):
-        if toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, self.couch_user.username):
+        if toggles.ACCOUNTING_PREVIEW.enabled(self.couch_user.username):
             try:
                 ensure_request_has_privilege(self.request, privileges.BULK_USER_MANAGEMENT)
             except PermissionDenied:

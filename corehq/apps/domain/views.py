@@ -21,8 +21,6 @@ from django.utils.safestring import mark_safe
 from corehq import toggles, privileges
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
-import toggle
-from toggle.decorators import require_toggle
 
 from corehq.apps.accounting.models import (Subscription, CreditLine, SoftwarePlanVisibility, SoftwareProductType,
                                            DefaultProductPlan, SoftwarePlanEdition, BillingAccount, BillingAccountType)
@@ -206,7 +204,7 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
 
     @property
     def can_use_custom_logo(self):
-        if toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, self.request.user.username):
+        if toggles.ACCOUNTING_PREVIEW.enabled(self.request.user.username):
             try:
                 ensure_request_has_privilege(self.request, privileges.CUSTOM_BRANDING)
             except PermissionDenied:

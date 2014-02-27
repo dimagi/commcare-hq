@@ -20,7 +20,6 @@ from dimagi.utils.couch.database import SafeSaveDocument
 from corehq.apps.accounting.exceptions import (CreditLineError, AccountingError, SubscriptionAdjustmentError,
                                                SubscriptionDowngradeError, NewSubscriptionError)
 from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES, assure_domain_instance, get_change_status
-import toggle
 
 global_logger = logging.getLogger(__name__)
 integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
@@ -513,7 +512,7 @@ class Subscriber(models.Model):
 
     def downgrade(self, downgraded_privileges=None, new_plan_version=None, web_user=None):
         # don't actually perform downgrades until march 1st.
-        if web_user is None or not toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, web_user):
+        if web_user is None or not toggles.ACCOUNTING_PREVIEW.enabled(web_user):
             return
 
         if self.organization is not None:

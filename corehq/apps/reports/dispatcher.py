@@ -1,4 +1,3 @@
-import toggle
 from django.utils.decorators import method_decorator
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect, HttpResponseBadRequest
@@ -234,7 +233,7 @@ class CustomProjectReportDispatcher(ProjectReportDispatcher):
         return super(CustomProjectReportDispatcher, self).dispatch(request, *args, **kwargs)
 
     def permissions_check(self, report, request, domain=None, is_navigation_check=False):
-        if is_navigation_check and toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, request.user.username):
+        if is_navigation_check and toggles.ACCOUNTING_PREVIEW.enabled(request.user.username):
             try:
                 ensure_request_has_privilege(request, privileges.CUSTOM_REPORTS)
             except PermissionDenied:

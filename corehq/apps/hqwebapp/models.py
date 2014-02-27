@@ -14,7 +14,6 @@ from corehq.apps.reminders.util import can_use_survey_reminders
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.models import Role, UserRole
 from django_prbac.utils import ensure_request_has_privilege
-import toggle
 
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
@@ -507,7 +506,7 @@ class CloudcareTab(UITab):
 
     @property
     def is_viewable(self):
-        if toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, self.couch_user.username):
+        if toggles.ACCOUNTING_PREVIEW.enabled(self.couch_user.username):
             try:
                 ensure_request_has_privilege(self._request, privileges.CLOUDCARE)
             except PermissionDenied:
@@ -523,7 +522,7 @@ class MessagingTab(UITab):
 
     @property
     def is_viewable(self):
-        if toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, self.couch_user.username):
+        if toggles.ACCOUNTING_PREVIEW.enabled(self.couch_user.username):
             try:
                 ensure_request_has_privilege(self._request, privileges.OUTBOUND_SMS)
             except PermissionDenied:
@@ -541,7 +540,7 @@ class MessagingTab(UITab):
         def keyword_subtitle(keyword=None, **context):
             return keyword.keyword
 
-        if toggle.shortcuts.toggle_enabled(toggles.REMINDERS_UI_PREVIEW, self.couch_user.username):
+        if toggles.REMINDERS_UI_PREVIEW.enabled(self.couch_user.username):
             from corehq.apps.sms.views import DomainSmsGatewayListView
             from corehq.apps.reminders.views import (
                 EditScheduledReminderView,
@@ -840,7 +839,7 @@ class ProjectSettingsTab(UITab):
         })
 
         can_view_orgs = user_is_admin
-        if toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, self.couch_user.username):
+        if toggles.ACCOUNTING_PREVIEW.enabled(self.couch_user.username):
             try:
                 ensure_request_has_privilege(self._request, privileges.CROSS_PROJECT_REPORTS)
             except PermissionDenied:
