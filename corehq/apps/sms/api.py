@@ -150,8 +150,10 @@ def queue_outgoing_sms(msg, onerror=lambda: None):
         return True
     else:
         msg.processed = True
-        store_billable.delay(msg)
-        return send_message_via_backend(msg, onerror=onerror)
+        msg_sent = send_message_via_backend(msg, onerror=onerror)
+        if msg_sent:
+            store_billable.delay(msg)
+        return msg_sent
 
 
 @task
