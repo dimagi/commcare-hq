@@ -1,20 +1,17 @@
 """
 API endpoints for filter options
 """
-from django.http import Http404, HttpResponseBadRequest, HttpResponse
 from django.utils.translation import ugettext as _
 from django.views.generic import View
 
 from braces.views import JSONResponseMixin
 
 from corehq.apps.domain.decorators import LoginAndDomainMixin
-from corehq.apps.groups.models import Group
-from corehq.elastic import es_wrapper, es_query, ES_URLS
+from corehq.elastic import es_wrapper
 from dimagi.utils.decorators.memoized import memoized
 
-from ..cache import CacheableRequestMixIn
 from ..models import HQUserType
-from ..util import _report_user_dict, user_list
+from ..util import _report_user_dict
 
 
 def user_tuple(u):
