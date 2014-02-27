@@ -301,7 +301,7 @@ def arbitrary_commcare_user(domain, is_active=True):
         commcare_user.is_active = is_active
         commcare_user.save()
         return commcare_user
-    except AlreadyExistsError:
+    except Exception:
         pass
 
 
