@@ -206,11 +206,13 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
     def can_use_custom_logo(self):
         if toggles.ACCOUNTING_PREVIEW.enabled(self.request.user.username):
             try:
-                ensure_request_has_privilege(self.request, privileges.CUSTOM_BRANDING)
+                ensure_request_has_privilege(
+                    self.request, privileges.CUSTOM_BRANDING
+                )
+                return True
             except PermissionDenied:
                 return False
-        # todo return true here after march 1
-        return self.can_user_see_meta
+        return self.request.couch_user.is_previewer()
 
     @property
     @memoized
@@ -226,8 +228,12 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
                     self.request.POST,
                     self.request.FILES,
                     user=self.request.couch_user,
-                    domain=self.domain_object.name)
-            return DomainGlobalSettingsForm(self.request.POST)
+                    domain=self.domain_object.name,
+                    can_use_custom_logo=self.can_use_custom_logo,
+                )
+            return DomainGlobalSettingsForm(
+                self.request.POST, can_use_custom_logo=self.can_use_custom_logo
+            )
 
         if self.can_user_see_meta:
             for attr in [
@@ -252,9 +258,15 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
                 'call_center_case_type': self.domain_object.call_center_config.case_type,
             })
 
-            return DomainMetadataForm(can_use_custom_logo=self.can_use_custom_logo,
-                                      user=self.request.couch_user, domain=self.domain_object.name, initial=initial)
-        return DomainGlobalSettingsForm(initial=initial, can_use_custom_logo=self.can_use_custom_logo)
+            return DomainMetadataForm(
+                can_use_custom_logo=self.can_use_custom_logo,
+                user=self.request.couch_user,
+                domain=self.domain_object.name,
+                initial=initial
+            )
+        return DomainGlobalSettingsForm(
+            initial=initial, can_use_custom_logo=self.can_use_custom_logo
+        )
 
     @property
     def page_context(self):
