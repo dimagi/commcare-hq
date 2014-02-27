@@ -6,11 +6,12 @@ from custom.m4change.constants import DOMAIN
 
 
 def _get_case_location_id(case):
-    user = CommCareUser.get_by_user_id(userID=case.user_id, domain=DOMAIN)
-    if user is not None and 'location_id' in user:
-        return user.location_id
-    else:
-        return None
+    if case.user_id is not None:
+        user = CommCareUser.get_by_user_id(userID=case.user_id, domain=DOMAIN)
+        if user is not None and 'location_id' in user:
+            return user.location_id
+        else:
+            return None
 
 
 class AncHmisCaseFluff(fluff.IndicatorDocument):
