@@ -10,3 +10,5 @@ ACCOUNTING_PREVIEW = 'accounting_preview'
 OFFLINE_CLOUDCARE = 'offline-cloudcare'
 
 REMINDERS_UI_PREVIEW = 'reminders_ui_preview'
+
+NAMESPACE_DOMAIN = 'domain'
