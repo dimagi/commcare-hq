@@ -374,24 +374,27 @@ class StockRequisitionTest(SMSTests):
             # TODO some day we will track this too
             # self.check_stock(code, amt, req._id, 'ct-received')
 
-    #def testReceiptsWithNoOpenRequisition(self):
-        ## make sure we don't have any open requisitions
-        #self.assertEqual(0, len(RequisitionCase.open_for_location(self.domain.name, self.loc._id)))
+    def testReceiptsWithNoOpenRequisition(self):
+        # TODO what should actually happen in this case?
 
-        #rec_amounts = {
-            #'pp': 30,
-            #'pq': 20,
-            #'pr': 10,
-        #}
-        ## rec loc1 pp 10 pq 20...
-        #handled = handle(self.user.get_verified_number(), 'rec {loc} {report}'.format(
-            #loc='loc1',
-            #report=' '.join('%s %s' % (k, v) for k, v in rec_amounts.items())
-        #))
-        #self.assertTrue(handled)
+        # make sure we don't have any open requisitions
+        self.assertEqual(0, len(RequisitionCase.open_for_location(self.domain.name, self.loc._id)))
 
-        ## should still be no open requisitions
-        #self.assertEqual(0, len(RequisitionCase.open_for_location(self.domain.name, self.loc._id)))
+        rec_amounts = {
+            'pp': 30,
+            'pq': 20,
+            'pr': 10,
+        }
+        # rec loc1 pp 10 pq 20...
+        handled = handle(self.users[0].get_verified_number(), 'rec {loc} {report}'.format(
+            loc='loc1',
+            report=' '.join('%s %s' % (k, v) for k, v in rec_amounts.items())
+        ))
+        self.assertTrue(handled)
+
+        # should still be no open requisitions
+        self.assertEqual(0, len(RequisitionCase.open_for_location(self.domain.name, self.loc._id)))
+
 
 def _get_location_from_form(form):
     return form.form['location']
