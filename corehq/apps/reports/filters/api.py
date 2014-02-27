@@ -42,9 +42,9 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
 
     def _init_counts(self):
         groups, _ = es_wrapper('groups', domain=self.domain, q=self.q,
-            doc_type='Group', size=100, return_count=True)
+            doc_type='Group', size=0, return_count=True)
         users, _ = es_wrapper('users', domain=self.domain, q=self.q,
-            size=1000, return_count=True)
+            size=0, return_count=True)
         self.group_start = len(self.basics)
         self.user_start = self.group_start + groups
         self.total_results = self.user_start + users

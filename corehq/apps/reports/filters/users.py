@@ -1,3 +1,4 @@
+from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 
@@ -287,7 +288,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     @property
     def filter_context(self):
         context = super(ExpandedMobileWorkerFilter, self).filter_context
-        url = "/a/esoergel/reports/filters/emwf_options/"
+        url = reverse('emwf_options', args=[self.domain])
         context.update({'endpoint': url})
         return context
 
