@@ -1,9 +1,10 @@
 from corehq.apps.reports.api import ReportDataSource
+from corehq.apps.users.models import Permissions
 from dimagi.utils.web import json_request
 from django.core.exceptions import ObjectDoesNotExist
 from tastypie import fields
 from corehq.apps.api.resources import JsonResource
-from corehq.apps.api.resources.v0_1 import CustomResourceMeta
+from corehq.apps.api.resources.v0_1 import CustomResourceMeta, RequirePermissionAuthentication
 from corehq.apps.domain.models import Domain
 from corehq.apps.reports.commtrack.data_sources import StockStatusDataSource
 
@@ -42,6 +43,7 @@ class ReportResource(JsonResource):
         return data_source(config)
 
     class Meta(CustomResourceMeta):
+        authentication = RequirePermissionAuthentication(Permissions.view_reports)
         object_class = ReportDataSource
         resource_name = 'report'
         detail_uri_name = 'slug'
