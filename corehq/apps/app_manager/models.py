@@ -8,6 +8,7 @@ import random
 import json
 import types
 import re
+import toggle
 from collections import defaultdict
 from datetime import datetime
 from functools import wraps
@@ -29,6 +30,9 @@ from django.http import Http404
 from django.template.loader import render_to_string
 from restkit.errors import ResourceError
 from couchdbkit.resource import ResourceNotFound
+from corehq import toggles, privileges
+from django_prbac.exceptions import PermissionDenied
+from corehq.apps.accounting.utils import domain_has_privilege
 
 from corehq.apps.app_manager.commcare_settings import check_condition
 from corehq.apps.app_manager.const import APP_V1, APP_V2, CAREPLAN_TASK, CAREPLAN_GOAL, CAREPLAN_CASE_NAMES
@@ -557,6 +561,10 @@ class FormBase(DocumentSchema):
             'module_name': self.get_module().default_name(),
             'form_name': self.default_name()
         }
+
+    @property
+    def has_fixtures(self):
+        return 'src="jr://fixture/item-list:' in self.source
 
 
 class IndexedFormBase(FormBase, IndexedSchema):
@@ -2021,6 +2029,18 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
     def get_jadjar(self):
         return self.get_build().get_jadjar(self.get_jar_path())
 
+    def validate_fixtures(self):
+        if (toggle.shortcuts.toggle_enabled(
+                toggles.ACCOUNTING_PREVIEW, self.domain, namespace=toggles.NAMESPACE_DOMAIN
+        ) and not domain_has_privilege(self.domain, privileges.LOOKUP_TABLES)):
+            for form in self.get_forms():
+                if form.has_fixtures:
+                    raise PermissionDenied(_(
+                        "Usage of lookup tables is not supported by your "
+                        "current subscription. Please upgrade your "
+                        "subscription before using this feature."
+                    ))
+
     def validate_jar_path(self):
         build = self.get_build()
         setting = commcare_settings.SETTINGS_LOOKUP['hq']['text_input']
@@ -2093,9 +2113,11 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
         errors.extend(self.check_password_charset())
 
         try:
+            self.validate_fixtures()
             self.validate_jar_path()
             self.create_all_files()
-        except (AppEditingError, XFormValidationError, XFormError) as e:
+        except (AppEditingError, XFormValidationError, XFormError,
+                PermissionDenied) as e:
             errors.append({'type': 'error', 'message': unicode(e)})
         except Exception as e:
             if settings.DEBUG:

@@ -172,12 +172,7 @@ class DomainDowngradeStatusHandler(BaseDowngradeHandler):
         """
         Lookup tables will be deleted on downgrade.
         """
-        num_fixtures = FixtureDataType.get_db().view(
-            'fixtures/data_types_by_domain',
-            reduce=True,
-            key=self.domain.name,
-        ).first()
-        num_fixtures = num_fixtures['value'] if num_fixtures is not None else 0
+        num_fixtures = FixtureDataType.total_by_domain(self.domain.name)
         if num_fixtures > 0:
             return self._fmt_alert(
                 ungettext(
