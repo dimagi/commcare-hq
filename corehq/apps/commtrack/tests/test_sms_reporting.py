@@ -236,11 +236,6 @@ class StockRequisitionTest(SMSTests):
         self.assertEqual(self.sp._id, index.referenced_id)
         self.assertEqual('parent_id', index.identifier)
 
-        # TODO should these work?
-        # forms = list(self.get_commtrack_forms())
-        # self.assertEqual(1, len(forms))
-        # self.assertEqual(self.sp.location_, forms[0].location_)
-
         # check updated status
         for code, amt in amounts.items():
             self.check_stock(code, amt, req._id, 'ct-requested')
@@ -318,13 +313,9 @@ class StockRequisitionTest(SMSTests):
 
         self.assertEqual(req.requisition_status, 'fulfilled')
 
-        # TODO should these work?
-        # forms = list(self.get_commtrack_forms())
-        # self.assertEqual(1, len(forms))
-        # self.assertEqual(self.sp.location_, forms[0].location_)
-
         # check updated status
         for code, amt in amounts.items():
+            self.check_stock(code, amt, self.sp._id, 'stock')
             self.check_stock(code, amt, req._id, 'stock')
             self.check_stock(code, amt, req._id, 'ct-fulfilled')
 
@@ -376,16 +367,10 @@ class StockRequisitionTest(SMSTests):
 
         self.assertEqual(req.requisition_status, 'received')
 
-        # TODO should these work?
-        # forms = list(self.get_commtrack_forms())
-        # self.assertEqual(1, len(forms))
-        # self.assertEqual(self.sp.location_, forms[0].location_)
-
         # check updated status
         for code, amt in amounts.items():
             self.check_stock(code, 0, req._id, 'stock')
-            # TODO support the sp side of this
-            # self.check_stock(code, amt, self.sp._id, 'stock')
+            self.check_stock(code, amt, self.sp._id, 'stock')
             # TODO some day we will track this too
             # self.check_stock(code, amt, req._id, 'ct-received')
 

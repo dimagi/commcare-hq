@@ -345,7 +345,6 @@ class CommTrackRequisitionTest(CommTrackSubmissionTest):
         # Create a request
         # ----------------
 
-        print create_requisition_xml(amounts)
         self.submit_xml_form(create_requisition_xml(amounts))
         req_cases = list(get_cases_in_domain(self.domain.name, type=const.REQUISITION_CASE_TYPE))
         self.assertEqual(1, len(req_cases))

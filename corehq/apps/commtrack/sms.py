@@ -10,12 +10,12 @@ from dimagi.utils.parsing import json_format_datetime
 from datetime import datetime
 from corehq.apps.commtrack.util import get_supply_point
 from corehq.apps.commtrack.xmlutil import XML, _
-from corehq.apps.commtrack.models import Product, CommtrackConfig, StockTransaction, CommTrackUser, RequisitionTransaction
+from corehq.apps.commtrack.models import Product, CommtrackConfig, StockTransaction, CommTrackUser, RequisitionTransaction, RequisitionCase
 from corehq.apps.receiverwrapper.util import get_submit_url
 from receiver.util import spoof_submission
 from dimagi.utils import parsing as dateparse
 from corehq.apps.receiverwrapper import submit_form_locally
-from corehq.apps.commtrack.models import RequisitionCase
+from corehq.apps.locations.models import Location
 import uuid
 
 logger = logging.getLogger('commtrack.sms')
@@ -347,7 +347,8 @@ def convert_transactions_to_blocks(E, transactions):
 
         if transactions[0].action == const.RequisitionActions.RECEIPTS:
             attr['src'] = transactions[0].case_id
-            # TODO support dest
+            sp = Location.get(transactions[0].location_id).linked_supply_point()
+            attr['dest'] = sp._id
 
         if transactions[0].subaction:
             attr['type'] = transactions[0].subaction
@@ -390,7 +391,7 @@ def requisition_case_xml(data, stock_blocks):
         create=create,
         close=close,
         case_type=const.REQUISITION_CASE_TYPE,
-        case_name='Some requisition', # TODO bad
+        case_name='SMS Requisition', # TODO bad
         index={'parent_id': (
             const.SUPPLY_POINT_CASE_TYPE,
             data['location'].linked_supply_point()._id
