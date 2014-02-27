@@ -40,17 +40,33 @@ var HQAsyncReport = function (o) {
         self.standardReport.resetFilterState();
     };
 
+    var urlSerialize = function (filters) {
+        var params = {};
+        for (var i=0; i<filters.length; i++) {
+            var filter = filters[i];
+            if (filter.name) {
+                if ($(filter).attr('ajax-select2')) {
+                    var vals = $(filter).val().split(',');
+                    params[filter.name] = vals;
+                } else {
+                    params[filter.name] = $(filter).val();
+                }
+            }
+        }
+        return $.param(params, true);
+    };
+
     self.init = function () {
         self.reportContent.attr('style', 'position: relative;');
 
         self.updateReport(true, window.location.search.substr(1), self.standardReport.filterSet);
-        
+
         // only update the report if there are actually filters set
         if (!self.standardReport.needsFilters) {
             self.standardReport.filterSubmitButton.addClass('disabled');
         }
         self.filterForm.submit(function () {
-            var params = $(this).serialize();
+            var params = urlSerialize(this);
             History.pushState(null,window.location.title,window.location.pathname+"?"+params);
             self.updateFilters(params);
             self.updateReport(false, params, true);
@@ -102,12 +118,12 @@ var HQAsyncReport = function (o) {
                 self.reportContent.html(data.report);
                 self.reportContent.append(self.hqLoading);
                 self.hqLoading.removeClass('hide');
-		
+
                 $('.hq-report-time-notice').removeClass('hide');
-		
+
                 $('.loading-backdrop').fadeOut();
                 self.hqLoading.fadeOut();
-		                
+
                 if (!initial_load || !self.standardReport.needsFilters) {
                     self.standardReport.filterSubmitButton.removeClass('btn-primary').button('standard');
                 } else {
