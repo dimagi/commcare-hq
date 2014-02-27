@@ -393,13 +393,52 @@ class SmsLineItemFactory(FeatureLineItemFactory):
 LOGO_FILENAME = 'corehq/apps/accounting/static/accounting/media/Dimagi-Logo-RGB.jpg'
 
 
+class Address(object):
+    def __init__(self, first_line='', second_line='', city='', region='',
+                 postal_code='', country='', phone_number='',
+                 email_address='', website=''):
+        self.first_line = first_line
+        self.second_line = second_line
+        self.city = city
+        self.region = region
+        self.postal_code = postal_code
+        self.country = country
+        self.phone_number = phone_number
+        self.email_address = email_address
+        self.website = website
+
+    # TODO don't skip lines when data is missing
+    def __str__(self):
+        return '''%(first_line)s
+        %(second_line)s
+        %(city)s, %(region)s %(postal_code)s
+        %(country)s
+        %(phone_number)s
+        %(email_address)s
+        %(website)s
+        ''' % {
+            'first_line': self.first_line,
+            'second_line': self.second_line,
+            'city': self.city,
+            'region': self.region,
+            'postal_code': self.postal_code,
+            'country': self.country,
+            'phone_number': self.phone_number,
+            'email_address': self.email_address,
+            'website': self.website,
+        }
+
+
 class InvoiceTemplate(object):
-    def __init__(self, filename, logo_filename=LOGO_FILENAME):
+    def __init__(self, filename, logo_filename=LOGO_FILENAME,
+                 from_address=None):
         self.canvas = Canvas(filename)
         self.logo_filename = os.path.join(os.getcwd(), logo_filename)
+        self.from_address = from_address
 
     def get_pdf(self):
         self.draw_logo()
+        self.draw_from_address()
 
         self.canvas.showPage()
         self.canvas.save()
@@ -407,3 +446,10 @@ class InvoiceTemplate(object):
     def draw_logo(self):
         self.canvas.drawImage(self.logo_filename, inch * 0.5, inch * 2.5,
                               width=inch * 1.5, preserveAspectRatio=True)
+
+    def draw_from_address(self):
+        if self.from_address is not None:
+            from_address_text = self.canvas.beginText()
+            from_address_text.setTextOrigin(inch * 3, inch * 11)
+            from_address_text.textLines(str(self.from_address))
+            self.canvas.drawText(from_address_text)
