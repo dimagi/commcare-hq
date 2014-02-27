@@ -13,7 +13,8 @@ def is_accounting_previewer(request):
         (hasattr(request, 'user') and toggle.shortcuts.toggle_enabled(
             toggles.ACCOUNTING_PREVIEW, request.user.username))
         or hasattr(request, 'domain') and toggle.shortcuts.toggle_enabled(
-            toggles.ACCOUNTING_PREVIEW, request.domain))
+            toggles.ACCOUNTING_PREVIEW, request.domain,
+            namespace=toggles.NAMESPACE_DOMAIN))
 
 
 def require_billing_admin():
