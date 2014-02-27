@@ -23,21 +23,6 @@ def hq_fixtures(user, version, last_sync):
 def item_lists(user, version, last_sync):
     assert isinstance(user, CommCareUser)
 
-    fixtures = []
-
-    # for accounting
-    if (toggle.shortcuts.toggle_enabled(
-            toggles.ACCOUNTING_PREVIEW, user.domain, namespace=toggles.NAMESPACE_DOMAIN)
-            and FixtureDataType.total_by_domain(user.domain)):
-        accountingFixture = ElementTree.Element('fixture', attrib={'id': 'accounting:lt'})
-
-        if not domain_has_privilege(user.domain, privileges.LOOKUP_TABLES):
-            accountingFixtureList = ElementTree.Element('lt_no_support')
-            accountingFixture.append(accountingFixtureList)
-            return [accountingFixture]
-
-        fixtures.append(accountingFixture)
-
     all_types = dict([(t._id, t) for t in FixtureDataType.by_domain(user.domain)])
     global_types = dict([(id, t) for id, t in all_types.items() if t.is_global])
 
@@ -67,6 +52,7 @@ def item_lists(user, version, last_sync):
         items_by_type[item.data_type_id].append(item)
         _set_cached_type(item, data_types[item.data_type_id])
 
+    fixtures = []
     all_types = data_types.values() + global_types.values()
     for data_type in all_types:
         xFixture = ElementTree.Element('fixture', attrib={'id': 'item-list:%s' % data_type.tag, 'user_id': user.user_id})
