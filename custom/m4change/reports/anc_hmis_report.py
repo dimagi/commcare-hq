@@ -136,6 +136,5 @@ class AncHmisReport(MonthYearMixin, CustomProjectReport, CaseListReport, M4Chang
             ]
 
     @property
-    @memoized
     def rendered_report_title(self):
         return self.name
