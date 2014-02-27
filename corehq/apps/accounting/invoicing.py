@@ -429,6 +429,10 @@ class Address(object):
         }
 
 
+LIGHT_GRAY = (0.7, 0.7, 0.7)
+BLACK = (0, 0, 0)
+
+
 class InvoiceTemplate(object):
     def __init__(self, filename, logo_filename=LOGO_FILENAME,
                  from_address=None, to_address=None):
@@ -460,6 +464,24 @@ class InvoiceTemplate(object):
             self.draw_text(str(self.from_address), inch * 3, inch * 11)
 
     def draw_to_address(self):
-        self.draw_text("Bill To", inch * 1.2, inch * 9.3)
+        self.canvas.translate(inch * 1, inch * 9.2)
+
+        left = 0
+        right = inch * 3
+        top = inch * 0.3
+        middle = 0
+        bottom = inch * -1.7
+        self.canvas.line(left, top, right, top)
+        self.canvas.line(left, middle, right, middle)
+        self.canvas.line(left, bottom, right, bottom)
+        self.canvas.line(left, top, left, bottom)
+        self.canvas.line(right, top, right, bottom)
+
+        self.canvas.setFillColorRGB(*LIGHT_GRAY)
+        self.canvas.rect(left, middle, right, top, fill=1)
+
+        self.canvas.setFillColorRGB(*BLACK)
+        self.draw_text("Bill To", inch * 0.2, inch * 0.1)
+
         if self.to_address is not None:
-            self.draw_text(str(self.to_address), inch, inch * 9)
+            self.draw_text(str(self.to_address), inch * 0.1, inch * -0.2)
