@@ -35,8 +35,9 @@ def handle_successful_processing_attempt(msg):
     msg.processed_timestamp = utcnow
     if msg.direction == OUTGOING:
         msg.date = utcnow
-        store_billable.delay(msg)
     msg.save()
+    if msg.direction == OUTGOING:
+        store_billable.delay(msg)
 
 def delay_processing(msg, minutes):
     msg.datetime_to_process += timedelta(minutes=minutes)
