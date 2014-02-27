@@ -9,6 +9,7 @@ from corehq.apps.users.models import CouchUser
 from django.template.loader import render_to_string
 from django.conf import settings
 from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.sms.api import store_billable
 
 from xml.etree.ElementTree import XML, tostring
 from dimagi.utils.parsing import json_format_datetime
@@ -157,6 +158,7 @@ def create_billable_for_sms(msg, backend_api, delay=True, **kwargs):
             bill_client_for_sms.delay(billable_class, msg._id, **kwargs)
         else:
             bill_client_for_sms(billable_class, msg._id, **kwargs)
+        store_billable.delay(msg)
     except Exception as e:
         logging.error("%s backend contacted, but errors in creating billable for incoming message. Error: %s" %
                       (backend_api, e))
