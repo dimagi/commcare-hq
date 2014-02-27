@@ -9,13 +9,14 @@ from dimagi.utils.couch.loosechange import map_reduce
 from dimagi.utils.parsing import json_format_datetime
 from datetime import datetime
 from corehq.apps.commtrack.util import get_supply_point
-from corehq.apps.commtrack.xmlutil import XML, _
+from corehq.apps.commtrack.xmlutil import XML
 from corehq.apps.commtrack.models import Product, CommtrackConfig, StockTransaction, CommTrackUser, RequisitionTransaction, RequisitionCase
-from corehq.apps.receiverwrapper.util import get_submit_url
-from receiver.util import spoof_submission
-from dimagi.utils import parsing as dateparse
 from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.apps.locations.models import Location
+from xml.etree import ElementTree
+from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.xml import V2
+
 import uuid
 
 logger = logging.getLogger('commtrack.sms')
@@ -94,7 +95,6 @@ class StockReportParser(object):
         else:
             return uuid.uuid4().hex
 
-    # TODO sms parsing could really use unit tests
     def parse(self, text):
         """take in a text and return the parsed stock transactions"""
         args = text.split()
@@ -117,7 +117,6 @@ class StockReportParser(object):
 
         action = self.C.action_by_keyword(action_keyword)
         if action and action.type == 'stock':
-            # single action stock report
             # TODO: support single-action by product, as well as by action?
             self.case_id = self.location['case']._id
             _tx = self.single_action_transactions(action, args, self.transaction_factory(StockTransaction))
@@ -290,16 +289,9 @@ def verify_transactions(transactions):
     )
 
 
-def convert_transactions_to_blocks(E, transactions):
-    """
-    Converts a list of StockTransactions (which in xml are entity items)
-    to lists inside of balance or transfer blocks, depending on their types
-    """
-
+def process_transactions(E, transactions):
     balances = []
     transfers = []
-
-    verify_transactions(transactions)
 
     for tx in transactions:
         if tx.action in (
@@ -314,58 +306,80 @@ def convert_transactions_to_blocks(E, transactions):
         else:
             transfers.append(tx)
 
-    stock_blocks = []
+    return process_balances(E, balances), process_transfers(E, transfers)
 
+
+def process_balances(E, balances):
     if balances:
-        if transactions[0].action == const.RequisitionActions.REQUEST:
+        if balances[0].action == const.RequisitionActions.REQUEST:
             section_id = 'ct-requested'
-        elif transactions[0].action == const.RequisitionActions.FULFILL:
+        elif balances[0].action == const.RequisitionActions.FULFILL:
             section_id = 'ct-fulfilled'
         else:
             section_id = 'stock'
 
         attr = {
             'section-id': section_id,
-            'entity-id': transactions[0].case_id
+            'entity-id': balances[0].case_id
         }
-        if transactions[0].date:
-            attr['date'] = transactions[0].date
+        if balances[0].date:
+            attr['date'] = balances[0].date
 
-        stock_blocks.append(E.balance(
+        return E.balance(
             attr,
             *[tx.to_xml() for tx in balances]
-        ))
+        )
 
+
+def process_transfers(E, transfers):
     if transfers:
         attr = {
             'section-id': 'stock',
         }
 
-        if transactions[0].action == const.RequisitionActions.FULFILL:
-            attr['dest'] = transactions[0].case_id
+        if transfers[0].action == const.RequisitionActions.FULFILL:
+            attr['dest'] = transfers[0].case_id
             # TODO support src
 
-        if transactions[0].action == const.RequisitionActions.RECEIPTS:
-            attr['src'] = transactions[0].case_id
-            sp = Location.get(transactions[0].location_id).linked_supply_point()
+        if transfers[0].action == const.RequisitionActions.RECEIPTS:
+            attr['src'] = transfers[0].case_id
+            sp = Location.get(transfers[0].location_id).linked_supply_point()
             attr['dest'] = sp._id
 
-        if transactions[0].subaction:
-            attr['type'] = transactions[0].subaction
+        if transfers[0].subaction:
+            attr['type'] = transfers[0].subaction
 
-        stock_blocks.append(E.transfer(
+        return E.transfer(
             attr,
             *[tx.to_xml() for tx in transfers]
-        ))
+        )
+
+
+def convert_transactions_to_blocks(E, transactions):
+    """
+    Converts a list of StockTransactions (which in xml are entity items)
+    to lists inside of balance or transfer blocks, depending on their types
+    """
+
+    verify_transactions(transactions)
+
+    balances, transfers = process_transactions(E, transactions)
+
+    stock_blocks = []
+    if balances:
+        stock_blocks.append(balances)
+    if transfers:
+        stock_blocks.append(transfers)
 
     return stock_blocks
 
+def get_device_id(data):
+    if data.get('phone'):
+        return 'sms:%s' % data['phone']
+    else:
+        return None
 
 def requisition_case_xml(data, stock_blocks):
-    from xml.etree import ElementTree
-    from casexml.apps.case.mock import CaseBlock
-    from casexml.apps.case.xml import V2
-
     req_id = data['transactions'][0].case_id
 
     # TODO: assert these are all the same or pass this information
@@ -391,21 +405,24 @@ def requisition_case_xml(data, stock_blocks):
         create=create,
         close=close,
         case_type=const.REQUISITION_CASE_TYPE,
-        case_name='SMS Requisition', # TODO bad
+        case_name='SMS Requisition',  # TODO make this something meaningful
         index={'parent_id': (
             const.SUPPLY_POINT_CASE_TYPE,
             data['location'].linked_supply_point()._id
         )},
         update={'requisition_status': status},
     ).as_xml())
-    # TODO: most of this needs real values..
+
+    timestamp = data['transactions'][0].timestamp or datetime.now()
+    device_id = get_device_id(data)
+
     return """
-        <data uiVersion="1" version="33" name="New Form" xmlns="http://commtrack.org/test_form_submission">
+        <data uiVersion="1" version="33" name="New Form" xmlns="%(xmlns)s">
             <meta>
-                <deviceID>351746051189879</deviceID>
-                <timeStart>2013-12-10T17:08:46.215-05</timeStart>
-                <timeEnd>2013-12-10T17:08:57.887-05</timeEnd>
-                <userID>{user_id}</userID>
+                <deviceID>%(device_id)s</deviceID>
+                <timeStart>%(timestamp)s</timeStart>
+                <timeEnd>%(timestamp)s</timeEnd>
+                <userID>%(user_id)s</userID>
             </meta>
             %(case_block)s
             %(stock_blocks)s
@@ -413,7 +430,10 @@ def requisition_case_xml(data, stock_blocks):
     """ % {
         'case_block': req_case_block,
         'stock_blocks': '\n'.join(etree.tostring(b) for b in stock_blocks),
-        'user_id': data['user']._id
+        'user_id': str(data['user']._id),
+        'device_id': str(device_id) if device_id else '',
+        'xmlns': const.SMS_XMLNS,
+        'timestamp': json_format_datetime(timestamp)
     }
 
 
@@ -423,9 +443,7 @@ def to_instance(data):
     E = XML()
     M = XML(const.META_XMLNS, 'jrm')
 
-    deviceID = ''
-    if data.get('phone'):
-        deviceID = 'sms:%s' % data['phone']
+    deviceID = get_device_id(data)
     timestamp = json_format_datetime(data['timestamp'])
 
     transactions = data['transactions']
@@ -433,8 +451,6 @@ def to_instance(data):
     stock_blocks = convert_transactions_to_blocks(E, transactions)
 
     if category == 'stock':
-        #TODO make sure all transaction types/case ids are the same
-
         root = E.stock_report(
             M.meta(
                 M.userID(data['user']._id),

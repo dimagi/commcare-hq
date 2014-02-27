@@ -315,7 +315,6 @@ class StockRequisitionTest(SMSTests):
 
         # check updated status
         for code, amt in amounts.items():
-            self.check_stock(code, amt, self.sp._id, 'stock')
             self.check_stock(code, amt, req._id, 'stock')
             self.check_stock(code, amt, req._id, 'ct-fulfilled')
 
