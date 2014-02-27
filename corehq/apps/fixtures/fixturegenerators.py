@@ -24,10 +24,10 @@ def item_lists(user, version, last_sync):
     assert isinstance(user, CommCareUser)
 
     fixtures = []
-    
+
     # for accounting
     if (toggle.shortcuts.toggle_enabled(
-            toggles.ACCOUNTING_PREVIEW, user.domain)
+            toggles.ACCOUNTING_PREVIEW, user.domain, namespace=toggles.NAMESPACE_DOMAIN)
             and FixtureDataType.total_by_domain(user.domain)):
         accountingFixture = ElementTree.Element('fixture', attrib={'id': 'accounting:lt'})
 
