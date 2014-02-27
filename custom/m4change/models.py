@@ -1,12 +1,25 @@
 from casexml.apps.case.models import CommCareCase
 import fluff
+from corehq.apps.users.models import CommCareUser
 from custom.m4change import user_calcs
+from custom.m4change.constants import DOMAIN
+
+
+def _get_case_location_id(case):
+    user = CommCareUser.get_by_user_id(userID=case.user_id, domain=DOMAIN)
+    if user is not None and 'location_id' in user:
+        return user.location_id
+    else:
+        return None
 
 
 class AncHmisCaseFluff(fluff.IndicatorDocument):
     document_class = CommCareCase
     domains = ('m4change',)
-    group_by = ('domain',)
+    group_by = (
+                'domain',
+                fluff.AttributeGetter('location_id', getter_function=_get_case_location_id),
+    )
     save_direct_to_sql = True
 
     attendance = user_calcs.AncAntenatalAttendanceCalculator()

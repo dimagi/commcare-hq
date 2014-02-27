@@ -1,12 +1,29 @@
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
+
+from corehq.apps.locations.models import Location
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
+from corehq.apps.reports.fields import AsyncLocationField
+from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin
 from corehq.apps.reports.standard.cases.basic import CaseListReport
+from custom.m4change.reports.reports import M4ChangeReport
 from custom.m4change.reports.sql_data import AncHmisCaseSqlData
 from custom.m4change.constants import DOMAIN
 
-class AncHmisReport(MonthYearMixin, CustomProjectReport, CaseListReport):
+
+def _get_row(row_data, form_data, key):
+    data = form_data.get(key)
+    rows = dict([(row_key, data.get(row_key, 0)) for row_key in row_data])
+    for key in rows:
+        if rows.get(key) == None:
+            rows[key] = 0
+    rows["antenatal_first_visit_total"] = rows.get("attendance_before_20_weeks_total") \
+                                          + rows.get("attendance_after_20_weeks_total")
+    return rows
+
+
+class AncHmisReport(MonthYearMixin, CustomProjectReport, CaseListReport, M4ChangeReport):
     ajax_pagination = False
     asynchronous = True
     exportable = True
@@ -14,6 +31,88 @@ class AncHmisReport(MonthYearMixin, CustomProjectReport, CaseListReport):
     name = "Facility ANC HMIS Report"
     slug = "facility_anc_hmis_report"
     default_rows = 25
+
+    fields = [
+        AsyncLocationField,
+        MonthFilter,
+        YearFilter
+    ]
+
+    @classmethod
+    def get_report_data(cls, config):
+        if 'location_id' not in config:
+            raise KeyError(_("Parameter 'location_id' is missing"))
+        if 'datespan' not in config:
+            raise KeyError(_("Parameter 'datespan' is missing"))
+
+        location_id = config.get('location_id', None)
+        form_sql_data = AncHmisCaseSqlData(domain=DOMAIN, datespan=config.get('datespan', None))
+        form_data = form_sql_data.data
+        top_location = Location.get(location_id)
+        locations = [top_location.get_id] + [descendant.get_id for descendant in top_location.descendants]
+        row_data = AncHmisReport.get_initial_row_data()
+
+        for location_id in locations:
+            key = (DOMAIN, location_id)
+            if key in form_sql_data.data:
+                report_rows = _get_row(row_data, form_data, key)
+                for key in report_rows:
+                    row_data.get(key)["value"] += report_rows.get(key)
+        return row_data
+
+
+    @classmethod
+    def get_initial_row_data(self):
+        return {
+            "attendance_total": {
+                "hmis_code": "03", "label": _("Antenatal Attendance - Total"), "value": 0
+            },
+            "attendance_before_20_weeks_total": {
+                "hmis_code": "04", "label": _("Antenatal first Visit before 20wks"), "value": 0
+            },
+            "attendance_after_20_weeks_total": {
+                "hmis_code": "05", "label": _("Antenatal first Visit after 20wks"), "value": 0
+            },
+            "antenatal_first_visit_total": {
+                "hmis_code": "06", "label": _("Antenatal first visit - total"), "value": 0
+            },
+            "attendance_gte_4_visits_total": {
+                "hmis_code": "07", "label": _("Pregnant women that attend antenatal clinic for 4th visit during the month"), "value": 0
+            },
+            'anc_syphilis_test_done_total': {
+                "hmis_code": "08", "label": _("ANC syphilis test done"), "value": 0
+            },
+            'anc_syphilis_test_positive_total': {
+                "hmis_code": "09", "label": _("ANC syphilis test positive"), "value": 0
+            },
+            'anc_syphilis_case_treated_total': {
+                "hmis_code": "10", "label": _("ANC syphilis case treated"), "value": 0
+            },
+            'pregnant_mothers_receiving_ipt1_total': {
+                "hmis_code": "11", "label": _("Pregnant women who receive malaria IPT1"), "value": 0
+            },
+            'pregnant_mothers_receiving_ipt2_total': {
+                "hmis_code": "12", "label": _("Pregnant women who receive malaria IPT2"), "value": 0
+            },
+            'pregnant_mothers_receiving_llin_total': {
+                "hmis_code": "13", "label": _("Pregnant women who receive malaria LLIN"), "value": 0
+            },
+            'pregnant_mothers_receiving_ifa_total': {
+                "hmis_code": "14", "label": _("Pregnant women who receive malaria Haematinics"), "value": 0
+            },
+            'postnatal_attendance_total': {
+                "hmis_code": "15", "label": _("Postnatal Attendance - Total"), "value": 0
+            },
+            'postnatal_clinic_visit_lte_1_day_total': {
+                "hmis_code": "16", "label": _("Postnatal clinic visit within 1 day of delivery"), "value": 0
+            },
+            'postnatal_clinic_visit_lte_3_days_total': {
+                "hmis_code": "17", "label": _("Postnatal clinic visit within 3 days of delivery"), "value": 0
+            },
+            'postnatal_clinic_visit_gte_7_days_total': {
+                "hmis_code": "18", "label": _("Postnatal clinic visit >= 7 days of delivery"), "value": 0
+            }
+        }
 
     @property
     def headers(self):
@@ -24,40 +123,17 @@ class AncHmisReport(MonthYearMixin, CustomProjectReport, CaseListReport):
 
     @property
     def rows(self):
-        self.form_sql_data = AncHmisCaseSqlData(domain=DOMAIN, datespan=self.datespan)
-        antenatal_first_visit_total = self.form_sql_data.data[DOMAIN].get("attendance_before_20_weeks_total", 0)\
-                                      + self.form_sql_data.data[DOMAIN].get("attendance_after_20_weeks_total", 0)
+        row_data = AncHmisReport.get_report_data({
+            'location_id': self.request.GET.get('location_id', None),
+            'datespan': self.datespan
+        })
 
-        print(self.form_sql_data.data[DOMAIN])
-
-        report_rows = [
-            (3, _("Antenatal Attendance - Total"), self.form_sql_data.data[DOMAIN].get("attendance_total", 0)),
-            (4, _("Antenatal first Visit before 20wks"), self.form_sql_data.data[DOMAIN].get("attendance_before_20_weeks_total", 0)),
-            (5, _("Antenatal first Visit after 20wks"), self.form_sql_data.data[DOMAIN].get("attendance_after_20_weeks_total", 0)),
-            (6, _("Antenatal first visit - total"), antenatal_first_visit_total),
-            (7, _("Pregnant Women that attend antenatal clinic for 4th visit during the month"),
-                self.form_sql_data.data[DOMAIN].get("attendance_gte_4_visits_total", 0)),
-            (8, _("ANC syphilis test done"), self.form_sql_data.data[DOMAIN].get('anc_syphilis_test_done_total', 0)),
-            (9, _("ANC syphilis test positive"), self.form_sql_data.data[DOMAIN].get('anc_syphilis_test_positive_total', 0)),
-            (10, _("ANC syphilis case treated"), self.form_sql_data.data[DOMAIN].get('anc_syphilis_case_treated_total', 0)),
-            (11, _("Pregnant women who receive malaria IPT1"), self.form_sql_data.data[DOMAIN].get('pregnant_mothers_receiving_ipt1_total', 0)),
-            (12, _("Pregnant women who receive malaria IPT2"),self.form_sql_data.data[DOMAIN].get('pregnant_mothers_receiving_ipt2_total', 0)),
-            (13, _("Pregnant women who receive LLIN"), self.form_sql_data.data[DOMAIN].get('pregnant_mothers_receiving_llin_total', 0)),
-            (14, _("Pregnant women who receive Haematinics"), self.form_sql_data.data[DOMAIN].get('pregnant_mothers_receiving_ifa_total', 0)),
-            (15, _("Postnatal Attendance - Total"), self.form_sql_data.data[DOMAIN].get('postnatal_attendance_total', 0)),
-            (16, _("Postnatal clinic visit within 1 day of delivery"),
-                self.form_sql_data.data[DOMAIN].get('postnatal_clinic_visit_lte_1_day_total', 0)),
-            (17, _("Postnatal clinic visit within 3 days of delivery"),
-                self.form_sql_data.data[DOMAIN].get('postnatal_clinic_visit_lte_3_days_total', 0)),
-            (18, _("Postanatal clinic visit >= 7 days of delivery"),
-                self.form_sql_data.data[DOMAIN].get('postnatal_clinic_visit_gte_7_days_total', 0))
-        ]
-
-        for row in report_rows:
-            value = row[2]
-            if value is None:
-                value = 0
-            yield [row[0], row[1], value]
+        for key in row_data:
+            yield [
+                row_data.get(key).get("hmis_code"),
+                row_data.get(key).get("label"),
+                row_data.get(key).get("value")
+            ]
 
     @property
     @memoized
