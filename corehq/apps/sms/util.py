@@ -157,6 +157,8 @@ def create_billable_for_sms(msg, backend_api, delay=True, **kwargs):
             bill_client_for_sms.delay(billable_class, msg._id, **kwargs)
         else:
             bill_client_for_sms(billable_class, msg._id, **kwargs)
+        from corehq.apps.sms.api import store_billable
+        store_billable.delay(msg)
     except Exception as e:
         logging.error("%s backend contacted, but errors in creating billable for incoming message. Error: %s" %
                       (backend_api, e))
