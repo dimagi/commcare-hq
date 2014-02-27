@@ -59,6 +59,5 @@ class ImmunizationHmisReport(MonthYearMixin, CustomProjectReport, CaseListReport
             yield [row[0], row[1], value]
 
     @property
-    @memoized
     def rendered_report_title(self):
         return self.name
