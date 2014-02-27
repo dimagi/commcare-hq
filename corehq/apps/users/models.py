@@ -325,7 +325,11 @@ class DomainMembership(Membership):
         if self.is_admin:
             return AdminUserRole(self.domain)
         elif self.role_id:
-            return UserRole.get(self.role_id)
+            try:
+                return UserRole.get(self.role_id)
+            except ResourceNotFound:
+                logging.exception('no role with id %s found in domain %s' % (self.role_id, self.domain))
+                return None
         else:
             return None
 
@@ -1232,6 +1236,11 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                     message="Error occured while syncing user %s: %s" %
                             (self.username, str(result[1]))
                 )
+
+    @property
+    @memoized
+    def project(self):
+        return Domain.get_by_name(self.domain)
 
     def is_domain_admin(self, domain=None):
         # cloudcare workaround

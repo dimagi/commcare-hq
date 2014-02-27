@@ -1,0 +1,28 @@
+{% load staticfiles %}
+{% load i18n %}
+<label class="control-label">{% trans datespan_name %}</label>
+<div class="controls">
+    <input type="text" id="filter_range" name="range" class="date-range-picker" value="{{ datespan.startdate|date:'Y-m-d' }} to {{ datespan.enddate|date:'Y-m-d' }}" />
+    <span class="helptext help-inline" style="margin-left: 1.5em;">
+        {% if timezone %}
+        {% blocktrans %}This report's timezone is {{ timezone }}.{% endblocktrans %}
+        {% endif %}
+    </span>
+</div>
+
+<script type="text/javascript" src="{% static 'm4change/javascripts/bootstrap-daterangepicker/moment.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'm4change/javascripts/bootstrap-daterangepicker/daterangepicker.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'm4change/javascripts/daterangepicker.js' %}"></script>
+<script type="text/javascript">
+    $(function () {
+        var separator = '{{ separator }}';
+        var report_labels = JSON.parse('{{ report_labels|safe }}');
+
+        $('#filter_range').createDateRangePicker(report_labels, separator);
+        $('#filter_range').on('apply', function(ev, picker) {
+            var dates = $(this).val().split(separator);
+            $(standardHQReport.filterAccordion).trigger('hqreport.filter.datespan.startdate', dates[0]);
+            $(standardHQReport.filterAccordion).trigger('hqreport.filter.datespan.enddate', dates[1]);
+        });
+    });
+</script>

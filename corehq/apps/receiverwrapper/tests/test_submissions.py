@@ -41,7 +41,7 @@ class SubmissionTest(TestCase):
         
     
     def testSubmitSimpleForm(self):
-        self.assertTrue(self._check_for_message("Thanks for submitting, someuser.  We have received 1 forms from you today (1 forms all time)", 
+        self.assertTrue(self._check_for_message("Thanks for submitting!",
                                                 self._submit("simple_form.xml")),
                         "Basic form successfully parsed")
     
@@ -56,12 +56,12 @@ class SubmissionTest(TestCase):
                         "User registration form successfully parsed")
     
     def testSubmitWithCase(self):
-        self.assertTrue(self._check_for_message("Thanks for submitting, someuser.  We have received 1 forms from you today (1 forms all time)", 
+        self.assertTrue(self._check_for_message("Thanks for submitting!",
                                                 self._submit("form_with_case.xml")),
                         "Form with case successfully parsed")
     
     def testSubmitWithNamespacedMeta(self):
-        self.assertTrue(self._check_for_message("Thanks for submitting, ctest.  We have received 1 forms from you today (1 forms all time)", 
+        self.assertTrue(self._check_for_message("Thanks for submitting!",
                                                 self._submit("namespace_in_meta.xml")),
                         "Form with namespace in meta successfully parsed")
         
