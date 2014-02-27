@@ -431,14 +431,16 @@ class Address(object):
 
 class InvoiceTemplate(object):
     def __init__(self, filename, logo_filename=LOGO_FILENAME,
-                 from_address=None):
+                 from_address=None, to_address=None):
         self.canvas = Canvas(filename)
         self.logo_filename = os.path.join(os.getcwd(), logo_filename)
         self.from_address = from_address
+        self.to_address = to_address
 
     def get_pdf(self):
         self.draw_logo()
         self.draw_from_address()
+        self.draw_to_address()
 
         self.canvas.showPage()
         self.canvas.save()
@@ -447,9 +449,17 @@ class InvoiceTemplate(object):
         self.canvas.drawImage(self.logo_filename, inch * 0.5, inch * 2.5,
                               width=inch * 1.5, preserveAspectRatio=True)
 
+    def draw_text(self, string, x, y):
+        text = self.canvas.beginText()
+        text.setTextOrigin(x, y)
+        text.textLines(string)
+        self.canvas.drawText(text)
+
     def draw_from_address(self):
         if self.from_address is not None:
-            from_address_text = self.canvas.beginText()
-            from_address_text.setTextOrigin(inch * 3, inch * 11)
-            from_address_text.textLines(str(self.from_address))
-            self.canvas.drawText(from_address_text)
+            self.draw_text(str(self.from_address), inch * 3, inch * 11)
+
+    def draw_to_address(self):
+        self.draw_text("Bill To", inch * 1.2, inch * 9.3)
+        if self.to_address is not None:
+            self.draw_text(str(self.to_address), inch, inch * 9)
