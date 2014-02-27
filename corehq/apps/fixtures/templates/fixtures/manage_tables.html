@@ -18,6 +18,7 @@
         var FixtureFileDownloadUrl = "{% url 'download_fixture_file' domain%}" +"?";
         var TableViewUrl = "{% url 'fixture_interface_dispatcher' domain 'view_lookup_tables'%}";
         var DataTypeUrl = "{% url 'fixture_data_types' domain %}";
+        var UpdateTableUrl = "{% url 'update_lookup_tables' domain %}";
     </script>
 {% endblock %}
 
@@ -84,12 +85,12 @@
                                 <a data-bind="attr: {href: view_link}" target='_blank'><span>View Table</span></a>
                             </td>
                             <td>
-<!--                            <button class="btn" data-bind="click: startEditing, visible: saveState() === 'saved'">
+                                <button class="btn" data-bind="click: startEditing, visible: saveState() === 'saved'">
                                     <i class="icon-edit"></i>
                                     Edit Type
                                 </button>
                                 <button class="btn disabled" data-bind="visible: saveState() === 'saving'">Saving...</button>
-                                {% include "fixtures/partials/edit_table_modal.html" %} -->
+                                {% include "fixtures/partials/edit_table_modal.html" %} 
                                 <button class="btn btn-danger" data-bind="click: $root.removeDataType">
                                     <i class="icon-white icon-trash"></i>
                                     Delete
