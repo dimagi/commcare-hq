@@ -16,6 +16,15 @@ class FixtureDataType(Document):
     fields = StringListProperty()
 
     @classmethod
+    def total_by_domain(cls, domain):
+        num_fixtures = FixtureDataType.get_db().view(
+            'fixtures/data_types_by_domain',
+            reduce=True,
+            key=domain,
+        ).first()
+        return num_fixtures['value'] if num_fixtures is not None else 0
+
+    @classmethod
     def by_domain(cls, domain):
         return cls.view('fixtures/data_types_by_domain', key=domain, reduce=False, include_docs=True)
 
