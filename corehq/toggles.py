@@ -7,7 +7,8 @@ class StaticToggle(object):
         self.namespaces = namespaces or []
 
     def enabled(self, item, **kwargs):
-        toggle_enabled(self.slug, item, **kwargs)
+        return toggle_enabled(self.slug, item, **kwargs)
+    
 
 NAMESPACE_DOMAIN = 'domain'
 
