@@ -32,12 +32,12 @@ $(function () {
             raw_fields = self.fields();
         self.fields = ko.observableArray([]);
         makeEditable(self);
-        self.view_link = ko.computed(function(){
-            return TableViewUrl + "?table_id="+self._id();
-        }, self);
         if (!o._id) {
             self._id = ko.observable();
         }
+        self.view_link = ko.computed(function(){
+            return TableViewUrl + "?table_id="+self._id();
+        }, self);
         self.aboutToDelete = ko.observable(false);
         self.addField = function (data, event, o) {
             var i, field;
@@ -87,7 +87,7 @@ $(function () {
         self.save = function () {
             $.ajax({
                 type: self._id() ? (self._destroy ? 'delete' : 'put') : 'post',
-                url: UpdateTableUrl,
+                url: UpdateTableUrl + (self._id() || ''),
                 data: JSON.stringify(self.serialize()),
                 dataType: 'json',
                 success: function (data) {
@@ -105,29 +105,28 @@ $(function () {
                 tag: self.tag(),
                 view_link: self.view_link(),
                 fields: (function () {
-                    var fields = [], i;
+                    var fields = {}, i;
                     console.log(self.fields());
                     for (i = 0; i < self.fields().length; i += 1) {
                         var field = self.fields()[i];
-                        var patch; var patch_dict = new Object;
+                        var patch;
                         if (field.is_new) {
+                            if (field.remove() == true) continue;
                             patch = {"is_new": 1};
-                            patch_dict[field.tag()] = patch;
+                            fields[field.tag()] = patch;
                         }
-                        else if (field.remove()) {
+                        else if (field.remove() === true) {
                             patch = {"remove": 1};
-                            patch_dict[field.tag()] = patch;
+                            fields[field.original_tag] = patch;
                         }
                         else if (field.tag() !== field.original_tag){
                             patch = {"update": field.tag()};
-                            patch_dict[field.original_tag] = patch;
+                            fields[field.original_tag] = patch;
                         }
                         else {
                             patch = {};
-                            patch_dict[field.tag()] = patch;
+                            fields[field.tag()] = patch;
                         }
-                        console.log(patch_dict);
-                        fields.push(patch_dict);
                     }
                     return fields;
                 }())

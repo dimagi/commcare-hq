@@ -35,6 +35,7 @@ from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 from dimagi.utils.decorators.view import get_file
 
+from copy import deepcopy
 from soil import CachedDownload, DownloadBase
 from soil.util import expose_download
 
@@ -115,10 +116,104 @@ def data_types(request, domain, data_type_id):
 
 
 @require_can_edit_fixtures
-def update_tables(request, domain):
-    print "\n################\n"
-    print _to_kwargs(request)
+def update_tables(request, domain, data_type_id):
+    print "\n################\n", request
+    # print _to_kwargs(request)
+    # return json_response({})
+    fiedls_update = _to_kwargs(request)
+    fields_patches = fiedls_update["fields"]
+    print fields_patches
+    data_tag = fiedls_update["tag"]
+    with CouchTransaction() as transaction:
+        if data_type_id:
+            update_types(fields_patches, domain, data_type_id, transaction)
+            print fields_patches, "ssss"
+            update_items(fields_patches, domain, data_type_id, transaction)
+        else:
+            create_types(fields_patches, domain, data_tag, transaction)
     return json_response({})
+
+
+def update_types(patches, domain, data_type_id, transaction):
+    data_type = FixtureDataType.get(data_type_id)
+    fields_patches = deepcopy(patches)
+    print data_type
+    assert(data_type.doc_type == FixtureDataType._doc_type)
+    assert(data_type.domain == domain)
+    old_fields = data_type.fields
+    new_fields = []
+    for old_field in old_fields:
+        patch = fields_patches.pop(old_field.field_name, {})
+        print old_field.field_name, patch, any(patch)
+        if not any(patch):
+            continue
+        if "update" in patch:
+            setattr(old_field, "field_name", patch["update"])
+        if "remove" in patch:
+            continue
+            # transaction.delete(old_field)
+    new_fields = fields_patches.keys()
+    for new_field_name in new_fields:
+        patch = fields_patches[new_field_name]
+        if "is_new" in patch:
+            old_fields.append(FixtureTypeField(
+                field_name=new_field_name,
+                properties=[]
+            ))
+        fields_patches.pop(new_field_name)
+    setattr(data_type, "fields", old_fields)
+    print data_type
+    # transaction.save(data_type)
+
+
+def update_items(fields_patches, domain, data_type_id, transaction):
+    def destroy_field(field):
+        return 1
+        for item_field in field.field_list:
+            transaction.delete(item_field)
+        transaction.delete(field)
+
+    data_items = FixtureDataItem.by_data_type(domain, data_type_id)
+    for item in data_items:
+        print item, "\n"
+        fields = item.fields
+        patches = deepcopy(fields_patches)
+        for old_field in fields.keys():
+            patch = patches.pop(old_field, {})
+            print old_field, patches, patch, "iiiii"
+            if not any(patch):
+                continue
+            if "update" in patch:
+                fields[patch["update"]] = fields.pop(old_field)
+                print old_field, "jjjjjjjjjjjjjj"
+                print fields[patch["update"]]
+            if "remove" in patch:
+                field_to_delete = fields.pop(old_field)
+                destroy_field(field_to_delete)
+        print patches, "ppppppppppppppppppppp"
+        for new_field_name in patches.keys():
+            patch = patches.pop(new_field_name, {})
+            if "is_new" in patch:
+                print "siioo"
+                fields[new_field_name] = FieldList(
+                    field_list=[]
+                )
+        print fields, "yyyyyyyyyyy"
+        setattr(item, "fields", fields)
+        print item
+        # transaction.save(item)
+
+
+def create_types(fields_patches, domain, data_tag, transaction):
+    data_type = FixtureDataType(
+        domain=domain,
+        tag=data_tag,
+        is_global=False,
+        fields=[FixtureTypeField(field_name=field, properties=[]) for field in fields_patches]
+    )
+    print data_type
+    # transaction.save(data_type)
+    return []
 
 
 @require_can_edit_fixtures
