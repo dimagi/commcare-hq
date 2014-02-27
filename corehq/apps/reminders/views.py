@@ -1342,7 +1342,10 @@ class RemindersListView(BaseMessagingSectionView):
         all_handlers = CaseReminderHandler.get_handlers(domain=self.domain).all()
         all_handlers = filter(lambda x : x.reminder_type == REMINDER_TYPE_DEFAULT, all_handlers)
         if not self.can_use_survey:
-            all_handlers = filter(lambda x: x.method in [METHOD_IVR_SURVEY, METHOD_SMS_SURVEY], all_handlers)
+            all_handlers = filter(
+                lambda x: x.method not in [METHOD_IVR_SURVEY, METHOD_SMS_SURVEY],
+                all_handlers
+            )
         for handler in all_handlers:
             yield self._fmt_reminder_data(handler)
 
