@@ -12,14 +12,6 @@ from custom.m4change.reports.reports import M4ChangeReportDataSource
 
 
 def generator(user, version, last_sync):
-    # todo: this appears in the beginning of all fixture generators. should fix
-    if isinstance(user, CommCareUser):
-        pass
-    elif hasattr(user, "_hq_user") and user._hq_user is not None:
-        user = user._hq_user
-    else:
-        return []
-
     from reports.anc_hmis_report import AncHmisReport
     hard_coded_reports = [
         AncHmisReport,
