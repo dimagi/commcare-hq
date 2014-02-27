@@ -435,16 +435,18 @@ BLACK = (0, 0, 0)
 
 class InvoiceTemplate(object):
     def __init__(self, filename, logo_filename=LOGO_FILENAME,
-                 from_address=None, to_address=None):
+                 from_address=None, to_address=None, project_name=''):
         self.canvas = Canvas(filename)
         self.logo_filename = os.path.join(os.getcwd(), logo_filename)
         self.from_address = from_address
         self.to_address = to_address
+        self.project_name = project_name
 
     def get_pdf(self):
         self.draw_logo()
         self.draw_from_address()
         self.draw_to_address()
+        self.draw_project_name()
 
         self.canvas.showPage()
         self.canvas.save()
@@ -464,24 +466,50 @@ class InvoiceTemplate(object):
             self.draw_text(str(self.from_address), inch * 3, inch * 11)
 
     def draw_to_address(self):
-        self.canvas.translate(inch * 1, inch * 9.2)
+        origin_x = inch * 1
+        origin_y = inch * 9.2
+        self.canvas.translate(origin_x, origin_y)
 
-        left = 0
-        right = inch * 3
+        left = inch * 0
+        right = inch * 4.5
         top = inch * 0.3
-        middle = 0
+        middle_horizational = inch * 0
         bottom = inch * -1.7
-        self.canvas.line(left, top, right, top)
-        self.canvas.line(left, middle, right, middle)
-        self.canvas.line(left, bottom, right, bottom)
-        self.canvas.line(left, top, left, bottom)
-        self.canvas.line(right, top, right, bottom)
+        self.canvas.rect(left, bottom, right - left, top - bottom)
 
         self.canvas.setFillColorRGB(*LIGHT_GRAY)
-        self.canvas.rect(left, middle, right, top, fill=1)
+        self.canvas.rect(left, middle_horizational, right - left,
+                         top - middle_horizational, fill=1)
 
         self.canvas.setFillColorRGB(*BLACK)
-        self.draw_text("Bill To", inch * 0.2, inch * 0.1)
+        self.draw_text("Bill To", left + inch * 0.2,
+                       middle_horizational + inch * 0.1)
 
         if self.to_address is not None:
             self.draw_text(str(self.to_address), inch * 0.1, inch * -0.2)
+
+        self.canvas.translate(-origin_x, -origin_y)
+
+    def draw_project_name(self):
+        origin_x = inch * 1
+        origin_y = inch * 7
+        self.canvas.translate(origin_x, origin_y)
+
+        left = inch * 0
+        middle_vertical = inch * 1
+        right = inch * 4.5
+        top = inch * 0
+        bottom = inch * -0.3
+        self.canvas.rect(left, bottom, right - left, top - bottom)
+
+        self.canvas.setFillColorRGB(*LIGHT_GRAY)
+        self.canvas.rect(left, bottom, middle_vertical - left, top - bottom,
+                         fill=1)
+
+        self.canvas.setFillColorRGB(*BLACK)
+        self.canvas.drawString(left + inch * 0.2, bottom + inch * 0.1,
+                               "Project")
+        self.canvas.drawString(middle_vertical + inch * 0.2,
+                               bottom + inch * 0.1, self.project_name)
+
+        self.canvas.translate(-origin_x, -origin_y)
