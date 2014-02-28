@@ -113,6 +113,7 @@ class Site(object):
 def get_days_on(date):
     week = get_m_to_f(date)
     week = [week[0] - datetime.timedelta(days=1)] + week
+    forms = []
     for form in XFormInstance.view(
         'couchforms/by_xmlns',
         key=WEEKLY_SCHEDULE_XMLNS,
@@ -120,7 +121,10 @@ def get_days_on(date):
         include_docs=True,
     ):
         if form.received_on.date() in week:
-            return form.form
+            forms.append(form)
+    if forms:
+        forms.sort(key=lambda form: form.received_on)
+        return forms[-1].form
 
 
 def save_report(date=None):

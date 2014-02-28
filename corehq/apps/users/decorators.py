@@ -2,6 +2,7 @@ from django.http import HttpResponseForbidden, Http404
 from corehq.apps.domain.decorators import login_and_domain_required, domain_specific_login_redirect
 from functools import wraps
 from corehq.apps.users.models import CouchUser
+from django.utils.translation import ugettext as _
 
 
 def require_permission(permission, data=None, login_decorator=login_and_domain_required):
@@ -20,7 +21,8 @@ def require_permission(permission, data=None, login_decorator=login_and_domain_r
             elif request.user.is_superuser or request.couch_user.has_permission(domain, permission, data=data):
                 return view_func(request, domain, *args, **kwargs)
             else:
-                return HttpResponseForbidden()
+                return HttpResponseForbidden(_("Sorry, you don't have permission to access that page! "
+                                               "Contact your administrator if you believe this is a mistake."))
 
         if login_decorator:
             return login_decorator(_inner)

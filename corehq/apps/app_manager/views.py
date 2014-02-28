@@ -13,7 +13,7 @@ from django.core.cache import cache
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _, get_language
 from django.views.decorators.cache import cache_control
-from corehq import ApplicationsTab, toggles
+from corehq import ApplicationsTab, toggles, privileges
 from corehq.apps.app_manager import commcare_settings
 from corehq.apps.app_manager.exceptions import (
     AppManagerException,
@@ -72,7 +72,8 @@ from corehq.apps.app_manager.models import import_app as import_app_util, SortEl
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST
 from django.contrib import messages
-from toggle import toggle_enabled
+from django_prbac.exceptions import PermissionDenied
+from django_prbac.utils import ensure_request_has_privilege
 
 logger = logging.getLogger(__name__)
 
@@ -408,22 +409,31 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
         return "app_manager/form_view_careplan.html", context
     elif isinstance(form, AdvancedForm):
         context.update({
-            'show_custom_ref': toggle_enabled(toggles.APP_BUILDER_CUSTOM_PARENT_REF, request.user.username),
+            'show_custom_ref': toggles.APP_BUILDER_CUSTOM_PARENT_REF.enabled(request.user.username),
         })
         return "app_manager/form_view_advanced.html", context
     else:
         context.update({
             'is_user_registration': is_user_registration,
-            'show_custom_ref': toggle_enabled(toggles.APP_BUILDER_CUSTOM_PARENT_REF, request.user.username),
+            'show_custom_ref': toggles.APP_BUILDER_CUSTOM_PARENT_REF.enabled(request.user.username),
         })
         return "app_manager/form_view.html", context
 
 
 def get_app_view_context(request, app):
 
+    is_cloudcare_allowed = True
+    if hasattr(request, 'user') and toggles.ACCOUNTING_PREVIEW.enabled(
+            request.user.username):
+        try:
+            ensure_request_has_privilege(request, privileges.CLOUDCARE)
+        except PermissionDenied:
+            is_cloudcare_allowed = False
+
     context = {
         'settings_layout': commcare_settings.LAYOUT[app.get_doc_type()],
         'settings_values': get_settings_values(app),
+        'is_cloudcare_allowed': is_cloudcare_allowed,
     }
 
     build_config = CommCareBuildConfig.fetch()
@@ -532,9 +542,9 @@ def get_apps_base_context(request, domain, app):
         context.update({
             'show_care_plan': (v2_app
                                and not app.has_careplan_module
-                               and toggle_enabled(toggles.APP_BUILDER_CAREPLAN, request.user.username)),
+                               and toggles.APP_BUILDER_CAREPLAN.enabled(request.user.username)),
             'show_advanced': (v2_app
-                               and toggle_enabled(toggles.APP_BUILDER_ADVANCED, request.user.username)),
+                               and toggles.APP_BUILDER_ADVANCED.enabled(request.user.username)),
         })
 
     return context
@@ -559,7 +569,7 @@ def paginate_releases(request, domain, app_id):
         wrapper=lambda x: SavedAppBuild.wrap(x['value']).to_saved_build_json(timezone),
     ).all()
     for app in saved_apps:
-        app['include_media'] = toggle_enabled(toggles.APP_BUILDER_INCLUDE_MULTIMEDIA_ODK, request.user.username)
+        app['include_media'] = toggles.APP_BUILDER_INCLUDE_MULTIMEDIA_ODK.enabled(request.user.username)
     return json_response(saved_apps)
 
 
@@ -1608,6 +1618,11 @@ def edit_app_attr(request, domain, app_id, attr):
     if should_edit("cloudcare_enabled"):
         if app.get_doc_type() not in ("Application",):
             raise Exception("App type %s does not support cloudcare" % app.get_doc_type())
+        if hasattr(request, 'user') and toggles.ACCOUNTING_PREVIEW.enabled(request.user.username):
+            try:
+                ensure_request_has_privilege(request, privileges.CLOUDCARE)
+            except PermissionDenied:
+                app.cloudcare_enabled = False
 
 
     def require_remote_app():

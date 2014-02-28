@@ -2,13 +2,16 @@ from __future__ import absolute_import
 import json
 import re
 import urllib
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from django.utils.decorators import method_decorator
-from corehq import Domain
+from corehq import Domain, toggles, privileges
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.locations.models import Location
 from corehq.apps.sms.mixin import BadSMSConfigException
 from corehq.apps.users.decorators import require_can_edit_web_users, require_permission_to_edit_user
 from dimagi.utils.decorators.memoized import memoized
+from django_prbac.exceptions import PermissionDenied
+from django_prbac.utils import ensure_request_has_privilege
 import langcodes
 from datetime import datetime
 from couchdbkit.exceptions import ResourceNotFound
@@ -350,6 +353,15 @@ class ListWebUsersView(BaseUserSettingsView):
         return user_roles
 
     @property
+    def can_edit_roles(self):
+        if toggles.ACCOUNTING_PREVIEW.enabled(self.couch_user.username):
+            try:
+                ensure_request_has_privilege(self.request, privileges.ROLE_BASED_ACCESS)
+            except PermissionDenied:
+                return False
+        return self.couch_user.is_domain_admin
+
+    @property
     @memoized
     def role_labels(self):
         role_labels = {}
@@ -370,6 +382,7 @@ class ListWebUsersView(BaseUserSettingsView):
     def page_context(self):
         return {
             'user_roles': self.user_roles,
+            'can_edit_roles': self.can_edit_roles,
             'default_role': UserRole.get_default(),
             'report_list': get_possible_reports(self.domain),
             'invitations': self.invitations,
@@ -405,6 +418,7 @@ def undo_remove_web_user(request, domain, record_id):
 # to change the permissions of your own role such that you could do anything, and would thus be equivalent to having
 # domain admin permissions.
 @domain_admin_required
+@method_decorator(requires_privilege_with_fallback(privileges.ROLE_BASED_ACCESS))
 @require_POST
 def post_user_role(request, domain):
     role_data = json.loads(request.raw_post_data)

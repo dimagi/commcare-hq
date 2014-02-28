@@ -413,11 +413,17 @@ OPENROSA_VERSION = "1.0"
 
 # OTA restore fixture generators
 FIXTURE_GENERATORS = [
+    "corehq.apps.fixtures.fixturegenerators.hq_fixtures",
+]
+
+HQ_FIXTURE_GENERATORS = [
     "corehq.apps.users.fixturegenerators.user_groups",
     "corehq.apps.fixtures.fixturegenerators.item_lists",
     "corehq.apps.reportfixtures.fixturegenerators.indicators",
     "custom.bihar.reports.indicators.fixtures.generator",
-    "corehq.apps.commtrack.models.product_fixture_generator",
+    "corehq.apps.commtrack.fixtures.product_fixture_generator",
+
+"custom.m4change.reports.fixtures.generator"
 ]
 
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
@@ -596,6 +602,8 @@ FLUFF_PILLOW_TYPES_TO_SQL = {
     'MalariaConsortiumFluff': 'SQL',
     'CareSAFluff': 'SQL',
     'AncHmisCaseFluff': 'SQL',
+    'ImmunizationHmisCaseFluff': 'SQL',
+    'ProjectIndicatorsCaseFluff': 'SQL'
 }
 
 PREVIEWER_RE = '^$'
@@ -955,6 +963,8 @@ PILLOWTOPS = {
         'custom.reports.care_sa.models.CareSAFluffPillow',
         'custom.reports.mc.models.MalariaConsortiumFluffPillow',
         'custom.m4change.models.AncHmisCaseFluffPillow',
+        'custom.m4change.models.ImmunizationHmisCaseFluffPillow',
+        'custom.m4change.models.ProjectIndicatorsCaseFluffPillow',
     ],
     'mvp': [
         'corehq.apps.indicators.pillows.FormIndicatorPillow',

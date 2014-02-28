@@ -5,130 +5,34 @@ import random
 import datetime
 
 from django.conf import settings
+from django.core.management import call_command
 
 from django_prbac import arbitrary as role_gen
 
 from dimagi.utils.dates import add_months
 from dimagi.utils.data import generator as data_gen
 
-from corehq.apps.accounting.models import (FeatureType, Currency, BillingAccount, FeatureRate, SoftwarePlanVersion,
-                                           SoftwarePlan, SoftwareProductRate, Subscription, Subscriber, SoftwareProduct,
-                                           Feature, SoftwareProductType, DefaultProductPlan, BillingAccountAdmin,
-                                           SubscriptionAdjustment, SoftwarePlanEdition)
+from corehq.apps.accounting.models import (
+    Currency, BillingAccount, Subscription, Subscriber, SoftwareProductType,
+    DefaultProductPlan, BillingAccountAdmin, SubscriptionAdjustment,
+    SoftwarePlanEdition,
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser, CommCareUser
 
 # don't actually use the plan lists below for initializing new plans! the amounts have been changed to make
 # it easier for testing:
-MAX_COMMUNITY_USERS = 2
 
-COMMUNITY_COMMCARE_PLANS = [
-    {
-        'name': "CommCare Community",
-        'product_type': SoftwareProductType.COMMCARE,
-        'fee': Decimal('0.0'),
-        'rates': [
-            {
-                'name': "User Community",
-                'limit': MAX_COMMUNITY_USERS,
-                'excess': Decimal('1.00'),
-                'type': FeatureType.USER,
-            },
-            {
-                'name': "SMS Community",
-                'type': FeatureType.SMS,
-            },
-        ],
-    },
-    {
-        'name': "CommTrack Community",
-        'product_type': SoftwareProductType.COMMTRACK,
-        'fee': Decimal('0.0'),
-        'rates': [
-            {
-                'name': "User CommTrack Community",
-                'limit': MAX_COMMUNITY_USERS,
-                'excess': Decimal('1.00'),
-                'type': FeatureType.USER,
-            },
-            {
-                'name': "SMS CommTrack Community",
-                'type': FeatureType.SMS,
-            },
-        ],
-    },
-    {
-        'name': "CommConnect Community",
-        'product_type': SoftwareProductType.COMMCONNECT,
-        'fee': Decimal('0.0'),
-        'rates': [
-            {
-                'name': "User CommConnect Community",
-                'limit': MAX_COMMUNITY_USERS,
-                'excess': Decimal('1.00'),
-                'type': FeatureType.USER,
-            },
-            {
-                'name': "SMS CommConnect Community",
-                'type': FeatureType.SMS,
-            },
-        ],
-    },
+SUBSCRIBABLE_EDITIONS = [
+    SoftwarePlanEdition.ADVANCED,
+    SoftwarePlanEdition.PRO,
+    SoftwarePlanEdition.STANDARD,
 ]
 
-SUBSCRIBABLE_COMMCARE_PLANS = [
-    {
-        'name': "CommCare Standard",
-        'fee': Decimal('100.00'),
-        'rates': [
-            {
-                'name': "User Standard",
-                'limit': 4,
-                'excess': Decimal('1.00'),
-                'type': FeatureType.USER,
-            },
-            {
-                'name': "SMS Standard",
-                'limit': 10,
-                'type': FeatureType.SMS,
-            },
-        ],
-    },
-    {
-        'name': "CommCare Pro",
-        'fee': Decimal('500.00'),
-        'rates': [
-            {
-                'name': "User Pro",
-                'limit': 6,
-                'excess': Decimal('1.00'),
-                'type': FeatureType.USER,
-            },
-            {
-                'name': "SMS Pro",
-                'limit': 16,
-                'type': FeatureType.SMS,
-            },
-        ],
-    },
-    {
-        'name': "CommCare Advanced",
-        'fee': Decimal('1000.00'),
-        'rates': [
-            {
-                'name': "User Advanced",
-                'limit': 8,
-                'excess': Decimal('1.00'),
-                'type': FeatureType.USER,
-            },
-            {
-                'name': "SMS Advanced",
-                'limit': 20,
-                'type': FeatureType.SMS,
-            },
-        ],
-    },
-]
+
+def instantiate_accounting_for_tests():
+    call_command('cchq_prbac_bootstrap', testing=True)
+    call_command('cchq_software_plan_bootstrap', testing=True)
 
 
 def init_default_currency():
@@ -144,7 +48,11 @@ def init_default_currency():
 def arbitrary_web_user(save=True, is_dimagi=False):
     domain = data_gen.arbitrary_unique_name().lower()[:25]
     username = "%s@%s.com" % (data_gen.arbitrary_username(), 'dimagi' if is_dimagi else 'gmail')
-    web_user = WebUser.create(domain, username, 'test123')
+    try:
+        web_user = WebUser.create(domain, username, 'test123')
+    except Exception:
+        web_user = WebUser.get_by_username(username)
+    web_user.is_active = True
     if save:
         web_user.save()
     return web_user
@@ -172,61 +80,11 @@ def delete_all_accounts():
     Currency.objects.all().delete()
 
 
-def _instantiate_plans_from_list(plan_list):
-    plans = []
-    for plan in plan_list:
-        software_plan, created = SoftwarePlan.objects.get_or_create(name=plan['name'])
-        plan_version = SoftwarePlanVersion(
-            plan=software_plan,
-            role=role_gen.arbitrary_role(),
-        )
-        plan_version.save()
-        plan_version.product_rates.add(SoftwareProductRate.new_rate(plan['name'], plan['fee']))
-        for rate in plan['rates']:
-            plan_version.feature_rates.add(
-                FeatureRate.new_rate(
-                    rate['name'],
-                    rate['type'],
-                    monthly_fee=rate.get('fee'),
-                    monthly_limit=rate.get('limit'),
-                    per_excess_fee=rate.get('excess'),
-                )
-            )
-        plan_version.save()
-        plans.append(software_plan)
-    return plans
-
-
-def instantiate_subscribable_plans():
-    _instantiate_plans_from_list(SUBSCRIBABLE_COMMCARE_PLANS)
-
-
-def instantiate_community_plans():
-    plans = _instantiate_plans_from_list(COMMUNITY_COMMCARE_PLANS)
-    for ind, plan in enumerate(plans):
-        DefaultProductPlan.objects.get_or_create(
-            product_type=COMMUNITY_COMMCARE_PLANS[ind]['product_type'],
-            edition=SoftwarePlanEdition.COMMUNITY,
-            plan=plan,
-        )
-
-
-def delete_all_plans():
-    DefaultProductPlan.objects.all().delete()
-    SoftwarePlanVersion.objects.all().delete()
-    SoftwarePlan.objects.all().delete()
-
-    SoftwareProductRate.objects.all().delete()
-    SoftwareProduct.objects.all().delete()
-
-    FeatureRate.objects.all().delete()
-    Feature.objects.all().delete()
-
-
 def arbitrary_subscribable_plan():
-    subscribable_plans = [plan['name'] for plan in SUBSCRIBABLE_COMMCARE_PLANS]
-    plan = SoftwarePlan.objects.get(name=random.choice(subscribable_plans))
-    return plan.get_version()
+    return DefaultProductPlan.objects.get(
+        edition=random.choice(SUBSCRIBABLE_EDITIONS),
+        product_type=SoftwareProductType.COMMCARE
+    ).plan.get_version()
 
 
 def generate_domain_subscription_from_date(date_start, billing_account, domain,
@@ -301,7 +159,7 @@ def arbitrary_commcare_user(domain, is_active=True):
         commcare_user.is_active = is_active
         commcare_user.save()
         return commcare_user
-    except AlreadyExistsError:
+    except Exception:
         pass
 
 
@@ -339,6 +197,11 @@ def arbitrary_sms_billables_for_domain(domain, direction, message_month_date, nu
 
 
 def create_excess_community_users(domain):
-    num_active_users = random.randint(MAX_COMMUNITY_USERS + 1, MAX_COMMUNITY_USERS + 4)
+    community_plan = DefaultProductPlan.objects.get(
+        product_type=SoftwareProductType.COMMCARE,
+        edition=SoftwarePlanEdition.COMMUNITY
+    ).plan.get_version()
+    num_active_users = random.randint(community_plan.user_limit + 1,
+                                      community_plan.user_limit + 4)
     arbitrary_commcare_users_for_domain(domain.name, num_active_users)
     return num_active_users

@@ -34,10 +34,17 @@ class Command(BaseCommand):
         make_option('--force-reset', action='store_true',  default=False,
                     help='Assign latest version of all DefaultProductPlans to current '
                          'subscriptions and delete older versions.'),
+        make_option('--testing', action='store_true',  default=False,
+                    help='Run this command for testing purposes.'),
     )
 
-    def handle(self, dry_run=False, verbose=False, fresh_start=False, flush=False, force_reset=False, *args, **options):
+    def handle(self, dry_run=False, verbose=False, fresh_start=False, flush=False, force_reset=False,
+               testing=False, *args, **options):
         logging.info('Bootstrapping standard plans. Enterprise plans will have to be created via the admin UIs.')
+
+        self.for_tests = testing
+        if self.for_tests:
+            logger.info("Initializing Plans and Roles for Testing")
 
         if verbose:
             logger.setLevel(logging.DEBUG)
@@ -229,20 +236,24 @@ class Command(BaseCommand):
         feature_rates = []
         BOOTSTRAP_FEATURE_RATES = {
             SoftwarePlanEdition.COMMUNITY: {
-                FeatureType.USER: FeatureRate(monthly_limit=50, per_excess_fee=Decimal('1.00')),
+                FeatureType.USER: FeatureRate(monthly_limit=2 if self.for_tests else 50,
+                                              per_excess_fee=Decimal('1.00')),
                 FeatureType.SMS: FeatureRate(monthly_limit=0),  # use defaults here
             },
             SoftwarePlanEdition.STANDARD: {
-                FeatureType.USER: FeatureRate(monthly_limit=100, per_excess_fee=Decimal('1.00')),
-                FeatureType.SMS: FeatureRate(monthly_limit=250),
+                FeatureType.USER: FeatureRate(monthly_limit=4 if self.for_tests else 100,
+                                              per_excess_fee=Decimal('1.00')),
+                FeatureType.SMS: FeatureRate(monthly_limit=3 if self.for_tests else 100),
             },
             SoftwarePlanEdition.PRO: {
-                FeatureType.USER: FeatureRate(monthly_limit=500, per_excess_fee=Decimal('1.00')),
-                FeatureType.SMS: FeatureRate(monthly_limit=500),
+                FeatureType.USER: FeatureRate(monthly_limit=6 if self.for_tests else 500,
+                                              per_excess_fee=Decimal('1.00')),
+                FeatureType.SMS: FeatureRate(monthly_limit=5 if self.for_tests else 500),
             },
             SoftwarePlanEdition.ADVANCED: {
-                FeatureType.USER: FeatureRate(monthly_limit=1000, per_excess_fee=Decimal('1.00')),
-                FeatureType.SMS: FeatureRate(monthly_limit=1000),
+                FeatureType.USER: FeatureRate(monthly_limit=8 if self.for_tests else 1000,
+                                              per_excess_fee=Decimal('1.00')),
+                FeatureType.SMS: FeatureRate(monthly_limit=7 if self.for_tests else 1000),
             },
             SoftwarePlanEdition.ENTERPRISE: {
                 FeatureType.USER: FeatureRate(monthly_limit=-1, per_excess_fee=Decimal('0.00')),

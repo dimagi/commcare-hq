@@ -37,8 +37,12 @@ function git-submodule-list() {
     git submodule | sed 's/^+/ /' | cut -f3 -d' '
 }
 
-cp git-hooks/pre-commit.sh .git/hooks/pre-commit
-for submodule in $(git-submodule-list)
+for hook in 'pre-commit' 'post-checkout'
 do
-    cp $CP_OPT git-hooks/pre-commit.sh .git/modules/$submodule/hooks/pre-commit
+
+    cp git-hooks/$hook.sh .git/hooks/$hook
+    for submodule in $(git-submodule-list)
+    do
+        cp $CP_OPT git-hooks/$hook.sh .git/modules/$submodule/hooks/$hook
+    done
 done

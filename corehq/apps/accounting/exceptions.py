@@ -18,7 +18,7 @@ class SubscriptionAdjustmentError(Exception):
     pass
 
 
-class SubscriptionDowngradeError(Exception):
+class SubscriptionChangeError(Exception):
     pass
 
 

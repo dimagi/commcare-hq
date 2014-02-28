@@ -4,6 +4,8 @@ from django.core.urlresolvers import reverse
 from eulxml.xmlmap.fields import StringListField
 from lxml import etree
 from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, NodeField
+import toggle
+from corehq import toggles
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK
 from corehq.apps.hqmedia.models import HQMediaMapItem

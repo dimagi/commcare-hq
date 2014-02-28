@@ -1,10 +1,11 @@
 from collections import defaultdict
 
-from django.core.urlresolvers import NoReverseMatch, reverse
+from django.core.urlresolvers import reverse
 from django.http import HttpResponseForbidden, HttpResponse, HttpResponseBadRequest
 from tastypie import fields
 from tastypie.bundle import Bundle
 from tastypie.authentication import Authentication
+from corehq.apps.api.resources.v0_1 import CustomResourceMeta, RequirePermissionAuthentication
 
 from couchforms.models import XFormInstance
 from casexml.apps.case.models import CommCareCase
@@ -18,19 +19,20 @@ from corehq.apps.receiverwrapper.models import Repeater, repeater_types
 from corehq.apps.groups.models import Group
 from corehq.apps.cloudcare.api import ElasticCaseQuery
 from corehq.apps.users.util import format_username
-from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.apps.users.models import CouchUser, Permissions
 
 from corehq.apps.api.resources import v0_1, v0_3, JsonResource, DomainSpecificResourceMixin, dict_object, SimpleSortableResourceMixin
 from corehq.apps.api.es import XFormES, CaseES, ESQuerySet, es_search
 from corehq.apps.api.fields import ToManyDocumentsField, UseIfRequested, ToManyDictField, ToManyListDictField, CallableCharField
 from corehq.apps.api.serializers import CommCareCaseSerializer
 
+
 # By the time a test case is running, the resource is already instantiated,
 # so as a hack until this can be remedied, there is a global that
 # can be set to provide a mock.
-
 MOCK_XFORM_ES = None
 MOCK_CASE_ES = None
+
 
 class XFormInstanceResource(SimpleSortableResourceMixin, v0_3.XFormInstanceResource, DomainSpecificResourceMixin):
 
@@ -58,7 +60,7 @@ class XFormInstanceResource(SimpleSortableResourceMixin, v0_3.XFormInstanceResou
 
         # Note that XFormES is used only as an ES client, for `run_query` against the proper index
         return ESQuerySet(payload = es_query,
-                          model = XFormInstance, 
+                          model = XFormInstance,
                           es_client=self.xform_es(domain)).order_by('-received_on')
 
     class Meta(v0_3.XFormInstanceResource.Meta):
@@ -115,12 +117,14 @@ class RepeaterResource(JsonResource, DomainSpecificResourceMixin):
         bundle = self.full_hydrate(bundle)
         return bundle
 
-    class Meta(v0_1.CustomResourceMeta):
+    class Meta(CustomResourceMeta):
+        authentication = v0_1.DomainAdminAuthentication()
         object_class = Repeater
         resource_name = 'data-forwarding'
         detail_allowed_methods = ['get', 'put', 'delete']
         list_allowed_methods = ['get', 'post']
-        authorization = v0_1.DomainAdminAuthorization
+
+
 
 def group_by_dict(objs, fn):
     """
@@ -160,6 +164,7 @@ class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResourc
     # Fields that v0.2 assumed were pre-transformed but we are now operating on straight CommCareCase objects again
     date_modified = fields.CharField(attribute='modified_on', default="1900-01-01")
     server_date_modified = fields.CharField(attribute='server_modified_on', default="1900-01-01")
+    server_date_opened = fields.CharField(attribute='server_opened_on', default="1900-01-01")
 
     def case_es(self, domain):
         return MOCK_CASE_ES or CaseES(domain)
@@ -205,13 +210,15 @@ class GroupResource(JsonResource, DomainSpecificResourceMixin):
     def obj_get_list(self, bundle, domain, **kwargs):
         groups = Group.by_domain(domain)
         return groups
-        
-    class Meta(v0_3.XFormInstanceResource.Meta):
-        object_class = Group    
+
+    class Meta(CustomResourceMeta):
+        authentication = RequirePermissionAuthentication(Permissions.edit_commcare_users)
+        object_class = Group
         list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
         resource_name = 'group'
 
-    
+
 class SingleSignOnResource(JsonResource, DomainSpecificResourceMixin):
     """
     This resource does not require "authorization" per se, but
@@ -246,7 +253,7 @@ class SingleSignOnResource(JsonResource, DomainSpecificResourceMixin):
             user_resource = v0_1.WebUserResource()
         else:
             return HttpResponseForbidden()
-        
+
         bundle = user_resource.build_bundle(obj=couch_user, request=request)
         bundle = user_resource.full_dehydrate(bundle)
         return user_resource.create_response(request, bundle, response_class=HttpResponse)
@@ -257,8 +264,8 @@ class SingleSignOnResource(JsonResource, DomainSpecificResourceMixin):
     def get_detail(self, bundle, **kwargs):
         return HttpResponseForbidden()
 
-    class Meta(v0_1.CustomResourceMeta):
-        authentication = Authentication() 
+    class Meta(CustomResourceMeta):
+        authentication = Authentication()
         resource_name = 'sso'
         detail_allowed_methods = []
         list_allowed_methods = ['post']
@@ -282,7 +289,7 @@ class ApplicationResource(JsonResource, DomainSpecificResourceMixin):
         dehydrated['case_type'] = module.case_type
 
         dehydrated['case_properties'] = app_manager_util.get_case_properties(app, [module.case_type], defaults=['name'])[module.case_type]
-        
+
         dehydrated['forms'] = []
         for form in module.forms:
             form = Form.get_form(form.unique_id)
@@ -294,7 +301,7 @@ class ApplicationResource(JsonResource, DomainSpecificResourceMixin):
             dehydrated['forms'].append(form_jvalue)
 
         return dehydrated
-    
+
     def dehydrate_modules(self, bundle):
         app = bundle.obj
 
@@ -310,19 +317,21 @@ class ApplicationResource(JsonResource, DomainSpecificResourceMixin):
 
         application_bases = ApplicationBase.by_domain(domain)
 
-        # This wraps in the appropriate class so that is_remote_app() returns the correct answer 
+        # This wraps in the appropriate class so that is_remote_app() returns the correct answer
         applications = [get_app(domain, application_base.id) for application_base in application_bases]
-        
+
         return [app for app in applications if not app.is_remote_app()]
 
     def obj_get(self, bundle, **kwargs):
         return get_object_or_not_exist(Application, kwargs['domain'], kwargs['pk'])
 
-    class Meta(v0_1.CustomResourceMeta):
+    class Meta(CustomResourceMeta):
+        authentication = RequirePermissionAuthentication(Permissions.edit_apps)
         object_class = Application
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
         resource_name = 'application'
+
 
 def bool_to_yesno(value):
     if value is None:
@@ -332,8 +341,10 @@ def bool_to_yesno(value):
     else:
         return 'no'
 
+
 def get_yesno(attribute):
     return lambda obj: bool_to_yesno(getattr(obj, attribute, None))
+
 
 class HOPECaseResource(CommCareCaseResource):
     """
@@ -389,12 +400,10 @@ class HOPECaseResource(CommCareCaseResource):
         if 'size' in query:
             del query['size']
 
-        return ESQuerySet(payload = query,
-                          model = HOPECase,
-                          es_client = self.case_es(domain)).order_by('server_modified_on') # Not that CaseES is used only as an ES client, for `run_query` against the proper index
+        # Note that CaseES is used only as an ES client, for `run_query` against the proper index
+        return ESQuerySet(payload=query,
+                          model=HOPECase,
+                          es_client=self.case_es(domain)).order_by('server_modified_on')
 
     class Meta(CommCareCaseResource.Meta):
         resource_name = 'hope-case'
-
-
-

@@ -70,6 +70,7 @@
   requires: "{$parent.doc_type}='Application'"
   hide_if_not_enabled: true
   since: "2.0"
+  permission: "cloudcare"
 
 - id: commtrack_enabled
   name: "CommTrack"

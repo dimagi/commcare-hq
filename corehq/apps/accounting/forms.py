@@ -15,6 +15,7 @@ from django.utils.translation import ugettext_noop, ugettext as _, ugettext
 from crispy_forms.bootstrap import FormActions, StrictButton, InlineField, InlineRadios
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
+from django_countries.countries import COUNTRIES
 from corehq import privileges
 
 from dimagi.utils.decorators.memoized import memoized
@@ -22,7 +23,7 @@ from dimagi.utils.django.email import send_HTML_email
 from django_prbac.models import Role, Grant
 
 from corehq.apps.accounting.async_handlers import (FeatureRateAsyncHandler, SoftwareProductRateAsyncHandler)
-from corehq.apps.accounting.utils import fmt_feature_rate_dict, fmt_product_rate_dict
+from corehq.apps.accounting.utils import is_active_subscription
 from corehq.apps.hqwebapp.crispy import BootstrapMultiField
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
@@ -107,7 +108,9 @@ class BillingAccountForm(forms.Form):
                 'city',
                 'region',
                 'postal_code',
-                crispy.Field('country', css_class="input-xlarge"),
+                crispy.Field('country', css_class="input-xlarge",
+                             data_countryname=dict(COUNTRIES).get(
+                                 args[0].get('country') if len(args) > 0 else account.billingcontactinfo.country, '')),
             ) if account is not None else None,
             FormActions(
                 crispy.ButtonHolder(
@@ -267,7 +270,7 @@ class SubscriptionForm(forms.Form):
         date_end = self.cleaned_data['end_date']
         date_delay_invoicing = self.cleaned_data['delay_invoice_until']
         salesforce_contract_id = self.cleaned_data['salesforce_contract_id']
-        is_active = (date_start == datetime.date.today())
+        is_active = is_active_subscription(date_start, date_end)
         do_not_invoice = self.cleaned_data['do_not_invoice']
         return Subscription.new_domain_subscription(account, domain, plan_version,
                                                     date_start=date_start,
