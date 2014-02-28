@@ -9,7 +9,7 @@ from tastypie.authentication import Authentication
 from couchforms.models import XFormInstance
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case import xform as casexml_xform
-from custom.hope.models import HOPECase
+from custom.hope.models import HOPECase, CC_BIHAR_NEWBORN, CC_BIHAR_PREGNANCY
 
 from corehq.apps.api.util import get_object_or_not_exist
 from corehq.apps.app_manager import util as app_manager_util
@@ -378,8 +378,8 @@ class HOPECaseResource(CommCareCaseResource):
             bundle.data['case_properties'] = bundle.data['properties']
             del bundle.data['properties']
 
-        mother_lists = filter(lambda x: x.obj.type == 'cc_bihar_pregnancy', data['objects'])
-        child_lists = filter(lambda x: x.obj.type == 'cc_bihar_newborn', data['objects'])
+        mother_lists = filter(lambda x: x.obj.type == CC_BIHAR_PREGNANCY, data['objects'])
+        child_lists = filter(lambda x: x.obj.type == CC_BIHAR_NEWBORN, data['objects'])
 
         return {'objects': {
             'mother_lists': mother_lists,
