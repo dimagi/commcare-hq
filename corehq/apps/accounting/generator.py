@@ -81,8 +81,10 @@ def delete_all_accounts():
 
 
 def arbitrary_subscribable_plan():
-    return DefaultProductPlan.objects.get(edition=random.choice(SUBSCRIBABLE_EDITIONS),
-                                          product_type=SoftwareProductType.COMMCARE).plan.get_version()
+    return DefaultProductPlan.objects.get(
+        edition=random.choice(SUBSCRIBABLE_EDITIONS),
+        product_type=SoftwareProductType.COMMCARE
+    ).plan.get_version()
 
 
 def generate_domain_subscription_from_date(date_start, billing_account, domain,
@@ -195,8 +197,11 @@ def arbitrary_sms_billables_for_domain(domain, direction, message_month_date, nu
 
 
 def create_excess_community_users(domain):
-    community_plan = DefaultProductPlan.objects.get(product_type=SoftwareProductType.COMMCARE,
-                                                    edition=SoftwarePlanEdition.COMMUNITY).get_version()
-    num_active_users = random.randint(community_plan.user_limit + 1, community_plan.user_limit + 4)
+    community_plan = DefaultProductPlan.objects.get(
+        product_type=SoftwareProductType.COMMCARE,
+        edition=SoftwarePlanEdition.COMMUNITY
+    ).plan.get_version()
+    num_active_users = random.randint(community_plan.user_limit + 1,
+                                      community_plan.user_limit + 4)
     arbitrary_commcare_users_for_domain(domain.name, num_active_users)
     return num_active_users

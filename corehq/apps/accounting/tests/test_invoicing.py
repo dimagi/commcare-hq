@@ -156,8 +156,10 @@ class TestInvoice(BaseInvoiceTestCase):
             self.assertEqual(subscriber.subscription_set.count(), 1)
             subscription = subscriber.subscription_set.get()
             self.assertEqual(subscription.invoice_set.count(), 1)
-            expected_community_plan = DefaultProductPlan.objects.get(product_type=product_type)
-            self.assertEqual(subscription.plan_version.plan, expected_community_plan.plan)
+            expected_community_plan = DefaultProductPlan.get_default_plan_by_domain(domain)
+            self.assertEqual(
+                subscription.plan_version.plan, expected_community_plan.plan
+            )
             domain.delete()
 
 
