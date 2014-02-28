@@ -417,13 +417,15 @@ FIXTURE_GENERATORS = [
 ]
 
 HQ_FIXTURE_GENERATORS = [
+    # core
     "corehq.apps.users.fixturegenerators.user_groups",
     "corehq.apps.fixtures.fixturegenerators.item_lists",
     "corehq.apps.reportfixtures.fixturegenerators.indicators",
-    "custom.bihar.reports.indicators.fixtures.generator",
     "corehq.apps.commtrack.fixtures.product_fixture_generator",
-
-"custom.m4change.reports.fixtures.generator"
+    "corehq.apps.locations.fixtures.location_fixture_generator",
+    # custom
+    "custom.bihar.reports.indicators.fixtures.generator",
+    "custom.m4change.reports.fixtures.generator",
 ]
 
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
