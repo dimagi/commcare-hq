@@ -35,6 +35,20 @@ def instantiate_accounting_for_tests():
     call_command('cchq_software_plan_bootstrap', testing=True)
 
 
+def teardown_accounting_for_tests():
+    print ('Tearing down accounting.')
+    DefaultProductPlan.objects.all().delete()
+
+    SoftwarePlanVersion.objects.all().delete()
+    SoftwarePlan.objects.all().delete()
+
+    FeatureRate.objects.all().delete()
+    Feature.objects.all().delete()
+
+    SoftwareProductRate.objects.all().delete()
+    SoftwareProduct.objects.all().delete()
+
+
 def init_default_currency():
     currency, _ = Currency.objects.get_or_create(
         code=settings.DEFAULT_CURRENCY,

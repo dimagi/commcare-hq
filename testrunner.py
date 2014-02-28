@@ -1,6 +1,6 @@
 from couchdbkit.ext.django.testrunner import CouchDbKitTestSuiteRunner
 from django.conf import settings
-from corehq.apps.accounting.generator import instantiate_accounting_for_tests
+from corehq.apps.accounting.generator import instantiate_accounting_for_tests, teardown_accounting_for_tests
 import settingshelper
 
 
