@@ -255,7 +255,7 @@ class StockRequisitionTest(SMSTests):
         except SMSError, e:
             self.assertTrue('invalid location code' in str(e))
 
-    def testSimpleApproval(self):
+    def inactive_testSimpleApproval(self):
         self.testRequisition()
 
         # approve loc1
