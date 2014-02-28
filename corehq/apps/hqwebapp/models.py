@@ -765,6 +765,15 @@ class ProjectUsersTab(UITab):
                 or full_path.startswith(cloudcare_settings_url))
 
     @property
+    def can_view_cloudcare(self):
+        if toggles.ACCOUNTING_PREVIEW.enabled(self.couch_user.username):
+            try:
+                ensure_request_has_privilege(self._request, privileges.CLOUDCARE)
+            except PermissionDenied:
+                return False
+        return self.couch_user.is_domain_admin()
+
+    @property
     def sidebar_items(self):
         items = []
 
@@ -807,7 +816,7 @@ class ProjectUsersTab(UITab):
                  ]}
             ]
 
-            if self.couch_user.is_domain_admin():
+            if self.can_view_cloudcare:
                 mobile_users_menu.append({
                     'title': _('CloudCare Permissions'),
                     'url': reverse('cloudcare_app_settings',
