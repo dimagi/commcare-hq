@@ -58,18 +58,34 @@ class AccountingInterface(AddItemInterface):
     @property
     def rows(self):
         rows = []
-        for account in BillingAccount.objects.all():
-            if DateCreatedFilter.date_passes_filter(self.request, account.date_created.date()) \
-                and (NameFilter.get_value(self.request, self.domain) is None
-                     or NameFilter.get_value(self.request, self.domain) == account.name) \
-                and (SalesforceAccountIDFilter.get_value(self.request, self.domain) is None
-                     or SalesforceAccountIDFilter.get_value(self.request, self.domain) == account.salesforce_account_id) \
-                and (AccountTypeFilter.get_value(self.request, self.domain) is None
-                     or AccountTypeFilter.get_value(self.request, self.domain) == account.account_type):
-                rows.append([mark_safe('<a href="./%d">%s</a>' % (account.id, account.name)),
-                             account.salesforce_account_id,
-                             account.date_created.date(),
-                             account.account_type])
+        filters = {}
+
+        if DateCreatedFilter.use_filter(self.request):
+            filters.update(
+                date_created__gte=DateCreatedFilter.get_start_date(self.request),
+                date_created__lte=DateCreatedFilter.get_end_date(self.request),
+            )
+        name = NameFilter.get_value(self.request, self.domain)
+        if name is not None:
+            filters.update(
+                name=name,
+            )
+        salesforce_account_id = SalesforceAccountIDFilter.get_value(self.request, self.domain)
+        if salesforce_account_id is not None:
+            filters.update(
+                salesforce_account_id=salesforce_account_id,
+            )
+        account_type = AccountTypeFilter.get_value(self.request, self.domain)
+        if account_type is not None:
+            filters.update(
+                account_type=account_type,
+            )
+
+        for account in BillingAccount.objects.filter(**filters):
+            rows.append([mark_safe('<a href="./%d">%s</a>' % (account.id, account.name)),
+                         account.salesforce_account_id,
+                         account.date_created.date(),
+                         account.account_type])
         return rows
 
     @property
