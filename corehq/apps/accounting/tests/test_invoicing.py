@@ -2,7 +2,7 @@ from decimal import Decimal
 import random
 import datetime
 from django.core.exceptions import ObjectDoesNotExist
-from django.test import TestCase
+from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 
 from corehq.apps.sms.models import INCOMING, OUTGOING
 from corehq.apps.smsbillables.models import (
@@ -17,10 +17,11 @@ from corehq.apps.accounting.models import (
 )
 
 
-class BaseInvoiceTestCase(TestCase):
+class BaseInvoiceTestCase(BaseAccountingTest):
     min_subscription_length = 3
 
     def setUp(self):
+        super(BaseInvoiceTestCase, self).setUp()
         self.billing_contact = generator.arbitrary_web_user()
         self.dimagi_user = generator.arbitrary_web_user(is_dimagi=True)
         self.currency = generator.init_default_currency()
@@ -49,6 +50,7 @@ class BaseInvoiceTestCase(TestCase):
         Invoice.objects.all().delete()
         generator.delete_all_subscriptions()
         generator.delete_all_accounts()
+        super(BaseInvoiceTestCase, self).tearDown()
 
 
 class TestInvoice(BaseInvoiceTestCase):

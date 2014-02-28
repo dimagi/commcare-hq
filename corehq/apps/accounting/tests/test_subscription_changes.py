@@ -1,4 +1,4 @@
-from django.test import TestCase
+from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from toggle.models import Toggle
 from corehq import toggles
 from corehq.apps.accounting import generator
@@ -10,7 +10,7 @@ from corehq.apps.users.models import (
 )
 
 
-class TestUserRoleSubscriptionChanges(TestCase):
+class TestUserRoleSubscriptionChanges(BaseAccountingTest):
     min_subscription_length = 3
 
     def setUp(self):
@@ -146,3 +146,4 @@ class TestUserRoleSubscriptionChanges(TestCase):
         self.toggle.delete()
         generator.delete_all_subscriptions()
         generator.delete_all_accounts()
+        super(TestUserRoleSubscriptionChanges, self).tearDown()
