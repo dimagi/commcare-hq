@@ -146,4 +146,3 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         self.toggle.delete()
         generator.delete_all_subscriptions()
         generator.delete_all_accounts()
-        super(TestUserRoleSubscriptionChanges, self).tearDown()
