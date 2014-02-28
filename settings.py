@@ -890,8 +890,10 @@ SMS_LOADED_BACKENDS = [
 # These are functions that can be called to retrieve custom content in a reminder event.
 # If the function is not in here, it will not be called.
 ALLOWED_CUSTOM_CONTENT_HANDLERS = {
-    "FRI_SMS_CONTENT" : "custom.fri.api.custom_content_handler",
-    "FRI_SMS_CATCHUP_CONTENT" : "custom.fri.api.catchup_custom_content_handler",
+    "FRI_SMS_CONTENT": "custom.fri.api.custom_content_handler",
+    "FRI_SMS_CATCHUP_CONTENT": "custom.fri.api.catchup_custom_content_handler",
+    "FRI_SMS_SHIFT": "custom.fri.api.shift_custom_content_handler",
+    "FRI_SMS_OFF_DAY": "custom.fri.api.off_day_custom_content_handler",
 }
 
 # These are custom templates which can wrap default the sms/chat.html template
