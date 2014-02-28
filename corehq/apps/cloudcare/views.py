@@ -1,6 +1,6 @@
 from couchdbkit import ResourceConflict
 from django.utils.decorators import method_decorator
-from corehq.apps.accounting.decorators import requires_privilege_plaintext_response, requires_privilege_for_commcare_user
+from corehq.apps.accounting.decorators import requires_privilege_plaintext_response, requires_privilege_for_commcare_user, requires_privilege_with_fallback
 from dimagi.utils.couch.database import iter_docs
 from django.views.decorators.cache import cache_page
 from casexml.apps.case.models import CommCareCase
@@ -321,6 +321,7 @@ class EditCloudcareUserPermissionsView(BaseUserSettingsView):
     page_title = ugettext_noop("CloudCare Permissions")
 
     @method_decorator(domain_admin_required)
+    @method_decorator(requires_privilege_with_fallback(privileges.CLOUDCARE))
     def dispatch(self, request, *args, **kwargs):
         return super(EditCloudcareUserPermissionsView, self).dispatch(request, *args, **kwargs)
 

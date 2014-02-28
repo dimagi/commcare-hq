@@ -1,0 +1,20 @@
+{% extends 'hqwebapp/base_page.html' %}
+{% load i18n %}
+
+{% block page_content %}
+    <p class="lead">
+        {% blocktrans %}
+            <strong>{{ feature_name }}</strong> is only available to projects
+            subscribed to <strong>{{ plan_name }}</strong> plan or higher.
+            To access this feature, you must subscribe to the
+            <strong>{{ plan_name }}</strong> plan.
+        {% endblocktrans %}
+    </p>
+    <div class="pull-left">
+        <a href="https://wiki.commcarehq.org/display/commcarepublic/CommCare+Plan+Details"
+           class="btn" target="_blank">{% trans 'Read more about our pricing plans' %}</a>
+    </div>
+    <div class="pull-right">
+        <a href="{{ change_subscription_url }}" class="btn btn-primary">{% trans 'Change My Subscription' %}</a>
+    </div>
+{% endblock %}

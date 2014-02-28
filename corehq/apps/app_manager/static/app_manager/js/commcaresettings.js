@@ -4,6 +4,7 @@ function CommcareSettings(options) {
     self.sections = options.sections;
     self.edit = ko.observable(options.edit);
     self.user = options.user;
+    self.permissions = options.permissions;
 
     self.settings = [];
     self.settingsIndex = {};
@@ -161,7 +162,8 @@ function CommcareSettings(options) {
             return !(
                 (setting.disabled && setting.visibleValue() === setting['default']) ||
                     (setting.hide_if_not_enabled && !setting.enabled()) ||
-                    (setting.preview && !self.user.is_previewer)
+                    (setting.preview && !self.user.is_previewer) ||
+                    (setting.permission && !self.permissions[setting.permission])
                 );
         });
         setting.disabledButHasValue = ko.computed(function () {

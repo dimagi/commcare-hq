@@ -2,7 +2,7 @@ from __future__ import absolute_import
 import json
 import re
 import urllib
-from corehq.apps.accounting.decorators import requires_privilege_alert
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from django.utils.decorators import method_decorator
 from corehq import Domain, toggles, privileges
 from corehq.apps.domain.views import BaseDomainView
@@ -418,7 +418,7 @@ def undo_remove_web_user(request, domain, record_id):
 # to change the permissions of your own role such that you could do anything, and would thus be equivalent to having
 # domain admin permissions.
 @domain_admin_required
-@method_decorator(requires_privilege_alert(privileges.ROLE_BASED_ACCESS))
+@method_decorator(requires_privilege_with_fallback(privileges.ROLE_BASED_ACCESS))
 @require_POST
 def post_user_role(request, domain):
     role_data = json.loads(request.raw_post_data)

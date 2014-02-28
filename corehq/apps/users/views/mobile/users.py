@@ -19,7 +19,7 @@ from django.views.decorators.http import require_POST
 from django.contrib import messages
 from corehq import toggles, privileges
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
-from corehq.apps.accounting.decorators import requires_privilege_alert, require_billing_admin
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback, require_billing_admin
 from corehq.apps.accounting.models import BillingAccount, BillingAccountType, BillingAccountAdmin
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.users.util import can_add_extra_mobile_workers
@@ -645,7 +645,7 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
     urlname = 'upload_commcare_users'
     page_title = ugettext_noop("Bulk Upload Mobile Workers")
 
-    @method_decorator(requires_privilege_alert(privileges.BULK_USER_MANAGEMENT))
+    @method_decorator(requires_privilege_with_fallback(privileges.BULK_USER_MANAGEMENT))
     def dispatch(self, request, *args, **kwargs):
         return super(UploadCommCareUsers, self).dispatch(request, *args, **kwargs)
 

@@ -1,6 +1,6 @@
 from django.utils.decorators import method_decorator
 from corehq import privileges, toggles
-from corehq.apps.accounting.decorators import requires_privilege_alert
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.reports.dispatcher import ReportDispatcher, ProjectReportDispatcher, datespan_default
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
@@ -20,7 +20,7 @@ class DataInterfaceDispatcher(ProjectReportDispatcher):
             return self.deid_dispatch(request, *args, **kwargs)
         return super(DataInterfaceDispatcher, self).dispatch(request, *args, **kwargs)
 
-    @method_decorator(requires_privilege_alert(privileges.DEIDENTIFIED_DATA))
+    @method_decorator(requires_privilege_with_fallback(privileges.DEIDENTIFIED_DATA))
     def deid_dispatch(self, request, *args, **kwargs):
         return super(DataInterfaceDispatcher, self).dispatch(request, *args, **kwargs)
 
@@ -47,7 +47,7 @@ class EditDataInterfaceDispatcher(ReportDispatcher):
             return self.bulk_dispatch(request, *args, **kwargs)
         return super(EditDataInterfaceDispatcher, self).dispatch(request, *args, **kwargs)
 
-    @method_decorator(requires_privilege_alert(privileges.BULK_CASE_MANAGEMENT))
+    @method_decorator(requires_privilege_with_fallback(privileges.BULK_CASE_MANAGEMENT))
     def bulk_dispatch(self, request, *args, **kwargs):
         return super(EditDataInterfaceDispatcher, self).dispatch(request, *args, **kwargs)
 

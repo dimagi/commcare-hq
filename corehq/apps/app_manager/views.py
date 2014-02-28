@@ -13,7 +13,7 @@ from django.core.cache import cache
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _, get_language
 from django.views.decorators.cache import cache_control
-from corehq import ApplicationsTab, toggles
+from corehq import ApplicationsTab, toggles, privileges
 from corehq.apps.app_manager import commcare_settings
 from corehq.apps.app_manager.exceptions import (
     AppManagerException,
@@ -72,6 +72,8 @@ from corehq.apps.app_manager.models import DETAIL_TYPES, import_app as import_ap
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST
 from django.contrib import messages
+from django_prbac.exceptions import PermissionDenied
+from django_prbac.utils import ensure_request_has_privilege
 
 logger = logging.getLogger(__name__)
 
@@ -408,9 +410,18 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
 
 def get_app_view_context(request, app):
 
+    is_cloudcare_allowed = True
+    if hasattr(request, 'user') and toggles.ACCOUNTING_PREVIEW.enabled(
+            request.user.username):
+        try:
+            ensure_request_has_privilege(request, privileges.CLOUDCARE)
+        except PermissionDenied:
+            is_cloudcare_allowed = False
+
     context = {
         'settings_layout': commcare_settings.LAYOUT[app.get_doc_type()],
         'settings_values': get_settings_values(app),
+        'is_cloudcare_allowed': is_cloudcare_allowed,
     }
 
     build_config = CommCareBuildConfig.fetch()
@@ -1555,6 +1566,11 @@ def edit_app_attr(request, domain, app_id, attr):
     if should_edit("cloudcare_enabled"):
         if app.get_doc_type() not in ("Application",):
             raise Exception("App type %s does not support cloudcare" % app.get_doc_type())
+        if hasattr(request, 'user') and toggles.ACCOUNTING_PREVIEW.enabled(request.user.username):
+            try:
+                ensure_request_has_privilege(request, privileges.CLOUDCARE)
+            except PermissionDenied:
+                app.cloudcare_enabled = False
 
 
     def require_remote_app():
