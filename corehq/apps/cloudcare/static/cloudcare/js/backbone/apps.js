@@ -485,7 +485,19 @@ cloudCare.AppView = Backbone.View.extend({
             };
             data.onload = function (adapter, resp) {
                 cloudCare.dispatch.trigger("form:ready", form, caseModel);
-            }
+            };
+            data.resourceMap = function(resource_path) {
+                if (resource_path.substring(0, 7) === 'http://') {
+                    return resource_path;
+                } else if (self.model.attributes.hasOwnProperty("multimedia_map") &&
+                    self.model.attributes.multimedia_map.hasOwnProperty(resource_path)) {
+                    var resource = self.model.attributes.multimedia_map[resource_path];
+                    var id = resource.multimedia_id;
+                    var media_type = resource.media_type;
+                    var name = _.last(resource_path.split('/'));
+                    return '/hq/multimedia/file/' + media_type + '/' + id + '/' + name;
+                }
+            };
             var loadSession = function() {
                 var sess = new WebFormSession(data);
                 // TODO: probably shouldn't hard code these divs
