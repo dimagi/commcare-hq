@@ -12,10 +12,11 @@ from django_prbac import arbitrary as role_gen
 from dimagi.utils.dates import add_months
 from dimagi.utils.data import generator as data_gen
 
-from corehq.apps.accounting.models import (FeatureType, Currency, BillingAccount, FeatureRate, SoftwarePlanVersion,
-                                           SoftwarePlan, SoftwareProductRate, Subscription, Subscriber, SoftwareProduct,
-                                           Feature, SoftwareProductType, DefaultProductPlan, BillingAccountAdmin,
-                                           SubscriptionAdjustment, SoftwarePlanEdition)
+from corehq.apps.accounting.models import (
+    Currency, BillingAccount, Subscription, Subscriber, SoftwareProductType,
+    DefaultProductPlan, BillingAccountAdmin, SubscriptionAdjustment,
+    SoftwarePlanEdition,
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser, CommCareUser
 
