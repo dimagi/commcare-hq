@@ -75,14 +75,26 @@ class ImmunizationHmisCaseFluff(fluff.IndicatorDocument):
 ImmunizationHmisCaseFluffPillow = ImmunizationHmisCaseFluff.pillow()
 
 
+def _get_case_mother_id(case):
+    parent = case.parent
+    if parent is not None:
+        return parent._id
+    else:
+        return case._id
+
+
 class ProjectIndicatorsCaseFluff(fluff.IndicatorDocument):
     document_class = CommCareCase
     domains = ('m4change',)
-    group_by = ('domain',)
+    group_by = (
+        'domain',
+        fluff.AttributeGetter('mother_id', getter_function=_get_case_mother_id)
+    )
     save_direct_to_sql = True
 
     women_registered_anc = user_calcs.AncRegistrationCalculator()
     women_having_4_anc_visits = user_calcs.Anc4VisitsCalculator()
+    women_delivering_at_facility_cct = user_calcs.FacilityDeliveryCctCalculator()
     women_delivering_within_6_weeks_attending_pnc = user_calcs.PncAttendanceWithin6WeeksCalculator()
 
 ProjectIndicatorsCaseFluffPillow = ProjectIndicatorsCaseFluff.pillow()
