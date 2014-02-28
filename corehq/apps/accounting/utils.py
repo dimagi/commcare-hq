@@ -3,7 +3,7 @@ import datetime
 import json
 from django.utils.encoding import force_unicode
 from django.utils.functional import Promise
-from corehq import Domain, privileges
+from corehq import Domain, privileges, toggles
 from corehq.apps.accounting.exceptions import AccountingError
 from dimagi.utils.dates import add_months
 from django_prbac.models import Role
@@ -107,15 +107,17 @@ def is_active_subscription(date_start, date_end):
 
 
 def domain_has_privilege(domain, privilege_slug, **assignment):
-    from corehq.apps.accounting.models import Subscription
-    try:
-        plan_version = Subscription.get_subscribed_plan_by_domain(domain)[0]
-        roles = Role.objects.filter(slug=privilege_slug)
-        if not roles:
-            return False
-        privilege = roles[0].instantiate(assignment)
-        if plan_version.role.has_privilege(privilege):
-            return True
-    except AccountingError:
-        pass
-    return False
+    if toggles.ACCOUNTING_PREVIEW.enabled(domain, namespace=toggles.NAMESPACE_DOMAIN):
+        from corehq.apps.accounting.models import Subscription
+        try:
+            plan_version = Subscription.get_subscribed_plan_by_domain(domain)[0]
+            roles = Role.objects.filter(slug=privilege_slug)
+            if not roles:
+                return False
+            privilege = roles[0].instantiate(assignment)
+            if plan_version.role.has_privilege(privilege):
+                return True
+        except AccountingError:
+            pass
+        return False
+    return True
