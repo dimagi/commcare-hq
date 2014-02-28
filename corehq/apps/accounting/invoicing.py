@@ -431,12 +431,14 @@ class Address(object):
 
 LIGHT_GRAY = (0.7, 0.7, 0.7)
 BLACK = (0, 0, 0)
+DEFAULT_FONT_SIZE = 12
 
 
 class InvoiceTemplate(object):
     def __init__(self, filename, logo_filename=LOGO_FILENAME,
                  from_address=None, to_address=None, project_name=''):
         self.canvas = Canvas(filename)
+        self.canvas.setFontSize(DEFAULT_FONT_SIZE)
         self.logo_filename = os.path.join(os.getcwd(), logo_filename)
         self.from_address = from_address
         self.to_address = to_address
@@ -447,6 +449,7 @@ class InvoiceTemplate(object):
         self.draw_from_address()
         self.draw_to_address()
         self.draw_project_name()
+        self.draw_invoice_label()
 
         self.canvas.showPage()
         self.canvas.save()
@@ -513,3 +516,8 @@ class InvoiceTemplate(object):
                                bottom + inch * 0.1, self.project_name)
 
         self.canvas.translate(-origin_x, -origin_y)
+
+    def draw_invoice_label(self):
+        self.canvas.setFontSize(size=24)
+        self.canvas.drawString(inch * 6.5, inch * 10.8, "Invoice")
+        self.canvas.setFontSize(DEFAULT_FONT_SIZE)
