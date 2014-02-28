@@ -2030,9 +2030,8 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
         return self.get_build().get_jadjar(self.get_jar_path())
 
     def validate_fixtures(self):
-        if (toggle.shortcuts.toggle_enabled(
-                toggles.ACCOUNTING_PREVIEW, self.domain, namespace=toggles.NAMESPACE_DOMAIN
-        ) and not domain_has_privilege(self.domain, privileges.LOOKUP_TABLES)):
+        if (toggles.ACCOUNTING_PREVIEW.enabled(self.domain, namespace=toggles.NAMESPACE_DOMAIN)
+                and not domain_has_privilege(self.domain, privileges.LOOKUP_TABLES)):
             for form in self.get_forms():
                 if form.has_fixtures:
                     raise PermissionDenied(_(
