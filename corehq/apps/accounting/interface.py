@@ -131,33 +131,56 @@ class SubscriptionInterface(AddItemInterface):
     def rows(self):
         from corehq.apps.accounting.views import ManageBillingAccountView
         rows = []
-        for subscription in Subscription.objects.all():
-            if StartDateFilter.date_passes_filter(self.request, subscription.date_start) \
-                and EndDateFilter.date_passes_filter(self.request, subscription.date_end) \
-                and (subscription.date_created is None
-                     or DateCreatedFilter.date_passes_filter(self.request, subscription.date_created.date())) \
-                and (SubscriberFilter.get_value(self.request, self.domain) is None
-                    or SubscriberFilter.get_value(self.request, self.domain) == subscription.subscriber.domain) \
-                and (SalesforceContractIDFilter.get_value(self.request, self.domain) is None
-                    or (SalesforceContractIDFilter.get_value(self.request, self.domain)
-                            == subscription.salesforce_contract_id)) \
-                and (ActiveStatusFilter.get_value(self.request, self.domain) is None
-                    or ((ActiveStatusFilter.get_value(self.request, self.domain) == ActiveStatusFilter.active)
-                            == subscription.is_active))\
-                and (DoNotInvoiceFilter.get_value(self.request, self.domain) is None
-                    or ((DoNotInvoiceFilter.get_value(self.request, self.domain) == DO_NOT_INVOICE)
-                            == subscription.do_not_invoice)):
-                rows.append([subscription.subscriber.domain,
-                             mark_safe('<a href="%s">%s</a>'
-                                       % (reverse(ManageBillingAccountView.urlname, args=(subscription.account.id,)),
-                                          subscription.account.name)),
-                             subscription.plan_version.plan.name,
-                             subscription.is_active,
-                             subscription.salesforce_contract_id,
-                             subscription.date_start,
-                             subscription.date_end,
-                             subscription.do_not_invoice,
-                             mark_safe('<a href="./%d" class="btn">Edit</a>' % subscription.id)])
+        filters = {}
+
+        if StartDateFilter.use_filter(self.request):
+            filters.update(
+                date_start__gte=StartDateFilter.get_start_date(self.request),
+                date_start__lte=StartDateFilter.get_end_date(self.request),
+            )
+        if EndDateFilter.use_filter(self.request):
+            filters.update(
+                date_end__gte=EndDateFilter.get_start_date(self.request),
+                date_end__lte=EndDateFilter.get_end_date(self.request),
+            )
+        if DateCreatedFilter.use_filter(self.request):
+            filters.update(
+                date_created__gte=DateCreatedFilter.get_start_date(self.request),
+                date_created__lte=DateCreatedFilter.get_end_date(self.request),
+            )
+        subscriber = SubscriberFilter.get_value(self.request, self.domain)
+        if subscriber is not None:
+            filters.update(
+                subscription__subscriber=subscriber,
+            )
+        salesforce_contract_id = SalesforceContractIDFilter.get_value(self.request, self.domain)
+        if salesforce_contract_id is not None:
+            filters.update(
+                salesforce_contract_id=salesforce_contract_id,
+            )
+        active_status = ActiveStatusFilter.get_value(self.request, self.domain)
+        if active_status is not None:
+            filters.update(
+                is_active=(active_status == ActiveStatusFilter.active),
+            )
+        do_not_invoice = DoNotInvoiceFilter.get_value(self.request, self.domain)
+        if do_not_invoice is not None:
+            filters.update(
+                do_not_invoice=(do_not_invoice == DO_NOT_INVOICE),
+            )
+
+        for subscription in Subscription.objects.filter(**filters):
+            rows.append([subscription.subscriber.domain,
+                         mark_safe('<a href="%s">%s</a>'
+                                   % (reverse(ManageBillingAccountView.urlname, args=(subscription.account.id,)),
+                                      subscription.account.name)),
+                         subscription.plan_version.plan.name,
+                         subscription.is_active,
+                         subscription.salesforce_contract_id,
+                         subscription.date_start,
+                         subscription.date_end,
+                         subscription.do_not_invoice,
+                         mark_safe('<a href="./%d" class="btn">Edit</a>' % subscription.id)])
 
         return rows
 
