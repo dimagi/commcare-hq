@@ -9,7 +9,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from corehq import toggles
-from corehq.apps.accounting.utils import is_active_subscription
+from corehq.apps.accounting.utils import is_active_subscription, get_privileges
 from corehq.apps.accounting.subscription_changes import (
     DomainDowngradeActionHandler, DomainUpgradeActionHandler,
 )
@@ -424,6 +424,24 @@ class DefaultProductPlan(models.Model):
             return default_product_plan.plan.get_version()
         except DefaultProductPlan.DoesNotExist:
             raise AccountingError("No default product plan was set up, did you forget to bootstrap plans?")
+
+    @classmethod
+    def get_lowest_edition_for_privilege_by_domain(cls, domain, privilege_slug):
+        edition_order = [
+            SoftwarePlanEdition.COMMUNITY,
+            SoftwarePlanEdition.STANDARD,
+            SoftwarePlanEdition.PRO,
+            SoftwarePlanEdition.ADVANCED,
+            SoftwarePlanEdition.ENTERPRISE,
+        ]
+        for edition in edition_order:
+            plan_version = cls.get_default_plan_by_domain(
+                domain, edition=edition
+            )
+            privileges = get_privileges(plan_version)
+            if privilege_slug in privileges:
+                return plan_version.plan.edition
+        return SoftwarePlanEdition.ENTERPRISE
 
 
 class SoftwarePlanVersion(models.Model):
