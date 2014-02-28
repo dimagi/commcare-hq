@@ -27,7 +27,7 @@ from django_prbac.utils import ensure_request_has_privilege
 from corehq.apps.accounting.models import (Subscription, CreditLine, SoftwarePlanVisibility, SoftwareProductType,
                                            DefaultProductPlan, SoftwarePlanEdition, BillingAccount, BillingAccountType)
 from corehq.apps.accounting.usage import FeatureUsage
-from corehq.apps.accounting.user_text import get_feature_name, PricingTable, DESC_BY_EDITION
+from corehq.apps.accounting.user_text import get_feature_name, PricingTable, DESC_BY_EDITION, PricingTableFeatures
 from corehq.apps.hqwebapp.models import ProjectSettingsTab
 from corehq.apps import receiverwrapper
 from django.core.urlresolvers import reverse
@@ -125,19 +125,23 @@ class SubscriptionUpgradeRequiredView(LoginAndDomainMixin, BasePageView,
             'domain': self.domain,
             'feature_name': self.feature_name,
             'plan_name': self.required_plan_name,
+            'change_subscription_url': reverse(SelectPlanView.urlname,
+                                               args=[self.domain])
         }
 
     @property
     def missing_privilege(self):
-        return self.args[0]
+        return self.args[1]
 
     @property
     def feature_name(self):
-        return self.missing_privilege
+        return privileges.Titles.get_name_from_privilege(self.missing_privilege)
 
     @property
     def required_plan_name(self):
-        return "AWESOME PLAN"
+        return DefaultProductPlan.get_lowest_edition_for_privilege_by_domain(
+            self.domain_object, self.missing_privilege
+        )
 
     def get(self, request, *args, **kwargs):
         self.request = request
