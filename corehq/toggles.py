@@ -22,8 +22,8 @@ APP_BUILDER_CAREPLAN = StaticToggle(
     'Careplan module'
 )
 
-APP_BUILDER_COMMTRACK = StaticToggle(
-    'commtrack-app-builder',
+APP_BUILDER_ADVANCED = StaticToggle(
+    'advanced-app-builder',
     'Advanced / CommTrack module'
 )
 

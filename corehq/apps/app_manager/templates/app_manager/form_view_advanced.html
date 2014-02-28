@@ -9,14 +9,9 @@
     <script src="{% static 'hqwebapp/js/lib/knockout.mapping.js' %}"></script>
     <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
 
-    {% if app.application_version == '2.0' %}
-        <script src="{% static 'app_manager/js/case-knockout-bindings.js' %}"></script>
-        <script src="{% static 'app_manager/js/case-config-utils.js' %}"></script>
-        <script src="{% static 'app_manager/js/case-config-ui-2.js' %}"></script>
-    {% else %}
-        <script src="{% static 'app_manager/js/ejs.min.js' %}"></script>
-        <script src="{% static 'app_manager/js/case-config-ui-1.js' %}"></script>
-    {% endif %}
+    <script src="{% static 'app_manager/js/case-knockout-bindings.js' %}"></script>
+    <script src="{% static 'app_manager/js/case-config-utils.js' %}"></script>
+    <script src="{% static 'app_manager/js/case-config-ui-advanced.js' %}"></script>
     <script src="{% static 'cloudcare/js/util.js' %}"></script>
 {% endblock %}
 
@@ -72,127 +67,28 @@
                 });
             }());
             var edit = {% if edit %}true{% else %}false{% endif %};
-            var form_empty = {% if form.source and xform_questions %}false{% else %}true{% endif %};
-        {% if is_user_registration %}
-            if (!form_empty) {
-                (function (options) {
-                    var i, username_question, password_question,
-                        questions = options.questions,
-                        url = options.url,
-                        home = $('#user_reg_home'),
-                        select = $('<select multiple="true" data-placeholder="No extra user properties"/>'),
-                        saveButton = SaveButton.init({
-                            save: function () {
-                                saveButton.ajax({
-                                    url: url,
-                                    type: 'post',
-                                    data: {user_reg_data: JSON.stringify(serialize())}
-                                })
-                            }
-                        }),
-                        paths = options.paths;
-                    saveButton.ui.appendTo(home);
-                    function extract_key(value) {
-                            return /^\/\w+\/([^/]*)$/.exec(value)[1];
-                    }
-                    function serialize() {
-                        var data = {data_paths: {}},
-                                paths = select.val() || [],
-                                i;
-                        data.data_paths = paths;
-                        if (username_question) {
-                            data.username_path = username_question.value;
-                        }
-                        if (password_question) {
-                            data.password_path = password_question.value;
-                        }
-                        return data;
-                    }
-                    for (i = 0; i < questions.length; i += 1) {
-                        if (/^\/\w+\/registration\/\w+$/.exec(questions[i].value)) {
-                            /* we don't want to do anything if there already exists a registration block */
-                            home.parent().hide().prev().hide();
-                            return;
-                        } else if (/^\/\w+\/username$/.exec(questions[i].value)) {
-                            username_question = questions[i];
-                        } else if (/^\/\w+\/password$/.exec(questions[i].value)) {
-                            password_question = questions[i];
-                        } else {
-                            $('<option/>').attr({'value': questions[i].value}).text(
-                                    extract_key(questions[i].value)
-                            ).appendTo(select);
-                        }
-                    }
 
-                    if (!username_question) {
-                        $('<p class="warning">You have no <strong>username</strong> field.</p>').appendTo(home);
-                    }
-                    if (!password_question) {
-                        $('<p class="warning">You have no <strong>password</strong> field.</p>').appendTo(home);
-                    }
-
-                    if (select.find('> *').length) {
-                        $('<label for="data_paths_select"/>').text('Save the following extra properties:').css({
-                            marginBottom: '.5em',
-                            display: 'block'
-                        }).appendTo(home);
-                        select.attr('id', 'data_paths_select').val(paths).css({
-                            width: '600px',
-                            height: '10em',
-                        }).appendTo(home).select2();
-                    }
-
-                    select.change(function () {
-                        saveButton.fire('change');
-                    });
-                }({
-                    questions: {{ xform_questions|JSON }},
-                    url: "{% url "edit_form_attr" domain app.id form.get_unique_id 'user_reg_data' %}",
-                    paths: {{ form.data_paths.values|JSON }}
-                }));
-            }
-        {% else %}
             /* form_requires needs to be a knockout observable so that
-             its value can be read by another UI (form filtering) */
+            its value can be read by another UI (form filtering) */
             var form_requires = ko.observable({{ form.requires|JSON }});
             {% if form.source %}
-            var caseConfig = new CaseConfig.CaseConfig({
+            var caseConfig = new AdvancedCase.CaseConfig({
                 home: $('#casexml_home'),
                 actions: {{ form.actions|JSON }},
                 questions: {{ xform_questions|JSON }},
-                edit: edit,
-                save_url: "{% url "corehq.apps.app_manager.views.edit_form_actions" app.domain app.id module.id nav_form.id %}",
                 requires: form_requires,
+                edit: edit,
+                save_url: "{% url "corehq.apps.app_manager.views.edit_advanced_form_actions" app.domain app.id module.id nav_form.id %}",
+                caseType: {{ form.get_case_type|JSON }},
+                module_id: {{ module.unique_id|JSON }},
                 reserved_words: {{ case_reserved_words_json|JSON }},
                 moduleCaseTypes: {{ module_case_types|JSON }},
-                caseType: {{ form.get_case_type|JSON }},
-                propertiesMap: {{ case_properties|JSON }}
-                {% if app.application_version == '1.0' %}
-                ,ejs_urls: {
-                    template: "{% static 'app_manager/ejs/case-config-ui-2.ejs' %}",
-                    condition_ejs: "{% static 'app_manager/ejs/condition.ejs' %}",
-                    action_ejs: "{% static 'app_manager/ejs/action.ejs' %}",
-                    options_ejs: "{% static 'app_manager/ejs/options.ejs' %}",
-                    propertyList_ejs: "{% static 'app_manager/ejs/propertyList.ejs' %}",
-                    action_templates: {
-                        open_case: "{% static 'app_manager/ejs/actions/open_case.ejs' %}",
-                        update_case: "{% static 'app_manager/ejs/actions/update_case.ejs' %}",
-                        case_preload: "{% static 'app_manager/ejs/actions/case_preload.ejs' %}",
-                        close_case: "{% static 'app_manager/ejs/actions/close_case.ejs' %}"
-                    }
-                }
-                {% endif %}
+                propertiesMap: {{ case_properties|JSON }},
+                commtrack_enabled: {{ app.commtrack_enabled|JSON }}
             });
             caseConfig.init();
             {% endif %}
-
-            // tag the 'preview in cloudcare' button with the right url
-            // unfortunately, has to be done in javascript
-            var cloudCareUrl = getCloudCareUrl("{% url "cloudcare_main" domain '' %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}") + "?preview=true";
-            $("#cloudcare-preview-url").attr("href", cloudCareUrl);
-
             {% if app.application_version == '2.0' %}
-                var allFormsRequireACase = {{ module.all_forms_require_a_case|BOOL }};
                 var putInRoot = {{ module.put_in_root|BOOL }};
                 var formFilter = {{ form.form_filter|JSON }};
                 var allOtherFormsRequireACase = {{ form.all_other_forms_require_a_case|BOOL }};
@@ -206,7 +102,6 @@
                     $('#form-filter').get(0)
                 );
             {% endif %}
-        {% endif %}
         });
     </script>
     <script>
@@ -283,7 +178,6 @@
             width: 600px !important;
         }
     </style>
-    {% if app.application_version == '2.0' %}
     <style>
         #open-referral-action,
         #update-referral-action,
@@ -302,7 +196,6 @@
             font-weight: normal;
         }
     </style>
-    {% endif %}
 {% endblock %}
 {% block form-view %}
 
@@ -310,47 +203,36 @@
     {% if edit and not is_user_registration %}
         <div class="delete-me">
             <form action="{% url "delete_form" domain app.id module.id form.id %}" method="post">
-                <button type="submit" class="disable-on-submit btn btn-danger">
-                    <i class="icon-trash"></i>
-                    {% trans "Delete Form" %}
-                </button>
+                <h3>
+                    <button type="submit" class="disable-on-submit btn btn-danger">
+                        <i class="icon-trash"></i>
+                        {% trans "Delete Form" %}
+                    </button>
+                </h3>
             </form>
         </div>
     {% endif %}
 
-    <h3>
-        <i class="icon icon-file-alt"></i>
-    {% if is_user_registration %}
-        <span class="app-manager-title">{% trans "User Registration" %}</span>
-    {% else %}
-        <span class="app-manager-title variable-form_name">{{ form.name|html_trans:langs|safe }}</span>
-    {% endif %}
-    </h3>
-
-    {% if edit %}
-    <div class="btn-group">
-        <a href="./source/" class="btn btn-primary" onclick="
-            _gaq.push(['_trackEvent', 'App Builder', 'Open Form', 'Edit Label']);
-        ">
-            <i class="icon-pencil"></i>
-            {% trans "Edit" %}
-        </a>
-        {% if app.application_version == '2.0' %}
-            {% if form.source and not is_user_registration %}
-            <a id="cloudcare-preview-url" href="#" target="_blank" class="btn">
-                <i class="icon-play"></i>
-                {% trans "Try in CloudCare" %}
-            </a>
-            {% endif %}
+    <div class="row">
+        {% if edit %}
+        <div class="span1">
+            <h3>
+                <a href="./source/" class="btn btn-primary" onclick="
+                    _gaq.push(['_trackEvent', 'App Builder', 'Open Form', 'Edit Label']);
+                ">
+                    <i class="icon-pencil"></i>
+                    {% trans "Edit" %}
+                </a>
+            </h3>
+        </div>
         {% endif %}
+        <div>
+            <h3>
+                <i class="icon icon-file-alt"></i>
+                <span class="app-manager-title variable-form_name">{{ form.name|html_trans:langs|safe }}</span>
+            </h3>
+        </div>
     </div>
-    <hr/>
-    {% endif %}
-
-    {% if is_user_registration %}
-    <h4>{% trans "User Registration Properties" %}</h4>
-    <div id="user_reg_home" class="config"></div>
-    {% else %}
 
     <div class="tabbable">
         <ul class="nav nav-tabs">
@@ -358,7 +240,7 @@
                 <a href="#form-settings" data-toggle="tab">{% trans "Settings" %}</a>
             </li>
             <li>
-                <a href="#case-configuration" data-toggle="tab">
+                <a id="case-configuration-tab" href="#case-configuration" data-toggle="tab">
                     {% trans "Case Management" %}
                 </a>
             </li>
@@ -367,7 +249,6 @@
             </li>
         </ul>
         <div class="tab-content">
-    {% if nav_form %}
         <div class="tab-pane active" id="form-settings">
             <form class="form-horizontal save-button-form" action="{% url "corehq.apps.app_manager.views.edit_form_attr" domain app.id form.get_unique_id 'all' %}">
                 <div class="save-button-holder clearfix"></div>
@@ -385,35 +266,15 @@
                 {% include "app_manager/partials/form_filter.html" %}
             </form>
         </div>
-    {% endif %}
         <div class="tab-pane" id="case-configuration">
         {% if form_errors or xform_validation_errored %}
             <p class="alert alert-warning">
                 {% trans "There are errors in your form. Fix your form in order to view and edit Case Management." %}
             </p>
         {% else %}{% if form.source %}
-            {% if app.application_version == '1.0' %}
-                <header class="clearfix">
-                    <h4 class="pull-left">{% trans "Cases and Referrals" %}</h4>
-                    <span class="hq-help-template"
-                          data-title="{% trans "Cases and Referrals" %}"
-                          data-content="{% trans "Cases give you a way to track patients, farms, etc. over time.  You can choose to save data from a form to the case, which will store the data locally on the phone to use later." %}"
-                    ></span>
-                </header>
-                <div class="casexml" id="casexml_home">
-                </div>
-            {% else %}
-                <header class="clearfix">
-                    <h4 class="pull-left">{% trans "Case Management" %}</h4>
-                    <span class="hq-help-template"
-                        data-title="{% trans "Case Management" %}"
-                        data-content="{% trans "Cases give you a way to track patients, farms, etc. over time.  You can choose to save data from a form to the case, which will store the data locally on the phone to use later." %}"
-                    ></span>
-                </header>
-                <div class="casexml" id="casexml_home">
-                    {% include 'app_manager/partials/case_config.html' %}
-                </div>
-            {% endif %}
+            <div class="casexml" id="casexml_home">
+                {% include 'app_manager/partials/case_config_advanced.html' %}
+            </div>
         {% else %}
             <p class="alert alert-warning">
                 {% trans "You have not created a form yet. Create a form in order to view and edit Case Management." %}
@@ -438,24 +299,15 @@
                     </div>
                 </li>
                 <li>
-                    <a {% if not form.source %}class="disabled"{% endif %}{% if is_user_registration %}
-                       href="{% url "get_user_registration_source" domain app.id %}?download=true"
-                    {% else %}
-                       href="{% url "get_xform_source" domain app.id module.id form.id %}?download=true"
-                    {% endif %}
-                            >
+                    <a {% if not form.source %}class="disabled"{% endif %}
+                       href="{% url "get_xform_source" domain app.id module.id form.id %}?download=true">
                         <i class="icon-arrow-down"></i>
                         {% trans "Download" %}
                     </a>
                 </li>
                 <li>
                     <a id="xform-source-opener" class="dialog_opener {% if not form.source %}disabled{% endif %}"
-                            {% if is_user_registration %}
-                       href="{% url "get_user_registration_source" domain app.id %}"
-                            {% else %}
-                       href="{% url "get_xform_source" domain app.id module.id form.id %}"
-                            {% endif %}
-                            >
+                       href="{% url "get_xform_source" domain app.id module.id form.id %}">
                         <i class="icon-search"></i>
                         {% trans "View" %}
                     </a>
@@ -478,16 +330,8 @@
                     </div>
                 </li>
             </ul>
-            <form class="form-inline" method='POST' action='{% url "copy_form" domain app.id module.id form.id %}'>
-                <p><i class="icon-share"></i> {% trans "Copy form to a different module" %}</p>
-                <select name='to_module_id'>{% for mod in app.get_modules %}
-                    <option value={{ mod.id }}>{{ mod.name|html_trans:langs }}</option>
-                {% endfor %}</select>
-                <button class='btn btn-primary' type="submit">Copy</button>
-            </form>
         </div>
         </div>
     </div>
-    {% endif %}
     <div id="questions"></div>
 {% endblock %}

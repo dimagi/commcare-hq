@@ -54,3 +54,34 @@ ko.bindingHandlers.questionsSelect = {
         allBindings.optstrText = utils.getLabel;
     }
 };
+ko.bindingHandlers.accordion = {
+    init: function(element, valueAccessor) {
+        var options = valueAccessor() || {};
+        setTimeout(function() {
+            $(element).accordion(options);
+        }, 0);
+
+        //handle disposal (if KO removes by the template binding)
+        ko.utils.domNodeDisposal.addDisposeCallback(element, function(){
+            $(element).accordion("destroy");
+        });
+    },
+    update: function(element, valueAccessor) {
+        var options = valueAccessor() || {};
+        $(element).accordion("destroy").accordion(options);
+    }
+};
+
+// Originally from http://stackoverflow.com/a/17998880
+ko.extenders.withPrevious = function (target) {
+    // Define new properties for previous value and whether it's changed
+    target.previous = ko.observable();
+
+    // Subscribe to observable to update previous, before change.
+    target.subscribe(function (v) {
+        target.previous(v);
+    }, null, 'beforeChange');
+
+    // Return modified observable
+    return target;
+};
