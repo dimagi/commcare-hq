@@ -51,17 +51,10 @@ def process(domain, data):
 
     xml = to_instance(data)
 
-    # TODO this is bad please stop
-    if not isinstance(xml, str):
-        submission = etree.tostring(xml, encoding='utf-8', pretty_print=True)
-    else:
-        submission = xml
+    logger.debug(xml)
 
-    logger.debug(submission)
-
-    # TODO are you sure we didn't lose any information making this change?
     submit_form_locally(
-        instance=submission,
+        instance=xml,
         domain=domain,
     )
 
@@ -279,7 +272,7 @@ def looks_like_prod_code(code):
         return True
 
 
-def verify_transactions(transactions):
+def verify_transaction_cases(transactions):
     """
     Make sure the transactions are all in a consistent state.
     Specifically, they all need to have the same case id.
@@ -337,14 +330,21 @@ def process_transfers(E, transfers):
             'section-id': 'stock',
         }
 
-        if transfers[0].action == const.RequisitionActions.FULFILL:
-            attr['dest'] = transfers[0].case_id
-            # TODO support src
-
         if transfers[0].action == const.RequisitionActions.RECEIPTS:
             attr['src'] = transfers[0].case_id
             sp = Location.get(transfers[0].location_id).linked_supply_point()
             attr['dest'] = sp._id
+        else:
+            if transfers[0].action in [
+                const.StockActions.RECEIPTS,
+                const.RequisitionActions.FULFILL
+            ]:
+                here, there = ('dest', 'src')
+            else:
+                here, there = ('src', 'dest')
+
+            attr[here] = transfers[0].case_id
+            # there not supported yet
 
         if transfers[0].subaction:
             attr['type'] = transfers[0].subaction
@@ -361,7 +361,7 @@ def convert_transactions_to_blocks(E, transactions):
     to lists inside of balance or transfer blocks, depending on their types
     """
 
-    verify_transactions(transactions)
+    verify_transaction_cases(transactions)
 
     balances, transfers = process_transactions(E, transactions)
 
@@ -373,16 +373,28 @@ def convert_transactions_to_blocks(E, transactions):
 
     return stock_blocks
 
+
 def get_device_id(data):
     if data.get('phone'):
         return 'sms:%s' % data['phone']
     else:
         return None
 
+
+def verify_transaction_actions(transactions):
+    """
+    Make sure the transactions are all in a consistent state.
+    Specifically, they all need to have the same case id.
+    """
+    assert transactions and all(
+        tx.action == transactions[0].action for tx in transactions
+    )
+
+
 def requisition_case_xml(data, stock_blocks):
     req_id = data['transactions'][0].case_id
 
-    # TODO: assert these are all the same or pass this information
+    verify_transaction_actions(data['transactions'])
     action_type = data['transactions'][0].action
     if action_type == const.RequisitionActions.REQUEST:
         create = True
@@ -405,7 +417,7 @@ def requisition_case_xml(data, stock_blocks):
         create=create,
         close=close,
         case_type=const.REQUISITION_CASE_TYPE,
-        case_name='SMS Requisition',  # TODO make this something meaningful
+        case_name='SMS Requisition',
         index={'parent_id': (
             const.SUPPLY_POINT_CASE_TYPE,
             data['location'].linked_supply_point()._id
@@ -461,7 +473,7 @@ def to_instance(data):
             E.location(data['location']._id),
             *stock_blocks
         )
-        return root
+        return etree.tostring(root, encoding='utf-8', pretty_print=True)
     else:
         return requisition_case_xml(data, stock_blocks)
 

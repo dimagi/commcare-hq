@@ -227,7 +227,6 @@ class StockRequisitionTest(SMSTests):
         reqs = RequisitionCase.open_for_location(self.domain.name, self.loc._id)
         self.assertEqual(1, len(reqs))
 
-        # TODO mad duplication, yo!
         req = RequisitionCase.get(reqs[0])
         [index] = req.indices
 
@@ -241,40 +240,40 @@ class StockRequisitionTest(SMSTests):
             self.check_stock(code, amt, req._id, 'ct-requested')
             self.check_stock(code, 0, req._id, 'stock')
 
-    #def testApprovalBadLocations(self):
-        #self.testRequisition()
+    def inactive_testApprovalBadLocations(self):
+        self.testRequisition()
 
-        #try:
-            #handle(self.user.get_verified_number(), 'approve')
-            #self.fail("empty locations should fail")
-        #except SMSError, e:
-            #self.assertEqual('must specify a location code', str(e))
+        try:
+            handle(self.user.get_verified_number(), 'approve')
+            self.fail("empty locations should fail")
+        except SMSError, e:
+            self.assertEqual('must specify a location code', str(e))
 
-        #try:
-            #handle(self.user.get_verified_number(), 'approve notareallocation')
-            #self.fail("unknown locations should fail")
-        #except SMSError, e:
-            #self.assertTrue('invalid location code' in str(e))
+        try:
+            handle(self.user.get_verified_number(), 'approve notareallocation')
+            self.fail("unknown locations should fail")
+        except SMSError, e:
+            self.assertTrue('invalid location code' in str(e))
 
-    #def testSimpleApproval(self):
-        #self.testRequisition()
+    def testSimpleApproval(self):
+        self.testRequisition()
 
-        ## approve loc1
-        #handled = handle(self.user.get_verified_number(), 'approve {loc}'.format(
-            #loc='loc1',
-            #))
-        #self.assertTrue(handled)
-        #reqs = RequisitionCase.open_for_location(self.domain.name, self.loc._id)
-        #self.assertEqual(3, len(reqs))
+        # approve loc1
+        handled = handle(self.user.get_verified_number(), 'approve {loc}'.format(
+            loc='loc1',
+            ))
+        self.assertTrue(handled)
+        reqs = RequisitionCase.open_for_location(self.domain.name, self.loc._id)
+        self.assertEqual(3, len(reqs))
 
-        #for req_id in reqs:
-            #req_case = RequisitionCase.get(req_id)
-            #self.assertEqual(RequisitionStatus.APPROVED, req_case.requisition_status)
-            #self.assertEqual(req_case.amount_requested, req_case.amount_approved)
-            #self.assertEqual(self.user._id, req_case.approved_by)
-            #self.assertIsNotNone(req_case.approved_on)
-            #self.assertTrue(isinstance(req_case.approved_on, datetime))
-            #self.assertEqual(req_case.product_id, req_case.get_product_case().product)
+        for req_id in reqs:
+            req_case = RequisitionCase.get(req_id)
+            self.assertEqual(RequisitionStatus.APPROVED, req_case.requisition_status)
+            self.assertEqual(req_case.amount_requested, req_case.amount_approved)
+            self.assertEqual(self.user._id, req_case.approved_by)
+            self.assertIsNotNone(req_case.approved_on)
+            self.assertTrue(isinstance(req_case.approved_on, datetime))
+            self.assertEqual(req_case.product_id, req_case.get_product_case().product)
 
     def testSimpleFulfill(self):
         amounts = {
@@ -307,13 +306,11 @@ class StockRequisitionTest(SMSTests):
         # should not have created a new req
         self.assertEqual(1, len(reqs))
 
-        # TODO mad duplication, yo!
         req = RequisitionCase.get(reqs[0])
         [index] = req.indices
 
         self.assertEqual(req.requisition_status, 'fulfilled')
 
-        # check updated status
         for code, amt in amounts.items():
             self.check_stock(code, amt, req._id, 'stock')
             self.check_stock(code, amt, req._id, 'ct-fulfilled')
@@ -360,7 +357,6 @@ class StockRequisitionTest(SMSTests):
         # receiving by sms closes the req
         self.assertEqual(0, len(reqs))
 
-        # TODO mad duplication, yo!
         req = RequisitionCase.get(req_id)
         [index] = req.indices
 
