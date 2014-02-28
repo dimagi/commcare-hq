@@ -11,7 +11,9 @@ class Worker(object):
         # If you need to change any of these names, keep the key intact
         ('name', "List of AWWs"),
         ('awc_name', "AWC Name"),
+        ('awc_code', "AWC Code"),
         ('bank_name', "AWW Bank Name"),
+        ('ifs_code', "IFS Code"),
         ('account_number', "AWW Bank Account Number"),
         ('block', "Block Name"),
         ('women_registered', "No. of women registered under BCSP"),
@@ -38,7 +40,9 @@ class Worker(object):
 
         self.name = worker.name
         self.awc_name = user_data('awc')
+        self.awc_code = user_data('awc_code')
         self.bank_name = user_data('bank_name')
+        self.ifs_code = user_data('ifs_code')
         self.account_number = user_data('account_number')
         self.block = user_data('block')
 

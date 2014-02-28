@@ -19,7 +19,7 @@ class Beneficiary(object):
         ('awc_name', "AWC Name"),
         ('bank_name', "Bank Name"),
         ('bank_branch_name', "Bank Branch Name"),
-        ('bank_branch_code', "Bank Branch Code"),
+        ('ifs_code', "IFS Code"),
         ('account_number', "Bank Account Number"),
         ('block', "Block Name"),
         ('village', "Village Name"),
@@ -57,7 +57,7 @@ class Beneficiary(object):
         self.awc_name = case_data('awc_name')
         self.bank_name = case_data('bank_name')
         self.bank_branch_name = case_data('bank_branch_name')
-        self.bank_branch_code = case_data('bank_branch_code')
+        self.ifs_code = case_data('ifsc')
         self.block = case_data('block_name')
         self.village = case_data('village_name')
 

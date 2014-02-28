@@ -35,7 +35,7 @@ class OpmCaseFluff(fluff.IndicatorDocument):
     awc_name = case_property('awc_name')
     bank_name = case_property('bank_name')
     bank_branch_name = case_property('bank_branch_name')
-    bank_branch_code = case_property('bank_branch_code')
+    ifs_code = case_property('ifs_code')
     account_number = case_property('bank_account_number')
     block = case_property('block_name')
     village = case_property('village_name')
