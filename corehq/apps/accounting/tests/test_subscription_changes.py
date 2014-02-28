@@ -14,6 +14,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
     min_subscription_length = 3
 
     def setUp(self):
+        super(TestUserRoleSubscriptionChanges, self).setUp()
         self.domain = generator.arbitrary_domain()
         UserRole.init_domain_with_presets(self.domain.name)
         self.user_roles = UserRole.by_domain(self.domain.name)
