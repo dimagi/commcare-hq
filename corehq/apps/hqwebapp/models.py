@@ -93,7 +93,7 @@ class UITab(object):
             return self.dispatcher.navigation_sections(context)
         else:
             return []
- 
+
     @property
     def is_viewable(self):
         """
@@ -116,7 +116,7 @@ class UITab(object):
                 return self.is_viewable
             except AttributeError:
                 return False
-    
+
     @property
     @memoized
     def url(self):
@@ -134,21 +134,33 @@ class UITab(object):
             return None
 
     @property
+    def is_active_shortcircuit(self):
+        return None
+
+    @property
+    def is_active_fast(self):
+        shortcircuit = self.is_active_shortcircuit
+        if shortcircuit is not None:
+            return shortcircuit
+
+        request_path = self._request.get_full_path()
+        return self.url and request_path.startswith(self.url)
+
+    @property
     @memoized
     def is_active(self):
-        if self.subtabs and any(st.is_active for st in self.subtabs):
-            return True
+        shortcircuit = self.is_active_shortcircuit
+        if shortcircuit is not None:
+            return shortcircuit
 
         request_path = self._request.get_full_path()
 
         if self.urls:
-            return (any(request_path.startswith(url) for url in self.urls) or
-                    self._current_url_name in self.subpage_url_names)
-
-        elif self.url:
-            return request_path.startswith(self.url)
-        else:
-            return False
+            if (any(request_path.startswith(url) for url in self.urls) or
+                    self._current_url_name in self.subpage_url_names):
+                return True
+        elif self.subtabs and any(st.is_active for st in self.subtabs):
+            return True
 
     @property
     @memoized
@@ -198,14 +210,12 @@ class UITab(object):
 class ProjectReportsTab(UITab):
     title = ugettext_noop("Project Reports")
     view = "corehq.apps.reports.views.default"
-   
+
     @property
-    def is_active(self):
+    def is_active_shortcircuit(self):
         # HACK. We need a more overarching way to avoid doing things this way
         if 'reports/adm' in self._request.get_full_path():
             return False
-
-        return super(ProjectReportsTab, self).is_active
 
     @property
     def is_viewable(self):
@@ -755,10 +765,13 @@ class ProjectUsersTab(UITab):
                                 self.couch_user.can_edit_web_users())
 
     @property
-    @memoized
-    def is_active(self):
+    def is_active_shortcircuit(self):
         if not self.domain:
             return False
+
+    @property
+    @memoized
+    def is_active(self):
         cloudcare_settings_url = reverse('cloudcare_app_settings', args=[self.domain])
         full_path = self._request.get_full_path()
         return (super(ProjectUsersTab, self).is_active
