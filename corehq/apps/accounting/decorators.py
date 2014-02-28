@@ -44,13 +44,17 @@ def requires_privilege_with_fallback(slug, **assignment):
     """
     def decorate(fn):
         def wrapped(request, *args, **kwargs):
+            if not is_accounting_previewer(request):
+                return fn(request, *args, **kwargs)
             try:
                 return requires_privilege(slug, **assignment)(fn)(
                     request, *args, **kwargs
                 )
             except PermissionDenied:
                 from corehq.apps.domain.views import SubscriptionUpgradeRequiredView
-                return SubscriptionUpgradeRequiredView().get(request, slug)
+                return SubscriptionUpgradeRequiredView().get(
+                    request, request.domain, slug
+                )
         return wrapped
     return decorate
 
