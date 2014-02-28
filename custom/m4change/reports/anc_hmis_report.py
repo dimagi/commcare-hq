@@ -1,8 +1,7 @@
-from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 
 from corehq.apps.locations.models import Location
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
+from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, NumericColumn
 from corehq.apps.reports.fields import AsyncLocationField
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin
@@ -116,9 +115,9 @@ class AncHmisReport(MonthYearMixin, CustomProjectReport, CaseListReport, M4Chang
 
     @property
     def headers(self):
-        headers = DataTablesHeader(DataTablesColumn(_("HMIS code")),
+        headers = DataTablesHeader(NumericColumn(_("HMIS code")),
                                    DataTablesColumn(_("Data Point")),
-                                   DataTablesColumn(_("Total")))
+                                   NumericColumn(_("Total")))
         return headers
 
     @property
@@ -130,9 +129,9 @@ class AncHmisReport(MonthYearMixin, CustomProjectReport, CaseListReport, M4Chang
 
         for key in row_data:
             yield [
-                row_data.get(key).get("hmis_code"),
-                row_data.get(key).get("label"),
-                row_data.get(key).get("value")
+                self.table_cell(row_data.get(key).get("hmis_code")),
+                self.table_cell(row_data.get(key).get("label")),
+                self.table_cell(row_data.get(key).get("value"))
             ]
 
     @property
