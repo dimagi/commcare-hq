@@ -117,7 +117,7 @@ class ProjectIndicatorsCaseSqlData(SqlData):
     @property
     def columns(self):
         return [
-            DatabaseColumn(_("Number of pregnant women who registered for ANC (in CCT payment sites only) "),
+            DatabaseColumn(_("Number of pregnant women who registered for ANC (in CCT payment sites only)"),
                            SumColumn("women_registered_anc_total")),
             DatabaseColumn(_("Number of women who had 4 ANC visits (in CCT payment sites only)"),
                            SumColumn("women_having_4_anc_visits_total")),
@@ -127,7 +127,7 @@ class ProjectIndicatorsCaseSqlData(SqlData):
 
     @property
     def group_by(self):
-        return ['domain']
+        return ['domain','mother_id']
 
 
 class ImmunizationHmisCaseSqlData(SqlData):
