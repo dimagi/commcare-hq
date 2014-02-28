@@ -6,7 +6,9 @@ import dateutil
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
-from corehq.apps.accounting.decorators import require_billing_admin, requires_privilege_alert
+from corehq.apps.accounting.decorators import (
+    require_billing_admin, requires_privilege_with_fallback,
+)
 from corehq.apps.accounting.subscription_changes import DomainDowngradeStatusHandler
 from corehq.apps.accounting.forms import EnterprisePlanContactForm
 from corehq.apps.accounting.utils import get_change_status
@@ -100,6 +102,49 @@ class LoginAndDomainMixin(object):
     @method_decorator(login_and_domain_required)
     def dispatch(self, *args, **kwargs):
         return super(LoginAndDomainMixin, self).dispatch(*args, **kwargs)
+
+
+class SubscriptionUpgradeRequiredView(LoginAndDomainMixin, BasePageView,
+                                      DomainViewMixin):
+    page_title = ugettext_noop("Upgrade Required")
+    template_name = "domain/insufficient_privilege_notification.html"
+
+    @property
+    def page_url(self):
+        return self.request.get_full_path
+
+    @property
+    def page_name(self):
+        return _("Sorry, you do not have access to %(feature_name)s") % {
+            'feature_name': self.feature_name,
+        }
+
+    @property
+    def page_context(self):
+        return {
+            'domain': self.domain,
+            'feature_name': self.feature_name,
+            'plan_name': self.required_plan_name,
+        }
+
+    @property
+    def missing_privilege(self):
+        return self.args[0]
+
+    @property
+    def feature_name(self):
+        return self.missing_privilege
+
+    @property
+    def required_plan_name(self):
+        return "AWESOME PLAN"
+
+    def get(self, request, *args, **kwargs):
+        self.request = request
+        self.args = args
+        return super(SubscriptionUpgradeRequiredView, self).get(
+            request, *args, **kwargs
+        )
 
 
 class BaseDomainView(LoginAndDomainMixin, BaseSectionPageView, DomainViewMixin):
@@ -1194,7 +1239,7 @@ class OrgSettingsView(BaseAdminProjectSettingsView):
     urlname = 'domain_org_settings'
     page_title = ugettext_noop("Organization")
 
-    @method_decorator(requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS))
+    @method_decorator(requires_privilege_with_fallback(privileges.CROSS_PROJECT_REPORTS))
     def dispatch(self, request, *args, **kwargs):
         return super(OrgSettingsView, self).dispatch(request, *args, **kwargs)
 

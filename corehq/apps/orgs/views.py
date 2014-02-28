@@ -10,7 +10,8 @@ from django.shortcuts import render
 from django.contrib import messages
 from django.utils.translation import ugettext as _
 from corehq import privileges
-from corehq.apps.accounting.decorators import requires_privilege_alert
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.accounting.utils import domain_has_privilege
 
 from corehq.apps.announcements.models import Notification
 from corehq.apps.domain.decorators import require_superuser
@@ -55,7 +56,6 @@ class MainNotification(Notification):
         return 'orgs/partials/main_notification.html'
 
 
-@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_member_required
 def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None, add_form=None, invite_member_form=None,
                  add_team_form=None, update_form=None, tab=None):
@@ -100,9 +100,17 @@ def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None, add
 
         # get the existing domains that an org admin would add to the organization
         user_domains = request.couch_user.domains or []
+        user_domains = filter(
+            lambda x: domain_has_privilege(x, privileges.CROSS_PROJECT_REPORTS),
+            user_domains
+        )
         req_domains = [req.domain for req in requests]
         user_domains = format_domains(user_domains)
         req_domains = format_domains(req_domains, [d.name for d in user_domains if d])
+        filter(
+            lambda x: domain_has_privilege(x, privileges.CROSS_PROJECT_REPORTS),
+            req_domains
+        )
 
     ctxt.update(dict(reg_form=reg_form, add_form=add_form, reg_form_empty=reg_form_empty, add_form_empty=add_form_empty,
                 invite_member_form=invite_member_form, invite_member_form_empty=invite_member_form_empty,
@@ -111,7 +119,6 @@ def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None, add
     return render(request, template, ctxt)
 
 
-@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_member_required
 def orgs_members(request, org, template="orgs/orgs_members.html"):
     class MembersNotification(Notification):
@@ -130,7 +137,6 @@ def orgs_members(request, org, template="orgs/orgs_members.html"):
     return render(request, template, ctxt)
 
 
-@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_member_required
 def orgs_teams(request, org, template="orgs/orgs_teams.html"):
     class TeamsNotification(Notification):
@@ -153,7 +159,6 @@ def get_data(request, org):
     return json_response(organization)
 
 
-@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_admin_required
 @require_POST
 def orgs_new_project(request, org):
@@ -161,7 +166,6 @@ def orgs_new_project(request, org):
     return register_domain(request)
 
 
-@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_admin_required
 @require_POST
 def orgs_update_info(request, org):
@@ -183,7 +187,6 @@ def orgs_update_info(request, org):
         return orgs_landing(request, org, update_form=form)
 
 
-@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_admin_required
 @require_POST
 def orgs_update_project(request, org):
@@ -203,7 +206,6 @@ def orgs_update_project(request, org):
     return HttpResponseRedirect(reverse("orgs_landing", args=(org, )))
 
 
-@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_admin_required
 @require_POST
 def orgs_update_team(request, org):
@@ -221,7 +223,6 @@ def orgs_update_team(request, org):
     return HttpResponseRedirect(reverse('orgs_team_members', args=(org, team_id)))
 
 
-@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_admin_required
 @require_POST
 def orgs_add_project(request, org):
@@ -240,7 +241,6 @@ def orgs_add_project(request, org):
     return HttpResponseRedirect(reverse('orgs_landing', args=[org]))
 
 
-@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_admin_required
 @require_POST
 def orgs_remove_project(request, org):
@@ -259,7 +259,6 @@ def orgs_remove_project(request, org):
     return HttpResponseRedirect(reverse(request.POST.get('redirect_url', 'orgs_landing'), args=(org,)))
 
 
-@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_admin_required
 @require_POST
 def invite_member(request, org):
@@ -314,7 +313,6 @@ def accept_invitation(request, org, invitation_id):
     return OrgInvitationView()(request, invitation_id, organization=org)
 
 
-@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_admin_required
 @require_POST
 def orgs_add_team(request, org):
@@ -335,14 +333,12 @@ def orgs_add_team(request, org):
     return HttpResponseRedirect(reverse('orgs_teams', args=[org]))
 
 
-@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_member_required
 def orgs_logo(request, org, template="orgs/orgs_logo.html"):
     image, type = request.organization.get_logo()
     return HttpResponse(image, content_type=type if image else 'image/gif')
 
 
-@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_member_required
 def orgs_team_members(request, org, team_id, template="orgs/orgs_team_members.html"):
     class TeamMembersNotification(Notification):
@@ -379,7 +375,6 @@ def orgs_team_members(request, org, team_id, template="orgs/orgs_team_members.ht
     return render(request, template, ctxt)
 
 
-@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_admin_required
 @require_POST
 def join_team(request, org, team_id):
@@ -393,7 +388,6 @@ def join_team(request, org, team_id):
     return HttpResponseRedirect(reverse(request.POST.get('redirect_url', 'orgs_team_members'), args=(org, team_id)))
 
 
-@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_admin_required
 @require_POST
 def leave_team(request, org, team_id):
@@ -409,7 +403,6 @@ def leave_team(request, org, team_id):
     return HttpResponseRedirect(reverse(request.POST.get('redirect_url', 'orgs_team_members'), args=(org, team_id)))
 
 
-@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_admin_required
 @require_POST
 def delete_team(request, org):
@@ -430,7 +423,6 @@ def delete_team(request, org):
     return HttpResponseRedirect(reverse("orgs_teams", args=(org, )))
 
 
-@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_admin_required
 def undo_delete_team(request, org, record_id):
     record = DeleteTeamRecord.get(record_id)
@@ -438,7 +430,6 @@ def undo_delete_team(request, org, record_id):
     return HttpResponseRedirect(reverse('orgs_team_members', args=[org, record.doc_id]))
 
 
-@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_admin_required
 @require_POST
 def add_domain_to_team(request, org, team_id):
@@ -456,7 +447,6 @@ def add_domain_to_team(request, org, team_id):
     return HttpResponseRedirect(reverse(request.POST.get('redirect_url', 'orgs_team_members'), args=(org, team_id)))
 
 
-@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_admin_required
 @require_POST
 def remove_domain_from_team(request, org, team_id):
@@ -472,7 +462,6 @@ def remove_domain_from_team(request, org, team_id):
     return HttpResponseRedirect(reverse(request.POST.get('redirect_url', 'orgs_team_members'), args=(org, team_id)))
 
 
-@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_admin_required
 @require_POST
 def set_team_permission_for_domain(request, org, team_id):
@@ -489,7 +478,6 @@ def set_team_permission_for_domain(request, org, team_id):
     return HttpResponseRedirect(reverse('orgs_team_members', args=(org, team_id)))
 
 
-@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_admin_required
 @require_POST
 def add_all_to_team(request, org, team_id):
@@ -500,7 +488,6 @@ def add_all_to_team(request, org, team_id):
     return HttpResponseRedirect(reverse(request.POST.get('redirect_url', 'orgs_team_members'), args=(org, team_id)))
 
 
-@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_admin_required
 @require_POST
 def remove_all_from_team(request, org, team_id):
@@ -516,7 +503,6 @@ def search_orgs(request):
     return json_response([{'title': o.title, 'name': o.name} for o in Organization.get_all()])
 
 
-@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_admin_required
 @require_POST
 def seen_request(request, org):
@@ -528,7 +514,6 @@ def seen_request(request, org):
     return HttpResponseRedirect(reverse("orgs_landing", args=[org]))
 
 
-@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_admin_required
 @require_POST
 def remove_member(request, org):
@@ -545,7 +530,6 @@ def remove_member(request, org):
     return HttpResponseRedirect(reverse("orgs_members", args=[org]))
 
 
-@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_admin_required
 def undo_remove_member(request, org, record_id):
     record = OrgRemovalRecord.get(record_id)
@@ -553,7 +537,6 @@ def undo_remove_member(request, org, record_id):
     return HttpResponseRedirect(reverse('orgs_members', args=[org]))
 
 
-@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_admin_required
 def set_admin(request, org):
     member_id = request.POST.get("member_id", None)
@@ -585,7 +568,6 @@ def public(request, org, template='orgs/public.html'):
     return render(request, template, ctxt)
 
 
-@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_member_required
 def base_report(request, org, template='orgs/report_base.html'):
     ctxt = base_context(request, request.organization)
@@ -605,7 +587,6 @@ def base_report(request, org, template='orgs/report_base.html'):
     return render(request, template, ctxt)
 
 
-@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_member_required
 @datespan_in_request(from_param="startdate", to_param="enddate")
 def stats(request, org, stat_slug, template='orgs/stats.html'):
@@ -630,7 +611,6 @@ def stats(request, org, stat_slug, template='orgs/stats.html'):
     return render(request, template, ctxt)
 
 
-@requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS)
 @org_member_required
 @datespan_in_request(from_param="startdate", to_param="enddate")
 def stats_data(request, org):
