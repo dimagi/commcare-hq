@@ -434,6 +434,10 @@ BLACK = (0, 0, 0)
 DEFAULT_FONT_SIZE = 12
 
 
+def midpoint(x1, x2):
+    return (x1 + x2) * 0.5
+
+
 class InvoiceTemplate(object):
     def __init__(self, filename, logo_filename=LOGO_FILENAME,
                  from_address=None, to_address=None, project_name=''):
@@ -510,8 +514,9 @@ class InvoiceTemplate(object):
                          fill=1)
 
         self.canvas.setFillColorRGB(*BLACK)
-        self.canvas.drawString(left + inch * 0.2, bottom + inch * 0.1,
-                               "Project")
+        self.canvas.drawCentredString(midpoint(left, middle_vertical),
+                                      bottom + inch * 0.1,
+                                      "Project")
         self.canvas.drawString(middle_vertical + inch * 0.2,
                                bottom + inch * 0.1, self.project_name)
 
