@@ -251,21 +251,34 @@ class SoftwarePlanInterface(AddItemInterface):
     @property
     def rows(self):
         rows = []
-        for plan in SoftwarePlan.objects.all():
-            name = SoftwarePlanNameFilter.get_value(self.request, self.domain)
-            edition = SoftwarePlanEditionFilter.get_value(self.request, self.domain)
-            visibility = SoftwarePlanVisibilityFilter.get_value(self.request, self.domain)
-            if ((name is None or name == plan.name)
-                and (edition is None or edition == plan.edition)
-                and (visibility is None or visibility == plan.visibility)):
-                rows.append([
-                    mark_safe('<a href="./%d">%s</a>' % (plan.id, plan.name)),
-                    plan.description,
-                    plan.edition,
-                    plan.visibility,
-                    SoftwarePlan.objects.get(id=plan.id).get_version().date_created
-                        if len(SoftwarePlanVersion.objects.filter(plan=plan)) != 0 else 'N/A',
-                ])
+        filters = {}
+
+        name = SoftwarePlanNameFilter.get_value(self.request, self.domain)
+        if name is not None:
+            filters.update(
+                name=name,
+            )
+        edition = SoftwarePlanEditionFilter.get_value(self.request, self.domain)
+        if edition is not None:
+            filters.update(
+                edition=edition,
+            )
+        visibility = SoftwarePlanVisibilityFilter.get_value(self.request, self.domain)
+        if visibility is not None:
+            filters.update(
+                visibility=visibility,
+            )
+
+        for plan in SoftwarePlan.objects.filter(**filters):
+            rows.append([
+                mark_safe('<a href="./%d">%s</a>' % (plan.id, plan.name)),
+                plan.description,
+                plan.edition,
+                plan.visibility,
+                SoftwarePlan.objects.get(id=plan.id).get_version().date_created
+                    if len(SoftwarePlanVersion.objects.filter(plan=plan)) != 0 else 'N/A',
+            ])
+
         return rows
 
     @property
