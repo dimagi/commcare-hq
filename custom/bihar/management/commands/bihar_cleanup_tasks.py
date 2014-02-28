@@ -46,7 +46,6 @@ class Command(BaseCommand):
                                             writer.writerow(row)
                                             if options['cleanup'] and not keep:
                                                 _purge(case)
-                                        return
                     except Exception, e:
                         print 'error with case %s (%s)' % (parent_case._id, e)
 
