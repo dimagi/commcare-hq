@@ -522,14 +522,30 @@ class MessagingTab(UITab):
 
     @property
     def is_viewable(self):
+        return (self.can_access_reminders or self.can_access_sms) and (
+            self.project and not (self.project.is_snapshot or
+                                  self.couch_user.is_commcare_user())
+        )
+
+    @property
+    @memoized
+    def can_access_sms(self):
         if toggles.ACCOUNTING_PREVIEW.enabled(self.couch_user.username):
             try:
                 ensure_request_has_privilege(self._request, privileges.OUTBOUND_SMS)
             except PermissionDenied:
                 return False
-        return (self.project and not
-                (self.project.is_snapshot or
-                 self.couch_user.is_commcare_user()))
+        return True
+
+    @property
+    @memoized
+    def can_access_reminders(self):
+        if toggles.ACCOUNTING_PREVIEW.enabled(self.couch_user.username):
+            try:
+                ensure_request_has_privilege(self._request, privileges.REMINDERS_FRAMEWORK)
+            except PermissionDenied:
+                return False
+        return True
 
     @property
     def sidebar_items(self):
@@ -540,53 +556,53 @@ class MessagingTab(UITab):
         def keyword_subtitle(keyword=None, **context):
             return keyword.keyword
 
-        if toggles.REMINDERS_UI_PREVIEW.enabled(self.couch_user.username):
-            from corehq.apps.sms.views import DomainSmsGatewayListView
-            from corehq.apps.reminders.views import (
-                EditScheduledReminderView,
-                CreateScheduledReminderView,
-                RemindersListView,
-                KeywordsListView,
-            )
-            sms_connectivity_url = reverse(DomainSmsGatewayListView.urlname, args=[self.domain])
-            reminders_list_url = reverse(RemindersListView.urlname, args=[self.domain])
-            edit_reminder_urlname = EditScheduledReminderView.urlname
-            new_reminder_urlname = CreateScheduledReminderView.urlname
-            keyword_list_url = reverse(KeywordsListView.urlname, args=[self.domain])
-        else:
-            sms_connectivity_url = reverse('list_domain_backends', args=[self.domain])
-            reminders_list_url = reverse('list_reminders', args=[self.domain])
-            edit_reminder_urlname = 'edit_complex'
-            new_reminder_urlname = 'add_complex_reminder_schedule'
-            keyword_list_url = reverse('manage_keywords', args=[self.domain])
+        reminders_urls = []
+        if self.can_access_reminders:
+            if toggles.REMINDERS_UI_PREVIEW.enabled(self.couch_user.username):
+                from corehq.apps.reminders.views import (
+                    EditScheduledReminderView,
+                    CreateScheduledReminderView,
+                    RemindersListView,
+                )
+                reminders_list_url = reverse(RemindersListView.urlname, args=[self.domain])
+                edit_reminder_urlname = EditScheduledReminderView.urlname
+                new_reminder_urlname = CreateScheduledReminderView.urlname
+            else:
+                reminders_list_url = reverse('list_reminders', args=[self.domain])
+                edit_reminder_urlname = 'edit_complex'
+                new_reminder_urlname = 'add_complex_reminder_schedule'
+            reminders_urls.extend([
+                {
+                    'title': _("Reminders"),
+                    'url': reminders_list_url,
+                    'subpages': [
+                        {
+                            'title': reminder_subtitle,
+                            'urlname': edit_reminder_urlname
+                        },
+                        {
+                            'title': _("Schedule Reminder"),
+                            'urlname': new_reminder_urlname,
+                        },
+                        {
+                            'title': _("Schedule Multi Event Reminder"),
+                            'urlname': 'create_complex_reminder_schedule',
+                        },
+                    ],
+                },
+                {
+                    'title': _("Reminder Calendar"),
+                    'url': reverse('scheduled_reminders', args=[self.domain])
+                },
+            ])
 
-        from corehq.apps.sms.views import SubscribeSMSView
-        reminders_urls = [
-            {
-                'title': _("Reminders"),
-                'url': reminders_list_url,
-                'subpages': [
-                    {
-                        'title': reminder_subtitle,
-                        'urlname': edit_reminder_urlname
-                    },
-                    {
-                        'title': _("Schedule Reminder"),
-                        'urlname': new_reminder_urlname,
-                    },
-                    {
-                        'title': _("Schedule Multi Event Reminder"),
-                        'urlname': 'create_complex_reminder_schedule',
-                    },
-                ],
-            },
-            {
-                'title': _("Reminder Calendar"),
-                'url': reverse('scheduled_reminders', args=[self.domain])
-            },
-        ]
         can_use_survey = can_use_survey_reminders(self._request)
         if can_use_survey:
+            from corehq.apps.reminders.views import KeywordsListView
+            if toggles.REMINDERS_UI_PREVIEW.enabled(self.couch_user.username):
+                keyword_list_url = reverse(KeywordsListView.urlname, args=[self.domain])
+            else:
+                keyword_list_url = reverse('manage_keywords', args=[self.domain])
             reminders_urls.append({
                 'title': _("Keywords"),
                 'url': keyword_list_url,
@@ -601,39 +617,75 @@ class MessagingTab(UITab):
                 },
                 ],
             })
-        reminders_urls.append({
-            'title': _("Reminders in Error"),
-            'url': reverse('reminders_in_error', args=[self.domain])
-        })
 
-        items = [
-            (_("Messages"), [
-                {'title': _('Compose SMS Message'),
-                 'url': reverse('sms_compose_message', args=[self.domain])},
-                {'title': _("Broadcast Messages"),
-                 'url': reverse('one_time_reminders', args=[self.domain]),
-                 'subpages': [
-                     {'title': _("Edit Broadcast"),
-                      'urlname': 'edit_one_time_reminder'},
-                     {'title': _("New Broadcast"),
-                      'urlname': 'add_one_time_reminder'},
-                     {'title': _("New Broadcast"),
-                      'urlname': 'copy_one_time_reminder'},
-                 ]},
-                {'title': _('Message Log'),
-                 'url': MessageLogReport.get_url(domain=self.domain)},
-                {'title': _('SMS Connectivity'),
-                 'url': sms_connectivity_url,
-                 'subpages': [
-                     {'title': _('Add Connection'),
-                      'urlname': 'add_domain_backend'},
-                     {'title': _('Edit Connection'),
-                      'urlname': 'edit_domain_backend'},
-                 ]},
-            ]),
-            (_("Data Collection and Reminders"), reminders_urls),
-        ]
+        if self.can_access_reminders:
+            reminders_urls.append({
+                'title': _("Reminders in Error"),
+                'url': reverse('reminders_in_error', args=[self.domain])
+            })
+        items = []
+        messages_urls = []
+        if self.can_access_sms:
+            messages_urls.extend([
+                {
+                    'title': _('Compose SMS Message'),
+                    'url': reverse('sms_compose_message', args=[self.domain])
+                },
+            ])
+        if self.can_access_reminders:
+            messages_urls.extend([
+                {
+                    'title': _("Broadcast Messages"),
+                    'url': reverse('one_time_reminders', args=[self.domain]),
+                    'subpages': [
+                        {
+                            'title': _("Edit Broadcast"),
+                            'urlname': 'edit_one_time_reminder'
+                        },
+                        {
+                            'title': _("New Broadcast"),
+                            'urlname': 'add_one_time_reminder'
+                        },
+                        {
+                            'title': _("New Broadcast"),
+                            'urlname': 'copy_one_time_reminder'
+                        },
+                    ]
+                },
+            ])
+        if self.can_access_sms:
+            from corehq.apps.sms.views import DomainSmsGatewayListView
+            if toggles.REMINDERS_UI_PREVIEW.enabled(self.couch_user.username):
+                sms_connectivity_url = reverse(DomainSmsGatewayListView.urlname, args=[self.domain])
+            else:
+                sms_connectivity_url = reverse('list_domain_backends', args=[self.domain])
+            messages_urls.extend([
+                {
+                    'title': _('Message Log'),
+                    'url': MessageLogReport.get_url(domain=self.domain)
+                },
+                {
+                    'title': _('SMS Connectivity'),
+                    'url': sms_connectivity_url,
+                    'subpages': [
+                        {
+                            'title': _('Add Connection'),
+                            'urlname': 'add_domain_backend'
+                        },
+                        {
+                            'title': _('Edit Connection'),
+                            'urlname': 'edit_domain_backend'
+                        },
+                    ]
+                },
+            ])
+        if messages_urls:
+            items.append((_("Messages"), messages_urls))
+        if reminders_urls:
+            items.append((_("Data Collection and Reminders"), reminders_urls))
+
         if self.project.commtrack_enabled:
+            from corehq.apps.sms.views import SubscribeSMSView
             items.append(
                 (_("CommTrack"), [
                     {'title': ugettext_lazy("Subscribe to SMS Reports"),
