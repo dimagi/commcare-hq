@@ -8,8 +8,8 @@ from dimagi.utils.decorators.log_exception import log_exception
 
 class Command(BaseCommand):
     """
-    Creates the backlog of repeat records that were dropped when bihar repeater
-    infrastructure went down.
+    Cleans up all duplicate task cases in the system created because
+    of bugs in MOTECH
     """
     option_list = BaseCommand.option_list + (
         make_option('--cleanup',
