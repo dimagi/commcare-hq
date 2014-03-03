@@ -256,7 +256,7 @@
                                 </div>
                                 <div class="modal-body">
                                     <p data-bind="text: archive_action_desc"></p>
-                                    {% if show_inactive and can_add_extra_users %}
+                                    {% if show_inactive and not can_add_extra_users %}
                                     <p>
                                         {% blocktrans %}
                                         You may not Un-Archive this Mobile Worker until you
