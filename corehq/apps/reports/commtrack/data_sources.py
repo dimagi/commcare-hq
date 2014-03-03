@@ -175,7 +175,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             yield {
                 'category': state.stock_category,
                 'product_id': product._id,
-                'consumption': state.daily_consumption * 30,
+                'consumption': state.daily_consumption * 30 if state.daily_consumption else None,
                 'months_remaining': state.months_remaining,
                 'location_id': state.case_id,
                 'product_name': product.name,
