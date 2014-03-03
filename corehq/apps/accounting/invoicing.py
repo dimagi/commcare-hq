@@ -440,13 +440,20 @@ def midpoint(x1, x2):
 
 class InvoiceTemplate(object):
     def __init__(self, filename, logo_filename=LOGO_FILENAME,
-                 from_address=None, to_address=None, project_name=''):
+                 from_address=None, to_address=None, project_name='',
+                 invoice_date=datetime.date.today(), invoice_number='',
+                 terms='',
+                 due_date=datetime.date.today()+datetime.timedelta(days=10)):
         self.canvas = Canvas(filename)
         self.canvas.setFontSize(DEFAULT_FONT_SIZE)
         self.logo_filename = os.path.join(os.getcwd(), logo_filename)
         self.from_address = from_address
         self.to_address = to_address
         self.project_name = project_name
+        self.invoice_date = invoice_date
+        self.invoice_number = invoice_number
+        self.terms = terms
+        self.due_date = due_date
 
     def get_pdf(self):
         self.draw_logo()
@@ -538,9 +545,13 @@ class InvoiceTemplate(object):
         bottom = inch * 0
         top = inch * 1.25
         label_height = (top - bottom) / 6.0
+        label_offset = label_height * 0.8
+        content_offset = 1.5 * label_offset
+        middle_x = midpoint(left, right)
+        middle_y = midpoint(bottom, top)
 
         self.canvas.setFillColorRGB(*LIGHT_GRAY)
-        self.canvas.rect(left, midpoint(bottom, top) - label_height,
+        self.canvas.rect(left, middle_y - label_height,
                          right - left, label_height, fill=1)
         self.canvas.rect(left, top - label_height, right - left, label_height,
                          fill=1)
@@ -549,5 +560,29 @@ class InvoiceTemplate(object):
         self.canvas.rect(left, bottom, right - left, top - bottom)
         self.canvas.rect(left, bottom, 0.5 * (right - left), top - bottom)
         self.canvas.rect(left, bottom, right - left, 0.5 * (top - bottom))
+
+        self.canvas.drawCentredString(midpoint(left, middle_x),
+                                      top - label_offset, "Date")
+        self.canvas.drawCentredString(midpoint(left, middle_x),
+                                      top - label_height - content_offset,
+                                      str(self.invoice_date))
+
+        self.canvas.drawCentredString(midpoint(middle_x, right),
+                                      top - label_offset, "Invoice #")
+        self.canvas.drawCentredString(midpoint(middle_x, right),
+                                      top - label_height - content_offset,
+                                      self.invoice_number)
+
+        self.canvas.drawCentredString(midpoint(left, middle_x),
+                                      middle_y - label_offset, "Terms")
+        self.canvas.drawCentredString(midpoint(left, middle_x),
+                                      middle_y - label_height - content_offset,
+                                      self.terms)
+
+        self.canvas.drawCentredString(midpoint(middle_x, right),
+                                      middle_y - label_offset, "Due Date")
+        self.canvas.drawCentredString(midpoint(middle_x, right),
+                                      middle_y - label_height - content_offset,
+                                      str(self.due_date))
 
         self.canvas.translate(-origin_x, -origin_y)
