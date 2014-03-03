@@ -309,6 +309,7 @@ class CommtrackConfig(Document):
     use_auto_emergency_levels = BooleanProperty(default=False)
 
     sync_location_fixtures = BooleanProperty(default=False)
+    sync_consumption_fixtures = BooleanProperty(default=False)
     use_auto_consumption = BooleanProperty(default=False)
     consumption_config = SchemaProperty(ConsumptionConfig)
     stock_levels_config = SchemaProperty(StockLevelsConfig)

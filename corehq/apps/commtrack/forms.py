@@ -103,6 +103,9 @@ class AdvancedSettingsForm(forms.Form):
     sync_location_fixtures = forms.BooleanField(
         label=ugettext_lazy("Sync location fixtures"), required=False)
 
+    sync_consumption_fixtures = forms.BooleanField(
+        label=ugettext_lazy("Sync consumption fixtures"), required=False)
+
     def clean(self):
         cleaned_data = super(AdvancedSettingsForm, self).clean()
 
@@ -142,6 +145,7 @@ class AdvancedSettingsForm(forms.Form):
             Fieldset(
                 _('Phone Settings'),
                 'sync_location_fixtures',
+                'sync_consumption_fixtures',
             ),
             ButtonHolder(
                 Submit('submit', ugettext_lazy('Submit'))
