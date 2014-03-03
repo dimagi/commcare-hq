@@ -222,10 +222,10 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         num_apps = len(cloudcare_enabled_apps)
         return self._fmt_alert(
             ungettext(
-                "You have %(num_apps)d application that will lose CloudCare access as of March 1, 2014 if you select "
-                "this plan.",
-                "You have %(num_apps)d applications that will lose CloudCare access as of March 1, 2014 if you select "
-                "this plan.",
+                "You have %(num_apps)d application that will lose CloudCare "
+                "access if you select this plan.",
+                "You have %(num_apps)d applications that will lose CloudCare "
+                "access if you select this plan.",
                 num_apps
             ) % {
                 'num_apps': num_apps,
@@ -245,10 +245,10 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         if num_fixtures > 0:
             return self._fmt_alert(
                 ungettext(
-                    "You have %(num_fix)s Lookup Table set up. Selecting this plan will delete this Lookup Table "
-                    "on March 1, 2014.",
-                    "You have $(num_fix)s Lookup Tables set up. Selecting this plan will delete these Lookup Tables "
-                    "on March 1, 2014.",
+                    "You have %(num_fix)s Lookup Table set up. Selecting this "
+                    "plan will delete this Lookup Table.",
+                    "You have $(num_fix)s Lookup Tables set up. Selecting "
+                    "this plan will delete these Lookup Tables.",
                     num_fixtures
                 ) % {'num_fix': num_fixtures}
             )
@@ -259,8 +259,9 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         Custom logos will be removed on downgrade.
         """
         if self.domain.has_custom_logo:
-            return self._fmt_alert(_("You are using custom branding. Selecting this plan will remove this feature "
-                                     "as of March 1, 2014."))
+            return self._fmt_alert(_("You are using custom branding. "
+                                     "Selecting this plan will remove this "
+                                     "feature."))
 
     @property
     def response_cross_project_reports(self):
@@ -270,8 +271,9 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         if self.domain.organization:
             org = Organization.get_by_name(self.domain.organization)
             return self._fmt_alert(
-                _("You will lose access to cross-project reports as of March 1, 2014 for the organization "
-                  "'%(org_name)s'.") % {
+                _("You will lose access to cross-project reports for the "
+                  "organization '%(org_name)s'.") %
+                {
                     'org_name': org.title,
                 })
 
@@ -301,10 +303,10 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         if num_active > 0:
             return self._fmt_alert(
                 ungettext(
-                    "You have %(num_active)d active Reminder Rule. Selecting this plan will deactivate this rule "
-                    "as of March 1, 2014.",
-                    "You have %(num_active)d active Reminder Rules. Selecting this plan will deactivate these rules "
-                    "as of March 1, 2014.",
+                    "You have %(num_active)d active Reminder Rule. Selecting "
+                    "this plan will deactivate this rule.",
+                    "You have %(num_active)d active Reminder Rules. Selecting "
+                    "this plan will deactivate these rules.",
                     num_active
                 ) % {
                     'num_active': num_active,
@@ -322,9 +324,9 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             return self._fmt_alert(
                 ungettext(
                     "You have %(num_active)d active Reminder Rule for a Survey. "
-                    "Selecting this plan will deactivate this rule as of March 1, 2014.",
+                    "Selecting this plan will deactivate this rule.",
                     "You have %(num_active)d active Reminder Rules for a Survey. "
-                    "Selecting this plan will deactivate these rules as of March 1, 2014.",
+                    "Selecting this plan will deactivate these rules.",
                     num_survey
                 ) % {
                     'num_active': num_survey,
@@ -346,8 +348,10 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         if num_deid_reports > 0:
             return self._fmt_alert(
                 ungettext(
-                    "You have %(num)d De-Identified Export. Selecting this plan will remove it as of March 1, 2014.",
-                    "You have %(num)d De-Identified Exports. Selecting this plan will remove them as of March 1, 2014.",
+                    "You have %(num)d De-Identified Export. Selecting this "
+                    "plan will remove it.",
+                    "You have %(num)d De-Identified Exports. Selecting this "
+                    "plan will remove them.",
                     num_deid_reports
                 ) % {
                     'num': num_deid_reports,
@@ -371,13 +375,16 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             if num_extra > 0:
                 return self._fmt_alert(
                     ungettext(
-                        "You have %(num_users)d Mobile Worker over the monthly limit of %(monthly_limit)d for "
-                        "this new plan. There will be an additional monthly charge as of March 1, 2014 "
-                        "of USD %(excess_fee)s per Mobile Worker, totalling USD %(monthly_total)s per month, "
-                        "if you select this plan.",
-                        "You have %(num_users)d Mobile Workers over the monthly limit of %(monthly_limit)d for "
-                        "this new plan. There will be an additional monthly charge as of March 1, 2014 of USD "
-                        "%(excess_fee)s per Mobile Worker, totalling USD %(monthly_total)s per month, if you "
+                        "You have %(num_users)d Mobile Worker over the monthly "
+                        "limit of %(monthly_limit)d for this new plan. There "
+                        "will be an additional monthly charge of USD "
+                        "%(excess_fee)s per Mobile Worker, totalling USD "
+                        "%(monthly_total)s per month, if you select this plan.",
+                        "You have %(num_users)d Mobile Workers over the "
+                        "monthly limit of %(monthly_limit)d for this new plan. "
+                        "There will be an additional monthly charge "
+                        "of USD %(excess_fee)s per Mobile Worker, totalling "
+                        "USD %(monthly_total)s per month, if you "
                         "select this plan.",
                         num_extra
                     ) % {
@@ -389,7 +396,8 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                 )
         except FeatureRate.DoesNotExist:
             global_logger.error(
-                "It seems that the plan %s did not have rate for Mobile Workers. This is problematic." %
+                "It seems that the plan %s did not have rate for Mobile "
+                "Workers. This is problematic." %
                     self.new_plan_version.plan.name
                 )
 
@@ -403,12 +411,12 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         if num_roles > 0:
             return self._fmt_alert(
                 ungettext(
-                    "You have %(num_roles)d Custom Role configured for your project. If you "
-                    "select this plan, all users with that role will change to having the Read Only role "
-                    "as of March 1, 2014.",
-                    "You have %(num_roles)d Custom Roles configured for your project . If you "
-                    "select this plan, all users with these roles will change to having the Read Only role "
-                    "as of March 1, 2014.",
+                    "You have %(num_roles)d Custom Role configured for your "
+                    "project. If you select this plan, all users with that "
+                    "role will change to having the Read Only role.",
+                    "You have %(num_roles)d Custom Roles configured for your "
+                    "project . If you select this plan, all users with these "
+                    "roles will change to having the Read Only role.",
                     num_roles
                 ) % {
                     'num_roles': num_roles,
