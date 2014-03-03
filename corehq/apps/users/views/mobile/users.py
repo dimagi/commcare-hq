@@ -237,11 +237,10 @@ class ListCommCareUsersView(BaseUserSettingsView):
 
     @property
     def can_bulk_edit_users(self):
-        if toggles.ACCOUNTING_PREVIEW.enabled(self.couch_user.username):
-            try:
-                ensure_request_has_privilege(self.request, privileges.BULK_USER_MANAGEMENT)
-            except PermissionDenied:
-                return False
+        try:
+            ensure_request_has_privilege(self.request, privileges.BULK_USER_MANAGEMENT)
+        except PermissionDenied:
+            return False
         return True
 
     @property

@@ -233,7 +233,7 @@ class CustomProjectReportDispatcher(ProjectReportDispatcher):
         return super(CustomProjectReportDispatcher, self).dispatch(request, *args, **kwargs)
 
     def permissions_check(self, report, request, domain=None, is_navigation_check=False):
-        if is_navigation_check and toggles.ACCOUNTING_PREVIEW.enabled(request.user.username):
+        if is_navigation_check:
             try:
                 ensure_request_has_privilege(request, privileges.CUSTOM_REPORTS)
             except PermissionDenied:
