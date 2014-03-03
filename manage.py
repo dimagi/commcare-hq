@@ -1,20 +1,40 @@
 #!/usr/bin/env python
-# vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
 
-from django.core.management import execute_manager
-import sys, os
+import sys
+import os
 
-filedir = os.path.dirname(__file__)
 
-submodules_list = os.listdir(os.path.join(filedir, 'submodules'))
-for d in submodules_list:
-    if d == "__init__.py" or d == '.' or d == '..':
-        continue
-    sys.path.insert(1, os.path.join(filedir, 'submodules', d))
+def _set_source_root_parent(source_root_parent):
+    """
+    add everything under `source_root_parent` to the list of source roots
+    e.g. if you call this with param 'submodules'
+    and you have the file structure
 
-sys.path.append(os.path.join(filedir,'submodules'))
+    project/
+        submodules/
+            foo-src/
+                foo/
+            bar-src/
+                bar/
+
+    (where foo and bar are python modules)
+    then foo and bar would become top-level importable
+
+    """
+    filedir = os.path.dirname(__file__)
+    submodules_list = os.listdir(os.path.join(filedir, source_root_parent))
+    for d in submodules_list:
+        if d == "__init__.py" or d == '.' or d == '..':
+            continue
+        sys.path.insert(1, os.path.join(filedir, source_root_parent, d))
+
+    sys.path.append(os.path.join(filedir, source_root_parent))
+
 
 if __name__ == "__main__":
+
+    _set_source_root_parent('submodules')
+
     # proxy for whether we're running gunicorn with -k gevent
     if "gevent" in sys.argv:
         from restkit.session import set_session; set_session("gevent")
