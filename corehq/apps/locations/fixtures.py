@@ -34,14 +34,14 @@ def _group_by_type(locations):
 
 
 def _types_to_fixture(type, locs):
-    type_node = ElementTree.Element('%ss' % type)  # ghetto pluralization
+    type_node = ElementTree.Element('%ss' % _el_name(type))  # ghetto pluralization
     for loc in locs:
         type_node.append(_location_to_fixture(loc))
     return type_node
 
 
 def _location_to_fixture(location):
-    root = ElementTree.Element(location.location_type, {'id': location._id})
+    root = ElementTree.Element(_el_name(location.location_type), {'id': location._id})
     fixture_fields = [
         'name',
         'site_code',
@@ -57,3 +57,8 @@ def _location_to_fixture(location):
 
     _append_children(root, location.children)
     return root
+
+
+def _el_name(location_type):
+    # todo: add a better way to configure/manage this
+    return '_'.join((location_type.encode('ascii', errors='ignore') or 'unknown_type').split())
