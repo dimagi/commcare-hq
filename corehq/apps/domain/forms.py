@@ -5,6 +5,7 @@ import re
 import io
 from PIL import Image
 import uuid
+from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 import settings
 
 from django import forms
@@ -19,9 +20,7 @@ from django.forms.widgets import  Select
 from django.utils.encoding import smart_str
 from django.contrib.auth.forms import PasswordResetForm
 from django.utils.safestring import mark_safe
-from django_countries import CountryField
 from django_countries.countries import COUNTRIES
-import phonenumbers
 from corehq.apps.accounting.models import BillingContactInfo, BillingAccountAdmin, SubscriptionAdjustmentMethod, Subscription, SoftwarePlanEdition
 from corehq.apps.app_manager.models import Application, FormBase
 
@@ -123,9 +122,7 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
     project_type = CharField(label=ugettext_noop("Project Category"), required=True,
         help_text=ugettext_noop("e.g. MCH, HIV, etc."))
     license = ChoiceField(label=ugettext_noop("License"), required=True, choices=LICENSES.items(),
-        widget=Select(attrs={'class': 'input-xxlarge'}),
-        help_text=render_to_string('domain/partials/license_explanations.html',
-            {'extra': ugettext_noop("All un-licensed multimedia files in your project will be given this license")}))
+        widget=Select(attrs={'class': 'input-xxlarge'}))
     description = CharField(label=ugettext_noop("Long Description"), required=False, widget=forms.Textarea,
         help_text=ugettext_noop("A high-level overview of your project as a whole"))
     short_description = CharField(label=ugettext_noop("Short Description"), required=False,
@@ -139,8 +136,7 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
         help_text=ugettext_noop("An optional image to show other users your logo or what your app looks like"))
     video = CharField(label=ugettext_noop("Youtube Video"), required=False,
         help_text=ugettext_noop("An optional youtube clip to tell users about your app. Please copy and paste a URL to a youtube video"))
-    cda_confirmed = BooleanField(required=False, label=ugettext_noop("Content Distribution Agreement"),
-        help_text=render_to_string('domain/partials/cda_modal.html'))
+    cda_confirmed = BooleanField(required=False, label=ugettext_noop("Content Distribution Agreement"))
 
     def __init__(self, *args, **kw):
         super(SnapshotSettingsForm, self).__init__(*args, **kw)
@@ -155,6 +151,13 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
             'share_reminders',
             'license',
             'cda_confirmed',]
+        self.fields['license'].help_text = \
+            render_to_string('domain/partials/license_explanations.html', {
+                'extra': _("All un-licensed multimedia files in "
+                           "your project will be given this license")
+            })
+        self.fields['cda_confirmed'].help_text = \
+            render_to_string('domain/partials/cda_modal.html')
 
     def clean_cda_confirmed(self):
         data_cda = self.cleaned_data['cda_confirmed']
@@ -262,6 +265,34 @@ class SubAreaMixin():
 class DomainGlobalSettingsForm(forms.Form):
     default_timezone = TimeZoneChoiceField(label=ugettext_noop("Default Timezone"), initial="UTC")
 
+    commtrack_enabled = BooleanField(
+        label=_("CommTrack Enabled"),
+        required=False,
+        help_text=_("CommTrack is a CommCareHQ module for logistics, inventory "
+                    "tracking, and supply chain management. It is still under "
+                    "active development. Do not enable for your domain unless "
+                    "you\'re actively piloting it.")
+    )
+    logo = ImageField(
+        label=_("Custom Logo"),
+        required=False,
+        help_text=_("Upload a custom image to display instead of the "
+                    "CommCare HQ logo.  It will be automatically resized to "
+                    "a height of 32 pixels.")
+    )
+    delete_logo = BooleanField(
+        label=_("Delete Logo"),
+        required=False,
+        help_text=_("Delete your custom logo and use the standard one.")
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.can_use_custom_logo = kwargs.pop('can_use_custom_logo', False)
+        super(DomainGlobalSettingsForm, self).__init__(*args, **kwargs)
+        if not self.can_use_custom_logo:
+            del self.fields['logo']
+            del self.fields['delete_logo']
+
     def clean_default_timezone(self):
         data = self.cleaned_data['default_timezone']
         timezone_field = TimeZoneField()
@@ -270,7 +301,24 @@ class DomainGlobalSettingsForm(forms.Form):
 
     def save(self, request, domain):
         try:
+            if self.can_use_custom_logo:
+                logo = self.cleaned_data['logo']
+                if logo:
+
+                    input_image = Image.open(io.BytesIO(logo.read()))
+                    input_image.load()
+                    input_image.thumbnail(LOGO_SIZE)
+                    # had issues trying to use a BytesIO instead
+                    tmpfilename = "/tmp/%s_%s" % (uuid.uuid4(), logo.name)
+                    input_image.save(tmpfilename, 'PNG')
+
+                    with open(tmpfilename) as tmpfile:
+                        domain.put_attachment(tmpfile, name=LOGO_ATTACHMENT)
+                elif self.cleaned_data['delete_logo']:
+                    domain.delete_attachment(LOGO_ATTACHMENT)
+
             global_tz = self.cleaned_data['default_timezone']
+            domain.commtrack_enabled = self.cleaned_data.get('commtrack_enabled', False)
             domain.default_timezone = global_tz
             users = WebUser.by_domain(domain.name)
             for user in users:
@@ -334,14 +382,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         help_text=_("This SMS backend will be used if a contact has no "
                     "backend specified.")
     )
-    commtrack_enabled = BooleanField(
-        label=_("CommTrack Enabled"),
-        required=False,
-        help_text=_("CommTrack is a CommCareHQ module for logistics, inventory "
-                    "tracking, and supply chain management. It is still under "
-                    "active development. Do not enable for your domain unless "
-                    "you\'re actively piloting it.")
-    )
     call_center_enabled = BooleanField(
         label=_("Call Center Application"),
         required=False,
@@ -378,18 +418,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
             "you are an advanced user."
         )
     )
-    logo = ImageField(
-        label=_("Custom Logo"),
-        required=False,
-        help_text=_("Upload a custom image to display instead of the "
-                    "CommCare HQ logo.  It will be automatically resized to "
-                    "a height of 32 pixels.")
-    )
-    delete_logo = BooleanField(
-        label=_("Delete Logo"),
-        required=False,
-        help_text=_("Delete your custom logo and use the standard one.")
-    )
     secure_submissions = BooleanField(
         label=_("Only accept secure submissions"),
         required=False,
@@ -402,9 +430,8 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         user = kwargs.pop('user', None)
         domain = kwargs.pop('domain', None)
         super(DomainMetadataForm, self).__init__(*args, **kwargs)
+
         if not (user and user.is_previewer):
-            # commtrack is pre-release
-            self.fields['commtrack_enabled'].widget = forms.HiddenInput()
             self.fields['call_center_enabled'].widget = forms.HiddenInput()
             self.fields['call_center_case_owner'].widget = forms.HiddenInput()
             self.fields['call_center_case_type'].widget = forms.HiddenInput()
@@ -457,21 +484,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         if not res:
             return False
         try:
-            logo = self.cleaned_data['logo']
-            if logo:
-
-                input_image = Image.open(io.BytesIO(logo.read()))
-                input_image.load()
-                input_image.thumbnail(LOGO_SIZE)
-                # had issues trying to use a BytesIO instead
-                tmpfilename = "/tmp/%s_%s" % (uuid.uuid4(), logo.name)
-                input_image.save(tmpfilename, 'PNG')
-               
-                with open(tmpfilename) as tmpfile:
-                    domain.put_attachment(tmpfile, name=LOGO_ATTACHMENT)
-            elif self.cleaned_data['delete_logo']:
-                domain.delete_attachment(LOGO_ATTACHMENT)
-
             domain.project_type = self.cleaned_data['project_type']
             domain.customer_type = self.cleaned_data['customer_type']
             domain.is_test = self.cleaned_data['is_test']
@@ -483,7 +495,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
             domain.sms_case_registration_owner_id = self.cleaned_data.get('sms_case_registration_owner_id')
             domain.sms_case_registration_user_id = self.cleaned_data.get('sms_case_registration_user_id')
             domain.default_sms_backend_id = self.cleaned_data.get('default_sms_backend_id')
-            domain.commtrack_enabled = self.cleaned_data.get('commtrack_enabled', False)
             domain.call_center_config.enabled = self.cleaned_data.get('call_center_enabled', False)
             if domain.call_center_config.enabled:
                 domain.internal.using_call_center = True
@@ -625,7 +636,8 @@ class EditBillingAccountInfoForm(forms.ModelForm):
         try:
             self.current_country = self.account.billingcontactinfo.country
         except Exception:
-            self.current_country = None
+            initial = kwargs.get('initial')
+            self.current_country = initial.get('country') if initial is not None else None
 
         try:
             kwargs['instance'] = self.account.billingcontactinfo
@@ -681,10 +693,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
         return result
 
     def _parse_number(self, number, country):
-        try:
-            return phonenumbers.parse(number, country)
-        except phonenumbers.NumberParseException:
-            pass
+        return parse_phone_number(number, country, failhard=False)
 
     def clean_phone_number(self):
         data = self.cleaned_data['phone_number']
@@ -784,6 +793,9 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                     web_user=self.creating_user, adjustment_method=SubscriptionAdjustmentMethod.USER
                 )
                 subscription.is_active = True
+                if subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE:
+                    # this point can only be reached if the initiating user was a superuser
+                    subscription.do_not_invoice = True
                 subscription.save()
             return True
         except Exception:
@@ -795,8 +807,8 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
 class ProBonoForm(forms.Form):
     contact_email = forms.CharField(label=_("Contact email"))
     organization = forms.CharField(required=False, label=_("Organization"))
-    project_overview = forms.CharField(widget=forms.Textarea, label="Project Overview")
-    pay_only_features_needed = forms.BooleanField(required=False, label="Pay only features needed")
+    project_overview = forms.CharField(widget=forms.Textarea, label="Project overview")
+    pay_only_features_needed = forms.CharField(widget=forms.Textarea, label="Pay only features needed")
     duration_of_project = forms.CharField(help_text=_("We grant pro-bono software plans for "
                                                       "12 months at a time. After 12 months "
                                                       "groups must reapply to renew their "
@@ -822,7 +834,7 @@ class ProBonoForm(forms.Form):
             ),
         )
 
-    def process_submission(self):
+    def process_submission(self, domain=None):
         try:
             params = {
                 'pro_bono_form': self,
@@ -830,8 +842,11 @@ class ProBonoForm(forms.Form):
             html_content = render_to_string("domain/email/pro_bono_application.html", params)
             text_content = render_to_string("domain/email/pro_bono_application.txt", params)
             recipient = settings.BILLING_EMAIL
-            send_HTML_email("Pro-Bono Application", recipient, html_content, text_content=text_content)
-            send_HTML_email("Pro-Bono Application", recipient, html_content, text_content=text_content)
+            subject = "[Pro-Bono Application]"
+            if domain is not None:
+                subject = "%s %s" % (subject, domain)
+            send_HTML_email(subject, recipient, html_content, text_content=text_content,
+                            email_from=settings.DEFAULT_FROM_EMAIL)
         except Exception:
             logging.error("Couldn't send pro-bono application email. "
                           "Contact: %s" % self.cleaned_data['contact_email']

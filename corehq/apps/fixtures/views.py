@@ -13,6 +13,8 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 from django.views.generic.base import TemplateView
 from django.shortcuts import render
+from corehq import privileges
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 
 from corehq.apps.domain.decorators import login_or_digest
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem, _id_from_doc
@@ -31,7 +33,12 @@ from dimagi.utils.web import json_response
 from dimagi.utils.decorators.view import get_file
 
 
-require_can_edit_fixtures = require_permission(Permissions.edit_data)
+require_can_edit_fixtures = lambda *args, **kwargs: (
+    require_permission(Permissions.edit_data)(
+        requires_privilege_with_fallback(privileges.LOOKUP_TABLES)(*args, **kwargs)
+    )
+)
+
 
 def strip_json(obj, disallow_basic=None, disallow=None):
     disallow = disallow or []

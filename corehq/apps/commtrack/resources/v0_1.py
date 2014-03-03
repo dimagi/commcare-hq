@@ -1,5 +1,5 @@
 from tastypie import fields
-from corehq.apps.api.resources.v0_1 import CustomResourceMeta
+from corehq.apps.api.resources.v0_1 import CustomResourceMeta, DomainAdminAuthentication
 from corehq.apps.commtrack.models import Product
 from corehq.apps.api.util import get_object_or_not_exist
 from corehq.apps.api.resources import JsonResource
@@ -30,5 +30,6 @@ class ProductResource(JsonResource):
         return Product.by_domain(kwargs['domain'])
 
     class Meta(CustomResourceMeta):
+        authentication = DomainAdminAuthentication()
         resource_name = 'product'
         limit = 0

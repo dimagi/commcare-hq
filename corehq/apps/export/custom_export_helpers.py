@@ -1,4 +1,7 @@
 import json
+from django_prbac.exceptions import PermissionDenied
+from django_prbac.utils import ensure_request_has_privilege
+from corehq import toggles, privileges
 from corehq.apps.reports.standard import export
 from corehq.apps.reports.models import FormExportSchema, HQGroupExportConfiguration, CaseExportSchema
 from corehq.apps.reports.standard.export import DeidExportReport
@@ -55,7 +58,7 @@ class CustomExportHelper(object):
         return any(
             col.doc_type == 'StockExportColumn'
             for col in self.custom_export.tables[0].columns
-        )
+        ) if self.custom_export.tables else False
 
     class DEID(object):
         options = (
@@ -171,7 +174,6 @@ class FormCustomExportHelper(CustomExportHelper):
     ExportSchemaClass = FormExportSchema
     ExportReport = export.ExcelExportReport
 
-    allow_deid = True
     allow_repeats = True
 
     default_questions = ["form.case.@case_id", "form.meta.timeEnd", "_id", "id", "form.meta.username"]
@@ -185,6 +187,15 @@ class FormCustomExportHelper(CustomExportHelper):
         super(FormCustomExportHelper, self).__init__(request, domain, export_id)
         if not self.custom_export.app_id:
             self.custom_export.app_id = request.GET.get('app_id')
+
+    @property
+    def allow_deid(self):
+        if toggles.ACCOUNTING_PREVIEW.enabled(self.request.user.username):
+            try:
+                ensure_request_has_privilege(self.request, privileges.DEIDENTIFIED_DATA)
+            except PermissionDenied:
+                return False
+        return True
 
     def update_custom_params(self):
         p = self.post_data['custom_export']

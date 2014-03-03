@@ -26,6 +26,9 @@
                 edit: {{ edit|BOOL }},
                 user: {
                     is_previewer: {{ request.couch_user.is_previewer|BOOL }}
+                },
+                permissions: {
+                    cloudcare: {{ is_cloudcare_allowed|BOOL }}
                 }
             }
         };
@@ -230,7 +233,7 @@
 {% endblock %}
 {% block form-view %}
     <div class="tab-content">
-        <div class="tab-pane active" id="app-settings">
+        <div class="tab-pane{% if not copy_app_form.is_bound %} active{% endif %}" id="app-settings">
             {% include "app_manager/partials/app-settings.html" %}
         </div>
         {% include 'app_manager/languages.html' %}
@@ -252,7 +255,7 @@
             </div>
 
         {% endif %}
-        <div class="tab-pane" id="copy">
+        <div class="tab-pane{% if copy_app_form.is_bound %} active{% endif %}" id="copy">
             <div>
                 <form class="form form-horizontal" method="post" action="{% url "copy_app" domain %}">
                     {% crispy copy_app_form %}

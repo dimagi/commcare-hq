@@ -1,4 +1,3 @@
-import phonenumbers
 import logging
 from decimal import Decimal
 from django.core.exceptions import ObjectDoesNotExist
@@ -8,6 +7,7 @@ from corehq.apps.accounting import models as accounting
 from corehq.apps.accounting.models import Currency
 from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES
 from corehq.apps.sms.models import DIRECTION_CHOICES
+from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.apps.sms.util import clean_phone_number
 
 
@@ -229,12 +229,9 @@ class SmsBillable(models.Model):
         # Fetch gateway_fee
         backend_api_id = message_log.backend_api
         backend_instance = message_log.backend_id
-        try:
-            parsed_number = phonenumbers.parse(phone_number)
-        except phonenumbers.NumberParseException:
-            country_code = None
-        else:
-            country_code = parsed_number.country_code
+
+        parsed_number = parse_phone_number(phone_number, failhard=False)
+        country_code = parsed_number.country_code if parsed_number else None
 
         billable.gateway_fee = SmsGatewayFee.get_by_criteria(
             backend_api_id, direction, backend_instance=backend_instance, country_code=country_code

@@ -1,16 +1,27 @@
 from collections import defaultdict
 from xml.etree import ElementTree
+from django.conf import settings
+from corehq import toggles, privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from corehq.apps.users.models import CommCareUser
+from dimagi.utils.modules import to_function
+import toggle
+
+
+def hq_fixtures(user, version, last_sync):
+    if hasattr(user, "_hq_user") and user._hq_user is not None:
+        user = user._hq_user
+    if isinstance(user, CommCareUser):
+        for func_path in settings.HQ_FIXTURE_GENERATORS:
+            func = to_function(func_path)
+            if func:
+                for fixture in func(user, version, last_sync):
+                    yield fixture
 
 
 def item_lists(user, version, last_sync):
-    if isinstance(user, CommCareUser):
-        pass
-    elif hasattr(user, "_hq_user") and user._hq_user is not None:
-        user = user._hq_user
-    else:
-        return []
+    assert isinstance(user, CommCareUser)
 
     all_types = dict([(t._id, t) for t in FixtureDataType.by_domain(user.domain)])
     global_types = dict([(id, t) for id, t in all_types.items() if t.is_global])

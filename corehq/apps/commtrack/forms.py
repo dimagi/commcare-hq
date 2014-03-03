@@ -100,6 +100,9 @@ class AdvancedSettingsForm(forms.Form):
     consumption_optimal_window = forms.IntegerField(
         label=ugettext_lazy("Optimal Window for Calculation (Days)"), required=False)
 
+    sync_location_fixtures = forms.BooleanField(
+        label=ugettext_lazy("Sync location fixtures"), required=False)
+
     def clean(self):
         cleaned_data = super(AdvancedSettingsForm, self).clean()
 
@@ -135,6 +138,10 @@ class AdvancedSettingsForm(forms.Form):
                 'consumption_min_transactions',
                 'consumption_min_window',
                 'consumption_optimal_window',
+            ),
+            Fieldset(
+                _('Phone Settings'),
+                'sync_location_fixtures',
             ),
             ButtonHolder(
                 Submit('submit', ugettext_lazy('Submit'))

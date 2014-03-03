@@ -1,4 +1,3 @@
-from StringIO import StringIO
 from datetime import date
 import os
 import tempfile
@@ -26,7 +25,7 @@ class BulkExport(object):
     def separator(self):
         return "."
 
-    def create(self, export_tags, export_filter, format=Format.XLS_2007, safe_only=False):
+    def create(self, export_tags, export_filter, format=Format.CSV, safe_only=False):
         self.export_filter = export_filter
         self.format = format
         self.safe_only = safe_only
@@ -39,7 +38,6 @@ class BulkExport(object):
         configs = list()
         schemas = list()
         checkpoints = list()
-        file = StringIO()
 
         for export_object in self.export_objects:
             config, schema, checkpoint = export_object.get_export_components(filter=self.export_filter)
@@ -52,22 +50,24 @@ class BulkExport(object):
         # generate the headers for the bulk excel file
         headers = self.generate_table_headers(schemas, checkpoints)
 
-        writer.open(headers, file)
+        fd, path = tempfile.mkstemp()
+        with os.fdopen(fd, 'wb') as tmp:
+            writer.open(headers, tmp)
 
-        # now that the headers are set, lets build the rows
-        for i, config in enumerate(configs):
-            for doc in config.get_docs():
-                if self.export_objects[i].transform:
-                    doc = self.export_objects[i].transform(doc)
-                table = format_tables(create_intermediate_tables(doc, schemas[i]),
-                                    include_headers=isinstance(self, CustomBulkExport), separator=self.separator)
-                if isinstance(self, CustomBulkExport):
-                    table = self.export_objects[i].trim(table, doc)
-                table = self.export_objects[i].parse_tables(table)
-                writer.write(table)
+            # now that the headers are set, lets build the rows
+            for i, config in enumerate(configs):
+                for doc in config.get_docs():
+                    if self.export_objects[i].transform:
+                        doc = self.export_objects[i].transform(doc)
+                    table = format_tables(create_intermediate_tables(doc, schemas[i]),
+                                        include_headers=isinstance(self, CustomBulkExport), separator=self.separator)
+                    if isinstance(self, CustomBulkExport):
+                        table = self.export_objects[i].trim(table, doc)
+                    table = self.export_objects[i].parse_tables(table)
+                    writer.write(table)
 
-        writer.close()
-        return file
+            writer.close()
+        return path
 
     def generate_table_headers(self, schemas, checkpoints):
         return []

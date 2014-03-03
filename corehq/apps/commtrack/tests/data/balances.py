@@ -135,10 +135,11 @@ def create_requisition_xml(product_amounts):
         case_type=const.REQUISITION_CASE_TYPE,
         case_name='Some requisition',
         index={'parent_id': (const.SUPPLY_POINT_CASE_TYPE, '{sp_id}')},
+        update={'requisition_status': 'requested'},
     ).as_xml())
     return """
         %(case_block)s
-        <ns0:balance xmlns:ns0="http://commcarehq.org/ledger/v1" date="{long_date}" entity-id="%(req_id)s" section-id="stock">
+        <ns0:balance xmlns:ns0="http://commcarehq.org/ledger/v1" date="{long_date}" entity-id="%(req_id)s" section-id="ct-requested">
             %(product_block)s
         </ns0:balance>
     """ % {'req_id': req_id, 'case_block': req_case_block, 'product_block': products_xml(product_amounts)}
@@ -149,10 +150,37 @@ def create_fulfillment_xml(original_requisition, product_amounts):
     req_case_block = ElementTree.tostring(CaseBlock(
         req_id,
         version=V2,
-        create=True,
         case_type=const.FULFILLMENT_CASE_TYPE,
         case_name='Some requisition',
-        index={'parent_id': (const.REQUISITION_CASE_TYPE, req_id)},
+        index={'parent_id': (const.REQUISITION_CASE_TYPE, '{sp_id}')},
+        update={'requisition_status': 'fulfilled'},
+    ).as_xml())
+    # TODO: needs a source supply point
+    return """
+        {case_block}
+        <ns0:transfer xmlns:ns0="http://commcarehq.org/ledger/v1" dest="{req_id}" date="{long_date}" section-id="stock">
+            {product_block}
+        </ns0:transfer>
+        <ns0:balance xmlns:ns0="http://commcarehq.org/ledger/v1" date="{long_date}" entity-id="{req_id}" section-id="ct-fulfilled">
+            {product_block}
+        </ns0:balance>
+    """.format(
+        req_id=req_id,
+        case_block=req_case_block,
+        product_block=products_xml(product_amounts),
+        long_date=long_date()
+    )
+
+def create_received_xml(original_requisition, product_amounts):
+    req_id = original_requisition._id
+    req_case_block = ElementTree.tostring(CaseBlock(
+        req_id,
+        version=V2,
+        close=True,
+        case_type=const.RECEIVED_CASE_TYPE,
+        case_name='Some requisition',
+        index={'parent_id': (const.REQUISITION_CASE_TYPE, '{sp_id}')},
+        update={'requisition_status': 'received'},
     ).as_xml())
     return """
         {case_block}
