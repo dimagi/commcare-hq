@@ -198,9 +198,8 @@ def create_immediate_reminder(contact, content_type, reminder_type=None, message
 
 
 def can_use_survey_reminders(request):
-    if toggles.ACCOUNTING_PREVIEW.enabled(request.user.username):
-        try:
-            ensure_request_has_privilege(request, privileges.INBOUND_SMS)
-        except PermissionDenied:
-            return False
+    try:
+        ensure_request_has_privilege(request, privileges.INBOUND_SMS)
+    except PermissionDenied:
+        return False
     return True

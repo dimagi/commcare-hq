@@ -253,15 +253,13 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
 
     @property
     def can_use_custom_logo(self):
-        if toggles.ACCOUNTING_PREVIEW.enabled(self.request.user.username):
-            try:
-                ensure_request_has_privilege(
-                    self.request, privileges.CUSTOM_BRANDING
-                )
-                return True
-            except PermissionDenied:
-                return False
-        return self.request.couch_user.is_previewer()
+        try:
+            ensure_request_has_privilege(
+                self.request, privileges.CUSTOM_BRANDING
+            )
+        except PermissionDenied:
+            return False
+        return True
 
     @property
     @memoized

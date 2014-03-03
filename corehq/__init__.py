@@ -62,9 +62,7 @@ def REPORTS(project):
     from corehq.apps.accounting.utils import domain_has_privilege
     messaging_reports = []
 
-    project_can_use_sms = True
-    if toggles.ACCOUNTING_PREVIEW.enabled(project.name, namespace=toggles.NAMESPACE_DOMAIN):
-        project_can_use_sms = domain_has_privilege(project.name, privileges.OUTBOUND_SMS)
+    project_can_use_sms = domain_has_privilege(project.name, privileges.OUTBOUND_SMS)
     if project_can_use_sms:
         messaging_reports.extend([
             sms.MessagesReport,
@@ -72,9 +70,7 @@ def REPORTS(project):
     # always have this historical report visible
     messaging_reports.append(sms.MessageLogReport)
 
-    project_can_use_inbound_sms = True
-    if toggles.ACCOUNTING_PREVIEW.enabled(project.name, namespace=toggles.NAMESPACE_DOMAIN):
-        project_can_use_inbound_sms = domain_has_privilege(project.name, privileges.INBOUND_SMS)
+    project_can_use_inbound_sms = domain_has_privilege(project.name, privileges.INBOUND_SMS)
     if project_can_use_inbound_sms:
         messaging_reports.extend([
             ivr.CallLogReport,

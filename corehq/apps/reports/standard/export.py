@@ -47,11 +47,10 @@ class FormExportReportBase(ExportReport, DatespanMixin):
 
     @property
     def can_view_deid(self):
-        if toggles.ACCOUNTING_PREVIEW.enabled(self.request.user.username):
-            try:
-                ensure_request_has_privilege(self.request, privileges.DEIDENTIFIED_DATA)
-            except PermissionDenied:
-                return False
+        try:
+            ensure_request_has_privilege(self.request, privileges.DEIDENTIFIED_DATA)
+        except PermissionDenied:
+            return False
         return True
 
     def get_saved_exports(self):

@@ -1,7 +1,4 @@
-from couchdbkit import ResourceConflict
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
-from toggle.models import Toggle
-from corehq import toggles
 from corehq.apps.accounting import generator
 from corehq.apps.accounting.models import (
     Subscription, BillingAccount, DefaultProductPlan, SoftwarePlanEdition,
@@ -44,18 +41,6 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
             commcare_user.set_role(self.domain.name, role.get_qualified_id())
             commcare_user.save()
             self.commcare_users.append(commcare_user)
-
-        # toggle until release
-        try:
-            self.toggle = Toggle(
-                slug=toggles.ACCOUNTING_PREVIEW.slug,
-                enabled_users=[self.admin_user.username],
-            )
-            self.toggle.save()
-        except ResourceConflict:
-            self.toggle = Toggle.get(toggles.ACCOUNTING_PREVIEW.slug)
-            self.toggle.enabled_users.append(self.admin_user.username)
-            self.toggle.save()
 
         self.account = BillingAccount.get_or_create_account_by_domain(
             self.domain.name,created_by=self.admin_user.username)[0]
