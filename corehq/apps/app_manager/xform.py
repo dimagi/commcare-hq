@@ -1121,8 +1121,11 @@ class XForm(WrappedNode):
                     prev_node = node
                 return node
 
-            node_xpath = "{{x}}{}".format(base_node_path[:-1])
-            base_node = self.data_node if not base_node_path else self.data_node.find(node_xpath)
+            if base_node_path:
+                node_xpath = "{{x}}{}".format(base_node_path[:-1])
+                base_node = self.data_node.find(node_xpath)
+            else:
+                base_node = self.data_node
             parent_base = _make_elem('{x}parents')
             base_node.append(parent_base)
             for parent_path, updates in sorted(updates_by_case.items()):
