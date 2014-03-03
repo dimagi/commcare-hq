@@ -533,10 +533,7 @@ class Subscriber(models.Model):
     def apply_upgrades_and_downgrades(self, downgraded_privileges=None,
                                       upgraded_privileges=None,
                                       new_plan_version=None,
-                                      verbose=False, web_user=None):
-        # don't actually perform downgrades until march 1st.
-        if web_user is None or not toggles.ACCOUNTING_PREVIEW.enabled(web_user):
-            return
+                                      verbose=False):
 
         if self.organization is not None:
             raise SubscriptionChangeError("Only domain upgrades and downgrades are possible.")
@@ -586,7 +583,7 @@ class Subscription(models.Model):
         today = datetime.date.today()
         if self.date_end is not None and today > self.date_end:
             raise SubscriptionAdjustmentError("The end date for this subscription already passed.")
-        self.subscriber.apply_upgrades_and_downgrades(web_user=web_user)
+        self.subscriber.apply_upgrades_and_downgrades()
         self.date_end = today
         self.is_active = False
         self.save()
@@ -604,8 +601,9 @@ class Subscription(models.Model):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
         adjustment_reason, downgrades, upgrades = get_change_status(self.plan_version, new_plan_version)
-        self.subscriber.apply_upgrades_and_downgrades(downgraded_privileges=downgrades, upgraded_privileges=upgrades,
-                                                      web_user=web_user, new_plan_version=new_plan_version)
+        self.subscriber.apply_upgrades_and_downgrades(
+            downgraded_privileges=downgrades, upgraded_privileges=upgrades,
+            new_plan_version=new_plan_version)
 
         today = datetime.date.today()
         new_start_date = today if self.date_start <= today else (date_start or self.date_start)
@@ -716,7 +714,7 @@ class Subscription(models.Model):
             **kwargs
         )
         subscription.save()
-        subscriber.apply_upgrades_and_downgrades(new_plan_version=plan_version, web_user=web_user)
+        subscriber.apply_upgrades_and_downgrades(new_plan_version=plan_version)
         SubscriptionAdjustment.record_adjustment(subscription, method=adjustment_method, note=note, web_user=web_user)
         return subscription
 
