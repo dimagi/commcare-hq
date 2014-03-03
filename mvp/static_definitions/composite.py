@@ -79,9 +79,9 @@ COMPOSITE_INDICATORS = dict(
         denominator_slug="child_muac_reading"
     ),
     muac_routine_proportion=dict(
-        description="Proportion of children aged 6-59 months receiving on-time routine (every 90 days) MUAC "\
+        description="Proportion of children aged 6-59 months receiving on-time routine (every 30 days) MUAC "\
                     "readings during the time period",
-        title="% Under-5s receiving on-time MUAC (90 days)",
+        title="% Under-5s receiving on-time MUAC (30 days)",
         numerator_slug="child_muac_routine",
         denominator_slug="num_children_6to59months"
     ),
@@ -127,7 +127,7 @@ COMPOSITE_INDICATORS = dict(
     neonate_routine_visit_past7days=dict(
         description="Proportion of NEONATES (NEWBORN LESS THAN 29 DAYS OLD) receiving on-time" \
                     " routine visit within last 7 DAYS",
-        title="% of NEONATES (NEWBORN LESS THAN 30 DAYS OLD) receiving on-time routine visit " \
+        title="% of NEONATES (NEWBORN LESS THAN 29 DAYS OLD) receiving on-time routine visit " \
               "within last 7 DAYS",
         numerator_slug="neonate_visits_7days",
         denominator_slug="neonate_cases_7days"
