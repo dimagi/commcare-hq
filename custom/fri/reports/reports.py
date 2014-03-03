@@ -332,12 +332,13 @@ class SurveyResponsesReport(FRIReport):
             pid = case.get_case_property("pid")
             study_arm = case.get_case_property("study_arm")
             registration_date = get_date(case, "start_date")
+            first_name = case.get_case_property("first_name") or ""
             if registration_date is None:
                 continue
             first_survey_date = self.get_first_tuesday(registration_date)
             row = [
                 self._fmt(pid),
-                self._fmt(case.name),
+                self._fmt(first_name),
                 self._fmt(study_arm),
             ]
             for i in range(8):
