@@ -18,8 +18,10 @@ global_logger = logging.getLogger(__name__)
 
 class BaseModifySubscriptionHandler(object):
     supported_privileges = []
+    action_type = "base"
 
-    def __init__(self, domain, new_plan_version, changed_privs):
+    def __init__(self, domain, new_plan_version, changed_privs, verbose=False):
+        self.verbose = verbose
         if isinstance(changed_privs, set):
             changed_privs = list(changed_privs)
         if not isinstance(domain, Domain):
@@ -35,6 +37,8 @@ class BaseModifySubscriptionHandler(object):
     def get_response(self):
         response = []
         for priv in self.privileges:
+            if self.verbose:
+                print "Applying %s %s." % (priv, self.action_type)
             message = getattr(self, 'response_%s' % priv)
             if message is not None:
                 response.append(message)
@@ -58,6 +62,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         privileges.INBOUND_SMS,
         privileges.ROLE_BASED_ACCESS,
     ]
+    action_type = "downgrade"
 
     @property
     @memoized
@@ -85,6 +90,8 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
             for reminder in self._active_reminders:
                 reminder.active = False
                 reminder.save()
+                if self.verbose:
+                    print "Deactivated Reminder %s" % reminder.nickname
         except Exception:
             logging.exception("Failed to downgrade outbound sms for domain %s." % self.domain.name)
             return False
@@ -100,6 +107,8 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
             for survey in surveys:
                 survey.active = False
                 survey.save()
+                if self.verbose:
+                    print "Deactivated Survey %s" % survey.nickname
         except Exception:
             logging.exception("Failed to downgrade outbound sms for domain %s." % self.domain.name)
             return False
@@ -116,6 +125,8 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         custom_roles = [r.get_id for r in UserRole.get_custom_roles_by_domain(self.domain.name)]
         if not custom_roles:
             return True
+        if self.verbose:
+            print "Archiving %d custom roles." % len(custom_roles)
         # temporarily disable this part of the downgrade until we
         # have a better user experience for notifying the downgraded user
         # read_only_role = UserRole.get_read_only_role_by_domain(self.domain.name)
@@ -142,6 +153,7 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
     supported_privileges = [
         privileges.ROLE_BASED_ACCESS,
     ]
+    action_type = "upgrade"
 
     @property
     def response_role_based_access(self):
@@ -149,6 +161,11 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
         Perform Role Based Access Upgrade
         - Un-archive custom roles.
         """
+        if self.verbose:
+            num_archived_roles = len(UserRole.by_domain(self.domain.name,
+                                                        is_archived=True))
+            if num_archived_roles:
+                print "Re-Activating %d archived roles." % num_archived_roles
         UserRole.unarchive_roles_for_domain(self.domain.name)
         return True
 
@@ -170,6 +187,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         privileges.MOBILE_WORKER_CREATION,
         privileges.ROLE_BASED_ACCESS,
     ]
+    action_type = "notification"
 
     def _fmt_alert(self, message, details=None):
         if details is not None and not isinstance(details, list):

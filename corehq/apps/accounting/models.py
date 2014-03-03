@@ -530,8 +530,10 @@ class Subscriber(models.Model):
             return "ORGANIZATION %s" % self.organization
         return "DOMAIN %s" % self.domain
 
-    def apply_upgrades_and_downgrades(self, downgraded_privileges=None, upgraded_privileges=None, web_user=None,
-                                      new_plan_version=None):
+    def apply_upgrades_and_downgrades(self, downgraded_privileges=None,
+                                      upgraded_privileges=None,
+                                      new_plan_version=None,
+                                      verbose=False, web_user=None):
         # don't actually perform downgrades until march 1st.
         if web_user is None or not toggles.ACCOUNTING_PREVIEW.enabled(web_user):
             return
@@ -548,12 +550,18 @@ class Subscriber(models.Model):
             upgraded_privileges = upgraded_privileges or up
 
         if downgraded_privileges:
-            downgrade_handler = DomainDowngradeActionHandler(self.domain, new_plan_version, downgraded_privileges)
+            downgrade_handler = DomainDowngradeActionHandler(
+                self.domain, new_plan_version, downgraded_privileges,
+                verbose=verbose,
+            )
             if not downgrade_handler.get_response():
                 raise SubscriptionChangeError("The downgrade was not successful.")
 
         if upgraded_privileges:
-            upgrade_handler = DomainUpgradeActionHandler(self.domain, new_plan_version, upgraded_privileges)
+            upgrade_handler = DomainUpgradeActionHandler(
+                self.domain, new_plan_version, upgraded_privileges,
+                verbose=verbose,
+            )
             if not upgrade_handler.get_response():
                 raise SubscriptionChangeError("The upgrade was not successful.")
 
