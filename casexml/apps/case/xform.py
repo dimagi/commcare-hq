@@ -151,6 +151,8 @@ class CaseDbCache(object):
             )
 
     def get(self, case_id):
+        if not case_id:
+            raise IllegalCaseId('case_id must not be empty')
         if case_id in self.cache:
             return self.cache[case_id]
 
@@ -248,12 +250,12 @@ def get_or_update_cases(xform, case_db):
 
 def _get_or_update_model(case_update, xform, case_db):
     """
-    Gets or updates an existing case, based on a block of data in a 
+    Gets or updates an existing case, based on a block of data in a
     submitted form.  Doesn't save anything.
     """
-    
+
     case = case_db.get(case_update.id)
-    
+
     if case is None:
         case = CommCareCase.from_case_update(case_update, xform)
         return case
