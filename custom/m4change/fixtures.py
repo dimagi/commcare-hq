@@ -104,7 +104,7 @@ class ReportFixtureProvider(object):
             report_data = M4ChangeReportDataSource(config={
                 'startdate': self.startdate,
                 'enddate': self.enddate,
-                'location_id': self.user.location_id
+                'location_id': self.user.get_domain_membership(DOMAIN).location_id
             }).get_data()
             _reports_to_fixture(report_data, facility_id, facility_element)
             return facility_element
@@ -115,7 +115,7 @@ class ReportFixtureProvider(object):
             'enddate': self.enddate.strftime('%Y-%m-%d')
         })
 
-        user_location = Location.get(self.user.location_id)
+        user_location = Location.get(self.user.get_domain_membership(DOMAIN).location_id)
         locations =  [user_location] + [descendant for descendant in user_location.descendants]
         for location in locations:
             root.append(_facility_to_fixture(location))

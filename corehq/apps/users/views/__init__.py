@@ -197,8 +197,8 @@ class BaseEditUserView(BaseUserSettingsView):
 
     def post(self, request, *args, **kwargs):
         if self.request.POST['form_type'] == "commtrack":
-            self.editable_user.location_id = self.request.POST['supply_point']
-            self.editable_user.program_id = self.request.POST['program_id']
+            self.editable_user.get_domain_membership(self.domain).location_id = self.request.POST['supply_point']
+            self.editable_user.get_domain_membership(self.domain).program_id = self.request.POST['program_id']
             self.editable_user.save()
         elif self.request.POST['form_type'] == "update-user":
             if self.form_user_update.is_valid():
@@ -464,8 +464,8 @@ class UserInvitationView(InvitationView):
         user.add_domain_membership(domain=self.domain)
         user.set_role(self.domain, invitation.role)
         if project.commtrack_enabled and not project.location_restriction_for_users:
-            user.location_id = invitation.supply_point
-            user.program_id = invitation.program
+            user.get_domain_membership(self.domain).location_id = invitation.supply_point
+            user.get_domain_membership(self.domain).program_id = invitation.program
         user.save()
 
 
