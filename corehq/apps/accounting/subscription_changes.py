@@ -116,16 +116,18 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         custom_roles = [r.get_id for r in UserRole.get_custom_roles_by_domain(self.domain.name)]
         if not custom_roles:
             return True
-        read_only_role = UserRole.get_read_only_role_by_domain(self.domain.name)
-        web_users = WebUser.by_domain(self.domain.name)
-        for web_user in web_users:
-            if web_user.get_domain_membership(self.domain.name).role_id in custom_roles:
-                web_user.set_role(self.domain.name, read_only_role.get_qualified_id())
-                web_user.save()
-        for cc_user in CommCareUser.by_domain(self.domain.name):
-            if cc_user.get_domain_membership(self.domain.name).role_id in custom_roles:
-                cc_user.set_role(self.domain.name, 'none')
-                cc_user.save()
+        # temporarily disable this part of the downgrade until we
+        # have a better user experience for notifying the downgraded user
+        # read_only_role = UserRole.get_read_only_role_by_domain(self.domain.name)
+        # web_users = WebUser.by_domain(self.domain.name)
+        # for web_user in web_users:
+        #     if web_user.get_domain_membership(self.domain.name).role_id in custom_roles:
+        #         web_user.set_role(self.domain.name, read_only_role.get_qualified_id())
+        #         web_user.save()
+        # for cc_user in CommCareUser.by_domain(self.domain.name):
+        #     if cc_user.get_domain_membership(self.domain.name).role_id in custom_roles:
+        #         cc_user.set_role(self.domain.name, 'none')
+        #         cc_user.save()
         UserRole.archive_custom_roles_for_domain(self.domain.name)
         UserRole.reset_initial_roles_for_domain(self.domain.name)
         return True

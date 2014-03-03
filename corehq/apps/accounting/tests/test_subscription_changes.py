@@ -71,17 +71,20 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         subscription.cancel_subscription(web_user=self.admin_user.username)
 
         custom_role = UserRole.get(self.custom_role.get_id)
-        custom_web_user = WebUser.get(self.web_users[0].get_id)
-        custom_commcare_user = CommCareUser.get(self.commcare_users[0].get_id)
-
         self.assertTrue(custom_role.is_archived)
-        self.assertEqual(
-            custom_web_user.get_domain_membership(self.domain.name).role_id,
-            self.read_only_role.get_id
-        )
-        self.assertIsNone(
-            custom_commcare_user.get_domain_membership(self.domain.name).role_id
-        )
+
+        # disable this part of the test until we improve the UX for notifying
+        # downgraded users of their privilege changes
+        # custom_web_user = WebUser.get(self.web_users[0].get_id)
+        # custom_commcare_user = CommCareUser.get(self.commcare_users[0].get_id)
+        # self.assertEqual(
+        #     custom_web_user.get_domain_membership(self.domain.name).role_id,
+        #     self.read_only_role.get_id
+        # )
+        # self.assertIsNone(
+        #     custom_commcare_user.get_domain_membership(self.domain.name).role_id
+        # )
+        
         self.assertInitialRoles()
         self.assertStdUsers()
 
@@ -101,15 +104,17 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         custom_role = UserRole.get(self.custom_role.get_id)
         self.assertFalse(custom_role.is_archived)
 
-        custom_web_user = WebUser.get(self.web_users[0].get_id)
-        custom_commcare_user = CommCareUser.get(self.commcare_users[0].get_id)
-        self.assertEqual(
-            custom_web_user.get_domain_membership(self.domain.name).role_id,
-            self.read_only_role.get_id
-        )
-        self.assertIsNone(
-            custom_commcare_user.get_domain_membership(self.domain.name).role_id
-        )
+        # disable this part of the test until we improve the UX for notifying
+        # downgraded users of their privilege changes
+        # custom_web_user = WebUser.get(self.web_users[0].get_id)
+        # custom_commcare_user = CommCareUser.get(self.commcare_users[0].get_id)
+        # self.assertEqual(
+        #     custom_web_user.get_domain_membership(self.domain.name).role_id,
+        #     self.read_only_role.get_id
+        # )
+        # self.assertIsNone(
+        #     custom_commcare_user.get_domain_membership(self.domain.name).role_id
+        # )
 
         self.assertInitialRoles()
         self.assertStdUsers()
