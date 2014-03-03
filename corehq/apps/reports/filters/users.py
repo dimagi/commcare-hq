@@ -233,7 +233,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         selected_ids = self.request.GET.getlist(self.slug)
         if not selected_ids:
             return [{
-                'id': '_all_mobile_workers',
+                'id': 't__0',
                 'text': _("[All mobile workers]"),
             }]
 
@@ -254,8 +254,6 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
                     user_ids.append(key)
                 elif kind == 'g':
                     group_ids.append(key)
-                else:
-                    basic_ids.append(s_id)
 
         if group_ids:
             q = {"query": {"filtered": {"filter": {
@@ -306,8 +304,11 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         if "t__3" in emws:  # Unknown users selected
             doc_types_to_include.append("UnknownUser")
 
-        query_filter = { "and": [{"terms": {"doc_type": doc_types_to_include}}, {"term": {"domain": domain}}]}
-        if "_all_mobile_workers" not in emws:
+        query_filter = {"and": [
+            {"terms": {"doc_type": doc_types_to_include}},
+            {"term": {"domain": domain}},
+        ]}
+        if "t__0" not in emws:
             or_filter = {"or": [
                 {"terms": {"_id": user_ids}},
                 {"terms": {"__group_ids": group_ids}},
@@ -335,7 +336,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
 
         users = []
         user_ids = [u[3:] for u in filter(lambda s: s.startswith("u__"), emws)]
-        if user_ids or "_all_mobile_workers" in emws:
+        if user_ids or "t__0" in emws:
             users = util.get_all_users_by_domain(domain=domain, user_ids=user_ids, simplified=simplified_users,
                                                  CommCareUser=CommCareUser)
 
@@ -370,10 +371,10 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     @property
     @memoized
     def basics(self):
-        return [("_all_mobile_workers", _("[All mobile workers]"))] + \
+        return [("t__0", _("[All mobile workers]"))] + \
             [("t__%s" % (i+1), "[%s]" % name)
                 for i, name in enumerate(HQUserType.human_readable[1:])]
 
     @property
     def options(self):
-        return [('_all_mobile_workers', _("[All mobile workers]"))]
+        return [('t__0', _("[All mobile workers]"))]
