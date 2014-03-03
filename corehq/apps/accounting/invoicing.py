@@ -393,6 +393,13 @@ class SmsLineItemFactory(FeatureLineItemFactory):
 LOGO_FILENAME = 'corehq/apps/accounting/static/accounting/media/Dimagi-Logo-RGB.jpg'
 
 
+def prepend_newline_if_not_empty(string):
+    if len(string) > 0:
+        return "\n" + string
+    else:
+        return string
+
+
 class Address(object):
     def __init__(self, first_line='', second_line='', city='', region='',
                  postal_code='', country='', phone_number='',
@@ -407,25 +414,20 @@ class Address(object):
         self.email_address = email_address
         self.website = website
 
-    # TODO don't skip lines when data is missing
     def __str__(self):
-        return '''%(first_line)s
-        %(second_line)s
+        return '''%(first_line)s%(second_line)s
         %(city)s, %(region)s %(postal_code)s
-        %(country)s
-        %(phone_number)s
-        %(email_address)s
-        %(website)s
+        %(country)s%(phone_number)s%(email_address)s%(website)s
         ''' % {
             'first_line': self.first_line,
-            'second_line': self.second_line,
+            'second_line': prepend_newline_if_not_empty(self.second_line),
             'city': self.city,
             'region': self.region,
             'postal_code': self.postal_code,
             'country': self.country,
-            'phone_number': self.phone_number,
-            'email_address': self.email_address,
-            'website': self.website,
+            'phone_number': prepend_newline_if_not_empty(self.phone_number),
+            'email_address': prepend_newline_if_not_empty(self.email_address),
+            'website': prepend_newline_if_not_empty(self.website),
         }
 
 
