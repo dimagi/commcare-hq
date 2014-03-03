@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from django.core.urlresolvers import NoReverseMatch, reverse
 from django.utils.translation import ugettext as _, ugettext_noop
 from dimagi.utils.decorators.memoized import memoized
@@ -8,8 +9,10 @@ from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
 from corehq.pillows.base import restore_property_dict
 from django.utils import html
+import dateutil
 from casexml.apps.case.models import CommCareCase
 
+EMPTY_FIELD = "---"
 
 PM1 = 'http://openrosa.org/formdesigner/111B09EB-DFFA-4613-9A16-A19BA6ED7D04'
 PM2 = 'http://openrosa.org/formdesigner/4B52ADB2-AA79-4056-A13E-BB34871876A1'
@@ -30,22 +33,115 @@ CHW1 = 'http://openrosa.org/formdesigner/4b368b1d73862abeca3bce67b6e09724b8dca85
 CHW2 = 'http://openrosa.org/formdesigner/cbc4e37437945bfda04e391d11006b6d02c24fc2'
 CHW3 = 'http://openrosa.org/formdesigner/5d77815bf7631a527d8647cdbaa5971e367f6548'
 CHW4 = 'http://openrosa.org/formdesigner/f8a741808584d772c4b899ef84db197da5b4d12a'
+CUSTOM_EDIT = 'http://commcarehq.org/cloudcare/custom-edit'
 
+VISIT_SCHEDULE = [
+    {
+        'visit_name': _('CM Initial contact form'),
+        'xmlns': CM1,
+        'days': 5
+    },
+    {
+        'visit_name': _('CM Medical Record Review'),
+        'xmlns': CM2,
+        'days': 7
+    },
+    {
+        'visit_name': _('Cm 1-week Telephone Call'),
+        'xmlns': CM3,
+        'days': 10
+    },
+    {
+        'visit_name': _('CM Initial huddle'),
+        'xmlns': HUD1,
+        'days': 21
+    },
+    {
+        'visit_name': _('CM Home Visit 1'),
+        'xmlns': CHW1,
+        'days': 35
+    },
+    {
+        'visit_name': _('CM Clinic Visit 1'),
+        'xmlns': CM4,
+        'days': 49
+    },
+    {
+        'visit_name': _('CM Home Visit 2'),
+        'xmlns': CHW2,
+        'days': 100
+    },
+    {
+        'visit_name': _('CM Clinic Visit 2'),
+        'xmlns': CM5,
+        'days': 130
+    },
+    {
+        'visit_name': _('CHW CDSMP tracking'),
+        'xmlns': CHW4,
+        'days': 135
+    },
+    {
+        'visit_name': _('CM Home Visit 3'),
+        'xmlns': CHW2,
+        'days': 200
+    },
+    {
+        'visit_name': _('CM Clinic Visit 3'),
+        'xmlns': CM5,
+        'days': 250
+    },
+]
 
-
+LAST_INTERACTION_LIST = [PM1, PM3, CM1, CM3, CM4, CM5, CM6, CHW1, CHW2, CHW3, CHW4]
 
 class PatientListReportDisplay(CaseDisplay):
 
     def __init__(self, report, case_dict):
+
         case = CommCareCase.get(case_dict["_id"])
         forms = case.get_forms()
+        next_visit = VISIT_SCHEDULE[0]
+        last_inter = []
+        for form in forms:
+            if form.xmlns in LAST_INTERACTION_LIST:
+                last_inter.append(form)
+
+        last_inter.sort(key=lambda form: form.received_on)
+        for visit_key, visit in enumerate(VISIT_SCHEDULE):
+            for key, form in enumerate(forms):
+                if visit['xmlns'] == form.xmlns:
+                    try:
+                        next_visit = VISIT_SCHEDULE[visit_key+1]
+                        del forms[key]
+                        break
+                    except IndexError:
+                        next_visit = 'last'
+        setattr(self, "next_visit", next_visit)
+        if len(last_inter) == 0:
+            setattr(self, "last_interaction", EMPTY_FIELD)
+        else:
+            setattr(self, "last_interaction", last_inter[len(last_inter)-1].received_on)
+
         super(PatientListReportDisplay, self).__init__(report, case_dict)
 
     def get_property(self, key):
         if key in self.case:
             return self.case[key]
         else:
-            return "---"
+            return EMPTY_FIELD
+
+    @property
+    def case_name(self):
+        return self.case['full_name']
+
+    @property
+    def case_link(self):
+        url = self.case_detail_url
+        if url:
+            return html.mark_safe("<a class='ajax_dialog' href='' target='_blank'>%s</a>" % html.escape(self.case_name))
+        else:
+            return "%s (bad ID format)" % self.case_name
 
     @property
     def edit_link(self):
@@ -67,19 +163,37 @@ class PatientListReportDisplay(CaseDisplay):
 
     @property
     def randomization_date(self):
-        return self.get_property("randomization_date")
+        date = datetime.strptime(self.get_property("randomization_date"), "%Y-%m-%d")
+        return date.strftime("%m/%d/%Y")
 
     @property
     def visit_name(self):
-        return self.get_property("visit_name")
+        next_visit = getattr(self, "next_visit", EMPTY_FIELD)
+        if next_visit == 'last':
+            return _('No More visits')
+        else:
+            return next_visit['visit_name']
 
     @property
     def target_date(self):
-        return self.get_property("target_date")
+        next_visit = getattr(self, "next_visit", EMPTY_FIELD)
+        if next_visit != 'last':
+            rand_date = dateutil.parser.parse(self.randomization_date)
+            tg_date = ((rand_date.date() + timedelta(days=next_visit['days'])) - datetime.now().date()).days
+            if tg_date >= 7:
+                return (rand_date.date() + timedelta(days=next_visit['days'])).date()
+            elif 7 > tg_date > 0:
+                return "<span style='background-color: #FFFF00;padding: 5px;display: block;'> In %s day(s)</span>" % tg_date
+            elif tg_date == 0:
+                return "<span style='background-color: #FFFF00;padding: 5px;display: block;'>Today</span>" % tg_date
+            else:
+                return "<span style='background-color: #FF0000; color: white;padding: 5px;display: block;'>%s day(s) overdue</span>" % (tg_date*(-1))
+        else:
+            return EMPTY_FIELD
 
     @property
     def most_recent(self):
-        return self.get_property("most_recent")
+        return self.get_property("BP_category")
 
     @property
     def discuss(self):
@@ -87,12 +201,18 @@ class PatientListReportDisplay(CaseDisplay):
 
     @property
     def patient_info(self):
-        return self.get_property("patient_info")
+        date = getattr(self, "last_interaction", EMPTY_FIELD)
+        if date != EMPTY_FIELD:
+            return date.strftime("%m/%d/%Y")
+        else:
+            return EMPTY_FIELD
 
 
 
 class PatientListReport(CustomProjectReport, CaseListReport):
 
+    ajax_pagination = False
+    include_inactive = True
     name = ugettext_noop('Patient List')
     slug = 'patient_list'
 
@@ -102,18 +222,35 @@ class PatientListReport(CustomProjectReport, CaseListReport):
 
     @property
     @memoized
+    def rendered_report_title(self):
+        return self.name
+
+    @property
+    @memoizedheaderSortUp
     def case_es(self):
         return ReportCaseES(self.domain)
 
     @property
+    def case_owners(self):
+        return None
+
+    @property
+    def case_filter(self):
+        filters = []
+        care_site = self.request_params.get('care_site', '')
+        if care_site != '':
+            filters.append({'term': {'care_site.#value': care_site.lower()}})
+        return {'and': filters} if filters else {}
+
+    @property
     def headers(self):
         headers = DataTablesHeader(
-            DataTablesColumn(_("Modify Schedule")),
+            DataTablesColumn(_("Modify Schedule"), sortable=False),
             DataTablesColumn(_("Name"), prop_name="name.exact"),
             DataTablesColumn(_("MRN")),
             DataTablesColumn(_("Randomization Date")),
             DataTablesColumn(_("Visit Name")),
-            DataTablesColumn(_("Target Date")),
+            DataTablesColumn(_("Target Date"), sortable=True),
             DataTablesColumn(_("Most Recent BP")),
             DataTablesColumn(_("Discuss at Huddle?")),
             DataTablesColumn(_("Last Patient Interaction")),
@@ -138,3 +275,7 @@ class PatientListReport(CustomProjectReport, CaseListReport):
                 disp.discuss,
                 disp.patient_info
             ]
+
+    @property
+    def user_filter(self):
+        return super(PatientListReport, self).user_filter

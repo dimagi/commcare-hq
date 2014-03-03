@@ -8,10 +8,10 @@ class CareSite(ReportSelectField):
     cssId = "opened_closed"
     cssClasses = "span3"
     default_option = "All Sites"
-    options = [dict(val="Harbor-UCLA", text=ugettext_noop("Harbor-UCLA")),
-               dict(val="LAC-USC", text=ugettext_noop("LAC-USC")),
-               dict(val="Olive View Medical Center", text=ugettext_noop("Olive View Medical Center")),
-               dict(val="Rancho Los Amigos", text=ugettext_noop("Rancho Los Amigos"))]
+    options = [dict(val="harbor", text=ugettext_noop("Harbor-UCLA")),
+               dict(val="lac-usc", text=ugettext_noop("LAC-USC")),
+               dict(val="oliveview", text=ugettext_noop("Olive View Medical Center")),
+               dict(val="rancho", text=ugettext_noop("Rancho Los Amigos"))]
 
 
 class ResponsibleParty(ReportSelectField):

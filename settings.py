@@ -1001,6 +1001,7 @@ ES_CASE_FULL_INDEX_DOMAINS = [
     'commtrack-public-demo',
     'uth-rhd-test',
     'crs-remind',
+    'succeed'
 ]
 
 # Custom fully indexed domains for ReportXForm index/pillowtop --
