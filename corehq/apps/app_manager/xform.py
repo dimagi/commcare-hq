@@ -1130,7 +1130,7 @@ class XForm(WrappedNode):
             base_node.append(parent_base)
             for parent_path, updates in sorted(updates_by_case.items()):
                 node = make_nested_subnode(parent_base, parent_path)
-                node_path = '%sparents/%s/' % (base_node_path, parent_path)
+                node_path = '%sparents/%s/' % (base_node_path or '', parent_path)
                 parent_case_block = CaseBlock.make_parent_case_block(
                     self,
                     node_path,
