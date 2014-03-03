@@ -454,6 +454,7 @@ class InvoiceTemplate(object):
         self.draw_to_address()
         self.draw_project_name()
         self.draw_invoice_label()
+        self.draw_details()
 
         self.canvas.showPage()
         self.canvas.save()
@@ -526,3 +527,27 @@ class InvoiceTemplate(object):
         self.canvas.setFontSize(size=24)
         self.canvas.drawString(inch * 6.5, inch * 10.8, "Invoice")
         self.canvas.setFontSize(DEFAULT_FONT_SIZE)
+
+    def draw_details(self):
+        origin_x = inch * 5.75
+        origin_y = inch * 9.5
+        self.canvas.translate(origin_x, origin_y)
+
+        left = inch * 0
+        right = inch * 2
+        bottom = inch * 0
+        top = inch * 1.25
+        label_height = (top - bottom) / 6.0
+
+        self.canvas.setFillColorRGB(*LIGHT_GRAY)
+        self.canvas.rect(left, midpoint(bottom, top) - label_height,
+                         right - left, label_height, fill=1)
+        self.canvas.rect(left, top - label_height, right - left, label_height,
+                         fill=1)
+        self.canvas.setFillColorRGB(*BLACK)
+
+        self.canvas.rect(left, bottom, right - left, top - bottom)
+        self.canvas.rect(left, bottom, 0.5 * (right - left), top - bottom)
+        self.canvas.rect(left, bottom, right - left, 0.5 * (top - bottom))
+
+        self.canvas.translate(-origin_x, -origin_y)
