@@ -167,7 +167,7 @@ class SubscriptionInterface(AddItemInterface):
         subscriber = SubscriberFilter.get_value(self.request, self.domain)
         if subscriber is not None:
             filters.update(
-                subscription__subscriber=subscriber,
+                subscriber__domain=subscriber,
             )
         salesforce_contract_id = SalesforceContractIDFilter.get_value(self.request, self.domain)
         if salesforce_contract_id is not None:
