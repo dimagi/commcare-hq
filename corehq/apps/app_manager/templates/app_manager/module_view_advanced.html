@@ -56,29 +56,32 @@
             }
             {% endif %}
 
-            var $product_home = $("#product-detail-screen-config");
-            var product_detailScreenConfig = DetailScreenConfig.init($product_home, {
-                state: {
-                    type: 'product',
-                    short: {{ module.product_details.short|JSON }},
-                    long: null
-                },
-                properties: {{ product_properties|JSON }},
-                lang: {{ lang|JSON }},
-                langs: {{ app.langs|JSON }},
-                edit: {{ edit|JSON }},
-                saveUrl: "{% url "edit_module_detail_screens" domain app.id module.id %}"
-            });
+            {% if app.commtrack_enabled %}
+                var $product_home = $("#product-detail-screen-config");
+                var product_detailScreenConfig = DetailScreenConfig.init($product_home, {
+                    state: {
+                        type: 'product',
+                        short: {{ module.product_details.short|JSON }},
+                        long: null
+                    },
+                    model: 'product',
+                    properties: {{ product_properties|JSON }},
+                    lang: {{ lang|JSON }},
+                    langs: {{ app.langs|JSON }},
+                    edit: {{ edit|JSON }},
+                    saveUrl: "{% url "edit_module_detail_screens" domain app.id module.id %}"
+                });
 
-            {% if product_sortElements %}
-            var product_parsedSortRows = JSON.parse({{ product_sortElements|JSON }});
-            for (var i = 0; i < product_parsedSortRows.length; i++) {
-                product_detailScreenConfig.sortRows.addSortRow(
-                    product_parsedSortRows[i].field,
-                    product_parsedSortRows[i].type,
-                    product_parsedSortRows[i].direction
-                );
-            }
+                {% if product_sortElements %}
+                var product_parsedSortRows = JSON.parse({{ product_sortElements|JSON }});
+                for (var i = 0; i < product_parsedSortRows.length; i++) {
+                    product_detailScreenConfig.sortRows.addSortRow(
+                        product_parsedSortRows[i].field,
+                        product_parsedSortRows[i].type,
+                        product_parsedSortRows[i].direction
+                    );
+                }
+                {% endif %}
             {% endif %}
         });
         $(function () {
@@ -126,11 +129,13 @@
             {% trans "Case List" %}
         </a>
     </li>
+    {% if app.commtrack_enabled %}
     <li>
         <a href="#product-detail-screen-config-tab" data-toggle="tab">
-            {% trans "Prodcut List" %}
+            {% trans "Product List" %}
         </a>
     </li>
+    {% endif %}
 </ul>
 <div class="tab-content">
     <div class="tab-pane active" id="module-settings">
@@ -144,6 +149,26 @@
                             {{ module.name|input_trans:langs|safe }}
                         {% else %}
                             {{ module.name|html_trans:langs|safe }}
+                        {% endif %}
+                    </div>
+                </div>
+
+                 <div class="control-group">
+                    <label class="control-label">
+                        {% trans "Menu Mode" %}
+                    </label>
+                    <div class="controls">
+                        {% if edit %}
+                            <select type="text" name="put_in_root" data-value="{% if module.put_in_root %}true{% else %}false{% endif %}">
+                                <option value="false">{% trans "Display module and then forms" %}</option>
+                                <option value="true">{% trans "Display only forms" %}</option>
+                            </select>
+                        {% else %}
+                            {% if not module.put_in_root %}
+                                {% trans "Display module and then forms" %}
+                            {% else %}
+                                {% trans "Display only forms" %}
+                            {% endif %}
                         {% endif %}
                     </div>
                 </div>
@@ -192,6 +217,10 @@
                         {% endif %}
                     </div>
                 </div>
+            </fieldset>
+            <fieldset>
+                <legend>{% trans "Advanced" %}</legend>
+                {% include 'app_manager/partials/case_list_setting.html' with LABEL="Case List Menu Item" DESC="Whether to have an item in the module's menu that lets you browse the case list without moving on to fill out a form." SLUG="case_list" case_list=module.case_list %}
             </fieldset>
         </form>
     </div>
@@ -297,6 +326,7 @@
         </div>
     </div>
 
+    {% if app.commtrack_enabled %}
     <div class="tab-pane" id="product-detail-screen-config-tab">
         <div id="product-detail-screen-config-body">
             <div id="product-detail-screen-sort">
@@ -397,6 +427,7 @@
             </div>
         </div>
     </div>
+    {% endif %}
 </div>
 </div>
 {% endblock %}

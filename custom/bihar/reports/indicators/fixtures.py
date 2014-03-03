@@ -2,7 +2,6 @@ from xml.etree import ElementTree
 from django.utils import translation
 from django.utils.translation import ugettext as _
 from corehq.apps.groups.models import Group
-from corehq.apps.users.models import CommCareUser
 from custom.bihar import BIHAR_DOMAINS
 from custom.bihar.reports.indicators.indicators import IndicatorDataProvider, IndicatorConfig, INDICATOR_SETS
 
@@ -14,14 +13,6 @@ hard_coded_fixture_id = 'indicators:bihar-supervisor'
 
 
 def generator(user, version, last_sync):
-    # todo: this appears in the beginning of all fixture generators. should fix
-    if isinstance(user, CommCareUser):
-        pass
-    elif hasattr(user, "_hq_user") and user._hq_user is not None:
-        user = user._hq_user
-    else:
-        return []
-
     if user.domain in hard_coded_domains:
         groups = filter(hard_coded_group_filter, Group.by_user(user))
         if len(groups) == 1:

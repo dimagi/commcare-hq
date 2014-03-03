@@ -1,6 +1,5 @@
 import logging
 from xml.etree import ElementTree
-from corehq.apps.domain.models import Domain
 from corehq.apps.callcenter.indicator_sets import CallCenter
 from corehq.apps.users.models import CommCareUser
 
@@ -9,19 +8,12 @@ logger = logging.getLogger(__name__)
 
 
 def indicators(user, version, last_sync):
-    if isinstance(user, CommCareUser):
-        pass
-    elif hasattr(user, "_hq_user") and user._hq_user is not None:
-        user = user._hq_user
-    else:
-        return []
-
+    assert isinstance(user, CommCareUser)
     fixtures = []
     indicator_sets = []
-    for dom in user.get_domains():
-        domain = Domain.get_by_name(dom)
-        if hasattr(domain, 'call_center_config') and domain.call_center_config.enabled:
-            indicator_sets.append(CallCenter(domain, user))
+    domain = user.project
+    if domain and hasattr(domain, 'call_center_config') and domain.call_center_config.enabled:
+        indicator_sets.append(CallCenter(domain, user))
 
     for set in indicator_sets:
         try:

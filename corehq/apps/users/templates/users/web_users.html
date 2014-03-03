@@ -70,7 +70,7 @@
                 defaultRole: {{ default_role|JSON }},
                 saveUrl: '{% url "post_user_role" domain %}',
                 reportOptions: {{ report_list|JSON }},
-                allowEdit: {{ request.couch_user.is_domain_admin|BOOL }}
+                allowEdit: {{ can_edit_roles|BOOL }}
             });
             $('#user-roles-table').show();
         });
@@ -206,6 +206,7 @@
                 </tr>
             </tbody>
         </table>
+        {% if can_edit_roles %}
         <button class="btn btn-primary" data-bind="click: function () {$root.setRoleBeingEdited($root.defaultRole)}">Add Role</button>
         <div data-bind="modal: roleBeingEdited">
             <div data-bind="with: roleBeingEdited">
@@ -268,6 +269,7 @@
                 </div>
             </div>
         </div>
+        {% endif %}
     </div>
     </div>
 </div>

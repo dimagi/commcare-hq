@@ -9,10 +9,11 @@ from django.core.urlresolvers import reverse
 
 from tastypie import fields
 from tastypie.bundle import Bundle
+from corehq.apps.api.resources.v0_1 import RequirePermissionAuthentication
 
 from corehq.apps.groups.models import Group
 from corehq.apps.sms.util import strip_plus
-from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.models import CommCareUser, WebUser, Permissions
 from corehq.elastic import es_wrapper
 
 from . import v0_1, v0_4
@@ -43,6 +44,7 @@ class BulkUserResource(JsonResource, DomainSpecificResourceMixin):
         return namedtuple('user', user.keys())(**user)
 
     class Meta(v0_1.CustomResourceMeta):
+        authentication = RequirePermissionAuthentication(Permissions.edit_commcare_users)
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
         object_class = object

@@ -9,8 +9,9 @@ import django.core.exceptions
 
 # External imports
 from redis_cache.exceptions import ConnectionInterrumped
+from corehq.apps.accounting.exceptions import AccountingError
+from corehq.apps.accounting.models import Subscription
 from dimagi.utils.couch.cache import cache_core
-import toggle.shortcuts
 from django_prbac.models import Role
 
 # CCHQ imports
@@ -33,18 +34,18 @@ class CCHQPRBACMiddleware(object):
 
     def process_view(self, request, view_func, view_args, view_kwargs):
 
-        # Until we have real roles, we can demo for certain users by just letting them specify
-        # on the querystring
-        if hasattr(request, 'user') and toggle.shortcuts.toggle_enabled(toggles.PRBAC_DEMO, request.user.username):
-            role_slug = request.GET.get('role', 'community_plan_v0')
-            request.role = Role.objects.get(slug=role_slug)
-            return None
-
         if hasattr(request, 'domain'):
-            # TODO once accounting is merged: role = accounting.role_for_domain(domain)
-            request.role = Role()
-        else:
-            request.role = Role() # A fresh Role() has no privileges
+            try:
+                plan_version = Subscription.get_subscribed_plan_by_domain(request.domain)[0]
+                request.role = plan_version.role
+                request.plan = plan_version
+                return None
+            except AccountingError:
+                pass
+        try:
+            request.role = Role.objects.get(slug='community_plan_v0')
+        except Role.DoesNotExist:
+            request.role = Role()  # A fresh Role() has no privileges
 
         return None
     

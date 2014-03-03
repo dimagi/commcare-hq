@@ -4,6 +4,7 @@ function CommcareSettings(options) {
     self.sections = options.sections;
     self.edit = ko.observable(options.edit);
     self.user = options.user;
+    self.permissions = options.permissions;
 
     self.settings = [];
     self.settingsIndex = {};
@@ -14,7 +15,6 @@ function CommcareSettings(options) {
                 var setting = section.settings[j];
 
                 self.settings.push(setting);
-
                 if (!self.settingsIndex[setting.type]) {
                     self.settingsIndex[setting.type] = {};
                 }
@@ -22,11 +22,17 @@ function CommcareSettings(options) {
             }
         }
     }());
-    self.settingsIndex.$parent = {
-        doc_type: {
-            visibleValue: function () {
-                return initialValues.$parent.doc_type;
-            }
+
+    self.settingsIndex.$parent = {};
+    for (var attr in initialValues.$parent) {
+        if (initialValues.$parent.hasOwnProperty(attr)) {
+            self.settingsIndex.$parent[attr] = (function (attrib) {
+                return {
+                    visibleValue: function () {
+                        return initialValues.$parent[attrib];
+                    }
+                }
+            })(attr);
         }
     };
 
@@ -161,7 +167,8 @@ function CommcareSettings(options) {
             return !(
                 (setting.disabled && setting.visibleValue() === setting['default']) ||
                     (setting.hide_if_not_enabled && !setting.enabled()) ||
-                    (setting.preview && !self.user.is_previewer)
+                    (setting.preview && !self.user.is_previewer) ||
+                    (setting.permission && !self.permissions[setting.permission])
                 );
         });
         setting.disabledButHasValue = ko.computed(function () {
