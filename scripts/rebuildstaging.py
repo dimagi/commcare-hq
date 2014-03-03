@@ -145,9 +145,9 @@ def check_merges(config):
 
 
 def rebuild_staging(config):
-    all_configs = config.span_configs()
-    context_manager = contextlib.nested(*[OriginalBranch(get_git(git))
-                                          for git, _ in all_configs])
+    all_configs = list(config.span_configs())
+    context_manager = contextlib.nested(*[OriginalBranch(get_git(path))
+                                          for path, _ in all_configs])
     with context_manager:
         for path, config in all_configs:
             git = get_git(path)
