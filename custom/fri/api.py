@@ -14,6 +14,7 @@ from custom.fri.models import (
     PROFILE_G,
     FRIMessageBankMessage,
     FRIRandomizedMessage,
+    FRIExtraMessage,
 )
 from corehq.apps.reports import util as report_utils
 from redis_cache.cache import RedisCache
@@ -394,8 +395,11 @@ def format_day(day):
         2: "nd",
         3: "rd",
     }
-    suffix = suffixes.get(day % 10, "th")
-    return "%s%s" (day, suffix)
+    if (day / 10) == 1:
+        suffix = "th"
+    else:
+        suffix = suffixes.get(day % 10, "th")
+    return "%s%s" % (day, suffix)
 
 def off_day_custom_content_handler(reminder, handler, recipient):
     case = reminder.case

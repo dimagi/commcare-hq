@@ -50,7 +50,7 @@ class FRIExtraMessage(Document):
     message = StringProperty()
 
     @classmethod
-    def get_by_message_id(domain, message_id):
+    def get_by_message_id(cls, domain, message_id):
         return FRIExtraMessage.view("fri/extra_message",
                                     key=[domain, message_id],
                                     include_docs=True).one()
