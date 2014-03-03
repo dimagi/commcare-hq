@@ -491,7 +491,9 @@ class ConfirmBillingAccountForExtraUsersView(BaseUserSettingsView, AsyncHandlerM
                     request, _("Billing contact information was successfully confirmed. "
                                "You may now add additional Mobile Workers.")
                 )
-                return HttpResponseRedirect(reverse(CreateCommCareUserView.urlname, args=[self.domain]))
+                return HttpResponseRedirect(reverse(
+                    ListCommCareUsersView.urlname, args=[self.domain]
+                ))
         return self.get(request, *args, **kwargs)
 
 
