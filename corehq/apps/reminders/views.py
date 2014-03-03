@@ -103,6 +103,13 @@ def list_reminders(request, domain, reminder_type=REMINDER_TYPE_DEFAULT):
     all_handlers = filter(lambda x : x.reminder_type == reminder_type, all_handlers)
     if reminder_type == REMINDER_TYPE_ONE_TIME:
         all_handlers.sort(key=lambda handler : handler.start_datetime)
+
+    if not can_use_survey_reminders(request):
+        all_handlers = filter(
+            lambda x: x.method not in [METHOD_IVR_SURVEY, METHOD_SMS_SURVEY],
+            all_handlers
+        )
+
     handlers = []
     utcnow = datetime.utcnow()
     timezone, now, timezone_now = get_project_time_info(domain)
