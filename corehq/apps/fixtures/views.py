@@ -233,7 +233,11 @@ def data_table(request, domain):
     }
     headers = [DataTablesColumn(header) for header in selected_sheet["headers"]]
     data_table["headers"] = DataTablesHeader(*headers)
-    data_table["rows"] = [[format_datatables_data(x or "--", "a") for x in row] for row in selected_sheet["rows"]]
+    if selected_sheet["headers"] and selected_sheet["rows"]:
+        data_table["rows"] = [[format_datatables_data(x or "--", "a") for x in row] for row in selected_sheet["rows"]]
+    else:
+        data_table["rows"] = [["<button>Empty-Table</button>" for x in range(0, len(headers))]]
+    print data_table
     return data_table
 
 DELETE_HEADER = "Delete(Y/N)"
