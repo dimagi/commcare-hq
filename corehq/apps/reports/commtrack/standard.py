@@ -128,16 +128,11 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     def get_prod_data(self):
         sp_ids = get_relevant_supply_point_ids(self.domain, self.active_location)
 
-        print self.start_date
-        print self.end_date
         stock_states = StockState.objects.filter(
             case_id__in=sp_ids,
             last_modified_date__lte=self.end_date,
             last_modified_date__gte=self.start_date,
         ).order_by('product_id')
-
-        for state in stock_states:
-            print state.__dict__
 
         if self.program_id:
             stock_states = stock_states.filter(
