@@ -202,7 +202,7 @@ def india():
 def zambia():
     """Our production server in wv zambia."""
     env.sudo_user = 'cchq'
-    env.environment = 'production'
+    env.environment = 'zambia'
     env.django_port = '9010'
     env.code_branch = 'master'
     env.should_migrate = True
@@ -484,7 +484,8 @@ def what_os():
 @task
 def setup_server():
     """Set up a server for the first time in preparation for deployments."""
-    require('environment', provided_by=('staging', 'preview', 'production', 'india'))
+    require('environment', provided_by=('staging', 'preview', 'production',
+                                        'india', 'zambia'))
     # Install required system packages for deployment, plus some extras
     # Install pip, and use it to install virtualenv
     install_packages()
@@ -499,7 +500,7 @@ def setup_server():
 @task
 def create_pg_user():
     """Create the Postgres user"""
-    require('environment', provided_by=('staging', 'preview', 'production'))
+    require('environment', provided_by=('staging', 'preview', 'production', 'zambia'))
     sudo('createuser -D -R -P -s  %(sudo_user)s' % env, user='postgres')
 
 
@@ -507,7 +508,7 @@ def create_pg_user():
 @task
 def create_pg_db():
     """Create the Postgres database"""
-    require('environment', provided_by=('staging', 'preview', 'production'))
+    require('environment', provided_by=('staging', 'preview', 'production', 'zambia'))
     sudo('createdb -O %(sudo_user)s %(db)s' % env, user='postgres')
 
 
@@ -552,7 +553,7 @@ def unbootstrap():
 def create_virtualenvs():
     """set up virtualenv on remote host"""
     require('virtualenv_root', 'virtualenv_root_preindex',
-            provided_by=('staging', 'production', 'india'))
+            provided_by=('staging', 'production', 'india', 'zambia'))
 
     args = '--distribute --no-site-packages'
     sudo('cd && virtualenv %s %s' % (args, env.virtualenv_root), user=env.sudo_user, shell=True)
@@ -587,7 +588,8 @@ def remove_submodule_source(path):
              '{env.environment}?').format(path=path, env=env), default=False):
         utils.abort('Action aborted.')
 
-    require('root', provided_by=('staging', 'preview', 'production', 'india'))
+    require('root', provided_by=('staging', 'preview', 'production',
+                                 'india', 'zambia'))
 
     execute(_remove_submodule_source_main, path)
     execute(_remove_submodule_source_preindex, path)
@@ -786,14 +788,14 @@ def clear_services_dir():
 @roles('lb')
 def configtest():
     """test Apache configuration"""
-    require('root', provided_by=('staging', 'preview', 'production'))
+    require('root', provided_by=('staging', 'preview', 'production', 'zambia'))
     sudo('apache2ctl configtest')
 
 
 @roles('lb')
 def apache_reload():
     """reload Apache on remote host"""
-    require('root', provided_by=('staging', 'preview', 'production'))
+    require('root', provided_by=('staging', 'preview', 'production', 'zambia'))
     if what_os() == 'redhat':
         sudo('/etc/init.d/httpd reload')
     elif what_os() == 'ubuntu':
@@ -803,20 +805,21 @@ def apache_reload():
 @roles('lb')
 def apache_restart():
     """restart Apache on remote host"""
-    require('root', provided_by=('staging', 'preview', 'production'))
+    require('root', provided_by=('staging', 'preview', 'production', 'zambia'))
     sudo('/etc/init.d/apache2 restart')
 
 @task
 def netstat_plnt():
     """run netstat -plnt on a remote host"""
-    require('hosts', provided_by=('production', 'preview', 'staging'))
+    require('hosts', provided_by=('production', 'preview', 'staging', 'zambia'))
     sudo('netstat -plnt')
 
 
 @roles(*ROLES_ALL_SERVICES)
 def services_start():
     """Start the gunicorn servers"""
-    require('environment', provided_by=('staging', 'preview', 'production'))
+    require('environment', provided_by=('staging', 'preview', 'production',
+                                        'zambia'))
     _supervisor_command('update')
     _supervisor_command('reload')
     _supervisor_command('start  all')
@@ -825,7 +828,8 @@ def services_start():
 @roles(*ROLES_ALL_SERVICES)
 def services_stop():
     """Stop the gunicorn servers"""
-    require('environment', provided_by=('staging', 'preview', 'production'))
+    require('environment', provided_by=('staging', 'preview', 'production',
+                                        'zambia'))
     _supervisor_command('stop all')
 
 
@@ -835,7 +839,8 @@ def restart_services():
                            '{env.environment}?'.format(env=env), default=False):
         utils.abort('Task aborted.')
 
-    require('root', provided_by=('staging', 'preview', 'production', 'india'))
+    require('root', provided_by=('staging', 'preview', 'production', 'india',
+                                 'zambia'))
     execute(services_restart)
 
 
@@ -843,7 +848,7 @@ def restart_services():
 def services_restart():
     """Stop and restart all supervisord services"""
     require('environment',
-            provided_by=('staging', 'preview', 'production', 'india'))
+            provided_by=('staging', 'preview', 'production', 'india', 'zambia'))
     _supervisor_command('stop all')
 
     _supervisor_command('update')
@@ -855,7 +860,7 @@ def services_restart():
 def migrate():
     """run south migration on remote environment"""
     require('code_root',
-            provided_by=('production', 'preview', 'staging', 'india'))
+            provided_by=('production', 'preview', 'staging', 'india', 'zambia'))
     with cd(env.code_root):
         sudo('%(virtualenv_root)s/bin/python manage.py sync_finish_couchdb_hq' % env, user=env.sudo_user)
         sudo('%(virtualenv_root)s/bin/python manage.py syncdb --noinput' % env, user=env.sudo_user)
@@ -866,7 +871,7 @@ def migrate():
 def flip_es_aliases():
     """Flip elasticsearch aliases to the latest version"""
     require('code_root',
-            provided_by=('production', 'preview', 'staging', 'india'))
+            provided_by=('production', 'preview', 'staging', 'india', 'zambia'))
     with cd(env.code_root):
         sudo('%(virtualenv_root)s/bin/python manage.py ptop_es_manage --flip_all_aliases' % env, user=env.sudo_user)
 
@@ -907,7 +912,7 @@ def version_static(preindex=False):
 @roles(*ROLES_STATIC)
 def collectstatic():
     """run collectstatic on remote environment"""
-    require('code_root', provided_by=('production', 'preview', 'staging'))
+    require('code_root', provided_by=('production', 'preview', 'staging', 'zambia'))
     update_code()
     _do_collectstatic()
 
@@ -915,7 +920,7 @@ def collectstatic():
 @task
 def reset_local_db():
     """Reset local database from remote host"""
-    require('code_root', provided_by=('production', 'preview', 'staging'))
+    require('code_root', provided_by=('production', 'preview', 'staging', 'zambia'))
     if env.environment == 'production':
         utils.abort('Local DB reset is for staging environment only')
     question = ('Are you sure you want to reset your local '
@@ -933,7 +938,7 @@ def reset_local_db():
 @task
 def fix_locale_perms():
     """Fix the permissions on the locale directory"""
-    require('root', provided_by=('staging', 'preview', 'production'))
+    require('root', provided_by=('staging', 'preview', 'production', 'zambia'))
     _set_apache_user()
     locale_dir = '%s/locale/' % env.code_root
     sudo('chown -R %s %s' % (env.sudo_user, locale_dir), user=env.sudo_user)
@@ -1010,7 +1015,8 @@ def set_sms_queue_supervisorconf():
 @task
 def set_supervisor_config():
     """Upload and link Supervisor configuration from the template."""
-    require('environment', provided_by=('staging', 'preview', 'production', 'india'))
+    require('environment', provided_by=('staging', 'preview', 'production',
+                                        'india', 'zambia'))
     execute(set_celery_supervisorconf)
     execute(set_djangoapp_supervisorconf)
     execute(set_formsplayer_supervisorconf)
@@ -1022,7 +1028,7 @@ def set_supervisor_config():
 
 
 def _supervisor_command(command):
-    require('hosts', provided_by=('staging', 'preview', 'production'))
+    require('hosts', provided_by=('staging', 'preview', 'production', 'zambia'))
     sudo('supervisorctl %s' % (command), shell=False)
 
 
@@ -1062,7 +1068,8 @@ def do_update_django_locales():
 
 @task
 def selenium_test():
-    require('environment', provided_by=('staging', 'preview', 'production', 'india'))
+    require('environment', provided_by=('staging', 'preview', 'production',
+                                        'india', 'zambia'))
     prompt("Jenkins username:", key="jenkins_user", default="selenium")
     prompt("Jenkins password:", key="jenkins_password")
     url = env.selenium_url % {"token": "foobar", "environment": env.environment}
