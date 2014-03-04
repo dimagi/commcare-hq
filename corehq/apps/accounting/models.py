@@ -162,7 +162,7 @@ class BillingAccountAdmin(models.Model):
     @classmethod
     def get_admin_status_and_account(cls, web_user, domain):
         if not isinstance(web_user, WebUser):
-            raise ValueError("web_user should be an instance of WebUser")
+            return False, None
         account = BillingAccount.get_account_by_domain(domain)
         if account is None:
             return web_user.is_domain_admin(domain), None
