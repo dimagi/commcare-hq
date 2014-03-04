@@ -280,7 +280,7 @@ HQ_APPS = (
     'custom.apps.crs_reports',
     'custom.hope',
     'custom.openlmis',
-    
+
     'custom.m4change'
 )
 
@@ -741,7 +741,7 @@ else:
 #SOUTH_TESTS_MIGRATE=False
 
 ####### Couch Forms & Couch DB Kit Settings #######
-from settingshelper import get_dynamic_db_settings, make_couchdb_tuple
+from settingshelper import get_dynamic_db_settings, make_couchdb_tuples
 
 _dynamic_db_settings = get_dynamic_db_settings(
     COUCH_SERVER_ROOT,
@@ -762,7 +762,6 @@ COUCHDB_APPS = [
     'app_manager',
     'appstore',
     'orgs',
-    'auditcare',
     'builds',
     'case',
     'callcenter',
@@ -808,7 +807,6 @@ COUCHDB_APPS = [
     'registration',
     'hutch',
     'hqbilling',
-    'couchlog',
     'wisepill',
     'fri',
     'crs_reports',
@@ -828,24 +826,22 @@ COUCHDB_APPS = [
     'psi',
     'trialconnect',
     'accounting',
+    ('auditcare', 'auditcare'),
+    ('couchlog', 'couchlog'),
+    ('receiverwrapper', 'receiverwrapper'),
+    # needed to make couchdbkit happy
+    ('fluff', 'fluff-bihar'),
+    ('bihar', 'fluff-bihar'),
+    ('opm_reports', 'fluff-opm'),
+    ('fluff', 'fluff-opm'),
+    ('care_sa', 'fluff-care_sa'),
+    ('cvsu', 'fluff-cvsu'),
+    ('mc', 'fluff-mc'),
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
 
-COUCHDB_DATABASES = [make_couchdb_tuple(app_label, COUCH_DATABASE)
-                     for app_label in COUCHDB_APPS]
-
-COUCHDB_DATABASES += [
-    # needed to make couchdbkit happy
-    ('fluff', COUCH_DATABASE + '__fluff-bihar'),
-    ('bihar', COUCH_DATABASE + '__fluff-bihar'),
-    ('opm_reports', COUCH_DATABASE + '__fluff-opm'),
-    ('fluff', COUCH_DATABASE + '__fluff-opm'),
-    ('care_sa', COUCH_DATABASE + '__fluff-care_sa'),
-    ('cvsu', COUCH_DATABASE + '__fluff-cvsu'),
-    ('mc', COUCH_DATABASE + '__fluff-mc'),
-    ('receiverwrapper', COUCH_DATABASE + '__receiverwrapper'),
-]
+COUCHDB_DATABASES = make_couchdb_tuples(COUCHDB_APPS, COUCH_DATABASE)
 
 INSTALLED_APPS += LOCAL_APPS
 
