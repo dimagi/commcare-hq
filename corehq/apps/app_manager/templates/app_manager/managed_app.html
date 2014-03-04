@@ -132,6 +132,9 @@
             </a>
         </li>
         <li class="divider"></li>
+        <li class="nav-header">
+            {% trans "Version" %} <span class="variable-version">{{ app.version }}</span>
+        </li>
         <li {% if not module and not form and not release_manager %}class="app-name-div
                 {% if not copy_app_form or not copy_app_form.is_bound %}active{% endif %}"
             {% endif %}>
