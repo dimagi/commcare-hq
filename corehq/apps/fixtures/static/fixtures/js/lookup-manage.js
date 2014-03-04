@@ -31,6 +31,7 @@ $(function () {
     function makeDataType(o, app) {
         var self = ko.mapping.fromJS(o),
             raw_fields = self.fields();
+            self.original_tag = self.tag();
         self.fields = ko.observableArray([]);
         makeEditable(self);
         if (!o._id) {
@@ -96,23 +97,48 @@ $(function () {
                     if (!self._id()) {
                         self._id(data._id);
                     }
-                    var indicesToRemoveAt = []
+                    console.log("came here");
+                    var indicesToRemoveAt = [];
                     for (var i = 0; i < self.fields().length; i += 1) {
                         var field = self.fields()[i];
-                        field.original_tag = field.tag;
-                        field.is_new = false;
+                        field.original_tag(field.tag());
+                        field.is_new(false); console.log("coming here")
                         if (field.remove() == true){
                             indicesToRemoveAt.push(i);
                         }
                     }
-                    for (var index in indicesToRemoveAt){
+                    for (var j = 0; j < indicesToRemoveAt.length; j += 1){
+                        var index = indicesToRemoveAt[j]
+                        console.log(self.fields()[index]);
                         self.fields.remove(self.fields()[index]);
                     }
-                    log(self);
+                    console.log(self);console.log("hello"); console.log(indicesToRemoveAt);
                 }
             });
             self.saveState('saving');
         };
+        self.cancel = function () {
+            var indicesToRemoveAt = [];console.log(self);
+            self.tag(self.original_tag);
+            if (!o._id){ console.log("yeah delete");
+                app.data_types.remove(self);
+                return;
+            }
+            for (var i = 0; i < self.fields().length; i += 1) {
+                var field = self.fields()[i];
+                if (field.is_new() == true){
+                    indicesToRemoveAt.push(i);
+                    continue;
+                }
+                field.tag(field.original_tag());
+                field.remove(false);
+            }
+            for (var j = 0; j < indicesToRemoveAt.length; j += 1){
+                var index = indicesToRemoveAt[j]
+                console.log(self.fields()[index]);
+                self.fields.remove(self.fields()[index]);
+            }
+        }
         self.serialize = function () {
             return log({
                 _id: self._id(),
@@ -124,18 +150,18 @@ $(function () {
                     for (i = 0; i < self.fields().length; i += 1) {
                         var field = self.fields()[i];
                         var patch;
-                        if (field.is_new) {
+                        if (field.is_new() == true) {
                             if (field.remove() == true) continue;
                             patch = {"is_new": 1};
                             fields[field.tag()] = patch;
                         }
                         else if (field.remove() === true) {
                             patch = {"remove": 1};
-                            fields[field.original_tag] = patch;
+                            fields[field.original_tag()] = patch;
                         }
-                        else if (field.tag() !== field.original_tag){
+                        else if (field.tag() !== field.original_tag()){
                             patch = {"update": field.tag()};
-                            fields[field.original_tag] = patch;
+                            fields[field.original_tag()] = patch;
                         }
                         else {
                             patch = {};
