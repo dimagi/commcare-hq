@@ -117,6 +117,25 @@ def data_types(request, domain, data_type_id):
 
 # @require_can_edit_fixtures
 def update_tables(request, domain, data_type_id, test_patch={}):
+    if data_type_id:
+        try:
+            data_type = FixtureDataType.get(data_type_id)
+        except ResourceNotFound:
+            raise Http404()
+
+        assert(data_type.doc_type == FixtureDataType._doc_type)
+        assert(data_type.domain == domain)
+
+        if request.method == 'GET':
+            return json_response(strip_json(data_type))
+
+        elif request.method == 'DELETE':
+            with CouchTransaction() as transaction:
+                data_type.recursive_delete(transaction)
+            return json_response({})
+        elif not request.method == 'PUT':
+            return HttpResponseBadRequest()
+
     fields_update = test_patch or _to_kwargs(request)
     fields_patches = fields_update["fields"]
     data_tag = fields_update["tag"]

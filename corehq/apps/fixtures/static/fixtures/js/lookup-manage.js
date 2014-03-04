@@ -215,8 +215,8 @@ $(function () {
         };
         self.removeDataType = function (dataType) {
             if (confirm("Are you sure you want to delete the table '" + dataType.tag() + "'")){
-                    dataType.save();                 
                     self.data_types.destroy(dataType);
+                    dataType.save();                 
             }
             return false;
         };
