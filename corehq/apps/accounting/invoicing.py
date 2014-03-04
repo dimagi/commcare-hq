@@ -457,7 +457,8 @@ class InvoiceTemplate(object):
                  from_address=None, to_address=None, project_name='',
                  invoice_date=datetime.date.today(), invoice_number='',
                  terms='',
-                 due_date=datetime.date.today()+datetime.timedelta(days=10)):
+                 due_date=datetime.date.today()+datetime.timedelta(days=10),
+                 account_number='', routing_number='', swift_code=''):
         self.canvas = Canvas(filename)
         self.canvas.setFontSize(DEFAULT_FONT_SIZE)
         self.logo_filename = os.path.join(os.getcwd(), logo_filename)
@@ -468,6 +469,9 @@ class InvoiceTemplate(object):
         self.invoice_number = invoice_number
         self.terms = terms
         self.due_date = due_date
+        self.account_number = account_number
+        self.routing_number = routing_number
+        self.swift_code = swift_code
 
         self.items = []
 
@@ -482,6 +486,7 @@ class InvoiceTemplate(object):
         self.draw_invoice_label()
         self.draw_details()
         self.draw_table()
+        self.draw_footer()
 
         self.canvas.showPage()
         self.canvas.save()
@@ -679,3 +684,6 @@ class InvoiceTemplate(object):
             )
 
         self.canvas.translate(-origin_x, -origin_y)
+
+    def draw_footer(self):
+        self.canvas.rect(inch * 0.75, inch * 1.5, inch * 4, inch * 0.5)
