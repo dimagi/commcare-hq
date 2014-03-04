@@ -458,6 +458,7 @@ class BaseSavedExportSchema(Document):
 
 class FakeSavedExportSchema(BaseSavedExportSchema):
     index = JsonProperty()
+    type = StringProperty()
 
     @property
     def name(self):
@@ -741,6 +742,17 @@ class ExportConfiguration(DocumentSchema):
     def filename(self):
         return "%s.%s" % (self.name, Format.from_format(self.format).extension)
 
+    @property
+    def type(self):
+        # hack - make this backwards compatible with form/case categorization
+        # these might only exist in the care-bihar domain or wherever else
+        # they've been manually created in the DB.
+        try:
+            return 'form' if 'http:' in self.index[1] else 'case'
+        except IndexError:
+            # arbitrarily choose default so it doesn't stay hidden from the UI forever.
+            return 'form'
+
     def __repr__(self):
         return ('%s (%s)' % (self.name, self.index)).encode('utf-8')
 
@@ -807,7 +819,7 @@ class GroupExportConfiguration(Document):
         main configs + the custom export configs.
         """
         for full in self.full_exports:
-            yield FakeSavedExportSchema(index=full.index)
+            yield FakeSavedExportSchema(index=full.index, type=full.type)
         for custom in self.get_custom_exports():
             yield custom
 
