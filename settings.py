@@ -612,17 +612,6 @@ PREVIEWER_RE = '^$'
 
 MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
 
-try:
-    # try to see if there's an environmental variable set for local_settings
-    if os.environ.get('CUSTOMSETTINGS', None) == "demo":
-        # this sucks, but is a workaround for supporting different settings
-        # in the same environment
-        from settings_demo import *
-    else:
-        from localsettings import *
-except ImportError:
-    pass
-
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': True,
@@ -717,6 +706,17 @@ LOGGING = {
         },
     }
 }
+
+try:
+    # try to see if there's an environmental variable set for local_settings
+    if os.environ.get('CUSTOMSETTINGS', None) == "demo":
+        # this sucks, but is a workaround for supporting different settings
+        # in the same environment
+        from settings_demo import *
+    else:
+        from localsettings import *
+except ImportError:
+    pass
 
 if DEBUG:
     try:
