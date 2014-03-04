@@ -609,6 +609,8 @@ PREVIEWER_RE = '^$'
 
 MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
 
+DIGEST_LOGIN_FACTORY = 'django_digest.NoEmailLoginFactory'
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': True,
