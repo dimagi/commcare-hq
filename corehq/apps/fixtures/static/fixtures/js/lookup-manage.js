@@ -32,6 +32,7 @@ $(function () {
         var self = ko.mapping.fromJS(o),
             raw_fields = self.fields();
             self.original_tag = self.tag();
+            self.original_visibility = self.is_global();
         self.fields = ko.observableArray([]);
         makeEditable(self);
         if (!o._id) {
@@ -97,6 +98,7 @@ $(function () {
                     if (!self._id()) {
                         self._id(data._id);
                     }
+                    self.original_visibility = self.is_global();
                     console.log("came here");
                     var indicesToRemoveAt = [];
                     for (var i = 0; i < self.fields().length; i += 1) {
@@ -120,6 +122,7 @@ $(function () {
         self.cancel = function () {
             var indicesToRemoveAt = [];console.log(self);
             self.tag(self.original_tag);
+            self.is_global(self.original_visibility);
             if (!o._id){ console.log("yeah delete");
                 app.data_types.remove(self);
                 return;
@@ -144,6 +147,7 @@ $(function () {
                 _id: self._id(),
                 tag: self.tag(),
                 view_link: self.view_link(),
+                is_global: self.is_global(),
                 fields: (function () {
                     var fields = {}, i;
                     console.log(self.fields());
@@ -234,7 +238,8 @@ $(function () {
         self.addDataType = function () {
             var dataType = makeDataType({
                 tag: "",
-                fields: ko.observableArray([])
+                fields: ko.observableArray([]),
+                is_global: false,
             }, self);
             dataType.editing(true);
             self.data_types.push(dataType);
