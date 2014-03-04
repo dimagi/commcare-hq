@@ -409,7 +409,7 @@ class InvoiceItem(object):
 
     @property
     def amount(self):
-        return self.quantity * self.rate
+        return float(self.quantity * self.rate)
 
 
 class Address(object):
@@ -609,10 +609,10 @@ class InvoiceTemplate(object):
 
     def draw_table(self):
         origin_x = inch * 0.5
-        origin_y = inch * 6.5
+        origin_y = inch * 6.2
         self.canvas.translate(origin_x, origin_y)
 
-        height = inch * 5
+        height = inch * 4.8
         date_x = inch * 1
         description_x = inch * 5
         quantity_x = inch * 5.75
@@ -622,28 +622,58 @@ class InvoiceTemplate(object):
 
         self.canvas.rect(0, 0, amount_x, -height)
         self.canvas.setFillColorRGB(*LIGHT_GRAY)
-        self.canvas.rect(0, -header_height, amount_x, header_height,
+        self.canvas.rect(0, 0, amount_x, header_height,
                          fill=1)
         self.canvas.setFillColorRGB(*BLACK)
-        self.canvas.line(date_x, 0, date_x, -height)
-        self.canvas.line(description_x, 0, description_x, -height)
-        self.canvas.line(quantity_x, 0, quantity_x, -height)
-        self.canvas.line(rate_x, 0, rate_x, -height)
+        self.canvas.line(date_x, header_height, date_x, -height)
+        self.canvas.line(description_x, header_height, description_x, -height)
+        self.canvas.line(quantity_x, header_height, quantity_x, -height)
+        self.canvas.line(rate_x, header_height, rate_x, -height)
 
         self.canvas.drawCentredString(midpoint(0, date_x),
-                                      -header_height + inch * 0.1,
+                                      inch * 0.1,
                                       "Date")
         self.canvas.drawCentredString(midpoint(date_x, description_x),
-                                      -header_height + inch * 0.1,
+                                      inch * 0.1,
                                       "Description")
         self.canvas.drawCentredString(midpoint(description_x, quantity_x),
-                                      -header_height + inch * 0.1,
+                                      inch * 0.1,
                                       "Quantity")
         self.canvas.drawCentredString(midpoint(quantity_x, rate_x),
-                                      -header_height + inch * 0.1,
+                                      inch * 0.1,
                                       "Rate")
         self.canvas.drawCentredString(midpoint(rate_x, amount_x),
-                                      -header_height + inch * 0.1,
+                                      inch * 0.1,
                                       "Amount")
+
+        for item_index in range(len(self.items)):
+            item = self.items[item_index]
+            coord_y = -item_index * header_height + inch * -0.2
+
+            self.canvas.drawCentredString(
+                midpoint(0, date_x),
+                coord_y,
+                str(item.date)
+            )
+            self.canvas.drawCentredString(
+                midpoint(date_x, description_x),
+                coord_y,
+                item.description
+            )
+            self.canvas.drawCentredString(
+                midpoint(description_x, quantity_x),
+                coord_y,
+                str(item.quantity)
+            )
+            self.canvas.drawCentredString(
+                midpoint(quantity_x, rate_x),
+                coord_y,
+                str(item.rate)
+            )
+            self.canvas.drawCentredString(
+                midpoint(rate_x, amount_x),
+                coord_y,
+                str(item.amount)
+            )
 
         self.canvas.translate(-origin_x, -origin_y)
