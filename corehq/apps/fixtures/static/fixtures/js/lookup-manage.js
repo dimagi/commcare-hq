@@ -23,6 +23,7 @@ $(function () {
         };
         o.saveEdit = function () {
             o.editing(false);
+            log(o);
             o.save();
         };
         return o;
@@ -45,8 +46,8 @@ $(function () {
                 field = {
                     tag: ko.observable(o.tag),
                     with_props: ko.observable(o.with_props),
-                    original_tag: o.tag,
-                    is_new: false,
+                    original_tag: ko.observable(o.tag),
+                    is_new: ko.observable(false),
                     remove: ko.observable(false),
                     editing: ko.observable(false)
                 };
@@ -54,7 +55,7 @@ $(function () {
                 field = {
                     tag: ko.observable(""),
                     with_props: ko.observable(false),
-                    is_new: true,
+                    is_new: ko.observable(true),
                     remove: ko.observable(false),
                     editing: ko.observable(true)
                 };
@@ -93,8 +94,21 @@ $(function () {
                 success: function (data) {
                     self.saveState('saved');
                     if (!self._id()) {
-                        self._id(data._id)
+                        self._id(data._id);
                     }
+                    var indicesToRemoveAt = []
+                    for (var i = 0; i < self.fields().length; i += 1) {
+                        var field = self.fields()[i];
+                        field.original_tag = field.tag;
+                        field.is_new = false;
+                        if (field.remove() == true){
+                            indicesToRemoveAt.push(i);
+                        }
+                    }
+                    for (var index in indicesToRemoveAt){
+                        self.fields.remove(self.fields()[index]);
+                    }
+                    log(self);
                 }
             });
             self.saveState('saving');
@@ -218,7 +232,7 @@ $(function () {
                         self.data_types.push(makeDataType(data[i], self));
                         dataType = self.data_types()[i];
                     }
-                    self.loading(self.loading() - 1)
+                    self.loading(self.loading() - 1); log(data);
                 }
             });
         };
