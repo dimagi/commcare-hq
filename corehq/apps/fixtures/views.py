@@ -238,7 +238,8 @@ def data_table(request, domain):
     if selected_sheet["headers"] and selected_sheet["rows"]:
         data_table["rows"] = [[format_datatables_data(x or "--", "a") for x in row] for row in selected_sheet["rows"]]
     else:
-        data_table["rows"] = [["<button>Empty-Table</button>" for x in range(0, len(headers))]]
+        messages.info(request, _("No items are added in this table type. Upload using excel to add some rows to this table"))
+        data_table["rows"] = [["--" for x in range(0, len(headers))]]
     print data_table
     return data_table
 
