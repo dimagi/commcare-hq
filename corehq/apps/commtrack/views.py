@@ -10,7 +10,7 @@ from corehq.apps.domain.decorators import require_superuser, domain_admin_requir
 from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.management.commands import bootstrap_psi
 from corehq.apps.commtrack.models import Product, Program
-from corehq.apps.commtrack.forms import ProductForm, ProgramForm
+from corehq.apps.commtrack.forms import ProductForm, ProgramForm, ConsumptionForm
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.locations.models import Location
 from dimagi.utils.decorators.memoized import memoized
@@ -44,6 +44,34 @@ class BaseCommTrackManageView(BaseDomainView):
     @method_decorator(domain_admin_required)  # TODO: will probably want less restrictive permission?
     def dispatch(self, request, *args, **kwargs):
         return super(BaseCommTrackManageView, self).dispatch(request, *args, **kwargs)
+
+
+class DefaultConsumptionView(BaseCommTrackManageView):
+    urlname = 'update_default_consumption'
+    template_name = 'commtrack/manage/default_consumption.html'
+    page_title = ugettext_noop("Manage Default Consumption")
+
+    @property
+    @memoized
+    def consumption_form(self):
+        if self.request.method == 'POST':
+            return ConsumptionForm(self.domain, self.request.POST)
+        return ConsumptionForm(self.domain)
+
+    @property
+    def page_context(self):
+        return {
+            'form': self.consumption_form,
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.consumption_form.is_valid():
+            self.consumption_form.save()
+            messages.success(request, _("Default consumption values updated"))
+            return HttpResponseRedirect(
+                reverse(DefaultConsumptionView.urlname, args=[self.domain])
+            )
+        return self.get(request, *args, **kwargs)
 
 
 class ProductListView(BaseCommTrackManageView):

@@ -301,7 +301,12 @@ class CommTrackSetupTab(UITab):
         items = []
 
         # circular import
-        from corehq.apps.commtrack.views import ProductListView, NewProductView, EditProductView
+        from corehq.apps.commtrack.views import (
+            ProductListView,
+            NewProductView,
+            EditProductView,
+            DefaultConsumptionView,
+        )
         products_section = [
             {
                 'title': ProductListView.page_title,
@@ -317,6 +322,10 @@ class CommTrackSetupTab(UITab):
                     },
                 ]
             },
+            {
+                'title': DefaultConsumptionView.page_title,
+                'url': reverse(DefaultConsumptionView.urlname, args=[self.domain]),
+            }
         ]
         items.append([_("Products"), products_section])
 
