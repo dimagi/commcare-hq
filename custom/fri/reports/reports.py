@@ -134,7 +134,10 @@ class MessageBankReport(FRIReport):
 class MessageReport(FRIReport, DatespanMixin):
     name = ugettext_noop('Message Report')
     slug = 'fri_message_report'
-    fields = [DatespanMixin.datespan_field]
+    fields = [
+        DatespanMixin.datespan_field,
+        "custom.fri.reports.fields.ShowOnlySurveyTraffic",
+    ]
     exportable = True
     emailable = False
 
@@ -190,6 +193,10 @@ class MessageReport(FRIReport, DatespanMixin):
             else:
                 return _("System")
 
+    def show_only_survey_traffic(self):
+        value = self.request.GET.get("show_only_survey_traffic", None)
+        return value == "on"
+
     @property
     def rows(self):
         startdate = json_format_datetime(self.datespan.startdate_utc)
@@ -209,8 +216,12 @@ class MessageReport(FRIReport, DatespanMixin):
         case_cache = CaseDbCache(domain=self.domain, strip_history=False, deleted_ok=True)
         user_cache = UserCache()
 
+        show_only_survey_traffic = self.show_only_survey_traffic()
+
         for message in data:
             if message.direction == OUTGOING and not message.processed:
+                continue
+            if show_only_survey_traffic and message.xforms_session_couch_id is None:
                 continue
             # Add metadata from the message bank if it has not been added already
             if (message.direction == OUTGOING) and (not message.fri_message_bank_lookup_completed):
