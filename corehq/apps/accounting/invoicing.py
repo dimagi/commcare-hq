@@ -400,6 +400,18 @@ def prepend_newline_if_not_empty(string):
         return string
 
 
+class InvoiceItem(object):
+    def __init__(self, date, description, quantity, rate):
+        self.date = date
+        self.description = description
+        self.quantity = quantity
+        self.rate = rate
+
+    @property
+    def amount(self):
+        return self.quantity * self.rate
+
+
 class Address(object):
     def __init__(self, first_line='', second_line='', city='', region='',
                  postal_code='', country='', phone_number='',
@@ -457,6 +469,11 @@ class InvoiceTemplate(object):
         self.terms = terms
         self.due_date = due_date
 
+        self.items = []
+
+    def add_item(self, date, description, quantity, rate):
+        self.items.append(InvoiceItem(date, description, quantity, rate))
+
     def get_pdf(self):
         self.draw_logo()
         self.draw_from_address()
@@ -464,6 +481,7 @@ class InvoiceTemplate(object):
         self.draw_project_name()
         self.draw_invoice_label()
         self.draw_details()
+        self.draw_table()
 
         self.canvas.showPage()
         self.canvas.save()
@@ -586,5 +604,46 @@ class InvoiceTemplate(object):
         self.canvas.drawCentredString(midpoint(middle_x, right),
                                       middle_y - label_height - content_offset,
                                       str(self.due_date))
+
+        self.canvas.translate(-origin_x, -origin_y)
+
+    def draw_table(self):
+        origin_x = inch * 0.5
+        origin_y = inch * 6.5
+        self.canvas.translate(origin_x, origin_y)
+
+        height = inch * 5
+        date_x = inch * 1
+        description_x = inch * 5
+        quantity_x = inch * 5.75
+        rate_x = inch * 6.5
+        amount_x = inch * 7.5
+        header_height = inch * 0.3
+
+        self.canvas.rect(0, 0, amount_x, -height)
+        self.canvas.setFillColorRGB(*LIGHT_GRAY)
+        self.canvas.rect(0, -header_height, amount_x, header_height,
+                         fill=1)
+        self.canvas.setFillColorRGB(*BLACK)
+        self.canvas.line(date_x, 0, date_x, -height)
+        self.canvas.line(description_x, 0, description_x, -height)
+        self.canvas.line(quantity_x, 0, quantity_x, -height)
+        self.canvas.line(rate_x, 0, rate_x, -height)
+
+        self.canvas.drawCentredString(midpoint(0, date_x),
+                                      -header_height + inch * 0.1,
+                                      "Date")
+        self.canvas.drawCentredString(midpoint(date_x, description_x),
+                                      -header_height + inch * 0.1,
+                                      "Description")
+        self.canvas.drawCentredString(midpoint(description_x, quantity_x),
+                                      -header_height + inch * 0.1,
+                                      "Quantity")
+        self.canvas.drawCentredString(midpoint(quantity_x, rate_x),
+                                      -header_height + inch * 0.1,
+                                      "Rate")
+        self.canvas.drawCentredString(midpoint(rate_x, amount_x),
+                                      -header_height + inch * 0.1,
+                                      "Amount")
 
         self.canvas.translate(-origin_x, -origin_y)
