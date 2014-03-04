@@ -2,12 +2,12 @@ from casexml.apps.case.models import CommCareCase
 import fluff
 from corehq.apps.users.models import CommCareUser
 from custom.m4change import user_calcs
-from custom.m4change.constants import DOMAIN
+from custom.m4change.constants import M4CHANGE_DOMAINS
 
 
 def _get_case_location_id(case):
     if case.user_id is not None:
-        user = CommCareUser.get_by_user_id(userID=case.user_id, domain=DOMAIN)
+        user = CommCareUser.get_by_user_id(userID=case.user_id, domain=case.domain)
         if user is not None and 'location_id' in user:
             return str(user.location_id)
         else:
@@ -16,7 +16,7 @@ def _get_case_location_id(case):
 
 class AncHmisCaseFluff(fluff.IndicatorDocument):
     document_class = CommCareCase
-    domains = ('m4change',)
+    domains = M4CHANGE_DOMAINS
     group_by = ('domain',)
     save_direct_to_sql = True
 
@@ -43,7 +43,7 @@ AncHmisCaseFluffPillow = AncHmisCaseFluff.pillow()
 
 class ImmunizationHmisCaseFluff(fluff.IndicatorDocument):
     document_class = CommCareCase
-    domains = ('m4change',)
+    domains = M4CHANGE_DOMAINS
     group_by = ('domain',)
     save_direct_to_sql = True
 
@@ -84,7 +84,7 @@ def _get_case_mother_id(case):
 
 class ProjectIndicatorsCaseFluff(fluff.IndicatorDocument):
     document_class = CommCareCase
-    domains = ('m4change',)
+    domains = M4CHANGE_DOMAINS
     group_by = (
         'domain',
         fluff.AttributeGetter('mother_id', getter_function=_get_case_mother_id),
