@@ -9,6 +9,7 @@ from corehq.apps.api.es import CaseES
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 from dimagi.utils.decorators.memoized import memoized
+from corehq.elastic import stream_es_query, ES_URLS
 from custom.bihar.reports.display import MCHMotherDisplay, MCHChildDisplay
 from dimagi.utils.timezones import utils as tz_utils
 import pytz
@@ -66,16 +67,18 @@ class MCHBaseReport(CustomProjectReport, CaseListReport):
 
     @property
     def get_all_rows(self):
-
-        query = self.build_query(case_type=self.case_type, filter=self.case_filter,
-                         status=self.case_status, owner_ids=self.case_owners)
-        query.__setitem__("size", self.total_records)
-        query_results = self.case_es.run_query(query)
-
+        query_results = stream_es_query(q=self.es_query, es_url=ES_URLS["cases"], size=999999, chunksize=100)
         case_displays = (self.model(self, self.get_case(case))
-                         for case in query_results['hits'].get('hits', []))
+                 for case in query_results)
+
         return self.get_cases(case_displays)
 
+    @property
+    @memoized
+    def es_query(self):
+        query = self.build_query(case_type=self.case_type, filter=self.case_filter,
+                                 status=self.case_status, owner_ids=self.case_owners)
+        return query
 
     @property
     @request_cache("export")
@@ -87,7 +90,6 @@ class MCHBaseReport(CustomProjectReport, CaseListReport):
 
     @property
     def rows(self):
-
         case_displays = (self.model(self, self.get_case(case))
                          for case in self.es_results['hits'].get('hits', []))
         return self.get_cases(case_displays)
