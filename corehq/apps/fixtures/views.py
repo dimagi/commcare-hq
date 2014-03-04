@@ -139,16 +139,17 @@ def update_tables(request, domain, data_type_id, test_patch={}):
     fields_update = test_patch or _to_kwargs(request)
     fields_patches = fields_update["fields"]
     data_tag = fields_update["tag"]
+    is_global = fields_update["is_global"]
     with CouchTransaction() as transaction:
         if data_type_id:
-            data_type = update_types(fields_patches, domain, data_type_id, data_tag, transaction)
+            data_type = update_types(fields_patches, domain, data_type_id, data_tag, is_global, transaction)
             update_items(fields_patches, domain, data_type_id, transaction)
         else:
-            data_type = create_types(fields_patches, domain, data_tag, transaction)
+            data_type = create_types(fields_patches, domain, data_tag, is_global, transaction)
     return json_response(strip_json(data_type))
 
 
-def update_types(patches, domain, data_type_id, data_tag, transaction):
+def update_types(patches, domain, data_type_id, data_tag, is_global, transaction):
     data_type = FixtureDataType.get(data_type_id)
     fields_patches = deepcopy(patches)
     assert(data_type.doc_type == FixtureDataType._doc_type)
@@ -156,6 +157,7 @@ def update_types(patches, domain, data_type_id, data_tag, transaction):
     old_fields = data_type.fields
     new_fixture_fields = []
     setattr(data_type, "tag", data_tag)
+    setattr(data_type, "is_global", is_global)
     for old_field in old_fields:
         patch = fields_patches.pop(old_field.field_name, {})
         if not any(patch):
@@ -206,11 +208,11 @@ def update_items(fields_patches, domain, data_type_id, transaction):
 
 
 
-def create_types(fields_patches, domain, data_tag, transaction):
+def create_types(fields_patches, domain, data_tag, is_global, transaction):
     data_type = FixtureDataType(
         domain=domain,
         tag=data_tag,
-        is_global=False,
+        is_global=is_global,
         fields=[FixtureTypeField(field_name=field, properties=[]) for field in fields_patches]
     )
     transaction.save(data_type)
