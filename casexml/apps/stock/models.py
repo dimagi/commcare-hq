@@ -2,9 +2,11 @@ from django.db import models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from casexml.apps.stock import const
+from casexml.apps.stock import utils as utils
+from casexml.apps.case.models import CommCareCase
 from decimal import Decimal
 from django.db.models.signals import post_save
-from casexml.apps.stock import utils as utils
+from corehq.apps.domain.models import Domain
 
 
 class StockReport(models.Model):
@@ -105,20 +107,33 @@ class StockState(models.Model):
     @property
     def resupply_quantity_needed(self):
         if self.daily_consumption is not None:
-            needed_quantity = int(self.daily_consumption * 30 * Decimal(utils.OVERSTOCK_THRESHOLD))
+            stock_levels = self.get_domain().commtrack_settings.stock_levels_config
+            needed_quantity = int(
+                self.daily_consumption * 30 * stock_levels.overstock_threshold
+            )
             return int(max(needed_quantity - self.stock_on_hand, 0))
         else:
             return None
 
     @property
     def stock_category(self):
-        return utils.stock_category(
-            self.stock_on_hand,
-            self.daily_consumption,
+        return utils.state_stock_category(self)
+
+    def get_domain(self):
+        return Domain.get_by_name(
+            CaseDomainMapping.objects.get(case_id=self.case_id).domain_name
         )
 
     class Meta:
         unique_together = ('section_id', 'case_id', 'product_id')
+
+
+class CaseDomainMapping(models.Model):
+    case_id = models.CharField(max_length=100, db_index=True)
+    domain_name = models.CharField(max_length=100)
+
+    class Meta:
+        unique_together = ('case_id', 'domain_name')
 
 
 @receiver(post_save, sender=StockTransaction)
@@ -153,3 +168,14 @@ def update_stock_state(sender, instance, *args, **kwargs):
         consumption_calc
     )
     state.save()
+
+
+@receiver(post_save, sender=StockState)
+def update_domain_mapping(sender, instance, *args, **kwargs):
+    case_id = unicode(instance.case_id)
+    if not CaseDomainMapping.objects.filter(case_id=case_id).exists():
+        mapping = CaseDomainMapping(
+            case_id=case_id,
+            domain_name=CommCareCase.get(case_id).domain
+        )
+        mapping.save()

@@ -1,8 +1,5 @@
 from decimal import Decimal
 
-UNDERSTOCK_THRESHOLD = 0.5  # months
-OVERSTOCK_THRESHOLD = 2.  # months
-
 
 def months_of_stock_remaining(stock, daily_consumption):
     if daily_consumption:
@@ -11,7 +8,7 @@ def months_of_stock_remaining(stock, daily_consumption):
         return None
 
 
-def stock_category(stock, daily_consumption):
+def stock_category(stock, daily_consumption, domain):
     if stock is None:
         return 'nodata'
     elif stock == 0:
@@ -23,11 +20,21 @@ def stock_category(stock, daily_consumption):
 
     months_left = months_of_stock_remaining(stock, daily_consumption)
 
+    stock_levels = domain.commtrack_settings.stock_levels_config
+
     if months_left is None:
         return 'nodata'
-    elif months_left < UNDERSTOCK_THRESHOLD:
+    elif months_left < stock_levels.understock_threshold:
         return 'understock'
-    elif months_left > OVERSTOCK_THRESHOLD:
+    elif months_left > stock_levels.overstock_threshold:
         return 'overstock'
     else:
         return 'adequate'
+
+
+def state_stock_category(state):
+    return stock_category(
+        state.stock_on_hand,
+        state.daily_consumption,
+        state.get_domain()
+    )
