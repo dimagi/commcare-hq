@@ -19,9 +19,6 @@
 [submodule "submodules/commcare-translations"]
 	path = submodules/commcare-translations
 	url = git://github.com/dimagi/commcare-translations.git
-[submodule "submodules/receiver-src"]
-	path = submodules/receiver-src
-	url = git://github.com/dimagi/receiver.git
 [submodule "submodules/formtranslate-src"]
 	path = submodules/formtranslate-src
 	url = git://github.com/dimagi/formtranslate.git

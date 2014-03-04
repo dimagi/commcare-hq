@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
 from collections import defaultdict
@@ -603,6 +604,11 @@ FLUFF_PILLOW_TYPES_TO_SQL = {
     'UnicefMalawiFluff': 'SQL',
     'MalariaConsortiumFluff': 'SQL',
     'CareSAFluff': 'SQL',
+    'OpmCaseFluff': 'SQL',
+    'OpmUserFluff': 'SQL',
+    'OpmFormFluff': 'SQL',
+    'OpmHealthStatusFluff': 'SQL',
+    'OpmHealthStatusBasicInfoFluff': 'SQL',
     'AncHmisCaseFluff': 'SQL',
     'ImmunizationHmisCaseFluff': 'SQL',
     'ProjectIndicatorsCaseFluff': 'SQL'
@@ -959,6 +965,8 @@ PILLOWTOPS = {
         'custom.opm.opm_reports.models.OpmCaseFluffPillow',
         'custom.opm.opm_reports.models.OpmUserFluffPillow',
         'custom.opm.opm_reports.models.OpmFormFluffPillow',
+        'custom.opm.opm_reports.models.OpmHealthStatusBasicInfoFluffPillow',
+        'custom.opm.opm_reports.models.OpmHealthStatusFluffPillow',
         'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
         'custom.reports.care_sa.models.CareSAFluffPillow',
         'custom.reports.mc.models.MalariaConsortiumFluffPillow',
@@ -1003,6 +1011,7 @@ ES_CASE_FULL_INDEX_DOMAINS = [
     'commtrack-public-demo',
     'uth-rhd-test',
     'crs-remind',
+    'opm',
 ]
 
 # Custom fully indexed domains for ReportXForm index/pillowtop --
