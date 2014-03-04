@@ -57,11 +57,17 @@ $(function () {
                 field = {
                     tag: ko.observable(""),
                     with_props: ko.observable(false),
+                    original_tag: ko.observable(""),
                     is_new: ko.observable(true),
                     remove: ko.observable(false),
                     editing: ko.observable(true)
                 };
             }
+            field.remove_if_new = function(){
+                if (field.is_new() == true){
+                    self.fields.remove(field);
+                }
+            };
             field.editTag = ko.computed({
                 read: function () {
                     return field.tag();
