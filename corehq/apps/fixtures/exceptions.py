@@ -5,8 +5,6 @@ class FixtureException(Exception):
 class ExcelMalformatException(Exception):
     pass
 
-
-
 class FixtureAPIException(Exception):
     pass
 

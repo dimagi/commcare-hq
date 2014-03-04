@@ -4,19 +4,12 @@ from xml.etree import ElementTree
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
 from corehq.apps.fixtures.exceptions import FixtureException
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.fixtures.exceptions import FixtureVersionError
 from couchdbkit.ext.django.schema import Document, DocumentSchema, DictProperty, StringProperty, StringListProperty, SchemaListProperty, IntegerProperty, BooleanProperty
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 from dimagi.utils.couch.bulk import CouchTransaction
 from dimagi.utils.couch.database import get_db
-
-
-class FixtureTypeCheckError(Exception):
-    pass
-
-
-class FixtureVersionError(Exception):
-    pass
 
 
 class FixtureTypeField(DocumentSchema):
