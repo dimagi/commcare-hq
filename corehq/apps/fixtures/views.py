@@ -115,7 +115,7 @@ def data_types(request, domain, data_type_id):
     return HttpResponseBadRequest()
 
 
-# @require_can_edit_fixtures
+@require_can_edit_fixtures
 def update_tables(request, domain, data_type_id, test_patch={}):
     if data_type_id:
         try:
