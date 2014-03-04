@@ -81,7 +81,7 @@ $(function () {
                     }
                     if (noRepeats) {
                         var oldTag = field.tag;
-                        field.tag(tag);log(field);
+                        field.tag(tag);
                     }
                 }
             });
@@ -89,7 +89,7 @@ $(function () {
         };
         for (var i = 0; i < raw_fields.length; i += 1) {
             var tag = raw_fields[i].field_name();
-            var with_props = (raw_fields[i].properties().length == 0) ? false : true; console.log(with_props);
+            var with_props = (raw_fields[i].properties().length == 0) ? false : true; 
             self.addField(undefined, undefined, {tag: tag, with_props: with_props});
         }
 
@@ -105,31 +105,28 @@ $(function () {
                         self._id(data._id);
                     }
                     self.original_visibility = self.is_global();
-                    console.log("came here");
                     var indicesToRemoveAt = [];
                     for (var i = 0; i < self.fields().length; i += 1) {
                         var field = self.fields()[i];
                         field.original_tag(field.tag());
-                        field.is_new(false); console.log("coming here")
+                        field.is_new(false);
                         if (field.remove() == true){
                             indicesToRemoveAt.push(i);
                         }
                     }
                     for (var j = 0; j < indicesToRemoveAt.length; j += 1){
                         var index = indicesToRemoveAt[j]
-                        console.log(self.fields()[index]);
                         self.fields.remove(self.fields()[index]);
                     }
-                    console.log(self);console.log("hello"); console.log(indicesToRemoveAt);
                 }
             });
             self.saveState('saving');
         };
         self.cancel = function () {
-            var indicesToRemoveAt = [];console.log(self);
+            var indicesToRemoveAt = [];
             self.tag(self.original_tag);
             self.is_global(self.original_visibility);
-            if (!o._id){ console.log("yeah delete");
+            if (!o._id){ 
                 app.data_types.remove(self);
                 return;
             }
@@ -144,7 +141,6 @@ $(function () {
             }
             for (var j = 0; j < indicesToRemoveAt.length; j += 1){
                 var index = indicesToRemoveAt[j]
-                console.log(self.fields()[index]);
                 self.fields.remove(self.fields()[index]);
             }
         }
@@ -156,7 +152,6 @@ $(function () {
                 is_global: self.is_global(),
                 fields: (function () {
                     var fields = {}, i;
-                    console.log(self.fields());
                     for (i = 0; i < self.fields().length; i += 1) {
                         var field = self.fields()[i];
                         var patch;
@@ -269,7 +264,7 @@ $(function () {
                         self.data_types.push(makeDataType(data[i], self));
                         dataType = self.data_types()[i];
                     }
-                    self.loading(self.loading() - 1); log(data);
+                    self.loading(self.loading() - 1);
                 }
             });
         };
