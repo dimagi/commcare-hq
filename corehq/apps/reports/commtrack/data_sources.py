@@ -2,6 +2,7 @@ from corehq.apps.commtrack.util import num_periods_late
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import Location
 from corehq.apps.commtrack.models import Product, SupplyPointCase
+from corehq.apps.domain.models import Domain
 from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.reports.api import ReportDataSource
 from datetime import datetime, timedelta
@@ -188,7 +189,11 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
         for state in stock_states:
             product = Product.get(state['product_id'])
             yield {
-                'category': stock_category(state['total_stock'], state['avg_consumption']),
+                'category': stock_category(
+                    state['total_stock'],
+                    state['avg_consumption'],
+                    Domain.get_by_name(self.domain)
+                ),
                 'product_id': product._id,
                 'consumption': state['avg_consumption'],
                 'months_remaining': months_of_stock_remaining(state['total_stock'], state['avg_consumption']),
