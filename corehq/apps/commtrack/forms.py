@@ -5,6 +5,7 @@ from crispy_forms.layout import Layout, Fieldset, ButtonHolder, Submit
 
 from corehq.apps.commtrack.models import Product, Program
 from corehq.apps.commtrack.util import all_sms_codes
+from corehq.apps.consumption.shortcuts import set_default_consumption_for_product, get_default_consumption
 
 
 class CurrencyField(forms.DecimalField):
@@ -103,6 +104,9 @@ class AdvancedSettingsForm(forms.Form):
     sync_location_fixtures = forms.BooleanField(
         label=ugettext_lazy("Sync location fixtures"), required=False)
 
+    sync_consumption_fixtures = forms.BooleanField(
+        label=ugettext_lazy("Sync consumption fixtures"), required=False)
+
     def clean(self):
         cleaned_data = super(AdvancedSettingsForm, self).clean()
 
@@ -142,6 +146,7 @@ class AdvancedSettingsForm(forms.Form):
             Fieldset(
                 _('Phone Settings'),
                 'sync_location_fixtures',
+                'sync_consumption_fixtures',
             ),
             ButtonHolder(
                 Submit('submit', ugettext_lazy('Submit'))
@@ -149,6 +154,39 @@ class AdvancedSettingsForm(forms.Form):
         )
 
         forms.Form.__init__(self, *args, **kwargs)
+
+
+class ConsumptionForm(forms.Form):
+    def __init__(self, domain, *args, **kwargs):
+        self.domain = domain
+        super(ConsumptionForm, self).__init__(*args, **kwargs)
+        products = Product.by_domain(domain)
+        for p in products:
+            field_name = 'default_%s' % p.code
+            display = _('Default %(product_name)s') % {'product_name': p.name}
+            self.fields[field_name] = forms.DecimalField(
+                label=display,
+                required=False,
+                initial=get_default_consumption(
+                    self.domain,
+                    p._id,
+                    None,
+                    None
+                )
+            )
+
+    def save(self):
+        for field in self.fields:
+            val = self.cleaned_data[field]
+            set_default_consumption_for_product(
+                self.domain,
+                Product.get_by_code(
+                    self.domain,
+                    field.split('_')[1]
+                )._id,
+                val
+            )
+
 
 class ProgramForm(forms.Form):
     name = forms.CharField(max_length=100)

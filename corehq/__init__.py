@@ -61,17 +61,16 @@ def REPORTS(project):
 
     from corehq.apps.accounting.utils import domain_has_privilege
     messaging_reports = []
-    project_can_use_sms = True
-    if toggles.ACCOUNTING_PREVIEW.enabled(project.name, namespace=toggles.NAMESPACE_DOMAIN):
-        project_can_use_sms = domain_has_privilege(project.name, privileges.OUTBOUND_SMS)
+
+    project_can_use_sms = domain_has_privilege(project.name, privileges.OUTBOUND_SMS)
     if project_can_use_sms:
         messaging_reports.extend([
-           sms.MessagesReport,
-            sms.MessageLogReport,
+            sms.MessagesReport,
         ])
-    project_can_use_inbound_sms = True
-    if toggles.ACCOUNTING_PREVIEW.enabled(project.name, namespace=toggles.NAMESPACE_DOMAIN):
-        project_can_use_inbound_sms = domain_has_privilege(project.name, privileges.INBOUND_SMS)
+    # always have this historical report visible
+    messaging_reports.append(sms.MessageLogReport)
+
+    project_can_use_inbound_sms = domain_has_privilege(project.name, privileges.INBOUND_SMS)
     if project_can_use_inbound_sms:
         messaging_reports.extend([
             ivr.CallLogReport,
@@ -85,9 +84,9 @@ def REPORTS(project):
     messaging = (lambda project, user: (
         ugettext_lazy("Logs") if project.commtrack_enabled else ugettext_lazy("Messaging")), messaging_reports)
 
-    if project.commconnect_enabled and messaging_reports:
+    if project.commconnect_enabled:
         reports.insert(0, messaging)
-    elif messaging_reports:
+    else:
         reports.append(messaging)
 
     reports.extend(dynamic_reports(project))

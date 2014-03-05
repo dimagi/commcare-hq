@@ -354,11 +354,10 @@ class ListWebUsersView(BaseUserSettingsView):
 
     @property
     def can_edit_roles(self):
-        if toggles.ACCOUNTING_PREVIEW.enabled(self.couch_user.username):
-            try:
-                ensure_request_has_privilege(self.request, privileges.ROLE_BASED_ACCESS)
-            except PermissionDenied:
-                return False
+        try:
+            ensure_request_has_privilege(self.request, privileges.ROLE_BASED_ACCESS)
+        except PermissionDenied:
+            return False
         return self.couch_user.is_domain_admin
 
     @property

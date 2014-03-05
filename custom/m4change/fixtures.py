@@ -7,7 +7,7 @@ from django.utils.translation import ugettext as _
 
 from corehq.apps.locations.models import Location
 from corehq.apps.users.models import CommCareUser
-from custom.m4change.constants import DOMAIN
+from custom.m4change.constants import M4CHANGE_DOMAINS
 from custom.m4change.reports.reports import M4ChangeReportDataSource
 
 
@@ -17,7 +17,7 @@ def generator(user, version, last_sync):
         AncHmisReport,
     ]
 
-    if user.domain == DOMAIN:
+    if user.domain in M4CHANGE_DOMAINS:
         startdate = datetime.utcnow().today() - timedelta(days=30)
         enddate = datetime.utcnow().today()
         return ReportFixtureProvider('reports:m4change-mobile', user, hard_coded_reports, startdate, enddate).to_fixture()
@@ -63,8 +63,8 @@ class ReportFixtureProvider(object):
             for dictionary in sorted(report_data):
                 columns_added = False
                 for report_key in sorted(dictionary):
-                    report_data = dictionary.get(report_key, {})
-                    name = report_data.get('name', None)
+                    data = dictionary.get(report_key, {})
+                    name = data.get('name', None)
                     report_element = ElementTree.Element('report', attrib={
                         'id': report_key,
                         'name': name
@@ -72,7 +72,7 @@ class ReportFixtureProvider(object):
                     columns_element = ElementTree.Element('columns')
                     rows_element = ElementTree.Element('rows')
 
-                    report_rows = report_data.get('data', {})
+                    report_rows = data.get('data', {})
                     for row_key in sorted(report_rows):
                         row_data = report_rows.get(row_key, {})
                         if not columns_added:

@@ -1,7 +1,4 @@
-from couchdbkit import ResourceConflict
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
-from toggle.models import Toggle
-from corehq import toggles
 from corehq.apps.accounting import generator
 from corehq.apps.accounting.models import (
     Subscription, BillingAccount, DefaultProductPlan, SoftwarePlanEdition,
@@ -45,18 +42,6 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
             commcare_user.save()
             self.commcare_users.append(commcare_user)
 
-        # toggle until release
-        try:
-            self.toggle = Toggle(
-                slug=toggles.ACCOUNTING_PREVIEW.slug,
-                enabled_users=[self.admin_user.username],
-            )
-            self.toggle.save()
-        except ResourceConflict:
-            self.toggle = Toggle.get(toggles.ACCOUNTING_PREVIEW.slug)
-            self.toggle.enabled_users.append(self.admin_user.username)
-            self.toggle.save()
-
         self.account = BillingAccount.get_or_create_account_by_domain(
             self.domain.name,created_by=self.admin_user.username)[0]
         self.advanced_plan = DefaultProductPlan.get_default_plan_by_domain(
@@ -71,17 +56,20 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         subscription.cancel_subscription(web_user=self.admin_user.username)
 
         custom_role = UserRole.get(self.custom_role.get_id)
-        custom_web_user = WebUser.get(self.web_users[0].get_id)
-        custom_commcare_user = CommCareUser.get(self.commcare_users[0].get_id)
-
         self.assertTrue(custom_role.is_archived)
-        self.assertEqual(
-            custom_web_user.get_domain_membership(self.domain.name).role_id,
-            self.read_only_role.get_id
-        )
-        self.assertIsNone(
-            custom_commcare_user.get_domain_membership(self.domain.name).role_id
-        )
+
+        # disable this part of the test until we improve the UX for notifying
+        # downgraded users of their privilege changes
+        # custom_web_user = WebUser.get(self.web_users[0].get_id)
+        # custom_commcare_user = CommCareUser.get(self.commcare_users[0].get_id)
+        # self.assertEqual(
+        #     custom_web_user.get_domain_membership(self.domain.name).role_id,
+        #     self.read_only_role.get_id
+        # )
+        # self.assertIsNone(
+        #     custom_commcare_user.get_domain_membership(self.domain.name).role_id
+        # )
+        
         self.assertInitialRoles()
         self.assertStdUsers()
 
@@ -101,15 +89,17 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         custom_role = UserRole.get(self.custom_role.get_id)
         self.assertFalse(custom_role.is_archived)
 
-        custom_web_user = WebUser.get(self.web_users[0].get_id)
-        custom_commcare_user = CommCareUser.get(self.commcare_users[0].get_id)
-        self.assertEqual(
-            custom_web_user.get_domain_membership(self.domain.name).role_id,
-            self.read_only_role.get_id
-        )
-        self.assertIsNone(
-            custom_commcare_user.get_domain_membership(self.domain.name).role_id
-        )
+        # disable this part of the test until we improve the UX for notifying
+        # downgraded users of their privilege changes
+        # custom_web_user = WebUser.get(self.web_users[0].get_id)
+        # custom_commcare_user = CommCareUser.get(self.commcare_users[0].get_id)
+        # self.assertEqual(
+        #     custom_web_user.get_domain_membership(self.domain.name).role_id,
+        #     self.read_only_role.get_id
+        # )
+        # self.assertIsNone(
+        #     custom_commcare_user.get_domain_membership(self.domain.name).role_id
+        # )
 
         self.assertInitialRoles()
         self.assertStdUsers()

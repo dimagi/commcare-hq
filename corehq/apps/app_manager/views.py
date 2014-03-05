@@ -422,13 +422,12 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
 
 def get_app_view_context(request, app):
 
-    is_cloudcare_allowed = True
-    if hasattr(request, 'user') and toggles.ACCOUNTING_PREVIEW.enabled(
-            request.user.username):
-        try:
-            ensure_request_has_privilege(request, privileges.CLOUDCARE)
-        except PermissionDenied:
-            is_cloudcare_allowed = False
+    is_cloudcare_allowed = False
+    try:
+        ensure_request_has_privilege(request, privileges.CLOUDCARE)
+        is_cloudcare_allowed = True
+    except PermissionDenied:
+        pass
 
     context = {
         'settings_layout': commcare_settings.LAYOUT[app.get_doc_type()],
@@ -1618,11 +1617,10 @@ def edit_app_attr(request, domain, app_id, attr):
     if should_edit("cloudcare_enabled"):
         if app.get_doc_type() not in ("Application",):
             raise Exception("App type %s does not support cloudcare" % app.get_doc_type())
-        if hasattr(request, 'user') and toggles.ACCOUNTING_PREVIEW.enabled(request.user.username):
-            try:
-                ensure_request_has_privilege(request, privileges.CLOUDCARE)
-            except PermissionDenied:
-                app.cloudcare_enabled = False
+        try:
+            ensure_request_has_privilege(request, privileges.CLOUDCARE)
+        except PermissionDenied:
+            app.cloudcare_enabled = False
 
 
     def require_remote_app():

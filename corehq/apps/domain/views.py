@@ -253,15 +253,13 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
 
     @property
     def can_use_custom_logo(self):
-        if toggles.ACCOUNTING_PREVIEW.enabled(self.request.user.username):
-            try:
-                ensure_request_has_privilege(
-                    self.request, privileges.CUSTOM_BRANDING
-                )
-                return True
-            except PermissionDenied:
-                return False
-        return self.request.couch_user.is_previewer()
+        try:
+            ensure_request_has_privilege(
+                self.request, privileges.CUSTOM_BRANDING
+            )
+        except PermissionDenied:
+            return False
+        return True
 
     @property
     @memoized
@@ -1542,11 +1540,38 @@ class AdvancedCommTrackSettingsView(BaseCommTrackAdminView):
             return AdvancedSettingsForm(self.request.POST, initial=initial)
         return AdvancedSettingsForm(initial=initial)
 
+    def set_ota_restore_config(self):
+        """
+        If the checkbox for syncing consumption fixtures is
+        checked, then we build the restore config with appropriate
+        special properties, otherwise just clear the object.
+
+        If there becomes a way to tweak these on the UI, this should
+        be done differently.
+        """
+
+        from corehq.apps.commtrack.models import StockRestoreConfig
+        if self.commtrack_settings.sync_consumption_fixtures:
+            self.domain_object.commtrack_settings.ota_restore_config = StockRestoreConfig(
+                section_to_consumption_types={
+                    'stock': 'consumption'
+                },
+                force_to_consumption_case_types=[
+                    'supply-point'
+                ],
+                use_dynamic_product_list=True,
+            )
+        else:
+            self.domain_object.commtrack_settings.ota_restore_config = StockRestoreConfig()
+
     def post(self, request, *args, **kwargs):
         if self.commtrack_settings_form.is_valid():
             data = self.commtrack_settings_form.cleaned_data
             self.commtrack_settings.use_auto_consumption = bool(data.get('use_auto_consumption'))
             self.commtrack_settings.sync_location_fixtures = bool(data.get('sync_location_fixtures'))
+            self.commtrack_settings.sync_consumption_fixtures = bool(data.get('sync_consumption_fixtures'))
+
+            self.set_ota_restore_config()
 
             fields = ('emergency_level', 'understock_threshold', 'overstock_threshold')
             for field in fields:

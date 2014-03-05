@@ -34,11 +34,10 @@ def load_domain(req, domain):
     domain = Domain.get_by_name(domain_name)
     req.project = domain
     req.can_see_organization = True
-    if toggles.ACCOUNTING_PREVIEW.enabled(req.user.username):
-        try:
-            ensure_request_has_privilege(req, privileges.CROSS_PROJECT_REPORTS)
-        except PermissionDenied:
-            req.can_see_organization = False
+    try:
+        ensure_request_has_privilege(req, privileges.CROSS_PROJECT_REPORTS)
+    except PermissionDenied:
+        req.can_see_organization = False
     return domain_name, domain
 
 ########################################################################################################
