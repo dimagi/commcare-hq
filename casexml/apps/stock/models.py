@@ -129,11 +129,8 @@ class StockState(models.Model):
 
 
 class CaseDomainMapping(models.Model):
-    case_id = models.CharField(max_length=100, db_index=True)
+    case_id = models.CharField(max_length=100, db_index=True, primary_key=True)
     domain_name = models.CharField(max_length=100)
-
-    class Meta:
-        unique_together = ('case_id', 'domain_name')
 
 
 @receiver(post_save, sender=StockTransaction)
