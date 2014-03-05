@@ -213,13 +213,20 @@ class CommtrackActionConfig(DocumentSchema):
 
 class LocationType(DocumentSchema):
     name = StringProperty()
+    code = StringProperty()
     allowed_parents = StringListProperty()
     administrative = BooleanProperty()
+
+    @classmethod
+    def wrap(cls, obj):
+        from corehq.apps.commtrack.util import unicode_slug
+        if not obj.get('code'):
+            obj['code'] = unicode_slug(obj['name'])
+        return super(LocationType, cls).wrap(obj)
 
 
 class CommtrackRequisitionConfig(DocumentSchema):
     # placeholder class for when this becomes fancier
-
     enabled = BooleanProperty(default=False)
 
     # requisitions have their own sets of actions
@@ -288,7 +295,6 @@ class StockRestoreConfig(DocumentSchema):
 
 
 class CommtrackConfig(Document):
-
     domain = StringProperty()
 
     # supported stock actions for this commtrack domain
