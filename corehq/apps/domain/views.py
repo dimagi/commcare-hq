@@ -24,8 +24,11 @@ from corehq import toggles, privileges
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
 
-from corehq.apps.accounting.models import (Subscription, CreditLine, SoftwarePlanVisibility, SoftwareProductType,
-                                           DefaultProductPlan, SoftwarePlanEdition, BillingAccount, BillingAccountType)
+from corehq.apps.accounting.models import (
+    Subscription, CreditLine, SoftwareProductType,
+    DefaultProductPlan, SoftwarePlanEdition, BillingAccount,
+    BillingAccountType, BillingAccountAdmin
+)
 from corehq.apps.accounting.usage import FeatureUsage
 from corehq.apps.accounting.user_text import get_feature_name, PricingTable, DESC_BY_EDITION, PricingTableFeatures
 from corehq.apps.hqwebapp.models import ProjectSettingsTab
@@ -120,13 +123,20 @@ class SubscriptionUpgradeRequiredView(LoginAndDomainMixin, BasePageView,
         }
 
     @property
+    def is_billing_admin(self):
+        return BillingAccountAdmin.get_admin_status_and_account(
+            self.request.couch_user, self.domain
+        )[0]
+
+    @property
     def page_context(self):
         return {
             'domain': self.domain,
             'feature_name': self.feature_name,
             'plan_name': self.required_plan_name,
             'change_subscription_url': reverse(SelectPlanView.urlname,
-                                               args=[self.domain])
+                                               args=[self.domain]),
+            'is_billing_admin': self.is_billing_admin,
         }
 
     @property
