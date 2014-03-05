@@ -14,6 +14,7 @@ import rawes
 from django.conf import settings
 
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.couch import LockManager
 from pillowtop.couchdb import CachedCouchDB
 from .utils import import_settings
 
@@ -91,23 +92,33 @@ def ms_from_timedelta(td):
     return (td.seconds * 1000) + (td.microseconds / 1000.0)
 
 
+def lock_manager(obj):
+    if isinstance(obj, LockManager):
+        return obj
+    else:
+        return LockManager(obj, None)
+
+
 class BasicPillow(object):
     couch_filter = None  # string for filter if needed
-    extra_args = {} # filter args if needed
+    extra_args = {}  # filter args if needed
     document_class = None  # couchdbkit Document class
     changes_seen = 0
     couch_db = None
     include_docs = True
+    use_locking = False
 
     def __init__(self, couch_db=None, document_class=None):
         if document_class:
             self.document_class = document_class
 
-        if couch_db:
-            self.couch_db = couch_db
+        self.couch_db = couch_db or self.couch_db or (
+            self.document_class.get_db() if self.document_class else None
+        )
 
-        if not self.couch_db:
-            self.couch_db = self.document_class.get_db() if self.document_class else None
+        if self.use_locking:
+            # document_class must be a CouchDocLockableMixIn
+            assert hasattr(self.document_class, 'get_obj_lock_by_id')
 
         self.settings = import_settings()
 
@@ -203,13 +214,19 @@ class BasicPillow(object):
 
     def process_change(self, change):
         try:
-            t = self.change_trigger(change)
-            if t is not None:
-                tr = self.change_transform(t)
-                if tr is not None:
-                    self.change_transport(tr)
+            with lock_manager(self.change_trigger(change)) as t:
+                if t is not None:
+                    tr = self.change_transform(t)
+                    if tr is not None:
+                        self.change_transport(tr)
         except Exception, ex:
-            pillow_logging.exception("[%s] Error on change: %s, %s" % (self.get_name(), change['id'], ex))
+            pillow_logging.exception(
+                "[%s] Error on change: %s, %s" % (
+                    self.get_name(),
+                    change['id'],
+                    ex
+                )
+            )
 
     def processor(self, change, do_set_checkpoint=True):
         """
@@ -235,12 +252,17 @@ class BasicPillow(object):
         Should return a doc_dict
         """
         if changes_dict.get('deleted', False):
-            #override deleted behavior on consumers that care/deal with deletions
+            # override deleted behavior on consumers that deal with deletions
             return None
-        if 'doc' in changes_dict:
+        id = changes_dict['id']
+        if self.use_locking:
+            lock = self.document_class.get_obj_lock_by_id(id)
+            lock.acquire()
+            return LockManager(self.couch_db.open_doc(id), lock)
+        elif 'doc' in changes_dict:
             return changes_dict['doc']
         else:
-            return self.couch_db.open_doc(changes_dict['id'])
+            return self.couch_db.open_doc(id)
 
     def change_transform(self, doc_dict):
         """
@@ -344,18 +366,27 @@ class BulkPillow(BasicPillow):
         """
         for change in changes:
             try:
-                t = self.change_trigger(change)
-                if t is not None:
-                    tr = self.change_transform(t)
-                    if tr is not None:
-                        self.change_transport(tr)
-
-                        yield {
-                            "index": {"_index": self.es_index, "_type": self.es_type,
-                                      "_id": tr['_id']}}
-                        yield tr
+                with lock_manager(self.change_trigger(change)) as t:
+                    if t is not None:
+                        tr = self.change_transform(t)
+                        if tr is not None:
+                            self.change_transport(tr)
+                            yield {
+                                "index": {
+                                    "_index": self.es_index,
+                                    "_type": self.es_type,
+                                    "_id": tr['_id']
+                                }
+                            }
+                            yield tr
             except Exception, ex:
-                pillow_logging.error("[%s] Error on change: %s, %s" % (self.get_name(), change['id'], ex))
+                pillow_logging.error(
+                    "[%s] Error on change: %s, %s" % (
+                        self.get_name(),
+                        change['id'],
+                        ex
+                    )
+                )
 
     def process_bulk(self, changes):
         self.allow_updates = False
@@ -461,18 +492,20 @@ class ElasticPillow(BulkPillow):
         self.get_es().post("%s/_refresh" % self.es_index)
 
     def change_trigger(self, changes_dict):
+        id = changes_dict['id']
         if changes_dict.get('deleted', False):
             try:
-                if self.get_es().head(path=self.get_doc_path(changes_dict['id'])):
-                    self.get_es().delete(path=self.get_doc_path(changes_dict['id']))
+                if self.get_es().head(path=self.get_doc_path(id)):
+                    self.get_es().delete(path=self.get_doc_path(id))
             except Exception, ex:
-                pillow_logging.error("ElasticPillow: error deleting route %s - ignoring: %s" % \
-                              (self.get_doc_path(changes_dict['id']), ex))
+                pillow_logging.error(
+                    "ElasticPillow: error deleting route %s - ignoring: %s" % (
+                        self.get_doc_path(changes_dict['id']),
+                        ex,
+                    )
+                )
             return None
-        if 'doc' in changes_dict:
-            return changes_dict['doc']
-        else:
-            return self.couch_db.open_doc(changes_dict['id'])
+        return super(ElasticPillow, self).change_trigger(changes_dict)
 
     @autoretry_connection()
     def doc_exists(self, doc_id):
@@ -643,17 +676,23 @@ class AliasedElasticPillow(ElasticPillow):
         """
         for change in changes:
             try:
-                t = self.change_trigger(change)
-                if t is not None:
-                    tr = self.change_transform(t)
-                    if tr is not None:
-                        self.change_transport(tr)
-
-                        yield {"index": {"_index": self.es_index, "_type": self.get_type_string(tr),
-                                         "_id": tr['_id']}}
-                        yield tr
+                with lock_manager(self.change_trigger(change)) as t:
+                    if t is not None:
+                        tr = self.change_transform(t)
+                        if tr is not None:
+                            self.change_transport(tr)
+                            yield {
+                                "index": {
+                                    "_index": self.es_index,
+                                    "_type": self.get_type_string(tr),
+                                    "_id": tr['_id']
+                                }
+                            }
+                            yield tr
             except Exception, ex:
-                pillow_logging.error("Error on change: %s, %s" % (change['id'], ex))
+                pillow_logging.error(
+                    "Error on change: %s, %s" % (change['id'], ex)
+                )
 
     def type_exists(self, doc_dict, server=False):
         """
