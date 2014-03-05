@@ -450,6 +450,10 @@ BLACK = (0, 0, 0)
 DEFAULT_FONT_SIZE = 12
 
 
+def inches(num_inches):
+    return inch * num_inches
+
+
 def midpoint(x1, x2):
     return (x1 + x2) * 0.5
 
@@ -498,8 +502,8 @@ class InvoiceTemplate(object):
         self.canvas.save()
 
     def draw_logo(self):
-        self.canvas.drawImage(self.logo_filename, inch * 0.5, inch * 2.5,
-                              width=inch * 1.5, preserveAspectRatio=True)
+        self.canvas.drawImage(self.logo_filename, inches(0.5), inches(2.5),
+                              width=inches(1.5), preserveAspectRatio=True)
 
     def draw_text(self, string, x, y):
         text = self.canvas.beginText()
@@ -509,18 +513,18 @@ class InvoiceTemplate(object):
 
     def draw_from_address(self):
         if self.from_address is not None:
-            self.draw_text(str(self.from_address), inch * 3, inch * 11)
+            self.draw_text(str(self.from_address), inches(3), inches(11))
 
     def draw_to_address(self):
-        origin_x = inch * 1
-        origin_y = inch * 9.2
+        origin_x = inches(1)
+        origin_y = inches(9.2)
         self.canvas.translate(origin_x, origin_y)
 
-        left = inch * 0
-        right = inch * 4.5
-        top = inch * 0.3
-        middle_horizational = inch * 0
-        bottom = inch * -1.7
+        left = inches(0)
+        right = inches(4.5)
+        top = inches(0.3)
+        middle_horizational = inches(0)
+        bottom = inches(-1.7)
         self.canvas.rect(left, bottom, right - left, top - bottom)
 
         self.canvas.setFillColorRGB(*LIGHT_GRAY)
@@ -528,24 +532,24 @@ class InvoiceTemplate(object):
                          top - middle_horizational, fill=1)
 
         self.canvas.setFillColorRGB(*BLACK)
-        self.draw_text("Bill To", left + inch * 0.2,
-                       middle_horizational + inch * 0.1)
+        self.draw_text("Bill To", left + inches(0.2),
+                       middle_horizational + inches(0.1))
 
         if self.to_address is not None:
-            self.draw_text(str(self.to_address), inch * 0.1, inch * -0.2)
+            self.draw_text(str(self.to_address), inches(0.1), inches(-0.2))
 
         self.canvas.translate(-origin_x, -origin_y)
 
     def draw_project_name(self):
-        origin_x = inch * 1
-        origin_y = inch * 7
+        origin_x = inches(1)
+        origin_y = inches(7)
         self.canvas.translate(origin_x, origin_y)
 
-        left = inch * 0
-        middle_vertical = inch * 1
-        right = inch * 4.5
-        top = inch * 0
-        bottom = inch * -0.3
+        left = inches(0)
+        middle_vertical = inches(1)
+        right = inches(4.5)
+        top = inches(0)
+        bottom = inches(-0.3)
         self.canvas.rect(left, bottom, right - left, top - bottom)
 
         self.canvas.setFillColorRGB(*LIGHT_GRAY)
@@ -554,27 +558,27 @@ class InvoiceTemplate(object):
 
         self.canvas.setFillColorRGB(*BLACK)
         self.canvas.drawCentredString(midpoint(left, middle_vertical),
-                                      bottom + inch * 0.1,
+                                      bottom + inches(0.1),
                                       "Project")
-        self.canvas.drawString(middle_vertical + inch * 0.2,
-                               bottom + inch * 0.1, self.project_name)
+        self.canvas.drawString(middle_vertical + inches(0.2),
+                               bottom + inches(0.1), self.project_name)
 
         self.canvas.translate(-origin_x, -origin_y)
 
     def draw_invoice_label(self):
         self.canvas.setFontSize(size=24)
-        self.canvas.drawString(inch * 6.5, inch * 10.8, "Invoice")
+        self.canvas.drawString(inches(6.5), inches(10.8), "Invoice")
         self.canvas.setFontSize(DEFAULT_FONT_SIZE)
 
     def draw_details(self):
-        origin_x = inch * 5.75
-        origin_y = inch * 9.5
+        origin_x = inches(5.75)
+        origin_y = inches(9.5)
         self.canvas.translate(origin_x, origin_y)
 
-        left = inch * 0
-        right = inch * 2
-        bottom = inch * 0
-        top = inch * 1.25
+        left = inches(0)
+        right = inches(2)
+        bottom = inches(0)
+        top = inches(1.25)
         label_height = (top - bottom) / 6.0
         label_offset = label_height * 0.8
         content_offset = 1.5 * label_offset
@@ -619,17 +623,17 @@ class InvoiceTemplate(object):
         self.canvas.translate(-origin_x, -origin_y)
 
     def draw_table(self):
-        origin_x = inch * 0.5
-        origin_y = inch * 6.2
+        origin_x = inches(0.5)
+        origin_y = inches(6.2)
         self.canvas.translate(origin_x, origin_y)
 
-        height = inch * 4.2
-        date_x = inch * 1
-        description_x = inch * 5
-        quantity_x = inch * 5.75
-        rate_x = inch * 6.5
-        amount_x = inch * 7.5
-        header_height = inch * 0.3
+        height = inches(4.2)
+        date_x = inches(1)
+        description_x = inches(5)
+        quantity_x = inches(5.75)
+        rate_x = inches(6.5)
+        amount_x = inches(7.5)
+        header_height = inches(0.3)
 
         self.canvas.rect(0, 0, amount_x, -height)
         self.canvas.setFillColorRGB(*LIGHT_GRAY)
@@ -642,26 +646,26 @@ class InvoiceTemplate(object):
         self.canvas.line(rate_x, header_height, rate_x, -height)
 
         self.canvas.drawCentredString(midpoint(0, date_x),
-                                      inch * 0.1,
+                                      inches(0.1),
                                       "Date")
         self.canvas.drawCentredString(midpoint(date_x, description_x),
-                                      inch * 0.1,
+                                      inches(0.1),
                                       "Description")
         self.canvas.drawCentredString(midpoint(description_x, quantity_x),
-                                      inch * 0.1,
+                                      inches(0.1),
                                       "Quantity")
         self.canvas.drawCentredString(midpoint(quantity_x, rate_x),
-                                      inch * 0.1,
+                                      inches(0.1),
                                       "Rate")
         self.canvas.drawCentredString(midpoint(rate_x, amount_x),
-                                      inch * 0.1,
+                                      inches(0.1),
                                       "Amount")
 
         for item_index in range(len(self.items)):
             if item_index > 13:
                 raise InvoiceError("Too many line items to fit to invoice")
             item = self.items[item_index]
-            coord_y = -item_index * header_height + inch * -0.2
+            coord_y = -item_index * header_height + inches(-0.2)
 
             self.canvas.drawCentredString(
                 midpoint(0, date_x),
@@ -692,16 +696,17 @@ class InvoiceTemplate(object):
         self.canvas.translate(-origin_x, -origin_y)
 
     def draw_footer(self):
-        self.canvas.rect(inch * 0.75, inch * 1.3, inch * 4, inch * 0.5)
+        self.canvas.rect(inches(0.75), inches(1.3), inches(4), inches(0.5))
 
         self.canvas.setFillColorRGB(*LIGHT_GRAY)
-        self.canvas.rect(inch * 5, inch * 1.05, inch * 3, inch * 0.5, fill=1)
+        self.canvas.rect(inches(5), inches(1.05), inches(3), inches(0.5),
+                         fill=1)
         self.canvas.setFillColorRGB(*BLACK)
 
-        self.canvas.drawString(inch * 5.2, inch * 1.25, "Total:")
+        self.canvas.drawString(inches(5.2), inches(1.25), "Total:")
         if self.total is not None:
-            self.canvas.drawCentredString(midpoint(inch * 7.0, inch * 8.0),
-                                          inch * 1.25,
+            self.canvas.drawCentredString(midpoint(inches(7.0), inches(8.0)),
+                                          inches(1.25),
                                           "$%0.2f" % self.total)
 
         footer_text = ("Payable by check or wire transfer. "
@@ -717,5 +722,5 @@ class InvoiceTemplate(object):
         }
 
         payment_info = Paragraph(footer_text, ParagraphStyle(''))
-        payment_info.wrapOn(self.canvas, inch * 4, inch * 0.9)
-        payment_info.drawOn(self.canvas, inch * 0.75, inch * 0.6)
+        payment_info.wrapOn(self.canvas, inches(4), inches(0.9))
+        payment_info.drawOn(self.canvas, inches(0.75), inches(0.6))
