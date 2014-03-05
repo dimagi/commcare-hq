@@ -85,6 +85,16 @@ LOGGING = {
             'level': 'CRITICAL',
             'handler': 'null',
             'propagate': False,
+        },
+        'south': {
+            'level': 'CRITICAL',
+            'handler': 'null',
+            'propagate': False,
+        },
+        'pillowtop': {
+            'level': 'CRITICAL',
+            'handler': 'null',
+            'propagate': False,
         }
     }
 }
