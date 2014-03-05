@@ -472,6 +472,10 @@ class FakeSavedExportSchema(BaseSavedExportSchema):
         first_header = headers[0][1]
         return [(self.table_name, first_header)]
 
+    def remap_tables(self, tables):
+        # can be overridden to rename/remove default stuff from exports
+        return tables
+
     def get_export_components(self, previous_export_id=None, filter=None):
         from couchexport.export import get_export_components
         return get_export_components(self.index, previous_export_id, filter=self.filter & filter)
@@ -506,13 +510,11 @@ class FakeSavedExportSchema(BaseSavedExportSchema):
             schema_index = export_tag
             config, updated_schema, export_schema_checkpoint = get_export_components(schema_index,
                                                                                      previous_export_id, filter)
-            # transform docs onto output and save
             if config:
                 writer = get_writer(format)
 
-                # open the doc and the headers
-                formatted_headers = get_headers(updated_schema, separator=separator)
-
+                # get cleaned up headers
+                formatted_headers = self.remap_tables(get_headers(updated_schema, separator=separator))
                 writer.open(formatted_headers, tmp, max_column_size=max_column_size)
 
                 total_docs = len(config.potentially_relevant_ids)
@@ -521,11 +523,13 @@ class FakeSavedExportSchema(BaseSavedExportSchema):
                 for i, doc in config.enum_docs():
                     if self.transform:
                         doc = self.transform(doc)
-                    writer.write(format_tables(create_intermediate_tables(doc, updated_schema),
-                                               include_headers=False, separator=separator))
+
+                    writer.write(self.remap_tables(format_tables(create_intermediate_tables(doc, updated_schema),
+                                                                 include_headers=False, separator=separator)))
                     if process:
                         DownloadBase.set_progress(process, i + 1, total_docs)
                 writer.close()
+
             checkpoint = export_schema_checkpoint
 
         if checkpoint:
