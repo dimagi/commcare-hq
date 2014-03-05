@@ -480,7 +480,7 @@ class FakeSavedExportSchema(BaseSavedExportSchema):
                          use_cache=True, max_column_size=2000, separator='|', process=None, **kwargs):
         # the APIs of how these methods are broken down suck, but at least
         # it's DRY
-        from couchexport.export import export
+        from couchexport.export import get_writer, format_tables, create_intermediate_tables, get_export_components, get_headers
         from django.core.cache import cache
         import hashlib
 
@@ -503,10 +503,30 @@ class FakeSavedExportSchema(BaseSavedExportSchema):
 
         fd, path = tempfile.mkstemp()
         with os.fdopen(fd, 'wb') as tmp:
-            checkpoint = export(export_tag, tmp, format=format,
-                previous_export_id=previous_export_id,
-                filter=filter, max_column_size=max_column_size,
-                separator=separator, export_object=self, process=process)
+            schema_index = export_tag
+            config, updated_schema, export_schema_checkpoint = get_export_components(schema_index,
+                                                                                     previous_export_id, filter)
+            # transform docs onto output and save
+            if config:
+                writer = get_writer(format)
+
+                # open the doc and the headers
+                formatted_headers = get_headers(updated_schema, separator=separator)
+
+                writer.open(formatted_headers, tmp, max_column_size=max_column_size)
+
+                total_docs = len(config.potentially_relevant_ids)
+                if process:
+                    DownloadBase.set_progress(process, 0, total_docs)
+                for i, doc in config.enum_docs():
+                    if self.transform:
+                        doc = self.transform(doc)
+                    writer.write(format_tables(create_intermediate_tables(doc, updated_schema),
+                                               include_headers=False, separator=separator))
+                    if process:
+                        DownloadBase.set_progress(process, i + 1, total_docs)
+                writer.close()
+            checkpoint = export_schema_checkpoint
 
         if checkpoint:
             if use_cache:
