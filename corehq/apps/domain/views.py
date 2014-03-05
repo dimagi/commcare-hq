@@ -6,8 +6,10 @@ import dateutil
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
-from corehq.apps.accounting.decorators import require_billing_admin, requires_privilege_alert
-from corehq.apps.accounting.downgrade import DomainDowngradeStatusHandler
+from corehq.apps.accounting.decorators import (
+    require_billing_admin, requires_privilege_with_fallback,
+)
+from corehq.apps.accounting.subscription_changes import DomainDowngradeStatusHandler
 from corehq.apps.accounting.forms import EnterprisePlanContactForm
 from corehq.apps.accounting.utils import get_change_status
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
@@ -21,13 +23,11 @@ from django.utils.safestring import mark_safe
 from corehq import toggles, privileges
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
-import toggle
-from toggle.decorators import require_toggle
 
 from corehq.apps.accounting.models import (Subscription, CreditLine, SoftwarePlanVisibility, SoftwareProductType,
                                            DefaultProductPlan, SoftwarePlanEdition, BillingAccount, BillingAccountType)
 from corehq.apps.accounting.usage import FeatureUsage
-from corehq.apps.accounting.user_text import get_feature_name, PricingTable, DESC_BY_EDITION
+from corehq.apps.accounting.user_text import get_feature_name, PricingTable, DESC_BY_EDITION, PricingTableFeatures
 from corehq.apps.hqwebapp.models import ProjectSettingsTab
 from corehq.apps import receiverwrapper
 from django.core.urlresolvers import reverse
@@ -102,6 +102,53 @@ class LoginAndDomainMixin(object):
     @method_decorator(login_and_domain_required)
     def dispatch(self, *args, **kwargs):
         return super(LoginAndDomainMixin, self).dispatch(*args, **kwargs)
+
+
+class SubscriptionUpgradeRequiredView(LoginAndDomainMixin, BasePageView,
+                                      DomainViewMixin):
+    page_title = ugettext_noop("Upgrade Required")
+    template_name = "domain/insufficient_privilege_notification.html"
+
+    @property
+    def page_url(self):
+        return self.request.get_full_path
+
+    @property
+    def page_name(self):
+        return _("Sorry, you do not have access to %(feature_name)s") % {
+            'feature_name': self.feature_name,
+        }
+
+    @property
+    def page_context(self):
+        return {
+            'domain': self.domain,
+            'feature_name': self.feature_name,
+            'plan_name': self.required_plan_name,
+            'change_subscription_url': reverse(SelectPlanView.urlname,
+                                               args=[self.domain])
+        }
+
+    @property
+    def missing_privilege(self):
+        return self.args[1]
+
+    @property
+    def feature_name(self):
+        return privileges.Titles.get_name_from_privilege(self.missing_privilege)
+
+    @property
+    def required_plan_name(self):
+        return DefaultProductPlan.get_lowest_edition_for_privilege_by_domain(
+            self.domain_object, self.missing_privilege
+        )
+
+    def get(self, request, *args, **kwargs):
+        self.request = request
+        self.args = args
+        return super(SubscriptionUpgradeRequiredView, self).get(
+            request, *args, **kwargs
+        )
 
 
 class BaseDomainView(LoginAndDomainMixin, BaseSectionPageView, DomainViewMixin):
@@ -206,13 +253,13 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
 
     @property
     def can_use_custom_logo(self):
-        if toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, self.request.user.username):
-            try:
-                ensure_request_has_privilege(self.request, privileges.CUSTOM_BRANDING)
-            except PermissionDenied:
-                return False
-        # todo return true here after march 1
-        return self.can_user_see_meta
+        try:
+            ensure_request_has_privilege(
+                self.request, privileges.CUSTOM_BRANDING
+            )
+        except PermissionDenied:
+            return False
+        return True
 
     @property
     @memoized
@@ -228,8 +275,12 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
                     self.request.POST,
                     self.request.FILES,
                     user=self.request.couch_user,
-                    domain=self.domain_object.name)
-            return DomainGlobalSettingsForm(self.request.POST)
+                    domain=self.domain_object.name,
+                    can_use_custom_logo=self.can_use_custom_logo,
+                )
+            return DomainGlobalSettingsForm(
+                self.request.POST, can_use_custom_logo=self.can_use_custom_logo
+            )
 
         if self.can_user_see_meta:
             for attr in [
@@ -254,9 +305,15 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
                 'call_center_case_type': self.domain_object.call_center_config.case_type,
             })
 
-            return DomainMetadataForm(can_use_custom_logo=self.can_use_custom_logo,
-                                      user=self.request.couch_user, domain=self.domain_object.name, initial=initial)
-        return DomainGlobalSettingsForm(initial=initial, can_use_custom_logo=self.can_use_custom_logo)
+            return DomainMetadataForm(
+                can_use_custom_logo=self.can_use_custom_logo,
+                user=self.request.couch_user,
+                domain=self.domain_object.name,
+                initial=initial
+            )
+        return DomainGlobalSettingsForm(
+            initial=initial, can_use_custom_logo=self.can_use_custom_logo
+        )
 
     @property
     def page_context(self):
@@ -1184,7 +1241,7 @@ class OrgSettingsView(BaseAdminProjectSettingsView):
     urlname = 'domain_org_settings'
     page_title = ugettext_noop("Organization")
 
-    @method_decorator(requires_privilege_alert(privileges.CROSS_PROJECT_REPORTS))
+    @method_decorator(requires_privilege_with_fallback(privileges.CROSS_PROJECT_REPORTS))
     def dispatch(self, request, *args, **kwargs):
         return super(OrgSettingsView, self).dispatch(request, *args, **kwargs)
 
@@ -1483,10 +1540,38 @@ class AdvancedCommTrackSettingsView(BaseCommTrackAdminView):
             return AdvancedSettingsForm(self.request.POST, initial=initial)
         return AdvancedSettingsForm(initial=initial)
 
+    def set_ota_restore_config(self):
+        """
+        If the checkbox for syncing consumption fixtures is
+        checked, then we build the restore config with appropriate
+        special properties, otherwise just clear the object.
+
+        If there becomes a way to tweak these on the UI, this should
+        be done differently.
+        """
+
+        from corehq.apps.commtrack.models import StockRestoreConfig
+        if self.commtrack_settings.sync_consumption_fixtures:
+            self.domain_object.commtrack_settings.ota_restore_config = StockRestoreConfig(
+                section_to_consumption_types={
+                    'stock': 'consumption'
+                },
+                force_to_consumption_case_types=[
+                    'supply-point'
+                ],
+                use_dynamic_product_list=True,
+            )
+        else:
+            self.domain_object.commtrack_settings.ota_restore_config = StockRestoreConfig()
+
     def post(self, request, *args, **kwargs):
         if self.commtrack_settings_form.is_valid():
             data = self.commtrack_settings_form.cleaned_data
             self.commtrack_settings.use_auto_consumption = bool(data.get('use_auto_consumption'))
+            self.commtrack_settings.sync_location_fixtures = bool(data.get('sync_location_fixtures'))
+            self.commtrack_settings.sync_consumption_fixtures = bool(data.get('sync_consumption_fixtures'))
+
+            self.set_ota_restore_config()
 
             fields = ('emergency_level', 'understock_threshold', 'overstock_threshold')
             for field in fields:

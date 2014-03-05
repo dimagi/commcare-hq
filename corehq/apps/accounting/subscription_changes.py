@@ -8,7 +8,7 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.orgs.models import Organization
 from corehq.apps.reminders.models import CaseReminderHandler, METHOD_SMS_SURVEY, METHOD_IVR_SURVEY
-from corehq.apps.users.models import CommCareUser, UserRole
+from corehq.apps.users.models import CommCareUser, UserRole, WebUser
 from couchexport.models import SavedExportSchema
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
@@ -16,32 +16,42 @@ from dimagi.utils.decorators.memoized import memoized
 global_logger = logging.getLogger(__name__)
 
 
-class BaseDowngradeHandler(object):
+class BaseModifySubscriptionHandler(object):
     supported_privileges = []
+    action_type = "base"
 
-    def __init__(self, domain, new_plan_version, downgraded_privileges):
-        if isinstance(downgraded_privileges, set):
-            downgraded_privileges = list(downgraded_privileges)
+    def __init__(self, domain, new_plan_version, changed_privs, verbose=False):
+        self.verbose = verbose
+        if isinstance(changed_privs, set):
+            changed_privs = list(changed_privs)
         if not isinstance(domain, Domain):
             domain = Domain.get_by_name(domain)
         self.domain = domain
 
         # plan dependent privilege
-        downgraded_privileges.append(privileges.MOBILE_WORKER_CREATION)
+        changed_privs.append(privileges.MOBILE_WORKER_CREATION)
 
-        self.privileges = filter(lambda x: x in self.supported_privileges, downgraded_privileges)
+        self.privileges = filter(lambda x: x in self.supported_privileges, changed_privs)
         self.new_plan_version = new_plan_version
 
     def get_response(self):
         response = []
         for priv in self.privileges:
+            if self.verbose:
+                print "Applying %s %s." % (priv, self.action_type)
             message = getattr(self, 'response_%s' % priv)
             if message is not None:
                 response.append(message)
         return response
 
 
-class DomainDowngradeActionHandler(BaseDowngradeHandler):
+class BaseModifySubscriptionActionHandler(BaseModifySubscriptionHandler):
+    def get_response(self):
+        response = super(BaseModifySubscriptionActionHandler, self).get_response()
+        return len(filter(lambda x: not x, response)) == 0
+
+
+class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
     """
     This carries out the downgrade action based on each privilege.
 
@@ -50,12 +60,9 @@ class DomainDowngradeActionHandler(BaseDowngradeHandler):
     supported_privileges = [
         privileges.OUTBOUND_SMS,
         privileges.INBOUND_SMS,
+        privileges.ROLE_BASED_ACCESS,
     ]
-
-    def get_response(self):
-        response = super(DomainDowngradeActionHandler, self).get_response()
-        return len(filter(lambda x: not x, response)) == 0
-
+    action_type = "downgrade"
 
     @property
     @memoized
@@ -83,6 +90,8 @@ class DomainDowngradeActionHandler(BaseDowngradeHandler):
             for reminder in self._active_reminders:
                 reminder.active = False
                 reminder.save()
+                if self.verbose:
+                    print "Deactivated Reminder %s" % reminder.nickname
         except Exception:
             logging.exception("Failed to downgrade outbound sms for domain %s." % self.domain.name)
             return False
@@ -98,12 +107,71 @@ class DomainDowngradeActionHandler(BaseDowngradeHandler):
             for survey in surveys:
                 survey.active = False
                 survey.save()
+                if self.verbose:
+                    print "Deactivated Survey %s" % survey.nickname
         except Exception:
             logging.exception("Failed to downgrade outbound sms for domain %s." % self.domain.name)
             return False
         return True
 
-class DomainDowngradeStatusHandler(BaseDowngradeHandler):
+    @property
+    def response_role_based_access(self):
+        """
+        Perform Role Based Access Downgrade
+        - Archive custom roles.
+        - Set user roles using custom roles to Read Only.
+        - Reset initial roles to standard permissions.
+        """
+        custom_roles = [r.get_id for r in UserRole.get_custom_roles_by_domain(self.domain.name)]
+        if not custom_roles:
+            return True
+        if self.verbose:
+            print "Archiving %d custom roles." % len(custom_roles)
+        # temporarily disable this part of the downgrade until we
+        # have a better user experience for notifying the downgraded user
+        # read_only_role = UserRole.get_read_only_role_by_domain(self.domain.name)
+        # web_users = WebUser.by_domain(self.domain.name)
+        # for web_user in web_users:
+        #     if web_user.get_domain_membership(self.domain.name).role_id in custom_roles:
+        #         web_user.set_role(self.domain.name, read_only_role.get_qualified_id())
+        #         web_user.save()
+        # for cc_user in CommCareUser.by_domain(self.domain.name):
+        #     if cc_user.get_domain_membership(self.domain.name).role_id in custom_roles:
+        #         cc_user.set_role(self.domain.name, 'none')
+        #         cc_user.save()
+        UserRole.archive_custom_roles_for_domain(self.domain.name)
+        UserRole.reset_initial_roles_for_domain(self.domain.name)
+        return True
+
+
+class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
+    """
+    This carries out the upgrade action based on each privilege.
+
+    Each response should return a boolean.
+    """
+    supported_privileges = [
+        privileges.ROLE_BASED_ACCESS,
+    ]
+    action_type = "upgrade"
+
+    @property
+    def response_role_based_access(self):
+        """
+        Perform Role Based Access Upgrade
+        - Un-archive custom roles.
+        """
+        if self.verbose:
+            num_archived_roles = len(UserRole.by_domain(self.domain.name,
+                                                        is_archived=True))
+            if num_archived_roles:
+                print "Re-Activating %d archived roles." % num_archived_roles
+        UserRole.unarchive_roles_for_domain(self.domain.name)
+        return True
+
+
+
+class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
     """
     This returns a list of alerts for the user if their current domain is using features that
     will be removed during the downgrade.
@@ -119,6 +187,7 @@ class DomainDowngradeStatusHandler(BaseDowngradeHandler):
         privileges.MOBILE_WORKER_CREATION,
         privileges.ROLE_BASED_ACCESS,
     ]
+    action_type = "notification"
 
     def _fmt_alert(self, message, details=None):
         if details is not None and not isinstance(details, list):
@@ -153,10 +222,10 @@ class DomainDowngradeStatusHandler(BaseDowngradeHandler):
         num_apps = len(cloudcare_enabled_apps)
         return self._fmt_alert(
             ungettext(
-                "You have %(num_apps)d application that will lose CloudCare access as of March 1, 2014 if you select "
-                "this plan.",
-                "You have %(num_apps)d applications that will lose CloudCare access as of March 1, 2014 if you select "
-                "this plan.",
+                "You have %(num_apps)d application that will lose CloudCare "
+                "access if you select this plan.",
+                "You have %(num_apps)d applications that will lose CloudCare "
+                "access if you select this plan.",
                 num_apps
             ) % {
                 'num_apps': num_apps,
@@ -172,19 +241,14 @@ class DomainDowngradeStatusHandler(BaseDowngradeHandler):
         """
         Lookup tables will be deleted on downgrade.
         """
-        num_fixtures = FixtureDataType.get_db().view(
-            'fixtures/data_types_by_domain',
-            reduce=True,
-            key=self.domain.name,
-        ).first()
-        num_fixtures = num_fixtures['value'] if num_fixtures is not None else 0
+        num_fixtures = FixtureDataType.total_by_domain(self.domain.name)
         if num_fixtures > 0:
             return self._fmt_alert(
                 ungettext(
-                    "You have %(num_fix)s Lookup Table set up. Selecting this plan will delete this Lookup Table "
-                    "on March 1, 2014.",
-                    "You have $(num_fix)s Lookup Tables set up. Selecting this plan will delete these Lookup Tables "
-                    "on March 1, 2014.",
+                    "You have %(num_fix)s Lookup Table set up. Selecting this "
+                    "plan will delete this Lookup Table.",
+                    "You have $(num_fix)s Lookup Tables set up. Selecting "
+                    "this plan will delete these Lookup Tables.",
                     num_fixtures
                 ) % {'num_fix': num_fixtures}
             )
@@ -195,8 +259,9 @@ class DomainDowngradeStatusHandler(BaseDowngradeHandler):
         Custom logos will be removed on downgrade.
         """
         if self.domain.has_custom_logo:
-            return self._fmt_alert(_("You are using custom branding. Selecting this plan will remove this feature "
-                                     "as of March 1, 2014."))
+            return self._fmt_alert(_("You are using custom branding. "
+                                     "Selecting this plan will remove this "
+                                     "feature."))
 
     @property
     def response_cross_project_reports(self):
@@ -206,8 +271,9 @@ class DomainDowngradeStatusHandler(BaseDowngradeHandler):
         if self.domain.organization:
             org = Organization.get_by_name(self.domain.organization)
             return self._fmt_alert(
-                _("You will lose access to cross-project reports as of March 1, 2014 for the organization "
-                  "'%(org_name)s'.") % {
+                _("You will lose access to cross-project reports for the "
+                  "organization '%(org_name)s'.") %
+                {
                     'org_name': org.title,
                 })
 
@@ -237,10 +303,10 @@ class DomainDowngradeStatusHandler(BaseDowngradeHandler):
         if num_active > 0:
             return self._fmt_alert(
                 ungettext(
-                    "You have %(num_active)d active Reminder Rule. Selecting this plan will deactivate this rule "
-                    "as of March 1, 2014.",
-                    "You have %(num_active)d active Reminder Rules. Selecting this plan will deactivate these rules "
-                    "as of March 1, 2014.",
+                    "You have %(num_active)d active Reminder Rule. Selecting "
+                    "this plan will deactivate this rule.",
+                    "You have %(num_active)d active Reminder Rules. Selecting "
+                    "this plan will deactivate these rules.",
                     num_active
                 ) % {
                     'num_active': num_active,
@@ -258,9 +324,9 @@ class DomainDowngradeStatusHandler(BaseDowngradeHandler):
             return self._fmt_alert(
                 ungettext(
                     "You have %(num_active)d active Reminder Rule for a Survey. "
-                    "Selecting this plan will deactivate this rule as of March 1, 2014.",
+                    "Selecting this plan will deactivate this rule.",
                     "You have %(num_active)d active Reminder Rules for a Survey. "
-                    "Selecting this plan will deactivate these rules as of March 1, 2014.",
+                    "Selecting this plan will deactivate these rules.",
                     num_survey
                 ) % {
                     'num_active': num_survey,
@@ -282,8 +348,10 @@ class DomainDowngradeStatusHandler(BaseDowngradeHandler):
         if num_deid_reports > 0:
             return self._fmt_alert(
                 ungettext(
-                    "You have %(num)d De-Identified Export. Selecting this plan will remove it as of March 1, 2014.",
-                    "You have %(num)d De-Identified Exports. Selecting this plan will remove them as of March 1, 2014.",
+                    "You have %(num)d De-Identified Export. Selecting this "
+                    "plan will remove it.",
+                    "You have %(num)d De-Identified Exports. Selecting this "
+                    "plan will remove them.",
                     num_deid_reports
                 ) % {
                     'num': num_deid_reports,
@@ -307,13 +375,16 @@ class DomainDowngradeStatusHandler(BaseDowngradeHandler):
             if num_extra > 0:
                 return self._fmt_alert(
                     ungettext(
-                        "You have %(num_users)d Mobile Worker over the monthly limit of %(monthly_limit)d for "
-                        "this new plan. There will be an additional monthly charge as of March 1, 2014 "
-                        "of USD %(excess_fee)s per Mobile Worker, totalling USD %(monthly_total)s per month, "
-                        "if you select this plan.",
-                        "You have %(num_users)d Mobile Workers over the monthly limit of %(monthly_limit)d for "
-                        "this new plan. There will be an additional monthly charge as of March 1, 2014 of USD "
-                        "%(excess_fee)s per Mobile Worker, totalling USD %(monthly_total)s per month, if you "
+                        "You have %(num_users)d Mobile Worker over the monthly "
+                        "limit of %(monthly_limit)d for this new plan. There "
+                        "will be an additional monthly charge of USD "
+                        "%(excess_fee)s per Mobile Worker, totalling USD "
+                        "%(monthly_total)s per month, if you select this plan.",
+                        "You have %(num_users)d Mobile Workers over the "
+                        "monthly limit of %(monthly_limit)d for this new plan. "
+                        "There will be an additional monthly charge "
+                        "of USD %(excess_fee)s per Mobile Worker, totalling "
+                        "USD %(monthly_total)s per month, if you "
                         "select this plan.",
                         num_extra
                     ) % {
@@ -325,7 +396,8 @@ class DomainDowngradeStatusHandler(BaseDowngradeHandler):
                 )
         except FeatureRate.DoesNotExist:
             global_logger.error(
-                "It seems that the plan %s did not have rate for Mobile Workers. This is problematic." %
+                "It seems that the plan %s did not have rate for Mobile "
+                "Workers. This is problematic." %
                     self.new_plan_version.plan.name
                 )
 
@@ -334,67 +406,17 @@ class DomainDowngradeStatusHandler(BaseDowngradeHandler):
         """
         Alert the user if there are currently custom roles set up for the domain.
         """
-        db = UserRole.get_db()
-        user_roles_query = db.view(
-            'users/roles_by_domain',
-            startkey=[self.domain.name],
-            endkey=[self.domain.name, {}],
-            reduce=False,
-        ).all()
-        user_role_ids = [r['id'] for r in user_roles_query]
-
-        EDIT_WEB_USERS = 'edit_web_users'
-        EDIT_CC_USERS = 'edit_commcare_users'
-        EDIT_APPS = 'edit_apps'
-        EDIT_DATA = 'edit_data'
-        VIEW_REPORTS = 'view_reports'
-
-        STD_ROLES = {
-            'Read Only': {
-                'on': [VIEW_REPORTS],
-                'off': [EDIT_DATA, EDIT_APPS, EDIT_CC_USERS, EDIT_WEB_USERS],
-            },
-            'Field Implementer': {
-                'on': [VIEW_REPORTS, EDIT_CC_USERS],
-                'off': [EDIT_DATA, EDIT_APPS, EDIT_WEB_USERS],
-            },
-            'App Editor': {
-                'on': [VIEW_REPORTS, EDIT_APPS],
-                'off': [EDIT_DATA, EDIT_WEB_USERS, EDIT_CC_USERS],
-            }
-        }
-
-        def _is_custom_role(doc):
-            role_name = doc['name']
-            if not role_name in STD_ROLES.keys():
-                return True
-            doc_perms = doc['permissions']
-            if len(doc_perms['view_report_list']) > 0:
-                return True
-            std_perms = STD_ROLES[role_name]
-            def _is_match(status, val):
-                return sum([doc_perms[k] == val for k in std_perms[status]]) == len(std_perms[status])
-            if not _is_match('on', True):
-                return True
-            if not _is_match('off', False):
-                return True
-            return False
-
-        custom_roles = []
-        for role_doc in iter_docs(db, user_role_ids):
-            if _is_custom_role(role_doc):
-                custom_roles.append(role_doc['name'])
-
+        custom_roles = [r.name for r in UserRole.get_custom_roles_by_domain(self.domain.name)]
         num_roles = len(custom_roles)
         if num_roles > 0:
             return self._fmt_alert(
                 ungettext(
-                    "You have %(num_roles)d Custom Role configured for your project. If you "
-                    "select this plan, all users with that role will change to having the Read Only role "
-                    "as of March 1, 2014.",
-                    "You have %(num_roles)d Custom Roles configured for your project . If you "
-                    "select this plan, all users with these roles will change to having the Read Only role "
-                    "as of March 1, 2014.",
+                    "You have %(num_roles)d Custom Role configured for your "
+                    "project. If you select this plan, all users with that "
+                    "role will change to having the Read Only role.",
+                    "You have %(num_roles)d Custom Roles configured for your "
+                    "project . If you select this plan, all users with these "
+                    "roles will change to having the Read Only role.",
                     num_roles
                 ) % {
                     'num_roles': num_roles,

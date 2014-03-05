@@ -40,6 +40,12 @@
                             uses cases but doesn't have
                             detail screens configured for cases.
                         {% endif %}
+                        {% if error.type == "no product detail" %}
+                            Module
+                            <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
+                            uses CommTrack products but doesn't have
+                            detail screens configured for products.
+                        {% endif %}
                         {% if error.type == "invalid id key" %}
                             Module
                             <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
@@ -86,16 +92,18 @@
                         {% endif %}
                         {% if error.type == "update_case uses reserved word" %}
                             Case Update uses reserved word "{{ error.word }}"
-                            in form {% include "app_manager/partials/form_error_message.html" %}
+                            {% if error.case_tag %} for action "{{ error.case_tag }}"{% endif %}
+                            {% if not not_actual_build %}in form {% include "app_manager/partials/form_error_message.html" %}{% endif %}
                         {% endif %}
                         {% if error.type == "update_case word illegal" %}
                             Case Update "{{ error.word }}" should start with a letter and only contain letters, numbers, '-', and '_'
-                            in form {% include "app_manager/partials/form_error_message.html" %}
+                            {% if error.case_tag %} for action "{{ error.case_tag }}"{% endif %}
+                            {% if not not_actual_build %}in form {% include "app_manager/partials/form_error_message.html" %}{% endif %}
                         {% endif %}
                         {% if error.type == "case_name required" %}
                             Every case must have a name. Please specify a value for the name property under
-                            "Save data to the following case properties"
-                            in form {% include "app_manager/partials/form_error_message.html" %}
+                            "Save data to the following case properties" {% if error.case_tag %} for action "{{ error.case_tag }}"{% endif %}
+                            {% if not not_actual_build %}in form {% include "app_manager/partials/form_error_message.html" %}{% endif %}
                         {% endif %}
                         {% if error.type == "path error" %}
                             {% if error.path %}
@@ -110,6 +118,18 @@
                         {% endif %}
                         {% if error.type == "empty lang" %}
                             One of your languages is empty. Check your <a href="{% url "view_app" domain app.id %}">app settings</a>.
+                        {% endif %}
+                        {% if error.type == "missing parent tag" %}
+                            A subcase is referencing a parent case tag that does not exist: "{{ error.case_tag }}"
+                            {% if not not_actual_build %}in form {% include "app_manager/partials/form_error_message.html" %}{% endif %}
+                        {% endif %}
+                        {% if error.type == "subcase repeat context" %}
+                            The subcase "{{ error.case_tag }}" is in a different repeat context to its parent
+                            {% if not not_actual_build %}in form {% include "app_manager/partials/form_error_message.html" %}{% endif %}
+                        {% endif %}
+                        {% if error.type == "circular ref" %}
+                            A circular reference was detecte in the hierarchy of subcase "{{ error.case_tag }}"
+                            {% if not not_actual_build %}in form {% include "app_manager/partials/form_error_message.html" %}{% endif %}
                         {% endif %}
                         {# And then show the optional `message` regardless #}
                         <span>{{ error.message }}</span>

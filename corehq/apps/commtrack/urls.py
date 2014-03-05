@@ -1,6 +1,6 @@
 #from django.conf.urls.defaults import patterns, url
 from django.conf.urls.defaults import *
-from corehq.apps.commtrack.views import ProductListView, FetchProductListView, NewProductView, EditProductView, ProgramListView, FetchProgramListView, NewProgramView, EditProgramView, FetchProductForProgramListView
+from corehq.apps.commtrack.views import ProductListView, FetchProductListView, NewProductView, EditProductView, ProgramListView, FetchProgramListView, NewProgramView, EditProgramView, FetchProductForProgramListView, DefaultConsumptionView
 
 urlpatterns = patterns('corehq.apps.commtrack.views',
     url(r'^debug/bootstrap/$', 'bootstrap'),
@@ -24,4 +24,5 @@ settings_urls = patterns('corehq.apps.commtrack.views',
     url(r'^programs/(?P<prog_id>[\w-]+)/$', EditProgramView.as_view(), name=EditProgramView.urlname),
     url(r'^programs/(?P<prog_id>[\w-]+)/productlist/$', FetchProductForProgramListView.as_view(),
         name=FetchProductForProgramListView.urlname),
+    url(r'^default_consumption/$', DefaultConsumptionView.as_view(), name=DefaultConsumptionView.urlname),
 )

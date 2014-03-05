@@ -26,6 +26,9 @@
                 edit: {{ edit|BOOL }},
                 user: {
                     is_previewer: {{ request.couch_user.is_previewer|BOOL }}
+                },
+                permissions: {
+                    cloudcare: {{ is_cloudcare_allowed|BOOL }}
                 }
             }
         };

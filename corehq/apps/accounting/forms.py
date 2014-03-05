@@ -15,6 +15,7 @@ from django.utils.translation import ugettext_noop, ugettext as _, ugettext
 from crispy_forms.bootstrap import FormActions, StrictButton, InlineField, InlineRadios
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
+from django_countries.countries import COUNTRIES
 from corehq import privileges
 
 from dimagi.utils.decorators.memoized import memoized
@@ -107,7 +108,9 @@ class BillingAccountForm(forms.Form):
                 'city',
                 'region',
                 'postal_code',
-                crispy.Field('country', css_class="input-xlarge"),
+                crispy.Field('country', css_class="input-xlarge",
+                             data_countryname=dict(COUNTRIES).get(
+                                 args[0].get('country') if len(args) > 0 else account.billingcontactinfo.country, '')),
             ) if account is not None else None,
             FormActions(
                 crispy.ButtonHolder(

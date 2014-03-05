@@ -4,7 +4,7 @@
 {% load hq_shared_tags %}
 {% load timezone_tags %}
 
-{% block title %}{% trans "Edit Feature Flag: " %}{{ toggle.slug }}{% endblock %}
+{% block title %}{% trans "Edit Feature Flag: " %}{{ toggle_meta.label }}{% endblock %}
 
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/js/main.js' %}"></script>
@@ -14,29 +14,39 @@
 
 {% block js-inline %}{{ block.super }}
 <script>
+    $(function () {
+        $('.hq-help-template').each(function () {
+            COMMCAREHQ.makeHqHelp({
+                content: $(this).data('content'),
+                title: $(this).data('title')
+            }, false).insertAfter(this);
+            $(this).remove();
+        });
+        $('.hq-help').hqHelp();
+    });
     $(function(){
         function ToggleView() {
             var self = this;
-            self.users = ko.observableArray();
+            self.items = ko.observableArray();
 
-            self.init = function (user_list) {
-                self.users.removeAll();
-                _(user_list).each(function (user) {
-                    self.users.push({
-                        value: ko.observable(user)
+            self.init = function (item_list) {
+                self.items.removeAll();
+                _(item_list).each(function (item) {
+                    self.items.push({
+                        value: ko.observable(item)
                     });
                 });
             };
 
-            self.addUser = function () {
-                self.users.push({
+            self.addItem = function () {
+                self.items.push({
                     value: ko.observable()
                 });
                 self.change();
             };
 
-            self.removeUser = function (user) {
-                self.users.remove(user);
+            self.removeItem = function (item) {
+                self.items.remove(item);
                 self.change();
             };
 
@@ -47,19 +57,18 @@
             self.saveButton = COMMCAREHQ.SaveButton.init({
                 unsavedMessage: "You have unchanged changes",
                 save: function () {
-                    var users = _.map(self.users(), function (user) {
-                        return user.value();
+                    var items = _.map(self.items(), function (item) {
+                        return item.value();
                     });
-                    console.log(users);
                     self.saveButton.ajax({
                         type: 'post',
                         url: "{% url "edit_toggle" toggle.slug %}",
                         data: {
-                            user_list: JSON.stringify(users)
+                            item_list: JSON.stringify(items)
                         },
                         dataType: 'json',
                         success: function (data) {
-                            self.init(data.user_list);
+                            self.init(data.item_list);
                         }
                     });
                 }
@@ -78,17 +87,32 @@
 {% block page_content %}
     <div id="toggle_editing_ko">
         <div data-bind="saveButton: saveButton"></div>
-        <h4>{% trans "Enabled users" %}</h4>
-        <!-- ko foreach: users -->
+        <h4>{% trans "Enabled toggle items" %}</h4>
+        {% if toggle_meta.namespaces %}
+        <hr/>
+        <div>
+            {% trans "Available namespaces:" %}
+        <span class="hq-help-template"
+              data-title="{% trans "Toggle Items" %}"
+              data-content="{% trans "Toggle items are usually usernames but can also be namespaced items such as 'domain:somedomain'" %}"></span>
+            <ul>
+                {% for ns in toggle_meta.namespaces %}
+                <li>{{ ns }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        <hr/>
+        {% endif %}
+        <!-- ko foreach: items -->
         <div class="row">
             <div class="span1">
-                <a href="#" class="btn btn-danger" data-bind="click: $parent.removeUser"><i class="icon-trash"></i></a>
+                <a href="#" class="btn btn-danger" data-bind="click: $parent.removeItem"><i class="icon-trash"></i></a>
             </div>
             <div class="span6">
                 <input type="text" data-bind="value: value">
             </div>
         </div>
         <!-- /ko -->
-        <button class="btn btn-success" data-bind="click: addUser"><i class="icon-plus"></i> {% trans "Add User" %}</button>
+        <button class="btn btn-success" data-bind="click: addItem"><i class="icon-plus"></i> {% trans "Add Item" %}</button>
     </div>
 {% endblock %}

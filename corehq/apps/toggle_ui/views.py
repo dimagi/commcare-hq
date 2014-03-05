@@ -16,10 +16,14 @@ class ToggleBaseView(BasePageView):
         return super(ToggleBaseView, self).dispatch(request, *args, **kwargs)
 
     def all_toggles(self):
-        for toggle in dir(toggles):
-            if not toggle.startswith('__'):
-                yield getattr(toggles, toggle)
+        for toggle_name in dir(toggles):
+            if not toggle_name.startswith('__'):
+                toggle = getattr(toggles, toggle_name)
+                if isinstance(toggle, toggles.StaticToggle):
+                    yield toggle
 
+    def toggle_map(self):
+        return dict([(t.slug, t) for t in self.all_toggles()])
 
 class ToggleListView(ToggleBaseView):
     urlname = 'toggle_list'
@@ -43,7 +47,7 @@ class ToggleEditView(ToggleBaseView):
 
     @property
     def page_title(self):
-        return "Edit Flag '{}'".format(self.toggle_slug)
+        return "Edit Flag '{}'".format(self.toggle_meta().label)
 
     @property
     def page_url(self):
@@ -54,29 +58,33 @@ class ToggleEditView(ToggleBaseView):
         return self.args[0] if len(self.args) > 0 else self.kwargs.get('toggle', "")
 
     def get_toggle(self):
-        if not self.toggle_slug in list(self.all_toggles()):
+        if not self.toggle_slug in [t.slug for t in self.all_toggles()]:
             raise Http404()
         try:
             return Toggle.get(generate_toggle_id(self.toggle_slug))
         except ResourceNotFound:
             return Toggle(slug=self.toggle_slug)
 
+    def toggle_meta(self):
+        return self.toggle_map()[self.toggle_slug]
+
     @property
     def page_context(self):
         return {
+            'toggle_meta': self.toggle_meta(),
             'toggle': self.get_toggle(),
         }
 
     def post(self, request, *args, **kwargs):
         toggle = self.get_toggle()
-        user_list = request.POST.get('user_list', [])
-        if user_list:
-            user_list = json.loads(user_list)
-            user_list = [u for u in user_list if u]
+        item_list = request.POST.get('item_list', [])
+        if item_list:
+            item_list = json.loads(item_list)
+            item_list = [u for u in item_list if u]
 
-        toggle.enabled_users = user_list
+        toggle.enabled_users = item_list
         toggle.save()
         data = {
-            'user_list': user_list
+            'item_list': item_list
         }
         return HttpResponse(json.dumps(data), mimetype="application/json")

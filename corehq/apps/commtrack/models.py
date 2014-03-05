@@ -308,6 +308,8 @@ class CommtrackConfig(Document):
     # configured on Advanced Settings page
     use_auto_emergency_levels = BooleanProperty(default=False)
 
+    sync_location_fixtures = BooleanProperty(default=False)
+    sync_consumption_fixtures = BooleanProperty(default=False)
     use_auto_consumption = BooleanProperty(default=False)
     consumption_config = SchemaProperty(ConsumptionConfig)
     stock_levels_config = SchemaProperty(StockLevelsConfig)
@@ -995,6 +997,12 @@ class RequisitionCase(CommCareCase):
                 ]
             }
         ]
+
+
+class RequisitionTransaction(StockTransaction):
+    @property
+    def category(self):
+        return 'requisition'
 
 
 class StockReport(object):

@@ -1,3 +1,5 @@
+from django.utils.translation import ugettext_lazy as _
+
 LOOKUP_TABLES = 'lookup_tables'
 API_ACCESS = 'api_access'
 
@@ -50,3 +52,27 @@ MOBILE_WORKER_CREATION = 'mobile_worker_creation'
 
 # Other privileges related specifically to accounting processes
 ACCOUNTING_ADMIN = 'accounting_admin'
+
+
+class Titles(object):
+
+    @classmethod
+    def get_name_from_privilege(cls, privilege):
+        return {
+            LOOKUP_TABLES: _("Lookup Tables"),
+            API_ACCESS: _("API Access"),
+            CLOUDCARE: _("Web-Based Apps (CloudCare)"),
+            ACTIVE_DATA_MANAGEMENT: _("Active Data Management"),
+            CUSTOM_BRANDING: _("Custom Branding"),
+            CROSS_PROJECT_REPORTS: _("Cross-Project Reports"),
+            ROLE_BASED_ACCESS: _("Advanced Role-Based Access"),
+            OUTBOUND_SMS: _("Outgoing Messaging"),
+            INBOUND_SMS: _("Incoming Messaging"),
+            REMINDERS_FRAMEWORK: _("Reminders Framework"),
+            CUSTOM_SMS_GATEWAY: _("Custom Android Gateway"),
+            BULK_CASE_MANAGEMENT: _("Bulk Case Management"),
+            BULK_USER_MANAGEMENT: _("Bulk User Management"),
+            ALLOW_EXCESS_USERS: _("Add Mobile Workers Above Limit"),
+            DEIDENTIFIED_DATA: _("De-Identified Data"),
+            HIPAA_COMPLIANCE_ASSURANCE: _("HIPAA Compliance Assurance"),
+        }.get(privilege, privilege)

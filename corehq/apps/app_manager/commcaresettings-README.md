@@ -23,7 +23,7 @@ with each element containing the following properties:
 
 ## Optional
 
-* `requires` - Should be set if this property is only enabled when another property has a certain value. Syntax is `"{SCOPE.PROPERTY}='VALUE'"`, where `SCOPE` can be `properties`, `features`, or `$parent`.
+* `requires` - Should be set if this property is only enabled when another property has a certain value. Syntax is `"{SCOPE.PROPERTY}='VALUE'"`, where `SCOPE` can be `hq`, `properties`, `features`, or `$parent`.
 * `requires_txt` - Optional text explaining the dependency enforced by `requires`
 * `contingent_default` - What value to force this property to if it's disabled. E.g. `[{"condition": "{features.sense}='true'", "value": "cc-su-auto"}]`, means "if the feature `sense` is `'true'`, then this property should be forced to take the value `"cc-su-auto"`.
 * `since` - The CommCare version in which this property was introduced. E.g. `2.1`.

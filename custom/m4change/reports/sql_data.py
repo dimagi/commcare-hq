@@ -1,5 +1,6 @@
 from django.utils.translation import ugettext as _
 from sqlagg import SumColumn
+from sqlagg.columns import SimpleColumn
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
 
 
@@ -29,6 +30,7 @@ class AncHmisCaseSqlData(SqlData):
     @property
     def columns(self):
         return [
+            DatabaseColumn(_("Location ID"), SimpleColumn("location_id")),
             DatabaseColumn(_("Antenatal Attendance - Total"), SumColumn("attendance_total")),
             DatabaseColumn(_("Antenatal first Visit before 20wks"), SumColumn("attendance_before_20_weeks_total")),
             DatabaseColumn(_("Antenatal first Visit after 20wks"), SumColumn("attendance_after_20_weeks_total")),
@@ -49,7 +51,49 @@ class AncHmisCaseSqlData(SqlData):
 
     @property
     def group_by(self):
-        return ['domain']
+        return ['domain','location_id']
+
+
+class ProjectIndicatorsCaseSqlData(SqlData):
+
+    table_name = "fluff_ProjectIndicatorsCaseFluff"
+
+    def __init__(self, domain, datespan):
+        self.domain = domain
+        self.datespan = datespan
+
+    @property
+    def filter_values(self):
+        return dict(
+            domain=self.domain,
+            startdate=self.datespan.startdate_utc.date(),
+            enddate=self.datespan.enddate_utc.date()
+        )
+
+    @property
+    def filters(self):
+        return [
+            "domain = :domain",
+            "date between :startdate and :enddate"
+        ]
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn(_("Location ID"), SimpleColumn("location_id")),
+            DatabaseColumn(_("Number of pregnant women who registered for ANC (in CCT payment sites only) "),
+                           SumColumn("women_registered_anc_total")),
+            DatabaseColumn(_("Number of women who had 4 ANC visits (in CCT payment sites only)"),
+                           SumColumn("women_having_4_anc_visits_total")),
+            DatabaseColumn(_("Number of women who delivered at the facility (in CCT payment sites only)"),
+                           SumColumn("women_delivering_at_facility_cct_total")),
+            DatabaseColumn(_("Number of women who attended PNC within 6 weeks of delivery"),
+                           SumColumn("women_delivering_within_6_weeks_attending_pnc_total")),
+        ]
+
+    @property
+    def group_by(self):
+        return ['domain','mother_id','location_id']
 
 
 class ImmunizationHmisCaseSqlData(SqlData):
@@ -78,6 +122,7 @@ class ImmunizationHmisCaseSqlData(SqlData):
     @property
     def columns(self):
         return [
+            DatabaseColumn(_("Location ID"), SimpleColumn("location_id")),
             DatabaseColumn(_("OPV0 - birth "), SumColumn("opv_0_total")),
             DatabaseColumn(_("Hep.B0 - birth"), SumColumn("hep_b_0_total")),
             DatabaseColumn(_("BCG"),SumColumn("bcg_total")),
@@ -104,4 +149,4 @@ class ImmunizationHmisCaseSqlData(SqlData):
 
     @property
     def group_by(self):
-        return ['domain']
+        return ['domain','location_id']

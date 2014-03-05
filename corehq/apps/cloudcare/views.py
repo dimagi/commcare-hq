@@ -1,6 +1,6 @@
 from couchdbkit import ResourceConflict
 from django.utils.decorators import method_decorator
-from corehq.apps.accounting.decorators import requires_privilege_plaintext_response, requires_privilege_for_commcare_user
+from corehq.apps.accounting.decorators import requires_privilege_plaintext_response, requires_privilege_for_commcare_user, requires_privilege_with_fallback
 from dimagi.utils.couch.database import iter_docs
 from django.views.decorators.cache import cache_page
 from casexml.apps.case.models import CommCareCase
@@ -23,7 +23,6 @@ from corehq.apps.cloudcare.api import look_up_app_json, get_cloudcare_apps, get_
 from dimagi.utils.parsing import string_to_boolean
 from django.conf import settings
 from corehq.apps.cloudcare import touchforms_api
-from toggle import toggle_enabled
 from touchforms.formplayer.api import DjangoAuth
 from django.core.urlresolvers import reverse
 from casexml.apps.phone.fixtures import generator
@@ -137,7 +136,7 @@ def cloudcare_main(request, domain, urlPath):
        "apps_raw": apps,
        "preview": preview,
        "maps_api_key": settings.GMAPS_API_KEY,
-       'offline_enabled': toggle_enabled(toggles.OFFLINE_CLOUDCARE, request.user.username),
+       'offline_enabled': toggles.OFFLINE_CLOUDCARE.enabled(request.user.username),
     }
     context.update(_url_context())
     return render(request, "cloudcare/cloudcare_home.html", context)
@@ -284,7 +283,6 @@ def get_apps_api(request, domain):
 def get_app_api(request, domain, app_id):
     return json_response(look_up_app_json(domain, app_id))
 
-@requires_privilege_plaintext_response(privileges.LOOKUP_TABLES)
 @cloudcare_api
 @cache_page(60 * 30)
 def get_fixtures(request, domain, user_id, fixture_id=None):
@@ -323,6 +321,7 @@ class EditCloudcareUserPermissionsView(BaseUserSettingsView):
     page_title = ugettext_noop("CloudCare Permissions")
 
     @method_decorator(domain_admin_required)
+    @method_decorator(requires_privilege_with_fallback(privileges.CLOUDCARE))
     def dispatch(self, request, *args, **kwargs):
         return super(EditCloudcareUserPermissionsView, self).dispatch(request, *args, **kwargs)
 

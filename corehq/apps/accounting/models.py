@@ -9,8 +9,10 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from corehq import toggles
-from corehq.apps.accounting.downgrade import DomainDowngradeActionHandler
-from corehq.apps.accounting.utils import is_active_subscription
+from corehq.apps.accounting.utils import is_active_subscription, get_privileges
+from corehq.apps.accounting.subscription_changes import (
+    DomainDowngradeActionHandler, DomainUpgradeActionHandler,
+)
 from corehq.apps.users.models import WebUser
 from dimagi.utils.decorators.memoized import memoized
 
@@ -18,9 +20,8 @@ from django_prbac.models import Role
 from dimagi.utils.couch.database import SafeSaveDocument
 
 from corehq.apps.accounting.exceptions import (CreditLineError, AccountingError, SubscriptionAdjustmentError,
-                                               SubscriptionDowngradeError, NewSubscriptionError)
+                                               SubscriptionChangeError, NewSubscriptionError)
 from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES, assure_domain_instance, get_change_status
-import toggle
 
 global_logger = logging.getLogger(__name__)
 integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
@@ -143,7 +144,10 @@ class Currency(models.Model):
     code = models.CharField(max_length=3, unique=True)
     name = models.CharField(max_length=25, db_index=True)
     symbol = models.CharField(max_length=10)
-    rate_to_default = models.DecimalField(default=1.0, max_digits=20, decimal_places=EXCHANGE_RATE_DECIMAL_PLACES)
+    rate_to_default = models.DecimalField(
+        default=Decimal('1.0'), max_digits=20,
+        decimal_places=EXCHANGE_RATE_DECIMAL_PLACES,
+    )
     date_updated = models.DateField(auto_now=True)
 
     @classmethod
@@ -158,7 +162,7 @@ class BillingAccountAdmin(models.Model):
     @classmethod
     def get_admin_status_and_account(cls, web_user, domain):
         if not isinstance(web_user, WebUser):
-            raise ValueError("web_user should be an instance of WebUser")
+            return False, None
         account = BillingAccount.get_account_by_domain(domain)
         if account is None:
             return web_user.is_domain_admin(domain), None
@@ -424,6 +428,24 @@ class DefaultProductPlan(models.Model):
         except DefaultProductPlan.DoesNotExist:
             raise AccountingError("No default product plan was set up, did you forget to bootstrap plans?")
 
+    @classmethod
+    def get_lowest_edition_for_privilege_by_domain(cls, domain, privilege_slug):
+        edition_order = [
+            SoftwarePlanEdition.COMMUNITY,
+            SoftwarePlanEdition.STANDARD,
+            SoftwarePlanEdition.PRO,
+            SoftwarePlanEdition.ADVANCED,
+            SoftwarePlanEdition.ENTERPRISE,
+        ]
+        for edition in edition_order:
+            plan_version = cls.get_default_plan_by_domain(
+                domain, edition=edition
+            )
+            privileges = get_privileges(plan_version)
+            if privilege_slug in privileges:
+                return plan_version.plan.edition
+        return SoftwarePlanEdition.ENTERPRISE
+
 
 class SoftwarePlanVersion(models.Model):
     """
@@ -511,25 +533,37 @@ class Subscriber(models.Model):
             return "ORGANIZATION %s" % self.organization
         return "DOMAIN %s" % self.domain
 
-    def downgrade(self, downgraded_privileges=None, new_plan_version=None, web_user=None):
-        # don't actually perform downgrades until march 1st.
-        if web_user is None or not toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, web_user):
-            return
+    def apply_upgrades_and_downgrades(self, downgraded_privileges=None,
+                                      upgraded_privileges=None,
+                                      new_plan_version=None,
+                                      verbose=False):
 
         if self.organization is not None:
-            raise SubscriptionDowngradeError("Only domain downgrades are possible.")
+            raise SubscriptionChangeError("Only domain upgrades and downgrades are possible.")
 
         if new_plan_version is None:
             new_plan_version = DefaultProductPlan.get_default_plan_by_domain(self.domain)
 
-        if downgraded_privileges is None:
-            downgraded_privileges = get_change_status(None, new_plan_version)[1]
-        if not downgraded_privileges:
-            return
+        if downgraded_privileges is None or upgraded_privileges is None:
+            dp, up = get_change_status(None, new_plan_version)[1:]
+            downgraded_privileges = downgraded_privileges or dp
+            upgraded_privileges = upgraded_privileges or up
 
-        downgrade_handler = DomainDowngradeActionHandler(self.domain, new_plan_version, downgraded_privileges)
-        if not downgrade_handler.get_response():
-            raise SubscriptionDowngradeError("The downgrade was not successful.")
+        if downgraded_privileges:
+            downgrade_handler = DomainDowngradeActionHandler(
+                self.domain, new_plan_version, downgraded_privileges,
+                verbose=verbose,
+            )
+            if not downgrade_handler.get_response():
+                raise SubscriptionChangeError("The downgrade was not successful.")
+
+        if upgraded_privileges:
+            upgrade_handler = DomainUpgradeActionHandler(
+                self.domain, new_plan_version, upgraded_privileges,
+                verbose=verbose,
+            )
+            if not upgrade_handler.get_response():
+                raise SubscriptionChangeError("The upgrade was not successful.")
 
 
 class Subscription(models.Model):
@@ -552,7 +586,7 @@ class Subscription(models.Model):
         today = datetime.date.today()
         if self.date_end is not None and today > self.date_end:
             raise SubscriptionAdjustmentError("The end date for this subscription already passed.")
-        self.subscriber.downgrade(web_user=web_user)
+        self.subscriber.apply_upgrades_and_downgrades()
         self.date_end = today
         self.is_active = False
         self.save()
@@ -570,15 +604,17 @@ class Subscription(models.Model):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
         adjustment_reason, downgrades, upgrades = get_change_status(self.plan_version, new_plan_version)
-        self.subscriber.downgrade(downgraded_privileges=downgrades, new_plan_version=new_plan_version,
-                                  web_user=web_user)
+        self.subscriber.apply_upgrades_and_downgrades(
+            downgraded_privileges=downgrades, upgraded_privileges=upgrades,
+            new_plan_version=new_plan_version)
 
         today = datetime.date.today()
         new_start_date = today if self.date_start <= today else (date_start or self.date_start)
 
         new_is_active = is_active_subscription(new_start_date, date_end)
-        new_salesforce_contract_id = salesforce_contract_id \
-            if salesforce_contract_id is not None else self.salesforce_contract_id
+        new_salesforce_contract_id = (
+            salesforce_contract_id if salesforce_contract_id is not None
+            else self.salesforce_contract_id)
 
         if self.date_start > today:
             self.date_start = today
@@ -589,20 +625,18 @@ class Subscription(models.Model):
         self.is_active = False
         self.save()
 
-        new_subscription =\
-            Subscription.new_domain_subscription(self.account,
-                                                 self.subscriber.domain,
-                                                 new_plan_version,
-                                                 date_start=new_start_date,
-                                                 date_end=date_end,
-                                                 date_delay_invoicing=date_delay_invoicing,
-                                                 salesforce_contract_id=new_salesforce_contract_id,
-                                                 is_active=new_is_active,
-                                                 do_not_invoice=do_not_invoice,
-                                                 adjustment_method=adjustment_method,
-                                                 note=note,
-                                                 web_user=web_user
-                                                 )
+        new_subscription = Subscription.new_domain_subscription(
+            self.account, self.subscriber.domain, new_plan_version,
+            date_start=new_start_date,
+            date_end=date_end,
+            date_delay_invoicing=date_delay_invoicing,
+            salesforce_contract_id=new_salesforce_contract_id,
+            is_active=new_is_active,
+            do_not_invoice=do_not_invoice,
+            adjustment_method=adjustment_method,
+            note=note,
+            web_user=web_user
+         )
 
         # record transfer from old subscription
         SubscriptionAdjustment.record_adjustment(self, method=adjustment_method, note=note, web_user=web_user,
@@ -674,8 +708,6 @@ class Subscription(models.Model):
         except (Subscription.DoesNotExist, IndexError):
             pass
 
-        subscriber.downgrade(new_plan_version=plan_version, web_user=web_user)
-
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
         subscription = Subscription(
             account=account,
@@ -685,6 +717,7 @@ class Subscription(models.Model):
             **kwargs
         )
         subscription.save()
+        subscriber.apply_upgrades_and_downgrades(new_plan_version=plan_version)
         SubscriptionAdjustment.record_adjustment(subscription, method=adjustment_method, note=note, web_user=web_user)
         return subscription
 

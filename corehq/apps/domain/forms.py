@@ -286,9 +286,9 @@ class DomainGlobalSettingsForm(forms.Form):
         help_text=_("Delete your custom logo and use the standard one.")
     )
 
-    def __init__(self, can_use_custom_logo=False, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
+        self.can_use_custom_logo = kwargs.pop('can_use_custom_logo', False)
         super(DomainGlobalSettingsForm, self).__init__(*args, **kwargs)
-        self.can_use_custom_logo = can_use_custom_logo
         if not self.can_use_custom_logo:
             del self.fields['logo']
             del self.fields['delete_logo']
@@ -426,8 +426,7 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
                     "must be using secure submissions."),
     )
 
-    def __init__(self, can_use_custom_logo=False, *args, **kwargs):
-        self.can_use_custom_logo = can_use_custom_logo
+    def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
         domain = kwargs.pop('domain', None)
         super(DomainMetadataForm, self).__init__(*args, **kwargs)
@@ -807,7 +806,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
 
 class ProBonoForm(forms.Form):
     contact_email = forms.CharField(label=_("Contact email"))
-    organization = forms.CharField(required=False, label=_("Organization"))
+    organization = forms.CharField(label=_("Organization"))
     project_overview = forms.CharField(widget=forms.Textarea, label="Project overview")
     pay_only_features_needed = forms.CharField(widget=forms.Textarea, label="Pay only features needed")
     duration_of_project = forms.CharField(help_text=_("We grant pro-bono software plans for "

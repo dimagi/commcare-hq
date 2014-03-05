@@ -18,6 +18,7 @@ from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
 from casexml.apps.stock.models import StockState
 from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, product_ids_filtered_by_program
+from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 
 def _enabled_hack(domain):
     return not is_psi_domain(domain)
@@ -112,7 +113,8 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
         sp_ids = get_relevant_supply_point_ids(self.domain, self.active_location)
 
         stock_states = StockState.objects.filter(
-            case_id__in=sp_ids
+            case_id__in=sp_ids,
+            section_id=STOCK_SECTION_TYPE
         ).order_by('product_id')
 
         if self.program_id:

@@ -12,7 +12,6 @@ from redis_cache.exceptions import ConnectionInterrumped
 from corehq.apps.accounting.exceptions import AccountingError
 from corehq.apps.accounting.models import Subscription
 from dimagi.utils.couch.cache import cache_core
-import toggle.shortcuts
 from django_prbac.models import Role
 
 # CCHQ imports

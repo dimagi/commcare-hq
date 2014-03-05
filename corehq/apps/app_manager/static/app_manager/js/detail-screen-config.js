@@ -146,7 +146,7 @@ var DetailScreenConfig = (function () {
                     return value;
                 }
             }
-            this.original.model = this.original.model || "case";
+            this.original.model = this.original.model || screen.model;
             this.original.field = this.original.field || "";
             this.original.header = this.original.header || {};
             this.original.format = this.original.format || "plain";
@@ -315,7 +315,7 @@ var DetailScreenConfig = (function () {
             },
             serialize: function (keepShortLong) {
                 var column = this.original;
-                column.model = this.model.val();
+//                column.model = this.model.val();
                 column.field = this.field.val();
                 column.header[this.lang] = this.header.val();
                 column.format = this.format.val();
@@ -362,7 +362,7 @@ var DetailScreenConfig = (function () {
             this.edit = options.edit;
             this.columns = [];
             this.suggestedColumns = [];
-            this.model = 'case';
+            this.model = config.model;
             this.lang = options.lang;
             this.langs = options.langs || [];
             this.properties = options.properties;
@@ -427,7 +427,7 @@ var DetailScreenConfig = (function () {
             }
 
             // set up the custom column
-            this.customColumn = Column.init({model: "case", format: "plain", includeInShort: false}, this);
+            this.customColumn = Column.init({model: this.model, format: "plain", includeInShort: false}, this);
             this.customColumn.field.on('change', function () {
                 that.customColumn.header.val(toTitleCase(this.val()));
                 if (this.val() && !field_val_re.test(this.val())) {
@@ -728,6 +728,7 @@ var DetailScreenConfig = (function () {
             this.$home = $home;
             this.properties = spec.properties;
             this.screens = [];
+            this.model = spec.model || 'case';
             this.sortRows = new SortRows();
             this.lang = spec.lang;
             this.langs = spec.langs || [];

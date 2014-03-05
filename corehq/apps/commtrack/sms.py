@@ -9,11 +9,15 @@ from dimagi.utils.couch.loosechange import map_reduce
 from dimagi.utils.parsing import json_format_datetime
 from datetime import datetime
 from corehq.apps.commtrack.util import get_supply_point
-from corehq.apps.commtrack.xmlutil import XML, _
-from corehq.apps.commtrack.models import Product, CommtrackConfig, StockTransaction, CommTrackUser
-from corehq.apps.receiverwrapper.util import get_submit_url
-from receiver.util import spoof_submission
-from dimagi.utils import parsing as dateparse
+from corehq.apps.commtrack.xmlutil import XML
+from corehq.apps.commtrack.models import Product, CommtrackConfig, StockTransaction, CommTrackUser, RequisitionTransaction, RequisitionCase
+from corehq.apps.receiverwrapper import submit_form_locally
+from corehq.apps.locations.models import Location
+from xml.etree import ElementTree
+from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.xml import V2
+
+import uuid
 
 logger = logging.getLogger('commtrack.sms')
 
@@ -40,20 +44,20 @@ def handle(verified_contact, text, msg=None):
     send_confirmation(verified_contact, data)
     return True
 
+
 def process(domain, data):
     import pprint
     logger.debug(pprint.pformat(data))
 
-    xmlroot = to_instance(data)
+    xml = to_instance(data)
 
-    submit_time = xmlroot.find('.//%s' % _('timeStart', const.META_XMLNS)).text
-    submission = etree.tostring(xmlroot, encoding='utf-8', pretty_print=True)
-    logger.debug(submission)
+    logger.debug(xml)
 
-    # submit it
-    spoof_submission(get_submit_url(domain), submission,
-                     headers={'HTTP_X_SUBMIT_TIME': submit_time},
-                     hqsubmission=False)
+    submit_form_locally(
+        instance=xml,
+        domain=domain,
+    )
+
 
 class StockReportParser(object):
     """a helper object for parsing raw stock report texts"""
@@ -72,7 +76,18 @@ class StockReportParser(object):
 
         self.C = domain.commtrack_settings
 
-    # TODO sms parsing could really use unit tests
+    def get_req_id(self):
+        reqs = RequisitionCase.open_for_location(
+            self.location['location'].domain,
+            self.location['location']._id
+        )
+        if reqs:
+            # only support one open requisition per location
+            assert(len(reqs) == 1)
+            return reqs[0]
+        else:
+            return uuid.uuid4().hex
+
     def parse(self, text):
         """take in a text and return the parsed stock transactions"""
         args = text.split()
@@ -95,21 +110,23 @@ class StockReportParser(object):
 
         action = self.C.action_by_keyword(action_keyword)
         if action and action.type == 'stock':
-            # single action stock report
             # TODO: support single-action by product, as well as by action?
+            self.case_id = self.location['case']._id
             _tx = self.single_action_transactions(action, args, self.transaction_factory(StockTransaction))
-
-        elif action and action.type == 'req':
-            # requisition
-            if action.action in [RequisitionActions.APPROVAL, RequisitionActions.PACK]:
-                _tx = self.requisition_bulk_action(action, args)
-            else:
-                _tx = self.single_action_transactions(action, args, self.transaction_factory(Requisition))
-
-        # multiple action stock report
+        elif action and action.action in [
+            RequisitionActions.REQUEST,
+            RequisitionActions.FULFILL,
+            RequisitionActions.RECEIPTS
+        ]:
+            self.case_id = self.get_req_id()
+            _tx = self.single_action_transactions(
+                action,
+                args,
+                self.transaction_factory(RequisitionTransaction)
+            )
         elif self.C.multiaction_enabled and action_keyword == self.C.multiaction_keyword:
+            # multiple action stock report
             _tx = self.multiple_action_transactions(args, self.transaction_factory(StockTransaction))
-
         else:
             # initial keyword not recognized; delegate to another handler
             return None
@@ -211,6 +228,7 @@ class StockReportParser(object):
 
             raise SMSError('do not recognize keyword "%s"' % keyword)
 
+    # TODO determine if this is needed for anything, fix or delete
     def requisition_bulk_action(self, action, args):
         if args:
             raise SMSError('extra arguments at end')
@@ -226,7 +244,7 @@ class StockReportParser(object):
         return lambda **kwargs: baseclass(
             domain=self.domain.name,
             location_id=self.location['location']._id,
-            case_id=self.location['case']._id,
+            case_id=self.case_id,
             **kwargs
         )
 
@@ -254,7 +272,7 @@ def looks_like_prod_code(code):
         return True
 
 
-def verify_transactions(transactions):
+def verify_transaction_cases(transactions):
     """
     Make sure the transactions are all in a consistent state.
     Specifically, they all need to have the same case id.
@@ -264,62 +282,171 @@ def verify_transactions(transactions):
     )
 
 
+def process_transactions(E, transactions):
+    balances = []
+    transfers = []
+
+    for tx in transactions:
+        if tx.action in (
+            const.StockActions.STOCKONHAND,
+            const.StockActions.STOCKOUT,
+            const.RequisitionActions.REQUEST
+        ):
+            balances.append(tx)
+        elif tx.action == const.RequisitionActions.FULFILL:
+            balances.append(tx)
+            transfers.append(tx)
+        else:
+            transfers.append(tx)
+
+    return process_balances(E, balances), process_transfers(E, transfers)
+
+
+def process_balances(E, balances):
+    if balances:
+        if balances[0].action == const.RequisitionActions.REQUEST:
+            section_id = 'ct-requested'
+        elif balances[0].action == const.RequisitionActions.FULFILL:
+            section_id = 'ct-fulfilled'
+        else:
+            section_id = 'stock'
+
+        attr = {
+            'section-id': section_id,
+            'entity-id': balances[0].case_id
+        }
+        if balances[0].date:
+            attr['date'] = balances[0].date
+
+        return E.balance(
+            attr,
+            *[tx.to_xml() for tx in balances]
+        )
+
+
+def process_transfers(E, transfers):
+    if transfers:
+        attr = {
+            'section-id': 'stock',
+        }
+
+        if transfers[0].action == const.RequisitionActions.RECEIPTS:
+            attr['src'] = transfers[0].case_id
+            sp = Location.get(transfers[0].location_id).linked_supply_point()
+            attr['dest'] = sp._id
+        else:
+            if transfers[0].action in [
+                const.StockActions.RECEIPTS,
+                const.RequisitionActions.FULFILL
+            ]:
+                here, there = ('dest', 'src')
+            else:
+                here, there = ('src', 'dest')
+
+            attr[here] = transfers[0].case_id
+            # there not supported yet
+
+        if transfers[0].subaction:
+            attr['type'] = transfers[0].subaction
+
+        return E.transfer(
+            attr,
+            *[tx.to_xml() for tx in transfers]
+        )
+
+
 def convert_transactions_to_blocks(E, transactions):
     """
     Converts a list of StockTransactions (which in xml are entity items)
     to lists inside of balance or transfer blocks, depending on their types
     """
 
-    balances = []
-    transfers = []
+    verify_transaction_cases(transactions)
 
-    verify_transactions(transactions)
-
-    for tx in transactions:
-        if tx.action in (
-            const.StockActions.STOCKONHAND, const.StockActions.STOCKOUT
-        ):
-            balances.append(tx)
-        else:
-            transfers.append(tx)
+    balances, transfers = process_transactions(E, transactions)
 
     stock_blocks = []
-
     if balances:
-        attr = {
-            'section-id': 'stock',
-            'entity-id': transactions[0].case_id
-        }
-        if transactions[0].date:
-            attr['date'] = transactions[0].date
-
-        stock_blocks.append(E.balance(
-            attr,
-            *[tx.to_xml() for tx in balances]
-        ))
-
+        stock_blocks.append(balances)
     if transfers:
-        attr = {
-            'section-id': 'stock',
-            'entity-id': transactions[0].case_id
-        }
-
-        if transactions[0].action == const.StockActions.RECEIPTS:
-            here, there = ('dest', 'src')
-        else:
-            here, there = ('src', 'dest')
-
-        attr[here] = transactions[0].case_id
-        # no 'there' for now
-        if transactions[0].subaction:
-            attr['type'] = transactions[0].subaction
-
-        stock_blocks.append(E.transfer(
-            attr,
-            *[tx.to_xml() for tx in transfers]
-        ))
+        stock_blocks.append(transfers)
 
     return stock_blocks
+
+
+def get_device_id(data):
+    if data.get('phone'):
+        return 'sms:%s' % data['phone']
+    else:
+        return None
+
+
+def verify_transaction_actions(transactions):
+    """
+    Make sure the transactions are all in a consistent state.
+    Specifically, they all need to have the same case id.
+    """
+    assert transactions and all(
+        tx.action == transactions[0].action for tx in transactions
+    )
+
+
+def requisition_case_xml(data, stock_blocks):
+    req_id = data['transactions'][0].case_id
+
+    verify_transaction_actions(data['transactions'])
+    action_type = data['transactions'][0].action
+    if action_type == const.RequisitionActions.REQUEST:
+        create = True
+        close = False
+        status = 'requested'
+    elif action_type == const.RequisitionActions.FULFILL:
+        create = False
+        close = False
+        status = 'fulfilled'
+    elif action_type == const.RequisitionActions.RECEIPTS:
+        create = False
+        close = True
+        status = 'received'
+    else:
+        raise NotImplementedError()
+
+    req_case_block = ElementTree.tostring(CaseBlock(
+        req_id,
+        version=V2,
+        create=create,
+        close=close,
+        case_type=const.REQUISITION_CASE_TYPE,
+        case_name='SMS Requisition',
+        index={'parent_id': (
+            const.SUPPLY_POINT_CASE_TYPE,
+            data['location'].linked_supply_point()._id
+        )},
+        update={'requisition_status': status},
+    ).as_xml())
+
+    timestamp = data['transactions'][0].timestamp or datetime.now()
+    device_id = get_device_id(data)
+
+    return """
+        <data uiVersion="1" version="33" name="New Form" xmlns="%(xmlns)s">
+            <meta>
+                <deviceID>%(device_id)s</deviceID>
+                <timeStart>%(timestamp)s</timeStart>
+                <timeEnd>%(timestamp)s</timeEnd>
+                <userID>%(user_id)s</userID>
+            </meta>
+            %(case_block)s
+            %(stock_blocks)s
+        </data>
+    """ % {
+        'case_block': req_case_block,
+        'stock_blocks': '\n'.join(etree.tostring(b) for b in stock_blocks),
+        'user_id': str(data['user']._id),
+        'device_id': str(device_id) if device_id else '',
+        'xmlns': const.SMS_XMLNS,
+        'timestamp': json_format_datetime(timestamp)
+    }
 
 
 def to_instance(data):
@@ -328,34 +455,27 @@ def to_instance(data):
     E = XML()
     M = XML(const.META_XMLNS, 'jrm')
 
-    deviceID = ''
-    if data.get('phone'):
-        deviceID = 'sms:%s' % data['phone']
+    deviceID = get_device_id(data)
     timestamp = json_format_datetime(data['timestamp'])
 
     transactions = data['transactions']
     category = set(tx.category for tx in transactions).pop()
-    factory = {
-        'stock': E.stock_report,
-        'requisition': E.requisition,
-    }[category]
-
     stock_blocks = convert_transactions_to_blocks(E, transactions)
 
-    root = factory(
-        M.meta(
-            M.userID(data['user']._id),
-            M.deviceID(deviceID),
-            M.timeStart(timestamp),
-            M.timeEnd(timestamp)
-        ),
-        E.location(data['location']._id),
-        *stock_blocks
-    )
-
-    #TODO make sure all transaction types/case ids are the same
-
-    return root
+    if category == 'stock':
+        root = E.stock_report(
+            M.meta(
+                M.userID(data['user']._id),
+                M.deviceID(deviceID),
+                M.timeStart(timestamp),
+                M.timeEnd(timestamp)
+            ),
+            E.location(data['location']._id),
+            *stock_blocks
+        )
+        return etree.tostring(root, encoding='utf-8', pretty_print=True)
+    else:
+        return requisition_case_xml(data, stock_blocks)
 
 def truncate(text, maxlen, ellipsis='...'):
     if len(text) > maxlen:

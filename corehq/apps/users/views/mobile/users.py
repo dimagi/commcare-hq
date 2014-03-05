@@ -19,7 +19,7 @@ from django.views.decorators.http import require_POST
 from django.contrib import messages
 from corehq import toggles, privileges
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
-from corehq.apps.accounting.decorators import requires_privilege_alert, require_billing_admin
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback, require_billing_admin
 from corehq.apps.accounting.models import BillingAccount, BillingAccountType, BillingAccountAdmin
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.users.util import can_add_extra_mobile_workers
@@ -43,7 +43,6 @@ from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound, JSONReader
 from corehq.apps.commtrack.models import CommTrackUser
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
-import toggle
 
 DEFAULT_USER_LIST_LIMIT = 10
 
@@ -238,11 +237,10 @@ class ListCommCareUsersView(BaseUserSettingsView):
 
     @property
     def can_bulk_edit_users(self):
-        if toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, self.couch_user.username):
-            try:
-                ensure_request_has_privilege(self.request, privileges.BULK_USER_MANAGEMENT)
-            except PermissionDenied:
-                return False
+        try:
+            ensure_request_has_privilege(self.request, privileges.BULK_USER_MANAGEMENT)
+        except PermissionDenied:
+            return False
         return True
 
     @property
@@ -493,7 +491,9 @@ class ConfirmBillingAccountForExtraUsersView(BaseUserSettingsView, AsyncHandlerM
                     request, _("Billing contact information was successfully confirmed. "
                                "You may now add additional Mobile Workers.")
                 )
-                return HttpResponseRedirect(reverse(CreateCommCareUserView.urlname, args=[self.domain]))
+                return HttpResponseRedirect(reverse(
+                    ListCommCareUsersView.urlname, args=[self.domain]
+                ))
         return self.get(request, *args, **kwargs)
 
 
@@ -646,7 +646,7 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
     urlname = 'upload_commcare_users'
     page_title = ugettext_noop("Bulk Upload Mobile Workers")
 
-    @method_decorator(requires_privilege_alert(privileges.BULK_USER_MANAGEMENT))
+    @method_decorator(requires_privilege_with_fallback(privileges.BULK_USER_MANAGEMENT))
     def dispatch(self, request, *args, **kwargs):
         return super(UploadCommCareUsers, self).dispatch(request, *args, **kwargs)
 

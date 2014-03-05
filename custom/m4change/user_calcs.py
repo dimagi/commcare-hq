@@ -1,7 +1,8 @@
 from datetime import datetime
 import fluff
+from corehq.apps.users.models import CommCareUser
 from custom.m4change.constants import BOOKING_FORMS, FOLLOW_UP_FORMS, BOOKING_AND_FOLLOW_UP_FORMS,\
-    PNC_CHILD_IMMUNIZATION_AND_REG_HOME_DELIVERED_FORMS
+    PNC_CHILD_IMMUNIZATION_AND_REG_HOME_DELIVERED_FORMS, IMMUNIZATION_FORMS, BOOKED_AND_UNBOOKED_DELIVERY_FORMS
 
 
 def __update_value_for_date__(date, dates):
@@ -19,24 +20,88 @@ class PncImmunizationCalculator(fluff.Calculator):
     @fluff.date_emitter
     def total(self, case):
         if case.type == "child":
-            if self.immunization_given_value in case.immunization_given:
-                yield[case.date_modified, 1]
-            for form in case.get_forms():
-                if form.xmlns in PNC_CHILD_IMMUNIZATION_AND_REG_HOME_DELIVERED_FORMS and self.immunization_given_value in form.form.get("immunization_given", ""):
-                    yield[case.date_modified, 1]
-            yield[case.date_modified, 0]
+            if case.get_case_property("immunization_given") is not None and self.immunization_given_value in case.get_case_property("immunization_given"):
+                yield[case.modified_on, 1]
+            else:
+                for form in case.get_forms():
+                    if form.xmlns in PNC_CHILD_IMMUNIZATION_AND_REG_HOME_DELIVERED_FORMS and self.immunization_given_value in form.form.get("immunization_given", ""):
+                        yield[case.modified_on, 1]
+
 
 class PncFullImmunizationCalculator(fluff.Calculator):
 
     @fluff.date_emitter
     def total(self, case):
-        if case.type == "child":
+        if case.type == "child" and case.get_case_property("immunization_given") is not None:
             full_immunization_values = ['opv_0', 'hep_b_0', 'bcg', 'opv_1', 'hep_b_1', 'penta_1', 'dpt_1',
-                                        'pcv_1', 'opv_2','hep_b_2', 'penta_2', 'dpt_2', 'pcv_2', 'opv_3', 'penta_3',
+                                        'pcv_1', 'opv_2', 'hep_b_2', 'penta_2', 'dpt_2', 'pcv_2', 'opv_3', 'penta_3',
                                         'dpt_3', 'pcv_3', 'measles_1', 'yellow_fever', 'measles_2', 'conjugate_csm']
-            if all(value in case.immunization_given for value in full_immunization_values):
-                yield[case.date_modified, 1]
-            yield[case.date_modified, 0]
+            if all(value in case.get_case_property("immunization_given") for value in full_immunization_values):
+                yield[case.modified_on, 1]
+
+
+class AncRegistrationCalculator(fluff.Calculator):
+
+    @fluff.date_emitter
+    def total(self, case):
+        # ignoring user_id == "demo_user", because it causes errors to show up in the logs
+        if case.type == "pregnant_mother" and hasattr(case, "user_id") and case.user_id != "demo_user":
+            for form in case.get_forms():
+                if form.xmlns in BOOKING_FORMS:
+                    user = CommCareUser.get(case.user_id) or None
+                    if user is not None and hasattr(user, "user_data") and user.user_data.get("CCT", None) == "true":
+                        yield [case.modified_on.date(), 1]
+
+
+class Anc4VisitsCalculator(fluff.Calculator):
+
+    @fluff.date_emitter
+    def total(self, case):
+        if hasattr(case, "user_id") and case.user_id != "demo_user":
+            visits = []
+            for form in case.get_forms():
+                if form.xmlns in BOOKING_AND_FOLLOW_UP_FORMS:
+                    user = CommCareUser.get(case.user_id) or None
+                    if user is not None and hasattr(user, "user_data") and user.user_data.get("CCT", None) == "true"\
+                            and form.received_on not in visits:
+                        visits.append(form.received_on)
+            if len(visits) >= 4:
+                yield [case.modified_on.date(), 1]
+
+
+class FacilityDeliveryCctCalculator(fluff.Calculator):
+
+    @fluff.date_emitter
+    def total(self, case):
+        # ignoring user_id == "demo_user", because it causes errors to show up in the logs
+        if case.type == "pregnant_mother" and hasattr(case, "user_id") and case.user_id != "demo_user":
+            form_filled = False
+            for form in case.get_forms():
+                if form.xmlns in BOOKED_AND_UNBOOKED_DELIVERY_FORMS:
+                    user = CommCareUser.get(case.user_id) or None
+                    if user is not None and hasattr(user, "user_data") and user.user_data.get("CCT", None) == "true":
+                        form_filled = True
+                        break
+            if form_filled:
+                yield [case.modified_on.date(), 1]
+
+
+class PncAttendanceWithin6WeeksCalculator(fluff.Calculator):
+
+    @fluff.date_emitter
+    def total(self, case):
+        if case.type == "child":
+            date_delivery = case.date_delivery
+            filled_forms = dict((xmlns, False) for xmlns in IMMUNIZATION_FORMS)
+            all_forms_filled = True
+            for form in case.get_forms():
+                if form.xmlns in IMMUNIZATION_FORMS and (form.received_on.date() - date_delivery).days < 42:
+                    filled_forms[form.xmlns] = True
+            for key in filled_forms:
+                if filled_forms.get(key, False) is False:
+                    all_forms_filled = False
+            if all_forms_filled:
+                yield [case.modified_on.date(), 1]
 
 
 class AncAntenatalAttendanceCalculator(fluff.Calculator):
