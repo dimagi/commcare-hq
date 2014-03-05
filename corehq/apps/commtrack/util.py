@@ -261,7 +261,7 @@ def location_map_case_id(user):
 
 
 def is_commtrack_location(user, domain):
-    return True if user and user.location_id and domain.commtrack_enabled else False
+    return True if user and user.get_domain_membership(domain.name).location_id and domain.commtrack_enabled else False
 
 
 def get_case_wrapper(data):

@@ -514,8 +514,8 @@ class AsyncLocationField(ReportField):
         from corehq.apps.commtrack.util import is_commtrack_location
         if is_commtrack_location(user, domain):
             # make sure users location belongs to our current domain first
-            if user.location_id and Location.get(user.location_id).domain == domain.name:
-                selected_loc_id = user.location_id
+            if user.get_domain_membership(domain.name).location_id:
+                selected_loc_id = user.get_domain_membership(domain.name).location_id
 
             if domain.location_restriction_for_users:
                 context.update({'restriction': domain.location_restriction_for_users})
@@ -779,7 +779,7 @@ class SelectProgramField(ReportSelectField):
         self.selected = self.request.GET.get('program')
         user = WebUser.get_by_username(str(self.request.user))
         if not self.selected and self.selected != '':
-            self.selected = user.program_id
+            self.selected = user.get_domain_membership(self.domain).program_id
         self.programs = Program.by_domain(self.domain)
         opts = [dict(val=program.get_id, text=program.name) for program in self.programs]
         self.options = opts

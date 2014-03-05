@@ -8,8 +8,8 @@ from custom.m4change.constants import M4CHANGE_DOMAINS
 def _get_case_location_id(case):
     if case.user_id is not None:
         user = CommCareUser.get_by_user_id(userID=case.user_id, domain=case.domain)
-        if user is not None and 'location_id' in user:
-            return str(user.location_id)
+        if user is not None and 'location_id' in user.get_domain_membership(case.domain):
+            return user.get_domain_membership(case.domain).location_id
         else:
             return 'None'
 
