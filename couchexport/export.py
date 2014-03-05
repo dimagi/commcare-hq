@@ -167,36 +167,6 @@ def export_raw(headers, data, file, format=Format.XLS_2007,
     writer.write(data)
     writer.close()
 
-def export(schema_index, file, format=Format.XLS_2007,
-           previous_export_id=None, filter=None,
-           max_column_size=2000, separator='|', export_object=None, process=None):
-    """
-    Exports data from couch documents matching a given tag to a file.
-    Returns true if it finds data, otherwise nothing
-    """
-    config, updated_schema, export_schema_checkpoint = get_export_components(schema_index,
-                                                                    previous_export_id, filter)
-    # transform docs onto output and save
-    if config:
-        writer = get_writer(format)
-
-        # open the doc and the headers
-        formatted_headers = get_headers(updated_schema, separator=separator)
-        writer.open(formatted_headers, file, max_column_size=max_column_size)
-
-        total_docs = len(config.potentially_relevant_ids)
-        if process:
-            DownloadBase.set_progress(process, 0, total_docs)
-        for i, doc in config.enum_docs():
-            if export_object and export_object.transform:
-                doc = export_object.transform(doc)
-            writer.write(format_tables(create_intermediate_tables(doc, updated_schema),
-                                       include_headers=False, separator=separator))
-            if process:
-                DownloadBase.set_progress(process, i + 1, total_docs)
-        writer.close()
-    return export_schema_checkpoint
-
 
 def get_export_components(schema_index, previous_export_id=None, filter=None):
     """
