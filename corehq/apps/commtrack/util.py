@@ -15,6 +15,8 @@ import bisect
 from corehq.apps.hqcase.utils import submit_case_blocks
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
+from django.utils.text import slugify
+from unidecode import unidecode
 
 
 def all_supply_point_types(domain):
@@ -273,3 +275,7 @@ def get_case_wrapper(data):
 
 def wrap_commtrack_case(case_json):
     return get_case_wrapper(case_json).wrap(case_json)
+
+
+def unicode_slug(text):
+    return slugify(unicode(unidecode(text)))
