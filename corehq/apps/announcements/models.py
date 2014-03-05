@@ -1,4 +1,3 @@
-from couchdbkit import MultipleResultsFound
 from couchdbkit.ext.django.schema import Document, StringProperty, DateTimeProperty, StringListProperty, BooleanProperty
 from django.template.loader import render_to_string
 from corehq.apps.announcements.crud import HQAnnouncementCRUDManager
