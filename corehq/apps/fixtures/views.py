@@ -69,7 +69,6 @@ def _to_kwargs(req):
     # version dependent
     return dict((str(k), v) for k, v in json.load(req).items())
 
-@require_can_edit_fixtures
 def data_types(request, domain, data_type_id):
     
     if data_type_id:
@@ -219,7 +218,7 @@ def create_types(fields_patches, domain, data_tag, is_global, transaction):
     return data_type
 
 
-@require_can_edit_fixtures
+# @require_can_edit_fixtures
 def data_table(request, domain):
     sheets = download_item_lists(request, domain, html_response=True)
     sheets.pop("types")
@@ -244,7 +243,7 @@ def data_table(request, domain):
     return data_table
 
 DELETE_HEADER = "Delete(Y/N)"
-@require_can_edit_fixtures
+# @require_can_edit_fixtures
 def download_item_lists(request, domain, html_response=False):
     """
         Is used to serve excel_download and html_view for view_lookup_tables
