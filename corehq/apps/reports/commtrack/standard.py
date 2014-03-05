@@ -227,7 +227,7 @@ class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
                     _('Total AMC'),
                     _('Remaining MOS'),
                     _('Stock Status'),
-                    _('Resupply Quantity Needed'),
+                    _('Resupply Quantity Suggested'),
                 ]))
 
     @property

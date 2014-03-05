@@ -8925,7 +8925,7 @@ msgid "Stock Status"
 msgstr "गृह-भ्रमण कि स्थिति"
 
 #: corehq/apps/reports/commtrack/standard.py:208
-msgid "Resupply Quantity Needed"
+msgid "Resupply Quantity Suggested"
 msgstr ""
 
 #: corehq/apps/reports/commtrack/standard.py:230

@@ -8565,7 +8565,7 @@ msgid "Stock Status"
 msgstr ""
 
 #: corehq/apps/reports/commtrack/standard.py:208
-msgid "Resupply Quantity Needed"
+msgid "Resupply Quantity Suggested"
 msgstr ""
 
 #: corehq/apps/reports/commtrack/standard.py:230
