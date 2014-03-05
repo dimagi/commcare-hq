@@ -1,6 +1,7 @@
 import datetime
 from decimal import Decimal
 import logging
+from tempfile import NamedTemporaryFile
 from couchdbkit.ext.django.schema import DateTimeProperty, StringProperty
 
 from django.conf import settings
@@ -875,11 +876,17 @@ class InvoicePdf(SafeSaveDocument):
     date_created = DateTimeProperty()
 
     def generate_pdf(self, billing_record):
-        # todo generate pdf
+        self.save()
+        pdf_data = NamedTemporaryFile()
+        from corehq.apps.accounting.invoicing import InvoiceTemplate
+        InvoiceTemplate(pdf_data.name).get_pdf()
+        self.put_attachment(pdf_data)
+        pdf_data.close()
+
         billing_record.pdf_data_id = self._id
-        # self.put_attachment(pdf_data)
         self.invoice_id = billing_record.invoice.id
         self.date_created = datetime.datetime.now()
+        self.save()
 
 
 class LineItemManager(models.Manager):
