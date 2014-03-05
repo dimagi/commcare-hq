@@ -11,7 +11,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.fields import StrongFilterUsersField
 from corehq.apps.reports.generic import GenericTabularReport, ProjectInspectionReportParamsMixin, ElasticProjectInspectionReport
-from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
+from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin, CompletionOrSubmissionTimeMixin
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.users.models import CouchUser
 from corehq.elastic import es_query, ADD_TO_ES_FILTER
@@ -32,12 +32,14 @@ class ProjectInspectionReport(ProjectInspectionReportParamsMixin, GenericTabular
               'corehq.apps.reports.fields.SelectMobileWorkerField']
 
 
-class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReportParametersMixin, MultiFormDrilldownMixin, DatespanMixin):
+class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReportParametersMixin, CompletionOrSubmissionTimeMixin, 
+                    MultiFormDrilldownMixin, DatespanMixin):
     name = ugettext_noop('Submit History')
     slug = 'submit_history'
     fields = [
               'corehq.apps.reports.fields.CombinedSelectUsersField',
               'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
+              'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
               'corehq.apps.reports.fields.DatespanField']
     ajax_pagination = True
     filter_users_field_class = StrongFilterUsersField
@@ -63,11 +65,12 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
         return self.es_response
 
     def es_query(self):
+        time_field = 'form.meta.timeEnd' if self.by_submission_time else 'received_on'
         if not getattr(self, 'es_response', None):
             q = {
                 "query": {
                     "range": {
-                        "form.meta.timeEnd": {
+                        time_field: {
                             "from": self.datespan.startdate_param,
                             "to": self.datespan.enddate_param,
                             "include_upper": False}}},
@@ -89,7 +92,7 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
                 ids = filter(None, [user['user_id'] for user in self.get_admins_and_demo_users()])
                 q["filter"]["and"].append({"not": {"terms": {"form.meta.userID": ids}}})
 
-            q["sort"] = self.get_sorting_block() if self.get_sorting_block() else [{"form.meta.timeEnd" : {"order": "desc"}}]
+            q["sort"] = self.get_sorting_block() if self.get_sorting_block() else [{time_field : {"order": "desc"}}]
             self.es_response = es_query(params={"domain.exact": self.domain}, q=q, es_url=XFORM_INDEX + '/xform/_search',
                 start_at=self.pagination.start, size=self.pagination.count)
         return self.es_response
