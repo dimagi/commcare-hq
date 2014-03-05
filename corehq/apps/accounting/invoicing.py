@@ -617,7 +617,7 @@ class InvoiceTemplate(object):
         origin_y = inch * 6.2
         self.canvas.translate(origin_x, origin_y)
 
-        height = inch * 4.8
+        height = inch * 4.2
         date_x = inch * 1
         description_x = inch * 5
         quantity_x = inch * 5.75
@@ -652,7 +652,7 @@ class InvoiceTemplate(object):
                                       "Amount")
 
         for item_index in range(len(self.items)):
-            if item_index > 15:
+            if item_index > 13:
                 raise InvoiceError("Too many line items to fit to invoice")
             item = self.items[item_index]
             coord_y = -item_index * header_height + inch * -0.2
@@ -686,4 +686,4 @@ class InvoiceTemplate(object):
         self.canvas.translate(-origin_x, -origin_y)
 
     def draw_footer(self):
-        self.canvas.rect(inch * 0.75, inch * 1.5, inch * 4, inch * 0.5)
+        self.canvas.rect(inch * 0.75, inch * 1.3, inch * 4, inch * 0.5)
