@@ -54,7 +54,7 @@ from corehq.apps.export.custom_export_helpers import CustomExportHelper
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.export import export_cases_and_referrals
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher
-from corehq.apps.reports.models import ReportConfig, ReportNotification
+from corehq.apps.reports.models import ReportConfig, ReportNotification, FakeFormExportSchema
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.tasks import create_metadata_export
 from corehq.apps.reports import util
@@ -273,10 +273,13 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
         assert(export_tag[0] == domain)
         # hack - also filter instances here rather than mess too much with trying to make this
         # look more like a FormExportSchema
+        export_class = FakeSavedExportSchema
         if export_type == 'form':
             filter &= SerializableFunction(instances)
+            export_class = FakeFormExportSchema
 
-        export_object = FakeSavedExportSchema(index=export_tag)
+        export_object = export_class(index=export_tag)
+
 
     if export_type == 'form':
         _filter = filter
