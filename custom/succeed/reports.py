@@ -103,12 +103,11 @@ class PatientListReportDisplay(CaseDisplay):
         case = CommCareCase.get(case_dict["_id"])
         forms = case.get_forms()
         next_visit = VISIT_SCHEDULE[0]
-        last_inter = []
+        last_inter = None
         for form in forms:
             if form.xmlns in LAST_INTERACTION_LIST:
-                last_inter.append(form)
+                last_inter = form
 
-        last_inter.sort(key=lambda form: form.received_on)
         for visit_key, visit in enumerate(VISIT_SCHEDULE):
             for key, form in enumerate(forms):
                 if visit['xmlns'] == form.xmlns:
@@ -119,10 +118,8 @@ class PatientListReportDisplay(CaseDisplay):
                     except IndexError:
                         next_visit = 'last'
         setattr(self, "next_visit", next_visit)
-        if len(last_inter) == 0:
-            setattr(self, "last_interaction", EMPTY_FIELD)
-        else:
-            setattr(self, "last_interaction", last_inter[len(last_inter) - 1].received_on)
+        if last_inter:
+            setattr(self, "last_interaction", last_inter.received_on)
 
         super(PatientListReportDisplay, self).__init__(report, case_dict)
 
@@ -150,6 +147,8 @@ class PatientListReportDisplay(CaseDisplay):
             return html.mark_safe("<a class='ajax_dialog' href=''>Edit</a>")
         except NoReverseMatch:
             return "%s (bad ID format)"
+
+
 
     @property
     def case_detail_url(self):
@@ -250,15 +249,16 @@ class PatientListReport(CustomProjectReport, CaseListReport):
             DataTablesColumn(_("MRN"), prop_name="mrn.#value"),
             DataTablesColumn(_("Randomization Date"), prop_name="randomization_date.#value"),
             DataTablesColumn(_("Visit Name")),
-            DataTablesColumn(_("Target Date")),
+            DataTablesColumn(_("Target Date"), prop_name='target_date'),
             DataTablesColumn(_("Most Recent BP"), prop_name="BP_category.#value"),
             DataTablesColumn(_("Discuss at Huddle?"), prop_name="discuss.#value"),
-            DataTablesColumn(_("Last Patient Interaction")),
-
+            DataTablesColumn(_("Last Patient Interaction"), prop_name="actions.date"),
         )
         return headers
 
-    def es_case_queries(self, dict_only=False):
+    @property
+    @memoized
+    def es_results(self):
         q = {
             "query": {
                 "bool": {
@@ -270,16 +270,76 @@ class PatientListReport(CustomProjectReport, CaseListReport):
             },
             'sort': self.get_sorting_block(),
         }
+        if len(self.get_sorting_block()) != 0 and self.get_sorting_block()[0].keys()[0] == 'actions.date':
+            sort = {
+                "_script": {
+                    "script":
+                        """
+                            last=0;
+                            foreach(action : _source.actions) {
+                                if (inter_list.contains(action.get('xform_xmlns'))) {
+                                    last = action.get('date')
+                                }
+                            }
+                            return last;
+                        """,
+                    "type": "string",
+                    "params": {
+                        "inter_list": LAST_INTERACTION_LIST
+                    },
+                    "order": self.get_sorting_block()[0].values()[0]
+                }
+            }
+            q['sort'] = sort
+        if len(self.get_sorting_block()) != 0 and self.get_sorting_block()[0].keys()[0] == 'target_date':
+            sort = {
+                "_script": {
+                    "script":
+                        """
+                            next_visit=visits_list[0];
+                            before_action=null;
+                            count=0;
+                            foreach(visit : visits_list) {
+                                skip = false;
+                                foreach(action : _source.actions) {
+                                    if (!skip && visit.xmlns.equals(action.xform_xmlns) && !action.xform_id.equals(before_action)) {
+                                        next_visit=visits_list[count+1];
+                                        before_visit=action.xform_id;
+                                        skip=true;
+                                        count++;
+                                    }
+                                    before_visit=action.xform_id;
+                                }
+                            }
+                            Calendar cal = Calendar.getInstance();
+
+                            r = _source.randomization_date.get('#value').split('-');
+                            int year = Integer.parseInt(r[0]);
+                            int month = Integer.parseInt(r[1]);
+                            int day = Integer.parseInt(r[2]);
+                            cal.set(year, month-1, day);
+                            cal.set(year, month-1, day);
+                            return cal;
+                        """,
+                    "type": "string",
+                    "params": {
+                        "visits_list": VISIT_SCHEDULE
+                    },
+                    "order": self.get_sorting_block()[0].values()[0]
+                }
+            }
+            q['sort'] = sort
+
         care_site = self.request_params.get('care_site', '')
         if care_site != '':
             q["query"]["bool"]["must"].append({"match": {"care_site.#value": care_site}})
         patient_status = self.request_params.get('patient_status', '')
         if patient_status != '':
             active_dict = {"nested": {
-                    "path": "actions",
-                    "query": {
-                        "match": {
-                            "actions.xform_xmlns": PM3}}}}
+                "path": "actions",
+                "query": {
+                    "match": {
+                        "actions.xform_xmlns": PM3}}}}
 
             if patient_status == "active":
                 q["query"]["bool"]["must_not"].append(active_dict)
@@ -288,7 +348,8 @@ class PatientListReport(CustomProjectReport, CaseListReport):
 
         if self.case_type:
             q["query"]["bool"]["must"].append({"match": {"type.exact": 'participant'}})
-        return es_query(q=q, es_url=REPORT_CASE_INDEX + '/_search', dict_only=dict_only)["hits"]["hits"]
+        print es_query(q=q, es_url=REPORT_CASE_INDEX + '/_search', dict_only=False)
+        return []
 
     @property
     def rows(self):
