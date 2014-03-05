@@ -7,10 +7,12 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
+from corehq.elastic import es_query
 from corehq.pillows.base import restore_property_dict
 from django.utils import html
 import dateutil
 from casexml.apps.case.models import CommCareCase
+from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 
 EMPTY_FIELD = "---"
 
@@ -95,10 +97,9 @@ VISIT_SCHEDULE = [
 
 LAST_INTERACTION_LIST = [PM1, PM3, CM1, CM3, CM4, CM5, CM6, CHW1, CHW2, CHW3, CHW4]
 
+
 class PatientListReportDisplay(CaseDisplay):
-
     def __init__(self, report, case_dict):
-
         case = CommCareCase.get(case_dict["_id"])
         forms = case.get_forms()
         next_visit = VISIT_SCHEDULE[0]
@@ -112,7 +113,7 @@ class PatientListReportDisplay(CaseDisplay):
             for key, form in enumerate(forms):
                 if visit['xmlns'] == form.xmlns:
                     try:
-                        next_visit = VISIT_SCHEDULE[visit_key+1]
+                        next_visit = VISIT_SCHEDULE[visit_key + 1]
                         del forms[key]
                         break
                     except IndexError:
@@ -121,7 +122,7 @@ class PatientListReportDisplay(CaseDisplay):
         if len(last_inter) == 0:
             setattr(self, "last_interaction", EMPTY_FIELD)
         else:
-            setattr(self, "last_interaction", last_inter[len(last_inter)-1].received_on)
+            setattr(self, "last_interaction", last_inter[len(last_inter) - 1].received_on)
 
         super(PatientListReportDisplay, self).__init__(report, case_dict)
 
@@ -133,7 +134,7 @@ class PatientListReportDisplay(CaseDisplay):
 
     @property
     def case_name(self):
-        return self.case['full_name']
+        return self.case["full_name"]
 
     @property
     def case_link(self):
@@ -187,7 +188,8 @@ class PatientListReportDisplay(CaseDisplay):
             elif tg_date == 0:
                 return "<span style='background-color: #FFFF00;padding: 5px;display: block;'>Today</span>" % tg_date
             else:
-                return "<span style='background-color: #FF0000; color: white;padding: 5px;display: block;'>%s day(s) overdue</span>" % (tg_date*(-1))
+                return "<span style='background-color: #FF0000; color: white;padding: 5px;display: block;'>%s day(s) overdue</span>" % (
+                    tg_date * (-1))
         else:
             return EMPTY_FIELD
 
@@ -208,10 +210,8 @@ class PatientListReportDisplay(CaseDisplay):
             return EMPTY_FIELD
 
 
-
 class PatientListReport(CustomProjectReport, CaseListReport):
-
-    ajax_pagination = False
+    ajax_pagination = True
     include_inactive = True
     name = ugettext_noop('Patient List')
     slug = 'patient_list'
@@ -226,7 +226,7 @@ class PatientListReport(CustomProjectReport, CaseListReport):
         return self.name
 
     @property
-    @memoizedheaderSortUp
+    @memoized
     def case_es(self):
         return ReportCaseES(self.domain)
 
@@ -247,16 +247,48 @@ class PatientListReport(CustomProjectReport, CaseListReport):
         headers = DataTablesHeader(
             DataTablesColumn(_("Modify Schedule"), sortable=False),
             DataTablesColumn(_("Name"), prop_name="name.exact"),
-            DataTablesColumn(_("MRN")),
-            DataTablesColumn(_("Randomization Date")),
+            DataTablesColumn(_("MRN"), prop_name="mrn.#value"),
+            DataTablesColumn(_("Randomization Date"), prop_name="randomization_date.#value"),
             DataTablesColumn(_("Visit Name")),
-            DataTablesColumn(_("Target Date"), sortable=True),
-            DataTablesColumn(_("Most Recent BP")),
-            DataTablesColumn(_("Discuss at Huddle?")),
+            DataTablesColumn(_("Target Date")),
+            DataTablesColumn(_("Most Recent BP"), prop_name="BP_category.#value"),
+            DataTablesColumn(_("Discuss at Huddle?"), prop_name="discuss.#value"),
             DataTablesColumn(_("Last Patient Interaction")),
 
         )
         return headers
+
+    def es_case_queries(self, dict_only=False):
+        q = {
+            "query": {
+                "bool": {
+                    "must": [
+                        {"match": {"domain.exact": self.domain}}
+                    ],
+                    "must_not": []
+                }
+            },
+            'sort': self.get_sorting_block(),
+        }
+        care_site = self.request_params.get('care_site', '')
+        if care_site != '':
+            q["query"]["bool"]["must"].append({"match": {"care_site.#value": care_site}})
+        patient_status = self.request_params.get('patient_status', '')
+        if patient_status != '':
+            active_dict = {"nested": {
+                    "path": "actions",
+                    "query": {
+                        "match": {
+                            "actions.xform_xmlns": PM3}}}}
+
+            if patient_status == "active":
+                q["query"]["bool"]["must_not"].append(active_dict)
+            else:
+                q["query"]["bool"]["must"].append(active_dict)
+
+        if self.case_type:
+            q["query"]["bool"]["must"].append({"match": {"type.exact": 'participant'}})
+        return es_query(q=q, es_url=REPORT_CASE_INDEX + '/_search', dict_only=dict_only)["hits"]["hits"]
 
     @property
     def rows(self):

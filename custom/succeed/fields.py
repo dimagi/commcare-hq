@@ -20,8 +20,11 @@ class ResponsibleParty(ReportSelectField):
     cssId = "opened_closed"
     cssClasses = "span3"
     default_option = "All Roles"
-    options = [dict(val="Care Manager", text=ugettext_noop("Care Manager")),
-               dict(val="Community Health Worker", text=ugettext_noop("Community Health Worker"))]
+    options = [
+        dict(val="PM", text=ugettext_noop("Project Manager")),
+        dict(val="CM", text=ugettext_noop("Care Manager")),
+        dict(val="CHW", text=ugettext_noop("Community Health Worker")),
+    ]
 
 
 class PatientStatus(ReportSelectField):
@@ -30,5 +33,5 @@ class PatientStatus(ReportSelectField):
     cssId = "opened_closed"
     cssClasses = "span3"
     default_option = "All Patients"
-    options = [dict(val="Active", text=ugettext_noop("Active")),
-               dict(val="Not Active", text=ugettext_noop("Not Active"))]
+    options = [dict(val="active", text=ugettext_noop("Active")),
+               dict(val="not_active", text=ugettext_noop("Not Active"))]
