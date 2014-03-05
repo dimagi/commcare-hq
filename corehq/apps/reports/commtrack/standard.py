@@ -10,7 +10,7 @@ from corehq.apps.commtrack.models import Product, CommtrackConfig, CommtrackActi
 from corehq.apps.reports.graph_models import PieChart, MultiBarChart, Axis
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin
 from dimagi.utils.couch.loosechange import map_reduce
-from datetime import datetime
+from datetime import datetime, timedelta
 from corehq.apps.locations.models import Location
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop
@@ -80,12 +80,29 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
     def aggregate_by(self):
         return self.request.GET.get('agg_type')
 
+    @property
+    def start_date(self):
+        date = self.request.GET.get('startdate')
+        if date:
+            return datetime.strptime(date, '%Y-%m-%d').date()
+        else:
+            return (datetime.now() - timedelta(30)).date()
+
+    @property
+    def end_date(self):
+        date = self.request.GET.get('enddate')
+        if date:
+            return datetime.strptime(date, '%Y-%m-%d').date()
+        else:
+            return datetime.now().date()
+
 
 class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Stock Status by Product')
     slug = 'current_stock_status'
     fields = ['corehq.apps.reports.fields.AsyncLocationField',
-              'corehq.apps.reports.fields.SelectProgramField']
+              'corehq.apps.reports.fields.SelectProgramField',
+              'corehq.apps.reports.filters.dates.DatespanFilter']
     exportable = True
     emailable = True
 
@@ -111,9 +128,16 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     def get_prod_data(self):
         sp_ids = get_relevant_supply_point_ids(self.domain, self.active_location)
 
+        print self.start_date
+        print self.end_date
         stock_states = StockState.objects.filter(
-            case_id__in=sp_ids
+            case_id__in=sp_ids,
+            last_modified_date__lte=self.end_date,
+            last_modified_date__gte=self.start_date,
         ).order_by('product_id')
+
+        for state in stock_states:
+            print state.__dict__
 
         if self.program_id:
             stock_states = stock_states.filter(
@@ -188,7 +212,8 @@ class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Inventory')
     slug = StockStatusDataSource.slug
     fields = ['corehq.apps.reports.fields.AsyncLocationField',
-              'corehq.apps.reports.fields.SelectProgramField']
+              'corehq.apps.reports.fields.SelectProgramField',
+              'corehq.apps.reports.filters.dates.DatespanFilter',]
     exportable = True
     emailable = True
 
@@ -216,6 +241,8 @@ class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
                 'domain': self.domain,
                 'location_id': self.request.GET.get('location_id'),
                 'program_id': self.request.GET.get('program'),
+                'start_date': self.request.GET.get('startdate'),
+                'end_date': self.request.GET.get('enddate'),
                 'aggregate': True
             }
             self.prod_data = self.prod_data + list(StockStatusDataSource(config).get_data())

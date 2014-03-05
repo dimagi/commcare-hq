@@ -144,7 +144,9 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
         if len(sp_ids) == 1:
             stock_states = StockState.objects.filter(
                 case_id=sp_ids[0],
-                section_id=STOCK_SECTION_TYPE
+                section_id=STOCK_SECTION_TYPE,
+                last_modified_date__lte=self.end_date,
+                last_modified_date__gte=self.start_date,
             )
 
             if self.program_id:
@@ -155,6 +157,8 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             stock_states = StockState.objects.filter(
                 case_id__in=sp_ids,
                 section_id=STOCK_SECTION_TYPE,
+                last_modified_date__lte=self.end_date,
+                last_modified_date__gte=self.start_date,
             )
 
             if self.program_id:
