@@ -45,7 +45,7 @@ from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.hqwebapp.views import BaseSectionPageView, BasePageView
 from corehq.apps.orgs.models import Organization, OrgRequest, Team
-from corehq.apps.commtrack.util import all_sms_codes
+from corehq.apps.commtrack.util import all_sms_codes, unicode_slug
 from corehq.apps.domain.forms import ProjectSettingsForm
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.email import send_HTML_email
@@ -1462,6 +1462,7 @@ class BasicCommTrackSettingsView(BaseCommTrackAdminView):
     def _get_loctype_info(self, loctype):
         return {
             'name': loctype.name,
+            'code': loctype.code,
             'allowed_parents': [p or None for p in loctype.allowed_parents],
             'administrative': loctype.administrative,
         }
@@ -1497,6 +1498,14 @@ class BasicCommTrackSettingsView(BaseCommTrackAdminView):
 
         def mk_loctype(loctype):
             loctype['allowed_parents'] = [p or '' for p in loctype['allowed_parents']]
+            cleaned_code = unicode_slug(loctype['code'])
+            if cleaned_code != loctype['code']:
+                err = _(
+                    'Location type code "{code}" is invalid. No spaces or special characters are allowed. '
+                    'It has been replaced with "{new_code}".'
+                )
+                messages.warning(request, err.format(code=loctype['code'], new_code=cleaned_code))
+                loctype['code'] = cleaned_code
             return LocationType(**loctype)
 
         #TODO add server-side input validation here (currently validated on client)
