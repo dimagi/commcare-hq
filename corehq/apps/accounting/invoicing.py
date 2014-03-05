@@ -16,8 +16,10 @@ from corehq.apps.accounting.models import (LineItem, FeatureType, Invoice, Defau
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.users.models import CommCareUser
 
+from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.pdfgen.canvas import Canvas
+from reportlab.platypus import Paragraph
 
 
 DEFAULT_DAYS_UNTIL_DUE = 10
@@ -458,8 +460,8 @@ class InvoiceTemplate(object):
                  invoice_date=datetime.date.today(), invoice_number='',
                  terms='',
                  due_date=datetime.date.today()+datetime.timedelta(days=10),
-                 account_number='', routing_number='', swift_code='',
-                 total=None):
+                 bank_name='', bank_address=None, account_number='',
+                 routing_number='', swift_code='', total=None):
         self.canvas = Canvas(filename)
         self.canvas.setFontSize(DEFAULT_FONT_SIZE)
         self.logo_filename = os.path.join(os.getcwd(), logo_filename)
@@ -470,6 +472,8 @@ class InvoiceTemplate(object):
         self.invoice_number = invoice_number
         self.terms = terms
         self.due_date = due_date
+        self.bank_name = bank_name
+        self.bank_address = bank_address
         self.account_number = account_number
         self.routing_number = routing_number
         self.swift_code = swift_code
@@ -699,3 +703,19 @@ class InvoiceTemplate(object):
             self.canvas.drawCentredString(midpoint(inch * 7.0, inch * 8.0),
                                           inch * 1.25,
                                           "$%0.2f" % self.total)
+
+        footer_text = ("Payable by check or wire transfer. "
+                       "Wire transfer is preferred: "
+                       "Bank: %(bank_name)s "
+                       "Bank Address: %(bank_address)s "
+                       "Routing Number or ABA: %(routing_number)s "
+                       "Swift Code: %(swift_code)s") % {
+            'bank_name': self.bank_name,
+            'bank_address': self.bank_address,
+            'routing_number': self.routing_number,
+            'swift_code': self.swift_code,
+        }
+
+        payment_info = Paragraph(footer_text, ParagraphStyle(''))
+        payment_info.wrapOn(self.canvas, inch * 4, inch * 0.9)
+        payment_info.drawOn(self.canvas, inch * 0.75, inch * 0.6)
