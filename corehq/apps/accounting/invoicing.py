@@ -458,7 +458,8 @@ class InvoiceTemplate(object):
                  invoice_date=datetime.date.today(), invoice_number='',
                  terms='',
                  due_date=datetime.date.today()+datetime.timedelta(days=10),
-                 account_number='', routing_number='', swift_code=''):
+                 account_number='', routing_number='', swift_code='',
+                 total=None):
         self.canvas = Canvas(filename)
         self.canvas.setFontSize(DEFAULT_FONT_SIZE)
         self.logo_filename = os.path.join(os.getcwd(), logo_filename)
@@ -472,6 +473,7 @@ class InvoiceTemplate(object):
         self.account_number = account_number
         self.routing_number = routing_number
         self.swift_code = swift_code
+        self.total = total
 
         self.items = []
 
@@ -680,10 +682,20 @@ class InvoiceTemplate(object):
             self.canvas.drawCentredString(
                 midpoint(rate_x, amount_x),
                 coord_y,
-                str(item.amount)
+                "$%0.2f" % item.amount
             )
 
         self.canvas.translate(-origin_x, -origin_y)
 
     def draw_footer(self):
         self.canvas.rect(inch * 0.75, inch * 1.3, inch * 4, inch * 0.5)
+
+        self.canvas.setFillColorRGB(*LIGHT_GRAY)
+        self.canvas.rect(inch * 5, inch * 1.05, inch * 3, inch * 0.5, fill=1)
+        self.canvas.setFillColorRGB(*BLACK)
+
+        self.canvas.drawString(inch * 5.2, inch * 1.25, "Total:")
+        if self.total is not None:
+            self.canvas.drawCentredString(midpoint(inch * 7.0, inch * 8.0),
+                                          inch * 1.25,
+                                          "$%0.2f" % self.total)
