@@ -304,6 +304,13 @@ def scrub_meta(xform):
 
 class SubmissionPost(object):
 
+    failed_auth_response = HttpResponseForbidden('Bad auth')
+    bad_multipart_response = HttpResponseBadRequest((
+        'If you use multipart/form-data, please name your file %s.\n'
+        'You may also do a normal (non-multipart) post '
+        'with the xml submission as the request body instead.'
+    ) % MAGIC_PROPERTY)
+
     def __init__(self, instance=None, attachments=None,
                  auth_context=None, domain=None, app_id=None, path=None,
                  location=None, submit_ip=None, openrosa_headers=None,
@@ -350,16 +357,10 @@ class SubmissionPost(object):
 
     def get_response(self):
         if not self.auth_context.is_valid():
-            return self.get_failed_auth_response()
+            return self.failed_auth_response
 
         if self.instance is MULTIPART_FILENAME_ERROR:
-            return HttpResponseBadRequest((
-                'If you use multipart/form-data, '
-                'please name your file %s.\n'
-                'You may also do a normal (non-multipart) post '
-                'with the xml submission as the request body instead.'
-            ) % MAGIC_PROPERTY)
-
+            return self.bad_multipart_response
         def process(xform):
             self._attach_shared_props(xform)
             scrub_meta(xform)
