@@ -8,6 +8,7 @@ from corehq import Domain
 from corehq.apps import reports
 from corehq.apps.app_manager.models import get_app
 from corehq.apps.app_manager.util import ParentCasePropertyBuilder
+from corehq.apps.domain.middleware import CCHQPRBACMiddleware
 from corehq.apps.reports.display import xmlns_to_name
 from couchdbkit.ext.django.schema import *
 from corehq.apps.reports.exportfilters import form_matches_users, is_commconnect_form, default_form_filter
@@ -363,6 +364,9 @@ class ReportConfig(Document):
         request.couch_user.current_domain = self.domain
 
         request.GET = QueryDict(self.query_string + '&filterSet=true')
+
+        # Make sure the request gets processed by PRBAC Middleware
+        CCHQPRBACMiddleware.process_request(request)
 
         try:
             response = self._dispatcher.dispatch(request, render_as='email',
