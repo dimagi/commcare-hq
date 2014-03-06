@@ -7,13 +7,14 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
-from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.users.models import CommCareUser
 from corehq.elastic import es_query
 from corehq.pillows.base import restore_property_dict
 from django.utils import html
 import dateutil
 from casexml.apps.case.models import CommCareCase
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
+from custom.succeed.utils import get_cloudcare_app
 
 EMPTY_FIELD = "---"
 
@@ -144,8 +145,18 @@ class PatientListReportDisplay(CaseDisplay):
 
     @property
     def edit_link(self):
+        base_url = '/a/%(domain)s/cloudcare/apps/view/%(build_id)s/%(module_id)s/%(form_id)s/enter/'
+        app_dict = get_cloudcare_app(1)
         try:
-            return html.mark_safe("<a class='ajax_dialog' href=''>Edit</a>")
+            return html.mark_safe("<a class='ajax_dialog' href='%s'>Edit</a>") \
+                % html.escape(base_url % dict(
+                    form_id=app_dict[CM7],
+                    case_id=self.case_id,
+                    domain=app_dict['domain'],
+                    build_id=app_dict['build_id'],
+                    module_id=1
+                )
+            )
         except NoReverseMatch:
             return "%s (bad ID format)"
 
