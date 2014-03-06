@@ -850,7 +850,7 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None,
 @require_can_edit_apps
 def new_app(req, domain):
     "Adds an app to the database"
-    lang = req.COOKIES.get('lang') or 'en'
+    lang = 'en'
     type = req.POST["type"]
     application_version = req.POST.get('application_version', APP_V1)
     cls = str_to_cls[type]
