@@ -262,13 +262,16 @@ def location_map_case_id(user):
     return 'user-owner-mapping-' + user._id
 
 
-def has_commtrack_location(user, domain):
-    return (
+def get_commtrack_location_id(user, domain):
+    if (
         user and
         user.get_domain_membership(domain.name) and
         user.get_domain_membership(domain.name).location_id and
         domain.commtrack_enabled
-    )
+    ):
+        return user.get_domain_membership(domain.name).location_id
+    else:
+        return None
 
 
 def get_case_wrapper(data):

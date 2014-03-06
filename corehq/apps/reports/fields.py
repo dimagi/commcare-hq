@@ -511,11 +511,10 @@ class AsyncLocationField(ReportField):
 
         context = {}
 
-        from corehq.apps.commtrack.util import has_commtrack_location
-        if has_commtrack_location(user, domain):
-            # make sure users location belongs to our current domain first
-            if user.get_domain_membership(domain.name).location_id:
-                selected_loc_id = user.get_domain_membership(domain.name).location_id
+        from corehq.apps.commtrack.util import get_commtrack_location_id
+        location_id = get_commtrack_location_id(user, domain)
+        if location_id:
+            selected_loc_id = location_id
 
             if domain.location_restriction_for_users:
                 context.update({'restriction': domain.location_restriction_for_users})
