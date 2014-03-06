@@ -12,7 +12,7 @@ from corehq.apps.reports.display import xmlns_to_name
 from couchdbkit.ext.django.schema import *
 from corehq.apps.reports.exportfilters import form_matches_users, is_commconnect_form, default_form_filter
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
-from couchexport.models import SavedExportSchema, GroupExportConfiguration
+from couchexport.models import SavedExportSchema, GroupExportConfiguration, FakeSavedExportSchema
 from couchexport.transforms import couch_to_excel_datetime, identity
 from couchexport.util import SerializableFunction
 import couchforms
@@ -667,6 +667,29 @@ class CaseExportSchema(HQExportSchema):
             builder = ParentCasePropertyBuilder(app, ("name",))
             props |= set(builder.get_properties(self.case_type))
         return props
+
+
+class FakeFormExportSchema(FakeSavedExportSchema):
+
+    def remap_tables(self, tables):
+        # kill the weird confusing stuff, and rename the main table to something sane
+        tables = _apply_removal(tables, ('#|#export_tag|#', '#|location_|#', '#|history|#'))
+        return _apply_mapping(tables, {
+            '#': 'Forms',
+        })
+
+
+def _apply_mapping(export_tables, mapping_dict):
+    def _clean(tabledata):
+        def _clean_tablename(tablename):
+            return mapping_dict.get(tablename, tablename)
+        return (_clean_tablename(tabledata[0]), tabledata[1])
+    return map(_clean, export_tables)
+
+
+def _apply_removal(export_tables, removal_list):
+    return [tabledata for tabledata in export_tables if not tabledata[0] in removal_list]
+
 
 class HQGroupExportConfiguration(GroupExportConfiguration):
     """

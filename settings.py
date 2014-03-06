@@ -604,14 +604,13 @@ FLUFF_PILLOW_TYPES_TO_SQL = {
     'UnicefMalawiFluff': 'SQL',
     'MalariaConsortiumFluff': 'SQL',
     'CareSAFluff': 'SQL',
-    'AncHmisCaseFluff': 'SQL',
-    'ImmunizationHmisCaseFluff': 'SQL',
-    'ProjectIndicatorsCaseFluff': 'SQL'
 }
 
 PREVIEWER_RE = '^$'
 
 MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
+
+DIGEST_LOGIN_FACTORY = 'django_digest.NoEmailLoginFactory'
 
 LOGGING = {
     'version': 1,
@@ -1020,6 +1019,8 @@ ES_XFORM_FULL_INDEX_DOMAINS = [
 
 CUSTOM_MODULES = [
     'custom.apps.crs_reports',
+    'custom.bihar',
+
 ]
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"

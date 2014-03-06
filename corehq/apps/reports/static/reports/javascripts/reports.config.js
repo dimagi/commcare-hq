@@ -13,6 +13,7 @@ var HQReport = function (options) {
     self.printReportButton = options.printReportButton || "#print-report";
     self.emailReportModal = options.emailReportModal || "#email-report-modal";
     self.isExportable = options.isExportable || false;
+    self.isExportAll = options.isExportAll || false;
     self.isEmailable = options.isEmailable || false;
     self.emailDefaultSubject = options.emailDefaultSubject || "";
     self.emailSuccessMessage = options.emailSuccessMessage;
@@ -40,7 +41,17 @@ var HQReport = function (options) {
                 if (self.isExportable) {
                     $(self.exportReportButton).click(function (e) {
                         e.preventDefault();
-                        window.location.href = get_report_render_url("export");
+                        if (self.isExportAll) {
+                            $.ajax({
+                                url: get_report_render_url("export"),
+                                type: "POST",
+                                success: function() {
+                                    alert("You requested excel report will be send to your email defined in your account settings.");
+                                }
+                            })
+                        } else {
+                            window.location.href = get_report_render_url("export");
+                        }
                     });
                 }
 

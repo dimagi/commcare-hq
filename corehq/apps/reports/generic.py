@@ -85,6 +85,7 @@ class GenericReportView(CacheableRequestMixIn):
     printable = False
 
     exportable = False
+    exportable_all = False
     mobile_enabled = False
     export_format_override = None
     icon = None
@@ -364,11 +365,11 @@ class GenericReportView(CacheableRequestMixIn):
         """
         return [ ['table_or_sheet_name', [['header'] ,['row']] ] ]
 
-    
+
     @property
     def filter_set(self):
         """
-        Whether a report has any filters set. Based on whether or not there 
+        Whether a report has any filters set. Based on whether or not there
         is a query string. This gets carried to additional asynchronous calls
         """
         are_filters_set = bool(self.request.META.get('QUERY_STRING'))
@@ -379,12 +380,12 @@ class GenericReportView(CacheableRequestMixIn):
                 # not a parseable boolean
                 pass
         return are_filters_set
-        
-    
+
+
     @property
     def needs_filters(self):
         """
-        Whether a report needs filters. A shortcut for hide_filters is false and 
+        Whether a report needs filters. A shortcut for hide_filters is false and
         filter_set is false.
         If no filters are used, False is automatically returned.
         """
@@ -392,12 +393,12 @@ class GenericReportView(CacheableRequestMixIn):
             return False
         else:
             return not self.hide_filters and not self.filter_set
-    
+
     def _validate_context_dict(self, property):
         if not isinstance(property, dict):
             raise TypeError("property must return a dict")
         return property
-    
+
     def _update_initial_context(self):
         """
             Intention: Don't override.
@@ -430,6 +431,7 @@ class GenericReportView(CacheableRequestMixIn):
                 show=self.override_permissions_check or \
                    self.request.couch_user.can_view_reports() or self.request.couch_user.get_viewable_reports(),
                 is_emailable=self.emailable,
+                is_export_all = self.exportable_all,
                 is_printable=self.printable,
                 is_admin=self.is_admin_report,   # todo is this necessary???
                 special_notice=self.special_notice,
@@ -735,6 +737,13 @@ class GenericTabularReport(GenericReportView):
         return []
 
     @property
+    def get_all_rows(self):
+        """
+            Override this method to return all records to export
+        """
+        return []
+
+    @property
     def total_records(self):
         """
             Override for pagination.
@@ -843,7 +852,10 @@ class GenericTabularReport(GenericReportView):
         3. str(cell)
         """
         headers = self.headers
-        formatted_rows = self.rows
+        if self.exportable_all:
+            formatted_rows = self.get_all_rows
+        else:
+            formatted_rows = self.rows
 
         def _unformat_row(row):
             def _unformat_val(val):
