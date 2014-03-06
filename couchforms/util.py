@@ -29,7 +29,6 @@ from couchforms.models import (
 )
 from couchforms.signals import (
     ReceiverResult,
-    submission_error_received,
     successful_form_received,
     xform_saved,
 )
@@ -371,7 +370,6 @@ class SubmissionPost(object):
             doc = post_xform_to_couch(self.instance,
                                       attachments=self.attachments,
                                       process=process)
-            return self.get_success_response(doc)
         except SubmissionError as e:
             logging.exception(
                 u"Problem receiving submission to %s. %s" % (
@@ -380,6 +378,8 @@ class SubmissionPost(object):
                 )
             )
             return self.get_error_response(e.error_log)
+        else:
+            return self.get_success_response(doc)
 
     def get_failed_auth_response(self):
         return HttpResponseForbidden('Bad auth')
@@ -452,7 +452,6 @@ class SubmissionPost(object):
     def get_error_response(self, error_log):
         error_doc = SubmissionErrorLog.get(error_log.get_id)
         self._attach_shared_props(error_doc)
-        submission_error_received.send(sender="receiver", xform=error_doc)
         error_doc.save()
         return HttpResponseServerError(
             xml.get_simple_response_xml(
