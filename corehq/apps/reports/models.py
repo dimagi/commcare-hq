@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import logging
+from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.utils import html
 from django.utils.safestring import mark_safe
@@ -30,6 +31,8 @@ import calendar
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 from dimagi.utils.logging import notify_exception
+from dimagi.utils.web import get_url_base
+from django_prbac.exceptions import PermissionDenied
 
 
 class HQUserType(object):
@@ -377,6 +380,19 @@ class ReportConfig(Document):
             else:
                 file_obj = None
             return json.loads(response.content)['report'], file_obj
+        except PermissionDenied:
+            return _("We are sorry, but your saved report '%(config_name)s' "
+                     "is no longer accessible because your subscription does "
+                     "not allow Custom Reporting. Please talk to your Project "
+                     "Administrator about enabling Custom Reports. If you "
+                     "want CommCare HQ to stop sending this message, please "
+                     "visit %(saved_reports_url)s to remove this "
+                     "Emailed Report.") % {
+                         'config_name': self.name,
+                         'saved_reports_url': "%s%s" % (
+                             get_url_base(), reverse(
+                                 'saved_reports', args=[request.domain])),
+                     }, None
         except Exception as e:
             notify_exception(None, "Error generating report")
             return _("An error occurred while generating this report."), None
