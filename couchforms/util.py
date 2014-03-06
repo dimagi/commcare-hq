@@ -12,7 +12,6 @@ from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseForbidden,
-    HttpResponseServerError,
 )
 
 import couchforms
@@ -29,13 +28,11 @@ from couchforms.models import (
 )
 from couchforms.signals import (
     ReceiverResult,
-    submission_error_received,
     successful_form_received,
     xform_saved,
 )
 from dimagi.utils.couch import uid
-from couchforms import xml
-from couchforms.xml import ResponseNature
+from couchforms.xml import ResponseNature, OpenRosaResponse
 import xml2json
 
 
@@ -307,6 +304,13 @@ def scrub_meta(xform):
 
 class SubmissionPost(object):
 
+    failed_auth_response = HttpResponseForbidden('Bad auth')
+    bad_multipart_response = HttpResponseBadRequest((
+        'If you use multipart/form-data, please name your file %s.\n'
+        'You may also do a normal (non-multipart) post '
+        'with the xml submission as the request body instead.'
+    ) % MAGIC_PROPERTY)
+
     def __init__(self, instance=None, attachments=None,
                  auth_context=None, domain=None, app_id=None, path=None,
                  location=None, submit_ip=None, openrosa_headers=None,
@@ -353,16 +357,10 @@ class SubmissionPost(object):
 
     def get_response(self):
         if not self.auth_context.is_valid():
-            return self.get_failed_auth_response()
+            return self.failed_auth_response
 
         if self.instance is MULTIPART_FILENAME_ERROR:
-            return HttpResponseBadRequest((
-                'If you use multipart/form-data, '
-                'please name your file %s.\n'
-                'You may also do a normal (non-multipart) post '
-                'with the xml submission as the request body instead.'
-            ) % MAGIC_PROPERTY)
-
+            return self.bad_multipart_response
         def process(xform):
             self._attach_shared_props(xform)
             scrub_meta(xform)
@@ -371,7 +369,6 @@ class SubmissionPost(object):
             doc = post_xform_to_couch(self.instance,
                                       attachments=self.attachments,
                                       process=process)
-            return self.get_success_response(doc)
         except SubmissionError as e:
             logging.exception(
                 u"Problem receiving submission to %s. %s" % (
@@ -380,6 +377,8 @@ class SubmissionPost(object):
                 )
             )
             return self.get_error_response(e.error_log)
+        else:
+            return self.get_success_response(doc)
 
     def get_failed_auth_response(self):
         return HttpResponseForbidden('Bad auth')
@@ -404,37 +403,34 @@ class SubmissionPost(object):
                 responses.append(resp)
 
         if errors:
-            # in the event of errors, respond with the errors, and mark the problem
+            # in the event of errors, respond with the errors,
+            # and mark the problem
             doc.problem = ", ".join(errors)
             doc.save()
-            response = HttpResponse(
-                xml.get_simple_response_xml(
-                    message=doc.problem,
-                    nature=ResponseNature.SUBMIT_ERROR,
-                ),
+            response = OpenRosaResponse(
+                message=doc.problem,
+                nature=ResponseNature.SUBMIT_ERROR,
                 status=201,
-            )
+            ).response()
         elif responses:
             # use the response with the highest priority if we got any
             responses.sort()
             response = HttpResponse(responses[-1].response, status=201)
         else:
             # default to something generic
-            response = HttpResponse(
-                xml.get_simple_response_xml("Thanks for submitting!",
-                                            ResponseNature.SUBMIT_SUCCESS),
+            response = OpenRosaResponse(
+                message="Thanks for submitting!",
+                nature=ResponseNature.SUBMIT_SUCCESS,
                 status=201,
-            )
+            ).response()
         return response
 
     def fail_actions_and_respond(self, doc):
-        return HttpResponse(
-            xml.get_simple_response_xml(
-                message=doc.problem,
-                nature=ResponseNature.SUBMIT_ERROR,
-            ),
+        return OpenRosaResponse(
+            message=doc.problem,
+            nature=ResponseNature.SUBMIT_ERROR,
             status=201,
-        )
+        ).response()
 
     def get_success_response(self, instance):
         if instance.doc_type == "XFormInstance":
@@ -452,12 +448,13 @@ class SubmissionPost(object):
     def get_error_response(self, error_log):
         error_doc = SubmissionErrorLog.get(error_log.get_id)
         self._attach_shared_props(error_doc)
-        submission_error_received.send(sender="receiver", xform=error_doc)
         error_doc.save()
-        return HttpResponseServerError(
-            xml.get_simple_response_xml(
-                message="The sever got itself into big trouble! Details: %s" % error_log.problem,
-                nature=ResponseNature.SUBMIT_ERROR))
+        return OpenRosaResponse(
+            message=("The sever got itself into big trouble! "
+                     "Details: %s" % error_log.problem),
+            nature=ResponseNature.SUBMIT_ERROR,
+            status=500,
+        ).response()
 
 
 def fetch_and_wrap_form(doc_id):
