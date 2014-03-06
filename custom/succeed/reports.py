@@ -3,11 +3,12 @@ from django.core.urlresolvers import NoReverseMatch, reverse
 from django.utils.translation import ugettext as _, ugettext_noop
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.api.es import ReportCaseES
+from corehq.apps.groups.models import Group
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.elastic import es_query
 from corehq.pillows.base import restore_property_dict
 from django.utils import html
@@ -372,6 +373,21 @@ class PatientListReport(CustomProjectReport, CaseListReport):
         care_site = self.request_params.get('care_site', '')
         if care_site != '':
             q["query"]["bool"]["must"].append({"match": {"care_site.#value": care_site}})
+        else:
+            if not isinstance(self.request.couch_user, WebUser) or self.request.couch_user.get_role()['name'] != "Succeed Admin":
+                groups = self.request.couch_user.get_group_ids()
+                party = []
+                for group_id in groups:
+                    group = Group.get(group_id)
+                    if group.name == "Harbor UCLA":
+                        party.append("harbor")
+                    elif group.name == "LAC-USC":
+                        party.append("lac-usc")
+                    elif group.name == "Olive View Medical Center":
+                        party.append("oliveview")
+                    elif group.name == "Rancho Los Amigos":
+                        party.append("rancho")
+                q["query"]["bool"]["must"].append({"terms": {"care_site.#value": party, "minimum_should_match": 1}})
         patient_status = self.request_params.get('patient_status', '')
         if patient_status != '':
             active_dict = {"nested": {
@@ -386,7 +402,7 @@ class PatientListReport(CustomProjectReport, CaseListReport):
                 q["query"]["bool"]["must"].append(active_dict)
         responsible_party = self.request_params.get('responsible_party', '')
         if responsible_party != '':
-            users = [user.get_id for user in CommCareUser.by_domain(domain=self.domain) if user.user_data['role'] == responsible_party.upper()]
+            users = [user.get_id for user in CommCareUser.by_domain(domain=self.domain) if 'role' in user.user_data and user.user_data['role'] == responsible_party.upper()]
             terms = {"terms": {"user_id": users, "minimum_should_match": 1}}
             q["query"]["bool"]["must"].append(terms)
         if self.case_type:
