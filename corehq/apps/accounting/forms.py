@@ -41,9 +41,10 @@ class BillingAccountForm(forms.Form):
                                             required=False)
     currency = forms.ChoiceField(label="Currency")
 
-    billing_account_admins = forms.CharField(label=_('Account Admins (emails)'),
-                                             required=False,
-                                             widget=forms.Textarea)
+    billing_account_admins = forms.CharField(
+        label=_('Account Admins (emails)'),
+        widget=forms.Textarea,
+    )
     first_name = forms.CharField(label='First Name', required=False)
     last_name = forms.CharField(label='Last Name', required=False)
     company_name = forms.CharField(label='Company Name', required=False)
@@ -93,12 +94,12 @@ class BillingAccountForm(forms.Form):
             crispy.Fieldset(
             'Basic Information',
                 'name',
+                'billing_account_admins',
                 'salesforce_account_id',
                 'currency',
             ),
             crispy.Fieldset(
             'Contact Information',
-                'billing_account_admins',
                 'first_name',
                 'last_name',
                 'company_name',
@@ -128,29 +129,48 @@ class BillingAccountForm(forms.Form):
                 if WebUser.get_by_username(email_no_whitespace) is None:
                     invalid_emails.append("'%s'" % email_no_whitespace)
             if len(invalid_emails) != 0:
-                raise ValidationError("Invalid emails: %s" % ', '.join(invalid_emails))
+                raise ValidationError(
+                    "Invalid emails: %s" % ', '.join(invalid_emails)
+                )
         return billing_account_admins
+
+    def update_billing_admins(self, account):
+        for web_user_email in \
+                self.cleaned_data['billing_account_admins'].split(','):
+            admin, _ = BillingAccountAdmin.objects.get_or_create(
+                web_user=web_user_email.strip(),
+            )
+            account.billing_admins.add(admin)
 
     def create_account(self):
         name = self.cleaned_data['name']
         salesforce_account_id = self.cleaned_data['salesforce_account_id']
-        currency, _ = Currency.objects.get_or_create(code=self.cleaned_data['currency'])
-        account = BillingAccount(name=name,
-                                 salesforce_account_id=salesforce_account_id,
-                                 currency=currency)
+        currency, _ = Currency.objects.get_or_create(
+            code=self.cleaned_data['currency']
+        )
+        account = BillingAccount(
+            name=name,
+            salesforce_account_id=salesforce_account_id,
+            currency=currency
+        )
+        account.save()
+        self.update_billing_admins(account)
         account.save()
         return account
 
     def update_account_and_contacts(self, account):
         account.name = self.cleaned_data['name']
-        account.salesforce_account_id = self.cleaned_data['salesforce_account_id']
-        account.currency, _ = Currency.objects.get_or_create(code=self.cleaned_data['currency'])
-        for web_user_email in self.cleaned_data['billing_account_admins'].split(','):
-            admin, _ = BillingAccountAdmin.objects.get_or_create(web_user=web_user_email)
-            account.billing_admins.add(admin)
+        account.salesforce_account_id = \
+            self.cleaned_data['salesforce_account_id']
+        account.currency, _ = Currency.objects.get_or_create(
+            code=self.cleaned_data['currency'],
+        )
+        self.update_billing_admins(account)
         account.save()
 
-        contact_info, _ = BillingContactInfo.objects.get_or_create(account=account)
+        contact_info, _ = BillingContactInfo.objects.get_or_create(
+            account=account,
+        )
         contact_info.first_name = self.cleaned_data['first_name']
         contact_info.last_name = self.cleaned_data['last_name']
         contact_info.company_name = self.cleaned_data['company_name']
