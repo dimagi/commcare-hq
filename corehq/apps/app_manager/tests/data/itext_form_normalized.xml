@@ -26,14 +26,8 @@
           <text id="question3">
             <value>q3-en</value>
           </text>
-          <text id="question4">
-            <value>q3-en</value>
-          </text>
           <text id="question4-1-label">
             <value>q4-1-label-en</value>
-          </text>
-          <text id="question4-2-label">
-            <value>q2-en</value>
           </text>
           <text id="question4-3-label">
             <value>q4-3-en</value>
@@ -53,11 +47,6 @@
             <value form="image">q4-5-en-audio</value>
             <value form="audio">q4-5-en-audio</value>
           </text>
-          <text id="question4-7-label">
-            <value>q4-5-en</value>
-            <value form="image">q4-5-en-image</value>
-            <value form="audio">q4-5-en-audio</value>
-          </text>
         </translation>
         <translation lang="pt">
           <text id="question1">
@@ -69,13 +58,7 @@
           <text id="question3">
             <value>q3-pt</value>
           </text>
-          <text id="question4">
-            <value>q3-pt</value>
-          </text>
           <text id="question4-1-label">
-            <value>q2-pt</value>
-          </text>
-          <text id="question4-2-label">
             <value>q2-pt</value>
           </text>
           <text id="question4-3-label">
@@ -96,11 +79,6 @@
             <value form="image">q4-5-pt-image</value>
             <value form="audio">q4-5-pt-audio</value>
           </text>
-          <text id="question4-7-label">
-            <value>q4-5-pt</value>
-            <value form="image">q4-5-pt-image</value>
-            <value form="audio">q4-5-pt-audio</value>
-          </text>
         </translation>
       </itext>
     </model>
@@ -116,13 +94,13 @@
       <label ref="jr:itext('question3')"/>
     </input>
     <select1 ref="/data/question4">
-      <label ref="jr:itext('question4')"/>
+      <label ref="jr:itext('question3')"/>
       <item>
         <label ref="jr:itext('question4-1-label')"/>
         <value>1</value>
       </item>
       <item>
-        <label ref="jr:itext('question4-2-label')"/>
+        <label ref="jr:itext('question2')"/>
         <value>2</value>
       </item>
       <item>
@@ -142,7 +120,7 @@
         <value>6</value>
       </item>
       <item>
-        <label ref="jr:itext('question4-7-label')"/>
+        <label ref="jr:itext('question4-5-label')"/>
         <value>7</value>
       </item>
     </select1>

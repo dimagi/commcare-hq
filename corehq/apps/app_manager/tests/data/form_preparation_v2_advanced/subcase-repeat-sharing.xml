@@ -44,9 +44,6 @@
 					<text id="child-label">
 						<value>Child</value>
 					</text>
-					<text id="name-label">
-						<value>Name</value>
-					</text>
                     <text id="which_child-label">
 						<value>which child</value>
 					</text>
@@ -94,7 +91,7 @@
 					</item>
 				</select1>
 				<input ref="/data/child/name">
-					<label ref="jr:itext('name-label')"/>
+					<label ref="jr:itext('mother_name-label')"/>
 				</input>
 			</repeat>
 		</group>
