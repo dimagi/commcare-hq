@@ -50,6 +50,5 @@ class ReceiverResult(object):
 
 successful_form_received = Signal(providing_args=["posted"])
 
-xform_saved = Signal(providing_args=["xform"])
 xform_archived = Signal(providing_args=["xform"])
 xform_unarchived = Signal(providing_args=["xform"])

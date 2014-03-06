@@ -16,6 +16,7 @@ from django.http import (
 
 import couchforms
 from couchforms.const import MAGIC_PROPERTY, MULTIPART_FILENAME_ERROR
+from couchforms.exceptions import DuplicateError
 from dimagi.utils.mixins import UnicodeMixIn
 from couchforms.models import (
     DefaultAuthContext,
@@ -29,7 +30,6 @@ from couchforms.models import (
 from couchforms.signals import (
     ReceiverResult,
     successful_form_received,
-    xform_saved,
 )
 from dimagi.utils.couch import uid
 from couchforms.xml import ResponseNature, OpenRosaResponse
@@ -130,7 +130,10 @@ def create_xform_from_xml(xml_string, _id=None, process=None):
         xform = XFormInstance(**kwargs)
         raise
     finally:
-        xform.save(encode_attachments=False)
+        try:
+            xform.save(encode_attachments=False)
+        except ResourceConflict:
+            raise DuplicateError()
 
     return xform.get_id
 
@@ -145,40 +148,32 @@ def post_xform_to_couch(instance, attachments=None, process=None):
     key is parameter name, value is django MemoryFile object stream
     """
     attachments = attachments or {}
-    try:
-        # todo: pretty sure nested try/except can be cleaned up
-        try:
-            doc_id = create_xform_from_xml(instance, process=process)
-        except couchforms.XMLSyntaxError as e:
-            doc = _log_hard_failure(instance, attachments, e)
-            raise SubmissionError(doc)
-        try:
-            xform = XFormInstance.get(doc_id)
-            for key, value in attachments.items():
-                xform.put_attachment(
-                    value,
-                    name=key,
-                    content_type=value.content_type,
-                    content_length=value.size
-                )
 
-            # fire signals
-            # We don't trap any exceptions here. This is by design.
-            # If something fails (e.g. case processing), we quarantine the
-            # form into an error location.
-            xform_saved.send(sender="couchforms", xform=xform)
-            return xform
-        except Exception, e:
-            logging.error("Problem with form %s" % doc_id)
-            logging.exception(e)
-            # "rollback" by changing the doc_type to XFormError
-            bad = XFormError.get(doc_id)
-            bad.problem = unicode(e)
-            bad.save()
-            return bad
-    except ResourceConflict:
-        # this is an update conflict, i.e. the uid in the form was the same.
+    try:
+        doc_id = create_xform_from_xml(instance, process=process)
+    except couchforms.XMLSyntaxError as e:
+        doc = _log_hard_failure(instance, attachments, e)
+        raise SubmissionError(doc)
+    except DuplicateError:
         return _handle_id_conflict(instance, attachments, process=process)
+
+    try:
+        xform = XFormInstance.get(doc_id)
+        for key, value in attachments.items():
+            xform.put_attachment(
+                value,
+                name=key,
+                content_type=value.content_type,
+                content_length=value.size
+            )
+        return xform
+    except Exception, e:
+        logging.exception("Problem with form %s" % doc_id)
+        # "rollback" by changing the doc_type to XFormError
+        bad = XFormError.get(doc_id)
+        bad.problem = unicode(e)
+        bad.save()
+        return bad
 
 
 def _has_errors(response, errors):

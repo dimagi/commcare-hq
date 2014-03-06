@@ -7,3 +7,7 @@ class CouchFormException(Exception):
 
 class XMLSyntaxError(CouchFormException):
     pass
+
+
+class DuplicateError(CouchFormException):
+    pass
