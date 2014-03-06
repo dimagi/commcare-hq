@@ -7,6 +7,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
+from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.elastic import es_query
 from corehq.pillows.base import restore_property_dict
 from django.utils import html
@@ -214,6 +215,7 @@ class PatientListReport(CustomProjectReport, CaseListReport):
     include_inactive = True
     name = ugettext_noop('Patient List')
     slug = 'patient_list'
+    default_sort = {'target_date': 'asc'}
 
     fields = ['custom.succeed.fields.CareSite',
               'custom.succeed.fields.ResponsibleParty',
@@ -230,10 +232,6 @@ class PatientListReport(CustomProjectReport, CaseListReport):
         return ReportCaseES(self.domain)
 
     @property
-    def case_owners(self):
-        return None
-
-    @property
     def case_filter(self):
         filters = []
         care_site = self.request_params.get('care_site', '')
@@ -248,7 +246,7 @@ class PatientListReport(CustomProjectReport, CaseListReport):
             DataTablesColumn(_("Name"), prop_name="name.exact"),
             DataTablesColumn(_("MRN"), prop_name="mrn.#value"),
             DataTablesColumn(_("Randomization Date"), prop_name="randomization_date.#value"),
-            DataTablesColumn(_("Visit Name")),
+            DataTablesColumn(_("Visit Name"), prop_name='visit_name'),
             DataTablesColumn(_("Target Date"), prop_name='target_date'),
             DataTablesColumn(_("Most Recent BP"), prop_name="BP_category.#value"),
             DataTablesColumn(_("Discuss at Huddle?"), prop_name="discuss.#value"),
@@ -318,8 +316,38 @@ class PatientListReport(CustomProjectReport, CaseListReport):
                             int month = Integer.parseInt(r[1]);
                             int day = Integer.parseInt(r[2]);
                             cal.set(year, month-1, day);
-                            cal.set(year, month-1, day);
-                            return cal;
+                            nv=(cal.getTimeInMillis() + (next_visit.get('days') * 24 * 60 * 60 * 1000));
+                            return Calendar.getInstance().getTimeInMillis() - nv;
+                        """,
+                    "type": "number",
+                    "params": {
+                        "visits_list": VISIT_SCHEDULE
+                    },
+                    "order": self.get_sorting_block()[0].values()[0]
+                }
+            }
+            q['sort'] = sort
+        if len(self.get_sorting_block()) != 0 and self.get_sorting_block()[0].keys()[0] == 'visit_name':
+            sort = {
+                "_script": {
+                    "script":
+                        """
+                            next_visit=visits_list[0];
+                            before_action=null;
+                            count=0;
+                            foreach(visit : visits_list) {
+                                skip = false;
+                                foreach(action : _source.actions) {
+                                    if (!skip && visit.xmlns.equals(action.xform_xmlns) && !action.xform_id.equals(before_action)) {
+                                        next_visit=visits_list[count+1];
+                                        before_visit=action.xform_id;
+                                        skip=true;
+                                        count++;
+                                    }
+                                    before_visit=action.xform_id;
+                                }
+                            }
+                            return next_visit.get('visit_name');
                         """,
                     "type": "string",
                     "params": {
@@ -345,11 +373,14 @@ class PatientListReport(CustomProjectReport, CaseListReport):
                 q["query"]["bool"]["must_not"].append(active_dict)
             else:
                 q["query"]["bool"]["must"].append(active_dict)
-
+        responsible_party = self.request_params.get('responsible_party', '')
+        if responsible_party != '':
+            users = [user.get_id for user in CommCareUser.by_domain(domain=self.domain) if user.user_data['role'] == responsible_party.upper()]
+            terms = {"terms": {"user_id": users, "minimum_should_match": 1}}
+            q["query"]["bool"]["must"].append(terms)
         if self.case_type:
             q["query"]["bool"]["must"].append({"match": {"type.exact": 'participant'}})
-        print es_query(q=q, es_url=REPORT_CASE_INDEX + '/_search', dict_only=False)
-        return []
+        return es_query(q=q, es_url=REPORT_CASE_INDEX + '/_search', dict_only=False)
 
     @property
     def rows(self):
