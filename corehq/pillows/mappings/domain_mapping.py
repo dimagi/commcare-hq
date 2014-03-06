@@ -1,5 +1,5 @@
-DOMAIN_INDEX="hqdomains_e591da94c9c4f4aa052cec2315d87b1b"
-DOMAIN_MAPPING={'_meta': {'comment': 'Yedi modified on 12/16/2013',
+DOMAIN_INDEX="hqdomains_m591sj94c9c4f4aa052cec2585d87b8b"
+DOMAIN_MAPPING={'_meta': {'comment': 'Yedi modified on 3/6/2014',
            'created': None},
  'date_detection': False,
  'date_formats': ['yyyy-MM-dd',
@@ -80,6 +80,8 @@ DOMAIN_MAPPING={'_meta': {'comment': 'Yedi modified on 12/16/2013',
                 'cp_n_inactive_cases': {'type': 'long'},
                 'cp_n_users_submitted_form': {'type': 'long'},
                 'cp_n_web_users': {'type': 'long'},
+                'cp_last_updated': {'format': "yyyy-MM-dd||yyyy-MM-dd'T'HH:mm:ssZZ||yyyy-MM-dd'T'HH:mm:ss.SSSSSS||yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'||yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd'T'HH:mm:ssZ||yyyy-MM-dd'T'HH:mm:ssZZ'Z'||yyyy-MM-dd'T'HH:mm:ss.SSSZZ||yyyy-MM-dd'T'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss.SSSSSS||mm/dd/yy' 'HH:mm:ss",
+                                    'type': 'date'},
                 'creating_user': {'type': 'string'},
                 'currency_code': {'type': 'string'},
                 'customer_type': {'type': 'string'},
