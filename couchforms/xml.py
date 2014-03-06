@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from xml.etree import ElementTree
+from django.http import HttpResponse
 
 RESPONSE_XMLNS = 'http://openrosa.org/http/response'
 
@@ -22,21 +23,36 @@ class ResponseNature(object):
 
 
 def get_response_element(message, nature=''):
+    return OpenRosaResponse(message, nature, status=None).etree()
+
+
+def get_simple_response_xml(message, nature=''):
+    return OpenRosaResponse(message, nature, status=None).xml()
+
+
+class OpenRosaResponse(object):
     """
     Response template according to
     https://bitbucket.org/javarosa/javarosa/wiki/OpenRosaRequest
 
     """
-    elem = ElementTree.Element('OpenRosaResponse')
-    elem.attrib = {'xmlns': RESPONSE_XMLNS}
-    msg_elem = ElementTree.Element('message')
-    if nature:
-        msg_elem.attrib = {'nature': nature}
-    msg_elem.text = unicode(message)
-    elem.append(msg_elem)
-    return elem
+    def __init__(self, message, nature, status):
+        self.message = message
+        self.nature = nature
+        self.status = status
 
+    def etree(self):
+        elem = ElementTree.Element('OpenRosaResponse')
+        elem.attrib = {'xmlns': RESPONSE_XMLNS}
+        msg_elem = ElementTree.Element('message')
+        if self.nature:
+            msg_elem.attrib = {'nature': self.nature}
+        msg_elem.text = unicode(self.message)
+        elem.append(msg_elem)
+        return elem
 
-def get_simple_response_xml(message, nature=''):
-    return ElementTree.tostring(get_response_element(message, nature),
-                                encoding='utf-8')
+    def xml(self):
+        return ElementTree.tostring(self.etree(), encoding='utf-8')
+
+    def response(self):
+        return HttpResponse(self.xml(), status=self.status)

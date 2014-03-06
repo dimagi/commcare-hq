@@ -12,7 +12,6 @@ from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseForbidden,
-    HttpResponseServerError,
 )
 
 import couchforms
@@ -33,8 +32,7 @@ from couchforms.signals import (
     xform_saved,
 )
 from dimagi.utils.couch import uid
-from couchforms import xml
-from couchforms.xml import ResponseNature
+from couchforms.xml import ResponseNature, OpenRosaResponse
 import xml2json
 
 
@@ -404,37 +402,34 @@ class SubmissionPost(object):
                 responses.append(resp)
 
         if errors:
-            # in the event of errors, respond with the errors, and mark the problem
+            # in the event of errors, respond with the errors,
+            # and mark the problem
             doc.problem = ", ".join(errors)
             doc.save()
-            response = HttpResponse(
-                xml.get_simple_response_xml(
-                    message=doc.problem,
-                    nature=ResponseNature.SUBMIT_ERROR,
-                ),
+            response = OpenRosaResponse(
+                message=doc.problem,
+                nature=ResponseNature.SUBMIT_ERROR,
                 status=201,
-            )
+            ).response()
         elif responses:
             # use the response with the highest priority if we got any
             responses.sort()
             response = HttpResponse(responses[-1].response, status=201)
         else:
             # default to something generic
-            response = HttpResponse(
-                xml.get_simple_response_xml("Thanks for submitting!",
-                                            ResponseNature.SUBMIT_SUCCESS),
+            response = OpenRosaResponse(
+                message="Thanks for submitting!",
+                nature=ResponseNature.SUBMIT_SUCCESS,
                 status=201,
-            )
+            ).response()
         return response
 
     def fail_actions_and_respond(self, doc):
-        return HttpResponse(
-            xml.get_simple_response_xml(
-                message=doc.problem,
-                nature=ResponseNature.SUBMIT_ERROR,
-            ),
+        return OpenRosaResponse(
+            message=doc.problem,
+            nature=ResponseNature.SUBMIT_ERROR,
             status=201,
-        )
+        ).response()
 
     def get_success_response(self, instance):
         if instance.doc_type == "XFormInstance":
@@ -453,10 +448,12 @@ class SubmissionPost(object):
         error_doc = SubmissionErrorLog.get(error_log.get_id)
         self._attach_shared_props(error_doc)
         error_doc.save()
-        return HttpResponseServerError(
-            xml.get_simple_response_xml(
-                message="The sever got itself into big trouble! Details: %s" % error_log.problem,
-                nature=ResponseNature.SUBMIT_ERROR))
+        return OpenRosaResponse(
+            message=("The sever got itself into big trouble! "
+                     "Details: %s" % error_log.problem),
+            nature=ResponseNature.SUBMIT_ERROR,
+            status=500,
+        ).response()
 
 
 def fetch_and_wrap_form(doc_id):
