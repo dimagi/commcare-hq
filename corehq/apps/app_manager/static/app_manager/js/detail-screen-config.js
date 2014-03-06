@@ -830,7 +830,7 @@ var DetailScreenConfig = (function () {
         FILTER_XPATH_EXTRA_LABEL: '',
         INVISIBLE_FORMAT: 'Search Only',
         ADDRESS_FORMAT: 'Address (Android/CloudCare)',
-        CALC_XPATH_FORMAT: 'Calculate (Advanced)',
+        CALC_XPATH_FORMAT: 'Calculate',
         CALC_XPATH_EXTRA_LABEL: '',
 
         ADD_COLUMN: 'Add to list',

@@ -7,7 +7,8 @@ class StaticToggle(object):
         self.namespaces = namespaces or []
 
     def enabled(self, item, **kwargs):
-        return toggle_enabled(self.slug, item, **kwargs)
+        namespaces = [None] + self.namespaces
+        return any([toggle_enabled(self.slug, item, namespace=n, **kwargs) for n in namespaces])
     
 
 NAMESPACE_DOMAIN = 'domain'
@@ -51,4 +52,10 @@ OFFLINE_CLOUDCARE = StaticToggle(
 REMINDERS_UI_PREVIEW = StaticToggle(
     'reminders_ui_preview',
     'New reminders UI'
+)
+
+CALC_XPATHS = StaticToggle(
+    'calc_xpaths',
+    'Enabling custom calculated xpaths',
+    namespaces=[NAMESPACE_DOMAIN],
 )
