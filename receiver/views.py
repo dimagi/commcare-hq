@@ -47,10 +47,8 @@ class SubmissionPost(couchforms.SubmissionPost):
         else:
             # default to something generic
             response = HttpResponse(
-                xml.get_simple_response_xml(
-                    message="Success! Received XForm id is: %s\n" % doc['_id'],
-                    nature=ResponseNature.SUBMIT_SUCCESS,
-                ),
+                xml.get_simple_response_xml("Thanks for submitting!",
+                                            ResponseNature.SUBMIT_SUCCESS),
                 status=201,
             )
         return response
