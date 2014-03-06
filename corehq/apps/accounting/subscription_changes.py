@@ -91,7 +91,8 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
                 reminder.active = False
                 reminder.save()
                 if self.verbose:
-                    print "Deactivated Reminder %s" % reminder.nickname
+                    print ("Deactivated Reminder %s [%s]"
+                           % (reminder.nickname, reminder._id))
         except Exception:
             logging.exception("Failed to downgrade outbound sms for domain %s." % self.domain.name)
             return False
@@ -108,7 +109,8 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
                 survey.active = False
                 survey.save()
                 if self.verbose:
-                    print "Deactivated Survey %s" % survey.nickname
+                    print ("Deactivated Survey %s [%s]"
+                           % (survey.nickname, survey._id))
         except Exception:
             logging.exception("Failed to downgrade outbound sms for domain %s." % self.domain.name)
             return False
@@ -126,7 +128,8 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         if not custom_roles:
             return True
         if self.verbose:
-            print "Archiving %d custom roles." % len(custom_roles)
+            for role in custom_roles:
+                print ("Archiving Custom Role %s [%s]" % (role.name, role._id))
         # temporarily disable this part of the downgrade until we
         # have a better user experience for notifying the downgraded user
         # read_only_role = UserRole.get_read_only_role_by_domain(self.domain.name)
