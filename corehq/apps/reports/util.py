@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 import math
 
@@ -21,7 +21,7 @@ from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
-from dimagi.utils.parsing import string_to_datetime
+from dimagi.utils.parsing import string_to_datetime, string_to_utc_datetime
 from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.web import json_request
 
@@ -272,13 +272,13 @@ def datespan_export_filter(doc, datespan):
     if isinstance(datespan, dict):
         datespan = DateSpan(**datespan)
     try:
-        received_on = doc['received_on']
+        received_on = string_to_utc_datetime(doc['received_on']).replace(tzinfo=pytz.utc)
     except Exception:
         if settings.DEBUG:
             raise
         return False
 
-    if datespan.startdate_param <= received_on < datespan.enddate_param:
+    if datespan.startdate <= received_on < (datespan.enddate + timedelta(days=1)):
         return True
     return False
 
@@ -326,7 +326,9 @@ def create_export_filter(request, domain, export_type='form'):
             filter = SerializableFunction(case_group_filter, group=group)
     else:
         filter = SerializableFunction(app_export_filter, app_id=app_id)
-        filter &= SerializableFunction(datespan_export_filter, datespan=request.datespan)
+        datespan = request.datespan
+        datespan.set_timezone(get_timezone(request.couch_user, domain))
+        filter &= SerializableFunction(datespan_export_filter, datespan=datespan)
         if user_filters and use_user_filters:
             users_matching_filter = map(lambda x: x.get('user_id'), get_all_users_by_domain(domain,
                 user_filter=user_filters, simplified=True))
