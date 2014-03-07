@@ -129,7 +129,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
             return True
         if self.verbose:
             for role in custom_roles:
-                print ("Archiving Custom Role %s [%s]" % (role.name, role._id))
+                print ("Archiving Custom Role %s" % role)
         # temporarily disable this part of the downgrade until we
         # have a better user experience for notifying the downgraded user
         # read_only_role = UserRole.get_read_only_role_by_domain(self.domain.name)
