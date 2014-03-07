@@ -49,9 +49,10 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
     @property
     def headers(self):
         headers = DataTablesHeader(DataTablesColumn(_("View Form")),
-            DataTablesColumn(_("Username")),
-            DataTablesColumn(_("Submission Time") if self.by_submission_time else _("Completion Time")),
-            DataTablesColumn(_("Form")),
+            DataTablesColumn(_("Username"), prop_name='form.meta.username'),
+            DataTablesColumn(_("Submission Time") if self.by_submission_time else _("Completion Time"),
+                             prop_name=self.time_field),
+            DataTablesColumn(_("Form"), prop_name='form.@name'),
         )
         return headers
 
