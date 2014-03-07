@@ -1,13 +1,16 @@
 from __future__ import absolute_import
+from collections import namedtuple
 from datetime import timedelta
 from dimagi.utils.couch.delete import delete
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from couchdbkit.ext.django.schema import DateTimeProperty, DocumentSchema
 from couchdbkit.exceptions import ResourceConflict
+import redis
 import json
 
-LOCK_EXPIRATION = timedelta(hours = 1)
+LOCK_EXPIRATION = timedelta(hours=1)
+
 
 class LockableMixIn(DocumentSchema):
     lock_date = DateTimeProperty()
@@ -31,6 +34,52 @@ class LockableMixIn(DocumentSchema):
         assert self.lock_date is not None
         self.lock_date = None
         self.save()
+
+
+class LockManager(namedtuple('ObjectLockTuple', 'obj lock')):
+    """
+    A context manager that can also act like a simple tuple
+    for dealing with an object and a lock
+
+    The two following examples are equivalent, except that the context manager
+    will release the lock even if an error is thrown in the body
+
+    >>> # as a tuple
+    >>> obj, lock = LockManager(obj, lock)
+    >>> # do stuff...
+    >>> if lock:
+    ...     lock.release()
+
+    >>> # as a context manager
+    >>> with LockManager(obj, lock) as obj:
+    ...     # do stuff...
+    """
+    def __enter__(self):
+        return self.obj
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        _release_lock(self.lock, degrade_gracefully=True)
+
+
+def _acquire_lock(lock, degrade_gracefully, **kwargs):
+    try:
+        lock.acquire(**kwargs)
+    except redis.ConnectionError:
+        if degrade_gracefully:
+            lock = None
+        else:
+            raise
+    return lock
+
+
+def _release_lock(lock, degrade_gracefully):
+    if lock:
+        try:
+            lock.release()
+        except redis.ConnectionError:
+            if not degrade_gracefully:
+                raise
+
 
 class RedisLockableMixIn(object):
     @classmethod
@@ -122,13 +171,14 @@ class RedisLockableMixIn(object):
         """
         create = kwargs.pop("create", False)
         _id = kwargs.get("_id", None)
+        degrade_gracefully = kwargs.pop('degrade_gracefully', False)
 
         if _id:
             lock = cls.get_obj_lock_by_id(_id)
-            lock.acquire(blocking=True)
         else:
             lock = cls.get_class_lock(timeout_seconds=60)
-            lock.acquire(blocking=True)
+
+        lock = _acquire_lock(lock, degrade_gracefully, blocking=True)
         try:
             if _id:
                 obj = cls.get_obj_by_id(_id)
@@ -138,21 +188,22 @@ class RedisLockableMixIn(object):
                 if create:
                     obj = cls.create_obj(*args, **kwargs)
                 else:
-                    lock.release()
-                    return (None, None)
+                    _release_lock(lock, degrade_gracefully)
+                    return LockManager(None, None)
         except:
-            lock.release()
+            _release_lock(lock, degrade_gracefully)
             raise
         else:
             if _id:
-                return (obj, lock)
+                return LockManager(obj, lock)
             else:
                 obj_lock = cls.get_obj_lock(obj)
-                obj_lock.acquire()
+                obj_lock = _acquire_lock(obj_lock, degrade_gracefully)
                 # Refresh the object in case another thread has updated it
                 obj = cls.get_latest_obj(obj)
-                lock.release()
-                return (obj, obj_lock)
+                _release_lock(lock, degrade_gracefully)
+                return LockManager(obj, obj_lock)
+
 
 class CouchDocLockableMixIn(RedisLockableMixIn):
     """
@@ -198,6 +249,14 @@ class CouchDocLockableMixIn(RedisLockableMixIn):
     >>> patient.last_visit = date(2014, 1, 26)
     >>> patient.save()
     >>> lock.release()
+
+    >>> # or using 'with' syntax
+
+    >>> with Patient.get_locked_obj("pid-1234", create=True) as patient:
+    ...     patient.last_visit = date(2014, 1, 24)
+    ...     patient.save()
+    ...
+    >>> # etc.
     """
 
     @classmethod
