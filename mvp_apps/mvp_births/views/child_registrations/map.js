@@ -1,6 +1,7 @@
 function (doc) {
     // !code util/mvp.js
-    if (isChildRegistrationForm(doc)) {
+    if (isChildRegistrationForm(doc) ||
+        isPregnancyCloseForm(doc)) {
         var meta = doc.form.meta,
             indicators = get_indicators(doc),
             indicator_keys = [];
