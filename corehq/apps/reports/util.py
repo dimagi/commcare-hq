@@ -244,14 +244,18 @@ def app_export_filter(doc, app_id):
     else:
         return True
 
-def get_timezone(couch_user_id, domain):
-    #todo cleanup
+def get_timezone(couch_user_or_id, domain):
+    # todo cleanup
     timezone = None
-    if couch_user_id:
-        try:
-            requesting_user = WebUser.get_by_user_id(couch_user_id)
-        except CouchUser.AccountTypeError:
-            return pytz.utc
+    if couch_user_or_id:
+        if isinstance(couch_user_or_id, CouchUser):
+            requesting_user = couch_user_or_id
+        else:
+            assert isinstance(couch_user_or_id, basestring)
+            try:
+                requesting_user = WebUser.get_by_user_id(couch_user_or_id)
+            except CouchUser.AccountTypeError:
+                return pytz.utc
         domain_membership = requesting_user.get_domain_membership(domain)
         if domain_membership:
             timezone = tz_utils.coerce_timezone_value(domain_membership.timezone)
