@@ -58,8 +58,27 @@ class LockManager(namedtuple('ObjectLockTuple', 'obj lock')):
         return self.obj
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.lock:
-            self.lock.release()
+        _release_lock(self.lock, degrade_gracefully=True)
+
+
+def _acquire_lock(lock, degrade_gracefully, **kwargs):
+    try:
+        lock.acquire(**kwargs)
+    except redis.ConnectionError:
+        if degrade_gracefully:
+            lock = None
+        else:
+            raise
+    return lock
+
+
+def _release_lock(lock, degrade_gracefully):
+    if lock:
+        try:
+            lock.release()
+        except redis.ConnectionError:
+            if not degrade_gracefully:
+                raise
 
 
 class RedisLockableMixIn(object):
@@ -159,18 +178,7 @@ class RedisLockableMixIn(object):
         else:
             lock = cls.get_class_lock(timeout_seconds=60)
 
-        def _release_lock():
-            if lock:
-                lock.release()
-
-        if degrade_gracefully:
-            try:
-                lock.acquire(blocking=True)
-            except redis.ConnectionError:
-                lock = None
-        else:
-            lock.acquire(blocking=True)
-
+        lock = _acquire_lock(lock, degrade_gracefully, blocking=True)
         try:
             if _id:
                 obj = cls.get_obj_by_id(_id)
@@ -180,20 +188,20 @@ class RedisLockableMixIn(object):
                 if create:
                     obj = cls.create_obj(*args, **kwargs)
                 else:
-                    _release_lock()
+                    _release_lock(lock, degrade_gracefully)
                     return LockManager(None, None)
         except:
-            _release_lock()
+            _release_lock(lock, degrade_gracefully)
             raise
         else:
             if _id:
                 return LockManager(obj, lock)
             else:
                 obj_lock = cls.get_obj_lock(obj)
-                obj_lock.acquire()
+                _acquire_lock(obj_lock.acquire(), degrade_gracefully)
                 # Refresh the object in case another thread has updated it
                 obj = cls.get_latest_obj(obj)
-                _release_lock()
+                _release_lock(lock, degrade_gracefully)
                 return LockManager(obj, obj_lock)
 
 
