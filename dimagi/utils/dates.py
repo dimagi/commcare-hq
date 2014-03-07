@@ -356,6 +356,16 @@ class DateSpan(object):
         end = datetime.datetime(next.year, next.month, 1) - datetime.timedelta(days=1)
         return DateSpan(start, end, format, inclusive, timezone)
 
+    def set_timezone(self, to_tz):
+        """
+        Sets the dates in this object to a specific timezone. This will actually change
+        the times (as opposed, to setting the timezone and adjusting the times). So
+        3pm in EST will be converted to PST as 3pm (so 6pm in EST) instead of adjusting
+        the time.
+        """
+        self.startdate = self.startdate.replace(tzinfo=to_tz)
+        self.enddate = self.enddate.replace(tzinfo=to_tz)
+        self.timezone = to_tz
 
     def parse(self, startdate_str, enddate_str, parse_format, display_format=None):
         """
