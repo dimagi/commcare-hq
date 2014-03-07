@@ -2,6 +2,7 @@ import json
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
 from corehq import toggles, privileges
+from corehq.apps.export.exceptions import BadExportConfiguration
 from corehq.apps.reports.standard import export
 from corehq.apps.reports.models import FormExportSchema, HQGroupExportConfiguration, CaseExportSchema
 from corehq.apps.reports.standard.export import DeidExportReport
@@ -87,9 +88,12 @@ class CustomExportHelper(object):
 
             self.export_stock = self.has_stock_column()
 
-            assert(self.custom_export.doc_type == 'SavedExportSchema')
-            assert(self.custom_export.type == self.export_type)
-            assert(self.custom_export.index[0] == domain)
+            try:
+                assert self.custom_export.doc_type == 'SavedExportSchema', 'bad export doc type'
+                assert self.custom_export.type == self.export_type, 'wrong export type specified'
+                assert self.custom_export.index[0] == domain, 'bad export doc domain'
+            except AssertionError, e:
+                raise BadExportConfiguration(str(e))
         else:
             self.custom_export = self.ExportSchemaClass(type=self.export_type)
             self.export_stock = False

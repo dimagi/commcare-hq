@@ -23,6 +23,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.templatetags.case_tags import case_inline_display
 from couchdbkit.exceptions import ResourceNotFound
 from casexml.apps.case.xml import V2
+from corehq.apps.export.exceptions import BadExportConfiguration
 from corehq.apps.reports.exportfilters import default_form_filter
 import couchexport
 from couchexport import views as couchexport_views
@@ -257,6 +258,9 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
                 return HttpResponseForbidden()
         except ResourceNotFound:
             raise Http404()
+        except BadExportConfiguration, e:
+            return HttpResponseBadRequest(str(e))
+
     elif safe_only:
         return HttpResponseForbidden()
     else:
