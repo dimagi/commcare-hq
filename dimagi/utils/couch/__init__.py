@@ -171,7 +171,7 @@ class RedisLockableMixIn(object):
         """
         create = kwargs.pop("create", False)
         _id = kwargs.get("_id", None)
-        degrade_gracefully = kwargs.get('degrade_gracefully')
+        degrade_gracefully = kwargs.pop('degrade_gracefully')
 
         if _id:
             lock = cls.get_obj_lock_by_id(_id)
