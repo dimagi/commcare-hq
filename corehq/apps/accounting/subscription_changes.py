@@ -77,7 +77,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         ).all()
         active_reminders = []
         for reminder_doc in iter_docs(db, [r['id'] for r in reminder_rules]):
-            if reminder_doc['active']:
+            if reminder_doc.get('active', True):
                 active_reminders.append(CaseReminderHandler.wrap(reminder_doc))
         return active_reminders
 
@@ -293,7 +293,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         ).all()
         recipients = []
         for reminder_doc in iter_docs(db, [r['id'] for r in reminder_rules]):
-            if reminder_doc['active']:
+            if reminder_doc.get('active', True):
                 recipients.append(reminder_doc['method'])
         return recipients
 
