@@ -198,7 +198,7 @@ class RedisLockableMixIn(object):
                 return LockManager(obj, lock)
             else:
                 obj_lock = cls.get_obj_lock(obj)
-                _acquire_lock(obj_lock, degrade_gracefully)
+                obj_lock = _acquire_lock(obj_lock, degrade_gracefully)
                 # Refresh the object in case another thread has updated it
                 obj = cls.get_latest_obj(obj)
                 _release_lock(lock, degrade_gracefully)
