@@ -49,10 +49,6 @@ class FixtureViewInterface(GenericTabularReport, FixtureInterface):
 
     fields = ['corehq.apps.fixtures.interface.FixtureSelectField']
 
-    @method_decorator(require_can_edit_fixtures)
-    def dispatch(self, *args, **kwargs):
-        return super(FixtureViewInterface, self).dispatch(*args, **kwargs)
-
     @property
     def report_context(self):
         context = super(FixtureViewInterface, self).report_context
