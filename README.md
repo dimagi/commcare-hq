@@ -55,7 +55,7 @@ individual project sites when necessary.
  [elasticsearch]: http://www.elasticsearch.org/download/
  [jython]: http://jython.org/downloads.html
 
-#### Configuration for Elasticsearch
+#### Elasticsearch Configuration
 
 To run elasticsearch in an upstart configuration, see [this example](https://gist.github.com/3961323).
 
@@ -63,6 +63,16 @@ To secure elasticsearch, we recommend setting the listen port to localhost on a
 local machine. On a distributed environment, we recommend setting up ssh
 tunneled ports for the elasticsearch port. The supervisor_elasticsearch.conf
 supervisor config demonstrates the tunnel creation using autossh.
+
+#### CouchDB Configuration
+
+Open http://localhost:5984/_utils/ and create a new database named `commcarehq`.
+
+#### PostgreSQL Configuration
+
+    createuser -U postgres commcarehq
+    createdb -U postgres commcarehq
+    createdb -U postgres commcarehq_reporting
 
 
 ### Setting up a virtualenv
@@ -130,7 +140,9 @@ that you have a 32bit version of Python installed.
     ./manage.py migrate --noinput
     ./manage.py collectstatic --noinput
 
-    # this will do some basic setup, create a superuser, and create a project
+    # This will do some basic setup, create a superuser, and create a project.
+    # The project-name, email, and password given here are specific to your
+    # local development environment.
     ./manage.py bootstrap <project-name> <email> <password>
 
     # To set up elasticsearch indexes, first run (and then kill once you see the
