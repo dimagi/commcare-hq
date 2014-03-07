@@ -171,7 +171,7 @@ class RedisLockableMixIn(object):
         """
         create = kwargs.pop("create", False)
         _id = kwargs.get("_id", None)
-        degrade_gracefully = kwargs.pop('degrade_gracefully')
+        degrade_gracefully = kwargs.pop('degrade_gracefully', False)
 
         if _id:
             lock = cls.get_obj_lock_by_id(_id)
@@ -198,7 +198,7 @@ class RedisLockableMixIn(object):
                 return LockManager(obj, lock)
             else:
                 obj_lock = cls.get_obj_lock(obj)
-                _acquire_lock(obj_lock.acquire(), degrade_gracefully)
+                _acquire_lock(obj_lock, degrade_gracefully)
                 # Refresh the object in case another thread has updated it
                 obj = cls.get_latest_obj(obj)
                 _release_lock(lock, degrade_gracefully)
