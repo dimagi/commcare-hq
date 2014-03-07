@@ -3,6 +3,7 @@ from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect, HttpResponseBadRequest
 from django.views.generic.base import View
 from django.utils.translation import ugettext
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.decorators import login_and_domain_required, cls_to_view
 from dimagi.utils.decorators.datespan import datespan_in_request
 from django_prbac.exceptions import PermissionDenied
@@ -228,8 +229,16 @@ class CustomProjectReportDispatcher(ProjectReportDispatcher):
     prefix = 'custom_project_report'
     map_name = 'CUSTOM_REPORTS'
 
-    @method_decorator(requires_privilege_with_fallback(privileges.CUSTOM_REPORTS))
     def dispatch(self, request, *args, **kwargs):
+        render_as = kwargs.get('render_as')
+        if not render_as == 'email':
+            return self.dispatch_with_priv(request, *args, **kwargs)
+        if not domain_has_privilege(request.domain, privileges.CUSTOM_REPORTS):
+            raise PermissionDenied()
+        return super(CustomProjectReportDispatcher, self).dispatch(request, *args, **kwargs)
+
+    @method_decorator(requires_privilege_with_fallback(privileges.CUSTOM_REPORTS))
+    def dispatch_with_priv(self, request, *args, **kwargs):
         return super(CustomProjectReportDispatcher, self).dispatch(request, *args, **kwargs)
 
     def permissions_check(self, report, request, domain=None, is_navigation_check=False):
