@@ -8,7 +8,7 @@ def rebuild_case(case_id):
     """
     Given a case ID, rebuild the entire case state based on all existing forms
     referencing it. Useful when things go wrong or when you need to manually
-    rebuild a case afer archiving / deliting it
+    rebuild a case after archiving / deleting it
     """
 
     try:
@@ -19,14 +19,25 @@ def rebuild_case(case_id):
         case._id = case_id
         found = False
 
-    # clear actions, xform_ids, and close state
-    # todo: properties too?
-    case.doc_type = 'CommCareCase'
+    # clear actions, xform_ids, close state, and all dynamic properties
+    dynamic_properties = set([k for action in case.actions for k in action.updated_unknown_properties.keys()])
+    for k in dynamic_properties:
+        try:
+            delattr(case, k)
+        except KeyError:
+            pass
+
+    # already deleted means it was explicitly set to "deleted",
+    # as opposed to getting set to that because it has no actions
+    already_deleted = case.doc_type == 'CommCareCase-Deleted' and case.actions
+    if not already_deleted:
+        case.doc_type = 'CommCareCase'
     case.xform_ids = []
     case.actions = []
     case.closed = False
     case.closed_on = None
     case.closed_by = ''
+
     form_ids = get_case_xform_ids(case_id)
     forms = [fetch_and_wrap_form(id) for id in form_ids]
     filtered_forms = [f for f in forms if f.doc_type == "XFormInstance"]
