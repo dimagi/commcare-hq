@@ -2,6 +2,7 @@ from django.utils.translation import ugettext_noop
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.fields import ReportSelectField
 from corehq.apps.users.models import CouchUser, WebUser
+from custom.succeed.utils import _is_succeed_admin, CONFIG, _is_pm_or_pi
 
 
 class CareSite(ReportSelectField):
@@ -15,24 +16,15 @@ class CareSite(ReportSelectField):
     def options(self):
         user = self.request.couch_user
         options = []
-        harbor = dict(val="harbor", text=ugettext_noop("Harbor UCLA"))
-        lac = dict(val="lac-usc", text=ugettext_noop("LAC-USC"))
-        olive = dict(val="oliveview", text=ugettext_noop("Olive View Medical Center"))
-        rancho = dict(val="rancho", text=ugettext_noop("Rancho Los Amigos"))
-        if isinstance(user, WebUser) or user.get_role()['name'] == "Succeed Admin":
-            options = [harbor, lac, olive, rancho]
+        if isinstance(user, WebUser) or _is_succeed_admin(user):
+            options = CONFIG['groups']
         else:
             groups = user.get_group_ids()
             for group_id in groups:
                 group = Group.get(group_id)
-                if group.name == "Harbor UCLA":
-                    options.append(harbor)
-                elif group.name == "LAC-USC":
-                    options.append(lac)
-                elif group.name == "Olive View Medical Center":
-                    options.append(olive)
-                elif group.name == "Rancho Los Amigos":
-                    options.append(rancho)
+                for grp in CONFIG['groups']:
+                    if group.name == grp['text']:
+                        options.append(grp)
         return options
 
 
@@ -45,22 +37,22 @@ class ResponsibleParty(ReportSelectField):
     @property
     def options(self):
         user = self.request.couch_user
-        cm = dict(val="CM", text=ugettext_noop("Care Manager"))
-        chw = dict(val="CHW", text=ugettext_noop("Community Health Worker"))
+        cm = dict(val=CONFIG['cm_role'], text=ugettext_noop("Care Manager"))
+        chw = dict(val=CONFIG['chw_role'], text=ugettext_noop("Community Health Worker"))
         options = []
-        if isinstance(user, WebUser) or user.get_role()['name'] == "Succeed Admin" or user.user_data['role'] in ['PM', 'PI']:
+        if isinstance(user, WebUser) or _is_succeed_admin(user) or _is_pm_or_pi(user):
             options = [
                 dict(val='', text=ugettext_noop("All Roles")),
-                dict(val="PM", text=ugettext_noop("Project Manager")),
+                dict(val=CONFIG['pm_role'], text=ugettext_noop("Project Manager")),
                 cm,
                 chw
             ]
         else:
             role = user.user_data['role']
-            if role == 'CM':
+            if role == CONFIG['cm_role']:
                 options.append(cm)
                 self.selected = cm['val']
-            elif role == 'CHW':
+            elif role == CONFIG['chw_role']:
                 options.append(chw)
                 self.selected = chw['val']
         return options

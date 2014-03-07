@@ -348,3 +348,16 @@ def look_up_app_json(domain, app_id):
     app = Application.get(app_id)
     assert(app.domain == domain)
     return get_app_json(app)
+
+def get_cloudcare_app(domain, app_name):
+    apps = get_cloudcare_apps(domain)
+    app = filter(lambda x: x['name'] == app_name, apps)[0]
+    return look_up_app_json(domain, app['_id'])
+
+def get_latest_build(domain, app_id):
+    build = ApplicationBase.view('app_manager/saved_app',
+                                 startkey=[domain, app_id, {}],
+                                 endkey=[domain, app_id],
+                                 descending=True,
+                                 limit=1).one()
+    return build._doc if build else None

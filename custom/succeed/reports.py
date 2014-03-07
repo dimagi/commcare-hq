@@ -3,6 +3,7 @@ from django.core.urlresolvers import NoReverseMatch, reverse
 from django.utils.translation import ugettext as _, ugettext_noop
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.api.es import ReportCaseES
+from corehq.apps.cloudcare.api import get_cloudcare_app, get_latest_build
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.standard import CustomProjectReport
@@ -13,9 +14,11 @@ from corehq.elastic import es_query
 from corehq.pillows.base import restore_property_dict
 from django.utils import html
 import dateutil
-from casexml.apps.case.models import CommCareCase
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
-from custom.succeed.utils import get_cloudcare_app
+from custom.succeed.utils import CONFIG, _is_succeed_admin, SUCCEED_CLOUD_APPNAME
+import logging
+import simplejson
+
 
 EMPTY_FIELD = "---"
 
@@ -103,27 +106,26 @@ LAST_INTERACTION_LIST = [PM1, PM3, CM1, CM3, CM4, CM5, CM6, CHW1, CHW2, CHW3, CH
 
 class PatientListReportDisplay(CaseDisplay):
     def __init__(self, report, case_dict):
-        case = CommCareCase.get(case_dict["_id"])
-        forms = case.get_forms()
         next_visit = VISIT_SCHEDULE[0]
         last_inter = None
-        for form in forms:
-            if form.xmlns in LAST_INTERACTION_LIST:
-                last_inter = form
+        for action in case_dict['actions']:
+            if action['xform_xmlns'] in LAST_INTERACTION_LIST:
+                last_inter = action
 
         for visit_key, visit in enumerate(VISIT_SCHEDULE):
-            for key, form in enumerate(forms):
-                if visit['xmlns'] == form.xmlns:
+            for key, action in enumerate(case_dict['actions']):
+                if visit['xmlns'] == action['xform_xmlns']:
                     try:
                         next_visit = VISIT_SCHEDULE[visit_key + 1]
-                        del forms[key]
+                        del case_dict['actions'][key]
                         break
                     except IndexError:
                         next_visit = 'last'
-        setattr(self, "next_visit", next_visit)
+        self.next_visit = next_visit
         if last_inter:
-            setattr(self, "last_interaction", last_inter.received_on)
-
+            self.last_interaction = last_inter['date']
+        self.app_dict = get_cloudcare_app(report.domain, SUCCEED_CLOUD_APPNAME)
+        self.latest_build = get_latest_build(report.domain, self.app_dict['_id'])['_id']
         super(PatientListReportDisplay, self).__init__(report, case_dict)
 
     def get_property(self, key):
@@ -147,21 +149,17 @@ class PatientListReportDisplay(CaseDisplay):
     @property
     def edit_link(self):
         base_url = '/a/%(domain)s/cloudcare/apps/view/%(build_id)s/%(module_id)s/%(form_id)s/enter/'
-        app_dict = get_cloudcare_app(1)
-        try:
-            return html.mark_safe("<a class='ajax_dialog' href='%s'>Edit</a>") \
-                % html.escape(base_url % dict(
-                    form_id=app_dict[CM7],
-                    case_id=self.case_id,
-                    domain=app_dict['domain'],
-                    build_id=app_dict['build_id'],
-                    module_id=1
-                )
+        module = self.app_dict['modules'][1]
+        form_idx = [ix for (ix, f) in enumerate(module['forms']) if f['xmlns'] == CM7][0]
+        return html.mark_safe("<a class='ajax_dialog' href='%s'>Edit</a>") \
+            % html.escape(base_url % dict(
+                form_id=form_idx,
+                case_id=self.case_id,
+                domain=self.app_dict['domain'],
+                build_id=self.latest_build,
+                module_id=1
             )
-        except NoReverseMatch:
-            return "%s (bad ID format)"
-
-
+        )
 
     @property
     def case_detail_url(self):
@@ -176,14 +174,18 @@ class PatientListReportDisplay(CaseDisplay):
 
     @property
     def randomization_date(self):
-        date = datetime.strptime(self.get_property("randomization_date"), "%Y-%m-%d")
-        return date.strftime("%m/%d/%Y")
+        rand_date = self.get_property("randomization_date")
+        if rand_date != EMPTY_FIELD:
+            date = datetime.strptime(rand_date, "%Y-%m-%d")
+            return date.strftime("%m/%d/%Y")
+        else:
+            return EMPTY_FIELD
 
     @property
     def visit_name(self):
         next_visit = getattr(self, "next_visit", EMPTY_FIELD)
         if next_visit == 'last':
-            return _('No More visits')
+            return _('No more visits')
         else:
             return next_visit['visit_name']
 
@@ -198,7 +200,7 @@ class PatientListReportDisplay(CaseDisplay):
             elif 7 > tg_date > 0:
                 return "<span style='background-color: #FFFF00;padding: 5px;display: block;'> In %s day(s)</span>" % tg_date
             elif tg_date == 0:
-                return "<span style='background-color: #FFFF00;padding: 5px;display: block;'>Today</span>" % tg_date
+                return "<span style='background-color: #FFFF00;padding: 5px;display: block;'>Today</span>"
             else:
                 return "<span style='background-color: #FF0000; color: white;padding: 5px;display: block;'>%s day(s) overdue</span>" % (
                     tg_date * (-1))
@@ -215,14 +217,15 @@ class PatientListReportDisplay(CaseDisplay):
 
     @property
     def patient_info(self):
-        date = getattr(self, "last_interaction", EMPTY_FIELD)
-        if date != EMPTY_FIELD:
+        if self.last_interaction != EMPTY_FIELD:
+            date = datetime.strptime( self.last_interaction, "%Y-%m-%dT%H:%M:%SZ")
             return date.strftime("%m/%d/%Y")
         else:
             return EMPTY_FIELD
 
 
 class PatientListReport(CustomProjectReport, CaseListReport):
+
     ajax_pagination = True
     include_inactive = True
     name = ugettext_noop('Patient List')
@@ -262,7 +265,7 @@ class PatientListReport(CustomProjectReport, CaseListReport):
             DataTablesColumn(_("Target Date"), prop_name='target_date'),
             DataTablesColumn(_("Most Recent BP"), prop_name="BP_category.#value"),
             DataTablesColumn(_("Discuss at Huddle?"), prop_name="discuss.#value"),
-            DataTablesColumn(_("Last Patient Interaction"), prop_name="actions.date"),
+            DataTablesColumn(_("Last Patient Interaction"), prop_name="last_interaction"),
         )
         return headers
 
@@ -280,15 +283,21 @@ class PatientListReport(CustomProjectReport, CaseListReport):
             },
             'sort': self.get_sorting_block(),
         }
-        if len(self.get_sorting_block()) != 0 and self.get_sorting_block()[0].keys()[0] == 'actions.date':
+        sorting_block = self.get_sorting_block()[0].keys()[0] if len(self.get_sorting_block()) != 0 else None
+        order = self.get_sorting_block()[0].values()[0] if len(self.get_sorting_block()) != 0 else None
+
+
+        if sorting_block == 'last_interaction':
             sort = {
                 "_script": {
                     "script":
                         """
                             last=0;
-                            foreach(action : _source.actions) {
-                                if (inter_list.contains(action.get('xform_xmlns'))) {
-                                    last = action.get('date')
+                            break = true;
+                            for (i = _source.actions.size(); (i > 0 && break); i--){
+                                if (inter_list.contains(_source.actions[i-1].get('xform_xmlns'))) {
+                                    last = _source.actions[i-1].get('date');
+                                    break = false;
                                 }
                             }
                             return last;
@@ -297,11 +306,11 @@ class PatientListReport(CustomProjectReport, CaseListReport):
                     "params": {
                         "inter_list": LAST_INTERACTION_LIST
                     },
-                    "order": self.get_sorting_block()[0].values()[0]
+                    "order": order
                 }
             }
             q['sort'] = sort
-        if len(self.get_sorting_block()) != 0 and self.get_sorting_block()[0].keys()[0] == 'target_date':
+        elif sorting_block == 'target_date':
             sort = {
                 "_script": {
                     "script":
@@ -335,11 +344,11 @@ class PatientListReport(CustomProjectReport, CaseListReport):
                     "params": {
                         "visits_list": VISIT_SCHEDULE
                     },
-                    "order": self.get_sorting_block()[0].values()[0]
+                    "order": order
                 }
             }
             q['sort'] = sort
-        if len(self.get_sorting_block()) != 0 and self.get_sorting_block()[0].keys()[0] == 'visit_name':
+        elif sorting_block == 'visit_name':
             sort = {
                 "_script": {
                     "script":
@@ -365,7 +374,7 @@ class PatientListReport(CustomProjectReport, CaseListReport):
                     "params": {
                         "visits_list": VISIT_SCHEDULE
                     },
-                    "order": self.get_sorting_block()[0].values()[0]
+                    "order": order
                 }
             }
             q['sort'] = sort
@@ -374,20 +383,16 @@ class PatientListReport(CustomProjectReport, CaseListReport):
         if care_site != '':
             q["query"]["bool"]["must"].append({"match": {"care_site.#value": care_site}})
         else:
-            if not isinstance(self.request.couch_user, WebUser) or self.request.couch_user.get_role()['name'] != "Succeed Admin":
+            if not isinstance(self.request.couch_user, WebUser) or _is_succeed_admin(self.request.couch_user):
                 groups = self.request.couch_user.get_group_ids()
                 party = []
                 for group_id in groups:
                     group = Group.get(group_id)
-                    if group.name == "Harbor UCLA":
-                        party.append("harbor")
-                    elif group.name == "LAC-USC":
-                        party.append("lac-usc")
-                    elif group.name == "Olive View Medical Center":
-                        party.append("oliveview")
-                    elif group.name == "Rancho Los Amigos":
-                        party.append("rancho")
+                    for grp in CONFIG['groups']:
+                        if group.name == grp['text']:
+                            party.append(grp['val'])
                 q["query"]["bool"]["must"].append({"terms": {"care_site.#value": party, "minimum_should_match": 1}})
+
         patient_status = self.request_params.get('patient_status', '')
         if patient_status != '':
             active_dict = {"nested": {
@@ -395,18 +400,20 @@ class PatientListReport(CustomProjectReport, CaseListReport):
                 "query": {
                     "match": {
                         "actions.xform_xmlns": PM3}}}}
-
             if patient_status == "active":
                 q["query"]["bool"]["must_not"].append(active_dict)
             else:
                 q["query"]["bool"]["must"].append(active_dict)
+
         responsible_party = self.request_params.get('responsible_party', '')
         if responsible_party != '':
             users = [user.get_id for user in CommCareUser.by_domain(domain=self.domain) if 'role' in user.user_data and user.user_data['role'] == responsible_party.upper()]
             terms = {"terms": {"user_id": users, "minimum_should_match": 1}}
             q["query"]["bool"]["must"].append(terms)
+
         if self.case_type:
             q["query"]["bool"]["must"].append({"match": {"type.exact": 'participant'}})
+        logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, simplejson.dumps(q)))
         return es_query(q=q, es_url=REPORT_CASE_INDEX + '/_search', dict_only=False)
 
     @property
