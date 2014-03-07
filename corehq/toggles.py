@@ -4,13 +4,16 @@ class StaticToggle(object):
     def __init__(self, slug, label, namespaces=None):
         self.slug = slug
         self.label = label
-        self.namespaces = namespaces or []
+        if namespaces:
+            self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
+        else:
+            self.namespaces = [None]
 
     def enabled(self, item, **kwargs):
-        namespaces = [None] + self.namespaces
-        return any([toggle_enabled(self.slug, item, namespace=n, **kwargs) for n in namespaces])
-    
+        return any([toggle_enabled(self.slug, item, namespace=n, **kwargs) for n in self.namespaces])
 
+# if no namespaces are specified the user namespace is assumed
+NAMESPACE_USER = object()
 NAMESPACE_DOMAIN = 'domain'
 
 APP_BUILDER_CUSTOM_PARENT_REF = StaticToggle(
