@@ -552,7 +552,11 @@ def get_apps_base_context(request, domain, app):
 @cache_control(no_cache=True, no_store=True)
 @login_and_domain_required
 def paginate_releases(request, domain, app_id):
-    limit = request.GET.get('limit', 10)
+    limit = request.GET.get('limit')
+    try:
+        limit = int(limit)
+    except ValueError:
+        limit = 10
     start_build_param = request.GET.get('start_build')
     if start_build_param and json.loads(start_build_param):
         start_build = json.loads(start_build_param)
