@@ -16,7 +16,7 @@ from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.users.models import CouchUser
 from corehq.elastic import es_query, ADD_TO_ES_FILTER
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
-from dimagi.utils.couch import get_cached_property, IncompatibleDocument
+from dimagi.utils.couch import get_cached_property, IncompatibleDocument, safe_index
 from corehq.apps.reports.graph_models import PieChart
 from corehq import elastic
 
@@ -49,9 +49,10 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
     @property
     def headers(self):
         headers = DataTablesHeader(DataTablesColumn(_("View Form")),
-            DataTablesColumn(_("Username"), prop_name="form.meta.username"),
-            DataTablesColumn(_("Submit Time"), prop_name="form.meta.timeEnd"),
-            DataTablesColumn(_("Form"), prop_name="form.@name"))
+            DataTablesColumn(_("Username")),
+            DataTablesColumn(_("Submission Time") if self.by_submission_time else _("Completion Time")),
+            DataTablesColumn(_("Form")),
+        )
         return headers
 
     @property
@@ -64,13 +65,16 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
             self.es_query()
         return self.es_response
 
+    @property
+    def time_field(self):
+        return 'received_on' if self.by_submission_time else 'form.meta.timeEnd'
+
     def es_query(self):
-        time_field = 'form.meta.timeEnd' if self.by_submission_time else 'received_on'
         if not getattr(self, 'es_response', None):
             q = {
                 "query": {
                     "range": {
-                        time_field: {
+                        self.time_field: {
                             "from": self.datespan.startdate_param,
                             "to": self.datespan.enddate_param,
                             "include_upper": False}}},
@@ -92,7 +96,7 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
                 ids = filter(None, [user['user_id'] for user in self.get_admins_and_demo_users()])
                 q["filter"]["and"].append({"not": {"terms": {"form.meta.userID": ids}}})
 
-            q["sort"] = self.get_sorting_block() if self.get_sorting_block() else [{time_field : {"order": "desc"}}]
+            q["sort"] = self.get_sorting_block() if self.get_sorting_block() else [{self.time_field : {"order": "desc"}}]
             self.es_response = es_query(params={"domain.exact": self.domain}, q=q, es_url=XFORM_INDEX + '/xform/_search',
                 start_at=self.pagination.start, size=self.pagination.count)
         return self.es_response
@@ -126,7 +130,7 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
             yield [
                 form_data_link(form["_id"]),
                 (username or _('No data for username')) + (" %s" % name if name else ""),
-                DateTimeProperty().wrap(form["form"]["meta"]["timeEnd"]).strftime("%Y-%m-%d %H:%M:%S"),
+                DateTimeProperty().wrap(safe_index(form, self.time_field.split('.'))).strftime("%Y-%m-%d %H:%M:%S"),
                 xmlns_to_name(self.domain, form.get("xmlns"), app_id=form.get("app_id")),
             ]
 
