@@ -19,16 +19,19 @@ class M4ChangeReportDataSource(ReportDataSource):
         from custom.m4change.reports.anc_hmis_report import AncHmisReport
         from custom.m4change.reports.project_indicators_report import ProjectIndicatorsReport
         from custom.m4change.reports.immunization_hmis_report import ImmunizationHmisReport
+        from custom.m4change.reports.mcct_monthly_aggregate_report import McctMonthlyAggregateReport
 
         startdate = self.config['startdate']
         enddate = self.config['enddate']
         datespan = DateSpan(startdate, enddate, format='%Y-%m-%d')
         location_id = self.config['location_id']
+        domain = self.config['domain']
 
         reports = [
             AncHmisReport,
             ImmunizationHmisReport,
-            ProjectIndicatorsReport
+            ProjectIndicatorsReport,
+            McctMonthlyAggregateReport
         ]
 
         report_data = []
@@ -38,7 +41,8 @@ class M4ChangeReportDataSource(ReportDataSource):
                     'name': report.name,
                     'data': report.get_report_data({
                         'location_id': location_id,
-                        'datespan': datespan
+                        'datespan': datespan,
+                        'domain': domain
                     })
                 }
             })

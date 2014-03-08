@@ -51,7 +51,7 @@ class AncHmisCaseSqlData(SqlData):
 
     @property
     def group_by(self):
-        return ['domain','location_id']
+        return ["domain","location_id"]
 
 
 class ProjectIndicatorsCaseSqlData(SqlData):
@@ -93,7 +93,7 @@ class ProjectIndicatorsCaseSqlData(SqlData):
 
     @property
     def group_by(self):
-        return ['domain','mother_id','location_id']
+        return ["domain","mother_id","location_id"]
 
 
 class ImmunizationHmisCaseSqlData(SqlData):
@@ -149,4 +149,43 @@ class ImmunizationHmisCaseSqlData(SqlData):
 
     @property
     def group_by(self):
-        return ['domain','location_id']
+        return ["domain","location_id"]
+
+
+class McctMonthlyAggregateFormSqlData(SqlData):
+
+    table_name = "fluff_McctMonthlyAggregateFormFluff"
+
+    def __init__(self, domain, datespan):
+        self.domain = domain
+        self.datespan = datespan
+
+    @property
+    def filter_values(self):
+        return dict(
+            domain=self.domain,
+            startdate=self.datespan.startdate_utc.date(),
+            enddate=self.datespan.enddate_utc.date()
+        )
+
+    @property
+    def filters(self):
+        return [
+            "domain = :domain",
+            "date between :startdate and :enddate"
+        ]
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn(_("Location ID"), SimpleColumn("location_id")),
+            DatabaseColumn(_("All eligible clients"), SumColumn("all_eligible_clients_total")),
+            DatabaseColumn(_("Eligible clients due to registration"), SumColumn("eligible_due_to_registration_total")),
+            DatabaseColumn(_("Eligible clients due to 4th visit"), SumColumn("eligible_due_to_4th_visit_total")),
+            DatabaseColumn(_("Eligible clients due to delivery"), SumColumn("eligible_due_to_delivery_total")),
+            DatabaseColumn(_("Eligible clients due to immunization or PNC visit"), SumColumn("eligible_due_to_immun_or_pnc_visit_total")),
+        ]
+
+    @property
+    def group_by(self):
+        return ["domain","location_id"]
