@@ -95,8 +95,9 @@ class ProductListView(BaseCommTrackManageView):
         return json.loads(self.request.GET.get('show_inactive', 'false'))
 
     @property
+    @memoized
     def total(self):
-        return len(Product.by_domain(self.domain))
+        return Product.count_by_domain(self.domain)
 
     @property
     def page_context(self):

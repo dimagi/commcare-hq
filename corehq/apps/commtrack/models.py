@@ -161,6 +161,15 @@ class Product(Document):
         return [row['id'] for row in view_results]
 
 
+    @classmethod
+    def count_by_domain(cls, domain):
+        """
+        Gets count of products in a domain
+        """
+        # todo: we should add a reduce so we can get this out of couch
+        return len(cls.ids_by_domain(domain))
+
+
 class CommtrackActionConfig(DocumentSchema):
     # one of the base stock action types (see StockActions enum)
     action = StringProperty()
