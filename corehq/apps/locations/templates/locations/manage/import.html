@@ -5,7 +5,13 @@
 
 {% block js %}{{ block.super }}
     <link rel="stylesheet" href="{% static 'locations/style/manage.css' %}">
+    <script type="text/javascript">
+        $('form#upload-locations').submit(function(){
+            $(this).find('button[type=submit]').attr('disabled', 'disabled');
+        });
+    </script>
 {% endblock %}
+
 
 {% block main_column %}
     <header>
@@ -21,7 +27,7 @@
             {% trans "Download your current location data: " %}<a href="{% url "location_export" domain %}">{% trans "locations.xlsx" %}</a>
         </li>
         <li>
-            {% trans "Updated it with the changes you want to make" %}
+            {% trans "Update it with the changes you want to make" %}
         </li>
         <li>
             {% trans "To speed up the process, you can remove rows you aren't modifying" %}
@@ -34,6 +40,7 @@
     <form class="form-horizontal form-report"
           method="post"
           action=""
+          id="upload-locations"
           enctype="multipart/form-data">
         <div class="control-group">
             <label class="control-label" for="file">
