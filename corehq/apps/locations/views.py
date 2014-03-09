@@ -231,7 +231,7 @@ def location_importer_job_poll(request, domain, download_id, template="hqwebapp/
     context = get_download_context(download_id, check_state=True)
     context.update({
         'on_complete_short': _('Import complete.'),
-        'on_complete_long': 'Location importing has finished'
+        'on_complete_long': _('Location importing has finished'),
 
     })
     return render(request, template, context)
