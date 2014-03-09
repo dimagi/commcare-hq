@@ -1,5 +1,5 @@
 {% load i18n %}
-{% if not is_alive %}
+{% if not is_alive and not progress.percent %}
     <p class="alert alert-error">
     {% blocktrans %}
         Task processor not detected.
