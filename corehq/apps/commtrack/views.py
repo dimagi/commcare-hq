@@ -14,7 +14,7 @@ from corehq.apps.commtrack.forms import ProductForm, ProgramForm, ConsumptionFor
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.locations.models import Location
 from dimagi.utils.decorators.memoized import memoized
-from soil.util import expose_download
+from soil.util import expose_download, get_download_context
 import uuid
 from django.core.urlresolvers import reverse
 from django.contrib import messages
@@ -224,9 +224,22 @@ class ProductImportStatusView(BaseCommTrackManageView):
     def get(self, request, *args, **kwargs):
         context = {
             'domain': self.domain,
-            'download_id': kwargs['download_id']
+            'download_id': kwargs['download_id'],
+            'poll_url': reverse('product_importer_job_poll', args=[self.domain, kwargs['download_id']]),
+            'title': _("Product Import Status"),
+            'progress_text': _("Importing your data. This may take some time..."),
         }
-        return render(request, 'locations/manage/import_status.html', context)
+        return render(request, 'hqwebapp/soil_status_full.html', context)
+
+@login_and_domain_required
+def product_importer_job_poll(request, domain, download_id, template="hqwebapp/partials/download_status.html"):
+    context = get_download_context(download_id, check_state=True)
+    context.update({
+        'on_complete_short': _('Import complete.'),
+        'on_complete_long': _('Product importing has finished'),
+
+    })
+    return render(request, template, context)
 
 
 def download_products(request, domain):
