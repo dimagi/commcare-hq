@@ -1,4 +1,3 @@
-{% load url from future %}
 {% load i18n %}
     {% if is_ready %}
         <div id="ready_{{ download_id }}">
@@ -12,27 +11,5 @@
         </script>
         </div>
     {% else %}
-        {% if not is_alive %}
-            <p class="alert alert-error">
-            {% blocktrans %}
-                Task processor not detected.
-                There may be something wrong with your system.
-                If the download takes longer than normal to complete
-                please contact support for help.
-            {% endblocktrans %}
-            </p>
-        {% else %}
-            {% if progress.percent %}
-                <div class="progress progress-striped active">
-                    <div class="bar" style="width: {{ progress.percent }}%;"></div>
-                </div>
-            {% endif %}
-            {% if progress.total %}
-                <p class="help-inline">
-                    {% trans "Processed" %} {{ progress.percent }}%
-                </p>
-            {% else %}
-{#                <p class="help-inline">{% trans "Preparing..." %}</p>#}
-            {% endif %}
-        {% endif %}
+        {% include 'soil/partials/download_in_progress.html' %}
     {% endif %}
