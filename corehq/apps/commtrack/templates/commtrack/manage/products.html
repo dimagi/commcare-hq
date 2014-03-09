@@ -1,5 +1,4 @@
 {% extends "settings/base_template.html" %}
-{% load url from future %}
 {% load i18n %}
 {% load hq_shared_tags %}
 
@@ -59,6 +58,9 @@
             <div class="btn-toolbar">
                 <a class="btn btn-success" href="{% url "commtrack_product_new" domain %}">
                     <i class="icon-plus"></i> {% trans 'New Product' %}
+                </a>
+                <a class="btn btn-info" href="{% url "commtrack_upload_products" domain %}">
+                    <i class="icon-upload"></i> {% trans 'Bulk Import Products' %}
                 </a>
             </div>
         </div>

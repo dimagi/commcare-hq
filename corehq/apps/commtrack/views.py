@@ -1,5 +1,5 @@
-from collections import defaultdict
-from itertools import product
+import os
+import tempfile
 from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpResponseNotFound
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
@@ -18,8 +18,7 @@ from soil.util import expose_download
 import uuid
 from django.core.urlresolvers import reverse
 from django.contrib import messages
-from corehq.apps.commtrack.tasks import import_locations_async,\
-    import_stock_reports_async
+from corehq.apps.commtrack.tasks import import_stock_reports_async, import_products_async
 import json
 from couchdbkit import ResourceNotFound
 import csv
@@ -181,6 +180,80 @@ class NewProductView(BaseCommTrackManageView):
             messages.success(request, _("Product saved!"))
             return HttpResponseRedirect(reverse(ProductListView.urlname, args=[self.domain]))
         return self.get(request, *args, **kwargs)
+
+
+class UploadProductView(BaseCommTrackManageView):
+    urlname = 'commtrack_upload_products'
+    page_title = ugettext_noop("Import Products")
+    template_name = 'commtrack/manage/upload_products.html'
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': ProductListView.page_title,
+            'url': reverse(ProductListView.urlname, args=[self.domain]),
+        }]
+
+    def post(self, request, *args, **kwargs):
+        upload = request.FILES.get('products')
+        if not upload:
+            messages.error(request, _('no file uploaded'))
+            return self.get(request, *args, **kwargs)
+
+        domain = args[0]
+        # stash this in soil to make it easier to pass to celery
+        file_ref = expose_download(upload.read(),
+                                   expiry=1*60*60)
+        task = import_products_async.delay(
+            domain,
+            file_ref.download_id,
+        )
+        file_ref.set_task(task)
+
+        return HttpResponseRedirect(
+            reverse(
+                ProductImportStatusView.urlname,
+                args=[domain, file_ref.download_id]
+            )
+        )
+
+class ProductImportStatusView(BaseCommTrackManageView):
+    urlname = 'product_import_status'
+    page_title = ugettext_noop('Product Import Status')
+
+    def get(self, request, *args, **kwargs):
+        context = {
+            'domain': self.domain,
+            'download_id': kwargs['download_id']
+        }
+        return render(request, 'locations/manage/import_status.html', context)
+
+
+def download_products(request, domain):
+    def _iter_product_rows(domain):
+        for p_doc in iter_docs(Product.get_db(), Product.ids_by_domain(domain)):
+            p = Product.wrap(p_doc)
+            yield p.to_csv()
+
+    fd, path = tempfile.mkstemp()
+    with os.fdopen(fd, 'wb') as file:
+        writer = csv.writer(file, dialect=csv.excel)
+        writer.writerow([
+            'id',
+            'name',
+            'unit',
+            'code',
+            'description',
+            'category',
+            'program_id',
+            'cost',
+        ])
+        for row in _iter_product_rows(domain):
+            writer.writerow(row)
+
+    response = HttpResponse(open(path, 'rb').read())
+    response['Content-Disposition'] = 'attachment; filename="{domain}-products.csv"'.format(domain=domain)
+    return response
 
 
 class EditProductView(NewProductView):
