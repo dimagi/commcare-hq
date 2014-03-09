@@ -178,7 +178,7 @@ class EditLocationHierarchy(BaseLocationView):
 class LocationImportStatusView(BaseLocationView):
     urlname = 'location_import_status'
     page_title = ugettext_noop('Location Import Status')
-    template_name = 'locations/manage/import_status.html'
+    template_name = 'hqwebapp/soil_status_full.html'
 
     @property
     def page_context(self):
@@ -192,7 +192,7 @@ class LocationImportStatusView(BaseLocationView):
             'title': _("Location Import Status"),
             'progress_text': _("Importing your data. This may take some time..."),
         }
-        return render(request, 'locations/manage/import_status.html', context)
+        return render(request, self.template_name, context)
 
 
 class LocationImportView(BaseLocationView):
