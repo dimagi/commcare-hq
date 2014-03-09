@@ -187,7 +187,10 @@ class LocationImportStatusView(BaseLocationView):
     def get(self, request, *args, **kwargs):
         context = {
             'domain': self.domain,
-            'download_id': kwargs['download_id']
+            'download_id': kwargs['download_id'],
+            'poll_url': reverse('location_importer_job_poll', args=[self.domain, kwargs['download_id']]),
+            'title': _("Location Import Status"),
+            'progress_text': _("Importing your data. This may take some time..."),
         }
         return render(request, 'locations/manage/import_status.html', context)
 
@@ -218,7 +221,6 @@ class LocationImportView(BaseLocationView):
             file_ref.download_id,
         )
         file_ref.set_task(task)
-
         return HttpResponseRedirect(
             reverse(
                 LocationImportStatusView.urlname,

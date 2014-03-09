@@ -14,7 +14,7 @@
             var pollDownloader = function () {
                 if ($('#ready_{{ download_id }}').length == 0)
                     {
-                        $.get("{% url "location_importer_job_poll" domain download_id %}", function(data) {
+                        $.get("{{ poll_url }}", function(data) {
                             $("#display_{{ download_id }}").html(data);
                         });
                     } else {
@@ -31,14 +31,14 @@
     <header>
         <div class="row-fluid">
             <div class="span8">
-                <h2>{% trans "Location Import Status" %}</h2>
+                <h2>{{ title }}</h2>
             </div>
         </div>
     </header>
 
     <div class="downloader_container" id="display_{{ download_id }}">
         <legend>
-            {% trans "Importing your data. This may take some time..." %}
+            {{ progress_text }}
         </legend>
     </div>
 {% endblock %}
