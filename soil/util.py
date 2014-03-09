@@ -1,5 +1,4 @@
 from django.conf import settings
-from django.template import RequestContext
 from django.utils import importlib
 from soil import FileDownload, DownloadBase
 from soil.exceptions import TaskFailedError
