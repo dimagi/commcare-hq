@@ -228,7 +228,13 @@ class LocationImportView(BaseLocationView):
 
 @login_and_domain_required
 def location_importer_job_poll(request, domain, download_id, template="locations/manage/partials/status.html"):
-    return render(request, template, get_download_context(download_id, check_state=True))
+    context = get_download_context(download_id, check_state=True)
+    context.update({
+        'on_complete_short': _('Import complete.'),
+        'on_complete_long': 'Location importing has finished'
+
+    })
+    return render(request, template, context)
 
 
 def location_export(request, domain):

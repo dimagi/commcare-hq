@@ -1,13 +1,12 @@
 {% load i18n %}
 {% if is_ready %}
     <div id="ready_{{ download_id }}">
-        <legend>{% trans "Import complete." %}</legend>
+        <legend>{{ on_complete_short }}</legend>
         <script type="text/javascript">
             $("#export-download-status .loading-indicator").addClass('hide');
         </script>
-
         <div class="alert alert-success">
-            <h3>{% trans "Location importing has finished:" %}</h3>
+            <h3>{{ on_complete_long }}</h3>
             {% for r in result %}
             <p>{{ r }}</p>
             {% endfor %}
