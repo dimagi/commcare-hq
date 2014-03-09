@@ -37,11 +37,12 @@ def expose_download(payload, expiry, backend=None, **kwargs):
     ref.save(expiry)
     return ref
 
-def get_download_context(download_id):
+def get_download_context(download_id, check_state=False):
+    is_ready = False
+    context = {}
     download_data = DownloadBase.get(download_id)
     if download_data is None:
         download_data = DownloadBase(download_id=download_id)
-        is_ready = False
         try:
             if download_data.task.failed():
                 raise TaskFailedError()
@@ -49,12 +50,16 @@ def get_download_context(download_id):
             # no result backend / improperly configured
             pass
     else:
-        is_ready=True
+        if not check_state:
+            is_ready=True
+        elif download_data.task.state == 'SUCCESS':
+            is_ready = True
+            context['result'] = download_data.task.result.get('messages')
+
     alive = True
     if heartbeat_enabled():
         alive = is_alive()
 
-    context = {}
     context['is_ready'] = is_ready
     context['is_alive'] = alive
     context['progress'] = download_data.get_progress()
