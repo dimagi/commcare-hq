@@ -3,7 +3,7 @@ from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_POST
 from corehq.apps.commtrack.views import BaseCommTrackManageView
 
-from corehq.apps.domain.decorators import domain_admin_required
+from corehq.apps.domain.decorators import domain_admin_required, login_and_domain_required
 from corehq.apps.locations.models import Location
 from corehq.apps.locations.forms import LocationForm
 from corehq.apps.locations.util import load_locs_json, location_hierarchy_config, dump_locations
@@ -18,7 +18,7 @@ import urllib
 from django.utils.translation import ugettext as _, ugettext_noop
 from dimagi.utils.decorators.memoized import memoized
 from custom.openlmis.tasks import bootstrap_domain_task
-from soil.util import expose_download
+from soil.util import expose_download, get_download_context
 import uuid
 from corehq.apps.commtrack.tasks import import_locations_async
 from soil import DownloadBase
@@ -226,35 +226,9 @@ class LocationImportView(BaseLocationView):
             )
         )
 
-
+@login_and_domain_required
 def location_importer_job_poll(request, domain, download_id, template="locations/manage/partials/status.html"):
-    download_data = DownloadBase.get(download_id)
-    is_ready = False
-
-    if download_data is None:
-        download_data = DownloadBase(download_id=download_id)
-        try:
-            if download_data.task.failed():
-                return HttpResponseServerError()
-        except (TypeError, NotImplementedError):
-            # no result backend / improperly configured
-            pass
-
-    alive = True
-    if heartbeat_enabled():
-        alive = is_alive()
-
-    context = RequestContext(request)
-
-    if download_data.task.state == 'SUCCESS':
-        is_ready = True
-        context['result'] = download_data.task.result.get('messages')
-
-    context['is_ready'] = is_ready
-    context['is_alive'] = alive
-    context['progress'] = download_data.get_progress()
-    context['download_id'] = download_id
-    return render_to_response(template, context_instance=context)
+    return render(request, template, get_download_context(download_id, check_state=True))
 
 
 def location_export(request, domain):
