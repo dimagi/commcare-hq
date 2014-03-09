@@ -4,14 +4,14 @@ from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponse, HttpResponseServerError
 import logging
-from django.shortcuts import render_to_response
+from django.shortcuts import render_to_response, render
 from django.template.context import RequestContext
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.tasks import demo_sleep
 import json
 from soil.heartbeat import get_file_heartbeat, get_cache_heartbeat, last_heartbeat
-from soil.util import get_request_context
+from soil.util import get_download_context
 
 
 def _parse_date(string):
@@ -38,10 +38,10 @@ def heartbeat_status(request):
 @login_required
 def ajax_job_poll(request, download_id, template="soil/partials/dl_status.html"):
     try:
-        context = get_request_context(request, download_id)
+        context = get_download_context(download_id)
     except TaskFailedError:
         return HttpResponseServerError()
-    return render_to_response(template, context_instance=context)
+    return render(request, template, context)
 
 
 @login_required

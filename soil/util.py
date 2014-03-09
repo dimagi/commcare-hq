@@ -37,7 +37,7 @@ def expose_download(payload, expiry, backend=None, **kwargs):
     ref.save(expiry)
     return ref
 
-def get_request_context(request, download_id):
+def get_download_context(download_id):
     download_data = DownloadBase.get(download_id)
     if download_data is None:
         download_data = DownloadBase(download_id=download_id)
@@ -54,7 +54,7 @@ def get_request_context(request, download_id):
     if heartbeat_enabled():
         alive = is_alive()
 
-    context = RequestContext(request)
+    context = {}
     context['is_ready'] = is_ready
     context['is_alive'] = alive
     context['progress'] = download_data.get_progress()
