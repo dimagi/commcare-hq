@@ -180,10 +180,6 @@ class LocationImportStatusView(BaseLocationView):
     page_title = ugettext_noop('Location Import Status')
     template_name = 'locations/manage/import_status.html'
 
-    @property
-    def page_context(self):
-        return {}
-
     def get(self, request, *args, **kwargs):
         context = {
             'domain': self.domain,
@@ -196,10 +192,6 @@ class LocationImportView(BaseLocationView):
     urlname = 'location_import'
     page_title = ugettext_noop('Upload Locations from Excel')
     template_name = 'locations/manage/import.html'
-
-    @property
-    def page_context(self):
-        return {}
 
     def post(self, request, *args, **kwargs):
         upload = request.FILES.get('locs')
