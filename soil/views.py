@@ -7,10 +7,12 @@ import logging
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 from soil import DownloadBase
+from soil.exceptions import TaskFailedError
 from soil.tasks import demo_sleep
 import json
-from soil.heartbeat import get_file_heartbeat, get_cache_heartbeat,\
-    last_heartbeat, heartbeat_enabled, is_alive
+from soil.heartbeat import get_file_heartbeat, get_cache_heartbeat, last_heartbeat
+from soil.util import get_request_context
+
 
 def _parse_date(string):
     if isinstance(string, basestring):
@@ -35,27 +37,10 @@ def heartbeat_status(request):
 
 @login_required
 def ajax_job_poll(request, download_id, template="soil/partials/dl_status.html"):
-    download_data = DownloadBase.get(download_id)
-    if download_data is None:
-        download_data = DownloadBase(download_id=download_id)
-        is_ready = False
-        try:
-            if download_data.task.failed():
-                return HttpResponseServerError()
-        except (TypeError, NotImplementedError):
-            # no result backend / improperly configured
-            pass
-    else:
-        is_ready=True
-    alive = True
-    if heartbeat_enabled():
-        alive = is_alive()
-
-    context = RequestContext(request)
-    context['is_ready'] = is_ready
-    context['is_alive'] = alive
-    context['progress'] = download_data.get_progress()
-    context['download_id'] = download_id
+    try:
+        context = get_request_context(request, download_id)
+    except TaskFailedError:
+        return HttpResponseServerError()
     return render_to_response(template, context_instance=context)
 
 
