@@ -449,10 +449,6 @@ class ProgramListView(BaseCommTrackManageView):
     template_name = 'commtrack/manage/programs.html'
     page_title = ugettext_noop("Manage Programs")
 
-    @property
-    def page_context(self):
-        return {}
-
 
 class FetchProgramListView(ProgramListView):
     urlname = 'commtrack_program_fetch'
