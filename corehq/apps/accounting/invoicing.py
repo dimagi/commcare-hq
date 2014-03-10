@@ -472,7 +472,8 @@ class InvoiceTemplate(object):
                  bank_address=Address(**settings.BANK_ADDRESS),
                  account_number=settings.ACCOUNT_NUMBER,
                  routing_number=settings.ROUTING_NUMBER,
-                 swift_code=settings.SWIFT_CODE, total=None):
+                 swift_code=settings.SWIFT_CODE, applied_credit=None,
+                 subtotal=None, tax_rate=None, applied_tax=None, total=None):
         self.canvas = Canvas(filename)
         self.canvas.setFontSize(DEFAULT_FONT_SIZE)
         self.logo_filename = os.path.join(os.getcwd(), logo_filename)
@@ -488,6 +489,10 @@ class InvoiceTemplate(object):
         self.account_number = account_number
         self.routing_number = routing_number
         self.swift_code = swift_code
+        self.applied_credit = applied_credit
+        self.subtotal = subtotal
+        self.tax_rate = tax_rate
+        self.applied_tax = applied_tax
         self.total = total
 
         self.items = []
@@ -721,11 +726,28 @@ class InvoiceTemplate(object):
                          fill=1)
         self.canvas.setFillColorRGB(*BLACK)
 
+        def get_amount_str(value):
+            if value is not None:
+                return "%0.2f" % value
+            return ""
+
+        self.canvas.drawString(inches(6.2), inches(2.45), "Subtotal:")
+        self.canvas.drawString(inches(6.2), inches(2.15),
+                               "Tax (%s%%):" % get_amount_str(self.tax_rate))
+        self.canvas.drawString(inches(6.2), inches(1.85), "Credit:")
         self.canvas.drawString(inches(5.2), inches(1.25), "Total:")
-        if self.total is not None:
-            self.canvas.drawCentredString(midpoint(inches(7.0), inches(8.0)),
-                                          inches(1.25),
-                                          "$%0.2f" % self.total)
+        self.canvas.drawCentredString(midpoint(inches(7.0), inches(8.0)),
+                                      inches(2.45),
+                                      get_amount_str(self.subtotal))
+        self.canvas.drawCentredString(midpoint(inches(7.0), inches(8.0)),
+                                      inches(2.15),
+                                      get_amount_str(self.applied_tax))
+        self.canvas.drawCentredString(midpoint(inches(7.0), inches(8.0)),
+                                      inches(1.85),
+                                      get_amount_str(self.applied_credit))
+        self.canvas.drawCentredString(midpoint(inches(7.0), inches(8.0)),
+                                      inches(1.25),
+                                      get_amount_str(self.total))
 
         footer_text = ("Payable by check or wire transfer. "
                        "Wire transfer is preferred: "

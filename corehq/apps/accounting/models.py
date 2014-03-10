@@ -899,6 +899,10 @@ class InvoicePdf(SafeSaveDocument):
             project_name=invoice.subscription.subscriber.domain,
             invoice_date=invoice.date_created.date(),
             due_date=invoice.date_due,
+            subtotal=invoice.subtotal,
+            tax_rate=invoice.tax_rate,
+            applied_tax=invoice.applied_tax,
+            applied_credit=invoice.applied_credit,
             total=invoice.get_total(),
         )
 
