@@ -227,17 +227,21 @@ class SubscriptionForm(forms.Form):
                                                  css_class="date-picker")
 
         if self.is_existing:
+            # circular import
+            from corehq.apps.accounting.views import (
+                EditSoftwarePlanView, ManageBillingAccountView
+            )
+            from corehq.apps.domain.views import DefaultProjectSettingsView
             self.fields['account'].initial = subscription.account.id
             account_field = TextField(
                 'account',
                 '<a href="%(account_url)s">%(account_name)s</a>' % {
-                    'account_url': '#',
+                    'account_url': reverse(ManageBillingAccountView.urlname,
+                                           args=[subscription.account.id]),
                     'account_name': subscription.account.name,
                 }
             )
 
-            # circular import
-            from corehq.apps.accounting.views import EditSoftwarePlanView
             self.fields['plan_version'].initial = subscription.plan_version.id
             plan_version_field = TextField(
                 'plan_version',
@@ -273,7 +277,8 @@ class SubscriptionForm(forms.Form):
             domain_field = TextField(
                 'domain',
                 '<a href="%(project_url)s">%(project_name)s</a>' % {
-                'project_url': "foo",
+                'project_url': reverse(DefaultProjectSettingsView.urlname,
+                                       args=[subscription.subscriber.domain]),
                 'project_name': subscription.subscriber.domain,
             })
 
@@ -327,7 +332,7 @@ class SubscriptionForm(forms.Form):
             plan_product_field = crispy.Field('plan_product')
             plan_edition_field = crispy.Field('plan_edition')
             plan_version_field = crispy.Field(
-                'plan_version', css_class="input-xlarge",
+                'plan_version', css_class="input-xxlarge",
                 placeholder="Search for Software Plan"
             )
 
