@@ -65,10 +65,10 @@ class FormErrorReport(DeploymentsReport, DatespanMixin):
         for user in self.users:
             # userlogs = UserLog.objects.filter(username__exact=user.get('raw_username')).values('xform_id')
             # xform_ids = [u["xform_id"] for u in userlogs]
-            phonelogs = Log.objects.filter(username__exact=user.get('raw_username'),
+            phonelogs = Log.objects.filter(username__exact=user.get('raw_username'), domain__exact=self.domain,
                 date__range=[self.datespan.startdate_param_utc, self.datespan.enddate_param_utc])
-            error_count = len(phonelogs.filter(type__in=TAGS["error"]))
-            warning_count = len(phonelogs.filter(type__in=TAGS["warning"]))
+            error_count = phonelogs.filter(type__in=TAGS["error"]).count()
+            warning_count = phonelogs.filter(type__in=TAGS["warning"]).count()
 
             formatted_warning_count = '<span class="label label-warning">%d</span>' % warning_count if warning_count > 0\
                                         else '<span class="label">%d</span>' % warning_count
