@@ -903,15 +903,13 @@ class InvoicePdf(SafeSaveDocument):
         )
 
         for line_item in LineItem.objects.filter(invoice=invoice):
-            description = None
-            if line_item.feature_rate is not None:
-                description = line_item.feature_rate.feature.name
-            if line_item.product_rate is not None:
-                description = line_item.product_rate.product.name
-            template.add_item(datetime.date.today(),
-                              description,
-                              line_item.quantity,
-                              line_item.unit_cost)
+            description = (line_item.base_description
+                           or line_item.unit_description)
+            if line_item.quantity > 0:
+                template.add_item(datetime.date.today(),
+                                  description,
+                                  line_item.quantity,
+                                  line_item.unit_cost)
 
         template.get_pdf()
         self.put_attachment(pdf_data)
