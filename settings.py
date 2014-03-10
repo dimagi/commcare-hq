@@ -962,6 +962,7 @@ PILLOWTOPS = {
         'custom.reports.care_sa.models.CareSAFluffPillow',
         'custom.reports.mc.models.MalariaConsortiumFluffPillow',
         'custom.m4change.models.AncHmisCaseFluffPillow',
+        'custom.m4change.models.LdHmisCaseFluffPillow',
         'custom.m4change.models.ImmunizationHmisCaseFluffPillow',
         'custom.m4change.models.ProjectIndicatorsCaseFluffPillow',
         'custom.m4change.models.McctMonthlyAggregateFormFluffPillow'
