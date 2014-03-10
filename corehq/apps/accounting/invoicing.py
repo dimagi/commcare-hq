@@ -640,7 +640,7 @@ class InvoiceTemplate(object):
         origin_y = inches(6.2)
         self.canvas.translate(origin_x, origin_y)
 
-        height = inches(4.2)
+        height = inches(3.5)
         description_x = inches(3)
         quantity_x = inches(3.75)
         rate_x = inches(4.5)
