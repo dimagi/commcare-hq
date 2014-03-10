@@ -1,6 +1,6 @@
 from corehq.pillows.core import DATE_FORMATS_STRING, DATE_FORMATS_ARR
 
-XFORM_INDEX="xforms_6oo89af5c6785e9uj39rdd5b8g2gyedi"
+XFORM_INDEX="xforms_6xx892jdu629mm9uj39rd95b8g2sd9hu"
 
 
 XFORM_MAPPING = {

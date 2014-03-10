@@ -91,7 +91,6 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
                 q["filter"]["and"].append({"not": {"terms": {"form.meta.userID": ids}}})
 
             for cp in self.request.GET.get('custom_props', "").split(","):
-                print cp
                 q["filter"]["and"].append({"term": {"__props_for_querying": cp.lower()}})
 
 

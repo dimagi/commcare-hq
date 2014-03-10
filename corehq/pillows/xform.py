@@ -70,7 +70,6 @@ class XFormPillow(HQPillow):
 
             doc_ret["__retrieved_case_ids"] = list(get_case_ids_from_form(doc_dict))
             form_props = ["%s:%s" % (k, v) for k, v in doc_ret['form'].iteritems() if k not in RESERVED_WORDS]
-            print form_props
             doc_ret["__props_for_querying"] = form_props
             return doc_ret
 
