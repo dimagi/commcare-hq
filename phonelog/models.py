@@ -1,3 +1,4 @@
+from couchdbkit.ext.django.schema import Document
 from dimagi.utils.decorators.memoized import memoized
 from django.db import models
 
@@ -25,3 +26,6 @@ class UserLog(models.Model):
     user_id = models.CharField(max_length=COUCH_UUID_MAX_LEN)
     sync_token = models.CharField(max_length=COUCH_UUID_MAX_LEN)
     username = models.CharField(max_length=100)
+
+class _(Document):
+    pass
