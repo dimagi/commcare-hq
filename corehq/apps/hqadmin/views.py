@@ -387,13 +387,12 @@ def mobile_user_reports(request):
     template = "hqadmin/mobile_user_reports.html"
 
     rows = []
-
     logs = Log.objects.filter(type__exact="user-report").order_by('domain')
     for log in logs:
         rows.append(dict(domain=log.domain,
                          time=log.date,
                          user=log.username,
-                         # device_users=val['device_users'],
+                         device_users=[u.username for u in log.device_users.all()],
                          message=log.msg,
                          version=(log.app_version or 'unknown').split(' ')[0],
                          detailed_version=html.escape(log.app_version or 'unknown'),
