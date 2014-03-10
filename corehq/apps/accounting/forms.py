@@ -185,7 +185,7 @@ class BillingAccountForm(forms.Form):
 
 
 class SubscriptionForm(forms.Form):
-    account = forms.ChoiceField(
+    account = forms.CharField(
         label=_("Billing Account")
     )
     start_date = forms.DateField(
@@ -205,7 +205,7 @@ class SubscriptionForm(forms.Form):
         label=_("Edition"), initial=SoftwarePlanEdition.ENTERPRISE,
         choices=SoftwarePlanEdition.CHOICES,
     )
-    plan_version = forms.ChoiceField(label=_("Software Plan"))
+    plan_version = forms.CharField(label=_("Software Plan"))
     domain = forms.CharField(label=_("Project Space"))
     salesforce_contract_id = forms.CharField(
         label=_("Salesforce Deployment ID"), max_length=80, required=False
@@ -236,9 +236,6 @@ class SubscriptionForm(forms.Form):
                                                  css_class="date-picker")
 
         if self.is_existing:
-            self.fields['account'].choices = [
-                (subscription.account.id, subscription.account.name)
-            ]
             self.fields['account'].initial = subscription.account.id
             account_field = TextField(
                 'account',
@@ -248,11 +245,9 @@ class SubscriptionForm(forms.Form):
                 }
             )
 
-            self.fields['plan_version'].choices = [
-                (subscription.plan_version.id, str(subscription.plan_version))
-            ]
             # circular import
             from corehq.apps.accounting.views import EditSoftwarePlanView
+            self.fields['plan_version'].initial = subscription.plan_version.id
             plan_version_field = TextField(
                 'plan_version',
                 '<a href="%(plan_version_url)s">%(plan_name)s</a>' % {
@@ -294,7 +289,6 @@ class SubscriptionForm(forms.Form):
             self.fields['start_date'].initial = subscription.date_start.isoformat()
             self.fields['end_date'].initial = subscription.date_end
             self.fields['delay_invoice_until'].initial = subscription.date_delay_invoicing
-            self.fields['plan_version'].initial = subscription.plan_version.id
             self.fields['domain'].initial = subscription.subscriber.domain
             self.fields['salesforce_contract_id'].initial = subscription.salesforce_contract_id
             self.fields['do_not_invoice'].initial = subscription.do_not_invoice
@@ -325,26 +319,26 @@ class SubscriptionForm(forms.Form):
             self.fields['domain'].required = False
 
         else:
-            self.fields['account'].choices = [
-                (account.id, account.name)
-                for account in BillingAccount.objects.order_by('name')
-            ]
-            account_field = crispy.Field('account')
+            account_field = crispy.Field(
+                'account', css_class="input-xxlarge",
+                placeholder="Search for Billing Account"
+            )
             if account_id is not None:
                 self.fields['account'].initial = account_id
-            self.fields['plan_version'].choices = [(plan_version.id, str(plan_version))
-                                                   for plan_version in SoftwarePlanVersion.objects.all()]
 
             self.fields['domain'].choices = [
                 (domain, domain) for domain in Domain.get_all()
             ]
             domain_field = crispy.Field(
-                'domain', css_class="input-xlarge", placeholder="Search for Project Space"
+                'domain', css_class="input-xxlarge",
+                placeholder="Search for Project Space"
             )
             plan_product_field = crispy.Field('plan_product')
             plan_edition_field = crispy.Field('plan_edition')
-            plan_version_field = crispy.Field('plan_version',
-                                              css_class="input-xlarge")
+            plan_version_field = crispy.Field(
+                'plan_version', css_class="input-xlarge",
+                placeholder="Search for Software Plan"
+            )
 
 
         self.helper = FormHelper()

@@ -44,7 +44,8 @@ var AsyncSelect2Handler = function (field, multiple) {
                                 handler: 'select2_billing',
                                 action: self.fieldName,
                                 searchString: term,
-                                existing: $('[name="' + self.fieldName + '"]').val().split(',')
+                                existing: $('[name="' + self.fieldName + '"]').val().split(','),
+                                additionalData: self.getAdditionalData()
                             };
                         },
                         results: function (data) {
@@ -63,6 +64,11 @@ var AsyncSelect2Handler = function (field, multiple) {
             billingInfoUtils.getSingleResultFromElement(element);
         callback(data);
     };
+
+    self.getAdditionalData = function () {
+        return null;
+    };
+
 };
 
 var EmailSelect2Handler = function (field, valid_email_text) {
