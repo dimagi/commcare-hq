@@ -29,29 +29,32 @@ var AsyncSelect2Handler = function (field, multiple) {
 
     self.init = function () {
         $(function () {
-            $('[name="' + self.fieldName + '"]').select2({
-                minimumInputLength: 0,
-                allowClear: true,
-                ajax: {
-                    quietMillis: 150,
-                    url: '',
-                    dataType: 'json',
-                    type: 'post',
-                    data: function (term) {
-                        return {
-                            handler: 'select2_billing',
-                            action: self.fieldName,
-                            searchString: term,
-                            existing: $('[name="' + self.fieldName + '"]').val().split(',')
-                        };
+            var $field = $('[name="' + self.fieldName + '"]');
+            if ($field.attr('type') !== 'hidden') {
+                $field.select2({
+                    minimumInputLength: 0,
+                    allowClear: true,
+                    ajax: {
+                        quietMillis: 150,
+                        url: '',
+                        dataType: 'json',
+                        type: 'post',
+                        data: function (term) {
+                            return {
+                                handler: 'select2_billing',
+                                action: self.fieldName,
+                                searchString: term,
+                                existing: $('[name="' + self.fieldName + '"]').val().split(',')
+                            };
+                        },
+                        results: function (data) {
+                            return data;
+                        }
                     },
-                    results: function (data) {
-                        return data;
-                    }
-                },
-                multiple: self.multiple,
-                initSelection: self.initSelection
-            });
+                    multiple: self.multiple,
+                    initSelection: self.initSelection
+                });
+            }
         });
     };
 
