@@ -15,6 +15,7 @@ from corehq.pillows.base import restore_property_dict
 from django.utils import html
 import dateutil
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
+from custom.succeed.reports.patient_details import PatientInfoReport
 from custom.succeed.utils import CONFIG, _is_succeed_admin, SUCCEED_CLOUD_APPNAME
 import logging
 import simplejson
@@ -144,7 +145,7 @@ class PatientListReportDisplay(CaseDisplay):
     def case_link(self):
         url = self.case_detail_url
         if url:
-            return html.mark_safe("<a class='ajax_dialog' href='' target='_blank'>%s</a>" % html.escape(self.case_name))
+            return html.mark_safe("<a class='ajax_dialog' href='%s' target='_blank'>%s</a>" % (url, html.escape(self.case_name)))
         else:
             return "%s (bad ID format)" % self.case_name
 
@@ -165,10 +166,9 @@ class PatientListReportDisplay(CaseDisplay):
 
     @property
     def case_detail_url(self):
-        try:
-            return reverse('case_details', args=[self.report.domain, self.case_id])
-        except NoReverseMatch:
-            return None
+        return html.escape(
+                PatientInfoReport.get_url(*[self.case["domain"]]) + "?patient_id=%s" % self.case["_id"])
+
 
     @property
     def mrn(self):

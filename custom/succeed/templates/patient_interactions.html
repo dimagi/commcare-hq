@@ -1,0 +1,12 @@
+{% extends "base_patient.html" %}
+{% load url from future %}
+{% load i18n %}
+{% block patient-tab-container %}
+    <div style="display: inline">
+        <span><a href="" class="btn btn-large btn-success" >{% trans "Problem List" %}</a></span>
+        <span><a href="" class="btn btn-large btn-success" >{% trans "Medication List" %}</a></span>
+        <span><a href="" class="btn btn-large btn-success" >{% trans "Follow-up Huddle" %}</a></span>
+        <span><a href="" class="btn btn-large btn-success" >{% trans "Follow-up CM Phone Call" %}</a></span>
+        <span><a href="" class="btn btn-large btn-success" >{% trans "Follow-up CHW Phone Call" %}</a></span>
+    </div>
+{% endblock %}
