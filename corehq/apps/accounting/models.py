@@ -464,7 +464,10 @@ class SoftwarePlanVersion(models.Model):
     role = models.ForeignKey(Role)
 
     def __str__(self):
-        return "Software Plan Version For Plan '%s' with Role '%s'" % (self.plan.name, self.role.slug)
+        return "%(plan_name)s (v%(version_num)d)" % {
+            'plan_name': self.plan.name,
+            'version_num': self.version,
+        }
 
     @property
     def version(self):
