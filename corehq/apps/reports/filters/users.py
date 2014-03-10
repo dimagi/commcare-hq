@@ -230,10 +230,10 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     @property
     @memoized
     def selected(self):
-        init = self.request.GET.get(self.slug, '')
-        if not init:
+        selected_ids = self.request.GET.getlist(self.slug)
+        if not selected_ids:
             return [{
-                'id': '_all_mobile_workers',
+                'id': 't__0',
                 'text': _("[All mobile workers]"),
             }]
 
@@ -241,7 +241,6 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         selected = []
         user_ids = []
         group_ids = []
-        selected_ids = init.split(',')
         for s_id in selected_ids:
             if s_id in basics:
                 selected.append((s_id, basics.get(s_id)))
@@ -255,8 +254,6 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
                     user_ids.append(key)
                 elif kind == 'g':
                     group_ids.append(key)
-                else:
-                    basic_ids.append(s_id)
 
         if group_ids:
             q = {"query": {"filtered": {"filter": {
@@ -294,7 +291,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
 
     @classmethod
     def pull_users_from_es(cls, domain, request, initial_query=None, **kwargs):
-        emws = request.GET.getlist('emw')
+        emws = request.GET.getlist(cls.slug)
         user_ids = [u[3:] for u in filter(lambda s: s.startswith("u__"), emws)]
         group_ids = [g[3:] for g in filter(lambda s: s.startswith("g__"), emws)]
 
@@ -307,8 +304,11 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         if "t__3" in emws:  # Unknown users selected
             doc_types_to_include.append("UnknownUser")
 
-        query_filter = { "and": [{"terms": {"doc_type": doc_types_to_include}}, {"term": {"domain": domain}}]}
-        if "_all_mobile_workers" not in emws:
+        query_filter = {"and": [
+            {"terms": {"doc_type": doc_types_to_include}},
+            {"term": {"domain": domain}},
+        ]}
+        if "t__0" not in emws:
             or_filter = {"or": [
                 {"terms": {"_id": user_ids}},
                 {"terms": {"__group_ids": group_ids}},
@@ -332,11 +332,11 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     @classmethod
     @memoized
     def pull_users_and_groups(cls, domain, request, simplified_users=False, combined=False, CommCareUser=CommCareUser):
-        emws = request.GET.getlist('emw')
+        emws = request.GET.getlist(cls.slug)
 
         users = []
         user_ids = [u[3:] for u in filter(lambda s: s.startswith("u__"), emws)]
-        if user_ids or "_all_mobile_workers" in emws:
+        if user_ids or "t__0" in emws:
             users = util.get_all_users_by_domain(domain=domain, user_ids=user_ids, simplified=simplified_users,
                                                  CommCareUser=CommCareUser)
 
@@ -371,10 +371,10 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     @property
     @memoized
     def basics(self):
-        return [("_all_mobile_workers", _("[All mobile workers]"))] + \
+        return [("t__0", _("[All mobile workers]"))] + \
             [("t__%s" % (i+1), "[%s]" % name)
                 for i, name in enumerate(HQUserType.human_readable[1:])]
 
     @property
     def options(self):
-        return [('_all_mobile_workers', _("[All mobile workers]"))]
+        return [('t__0', _("[All mobile workers]"))]
