@@ -468,7 +468,8 @@ class InvoiceTemplate(object):
                  to_address=None, project_name='',
                  invoice_date=datetime.date.today(), invoice_number='',
                  terms=settings.TERMS,
-                 due_date=datetime.date.today()+datetime.timedelta(days=10),
+                 due_date=(datetime.date.today()
+                           + datetime.timedelta(days=DEFAULT_DAYS_UNTIL_DUE)),
                  bank_name=settings.BANK_NAME,
                  bank_address=Address(**settings.BANK_ADDRESS),
                  account_number=settings.ACCOUNT_NUMBER,
