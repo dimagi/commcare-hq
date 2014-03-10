@@ -3,7 +3,7 @@ from django.core.urlresolvers import NoReverseMatch, reverse
 from django.utils.translation import ugettext as _, ugettext_noop
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.api.es import ReportCaseES
-from corehq.apps.cloudcare.api import get_cloudcare_app, get_latest_build
+from corehq.apps.cloudcare.api import get_cloudcare_app
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.standard import CustomProjectReport
@@ -18,6 +18,7 @@ from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 from custom.succeed.utils import CONFIG, _is_succeed_admin, SUCCEED_CLOUD_APPNAME
 import logging
 import simplejson
+from corehq.apps.app_manager.models import ApplicationBase
 
 
 EMPTY_FIELD = "---"
@@ -106,6 +107,7 @@ LAST_INTERACTION_LIST = [PM1, PM3, CM1, CM3, CM4, CM5, CM6, CHW1, CHW2, CHW3, CH
 
 class PatientListReportDisplay(CaseDisplay):
     def __init__(self, report, case_dict):
+
         next_visit = VISIT_SCHEDULE[0]
         last_inter = None
         for action in case_dict['actions']:
@@ -125,7 +127,7 @@ class PatientListReportDisplay(CaseDisplay):
         if last_inter:
             self.last_interaction = last_inter['date']
         self.app_dict = get_cloudcare_app(report.domain, SUCCEED_CLOUD_APPNAME)
-        self.latest_build = get_latest_build(report.domain, self.app_dict['_id'])['_id']
+        self.latest_build = ApplicationBase.get_latest_build(report.domain, self.app_dict['_id'])['_id']
         super(PatientListReportDisplay, self).__init__(report, case_dict)
 
     def get_property(self, key):

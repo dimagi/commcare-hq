@@ -1,5 +1,4 @@
 from django.utils.translation import ugettext_noop
-from corehq.apps.app_manager.models import ApplicationBase
 
 SUCCEED_DOMAIN = 'succeed'
 SUCCEED_CLOUD_APPNAME = 'SUCCEED Project'
