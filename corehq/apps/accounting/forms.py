@@ -213,9 +213,6 @@ class SubscriptionForm(forms.Form):
     do_not_invoice = forms.BooleanField(
         label=_("Do Not Invoice"), required=False
     )
-    is_active = forms.BooleanField(
-        label=_("Subscription is Active"), required=False,
-    )
 
     def __init__(self, subscription, account_id, *args, **kwargs):
         # account_id is not referenced if subscription is not None
@@ -223,12 +220,6 @@ class SubscriptionForm(forms.Form):
         self.subscription = subscription
         self.is_existing = subscription is not None
         today = datetime.date.today()
-
-        # don't show the is_active field until the start date has passed
-        if not self.is_existing or self.subscription.date_start > today:
-            del self.fields['is_active']
-        else:
-            self.fields['is_active'].initial = self.subscription.is_active
 
         start_date_field = crispy.Field('start_date', css_class="date-picker")
         end_date_field = crispy.Field('end_date', css_class="date-picker")
@@ -357,7 +348,6 @@ class SubscriptionForm(forms.Form):
                 domain_field,
                 'salesforce_contract_id',
                 'do_not_invoice',
-                'is_active',
             ),
             FormActions(
                 crispy.ButtonHolder(
