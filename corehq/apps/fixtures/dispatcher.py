@@ -8,6 +8,5 @@ class FixtureInterfaceDispatcher(ProjectReportDispatcher):
 	map_name = 'FIXTURE_INTERFACES'
 
 	@method_decorator(require_can_edit_fixtures)
-	def dispatch(self, request, domain, *args, **kwargs):
-		self.domain = domain
-		return super(UploadItemLists, self).dispatch(request, *args, **kwargs)
+	def dispatch(self, request, *args, **kwargs):
+		return super(FixtureInterfaceDispatcher, self).dispatch(request, *args, **kwargs)
