@@ -610,8 +610,6 @@ def run_upload(request, domain, workbook, replace=False):
    
     number_of_fixtures = -1
     with CouchTransaction() as transaction:
-        if replace:
-            FixtureDataType.delete_fixtures_by_domain(domain, transaction)
         for number_of_fixtures, dt in enumerate(data_types):
             try:
                 tag = _get_or_raise(dt, 'table_id')
@@ -648,11 +646,10 @@ def run_upload(request, domain, workbook, replace=False):
             )
             try:
                 if dt['UID']:
-                    if replace:
-                        raise FixtureAPIException(failure_messages["replace_with_UID"].format(
-                            tag="types"
-                        ))
                     data_type = FixtureDataType.get(dt['UID'])
+                    if replace:
+                        data_type.recursive_delete(transaction)
+                        data_type = new_data_type
                 else:
                     data_type = new_data_type
                     pass
@@ -756,11 +753,7 @@ def run_upload(request, domain, workbook, replace=False):
                     sort_key=sort_key
                 )
                 try:
-                    if di['UID']:
-                        if replace:
-                            raise FixtureAPIException(failure_messages["replace_with_UID"].format(
-                                tag=tag
-                            ))
+                    if di['UID'] and not replace:
                         old_data_item = FixtureDataItem.get(di['UID'])
                     else:
                         old_data_item = new_data_item
