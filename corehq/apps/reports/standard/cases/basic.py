@@ -9,6 +9,7 @@ from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.fields import SelectMobileWorkerField, SelectOpenCloseField
 from corehq.apps.reports.filters.search import SearchFilter
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.reports.generic import ElasticProjectInspectionReport
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReportParametersMixin
@@ -20,8 +21,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin):
     fields = [
-        'corehq.apps.reports.fields.FilterUsersField',
-        'corehq.apps.reports.fields.SelectCaseOwnerField',
+        'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
         'corehq.apps.reports.fields.CaseTypeField',
         'corehq.apps.reports.fields.SelectOpenCloseField',
         'corehq.apps.reports.standard.cases.filters.CaseSearchFilter',
@@ -37,35 +37,38 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         return CaseES(self.domain)
 
 
-    def build_query(self, case_type=None, filter=None, status=None, owner_ids=None, search_string=None):
+    def build_query(self, case_type=None, afilter=None, status=None, owner_ids=None, user_ids=None, search_string=None):
         # there's no point doing filters that are like owner_id:(x1 OR x2 OR ... OR x612)
         # so past a certain number just exclude
         owner_ids = owner_ids or []
+        user_ids = user_ids or []
         MAX_IDS = 50
 
         def _filter_gen(key, flist):
             if flist and len(flist) < MAX_IDS:
-                yield {"terms": {
+                return {"terms": {
                     key: [item.lower() if item else "" for item in flist]
                 }}
 
             # demo user hack
             elif flist and "demo_user" not in flist:
-                yield {"not": {"term": {key: "demo_user"}}}
+                return {"not": {"term": {key: "demo_user"}}}
 
         def _domain_term():
             return {"term": {"domain.exact": self.domain}}
 
-        subterms = [_domain_term(), filter] if filter else [_domain_term()]
+        subterms = [_domain_term(), afilter] if afilter else [_domain_term()]
         if case_type:
             subterms.append({"term": {"type.exact": case_type}})
 
         if status:
             subterms.append({"term": {"closed": (status == 'closed')}})
 
-        user_filters = list(_filter_gen('owner_id', owner_ids))
-        if user_filters:
-            subterms.append({'or': user_filters})
+        owner_filters = _filter_gen('owner_id', owner_ids)
+        user_filters = _filter_gen('user_id', user_ids)
+        filters = filter(None, [owner_filters, user_filters])
+        if filters:
+            subterms.append({'or': filters})
 
         if search_string:
             query_block = {
@@ -93,8 +96,9 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     @memoized
     def es_results(self):
         case_es = self.case_es
-        query = self.build_query(case_type=self.case_type, filter=self.case_filter,
-                                 status=self.case_status, owner_ids=self.case_owners,
+        user_ids, owner_ids = self.case_users_and_owners
+        query = self.build_query(case_type=self.case_type, afilter=self.case_filter,
+                                 status=self.case_status, owner_ids=owner_ids, user_ids=user_ids,
                                  search_string=SearchFilter.get_value(self.request, self.domain))
         query_results = case_es.run_query(query)
 
@@ -112,34 +116,13 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
 
     @property
     @memoized
-    def case_owners(self):
-        if self.individual:
-            group_owners_raw = self.case_sharing_groups
-        else:
-            group_owners_raw = Group.get_case_sharing_groups(self.domain)
-        group_owners = [group._id for group in group_owners_raw]
-        ret = [user.get('user_id') for user in self.users]
-        if len(self.request.GET.getlist('ufilter')) == 1 and str(HQUserType.UNKNOWN) in self.request.GET.getlist('ufilter'):
-            #not applying group filter
-            pass
-        else:
-            ret += group_owners
-        return ret
-
-    @property
-    @memoized
-    def case_sharing_groups(self):
-        try:
-            user = CommCareUser.get_by_user_id(self.individual)
-            user = user if user.username_in_report else None
-            return user.get_case_sharing_groups()
-        except Exception:
-            try:
-                group = Group.get(self.individual)
-                assert(group.doc_type == 'Group')
-                return [group]
-            except Exception:
-                return []
+    def case_users_and_owners(self):
+        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
+        user_ids = filter(None, [u.get("user_id") for u in users_data["combined_users"]])
+        group_owner_ids = []
+        for user_id in user_ids:
+            group_owner_ids.append([group._id for group in Group.by_user(user_id) if group.case_sharing])
+        return user_ids, filter(None, group_owner_ids)
 
     def get_case(self, row):
         if '_source' in row:
@@ -178,11 +161,10 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
     @property
     @memoized
     def rendered_report_title(self):
-        if not self.individual:
-            self.name = _("%(report_name)s for %(worker_type)s") % {
-                "report_name": _(self.name),
-                "worker_type": _(SelectMobileWorkerField.get_default_text(self.user_filter))
-            }
+        self.name = _("%(report_name)s for %(worker_type)s") % {
+            "report_name": _(self.name),
+            "worker_type": _(SelectMobileWorkerField.get_default_text(self.user_filter))
+        }
         return self.name
 
     def slugs(self):
