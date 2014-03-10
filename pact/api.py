@@ -15,7 +15,6 @@ from django.core.cache import cache
 
 from corehq.apps.api.domainapi import DomainAPI
 from corehq.apps.api.es import ReportXFormES
-from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.domain.decorators import login_or_digest
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 from corehq.apps.groups.models import Group
@@ -27,7 +26,7 @@ from pact.enums import PACT_DOMAIN, XMLNS_PATIENT_UPDATE, PACT_PROVIDER_FIXTURE_
 from pact.forms.patient_form import PactPatientForm
 from pact.forms.weekly_schedule_form import ScheduleForm, DAYS_OF_WEEK
 from pact.utils import pact_script_fields, case_script_field, submit_xform, query_per_case_submissions_facet
-
+from corehq.apps.app_manager.models import ApplicationBase
 
 PACT_CLOUD_APPNAME = "PACT Cloud"
 PACT_CLOUDCARE_MODULE = "PACT Cloudcare"
@@ -43,21 +42,9 @@ def get_cloudcare_app():
     Total hack function to get direct links to the cloud care application pages
     """
 
-    def get_latest_build(domain, app_id):
-        build = ApplicationBase.view('app_manager/saved_app',
-                                     startkey=[domain, app_id, {}],
-                                     endkey=[domain, app_id],
-                                     descending=True,
-                                     limit=1).one()
-        return build._doc if build else None
-
     from corehq.apps.cloudcare import api
-    apps = api.get_cloudcare_apps(PACT_DOMAIN)
-    filtered_app = filter(lambda x: x['name']==PACT_CLOUD_APPNAME, apps)
-    if len(filtered_app) != 1:
-        raise Exception ("Your hacky assumption failed for pact!")
 
-    app = api.look_up_app_json(PACT_DOMAIN, filtered_app[0]['_id'])
+    app = api.get_cloudcare_app(PACT_DOMAIN, PACT_CLOUD_APPNAME)
     app_id = app['_id']
 
     pact_cloudcare = filter(lambda x: x['name']['en'] == PACT_CLOUDCARE_MODULE, app['modules'])
@@ -68,7 +55,7 @@ def get_cloudcare_app():
     ret['url_root'] = url_root
     ret['domain'] = PACT_DOMAIN
     ret['app_id'] = app_id
-    latest_build = get_latest_build(PACT_DOMAIN, app_id)
+    latest_build = ApplicationBase.get_latest_build(PACT_DOMAIN, app_id)
     if latest_build is not None:
         latest_build_id = latest_build['_id']
         ret['build_id'] = latest_build_id
