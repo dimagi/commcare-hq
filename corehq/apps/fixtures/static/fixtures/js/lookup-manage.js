@@ -99,6 +99,11 @@ $(function () {
                 url: UpdateTableUrl + (self._id() || ''),
                 data: JSON.stringify(self.serialize()),
                 dataType: 'json',
+                error: function() {
+                      $("#editFailure").show();
+                      self.cancel();
+                      self.saveState('saved');
+                    },
                 success: function (data) {
                     self.saveState('saved');
                     if (!self._id()) {
@@ -295,4 +300,7 @@ $(function () {
                     $("#downloading").show();
                     $("#download-complete").hide();
     });
+    $('.alert .close').live("click", function(e) {
+    $(this).parent().hide();
+});
 });

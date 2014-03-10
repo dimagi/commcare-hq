@@ -5,7 +5,7 @@ from django.conf.urls.defaults import patterns, url
 urlpatterns = patterns('corehq.apps.fixtures.views',
     url(r'^fixapi/', 'upload_fixture_api'),
     FixtureInterfaceDispatcher.url_pattern(),
-    url(r'^edit_lookup_tables/data-types/(?P<data_type_id>[\w-]+)?$', 'update_tables', name='fixture_data_types'),
+    url(r'^edit_lookup_tables/data-types/$', 'tables', name='fixture_data_types'),
     url(r'^edit_lookup_tables/download/$', 'download_item_lists', name="download_fixtures"),
     url(r'^edit_lookup_tables/upload/$', UploadItemLists.as_view(), name='upload_fixtures'),
     url(r'^edit_lookup_tables/file/$', 'download_file', name="download_fixture_file"),

@@ -69,6 +69,10 @@ def _to_kwargs(req):
     # version dependent
     return dict((str(k), v) for k, v in json.load(req).items())
 
+@require_can_edit_fixtures
+def tables(request, domain):
+    if request.method == 'GET':
+        return json_response([strip_json(x) for x in FixtureDataType.by_domain(domain)])
 
 @require_can_edit_fixtures
 def update_tables(request, domain, data_type_id, test_patch={}):
@@ -91,17 +95,18 @@ def update_tables(request, domain, data_type_id, test_patch={}):
         elif not request.method == 'PUT':
             return HttpResponseBadRequest()
 
-    fields_update = test_patch or _to_kwargs(request)
-    fields_patches = fields_update["fields"]
-    data_tag = fields_update["tag"]
-    is_global = fields_update["is_global"]
-    with CouchTransaction() as transaction:
-        if data_type_id:
-            data_type = update_types(fields_patches, domain, data_type_id, data_tag, is_global, transaction)
-            update_items(fields_patches, domain, data_type_id, transaction)
-        else:
-            data_type = create_types(fields_patches, domain, data_tag, is_global, transaction)
-    return json_response(strip_json(data_type))
+    if request.method == 'POST' or request.method == "PUT":
+        fields_update = test_patch or _to_kwargs(request)
+        fields_patches = fields_update["fields"]
+        data_tag = fields_update["tag"]
+        is_global = fields_update["is_global"]
+        with CouchTransaction() as transaction:
+            if data_type_id:
+                data_type = update_types(fields_patches, domain, data_type_id, data_tag, is_global, transaction)
+                update_items(fields_patches, domain, data_type_id, transaction)
+            else:
+                data_type = create_types(fields_patches, domain, data_tag, is_global, transaction)
+        return json_response(strip_json(data_type))
 
 
 def update_types(patches, domain, data_type_id, data_tag, is_global, transaction):
