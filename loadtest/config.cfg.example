@@ -7,7 +7,7 @@ threads = 5
 script = ota_restore.py
 
 [global]
-run_time = 30
+run_time = 3
 rampup = 0
 results_ts_interval = 10
 progress_bar = on

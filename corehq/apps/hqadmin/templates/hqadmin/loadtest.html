@@ -1,0 +1,13 @@
+{% extends "hqadmin/hqadmin_base_report.html" %}
+{% load url from future %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% block report-title %}Loadtest Results{% endblock %}
+
+{% block reportcontent %}
+
+<pre>
+{{ info }}
+</pre>
+
+{% endblock %}

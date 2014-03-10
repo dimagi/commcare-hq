@@ -864,3 +864,39 @@ def stats_data(request):
 
     stats_data = get_stats_data(domain_info, histo_type, request.datespan, interval=interval)
     return json_response(stats_data)
+
+
+@require_superuser
+def loadtest(request):
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    from multimechanize.resultsloader import ResultRow
+    from multimechanize.resultsloader import load_results_database
+    from multimechanize.resultsloader import GlobalConfig
+    from multimechanize.resultsloader import UserGroupConfig
+    from multimechanize.resultsloader import TimerRow
+
+    from django.conf import settings
+    db_url = "postgresql://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}".format(
+        **settings.DATABASES["default"]
+    )
+    print db_url
+    engine = create_engine(db_url)
+    session = sessionmaker(bind=engine)
+    current = session()
+    import ipdb; ipdb.set_trace()
+
+    rows = []
+    for rr in current.query(ResultRow).order_by(ResultRow.trans_count):
+        rows.append(rr)
+        print rr
+        print rr.global_config
+        print rr.global_config.user_group_configs
+        print rr.timers
+
+    context = get_hqadmin_base_context(request).update({
+        "info": rows,
+        "hide_filters": True,
+    })
+    template = "hqadmin/loadtest.html"
+    return render(request, template, context)
