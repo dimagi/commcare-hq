@@ -7,7 +7,7 @@ from django.contrib.auth.signals import user_logged_in
 from corehq.apps.users.models import CommCareUser, CouchUser
 
 import corehq.apps.users.xml as xml
-from receiver.signals import successful_form_received, ReceiverResult, Certainty
+from couchforms.signals import successful_form_received, ReceiverResult, Certainty
 from casexml.apps.phone.xml import VALID_USER_REGISTRATION_XMLNSES
 
 @receiver(user_logged_in)
