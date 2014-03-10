@@ -161,6 +161,54 @@ class Product(Document):
         return [row['id'] for row in view_results]
 
 
+    @classmethod
+    def count_by_domain(cls, domain):
+        """
+        Gets count of products in a domain
+        """
+        # todo: we should add a reduce so we can get this out of couch
+        return len(cls.ids_by_domain(domain))
+
+
+    @classmethod
+    def _csv_attrs(cls):
+        return [
+            '_id',
+            'name',
+            'unit',
+            'code_',
+            'description',
+            'category',
+            'program_id',
+            ('cost', lambda a: Decimal(a) if a else None),
+        ]
+
+    def to_csv(self):
+        return [getattr(self, attr[0] if isinstance(attr, tuple) else attr) for attr in self._csv_attrs()]
+
+    @classmethod
+    def from_csv(cls, row):
+        if not row:
+            return None
+        id, row = row[0], row[1:]
+        if id:
+            p = cls.get(id)
+        else:
+            p = cls()
+        for i, attr in enumerate(cls._csv_attrs()[1:]):
+            try:
+                val = row[i]
+            except IndexError:
+                break
+            else:
+                if isinstance(attr, tuple):
+                    attr, f = attr
+                    val = f(val)
+                setattr(p, attr, val)
+
+        return p
+
+
 class CommtrackActionConfig(DocumentSchema):
     # one of the base stock action types (see StockActions enum)
     action = StringProperty()

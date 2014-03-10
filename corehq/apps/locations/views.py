@@ -3,7 +3,7 @@ from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_POST
 from corehq.apps.commtrack.views import BaseCommTrackManageView
 
-from corehq.apps.domain.decorators import domain_admin_required
+from corehq.apps.domain.decorators import domain_admin_required, login_and_domain_required
 from corehq.apps.locations.models import Location
 from corehq.apps.locations.forms import LocationForm
 from corehq.apps.locations.util import load_locs_json, location_hierarchy_config, dump_locations
@@ -18,7 +18,7 @@ import urllib
 from django.utils.translation import ugettext as _, ugettext_noop
 from dimagi.utils.decorators.memoized import memoized
 from custom.openlmis.tasks import bootstrap_domain_task
-from soil.util import expose_download
+from soil.util import expose_download, get_download_context
 import uuid
 from corehq.apps.commtrack.tasks import import_locations_async
 from soil import DownloadBase
@@ -178,14 +178,17 @@ class EditLocationHierarchy(BaseLocationView):
 class LocationImportStatusView(BaseLocationView):
     urlname = 'location_import_status'
     page_title = ugettext_noop('Location Import Status')
-    template_name = 'locations/manage/import_status.html'
+    template_name = 'hqwebapp/soil_status_full.html'
 
     def get(self, request, *args, **kwargs):
         context = {
             'domain': self.domain,
-            'download_id': kwargs['download_id']
+            'download_id': kwargs['download_id'],
+            'poll_url': reverse('location_importer_job_poll', args=[self.domain, kwargs['download_id']]),
+            'title': _("Location Import Status"),
+            'progress_text': _("Importing your data. This may take some time..."),
         }
-        return render(request, 'locations/manage/import_status.html', context)
+        return render(request, self.template_name, context)
 
 
 class LocationImportView(BaseLocationView):
@@ -212,7 +215,6 @@ class LocationImportView(BaseLocationView):
             file_ref.download_id,
         )
         file_ref.set_task(task)
-
         return HttpResponseRedirect(
             reverse(
                 LocationImportStatusView.urlname,
@@ -220,35 +222,15 @@ class LocationImportView(BaseLocationView):
             )
         )
 
+@login_and_domain_required
+def location_importer_job_poll(request, domain, download_id, template="hqwebapp/partials/download_status.html"):
+    context = get_download_context(download_id, check_state=True)
+    context.update({
+        'on_complete_short': _('Import complete.'),
+        'on_complete_long': _('Location importing has finished'),
 
-def location_importer_job_poll(request, domain, download_id, template="locations/manage/partials/status.html"):
-    download_data = DownloadBase.get(download_id)
-    is_ready = False
-
-    if download_data is None:
-        download_data = DownloadBase(download_id=download_id)
-        try:
-            if download_data.task.failed():
-                return HttpResponseServerError()
-        except (TypeError, NotImplementedError):
-            # no result backend / improperly configured
-            pass
-
-    alive = True
-    if heartbeat_enabled():
-        alive = is_alive()
-
-    context = RequestContext(request)
-
-    if download_data.task.state == 'SUCCESS':
-        is_ready = True
-        context['result'] = download_data.task.result.get('messages')
-
-    context['is_ready'] = is_ready
-    context['is_alive'] = alive
-    context['progress'] = download_data.get_progress()
-    context['download_id'] = download_id
-    return render_to_response(template, context_instance=context)
+    })
+    return render(request, template, context)
 
 
 def location_export(request, domain):
