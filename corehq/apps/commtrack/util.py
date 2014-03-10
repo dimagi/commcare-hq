@@ -253,8 +253,6 @@ def submit_mapping_case_block(user, index):
     submit_case_blocks(
         ElementTree.tostring(caseblock.as_xml()),
         user.domain,
-        user.username,
-        user._id
     )
 
 
