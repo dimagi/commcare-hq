@@ -168,7 +168,7 @@ var ExportManager = function (o) {
         var downloadUrl = self.downloadUrl || $button.data('dlocation');
         resetModal("'" + options.modalTitle + "'", true);
         var format = self.format;
-        var fileName = encodeURIComponent($button.data('formname'));
+        var fileName = encodeURIComponent($.trim($button.data('formname')));
         if ($button.data('format')) {
             format = $button.data('format');
         }
