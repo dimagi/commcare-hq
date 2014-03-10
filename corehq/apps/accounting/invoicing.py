@@ -404,8 +404,7 @@ def prepend_newline_if_not_empty(string):
 
 
 class InvoiceItem(object):
-    def __init__(self, date, description, quantity, rate):
-        self.date = date
+    def __init__(self, description, quantity, rate):
         self.description = description
         self.quantity = quantity
         self.rate = rate
@@ -495,7 +494,7 @@ class InvoiceTemplate(object):
         self.items = []
 
     def add_item(self, date, description, quantity, rate):
-        self.items.append(InvoiceItem(date, description, quantity, rate))
+        self.items.append(InvoiceItem(description, quantity, rate))
 
     def get_pdf(self):
         self.draw_logo()
@@ -637,7 +636,6 @@ class InvoiceTemplate(object):
         self.canvas.translate(origin_x, origin_y)
 
         height = inches(4.2)
-        date_x = inches(1)
         description_x = inches(5)
         quantity_x = inches(5.75)
         rate_x = inches(6.5)
@@ -649,15 +647,11 @@ class InvoiceTemplate(object):
         self.canvas.rect(0, 0, amount_x, header_height,
                          fill=1)
         self.canvas.setFillColorRGB(*BLACK)
-        self.canvas.line(date_x, header_height, date_x, -height)
         self.canvas.line(description_x, header_height, description_x, -height)
         self.canvas.line(quantity_x, header_height, quantity_x, -height)
         self.canvas.line(rate_x, header_height, rate_x, -height)
 
-        self.canvas.drawCentredString(midpoint(0, date_x),
-                                      inches(0.1),
-                                      "Date")
-        self.canvas.drawCentredString(midpoint(date_x, description_x),
+        self.canvas.drawCentredString(midpoint(0, description_x),
                                       inches(0.1),
                                       "Description")
         self.canvas.drawCentredString(midpoint(description_x, quantity_x),
@@ -677,12 +671,7 @@ class InvoiceTemplate(object):
             coord_y = -item_index * header_height + inches(-0.2)
 
             self.canvas.drawCentredString(
-                midpoint(0, date_x),
-                coord_y,
-                str(item.date)
-            )
-            self.canvas.drawCentredString(
-                midpoint(date_x, description_x),
+                midpoint(0, description_x),
                 coord_y,
                 str(item.description)
             )
