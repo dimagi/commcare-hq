@@ -59,7 +59,7 @@ Extracting data from the db:
 
     # alternatively, this will pull ALL forms from a domain:
     forms = db.view(
-        "receiverwrapper/all_submissions_by_domain",
+        "couchforms/all_submissions_by_domain",
         startkey=['opm'],
         endkey=['opm', {}],
         include_docs=True, reduce=False

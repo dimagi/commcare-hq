@@ -15,6 +15,7 @@ from django.utils.translation import ugettext_noop, ugettext as _, ugettext
 from crispy_forms.bootstrap import FormActions, StrictButton, InlineField, InlineRadios
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
+from django_countries.countries import COUNTRIES
 from corehq import privileges
 
 from dimagi.utils.decorators.memoized import memoized
@@ -22,7 +23,7 @@ from dimagi.utils.django.email import send_HTML_email
 from django_prbac.models import Role, Grant
 
 from corehq.apps.accounting.async_handlers import (FeatureRateAsyncHandler, SoftwareProductRateAsyncHandler)
-from corehq.apps.accounting.utils import fmt_feature_rate_dict, fmt_product_rate_dict
+from corehq.apps.accounting.utils import is_active_subscription
 from corehq.apps.hqwebapp.crispy import BootstrapMultiField
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
@@ -40,9 +41,10 @@ class BillingAccountForm(forms.Form):
                                             required=False)
     currency = forms.ChoiceField(label="Currency")
 
-    billing_account_admins = forms.CharField(label=_('Account Admins (emails)'),
-                                             required=False,
-                                             widget=forms.Textarea)
+    billing_account_admins = forms.CharField(
+        label=_('Account Admins (emails)'),
+        widget=forms.Textarea,
+    )
     first_name = forms.CharField(label='First Name', required=False)
     last_name = forms.CharField(label='Last Name', required=False)
     company_name = forms.CharField(label='Company Name', required=False)
@@ -92,12 +94,12 @@ class BillingAccountForm(forms.Form):
             crispy.Fieldset(
             'Basic Information',
                 'name',
+                'billing_account_admins',
                 'salesforce_account_id',
                 'currency',
             ),
             crispy.Fieldset(
             'Contact Information',
-                'billing_account_admins',
                 'first_name',
                 'last_name',
                 'company_name',
@@ -107,7 +109,9 @@ class BillingAccountForm(forms.Form):
                 'city',
                 'region',
                 'postal_code',
-                crispy.Field('country', css_class="input-xlarge"),
+                crispy.Field('country', css_class="input-xlarge",
+                             data_countryname=dict(COUNTRIES).get(
+                                 args[0].get('country') if len(args) > 0 else account.billingcontactinfo.country, '')),
             ) if account is not None else None,
             FormActions(
                 crispy.ButtonHolder(
@@ -125,29 +129,48 @@ class BillingAccountForm(forms.Form):
                 if WebUser.get_by_username(email_no_whitespace) is None:
                     invalid_emails.append("'%s'" % email_no_whitespace)
             if len(invalid_emails) != 0:
-                raise ValidationError("Invalid emails: %s" % ', '.join(invalid_emails))
+                raise ValidationError(
+                    "Invalid emails: %s" % ', '.join(invalid_emails)
+                )
         return billing_account_admins
+
+    def update_billing_admins(self, account):
+        for web_user_email in \
+                self.cleaned_data['billing_account_admins'].split(','):
+            admin, _ = BillingAccountAdmin.objects.get_or_create(
+                web_user=web_user_email.strip(),
+            )
+            account.billing_admins.add(admin)
 
     def create_account(self):
         name = self.cleaned_data['name']
         salesforce_account_id = self.cleaned_data['salesforce_account_id']
-        currency, _ = Currency.objects.get_or_create(code=self.cleaned_data['currency'])
-        account = BillingAccount(name=name,
-                                 salesforce_account_id=salesforce_account_id,
-                                 currency=currency)
+        currency, _ = Currency.objects.get_or_create(
+            code=self.cleaned_data['currency']
+        )
+        account = BillingAccount(
+            name=name,
+            salesforce_account_id=salesforce_account_id,
+            currency=currency
+        )
+        account.save()
+        self.update_billing_admins(account)
         account.save()
         return account
 
     def update_account_and_contacts(self, account):
         account.name = self.cleaned_data['name']
-        account.salesforce_account_id = self.cleaned_data['salesforce_account_id']
-        account.currency, _ = Currency.objects.get_or_create(code=self.cleaned_data['currency'])
-        for web_user_email in self.cleaned_data['billing_account_admins'].split(','):
-            admin, _ = BillingAccountAdmin.objects.get_or_create(web_user=web_user_email)
-            account.billing_admins.add(admin)
+        account.salesforce_account_id = \
+            self.cleaned_data['salesforce_account_id']
+        account.currency, _ = Currency.objects.get_or_create(
+            code=self.cleaned_data['currency'],
+        )
+        self.update_billing_admins(account)
         account.save()
 
-        contact_info, _ = BillingContactInfo.objects.get_or_create(account=account)
+        contact_info, _ = BillingContactInfo.objects.get_or_create(
+            account=account,
+        )
         contact_info.first_name = self.cleaned_data['first_name']
         contact_info.last_name = self.cleaned_data['last_name']
         contact_info.company_name = self.cleaned_data['company_name']
@@ -171,10 +194,13 @@ class SubscriptionForm(forms.Form):
     salesforce_contract_id = forms.CharField(label=_("Salesforce Deployment ID"),
                                              max_length=80,
                                              required=False)
+    do_not_invoice = forms.BooleanField(label=_("Do Not Invoice"),
+                                        required=False)
 
     # account_id is not referenced if subscription is not None
     def __init__(self, subscription, account_id, *args, **kwargs):
         super(SubscriptionForm, self).__init__(*args, **kwargs)
+        self.subscription = subscription
 
         css_class = {'css_class': 'date-picker'}
         disabled = {'disabled': 'disabled'}
@@ -196,6 +222,7 @@ class SubscriptionForm(forms.Form):
             self.fields['plan_version'].initial = subscription.plan_version.id
             self.fields['domain'].initial = subscription.subscriber.domain
             self.fields['salesforce_contract_id'].initial = subscription.salesforce_contract_id
+            self.fields['do_not_invoice'].initial = subscription.do_not_invoice
             if (subscription.date_start is not None
                 and subscription.date_start <= datetime.date.today()):
                 start_date_kwargs.update(disabled)
@@ -229,6 +256,7 @@ class SubscriptionForm(forms.Form):
                 crispy.Field('plan_version'),
                 crispy.Field('domain', **domain_kwargs),
                 'salesforce_contract_id',
+                'do_not_invoice',
             ),
             FormActions(
                 crispy.ButtonHolder(
@@ -246,6 +274,14 @@ class SubscriptionForm(forms.Form):
                 raise forms.ValidationError("A valid project space is required.")
         return domain_name
 
+    def clean_end_date(self):
+        start_date = self.subscription.date_start \
+            if self.subscription is not None else self.cleaned_data['start_date']
+        if (self.cleaned_data['end_date'] is not None
+            and start_date > self.cleaned_data['end_date']):
+            raise ValidationError("End date must be after start date.")
+        return self.cleaned_data['end_date']
+
     def create_subscription(self):
         account = BillingAccount.objects.get(id=self.cleaned_data['account'])
         domain = self.cleaned_data['domain']
@@ -254,15 +290,20 @@ class SubscriptionForm(forms.Form):
         date_end = self.cleaned_data['end_date']
         date_delay_invoicing = self.cleaned_data['delay_invoice_until']
         salesforce_contract_id = self.cleaned_data['salesforce_contract_id']
+        is_active = is_active_subscription(date_start, date_end)
+        do_not_invoice = self.cleaned_data['do_not_invoice']
         return Subscription.new_domain_subscription(account, domain, plan_version,
                                                     date_start=date_start,
                                                     date_end=date_end,
                                                     date_delay_invoicing=date_delay_invoicing,
-                                                    salesforce_contract_id=salesforce_contract_id)
+                                                    salesforce_contract_id=salesforce_contract_id,
+                                                    is_active=is_active,
+                                                    do_not_invoice=do_not_invoice)
 
     def update_subscription(self, subscription):
         kwargs = {
             'salesforce_contract_id': self.cleaned_data['salesforce_contract_id'],
+            'do_not_invoice': self.cleaned_data['do_not_invoice'],
         }
 
         if self.fields['start_date'].required:
@@ -1086,17 +1127,16 @@ class EnterprisePlanContactForm(forms.Form):
             'company': self.cleaned_data['company_name'],
             'message': self.cleaned_data['message'],
             'domain': self.domain,
+            'email': self.web_user.email
         }
         html_content = render_to_string('accounting/enterprise_request_email.html', context)
         text_content = """
+        Email: %(email)s
         Name: %(name)s
         Company: %(company)s
         Domain: %(domain)s
         Message:
         %(message)s
         """ % context
-        send_HTML_email(subject, settings.SUPPORT_EMAIL, html_content, text_content,
-                        email_from=self.web_user.email)
-
-
-
+        send_HTML_email(subject, settings.BILLING_EMAIL, html_content, text_content,
+                        email_from=settings.DEFAULT_FROM_EMAIL)

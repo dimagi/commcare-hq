@@ -295,7 +295,7 @@
                                     index: column.index,
                                     display: column.display,
                                     transform: column.transform() || null, // it doesn't save '' well
-                                    is_sensitive: is_sensitive
+                                    is_sensitive: Boolean(is_sensitive)
                                 };
                             })
                         }
@@ -320,7 +320,8 @@
                 self.output = ko.computed(function () {
                     var output = ko.mapping.toJS({
                         custom_export: self.custom_export,
-                        presave: self.presave
+                        presave: self.presave,
+                        export_stock: self.export_stock
                     });
                     output.custom_export.tables = self.make_tables();
                     return JSON.stringify(output);
@@ -382,6 +383,7 @@
                 custom_export: {{ custom_export|JSON }},
                 table_configuration: {{ table_configuration|JSON }},
                 presave: {{ presave|JSON }},
+                export_stock: {{ export_stock|JSON }},
                 deid_options: {{ deid_options|JSON }},
                 urls: {
                     save: {{ request.get_full_path|safe|JSON }}
@@ -410,31 +412,38 @@
                 <label for="format-select" class="control-label">{% trans "Default file type" %}</label>
                 <div class="controls">
                     <select id="format-select" data-bind="value: custom_export.default_format">
+                        <option value="csv">{% trans "CSV (Zip file)" %}</option>
                         <option value="xlsx">{% trans "Excel 2007" %}</option>
                         <option value="xls">{% trans "Excel (older versions)" %}</option>
-                        <option value="csv">{% trans "CSV (Zip file)" %}</option>
                     </select>
                 </div>
             </div>
             <div class="control-group">
                 <div class="controls">
-            {% if custom_export.type == 'form' %}
+                    {% if commtrack_domain %}
+                        <label class="checkbox">
+                            <input type="checkbox" id="presave-checkbox" data-bind="checked: export_stock" />
+                            {% trans "Export stock columns?" %}
+                        </label>
+                    {% endif %}
+                    <label class="checkbox">
+                        <input type="checkbox" id="transform-dates-checkbox" data-bind="checked: custom_export.transform_dates" />
+                        {% trans "Automatically convert dates for Excel" %}
+                    </label>
+                    <label class="checkbox">
+                        <input type="checkbox" data-bind="checked: $root.show_deleted" />
+                        {% trans "Show Deleted Questions and Advanced Properties" %}
+                    </label>
+                    <label class="checkbox">
+                        <input type="checkbox" id="presave-checkbox" data-bind="checked: presave" />
+                        {% trans "Create a Daily Saved Export" %}
+                    </label>
+                {% if custom_export.type == 'form' %}
                     <label class="checkbox">
                         <input type="checkbox" id="include-errors-checkbox" data-bind="checked: custom_export.include_errors" />
                         {% trans "Include duplicates and other unprocessed forms" %}
                     </label>
-            {% endif %}
-                    <label class="checkbox">
-                        <input type="checkbox" id="presave-checkbox" data-bind="checked: presave" />
-                        {% trans "Save this report daily?" %}
-                    </label>
-                    <label class="checkbox">
-                        <input type="checkbox" id="transform-dates-checkbox" data-bind="checked: custom_export.transform_dates" />
-                        {% trans "Automatically convert dates for Excel?" %}
-                    </label>
-                    <label class="checkbox">
-                        <input type="checkbox" data-bind="checked: $root.show_deleted" /> {% trans "Show Deleted Questions and Advanced Properties" %}
-                    </label>
+                {% endif %}
                 </div>
             </div>
         </fieldset>
@@ -471,7 +480,9 @@
                                 {% trans "Question" %}
                             </th>
                             <th>{% trans "Display" %}</th>
+                            {% if helper.allow_deid %}
                             <th class="deid-column" data-bind="visible: $root.showDeidColumn()">{% trans "Sensitivity" %}</th>
+                            {% endif %}
                         </tr>
                         </thead>
                         <tbody data-bind="sortable: column_configuration">
@@ -488,6 +499,7 @@
 
                                 </td>
                                 <td><input class="input-xlarge" type="text" data-bind="value: display" /></td>
+                                {% if helper.allow_deid %}
                                 <td class="deid-column" data-bind="visible: $root.showDeidColumn()">
                                     <select data-bind="
                                         value: transform || '',
@@ -497,6 +509,7 @@
                                         <option data-bind="value: value, text: label"></option>
                                     </select>
                                 </td>
+                                {% endif %}
                             </tr>
                         </tbody>
                     </table>
@@ -527,7 +540,8 @@
         {% endif %}
         <div class="form-actions">
             <button type="submit" class="btn btn-large btn-primary" data-bind="
-                click: save
+                click: save,
+                disable: save.state() === 'saving'
             ">
                 <span data-bind="visible: save.state() === 'save'">
                     <span data-bind="visible: custom_export._id && custom_export._id()">{% trans "Save" %}</span>

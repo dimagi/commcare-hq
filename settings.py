@@ -2,7 +2,8 @@
 # vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
 from collections import defaultdict
 
-import sys, os
+import sys
+import os
 from django.contrib import messages
 
 # odd celery fix
@@ -94,7 +95,6 @@ TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.Loader',
     'django.template.loaders.app_directories.Loader',
     'django.template.loaders.eggs.Loader',
-    #     'django.template.loaders.eggs.load_template_source',
 )
 
 MIDDLEWARE_CLASSES = [
@@ -136,38 +136,32 @@ TEMPLATE_CONTEXT_PROCESSORS = [
     'django.core.context_processors.static',
     "corehq.util.context_processors.current_url_name",
     'corehq.util.context_processors.domain',
-    "corehq.util.context_processors.base_template", # sticks the base template inside all responses
+    # sticks the base template inside all responses
+    "corehq.util.context_processors.base_template",
     "corehq.util.context_processors.analytics_js",
     "corehq.util.context_processors.raven",
 ]
 
-TEMPLATE_DIRS = [
-    # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
-    # Always use forward slashes, even on Windows.
-    # Don't forget to use absolute paths, not relative paths.
-]
+TEMPLATE_DIRS = []
 
 DEFAULT_APPS = (
-    'corehq.apps.userhack', # this has to be above auth
+    'corehq.apps.userhack',  # this has to be above auth
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.sites',
-    #'django.contrib.messages', # don't need this for messages and it's causing some error
     'django.contrib.staticfiles',
     'south',
-    'djcelery', # pip install django-celery
-    'djtables', # pip install djtables
+    'djcelery',
+    'djtables',
     'django_prbac',
-    #'ghettoq',     # pip install ghettoq
-    'djkombu', # pip install django-kombu
+    'djkombu',
     'couchdbkit.ext.django',
     'crispy_forms',
     'django.contrib.markup',
     'gunicorn',
     'raven.contrib.django.raven_compat',
-    # 'weasyprint',
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap'
@@ -286,6 +280,8 @@ HQ_APPS = (
     'custom.apps.crs_reports',
     'custom.hope',
     'custom.openlmis',
+
+    'custom.m4change'
 )
 
 TEST_APPS = ()
@@ -318,8 +314,8 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'rosetta',
     'soil',
     'south',
-    # 'weasyprint',
     'custom.apps.crs_reports',
+    'custom.m4change',
 
     # submodules with tests that run on travis
     'casexml.apps.case',
@@ -347,7 +343,7 @@ LOGIN_REDIRECT_URL = '/'
 # Default reporting database should be overridden in localsettings.
 SQL_REPORTING_DATABASE_URL = "sqlite:////tmp/commcare_reporting_test.db"
 
-REPORT_CACHE = 'default' # or e.g. 'redis'
+REPORT_CACHE = 'default'  # or e.g. 'redis'
 
 ####### Domain settings  #######
 
@@ -382,7 +378,7 @@ RELEASE_FILE_PATH = os.path.join("data", "builds")
 SOIL_HEARTBEAT_CACHE_KEY = "django-soil-heartbeat"
 
 
-####### Shared/Global/UI Settings ######
+####### Shared/Global/UI Settings #######
 
 # restyle some templates
 BASE_TEMPLATE = "hqwebapp/base.html"
@@ -399,10 +395,12 @@ EMAIL_SMTP_PORT = 587
 BUG_REPORT_RECIPIENTS = ()
 EXCHANGE_NOTIFICATION_RECIPIENTS = []
 
-SERVER_EMAIL = 'commcarehq-noreply@dimagi.com' #the physical server emailing - differentiate if needed
+# the physical server emailing - differentiate if needed
+SERVER_EMAIL = 'commcarehq-noreply@dimagi.com'
 DEFAULT_FROM_EMAIL = 'commcarehq-noreply@dimagi.com'
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 CCHQ_BUG_REPORT_EMAIL = 'commcarehq-bug-reports@dimagi.com'
+BILLING_EMAIL = 'billing-comm@dimagi.com'
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 
 SERVER_ENVIRONMENT = 'localdev'
@@ -415,11 +413,19 @@ OPENROSA_VERSION = "1.0"
 
 # OTA restore fixture generators
 FIXTURE_GENERATORS = [
+    "corehq.apps.fixtures.fixturegenerators.hq_fixtures",
+]
+
+HQ_FIXTURE_GENERATORS = [
+    # core
     "corehq.apps.users.fixturegenerators.user_groups",
     "corehq.apps.fixtures.fixturegenerators.item_lists",
     "corehq.apps.reportfixtures.fixturegenerators.indicators",
+    "corehq.apps.commtrack.fixtures.product_fixture_generator",
+    "corehq.apps.locations.fixtures.location_fixture_generator",
+    # custom
     "custom.bihar.reports.indicators.fixtures.generator",
-    "corehq.apps.commtrack.models.product_fixture_generator",
+    "custom.m4change.reports.fixtures.generator",
 ]
 
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
@@ -428,27 +434,31 @@ SMS_GATEWAY_URL = "http://localhost:8001/"
 SMS_GATEWAY_PARAMS = "user=my_username&password=my_password&id=%(phone_number)s&text=%(message)s"
 
 # celery
-BROKER_URL = 'django://' #default django db based
+BROKER_URL = 'django://'  # default django db based
 
-#this is the default celery queue - for periodic tasks on a separate queue override this to something else
+# this is the default celery queue
+# for periodic tasks on a separate queue override this to something else
 CELERY_PERIODIC_QUEUE = 'celery'
 
 SKIP_SOUTH_TESTS = True
 #AUTH_PROFILE_MODULE = 'users.HqUserProfile'
 TEST_RUNNER = 'testrunner.HqTestSuiteRunner'
-HQ_ACCOUNT_ROOT = "commcarehq.org" # this is what gets appended to @domain after your accounts
+# this is what gets appended to @domain after your accounts
+HQ_ACCOUNT_ROOT = "commcarehq.org"
 
 XFORMS_PLAYER_URL = "http://localhost:4444/"  # touchform's setting
 OFFLINE_TOUCHFORMS_PORT = 4444
 
-####### Couchlog config ######
+####### Couchlog config #######
 
-COUCHLOG_BLUEPRINT_HOME = "%s%s" % (STATIC_URL, "hqwebapp/stylesheets/blueprint/")
+COUCHLOG_BLUEPRINT_HOME = "%s%s" % (
+    STATIC_URL, "hqwebapp/stylesheets/blueprint/")
 COUCHLOG_DATATABLES_LOC = "%s%s" % (
     STATIC_URL, "hqwebapp/js/lib/datatables-1.9/js/jquery.dataTables.min.js")
 
 COUCHLOG_JQMODAL_LOC = "%s%s" % (STATIC_URL, "hqwebapp/js/lib/jqModal.js")
-COUCHLOG_JQMODAL_CSS_LOC = "%s%s" % (STATIC_URL, "hqwebapp/stylesheets/jqModal.css")
+COUCHLOG_JQMODAL_CSS_LOC = "%s%s" % (
+    STATIC_URL, "hqwebapp/stylesheets/jqModal.css")
 
 # These allow HQ to override what shows up in couchlog (add a domain column)
 COUCHLOG_TABLE_CONFIG = {"id_column": 0,
@@ -458,14 +468,13 @@ COUCHLOG_TABLE_CONFIG = {"id_column": 0,
                          "actions_column": 8,
                          "email_column": 9,
                          "no_cols": 10}
-COUCHLOG_DISPLAY_COLS = ["id", "archived?", "date", "exception type",
-                         "message", "domain", "user", "url", "actions", "report"]
+COUCHLOG_DISPLAY_COLS = ["id", "archived?", "date", "exception type", "message",
+                         "domain", "user", "url", "actions", "report"]
 COUCHLOG_RECORD_WRAPPER = "corehq.apps.hqcouchlog.wrapper"
 COUCHLOG_DATABASE_NAME = "commcarehq-couchlog"
 
 # couchlog/case search
 LUCENE_ENABLED = False
-
 
 
 # unicel sms config
@@ -478,7 +487,7 @@ MACH_CONFIG = {"username": "Dimagi",
                "password": "changeme",
                "service_profile": "changeme"}
 
-""" SMS Queue Settings"""
+####### SMS Queue Settings #######
 
 # Setting this to False will make the system process outgoing and incoming SMS
 # immediately rather than use the queue.
@@ -506,7 +515,7 @@ SMS_QUEUE_DOMAIN_RESTRICTED_RETRY_INTERVAL = 15
 # messages will not be processed.
 SMS_QUEUE_STALE_MESSAGE_DURATION = 7 * 24
 
-#auditcare parameters
+####### auditcare parameters #######
 AUDIT_MODEL_SAVE = [
     'corehq.apps.app_manager.Application',
     'corehq.apps.app_manager.RemoteApp',
@@ -548,8 +557,9 @@ LOCAL_COUCHDB_APPS = ()
 LOCAL_MIDDLEWARE_CLASSES = ()
 LOCAL_PILLOWTOPS = {}
 
-#If there are existing doc_ids and case_ids you want to check directly - they are refernced
-#in your localsettings for more accurate direct checks, otherwise use view based which can be inaccurate.
+# If there are existing doc_ids and case_ids you want to check directly,
+# they are referenced in your localsettings for more accurate direct checks,
+# otherwise use view-based which can be inaccurate.
 ES_CASE_CHECK_DIRECT_DOC_ID = None
 ES_XFORM_CHECK_DIRECT_DOC_ID = None
 
@@ -559,12 +569,12 @@ LOGSTASH_COUCHLOG_PORT = 10888
 LOGSTASH_AUDITCARE_PORT = 10999
 LOGSTASH_HOST = 'localhost'
 
-#on both a single instance or distributed setup this should assume to be localhost
+# on both a single instance or distributed setup this should assume localhost
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
 
-####### Couch Config ######
-#for production this ought to be set to true on your configured couch instance
+####### Couch Config #######
+# for production this ought to be set to true on your configured couch instance
 COUCH_HTTPS = False
 COUCH_SERVER_ROOT = 'localhost:5984'  # 6984 for https couch
 COUCH_USERNAME = ''
@@ -577,7 +587,7 @@ BITLY_APIKEY = ''
 # this should be overridden in localsettings
 INTERNAL_DATA = defaultdict(list)
 
-COUCH_STALE_QUERY='update_after'  # 'ok' for cloudant
+COUCH_STALE_QUERY = 'update_after'  # 'ok' for cloudant
 
 
 MESSAGE_LOG_OPTIONS = {
@@ -597,16 +607,9 @@ FLUFF_PILLOW_TYPES_TO_SQL = {
 
 PREVIEWER_RE = '^$'
 
-try:
-    #try to see if there's an environmental variable set for local_settings
-    if os.environ.get('CUSTOMSETTINGS', None) == "demo":
-        # this sucks, but is a workaround for supporting different settings
-        # in the same environment
-        from settings_demo import *
-    else:
-        from localsettings import *
-except ImportError:
-    pass
+MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
+
+DIGEST_LOGIN_FACTORY = 'django_digest.NoEmailLoginFactory'
 
 LOGGING = {
     'version': 1,
@@ -703,6 +706,17 @@ LOGGING = {
     }
 }
 
+try:
+    # try to see if there's an environmental variable set for local_settings
+    if os.environ.get('CUSTOMSETTINGS', None) == "demo":
+        # this sucks, but is a workaround for supporting different settings
+        # in the same environment
+        from settings_demo import *
+    else:
+        from localsettings import *
+except ImportError:
+    pass
+
 if DEBUG:
     try:
         import luna
@@ -716,8 +730,7 @@ if DEBUG:
 
     import warnings
     warnings.simplefilter('default')
-
-if not DEBUG:
+else:
     TEMPLATE_LOADERS = [
         ('django.template.loaders.cached.Loader', TEMPLATE_LOADERS),
     ]
@@ -727,11 +740,15 @@ if not DEBUG:
 #SOUTH_TESTS_MIGRATE=False
 
 ####### Couch Forms & Couch DB Kit Settings #######
-from settingshelper import get_dynamic_db_settings, make_couchdb_tuple
+from settingshelper import get_dynamic_db_settings, make_couchdb_tuples
 
-_dynamic_db_settings = get_dynamic_db_settings(COUCH_SERVER_ROOT, COUCH_USERNAME, COUCH_PASSWORD,
-                                               COUCH_DATABASE_NAME, INSTALLED_APPS,
-                                               use_https=COUCH_HTTPS)
+_dynamic_db_settings = get_dynamic_db_settings(
+    COUCH_SERVER_ROOT,
+    COUCH_USERNAME,
+    COUCH_PASSWORD,
+    COUCH_DATABASE_NAME,
+    use_https=COUCH_HTTPS,
+)
 
 # create local server and database configs
 COUCH_SERVER = _dynamic_db_settings["COUCH_SERVER"]
@@ -744,7 +761,6 @@ COUCHDB_APPS = [
     'app_manager',
     'appstore',
     'orgs',
-    'auditcare',
     'builds',
     'case',
     'callcenter',
@@ -753,7 +769,8 @@ COUCHDB_APPS = [
     'commtrack',
     'consumption',
     'couch',
-    # This is necessary for abstract classes in dimagi.utils.couch.undo; otherwise breaks tests
+    # This is necessary for abstract classes in dimagi.utils.couch.undo;
+    # otherwise breaks tests
     'couchdbkit_aggregate',
     'couchforms',
     'couchexport',
@@ -789,7 +806,6 @@ COUCHDB_APPS = [
     'registration',
     'hutch',
     'hqbilling',
-    'couchlog',
     'wisepill',
     'fri',
     'crs_reports',
@@ -809,22 +825,22 @@ COUCHDB_APPS = [
     'psi',
     'trialconnect',
     'accounting',
+    ('auditcare', 'auditcare'),
+    ('couchlog', 'couchlog'),
+    ('receiverwrapper', 'receiverwrapper'),
+    # needed to make couchdbkit happy
+    ('fluff', 'fluff-bihar'),
+    ('bihar', 'fluff-bihar'),
+    ('opm_reports', 'fluff-opm'),
+    ('fluff', 'fluff-opm'),
+    ('care_sa', 'fluff-care_sa'),
+    ('cvsu', 'fluff-cvsu'),
+    ('mc', 'fluff-mc'),
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
 
-COUCHDB_DATABASES = [make_couchdb_tuple(app_label, COUCH_DATABASE) for app_label in COUCHDB_APPS]
-
-COUCHDB_DATABASES += [
-    ('fluff', COUCH_DATABASE + '__fluff-bihar'),  # needed to make couchdbkit happy
-    ('bihar', COUCH_DATABASE + '__fluff-bihar'),
-    ('opm_reports', COUCH_DATABASE + '__fluff-opm'),
-    ('fluff', COUCH_DATABASE + '__fluff-opm'),
-    ('care_sa', COUCH_DATABASE + '__fluff-care_sa'),
-    ('cvsu', COUCH_DATABASE + '__fluff-cvsu'),
-    ('mc', COUCH_DATABASE + '__fluff-mc'),
-    ('receiverwrapper', COUCH_DATABASE + '__receiverwrapper'),
-]
+COUCHDB_DATABASES = make_couchdb_tuples(COUCHDB_APPS, COUCH_DATABASE)
 
 INSTALLED_APPS += LOCAL_APPS
 
@@ -884,16 +900,19 @@ SMS_LOADED_BACKENDS = [
     "corehq.apps.megamobile.api.MegamobileBackend",
 ]
 
-# These are functions that can be called to retrieve custom content in a reminder event.
+# These are functions that can be called
+# to retrieve custom content in a reminder event.
 # If the function is not in here, it will not be called.
 ALLOWED_CUSTOM_CONTENT_HANDLERS = {
-    "FRI_SMS_CONTENT" : "custom.fri.api.custom_content_handler",
-    "FRI_SMS_CATCHUP_CONTENT" : "custom.fri.api.catchup_custom_content_handler",
+    "FRI_SMS_CONTENT": "custom.fri.api.custom_content_handler",
+    "FRI_SMS_CATCHUP_CONTENT": "custom.fri.api.catchup_custom_content_handler",
+    "FRI_SMS_SHIFT": "custom.fri.api.shift_custom_content_handler",
+    "FRI_SMS_OFF_DAY": "custom.fri.api.off_day_custom_content_handler",
 }
 
 # These are custom templates which can wrap default the sms/chat.html template
 CUSTOM_CHAT_TEMPLATES = {
-    "FRI" : "fri/chat.html",
+    "FRI": "fri/chat.html",
 }
 
 SELENIUM_APP_SETTING_DEFAULTS = {
@@ -902,7 +921,6 @@ SELENIUM_APP_SETTING_DEFAULTS = {
         'OPEN_FORM_WAIT_TIME': 20,
         'SUBMIT_FORM_WAIT_TIME': 20
     },
-
     'reports': {
         'MAX_PRELOAD_TIME': 20,
         'MAX_LOAD_TIME': 30,
@@ -943,6 +961,10 @@ PILLOWTOPS = {
         'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
         'custom.reports.care_sa.models.CareSAFluffPillow',
         'custom.reports.mc.models.MalariaConsortiumFluffPillow',
+        'custom.m4change.models.AncHmisCaseFluffPillow',
+        'custom.m4change.models.ImmunizationHmisCaseFluffPillow',
+        'custom.m4change.models.ProjectIndicatorsCaseFluffPillow',
+        'custom.m4change.models.McctMonthlyAggregateFormFluffPillow'
     ],
     'mvp': [
         'corehq.apps.indicators.pillows.FormIndicatorPillow',
@@ -953,7 +975,7 @@ PILLOWTOPS = {
     ],
 }
 
-for k, v in  LOCAL_PILLOWTOPS.items():
+for k, v in LOCAL_PILLOWTOPS.items():
     plist = PILLOWTOPS.get(k, [])
     plist.extend(v)
     PILLOWTOPS[k] = plist
@@ -969,7 +991,7 @@ COUCH_CACHE_BACKENDS = [
     'dimagi.utils.couch.cache.cache_core.gen.GlobalCache',
 ]
 
-#Custom fully indexed domains for ReportCase index/pillowtop
+# Custom fully indexed domains for ReportCase index/pillowtop
 # Adding a domain will not automatically index that domain's existing cases
 ES_CASE_FULL_INDEX_DOMAINS = [
     'pact',
@@ -983,7 +1005,7 @@ ES_CASE_FULL_INDEX_DOMAINS = [
     'crs-remind',
 ]
 
-#Custom fully indexed domains for ReportXForm index/pillowtop --
+# Custom fully indexed domains for ReportXForm index/pillowtop --
 # only those domains that don't require custom pre-processing before indexing,
 # otherwise list in XFORM_PILLOW_HANDLERS
 # Adding a domain will not automatically index that domain's existing forms
@@ -995,6 +1017,8 @@ ES_XFORM_FULL_INDEX_DOMAINS = [
 
 CUSTOM_MODULES = [
     'custom.apps.crs_reports',
+    'custom.bihar',
+
 ]
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
@@ -1033,7 +1057,10 @@ DOMAIN_MODULE_MAP = {
     'tc-test': 'custom.trialconnect',
     'trialconnect': 'custom.trialconnect',
 
-    'crs-remind': 'custom.apps.crs_reports'
+    'crs-remind': 'custom.apps.crs_reports',
+
+    'm4change': 'custom.m4change',
+    'test-pathfinder': 'custom.m4change'
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True

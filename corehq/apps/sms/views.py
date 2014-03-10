@@ -10,6 +10,9 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
+from corehq import privileges
+from corehq.apps.reminders.util import can_use_survey_reminders
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback, requires_privilege_plaintext_response
 from corehq.apps.api.models import require_api_user_permission, PERMISSION_POST_SMS
 from corehq.apps.commtrack.models import AlertConfig
 from corehq.apps.sms.api import (
@@ -66,32 +69,39 @@ def default(request, domain):
 class BaseMessagingSectionView(BaseDomainView):
     section_name = ugettext_noop("Messaging")
 
+    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
+    def dispatch(self, *args, **kwargs):
+        return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
+
     @property
     def section_url(self):
         return reverse("sms_default", args=[self.domain])
 
 
 @login_and_domain_required
+@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
 def messaging(request, domain, template="sms/default.html"):
     context = get_sms_autocomplete_context(request, domain)
     context['domain'] = domain
     context['messagelog'] = SMSLog.by_domain_dsc(domain)
     context['now'] = datetime.utcnow()
-    tz = report_utils.get_timezone(request.couch_user.user_id, domain)
+    tz = report_utils.get_timezone(request.couch_user, domain)
     context['timezone'] = tz
     context['timezone_now'] = datetime.now(tz=tz)
     context['layout_flush_content'] = True
     return render(request, template, context)
 
 @login_and_domain_required
+@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
 def compose_message(request, domain, template="sms/compose.html"):
     context = get_sms_autocomplete_context(request, domain)
     context['domain'] = domain
     context['now'] = datetime.utcnow()
-    tz = report_utils.get_timezone(request.couch_user.user_id, domain)
+    tz = report_utils.get_timezone(request.couch_user, domain)
     context['timezone'] = tz
     context['timezone_now'] = datetime.now(tz=tz)
     return render(request, template, context)
+
 
 def post(request, domain):
     # TODO: Figure out if this is being used anywhere and remove it if not
@@ -123,6 +133,7 @@ def post(request, domain):
     msg.save()
     return HttpResponse('OK')
 
+@requires_privilege_plaintext_response(privileges.OUTBOUND_SMS)
 @require_api_user_permission(PERMISSION_POST_SMS)
 def sms_in(request):
     """
@@ -160,6 +171,7 @@ def get_sms_autocomplete_context(request, domain):
     return {"sms_contacts": contacts}
 
 @login_and_domain_required
+@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
 def send_to_recipients(request, domain):
     recipients = request.POST.get('recipients')
     message = request.POST.get('message')
@@ -266,6 +278,7 @@ def send_to_recipients(request, domain):
     )
 
 @domain_admin_required
+@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
 def message_test(request, domain, phone_number):
     if request.method == "POST":
         message = request.POST.get("message", "")
@@ -292,7 +305,7 @@ def message_test(request, domain, phone_number):
     context['domain'] = domain
     context['messagelog'] = SMSLog.by_domain_dsc(domain)
     context['now'] = datetime.utcnow()
-    tz = report_utils.get_timezone(request.couch_user.user_id, domain)
+    tz = report_utils.get_timezone(request.couch_user, domain)
     context['timezone'] = tz
     context['timezone_now'] = datetime.now(tz=tz)
     context['layout_flush_content'] = True
@@ -301,6 +314,7 @@ def message_test(request, domain, phone_number):
 
 @csrf_exempt
 @login_or_digest
+@requires_privilege_plaintext_response(privileges.OUTBOUND_SMS)
 def api_send_sms(request, domain):
     """
     An API to send SMS.
@@ -467,6 +481,7 @@ def _add_backend(request, backend_class_name, is_global, domain=None, backend_id
     return render(request, backend_class.get_template(), context)
 
 @domain_admin_required
+@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
 def add_domain_backend(request, domain, backend_class_name, backend_id=None):
     return _add_backend(request, backend_class_name, False, domain, backend_id)
 
@@ -526,6 +541,7 @@ def _list_backends(request, show_global=False, domain=None):
     return render(request, "sms/list_backends.html", context)
 
 @domain_admin_required
+@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
 def list_domain_backends(request, domain):
     return _list_backends(request, False, domain)
 
@@ -538,6 +554,7 @@ def default_sms_admin_interface(request):
     return HttpResponseRedirect(reverse("list_backends"))
 
 @domain_admin_required
+@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
 def delete_domain_backend(request, domain, backend_id):
     backend = SMSBackend.get(backend_id)
     if backend.domain != domain or backend.base_doc != "MobileBackend":
@@ -567,10 +584,12 @@ def _set_default_domain_backend(request, domain, backend_id, unset=False):
     return HttpResponseRedirect(reverse("list_domain_backends", args=[domain]))
 
 @domain_admin_required
+@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
 def set_default_domain_backend(request, domain, backend_id):
     return _set_default_domain_backend(request, domain, backend_id)
 
 @domain_admin_required
+@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
 def unset_default_domain_backend(request, domain, backend_id):
     return _set_default_domain_backend(request, domain, backend_id, True)
 
@@ -630,6 +649,7 @@ def global_backend_map(request):
     return render(request, "sms/backend_map.html", context)
 
 @require_permission(Permissions.edit_data)
+@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
 def chat_contacts(request, domain):
     domain_obj = Domain.get_by_name(domain, strict=True)
     verified_numbers = VerifiedNumber.by_domain(domain)
@@ -659,6 +679,7 @@ def chat_contacts(request, domain):
     return render(request, "sms/chat_contacts.html", context)
 
 @require_permission(Permissions.edit_data)
+@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
 def chat(request, domain, contact_id):
     domain_obj = Domain.get_by_name(domain, strict=True)
     timezone = report_utils.get_timezone(None, domain)
@@ -694,6 +715,7 @@ def chat(request, domain, contact_id):
     return render(request, template, context)
 
 @require_permission(Permissions.edit_data)
+@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
 def api_history(request, domain):
     result = []
     contact_id = request.GET.get("contact_id", None)
@@ -797,6 +819,7 @@ def api_history(request, domain):
     return HttpResponse(json.dumps(result))
 
 @require_permission(Permissions.edit_data)
+@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
 def api_last_read_message(request, domain):
     contact_id = request.GET.get("contact_id", None)
     domain_obj = Domain.get_by_name(domain, strict=True)
@@ -975,6 +998,7 @@ class SubscribeSMSView(BaseMessagingSectionView):
         return self.get(request, *args, **kwargs)
 
 @domain_admin_required
+@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
 def sms_settings(request, domain):
     domain_obj = Domain.get_by_name(domain, strict=True)
     is_previewer = request.couch_user.is_previewer()
@@ -1021,5 +1045,6 @@ def sms_settings(request, domain):
         "form" : form,
         "is_previewer" : is_previewer,
         "sms_queue_enabled" : settings.SMS_QUEUE_ENABLED,
+        'can_use_survey': can_use_survey_reminders(request),
     }
     return render(request, "sms/settings.html", context)

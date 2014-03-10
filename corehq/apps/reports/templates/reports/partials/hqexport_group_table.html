@@ -1,29 +1,28 @@
-{% load url from future %}
 {% load i18n %}
 {% load timezone_tags %}
-{% if group.saved_exports %}
-<table class="couchexport-group-download table table-condensed">
-    <thead>
+{% if exports %}
+    <table class="couchexport-group-download table table-condensed">
+        <thead>
+            <tr>
+                <th>{% trans "File" %}</th>
+                <th>{% trans "Last Updated" %}</th>
+                <th>{% trans "Size" %}</th>
+            </tr>
+        </thead>
+        <tbody>
+    {% for config, saved in exports %}
         <tr>
-            <th>{% trans "File" %}</th>
-            <th>{% trans "Last Updated" %}</th>
-            <th>{% trans "Size" %}</th>
+        {% if saved and saved.has_file %}
+            <td><a href="{% url "hq_download_saved_export" domain saved.get_id %}">{{ config.name }}</a></td>
+            <td>{%  utc_to_timezone saved.last_updated timezone %}</td>
+            <td>{{ saved.size|filesizeformat }}</td>
+        {% else %}
+            <td>{{ config.name }}</td>
+            <td>{% trans "N/A" %}</td>
+            <td>{% trans "N/A" %}</td>
+        {% endif %}
         </tr>
-    </thead>
-    <tbody>
-{% for config, saved in group.saved_exports %}
-    <tr>
-    {% if saved and saved.has_file %}
-        <td><a href="{% url "hq_download_saved_export" domain saved.get_id %}">{{ config.name }}</a></td>
-        <td>{%  utc_to_timezone saved.last_updated timezone %}</td>
-        <td>{{ saved.size|filesizeformat }}</td>
-    {% else %}
-        <td>{{ config.name }}</td>
-        <td>{% trans "N/A" %}</td>
-        <td>{% trans "N/A" %}</td>
-    {% endif %}
-    </tr>
-{% endfor %}    
-    </tbody>
-</table>
+    {% endfor %}
+        </tbody>
+    </table>
 {% endif %}

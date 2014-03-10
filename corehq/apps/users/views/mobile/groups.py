@@ -44,10 +44,6 @@ class EditGroupsView(BaseGroupsView):
     page_title = ugettext_noop("Groups")
     urlname = 'all_groups'
 
-    @property
-    def page_context(self):
-        return {}
-
 
 class EditGroupMembersView(BaseGroupsView):
     urlname = 'group_members'

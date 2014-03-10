@@ -81,6 +81,12 @@ class Site(object):
 
 
     def process_form(self, form, username):
+        try:
+            day = self.week.index(form.form['date_form_completed'])
+        except ValueError:
+            msg = "Form %s created outside of report period. Ignoring." % form._id
+            logging.info(msg)
+            return
 
         def get_or_None(obj, *args):
             val = obj
@@ -90,8 +96,6 @@ class Site(object):
                 except KeyError:
                     return None
             return val
-
-        day = self.week.index(form.form['date_form_completed'])
 
         strategies = len(form.form.get('strategies_used').split())
 
@@ -109,6 +113,7 @@ class Site(object):
 def get_days_on(date):
     week = get_m_to_f(date)
     week = [week[0] - datetime.timedelta(days=1)] + week
+    forms = []
     for form in XFormInstance.view(
         'couchforms/by_xmlns',
         key=WEEKLY_SCHEDULE_XMLNS,
@@ -116,7 +121,10 @@ def get_days_on(date):
         include_docs=True,
     ):
         if form.received_on.date() in week:
-            return form.form
+            forms.append(form)
+    if forms:
+        forms.sort(key=lambda form: form.received_on)
+        return forms[-1].form
 
 
 def save_report(date=None):

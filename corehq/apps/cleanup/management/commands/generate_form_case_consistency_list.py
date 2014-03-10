@@ -63,7 +63,7 @@ class Command(BaseCommand):
         ek = [domain, "by_date", (datetime.utcnow() + timedelta(days=10)).strftime("%Y-%m%d")]
 
         def call_view(sk, ek, skip, limit):
-            return db.view('receiverwrapper/all_submissions_by_domain',
+            return db.view('couchforms/all_submissions_by_domain',
                            startkey=sk,
                            endkey=ek,
                            reduce=False,

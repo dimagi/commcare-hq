@@ -13,7 +13,7 @@ from django.core.cache import cache
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _, get_language
 from django.views.decorators.cache import cache_control
-from corehq import ApplicationsTab, toggles
+from corehq import ApplicationsTab, toggles, privileges
 from corehq.apps.app_manager import commcare_settings
 from corehq.apps.app_manager.exceptions import (
     AppManagerException,
@@ -36,9 +36,9 @@ from django.utils.http import urlencode
 from django.views.decorators.http import require_GET
 from django.conf import settings
 from couchdbkit.resource import ResourceNotFound
-from corehq.apps.app_manager.const import APP_V1, CAREPLAN_GOAL, CAREPLAN_TASK, APP_V2
+from corehq.apps.app_manager.const import APP_V1, CAREPLAN_GOAL, CAREPLAN_TASK, APP_V2, CT_REQUISITION_MODES
 from corehq.apps.app_manager.success_message import SuccessMessage
-from corehq.apps.app_manager.util import is_valid_case_type, get_all_case_properties, add_odk_profile_after_build, ParentCasePropertyBuilder
+from corehq.apps.app_manager.util import is_valid_case_type, get_all_case_properties, add_odk_profile_after_build, ParentCasePropertyBuilder, commtrack_ledger_sections
 from corehq.apps.app_manager.util import save_xform, get_settings_values
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin
@@ -66,13 +66,14 @@ from corehq.apps.reports import util as report_utils
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
 from corehq.apps.app_manager.models import Application, get_app, DetailColumn, Form, FormActions,\
     AppEditingError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, \
-    DeleteApplicationRecord, str_to_cls, validate_lang, SavedAppBuild, ParentSelect, Module, CareplanModule, \
-    CareplanForm, CareplanGoalForm, CareplanTaskForm, CommTrackModule, CommTrackForm, ModuleNotFoundException
-from corehq.apps.app_manager.models import DETAIL_TYPES, import_app as import_app_util, SortElement
+    DeleteApplicationRecord, str_to_cls, SavedAppBuild, ParentSelect, Module, CareplanModule, CareplanForm, AdvancedModule, AdvancedForm, AdvancedFormActions, \
+    IncompatibleFormTypeException, ModuleNotFoundException
+from corehq.apps.app_manager.models import import_app as import_app_util, SortElement
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST
 from django.contrib import messages
-from toggle import toggle_enabled
+from django_prbac.exceptions import PermissionDenied
+from django_prbac.utils import ensure_request_has_privilege
 
 logger = logging.getLogger(__name__)
 
@@ -375,11 +376,18 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
         else:
             messages.error(request, err)
 
-    module_case_types = [
-        {'module_name': trans(module.name, langs),
-         'case_type': module.case_type}
-        for module in form.get_app().modules if module.case_type
-    ] if not is_user_registration else None
+    module_case_types = []
+    if is_user_registration:
+        module_case_types = None
+    else:
+        for module in form.get_app().get_modules():
+            for case_type in module.get_case_types():
+                module_case_types.append({
+                    'id': module.unique_id,
+                    'module_name': trans(module.name, langs),
+                    'case_type': case_type,
+                    'module_type': module.doc_type
+                })
 
     context = {
         'nav_form': form if not is_user_registration else '',
@@ -399,19 +407,32 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
             'case_preload': [{'key': key, 'path': path} for key, path in form.case_preload.items()],
         })
         return "app_manager/form_view_careplan.html", context
+    elif isinstance(form, AdvancedForm):
+        context.update({
+            'show_custom_ref': toggles.APP_BUILDER_CUSTOM_PARENT_REF.enabled(request.user.username),
+        })
+        return "app_manager/form_view_advanced.html", context
     else:
         context.update({
             'is_user_registration': is_user_registration,
-            'show_custom_ref': toggle_enabled(toggles.APP_BUILDER_CUSTOM_PARENT_REF, request.user.username),
+            'show_custom_ref': toggles.APP_BUILDER_CUSTOM_PARENT_REF.enabled(request.user.username),
         })
         return "app_manager/form_view.html", context
 
 
 def get_app_view_context(request, app):
 
+    is_cloudcare_allowed = False
+    try:
+        ensure_request_has_privilege(request, privileges.CLOUDCARE)
+        is_cloudcare_allowed = True
+    except PermissionDenied:
+        pass
+
     context = {
         'settings_layout': commcare_settings.LAYOUT[app.get_doc_type()],
         'settings_values': get_settings_values(app),
+        'is_cloudcare_allowed': is_cloudcare_allowed,
     }
 
     build_config = CommCareBuildConfig.fetch()
@@ -494,19 +515,12 @@ def get_apps_base_context(request, domain, app):
     if getattr(request, 'couch_user', None):
         edit = (request.GET.get('edit', 'true') == 'true') and\
                (request.couch_user.can_edit_apps(domain) or request.user.is_superuser)
-        timezone = report_utils.get_timezone(request.couch_user.user_id, domain)
+        timezone = report_utils.get_timezone(request.couch_user, domain)
     else:
         edit = False
         timezone = None
 
-    if app:
-        for _lang in app.langs:
-            try:
-                SuccessMessage(app.success_message.get(_lang, ''), '').check_message()
-            except Exception as e:
-                messages.error(request, "Your success message is malformed: %s is not a keyword" % e)
-
-    return {
+    context = {
         'lang': lang,
         'langs': langs,
         'domain': domain,
@@ -516,18 +530,40 @@ def get_apps_base_context(request, domain, app):
         'timezone': timezone,
     }
 
+    if app:
+        for _lang in app.langs:
+            try:
+                SuccessMessage(app.success_message.get(_lang, ''), '').check_message()
+            except Exception as e:
+                messages.error(request, "Your success message is malformed: %s is not a keyword" % e)
+
+        v2_app = app.application_version == APP_V2
+        context.update({
+            'show_care_plan': (v2_app
+                               and not app.has_careplan_module
+                               and toggles.APP_BUILDER_CAREPLAN.enabled(request.user.username)),
+            'show_advanced': (v2_app
+                               and toggles.APP_BUILDER_ADVANCED.enabled(request.user.username)),
+        })
+
+    return context
+
 
 @cache_control(no_cache=True, no_store=True)
 @login_and_domain_required
 def paginate_releases(request, domain, app_id):
-    limit = request.GET.get('limit', 10)
+    limit = request.GET.get('limit')
+    try:
+        limit = int(limit)
+    except ValueError:
+        limit = 10
     start_build_param = request.GET.get('start_build')
     if start_build_param and json.loads(start_build_param):
         start_build = json.loads(start_build_param)
         assert isinstance(start_build, int)
     else:
         start_build = {}
-    timezone = report_utils.get_timezone(request.couch_user.user_id, domain)
+    timezone = report_utils.get_timezone(request.couch_user, domain)
     saved_apps = get_db().view('app_manager/saved_app',
         startkey=[domain, app_id, start_build],
         endkey=[domain, app_id],
@@ -536,7 +572,7 @@ def paginate_releases(request, domain, app_id):
         wrapper=lambda x: SavedAppBuild.wrap(x['value']).to_saved_build_json(timezone),
     ).all()
     for app in saved_apps:
-        app['include_media'] = toggle_enabled(toggles.APP_BUILDER_INCLUDE_MULTIMEDIA_ODK, request.user.username)
+        app['include_media'] = toggles.APP_BUILDER_INCLUDE_MULTIMEDIA_ODK.enabled(request.user.username)
     return json_response(saved_apps)
 
 
@@ -607,14 +643,17 @@ def get_module_view_context_and_template(app, module):
         defaults=('name', 'date-opened', 'status')
     )
 
-    def get_parent_modules_and_save(case_type):
-        parent_types = builder.get_parent_types(case_type)
-        modules = app.modules
+    def ensure_unique_ids():
         # make sure all modules have unique ids
+        modules = app.modules
         if any(not mod.unique_id for mod in modules):
             for mod in modules:
                 mod.get_or_create_unique_id()
             app.save()
+
+    def get_parent_modules(case_type):
+        parent_types = builder.get_parent_types(case_type)
+        modules = app.modules
         parent_module_ids = [mod.unique_id for mod in modules
                              if mod.case_type in parent_types]
         return [{
@@ -626,26 +665,27 @@ def get_module_view_context_and_template(app, module):
     def get_sort_elements(details):
         return [prop.values() for prop in details.sort_elements]
 
+    ensure_unique_ids()
     if isinstance(module, CareplanModule):
         return "app_manager/module_view_careplan.html", {
-            'parent_modules': get_parent_modules_and_save(CAREPLAN_GOAL),
+            'parent_modules': get_parent_modules(CAREPLAN_GOAL),
             'goal_case_properties': sorted(builder.get_properties(CAREPLAN_GOAL)),
             'task_case_properties': sorted(builder.get_properties(CAREPLAN_TASK)),
             "goal_sortElements": json.dumps(get_sort_elements(module.goal_details.short)),
             "task_sortElements": json.dumps(get_sort_elements(module.task_details.short)),
         }
-    elif isinstance(module, CommTrackModule):
+    elif isinstance(module, AdvancedModule):
         case_type = module.case_type
-        return "app_manager/module_view_commtrack.html", {
+        return "app_manager/module_view_advanced.html", {
             'case_properties': sorted(builder.get_properties(case_type)),
-            'product_properties': ('name', 'product:quantity'),
+            'product_properties': ['name'] + commtrack_ledger_sections(app.commtrack_requisition_mode),
             'case_sortElements': json.dumps(get_sort_elements(module.case_details.short)),
             'product_sortElements': json.dumps(get_sort_elements(module.product_details.short)),
         }
     else:
         case_type = module.case_type
         return "app_manager/module_view.html", {
-            'parent_modules': get_parent_modules_and_save(case_type),
+            'parent_modules': get_parent_modules(case_type),
             'case_properties': sorted(builder.get_properties(case_type)),
             "sortElements": json.dumps(get_sort_elements(module.case_details.short))
         }
@@ -679,7 +719,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
             module = app.get_module(module_id)
         if form_id:
             form = module.get_form(form_id)
-    except IndexError:
+    except ModuleNotFoundException:
         return bail(req, domain, app_id)
 
     context = get_apps_base_context(req, domain, app)
@@ -706,13 +746,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         del app['use_commcare_sense']
         app.save()
 
-    v2_app = app and app.application_version == APP_V2
     context.update({
-        'show_care_plan': (v2_app
-                           and not (app and app.has_careplan_module)
-                           and toggle_enabled(toggles.APP_BUILDER_CAREPLAN, req.user.username)),
-        'show_commtrack': (v2_app
-                           and toggle_enabled(toggles.APP_BUILDER_COMMTRACK, req.user.username)),
         'module': module,
         'form': form,
     })
@@ -728,6 +762,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         context.update(form_context)
     elif module:
         template, module_context = get_module_view_context_and_template(app, module)
+        module_context["enable_calc_xpaths"] = toggles.CALC_XPATHS.enabled(getattr(req, 'domain', None))
         context.update(module_context)
     else:
         template = "app_manager/app_view.html"
@@ -820,7 +855,7 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None,
 @require_can_edit_apps
 def new_app(req, domain):
     "Adds an app to the database"
-    lang = req.COOKIES.get('lang') or 'en'
+    lang = 'en'
     type = req.POST["type"]
     application_version = req.POST.get('application_version', APP_V1)
     cls = str_to_cls[type]
@@ -885,19 +920,15 @@ def _new_careplan_module(req, domain, app, name, lang):
     return response
 
 
-def _new_commtrack_module(req, domain, app, name, lang):
-    module = app.add_module(CommTrackModule.new_module(name, lang))
+def _new_advanced_module(req, domain, app, name, lang):
+    module = app.add_module(AdvancedModule.new_module(name, lang))
     module_id = module.id
-    form = CommTrackForm(
-        name={lang if lang else "en": name if name else "Untitled Form"},
-    )
-    module.forms.append(form)
-    form = module.get_form(-1)
-    form.source = ''
+    app.new_form(module_id, _("Untitled Form"), lang)
+
     app.save()
     response = back_to_main(req, domain, app_id=app.id, module_id=module_id)
     response.set_cookie('suppress_build_errors', 'yes')
-    messages.info(req, _('Caution: CommTrack modules are a labs feature'))
+    messages.info(req, _('Caution: Advanced modules are a labs feature'))
     return response
 
 
@@ -953,7 +984,7 @@ def delete_module(req, domain, app_id, module_id):
     try:
         record = app.delete_module(module_id)
     except ModuleNotFoundException:
-        raise Http404()
+        return bail(req, domain, app_id)
     messages.success(req,
         'You have deleted a module. <a href="%s" class="post-link">Undo</a>' % reverse('undo_delete_module', args=[domain, record.get_id]),
         extra_tags='html'
@@ -998,6 +1029,10 @@ def copy_form(req, domain, app_id, module_id, form_id):
         # don't save!
         messages.error(req, _('We could not copy this form, because it is blank.'
                               'In order to copy this form, please add some questions first.'))
+    except IncompatibleFormTypeException:
+        # don't save!
+        messages.error(req, _('This form could not be copied because it '
+                              'is not compatible with the selected module.'))
     else:
         app.save()
 
@@ -1022,7 +1057,7 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
     """
     attributes = {
         "all": None,
-        "case_type": None, "put_in_root": None,
+        "case_type": None, "put_in_root": None, "display_separately": None,
         "name": None, "case_label": None, "referral_label": None,
         'media_image': None, 'media_audio': None,
         "case_list": ('case_list-show', 'case_list-label'),
@@ -1053,14 +1088,30 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
         case_type = req.POST.get("case_type", None)
         if is_valid_case_type(case_type):
             # todo: something better than nothing when invalid
+            old_case_type = module["case_type"]
             module["case_type"] = case_type
             for cp_mod in (mod for mod in app.modules if isinstance(mod, CareplanModule)):
                 if cp_mod.unique_id != module.unique_id and cp_mod.parent_select.module_id == module.unique_id:
                     cp_mod.case_type = case_type
+
+            def rename_action_case_type(mod):
+                for form in mod.forms:
+                    for action in form.actions.get_all_actions():
+                        if action.case_type == old_case_type:
+                            action.case_type = case_type
+
+            if isinstance(module, AdvancedModule):
+                rename_action_case_type(module)
+            for ad_mod in (mod for mod in app.modules if isinstance(mod, AdvancedModule)):
+                if ad_mod.unique_id != module.unique_id and ad_mod.case_type != old_case_type:
+                    # only apply change if the module's case_type does not reference the old value
+                    rename_action_case_type(ad_mod)
         else:
             return HttpResponseBadRequest("case type is improperly formatted")
     if should_edit("put_in_root"):
         module["put_in_root"] = json.loads(req.POST.get("put_in_root"))
+    if should_edit("display_separately"):
+        module["display_separately"] = json.loads(req.POST.get("display_separately"))
     if should_edit("parent_module"):
         parent_module = req.POST.get("parent_module")
         module.parent_select.module_id = parent_module
@@ -1324,6 +1375,21 @@ def edit_careplan_form_actions(req, domain, app_id, module_id, form_id):
     app.save(response_json)
     return json_response(response_json)
 
+
+@no_conflict_require_POST
+@require_can_edit_apps
+def edit_advanced_form_actions(req, domain, app_id, module_id, form_id):
+    app = get_app(domain, app_id)
+    form = app.get_module(module_id).get_form(form_id)
+    json_loads = json.loads(req.POST.get('actions'))
+    actions = AdvancedFormActions.wrap(json_loads)
+    form.actions = actions
+    response_json = {}
+    app.save(response_json)
+    response_json['propertiesMap'] = get_all_case_properties(app)
+    return json_response(response_json)
+
+
 @require_can_edit_apps
 def multimedia_list_download(req, domain, app_id):
     app = get_app(domain, app_id)
@@ -1513,6 +1579,8 @@ def edit_app_attr(request, domain, app_id, attr):
         ('build_spec', BuildSpec.from_string),
         ('case_sharing', None),
         ('cloudcare_enabled', None),
+        ('commtrack_enabled', None),
+        ('commtrack_requisition_mode', lambda m: None if m == 'disabled' else m),
         ('manage_urls', None),
         ('name', None),
         ('platform', None),
@@ -1554,6 +1622,10 @@ def edit_app_attr(request, domain, app_id, attr):
     if should_edit("cloudcare_enabled"):
         if app.get_doc_type() not in ("Application",):
             raise Exception("App type %s does not support cloudcare" % app.get_doc_type())
+        try:
+            ensure_request_has_privilege(request, privileges.CLOUDCARE)
+        except PermissionDenied:
+            app.cloudcare_enabled = False
 
 
     def require_remote_app():
@@ -1601,7 +1673,12 @@ def rearrange(req, domain, app_id, key):
                 messages.warning(req, CASE_TYPE_CONFLICT_MSG,  extra_tags="html")
         elif "modules" == key:
             app.rearrange_modules(i, j)
-    except RearrangeError:
+    except IncompatibleFormTypeException:
+        messages.error(req, _(
+            'The form can not be moved into the desired module.'
+        ))
+        return back_to_main(req, domain, app_id=app_id, module_id=module_id)
+    except RearrangeError, ModuleNotFoundException:
         messages.error(req, _(
             'Oops. '
             'Looks like you got out of sync with us. '
@@ -1647,7 +1724,7 @@ def save_copy(req, domain, app_id):
     else:
         copy = None
     copy = copy and SavedAppBuild.wrap(copy.to_json()).to_saved_build_json(
-        report_utils.get_timezone(req.couch_user.user_id, domain)
+        report_utils.get_timezone(req.couch_user, domain)
     )
     lang, langs = get_langs(req, app)
     return json_response({
@@ -2216,8 +2293,8 @@ MODULE_TYPE_MAP = {
              _('This application already has a Careplan module'))
         ]
     },
-    'commtrack': {
-        FN: _new_commtrack_module,
+    'advanced': {
+        FN: _new_advanced_module,
         VALIDATIONS: common_module_validations
     }
 }

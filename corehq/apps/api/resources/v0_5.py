@@ -9,10 +9,11 @@ from django.core.urlresolvers import reverse
 
 from tastypie import fields
 from tastypie.bundle import Bundle
+from corehq.apps.api.resources.v0_1 import RequirePermissionAuthentication
 
 from corehq.apps.groups.models import Group
 from corehq.apps.sms.util import strip_plus
-from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.models import CommCareUser, WebUser, Permissions
 from corehq.elastic import es_wrapper
 
 from . import v0_1, v0_4
@@ -43,6 +44,7 @@ class BulkUserResource(JsonResource, DomainSpecificResourceMixin):
         return namedtuple('user', user.keys())(**user)
 
     class Meta(v0_1.CustomResourceMeta):
+        authentication = RequirePermissionAuthentication(Permissions.edit_commcare_users)
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
         object_class = object
@@ -213,8 +215,11 @@ class GroupResource(v0_4.GroupResource):
         always_return_data = True
 
     def serialize(self, request, data, format, options=None):
-        if not isinstance(data, dict) and request.method == 'POST':
-            data = {'id': data.obj._id}
+        if not isinstance(data, dict):
+            if 'error_message' in data.data:
+                data = {'error_message': data.data['error_message']}
+            elif request.method == 'POST':
+                data = {'id': data.obj._id}
         return self._meta.serializer.serialize(data, format, options)
 
     def patch_list(self, request=None, **kwargs):
@@ -248,6 +253,29 @@ class GroupResource(v0_4.GroupResource):
 
         to_be_serialized = [bundle.data['_id'] for bundle in bundles_seen]
         return self.create_response(request, to_be_serialized, response_class=status)
+
+    def post_list(self, request, **kwargs):
+        """
+        Exactly copied from https://github.com/toastdriven/django-tastypie/blob/v0.9.14/tastypie/resources.py#L1314
+        (BSD licensed) and modified to catch Exception and not returning traceback
+        """
+        deserialized = self.deserialize(request, request.raw_post_data, format=request.META.get('CONTENT_TYPE', 'application/json'))
+        deserialized = self.alter_deserialized_detail_data(request, deserialized)
+        bundle = self.build_bundle(data=dict_strip_unicode_keys(deserialized), request=request)
+        try:
+            updated_bundle = self.obj_create(bundle, **self.remove_api_resource_names(kwargs))
+            location = self.get_resource_uri(updated_bundle)
+
+            if not self._meta.always_return_data:
+                return http.HttpCreated(location=location)
+            else:
+                updated_bundle = self.full_dehydrate(updated_bundle)
+                updated_bundle = self.alter_detail_data_to_serialize(request, updated_bundle)
+                return self.create_response(request, updated_bundle, response_class=http.HttpCreated, location=location)
+        except AssertionError as ex:
+            bundle.data['error_message'] = ex.message
+            return self.create_response(request, bundle, response_class=http.HttpBadRequest)
+
 
     def _update(self, bundle):
         should_save = False

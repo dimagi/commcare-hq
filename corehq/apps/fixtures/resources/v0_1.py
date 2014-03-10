@@ -1,8 +1,10 @@
 from tastypie import fields as tp_f
 from corehq.apps.api.resources import JsonResource
-from corehq.apps.api.resources.v0_1 import CustomResourceMeta
+from corehq.apps.api.resources.v0_1 import CustomResourceMeta, RequirePermissionAuthentication
 from corehq.apps.api.util import get_object_or_not_exist
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
+from corehq.apps.users.models import Permissions
+
 
 def convert_fdt(fdi):
     fdt = FixtureDataType.get(fdi.data_type_id)
@@ -39,6 +41,7 @@ class FixtureResource(JsonResource):
         return [convert_fdt(fdi) for fdi in fdis] or []
 
     class Meta(CustomResourceMeta):
+        authentication = RequirePermissionAuthentication(Permissions.edit_apps)
         object_class = FixtureDataItem
         resource_name = 'fixture'
         limit = 0

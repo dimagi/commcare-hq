@@ -17,10 +17,17 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.http import require_POST
 from django.contrib import messages
+from corehq import toggles, privileges
+from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback, require_billing_admin
+from corehq.apps.accounting.models import BillingAccount, BillingAccountType, BillingAccountAdmin
+from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
+from corehq.apps.users.util import can_add_extra_mobile_workers
 from corehq.elastic import es_query, ES_URLS, ADD_TO_ES_FILTER
 
 from couchexport.models import Format
-from corehq.apps.users.forms import CommCareAccountForm, UpdateCommCareUserInfoForm, CommtrackUserForm, MultipleSelectionForm
+from corehq.apps.users.forms import (CommCareAccountForm, UpdateCommCareUserInfoForm, CommtrackUserForm,
+                                     MultipleSelectionForm, ConfirmExtraUserChargesForm)
 from corehq.apps.users.models import CommCareUser, UserRole, CouchUser
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.models import Domain
@@ -34,6 +41,8 @@ from dimagi.utils.html import format_html
 from dimagi.utils.decorators.view import get_file
 from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound, JSONReaderError, HeaderValueError
 from corehq.apps.commtrack.models import CommTrackUser
+from django_prbac.exceptions import PermissionDenied
+from django_prbac.utils import ensure_request_has_privilege
 
 DEFAULT_USER_LIST_LIMIT = 10
 
@@ -226,6 +235,28 @@ class ListCommCareUsersView(BaseUserSettingsView):
     def dispatch(self, request, *args, **kwargs):
         return super(ListCommCareUsersView, self).dispatch(request, *args, **kwargs)
 
+    @property
+    def can_bulk_edit_users(self):
+        try:
+            ensure_request_has_privilege(self.request, privileges.BULK_USER_MANAGEMENT)
+        except PermissionDenied:
+            return False
+        return True
+
+    @property
+    def can_add_extra_users(self):
+        return can_add_extra_mobile_workers(self.request)
+
+    @property
+    def can_edit_user_archive(self):
+        return self.couch_user.can_edit_commcare_users and (
+            (self.show_inactive and self.can_add_extra_users) or not self.show_inactive)
+
+    @property
+    def is_billing_admin(self):
+        return (BillingAccountAdmin.get_admin_status_and_account(self.couch_user, self.domain)[0]
+                or self.couch_user.is_superuser)
+
     def _escape_val_error(self, expression, default):
         try:
             return expression()
@@ -249,6 +280,8 @@ class ListCommCareUsersView(BaseUserSettingsView):
     @property
     @memoized
     def users_list_total(self):
+        if self.query:
+            return self.total_users_from_es
         return CommCareUser.total_by_domain(self.domain, is_active=not self.show_inactive)
 
     @property
@@ -302,11 +335,16 @@ class ListCommCareUsersView(BaseUserSettingsView):
             'show_case_sharing': self.show_case_sharing,
             'pagination_limit_options': range(self.DEFAULT_LIMIT, 51, self.DEFAULT_LIMIT),
             'query': self.query,
+            'can_bulk_edit_users': self.can_bulk_edit_users,
+            'can_add_extra_users': self.can_add_extra_users,
+            'can_edit_user_archive': self.can_edit_user_archive,
+            'is_billing_admin': self.is_billing_admin,
         }
 
 
 class AsyncListCommCareUsersView(ListCommCareUsersView):
     urlname = 'user_list'
+    es_results = None
 
     @property
     def sort_by(self):
@@ -339,9 +377,7 @@ class AsyncListCommCareUsersView(ListCommCareUsersView):
             users.sort(key=lambda user: -user.form_count)
         return users
 
-    @property
-    @memoized
-    def users_from_es(self):
+    def query_es(self):
         q = {
             "query": { "query_string": { "query": self.query }},
             "filter": {"and": ADD_TO_ES_FILTER["users"][:]},
@@ -351,10 +387,23 @@ class AsyncListCommCareUsersView(ListCommCareUsersView):
             "domain": self.domain,
             "is_active": not self.show_inactive,
         }
-        results = es_query(params=params, q=q, es_url=ES_URLS["users"],
+        self.es_results = es_query(params=params, q=q, es_url=ES_URLS["users"],
                            size=self.users_list_limit, start_at=self.users_list_skip)
-        users = [res['_source'] for res in results.get('hits', {}).get('hits', [])]
+
+    @property
+    @memoized
+    def users_from_es(self):
+        if self.es_results is None:
+            self.query_es()
+        users = [res['_source'] for res in self.es_results.get('hits', {}).get('hits', [])]
         return [CommCareUser.wrap(user) for user in users]
+
+    @property
+    @memoized
+    def total_users_from_es(self):
+        if self.es_results is None:
+            self.query_es()
+        return self.es_results.get("hits", {}).get("total", 0)
 
     def get_archive_text(self, is_active):
         if is_active:
@@ -400,8 +449,67 @@ class AsyncListCommCareUsersView(ListCommCareUsersView):
         return HttpResponse(json.dumps({
             'success': True,
             'current_page': self.users_list_page,
+            'users_list_total': self.users_list_total,
             'users_list': self.users_list,
         }))
+
+
+class ConfirmBillingAccountForExtraUsersView(BaseUserSettingsView, AsyncHandlerMixin):
+    urlname = 'extra_users_confirm_billing'
+    template_name = 'users/extra_users_confirm_billing.html'
+    page_title = ugettext_noop("Confirm Billing Information")
+    async_handlers = [
+        Select2BillingInfoHandler,
+    ]
+
+    @property
+    @memoized
+    def account(self):
+        account = BillingAccount.get_or_create_account_by_domain(
+            self.domain, created_by=self.couch_user.username, account_type=BillingAccountType.USER_CREATED,
+        )[0]
+        return account
+
+    @property
+    @memoized
+    def billing_info_form(self):
+        if self.request.method == 'POST':
+            return ConfirmExtraUserChargesForm(
+                self.account, self.domain, self.request.couch_user.username, data=self.request.POST
+            )
+        return ConfirmExtraUserChargesForm(self.account, self.domain, self.request.couch_user.username)
+
+    @property
+    def page_context(self):
+        return {
+            'billing_info_form': self.billing_info_form,
+        }
+
+    @method_decorator(require_billing_admin())
+    def dispatch(self, request, *args, **kwargs):
+        if self.account.date_confirmed_extra_charges is not None:
+            return HttpResponseRedirect(reverse(CreateCommCareUserView.urlname, args=[self.domain]))
+        return super(ConfirmBillingAccountForExtraUsersView, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        if self.async_response is not None:
+            return self.async_response
+        if self.billing_info_form.is_valid():
+            is_saved = self.billing_info_form.save()
+            if not is_saved:
+                messages.error(
+                    request, _("It appears that there was an issue updating your contact information. "
+                               "We've been notified of the issue. Please try submitting again, and if the problem "
+                               "persists, please try in a few hours."))
+            else:
+                messages.success(
+                    request, _("Billing contact information was successfully confirmed. "
+                               "You may now add additional Mobile Workers.")
+                )
+                return HttpResponseRedirect(reverse(
+                    ListCommCareUsersView.urlname, args=[self.domain]
+                ))
+        return self.get(request, *args, **kwargs)
 
 
 # this was originally written with a GET, which is wrong
@@ -422,6 +530,12 @@ def set_commcare_user_group(request, domain):
 
 @require_can_edit_commcare_users
 def archive_commcare_user(request, domain, user_id, is_active=False):
+    can_add_extra_users = can_add_extra_mobile_workers(request)
+    if not can_add_extra_users and is_active:
+        return HttpResponse(json.dumps({
+            'success': False,
+            'message': _("You are not allowed to add additional mobile workers"),
+        }))
     user = CommCareUser.get_by_user_id(user_id, domain)
     user.is_active = is_active
     user.save()
@@ -438,7 +552,7 @@ def archive_commcare_user(request, domain, user_id, is_active=False):
 def delete_commcare_user(request, domain, user_id):
     user = CommCareUser.get_by_user_id(user_id, domain)
     user.retire()
-    messages.success(request, "User %s and all their submissions have been permanently deleted" % user.username)
+    messages.success(request, "User %s has been deleted. All their submissions and cases will be permanently deleted in the next few minutes" % user.username)
     return HttpResponseRedirect(reverse('commcare_users', args=[domain]))
 
 @require_can_edit_commcare_users
@@ -519,6 +633,11 @@ class CreateCommCareUserView(BaseManageCommCareUserView):
             'only_numeric': self.password_format == 'n',
         }
 
+    def dispatch(self, request, *args, **kwargs):
+        if not can_add_extra_mobile_workers(request):
+            return HttpResponseRedirect(reverse(ListCommCareUsersView.urlname, args=[self.domain]))
+        return super(CreateCommCareUserView, self).dispatch(request, *args, **kwargs)
+
     def post(self, request, *args, **kwargs):
         if self.new_commcare_user_form.is_valid():
             username = self.new_commcare_user_form.cleaned_data['username']
@@ -541,6 +660,10 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
     template_name = 'users/upload_commcare_users.html'
     urlname = 'upload_commcare_users'
     page_title = ugettext_noop("Bulk Upload Mobile Workers")
+
+    @method_decorator(requires_privilege_with_fallback(privileges.BULK_USER_MANAGEMENT))
+    def dispatch(self, request, *args, **kwargs):
+        return super(UploadCommCareUsers, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_context(self):

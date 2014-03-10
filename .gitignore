@@ -39,3 +39,5 @@ ptop*.json
 
 # Sphinx
 docs/_build
+celerybeat-schedule
+staging.yaml

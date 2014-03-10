@@ -5,15 +5,19 @@ from dimagi.utils.couch.database import get_db
 
 def get_indicator_config():
     try:
-        return cache_core.cached_open_doc(get_db(), 'INDICATOR_CONFIGURATION').get('namespaces', {})
+        doc = cache_core.cached_open_doc(get_db(), 'INDICATOR_CONFIGURATION')
     except ResourceNotFound:
-        pass
-    return {}
+        return {}
+    else:
+        return doc.get('namespaces', {})
 
 
 def get_namespaces(domain, as_choices=False):
     available_namespaces = get_indicator_config()
-    return available_namespaces.get(domain, ()) if as_choices else [n[0] for n in available_namespaces.get(domain, [])]
+    if as_choices:
+        return available_namespaces.get(domain, ())
+    else:
+        return [n[0] for n in available_namespaces.get(domain, [])]
 
 
 def get_namespace_name(domain, namespace):

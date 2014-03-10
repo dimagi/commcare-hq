@@ -1,0 +1,29 @@
+{% extends "settings/base_template.html" %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+
+{% block main_column %}
+    <div class="row-fluid">
+        <div class="span6">
+                <p>
+                    {% blocktrans %}
+                        Use this page to edit the default consumption values
+                        for your products. These will be used if there is
+                        not enough information to compute an accurate value.
+                    {% endblocktrans %}
+                </p>
+        </div>
+    </div>
+    <form class="form-horizontal" method="post">
+        <fieldset>
+            <legend>{% trans 'Edit Default Consumption' %}</legend>
+            {% crispy form %}
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    {% trans 'Update Default Consumption Info' %}
+                </button>
+            </div>
+        </fieldset>
+    </form>
+{% endblock %}

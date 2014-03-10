@@ -41,13 +41,13 @@ class FeatureRateAsyncHandler(BaseRateAsyncHandler):
 
     @property
     def create_response(self):
-        new_feature, is_new = Feature.objects.get_or_create(
+        if Feature.objects.filter(name=self.name).count() > 0:
+            raise AsyncHandlerError("Feature '%s' already exists, and likely already "
+                                    "in this Software Plan Version." % self.name)
+        new_feature, _ = Feature.objects.get_or_create(
             name=self.name,
             feature_type=self.rate_type,
         )
-        if not is_new:
-            raise AsyncHandlerError("Feature '%s' already exists, and likely already "
-                                    "in this Software Plan Version." % new_feature.name)
         return fmt_feature_rate_dict(new_feature)
 
     @property
@@ -64,13 +64,13 @@ class SoftwareProductRateAsyncHandler(BaseRateAsyncHandler):
 
     @property
     def create_response(self):
-        new_product, is_new = SoftwareProduct.objects.get_or_create(
+        if SoftwareProduct.objects.filter(name=self.name).count() > 0:
+            raise AsyncHandlerError("Product '%s' already exists, and likely already "
+                                    "in this Software Plan Version." % self.name)
+        new_product, _ = SoftwareProduct.objects.get_or_create(
             name=self.name,
             product_type=self.rate_type
         )
-        if not is_new:
-            raise AsyncHandlerError("Product '%s' already exists, and likely already "
-                                    "in this Software Plan Version." % new_product.name)
         return fmt_product_rate_dict(new_product)
 
     @property
@@ -163,6 +163,9 @@ class Select2BillingInfoHandler(BaseSelect2AsyncHandler):
         admins = filter(lambda x: x.is_domain_admin and x.username != self.request.couch_user.username,
                         all_web_users)
         admins = filter(lambda x: x.username not in self.existing, admins)
+        if self.search_string:
+            admins = filter(lambda x: (x.username.lower().startswith(self.search_string.lower())
+                                       or self.search_string in x.full_name), admins)
         return [(a.username, "%s (%s)" % (a.full_name, a.username)) for a in admins]
 
 
@@ -174,7 +177,7 @@ class Select2SubscriptionInfoHandler(BaseSelect2AsyncHandler):
 
     @property
     def domain_response(self):
-        domain_names = [domain.name for domain in Domain.get_all()]
+        domain_names = [domain['key'] for domain in Domain.get_all(include_docs=False)]
         if self.search_string:
             domain_names = filter(lambda x: x.lower().startswith(self.search_string.lower()), domain_names)
         return [(name, name) for name in domain_names]

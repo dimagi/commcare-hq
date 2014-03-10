@@ -128,6 +128,7 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
 
         return conf
 
+
 class ReportingStatusMapReport(GenericMapReport, CommtrackReportMixin):
     name = ugettext_noop("Reporting Status (map)")
     slug = "reportingstatus_map"

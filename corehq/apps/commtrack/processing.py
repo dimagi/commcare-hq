@@ -69,6 +69,11 @@ def process_stock(xform):
     for report in stock_reports:
         report.create_models()
 
+    # TODO make this a signal
+    from corehq.apps.commtrack.signals import send_notifications, raise_events
+    send_notifications(xform, relevant_cases)
+    raise_events(xform, relevant_cases)
+
 def unpack_commtrack(xform, config):
     xml = xform.get_xml_element()
 
@@ -82,23 +87,3 @@ def unpack_commtrack(xform, config):
 
     for elem in commtrack_nodes(xml):
         yield NewStockReport.from_xml(xform, config, elem)
-
-
-from couchdbkit.ext.django.schema import *
-class LegacyStockTransaction(StockTransaction):
-    product_subcase = StringProperty()
-
-    def to_legacy_xml(self, E):
-        attr = {}
-        if self.subaction == TRANSACTION_SUBTYPE_INFERRED:
-            attr['inferred'] = 'true'
-        if self.processing_order is not None:
-            attr['order'] = str(self.processing_order + 1)
-
-        return E.transaction(
-            E.product(self.product_id),
-            E.product_entry(self.product_subcase),
-            E.action((self.subaction if self.subaction != TRANSACTION_SUBTYPE_INFERRED else None) or self.action),
-            E.value(str(self.quantity)),
-            **attr
-        )

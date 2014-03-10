@@ -1,11 +1,34 @@
 {% extends "domain/base_change_plan.html" %}
 {% load i18n %}
 
+{% block js-inline %}{{ block.super }}
+    <script>
+        $(function () {
+            $('#confirm-product-agreement').click(function () {
+                var $submit = $('#submit-button-pa'),
+                    $helpText = $('#submit-button-help-qa');
+                if ($(this).attr('checked')) {
+                    $submit.removeAttr('disabled');
+                    $submit.removeClass('disabled');
+                    $helpText.addClass('hide');
+                } else {
+                    $submit.attr('disabled', 'disabled');
+                    $submit.addClass('disabled');
+                    $helpText.removeClass('hide');
+                }
+            });
+        });
+    </script>
+{% endblock %}
+
 {% block form_content %}
     <p class="lead">
         {% blocktrans with plan.name as p %}
         You have selected the <strong>{{ p }} Software Plan</strong>.
         {% endblocktrans %}
+        {% ifequal plan.edition 'Enterprise' %}
+        This is the Dimagi Internal Special!
+        {% endifequal %}
     </p>
     <dl class="dl-horizontal">
         <dt>{% trans 'Monthly Fee' %}</dt>
@@ -71,20 +94,27 @@
         <input type="hidden" value="{{ plan.edition }}" name="plan_edition" />
         <p>
             {% blocktrans %}
-            Clicking the confirm button below will bring you to a page where you can enter basic billing information.
+            Clicking the 'Select this Plan' button below will bring you to a page where you can enter basic billing information.
             {% endblocktrans %}
         </p>
         <p>
-            {% blocktrans %}
-            By clicking confirm you acknowledge the information presented to you on this page.
-            PLEASE SOMEONE GIVE ME BETTER LEGAL TEXT HERE. KTHNX.
-            {% endblocktrans %}
+            <label class="checkbox" style="font-weight: bold;">
+                <input type="checkbox" id="confirm-product-agreement" name="confirm_legal" />
+                {% url "product_agreement" as pa_url %}
+                {% blocktrans %}
+                    I have read and agree to the <a href="{{ pa_url }}" target="_blank">
+                    Software Product Subscription Agreement</a>.
+                {% endblocktrans %}
+            </label>
         </p>
         <div class="form-actions">
             <a href="{% url 'domain_select_plan' domain %}" class="btn">{% trans 'Select different plan' %}</a>
-            <button type="submit" class="btn btn-primary">
+            <button type="submit" class="btn btn-primary disabled" id="submit-button-pa" disabled="disabled">
                 {% trans 'Select this Plan' %}
             </button>
+            <p class="help-inline" id="submit-button-help-qa" style="vertical-align: top; margin-top: 5px; margin-bottom: 0px;">
+                Please agree to the Product Subscription Agreement above before continuing.
+            </p>
         </div>
     </form>
     {% endif %}

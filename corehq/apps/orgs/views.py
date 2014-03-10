@@ -9,6 +9,9 @@ from django.views.decorators.http import require_POST
 from django.shortcuts import render
 from django.contrib import messages
 from django.utils.translation import ugettext as _
+from corehq import privileges
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.accounting.utils import domain_has_privilege
 
 from corehq.apps.announcements.models import Notification
 from corehq.apps.domain.decorators import require_superuser
@@ -51,6 +54,7 @@ class MainNotification(Notification):
 
     def template(self):
         return 'orgs/partials/main_notification.html'
+
 
 @org_member_required
 def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None, add_form=None, invite_member_form=None,
@@ -96,15 +100,24 @@ def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None, add
 
         # get the existing domains that an org admin would add to the organization
         user_domains = request.couch_user.domains or []
+        user_domains = filter(
+            lambda x: domain_has_privilege(x, privileges.CROSS_PROJECT_REPORTS),
+            user_domains
+        )
         req_domains = [req.domain for req in requests]
         user_domains = format_domains(user_domains)
         req_domains = format_domains(req_domains, [d.name for d in user_domains if d])
+        filter(
+            lambda x: domain_has_privilege(x, privileges.CROSS_PROJECT_REPORTS),
+            req_domains
+        )
 
     ctxt.update(dict(reg_form=reg_form, add_form=add_form, reg_form_empty=reg_form_empty, add_form_empty=add_form_empty,
                 invite_member_form=invite_member_form, invite_member_form_empty=invite_member_form_empty,
                 add_team_form=add_team_form, add_team_form_empty=add_team_form_empty, tab="projects",
                 user_domains=user_domains, req_domains=req_domains))
     return render(request, template, ctxt)
+
 
 @org_member_required
 def orgs_members(request, org, template="orgs/orgs_members.html"):
@@ -122,6 +135,7 @@ def orgs_members(request, org, template="orgs/orgs_members.html"):
     ctxt["tab"] = "members"
 
     return render(request, template, ctxt)
+
 
 @org_member_required
 def orgs_teams(request, org, template="orgs/orgs_teams.html"):
@@ -144,11 +158,13 @@ def get_data(request, org):
     organization = Organization.get_by_name(org)
     return json_response(organization)
 
+
 @org_admin_required
 @require_POST
 def orgs_new_project(request, org):
     from corehq.apps.registration.views import register_domain
     return register_domain(request)
+
 
 @org_admin_required
 @require_POST
@@ -170,6 +186,7 @@ def orgs_update_info(request, org):
     else:
         return orgs_landing(request, org, update_form=form)
 
+
 @org_admin_required
 @require_POST
 def orgs_update_project(request, org):
@@ -188,6 +205,7 @@ def orgs_update_project(request, org):
 
     return HttpResponseRedirect(reverse("orgs_landing", args=(org, )))
 
+
 @org_admin_required
 @require_POST
 def orgs_update_team(request, org):
@@ -203,6 +221,7 @@ def orgs_update_team(request, org):
         messages.error(request, "Could not edit team information -- missing new team name")
 
     return HttpResponseRedirect(reverse('orgs_team_members', args=(org, team_id)))
+
 
 @org_admin_required
 @require_POST
@@ -221,6 +240,7 @@ def orgs_add_project(request, org):
         return orgs_landing(request, org, add_form=form)
     return HttpResponseRedirect(reverse('orgs_landing', args=[org]))
 
+
 @org_admin_required
 @require_POST
 def orgs_remove_project(request, org):
@@ -237,6 +257,7 @@ def orgs_remove_project(request, org):
         messages.success(request, render_to_string('orgs/partials/undo_remove_project.html',
                                                    {"org": org, "dom": domain}), extra_tags="html")
     return HttpResponseRedirect(reverse(request.POST.get('redirect_url', 'orgs_landing'), args=(org,)))
+
 
 @org_admin_required
 @require_POST
@@ -291,6 +312,7 @@ def accept_invitation(request, org, invitation_id):
     # todo, why wasn't this a TemplateView?
     return OrgInvitationView()(request, invitation_id, organization=org)
 
+
 @org_admin_required
 @require_POST
 def orgs_add_team(request, org):
@@ -310,10 +332,12 @@ def orgs_add_team(request, org):
     messages.success(request, "Team Added!")
     return HttpResponseRedirect(reverse('orgs_teams', args=[org]))
 
+
 @org_member_required
 def orgs_logo(request, org, template="orgs/orgs_logo.html"):
     image, type = request.organization.get_logo()
     return HttpResponse(image, content_type=type if image else 'image/gif')
+
 
 @org_member_required
 def orgs_team_members(request, org, team_id, template="orgs/orgs_team_members.html"):
@@ -350,6 +374,7 @@ def orgs_team_members(request, org, team_id, template="orgs/orgs_team_members.ht
                      team_domains=team_domains, nondomains=nondomains))
     return render(request, template, ctxt)
 
+
 @org_admin_required
 @require_POST
 def join_team(request, org, team_id):
@@ -361,6 +386,7 @@ def join_team(request, org, team_id):
         user.add_to_team(org, team_id)
         user.save()
     return HttpResponseRedirect(reverse(request.POST.get('redirect_url', 'orgs_team_members'), args=(org, team_id)))
+
 
 @org_admin_required
 @require_POST
@@ -375,6 +401,7 @@ def leave_team(request, org, team_id):
         messages.success(request, render_to_string('orgs/partials/undo_leave_team.html',
                                                    {"team_id": team_id, "org": org, "user": user}), extra_tags="html")
     return HttpResponseRedirect(reverse(request.POST.get('redirect_url', 'orgs_team_members'), args=(org, team_id)))
+
 
 @org_admin_required
 @require_POST
@@ -395,11 +422,13 @@ def delete_team(request, org):
 
     return HttpResponseRedirect(reverse("orgs_teams", args=(org, )))
 
+
 @org_admin_required
 def undo_delete_team(request, org, record_id):
     record = DeleteTeamRecord.get(record_id)
     record.undo()
     return HttpResponseRedirect(reverse('orgs_team_members', args=[org, record.doc_id]))
+
 
 @org_admin_required
 @require_POST
@@ -448,6 +477,7 @@ def set_team_permission_for_domain(request, org, team_id):
         return json_response(UserRole.get(dm.role_id).name if not dm.is_admin else 'Admin')
     return HttpResponseRedirect(reverse('orgs_team_members', args=(org, team_id)))
 
+
 @org_admin_required
 @require_POST
 def add_all_to_team(request, org, team_id):
@@ -472,6 +502,7 @@ def remove_all_from_team(request, org, team_id):
 def search_orgs(request):
     return json_response([{'title': o.title, 'name': o.name} for o in Organization.get_all()])
 
+
 @org_admin_required
 @require_POST
 def seen_request(request, org):
@@ -481,6 +512,7 @@ def seen_request(request, org):
         org_req.seen = True
         org_req.save()
     return HttpResponseRedirect(reverse("orgs_landing", args=[org]))
+
 
 @org_admin_required
 @require_POST
@@ -497,11 +529,13 @@ def remove_member(request, org):
         ), extra_tags="html")
     return HttpResponseRedirect(reverse("orgs_members", args=[org]))
 
+
 @org_admin_required
 def undo_remove_member(request, org, record_id):
     record = OrgRemovalRecord.get(record_id)
     record.undo()
     return HttpResponseRedirect(reverse('orgs_members', args=[org]))
+
 
 @org_admin_required
 def set_admin(request, org):
@@ -532,6 +566,7 @@ def public(request, org, template='orgs/public.html'):
         if dom.published_snapshot() and dom.published_snapshot().is_approved:
             ctxt["snapshots"].append(dom.published_snapshot())
     return render(request, template, ctxt)
+
 
 @org_member_required
 def base_report(request, org, template='orgs/report_base.html'):
@@ -574,6 +609,7 @@ def stats(request, org, stat_slug, template='orgs/stats.html'):
         'interval': request.GET.get('interval', 'day'),
     })
     return render(request, template, ctxt)
+
 
 @org_member_required
 @datespan_in_request(from_param="startdate", to_param="enddate")

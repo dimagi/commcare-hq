@@ -24,6 +24,7 @@ class MainMenuNode(template.Node):
 
         tabs = corehq.TABS + getattr(module, 'TABS', ())
         visible_tabs = []
+        all_tabs = []
 
         active_tab = None
 
@@ -32,17 +33,26 @@ class MainMenuNode(template.Node):
                     request, current_url_name, domain=domain,
                     couch_user=couch_user, project=project, org=org)
 
+            t.is_active_tab = False
+            all_tabs.append(t)
             if t.real_is_viewable:
                 visible_tabs.append(t)
 
-            # only highlight the first tab considered active.  This allows
-            # multiple tabs to contain the same sidebar item, but in all but
-            # the first it will effectively be a link to the other tabs.
-            if not active_tab and t.is_active:
+        # only highlight the first tab considered active.  This allows
+        # multiple tabs to contain the same sidebar item, but in all but
+        # the first it will effectively be a link to the other tabs.
+        for t in all_tabs:
+            if t.is_active_fast:
                 t.is_active_tab = True
                 active_tab = t
-            else:
-                t.is_active_tab = False
+                break
+
+        if active_tab is None:
+            for t in all_tabs:
+                if t.is_active:
+                    t.is_active_tab = True
+                    active_tab = t
+                    break
 
         if active_tab is None:
             for t in visible_tabs:
@@ -56,9 +66,7 @@ class MainMenuNode(template.Node):
 
         return mark_safe(render_to_string("hqwebapp/partials/main_menu.html", {
             'tabs': visible_tabs,
-            'active_tab': active_tab,
         }))
-
 
 @register.tag(name="format_main_menu")
 def format_main_menu(parser, token):

@@ -194,8 +194,15 @@ var ReportConfigsViewModel = function (options) {
         state: ko.observable(),
         saveOptions: function () {
             var config_data = self.configBeingEdited().unwrap();
-            // remove null filters
+            var select2 = $("[data-ajax-select2]").map(function() {
+                return $(this).attr('name');
+            }).toArray();
             for (var key in config_data["filters"]) {
+                // Make ajax select2 fields into lists so they serialize properly
+                if (select2.indexOf(key) >= 0) {
+                    config_data["filters"][key] = config_data["filters"][key].split(',');
+                }
+                // remove null filters
                 if (config_data["filters"].hasOwnProperty(key)) {
                     if (config_data["filters"][key] === null) {
                         delete config_data["filters"][key];
