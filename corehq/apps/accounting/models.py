@@ -883,7 +883,7 @@ class InvoicePdf(SafeSaveDocument):
             account=invoice.subscription.account,
         )
         from corehq.apps.accounting.invoicing import Address, InvoiceTemplate
-        InvoiceTemplate(
+        template = InvoiceTemplate(
             pdf_data.name,
             invoice_number=("HQ-%d" %
                             (settings.STARTING_INVOICE_NUMBER + invoice.id)),
@@ -900,7 +900,15 @@ class InvoicePdf(SafeSaveDocument):
             invoice_date=invoice.date_created.date(),
             due_date=invoice.date_due,
             total=invoice.get_total(),
-        ).get_pdf()
+        )
+
+        for line_item in LineItem.objects.filter(invoice=invoice):
+            template.add_item(datetime.date.today(),
+                              line_item.base_description,
+                              line_item.quantity,
+                              line_item.unit_cost)
+
+        template.get_pdf()
         self.put_attachment(pdf_data)
         pdf_data.close()
 

@@ -684,7 +684,7 @@ class InvoiceTemplate(object):
             self.canvas.drawCentredString(
                 midpoint(date_x, description_x),
                 coord_y,
-                item.description
+                str(item.description)
             )
             self.canvas.drawCentredString(
                 midpoint(description_x, quantity_x),
