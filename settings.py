@@ -1081,3 +1081,14 @@ DOMAIN_MODULE_MAP = {
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True
+
+# Invoicing
+STARTING_INVOICE_NUMBER = \
+    (STARTING_INVOICE_NUMBER if 'STARTING_INVOICE_NUMBER' in globals() else '')
+TERMS = TERMS if 'TERMS' in globals() else ''
+FROM_ADDRESS = FROM_ADDRESS if 'FROM_ADDRESS' in globals() else {}
+BANK_ADDRESS = BANK_ADDRESS if 'BANK_ADDRESS' in globals() else {}
+BANK_NAME = BANK_NAME if 'BANK_NAME' in globals() else ''
+ACCOUNT_NUMBER = ACCOUNT_NUMBER if 'ACCOUNT_NUMBER' in globals() else ''
+ROUTING_NUMBER = ROUTING_NUMBER if 'ROUTING_NUMBER' in globals() else ''
+SWIFT_CODE = SWIFT_CODE if 'SWIFT_CODE' in globals() else ''

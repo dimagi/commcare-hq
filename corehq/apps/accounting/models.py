@@ -878,13 +878,34 @@ class InvoicePdf(SafeSaveDocument):
     def generate_pdf(self, billing_record):
         self.save()
         pdf_data = NamedTemporaryFile()
-        from corehq.apps.accounting.invoicing import InvoiceTemplate
-        InvoiceTemplate(pdf_data.name).get_pdf()
+        invoice = billing_record.invoice
+        contact_info = BillingContactInfo.objects.get(
+            account=invoice.subscription.account,
+        )
+        from corehq.apps.accounting.invoicing import Address, InvoiceTemplate
+        InvoiceTemplate(
+            pdf_data.name,
+            invoice_number=("HQ-%d" %
+                            (settings.STARTING_INVOICE_NUMBER + invoice.id)),
+            to_address=Address(
+                name=("%s %s" %
+                      (contact_info.first_name, contact_info.last_name)),
+                first_line=contact_info.first_line,
+                second_line=contact_info.second_line,
+                city=contact_info.city,
+                region=contact_info.state_province_region,
+                country=contact_info.country,
+            ),
+            project_name=invoice.subscription.subscriber.domain,
+            invoice_date=invoice.date_created.date(),
+            due_date=invoice.date_due,
+            total=invoice.get_total(),
+        ).get_pdf()
         self.put_attachment(pdf_data)
         pdf_data.close()
 
         billing_record.pdf_data_id = self._id
-        self.invoice_id = str(billing_record.invoice.id)
+        self.invoice_id = str(invoice.id)
         self.date_created = datetime.datetime.now()
         self.save()
 

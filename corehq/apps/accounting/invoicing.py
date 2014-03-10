@@ -20,6 +20,7 @@ from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.pdfgen.canvas import Canvas
 from reportlab.platypus import Paragraph
+import settings
 
 
 DEFAULT_DAYS_UNTIL_DUE = 10
@@ -415,9 +416,10 @@ class InvoiceItem(object):
 
 
 class Address(object):
-    def __init__(self, first_line='', second_line='', city='', region='',
-                 postal_code='', country='', phone_number='',
-                 email_address='', website=''):
+    def __init__(self, name='', first_line='', second_line='', city='',
+                 region='', postal_code='', country='', phone_number='',
+                 email='', website=''):
+        self.name = name
         self.first_line = first_line
         self.second_line = second_line
         self.city = city
@@ -425,14 +427,16 @@ class Address(object):
         self.postal_code = postal_code
         self.country = country
         self.phone_number = phone_number
-        self.email_address = email_address
+        self.email = email
         self.website = website
 
     def __str__(self):
-        return '''%(first_line)s%(second_line)s
+        return '''%(name)s
+        %(first_line)s%(second_line)s
         %(city)s, %(region)s %(postal_code)s
         %(country)s%(phone_number)s%(email_address)s%(website)s
         ''' % {
+            'name': self.name,
             'first_line': self.first_line,
             'second_line': prepend_newline_if_not_empty(self.second_line),
             'city': self.city,
@@ -440,7 +444,7 @@ class Address(object):
             'postal_code': self.postal_code,
             'country': self.country,
             'phone_number': prepend_newline_if_not_empty(self.phone_number),
-            'email_address': prepend_newline_if_not_empty(self.email_address),
+            'email_address': prepend_newline_if_not_empty(self.email),
             'website': prepend_newline_if_not_empty(self.website),
         }
 
@@ -460,12 +464,16 @@ def midpoint(x1, x2):
 
 class InvoiceTemplate(object):
     def __init__(self, filename, logo_filename=LOGO_FILENAME,
-                 from_address=None, to_address=None, project_name='',
+                 from_address=Address(**settings.FROM_ADDRESS),
+                 to_address=None, project_name='',
                  invoice_date=datetime.date.today(), invoice_number='',
-                 terms='',
+                 terms=settings.TERMS,
                  due_date=datetime.date.today()+datetime.timedelta(days=10),
-                 bank_name='', bank_address=None, account_number='',
-                 routing_number='', swift_code='', total=None):
+                 bank_name=settings.BANK_NAME,
+                 bank_address=Address(**settings.BANK_ADDRESS),
+                 account_number=settings.ACCOUNT_NUMBER,
+                 routing_number=settings.ROUTING_NUMBER,
+                 swift_code=settings.SWIFT_CODE, total=None):
         self.canvas = Canvas(filename)
         self.canvas.setFontSize(DEFAULT_FONT_SIZE)
         self.logo_filename = os.path.join(os.getcwd(), logo_filename)
@@ -713,10 +721,12 @@ class InvoiceTemplate(object):
                        "Wire transfer is preferred: "
                        "Bank: %(bank_name)s "
                        "Bank Address: %(bank_address)s "
+                       "Account Number: %(account_number)s "
                        "Routing Number or ABA: %(routing_number)s "
                        "Swift Code: %(swift_code)s") % {
             'bank_name': self.bank_name,
             'bank_address': self.bank_address,
+            'account_number': self.account_number,
             'routing_number': self.routing_number,
             'swift_code': self.swift_code,
         }
