@@ -639,12 +639,12 @@ class InvoiceTemplate(object):
         description_x = inches(5)
         quantity_x = inches(5.75)
         rate_x = inches(6.5)
-        amount_x = inches(7.5)
+        subtotal_x = inches(7.5)
         header_height = inches(0.3)
 
-        self.canvas.rect(0, 0, amount_x, -height)
+        self.canvas.rect(0, 0, subtotal_x, -height)
         self.canvas.setFillColorRGB(*LIGHT_GRAY)
-        self.canvas.rect(0, 0, amount_x, header_height,
+        self.canvas.rect(0, 0, subtotal_x, header_height,
                          fill=1)
         self.canvas.setFillColorRGB(*BLACK)
         self.canvas.line(description_x, header_height, description_x, -height)
@@ -660,9 +660,9 @@ class InvoiceTemplate(object):
         self.canvas.drawCentredString(midpoint(quantity_x, rate_x),
                                       inches(0.1),
                                       "Rate")
-        self.canvas.drawCentredString(midpoint(rate_x, amount_x),
+        self.canvas.drawCentredString(midpoint(rate_x, subtotal_x),
                                       inches(0.1),
-                                      "Amount")
+                                      "Subtotal")
 
         for item_index in range(len(self.items)):
             if item_index > 13:
@@ -686,7 +686,7 @@ class InvoiceTemplate(object):
                 str(item.rate)
             )
             self.canvas.drawCentredString(
-                midpoint(rate_x, amount_x),
+                midpoint(rate_x, subtotal_x),
                 coord_y,
                 "$%0.2f" % item.amount
             )
