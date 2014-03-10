@@ -23,10 +23,9 @@ def git_current_branch(git=None):
     git = git or get_git()
     branch = sh.grep(git.branch('--no-color'), '^* ').strip()[2:]
     if branch.startswith('('):
-        branch = sh.grep(
-            git.log('--no-color', n=1),
-            'commit'
-        ).strip().split(' ')[-1]
+        branch = git.log(
+            '--no-color', '--pretty=oneline', n=1
+        ).strip().split(' ')[0]
     return branch
 
 

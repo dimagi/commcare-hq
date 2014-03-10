@@ -1,6 +1,4 @@
 import logging
-from datetime import datetime
-import simplejson
 
 from corehq.apps.domain.models import Domain
 from dimagi.utils.couch.cache import cache_core

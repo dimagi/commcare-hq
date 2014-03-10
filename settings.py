@@ -280,7 +280,7 @@ HQ_APPS = (
     'custom.apps.crs_reports',
     'custom.hope',
     'custom.openlmis',
-    
+
     'custom.m4change'
 )
 
@@ -413,11 +413,19 @@ OPENROSA_VERSION = "1.0"
 
 # OTA restore fixture generators
 FIXTURE_GENERATORS = [
+    "corehq.apps.fixtures.fixturegenerators.hq_fixtures",
+]
+
+HQ_FIXTURE_GENERATORS = [
+    # core
     "corehq.apps.users.fixturegenerators.user_groups",
     "corehq.apps.fixtures.fixturegenerators.item_lists",
     "corehq.apps.reportfixtures.fixturegenerators.indicators",
+    "corehq.apps.commtrack.fixtures.product_fixture_generator",
+    "corehq.apps.locations.fixtures.location_fixture_generator",
+    # custom
     "custom.bihar.reports.indicators.fixtures.generator",
-    "corehq.apps.commtrack.models.product_fixture_generator",
+    "custom.m4change.reports.fixtures.generator",
 ]
 
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
@@ -608,16 +616,7 @@ PREVIEWER_RE = '^$'
 
 MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
 
-try:
-    # try to see if there's an environmental variable set for local_settings
-    if os.environ.get('CUSTOMSETTINGS', None) == "demo":
-        # this sucks, but is a workaround for supporting different settings
-        # in the same environment
-        from settings_demo import *
-    else:
-        from localsettings import *
-except ImportError:
-    pass
+DIGEST_LOGIN_FACTORY = 'django_digest.NoEmailLoginFactory'
 
 LOGGING = {
     'version': 1,
@@ -714,6 +713,17 @@ LOGGING = {
     }
 }
 
+try:
+    # try to see if there's an environmental variable set for local_settings
+    if os.environ.get('CUSTOMSETTINGS', None) == "demo":
+        # this sucks, but is a workaround for supporting different settings
+        # in the same environment
+        from settings_demo import *
+    else:
+        from localsettings import *
+except ImportError:
+    pass
+
 if DEBUG:
     try:
         import luna
@@ -737,7 +747,7 @@ else:
 #SOUTH_TESTS_MIGRATE=False
 
 ####### Couch Forms & Couch DB Kit Settings #######
-from settingshelper import get_dynamic_db_settings, make_couchdb_tuple
+from settingshelper import get_dynamic_db_settings, make_couchdb_tuples
 
 _dynamic_db_settings = get_dynamic_db_settings(
     COUCH_SERVER_ROOT,
@@ -758,7 +768,6 @@ COUCHDB_APPS = [
     'app_manager',
     'appstore',
     'orgs',
-    'auditcare',
     'builds',
     'case',
     'callcenter',
@@ -804,7 +813,6 @@ COUCHDB_APPS = [
     'registration',
     'hutch',
     'hqbilling',
-    'couchlog',
     'wisepill',
     'fri',
     'crs_reports',
@@ -824,24 +832,22 @@ COUCHDB_APPS = [
     'psi',
     'trialconnect',
     'accounting',
+    ('auditcare', 'auditcare'),
+    ('couchlog', 'couchlog'),
+    ('receiverwrapper', 'receiverwrapper'),
+    # needed to make couchdbkit happy
+    ('fluff', 'fluff-bihar'),
+    ('bihar', 'fluff-bihar'),
+    ('opm_reports', 'fluff-opm'),
+    ('fluff', 'fluff-opm'),
+    ('care_sa', 'fluff-care_sa'),
+    ('cvsu', 'fluff-cvsu'),
+    ('mc', 'fluff-mc'),
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
 
-COUCHDB_DATABASES = [make_couchdb_tuple(app_label, COUCH_DATABASE)
-                     for app_label in COUCHDB_APPS]
-
-COUCHDB_DATABASES += [
-    # needed to make couchdbkit happy
-    ('fluff', COUCH_DATABASE + '__fluff-bihar'),
-    ('bihar', COUCH_DATABASE + '__fluff-bihar'),
-    ('opm_reports', COUCH_DATABASE + '__fluff-opm'),
-    ('fluff', COUCH_DATABASE + '__fluff-opm'),
-    ('care_sa', COUCH_DATABASE + '__fluff-care_sa'),
-    ('cvsu', COUCH_DATABASE + '__fluff-cvsu'),
-    ('mc', COUCH_DATABASE + '__fluff-mc'),
-    ('receiverwrapper', COUCH_DATABASE + '__receiverwrapper'),
-]
+COUCHDB_DATABASES = make_couchdb_tuples(COUCHDB_APPS, COUCH_DATABASE)
 
 INSTALLED_APPS += LOCAL_APPS
 
@@ -907,6 +913,8 @@ SMS_LOADED_BACKENDS = [
 ALLOWED_CUSTOM_CONTENT_HANDLERS = {
     "FRI_SMS_CONTENT": "custom.fri.api.custom_content_handler",
     "FRI_SMS_CATCHUP_CONTENT": "custom.fri.api.catchup_custom_content_handler",
+    "FRI_SMS_SHIFT": "custom.fri.api.shift_custom_content_handler",
+    "FRI_SMS_OFF_DAY": "custom.fri.api.off_day_custom_content_handler",
 }
 
 # These are custom templates which can wrap default the sms/chat.html template
@@ -963,7 +971,10 @@ PILLOWTOPS = {
         'custom.reports.care_sa.models.CareSAFluffPillow',
         'custom.reports.mc.models.MalariaConsortiumFluffPillow',
         'custom.m4change.models.AncHmisCaseFluffPillow',
+        'custom.m4change.models.LdHmisCaseFluffPillow',
         'custom.m4change.models.ImmunizationHmisCaseFluffPillow',
+        'custom.m4change.models.ProjectIndicatorsCaseFluffPillow',
+        'custom.m4change.models.McctMonthlyAggregateFormFluffPillow'
     ],
     'mvp': [
         'corehq.apps.indicators.pillows.FormIndicatorPillow',
@@ -1017,6 +1028,8 @@ ES_XFORM_FULL_INDEX_DOMAINS = [
 
 CUSTOM_MODULES = [
     'custom.apps.crs_reports',
+    'custom.bihar',
+
 ]
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"

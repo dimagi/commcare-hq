@@ -1,17 +1,39 @@
 from datetime import datetime
 from casexml.apps.stock.models import StockReport, StockTransaction, StockState
-from corehq.apps.commtrack.const import RequisitionStatus
+from corehq.apps.commtrack import const
 from corehq.apps.commtrack.models import RequisitionCase
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack.tests.util import CommTrackTest, bootstrap_user, FIXED_USER, ROAMING_USER
 from corehq.apps.commtrack.sms import handle, SMSError
 
 
-class StockReportTest(CommTrackTest):
-    user_definitions = [ROAMING_USER, FIXED_USER]
-
+class SMSTests(CommTrackTest):
     def setUp(self):
-        super(StockReportTest, self).setUp()
+        super(SMSTests, self).setUp()
+
+    def check_stock(self, code, amount, case_id=None, section_id='stock'):
+        if not case_id:
+            case_id = self.sp._id
+
+        [product] = filter(lambda p: p.code_ == code, self.products)
+
+        try:
+            state = StockState.objects.get(
+                product_id=product._id,
+                case_id=case_id,
+                section_id=section_id
+            )
+            self.assertEqual(amount, state.stock_on_hand)
+        except StockState.DoesNotExist:
+            if amount != 0:
+                # only error if we weren't checking for no stock
+                raise Exception(
+                    'StockState for "%s" section does not exist' % section_id
+                )
+
+
+class StockReportTest(SMSTests):
+    user_definitions = [ROAMING_USER, FIXED_USER]
 
     def testStockReportRoaming(self):
         self.assertEqual(0, len(self.get_commtrack_forms()))
@@ -66,15 +88,6 @@ class StockReportTest(CommTrackTest):
             self.assertEqual(self.sp._id, trans.case_id)
             self.assertEqual(0, trans.quantity)
             self.assertEqual(amt, trans.stock_on_hand)
-
-    def check_stock(self, code, amount):
-        [product] = filter(lambda p: p.code_ == code, self.products)
-        state = StockState.objects.get(
-            product_id=product._id,
-            case_id=self.sp._id,
-            section_id='stock'
-        )
-        self.assertEqual(amount, state.stock_on_hand)
 
     def check_form_type(self, expected_type, subtype=None):
         [report] = StockReport.objects.filter(type='transfer')
@@ -188,15 +201,12 @@ class StockReportTest(CommTrackTest):
             self.check_stock(code, expected_amount)
 
 
-class StockRequisitionTest(object):
+class StockRequisitionTest(SMSTests):
     requisitions_enabled = True
     user_definitions = [ROAMING_USER]
 
-    def setUp(self):
-        super(StockRequisitionTest, self).setUp()
-
-
     def testRequisition(self):
+        # confirm we have a clean start
         self.assertEqual(0, len(RequisitionCase.open_for_location(self.domain.name, self.loc._id)))
         self.assertEqual(0, len(self.get_commtrack_forms()))
 
@@ -210,29 +220,27 @@ class StockRequisitionTest(object):
             loc='loc1',
             report=' '.join('%s %s' % (k, v) for k, v in amounts.items())
         ))
+
         self.assertTrue(handled)
 
         # make sure we got the updated requisitions
         reqs = RequisitionCase.open_for_location(self.domain.name, self.loc._id)
-        self.assertEqual(3, len(reqs))
+        self.assertEqual(1, len(reqs))
 
-        forms = list(self.get_commtrack_forms())
-        self.assertEqual(1, len(forms))
+        req = RequisitionCase.get(reqs[0])
+        [index] = req.indices
 
-        self.assertEqual(self.sp.location_, forms[0].location_)
+        self.assertEqual(req.requisition_status, 'requested')
+        self.assertEqual(const.SUPPLY_POINT_CASE_TYPE, index.referenced_type)
+        self.assertEqual(self.sp._id, index.referenced_id)
+        self.assertEqual('parent_id', index.identifier)
+
         # check updated status
         for code, amt in amounts.items():
-            spp = CommCareCase.get(self.spps[code]._id)
-            # make sure the index was created
-            [req_ref] = spp.reverse_indices
-            req_case = RequisitionCase.get(req_ref.referenced_id)
-            self.assertEqual(str(amt), req_case.amount_requested)
-            self.assertEqual(self.user._id, req_case.requested_by)
-            self.assertEqual(req_case.location_, self.sp.location_)
-            self.assertTrue(req_case._id in reqs)
-            self.assertEqual(spp._id, req_case.get_product_case()._id)
+            self.check_stock(code, amt, req._id, 'ct-requested')
+            self.check_stock(code, 0, req._id, 'stock')
 
-    def testApprovalBadLocations(self):
+    def inactive_testApprovalBadLocations(self):
         self.testRequisition()
 
         try:
@@ -247,7 +255,7 @@ class StockRequisitionTest(object):
         except SMSError, e:
             self.assertTrue('invalid location code' in str(e))
 
-    def testSimpleApproval(self):
+    def inactive_testSimpleApproval(self):
         self.testRequisition()
 
         # approve loc1
@@ -267,63 +275,103 @@ class StockRequisitionTest(object):
             self.assertTrue(isinstance(req_case.approved_on, datetime))
             self.assertEqual(req_case.product_id, req_case.get_product_case().product)
 
-    def testSimplePack(self):
-        self.testRequisition()
-
-        # pack loc1
-        handled = handle(self.user.get_verified_number(), 'pack {loc}'.format(
-            loc='loc1',
-        ))
-        self.assertTrue(handled)
-        reqs = RequisitionCase.open_for_location(self.domain.name, self.loc._id)
-        self.assertEqual(3, len(reqs))
-
-        for req_id in reqs:
-            req_case = RequisitionCase.get(req_id)
-            self.assertEqual(RequisitionStatus.PACKED, req_case.requisition_status)
-            self.assertEqual(req_case.amount_requested, req_case.amount_packed)
-            self.assertEqual(self.user._id, req_case.packed_by)
-            self.assertIsNotNone(req_case.packed_on)
-            self.assertTrue(isinstance(req_case.packed_on, datetime))
-            self.assertEqual(req_case.product_id, req_case.get_product_case().product)
-
-    def testReceipts(self):
-        # this tests the requisition specific receipt keyword. not to be confused
-        # with the standard stock receipt keyword
-        self.testRequisition()
-
-        reqs = RequisitionCase.open_for_location(self.domain.name, self.loc._id)
-        self.assertEqual(3, len(reqs))
-        req_ids_by_product_code = dict(((RequisitionCase.get(id).get_product().code, id) for id in reqs))
-
-        rec_amounts = {
-            'pp': 30,
+    def testSimpleFulfill(self):
+        amounts = {
+            'pp': 10,
             'pq': 20,
-            'pr': 10,
+            'pr': 30,
         }
-        # rec loc1 pp 10 pq 20...
-        handled = handle(self.user.get_verified_number(), 'rec {loc} {report}'.format(
-            loc='loc1',
-            report=' '.join('%s %s' % (k, v) for k, v in rec_amounts.items())
-        ))
+
+        # start with an open request
+        handle(
+            self.users[0].get_verified_number(),
+            'req {loc} {report}'.format(
+                loc='loc1',
+                report=' '.join('%s %s' % (k, v) for k, v in amounts.items())
+            )
+        )
+
+        # fulfill loc1
+        handled = handle(
+            self.users[0].get_verified_number(),
+            'fulfill {loc} {report}'.format(
+                loc='loc1',
+                report=' '.join('%s %s' % (k, v) for k, v in amounts.items())
+            )
+        )
         self.assertTrue(handled)
 
-        # we should have closed the requisitions
-        self.assertEqual(0, len(RequisitionCase.open_for_location(self.domain.name, self.loc._id)))
+        reqs = RequisitionCase.open_for_location(self.domain.name, self.loc._id)
 
-        forms = list(self.get_commtrack_forms())
-        self.assertEqual(2, len(forms))
+        # should not have created a new req
+        self.assertEqual(1, len(reqs))
 
-        self.assertEqual(self.sp.location_, forms[1].location_)
+        req = RequisitionCase.get(reqs[0])
+        [index] = req.indices
+
+        self.assertEqual(req.requisition_status, 'fulfilled')
+
+        for code, amt in amounts.items():
+            self.check_stock(code, amt, req._id, 'stock')
+            self.check_stock(code, amt, req._id, 'ct-fulfilled')
+
+    def testReceipt(self):
+        amounts = {
+            'pp': 10,
+            'pq': 20,
+            'pr': 30,
+        }
+
+        # start with an open request
+        handle(
+            self.users[0].get_verified_number(),
+            'req {loc} {report}'.format(
+                loc='loc1',
+                report=' '.join('%s %s' % (k, v) for k, v in amounts.items())
+            )
+        )
+
+        # fulfill it
+        handle(
+            self.users[0].get_verified_number(),
+            'fulfill {loc} {report}'.format(
+                loc='loc1',
+                report=' '.join('%s %s' % (k, v) for k, v in amounts.items())
+            )
+        )
+
+        # grab this first because we are about to close it
+        req_id = RequisitionCase.open_for_location(self.domain.name, self.loc._id)[0]
+
+        # mark it received
+        handle(
+            self.users[0].get_verified_number(),
+            'rec {loc} {report}'.format(
+                loc='loc1',
+                report=' '.join('%s %s' % (k, v) for k, v in amounts.items())
+            )
+        )
+
+        reqs = RequisitionCase.open_for_location(self.domain.name, self.loc._id)
+
+        # receiving by sms closes the req
+        self.assertEqual(0, len(reqs))
+
+        req = RequisitionCase.get(req_id)
+        [index] = req.indices
+
+        self.assertEqual(req.requisition_status, 'received')
+
         # check updated status
-        for code, amt in rec_amounts.items():
-            req_case = RequisitionCase.get(req_ids_by_product_code[code])
-            self.assertTrue(req_case.closed)
-            self.assertEqual(str(amt), req_case.amount_received)
-            self.assertEqual(self.user._id, req_case.received_by)
-            self.assertTrue(req_case._id in reqs, 'requisition %s should be in %s' % (req_case._id, reqs))
+        for code, amt in amounts.items():
+            self.check_stock(code, 0, req._id, 'stock')
+            self.check_stock(code, amt, self.sp._id, 'stock')
+            # TODO some day we will track this too
+            # self.check_stock(code, amt, req._id, 'ct-received')
 
     def testReceiptsWithNoOpenRequisition(self):
+        # TODO what should actually happen in this case?
+
         # make sure we don't have any open requisitions
         self.assertEqual(0, len(RequisitionCase.open_for_location(self.domain.name, self.loc._id)))
 
@@ -333,7 +381,7 @@ class StockRequisitionTest(object):
             'pr': 10,
         }
         # rec loc1 pp 10 pq 20...
-        handled = handle(self.user.get_verified_number(), 'rec {loc} {report}'.format(
+        handled = handle(self.users[0].get_verified_number(), 'rec {loc} {report}'.format(
             loc='loc1',
             report=' '.join('%s %s' % (k, v) for k, v in rec_amounts.items())
         ))
@@ -341,6 +389,7 @@ class StockRequisitionTest(object):
 
         # should still be no open requisitions
         self.assertEqual(0, len(RequisitionCase.open_for_location(self.domain.name, self.loc._id)))
+
 
 def _get_location_from_form(form):
     return form.form['location']

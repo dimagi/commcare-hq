@@ -16,12 +16,13 @@ from tastypie.throttle import CacheThrottle
 
 # External imports
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.users.decorators import require_permission
 from couchforms.models import XFormInstance
 
 # CCHQ imports
 from corehq.apps.domain.decorators import login_or_digest, domain_admin_required
 from corehq.apps.groups.models import Group
-from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.models import CommCareUser, WebUser, Permissions
 
 # API imports
 from corehq.apps.api.serializers import CustomXMLSerializer, XFormInstanceSerializer
@@ -39,6 +40,7 @@ def api_auth(view_func):
                                 content_type="application/json",
                                 status=401)
     return _inner
+
 
 class LoginAndDomainAuthentication(Authentication):
     def is_authenticated(self, request, **kwargs):
@@ -63,25 +65,50 @@ class LoginAndDomainAuthentication(Authentication):
     def get_identifier(self, request):
         return request.couch_user.username
 
-class DomainAdminAuthorization(Authorization):
 
-    def is_authorized(self, request, object=None, **kwargs):
-        PASSED_AUTHORIZATION = 'is_authorized'
+class RequirePermissionAuthentication(LoginAndDomainAuthentication):
+    def __init__(self, permission, *args, **kwargs):
+        super(RequirePermissionAuthentication, self).__init__(*args, **kwargs)
+        self.permission = permission
+
+    def is_authenticated(self, request, **kwargs):
+        PASSED_AUTH = 'is_authenticated'
 
         @api_auth
-        @domain_admin_required
+        @require_permission(self.permission, login_decorator=login_or_digest)
         def dummy(request, domain, **kwargs):
-            return PASSED_AUTHORIZATION
+            return PASSED_AUTH
 
         if not kwargs.has_key('domain'):
             kwargs['domain'] = request.domain
 
         response = dummy(request, **kwargs)
-
-        if response == PASSED_AUTHORIZATION:
+        if response == PASSED_AUTH:
             return True
         else:
             return response
+
+
+class DomainAdminAuthentication(LoginAndDomainAuthentication):
+
+    def is_authenticated(self, request, **kwargs):
+        PASSED_AUTH = 'is_authenticated'
+
+        @api_auth
+        @domain_admin_required
+        @login_or_digest
+        def dummy(request, domain, **kwargs):
+            return PASSED_AUTH
+
+        if not kwargs.has_key('domain'):
+            kwargs['domain'] = request.domain
+
+        response = dummy(request, **kwargs)
+        if response == PASSED_AUTH:
+            return True
+        else:
+            return response
+
 
 class CustomResourceMeta(object):
     authorization = ReadOnlyAuthorization()
@@ -120,6 +147,7 @@ class CommCareUserResource(UserResource):
     user_data = fields.DictField(attribute='user_data')
 
     class Meta(UserResource.Meta):
+        authentication = RequirePermissionAuthentication(Permissions.edit_commcare_users)
         object_class = CommCareUser
         resource_name = 'user'
 
@@ -150,6 +178,7 @@ class WebUserResource(UserResource):
         return bundle.obj.is_domain_admin(bundle.request.domain)
 
     class Meta(UserResource.Meta):
+        authentication = RequirePermissionAuthentication(Permissions.edit_web_users)
         object_class = WebUser
         resource_name = 'web-user'
 
@@ -189,10 +218,10 @@ class CommCareCaseResource(JsonResource, DomainSpecificResourceMixin):
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
         closed_only = {
-                          'true': True,
-                          'false': False,
-                          'any': True
-                      }[bundle.request.GET.get('closed', 'false')]
+            'true': True,
+            'false': False,
+            'any': True
+        }[bundle.request.GET.get('closed', 'false')]
         case_type = bundle.request.GET.get('case_type')
 
         key = [domain]
@@ -204,7 +233,8 @@ class CommCareCaseResource(JsonResource, DomainSpecificResourceMixin):
 
 
     class Meta(CustomResourceMeta):
-        object_class = CommCareCase    
+        authentication = RequirePermissionAuthentication(Permissions.edit_data)
+        object_class = CommCareCase
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
         resource_name = 'case'
@@ -226,6 +256,7 @@ class XFormInstanceResource(JsonResource, DomainSpecificResourceMixin):
         return get_object_or_not_exist(XFormInstance, kwargs['pk'], kwargs['domain'])
 
     class Meta(CustomResourceMeta):
+        authentication = RequirePermissionAuthentication(Permissions.edit_data)
         object_class = XFormInstance        
         list_allowed_methods = []
         detail_allowed_methods = ['get']

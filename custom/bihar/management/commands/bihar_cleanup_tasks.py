@@ -1,4 +1,6 @@
 import csv
+from datetime import datetime
+from optparse import make_option
 from django.core.management.base import BaseCommand
 from corehq.apps.hqcase.utils import get_cases_in_domain
 from dimagi.utils.decorators.log_exception import log_exception
@@ -6,9 +8,16 @@ from dimagi.utils.decorators.log_exception import log_exception
 
 class Command(BaseCommand):
     """
-    Creates the backlog of repeat records that were dropped when bihar repeater
-    infrastructure went down.
+    Cleans up all duplicate task cases in the system created because
+    of bugs in MOTECH
     """
+    option_list = BaseCommand.option_list + (
+        make_option('--cleanup',
+                    action='store_true',
+                    dest='cleanup',
+                    default=False,
+                    help="Clean up (delete) the affected cases."),
+    )
 
     @log_exception()
     def handle(self, *args, **options):
@@ -32,15 +41,21 @@ class Command(BaseCommand):
                                 for type_being_checked in unique_types:
                                     matching_cases = [t for t in tasks if _task_id(t) == type_being_checked]
                                     if len(matching_cases) > 1:
-                                        _dump(parent_case, matching_cases, writer)
+                                        for row, case in _get_rows(parent_case, matching_cases):
+                                            keep = row[-1]
+                                            writer.writerow(row)
+                                            if options['cleanup'] and not keep:
+                                                _purge(case)
                     except Exception, e:
                         print 'error with case %s (%s)' % (parent_case._id, e)
+
 
 def _task_id(task_case):
     id = getattr(task_case, 'task_id', None)
     if id is None:
         print '%s has no task id' % task_case._id
     return id
+
 
 def _dump_headings(csv_writer):
     csv_writer.writerow([
@@ -52,14 +67,23 @@ def _dump_headings(csv_writer):
         'keep?',
     ])
 
-def _dump(parent, tasklist, csv_writer):
+
+def _get_rows(parent, tasklist):
     tasklist = sorted(tasklist, key=lambda case: (not case.closed, case.opened_on))
     for i, task in enumerate(tasklist):
-        csv_writer.writerow([
+        row = [
             parent._id,
             task._id,
             _task_id(task),
             task.opened_on,
             task.closed,
             i==0,
-        ])
+        ]
+        yield (row, task)
+
+
+def _purge(case):
+    case.doc_type = 'CommCareCase-Deleted'
+    case.bihar_task_deleted = True
+    case.bihar_task_deleted_on = datetime.utcnow()
+    case.save()

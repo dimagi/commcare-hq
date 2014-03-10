@@ -23,6 +23,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.templatetags.case_tags import case_inline_display
 from couchdbkit.exceptions import ResourceNotFound
 from casexml.apps.case.xml import V2
+from corehq.apps.export.exceptions import BadExportConfiguration
 from corehq.apps.reports.exportfilters import default_form_filter
 import couchexport
 from couchexport import views as couchexport_views
@@ -54,7 +55,7 @@ from corehq.apps.export.custom_export_helpers import CustomExportHelper
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.export import export_cases_and_referrals
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher
-from corehq.apps.reports.models import ReportConfig, ReportNotification
+from corehq.apps.reports.models import ReportConfig, ReportNotification, FakeFormExportSchema
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.tasks import create_metadata_export
 from corehq.apps.reports import util
@@ -210,7 +211,6 @@ def export_default_or_custom_data(request, domain, export_id=None, bulk_export=F
     """
     Export data from a saved export schema
     """
-
     deid = request.GET.get('deid') == 'true'
     if deid:
         return _export_deid(request, domain, export_id, bulk_export=bulk_export)
@@ -258,6 +258,9 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
                 return HttpResponseForbidden()
         except ResourceNotFound:
             raise Http404()
+        except BadExportConfiguration, e:
+            return HttpResponseBadRequest(str(e))
+
     elif safe_only:
         return HttpResponseForbidden()
     else:
@@ -273,10 +276,13 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
         assert(export_tag[0] == domain)
         # hack - also filter instances here rather than mess too much with trying to make this
         # look more like a FormExportSchema
+        export_class = FakeSavedExportSchema
         if export_type == 'form':
             filter &= SerializableFunction(instances)
+            export_class = FakeFormExportSchema
 
-        export_object = FakeSavedExportSchema(index=export_tag)
+        export_object = export_class(index=export_tag)
+
 
     if export_type == 'form':
         _filter = filter
@@ -683,7 +689,7 @@ def view_scheduled_report(request, domain, scheduled_report_id):
 @login_and_domain_required
 @require_GET
 def case_details(request, domain, case_id):
-    timezone = util.get_timezone(request.couch_user.user_id, domain)
+    timezone = util.get_timezone(request.couch_user, domain)
 
     try:
         case = _get_case_or_404(domain, case_id)
@@ -827,7 +833,7 @@ def download_cases(request, domain):
 
 
 def _get_form_context(request, domain, instance_id):
-    timezone = util.get_timezone(request.couch_user.user_id, domain)
+    timezone = util.get_timezone(request.couch_user, domain)
     instance = _get_form_or_404(instance_id)
     try:
         assert domain == instance.domain

@@ -1,15 +1,16 @@
 from collections import defaultdict
 
-from django.core.urlresolvers import NoReverseMatch, reverse
+from django.core.urlresolvers import reverse
 from django.http import HttpResponseForbidden, HttpResponse, HttpResponseBadRequest
 from tastypie import fields
 from tastypie.bundle import Bundle
 from tastypie.authentication import Authentication
+from corehq.apps.api.resources.v0_1 import CustomResourceMeta, RequirePermissionAuthentication
 
 from couchforms.models import XFormInstance
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case import xform as casexml_xform
-from custom.hope.models import HOPECase
+from custom.hope.models import HOPECase, CC_BIHAR_NEWBORN, CC_BIHAR_PREGNANCY
 
 from corehq.apps.api.util import get_object_or_not_exist
 from corehq.apps.app_manager import util as app_manager_util
@@ -18,7 +19,7 @@ from corehq.apps.receiverwrapper.models import Repeater, repeater_types
 from corehq.apps.groups.models import Group
 from corehq.apps.cloudcare.api import ElasticCaseQuery
 from corehq.apps.users.util import format_username
-from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.apps.users.models import CouchUser, Permissions
 
 from corehq.apps.api.resources import v0_1, v0_3, JsonResource, DomainSpecificResourceMixin, dict_object, SimpleSortableResourceMixin
 from corehq.apps.api.es import XFormES, CaseES, ESQuerySet, es_search
@@ -116,12 +117,13 @@ class RepeaterResource(JsonResource, DomainSpecificResourceMixin):
         bundle = self.full_hydrate(bundle)
         return bundle
 
-    class Meta(v0_1.CustomResourceMeta):
+    class Meta(CustomResourceMeta):
+        authentication = v0_1.DomainAdminAuthentication()
         object_class = Repeater
         resource_name = 'data-forwarding'
         detail_allowed_methods = ['get', 'put', 'delete']
         list_allowed_methods = ['get', 'post']
-        authorization = v0_1.DomainAdminAuthorization
+
 
 
 def group_by_dict(objs, fn):
@@ -209,9 +211,11 @@ class GroupResource(JsonResource, DomainSpecificResourceMixin):
         groups = Group.by_domain(domain)
         return groups
 
-    class Meta(v0_3.XFormInstanceResource.Meta):
+    class Meta(CustomResourceMeta):
+        authentication = RequirePermissionAuthentication(Permissions.edit_commcare_users)
         object_class = Group
         list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
         resource_name = 'group'
 
 
@@ -260,7 +264,7 @@ class SingleSignOnResource(JsonResource, DomainSpecificResourceMixin):
     def get_detail(self, bundle, **kwargs):
         return HttpResponseForbidden()
 
-    class Meta(v0_1.CustomResourceMeta):
+    class Meta(CustomResourceMeta):
         authentication = Authentication()
         resource_name = 'sso'
         detail_allowed_methods = []
@@ -321,7 +325,8 @@ class ApplicationResource(JsonResource, DomainSpecificResourceMixin):
     def obj_get(self, bundle, **kwargs):
         return get_object_or_not_exist(Application, kwargs['domain'], kwargs['pk'])
 
-    class Meta(v0_1.CustomResourceMeta):
+    class Meta(CustomResourceMeta):
+        authentication = RequirePermissionAuthentication(Permissions.edit_apps)
         object_class = Application
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
@@ -345,36 +350,14 @@ class HOPECaseResource(CommCareCaseResource):
     """
     Custom API endpoint for custom case wrapper
     """
+    events_attributes = fields.ListField()
+    other_properties = fields.DictField()
 
-    # For the curious, the attribute='<exact thing I just typed>' is mandatory,
-    # and refers to a property on the HOPECase object
-    all_anc_doses_given = CallableCharField(attribute=get_yesno('_HOPE_all_anc_doses_given'), readonly=True, null=True)
-    all_dpt1_opv1_hb1_doses_given = CallableCharField(attribute=get_yesno('_HOPE_all_dpt1_opv1_hb1_doses_given'),
-                                                     readonly=True, null=True)
-    all_dpt2_opv2_hb2_doses_given = CallableCharField(attribute=get_yesno('_HOPE_all_dpt2_opv2_hb2_doses_given'),
-                                                     readonly=True, null=True)
-    all_dpt3_opv3_hb3_doses_given = CallableCharField(attribute=get_yesno('_HOPE_all_dpt3_opv3_hb3_doses_given'),
-                                                     readonly=True, null=True)
-    all_ifa_doses_given = CallableCharField(attribute=get_yesno('_HOPE_all_ifa_doses_given'),
-                                           readonly=True, null=True)
-    all_tt_doses_given = CallableCharField(attribute=get_yesno('_HOPE_all_tt_doses_given'),
-                                          readonly=True, null=True)
-    asha_id = fields.CharField(attribute='_HOPE_asha_id', readonly=True, null=True)
-    bcg_indicator = fields.BooleanField(attribute='_HOPE_bcg_indicator', readonly=True, null=True)
-    child_name = fields.CharField(attribute='_HOPE_child_name', readonly=True, null=True)
-    delivery_nature = fields.CharField(attribute='_HOPE_delivery_nature', readonly=True, null=True)
-    delivery_type = fields.CharField(attribute='_HOPE_delivery_type', readonly=True, null=True)
-    dpt_1_indicator = fields.BooleanField(attribute='_HOPE_dpt_1_indicator', readonly=True, null=True)
-    existing_child_count = fields.IntegerField(attribute='_HOPE_existing_child_count', readonly=True, null=True)
-    ifa1_date = fields.CharField(attribute='_HOPE_ifa1_date', readonly=True, null=True)
-    ifa2_date = fields.CharField(attribute='_HOPE_ifa2_date', readonly=True, null=True)
-    ifa3_date = fields.CharField(attribute='_HOPE_ifa3_date', readonly=True, null=True)
-    measles_dose_given = CallableCharField(attribute=get_yesno('_HOPE_measles_dose_given'),
-                                          readonly=True, null=True)
-    number_of_visits = fields.IntegerField(attribute='_HOPE_number_of_visits', readonly=True, null=True)
-    opv_1_indicator = fields.BooleanField(attribute='_HOPE_opv_1_indicator', readonly=True, null=True)
-    registration_date = fields.CharField(attribute='_HOPE_registration_date', readonly=True, null=True)
-    tubal_ligation = CallableCharField(attribute=get_yesno('_HOPE_tubal_ligation'), readonly=True, null=True)
+    def dehydrate_events_attributes(self, bundle):
+        return bundle.obj.events_attributes
+
+    def dehydrate_other_properties(self, bundle):
+        return bundle.obj.other_properties
 
     def obj_get(self, bundle, **kwargs):
         return get_object_or_not_exist(HOPECase, kwargs['pk'], kwargs['domain'],
@@ -395,9 +378,25 @@ class HOPECaseResource(CommCareCaseResource):
         if 'size' in query:
             del query['size']
 
-        return ESQuerySet(payload = query,
-                          model = HOPECase,
-                          es_client = self.case_es(domain)).order_by('server_modified_on') # Not that CaseES is used only as an ES client, for `run_query` against the proper index
+        # Note that CaseES is used only as an ES client, for `run_query` against the proper index
+        return ESQuerySet(payload=query,
+                          model=HOPECase,
+                          es_client=self.case_es(domain)).order_by('server_modified_on')
+
+    def alter_list_data_to_serialize(self, request, data):
+
+        # rename 'properties' field to 'case_properties'
+        for bundle in data['objects']:
+            bundle.data['case_properties'] = bundle.data['properties']
+            del bundle.data['properties']
+
+        mother_lists = filter(lambda x: x.obj.type == CC_BIHAR_PREGNANCY, data['objects'])
+        child_lists = filter(lambda x: x.obj.type == CC_BIHAR_NEWBORN, data['objects'])
+
+        return {'objects': {
+            'mother_lists': mother_lists,
+            'child_lists': child_lists
+        }, 'meta': data['meta']}
 
     class Meta(CommCareCaseResource.Meta):
         resource_name = 'hope-case'

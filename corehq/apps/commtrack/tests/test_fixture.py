@@ -3,13 +3,14 @@ import string
 from xml.etree import ElementTree
 
 from casexml.apps.case.xml import V1
-from corehq.apps.app_manager.tests import XmlTest
-from corehq.apps.commtrack.models import Product, product_fixture_generator
+from corehq.apps.app_manager.tests.util import TestFileMixin
+from corehq.apps.commtrack.fixtures import product_fixture_generator
+from corehq.apps.commtrack.models import Product
 from corehq.apps.commtrack.tests.util import CommTrackTest
 from corehq.apps.commtrack.tests.util import bootstrap_user
 
 
-class FixtureTest(CommTrackTest, XmlTest):
+class FixtureTest(CommTrackTest, TestFileMixin):
 
     def _random_string(self, length):
         return ''.join(random.choice(string.ascii_lowercase)

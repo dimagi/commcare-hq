@@ -12,7 +12,6 @@ from redis_cache.exceptions import ConnectionInterrumped
 from corehq.apps.accounting.exceptions import AccountingError
 from corehq.apps.accounting.models import Subscription
 from dimagi.utils.couch.cache import cache_core
-import toggle.shortcuts
 from django_prbac.models import Role
 
 # CCHQ imports
@@ -35,6 +34,13 @@ class CCHQPRBACMiddleware(object):
 
     def process_view(self, request, view_func, view_args, view_kwargs):
 
+        self.process_request(request)
+
+        return None
+
+
+    @classmethod
+    def process_request(cls, request):
         if hasattr(request, 'domain'):
             try:
                 plan_version = Subscription.get_subscribed_plan_by_domain(request.domain)[0]
@@ -47,7 +53,5 @@ class CCHQPRBACMiddleware(object):
             request.role = Role.objects.get(slug='community_plan_v0')
         except Role.DoesNotExist:
             request.role = Role()  # A fresh Role() has no privileges
-
-        return None
     
 ############################################################################################################

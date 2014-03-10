@@ -14,6 +14,7 @@ from custom.fri.models import (
     PROFILE_G,
     FRIMessageBankMessage,
     FRIRandomizedMessage,
+    FRIExtraMessage,
 )
 from corehq.apps.reports import util as report_utils
 from redis_cache.cache import RedisCache
@@ -32,6 +33,70 @@ WINDOWS = (
     (time(15, 30), 630),
     (time(15, 30), 510),
 )
+
+WEEKDAYS = (
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+)
+
+OFF_DAYS = [
+    date(2014, 1, 1),
+    date(2014, 1, 20),
+    date(2014, 2, 17),
+    date(2014, 5, 26),
+    date(2014, 7, 4),
+    date(2014, 9, 1),
+    date(2014, 11, 27),
+    date(2014, 11, 28),
+    date(2014, 12, 24),
+    date(2014, 12, 25),
+    date(2014, 12, 31),
+    date(2015, 1, 1),
+    date(2015, 1, 19),
+    date(2015, 2, 16),
+    date(2015, 5, 25),
+    date(2015, 7, 4),
+    date(2015, 9, 7),
+    date(2015, 11, 26),
+    date(2015, 11, 27),
+    date(2015, 12, 24),
+    date(2015, 12, 25),
+    date(2015, 12, 31),
+    date(2016, 1, 1),
+    date(2016, 1, 18),
+    date(2016, 2, 15),
+    date(2016, 5, 30),
+    date(2016, 7, 4),
+    date(2016, 9, 5),
+    date(2016, 11, 24),
+    date(2016, 11, 25),
+    date(2016, 12, 24),
+    date(2016, 12, 25),
+    date(2016, 12, 31),
+    date(2017, 1, 1),
+    date(2017, 1, 16),
+    date(2017, 2, 20),
+    date(2017, 5, 29),
+    date(2017, 7, 4),
+    date(2017, 9, 4),
+    date(2017, 11, 23),
+    date(2017, 11, 24),
+    date(2017, 12, 24),
+    date(2017, 12, 25),
+    date(2017, 12, 31),
+    date(2018, 1, 1),
+]
+
+MSG_ID_OPENING = "OPENING"
+MSG_ID_CLOSING = "CLOSING"
+MSG_ID_CLOSED = "CLOSED"
+MSG_ID_REOPEN = "REOPEN"
+MSG_ID_OFF_NOTICE = "OFF_NOTICE"
 
 def letters_only(text):
     return re.sub(r"[^a-zA-Z]", "", text).upper()
@@ -257,4 +322,100 @@ def catchup_custom_content_handler(reminder, handler, recipient):
     Used to send content that was missed to due registering late in the day.
     """
     return custom_content_handler(reminder, handler, recipient, catch_up=True)
+
+def get_valid_date_range(case):
+    start_date = get_date(case, "start_date")
+    if start_date:
+        return (start_date, start_date + timedelta(days=55))
+    else:
+        return (None, None)
+
+def shift_custom_content_handler(reminder, handler, recipient):
+    # This is a bit complex / coupled with the reminder schedule, but is
+    # the easiest way to do this without cluttering the reminders ui with
+    # advanced features
+    message_type = reminder.current_event_sequence_num % 3
+    is_opening = message_type == 2
+    is_closing = message_type == 0
+    is_closed = message_type == 1
+    # Monday=0, Sunday=6
+    curr_day_num = (reminder.current_event_sequence_num + 1) / 3
+    curr_day_num = (curr_day_num + 5) % 7
+    next_day_num = (curr_day_num + 1) % 7
+
+    case = reminder.case
+    start_date, end_date = get_valid_date_range(case)
+
+    # current_date is the date that the shift began in
+    date_offset = (reminder.current_event_sequence_num - 2) / 3
+    date_offset += (reminder.schedule_iteration_num - 1) * 7
+    current_date = get_date(case, "previous_sunday")
+    if current_date:
+        current_date += timedelta(days=date_offset)
+        if current_date in OFF_DAYS or (end_date and current_date > end_date):
+            # don't send anything
+            return None
+
+    message = None
+    if is_opening:
+        msg = FRIExtraMessage.get_by_message_id(reminder.domain, MSG_ID_OPENING)
+        if msg:
+            message = msg.message
+            closing_datetime = datetime.combine(date(2000, 1, 1), WINDOWS[curr_day_num][0])
+            closing_datetime += timedelta(minutes=WINDOWS[curr_day_num][1])
+            closing_time = closing_datetime.time().strftime("%I:%M %p")
+            message = "%s %s" % (message, closing_time)
+    elif is_closing:
+        msg = FRIExtraMessage.get_by_message_id(reminder.domain, MSG_ID_CLOSING)
+        if msg:
+            message = msg.message
+    elif is_closed:
+        closed_msg = FRIExtraMessage.get_by_message_id(reminder.domain, MSG_ID_CLOSED)
+        reopen_msg = FRIExtraMessage.get_by_message_id(reminder.domain, MSG_ID_REOPEN)
+        if closed_msg and reopen_msg:
+            tomorrow_time = "%s at %s" % (
+                WEEKDAYS[next_day_num],
+                WINDOWS[next_day_num][0].strftime("%I:%M %p"),
+            )
+            tomorrow_is_off = False
+            if current_date:
+                tomorrow_date = current_date + timedelta(days=1)
+                if tomorrow_date in OFF_DAYS:
+                    tomorrow_is_off = True
+            if tomorrow_is_off:
+                message = closed_msg.message
+            else:
+                message = "%s %s %s" % (closed_msg.message, reopen_msg.message, tomorrow_time)
+
+    return message
+
+def format_day(day):
+    suffixes = {
+        1: "st",
+        2: "nd",
+        3: "rd",
+    }
+    if (day / 10) == 1:
+        suffix = "th"
+    else:
+        suffix = suffixes.get(day % 10, "th")
+    return "%s%s" % (day, suffix)
+
+def off_day_custom_content_handler(reminder, handler, recipient):
+    case = reminder.case
+    start_date, end_date = get_valid_date_range(case)
+
+    current_date = get_date(case, "previous_sunday")
+    if current_date:
+        date_offset = reminder.schedule_iteration_num - 1
+        current_date += timedelta(days=date_offset)
+        tomorrow_date = current_date + timedelta(days=1)
+        if end_date and tomorrow_date <= end_date and tomorrow_date in OFF_DAYS:
+            msg = FRIExtraMessage.get_by_message_id(reminder.domain, MSG_ID_OFF_NOTICE)
+            day = tomorrow_date.day
+            weekday_and_month = tomorrow_date.strftime("%A, %B")
+            message = "%s %s %s" % (msg.message, weekday_and_month, format_day(day))
+            return message
+
+    return None
 

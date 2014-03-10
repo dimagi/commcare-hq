@@ -5,7 +5,8 @@ from celery.task import task
 from time import sleep
 from redis_cache.cache import RedisCache
 from corehq.apps.sms.models import SMSLog, OUTGOING, INCOMING
-from corehq.apps.sms.api import send_message_via_backend, process_incoming
+from corehq.apps.sms.api import (send_message_via_backend, process_incoming,
+                                 store_billable)
 from django.conf import settings
 from corehq.apps.domain.models import Domain
 from dimagi.utils.timezones import utils as tz_utils
@@ -35,6 +36,8 @@ def handle_successful_processing_attempt(msg):
     if msg.direction == OUTGOING:
         msg.date = utcnow
     msg.save()
+    if msg.direction == OUTGOING:
+        store_billable.delay(msg)
 
 def delay_processing(msg, minutes):
     msg.datetime_to_process += timedelta(minutes=minutes)
