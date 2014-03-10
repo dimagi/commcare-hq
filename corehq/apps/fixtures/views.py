@@ -69,50 +69,6 @@ def _to_kwargs(req):
     # version dependent
     return dict((str(k), v) for k, v in json.load(req).items())
 
-def data_types(request, domain, data_type_id):
-    
-    if data_type_id:
-        try:
-            data_type = FixtureDataType.get(data_type_id)
-        except ResourceNotFound:
-            raise Http404()
-
-        assert(data_type.doc_type == FixtureDataType._doc_type)
-        assert(data_type.domain == domain)
-
-        if request.method == 'GET':
-            return json_response(strip_json(data_type))
-
-        elif request.method == 'PUT':
-            new = FixtureDataType(domain=domain, **_to_kwargs(request))
-            for attr in 'tag', 'name', 'fields':
-                setattr(data_type, attr, getattr(new, attr))
-            data_type.save()
-            return json_response(strip_json(data_type))
-
-        elif request.method == 'DELETE':
-            with CouchTransaction() as transaction:
-                data_type.recursive_delete(transaction)
-            return json_response({})
-
-    elif data_type_id is None:
-
-        if request.method == 'POST':
-            data_type = FixtureDataType(domain=domain, **_to_kwargs(request))
-            data_type.save()
-            return json_response(strip_json(data_type))
-
-        elif request.method == 'GET':
-            return json_response([strip_json(x) for x in FixtureDataType.by_domain(domain)])
-
-        elif request.method == 'DELETE':
-            with CouchTransaction() as transaction:
-                for data_type in FixtureDataType.by_domain(domain):
-                    data_type.recursive_delete(transaction)
-            return json_response({})
-
-    return HttpResponseBadRequest()
-
 
 @require_can_edit_fixtures
 def update_tables(request, domain, data_type_id, test_patch={}):
@@ -217,8 +173,7 @@ def create_types(fields_patches, domain, data_tag, is_global, transaction):
     transaction.save(data_type)
     return data_type
 
-
-# @require_can_edit_fixtures
+@require_can_edit_fixtures
 def data_table(request, domain):
     sheets = download_item_lists(request, domain, html_response=True)
     sheets.pop("types")
@@ -243,7 +198,8 @@ def data_table(request, domain):
     return data_table
 
 DELETE_HEADER = "Delete(Y/N)"
-# @require_can_edit_fixtures
+
+@require_can_edit_fixtures
 def download_item_lists(request, domain, html_response=False):
     """
         Is used to serve excel_download and html_view for view_lookup_tables
@@ -455,7 +411,10 @@ def download_file(request, domain):
     download_id = request.GET.get("download_id")
     try:
         dw = CachedDownload.get(download_id)
-        return dw.toHttpResponse()
+        if dw:
+            return dw.toHttpResponse()
+        else:
+            raise IOError
     except IOError:
         notify_exception(request)
         messages.error(request, _("Sorry, Something went wrong with your download! Please try again. If you see this repeatedly please report an issue "))
@@ -524,6 +483,7 @@ class UploadItemLists(TemplateView):
 
 @require_POST
 @login_or_digest
+@require_can_edit_fixtures
 def upload_fixture_api(request, domain, **kwargs):
     """
         Use following curl-command to test.
