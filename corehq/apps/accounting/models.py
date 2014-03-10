@@ -467,6 +467,12 @@ class SoftwarePlanVersion(models.Model):
         return "Software Plan Version For Plan '%s' with Role '%s'" % (self.plan.name, self.role.slug)
 
     @property
+    def version(self):
+        return (self.plan.softwareplanversion_set.count() -
+                self.plan.softwareplanversion_set.filter(
+                    date_created__gt=self.date_created).count())
+
+    @property
     def user_facing_description(self):
         from corehq.apps.accounting.user_text import DESC_BY_EDITION, FEATURE_TYPE_TO_NAME
         product = self.product_rates.get()
