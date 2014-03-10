@@ -1,14 +1,15 @@
 import datetime
 from django.db import models
-from django.test import TestCase
 
 from corehq.apps.accounting import generator, tasks
 from corehq.apps.accounting.models import BillingAccount, Currency, Subscription
+from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 
 
-class TestBillingAccount(TestCase):
+class TestBillingAccount(BaseAccountingTest):
 
     def setUp(self):
+        super(TestBillingAccount, self).setUp()
         self.billing_contact = generator.arbitrary_web_user()
         self.dimagi_user = generator.arbitrary_web_user(is_dimagi=True)
         self.currency = generator.init_default_currency()
@@ -27,14 +28,14 @@ class TestBillingAccount(TestCase):
         Currency.objects.all().delete()
 
 
-class TestSubscription(TestCase):
+class TestSubscription(BaseAccountingTest):
 
     def setUp(self):
+        super(TestSubscription, self).setUp()
         self.billing_contact = generator.arbitrary_web_user()
         self.dimagi_user = generator.arbitrary_web_user(is_dimagi=True)
         self.currency = generator.init_default_currency()
         self.account = generator.billing_account(self.dimagi_user, self.billing_contact)
-        generator.instantiate_subscribable_plans()
         self.subscription, self.subscription_length = generator.generate_domain_subscription_from_date(
             datetime.date.today(), self.account, 'test'
         )
@@ -73,5 +74,4 @@ class TestSubscription(TestCase):
         self.dimagi_user.delete()
 
         generator.delete_all_subscriptions()
-        generator.delete_all_plans()
         generator.delete_all_accounts()

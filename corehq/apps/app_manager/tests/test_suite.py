@@ -5,29 +5,9 @@ from corehq.apps.app_manager.suite_xml import dot_interpolate
 
 from lxml import etree
 import commcare_translations
-import difflib
 
 
-# snippet from http://stackoverflow.com/questions/321795/comparing-xml-in-a-unit-test-in-python/7060342#7060342
-from doctest import Example
-from lxml.doctestcompare import LXMLOutputChecker
-
-def assertXmlEqual(want, got):
-    checker = LXMLOutputChecker()
-    if not checker.check_output(want, got, 0):
-        message = checker.output_difference(Example("", want), got, 0)
-        for line in difflib.unified_diff(want.splitlines(1), got.splitlines(1), fromfile='want.xml', tofile='got.xml'):
-            print line
-        raise AssertionError(message)
-
-class XmlTest(TestCase):
-
-    def assertXmlEqual(self, want, got):
-        return assertXmlEqual(want, got)
-# end snippet
-
-
-class SuiteTest(XmlTest, TestFileMixin):
+class SuiteTest(TestCase, TestFileMixin):
     file_path = ('data', 'suite')
 
     def assertHasAllStrings(self, app, strings):
@@ -61,7 +41,6 @@ class SuiteTest(XmlTest, TestFileMixin):
 
     def test_tiered_select(self):
         self._test_generic_suite('tiered-select', 'tiered-select')
-
     def test_3_tiered_select(self):
         self._test_generic_suite('tiered-select-3', 'tiered-select-3')
 
@@ -77,6 +56,22 @@ class SuiteTest(XmlTest, TestFileMixin):
 
     def test_careplan_suite(self):
         self._test_generic_suite('careplan')
+
+    def test_advanced_suite(self):
+        self._test_generic_suite('suite-advanced')
+
+    def test_advanced_suite_details(self):
+        app = Application.wrap(self.get_json('suite-advanced'))
+        clinic_module_id = app.get_module(0).unique_id
+        other_module_id = app.get_module(1).unique_id
+        app.get_module(1).get_form(0).actions.load_update_cases[0].details_module = clinic_module_id
+        app.get_module(1).get_form(1).actions.load_update_cases[0].details_module = other_module_id
+        self.assertXmlEqual(self.get_xml('suite-advanced-details'), app.create_suite())
+
+    def test_advanced_suite_commtrack(self):
+        app = Application.wrap(self.get_json('suite-advanced'))
+        app.commtrack_enabled = True
+        self.assertXmlEqual(self.get_xml('suite-advanced-commtrack'), app.create_suite())
 
     def test_case_assertions(self):
         self._test_generic_suite('app_case_sharing', 'suite-case-sharing')

@@ -1,6 +1,9 @@
 from django.conf import settings
 from django.core.urlresolvers import resolve, reverse
 from django.http import Http404
+from django_prbac.exceptions import PermissionDenied
+from django_prbac.utils import ensure_request_has_privilege
+from corehq import toggles, privileges
 
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 
@@ -44,7 +47,12 @@ def get_per_domain_context(project, request=None):
         pass
 
     if project and project.has_custom_logo:
-        logo_url = reverse('logo', args=[project.name])
+        try:
+            ensure_request_has_privilege(request, privileges.CUSTOM_BRANDING)
+            logo_url = reverse('logo', args=[project.name])
+        except PermissionDenied:
+            pass
+
 
     return {
         'DOMAIN_TYPE': domain_type,

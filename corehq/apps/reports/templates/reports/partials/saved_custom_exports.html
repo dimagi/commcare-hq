@@ -1,4 +1,3 @@
-{% load url from future %}
 {% load i18n %}
 <table class="export_data table table-striped">
     <thead>
@@ -58,6 +57,7 @@
                    data-exportid="{{ export.get_id }}"
                    data-exporttype="form"
                    data-dlocation='{% url "export_custom_data" domain export.get_id %}'
+                   data-format="{{ export.default_format }}"
                    data-bind="click: requestDownload"
                    class="dl-export btn btn-primary"><i class="icon-download-alt icon-white"></i> {% trans "Download" %}</a>
             </td>

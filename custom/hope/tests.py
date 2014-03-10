@@ -33,25 +33,86 @@ class TestHOPECaseResource(TestCase):
         to make sure none of the _HOPE properties crash
         """
 
-        hope_case._HOPE_all_anc_doses_given
-        hope_case._HOPE_all_dpt1_opv1_hb1_doses_given
-        hope_case._HOPE_all_dpt2_opv2_hb2_doses_given
-        hope_case._HOPE_all_dpt3_opv3_hb3_doses_given
-        hope_case._HOPE_all_ifa_doses_given
-        hope_case._HOPE_all_tt_doses_given
-        hope_case._HOPE_bcg_indicator
-        hope_case._HOPE_delivery_nature
-        hope_case._HOPE_delivery_type
-        hope_case._HOPE_existing_child_count
-        hope_case._HOPE_ifa1_date
-        hope_case._HOPE_ifa2_date
-        hope_case._HOPE_ifa3_date
-        hope_case._HOPE_measles_dose_given
-        hope_case._HOPE_number_of_visits
-        hope_case._HOPE_opv_1_indicator
-        hope_case._HOPE_registration_date
-        hope_case._HOPE_time_of_birth
-        hope_case._HOPE_tubal_ligation
+        # test mother other properties
+        hope_case._HOPE_mother_mother_name
+        hope_case._HOPE_mother_husband_name
+        hope_case._HOPE_mother_program_cd
+        hope_case._HOPE_mother_bank_account_number
+        hope_case._HOPE_mother_bank_id
+        hope_case._HOPE_mother_bank_branch_id
+        hope_case._HOPE_mother_ifsc_code
+        hope_case._HOPE_mother_full_mcts_id
+        hope_case._HOPE_asha_id
+        hope_case._HOPE_asha_bank_account_number
+        hope_case._HOPE_asha_bank_id
+        hope_case._HOPE_asha_bank_branch_id
+        hope_case._HOPE_asha_ifsc_code
+
+        # test child other properties
+        hope_case._HOPE_child_parent_mother_name
+        hope_case._HOPE_child_parent_husband_name
+        hope_case._HOPE_child_parent_bank_account_number
+        hope_case._HOPE_child_parent_bank_id
+        hope_case._HOPE_child_parent_bank_branch_id
+        hope_case._HOPE_child_parent_ifsc_code
+        hope_case._HOPE_child_parent_full_mcts_id
+        hope_case._HOPE_child_full_child_mcts_id
+        hope_case._HOPE_asha_id
+        hope_case._HOPE_asha_bank_account_number
+        hope_case._HOPE_asha_bank_id
+        hope_case._HOPE_asha_bank_branch_id
+        hope_case._HOPE_asha_ifsc_code
+
+        # test mother events attributes
+        hope_case._HOPE_mother_anc_1_date
+        hope_case._HOPE_mother_anc_2_date
+        hope_case._HOPE_mother_anc_3_date
+        hope_case._HOPE_mother_anc_4_date
+        hope_case._HOPE_mother_all_anc_doses_given
+        hope_case._HOPE_mother_patient_reg_num
+        hope_case._HOPE_mother_registration_date
+        hope_case._HOPE_mother_existing_child_count
+        hope_case._HOPE_mother_age
+        hope_case._HOPE_mother_bpl_indicator
+        hope_case._HOPE_mother_delivery_date
+        hope_case._HOPE_mother_time_of_birth
+        hope_case._HOPE_mother_tubal_ligation
+        hope_case._HOPE_mother_area_indicator
+        hope_case._HOPE_mother_ifa1_date
+        hope_case._HOPE_mother_ifa2_date
+        hope_case._HOPE_mother_ifa3_date
+        hope_case._HOPE_mother_all_ifa_doses_given
+        hope_case._HOPE_mother_tt_1_date
+        hope_case._HOPE_mother_tt_2_date
+        hope_case._HOPE_mother_all_tt_doses_given
+
+        # test child events attributes
+        hope_case._HOPE_child_child_name
+        hope_case._HOPE_child_mother_name
+        hope_case._HOPE_child_number_of_visits
+        hope_case._HOPE_child_bcg_indicator
+        hope_case._HOPE_child_opv_1_indicator
+        hope_case._HOPE_child_dpt_1_indicator
+        hope_case._HOPE_child_delivery_type
+        hope_case._HOPE_child_child_name
+        hope_case._HOPE_child_mother_name
+        hope_case._HOPE_child_mother_husband_name
+        hope_case._HOPE_child_dpt_1_date
+        hope_case._HOPE_child_opv_1_date
+        hope_case._HOPE_child_hep_b_1_date
+        hope_case._HOPE_child_dpt_2_date
+        hope_case._HOPE_child_opv_2_date
+        hope_case._HOPE_child_hep_b_2_date
+        hope_case._HOPE_child_dpt_3_date
+        hope_case._HOPE_child_opv_3_date
+        hope_case._HOPE_child_hep_b_3_date
+        hope_case._HOPE_child_measles_date
+        hope_case._HOPE_child_dob
+        hope_case._HOPE_child_all_dpt1_opv1_hb1_doses_given
+        hope_case._HOPE_child_all_dpt2_opv2_hb2_doses_given
+        hope_case._HOPE_child_all_dpt3_opv3_hb3_doses_given
+        hope_case._HOPE_child_measles_dose_given
+
 
     def test_derived_properties(self):
         """

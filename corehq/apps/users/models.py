@@ -177,30 +177,66 @@ class Permissions(DocumentSchema):
             view_reports=True,
         )
 
+
+class UserRolePresets(object):
+    READ_ONLY_NO_REPORTS = "Read Only (No Reports)"
+    APP_EDITOR = "App Editor"
+    READ_ONLY = "Read Only"
+    FIELD_IMPLEMENTER = "Field Implementer"
+    INITIAL_ROLES = (
+        READ_ONLY,
+        APP_EDITOR,
+        FIELD_IMPLEMENTER,
+    )
+
+    @classmethod
+    def get_preset_map(cls):
+        return {
+            cls.READ_ONLY_NO_REPORTS: lambda: Permissions(),
+            cls.READ_ONLY: lambda: Permissions(view_reports=True),
+            cls.FIELD_IMPLEMENTER: lambda: Permissions(edit_commcare_users=True, view_reports=True),
+            cls.APP_EDITOR: lambda: Permissions(edit_apps=True, view_reports=True),
+        }
+
+    @classmethod
+    def get_permissions(cls, preset):
+        preset_map = cls.get_preset_map()
+        if preset not in preset_map.keys():
+            return None
+        return preset_map[preset]()
+
+
 class UserRole(Document):
     domain = StringProperty()
     name = StringProperty()
     permissions = SchemaProperty(Permissions)
+    is_archived = BooleanProperty(default=False)
 
     def get_qualified_id(self):
         return 'user-role:%s' % self.get_id
 
     @classmethod
-    def by_domain(cls, domain):
-        return cls.view('users/roles_by_domain',
+    def by_domain(cls, domain, is_archived=False):
+        # todo change this view to show is_archived status or move to PRBAC UserRole
+        all_roles = cls.view(
+            'users/roles_by_domain',
             startkey=[domain],
             endkey=[domain, {}],
             include_docs=True,
             reduce=False,
         )
+        return filter(lambda x: x.is_archived == is_archived, all_roles)
 
     @classmethod
-    def by_domain_and_name(cls, domain, name):
-        return cls.view('users/roles_by_domain',
+    def by_domain_and_name(cls, domain, name, is_archived=False):
+        # todo change this view to show is_archived status or move to PRBAC UserRole
+        all_roles = cls.view(
+            'users/roles_by_domain',
             key=[domain, name],
             include_docs=True,
             reduce=False,
         )
+        return filter(lambda x: x.is_archived == is_archived, all_roles)
 
     @classmethod
     def get_or_create_with_permissions(cls, domain, permissions, name=None):
@@ -215,23 +251,61 @@ class UserRole(Document):
         def get_name():
             if name:
                 return name
-            elif permissions == Permissions():
-                return "Read Only (No Reports)"
-            elif permissions == Permissions(edit_apps=True, view_reports=True):
-                return "App Editor"
-            elif permissions == Permissions(view_reports=True):
-                return "Read Only"
-            elif permissions == Permissions(edit_commcare_users=True, view_reports=True):
-                return "Field Implementer"
+            preset_match = filter(
+                lambda x: x[1]() == permissions,
+                UserRolePresets.get_preset_map().items()
+            )
+            if preset_match:
+                return preset_match[0][0]
         role = cls(domain=domain, permissions=permissions, name=get_name())
         role.save()
         return role
 
     @classmethod
+    def get_read_only_role_by_domain(cls, domain):
+        try:
+            return cls.by_domain_and_name(domain, UserRolePresets.READ_ONLY)[0]
+        except (IndexError, TypeError):
+            return cls.get_or_create_with_permissions(
+                domain, UserRolePresets.get_permissions(
+                    UserRolePresets.READ_ONLY), UserRolePresets.READ_ONLY)
+
+    @classmethod
+    def get_custom_roles_by_domain(cls, domain):
+        return filter(
+            lambda x: x.name not in UserRolePresets.INITIAL_ROLES,
+            cls.by_domain(domain)
+        )
+
+    @classmethod
+    def reset_initial_roles_for_domain(cls, domain):
+        initial_roles = filter(
+            lambda x: x.name in UserRolePresets.INITIAL_ROLES,
+            cls.by_domain(domain)
+        )
+        for role in initial_roles:
+            role.permissions = UserRolePresets.get_permissions(role.name)
+            role.save()
+
+    @classmethod
+    def archive_custom_roles_for_domain(cls, domain):
+        custom_roles = cls.get_custom_roles_by_domain(domain)
+        for role in custom_roles:
+            role.is_archived = True
+            role.save()
+
+    @classmethod
+    def unarchive_roles_for_domain(cls, domain):
+        archived_roles = cls.by_domain(domain, is_archived=True)
+        for role in archived_roles:
+            role.is_archived = False
+            role.save()
+
+    @classmethod
     def init_domain_with_presets(cls, domain):
-        cls.get_or_create_with_permissions(domain, Permissions(edit_apps=True, view_reports=True), 'App Editor')
-        cls.get_or_create_with_permissions(domain, Permissions(edit_commcare_users=True, view_reports=True), 'Field Implementer')
-        cls.get_or_create_with_permissions(domain, Permissions(view_reports=True), 'Read Only')
+        for role_name in UserRolePresets.INITIAL_ROLES:
+            cls.get_or_create_with_permissions(
+                domain, UserRolePresets.get_permissions(role_name), role_name)
 
     @classmethod
     def get_default(cls, domain=None):
@@ -276,6 +350,8 @@ class DomainMembership(Membership):
     timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
     override_global_tz = BooleanProperty(default=False)
     role_id = StringProperty()
+    location_id = StringProperty()
+    program_id = StringProperty()
 
     @property
     def permissions(self):
@@ -325,7 +401,11 @@ class DomainMembership(Membership):
         if self.is_admin:
             return AdminUserRole(self.domain)
         elif self.role_id:
-            return UserRole.get(self.role_id)
+            try:
+                return UserRole.get(self.role_id)
+            except ResourceNotFound:
+                logging.exception('no role with id %s found in domain %s' % (self.role_id, self.domain))
+                return None
         else:
             return None
 
@@ -765,6 +845,11 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     @property
     def human_friendly_name(self):
         return self.full_name if self.full_name else self.username
+
+    @property
+    def name_in_filters(self):
+        username = self.username.split("@")[0]
+        return "%s <%s>" % (self.full_name, username) if self.full_name else username
 
     formatted_name = full_name
     name = full_name
@@ -1232,6 +1317,11 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                     message="Error occured while syncing user %s: %s" %
                             (self.username, str(result[1]))
                 )
+
+    @property
+    @memoized
+    def project(self):
+        return Domain.get_by_name(self.domain)
 
     def is_domain_admin(self, domain=None):
         # cloudcare workaround

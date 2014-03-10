@@ -4,6 +4,8 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
 from jsonobject import DateTimeProperty
+from corehq.apps.reports import util
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
@@ -11,12 +13,12 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.fields import StrongFilterUsersField
 from corehq.apps.reports.generic import GenericTabularReport, ProjectInspectionReportParamsMixin, ElasticProjectInspectionReport
-from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
+from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin, CompletionOrSubmissionTimeMixin
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.users.models import CouchUser
 from corehq.elastic import es_query, ADD_TO_ES_FILTER
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
-from dimagi.utils.couch import get_cached_property, IncompatibleDocument
+from dimagi.utils.couch import get_cached_property, IncompatibleDocument, safe_index
 from corehq.apps.reports.graph_models import PieChart
 from corehq import elastic
 
@@ -32,12 +34,14 @@ class ProjectInspectionReport(ProjectInspectionReportParamsMixin, GenericTabular
               'corehq.apps.reports.fields.SelectMobileWorkerField']
 
 
-class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReportParametersMixin, MultiFormDrilldownMixin, DatespanMixin):
+class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReportParametersMixin, CompletionOrSubmissionTimeMixin, 
+                    MultiFormDrilldownMixin, DatespanMixin):
     name = ugettext_noop('Submit History')
     slug = 'submit_history'
     fields = [
-              'corehq.apps.reports.fields.CombinedSelectUsersField',
+              'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
               'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
+              'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
               'corehq.apps.reports.fields.DatespanField',
               'corehq.apps.reports.filters.forms.CustomPropsFilter']
     ajax_pagination = True
@@ -48,9 +52,11 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
     @property
     def headers(self):
         headers = DataTablesHeader(DataTablesColumn(_("View Form")),
-            DataTablesColumn(_("Username"), prop_name="form.meta.username"),
-            DataTablesColumn(_("Submit Time"), prop_name="form.meta.timeEnd"),
-            DataTablesColumn(_("Form"), prop_name="form.@name"))
+            DataTablesColumn(_("Username"), prop_name='form.meta.username'),
+            DataTablesColumn(_("Submission Time") if self.by_submission_time else _("Completion Time"),
+                             prop_name=self.time_field),
+            DataTablesColumn(_("Form"), prop_name='form.@name'),
+        )
         return headers
 
     @property
@@ -63,12 +69,16 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
             self.es_query()
         return self.es_response
 
+    @property
+    def time_field(self):
+        return 'received_on' if self.by_submission_time else 'form.meta.timeEnd'
+
     def es_query(self):
         if not getattr(self, 'es_response', None):
             q = {
                 "query": {
                     "range": {
-                        "form.meta.timeEnd": {
+                        self.time_field: {
                             "from": self.datespan.startdate_param,
                             "to": self.datespan.enddate_param,
                             "include_upper": False}}},
@@ -78,23 +88,19 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
             if xmlnss:
                 q["filter"]["and"].append({"terms": {"xmlns.exact": xmlnss}})
 
-            def any_in(a, b):
-                return any(i in b for i in a)
-
-            if self.request.GET.get('all_mws', 'off') != 'on' or any_in(
-                    [str(HQUserType.DEMO_USER), str(HQUserType.ADMIN), str(HQUserType.UNKNOWN)],
-                    self.request.GET.getlist('ufilter')):
+            users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
+            if "_all_mobile_workers" not in self.request.GET.getlist("emw") or users_data["admin_and_demo_users"]:
                 q["filter"]["and"].append(
-                    {"terms": {"form.meta.userID": filter(None, self.combined_user_ids)}})
+                    {"terms": {"form.meta.userID": filter(None, [u["user_id"] for u in users_data["combined_users"]])}})
             else:
-                ids = filter(None, [user['user_id'] for user in self.get_admins_and_demo_users()])
+                negated_ids = util.get_all_users_by_domain(self.domain, user_filter=HQUserType.all_but_users(), simplified=True)
+                ids = filter(None, [user['user_id'] for user in negated_ids])
                 q["filter"]["and"].append({"not": {"terms": {"form.meta.userID": ids}}})
 
             for cp in self.request.GET.get('custom_props', "").split(","):
                 q["filter"]["and"].append({"term": {"__props_for_querying": cp.lower()}})
 
-
-            q["sort"] = self.get_sorting_block() if self.get_sorting_block() else [{"form.meta.timeEnd" : {"order": "desc"}}]
+            q["sort"] = self.get_sorting_block() if self.get_sorting_block() else [{self.time_field : {"order": "desc"}}]
             self.es_response = es_query(params={"domain.exact": self.domain}, q=q, es_url=XFORM_INDEX + '/xform/_search',
                 start_at=self.pagination.start, size=self.pagination.count)
         return self.es_response
@@ -128,7 +134,7 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
             yield [
                 form_data_link(form["_id"]),
                 (username or _('No data for username')) + (" %s" % name if name else ""),
-                DateTimeProperty().wrap(form["form"]["meta"]["timeEnd"]).strftime("%Y-%m-%d %H:%M:%S"),
+                DateTimeProperty().wrap(safe_index(form, self.time_field.split('.'))).strftime("%Y-%m-%d %H:%M:%S"),
                 xmlns_to_name(self.domain, form.get("xmlns"), app_id=form.get("app_id")),
             ]
 

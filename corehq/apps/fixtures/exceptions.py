@@ -1,2 +1,4 @@
-class UploadItemListsException(Exception):
+
+
+class FixtureException(Exception):
     pass

@@ -4,6 +4,7 @@ var ExportManager = function (o) {
     self.export_type = o.export_type || "form";
     self.is_custom = o.is_custom || false;
 
+    self.format = o.format || "csv";
     self.domain = o.domain;
     self.downloadUrl = o.downloadUrl;
     self.bulkDownloadUrl = o.bulkDownloadUrl;
@@ -162,37 +163,54 @@ var ExportManager = function (o) {
         self.downloadExport(downloadUrl);
     };
 
-    self.requestDownload = function(data, event) {
+    self._requestDownload = function(event, options) {
         var $button = $(event.srcElement || event.currentTarget);
-        var modalTitle = $button.data('formname') || $button.data('xmlns');
         var downloadUrl = self.downloadUrl || $button.data('dlocation');
-
-        if ($button.data('modulename'))
-            modalTitle  = $button.data('modulename')+" > "+modalTitle;
-        resetModal("'"+modalTitle+"'", true);
-
+        resetModal("'" + options.modalTitle + "'", true);
+        var format = self.format;
+        var fileName = encodeURIComponent($button.data('formname'));
+        if ($button.data('format')) {
+            format = $button.data('format');
+        }
         downloadUrl = downloadUrl +
-            "?"+self.exportFilters+
-            '&export_tag=["'+self.domain+'","'+$button.data('xmlns')+'","'+$button.data('formname')+'"]' +
-            '&filename='+$button.data('formname') +
-            '&async=true';
-        if (!self.is_custom)
-            downloadUrl = downloadUrl+'&app_id='+$button.data('appid');
+            "?" + self.exportFilters +
+            '&async=true' +
+            '&export_tag=["'+self.domain+'","'+$button.data('xmlns')+'","' + fileName +'"]' +
+            '&format=' + format +
+            '&filename=' + fileName;
 
+        for (var k in options.downloadParams) {
+            if (options.downloadParams.hasOwnProperty(k)) {
+                var v = options.downloadParams[k];
+                downloadUrl += '&' + k + '=' + v;
+            }
+        }
         self.downloadExport(downloadUrl);
     };
 
-    self.requestCaseDownload = function(data, event) {
+    self.requestDownload = function(data, event) {
         var $button = $(event.srcElement || event.currentTarget);
-        var downloadUrl = self.downloadUrl || $button.data('dlocation');
-        var modalTitle = "Case List";
-        resetModal(modalTitle, true);
+        var modalTitle = $button.data('formname') || $button.data('xmlns');
+        if ($button.data('modulename')) {
+            modalTitle  = $button.data('modulename') + " > " + modalTitle;
+        }
+        var downloadParams = {};
+        if (!self.is_custom) {
+            downloadParams.app_id = $button.data('appid');
+        }
+        return self._requestDownload(event, {
+            modalTitle: modalTitle,
+            downloadParams: downloadParams
+        });
+    };
 
-        downloadUrl += '?'+self.exportFilters;
-        downloadUrl += '&include_closed=' + $('#include-closed-select').val();
-        downloadUrl += '&async=true'
-
-        self.downloadExport(downloadUrl);
+    self.requestCaseDownload = function(data, event) {
+        return self._requestDownload(event, {
+            modalTitle: "Case List",
+            downloadParams: {
+                include_closed: $('#include-closed-select').val()
+            }
+        });
     };
 
     self.checkCustomSheetNameLength = function(data, event) {
@@ -304,5 +322,3 @@ ko.bindingHandlers.updateCustomSheetName = {
         }
     }
 };
-
-

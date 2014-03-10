@@ -8,6 +8,7 @@ import numpy
 import operator
 import pytz
 from corehq.apps.reports import util
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.reports.standard import ProjectReportParametersMixin, \
     DatespanMixin, ProjectReport, DATE_FORMAT
 from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, FormsByApplicationFilter, SingleFormByApplicationFilter
@@ -79,9 +80,8 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
     """
     name = ugettext_noop('Case Activity')
     slug = 'case_activity'
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.CaseTypeField',
-              'corehq.apps.reports.fields.GroupField']
+    fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
+              'corehq.apps.reports.fields.CaseTypeField']
     all_users = None
     display_data = ['percent']
     emailable = True
@@ -215,7 +215,8 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
 
     @property
     def rows(self):
-        rows = [self.Row(self, user) for user in self.users]
+        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
+        rows = [self.Row(self, user) for user in users_data["combined_users"]]
 
         total_row = self.TotalRow(rows, _("All Users"))
 
@@ -280,8 +281,7 @@ class SubmissionsByFormReport(WorkerMonitoringReportTableBase, MultiFormDrilldow
     name = ugettext_noop("Submissions By Form")
     slug = "submissions_by_form"
     fields = [
-        'corehq.apps.reports.fields.FilterUsersField',
-        'corehq.apps.reports.fields.GroupField',
+        'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
         'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
         'corehq.apps.reports.fields.DatespanField'
     ]
@@ -313,7 +313,8 @@ class SubmissionsByFormReport(WorkerMonitoringReportTableBase, MultiFormDrilldow
     def rows(self):
         rows = []
         totals = [0]*(len(self.all_relevant_forms)+1)
-        for user in self.users:
+        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
+        for user in users_data["combined_users"]:
             row = []
             if self.all_relevant_forms:
                 for form in self.all_relevant_forms.values():
@@ -344,8 +345,7 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
     slug = "daily_form_stats"
     name = ugettext_noop("Daily Form Activity")
 
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-                'corehq.apps.reports.fields.GroupField',
+    fields = [  'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
                 'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
                 'corehq.apps.reports.fields.DatespanField']
 
@@ -382,11 +382,13 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
             endkey=key+[self.datespan.enddate_param_utc if self.by_submission_time else self.datespan.enddate_param]
         ).all()
 
-        user_map = dict([(user.get('user_id'), i) for (i, user) in enumerate(self.users)])
+        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
+        user_map = dict([(user.get('user_id'), i) for (i, user) in enumerate(users_data["combined_users"])])
         date_map = dict([(date.strftime(DATE_FORMAT), i+1) for (i,date) in enumerate(self.dates)])
-        rows = [[0]*(2+len(date_map)) for _tmp in range(len(self.users))]
+        rows = [[0]*(2+len(date_map)) for _tmp in range(len(users_data["combined_users"]))]
         total_row = [0]*(2+len(date_map))
 
+        user_ids = [user.get('user_id') for user in users_data["combined_users"]]
         for result in results:
             _tmp, _domain, date = result['key']
             date = dateutil.parser.parse(date)
@@ -395,12 +397,12 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
             date = date.isoformat()
             val = result['value']
             user_id = val.get("user_id")
-            if user_id in self.user_ids:
+            if user_id in user_ids:
                 date_key = date_map.get(date[0:10], None)
                 if date_key:
                     rows[user_map[user_id]][date_key] += 1
 
-        for i, user in enumerate(self.users):
+        for i, user in enumerate(users_data["combined_users"]):
             rows[i][0] = self.get_user_link(user)
             total = sum(rows[i][1:-1])
             rows[i][-1] = total
@@ -418,8 +420,7 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
 class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin):
     name = ugettext_noop("Form Completion Time")
     slug = "completion_times"
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.GroupField',
+    fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
               'corehq.apps.reports.filters.forms.SingleFormByApplicationFilter',
               'corehq.apps.reports.fields.DatespanField']
 
@@ -507,7 +508,8 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin):
 
         durations = []
         totalcount = 0
-        for user in self.users:
+        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
+        for user in users_data["combined_users"]:
             stats = self.get_user_data(user.get('user_id'))
             rows.append([self.get_user_link(user),
                          stats['error_msg'] if stats['error_msg'] else _fmt_ts(stats['avg']),
@@ -560,8 +562,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, Mu
     description = ugettext_noop("Time lag between when forms were completed and when forms were successfully "
                                 "sent to CommCare HQ.")
     
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.SelectMobileWorkerField',
+    fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
               'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
               'corehq.apps.reports.fields.DatespanField']
 
@@ -581,7 +582,8 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, Mu
         total = 0
         total_seconds = 0
         if self.all_relevant_forms:
-            for user in self.users:
+            users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
+            for user in users_data["combined_users"]:
                 if not user.get('user_id'):
                     # calling get_form_data with no user_id will return ALL form data which is not what we want
                     continue
@@ -684,8 +686,7 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
     description = ugettext_noop("Graphical representation of when forms are submitted.")
 
     fields = [
-        'corehq.apps.reports.fields.FilterUsersField',
-        'corehq.apps.reports.fields.GroupField',
+        'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
         'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
         'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
         'corehq.apps.reports.fields.DatespanField']
@@ -696,7 +697,8 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
     @memoized
     def activity_times(self):
         all_times = []
-        for user in self.users:
+        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
+        for user in users_data["combined_users"]:
             for form, info in self.all_relevant_forms.items():
                 key = make_form_couch_key(self.domain, user_id=user.get('user_id'),
                    xmlns=info['xmlns'], app_id=info['app_id'], by_submission_time=self.by_submission_time)
