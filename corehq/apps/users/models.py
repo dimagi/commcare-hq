@@ -766,7 +766,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     @property
     def name_in_filters(self):
-        return "%s <%s>" % (self.full_name, self.username) if self.full_name else self.username
+        username = self.username.split("@")[0]
+        return "%s <%s>" % (self.full_name, username) if self.full_name else username
 
     formatted_name = full_name
     name = full_name
