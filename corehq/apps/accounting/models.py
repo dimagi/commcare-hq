@@ -906,8 +906,7 @@ class InvoicePdf(SafeSaveDocument):
             description = (line_item.base_description
                            or line_item.unit_description)
             if line_item.quantity > 0:
-                template.add_item(datetime.date.today(),
-                                  description,
+                template.add_item(description,
                                   line_item.quantity,
                                   line_item.unit_cost)
 

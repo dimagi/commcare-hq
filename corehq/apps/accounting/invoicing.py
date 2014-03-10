@@ -493,7 +493,7 @@ class InvoiceTemplate(object):
 
         self.items = []
 
-    def add_item(self, date, description, quantity, rate):
+    def add_item(self, description, quantity, rate):
         self.items.append(InvoiceItem(description, quantity, rate))
 
     def get_pdf(self):
