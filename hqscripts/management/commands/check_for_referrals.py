@@ -17,6 +17,14 @@ class Command(LabelCommand):
             if i % 1000 == 0:
                 self.stderr.write('%s' % i)
             if doc.get('referrals'):
-                self.stdout.write('%s %s %s' % (
-                    doc.get('_id'), doc.get('domain'), doc.get('modified_on')
+                try:
+                    referral_date = filter(
+                        None,
+                        [r.get('modified_on') for r in doc['referrals']],
+                    )[-1]
+                except (TypeError, IndexError):
+                    referral_date = 'N/A'
+                self.stdout.write('%s\t%s\t%s\t%s' % (
+                    doc.get('_id'), doc.get('domain'),
+                    doc.get('server_modified_on'), referral_date,
                 ))
