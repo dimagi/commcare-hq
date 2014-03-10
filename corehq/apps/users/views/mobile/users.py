@@ -19,7 +19,7 @@ from django.views.decorators.http import require_POST
 from django.contrib import messages
 from corehq import toggles, privileges
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
-from corehq.apps.accounting.decorators import requires_privilege_alert, require_billing_admin
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback, require_billing_admin
 from corehq.apps.accounting.models import BillingAccount, BillingAccountType, BillingAccountAdmin
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.users.util import can_add_extra_mobile_workers
@@ -43,7 +43,6 @@ from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound, JSONReader
 from corehq.apps.commtrack.models import CommTrackUser
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
-import toggle
 
 DEFAULT_USER_LIST_LIMIT = 10
 
@@ -238,11 +237,10 @@ class ListCommCareUsersView(BaseUserSettingsView):
 
     @property
     def can_bulk_edit_users(self):
-        if toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, self.couch_user.username):
-            try:
-                ensure_request_has_privilege(self.request, privileges.BULK_USER_MANAGEMENT)
-            except PermissionDenied:
-                return False
+        try:
+            ensure_request_has_privilege(self.request, privileges.BULK_USER_MANAGEMENT)
+        except PermissionDenied:
+            return False
         return True
 
     @property
@@ -282,6 +280,8 @@ class ListCommCareUsersView(BaseUserSettingsView):
     @property
     @memoized
     def users_list_total(self):
+        if self.query:
+            return self.total_users_from_es
         return CommCareUser.total_by_domain(self.domain, is_active=not self.show_inactive)
 
     @property
@@ -344,6 +344,7 @@ class ListCommCareUsersView(BaseUserSettingsView):
 
 class AsyncListCommCareUsersView(ListCommCareUsersView):
     urlname = 'user_list'
+    es_results = None
 
     @property
     def sort_by(self):
@@ -376,9 +377,7 @@ class AsyncListCommCareUsersView(ListCommCareUsersView):
             users.sort(key=lambda user: -user.form_count)
         return users
 
-    @property
-    @memoized
-    def users_from_es(self):
+    def query_es(self):
         q = {
             "query": { "query_string": { "query": self.query }},
             "filter": {"and": ADD_TO_ES_FILTER["users"][:]},
@@ -388,10 +387,23 @@ class AsyncListCommCareUsersView(ListCommCareUsersView):
             "domain": self.domain,
             "is_active": not self.show_inactive,
         }
-        results = es_query(params=params, q=q, es_url=ES_URLS["users"],
+        self.es_results = es_query(params=params, q=q, es_url=ES_URLS["users"],
                            size=self.users_list_limit, start_at=self.users_list_skip)
-        users = [res['_source'] for res in results.get('hits', {}).get('hits', [])]
+
+    @property
+    @memoized
+    def users_from_es(self):
+        if self.es_results is None:
+            self.query_es()
+        users = [res['_source'] for res in self.es_results.get('hits', {}).get('hits', [])]
         return [CommCareUser.wrap(user) for user in users]
+
+    @property
+    @memoized
+    def total_users_from_es(self):
+        if self.es_results is None:
+            self.query_es()
+        return self.es_results.get("hits", {}).get("total", 0)
 
     def get_archive_text(self, is_active):
         if is_active:
@@ -437,6 +449,7 @@ class AsyncListCommCareUsersView(ListCommCareUsersView):
         return HttpResponse(json.dumps({
             'success': True,
             'current_page': self.users_list_page,
+            'users_list_total': self.users_list_total,
             'users_list': self.users_list,
         }))
 
@@ -493,7 +506,9 @@ class ConfirmBillingAccountForExtraUsersView(BaseUserSettingsView, AsyncHandlerM
                     request, _("Billing contact information was successfully confirmed. "
                                "You may now add additional Mobile Workers.")
                 )
-                return HttpResponseRedirect(reverse(CreateCommCareUserView.urlname, args=[self.domain]))
+                return HttpResponseRedirect(reverse(
+                    ListCommCareUsersView.urlname, args=[self.domain]
+                ))
         return self.get(request, *args, **kwargs)
 
 
@@ -646,7 +661,7 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
     urlname = 'upload_commcare_users'
     page_title = ugettext_noop("Bulk Upload Mobile Workers")
 
-    @method_decorator(requires_privilege_alert(privileges.BULK_USER_MANAGEMENT))
+    @method_decorator(requires_privilege_with_fallback(privileges.BULK_USER_MANAGEMENT))
     def dispatch(self, request, *args, **kwargs):
         return super(UploadCommCareUsers, self).dispatch(request, *args, **kwargs)
 

@@ -74,6 +74,8 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
         'edit_form_actions'),
     url(r'^edit_careplan_form_actions/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/(?P<form_id>[\w-]+)/$',
         'edit_careplan_form_actions'),
+    url(r'^edit_advanced_form_actions/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/(?P<form_id>[\w-]+)/$',
+        'edit_advanced_form_actions'),
     # multimedia stuff
     url(r'^multimedia/(?P<app_id>[\w-]+)/download/$',
         'multimedia_list_download', name='multimedia_list_download'),

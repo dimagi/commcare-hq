@@ -33,16 +33,20 @@ def get_dynamic_db_settings(server_root, username, password, dbname,
     }
 
 
-def make_couchdb_tuple(app_label, couch_database_url):
+def _make_couchdb_tuple(row, couch_database_url):
+
+    if isinstance(row, basestring):
+        app_label = row
+        return app_label, couch_database_url
+    else:
+        app_label, postfix = row
+        return app_label, '%s__%s' % (couch_database_url, postfix)
+
+
+def make_couchdb_tuples(config, couch_database_url):
     """
     Helper function to generate couchdb tuples
     for mapping app name to couch database URL.
 
-    Will also magically alter the URL for special core libraries;
-    namely, auditcare, and couchlog
     """
-
-    if app_label == 'auditcare' or app_label == 'couchlog':
-        return app_label, '%s__%s' % (couch_database_url, app_label)
-    else:
-        return app_label, couch_database_url
+    return [_make_couchdb_tuple(row, couch_database_url) for row in config]

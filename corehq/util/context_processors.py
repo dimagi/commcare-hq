@@ -1,4 +1,3 @@
-import toggle
 from django.conf import settings
 from django.core.urlresolvers import resolve, reverse
 from django.http import Http404
@@ -48,15 +47,11 @@ def get_per_domain_context(project, request=None):
         pass
 
     if project and project.has_custom_logo:
-        if (hasattr(request, 'user') and
-                toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, request.user.username)):
-            try:
-                ensure_request_has_privilege(request, privileges.CUSTOM_BRANDING)
-                logo_url = reverse('logo', args=[project.name])
-            except PermissionDenied:
-                pass
-        else:
+        try:
+            ensure_request_has_privilege(request, privileges.CUSTOM_BRANDING)
             logo_url = reverse('logo', args=[project.name])
+        except PermissionDenied:
+            pass
 
 
     return {

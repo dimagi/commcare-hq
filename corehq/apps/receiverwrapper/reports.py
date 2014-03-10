@@ -27,7 +27,7 @@ class SubmitFilter(CouchFilter):
         
     
     def get_total(self):
-        return XFormError.view("receiverwrapper/all_submissions_by_domain",
+        return XFormError.view("couchforms/all_submissions_by_domain",
                                **self._kwargs).count()
 
     def get(self, count):
@@ -37,7 +37,7 @@ class SubmitFilter(CouchFilter):
             form.doc_type = self.doc_type
             return form 
         return [_update_doc_type(form) for form in \
-                 XFormError.view("receiverwrapper/all_submissions_by_domain",
+                 XFormError.view("couchforms/all_submissions_by_domain",
                                  include_docs=True,
                                  limit=count,
                                  **self._kwargs)]
@@ -89,7 +89,7 @@ class SubmissionErrorReport(DeploymentsReport):
 
     @property
     def total_records(self):
-        return XFormError.view("receiverwrapper/all_submissions_by_domain",
+        return XFormError.view("couchforms/all_submissions_by_domain",
             startkey=[self.domain, "by_type"],
             endkey=[self.domain, "by_type", {}],
             reduce=False).count()

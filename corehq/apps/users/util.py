@@ -10,7 +10,6 @@ from dimagi.utils.couch.database import get_db
 from django.core.cache import cache
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
-import toggle
 
 
 WEIRD_USER_IDS = ['commtrack-system', 'demo_user']
@@ -131,11 +130,10 @@ def can_add_extra_mobile_workers(request):
     user_limit = request.plan.user_limit
     if user_limit == -1 or num_web_users < user_limit:
         return True
-    if toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, request.user.username):
-        try:
-            ensure_request_has_privilege(request, privileges.ALLOW_EXCESS_USERS)
-        except PermissionDenied:
-            account = BillingAccount.get_account_by_domain(request.domain)
-            if account is None or account.date_confirmed_extra_charges is None:
-                return False
+    try:
+        ensure_request_has_privilege(request, privileges.ALLOW_EXCESS_USERS)
+    except PermissionDenied:
+        account = BillingAccount.get_account_by_domain(request.domain)
+        if account is None or account.date_confirmed_extra_charges is None:
+            return False
     return True

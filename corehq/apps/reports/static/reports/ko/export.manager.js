@@ -163,20 +163,21 @@ var ExportManager = function (o) {
         self.downloadExport(downloadUrl);
     };
 
-    self._requestDownload = function(options) {
+    self._requestDownload = function(event, options) {
         var $button = $(event.srcElement || event.currentTarget);
         var downloadUrl = self.downloadUrl || $button.data('dlocation');
         resetModal("'" + options.modalTitle + "'", true);
         var format = self.format;
+        var fileName = encodeURIComponent($button.data('formname'));
         if ($button.data('format')) {
             format = $button.data('format');
         }
         downloadUrl = downloadUrl +
             "?" + self.exportFilters +
             '&async=true' +
-            '&export_tag=["'+self.domain+'","'+$button.data('xmlns')+'","'+$button.data('formname')+'"]' +
+            '&export_tag=["'+self.domain+'","'+$button.data('xmlns')+'","' + fileName +'"]' +
             '&format=' + format +
-            '&filename='+$button.data('formname');
+            '&filename=' + fileName;
 
         for (var k in options.downloadParams) {
             if (options.downloadParams.hasOwnProperty(k)) {
@@ -197,14 +198,14 @@ var ExportManager = function (o) {
         if (!self.is_custom) {
             downloadParams.app_id = $button.data('appid');
         }
-        return self._requestDownload({
+        return self._requestDownload(event, {
             modalTitle: modalTitle,
             downloadParams: downloadParams
         });
     };
 
     self.requestCaseDownload = function(data, event) {
-        return self._requestDownload({
+        return self._requestDownload(event, {
             modalTitle: "Case List",
             downloadParams: {
                 include_closed: $('#include-closed-select').val()

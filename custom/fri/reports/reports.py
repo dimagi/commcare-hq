@@ -7,7 +7,11 @@ from django.utils.translation import ugettext as _
 from corehq.apps.domain.models import Domain
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
+from corehq.apps.reports.datatables import (
+    DataTablesColumn,
+    DataTablesHeader,
+    DTSortType,
+)
 from corehq.apps.reports.util import format_datatables_data
 from custom.fri.models import FRISMSLog, PROFILE_DESC
 from custom.fri.reports.filters import InteractiveParticipantFilter, RiskProfileFilter
@@ -18,7 +22,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xform import CaseDbCache
 from corehq.apps.users.models import CouchUser, UserCache
 from dimagi.utils.timezones import utils as tz_utils
-from custom.fri.api import get_interactive_participants
+from custom.fri.api import get_interactive_participants, get_valid_date_range
 from django.core.urlresolvers import reverse
 from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
 
@@ -134,7 +138,10 @@ class MessageBankReport(FRIReport):
 class MessageReport(FRIReport, DatespanMixin):
     name = ugettext_noop('Message Report')
     slug = 'fri_message_report'
-    fields = [DatespanMixin.datespan_field]
+    fields = [
+        DatespanMixin.datespan_field,
+        "custom.fri.reports.fields.ShowOnlySurveyTraffic",
+    ]
     exportable = True
     emailable = False
 
@@ -190,6 +197,10 @@ class MessageReport(FRIReport, DatespanMixin):
             else:
                 return _("System")
 
+    def show_only_survey_traffic(self):
+        value = self.request.GET.get("show_only_survey_traffic", None)
+        return value == "on"
+
     @property
     def rows(self):
         startdate = json_format_datetime(self.datespan.startdate_utc)
@@ -209,8 +220,12 @@ class MessageReport(FRIReport, DatespanMixin):
         case_cache = CaseDbCache(domain=self.domain, strip_history=False, deleted_ok=True)
         user_cache = UserCache()
 
+        show_only_survey_traffic = self.show_only_survey_traffic()
+
         for message in data:
             if message.direction == OUTGOING and not message.processed:
+                continue
+            if show_only_survey_traffic and message.xforms_session_couch_id is None:
                 continue
             # Add metadata from the message bank if it has not been added already
             if (message.direction == OUTGOING) and (not message.fri_message_bank_lookup_completed):
@@ -272,6 +287,7 @@ class PHEDashboardReport(FRIReport):
     def headers(self):
         return DataTablesHeader(
             DataTablesColumn(_("Participant")),
+            DataTablesColumn(_("Last Day of PTS"), sort_type=DTSortType.NUMERIC),
             DataTablesColumn(_("Open Chat Window")),
         )
 
@@ -280,14 +296,21 @@ class PHEDashboardReport(FRIReport):
         result = []
         cases = self.interactive_participants
         for case in cases:
+            start_date, end_date = get_valid_date_range(case)
+            # end_date will never be None because of how we get_interactive_participants
             result.append([
                 self._fmt(case.get_case_property("name_and_pid")),
+                self._fmt_date(end_date),
                 self._fmt_chat_link(case.get_id),
             ])
         return result
 
     def _fmt(self, val):
         return format_datatables_data(val, val)
+
+    def _fmt_date(self, val):
+        date_as_num = int(val.strftime("%Y%m%d"))
+        return format_datatables_data(val.strftime("%m/%d/%Y"), date_as_num)
 
     def _fmt_chat_link(self, case_id):
         return self.table_cell(
@@ -332,12 +355,13 @@ class SurveyResponsesReport(FRIReport):
             pid = case.get_case_property("pid")
             study_arm = case.get_case_property("study_arm")
             registration_date = get_date(case, "start_date")
+            first_name = case.get_case_property("first_name") or ""
             if registration_date is None:
                 continue
             first_survey_date = self.get_first_tuesday(registration_date)
             row = [
                 self._fmt(pid),
-                self._fmt(case.name),
+                self._fmt(first_name),
                 self._fmt(study_arm),
             ]
             for i in range(8):

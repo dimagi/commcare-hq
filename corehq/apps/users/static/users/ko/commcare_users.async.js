@@ -131,6 +131,7 @@ var CommCareUsersViewModel = function (o) {
                 }
                 self.current_page(data.current_page);
                 self.users_list(data.users_list);
+                self.total(data.users_list_total);
                 self.archive_action_users([]);
             }
         },

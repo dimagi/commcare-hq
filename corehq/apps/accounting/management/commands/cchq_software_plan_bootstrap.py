@@ -18,7 +18,6 @@ from django_prbac.models import Role
 
 logger = logging.getLogger(__name__)
 
-
 class Command(BaseCommand):
     help = 'Populate a fresh db with standard set of Software Plans.'
 
@@ -34,10 +33,17 @@ class Command(BaseCommand):
         make_option('--force-reset', action='store_true',  default=False,
                     help='Assign latest version of all DefaultProductPlans to current '
                          'subscriptions and delete older versions.'),
+        make_option('--testing', action='store_true',  default=False,
+                    help='Run this command for testing purposes.'),
     )
 
-    def handle(self, dry_run=False, verbose=False, fresh_start=False, flush=False, force_reset=False, *args, **options):
-        logging.info('Bootstrapping standard plans. Enterprise plans will have to be created via the admin UIs.')
+    def handle(self, dry_run=False, verbose=False, fresh_start=False, flush=False, force_reset=False,
+               testing=False, *args, **options):
+        logger.info('Bootstrapping standard plans. Enterprise plans will have to be created via the admin UIs.')
+
+        self.for_tests = testing
+        if self.for_tests:
+            logger.info("Initializing Plans and Roles for Testing")
 
         if verbose:
             logger.setLevel(logging.DEBUG)
@@ -70,7 +76,7 @@ class Command(BaseCommand):
             self.ensure_plans(dry_run=dry_run)
 
     def flush_plans(self):
-        logging.info("Flushing ALL SoftwarePlans...")
+        logger.info("Flushing ALL SoftwarePlans...")
         DefaultProductPlan.objects.all().delete()
         SoftwarePlanVersion.objects.all().delete()
         SoftwarePlan.objects.all().delete()
@@ -86,14 +92,14 @@ class Command(BaseCommand):
             subscriptions_to_update = Subscription.objects.filter(plan_version__plan__pk=software_plan.pk).exclude(
                 plan_version=latest_version).all()
             # assign latest version of software plan to all subscriptions referencing that software plan
-            logging.info('Updating %d subscriptions to latest version of %s.' %
+            logger.info('Updating %d subscriptions to latest version of %s.' %
                          (len(subscriptions_to_update), software_plan.name))
             for subscription in subscriptions_to_update:
                 subscription.plan_version = latest_version
                 subscription.save()
             # delete all old versions of that software plan
             versions_to_remove = software_plan.softwareplanversion_set.exclude(pk=latest_version.pk).all()
-            logging.info("Removing %d old versions." % len(versions_to_remove))
+            logger.info("Removing %d old versions." % len(versions_to_remove))
             versions_to_remove.delete()
 
     def ensure_plans(self, dry_run=False):
@@ -104,8 +110,8 @@ class Command(BaseCommand):
                 try:
                     role = Role.objects.get(slug=role_slug)
                 except ObjectDoesNotExist:
-                    logging.info("Could not find the role '%s'. Did you forget to run cchq_prbac_bootstrap?")
-                    logging.info("Aborting. You should figure this out.")
+                    logger.info("Could not find the role '%s'. Did you forget to run cchq_prbac_bootstrap?")
+                    logger.info("Aborting. You should figure this out.")
                     return
                 software_plan_version = SoftwarePlanVersion(role=role)
 
@@ -115,15 +121,15 @@ class Command(BaseCommand):
                     name='%s Edition' % product.name, edition=edition, visibility=SoftwarePlanVisibility.PUBLIC
                 )
                 if dry_run:
-                    logging.info("[DRY RUN] Creating Software Plan: %s" % software_plan.name)
+                    logger.info("[DRY RUN] Creating Software Plan: %s" % software_plan.name)
                 else:
                     try:
                         software_plan = SoftwarePlan.objects.get(name=software_plan.name)
-                        logging.info("Plan '%s' already exists. Using existing plan to add version."
+                        logger.info("Plan '%s' already exists. Using existing plan to add version."
                                      % software_plan.name)
                     except SoftwarePlan.DoesNotExist:
                         software_plan.save()
-                        logging.info("Creating Software Plan: %s" % software_plan.name)
+                        logger.info("Creating Software Plan: %s" % software_plan.name)
 
                         software_plan_version.plan = software_plan
                         software_plan_version.save()
@@ -137,25 +143,25 @@ class Command(BaseCommand):
 
                 default_product_plan = DefaultProductPlan(product_type=product.product_type, edition=edition)
                 if dry_run:
-                    logging.info("[DRY RUN] Setting plan as default for product '%s' and edition '%s'." %
+                    logger.info("[DRY RUN] Setting plan as default for product '%s' and edition '%s'." %
                                  (product.product_type, default_product_plan.edition))
                 else:
                     try:
                         default_product_plan = DefaultProductPlan.objects.get(product_type=product.product_type,
                                                                               edition=edition)
-                        logging.info("Default for product '%s' and edition '%s' already exists." %
+                        logger.info("Default for product '%s' and edition '%s' already exists." %
                                      (product.product_type, default_product_plan.edition))
                     except ObjectDoesNotExist:
                         default_product_plan.plan = software_plan
                         default_product_plan.save()
-                        logging.info("Setting plan as default for product '%s' and edition '%s'." %
+                        logger.info("Setting plan as default for product '%s' and edition '%s'." %
                                      (product.product_type, default_product_plan.edition))
 
     def ensure_product_and_rate(self, product_type, edition, dry_run=False):
         """
         Ensures that all the necessary SoftwareProducts and SoftwareProductRates are created for the plan.
         """
-        logging.info('Ensuring Products and Product Rates')
+        logger.info('Ensuring Products and Product Rates')
 
         product = SoftwareProduct(name='%s %s' % (product_type, edition), product_type=product_type)
         if edition == SoftwarePlanEdition.ENTERPRISE:
@@ -182,16 +188,16 @@ class Command(BaseCommand):
 
         for product_rate in BOOTSTRAP_PRODUCT_RATES[edition]:
             if dry_run:
-                logging.info("[DRY RUN] Creating Product: %s" % product)
-                logging.info("[DRY RUN] Corresponding product rate of $%d created." % product_rate.monthly_fee)
+                logger.info("[DRY RUN] Creating Product: %s" % product)
+                logger.info("[DRY RUN] Corresponding product rate of $%d created." % product_rate.monthly_fee)
             else:
                 try:
                     product = SoftwareProduct.objects.get(name=product.name)
-                    logging.info("Product '%s' already exists. Using existing product to add rate." % product.name)
+                    logger.info("Product '%s' already exists. Using existing product to add rate." % product.name)
                 except SoftwareProduct.DoesNotExist:
                     product.save()
-                    logging.info("Creating Product: %s" % product)
-                logging.info("Corresponding product rate of $%d created." % product_rate.monthly_fee)
+                    logger.info("Creating Product: %s" % product)
+                logger.info("Corresponding product rate of $%d created." % product_rate.monthly_fee)
             product_rate.product = product
             product_rates.append(product_rate)
         return product, product_rates
@@ -200,7 +206,7 @@ class Command(BaseCommand):
         """
         Ensures that all the Features necessary for the plans are created.
         """
-        logging.info('Ensuring Features')
+        logger.info('Ensuring Features')
 
         edition_to_features = defaultdict(list)
         for edition in self.editions:
@@ -209,14 +215,14 @@ class Command(BaseCommand):
                 if edition == SoftwarePlanEdition.ENTERPRISE:
                     feature.name = "Dimagi Only %s" % feature.name
                 if dry_run:
-                    logging.info("[DRY RUN] Creating Feature: %s" % feature)
+                    logger.info("[DRY RUN] Creating Feature: %s" % feature)
                 else:
                     try:
                         feature = Feature.objects.get(name=feature.name)
-                        logging.info("Feature '%s' already exists. Using existing feature to add rate." % feature.name)
+                        logger.info("Feature '%s' already exists. Using existing feature to add rate." % feature.name)
                     except ObjectDoesNotExist:
                         feature.save()
-                        logging.info("Creating Feature: %s" % feature)
+                        logger.info("Creating Feature: %s" % feature)
                 edition_to_features[edition].append(feature)
         return edition_to_features
 
@@ -224,25 +230,29 @@ class Command(BaseCommand):
         """
         Ensures that all the FeatureRates necessary for the plans are created.
         """
-        logging.info('Ensuring Feature Rates')
+        logger.info('Ensuring Feature Rates')
 
         feature_rates = []
         BOOTSTRAP_FEATURE_RATES = {
             SoftwarePlanEdition.COMMUNITY: {
-                FeatureType.USER: FeatureRate(monthly_limit=50, per_excess_fee=Decimal('1.00')),
+                FeatureType.USER: FeatureRate(monthly_limit=2 if self.for_tests else 50,
+                                              per_excess_fee=Decimal('1.00')),
                 FeatureType.SMS: FeatureRate(monthly_limit=0),  # use defaults here
             },
             SoftwarePlanEdition.STANDARD: {
-                FeatureType.USER: FeatureRate(monthly_limit=100, per_excess_fee=Decimal('1.00')),
-                FeatureType.SMS: FeatureRate(monthly_limit=250),
+                FeatureType.USER: FeatureRate(monthly_limit=4 if self.for_tests else 100,
+                                              per_excess_fee=Decimal('1.00')),
+                FeatureType.SMS: FeatureRate(monthly_limit=3 if self.for_tests else 100),
             },
             SoftwarePlanEdition.PRO: {
-                FeatureType.USER: FeatureRate(monthly_limit=500, per_excess_fee=Decimal('1.00')),
-                FeatureType.SMS: FeatureRate(monthly_limit=500),
+                FeatureType.USER: FeatureRate(monthly_limit=6 if self.for_tests else 500,
+                                              per_excess_fee=Decimal('1.00')),
+                FeatureType.SMS: FeatureRate(monthly_limit=5 if self.for_tests else 500),
             },
             SoftwarePlanEdition.ADVANCED: {
-                FeatureType.USER: FeatureRate(monthly_limit=1000, per_excess_fee=Decimal('1.00')),
-                FeatureType.SMS: FeatureRate(monthly_limit=1000),
+                FeatureType.USER: FeatureRate(monthly_limit=8 if self.for_tests else 1000,
+                                              per_excess_fee=Decimal('1.00')),
+                FeatureType.SMS: FeatureRate(monthly_limit=7 if self.for_tests else 1000),
             },
             SoftwarePlanEdition.ENTERPRISE: {
                 FeatureType.USER: FeatureRate(monthly_limit=-1, per_excess_fee=Decimal('0.00')),
@@ -253,9 +263,9 @@ class Command(BaseCommand):
             feature_rate = BOOTSTRAP_FEATURE_RATES[edition][feature.feature_type]
             feature_rate.feature = feature
             if dry_run:
-                logging.info("[DRY RUN] Creating rate for feature '%s': %s" % (feature.name, feature_rate))
+                logger.info("[DRY RUN] Creating rate for feature '%s': %s" % (feature.name, feature_rate))
             else:
-                logging.info("Creating rate for feature '%s': %s" % (feature.name, feature_rate))
+                logger.info("Creating rate for feature '%s': %s" % (feature.name, feature_rate))
             feature_rates.append(feature_rate)
         return feature_rates
 

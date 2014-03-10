@@ -29,6 +29,7 @@ import os
 import jsonobject
 import sh
 import sys
+import contextlib
 import gevent
 
 from sh_verbose import ShVerbose
@@ -144,9 +145,12 @@ def check_merges(config):
 
 
 def rebuild_staging(config):
-    for path, config in config.span_configs():
-        git = get_git(path)
-        with OriginalBranch(git):
+    all_configs = list(config.span_configs())
+    context_manager = contextlib.nested(*[OriginalBranch(get_git(path))
+                                          for path, _ in all_configs])
+    with context_manager:
+        for path, config in all_configs:
+            git = get_git(path)
             git.checkout(config.trunk)
             git.checkout('-B', config.name, config.trunk)
             for branch in config.branches:

@@ -1,15 +1,13 @@
 
 $(function() {
-        
-        var model = new CommtrackSettingsViewModel();
-        $('#settings').submit(function() {
-                return model.presubmit();
-            });
-
-        model.load(settings);
-        ko.applyBindings(model);
-
+    var model = new CommtrackSettingsViewModel();
+    $('#settings').submit(function() {
+        return model.presubmit();
     });
+
+    model.load(settings);
+    ko.applyBindings(model);
+});
 
 function CommtrackSettingsViewModel() {
     this.keyword = ko.observable();
@@ -205,13 +203,31 @@ function ActionModel(data) {
 }
 
 function LocationTypeModel(data, root) {
-    this.name = ko.observable(data.name || '\u2014');
+    var name = data.name || '\u2014';
+    var self = this;
+    this.name = ko.observable(name);
+    this.code = ko.observable(data.code || name);
+    var code_autoset = this.name() == this.code();
+
+    // sync code to name if it looks autoset
+    this.name.subscribe(function (newValue) {
+        if (code_autoset) {
+            self.code(newValue);
+        }
+    });
+
+    // clear autoset if we explicitly change the code
+    this.code.subscribe(function (newValue) {
+        self.name() != self.code();
+        code_autoset = false;
+    });
+
     var allowed_parents = data.allowed_parents || [];
     $.each(allowed_parents, function(i, e) {
-            if (e === null) {
-                allowed_parents[i] = undefined;
-            }
-        });
+        if (e === null) {
+            allowed_parents[i] = undefined;
+        }
+    });
     if (allowed_parents.length == 0) {
         var last = root.loc_types.slice(-1)[0];
         allowed_parents = [last ? last.name() : undefined];
@@ -220,6 +236,7 @@ function LocationTypeModel(data, root) {
     this.administrative = ko.observable(data.administrative);
 
     this.name_error = ko.observable();
+    this.code_error = ko.observable();
     this.allowed_parents_error = ko.observable();
 
     this.validate = function() {
@@ -230,6 +247,10 @@ function LocationTypeModel(data, root) {
 
         if (!this.name()) {
             this.name_error('required');
+            valid = false;
+        }
+        if (!this.code()) {
+            this.code_error('required');
             valid = false;
         }
         if (this.allowed_parents().length == 0) {
@@ -243,6 +264,7 @@ function LocationTypeModel(data, root) {
     this.to_json = function() {
         return {
             name: this.name(),
+            code: this.code(),
             allowed_parents: this.allowed_parents(),
             administrative: this.administrative()
         };

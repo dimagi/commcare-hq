@@ -295,6 +295,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
             DataTablesColumn(_("Project State"), prop_name="internal.project_state"),
             DataTablesColumn(_("Using ADM?"), prop_name="internal.using_adm"),
             DataTablesColumn(_("Using Call Center?"), prop_name="internal.using_call_center"),
+            DataTablesColumn(_("Date Last Updated"), prop_name="cp_last_updated"),
         )
         return headers
 
@@ -360,4 +361,5 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                     dom.get('internal', {}).get('project_state') or _('No info'),
                     dom.get('internal', {}).get('using_adm') or False,
                     dom.get('internal', {}).get('using_call_center') or False,
+                    format_date(dom.get("cp_last_updated"), _("No Info")),
                 ]

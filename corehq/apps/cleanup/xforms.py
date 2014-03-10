@@ -11,7 +11,7 @@ def get_problem_ids(domain, since=None):
         startkey.append(since.isoformat())
 
     return [row['id'] for row in XFormError.get_db().view(
-        "receiverwrapper/all_submissions_by_domain",
+        "couchforms/all_submissions_by_domain",
         startkey=startkey,
         endkey=endkey,
         reduce=False

@@ -1,6 +1,6 @@
 from tastypie import fields
 from corehq.apps.locations.models import Location, root_locations
-from corehq.apps.api.resources.v0_1 import CustomResourceMeta
+from corehq.apps.api.resources.v0_1 import CustomResourceMeta, DomainAdminAuthentication
 from corehq.apps.api.util import get_object_or_not_exist
 from corehq.apps.api.resources import JsonResource
 
@@ -25,6 +25,7 @@ class LocationResource(JsonResource):
         return root_locations(domain)
 
     class Meta(CustomResourceMeta):
-        object_class = Location    
+        authentication = DomainAdminAuthentication()
+        object_class = Location
         resource_name = 'location'
         limit = 0
