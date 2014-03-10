@@ -404,14 +404,13 @@ def prepend_newline_if_not_empty(string):
 
 
 class InvoiceItem(object):
-    def __init__(self, description, quantity, rate):
+    def __init__(self, description, quantity, rate, subtotal, credits, total):
         self.description = description
         self.quantity = quantity
         self.rate = rate
-
-    @property
-    def amount(self):
-        return float(self.quantity * self.rate)
+        self.subtotal = subtotal
+        self.credits = credits
+        self.total = total
 
 
 class Address(object):
@@ -493,8 +492,9 @@ class InvoiceTemplate(object):
 
         self.items = []
 
-    def add_item(self, description, quantity, rate):
-        self.items.append(InvoiceItem(description, quantity, rate))
+    def add_item(self, description, quantity, rate, subtotal, credits, total):
+        self.items.append(InvoiceItem(description, quantity, rate, subtotal,
+                                      credits, total))
 
     def get_pdf(self):
         self.draw_logo()
@@ -636,20 +636,24 @@ class InvoiceTemplate(object):
         self.canvas.translate(origin_x, origin_y)
 
         height = inches(4.2)
-        description_x = inches(5)
-        quantity_x = inches(5.75)
-        rate_x = inches(6.5)
-        subtotal_x = inches(7.5)
+        description_x = inches(3)
+        quantity_x = inches(3.75)
+        rate_x = inches(4.5)
+        subtotal_x = inches(5.5)
+        credits_x = inches(6.5)
+        total_x = inches(7.5)
         header_height = inches(0.3)
 
-        self.canvas.rect(0, 0, subtotal_x, -height)
+        self.canvas.rect(0, 0, total_x, -height)
         self.canvas.setFillColorRGB(*LIGHT_GRAY)
-        self.canvas.rect(0, 0, subtotal_x, header_height,
+        self.canvas.rect(0, 0, total_x, header_height,
                          fill=1)
         self.canvas.setFillColorRGB(*BLACK)
         self.canvas.line(description_x, header_height, description_x, -height)
         self.canvas.line(quantity_x, header_height, quantity_x, -height)
         self.canvas.line(rate_x, header_height, rate_x, -height)
+        self.canvas.line(subtotal_x, header_height, subtotal_x, -height)
+        self.canvas.line(credits_x, header_height, credits_x, -height)
 
         self.canvas.drawCentredString(midpoint(0, description_x),
                                       inches(0.1),
@@ -663,6 +667,12 @@ class InvoiceTemplate(object):
         self.canvas.drawCentredString(midpoint(rate_x, subtotal_x),
                                       inches(0.1),
                                       "Subtotal")
+        self.canvas.drawCentredString(midpoint(subtotal_x, credits_x),
+                                      inches(0.1),
+                                      "Credits Applied")
+        self.canvas.drawCentredString(midpoint(credits_x, total_x),
+                                      inches(0.1),
+                                      "Total")
 
         for item_index in range(len(self.items)):
             if item_index > 13:
@@ -688,7 +698,17 @@ class InvoiceTemplate(object):
             self.canvas.drawCentredString(
                 midpoint(rate_x, subtotal_x),
                 coord_y,
-                "$%0.2f" % item.amount
+                "$%0.2f" % item.subtotal
+            )
+            self.canvas.drawCentredString(
+                midpoint(subtotal_x, credits_x),
+                coord_y,
+                "$%0.2f" % item.credits
+            )
+            self.canvas.drawCentredString(
+                midpoint(credits_x, total_x),
+                coord_y,
+                "$%0.2f" % item.total
             )
 
         self.canvas.translate(-origin_x, -origin_y)

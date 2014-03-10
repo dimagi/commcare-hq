@@ -908,7 +908,10 @@ class InvoicePdf(SafeSaveDocument):
             if line_item.quantity > 0:
                 template.add_item(description,
                                   line_item.quantity,
-                                  line_item.unit_cost)
+                                  line_item.unit_cost,
+                                  line_item.subtotal,
+                                  line_item.applied_credit,
+                                  line_item.total)
 
         template.get_pdf()
         self.put_attachment(pdf_data)
