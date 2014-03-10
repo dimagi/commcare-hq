@@ -669,7 +669,7 @@ class InvoiceTemplate(object):
                                       "Subtotal")
         self.canvas.drawCentredString(midpoint(subtotal_x, credits_x),
                                       inches(0.1),
-                                      "Credits Applied")
+                                      "Credits")
         self.canvas.drawCentredString(midpoint(credits_x, total_x),
                                       inches(0.1),
                                       "Total")
@@ -693,7 +693,7 @@ class InvoiceTemplate(object):
             self.canvas.drawCentredString(
                 midpoint(quantity_x, rate_x),
                 coord_y,
-                str(item.rate)
+                "$%0.2f" % item.rate
             )
             self.canvas.drawCentredString(
                 midpoint(rate_x, subtotal_x),
