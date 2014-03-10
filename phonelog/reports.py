@@ -13,12 +13,18 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.timezones import utils as tz_utils
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop
+from phonelog.models import UserLog, Log
 
 logger = logging.getLogger(__name__)
 
 DATA_NOTICE = ugettext_noop(
         "This report may not always show the latest log data but will "
         "be updated over time")
+
+TAGS = {
+    "error": ['exception', 'rms-repair', 'rms-spill'],
+    "warning": ['case-recreate', 'permissions_notify', 'time message'],
+}
 
 class PhonelogReport(DeploymentsReport, DatespanMixin):
     fields = ['corehq.apps.reports.fields.FilterUsersField',
@@ -37,6 +43,7 @@ class FormErrorReport(DeploymentsReport, DatespanMixin):
               'corehq.apps.reports.fields.DatespanField']
 
     special_notice = DATA_NOTICE
+    is_cacheable = False
 
     @property
     def headers(self):
@@ -56,19 +63,12 @@ class FormErrorReport(DeploymentsReport, DatespanMixin):
         query_string = self.request.META['QUERY_STRING']
         child_report_url = DeviceLogDetailsReport.get_url(domain=self.domain)
         for user in self.users:
-            key = [self.domain, "errors_only", user.get('raw_username')]
-            data = get_db().view("phonelog/devicelog_data",
-                    reduce=True,
-                    startkey=key+[self.datespan.startdate_param_utc],
-                    endkey=key+[self.datespan.enddate_param_utc],
-                    stale=settings.COUCH_STALE_QUERY,
-                ).first()
-            warning_count = 0
-            error_count = 0
-            if data:
-                data = data.get('value', {})
-                error_count = data.get('errors', 0)
-                warning_count = data.get('warnings', 0)
+            # userlogs = UserLog.objects.filter(username__exact=user.get('raw_username')).values('xform_id')
+            # xform_ids = [u["xform_id"] for u in userlogs]
+            phonelogs = Log.objects.filter(username__exact=user.get('raw_username'),
+                date__range=[self.datespan.startdate_param_utc, self.datespan.enddate_param_utc])
+            error_count = len(phonelogs.filter(type__in=TAGS["error"]))
+            warning_count = len(phonelogs.filter(type__in=TAGS["warning"]))
 
             formatted_warning_count = '<span class="label label-warning">%d</span>' % warning_count if warning_count > 0\
                                         else '<span class="label">%d</span>' % warning_count
@@ -238,75 +238,49 @@ class DeviceLogDetailsReport(PhonelogReport):
             new_title = "Last %s Logs <small>before %s</small>" % (self.limit, record_desc)
         return mark_safe(new_title)
 
-    def is_filtered_by(self, *args):
-        return set(args) == self.filters
+    @memoized
+    def get_device_users(self, log_id):
+        return []
 
     @property
     def rows(self):
         rows = []
-        view = "phonelog/devicelog_data"
+        # phonelogs = Log.objects.filter(xform_id__in=xform_ids,
+        #         date__range=[self.datespan.startdate_param_utc, self.datespan.enddate_param_utc])
+        #     error_count = len(phonelogs.filter(type__in=TAGS["error"]))
+        #     warning_count = len(phonelogs.filter(type__in=TAGS["warning"]))
 
         if self.goto_key:
-            data = get_db().view(view,
-                startkey=[self.domain, "basic", self.goto_key[-1]],
-                limit=self.limit,
-                reduce=False,
-                descending=True,
-                stale=settings.COUCH_STALE_QUERY,
-            ).all()
-            rows.extend(self._create_rows(data, self.goto_key))
+            log = Log.objects.get(pk=self.goto_key)#.values(["domain", "date"])
+            assert log.domain == self.domain
+            logs = Log.objects.filter(date__lte=log.date, domain__exact=self.domain,
+                                      device_id__exact=log.device_id)
+            return self._create_rows(logs, matching_id=log.id)
         else:
+            logs = Log.objects.filter(date__range=[self.datespan.startdate_param_utc,
+                                                   self.datespan.enddate_param_utc],
+                                      domain__exact=self.domain)
             if self.errors_only:
-                key_set = [[self.domain, "all_errors_only"]]
-            elif self.is_filtered_by('user'):
-                key_set = [[self.domain, "user", [user]]
-                           for user in self.device_log_users]
-            elif self.is_filtered_by('device'):
-                key_set = [[self.domain, "device", device]
-                           for device in self.devices]
-            elif self.is_filtered_by('tag'):
-                key_set = [[self.domain, "tag", tag]
-                           for tag in self.selected_tags]
-            elif self.is_filtered_by('tag', 'device'):
-                key_set = [[self.domain, "tag_device", tag, device]
-                           for tag in self.selected_tags
-                           for device in self.devices]
-            elif self.is_filtered_by('tag', 'user'):
-                key_set = [[self.domain, "tag_user", tag, [user]]
-                           for tag in self.selected_tags
-                           for user in self.device_log_users]
-            elif self.is_filtered_by('user', 'device'):
-                key_set = [[self.domain, "user_device", [user], device]
-                           for user in self.device_log_users
-                           for device in self.devices]
-            elif self.is_filtered_by('tag', 'user', 'device'):
-                key_set = [[self.domain, "tag_user_device", tag, [user], device]
-                           for tag in self.selected_tags
-                           for user in self.device_log_users
-                           for device in self.devices]
-            else:
-                key_set = [[self.domain, "basic"]]
+                logs = logs.filter(type__in=TAGS['error']+TAGS['warning'])
+            elif 'tag' in self.filters:
+                logs = logs.filter(type__in=self._selected_tags)
 
-            for key in key_set:
-                data = get_db().view(view,
-                    startkey=key+[self.datespan.startdate_param_utc],
-                    endkey=key+[self.datespan.enddate_param_utc, {}],
-                    reduce=False,
-                    stale=settings.COUCH_STALE_QUERY,
-                ).all()
-                rows.extend(self._create_rows(data))
-        return rows
+            if 'user' in self.filters:
+                logs = logs.filter(username__in=self.device_log_users)
+            if 'device' in self.filters:
+                logs = logs.filter(device_id__in=self.devices)
+            return self._create_rows(logs)
 
-    def _create_rows(self, data, matching_key=None):
+    def _create_rows(self, logs, matching_id=None):
         row_set = []
         user_query = self._filter_query_by_slug(DeviceLogUsersField.slug)
         device_query = self._filter_query_by_slug(DeviceLogDevicesField.slug)
-        for item in data:
-            entry = item['value']
-            date = entry['@date']
+        logs = logs.all().order_by('-date')[:self.limit] if matching_id else logs.all().order_by('date')
+        for log in logs:
+            date = str(log.date)
             date_fmt = tz_utils.string_to_prertty_time(date, self.timezone, fmt="%b %d, %Y %H:%M:%S")
 
-            username = entry.get('user','unknown')
+            username = log.username or 'unknown'
             username_fmt = '<a href="%(url)s">%(username)s</a>' % {
                 "url": "%s?%s=%s&%s" % (self.get_url(domain=self.domain),
                                         DeviceLogUsersField.slug,
@@ -315,7 +289,7 @@ class DeviceLogDetailsReport(PhonelogReport):
                 "username": username
             }
 
-            device_users = entry.get('device_users', [])
+            device_users = self.get_device_users(log.id)
             device_users_fmt = ', '.join([ 
                 '<a href="%(url)s">%(username)s</a>' % { "url": "%s?%s=%s&%s" % (self.get_url(domain=self.domain),
                                                                                  DeviceLogUsersField.slug,
@@ -325,22 +299,20 @@ class DeviceLogDetailsReport(PhonelogReport):
                 for username in device_users
             ])
 
-            log_tag = entry.get('type','unknown')
+            log_tag = log.type or 'unknown'
             tag_classes = ["label"]
             if log_tag in self.tag_labels:
                 tag_classes.append(self.tag_labels[log_tag])
 
-            goto_key = [self.domain, "tag", log_tag, item['key'][-1]]
-
             log_tag_format = '<a href="%(url)s" class="%(classes)s"%(extra_params)s data-datatable-tooltip="right" data-datatable-tooltip-text="%(tooltip)s">%(text)s</a>' % {
-                "url": "%s?goto=%s" % (self.get_url(domain=self.domain), html.escape(json.dumps(goto_key))),
+                "url": "%s?goto=%s" % (self.get_url(domain=self.domain), html.escape(json.dumps(log.id))),
                 "classes": " ".join(tag_classes),
                 "text": log_tag,
-                "extra_params": ' data-datatable-highlight-closest="tr"' if goto_key == matching_key else '',
+                "extra_params": ' data-datatable-highlight-closest="tr"' if log.id == matching_id else '',
                 "tooltip": "Show the surrounding 100 logs."
             }
 
-            device = entry.get('device_id','')
+            device = log.device_id
             device_fmt = '<a href="%(url)s">%(device)s</a>' % {
                 "url": "%s?%s=%s&%s" % (self.get_url(domain=self.domain),
                                         DeviceLogDevicesField.slug,
@@ -349,7 +321,7 @@ class DeviceLogDetailsReport(PhonelogReport):
                 "device": device
             }
 
-            version = entry.get('version', 'unknown')
+            version = log.app_version
             ver_format = '%s <a href="#" data-datatable-tooltip="left" data-datatable-tooltip-text="%s"><i class="icon icon-info-sign"></i></a>'\
             % (version.split(' ')[0], html.escape(version))
 
@@ -358,7 +330,7 @@ class DeviceLogDetailsReport(PhonelogReport):
                             self.table_cell(username, username_fmt),
                             self.table_cell(device_users, device_users_fmt),
                             self.table_cell(device, device_fmt),
-                            self.table_cell(entry.get('msg', '')),
+                            self.table_cell(log.msg),
                             self.table_cell(version, ver_format)])
         return row_set
 
