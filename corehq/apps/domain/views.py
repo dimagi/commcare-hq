@@ -124,6 +124,8 @@ class SubscriptionUpgradeRequiredView(LoginAndDomainMixin, BasePageView,
 
     @property
     def is_billing_admin(self):
+        if not hasattr(self.request, 'couch_user'):
+            return False
         return BillingAccountAdmin.get_admin_status_and_account(
             self.request.couch_user, self.domain
         )[0]

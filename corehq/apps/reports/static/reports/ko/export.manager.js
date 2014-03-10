@@ -168,15 +168,16 @@ var ExportManager = function (o) {
         var downloadUrl = self.downloadUrl || $button.data('dlocation');
         resetModal("'" + options.modalTitle + "'", true);
         var format = self.format;
+        var fileName = encodeURIComponent($button.data('formname'));
         if ($button.data('format')) {
             format = $button.data('format');
         }
         downloadUrl = downloadUrl +
             "?" + self.exportFilters +
             '&async=true' +
-            '&export_tag=["'+self.domain+'","'+$button.data('xmlns')+'","'+$button.data('formname')+'"]' +
+            '&export_tag=["'+self.domain+'","'+$button.data('xmlns')+'","' + fileName +'"]' +
             '&format=' + format +
-            '&filename='+$button.data('formname');
+            '&filename=' + fileName;
 
         for (var k in options.downloadParams) {
             if (options.downloadParams.hasOwnProperty(k)) {

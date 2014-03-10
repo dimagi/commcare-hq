@@ -232,7 +232,7 @@ class GenericReportView(CacheableRequestMixIn):
             return pytz.utc
         else:
             try:
-                return util.get_timezone(self.request.couch_user.user_id, self.domain)
+                return util.get_timezone(self.request.couch_user, self.domain)
             except AttributeError:
                 return util.get_timezone(None, self.domain)
 

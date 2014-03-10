@@ -1295,7 +1295,7 @@ def reminders_in_error(request, domain):
                 handler.set_next_fire(reminder, current_timestamp)
                 reminder.save(**kwargs)
     
-    timezone = report_utils.get_timezone(request.couch_user.user_id, domain)
+    timezone = report_utils.get_timezone(request.couch_user, domain)
     reminders = []
     for reminder in CaseReminder.view("reminders/reminders_in_error", startkey=[domain], endkey=[domain, {}], include_docs=True).all():
         if reminder.handler_id in handler_map:

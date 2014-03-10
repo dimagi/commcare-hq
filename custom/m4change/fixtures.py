@@ -1,12 +1,12 @@
 from lxml import etree as ElementTree
 from datetime import timedelta
 
-from django.utils import translation
 from django.utils.datetime_safe import datetime
 from django.utils.translation import ugettext as _
+from corehq import Domain
+from corehq.apps.commtrack.util import get_commtrack_location_id
 
 from corehq.apps.locations.models import Location
-from corehq.apps.users.models import CommCareUser
 from custom.m4change.constants import M4CHANGE_DOMAINS
 from custom.m4change.reports.reports import M4ChangeReportDataSource
 
@@ -33,6 +33,7 @@ class ReportFixtureProvider(object):
         self.reports = reports
         self.startdate = startdate
         self.enddate = enddate
+        self.domain = Domain.get_by_name(user.domain)
 
     def to_fixture(self):
         """
@@ -104,7 +105,8 @@ class ReportFixtureProvider(object):
             report_data = M4ChangeReportDataSource(config={
                 'startdate': self.startdate,
                 'enddate': self.enddate,
-                'location_id': self.user.get_domain_membership(DOMAIN).location_id
+                'location_id': facility_id,
+                'domain': self.domain.name
             }).get_data()
             _reports_to_fixture(report_data, facility_id, facility_element)
             return facility_element
@@ -115,7 +117,7 @@ class ReportFixtureProvider(object):
             'enddate': self.enddate.strftime('%Y-%m-%d')
         })
 
-        user_location = Location.get(self.user.get_domain_membership(DOMAIN).location_id)
+        user_location = Location.get(get_commtrack_location_id(self.user, self.domain))
         locations =  [user_location] + [descendant for descendant in user_location.descendants]
         for location in locations:
             root.append(_facility_to_fixture(location))
