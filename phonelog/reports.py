@@ -54,17 +54,10 @@ class FormErrorReport(DeploymentsReport, DatespanMixin):
 
     @property
     def rows(self):
-#        for user_type in [HQUserType.DEMO_USER, HQUserType.ADMIN]:
-#            if self.user_filter[user_type].show\
-#            and not HQUserType.human_readable[user_type] in self.usernames:
-#                temp_user = TempCommCareUser(self.domain, HQUserType.human_readable[user_type], "unknownID")
-#                self._users.append(temp_user)
         rows = []
         query_string = self.request.META['QUERY_STRING']
         child_report_url = DeviceLogDetailsReport.get_url(domain=self.domain)
         for user in self.users:
-            # userlogs = UserLog.objects.filter(username__exact=user.get('raw_username')).values('xform_id')
-            # xform_ids = [u["xform_id"] for u in userlogs]
             phonelogs = Log.objects.filter(username__exact=user.get('raw_username'), domain__exact=self.domain,
                 date__range=[self.datespan.startdate_param_utc, self.datespan.enddate_param_utc])
             error_count = phonelogs.filter(type__in=TAGS["error"]).count()
@@ -238,18 +231,9 @@ class DeviceLogDetailsReport(PhonelogReport):
             new_title = "Last %s Logs <small>before %s</small>" % (self.limit, record_desc)
         return mark_safe(new_title)
 
-    @memoized
-    def get_device_users(self, log_id):
-        return []
-
     @property
     def rows(self):
         rows = []
-        # phonelogs = Log.objects.filter(xform_id__in=xform_ids,
-        #         date__range=[self.datespan.startdate_param_utc, self.datespan.enddate_param_utc])
-        #     error_count = len(phonelogs.filter(type__in=TAGS["error"]))
-        #     warning_count = len(phonelogs.filter(type__in=TAGS["warning"]))
-
         if self.goto_key:
             log = Log.objects.get(pk=self.goto_key)#.values(["domain", "date"])
             assert log.domain == self.domain
@@ -289,7 +273,7 @@ class DeviceLogDetailsReport(PhonelogReport):
                 "username": username
             }
 
-            device_users = self.get_device_users(log.id)
+            device_users = [u["username"]for u in log.device_users.values('username').all()]
             device_users_fmt = ', '.join([ 
                 '<a href="%(url)s">%(username)s</a>' % { "url": "%s?%s=%s&%s" % (self.get_url(domain=self.domain),
                                                                                  DeviceLogUsersField.slug,

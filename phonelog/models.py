@@ -1,3 +1,4 @@
+from dimagi.utils.decorators.memoized import memoized
 from django.db import models
 
 COUCH_UUID_MAX_LEN = 50
@@ -12,6 +13,11 @@ class Log(models.Model):
     device_id = models.CharField(max_length=COUCH_UUID_MAX_LEN)
     app_version = models.TextField()
     username = models.CharField(max_length=100)
+
+    @property
+    @memoized
+    def device_users(self):
+        return UserLog.objects.filter(xform_id__exact=self.xform_id)
 
 
 class UserLog(models.Model):
