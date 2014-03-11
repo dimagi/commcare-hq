@@ -286,7 +286,7 @@ class BaseTagsFilter(BaseReportFilter):
 
     @property
     def selected(self):
-        return self.get_value(self.request, self.domain) or self.tags
+        return self.get_value(self.request, self.domain) or ''
 
     @property
     def filter_context(self):

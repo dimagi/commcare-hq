@@ -97,7 +97,7 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
                 ids = filter(None, [user['user_id'] for user in negated_ids])
                 q["filter"]["and"].append({"not": {"terms": {"form.meta.userID": ids}}})
 
-            for cp in self.request.GET.get('custom_props', "").split(","):
+            for cp in filter(None, self.request.GET.get('custom_props', "").split(",")):
                 q["filter"]["and"].append({"term": {"__props_for_querying": cp.lower()}})
 
             q["sort"] = self.get_sorting_block() if self.get_sorting_block() else [{self.time_field : {"order": "desc"}}]
