@@ -434,14 +434,18 @@ class CreditForm(forms.Form):
     product_rate = forms.ChoiceField(required=False, label=_("Product Rate"))
     feature_rate = forms.ChoiceField(required=False, label=_("Feature Rate"))
 
-    def __init__(self, id, is_account, *args, **kwargs):
+    def __init__(self, obj_id, is_account, *args, **kwargs):
         super(CreditForm, self).__init__(*args, **kwargs)
         if not kwargs:
-            self.fields['product_rate'].choices = self.get_product_rate_choices(id, is_account)
-            self.fields['feature_rate'].choices = self.get_feature_choices(id, is_account)
-            self.fields['rate_type'].choices = self.get_rate_type_choices(self.fields['product_rate'].choices,
-                                                                          self.fields['feature_rate'].choices)
-        self.fields['amount'].label = _("Amount (%s)") % self.get_currency_str(id, is_account)
+            self.fields['product_rate'].choices = \
+                self.get_product_rate_choices(obj_id, is_account)
+            self.fields['feature_rate'].choices = \
+                self.get_feature_choices(obj_id, is_account)
+            self.fields['rate_type'].choices = \
+                self.get_rate_type_choices(self.fields['product_rate'].choices,
+                                           self.fields['feature_rate'].choices)
+        self.fields['amount'].label = \
+            _("Amount (%s)") % self.get_currency_str(obj_id, is_account)
         self.helper = FormHelper()
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
