@@ -1,32 +1,47 @@
+from __future__ import absolute_import
 import hashlib
-from couchdbkit import ResourceConflict, resource
 import datetime
-from django.http import HttpResponse, HttpResponseServerError, HttpResponseBadRequest, HttpResponseForbidden, HttpRequest
+import logging
+
+from StringIO import StringIO
+from django.test.client import Client
+
+from couchdbkit import ResourceConflict, ResourceNotFound, resource
+from django.http import (
+    HttpRequest,
+    HttpResponse,
+    HttpResponseBadRequest,
+    HttpResponseForbidden,
+)
+
 import couchforms
 from couchforms.const import MAGIC_PROPERTY, MULTIPART_FILENAME_ERROR
+from couchforms.exceptions import DuplicateError
 from dimagi.utils.mixins import UnicodeMixIn
-
-try:
-    import simplejson
-except ImportError:
-    from django.utils import simplejson
-
-from couchforms.models import XFormInstance, XFormDuplicate, XFormError, XFormDeprecated,\
-    SubmissionErrorLog, DefaultAuthContext, doc_types
-import logging
-from couchforms.signals import xform_saved
+from couchforms.models import (
+    DefaultAuthContext,
+    SubmissionErrorLog,
+    XFormDeprecated,
+    XFormDuplicate,
+    XFormError,
+    XFormInstance,
+    doc_types,
+)
+from couchforms.signals import (
+    ReceiverResult,
+    successful_form_received,
+)
 from dimagi.utils.couch import uid
-import re
-from restkit.errors import ResourceNotFound
-from lxml import etree
+from couchforms.xml import ResponseNature, OpenRosaResponse
 import xml2json
+
 
 class SubmissionError(Exception, UnicodeMixIn):
     """
-    When something especially bad goes wrong during a submission, this 
+    When something especially bad goes wrong during a submission, this
     exception gets raised.
     """
-    
+
     def __init__(self, error_log, *args, **kwargs):
         super(SubmissionError, self).__init__(*args, **kwargs)
         self.error_log = error_log
@@ -115,7 +130,10 @@ def create_xform_from_xml(xml_string, _id=None, process=None):
         xform = XFormInstance(**kwargs)
         raise
     finally:
-        xform.save(encode_attachments=False)
+        try:
+            xform.save(encode_attachments=False)
+        except ResourceConflict:
+            raise DuplicateError()
 
     return xform.get_id
 
@@ -130,45 +148,32 @@ def post_xform_to_couch(instance, attachments=None, process=None):
     key is parameter name, value is django MemoryFile object stream
     """
     attachments = attachments or {}
-    try:
-        # todo: pretty sure nested try/except can be cleaned up
-        try:
-            doc_id = create_xform_from_xml(instance, process=process)
-        except couchforms.XMLSyntaxError as e:
-            doc = _log_hard_failure(instance, attachments, e)
-            raise SubmissionError(doc)
-        try:
-            xform = XFormInstance.get(doc_id)
-            for key, value in attachments.items():
-                xform.put_attachment(
-                    value,
-                    name=key,
-                    content_type=value.content_type,
-                    content_length=value.size
-                )
 
-            # fire signals
-            # We don't trap any exceptions here. This is by design.
-            # If something fails (e.g. case processing), we quarantine the
-            # form into an error location.
-            xform_saved.send(sender="couchforms", xform=xform)
-            return xform
-        except Exception, e:
-            logging.error("Problem with form %s" % doc_id)
-            logging.exception(e)
-            # "rollback" by changing the doc_type to XFormError
-            try:
-                bad = XFormError.get(doc_id)
-                bad.problem = unicode(e)
-                bad.save()
-                return bad
-            except ResourceNotFound:
-                # no biggie, the failure must have been in getting it back
-                pass
-            raise
-    except ResourceConflict:
-        # this is an update conflict, i.e. the uid in the form was the same.
+    try:
+        doc_id = create_xform_from_xml(instance, process=process)
+    except couchforms.XMLSyntaxError as e:
+        doc = _log_hard_failure(instance, attachments, e)
+        raise SubmissionError(doc)
+    except DuplicateError:
         return _handle_id_conflict(instance, attachments, process=process)
+
+    try:
+        xform = XFormInstance.get(doc_id)
+        for key, value in attachments.items():
+            xform.put_attachment(
+                value,
+                name=key,
+                content_type=value.content_type,
+                content_length=value.size
+            )
+        return xform
+    except Exception, e:
+        logging.exception("Problem with form %s" % doc_id)
+        # "rollback" by changing the doc_type to XFormError
+        bad = XFormError.get(doc_id)
+        bad.problem = unicode(e)
+        bad.save()
+        return bad
 
 
 def _has_errors(response, errors):
@@ -207,7 +212,7 @@ def _handle_id_conflict(instance, attachments, process):
         # r=3 implied by class
         xfd = XFormDeprecated.get(doc_copy['id'])
         xfd.orig_id = conflict_id
-        xfd.doc_type=XFormDeprecated.__name__
+        xfd.doc_type = XFormDeprecated.__name__
         xfd.save()
 
         # after that delete the original document and resubmit.
@@ -294,12 +299,20 @@ def scrub_meta(xform):
 
 class SubmissionPost(object):
 
+    failed_auth_response = HttpResponseForbidden('Bad auth')
+    bad_multipart_response = HttpResponseBadRequest((
+        'If you use multipart/form-data, please name your file %s.\n'
+        'You may also do a normal (non-multipart) post '
+        'with the xml submission as the request body instead.'
+    ) % MAGIC_PROPERTY)
+
     def __init__(self, instance=None, attachments=None,
                  auth_context=None, domain=None, app_id=None, path=None,
                  location=None, submit_ip=None, openrosa_headers=None,
                  last_sync_token=None, received_on=None, date_header=None):
-        assert domain
-        assert instance and not isinstance(instance, HttpRequest), instance
+        assert domain, domain
+        assert instance, instance
+        assert not isinstance(instance, HttpRequest), instance
         # get_location has good default
         self.domain = domain
         self.app_id = app_id
@@ -339,16 +352,10 @@ class SubmissionPost(object):
 
     def get_response(self):
         if not self.auth_context.is_valid():
-            return self.get_failed_auth_response()
+            return self.failed_auth_response
 
         if self.instance is MULTIPART_FILENAME_ERROR:
-            return HttpResponseBadRequest((
-                'If you use multipart/form-data, '
-                'please name your file %s.\n'
-                'You may also do a normal (non-multipart) post '
-                'with the xml submission as the request body instead.'
-            ) % MAGIC_PROPERTY)
-
+            return self.bad_multipart_response
         def process(xform):
             self._attach_shared_props(xform)
             scrub_meta(xform)
@@ -357,7 +364,6 @@ class SubmissionPost(object):
             doc = post_xform_to_couch(self.instance,
                                       attachments=self.attachments,
                                       process=process)
-            return self.get_success_response(doc)
         except SubmissionError as e:
             logging.exception(
                 u"Problem receiving submission to %s. %s" % (
@@ -366,18 +372,84 @@ class SubmissionPost(object):
                 )
             )
             return self.get_error_response(e.error_log)
+        else:
+            return self.get_success_response(doc)
 
     def get_failed_auth_response(self):
         return HttpResponseForbidden('Bad auth')
 
-    def get_success_response(self, doc):
-        return HttpResponse(
-            "Thanks! Your new xform id is: %s" % doc.get_id,
+    def success_actions_and_respond(self, doc):
+        feedback = successful_form_received.send_robust(sender='receiver', xform=doc)
+        responses = []
+        errors = []
+        for func, resp in feedback:
+            if resp and isinstance(resp, Exception):
+                error_message = unicode(resp)
+                # hack to log exception type (no valuable stacktrace though)
+                try:
+                    raise resp
+                except Exception:
+                    logging.exception((
+                        u"Receiver app: problem sending "
+                        u"post-save signal %s for xform %s: %s"
+                    ) % (func, doc._id, error_message))
+                errors.append(error_message)
+            elif resp and isinstance(resp, ReceiverResult):
+                responses.append(resp)
+
+        if errors:
+            # in the event of errors, respond with the errors,
+            # and mark the problem
+            doc.problem = ", ".join(errors)
+            doc.save()
+            response = OpenRosaResponse(
+                message=doc.problem,
+                nature=ResponseNature.SUBMIT_ERROR,
+                status=201,
+            ).response()
+        elif responses:
+            # use the response with the highest priority if we got any
+            responses.sort()
+            response = HttpResponse(responses[-1].response, status=201)
+        else:
+            # default to something generic
+            response = OpenRosaResponse(
+                message="Thanks for submitting!",
+                nature=ResponseNature.SUBMIT_SUCCESS,
+                status=201,
+            ).response()
+        return response
+
+    def fail_actions_and_respond(self, doc):
+        return OpenRosaResponse(
+            message=doc.problem,
+            nature=ResponseNature.SUBMIT_ERROR,
             status=201,
-        )
+        ).response()
+
+    def get_success_response(self, instance):
+        if instance.doc_type == "XFormInstance":
+            response = self.success_actions_and_respond(instance)
+        else:
+            response = self.fail_actions_and_respond(instance)
+
+        # this hack is required for ODK
+        response["Location"] = self.location
+
+        # this is a magic thing that we add
+        response['X-CommCareHQ-FormID'] = instance.get_id
+        return response
 
     def get_error_response(self, error_log):
-        return HttpResponseServerError("FAIL")
+        error_doc = SubmissionErrorLog.get(error_log.get_id)
+        self._attach_shared_props(error_doc)
+        error_doc.save()
+        return OpenRosaResponse(
+            message=("The sever got itself into big trouble! "
+                     "Details: %s" % error_log.problem),
+            nature=ResponseNature.SUBMIT_ERROR,
+            status=500,
+        ).response()
 
 
 def fetch_and_wrap_form(doc_id):
@@ -389,3 +461,21 @@ def fetch_and_wrap_form(doc_id):
     if doc['doc_type'] in doc_types():
         return doc_types()[doc['doc_type']].wrap(doc)
     raise ResourceNotFound(doc_id)
+
+
+def spoof_submission(submit_url, body, name="form.xml", hqsubmission=True,
+                     headers=None):
+    if headers is None:
+        headers = {}
+    client = Client()
+    f = StringIO(body.encode('utf-8'))
+    f.name = name
+    response = client.post(submit_url, {
+        'xml_submission_file': f,
+    }, **headers)
+    if hqsubmission:
+        xform_id = response['X-CommCareHQ-FormID']
+        xform = XFormInstance.get(xform_id)
+        xform['doc_type'] = "HQSubmission"
+        xform.save()
+    return response

@@ -9,6 +9,7 @@ from django.utils.datastructures import SortedDict
 from couchdbkit.exceptions import PreconditionFailed
 from couchdbkit.ext.django.schema import *
 from couchdbkit.resource import ResourceNotFound
+from dimagi.utils.couch import CouchDocLockableMixIn
 
 from dimagi.utils.indicators import ComputedDocumentMixin
 from dimagi.utils.parsing import string_to_datetime
@@ -85,10 +86,11 @@ class XFormOperation(DocumentSchema):
     """
     user = StringProperty()
     date = DateTimeProperty(default=datetime.datetime.utcnow)
-    operation = StringProperty() # e.g. "archived", "unarchived"
+    operation = StringProperty()  # e.g. "archived", "unarchived"
 
 
-class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin):
+class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
+                    CouchDocLockableMixIn):
     """An XForms instance."""
     xmlns = StringProperty()
     received_on = DateTimeProperty()
@@ -113,7 +115,7 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin):
         Returns a generator object of all forms submitted by user,
         from start to end dates, if specified.
         """
-        # Thew couchforms/by_user view returns a zero-indexed month
+        # The couchforms/by_user view returns a zero-indexed month
         # correct for this by subtracting 1 from month
         if start is not None:
             startkey = [user.user_id, start.year, start.month - 1, start.day]
@@ -123,11 +125,11 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin):
             endkey = [user.user_id, end.year, end.month - 1, end.day, {}]
         else:
             endkey = [user.user_id, {}]
-        results = cls.view(
+        results = cls.get_db().view(
             "couchforms/by_user",
             startkey=startkey,
             endkey=endkey,
-            reduce=False
+            reduce=False,
         ).all()
         docs = iter_docs(cls.get_db(), [r['id'] for r in results])
         return (cls(doc) for doc in docs)
