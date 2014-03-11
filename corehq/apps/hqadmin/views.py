@@ -6,6 +6,10 @@ from collections import defaultdict
 from StringIO import StringIO
 import socket
 
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from multimechanize.resultsloader import GlobalConfig
+
 from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_POST, require_GET
 from pytz import timezone
@@ -868,34 +872,60 @@ def stats_data(request):
 
 @require_superuser
 def loadtest(request):
-    from sqlalchemy import create_engine
-    from sqlalchemy.orm import sessionmaker
-    from multimechanize.resultsloader import ResultRow
-    from multimechanize.resultsloader import load_results_database
-    from multimechanize.resultsloader import GlobalConfig
-    from multimechanize.resultsloader import UserGroupConfig
-    from multimechanize.resultsloader import TimerRow
+    # The multimech results api is kinda all over the place.
+    # the docs are here: http://testutils.org/multi-mechanize/datastore.html
+    # Here's some stuff to play around with if you need to re-figure out how
+    # stuff is stored and retrieved:
 
-    from django.conf import settings
+    # from multimechanize.resultsloader import (GlobalConfig, ResultRow,
+        # load_results_database, UserGroupConfig, TimerRow)
+    # ugcs = current.query(UserGroupConfig).all()
+    # ugc = ugcs[0]
+    # print ugc.script, ugc.user_group
+    # rrs = current.query(ResultRow).all()
+    # rr = rrs[0]
+    # print rr.run_time, rr.user_group_name
+    # trs = current.query(TimerRow).all()
+    # tr = trs[0]
+    # # GlobalConfigs store each individual test run,
+    # # although gc.results seems to be the only place with specific info
+    # gcs = current.query(GlobalConfig).all()
+    # gc = gcs[0]
+    # print len(gc.results), gc.user_group_configs
+    # import ipdb; ipdb.set_trace()
+
     db_url = "postgresql://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}".format(
         **settings.DATABASES["default"]
     )
-    print db_url
     engine = create_engine(db_url)
     session = sessionmaker(bind=engine)
     current = session()
-    import ipdb; ipdb.set_trace()
 
-    rows = []
-    for rr in current.query(ResultRow).order_by(ResultRow.trans_count):
-        rows.append(rr)
-        print rr
-        print rr.global_config
-        print rr.global_config.user_group_configs
-        print rr.timers
+    scripts = ['submit_form.py', 'ota_restore.py']
 
-    context = get_hqadmin_base_context(request).update({
-        "info": rows,
+    tests = []
+    # datetime info seems to be buried in GlobalConfig.results[0].run_id,
+    # which makes ORM-level sorting problematic
+    for gc in current.query(GlobalConfig).all()[::-1]:
+        gc.scripts = dict((uc.script, uc) for uc in gc.user_group_configs)
+        if gc.results:
+            for script, uc in gc.scripts.items():
+                uc.results = filter(
+                    lambda res: res.user_group_name == uc.user_group,
+                    gc.results
+                )
+            test = {
+                'datetime': gc.results[0].run_id,
+                'run_time': gc.run_time,
+                'results': gc.results,
+            }
+            for script in scripts:
+                test[script.split('.')[0]] = gc.scripts.get(script)
+            tests.append(test)
+
+    context = get_hqadmin_base_context(request)
+    context.update({
+        "tests": tests,
         "hide_filters": True,
     })
     template = "hqadmin/loadtest.html"
