@@ -2,6 +2,8 @@
 
 DIR=`dirname $0`
 
+pip install -r requirements/loadtest-requirements.txt
+
 cp $DIR/config.cfg.example $DIR/config.cfg
 python -c '
 import settings
