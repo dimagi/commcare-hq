@@ -121,15 +121,20 @@ class StockState(models.Model):
 
     def get_domain(self):
         return Domain.get_by_name(
-            CaseDomainMapping.objects.get(case_id=self.case_id).domain_name
+            DocDomainMapping.objects.get(doc_id=self.case_id).domain_name
         )
 
     class Meta:
         unique_together = ('section_id', 'case_id', 'product_id')
 
 
-class CaseDomainMapping(models.Model):
-    case_id = models.CharField(max_length=100, db_index=True, primary_key=True)
+class DocDomainMapping(models.Model):
+    """
+    Used to store the relationship between a doc and the
+    domain it belongs to for efficient lookup
+    """
+    doc_id = models.CharField(max_length=100, db_index=True, primary_key=True)
+    doc_type = models.CharField(max_length=100, db_index=True)
     domain_name = models.CharField(max_length=100)
 
 
@@ -170,9 +175,10 @@ def update_stock_state(sender, instance, *args, **kwargs):
 @receiver(post_save, sender=StockState)
 def update_domain_mapping(sender, instance, *args, **kwargs):
     case_id = unicode(instance.case_id)
-    if not CaseDomainMapping.objects.filter(case_id=case_id).exists():
-        mapping = CaseDomainMapping(
-            case_id=case_id,
+    if not DocDomainMapping.objects.filter(doc_id=case_id).exists():
+        mapping = DocDomainMapping(
+            doc_id=case_id,
+            doc_type='CommCareCase',
             domain_name=CommCareCase.get(case_id).domain
         )
         mapping.save()
