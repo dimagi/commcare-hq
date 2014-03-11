@@ -67,6 +67,7 @@ fakecouch==0.0.5
 # WeasyPrint==0.20.2
 twilio==3.6.4
 django-countries==1.5
+git+git://github.com/cgoldberg/multi-mechanize.git@f624aaa6f7d0bce814e72c2220e60d8388e7c1ac
 
 # required by ctable
 SQLAlchemy==0.8.2
