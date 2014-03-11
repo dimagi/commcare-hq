@@ -4,9 +4,9 @@ from django.dispatch.dispatcher import Signal
 
 from corehq import Domain
 from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK
-from receiver.signals import successful_form_received, Certainty, ReceiverResult
-from receiver.xml import ResponseNature
-from receiver import xml
+from couchforms.signals import successful_form_received, Certainty, ReceiverResult
+from couchforms.xml import ResponseNature
+from couchforms import xml
 
 from corehq.middleware import OPENROSA_ACCEPT_LANGUAGE
 from corehq.apps.app_manager.models import Application, get_app, CareplanModule, CareplanConfig, CareplanAppProperties

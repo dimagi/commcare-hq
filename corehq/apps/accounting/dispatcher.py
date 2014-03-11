@@ -2,7 +2,6 @@ from django.utils.decorators import method_decorator
 from corehq import toggles, privileges
 from corehq.apps.reports.dispatcher import ReportDispatcher
 from django_prbac.decorators import requires_privilege_raise404
-from toggle.decorators import require_toggle
 
 
 class AccountingAdminInterfaceDispatcher(ReportDispatcher):

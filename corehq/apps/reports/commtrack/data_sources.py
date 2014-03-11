@@ -144,7 +144,9 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
         if len(sp_ids) == 1:
             stock_states = StockState.objects.filter(
                 case_id=sp_ids[0],
-                section_id=STOCK_SECTION_TYPE
+                section_id=STOCK_SECTION_TYPE,
+                last_modified_date__lte=self.end_date,
+                last_modified_date__gte=self.start_date,
             )
 
             if self.program_id:
@@ -155,6 +157,8 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             stock_states = StockState.objects.filter(
                 case_id__in=sp_ids,
                 section_id=STOCK_SECTION_TYPE,
+                last_modified_date__lte=self.end_date,
+                last_modified_date__gte=self.start_date,
             )
 
             if self.program_id:
@@ -172,13 +176,12 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
     def leaf_node_data(self, stock_states):
         for state in stock_states:
             product = Product.get(state.product_id)
-            print state.resupply_quantity_needed
             yield {
                 'category': state.stock_category,
                 'product_id': product._id,
-                'consumption': state.daily_consumption * 30,
+                'consumption': state.daily_consumption * 30 if state.daily_consumption else None,
                 'months_remaining': state.months_remaining,
-                'location_id': state.case_id,
+                'location_id': SupplyPointCase.get(state.case_id).location_id,
                 'product_name': product.name,
                 'current_stock': state.stock_on_hand,
                 'location_lineage': None,
@@ -264,23 +267,29 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             )
 
         for sp_id in sp_ids:
-            for product in products:
-                loc = SupplyPointCase.get(sp_id).location
-                last_transaction = StockTransaction.latest(
-                    sp_id,
-                    STOCK_SECTION_TYPE,
-                    product._id
-                )
+            loc = SupplyPointCase.get(sp_id).location
+            transactions = StockTransaction.objects.filter(
+                case_id=sp_id,
+                section_id=STOCK_SECTION_TYPE,
+            )
 
-                yield {
-                    'loc_id': loc._id,
-                    'loc_path': loc.path,
-                    'name': loc.name,
-                    'type': loc.location_type,
-                    'reporting_status': reporting_status(
-                        last_transaction,
-                        self.start_date,
-                        self.end_date
-                    ),
-                    'geo': loc._geopoint,
-                }
+            if transactions:
+                last_transaction = sorted(
+                    transactions,
+                    key=lambda trans: trans.report.date
+                )[-1]
+            else:
+                last_transaction = None
+
+            yield {
+                'loc_id': loc._id,
+                'loc_path': loc.path,
+                'name': loc.name,
+                'type': loc.location_type,
+                'reporting_status': reporting_status(
+                    last_transaction,
+                    self.start_date,
+                    self.end_date
+                ),
+                'geo': loc._geopoint,
+            }

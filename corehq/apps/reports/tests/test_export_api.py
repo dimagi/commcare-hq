@@ -1,6 +1,6 @@
 from django.test.client import Client
 from django.test import TestCase
-from receiver.util import spoof_submission
+from couchforms.util import spoof_submission
 import uuid
 from corehq.apps.receiverwrapper.util import get_submit_url
 from corehq.apps.domain.shortcuts import create_domain

@@ -1,4 +1,4 @@
-{% load hq_shared_tags %}{% load i18n %}{% load url from future %}<!DOCTYPE html>
+{% load hq_shared_tags %}{% load i18n %}<!DOCTYPE html>
 <html>
     <head>
         <title>
@@ -141,7 +141,7 @@
                 <tbody>
                     <tr>
                         <td><textarea id="text_box"></textarea></td>
-                        <td id="send_col"><strong><span id="message_length_label" data-bind="text: message_length"></span></strong><span class="btn btn-primary" data-bind="click: send_message">Send</span></td>
+                        <td id="send_col"><strong><span id="message_length_label" data-bind="text: message_length"></span></strong><button id="send_sms_button" class="btn btn-primary" data-bind="click: send_message">Send</button></td>
                     </tr>
                 </tbody>
             </table>
@@ -218,7 +218,7 @@
                     }
                     self.update_history_choice(0, false);
                     
-                    self.update_messages = function() {
+                    self.update_messages = function(set_next_timeout) {
                         payload = {
                             contact_id : "{{ contact_id }}"
                         };
@@ -228,7 +228,7 @@
                         request = $.ajax({
                             url : "{% url 'api_history' domain %}",
                             data : payload,
-                            async : false,
+                            async : true,
                             dataType : "json",
                             success : function(data, textStatus, jqXHR) {
                                 var chat_message = null;
@@ -265,10 +265,15 @@
                                     }
                                 }
                             },
+                            complete : function(jqXHR, textStatus) {
+                                if(set_next_timeout) {
+                                    setTimeout(self.update_messages_timeout, 15000);
+                                }
+                            },
                         });
                     };
                     self.send_message = function() {
-                        clearTimeout(self.latest_timeout_handle);
+                        $("#send_sms_button").prop("disabled", true);
                         request = $.ajax({
                             url : "{% url 'api_send_sms' domain %}",
                             type : "POST",
@@ -285,13 +290,12 @@
                             } else {
                             }
                         });
-                        request.always(function() {
-                            self.update_messages_timeout();
+                        request.always(function(param1, textStatus, param3) {
+                            $("#send_sms_button").prop("disabled", false);
                         });
                     };
                     self.update_messages_timeout = function() {
-                        self.update_messages();
-                        self.latest_timeout_handle = setTimeout(self.update_messages_timeout, 15000);
+                        self.update_messages(true);
                     };
                     self.update_message_length = function(event) {
                         setTimeout(function() {

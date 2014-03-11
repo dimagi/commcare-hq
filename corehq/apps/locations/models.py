@@ -59,6 +59,10 @@ class Location(Document):
         ).all()])
         return (cls.wrap(l) for l in iter_docs(cls.get_db(), list(relevant_ids)))
 
+    @classmethod
+    def root_locations(cls, domain):
+        return root_locations(domain)
+
     @property
     def is_root(self):
         return not self.lineage
@@ -124,27 +128,6 @@ class Location(Document):
         return SupplyPointCase.get_by_location(self)
 
 
-def location_tree(domain):
-    """build a hierarchical tree of the entire location structure for a domain"""
-    # this is going to be extremely slow as the number of locations gets big
-    locs = all_locations(domain)
-    locs.sort(key=lambda l: l.path) # parents must appear before their children; couch should
-    # return docs in the correct order, but, just to be safe...
-    locs_by_id = dict((l._id, l) for l in locs)
-
-    tree_root = []
-    for loc in locs:
-        loc._children = []
-
-        parent_id = loc.parent_id
-
-        if parent_id:
-            parent_loc = locs_by_id[parent_id]
-            parent_loc._children.append(loc)
-        else:
-            tree_root.append(loc)
-    return tree_root
-    
 def root_locations(domain):
     results = Location.get_db().view('locations/hierarchy',
                                      startkey=[domain], endkey=[domain, {}],

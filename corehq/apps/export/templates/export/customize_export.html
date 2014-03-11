@@ -331,9 +331,10 @@
                     self.save.state('saving');
                     $.post(self.urls.save(), self.output()).done(function (data) {
                         window.location.href = data.redirect;
-                    }).fail(function () {
+                    }).fail(function (response) {
+                        var data = $.parseJSON(response.responseText);
                         self.save.state('error');
-                        alert('There was an error saving.');
+                        alert('There was an error saving: ' + data.error);
                     });
                 };
                 self.save.state = ko.observable('save');
@@ -412,24 +413,14 @@
                 <label for="format-select" class="control-label">{% trans "Default file type" %}</label>
                 <div class="controls">
                     <select id="format-select" data-bind="value: custom_export.default_format">
+                        <option value="csv">{% trans "CSV (Zip file)" %}</option>
                         <option value="xlsx">{% trans "Excel 2007" %}</option>
                         <option value="xls">{% trans "Excel (older versions)" %}</option>
-                        <option value="csv">{% trans "CSV (Zip file)" %}</option>
                     </select>
                 </div>
             </div>
             <div class="control-group">
                 <div class="controls">
-            {% if custom_export.type == 'form' %}
-                    <label class="checkbox">
-                        <input type="checkbox" id="include-errors-checkbox" data-bind="checked: custom_export.include_errors" />
-                        {% trans "Include duplicates and other unprocessed forms" %}
-                    </label>
-            {% endif %}
-                    <label class="checkbox">
-                        <input type="checkbox" id="presave-checkbox" data-bind="checked: presave" />
-                        {% trans "Save this report daily?" %}
-                    </label>
                     {% if commtrack_domain %}
                         <label class="checkbox">
                             <input type="checkbox" id="presave-checkbox" data-bind="checked: export_stock" />
@@ -438,11 +429,22 @@
                     {% endif %}
                     <label class="checkbox">
                         <input type="checkbox" id="transform-dates-checkbox" data-bind="checked: custom_export.transform_dates" />
-                        {% trans "Automatically convert dates for Excel?" %}
+                        {% trans "Automatically convert dates for Excel" %}
                     </label>
                     <label class="checkbox">
-                        <input type="checkbox" data-bind="checked: $root.show_deleted" /> {% trans "Show Deleted Questions and Advanced Properties" %}
+                        <input type="checkbox" data-bind="checked: $root.show_deleted" />
+                        {% trans "Show Deleted Questions and Advanced Properties" %}
                     </label>
+                    <label class="checkbox">
+                        <input type="checkbox" id="presave-checkbox" data-bind="checked: presave" />
+                        {% trans "Create a Daily Saved Export" %}
+                    </label>
+                {% if custom_export.type == 'form' %}
+                    <label class="checkbox">
+                        <input type="checkbox" id="include-errors-checkbox" data-bind="checked: custom_export.include_errors" />
+                        {% trans "Include duplicates and other unprocessed forms" %}
+                    </label>
+                {% endif %}
                 </div>
             </div>
         </fieldset>
@@ -479,7 +481,9 @@
                                 {% trans "Question" %}
                             </th>
                             <th>{% trans "Display" %}</th>
+                            {% if helper.allow_deid %}
                             <th class="deid-column" data-bind="visible: $root.showDeidColumn()">{% trans "Sensitivity" %}</th>
+                            {% endif %}
                         </tr>
                         </thead>
                         <tbody data-bind="sortable: column_configuration">
@@ -496,6 +500,7 @@
 
                                 </td>
                                 <td><input class="input-xlarge" type="text" data-bind="value: display" /></td>
+                                {% if helper.allow_deid %}
                                 <td class="deid-column" data-bind="visible: $root.showDeidColumn()">
                                     <select data-bind="
                                         value: transform || '',
@@ -505,6 +510,7 @@
                                         <option data-bind="value: value, text: label"></option>
                                     </select>
                                 </td>
+                                {% endif %}
                             </tr>
                         </tbody>
                     </table>
@@ -535,7 +541,8 @@
         {% endif %}
         <div class="form-actions">
             <button type="submit" class="btn btn-large btn-primary" data-bind="
-                click: save
+                click: save,
+                disable: save.state() === 'saving'
             ">
                 <span data-bind="visible: save.state() === 'save'">
                     <span data-bind="visible: custom_export._id && custom_export._id()">{% trans "Save" %}</span>

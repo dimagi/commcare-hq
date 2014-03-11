@@ -1,9 +1,10 @@
 from couchdbkit import ResourceConflict
 from django.utils.decorators import method_decorator
+from corehq.apps.accounting.decorators import requires_privilege_plaintext_response, requires_privilege_for_commcare_user, requires_privilege_with_fallback
 from dimagi.utils.couch.database import iter_docs
 from django.views.decorators.cache import cache_page
 from casexml.apps.case.models import CommCareCase
-from corehq import toggles
+from corehq import toggles, privileges
 from corehq.apps.app_manager.suite_xml import SuiteGenerator
 from corehq.apps.cloudcare.models import CaseSpec, ApplicationAccess
 from corehq.apps.cloudcare.touchforms_api import DELEGATION_STUB_CASE_TYPE
@@ -22,7 +23,6 @@ from corehq.apps.cloudcare.api import look_up_app_json, get_cloudcare_apps, get_
 from dimagi.utils.parsing import string_to_boolean
 from django.conf import settings
 from corehq.apps.cloudcare import touchforms_api
-from toggle import toggle_enabled
 from touchforms.formplayer.api import DjangoAuth
 from django.core.urlresolvers import reverse
 from casexml.apps.phone.fixtures import generator
@@ -32,7 +32,6 @@ from corehq.apps.cloudcare.decorators import require_cloudcare_access
 import HTMLParser
 from django.contrib import messages
 from django.utils.translation import ugettext as _, ugettext_noop
-from corehq.apps.domain.decorators import require_privilege
 
 
 @require_cloudcare_access
@@ -46,8 +45,8 @@ def insufficient_privilege(request, domain, *args, **kwargs):
 
     return render(request, "cloudcare/insufficient_privilege.html", context)
 
+@requires_privilege_for_commcare_user(privileges.CLOUDCARE)
 @require_cloudcare_access
-@require_privilege('cloudcare', fallback_view=insufficient_privilege)
 def cloudcare_main(request, domain, urlPath):
     try:
         preview = string_to_boolean(request.REQUEST.get("preview", "false"))
@@ -57,19 +56,11 @@ def cloudcare_main(request, domain, urlPath):
         preview = True
 
     app_access = ApplicationAccess.get_by_domain(domain)
-    
-    def _app_latest_build_json(app_id):
-        build = ApplicationBase.view('app_manager/saved_app',
-                                     startkey=[domain, app_id, {}],
-                                     endkey=[domain, app_id],
-                                     descending=True,
-                                     limit=1).one()
-        return get_app_json(build) if build else None
 
     if not preview:
         apps = get_cloudcare_apps(domain)
         # replace the apps with the last build of each app
-        apps = [_app_latest_build_json(app["_id"]) for app in apps]
+        apps = [get_app_json(ApplicationBase.get_latest_build(domain, app['_id'])) for app in apps]
     else:
         apps = ApplicationBase.view('app_manager/applications_brief', startkey=[domain], endkey=[domain, {}])
         apps = [get_app_json(app) for app in apps if app and app.application_version == V2]
@@ -137,12 +128,12 @@ def cloudcare_main(request, domain, urlPath):
        "apps_raw": apps,
        "preview": preview,
        "maps_api_key": settings.GMAPS_API_KEY,
-       'offline_enabled': toggle_enabled(toggles.OFFLINE_CLOUDCARE, request.user.username),
+       'offline_enabled': toggles.OFFLINE_CLOUDCARE.enabled(request.user.username),
     }
     context.update(_url_context())
     return render(request, "cloudcare/cloudcare_home.html", context)
 
-
+@requires_privilege_for_commcare_user(privileges.CLOUDCARE)
 @login_and_domain_required
 def form_context(request, domain, app_id, module_id, form_id):
     app = Application.get(app_id)
@@ -158,6 +149,7 @@ def form_context(request, domain, app_id, module_id, form_id):
 
 cloudcare_api = login_or_digest_ex(allow_cc_users=True)
 
+@requires_privilege_for_commcare_user(privileges.CLOUDCARE)
 @login_and_domain_required
 def view_case(request, domain, case_id=None):
     context = {}
@@ -321,6 +313,7 @@ class EditCloudcareUserPermissionsView(BaseUserSettingsView):
     page_title = ugettext_noop("CloudCare Permissions")
 
     @method_decorator(domain_admin_required)
+    @method_decorator(requires_privilege_with_fallback(privileges.CLOUDCARE))
     def dispatch(self, request, *args, **kwargs):
         return super(EditCloudcareUserPermissionsView, self).dispatch(request, *args, **kwargs)
 

@@ -1,13 +1,18 @@
-from dimagi.utils.decorators.memoized import memoized
+from django.utils.decorators import method_decorator
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect, HttpResponseBadRequest
 from django.views.generic.base import View
 from django.utils.translation import ugettext
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.decorators import login_and_domain_required, cls_to_view
 from dimagi.utils.decorators.datespan import datespan_in_request
+from django_prbac.exceptions import PermissionDenied
+from django_prbac.utils import ensure_request_has_privilege
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.reports.exceptions import BadRequestError
+from corehq import privileges, toggles
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 
 datespan_default = datespan_in_request(
     from_param="startdate",
@@ -55,7 +60,7 @@ class ReportDispatcher(View):
         """
         return {}
 
-    def permissions_check(self, report, request, domain=None):
+    def permissions_check(self, report, request, domain=None, is_navigation_check=False):
         """
             Override this method to check for appropriate permissions based on the report model
             and other arguments.
@@ -168,7 +173,7 @@ class ReportDispatcher(View):
             report_contexts = []
             for report in report_group:
                 class_name = report.__module__ + '.' + report.__name__
-                if not dispatcher.permissions_check(class_name, request, domain=domain):
+                if not dispatcher.permissions_check(class_name, request, domain=domain, is_navigation_check=True):
                     continue
                 if report.show_in_navigation(
                         domain=domain, project=project, user=couch_user):
@@ -214,7 +219,7 @@ class ProjectReportDispatcher(ReportDispatcher):
     def dispatch(self, request, *args, **kwargs):
         return super(ProjectReportDispatcher, self).dispatch(request, *args, **kwargs)
 
-    def permissions_check(self, report, request, domain=None):
+    def permissions_check(self, report, request, domain=None, is_navigation_check=False):
         if domain is None:
             return False
         return request.couch_user.can_view_report(domain, report)
@@ -223,6 +228,26 @@ class ProjectReportDispatcher(ReportDispatcher):
 class CustomProjectReportDispatcher(ProjectReportDispatcher):
     prefix = 'custom_project_report'
     map_name = 'CUSTOM_REPORTS'
+
+    def dispatch(self, request, *args, **kwargs):
+        render_as = kwargs.get('render_as')
+        if not render_as == 'email':
+            return self.dispatch_with_priv(request, *args, **kwargs)
+        if not domain_has_privilege(request.domain, privileges.CUSTOM_REPORTS):
+            raise PermissionDenied()
+        return super(CustomProjectReportDispatcher, self).dispatch(request, *args, **kwargs)
+
+    @method_decorator(requires_privilege_with_fallback(privileges.CUSTOM_REPORTS))
+    def dispatch_with_priv(self, request, *args, **kwargs):
+        return super(CustomProjectReportDispatcher, self).dispatch(request, *args, **kwargs)
+
+    def permissions_check(self, report, request, domain=None, is_navigation_check=False):
+        if is_navigation_check:
+            try:
+                ensure_request_has_privilege(request, privileges.CUSTOM_REPORTS)
+            except PermissionDenied:
+                return False
+        return super(CustomProjectReportDispatcher, self).permissions_check(report, request, domain)
 
 
 class BasicReportDispatcher(ReportDispatcher):
@@ -234,7 +259,7 @@ class AdminReportDispatcher(ReportDispatcher):
     prefix = 'admin_report'
     map_name = 'ADMIN_REPORTS'
 
-    def permissions_check(self, report, request, domain=None):
+    def permissions_check(self, report, request, domain=None, is_navigation_check=False):
         return hasattr(request, 'couch_user') and request.user.has_perm("is_superuser")
 
 

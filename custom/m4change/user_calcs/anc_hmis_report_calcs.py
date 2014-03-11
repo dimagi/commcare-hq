@@ -1,14 +1,9 @@
+from . import update_value_for_date
 from datetime import datetime
 import fluff
+from corehq.apps.users.models import CommCareUser
 from custom.m4change.constants import BOOKING_FORMS, FOLLOW_UP_FORMS, BOOKING_AND_FOLLOW_UP_FORMS,\
-    PNC_CHILD_IMMUNIZATION_AND_REG_HOME_DELIVERED_FORMS
-
-
-def __update_value_for_date__(date, dates):
-    if date not in dates:
-        dates[date] = 1
-    else:
-        dates[date] += 1
+    PNC_CHILD_IMMUNIZATION_AND_REG_HOME_DELIVERED_FORMS, IMMUNIZATION_FORMS, BOOKED_AND_UNBOOKED_DELIVERY_FORMS
 
 
 class AncAntenatalAttendanceCalculator(fluff.Calculator):
@@ -37,7 +32,7 @@ class AncAntenatalVisitBefore20WeeksCalculator(fluff.Calculator):
         dates = dict()
         for form in case.get_forms():
             if form.xmlns in BOOKING_FORMS and form.form.get("registered_early", "") == "yes":
-                __update_value_for_date__(form.received_on, dates)
+                update_value_for_date(form.received_on, dates)
         for date in dates:
             yield [date, dates[date]]
 
@@ -49,7 +44,7 @@ class AncAntenatalVisitAfter20WeeksCalculator(fluff.Calculator):
         dates = dict()
         for form in case.get_forms():
             if form.xmlns in BOOKING_FORMS and form.form.get("registered_early", "") == "no":
-                __update_value_for_date__(form.received_on, dates)
+                update_value_for_date(form.received_on, dates)
         for date in dates:
             yield [date, dates[date]]
 
@@ -61,7 +56,7 @@ class AncAttendanceGreaterEqual4VisitsCalculator(fluff.Calculator):
         dates = dict()
         for form in case.get_forms():
             if form.xmlns in FOLLOW_UP_FORMS and form.form.get("visits", 0) >= 4:
-                __update_value_for_date__(form.received_on, dates)
+                update_value_for_date(form.received_on, dates)
         for date in dates:
             yield [date, dates[date]]
 
@@ -73,7 +68,7 @@ class AncSyphilisTestDoneCalculator(fluff.Calculator):
         dates = dict()
         for form in case.get_forms():
             if form.xmlns in FOLLOW_UP_FORMS and "syphilis" in form.form.get("tests_conducted", ""):
-                __update_value_for_date__(form.received_on, dates)
+                update_value_for_date(form.received_on, dates)
         for date in dates:
             yield [date, dates[date]]
 
@@ -85,7 +80,7 @@ class AncSyphilisPositiveCalculator(fluff.Calculator):
         dates = dict()
         for form in case.get_forms():
             if form.xmlns in FOLLOW_UP_FORMS and form.form.get("syphilis_result", "") == "positive":
-                __update_value_for_date__(form.received_on, dates)
+                update_value_for_date(form.received_on, dates)
         for date in dates:
             yield [date, dates[date]]
 
@@ -98,7 +93,7 @@ class AncSyphilisCaseTreatedCalculator(fluff.Calculator):
         for form in case.get_forms():
             if form.xmlns in FOLLOW_UP_FORMS and form.form.get("syphilis_result", "") == "positive"\
                     and form.form.get("client_diagnosis", "") == "treated":
-                __update_value_for_date__(form.received_on, dates)
+                update_value_for_date(form.received_on, dates)
         for date in dates:
             yield [date, dates[date]]
 
@@ -111,7 +106,7 @@ class PregnantMothersReceivingIpt1Calculator(fluff.Calculator):
         for form in case.get_forms():
             if form.xmlns in BOOKING_AND_FOLLOW_UP_FORMS:
                 if "IPT" in form.form.get("drugs_given", ""):
-                    __update_value_for_date__(form.received_on, dates)
+                    update_value_for_date(form.received_on, dates)
         for date in dates:
             yield [date, dates[date]]
 
@@ -123,7 +118,7 @@ class PregnantMothersReceivingIpt2Calculator(fluff.Calculator):
         dates = dict()
         for form in case.get_forms():
             if form.xmlns in FOLLOW_UP_FORMS and "ipt" in form.form.get("drugs_given", ""):
-                __update_value_for_date__(form.received_on, dates)
+                update_value_for_date(form.received_on, dates)
         for date in dates:
             yield [date, dates[date]]
 
@@ -135,7 +130,7 @@ class PregnantMothersReceivingLlinCalculator(fluff.Calculator):
         dates = dict()
         for form in case.get_forms():
             if form.xmlns in BOOKING_AND_FOLLOW_UP_FORMS and "llin" in form.form.get("drugs_given", ""):
-                __update_value_for_date__(form.received_on, dates)
+                update_value_for_date(form.received_on, dates)
         for date in dates:
             yield [date, dates[date]]
 
@@ -147,7 +142,7 @@ class PregnantMothersReceivingIfaCalculator(fluff.Calculator):
         dates = dict()
         for form in case.get_forms():
             if form.xmlns in BOOKING_AND_FOLLOW_UP_FORMS and "ifa" in form.form.get("drugs_given", ""):
-                __update_value_for_date__(form.received_on, dates)
+                update_value_for_date(form.received_on, dates)
         for date in dates:
             yield [date, dates[date]]
 
@@ -182,7 +177,7 @@ class PostnatalClinicVisitWithin1DayOfDeliveryCalculator(fluff.Calculator):
             dt = date_modified - datetime.combine(date_delivery, datetime.min.time())
             for form in case.get_forms():
                 if form.xmlns in PNC_CHILD_IMMUNIZATION_AND_REG_HOME_DELIVERED_FORMS and dt.days <= 1:
-                    __update_value_for_date__(form.received_on, dates)
+                    update_value_for_date(form.received_on, dates)
             for date in dates:
                 yield [date, dates[date]]
 
@@ -198,7 +193,7 @@ class PostnatalClinicVisitWithin3DaysOfDeliveryCalculator(fluff.Calculator):
             dt = date_modified - datetime.combine(date_delivery, datetime.min.time())
             for form in case.get_forms():
                 if form.xmlns in PNC_CHILD_IMMUNIZATION_AND_REG_HOME_DELIVERED_FORMS and dt.days <= 3:
-                    __update_value_for_date__(form.received_on, dates)
+                    update_value_for_date(form.received_on, dates)
             for date in dates:
                 yield [date, dates[date]]
 
@@ -214,6 +209,6 @@ class PostnatalClinicVisitGreaterEqual7DaysOfDeliveryCalculator(fluff.Calculator
             dt = date_modified - datetime.combine(date_delivery, datetime.min.time())
             for form in case.get_forms():
                 if form.xmlns in PNC_CHILD_IMMUNIZATION_AND_REG_HOME_DELIVERED_FORMS and dt.days >= 7:
-                    __update_value_for_date__(form.received_on, dates)
+                    update_value_for_date(form.received_on, dates)
             for date in dates:
                 yield [date, dates[date]]

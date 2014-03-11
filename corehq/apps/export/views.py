@@ -64,12 +64,27 @@ class BaseExportView(BaseProjectDataView):
     def page_context(self):
         return self.export_helper.get_context()
 
+    def commit(self, request):
+        raise NotImplementedError('Subclasses must implement a commit method.')
+
     def post(self, request, *args, **kwargs):
-        if self.is_async:
-            return json_response({
-                'redirect': self.export_home_url,
-            })
-        return HttpResponseRedirect(self.export_home_url)
+        try:
+            self.commit(request)
+        except Exception, e:
+            if self.is_async:
+                response = json_response({
+                    'error': str(e) or type(e).__name__
+                })
+                response.status_code = 500
+                return response
+            else:
+                raise
+        else:
+            if self.is_async:
+                return json_response({
+                    'redirect': self.export_home_url,
+                })
+            return HttpResponseRedirect(self.export_home_url)
 
 
 class BaseCreateCustomExportView(BaseExportView):
@@ -80,10 +95,9 @@ class BaseCreateCustomExportView(BaseExportView):
     def export_helper(self):
         return CustomExportHelper.make(self.request, self.export_type, domain=self.domain)
 
-    def post(self, request, *args, **kwargs):
+    def commit(self, request):
         self.export_helper.update_custom_export()
         messages.success(request, _("Custom export created!"))
-        return super(BaseCreateCustomExportView, self).post(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
         # just copying what was in the old django view here. don't want to mess too much with exports just yet.
@@ -151,10 +165,9 @@ class BaseModifyCustomExportView(BaseExportView):
 
 class BaseEditCustomExportView(BaseModifyCustomExportView):
 
-    def post(self, request, *args, **kwargs):
+    def commit(self, request):
         self.export_helper.update_custom_export()
         messages.success(request, _("Custom export saved!"))
-        return super(BaseEditCustomExportView, self).post(request, *args, **kwargs)
 
 
 class EditCustomFormExportView(BaseEditCustomExportView):
@@ -174,7 +187,7 @@ class DeleteCustomExportView(BaseModifyCustomExportView):
     http_method_names = ['post']
     is_async = False
 
-    def post(self, request, *args, **kwargs):
+    def commit(self, request):
         try:
             saved_export = SavedExportSchema.get(self.export_id)
         except ResourceNotFound:
@@ -182,7 +195,7 @@ class DeleteCustomExportView(BaseModifyCustomExportView):
         self.export_type = saved_export.type
         saved_export.delete()
         messages.success(request, _("Custom export was deleted."))
-        return super(DeleteCustomExportView, self).post(request, *args, **kwargs)
+
 
 BASIC_FORM_SCHEMA = {
     "doc_type": "string",

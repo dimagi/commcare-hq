@@ -59,14 +59,25 @@ def REPORTS(project):
             cp_reports = tuple(make_careplan_reports(config))
             reports.insert(0, (ugettext_lazy("Care Plans"), cp_reports))
 
-    messaging_reports = (
-        sms.MessagesReport,
-        sms.MessageLogReport,
-        ivr.CallLogReport,
-        ivr.ExpectedCallbackReport,
-        system_overview.SystemOverviewReport,
-        system_overview.SystemUsersReport
-    )
+    from corehq.apps.accounting.utils import domain_has_privilege
+    messaging_reports = []
+
+    project_can_use_sms = domain_has_privilege(project.name, privileges.OUTBOUND_SMS)
+    if project_can_use_sms:
+        messaging_reports.extend([
+            sms.MessagesReport,
+        ])
+    # always have this historical report visible
+    messaging_reports.append(sms.MessageLogReport)
+
+    project_can_use_inbound_sms = domain_has_privilege(project.name, privileges.INBOUND_SMS)
+    if project_can_use_inbound_sms:
+        messaging_reports.extend([
+            ivr.CallLogReport,
+            ivr.ExpectedCallbackReport,
+            system_overview.SystemOverviewReport,
+            system_overview.SystemUsersReport,
+        ])
 
     messaging_reports += getattr(Domain.get_module_by_name(project.name), 'MESSAGING_REPORTS', ())
 
