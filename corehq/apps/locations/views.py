@@ -187,6 +187,7 @@ class LocationImportStatusView(BaseLocationView):
             'poll_url': reverse('location_importer_job_poll', args=[self.domain, kwargs['download_id']]),
             'title': _("Location Import Status"),
             'progress_text': _("Importing your data. This may take some time..."),
+            'error_text': _("Problem importing data! Please try again or report an issue."),
         }
         return render(request, self.template_name, context)
 

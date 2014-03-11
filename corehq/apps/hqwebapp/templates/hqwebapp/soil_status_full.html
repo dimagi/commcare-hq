@@ -13,8 +13,14 @@
             var pollDownloader = function () {
                 if ($('#ready_{{ download_id }}').length == 0)
                     {
-                        $.get("{{ poll_url }}", function(data) {
-                            $("#display_{{ download_id }}").html(data);
+                        $.ajax("{{ poll_url }}", {
+                            success: function(data) {
+                                $("#display_{{ download_id }}").html(data);
+                            },
+                            error: function(data) {
+                                $("#display_{{ download_id }}").html('<p class="alert alert-error">{{ error_text }}</p>');
+                                clearInterval(autoRefresh);
+                            }
                         });
                     } else {
                         clearInterval(autoRefresh);
