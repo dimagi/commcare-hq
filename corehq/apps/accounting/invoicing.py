@@ -690,17 +690,20 @@ class InvoiceTemplate(object):
                                       inches(0.1),
                                       "Total")
 
+        coord_y = 0
         for item_index in range(len(self.items)):
             if item_index > 13:
                 raise InvoiceError("Too many line items to fit to invoice")
             item = self.items[item_index]
-            coord_y = -item_index * header_height + inches(-0.2)
 
-            self.canvas.drawCentredString(
-                midpoint(0, description_x),
-                coord_y,
-                str(item.description)
-            )
+            description = Paragraph(item.description,
+                                    ParagraphStyle('',
+                                                   fontSize=12,
+                                                   ))
+            description.wrapOn(self.canvas, description_x - inches(0.2),
+                               -header_height)
+            coord_y -= description.height + inches(0.05)
+            description.drawOn(self.canvas, inches(0.1), coord_y)
             self.canvas.drawCentredString(
                 midpoint(description_x, quantity_x),
                 coord_y,
@@ -726,6 +729,8 @@ class InvoiceTemplate(object):
                 coord_y,
                 get_amount_str(item.total)
             )
+            coord_y -= inches(0.1)
+            self.canvas.line(0, coord_y, total_x, coord_y)
 
         self.canvas.translate(-origin_x, -origin_y)
 
