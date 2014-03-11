@@ -6,7 +6,7 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop, ugettext_lazy
 from corehq import toggles, privileges
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
-from corehq.apps.accounting.models import BillingAccountAdmin
+from corehq.apps.accounting.models import BillingAccountAdmin, Invoice
 from corehq.apps.domain.utils import get_adm_enabled_domains
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
@@ -987,7 +987,10 @@ class ProjectSettingsTab(UITab):
             user_is_billing_admin, billing_account = BillingAccountAdmin.get_admin_status_and_account(
                 self.couch_user, self.domain)
             if user_is_billing_admin or self.couch_user.is_superuser:
-                from corehq.apps.domain.views import DomainSubscriptionView, EditExistingBillingAccountView
+                from corehq.apps.domain.views import (
+                    DomainSubscriptionView, EditExistingBillingAccountView,
+                    DomainBillingStatementsView,
+                )
                 subscription = [
                     {
                         'title': DomainSubscriptionView.page_title,
@@ -1000,6 +1003,17 @@ class ProjectSettingsTab(UITab):
                             'title':  EditExistingBillingAccountView.page_title,
                             'url': reverse(EditExistingBillingAccountView.urlname, args=[self.domain]),
                         },
+                    )
+                if ((toggles.ACCOUNTING_PREVIEW.enabled(self.couch_user.username)
+                     or toggles.ACCOUNTING_PREVIEW.enabled(self.domain))
+                    and billing_account is not None
+                    and Invoice.exists_for_domain(self.domain)
+                ):
+                    subscription.append(
+                        {
+                            'title': DomainBillingStatementsView.page_title,
+                            'url': reverse(DomainBillingStatementsView.urlname, args=[self.domain]),
+                        }
                     )
                 items.append((_('Subscription'), subscription))
 

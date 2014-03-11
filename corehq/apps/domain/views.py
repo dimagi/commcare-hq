@@ -508,6 +508,15 @@ class DomainAccountingSettings(BaseAdminProjectSettingsView):
     def product(self):
         return SoftwareProductType.get_type_by_domain(self.domain_object)
 
+    @property
+    @memoized
+    def account(self):
+        return BillingAccount.get_account_by_domain(self.domain)
+
+    @property
+    def current_subscription(self):
+        return Subscription.get_subscribed_plan_by_domain(self.domain_object)[1]
+
 
 class DomainSubscriptionView(DomainAccountingSettings):
     urlname = 'domain_subscription_view'
@@ -596,11 +605,6 @@ class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin
 
     @property
     @memoized
-    def account(self):
-        return BillingAccount.get_account_by_domain(self.domain)
-
-    @property
-    @memoized
     def billing_info_form(self):
         if self.request.method == 'POST':
             return EditBillingAccountInfoForm(
@@ -637,16 +641,28 @@ class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin
         return self.get(request, *args, **kwargs)
 
 
+class DomainBillingStatementsView(DomainAccountingSettings):
+    template_name = 'domain/billing_statements.html'
+    urlname = 'domain_billing_statements'
+    page_title = ugettext_noop("Billing Statements")
+
+    @property
+    def page_context(self):
+        return {}
+
+    @method_decorator(toggles.ACCOUNTING_PREVIEW.required_decorator())
+    def dispatch(self, request, *args, **kwargs):
+        if self.account is None:
+            raise Http404()
+        return super(DomainBillingStatementsView, self).dispatch(request, *args, **kwargs)
+
+
 class SelectPlanView(DomainAccountingSettings):
     template_name = 'domain/select_plan.html'
     urlname = 'domain_select_plan'
     page_title = ugettext_noop("Change Plan")
     step_title = ugettext_noop("Select Plan")
     edition = None
-
-    @property
-    def current_subscription(self):
-        return Subscription.get_subscribed_plan_by_domain(self.domain_object)[1]
 
     @property
     def edition_name(self):
