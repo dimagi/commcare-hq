@@ -11,23 +11,25 @@ from custom.m4change.constants import M4CHANGE_DOMAINS, BOOKED_AND_UNBOOKED_DELI
 from custom.m4change.user_calcs.ld_hmis_report_calcs import form_passes_filter_date_delivery, \
     form_passes_filter_date_modified
 
+NO_LOCATION_VALUE_STRING = "None"
 
 def _get_location_by_user_id(user_id, domain):
-    user = CommCareUser.get_by_user_id(userID=user_id, domain=domain)
+    user = CommCareUser.get(user_id)
     if user is not None:
-        return str(get_commtrack_location_id(user, Domain.get_by_name(domain)))
-    return "None"
+        location_id = get_commtrack_location_id(user, Domain.get_by_name(domain))
+        return str(location_id) if location_id is not None else NO_LOCATION_VALUE_STRING
+    return NO_LOCATION_VALUE_STRING
 
 def _get_case_location_id(case):
     if is_valid_user_by_case(case):
         return _get_location_by_user_id(case.user_id, case.domain)
-    return "None"
+    return NO_LOCATION_VALUE_STRING
 
 def _get_form_location_id(form):
     user_id = form.form.get("meta", {}).get("userID", None)
     if user_id not in [None, "", "demo_user"]:
         return _get_location_by_user_id(user_id, form.domain)
-    return "None"
+    return NO_LOCATION_VALUE_STRING
 
 
 class AncHmisCaseFluff(fluff.IndicatorDocument):
