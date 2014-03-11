@@ -818,6 +818,11 @@ class Invoice(models.Model):
         credit_lines = CreditLine.get_credits_for_invoice(self)
         CreditLine.apply_credits_toward_balance(credit_lines, current_total, dict(invoice=self))
 
+    @classmethod
+    def exists_for_domain(cls, domain):
+        # todo return cls.objects.filter(subscription__subscriber__domain=domain).exists()
+        return True
+
 
 class SubscriptionAdjustment(models.Model):
     """
