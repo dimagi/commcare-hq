@@ -199,6 +199,9 @@ class UploadProductView(BaseCommTrackManageView):
         if not upload:
             messages.error(request, _('no file uploaded'))
             return self.get(request, *args, **kwargs)
+        elif not upload.name.endswith('.csv'):
+            messages.error(request, _('please use csv format only'))
+            return self.get(request, *args, **kwargs)
 
         domain = args[0]
         # stash this in soil to make it easier to pass to celery
@@ -209,7 +212,6 @@ class UploadProductView(BaseCommTrackManageView):
             file_ref.download_id,
         )
         file_ref.set_task(task)
-
         return HttpResponseRedirect(
             reverse(
                 ProductImportStatusView.urlname,
@@ -228,6 +230,7 @@ class ProductImportStatusView(BaseCommTrackManageView):
             'poll_url': reverse('product_importer_job_poll', args=[self.domain, kwargs['download_id']]),
             'title': _("Product Import Status"),
             'progress_text': _("Importing your data. This may take some time..."),
+            'error_text': _("Problem importing data! Please try again or report an issue."),
         }
         return render(request, 'hqwebapp/soil_status_full.html', context)
 

@@ -184,7 +184,11 @@ class Product(Document):
         ]
 
     def to_csv(self):
-        return [getattr(self, attr[0] if isinstance(attr, tuple) else attr) for attr in self._csv_attrs()]
+        def _encode_if_needed(val):
+            return val.encode("utf8") if isinstance(val, unicode) else val
+
+        return [_encode_if_needed(getattr(self, attr[0] if isinstance(attr, tuple) else attr))
+                for attr in self._csv_attrs()]
 
     @classmethod
     def from_csv(cls, row):
@@ -197,7 +201,7 @@ class Product(Document):
             p = cls()
         for i, attr in enumerate(cls._csv_attrs()[1:]):
             try:
-                val = row[i]
+                val = row[i].decode('utf-8')
             except IndexError:
                 break
             else:

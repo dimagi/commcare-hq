@@ -48,6 +48,7 @@ class IndicatorPillowBase(BasicPillow):
 
 class CaseIndicatorPillow(IndicatorPillowBase):
     document_class = CommCareCase
+    use_locking = True
 
     def process_indicators(self, doc_dict, domain, namespaces):
         case_type = doc_dict.get('type')
@@ -124,6 +125,7 @@ class CaseIndicatorPillow(IndicatorPillowBase):
 
 class FormIndicatorPillow(IndicatorPillowBase):
     document_class = XFormInstance
+    use_locking = True
 
     def process_indicators(self, doc_dict, domain, namespaces):
         if not doc_dict.get('initial_processing_complete', False):

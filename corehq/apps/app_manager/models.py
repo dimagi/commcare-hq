@@ -2147,6 +2147,15 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
                         #stale=settings.COUCH_STALE_QUERY,
         ).all()
 
+    @classmethod
+    def get_latest_build(cls, domain, app_id):
+        build = cls.view('app_manager/saved_app',
+                                     startkey=[domain, app_id, {}],
+                                     endkey=[domain, app_id],
+                                     descending=True,
+                                     limit=1).one()
+        return build if build else None
+
     def rename_lang(self, old_lang, new_lang):
         validate_lang(new_lang)
 

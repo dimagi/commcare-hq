@@ -1,3 +1,4 @@
+{% load hq_shared_tags %}{% load i18n %}<!DOCTYPE html>
 <html>
     <head>
         <title>
@@ -140,7 +141,7 @@
                 <tbody>
                     <tr>
                         <td><textarea id="text_box"></textarea></td>
-                        <td id="send_col"><strong><span id="message_length_label" data-bind="text: message_length"></span></strong><span class="btn btn-primary" data-bind="click: send_message">Send</span></td>
+                        <td id="send_col"><strong><span id="message_length_label" data-bind="text: message_length"></span></strong><button id="send_sms_button" class="btn btn-primary" data-bind="click: send_message">Send</button></td>
                     </tr>
                 </tbody>
             </table>
@@ -272,6 +273,7 @@
                         });
                     };
                     self.send_message = function() {
+                        $("#send_sms_button").prop("disabled", true);
                         request = $.ajax({
                             url : "{% url 'api_send_sms' domain %}",
                             type : "POST",
@@ -287,6 +289,9 @@
                                 self.update_message_length(null);
                             } else {
                             }
+                        });
+                        request.always(function(param1, textStatus, param3) {
+                            $("#send_sms_button").prop("disabled", false);
                         });
                     };
                     self.update_messages_timeout = function() {

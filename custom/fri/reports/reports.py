@@ -398,7 +398,7 @@ class SurveyResponsesReport(FRIReport):
                 return False
             first_tuesday = self.get_first_tuesday(registration_date)
             end_date = first_tuesday + timedelta(days=56)
-            return end_date >= local_date
+            return (not case.closed) and (end_date >= local_date)
 
         result = filter(filter_function, result)
         return result

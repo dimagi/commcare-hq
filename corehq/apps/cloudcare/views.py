@@ -56,19 +56,11 @@ def cloudcare_main(request, domain, urlPath):
         preview = True
 
     app_access = ApplicationAccess.get_by_domain(domain)
-    
-    def _app_latest_build_json(app_id):
-        build = ApplicationBase.view('app_manager/saved_app',
-                                     startkey=[domain, app_id, {}],
-                                     endkey=[domain, app_id],
-                                     descending=True,
-                                     limit=1).one()
-        return get_app_json(build) if build else None
 
     if not preview:
         apps = get_cloudcare_apps(domain)
         # replace the apps with the last build of each app
-        apps = [_app_latest_build_json(app["_id"]) for app in apps]
+        apps = [get_app_json(ApplicationBase.get_latest_build(domain, app['_id'])) for app in apps]
     else:
         apps = ApplicationBase.view('app_manager/applications_brief', startkey=[domain], endkey=[domain, {}])
         apps = [get_app_json(app) for app in apps if app and app.application_version == V2]
