@@ -1,5 +1,6 @@
 from collections import namedtuple
 from distutils.version import LooseVersion
+import urllib
 from django.core.urlresolvers import reverse
 from eulxml.xmlmap.fields import StringListField
 from lxml import etree
@@ -530,7 +531,7 @@ class SuiteGenerator(object):
                 remote=get_url_base() + reverse(
                     'hqmedia_download',
                     args=[m.media_type, m.multimedia_id]
-                ) + name
+                ) + urllib.quote(name.encode('utf-8')) if name else name
             )
 
     @property
