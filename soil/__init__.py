@@ -119,7 +119,7 @@ class DownloadBase(object):
             elif isinstance(info, Exception):
                 current = total = percent = 100
                 error = True
-                error_message = str(info)
+                error_message = "%s: %s" % (type(info).__name__, info)
             else:
                 current = info.get('current')
                 total = info.get('total')

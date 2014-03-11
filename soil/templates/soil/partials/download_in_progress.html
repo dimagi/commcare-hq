@@ -11,7 +11,7 @@
 {% else %}
     {% if progress.error %}
         <p class="alert alert-error">
-            {% trans "Error! " %} {{ progress.error_message }}
+            {% trans "Something went wrong! " %} {{ progress.error_message }}
         </p>
     {% else %}
         {% if progress.percent %}
