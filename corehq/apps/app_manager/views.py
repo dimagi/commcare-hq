@@ -36,7 +36,7 @@ from django.utils.http import urlencode
 from django.views.decorators.http import require_GET
 from django.conf import settings
 from couchdbkit.resource import ResourceNotFound
-from corehq.apps.app_manager.const import APP_V1, CAREPLAN_GOAL, CAREPLAN_TASK, APP_V2, CT_REQUISITION_MODES
+from corehq.apps.app_manager.const import APP_V1, CAREPLAN_GOAL, CAREPLAN_TASK, APP_V2, CT_REQUISITION_MODES, MAJOR_RELEASE_TO_VERSION
 from corehq.apps.app_manager.success_message import SuccessMessage
 from corehq.apps.app_manager.util import is_valid_case_type, get_all_case_properties, add_odk_profile_after_build, ParentCasePropertyBuilder, commtrack_ledger_sections
 from corehq.apps.app_manager.util import save_xform, get_settings_values
@@ -436,21 +436,25 @@ def get_app_view_context(request, app):
     }
 
     build_config = CommCareBuildConfig.fetch()
-    version = app.application_version
-    options = build_config.get_menu(version)
+    options = build_config.get_menu()
     if not request.user.is_superuser:
         options = [option for option in options if not option.superuser_only]
-    options_labels = [option.get_label() for option in options]
-    options_builds = [option.build.to_string() for option in options]
+    options_map = defaultdict(lambda:{"values": [], "value_names": []})
+    for option in options:
+        builds = options_map[option.build.major_release()]
+        builds["values"].append(option.build.to_string())
+        builds["value_names"].append(option.get_label())
+        if "default" not in builds:
+            app_ver = MAJOR_RELEASE_TO_VERSION[option.build.major_release()]
+            builds["default"] = build_config.get_default(app_ver).to_string()
 
     (build_spec_setting,) = filter(
         lambda x: x['type'] == 'hq' and x['id'] == 'build_spec',
         [setting for section in context['settings_layout']
             for setting in section['settings']]
     )
-    build_spec_setting['values'] = options_builds
-    build_spec_setting['value_names'] = options_labels
-    build_spec_setting['default'] = build_config.get_default(app.application_version).to_string()
+    build_spec_setting['options_map'] = options_map
+    build_spec_setting['default_app_version'] = app.application_version
 
     if app.get_doc_type() == 'Application':
         try:
