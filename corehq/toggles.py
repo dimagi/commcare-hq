@@ -1,4 +1,7 @@
+from functools import wraps
+from django.http import Http404
 from toggle.shortcuts import toggle_enabled
+
 
 class StaticToggle(object):
     def __init__(self, slug, label, namespaces=None):
@@ -11,6 +14,24 @@ class StaticToggle(object):
 
     def enabled(self, item, **kwargs):
         return any([toggle_enabled(self.slug, item, namespace=n, **kwargs) for n in self.namespaces])
+
+    def required_decorator(self):
+        """
+        Returns a view function decorator that checks to see if the domain
+        or user in the request has the appropriate toggle enabled.
+        """
+        def decorator(view_func):
+            @wraps(view_func)
+            def wrapped_view(request, *args, **kwargs):
+                if (
+                    (hasattr(request, 'user') and self.enabled(request.user.username))
+                    or (hasattr(request, 'domain') and self.enabled(request.domain))
+                ):
+                    return view_func(request, *args, **kwargs)
+                raise Http404()
+            return wrapped_view
+        return decorator
+
 
 # if no namespaces are specified the user namespace is assumed
 NAMESPACE_USER = object()
@@ -44,7 +65,7 @@ PRBAC_DEMO = StaticToggle(
 ACCOUNTING_PREVIEW = StaticToggle(
     'accounting_preview',
     'Accounting preview',
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
 OFFLINE_CLOUDCARE = StaticToggle(
