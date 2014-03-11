@@ -314,5 +314,3 @@ class SyncLog(SafeSaveDocument, UnicodeMixIn):
 
     def __unicode__(self):
         return "%s synced on %s (%s)" % (self.user_id, self.date.date(), self.get_id)
-
-from casexml.apps.phone import signals

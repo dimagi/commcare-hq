@@ -239,12 +239,12 @@ class CaseRebuildTest(TestCase):
         self.assertEqual(f2, u2)
         self.assertEqual(f3, u3)
 
-        self.assertTrue(case.closed) # no change
-        # self.assertFalse('p1' in case._doc) # todo: should disappear entirely
-        self.assertEqual(case.p2, 'p2-2') # no change
-        self.assertEqual(case.p3, 'p3-2') # no change
-        self.assertEqual(case.p4, 'p4-3') # no change
-        self.assertEqual(case.p5, 'p5-3') # no change
+        self.assertTrue(case.closed)  # no change
+        self.assertFalse('p1' in case._doc)  # should disappear entirely
+        self.assertEqual(case.p2, 'p2-2')  # no change
+        self.assertEqual(case.p3, 'p3-2')  # no change
+        self.assertEqual(case.p4, 'p4-3')  # no change
+        self.assertEqual(case.p5, 'p5-3')  # no change
 
         def _reset(form_id):
             form_doc = XFormInstance.get(form_id)
@@ -290,6 +290,26 @@ class CaseRebuildTest(TestCase):
         self.assertEqual(case.p4, 'p4-2')  # loses third form update
         # self.assertFalse('p5' in case._doc) # todo: should disappear entirely
         _reset(f3)
+
+    def testArchiveAgainstDeletedCases(self):
+        now = datetime.utcnow()
+        # make sure we timestamp everything so they have the right order
+        case_id = post_util(create=True, p1='p1', form_extras={'received_on': now})
+        post_util(case_id=case_id, p2='p2',
+                  form_extras={'received_on': now + timedelta(seconds=1)})
+        post_util(case_id=case_id, p3='p3',
+                  form_extras={'received_on': now + timedelta(seconds=2)})
+
+        case = CommCareCase.get(case_id)
+        case.doc_type = 'CommCareCase-Deleted'
+        case.save()
+
+        [f1, f2, f3] = case.xform_ids
+        f2_doc = XFormInstance.get(f2)
+        f2_doc.archive()
+        case = CommCareCase.get(case_id)
+        self.assertEqual(case.doc_type, 'CommCareCase-Deleted')
+
 
 
 class TestCheckActionOrder(TestCase):
