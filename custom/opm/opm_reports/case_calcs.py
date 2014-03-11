@@ -4,11 +4,10 @@ These are used in the Beneficiary Payment Report
 """
 import datetime
 
-from corehq.apps.users.models import CommCareUser, CommCareCase
+from corehq.apps.users.models import CommCareCase
 import fluff
 
 from .constants import *
-
 
 def get_case(form):
     case_id = form.form['case']['@case_id']
@@ -27,6 +26,11 @@ def block_type(form):
 
 def case_date_group(form):
     return form.received_on
+
+
+def case_date(case):
+    return case.opened_on
+
 
 class BirthPreparedness(fluff.Calculator):
     """
@@ -57,6 +61,161 @@ class BirthPreparedness(fluff.Calculator):
                     yield case_date_group(form)
 
 
+months = (('4', '1'), ('5', '2'), ('6', '3'), ('7', '4'), ('8', '5'), ('9', '6'),)
+
+
+def is_equals(form, prop1, prop2, start=0, end=6, count=0):
+    c = 0
+    check = False
+    for (k, v) in months[start:end]:
+        p1 = prop1 % k
+        p2 = prop2 % v
+        if p1 in form.form and p2 in form.form[p1] and form.form[p1][p2] == '1':
+            c += 1
+            check = True
+    return check if c > count else (None, False)
+
+
+def num_of_children(form, prop1, prop2, num_in_condition, children):
+    c = 0
+    for num in children:
+        p1 = prop1 % str(num)
+        p2 = prop2 % str(num)
+        if num_in_condition == 'exist':
+            if p1 in form.form and p2 in form.form[p1] and form.form[p1][p2]:
+                c += 1
+        else:
+            if p1 in form.form and p2 in form.form[p1] and int(form.form[p1][p2]) > num_in_condition:
+                c += 1
+    return c
+
+
+class MotherRegistered(fluff.Calculator):
+    @fluff.date_emitter
+    def total(self, case):
+        if case.type.upper() == "PREGNANCY" and getattr(case, 'bank_account_number', None) is not None:
+            yield case_date(case)
+
+
+class VhndMonthly(fluff.Calculator):
+    @fluff.date_emitter
+    def total(self, case):
+        for form in case.get_forms():
+            if form.xmlns == BIRTH_PREP_XMLNS and is_equals(form, "pregnancy_month_%s", "attendance_vhnd_%s"):
+                yield case_date_group(form)
+                break
+            elif form.xmlns in children_forms and form.form['child_1']['child1_attendance_vhnd'] == 1:
+                yield case_date_group(form)
+                break
+
+
+
+def check_status(form, status):
+    for prop in ['interpret_grade', 'interpret_grade_2', 'interpret_grade_3']:
+        if prop in form.form and form.form[prop].upper() == status:
+            return True
+    return False
+
+
+class Status(fluff.Calculator):
+    def __init__(self, status, *args, **kwargs):
+        self.status = status
+        super(Status, self).__init__(*args, **kwargs)
+
+    @fluff.date_emitter
+    def total(self, case):
+        for form in case.get_forms():
+            if form.xmlns in children_forms and check_status(form, self.status):
+                yield case_date_group(form)
+
+
+class Weight(fluff.Calculator):
+    def __init__(self, count=0, *args, **kwargs):
+        self.count = count
+        super(Weight, self).__init__(*args, **kwargs)
+
+    @fluff.date_emitter
+    def total(self, case):
+        for form in case.get_forms():
+            if form.xmlns == BIRTH_PREP_XMLNS and is_equals(form, "pregnancy_month_%s", "mother_weight_%s", count=self.count):
+                yield case_date_group(form)
+                break
+
+
+class BreastFed(fluff.Calculator):
+    @fluff.date_emitter
+    def total(self, case):
+        birth_amount = None
+        for form in case.get_forms():
+            if form.xmlns == DELIVERY_XMLNS and 'live_birth_amount' in form.form:
+                birth_amount = form.form['live_birth_amount']
+        if birth_amount:
+            for form in case.get_forms():
+                if form.xmlns == CFU1_XMLNS:
+                    yield {
+                        'date': case_date_group(form),
+                        'value': num_of_children(form, 'child_%s', 'child%s_child_excbreastfed', 0,
+                                                 range(1, (int(birth_amount) + 1)))
+                    }
+
+
+class ChildrenInfo(fluff.Calculator):
+    def __init__(self, prop, num_in_condition=0, forms=children_forms, *args, **kwargs):
+        self.num_in_condition = num_in_condition
+        self.prop1 = 'child_%s'
+        self.prop2 = prop
+        self.forms = forms
+        super(ChildrenInfo, self).__init__(*args, **kwargs)
+
+    @fluff.date_emitter
+    def total(self, case):
+        for form in case.get_forms():
+            if form.xmlns in self.forms:
+                yield {
+                    'date': case_date_group(form),
+                    'value': num_of_children(form, self.prop1, self.prop2, self.num_in_condition, [1, 2, 3])
+                }
+
+
+class IfaTablets(fluff.Calculator):
+    @fluff.date_emitter
+    def total(self, case):
+        for form in case.get_forms():
+            if form.xmlns == BIRTH_PREP_XMLNS and is_equals(form, "pregnancy_month_%s", "ifa_receive_%s", start=0, end=3):
+                yield case_date_group(form)
+                break
+
+
+class Lactating(fluff.Calculator):
+    @fluff.date_emitter
+    def total(self, case):
+        for form in case.get_forms():
+            if form.xmlns == DELIVERY_XMLNS:
+                if form.form.get('mother_preg_outcome') == '1':
+                    yield case_date(case)
+
+
+class Lmp(fluff.Calculator):
+    @fluff.date_emitter
+    def total(self, case):
+        for form in case.get_forms():
+            if form.xmlns == PREG_REG_XMLNS:
+                if 'lmp_date' in form.form and form.form.get('lmp_date'):
+                    yield case_date(case)
+
+
+class LiveChildren(fluff.Calculator):
+    @fluff.date_emitter
+    def total(self, case):
+        for form in case.get_forms():
+            if form.xmlns == DELIVERY_XMLNS:
+                if 'live_birth_amount' in form.form and form.form.get('live_birth_amount'):
+                    yield {
+                        'date': case_date(case),
+                        'value': form.form.get('live_birth_amount')
+                    }
+
+
 class Delivery(fluff.Calculator):
     """
     Delivery Form
@@ -78,7 +237,7 @@ def account_number_from_form(form):
     case = get_case(form)
     return case.get_case_property("bank_account_number")
 
-       
+
 class ChildFollowup(fluff.Calculator):
     """
     Child Followup Form
@@ -94,16 +253,23 @@ class ChildFollowup(fluff.Calculator):
 
     @fluff.date_emitter
     def total(self, form):
-        if form.xmlns == CHILD_FOLLOWUP_XMLNS:
+        forms = children_forms.append(CHILD_FOLLOWUP_XMLNS)
+        if form.xmlns in children_forms:
+            block = block_type(form)
             followed_up = False
-            for prop in [
-                'window%d_child%d' % (window, child)
-                for window in range(3, 15) for child in range(1, 4)
-            ]:
-                if form.form.get(prop):# == '1':
-                    followed_up = True
-            if followed_up:
+            if block == "soft" and "total_soft_conditions" in form.form and form.form["total_soft_conditions"] == 1:
                 yield case_date_group(form)
+            else:
+                for prop in [
+                    'window%d_child%d' % (window, child)
+                    for window in range(3, 15) for child in range(1, 4)
+                ]:
+                    if form.form.get(prop) == 1 and block == 'hard':
+                        followed_up = True
+                    elif form.form.get(prop) and block not in ['hard', 'soft']:
+                        followed_up = True
+                if followed_up:
+                    yield case_date_group(form)
 
 
 class ChildSpacing(fluff.Calculator):
@@ -134,8 +300,8 @@ class ChildSpacing(fluff.Calculator):
         if not dates:
             return 0
         latest = sorted(dates).pop()
-        two_year = latest + datetime.timedelta(365*2)
-        three_year = latest + datetime.timedelta(365*3)
+        two_year = latest + datetime.timedelta(365 * 2)
+        three_year = latest + datetime.timedelta(365 * 3)
         FIXTURES = get_fixture_data()
         if self.in_range(two_year):
             return FIXTURES['two_year_spacing']
@@ -154,8 +320,10 @@ class ChildSpacing(fluff.Calculator):
             endkey=shared_key + [{}],
             **q_args
         ).all()
+
         def convert_date(date_str):
             return datetime.date(*[int(d) for d in date_str.split('-')])
+
         dates = [convert_date(delivery['key'][-1]) for delivery in query]
         return self.get_cash_amt(dates)
 

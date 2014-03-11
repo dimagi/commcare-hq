@@ -3,20 +3,17 @@ Field definitions for the Incentive Payment Report.
 Takes a CommCareUser and points to the appropriate fluff indicators
 for each field.
 """
-import datetime
 
-from couchdbkit.exceptions import ResourceNotFound
-
-from ..opm_tasks.models import OpmReportSnapshot
 from .constants import *
-from .models import OpmCaseFluff, OpmUserFluff, OpmFormFluff
 
 class Worker(object):
     method_map = [
         # If you need to change any of these names, keep the key intact
         ('name', "List of AWWs"),
         ('awc_name', "AWC Name"),
+        ('awc_code', "AWC Code"),
         ('bank_name', "AWW Bank Name"),
+        ('ifs_code', "IFS Code"),
         ('account_number', "AWW Bank Account Number"),
         ('block', "Block Name"),
         ('women_registered', "No. of women registered under BCSP"),
@@ -29,7 +26,7 @@ class Worker(object):
         ('last_month_total', "Amount of AWW incentive paid last month"),
     ]
 
-    def __init__(self, worker, report):
+    def __init__(self, worker, report, case_sql_data=None, form_sql_data=None):
 
         # make sure worker passes the filters
         report.filter(
@@ -38,43 +35,30 @@ class Worker(object):
             [('awc', 'awcs'), ('block', 'blocks')]
         )
 
-        try:
-            self.fluff_doc = OpmUserFluff.get("%s-%s" %
-                (OpmUserFluff._doc_type, worker._id))
-        except ResourceNotFound:
-            raise InvalidRow
+        def user_data(property):
+            return worker.user_data.get(property)
 
-        def fluff_attr(attr):
-            return getattr(self.fluff_doc, attr, '')
+        self.name = worker.name
+        self.awc_name = user_data('awc')
+        self.awc_code = user_data('awc_code')
+        self.bank_name = user_data('bank_name')
+        self.ifs_code = user_data('ifs_code')
+        self.account_number = user_data('account_number')
+        self.block = user_data('block')
 
-        self.name = fluff_attr('name')
-        self.awc_name = fluff_attr('awc_name')
-        self.bank_name = fluff_attr('bank_name')
-        self.account_number = fluff_attr('account_number')
-        self.block = fluff_attr('block')
+        if case_sql_data:
+            self.women_registered = str(case_sql_data.get('women_registered_total', None))
+            self.children_registered = str(case_sql_data.get('children_registered_total', None))
+        else:
+            self.women_registered = None
+            self.children_registered = None
 
-        def get_result(calculator, reduce=True):
-            return OpmFormFluff.get_result(
-                calculator,
-                [DOMAIN, worker._id],
-                report.date_range,
-                reduce=reduce,
-            )['total']
-
-        self.women_registered = len(OpmCaseFluff.get_result(
-            'women_registered',
-            [DOMAIN, worker._id],
-            report.date_range,
-            reduce=False,
-        )['total'])
-        self.children_registered = OpmCaseFluff.get_result(
-            'women_registered',
-            [DOMAIN, worker._id],
-            report.date_range,
-        )['total']
-        self.service_forms_count = 'yes' if get_result('service_forms') else 'no'
-
-        self.growth_monitoring_count = get_result('growth_monitoring')
+        if form_sql_data:
+            self.service_forms_count = 'yes' if form_sql_data.get('service_forms_total') else 'no'
+            self.growth_monitoring_count = int(0 if form_sql_data.get('growth_monitoring_total') is None else form_sql_data.get('growth_monitoring_total'))
+        else:
+            self.service_forms_count = 'no'
+            self.growth_monitoring_count = 0
 
         FIXTURES = get_fixture_data()
         self.service_forms_cash = FIXTURES['service_form_submitted'] \

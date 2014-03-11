@@ -1,61 +1,68 @@
-from lxml import etree as ElementTree
-from datetime import timedelta
+import calendar
+from datetime import datetime
 
-from django.utils import translation
-from django.utils.datetime_safe import datetime
+from dateutil.relativedelta import relativedelta
+from lxml import etree as ElementTree
 from django.utils.translation import ugettext as _
 
+from corehq import Domain
+from corehq.apps.commtrack.util import get_commtrack_location_id
 from corehq.apps.locations.models import Location
-from corehq.apps.users.models import CommCareUser
 from custom.m4change.constants import M4CHANGE_DOMAINS
 from custom.m4change.reports.reports import M4ChangeReportDataSource
 
 
-def generator(user, version, last_sync):
-    from reports.anc_hmis_report import AncHmisReport
-    hard_coded_reports = [
-        AncHmisReport,
-    ]
+def _get_last_n_full_months(months):
+    ranges = []
+    today = datetime.utcnow()
+    for month in range(1, months + 1):
+        month_start = datetime(today.year, today.month, 1) - relativedelta(months=month)
+        last_day_of_month = calendar.monthrange(month_start.year, month_start.month)[1]
+        month_end = datetime(month_start.year, month_start.month, last_day_of_month)
+        ranges.insert(0, (month_start, month_end))
+    return ranges
 
+
+def generator(user, version, last_sync):
     if user.domain in M4CHANGE_DOMAINS:
-        startdate = datetime.utcnow().today() - timedelta(days=30)
-        enddate = datetime.utcnow().today()
-        return ReportFixtureProvider('reports:m4change-mobile', user, hard_coded_reports, startdate, enddate).to_fixture()
+        return ReportFixtureProvider('reports:m4change-mobile', user).to_fixture()
     else:
         return []
 
 
 class ReportFixtureProvider(object):
 
-    def __init__(self, id, user, reports, startdate, enddate):
+    def __init__(self, id, user):
         self.id = id
         self.user = user
-        self.reports = reports
-        self.startdate = startdate
-        self.enddate = enddate
+        self.dates = _get_last_n_full_months(2)
+        self.domain = Domain.get_by_name(user.domain)
 
     def to_fixture(self):
         """
         Generate a fixture representation of the indicator set. Something like the following:
-        <fixture id="indicators:m4change-mobile" user_id="4ce8b1611c38e953d3b3b84dd3a7ac18" startdate="2013-02-01" enddate="2013-03-01">
-            <facility id="4ce8b1611c38e953d3b3b84dd3a7ac19" name="Facility 1">
-                <report id="facility_anc_hmis_report" name="Facility ANC HMIS Report">
-                    <columns>
-                        <column name="HMIS Code" />
-                        <column name="Data Point" />
-                        <column name="Total" />
-                    </columns>
-                    <rows>
-                        <row>
-                            <field value="03" />
-                            <field value="Antenatal Attendance - Total" />
-                            <field value="0" />
-                        </row>
-                        <!-- ... -->
-                    </rows>
-                </report>
+        <fixture id="indicators:m4change-mobile" user_id="4ce8b1611c38e953d3b3b84dd3a7ac18">
+            <monthly-report startdate="2013-02-01" enddate="2013-03-01">
+                <facility id="4ce8b1611c38e953d3b3b84dd3a7ac19" name="Facility 1">
+                    <report id="facility_anc_hmis_report" name="Facility ANC HMIS Report">
+                        <columns>
+                            <column name="HMIS Code" />
+                            <column name="Data Point" />
+                            <column name="Total" />
+                        </columns>
+                        <rows>
+                            <row>
+                                <field value="03" />
+                                <field value="Antenatal Attendance - Total" />
+                                <field value="0" />
+                            </row>
+                            <!-- ... -->
+                        </rows>
+                    </report>
+                    <!-- ... -->
+                </facility>
                 <!-- ... -->
-            </facility>
+            </monthly-report>
             <!-- ... -->
         </fixture>
         """
@@ -93,32 +100,40 @@ class ReportFixtureProvider(object):
 
                     report_element.append(columns_element)
                     report_element.append(rows_element)
-                    facility_element.append(report_element)
+                    return report_element
 
-        def _facility_to_fixture(facility):
+        def _facility_to_fixture(facility, startdate, enddate):
             facility_id = facility.get_id
             facility_element = ElementTree.Element('facility', attrib={
                 'id': facility_id,
                 'name': _(facility.name)
             })
             report_data = M4ChangeReportDataSource(config={
-                'startdate': self.startdate,
-                'enddate': self.enddate,
-                'location_id': self.user.get_domain_membership(DOMAIN).location_id
+                'startdate': startdate,
+                'enddate': enddate,
+                'location_id': facility_id,
+                'domain': self.domain.name
             }).get_data()
-            _reports_to_fixture(report_data, facility_id, facility_element)
+            facility_element.append(_reports_to_fixture(report_data, facility_id, facility_element))
             return facility_element
 
+        def _month_to_fixture(date_tuple, locations):
+            monthly_report_element = ElementTree.Element('monthly-report', attrib={
+                'startdate': date_tuple[0].strftime('%Y-%m-%d'),
+                'enddate': date_tuple[1].strftime('%Y-%m-%d')
+            })
+            for location in locations:
+                monthly_report_element.append(_facility_to_fixture(location, date_tuple[0], date_tuple[1]))
+            return monthly_report_element
+
         root = ElementTree.Element('fixture', attrib={
-            'user_id': self.user._id,
-            'startdate': self.startdate.strftime('%Y-%m-%d'),
-            'enddate': self.enddate.strftime('%Y-%m-%d')
+            'user_id': self.user._id
         })
 
-        user_location = Location.get(self.user.get_domain_membership(DOMAIN).location_id)
+        user_location = Location.get(get_commtrack_location_id(self.user, self.domain))
         locations =  [user_location] + [descendant for descendant in user_location.descendants]
-        for location in locations:
-            root.append(_facility_to_fixture(location))
+        for date_tuple in self.dates:
+            root.append(_month_to_fixture(date_tuple, locations))
         return root
 
     def to_string(self):

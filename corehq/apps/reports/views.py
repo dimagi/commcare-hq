@@ -23,6 +23,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.templatetags.case_tags import case_inline_display
 from couchdbkit.exceptions import ResourceNotFound
 from casexml.apps.case.xml import V2
+from corehq.apps.export.exceptions import BadExportConfiguration
 from corehq.apps.reports.exportfilters import default_form_filter
 import couchexport
 from couchexport import views as couchexport_views
@@ -210,7 +211,6 @@ def export_default_or_custom_data(request, domain, export_id=None, bulk_export=F
     """
     Export data from a saved export schema
     """
-
     deid = request.GET.get('deid') == 'true'
     if deid:
         return _export_deid(request, domain, export_id, bulk_export=bulk_export)
@@ -258,6 +258,9 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
                 return HttpResponseForbidden()
         except ResourceNotFound:
             raise Http404()
+        except BadExportConfiguration, e:
+            return HttpResponseBadRequest(str(e))
+
     elif safe_only:
         return HttpResponseForbidden()
     else:
@@ -686,7 +689,7 @@ def view_scheduled_report(request, domain, scheduled_report_id):
 @login_and_domain_required
 @require_GET
 def case_details(request, domain, case_id):
-    timezone = util.get_timezone(request.couch_user.user_id, domain)
+    timezone = util.get_timezone(request.couch_user, domain)
 
     try:
         case = _get_case_or_404(domain, case_id)
@@ -830,7 +833,7 @@ def download_cases(request, domain):
 
 
 def _get_form_context(request, domain, instance_id):
-    timezone = util.get_timezone(request.couch_user.user_id, domain)
+    timezone = util.get_timezone(request.couch_user, domain)
     instance = _get_form_or_404(instance_id)
     try:
         assert domain == instance.domain

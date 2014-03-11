@@ -8,6 +8,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponseForbidden
+from django.utils.decorators import method_decorator
 from django.utils.http import urlquote
 from django.utils.translation import ugettext as _
 
@@ -89,6 +90,12 @@ def login_and_domain_required(view_func):
         else:
             raise Http404
     return _inner
+
+
+class LoginAndDomainMixin(object):
+    @method_decorator(login_and_domain_required)
+    def dispatch(self, *args, **kwargs):
+        return super(LoginAndDomainMixin, self).dispatch(*args, **kwargs)
 
 
 def login_or_digest_ex(allow_cc_users=False):

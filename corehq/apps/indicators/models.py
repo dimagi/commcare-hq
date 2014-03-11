@@ -471,6 +471,18 @@ class CouchIndicatorDef(DynamicIndicatorDefinition):
     def get_nice_name(cls):
         return "Simple Indicators"
 
+    @classmethod
+    def increment_or_create_unique(cls, namespace, domain,
+                                   slug=None, version=None, **kwargs):
+        if 'couch_view' in kwargs:
+            # make sure that a viewname with trailing whitespace NEVER
+            # gets created.
+            kwargs['couch_view'] = kwargs['couch_view'].strip()
+
+        super(CouchIndicatorDef, cls).increment_or_create_unique(
+            namespace, domain, slug=slug, version=version, **kwargs
+        )
+
 
 class NoGroupCouchIndicatorDefBase(CouchIndicatorDef):
     """

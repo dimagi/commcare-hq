@@ -515,7 +515,7 @@ def get_apps_base_context(request, domain, app):
     if getattr(request, 'couch_user', None):
         edit = (request.GET.get('edit', 'true') == 'true') and\
                (request.couch_user.can_edit_apps(domain) or request.user.is_superuser)
-        timezone = report_utils.get_timezone(request.couch_user.user_id, domain)
+        timezone = report_utils.get_timezone(request.couch_user, domain)
     else:
         edit = False
         timezone = None
@@ -552,14 +552,18 @@ def get_apps_base_context(request, domain, app):
 @cache_control(no_cache=True, no_store=True)
 @login_and_domain_required
 def paginate_releases(request, domain, app_id):
-    limit = request.GET.get('limit', 10)
+    limit = request.GET.get('limit')
+    try:
+        limit = int(limit)
+    except ValueError:
+        limit = 10
     start_build_param = request.GET.get('start_build')
     if start_build_param and json.loads(start_build_param):
         start_build = json.loads(start_build_param)
         assert isinstance(start_build, int)
     else:
         start_build = {}
-    timezone = report_utils.get_timezone(request.couch_user.user_id, domain)
+    timezone = report_utils.get_timezone(request.couch_user, domain)
     saved_apps = get_db().view('app_manager/saved_app',
         startkey=[domain, app_id, start_build],
         endkey=[domain, app_id],
@@ -758,6 +762,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         context.update(form_context)
     elif module:
         template, module_context = get_module_view_context_and_template(app, module)
+        module_context["enable_calc_xpaths"] = toggles.CALC_XPATHS.enabled(getattr(req, 'domain', None))
         context.update(module_context)
     else:
         template = "app_manager/app_view.html"
@@ -850,7 +855,7 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None,
 @require_can_edit_apps
 def new_app(req, domain):
     "Adds an app to the database"
-    lang = req.COOKIES.get('lang') or 'en'
+    lang = 'en'
     type = req.POST["type"]
     application_version = req.POST.get('application_version', APP_V1)
     cls = str_to_cls[type]
@@ -1719,7 +1724,7 @@ def save_copy(req, domain, app_id):
     else:
         copy = None
     copy = copy and SavedAppBuild.wrap(copy.to_json()).to_saved_build_json(
-        report_utils.get_timezone(req.couch_user.user_id, domain)
+        report_utils.get_timezone(req.couch_user, domain)
     )
     lang, langs = get_langs(req, app)
     return json_response({

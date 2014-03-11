@@ -604,6 +604,13 @@ FLUFF_PILLOW_TYPES_TO_SQL = {
     'UnicefMalawiFluff': 'SQL',
     'MalariaConsortiumFluff': 'SQL',
     'CareSAFluff': 'SQL',
+    'OpmCaseFluff': 'SQL',
+    'OpmUserFluff': 'SQL',
+    'OpmFormFluff': 'SQL',
+    'OpmHealthStatusFluff': 'SQL',
+    'OpmHealthStatusBasicInfoFluff': 'SQL',
+    'AncHmisCaseFluff': 'SQL',
+    'ImmunizationHmisCaseFluff': 'SQL',
 }
 
 PREVIEWER_RE = '^$'
@@ -960,12 +967,16 @@ PILLOWTOPS = {
         'custom.opm.opm_reports.models.OpmCaseFluffPillow',
         'custom.opm.opm_reports.models.OpmUserFluffPillow',
         'custom.opm.opm_reports.models.OpmFormFluffPillow',
+        'custom.opm.opm_reports.models.OpmHealthStatusBasicInfoFluffPillow',
+        'custom.opm.opm_reports.models.OpmHealthStatusFluffPillow',
         'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
         'custom.reports.care_sa.models.CareSAFluffPillow',
         'custom.reports.mc.models.MalariaConsortiumFluffPillow',
         'custom.m4change.models.AncHmisCaseFluffPillow',
+        'custom.m4change.models.LdHmisCaseFluffPillow',
         'custom.m4change.models.ImmunizationHmisCaseFluffPillow',
         'custom.m4change.models.ProjectIndicatorsCaseFluffPillow',
+        'custom.m4change.models.McctMonthlyAggregateFormFluffPillow'
     ],
     'mvp': [
         'corehq.apps.indicators.pillows.FormIndicatorPillow',
@@ -1004,7 +1015,8 @@ ES_CASE_FULL_INDEX_DOMAINS = [
     'commtrack-public-demo',
     'uth-rhd-test',
     'crs-remind',
-    'succeed'
+    'succeed',
+    'opm',
 ]
 
 # Custom fully indexed domains for ReportXForm index/pillowtop --

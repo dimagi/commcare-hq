@@ -627,6 +627,7 @@ class FormBase(DocumentSchema):
         app = self.get_app()
         xform.exclude_languages(app.build_langs)
         xform.set_default_language(app.build_langs[0])
+        xform.normalize_itext()
         xform.set_version(self.get_version())
 
     def render_xform(self):

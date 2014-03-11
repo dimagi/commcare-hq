@@ -181,7 +181,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                 'product_id': product._id,
                 'consumption': state.daily_consumption * 30 if state.daily_consumption else None,
                 'months_remaining': state.months_remaining,
-                'location_id': state.case_id,
+                'location_id': SupplyPointCase.get(state.case_id).location_id,
                 'product_name': product.name,
                 'current_stock': state.stock_on_hand,
                 'location_lineage': None,
