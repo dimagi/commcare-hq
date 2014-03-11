@@ -460,6 +460,17 @@ def midpoint(x1, x2):
     return (x1 + x2) * 0.5
 
 
+def get_amount_str(value):
+    if value is not None:
+        if value < 0:
+            fmt = "-$%0.2f"
+            value = abs(value)
+        else:
+            fmt = "$%0.2f"
+        return fmt % value
+    return ""
+
+
 class InvoiceTemplate(object):
     def __init__(self, filename, logo_filename=LOGO_FILENAME,
                  from_address=Address(**settings.FROM_ADDRESS),
@@ -698,22 +709,22 @@ class InvoiceTemplate(object):
             self.canvas.drawCentredString(
                 midpoint(quantity_x, rate_x),
                 coord_y,
-                "$%0.2f" % item.rate
+                get_amount_str(item.rate)
             )
             self.canvas.drawCentredString(
                 midpoint(rate_x, subtotal_x),
                 coord_y,
-                "$%0.2f" % item.subtotal
+                get_amount_str(item.subtotal)
             )
             self.canvas.drawCentredString(
                 midpoint(subtotal_x, credits_x),
                 coord_y,
-                "$%0.2f" % item.credits
+                get_amount_str(item.credits)
             )
             self.canvas.drawCentredString(
                 midpoint(credits_x, total_x),
                 coord_y,
-                "$%0.2f" % item.total
+                get_amount_str(item.total)
             )
 
         self.canvas.translate(-origin_x, -origin_y)
@@ -725,11 +736,6 @@ class InvoiceTemplate(object):
         self.canvas.rect(inches(5), inches(1.05), inches(3), inches(0.5),
                          fill=1)
         self.canvas.setFillColorRGB(*BLACK)
-
-        def get_amount_str(value):
-            if value is not None:
-                return "%0.2f" % value
-            return ""
 
         self.canvas.drawString(inches(6.2), inches(2.45), "Subtotal:")
         self.canvas.drawString(inches(6.2), inches(2.15),
