@@ -228,6 +228,7 @@ class ProductImportStatusView(BaseCommTrackManageView):
             'poll_url': reverse('product_importer_job_poll', args=[self.domain, kwargs['download_id']]),
             'title': _("Product Import Status"),
             'progress_text': _("Importing your data. This may take some time..."),
+            'error_text': _("Problem importing data! Please try again or report an issue."),
         }
         return render(request, 'hqwebapp/soil_status_full.html', context)
 
