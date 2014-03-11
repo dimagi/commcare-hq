@@ -199,6 +199,9 @@ class UploadProductView(BaseCommTrackManageView):
         if not upload:
             messages.error(request, _('no file uploaded'))
             return self.get(request, *args, **kwargs)
+        elif not upload.name.endswith('.csv'):
+            messages.error(request, _('please use csv format only'))
+            return self.get(request, *args, **kwargs)
 
         domain = args[0]
         # stash this in soil to make it easier to pass to celery
@@ -209,7 +212,6 @@ class UploadProductView(BaseCommTrackManageView):
             file_ref.download_id,
         )
         file_ref.set_task(task)
-
         return HttpResponseRedirect(
             reverse(
                 ProductImportStatusView.urlname,
