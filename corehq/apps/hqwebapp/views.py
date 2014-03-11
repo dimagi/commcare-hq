@@ -524,7 +524,7 @@ class BasePageView(TemplateView):
         """
         The Context for the settings page
         """
-        raise NotImplementedError("This should return a dict.")
+        return {}
 
     def get_context_data(self, **kwargs):
         context = super(BasePageView, self).get_context_data(**kwargs)

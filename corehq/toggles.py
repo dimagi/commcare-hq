@@ -4,12 +4,16 @@ class StaticToggle(object):
     def __init__(self, slug, label, namespaces=None):
         self.slug = slug
         self.label = label
-        self.namespaces = namespaces or []
+        if namespaces:
+            self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
+        else:
+            self.namespaces = [None]
 
     def enabled(self, item, **kwargs):
-        return toggle_enabled(self.slug, item, **kwargs)
-    
+        return any([toggle_enabled(self.slug, item, namespace=n, **kwargs) for n in self.namespaces])
 
+# if no namespaces are specified the user namespace is assumed
+NAMESPACE_USER = object()
 NAMESPACE_DOMAIN = 'domain'
 
 APP_BUILDER_CUSTOM_PARENT_REF = StaticToggle(
@@ -51,4 +55,10 @@ OFFLINE_CLOUDCARE = StaticToggle(
 REMINDERS_UI_PREVIEW = StaticToggle(
     'reminders_ui_preview',
     'New reminders UI'
+)
+
+CALC_XPATHS = StaticToggle(
+    'calc_xpaths',
+    'Enabling custom calculated xpaths',
+    namespaces=[NAMESPACE_DOMAIN],
 )

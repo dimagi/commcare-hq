@@ -688,8 +688,13 @@ class EditBillingAccountInfoForm(forms.ModelForm):
         all_admins = data.split(',')
         result = []
         for admin in all_admins:
-            result.append(BillingAccountAdmin.objects.get_or_create(web_user=admin)[0])
-        result.append(BillingAccountAdmin.objects.get_or_create(web_user=self.creating_user)[0])
+            if admin and admin != u'':
+                result.append(BillingAccountAdmin.objects.get_or_create(
+                    web_user=admin
+                )[0])
+        result.append(BillingAccountAdmin.objects.get_or_create(
+            web_user=self.creating_user
+        )[0])
         return result
 
     def _parse_number(self, number, country):
@@ -714,6 +719,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
         billing_contact_info.save()
 
         billing_admins = self.cleaned_data['billing_admins']
+        self.account.billing_admins.clear()
         for admin in billing_admins:
             if not self.account.billing_admins.filter(web_user=admin.web_user).exists():
                 self.account.billing_admins.add(admin)

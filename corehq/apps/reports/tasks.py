@@ -145,6 +145,7 @@ def update_calculated_properties():
             "cp_last_form": CALC_FNS["last_form_submission"](dom, False),
             "cp_is_active": CALC_FNS["active"](dom),
             "cp_has_app": CALC_FNS["has_app"](dom),
+            "cp_last_updated": datetime.now().strftime(DATE_FORMAT),
         }
         if calced_props['cp_first_form'] == 'No forms':
             del calced_props['cp_first_form']

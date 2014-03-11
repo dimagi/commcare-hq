@@ -540,7 +540,8 @@
         {% endif %}
         <div class="form-actions">
             <button type="submit" class="btn btn-large btn-primary" data-bind="
-                click: save
+                click: save,
+                disable: save.state() === 'saving'
             ">
                 <span data-bind="visible: save.state() === 'save'">
                     <span data-bind="visible: custom_export._id && custom_export._id()">{% trans "Save" %}</span>

@@ -85,7 +85,7 @@ def messaging(request, domain, template="sms/default.html"):
     context['domain'] = domain
     context['messagelog'] = SMSLog.by_domain_dsc(domain)
     context['now'] = datetime.utcnow()
-    tz = report_utils.get_timezone(request.couch_user.user_id, domain)
+    tz = report_utils.get_timezone(request.couch_user, domain)
     context['timezone'] = tz
     context['timezone_now'] = datetime.now(tz=tz)
     context['layout_flush_content'] = True
@@ -97,7 +97,7 @@ def compose_message(request, domain, template="sms/compose.html"):
     context = get_sms_autocomplete_context(request, domain)
     context['domain'] = domain
     context['now'] = datetime.utcnow()
-    tz = report_utils.get_timezone(request.couch_user.user_id, domain)
+    tz = report_utils.get_timezone(request.couch_user, domain)
     context['timezone'] = tz
     context['timezone_now'] = datetime.now(tz=tz)
     return render(request, template, context)
@@ -305,7 +305,7 @@ def message_test(request, domain, phone_number):
     context['domain'] = domain
     context['messagelog'] = SMSLog.by_domain_dsc(domain)
     context['now'] = datetime.utcnow()
-    tz = report_utils.get_timezone(request.couch_user.user_id, domain)
+    tz = report_utils.get_timezone(request.couch_user, domain)
     context['timezone'] = tz
     context['timezone_now'] = datetime.now(tz=tz)
     context['layout_flush_content'] = True

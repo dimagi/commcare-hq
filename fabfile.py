@@ -26,6 +26,7 @@ from fabric.api import run, roles, execute, task, sudo, env, parallel
 from fabric.contrib import files, console
 from fabric import utils
 import posixpath
+import time
 
 
 ROLES_ALL_SRC = ['django_monolith', 'django_app', 'django_celery', 'django_pillowtop', 'formsplayer', 'staticfiles']
@@ -647,6 +648,8 @@ def update_code(preindex=False):
         sudo('git reset --hard origin/%(code_branch)s' % env, user=env.sudo_user)
         sudo('git submodule sync', user=env.sudo_user)
         sudo('git submodule update --init --recursive', user=env.sudo_user)
+        # remove all untracked files, including submodules
+        sudo("git clean -ffd", user=env.sudo_user)
         # remove all .pyc files in the project
         sudo("find . -name '*.pyc' -delete", user=env.sudo_user)
 
@@ -819,6 +822,7 @@ def services_start():
     require('environment', provided_by=('staging', 'preview', 'production'))
     _supervisor_command('update')
     _supervisor_command('reload')
+    time.sleep(2)
     _supervisor_command('start  all')
 
 
