@@ -11,8 +11,8 @@ class StockTestBase(TestCase):
 
     def setUp(self):
         # create case
-        self.case_id = uuid.uuid4()
-        self.product_id = uuid.uuid4()
+        self.case_id = uuid.uuid4().hex
+        self.product_id = uuid.uuid4().hex
         self._stock_report = functools.partial(_stock_report, self.case_id, self.product_id)
         self._receipt_report = functools.partial(_receipt_report, self.case_id, self.product_id)
         self._test_config = ConsumptionConfiguration.test_config()

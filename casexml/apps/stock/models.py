@@ -7,6 +7,7 @@ from casexml.apps.case.models import CommCareCase
 from decimal import Decimal
 from django.db.models.signals import post_save
 from corehq.apps.domain.models import Domain
+from couchdbkit.exceptions import ResourceNotFound
 
 
 class StockReport(models.Model):
@@ -176,9 +177,14 @@ def update_stock_state(sender, instance, *args, **kwargs):
 def update_domain_mapping(sender, instance, *args, **kwargs):
     case_id = unicode(instance.case_id)
     if not DocDomainMapping.objects.filter(doc_id=case_id).exists():
-        mapping = DocDomainMapping(
-            doc_id=case_id,
-            doc_type='CommCareCase',
-            domain_name=CommCareCase.get(case_id).domain
-        )
+        try:
+            mapping = DocDomainMapping(
+                doc_id=case_id,
+                doc_type='CommCareCase',
+                domain_name=CommCareCase.get(case_id).domain
+            )
+        except ResourceNotFound:
+            # if the case id isn't a case don't blow up
+            # this is most likely just in tests
+            return
         mapping.save()

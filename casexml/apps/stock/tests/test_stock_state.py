@@ -1,4 +1,4 @@
-from casexml.apps.stock.models import StockState, CaseDomainMapping
+from casexml.apps.stock.models import StockState, DocDomainMapping
 from casexml.apps.stock.tests.base import StockTestBase
 from casexml.apps.case.models import CommCareCase
 from datetime import datetime
@@ -27,8 +27,8 @@ class StockStateTest(StockTestBase):
         )
         case.save()
 
-        with self.assertRaises(CaseDomainMapping.DoesNotExist):
-            CaseDomainMapping.objects.get(case_id=case._id)
+        with self.assertRaises(DocDomainMapping.DoesNotExist):
+            DocDomainMapping.objects.get(doc_id=case._id)
 
         StockState(
             section_id='stock',
@@ -39,5 +39,5 @@ class StockStateTest(StockTestBase):
 
         self.assertEqual(
             'fakedomain',
-            CaseDomainMapping.objects.get(case_id=case._id).domain_name
+            DocDomainMapping.objects.get(doc_id=case._id).domain_name
         )
