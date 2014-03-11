@@ -144,6 +144,7 @@ class CustomExportHelper(object):
                 )
 
         self.update_custom_params()
+        self.custom_export.custom_validate()
         self.custom_export.save()
 
         if self.presave:
