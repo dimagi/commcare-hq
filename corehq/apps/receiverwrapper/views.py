@@ -5,15 +5,15 @@ from casexml.apps.case.xform import is_device_report
 from corehq.apps.domain.decorators import login_or_digest_ex
 from corehq.apps.receiverwrapper.auth import AuthContext, WaivedAuthContext
 from couchforms import convert_xform_to_json
-import receiver
+import couchforms
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 
 
 def _process_form(request, domain, app_id, user_id, authenticated,
                   auth_cls=AuthContext):
-    instance, attachments = receiver.get_instance_and_attachment(request)
-    return receiver.SubmissionPost(
+    instance, attachments = couchforms.get_instance_and_attachment(request)
+    return couchforms.SubmissionPost(
         instance=instance,
         attachments=attachments,
         domain=domain,
@@ -23,13 +23,13 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             user_id=user_id,
             authenticated=authenticated,
         ),
-        location=receiver.get_location(request),
-        received_on=receiver.get_received_on(request),
-        date_header=receiver.get_date_header(request),
-        path=receiver.get_path(request),
-        submit_ip=receiver.get_submit_ip(request),
-        last_sync_token=receiver.get_last_sync_token(request),
-        openrosa_headers=receiver.get_openrosa_headers(request),
+        location=couchforms.get_location(request),
+        received_on=couchforms.get_received_on(request),
+        date_header=couchforms.get_date_header(request),
+        path=couchforms.get_path(request),
+        submit_ip=couchforms.get_submit_ip(request),
+        last_sync_token=couchforms.get_last_sync_token(request),
+        openrosa_headers=couchforms.get_openrosa_headers(request),
     ).get_response()
 
 
@@ -46,7 +46,7 @@ def post(request, domain, app_id=None):
 
 
 def _noauth_post(request, domain, app_id=None):
-    instance, _ = receiver.get_instance_and_attachment(request)
+    instance, _ = couchforms.get_instance_and_attachment(request)
     form_json = convert_xform_to_json(instance)
     case_updates = get_case_updates(form_json)
 
