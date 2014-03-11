@@ -22,7 +22,7 @@ from dimagi.utils.couch.database import SafeSaveDocument
 
 from corehq.apps.accounting.exceptions import (CreditLineError, AccountingError, SubscriptionAdjustmentError,
                                                SubscriptionChangeError, NewSubscriptionError)
-from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES, assure_domain_instance, get_change_status
+from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES, ensure_domain_instance, get_change_status
 
 global_logger = logging.getLogger(__name__)
 integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
@@ -444,7 +444,7 @@ class DefaultProductPlan(models.Model):
 
     @classmethod
     def get_default_plan_by_domain(cls, domain, edition=None):
-        domain = assure_domain_instance(domain)
+        domain = ensure_domain_instance(domain)
         edition = edition or SoftwarePlanEdition.COMMUNITY
         product_type = SoftwareProductType.get_type_by_domain(domain)
         try:
@@ -706,7 +706,7 @@ class Subscription(models.Model):
         """
         Returns SoftwarePlanVersion, Subscription for the given domain.
         """
-        domain_obj = assure_domain_instance(domain)
+        domain_obj = ensure_domain_instance(domain)
         if domain_obj is None:
             plan_version = DefaultProductPlan.objects.get(edition=SoftwarePlanEdition.COMMUNITY,
                                                           product_type=SoftwareProductType.COMMCARE).plan.get_version()

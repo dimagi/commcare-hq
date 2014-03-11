@@ -28,7 +28,7 @@ def months_from_date(reference_date, months_from_date):
     return datetime.date(year, month, 1)
 
 
-def assure_domain_instance(domain):
+def ensure_domain_instance(domain):
     if not isinstance(domain, Domain):
         domain = Domain.get_by_name(domain)
     return domain

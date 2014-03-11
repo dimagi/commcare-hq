@@ -4,7 +4,7 @@ import datetime
 from django.db.models import ProtectedError
 
 from django.utils.translation import ugettext as _
-from corehq.apps.accounting.utils import assure_domain_instance
+from corehq.apps.accounting.utils import ensure_domain_instance
 from dimagi.utils.decorators.memoized import memoized
 
 from corehq import Domain
@@ -93,11 +93,11 @@ class SubscriptionInvoiceFactory(InvoiceFactory):
         self.date_end = self.subscription.date_end if self.subscription.date_end < date_end else date_end
 
 
-class CommunityInvoiceFactory(InvoiceFactory):
+class CommunityInvoiceFactory(DomainInvoiceFactory):
 
     def __init__(self, date_start, date_end, domain):
         super(CommunityInvoiceFactory, self).__init__(date_start, date_end)
-        self.domain = assure_domain_instance(domain)
+        self.domain = ensure_domain_instance(domain)
 
     @property
     @memoized
