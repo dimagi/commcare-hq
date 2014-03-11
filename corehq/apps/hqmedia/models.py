@@ -215,10 +215,6 @@ class CommCareMultimedia(SafeSaveDocument):
         return cls.get_by_hash(file_hash)
 
     @classmethod
-    def get_all(cls):
-        return cls.view('hqmedia/by_doc_type', key=cls.__name__, include_docs=True)
-
-    @classmethod
     def all_tags(cls):
         return [d['key'] for d in cls.view('hqmedia/tags', group=True).all()]
 
