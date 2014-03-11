@@ -65,7 +65,7 @@ PRBAC_DEMO = StaticToggle(
 ACCOUNTING_PREVIEW = StaticToggle(
     'accounting_preview',
     'Accounting preview',
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
 OFFLINE_CLOUDCARE = StaticToggle(
