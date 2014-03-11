@@ -85,8 +85,13 @@ def num_of_children(form, prop1, prop2, num_in_condition, children):
             if p1 in form.form and p2 in form.form[p1] and form.form[p1][p2]:
                 c += 1
         else:
-            if p1 in form.form and p2 in form.form[p1] and int(form.form[p1][p2]) > num_in_condition:
-                c += 1
+            try:
+                val = int(form.form[p1][p2])
+            except (KeyError, ValueError):
+                pass
+            else:
+                if val > num_in_condition:
+                    c += 1
     return c
 
 
