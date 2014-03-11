@@ -1,3 +1,5 @@
+import logging
+from couchdbkit.ext.django.loading import get_db
 from django.http import HttpResponseBadRequest, HttpResponseForbidden
 from casexml.apps.case import get_case_updates
 from casexml.apps.case.models import CommCareCase
@@ -13,7 +15,7 @@ from django.views.decorators.csrf import csrf_exempt
 def _process_form(request, domain, app_id, user_id, authenticated,
                   auth_cls=AuthContext):
     instance, attachments = couchforms.get_instance_and_attachment(request)
-    return couchforms.SubmissionPost(
+    response = couchforms.SubmissionPost(
         instance=instance,
         attachments=attachments,
         domain=domain,
@@ -31,6 +33,14 @@ def _process_form(request, domain, app_id, user_id, authenticated,
         last_sync_token=couchforms.get_last_sync_token(request),
         openrosa_headers=couchforms.get_openrosa_headers(request),
     ).get_response()
+    if response.status_code == 400:
+        db_response = get_db('couchlog').save_doc({
+            'request': unicode(request),
+            'response': unicode(response),
+        })
+        logging.error('Status code 400 for a form submission. '
+                      'See couchlog db for more info: %s' % db_response['id'])
+    return response
 
 
 @csrf_exempt
