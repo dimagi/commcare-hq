@@ -707,9 +707,6 @@ class Subscription(models.Model):
         """
         domain_obj = assure_domain_instance(domain)
         if domain_obj is None:
-            # need more info to troubleshoot this further
-            logging.error("Tried to fetch a subscription for a domain that was not properly located. "
-                          "Domain name is %s." % domain)
             plan_version = DefaultProductPlan.objects.get(edition=SoftwarePlanEdition.COMMUNITY,
                                                           product_type=SoftwareProductType.COMMCARE).plan.get_version()
             return plan_version, None
