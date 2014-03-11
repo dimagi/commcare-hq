@@ -106,6 +106,8 @@ class DownloadBase(object):
         return Task.AsyncResult(self.task_id)
 
     def get_progress(self):
+        error = False
+        error_message = ''
         try:
             info = self.task.info
         except (TypeError, NotImplementedError):
@@ -114,6 +116,10 @@ class DownloadBase(object):
         else:
             if info is None:
                 current = total = percent = None
+            elif isinstance(info, Exception):
+                current = total = percent = 100
+                error = True
+                error_message = "%s: %s" % (type(info).__name__, info)
             else:
                 current = info.get('current')
                 total = info.get('total')
@@ -124,7 +130,9 @@ class DownloadBase(object):
         return {
             'current': current,
             'total': total,
-            'percent': percent
+            'percent': percent,
+            'error': error,
+            'error_message': error_message,
         }
 
     @classmethod
