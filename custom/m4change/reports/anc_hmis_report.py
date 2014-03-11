@@ -6,9 +6,9 @@ from corehq.apps.reports.fields import AsyncLocationField
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin
 from corehq.apps.reports.standard.cases.basic import CaseListReport
+from custom.m4change.reports import validate_report_parameters
 from custom.m4change.reports.reports import M4ChangeReport
 from custom.m4change.reports.sql_data import AncHmisCaseSqlData
-from custom.m4change.constants import DOMAIN
 
 
 def _get_row(row_data, form_data, key):
@@ -39,19 +39,17 @@ class AncHmisReport(MonthYearMixin, CustomProjectReport, CaseListReport, M4Chang
 
     @classmethod
     def get_report_data(cls, config):
-        if "location_id" not in config:
-            raise KeyError(_("Parameter 'location_id' is missing"))
-        if "datespan" not in config:
-            raise KeyError(_("Parameter 'datespan' is missing"))
+        validate_report_parameters(["domain", "location_id", "datespan"], config)
 
-        location_id = config.get("location_id", None)
-        sql_data = AncHmisCaseSqlData(domain=DOMAIN, datespan=config.get("datespan", None)).data
+        domain = config["domain"]
+        location_id = config["location_id"]
+        sql_data = AncHmisCaseSqlData(domain=domain, datespan=config["datespan"]).data
         top_location = Location.get(location_id)
         locations = [location_id] + [descendant.get_id for descendant in top_location.descendants]
         row_data = AncHmisReport.get_initial_row_data()
 
         for location_id in locations:
-            key = (DOMAIN, location_id)
+            key = (domain, location_id)
             if key in sql_data:
                 report_rows = _get_row(row_data, sql_data, key)
                 for key in report_rows:
@@ -123,7 +121,8 @@ class AncHmisReport(MonthYearMixin, CustomProjectReport, CaseListReport, M4Chang
     def rows(self):
         row_data = AncHmisReport.get_report_data({
             "location_id": self.request.GET.get("location_id", None),
-            "datespan": self.datespan
+            "datespan": self.datespan,
+            "domain": str(self.domain)
         })
 
         for key in row_data:

@@ -159,10 +159,13 @@ class Currency(models.Model):
 class BillingAccountAdmin(models.Model):
     web_user = models.CharField(max_length=80, unique=True, db_index=True)
 
+    def __str__(self):
+        return "Billing Admin %s" % self.web_user
+
     @classmethod
     def get_admin_status_and_account(cls, web_user, domain):
         if not isinstance(web_user, WebUser):
-            raise ValueError("web_user should be an instance of WebUser")
+            return False, None
         account = BillingAccount.get_account_by_domain(domain)
         if account is None:
             return web_user.is_domain_admin(domain), None
@@ -250,18 +253,40 @@ class BillingContactInfo(models.Model):
         max_length=50, null=True, blank=True, verbose_name=_("Last Name")
     )
     emails = models.CharField(
-        max_length=200, null=True, blank=True, verbose_name=_("Additional Contact Emails"),
-        help_text=_("We will email communications to the emails specified here and the emails "
+        max_length=200, null=True, blank=True,
+        verbose_name=_("Additional Contact Emails"),
+        help_text=_("We will email communications to the emails specified "
+                    "here and the emails "
                     "of the Billing Administrators.")
     )
-    phone_number = models.CharField(max_length=20, null=True, blank=True, verbose_name=_("Phone Number"))
-    company_name = models.CharField(max_length=50, null=True, blank=True, verbose_name=_("Company / Organization"))
-    first_line = models.CharField(max_length=50, null=False, verbose_name=_("Address First Line"))
-    second_line = models.CharField(max_length=50, null=True, blank=True, verbose_name=_("Address Second Line"))
-    city = models.CharField(max_length=50, null=False, verbose_name=_("City"))
-    state_province_region = models.CharField(max_length=50, null=False, verbose_name=_("State / Province / Region"))
-    postal_code = models.CharField(max_length=20, null=False, verbose_name=_("Postal Code"))
-    country = models.CharField(max_length=50, null=False, verbose_name=_("Country"))
+    phone_number = models.CharField(
+        max_length=20, null=True, blank=True, verbose_name=_("Phone Number")
+    )
+    company_name = models.CharField(
+        max_length=50, null=True, blank=True,
+        verbose_name=_("Company / Organization")
+    )
+    first_line = models.CharField(
+        max_length=50, null=False, blank=True,
+        verbose_name=_("Address First Line")
+    )
+    second_line = models.CharField(
+        max_length=50, null=True, blank=True,
+        verbose_name=_("Address Second Line")
+    )
+    city = models.CharField(
+        max_length=50, null=False, blank=True, verbose_name=_("City")
+    )
+    state_province_region = models.CharField(
+        max_length=50, null=False, blank=True,
+        verbose_name=_("State / Province / Region"),
+    )
+    postal_code = models.CharField(
+        max_length=20, null=False, blank=True, verbose_name=_("Postal Code")
+    )
+    country = models.CharField(
+        max_length=50, null=False, blank=True, verbose_name=_("Country")
+    )
 
 
 class SoftwareProduct(models.Model):
@@ -461,7 +486,16 @@ class SoftwarePlanVersion(models.Model):
     role = models.ForeignKey(Role)
 
     def __str__(self):
-        return "Software Plan Version For Plan '%s' with Role '%s'" % (self.plan.name, self.role.slug)
+        return "%(plan_name)s (v%(version_num)d)" % {
+            'plan_name': self.plan.name,
+            'version_num': self.version,
+        }
+
+    @property
+    def version(self):
+        return (self.plan.softwareplanversion_set.count() -
+                self.plan.softwareplanversion_set.filter(
+                    date_created__gt=self.date_created).count())
 
     @property
     def user_facing_description(self):
@@ -523,8 +557,8 @@ class Subscriber(models.Model):
     """
     The objects that can be subscribed to a Subscription.
     """
-    domain = models.CharField(max_length=25, null=True, db_index=True)
-    organization = models.CharField(max_length=25, null=True, db_index=True)
+    domain = models.CharField(max_length=256, null=True, db_index=True)
+    organization = models.CharField(max_length=256, null=True, db_index=True)
 
     objects = SubscriberManager()
 
@@ -673,9 +707,6 @@ class Subscription(models.Model):
         """
         domain_obj = assure_domain_instance(domain)
         if domain_obj is None:
-            # need more info to troubleshoot this further
-            logging.error("Tried to fetch a subscription for a domain that was not properly located. "
-                          "Domain name is %s." % domain)
             plan_version = DefaultProductPlan.objects.get(edition=SoftwarePlanEdition.COMMUNITY,
                                                           product_type=SoftwareProductType.COMMCARE).plan.get_version()
             return plan_version, None

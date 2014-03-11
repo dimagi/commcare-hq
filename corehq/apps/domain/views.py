@@ -24,8 +24,11 @@ from corehq import toggles, privileges
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
 
-from corehq.apps.accounting.models import (Subscription, CreditLine, SoftwarePlanVisibility, SoftwareProductType,
-                                           DefaultProductPlan, SoftwarePlanEdition, BillingAccount, BillingAccountType)
+from corehq.apps.accounting.models import (
+    Subscription, CreditLine, SoftwareProductType,
+    DefaultProductPlan, SoftwarePlanEdition, BillingAccount,
+    BillingAccountType, BillingAccountAdmin
+)
 from corehq.apps.accounting.usage import FeatureUsage
 from corehq.apps.accounting.user_text import get_feature_name, PricingTable, DESC_BY_EDITION, PricingTableFeatures
 from corehq.apps.hqwebapp.models import ProjectSettingsTab
@@ -45,7 +48,7 @@ from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.hqwebapp.views import BaseSectionPageView, BasePageView
 from corehq.apps.orgs.models import Organization, OrgRequest, Team
-from corehq.apps.commtrack.util import all_sms_codes
+from corehq.apps.commtrack.util import all_sms_codes, unicode_slug
 from corehq.apps.domain.forms import ProjectSettingsForm
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.email import send_HTML_email
@@ -120,13 +123,22 @@ class SubscriptionUpgradeRequiredView(LoginAndDomainMixin, BasePageView,
         }
 
     @property
+    def is_billing_admin(self):
+        if not hasattr(self.request, 'couch_user'):
+            return False
+        return BillingAccountAdmin.get_admin_status_and_account(
+            self.request.couch_user, self.domain
+        )[0]
+
+    @property
     def page_context(self):
         return {
             'domain': self.domain,
             'feature_name': self.feature_name,
             'plan_name': self.required_plan_name,
             'change_subscription_url': reverse(SelectPlanView.urlname,
-                                               args=[self.domain])
+                                               args=[self.domain]),
+            'is_billing_admin': self.is_billing_admin,
         }
 
     @property
@@ -1462,6 +1474,7 @@ class BasicCommTrackSettingsView(BaseCommTrackAdminView):
     def _get_loctype_info(self, loctype):
         return {
             'name': loctype.name,
+            'code': loctype.code,
             'allowed_parents': [p or None for p in loctype.allowed_parents],
             'administrative': loctype.administrative,
         }
@@ -1497,6 +1510,14 @@ class BasicCommTrackSettingsView(BaseCommTrackAdminView):
 
         def mk_loctype(loctype):
             loctype['allowed_parents'] = [p or '' for p in loctype['allowed_parents']]
+            cleaned_code = unicode_slug(loctype['code'])
+            if cleaned_code != loctype['code']:
+                err = _(
+                    'Location type code "{code}" is invalid. No spaces or special characters are allowed. '
+                    'It has been replaced with "{new_code}".'
+                )
+                messages.warning(request, err.format(code=loctype['code'], new_code=cleaned_code))
+                loctype['code'] = cleaned_code
             return LocationType(**loctype)
 
         #TODO add server-side input validation here (currently validated on client)

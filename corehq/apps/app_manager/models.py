@@ -627,6 +627,7 @@ class FormBase(DocumentSchema):
         app = self.get_app()
         xform.exclude_languages(app.build_langs)
         xform.set_default_language(app.build_langs[0])
+        xform.normalize_itext()
         xform.set_version(self.get_version())
 
     def render_xform(self):
@@ -2145,6 +2146,15 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
                         include_docs=True,
                         #stale=settings.COUCH_STALE_QUERY,
         ).all()
+
+    @classmethod
+    def get_latest_build(cls, domain, app_id):
+        build = cls.view('app_manager/saved_app',
+                                     startkey=[domain, app_id, {}],
+                                     endkey=[domain, app_id],
+                                     descending=True,
+                                     limit=1).one()
+        return build if build else None
 
     def rename_lang(self, old_lang, new_lang):
         validate_lang(new_lang)

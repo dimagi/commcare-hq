@@ -280,8 +280,8 @@ HQ_APPS = (
     'custom.apps.crs_reports',
     'custom.hope',
     'custom.openlmis',
-
-    'custom.m4change'
+    'custom.m4change',
+    'custom.succeed'
 )
 
 TEST_APPS = ()
@@ -316,6 +316,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'south',
     'custom.apps.crs_reports',
     'custom.m4change',
+    'custom.succeed'
 
     # submodules with tests that run on travis
     'casexml.apps.case',
@@ -603,25 +604,20 @@ FLUFF_PILLOW_TYPES_TO_SQL = {
     'UnicefMalawiFluff': 'SQL',
     'MalariaConsortiumFluff': 'SQL',
     'CareSAFluff': 'SQL',
+    'OpmCaseFluff': 'SQL',
+    'OpmUserFluff': 'SQL',
+    'OpmFormFluff': 'SQL',
+    'OpmHealthStatusFluff': 'SQL',
+    'OpmHealthStatusBasicInfoFluff': 'SQL',
     'AncHmisCaseFluff': 'SQL',
     'ImmunizationHmisCaseFluff': 'SQL',
-    'ProjectIndicatorsCaseFluff': 'SQL'
 }
 
 PREVIEWER_RE = '^$'
 
 MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
 
-try:
-    # try to see if there's an environmental variable set for local_settings
-    if os.environ.get('CUSTOMSETTINGS', None) == "demo":
-        # this sucks, but is a workaround for supporting different settings
-        # in the same environment
-        from settings_demo import *
-    else:
-        from localsettings import *
-except ImportError:
-    pass
+DIGEST_LOGIN_FACTORY = 'django_digest.NoEmailLoginFactory'
 
 LOGGING = {
     'version': 1,
@@ -717,6 +713,17 @@ LOGGING = {
         },
     }
 }
+
+try:
+    # try to see if there's an environmental variable set for local_settings
+    if os.environ.get('CUSTOMSETTINGS', None) == "demo":
+        # this sucks, but is a workaround for supporting different settings
+        # in the same environment
+        from settings_demo import *
+    else:
+        from localsettings import *
+except ImportError:
+    pass
 
 if DEBUG:
     try:
@@ -826,6 +833,7 @@ COUCHDB_APPS = [
     'psi',
     'trialconnect',
     'accounting',
+    'succeed',
     ('auditcare', 'auditcare'),
     ('couchlog', 'couchlog'),
     ('receiverwrapper', 'receiverwrapper'),
@@ -959,12 +967,16 @@ PILLOWTOPS = {
         'custom.opm.opm_reports.models.OpmCaseFluffPillow',
         'custom.opm.opm_reports.models.OpmUserFluffPillow',
         'custom.opm.opm_reports.models.OpmFormFluffPillow',
+        'custom.opm.opm_reports.models.OpmHealthStatusBasicInfoFluffPillow',
+        'custom.opm.opm_reports.models.OpmHealthStatusFluffPillow',
         'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
         'custom.reports.care_sa.models.CareSAFluffPillow',
         'custom.reports.mc.models.MalariaConsortiumFluffPillow',
         'custom.m4change.models.AncHmisCaseFluffPillow',
+        'custom.m4change.models.LdHmisCaseFluffPillow',
         'custom.m4change.models.ImmunizationHmisCaseFluffPillow',
         'custom.m4change.models.ProjectIndicatorsCaseFluffPillow',
+        'custom.m4change.models.McctMonthlyAggregateFormFluffPillow'
     ],
     'mvp': [
         'corehq.apps.indicators.pillows.FormIndicatorPillow',
@@ -1003,6 +1015,8 @@ ES_CASE_FULL_INDEX_DOMAINS = [
     'commtrack-public-demo',
     'uth-rhd-test',
     'crs-remind',
+    'succeed',
+    'opm',
 ]
 
 # Custom fully indexed domains for ReportXForm index/pillowtop --
@@ -1017,6 +1031,8 @@ ES_XFORM_FULL_INDEX_DOMAINS = [
 
 CUSTOM_MODULES = [
     'custom.apps.crs_reports',
+    'custom.bihar',
+
 ]
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
@@ -1058,6 +1074,7 @@ DOMAIN_MODULE_MAP = {
     'crs-remind': 'custom.apps.crs_reports',
 
     'm4change': 'custom.m4change',
+    'succeed': 'custom.succeed',
     'test-pathfinder': 'custom.m4change'
 }
 

@@ -161,6 +161,58 @@ class Product(Document):
         return [row['id'] for row in view_results]
 
 
+    @classmethod
+    def count_by_domain(cls, domain):
+        """
+        Gets count of products in a domain
+        """
+        # todo: we should add a reduce so we can get this out of couch
+        return len(cls.ids_by_domain(domain))
+
+
+    @classmethod
+    def _csv_attrs(cls):
+        return [
+            '_id',
+            'name',
+            'unit',
+            'code_',
+            'description',
+            'category',
+            'program_id',
+            ('cost', lambda a: Decimal(a) if a else None),
+        ]
+
+    def to_csv(self):
+        def _encode_if_needed(val):
+            return val.encode("utf8") if isinstance(val, unicode) else val
+
+        return [_encode_if_needed(getattr(self, attr[0] if isinstance(attr, tuple) else attr))
+                for attr in self._csv_attrs()]
+
+    @classmethod
+    def from_csv(cls, row):
+        if not row:
+            return None
+        id, row = row[0], row[1:]
+        if id:
+            p = cls.get(id)
+        else:
+            p = cls()
+        for i, attr in enumerate(cls._csv_attrs()[1:]):
+            try:
+                val = row[i].decode('utf-8')
+            except IndexError:
+                break
+            else:
+                if isinstance(attr, tuple):
+                    attr, f = attr
+                    val = f(val)
+                setattr(p, attr, val)
+
+        return p
+
+
 class CommtrackActionConfig(DocumentSchema):
     # one of the base stock action types (see StockActions enum)
     action = StringProperty()
@@ -213,13 +265,20 @@ class CommtrackActionConfig(DocumentSchema):
 
 class LocationType(DocumentSchema):
     name = StringProperty()
+    code = StringProperty()
     allowed_parents = StringListProperty()
     administrative = BooleanProperty()
+
+    @classmethod
+    def wrap(cls, obj):
+        from corehq.apps.commtrack.util import unicode_slug
+        if not obj.get('code'):
+            obj['code'] = unicode_slug(obj['name'])
+        return super(LocationType, cls).wrap(obj)
 
 
 class CommtrackRequisitionConfig(DocumentSchema):
     # placeholder class for when this becomes fancier
-
     enabled = BooleanProperty(default=False)
 
     # requisitions have their own sets of actions
@@ -288,7 +347,6 @@ class StockRestoreConfig(DocumentSchema):
 
 
 class CommtrackConfig(Document):
-
     domain = StringProperty()
 
     # supported stock actions for this commtrack domain
@@ -496,7 +554,7 @@ class NewStockReport(object):
     def from_xml(cls, form, config, elem):
         tag = elem.tag
         tag = tag[tag.find('}')+1:] # strip out ns
-        timestamp = force_to_datetime(elem.attrib.get('date', form.received_on)).replace(tzinfo=None)
+        timestamp = force_to_datetime(elem.attrib.get('date') or form.received_on).replace(tzinfo=None)
         products = elem.findall('./{%s}entry' % stockconst.COMMTRACK_REPORT_XMLNS)
         transactions = [t for prod_entry in products for t in
                         StockTransaction.from_xml(config, timestamp, tag, elem, prod_entry)]
@@ -997,6 +1055,12 @@ class RequisitionCase(CommCareCase):
                 ]
             }
         ]
+
+
+class RequisitionTransaction(StockTransaction):
+    @property
+    def category(self):
+        return 'requisition'
 
 
 class StockReport(object):

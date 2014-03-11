@@ -398,7 +398,7 @@ class HQMediaMapItem(DocumentSchema):
 
     @classmethod
     def gen_unique_id(cls, m_id, path):
-        return hashlib.md5("%s: %s" % (path, m_id)).hexdigest()
+        return hashlib.md5("%s: %s" % (path.encode('utf-8'), str(m_id))).hexdigest()
 
 
 class ApplicationMediaReference(object):

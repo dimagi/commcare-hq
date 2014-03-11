@@ -144,6 +144,44 @@ class WrappedNode(object):
         return ET.tostring(self.xml)
 
 
+class ItextNodeGroup(object):
+    def __init__(self, nodes):
+        self.id = nodes[0].id
+        assert all(node.id == self.id for node in nodes)
+        self.nodes = dict((n.lang, n) for n in nodes)
+
+    def add_node(self, node):
+        if self.nodes.get(node.lang):
+            raise Exception("Group already has node for lang: {}".format(node.lang))
+        else:
+            self.nodes[node.lang] = node
+
+    def __eq__(self, other):
+        for lang, node in self.nodes.items():
+            other_node = other.nodes.get(lang)
+            if node.values != other_node.values:
+                return False
+
+        return True
+
+    def __hash__(self):
+        return ''.join(["{}{}".format(n.lang, n.values) for n in self.nodes.values()]).__hash__()
+
+    def __repr__(self):
+        return "{}, {}".format(self.id, self.nodes)
+
+
+class ItextNode(object):
+    def __init__(self, lang, itext_node):
+        self.lang = lang
+        self.id = itext_node.attrib['id']
+        values = itext_node.findall('{f}value')
+        self.values = sorted([str.strip(ET.tostring(v.xml)) for v in values])
+
+    def __repr__(self):
+        return self.id
+
+
 def raise_if_none(message):
     """
     raise_if_none("message") is a decorator that turns a function that returns a WrappedNode
@@ -379,6 +417,60 @@ class XForm(WrappedNode):
     @property
     def video_references(self):
         return self.media_references(form="video")
+
+    def normalize_itext(self):
+        """
+        Convert this:
+            id1: en => 'yes', sp => 'si'
+            id2: en => 'yes', sp => 'si'
+            id3: en => 'if', sp => 'si'
+
+        to this:
+            id1: en => 'yes', sp => 'si'
+            id3: en => 'if', sp => 'si'
+
+        and rename the appropriate label references.
+        """
+        try:
+            itext = self.itext_node
+        except:
+            return
+        node_groups = {}
+        translations = {}
+        for translation in itext.findall('{f}translation'):
+            lang = translation.attrib['lang']
+            translations[lang] = translation
+            text_nodes = translation.findall('{f}text')
+            for text in text_nodes:
+                node = ItextNode(lang, text)
+                group = node_groups.get(node.id)
+                if not group:
+                    group = ItextNodeGroup([node])
+                else:
+                    group.add_node(node)
+                node_groups[node.id] = group
+
+        duplicate_dict = defaultdict(list)
+        for g in node_groups.values():
+            duplicate_dict[g].append(g)
+
+        duplicates = [g for g in duplicate_dict.values() if len(g) > 1]
+        for d in duplicates:
+            d = sorted(d, key=lambda ng: ng.id)
+            reference = d[0]
+            new_ref = u"jr:itext('{}')".format(reference.id)
+
+            for group in d[1:]:
+                itext_ref = u'{{f}}text[@id="{}"]'.format(group.id)
+                for lang in group.nodes.keys():
+                    translation = translations[lang]
+                    node = translation.find(itext_ref)
+                    translation.remove(node.xml)
+
+                old_ref_xpath = u'.//*[@ref="jr:itext(\'{}\')"]'.format(group.id)
+                for ref in self.findall(old_ref_xpath):
+                    if ref.xml is not None:
+                        ref.attrib['ref'] = new_ref
 
     def rename_language(self, old_code, new_code):
         trans_node = self.itext_node.find('{f}translation[@lang="%s"]' % old_code)
@@ -1130,7 +1222,7 @@ class XForm(WrappedNode):
             base_node.append(parent_base)
             for parent_path, updates in sorted(updates_by_case.items()):
                 node = make_nested_subnode(parent_base, parent_path)
-                node_path = '%sparents/%s/' % (base_node_path, parent_path)
+                node_path = '%sparents/%s/' % (base_node_path or '', parent_path)
                 parent_case_block = CaseBlock.make_parent_case_block(
                     self,
                     node_path,

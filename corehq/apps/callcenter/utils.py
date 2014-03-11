@@ -61,7 +61,7 @@ def sync_user_cases(commcare_user):
         )
 
     casexml = ElementTree.tostring(caseblock.as_xml())
-    submit_case_blocks(casexml, domain.name, commcare_user.username, commcare_user._id)
+    submit_case_blocks(casexml, domain.name)
 
 
 def bootstrap_callcenter(domain):

@@ -278,7 +278,10 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
     @property
     @memoized
     def uploaded_file(self):
-        bulk_file = self.request.FILES['bulk_file']
+        try:
+            bulk_file = self.request.FILES['bulk_file']
+        except KeyError:
+            raise BulkUploadCasesException(_("No files uploaded"))
         try:
             return WorkbookJSONReader(bulk_file)
         except InvalidFileException:

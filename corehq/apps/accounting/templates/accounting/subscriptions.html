@@ -7,6 +7,14 @@
     <script src="{% static 'accounting/js/stay-on-tab.js' %}"></script>
 {% endblock %}
 
+{% block js-inline %}{{ block.super }}
+    {% if disable_cancel %}
+        <script>
+            $("#cancel_form :input").attr("disabled", true);
+        </script>
+    {% endif %}
+{% endblock %}
+
 {% block main_column %}
     <ul class="nav nav-tabs" id="user-settings-tabs">
         <li><a href="#subscription" data-toggle="tab">{% trans "Subscription" %}</a></li>
@@ -24,11 +32,14 @@
         </div>
 
         <div class="tab-pane" id="actions">
-            <form class="form form-horizontal" method="post">
+            <form class="form form-horizontal" method="post" id="cancel_form">
                 {% crispy cancel_form %}
             </form>
             {% if subscription_canceled %}
                 Subscription has been canceled.
+            {% endif %}
+            {% if disable_cancel %}
+                Subscription has already ended.
             {% endif %}
         </div>
     </div>
