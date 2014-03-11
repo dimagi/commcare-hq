@@ -1,7 +1,13 @@
-from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
+from corehq.apps.accounting.dispatcher import (
+    AccountingAdminInterfaceDispatcher
+)
 from corehq.apps.accounting.filters import *
-from corehq.apps.accounting.models import BillingAccount, Subscription, SoftwarePlan
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
+from corehq.apps.accounting.models import (
+    BillingAccount, Subscription, SoftwarePlan
+)
+from corehq.apps.reports.datatables import (
+    DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
+)
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from corehq.apps.reports.generic import GenericTabularReport
@@ -310,6 +316,18 @@ class InvoiceInterface(GenericTabularReport):
     @property
     def headers(self):
         return DataTablesHeader(
+            DataTablesColumn("Account Name"),
+            DataTablesColumn("Project Space"),
+            DataTablesColumn("Salesforce Account ID"),
+            DataTablesColumn("Salesforce Contract ID"),
+            DataTablesColumnGroup("Statement Period",
+                                  DataTablesColumn("Start"),
+                                  DataTablesColumn("End")),
+            DataTablesColumn("Date Due"),
+            DataTablesColumn("Amount Due"),
+            DataTablesColumn("Payment Status"),
+            DataTablesColumn("Action"),
+            DataTablesColumn("View Invoice"),
         )
 
     @property
