@@ -332,5 +332,27 @@ class InvoiceInterface(GenericTabularReport):
 
     @property
     def rows(self):
-        rows = []
-        return rows
+        filters = {}
+
+        return [
+            [
+                invoice.subscription.account.name,
+                invoice.subscription.subscriber.domain,
+                invoice.subscription.account.salesforce_account_id,
+                invoice.subscription.salesforce_contract_id,
+                invoice.date_start,
+                invoice.date_end,
+                invoice.date_due,
+                # TODO - format decimal, add currency symbol
+                invoice.get_total(),
+                "Paid" if invoice.date_paid else "Not paid",
+                # TODO - Create helper function for action button HTML
+                # TODO - Add link to adjust balance
+                mark_safe('<a href="%s" class="btn">Adjust Balance</a>'
+                          % 'LINK'),
+                # TODO - Add link to invoice
+                mark_safe('<a href="%s" class="btn">Go to Invoice</a>'
+                          % 'LINK'),
+
+            ] for invoice in Invoice.objects.filter(**filters)
+        ]
