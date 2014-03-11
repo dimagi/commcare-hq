@@ -41,9 +41,10 @@ class BillingAccountForm(forms.Form):
                                             required=False)
     currency = forms.ChoiceField(label="Currency")
 
-    billing_account_admins = forms.CharField(
-        label=_('Account Admins (emails)'),
+    contact_emails = forms.CharField(
+        label=_('Additional Contact Emails'),
         widget=forms.Textarea,
+        max_length=BillingContactInfo._meta.get_field('emails').max_length,
     )
     first_name = forms.CharField(label='First Name', required=False)
     last_name = forms.CharField(label='Last Name', required=False)
@@ -63,8 +64,7 @@ class BillingAccountForm(forms.Form):
                 'name': account.name,
                 'salesforce_account_id': account.salesforce_account_id,
                 'currency': account.currency.code,
-                'billing_account_admins':
-                ', '.join([admin.web_user for admin in account.billing_admins.all()]),
+                'contact_emails': contact_info.emails,
                 'first_name': contact_info.first_name,
                 'last_name': contact_info.last_name,
                 'company_name': contact_info.company_name,
@@ -94,7 +94,7 @@ class BillingAccountForm(forms.Form):
             crispy.Fieldset(
             'Basic Information',
                 'name',
-                'billing_account_admins',
+                'contact_emails',
                 'salesforce_account_id',
                 'currency',
             ),
@@ -120,27 +120,18 @@ class BillingAccountForm(forms.Form):
             )
         )
 
-    def clean_billing_account_admins(self):
-        billing_account_admins = self.cleaned_data['billing_account_admins']
-        if billing_account_admins != '':
+    def clean_contact_emails(self):
+        account_contact_emails = self.cleaned_data['contact_emails']
+        if account_contact_emails != '':
             invalid_emails = []
-            for email in billing_account_admins.split(','):
+            for email in account_contact_emails.split(','):
                 email_no_whitespace = email.strip()
-                if WebUser.get_by_username(email_no_whitespace) is None:
-                    invalid_emails.append("'%s'" % email_no_whitespace)
+                # TODO - validate emails
             if len(invalid_emails) != 0:
                 raise ValidationError(
                     "Invalid emails: %s" % ', '.join(invalid_emails)
                 )
-        return billing_account_admins
-
-    def update_billing_admins(self, account):
-        for web_user_email in \
-                self.cleaned_data['billing_account_admins'].split(','):
-            admin, _ = BillingAccountAdmin.objects.get_or_create(
-                web_user=web_user_email.strip(),
-            )
-            account.billing_admins.add(admin)
+        return account_contact_emails
 
     def create_account(self):
         name = self.cleaned_data['name']
@@ -154,8 +145,13 @@ class BillingAccountForm(forms.Form):
             currency=currency
         )
         account.save()
-        self.update_billing_admins(account)
-        account.save()
+
+        contact_info, _ = BillingContactInfo.objects.get_or_create(
+            account=account,
+        )
+        contact_info.emails = self.cleaned_data['contact_emails']
+        contact_info.save()
+
         return account
 
     def update_account_and_contacts(self, account):
@@ -165,12 +161,12 @@ class BillingAccountForm(forms.Form):
         account.currency, _ = Currency.objects.get_or_create(
             code=self.cleaned_data['currency'],
         )
-        self.update_billing_admins(account)
         account.save()
 
         contact_info, _ = BillingContactInfo.objects.get_or_create(
             account=account,
         )
+        contact_info.emails = self.cleaned_data['contact_emails']
         contact_info.first_name = self.cleaned_data['first_name']
         contact_info.last_name = self.cleaned_data['last_name']
         contact_info.company_name = self.cleaned_data['company_name']
