@@ -53,7 +53,7 @@ class OpmUserFluff(fluff.IndicatorDocument):
         returns a flat field with a callable looking for `property` on the user
         """
         return flat_field(lambda user: user.user_data.get(property))
-    
+
     document_class = CommCareUser
     domains = ('opm',)
     group_by = ('domain', )
@@ -74,7 +74,10 @@ class OpmFormFluff(fluff.IndicatorDocument):
     domains = ('opm',)
     group_by = (
         'domain',
-        fluff.AttributeGetter('case_id', lambda form: form.form['case']['@case_id']),
+        fluff.AttributeGetter(
+            'case_id',
+            lambda form: form.form.get('case', {}).get('@case_id'),
+        ),
     )
     save_direct_to_sql = True
 
