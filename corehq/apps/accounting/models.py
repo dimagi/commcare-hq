@@ -922,6 +922,7 @@ class InvoicePdf(SafeSaveDocument):
         pdf_data.close()
 
         billing_record.pdf_data_id = self._id
+        billing_record.save()
         self.invoice_id = str(invoice.id)
         self.date_created = datetime.datetime.now()
         self.save()

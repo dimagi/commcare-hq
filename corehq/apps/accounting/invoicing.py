@@ -10,9 +10,10 @@ from dimagi.utils.decorators.memoized import memoized
 
 from corehq import Domain
 from corehq.apps.accounting.exceptions import LineItemError, InvoiceError
-from corehq.apps.accounting.models import (LineItem, FeatureType, Invoice, DefaultProductPlan, Subscriber,
-                                           Subscription, BillingAccount, SubscriptionAdjustment,
-                                           SubscriptionAdjustmentMethod)
+from corehq.apps.accounting.models import (
+    LineItem, FeatureType, Invoice, DefaultProductPlan, Subscriber,
+    Subscription, BillingAccount, SubscriptionAdjustment,
+    SubscriptionAdjustmentMethod, BillingRecord, InvoicePdf)
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.users.models import CommCareUser
 
@@ -69,6 +70,11 @@ class InvoiceFactory(object):
         invoice.update_balance()
         # generate PDF
         invoice.save()
+
+        billing_record = BillingRecord(invoice=invoice)
+        invoice_pdf = InvoicePdf()
+        invoice_pdf.generate_pdf(billing_record)
+
         return invoice
 
     def generate_line_items(self, invoice):
