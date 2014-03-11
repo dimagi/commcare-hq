@@ -294,3 +294,25 @@ class SoftwarePlanInterface(AddItemInterface):
     slug = "software_plans"
 
     crud_item_type = "Software_Plan"
+
+
+class InvoiceInterface(GenericTabularReport):
+    base_template = "accounting/report_filter_actions.html"
+    section_name = "Accounting"
+    dispatcher = AccountingAdminInterfaceDispatcher
+    name = "Invoices"
+    description = "List of all invoices"
+    slug = "invoices"
+    exportable = True
+    fields = [
+    ]
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+        )
+
+    @property
+    def rows(self):
+        rows = []
+        return rows
