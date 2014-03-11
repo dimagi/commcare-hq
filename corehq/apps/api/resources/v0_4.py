@@ -10,7 +10,7 @@ from corehq.apps.api.resources.v0_1 import CustomResourceMeta, RequirePermission
 from couchforms.models import XFormInstance
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case import xform as casexml_xform
-from custom.hope.models import HOPECase
+from custom.hope.models import HOPECase, CC_BIHAR_NEWBORN, CC_BIHAR_PREGNANCY
 
 from corehq.apps.api.util import get_object_or_not_exist
 from corehq.apps.app_manager import util as app_manager_util
@@ -350,36 +350,14 @@ class HOPECaseResource(CommCareCaseResource):
     """
     Custom API endpoint for custom case wrapper
     """
+    events_attributes = fields.ListField()
+    other_properties = fields.DictField()
 
-    # For the curious, the attribute='<exact thing I just typed>' is mandatory,
-    # and refers to a property on the HOPECase object
-    all_anc_doses_given = CallableCharField(attribute=get_yesno('_HOPE_all_anc_doses_given'), readonly=True, null=True)
-    all_dpt1_opv1_hb1_doses_given = CallableCharField(attribute=get_yesno('_HOPE_all_dpt1_opv1_hb1_doses_given'),
-                                                     readonly=True, null=True)
-    all_dpt2_opv2_hb2_doses_given = CallableCharField(attribute=get_yesno('_HOPE_all_dpt2_opv2_hb2_doses_given'),
-                                                     readonly=True, null=True)
-    all_dpt3_opv3_hb3_doses_given = CallableCharField(attribute=get_yesno('_HOPE_all_dpt3_opv3_hb3_doses_given'),
-                                                     readonly=True, null=True)
-    all_ifa_doses_given = CallableCharField(attribute=get_yesno('_HOPE_all_ifa_doses_given'),
-                                           readonly=True, null=True)
-    all_tt_doses_given = CallableCharField(attribute=get_yesno('_HOPE_all_tt_doses_given'),
-                                          readonly=True, null=True)
-    asha_id = fields.CharField(attribute='_HOPE_asha_id', readonly=True, null=True)
-    bcg_indicator = fields.BooleanField(attribute='_HOPE_bcg_indicator', readonly=True, null=True)
-    child_name = fields.CharField(attribute='_HOPE_child_name', readonly=True, null=True)
-    delivery_nature = fields.CharField(attribute='_HOPE_delivery_nature', readonly=True, null=True)
-    delivery_type = fields.CharField(attribute='_HOPE_delivery_type', readonly=True, null=True)
-    dpt_1_indicator = fields.BooleanField(attribute='_HOPE_dpt_1_indicator', readonly=True, null=True)
-    existing_child_count = fields.IntegerField(attribute='_HOPE_existing_child_count', readonly=True, null=True)
-    ifa1_date = fields.CharField(attribute='_HOPE_ifa1_date', readonly=True, null=True)
-    ifa2_date = fields.CharField(attribute='_HOPE_ifa2_date', readonly=True, null=True)
-    ifa3_date = fields.CharField(attribute='_HOPE_ifa3_date', readonly=True, null=True)
-    measles_dose_given = CallableCharField(attribute=get_yesno('_HOPE_measles_dose_given'),
-                                          readonly=True, null=True)
-    number_of_visits = fields.IntegerField(attribute='_HOPE_number_of_visits', readonly=True, null=True)
-    opv_1_indicator = fields.BooleanField(attribute='_HOPE_opv_1_indicator', readonly=True, null=True)
-    registration_date = fields.CharField(attribute='_HOPE_registration_date', readonly=True, null=True)
-    tubal_ligation = CallableCharField(attribute=get_yesno('_HOPE_tubal_ligation'), readonly=True, null=True)
+    def dehydrate_events_attributes(self, bundle):
+        return bundle.obj.events_attributes
+
+    def dehydrate_other_properties(self, bundle):
+        return bundle.obj.other_properties
 
     def obj_get(self, bundle, **kwargs):
         return get_object_or_not_exist(HOPECase, kwargs['pk'], kwargs['domain'],
@@ -404,6 +382,21 @@ class HOPECaseResource(CommCareCaseResource):
         return ESQuerySet(payload=query,
                           model=HOPECase,
                           es_client=self.case_es(domain)).order_by('server_modified_on')
+
+    def alter_list_data_to_serialize(self, request, data):
+
+        # rename 'properties' field to 'case_properties'
+        for bundle in data['objects']:
+            bundle.data['case_properties'] = bundle.data['properties']
+            del bundle.data['properties']
+
+        mother_lists = filter(lambda x: x.obj.type == CC_BIHAR_PREGNANCY, data['objects'])
+        child_lists = filter(lambda x: x.obj.type == CC_BIHAR_NEWBORN, data['objects'])
+
+        return {'objects': {
+            'mother_lists': mother_lists,
+            'child_lists': child_lists
+        }, 'meta': data['meta']}
 
     class Meta(CommCareCaseResource.Meta):
         resource_name = 'hope-case'

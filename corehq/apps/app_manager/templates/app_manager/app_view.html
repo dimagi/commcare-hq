@@ -1,5 +1,4 @@
 {% extends "app_manager/managed_app.html" %}
-{% load url from future %}
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 {% load i18n %}
@@ -26,6 +25,9 @@
                 edit: {{ edit|BOOL }},
                 user: {
                     is_previewer: {{ request.couch_user.is_previewer|BOOL }}
+                },
+                permissions: {
+                    cloudcare: {{ is_cloudcare_allowed|BOOL }}
                 }
             }
         };

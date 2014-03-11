@@ -17,7 +17,7 @@ from ..util import _report_user_dict
 def user_tuple(u):
     user = _report_user_dict(u)
     uid = "u__%s" % user['user_id']
-    name = "%s [user]" % user['username_in_report']
+    name = "%s [user]" % user['username_in_report'].split('@')[0]
     return (uid, name)
 
 

@@ -331,9 +331,10 @@
                     self.save.state('saving');
                     $.post(self.urls.save(), self.output()).done(function (data) {
                         window.location.href = data.redirect;
-                    }).fail(function () {
+                    }).fail(function (response) {
+                        var data = $.parseJSON(response.responseText);
                         self.save.state('error');
-                        alert('There was an error saving.');
+                        alert('There was an error saving: ' + data.error);
                     });
                 };
                 self.save.state = ko.observable('save');
@@ -540,7 +541,8 @@
         {% endif %}
         <div class="form-actions">
             <button type="submit" class="btn btn-large btn-primary" data-bind="
-                click: save
+                click: save,
+                disable: save.state() === 'saving'
             ">
                 <span data-bind="visible: save.state() === 'save'">
                     <span data-bind="visible: custom_export._id && custom_export._id()">{% trans "Save" %}</span>

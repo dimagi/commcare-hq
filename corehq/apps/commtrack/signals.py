@@ -12,7 +12,7 @@ from corehq.apps.locations.models import Location
 from corehq.apps.sms.api import send_sms_to_verified_number
 from dimagi.utils import create_unique_filter
 from corehq.apps.commtrack.processing import process_stock_signal_catcher
-from receiver.signals import successful_form_received
+from couchforms.signals import successful_form_received
 from custom.openlmis.commtrack import requisition_receipt, requisition_approved
 
 supply_point_modified = Signal(providing_args=['supply_point', 'created'])

@@ -25,7 +25,7 @@ class BulkExport(object):
     def separator(self):
         return "."
 
-    def create(self, export_tags, export_filter, format=Format.CSV, safe_only=False):
+    def create(self, export_tags, export_filter, format=Format.XLS_2007, safe_only=False):
         self.export_filter = export_filter
         self.format = format
         self.safe_only = safe_only

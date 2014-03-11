@@ -85,9 +85,8 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
     """
     name = ugettext_noop('Case Activity')
     slug = 'case_activity'
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.CaseTypeField',
-              'corehq.apps.reports.fields.GroupField']
+    fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
+              'corehq.apps.reports.fields.CaseTypeField']
     all_users = None
     display_data = ['percent']
     emailable = True
@@ -221,7 +220,8 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
 
     @property
     def rows(self):
-        rows = [self.Row(self, user) for user in self.users]
+        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
+        rows = [self.Row(self, user) for user in users_data["combined_users"]]
 
         total_row = self.TotalRow(rows, _("All Users"))
 
@@ -286,8 +286,7 @@ class SubmissionsByFormReport(WorkerMonitoringReportTableBase, MultiFormDrilldow
     name = ugettext_noop("Submissions By Form")
     slug = "submissions_by_form"
     fields = [
-        'corehq.apps.reports.fields.FilterUsersField',
-        'corehq.apps.reports.fields.GroupField',
+        'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
         'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
         'corehq.apps.reports.fields.DatespanField'
     ]
@@ -319,7 +318,8 @@ class SubmissionsByFormReport(WorkerMonitoringReportTableBase, MultiFormDrilldow
     def rows(self):
         rows = []
         totals = [0]*(len(self.all_relevant_forms)+1)
-        for user in self.users:
+        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
+        for user in users_data["combined_users"]:
             row = []
             if self.all_relevant_forms:
                 for form in self.all_relevant_forms.values():
@@ -566,8 +566,7 @@ class DailyFormStatsReport(ElasticProjectInspectionReport, WorkerMonitoringRepor
 class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin):
     name = ugettext_noop("Form Completion Time")
     slug = "completion_times"
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.GroupField',
+    fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
               'corehq.apps.reports.filters.forms.SingleFormByApplicationFilter',
               'corehq.apps.reports.fields.DatespanField']
 
@@ -655,7 +654,8 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin):
 
         durations = []
         totalcount = 0
-        for user in self.users:
+        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
+        for user in users_data["combined_users"]:
             stats = self.get_user_data(user.get('user_id'))
             rows.append([self.get_user_link(user),
                          stats['error_msg'] if stats['error_msg'] else _fmt_ts(stats['avg']),
@@ -708,8 +708,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, Mu
     description = ugettext_noop("Time lag between when forms were completed and when forms were successfully "
                                 "sent to CommCare HQ.")
     
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.SelectMobileWorkerField',
+    fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
               'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
               'corehq.apps.reports.fields.DatespanField']
 
@@ -729,7 +728,8 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, Mu
         total = 0
         total_seconds = 0
         if self.all_relevant_forms:
-            for user in self.users:
+            users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
+            for user in users_data["combined_users"]:
                 if not user.get('user_id'):
                     # calling get_form_data with no user_id will return ALL form data which is not what we want
                     continue
@@ -832,8 +832,7 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
     description = ugettext_noop("Graphical representation of when forms are submitted.")
 
     fields = [
-        'corehq.apps.reports.fields.FilterUsersField',
-        'corehq.apps.reports.fields.GroupField',
+        'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
         'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
         'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
         'corehq.apps.reports.fields.DatespanField']
@@ -844,7 +843,8 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
     @memoized
     def activity_times(self):
         all_times = []
-        for user in self.users:
+        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
+        for user in users_data["combined_users"]:
             for form, info in self.all_relevant_forms.items():
                 key = make_form_couch_key(self.domain, user_id=user.get('user_id'),
                    xmlns=info['xmlns'], app_id=info['app_id'], by_submission_time=self.by_submission_time)

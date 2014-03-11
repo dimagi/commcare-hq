@@ -70,6 +70,33 @@
   requires: "{$parent.doc_type}='Application'"
   hide_if_not_enabled: true
   since: "2.0"
+  permission: "cloudcare"
+
+- id: commtrack_enabled
+  name: "CommTrack"
+  description: 'Enable CommTrack'
+  description_format: html
+  widget: bool
+  default: false
+#  contingent_default: [{"condition": "{$parent.commtrack_enabled}=true", "value": "true"}]
+  requires: "{$parent.doc_type}='Application'"
+  hide_if_not_enabled: true
+  since: "2.0"
+  preview: true
+
+- id: commtrack_requisition_mode
+  name: "CommTrack Requisition Mode"
+  description: "CommTrack Requisition Mode"
+  description_format: html
+  requires: "{hq.commtrack_enabled}=true"
+  values: ['disabled', '3-step', '4-step']
+  value_names:
+   - "Disable Requisitions"
+   - "3 Step Requisitions (Requisition -> Fulfillment -> Receipt)"
+   - "4 Step Requisitions (Requisition -> Approval -> Fulfillment -> Receipt)"
+  hide_if_not_enabled: true
+  preview: true
+  since: "2.0"
 
 - id: use_custom_suite
   name: "Custom Suite File"

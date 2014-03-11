@@ -1,5 +1,5 @@
-from collections import defaultdict
-from itertools import product
+import os
+import tempfile
 from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpResponseNotFound
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
@@ -10,16 +10,15 @@ from corehq.apps.domain.decorators import require_superuser, domain_admin_requir
 from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.management.commands import bootstrap_psi
 from corehq.apps.commtrack.models import Product, Program
-from corehq.apps.commtrack.forms import ProductForm, ProgramForm
+from corehq.apps.commtrack.forms import ProductForm, ProgramForm, ConsumptionForm
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.locations.models import Location
 from dimagi.utils.decorators.memoized import memoized
-from soil.util import expose_download
+from soil.util import expose_download, get_download_context
 import uuid
 from django.core.urlresolvers import reverse
 from django.contrib import messages
-from corehq.apps.commtrack.tasks import import_locations_async,\
-    import_stock_reports_async
+from corehq.apps.commtrack.tasks import import_stock_reports_async, import_products_async
 import json
 from couchdbkit import ResourceNotFound
 import csv
@@ -46,6 +45,34 @@ class BaseCommTrackManageView(BaseDomainView):
         return super(BaseCommTrackManageView, self).dispatch(request, *args, **kwargs)
 
 
+class DefaultConsumptionView(BaseCommTrackManageView):
+    urlname = 'update_default_consumption'
+    template_name = 'commtrack/manage/default_consumption.html'
+    page_title = ugettext_noop("Manage Default Consumption")
+
+    @property
+    @memoized
+    def consumption_form(self):
+        if self.request.method == 'POST':
+            return ConsumptionForm(self.domain, self.request.POST)
+        return ConsumptionForm(self.domain)
+
+    @property
+    def page_context(self):
+        return {
+            'form': self.consumption_form,
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.consumption_form.is_valid():
+            self.consumption_form.save()
+            messages.success(request, _("Default consumption values updated"))
+            return HttpResponseRedirect(
+                reverse(DefaultConsumptionView.urlname, args=[self.domain])
+            )
+        return self.get(request, *args, **kwargs)
+
+
 class ProductListView(BaseCommTrackManageView):
     # todo mobile workers shares this type of view too---maybe there should be a class for this?
     urlname = 'commtrack_product_list'
@@ -67,8 +94,9 @@ class ProductListView(BaseCommTrackManageView):
         return json.loads(self.request.GET.get('show_inactive', 'false'))
 
     @property
+    @memoized
     def total(self):
-        return len(Product.by_domain(self.domain))
+        return Product.count_by_domain(self.domain)
 
     @property
     def page_context(self):
@@ -152,6 +180,96 @@ class NewProductView(BaseCommTrackManageView):
             messages.success(request, _("Product saved!"))
             return HttpResponseRedirect(reverse(ProductListView.urlname, args=[self.domain]))
         return self.get(request, *args, **kwargs)
+
+
+class UploadProductView(BaseCommTrackManageView):
+    urlname = 'commtrack_upload_products'
+    page_title = ugettext_noop("Import Products")
+    template_name = 'commtrack/manage/upload_products.html'
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': ProductListView.page_title,
+            'url': reverse(ProductListView.urlname, args=[self.domain]),
+        }]
+
+    def post(self, request, *args, **kwargs):
+        upload = request.FILES.get('products')
+        if not upload:
+            messages.error(request, _('no file uploaded'))
+            return self.get(request, *args, **kwargs)
+        elif not upload.name.endswith('.csv'):
+            messages.error(request, _('please use csv format only'))
+            return self.get(request, *args, **kwargs)
+
+        domain = args[0]
+        # stash this in soil to make it easier to pass to celery
+        file_ref = expose_download(upload.read(),
+                                   expiry=1*60*60)
+        task = import_products_async.delay(
+            domain,
+            file_ref.download_id,
+        )
+        file_ref.set_task(task)
+        return HttpResponseRedirect(
+            reverse(
+                ProductImportStatusView.urlname,
+                args=[domain, file_ref.download_id]
+            )
+        )
+
+class ProductImportStatusView(BaseCommTrackManageView):
+    urlname = 'product_import_status'
+    page_title = ugettext_noop('Product Import Status')
+
+    def get(self, request, *args, **kwargs):
+        context = {
+            'domain': self.domain,
+            'download_id': kwargs['download_id'],
+            'poll_url': reverse('product_importer_job_poll', args=[self.domain, kwargs['download_id']]),
+            'title': _("Product Import Status"),
+            'progress_text': _("Importing your data. This may take some time..."),
+            'error_text': _("Problem importing data! Please try again or report an issue."),
+        }
+        return render(request, 'hqwebapp/soil_status_full.html', context)
+
+@login_and_domain_required
+def product_importer_job_poll(request, domain, download_id, template="hqwebapp/partials/download_status.html"):
+    context = get_download_context(download_id, check_state=True)
+    context.update({
+        'on_complete_short': _('Import complete.'),
+        'on_complete_long': _('Product importing has finished'),
+
+    })
+    return render(request, template, context)
+
+
+def download_products(request, domain):
+    def _iter_product_rows(domain):
+        for p_doc in iter_docs(Product.get_db(), Product.ids_by_domain(domain)):
+            p = Product.wrap(p_doc)
+            yield p.to_csv()
+
+    fd, path = tempfile.mkstemp()
+    with os.fdopen(fd, 'wb') as file:
+        writer = csv.writer(file, dialect=csv.excel)
+        writer.writerow([
+            'id',
+            'name',
+            'unit',
+            'code',
+            'description',
+            'category',
+            'program_id',
+            'cost',
+        ])
+        for row in _iter_product_rows(domain):
+            writer.writerow(row)
+
+    response = HttpResponse(open(path, 'rb').read())
+    response['Content-Disposition'] = 'attachment; filename="{domain}-products.csv"'.format(domain=domain)
+    return response
 
 
 class EditProductView(NewProductView):
@@ -333,10 +451,6 @@ class ProgramListView(BaseCommTrackManageView):
     urlname = 'commtrack_program_list'
     template_name = 'commtrack/manage/programs.html'
     page_title = ugettext_noop("Manage Programs")
-
-    @property
-    def page_context(self):
-        return {}
 
 
 class FetchProgramListView(ProgramListView):

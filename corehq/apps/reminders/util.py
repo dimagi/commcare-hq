@@ -8,7 +8,6 @@ from corehq.apps.users.models import CommCareUser
 from casexml.apps.case.models import CommCareCase, CommCareCaseGroup
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
-import toggle
 
 
 class DotExpandedDict(dict):
@@ -199,9 +198,8 @@ def create_immediate_reminder(contact, content_type, reminder_type=None, message
 
 
 def can_use_survey_reminders(request):
-    if toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, request.user.username):
-        try:
-            ensure_request_has_privilege(request, privileges.INBOUND_SMS)
-        except PermissionDenied:
-            return False
+    try:
+        ensure_request_has_privilege(request, privileges.INBOUND_SMS)
+    except PermissionDenied:
+        return False
     return True

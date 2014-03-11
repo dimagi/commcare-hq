@@ -101,11 +101,12 @@ def export_cases_and_referrals(domain, cases, workbook, users=None, groups=None,
 
     case_headers = list(case_static_keys)
     case_headers.extend([format_dynamic_key(key) for key in case_dynamic_keys])
-    workbook.open("Case", case_headers)
+    workbook.open("Cases", case_headers)
     for case_row in case_rows:
-        workbook.write_row("Case", tidy_up_case_row(case_row))
+        workbook.write_row("Cases", tidy_up_case_row(case_row))
 
-    workbook.open("Referral", referral_keys)
-    for referral_row in referral_rows:
-        workbook.write_row("Referral", referral_row)
+    if referral_rows:
+        workbook.open("Referrals", referral_keys)
+        for referral_row in referral_rows:
+            workbook.write_row("Referrals", referral_row)
     return workbook

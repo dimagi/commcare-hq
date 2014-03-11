@@ -522,7 +522,7 @@ def update_domains(request):
         if dom.forms:
             try:
                 dom.first_submission = string_to_datetime(XFormInstance.get_db().view\
-                    ("receiverwrapper/all_submissions_by_domain", 
+                    ("couchforms/all_submissions_by_domain",
                      reduce=False, limit=1, 
                      startkey=[dom.name, "by_date"],
                      endkey=[dom.name, "by_date", {}]).all()[0]["key"][2]).strftime("%Y-%m-%d")
@@ -531,7 +531,7 @@ def update_domains(request):
             
             try:
                 dom.last_submission = string_to_datetime(XFormInstance.get_db().view\
-                    ("receiverwrapper/all_submissions_by_domain", 
+                    ("couchforms/all_submissions_by_domain",
                      reduce=False, limit=1, descending=True,
                      startkey=[dom.name, "by_date", {}],
                      endkey=[dom.name, "by_date"]).all()[0]["key"][2]).strftime("%Y-%m-%d")

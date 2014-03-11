@@ -1,4 +1,6 @@
 from xml.etree import ElementTree
+from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
+from corehq.apps.fixtures.exceptions import FixtureException
 from corehq.apps.users.models import CommCareUser
 from couchdbkit.ext.django.schema import Document, DictProperty, StringProperty, StringListProperty, IntegerProperty, BooleanProperty
 from corehq.apps.groups.models import Group
@@ -14,6 +16,15 @@ class FixtureDataType(Document):
     tag = StringProperty()
     name = StringProperty()
     fields = StringListProperty()
+
+    @classmethod
+    def total_by_domain(cls, domain):
+        num_fixtures = FixtureDataType.get_db().view(
+            'fixtures/data_types_by_domain',
+            reduce=True,
+            key=domain,
+        ).first()
+        return num_fixtures['value'] if num_fixtures is not None else 0
 
     @classmethod
     def by_domain(cls, domain):
@@ -56,7 +67,21 @@ class FixtureDataItem(Document):
             reduce=False,
             include_docs=True
         ):
-            ownership.delete()
+            try:
+                ownership.delete()
+            except ResourceNotFound:
+                # looks like it was already deleted
+                pass
+            except ResourceConflict:
+                raise FixtureException((
+                    "couldn't remove ownership {owner_id} for item {fixture_id} of type "
+                    "{data_type_id} in domain {domain}. It was updated elsewhere"
+                ).format(
+                    owner_id=ownership._id,
+                    fixture_id=self._id,
+                    data_type_id=self.data_type_id,
+                    domain=self.domain
+                ))
 
     def add_user(self, user, transaction=None):
         return self.add_owner(user, 'user', transaction=transaction)
