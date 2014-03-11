@@ -8,7 +8,6 @@ import socket
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from multimechanize.resultsloader import GlobalConfig
 
 from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_POST, require_GET
@@ -62,6 +61,7 @@ from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.django.email import send_HTML_email
 from pillowtop import get_all_pillows_json
 
+from .multimech import GlobalConfig
 
 @require_superuser
 def default(request):
@@ -874,25 +874,6 @@ def stats_data(request):
 def loadtest(request):
     # The multimech results api is kinda all over the place.
     # the docs are here: http://testutils.org/multi-mechanize/datastore.html
-    # Here's some stuff to play around with if you need to re-figure out how
-    # stuff is stored and retrieved:
-
-    # from multimechanize.resultsloader import (GlobalConfig, ResultRow,
-        # load_results_database, UserGroupConfig, TimerRow)
-    # ugcs = current.query(UserGroupConfig).all()
-    # ugc = ugcs[0]
-    # print ugc.script, ugc.user_group
-    # rrs = current.query(ResultRow).all()
-    # rr = rrs[0]
-    # print rr.run_time, rr.user_group_name
-    # trs = current.query(TimerRow).all()
-    # tr = trs[0]
-    # # GlobalConfigs store each individual test run,
-    # # although gc.results seems to be the only place with specific info
-    # gcs = current.query(GlobalConfig).all()
-    # gc = gcs[0]
-    # print len(gc.results), gc.user_group_configs
-    # import ipdb; ipdb.set_trace()
 
     db_url = "postgresql://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}".format(
         **settings.DATABASES["default"]
