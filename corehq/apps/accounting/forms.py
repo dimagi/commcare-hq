@@ -24,7 +24,7 @@ from django_prbac.models import Role, Grant
 
 from corehq.apps.accounting.async_handlers import (FeatureRateAsyncHandler, SoftwareProductRateAsyncHandler)
 from corehq.apps.accounting.utils import is_active_subscription
-from corehq.apps.hqwebapp.crispy import BootstrapMultiField
+from corehq.apps.hqwebapp.crispy import BootstrapMultiField, TextField
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
 from corehq.apps.accounting.models import (BillingContactInfo, Currency, SoftwarePlanVersion, BillingAccount,
@@ -185,83 +185,179 @@ class BillingAccountForm(forms.Form):
 
 
 class SubscriptionForm(forms.Form):
-    account = forms.ChoiceField(label=_("Billing Account"))
-    start_date = forms.DateField(label="Start Date", widget=forms.DateInput())
-    end_date = forms.DateField(label="End Date", widget=forms.DateInput(), required=False)
-    delay_invoice_until = forms.DateField(label="Delay Invoice Until", widget=forms.DateInput(), required=False)
-    plan_version = forms.ChoiceField(label="Plan Version")
+    account = forms.CharField(
+        label=_("Billing Account")
+    )
+    start_date = forms.DateField(
+        label=_("Start Date"), widget=forms.DateInput()
+    )
+    end_date = forms.DateField(
+        label=_("End Date"), widget=forms.DateInput(), required=False
+    )
+    delay_invoice_until = forms.DateField(
+        label=_("Delay Invoice Until"), widget=forms.DateInput(), required=False
+    )
+    plan_product = forms.ChoiceField(
+        label=_("Core Product"), initial=SoftwareProductType.COMMCARE,
+        choices=SoftwareProductType.CHOICES,
+    )
+    plan_edition = forms.ChoiceField(
+        label=_("Edition"), initial=SoftwarePlanEdition.ENTERPRISE,
+        choices=SoftwarePlanEdition.CHOICES,
+    )
+    plan_version = forms.CharField(label=_("Software Plan"))
     domain = forms.CharField(label=_("Project Space"))
-    salesforce_contract_id = forms.CharField(label=_("Salesforce Deployment ID"),
-                                             max_length=80,
-                                             required=False)
-    do_not_invoice = forms.BooleanField(label=_("Do Not Invoice"),
-                                        required=False)
+    salesforce_contract_id = forms.CharField(
+        label=_("Salesforce Deployment ID"), max_length=80, required=False
+    )
+    do_not_invoice = forms.BooleanField(
+        label=_("Do Not Invoice"), required=False
+    )
 
-    # account_id is not referenced if subscription is not None
     def __init__(self, subscription, account_id, *args, **kwargs):
+        # account_id is not referenced if subscription is not None
         super(SubscriptionForm, self).__init__(*args, **kwargs)
         self.subscription = subscription
+        self.is_existing = subscription is not None
+        today = datetime.date.today()
 
-        css_class = {'css_class': 'date-picker'}
-        disabled = {'disabled': 'disabled'}
+        start_date_field = crispy.Field('start_date', css_class="date-picker")
+        end_date_field = crispy.Field('end_date', css_class="date-picker")
+        delay_invoice_until_field = crispy.Field('delay_invoice_until',
+                                                 css_class="date-picker")
 
-        start_date_kwargs = dict(**css_class)
-        end_date_kwargs = dict(**css_class)
-        delay_invoice_until_kwargs = dict(**css_class)
-        domain_kwargs = {'css_class': 'input-xlarge'}
+        if self.is_existing:
+            # circular import
+            from corehq.apps.accounting.views import (
+                EditSoftwarePlanView, ManageBillingAccountView
+            )
+            from corehq.apps.domain.views import DefaultProjectSettingsView
+            self.fields['account'].initial = subscription.account.id
+            account_field = TextField(
+                'account',
+                '<a href="%(account_url)s">%(account_name)s</a>' % {
+                    'account_url': reverse(ManageBillingAccountView.urlname,
+                                           args=[subscription.account.id]),
+                    'account_name': subscription.account.name,
+                }
+            )
 
-        if subscription is not None:
-            self.fields['account'].choices = [(subscription.account.id, subscription.account.name)]
-            self.fields['plan_version'].choices = [(subscription.plan_version.id,
-                                                    str(subscription.plan_version))]
-            self.fields['domain'].choices = [(subscription.subscriber.domain,
-                                              subscription.subscriber.domain)]
-            self.fields['start_date'].initial = subscription.date_start
+            self.fields['plan_version'].initial = subscription.plan_version.id
+            plan_version_field = TextField(
+                'plan_version',
+                '<a href="%(plan_version_url)s">%(plan_name)s</a>' % {
+                'plan_version_url': reverse(
+                    EditSoftwarePlanView.urlname,
+                    args=[subscription.plan_version.plan.id]),
+                'plan_name': subscription.plan_version,
+            })
+            try:
+                plan_product = subscription.plan_version.product_rates.all()[0].product.product_type
+                self.fields['plan_product'].initial = plan_product
+            except SoftwarePlanVersion.DoesNotExist:
+                plan_product = (
+                    '<i class="icon-alert-sign"></i> No Product Exists for '
+                    'the Plan (update required)'
+                )
+            plan_product_field = TextField(
+                'plan_product',
+                plan_product,
+            )
+            self.fields['plan_edition'].initial = subscription.plan_version.plan.edition
+            plan_edition_field = TextField(
+                'plan_edition',
+                self.fields['plan_edition'].initial
+            )
+
+            self.fields['domain'].choices = [
+                (subscription.subscriber.domain, subscription.subscriber.domain)
+            ]
+            self.fields['domain'].initial = subscription.subscriber.domain
+
+            domain_field = TextField(
+                'domain',
+                '<a href="%(project_url)s">%(project_name)s</a>' % {
+                'project_url': reverse(DefaultProjectSettingsView.urlname,
+                                       args=[subscription.subscriber.domain]),
+                'project_name': subscription.subscriber.domain,
+            })
+
+            self.fields['start_date'].initial = subscription.date_start.isoformat()
             self.fields['end_date'].initial = subscription.date_end
             self.fields['delay_invoice_until'].initial = subscription.date_delay_invoicing
-            self.fields['plan_version'].initial = subscription.plan_version.id
             self.fields['domain'].initial = subscription.subscriber.domain
             self.fields['salesforce_contract_id'].initial = subscription.salesforce_contract_id
             self.fields['do_not_invoice'].initial = subscription.do_not_invoice
+
             if (subscription.date_start is not None
-                and subscription.date_start <= datetime.date.today()):
-                start_date_kwargs.update(disabled)
-                self.fields['start_date'].required = False
+                and subscription.date_start <= today):
+                start_date_field = TextField(
+                    'start_date',
+                    "%(start_date)s (already started)" % {
+                    'start_date': self.fields['start_date'].initial,
+                })
             if (subscription.date_end is not None
-                and subscription.date_end <= datetime.date.today()):
-                end_date_kwargs.update(disabled)
+                and subscription.date_end <= today):
+                end_date_field = TextField(
+                    'end_date',
+                    "%(end_date)s (already ended)" % {
+                    'end_date': self.fields['end_date'].initial,
+                })
             if (subscription.date_delay_invoicing is not None
-                and subscription.date_delay_invoicing <= datetime.date.today()):
-                delay_invoice_until_kwargs.update(disabled)
+                and subscription.date_delay_invoicing <= today):
+                delay_invoice_until_field = TextField(
+                    'delay_invoice_until',
+                    "%(delay_date)s (date has already passed)" % {
+                    'delay_date': self.fields['delay_invoice_until'].initial,
+                })
+
             self.fields['plan_version'].required = False
             self.fields['domain'].required = False
-            domain_kwargs.update(disabled)
+
         else:
-            self.fields['account'].choices = [(account.id, account.name)
-                                              for account in BillingAccount.objects.order_by('name')]
+            account_field = crispy.Field(
+                'account', css_class="input-xxlarge",
+                placeholder="Search for Billing Account"
+            )
             if account_id is not None:
                 self.fields['account'].initial = account_id
-            self.fields['plan_version'].choices = [(plan_version.id, str(plan_version))
-                                                   for plan_version in SoftwarePlanVersion.objects.all()]
-            self.fields['domain'].choices = [(domain, domain) for domain in Domain.get_all()]
+
+            self.fields['domain'].choices = [
+                (domain, domain) for domain in Domain.get_all()
+            ]
+            domain_field = crispy.Field(
+                'domain', css_class="input-xxlarge",
+                placeholder="Search for Project Space"
+            )
+            plan_product_field = crispy.Field('plan_product')
+            plan_edition_field = crispy.Field('plan_edition')
+            plan_version_field = crispy.Field(
+                'plan_version', css_class="input-xxlarge",
+                placeholder="Search for Software Plan"
+            )
+
 
         self.helper = FormHelper()
+        self.helper.form_text_inline = True
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-            '%s Subscription' % ('Edit' if subscription is not None else 'New'),
-                crispy.Field('account'),
-                crispy.Field('start_date', **start_date_kwargs),
-                crispy.Field('end_date', **end_date_kwargs),
-                crispy.Field('delay_invoice_until', **delay_invoice_until_kwargs),
-                crispy.Field('plan_version'),
-                crispy.Field('domain', **domain_kwargs),
+                '%s Subscription' % ('Edit' if self.is_existing
+                                     else 'New'),
+                account_field,
+                start_date_field,
+                end_date_field,
+                delay_invoice_until_field,
+                plan_product_field,
+                plan_edition_field,
+                plan_version_field,
+                domain_field,
                 'salesforce_contract_id',
                 'do_not_invoice',
             ),
             FormActions(
                 crispy.ButtonHolder(
                     crispy.Submit('set_subscription',
-                           '%s Subscription' % ('Update' if subscription is not None else 'Create'))
+                           '%s Subscription' % ('Update' if self.is_existing else 'Create'))
                 )
             )
         )
@@ -276,7 +372,7 @@ class SubscriptionForm(forms.Form):
 
     def clean_end_date(self):
         start_date = self.subscription.date_start \
-            if self.subscription is not None else self.cleaned_data['start_date']
+            if self.is_existing else self.cleaned_data['start_date']
         if (self.cleaned_data['end_date'] is not None
             and start_date > self.cleaned_data['end_date']):
             raise ValidationError("End date must be after start date.")
@@ -451,7 +547,7 @@ class CreditForm(forms.Form):
             add_feature_rate()
         elif account is not None:
             add_account_level()
-        elif subscription is not None:
+        elif self.is_existing:
             add_subscription_level()
         else:
             raise ValueError('invalid credit adjustment')

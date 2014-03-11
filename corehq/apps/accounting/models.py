@@ -464,7 +464,16 @@ class SoftwarePlanVersion(models.Model):
     role = models.ForeignKey(Role)
 
     def __str__(self):
-        return "Software Plan Version For Plan '%s' with Role '%s'" % (self.plan.name, self.role.slug)
+        return "%(plan_name)s (v%(version_num)d)" % {
+            'plan_name': self.plan.name,
+            'version_num': self.version,
+        }
+
+    @property
+    def version(self):
+        return (self.plan.softwareplanversion_set.count() -
+                self.plan.softwareplanversion_set.filter(
+                    date_created__gt=self.date_created).count())
 
     @property
     def user_facing_description(self):
