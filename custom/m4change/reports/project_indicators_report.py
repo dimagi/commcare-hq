@@ -5,6 +5,7 @@ from corehq.apps.reports.fields import AsyncLocationField
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from corehq.apps.reports.standard import MonthYearMixin, CustomProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListReport
+from custom.m4change.reports import validate_report_parameters
 from custom.m4change.reports.reports import M4ChangeReport
 from custom.m4change.reports.sql_data import ProjectIndicatorsCaseSqlData
 
@@ -26,16 +27,11 @@ class ProjectIndicatorsReport(MonthYearMixin, CustomProjectReport, CaseListRepor
 
     @classmethod
     def get_report_data(cls, config):
-        if "location_id" not in config:
-            raise KeyError(_("Parameter 'location_id' is missing"))
-        if "datespan" not in config:
-            raise KeyError(_("Parameter 'datespan' is missing"))
-        if "domain" not in config:
-            raise KeyError(_("Parameter 'domain' is missing"))
+        validate_report_parameters(["domain", "location_id", "datespan"], config)
 
-        domain = config.get("domain", None)
-        location_id = config.get("location_id", None)
-        sql_data = ProjectIndicatorsCaseSqlData(domain=domain, datespan=config.get("datespan", None)).data
+        domain = config["domain"]
+        location_id = config["location_id"]
+        sql_data = ProjectIndicatorsCaseSqlData(domain=domain, datespan=config["datespan"]).data
         top_location = Location.get(location_id)
         locations = [location_id] + [descendant.get_id for descendant in top_location.descendants]
         row_data = ProjectIndicatorsReport.get_initial_row_data()
