@@ -8,6 +8,7 @@ from couchdbkit.ext.django.schema import Document, DictProperty,\
     StringListProperty, DateTimeProperty, SchemaProperty, BooleanProperty
 import json
 import couchexport
+from couchexport.exceptions import CustomExportValidationError
 from couchexport.files import ExportFiles
 from couchexport.transforms import identity
 from couchexport.util import SerializableFunctionProperty,\
@@ -670,7 +671,6 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
     def get_export_files(self, format=None, previous_export=None, filter=None, process=None, max_column_size=None,
                          apply_transforms=True, **kwargs):
         from couchexport.export import get_writer, format_tables, create_intermediate_tables
-
         if not format:
             format = self.default_format or Format.XLS_2007
 
@@ -736,8 +736,13 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
         return ExportConfiguration(index=index, name=self.name,
                                    format=self.default_format)
 
-    # replaces `sheet_name = StringProperty()`
+    def custom_validate(self):
+        if self.default_format == Format.XLS:
+            for table in self.tables:
+                if len(table.columns) > 255:
+                    raise CustomExportValidationError("XLS files can only have 255 columns")
 
+    # replaces `sheet_name = StringProperty()`
     def __get_sheet_name(self):
         return self.tables[0].display
 
