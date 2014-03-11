@@ -36,7 +36,7 @@ class Command(BaseCommand):
         forms = []
 
         for b in beneficiaries:
-            forms += b.get_forms()
+            forms += list(b.get_forms())
 
         test_data = []
 

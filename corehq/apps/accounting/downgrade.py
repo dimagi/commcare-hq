@@ -7,8 +7,8 @@ from corehq import privileges, Domain
 from corehq.apps.app_manager.models import Application
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.orgs.models import Organization
-from corehq.apps.reminders.models import CaseReminderHandler, RECIPIENT_SURVEY_SAMPLE, METHOD_SMS_SURVEY, METHOD_IVR_SURVEY
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.reminders.models import CaseReminderHandler, METHOD_SMS_SURVEY, METHOD_IVR_SURVEY
+from corehq.apps.users.models import CommCareUser, UserRole
 from couchexport.models import SavedExportSchema
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
@@ -46,14 +46,62 @@ class DomainDowngradeActionHandler(BaseDowngradeHandler):
     This carries out the downgrade action based on each privilege.
 
     Each response should return a boolean.
-
-    # todo implement
     """
+    supported_privileges = [
+        privileges.OUTBOUND_SMS,
+        privileges.INBOUND_SMS,
+    ]
 
     def get_response(self):
         response = super(DomainDowngradeActionHandler, self).get_response()
         return len(filter(lambda x: not x, response)) == 0
 
+
+    @property
+    @memoized
+    def _active_reminders(self):
+        db = CaseReminderHandler.get_db()
+        key = [self.domain.name]
+        reminder_rules = db.view(
+            'reminders/handlers_by_reminder_type',
+            startkey=key,
+            endkey=key+[{}],
+            reduce=False
+        ).all()
+        active_reminders = []
+        for reminder_doc in iter_docs(db, [r['id'] for r in reminder_rules]):
+            if reminder_doc['active']:
+                active_reminders.append(CaseReminderHandler.wrap(reminder_doc))
+        return active_reminders
+
+    @property
+    def response_outbound_sms(self):
+        """
+        Reminder rules will be deactivated.
+        """
+        try:
+            for reminder in self._active_reminders:
+                reminder.active = False
+                reminder.save()
+        except Exception:
+            logging.exception("Failed to downgrade outbound sms for domain %s." % self.domain.name)
+            return False
+        return True
+
+    @property
+    def response_inbound_sms(self):
+        """
+        All Reminder rules utilizing "survey" will be deactivated.
+        """
+        try:
+            surveys = filter(lambda x: x.method in [METHOD_IVR_SURVEY, METHOD_SMS_SURVEY], self._active_reminders)
+            for survey in surveys:
+                survey.active = False
+                survey.save()
+        except Exception:
+            logging.exception("Failed to downgrade outbound sms for domain %s." % self.domain.name)
+            return False
+        return True
 
 class DomainDowngradeStatusHandler(BaseDowngradeHandler):
     """
@@ -69,6 +117,7 @@ class DomainDowngradeStatusHandler(BaseDowngradeHandler):
         privileges.INBOUND_SMS,
         privileges.DEIDENTIFIED_DATA,
         privileges.MOBILE_WORKER_CREATION,
+        privileges.ROLE_BASED_ACCESS,
     ]
 
     def _fmt_alert(self, message, details=None):
@@ -104,8 +153,10 @@ class DomainDowngradeStatusHandler(BaseDowngradeHandler):
         num_apps = len(cloudcare_enabled_apps)
         return self._fmt_alert(
             ungettext(
-                "You have %(num_apps)d application that will lose CloudCare access if you select this plan.",
-                "You have %(num_apps)d applications that will lose CloudCare access if you select this plan.",
+                "You have %(num_apps)d application that will lose CloudCare access as of March 1, 2014 if you select "
+                "this plan.",
+                "You have %(num_apps)d applications that will lose CloudCare access as of March 1, 2014 if you select "
+                "this plan.",
                 num_apps
             ) % {
                 'num_apps': num_apps,
@@ -130,8 +181,10 @@ class DomainDowngradeStatusHandler(BaseDowngradeHandler):
         if num_fixtures > 0:
             return self._fmt_alert(
                 ungettext(
-                    "You have %(num_fix)s Lookup Table set up. Selecting this plan will delete this Lookup Table.",
-                    "You have $(num_fix)s Lookup Tables set up. Selecting this plan will delete these Lookup Tables.",
+                    "You have %(num_fix)s Lookup Table set up. Selecting this plan will delete this Lookup Table "
+                    "on March 1, 2014.",
+                    "You have $(num_fix)s Lookup Tables set up. Selecting this plan will delete these Lookup Tables "
+                    "on March 1, 2014.",
                     num_fixtures
                 ) % {'num_fix': num_fixtures}
             )
@@ -142,7 +195,8 @@ class DomainDowngradeStatusHandler(BaseDowngradeHandler):
         Custom logos will be removed on downgrade.
         """
         if self.domain.has_custom_logo:
-            return self._fmt_alert(_("You are using custom branding. Selecting this plan will remove this feature."))
+            return self._fmt_alert(_("You are using custom branding. Selecting this plan will remove this feature "
+                                     "as of March 1, 2014."))
 
     @property
     def response_cross_project_reports(self):
@@ -152,7 +206,8 @@ class DomainDowngradeStatusHandler(BaseDowngradeHandler):
         if self.domain.organization:
             org = Organization.get_by_name(self.domain.organization)
             return self._fmt_alert(
-                _("You will lose access to cross-project reports for the organization '%(org_name)s'.") % {
+                _("You will lose access to cross-project reports as of March 1, 2014 for the organization "
+                  "'%(org_name)s'.") % {
                     'org_name': org.title,
                 })
 
@@ -182,8 +237,10 @@ class DomainDowngradeStatusHandler(BaseDowngradeHandler):
         if num_active > 0:
             return self._fmt_alert(
                 ungettext(
-                    "You have %(num_active)d active Reminder Rule. Selecting this plan will deactivate this rule.",
-                    "You have %(num_active)d active Reminder Rules. Selecting this plan will deactivate these rules.",
+                    "You have %(num_active)d active Reminder Rule. Selecting this plan will deactivate this rule "
+                    "as of March 1, 2014.",
+                    "You have %(num_active)d active Reminder Rules. Selecting this plan will deactivate these rules "
+                    "as of March 1, 2014.",
                     num_active
                 ) % {
                     'num_active': num_active,
@@ -201,9 +258,9 @@ class DomainDowngradeStatusHandler(BaseDowngradeHandler):
             return self._fmt_alert(
                 ungettext(
                     "You have %(num_active)d active Reminder Rule for a Survey. "
-                    "Selecting this plan will deactivate this rule.",
+                    "Selecting this plan will deactivate this rule as of March 1, 2014.",
                     "You have %(num_active)d active Reminder Rules for a Survey. "
-                    "Selecting this plan will deactivate these rules.",
+                    "Selecting this plan will deactivate these rules as of March 1, 2014.",
                     num_survey
                 ) % {
                     'num_active': num_survey,
@@ -215,7 +272,6 @@ class DomainDowngradeStatusHandler(BaseDowngradeHandler):
         """
         De-id exports will be hidden
         """
-        print "DEID"
         startkey = json.dumps([self.domain.name, ""])[:-3]
         endkey = "%s{" % startkey
         num_deid_reports = SavedExportSchema.view("couchexport/saved_export_schemas",
@@ -223,13 +279,11 @@ class DomainDowngradeStatusHandler(BaseDowngradeHandler):
             endkey=endkey,
             include_docs=False,
         ).count()
-
-        print "num deid", num_deid_reports
         if num_deid_reports > 0:
             return self._fmt_alert(
                 ungettext(
-                    "You have %(num)d De-Identified Export. Selecting this plan will remove it.",
-                    "You have %(num)d De-Identified Exports. Selecting this plan will remove them.",
+                    "You have %(num)d De-Identified Export. Selecting this plan will remove it as of March 1, 2014.",
+                    "You have %(num)d De-Identified Exports. Selecting this plan will remove them as of March 1, 2014.",
                     num_deid_reports
                 ) % {
                     'num': num_deid_reports,
@@ -246,17 +300,21 @@ class DomainDowngradeStatusHandler(BaseDowngradeHandler):
         try:
             user_rate = self.new_plan_version.feature_rates.filter(
                 feature__feature_type=FeatureType.USER).latest('date_created')
+            if user_rate.monthly_limit == -1:
+                return
             num_allowed = user_rate.monthly_limit
             num_extra = num_users - num_allowed
             if num_extra > 0:
                 return self._fmt_alert(
                     ungettext(
                         "You have %(num_users)d Mobile Worker over the monthly limit of %(monthly_limit)d for "
-                        "this new plan. There will be an additional monthly charge of USD %(excess_fee)s per "
-                        "Mobile Worker, totalling USD %(monthly_total)s per month, if you select this plan.",
+                        "this new plan. There will be an additional monthly charge as of March 1, 2014 "
+                        "of USD %(excess_fee)s per Mobile Worker, totalling USD %(monthly_total)s per month, "
+                        "if you select this plan.",
                         "You have %(num_users)d Mobile Workers over the monthly limit of %(monthly_limit)d for "
-                        "this new plan. There will be an additional monthly charge of USD %(excess_fee)s per "
-                        "Mobile Worker, totalling USD %(monthly_total)s per month, if you select this plan.",
+                        "this new plan. There will be an additional monthly charge as of March 1, 2014 of USD "
+                        "%(excess_fee)s per Mobile Worker, totalling USD %(monthly_total)s per month, if you "
+                        "select this plan.",
                         num_extra
                     ) % {
                         'num_users': num_extra,
@@ -270,3 +328,74 @@ class DomainDowngradeStatusHandler(BaseDowngradeHandler):
                 "It seems that the plan %s did not have rate for Mobile Workers. This is problematic." %
                     self.new_plan_version.plan.name
                 )
+
+    @property
+    def response_role_based_access(self):
+        """
+        Alert the user if there are currently custom roles set up for the domain.
+        """
+        db = UserRole.get_db()
+        user_roles_query = db.view(
+            'users/roles_by_domain',
+            startkey=[self.domain.name],
+            endkey=[self.domain.name, {}],
+            reduce=False,
+        ).all()
+        user_role_ids = [r['id'] for r in user_roles_query]
+
+        EDIT_WEB_USERS = 'edit_web_users'
+        EDIT_CC_USERS = 'edit_commcare_users'
+        EDIT_APPS = 'edit_apps'
+        EDIT_DATA = 'edit_data'
+        VIEW_REPORTS = 'view_reports'
+
+        STD_ROLES = {
+            'Read Only': {
+                'on': [VIEW_REPORTS],
+                'off': [EDIT_DATA, EDIT_APPS, EDIT_CC_USERS, EDIT_WEB_USERS],
+            },
+            'Field Implementer': {
+                'on': [VIEW_REPORTS, EDIT_CC_USERS],
+                'off': [EDIT_DATA, EDIT_APPS, EDIT_WEB_USERS],
+            },
+            'App Editor': {
+                'on': [VIEW_REPORTS, EDIT_APPS],
+                'off': [EDIT_DATA, EDIT_WEB_USERS, EDIT_CC_USERS],
+            }
+        }
+
+        def _is_custom_role(doc):
+            role_name = doc['name']
+            if not role_name in STD_ROLES.keys():
+                return True
+            doc_perms = doc['permissions']
+            if len(doc_perms['view_report_list']) > 0:
+                return True
+            std_perms = STD_ROLES[role_name]
+            def _is_match(status, val):
+                return sum([doc_perms[k] == val for k in std_perms[status]]) == len(std_perms[status])
+            if not _is_match('on', True):
+                return True
+            if not _is_match('off', False):
+                return True
+            return False
+
+        custom_roles = []
+        for role_doc in iter_docs(db, user_role_ids):
+            if _is_custom_role(role_doc):
+                custom_roles.append(role_doc['name'])
+
+        num_roles = len(custom_roles)
+        if num_roles > 0:
+            return self._fmt_alert(
+                ungettext(
+                    "You have %(num_roles)d Custom Role configured for your project. If you "
+                    "select this plan, all users with that role will change to having the Read Only role "
+                    "as of March 1, 2014.",
+                    "You have %(num_roles)d Custom Roles configured for your project . If you "
+                    "select this plan, all users with these roles will change to having the Read Only role "
+                    "as of March 1, 2014.",
+                    num_roles
+                ) % {
+                    'num_roles': num_roles,
+                }, custom_roles)

@@ -104,6 +104,10 @@ def partial_escape(xpath):
     return mark_safe(force_unicode(xpath).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;'))
 
 
+class ModuleNotFoundException(Exception):
+    pass
+
+
 class IndexedSchema(DocumentSchema):
     """
     Abstract class.
@@ -1492,6 +1496,7 @@ class CareplanModule(ModuleBase):
     """
     parent_select = SchemaProperty(ParentSelect)
 
+    display_separately = BooleanProperty(default=False)
     forms = SchemaListProperty(CareplanForm)
     goal_details = SchemaProperty(DetailPair)
     task_details = SchemaProperty(DetailPair)
@@ -2233,9 +2238,14 @@ class SavedAppBuild(ApplicationBase):
             'jar_path': self.get_jar_path(),
             'short_name': self.short_name
         })
-        if data['comment_from']:
-            comment_user = CouchUser.get(data['comment_from'])
-            data['comment_user_name'] = comment_user.full_name
+        comment_from = data['comment_from']
+        if comment_from:
+            try:
+                comment_user = CouchUser.get(comment_from)
+            except ResourceNotFound:
+                data['comment_user_name'] = comment_from
+            else:
+                data['comment_user_name'] = comment_user.full_name
 
         return data
 
@@ -2505,7 +2515,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     @parse_int([1])
     def get_module(self, i):
         self__modules = self.modules
-        return self__modules[i].with_id(i%len(self__modules), self)
+        try:
+            return self__modules[i].with_id(i%len(self__modules), self)
+        except IndexError:
+            raise ModuleNotFoundException()
 
     def get_user_registration(self):
         form = self.user_registration
@@ -2554,7 +2567,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @parse_int([1])
     def delete_module(self, module_id):
-        module = self.modules[module_id]
+        module = self.get_module(module_id)
         record = DeleteModuleRecord(
             domain=self.domain,
             app_id=self.id,
@@ -2694,6 +2707,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         return xmlns_map
 
     def get_questions(self, xmlns):
+        if xmlns == "http://code.javarosa.org/devicereport":
+            return []
         forms = self.get_xmlns_map()[xmlns]
         if len(forms) != 1:
             logging.error('App %s in domain %s has %s forms with xmlns %s' % (

@@ -1,4 +1,4 @@
-/*globals $, COMMCAREHQ */
+/*globals $, COMMCAREHQ, ko, _, CC_UTILS */
 
 var action_names = ["open_case", "update_case", "close_case", "case_preload"];
 
@@ -27,7 +27,11 @@ var CaseConfig = (function () {
         self.caseType = params.caseType;
         self.reserved_words = params.reserved_words;
         self.moduleCaseTypes = params.moduleCaseTypes;
-        self.propertiesMap = ko.mapping.fromJS(params.propertiesMap);
+
+        self.setPropertiesMap = function (propertiesMap) {
+            self.propertiesMap = ko.mapping.fromJS(propertiesMap);
+        };
+        self.setPropertiesMap(params.propertiesMap);
 
         self.saveButton = COMMCAREHQ.SaveButton.init({
             unsavedMessage: "You have unchanged case settings",
@@ -109,7 +113,7 @@ var CaseConfig = (function () {
                      .on('click', 'a', self.change);
                 self.ensureBlankProperties();
             });
-        }
+        };
     };
 
 
@@ -134,12 +138,12 @@ var CaseConfig = (function () {
             if (caseType === self.caseConfig.caseType) {
                 label = '*' + label;
             }
-            return label
+            return label;
         };
         self.case_transaction = HQFormActions.to_case_transaction(caseConfig.actions, caseConfig);
         self.subcases = ko.observableArray(
             _(caseConfig.actions.subcases).map(function (subcase) {
-                return HQOpenSubCaseAction.to_case_transaction(subcase, caseConfig)
+                return HQOpenSubCaseAction.to_case_transaction(subcase, caseConfig);
             })
         );
         self.addSubCase = function () {
@@ -201,7 +205,7 @@ var CaseConfig = (function () {
                         return CasePreload.wrap(options.data, self);
                     }
                 }
-            }
+            };
         },
         wrap: function (data, caseConfig) {
             var self = {};
@@ -389,7 +393,7 @@ var CaseConfig = (function () {
                     } else if (case_transaction.caseConfig.reserved_words.indexOf(self.key()) !== -1) {
                         return '<strong>' + self.key() + '</strong> is a reserved word';
                     } else if (self.repeat_context() && self.repeat_context() !== case_transaction.repeat_context()) {
-                        return 'Inside the wrong repeat!'
+                        return 'Inside the wrong repeat!';
                     }
                 }
                 return null;

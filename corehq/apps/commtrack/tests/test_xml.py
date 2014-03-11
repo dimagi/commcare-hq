@@ -1,13 +1,13 @@
+from lxml import etree
+import os
 import random
 import uuid
 from datetime import datetime
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
-from casexml.apps.phone.models import SyncLog
 from casexml.apps.phone.restore import RestoreConfig
-from casexml.apps.phone.tests import synclog_from_restore_payload
 from casexml.apps.phone.tests.utils import synclog_id_from_restore_payload
-from corehq.apps.commtrack.models import ConsumptionConfig, StockRestoreConfig
+from corehq.apps.commtrack.models import ConsumptionConfig, StockRestoreConfig, RequisitionCase, Product
 from corehq.apps.consumption.shortcuts import set_default_consumption_for_domain
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.stock import const as stockconst
@@ -18,6 +18,7 @@ from casexml.apps.case.tests.util import check_xml_line_by_line, check_user_has_
 from corehq.apps.hqcase.utils import get_cases_in_domain
 from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.apps.commtrack.tests.util import make_loc, make_supply_point
+from corehq.apps.commtrack.requisitions import get_notification_message
 from corehq.apps.commtrack.tests.data.balances import (
     balance_ota_block,
     submission_wrap,
@@ -29,9 +30,10 @@ from corehq.apps.commtrack.tests.data.balances import (
     transfer_first,
     create_requisition_xml,
     create_fulfillment_xml,
+    create_received_xml,
     receipts_enumerated,
-    balance_enumerated
-)
+    balance_enumerated,
+    products_xml, long_date)
 
 
 class CommTrackOTATest(CommTrackTest):
@@ -95,16 +97,10 @@ class CommTrackOTATest(CommTrackTest):
             section_to_consumption_types={'stock': 'consumption'}
         )
         set_default_consumption_for_domain(self.domain.name, 5)
-        ota_settings = self.ct_settings.get_ota_restore_settings()
 
         amounts = [(p._id, i*10) for i, p in enumerate(self.products)]
         report = _report_soh(amounts, self.sp._id, 'stock')
-        restore_config = RestoreConfig(
-            self.user.to_casexml_user(),
-            version=V2,
-            stock_settings=ota_settings,
-        )
-        balance_blocks = extract_balance_xml(restore_config.get_payload())
+        balance_blocks = _get_ota_balance_blocks(self.ct_settings, self.user)
         self.assertEqual(2, len(balance_blocks))
         stock_block, consumption_block = balance_blocks
         check_xml_line_by_line(
@@ -127,6 +123,35 @@ class CommTrackOTATest(CommTrackTest):
             ),
              consumption_block,
         )
+
+    def test_force_consumption(self):
+        self.ct_settings.consumption_config = ConsumptionConfig(
+            min_transactions=0,
+            min_window=0,
+            optimal_window=60,
+        )
+        self.ct_settings.ota_restore_config = StockRestoreConfig(
+            section_to_consumption_types={'stock': 'consumption'},
+        )
+        set_default_consumption_for_domain(self.domain.name, 5)
+
+        balance_blocks = _get_ota_balance_blocks(self.ct_settings, self.user)
+        self.assertEqual(0, len(balance_blocks))
+
+        # self.ct_settings.ota_restore_config.use_dynamic_product_list = True
+        self.ct_settings.ota_restore_config.force_consumption_case_types = [const.SUPPLY_POINT_CASE_TYPE]
+        balance_blocks = _get_ota_balance_blocks(self.ct_settings, self.user)
+        self.assertEqual(1, len(balance_blocks))
+        [balance_block] = balance_blocks
+        element = etree.fromstring(balance_block)
+        self.assertEqual(0, len([child for child in element]))
+
+        self.ct_settings.ota_restore_config.use_dynamic_product_list = True
+        balance_blocks = _get_ota_balance_blocks(self.ct_settings, self.user)
+        self.assertEqual(1, len(balance_blocks))
+        [balance_block] = balance_blocks
+        element = etree.fromstring(balance_block)
+        self.assertEqual(3, len([child for child in element]))
 
 
 class CommTrackSubmissionTest(CommTrackTest):
@@ -156,6 +181,7 @@ class CommTrackSubmissionTest(CommTrackTest):
 
     def check_stock_models(self, case, product_id, expected_soh, expected_qty, section_id):
         latest_trans = StockTransaction.latest(case._id, section_id, product_id)
+        self.assertIsNotNone(latest_trans)
         self.assertEqual(section_id, latest_trans.section_id)
         self.assertEqual(expected_soh, latest_trans.stock_on_hand)
         self.assertEqual(expected_qty, latest_trans.quantity)
@@ -268,28 +294,127 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
             self.check_product_stock(self.sp, product, final, 0)
 
 
+class BugSubmissionsTest(CommTrackSubmissionTest):
+    def test_device_report_submissions_ignored(self):
+        """
+        submit a device report with a stock block and make sure it doesn't
+        get processed
+        """
+        self.assertEqual(0, StockTransaction.objects.count())
+
+        fpath = os.path.join(os.path.dirname(__file__), 'data', 'xml', 'device_log.xml')
+        with open(fpath) as f:
+            form = f.read()
+        amounts = [(p._id, 10) for p in self.products]
+        product_block = products_xml(amounts)
+        form = form.format(
+            form_id=uuid.uuid4().hex,
+            user_id=self.user._id,
+            date=long_date(),
+            sp_id=self.sp._id,
+            product_block=product_block
+        )
+        submit_form_locally(
+            instance=form,
+            domain=self.domain.name,
+        )
+        self.assertEqual(0, StockTransaction.objects.count())
+
+
 class CommTrackRequisitionTest(CommTrackSubmissionTest):
 
-    def test_create_and_fulfill_requisition(self):
+    def setUp(self):
+        self.requisitions_enabled = True
+        super(CommTrackRequisitionTest, self).setUp()
+
+    def expected_notification_message(self, req, amounts):
+        summary = sorted(
+            ['%s:%d' % (str(Product.get(p).code), amt) for p, amt in amounts]
+        )
+        return const.notification_template(req.get_next_action().action).format(
+            name='Unknown',  # TODO currently not storing requester
+            summary=' '.join(summary),
+            loc=self.sp.location.site_code,
+            keyword=req.get_next_action().keyword
+        )
+
+    def test_create_fulfill_and_receive_requisition(self):
         amounts = [(p._id, 50.0 + float(i*10)) for i, p in enumerate(self.products)]
+
+        # ----------------
+        # Create a request
+        # ----------------
+
         self.submit_xml_form(create_requisition_xml(amounts))
         req_cases = list(get_cases_in_domain(self.domain.name, type=const.REQUISITION_CASE_TYPE))
         self.assertEqual(1, len(req_cases))
-        req = req_cases[0]
+        req = RequisitionCase.get(req_cases[0]._id)
         [index] = req.indices
+
+        self.assertEqual(req.requisition_status, 'requested')
         self.assertEqual(const.SUPPLY_POINT_CASE_TYPE, index.referenced_type)
         self.assertEqual(self.sp._id, index.referenced_id)
         self.assertEqual('parent_id', index.identifier)
+        # TODO: these types of tests probably belong elsewhere
+        self.assertEqual(req.get_next_action().keyword, 'fulfill')
+        self.assertEqual(req.get_location()._id, self.sp.location._id)
+        self.assertEqual(len(RequisitionCase.open_for_location(
+            self.domain.name,
+            self.sp.location._id
+        )), 1)
+        self.assertEqual(
+            get_notification_message(
+                req.get_next_action(),
+                [req]
+            ),
+            self.expected_notification_message(req, amounts)
+        )
+
         for product, amt in amounts:
-            self.check_stock_models(req, product, amt, 0, 'stock')
+            self.check_stock_models(req, product, amt, 0, 'ct-requested')
+
+        # ----------------
+        # Mark it fulfilled
+        # -----------------
 
         self.submit_xml_form(create_fulfillment_xml(req, amounts))
 
-        for product, amt in amounts:
-            self.check_stock_models(req, product, 0, -amt, 'stock')
+        req = RequisitionCase.get(req._id)
+
+        self.assertEqual(req.requisition_status, 'fulfilled')
+        self.assertEqual(req.get_next_action().keyword, 'rec')
+        self.assertEqual(
+            get_notification_message(
+                req.get_next_action(),
+                [req]
+            ),
+            self.expected_notification_message(req, amounts)
+        )
 
         for product, amt in amounts:
-            self.check_product_stock(self.sp, product, amt, amt, 'stock')
+            # we are expecting two separate blocks to have come with the same
+            # values
+            self.check_stock_models(req, product, amt, amt, 'stock')
+            self.check_stock_models(req, product, amt, 0, 'ct-fulfilled')
+
+        # ----------------
+        # Mark it received
+        # ----------------
+
+        self.submit_xml_form(create_received_xml(req, amounts))
+
+        req = RequisitionCase.get(req._id)
+
+        self.assertEqual(req.requisition_status, 'received')
+        self.assertIsNone(req.get_next_action())
+        self.assertEqual(len(RequisitionCase.open_for_location(
+            self.domain.name,
+            self.sp.location._id
+        )), 0)
+
+        for product, amt in amounts:
+            self.check_stock_models(req, product, 0, -amt, 'stock')
+            self.check_stock_models(self.sp, product, amt, amt, 'stock')
 
 
 class CommTrackSyncTest(CommTrackSubmissionTest):
@@ -354,3 +479,12 @@ def _report_soh(amounts, case_id, section_id='stock', report=None):
             type=stockconst.TRANSACTION_TYPE_STOCKONHAND,
         )
     return report
+
+def _get_ota_balance_blocks(ct_settings, user):
+    ota_settings = ct_settings.get_ota_restore_settings()
+    restore_config = RestoreConfig(
+        user.to_casexml_user(),
+        version=V2,
+        stock_settings=ota_settings,
+    )
+    return extract_balance_xml(restore_config.get_payload())

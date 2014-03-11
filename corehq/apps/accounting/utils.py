@@ -48,6 +48,7 @@ def fmt_feature_rate_dict(feature, feature_rate=None):
         'per_excess_fee': feature_rate.per_excess_fee.__str__(),
     }
 
+
 def fmt_product_rate_dict(product, product_rate=None):
     """
     This will be turned into a JSON representation of this SoftwareProduct and its SoftwareProductRate
@@ -63,25 +64,19 @@ def fmt_product_rate_dict(product, product_rate=None):
     }
 
 
-def fmt_role_dict(role):
-    return {
-        'slug': role.slug,
-        'name': role.name,
-        'description': role.description,
-        'parameters': list(role.parameters),
-    }
-
-
 def get_privileges(plan_version):
     role = plan_version.role
-    return set([grant.to_role.slug for grant in role.memberships_granted.filter(from_role=role)])
+    return set([grant.to_role.slug for grant in role.memberships_granted.all()])
 
 
 def get_change_status(from_plan_version, to_plan_version):
-    from_privs = get_privileges(from_plan_version) if from_plan_version is not None else set(privileges.MAX_PRIVILEGES)
+    all_privs = set(privileges.MAX_PRIVILEGES)
+    from_privs = get_privileges(from_plan_version) if from_plan_version is not None else all_privs
     to_privs = get_privileges(to_plan_version)
-    downgraded_privs = from_privs.difference(to_privs)
+
+    downgraded_privs = all_privs.difference(to_privs)
     upgraded_privs = to_privs.difference(from_privs)
+
     from corehq.apps.accounting.models import SubscriptionAdjustmentReason as Reason
     if from_plan_version is None:
         adjustment_reason = Reason.CREATE
@@ -102,3 +97,8 @@ class LazyEncoder(json.JSONEncoder):
         if isinstance(obj, Promise):
             return force_unicode(obj)
         return super(LazyEncoder, self).default(obj)
+
+
+def is_active_subscription(date_start, date_end):
+    today = datetime.date.today()
+    return (date_start is None or date_start <= today) and (date_end is None or today <= date_end)

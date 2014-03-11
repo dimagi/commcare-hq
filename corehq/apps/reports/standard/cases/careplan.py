@@ -148,6 +148,7 @@ class CareplanReport(ProjectReport, GenericReportView, ProjectReportParametersMi
             'app_id': self.careplan_app_id,
             "case_id_attr": "case_id_task",
             "description_property": "description",
+            "ignore_relationship_types": [case_type]
         }
         task_conf.update(self.config.task_conf)
         return {

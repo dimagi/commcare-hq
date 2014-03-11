@@ -5,6 +5,7 @@ from django.conf import settings
 from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
+from corehq.pillows.mappings.group_mapping import GROUP_INDEX
 from corehq.pillows.mappings.sms_mapping import SMS_INDEX
 from corehq.pillows.mappings.tc_sms_mapping import TCSMS_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
@@ -26,6 +27,7 @@ ES_URLS = {
     "users": USER_INDEX + '/user/_search',
     "domains": DOMAIN_INDEX + '/hqdomain/_search',
     "apps": APP_INDEX + '/app/_search',
+    "groups": GROUP_INDEX + '/group/_search',
     "sms": SMS_INDEX + '/sms/_search',
     "tc_sms": TCSMS_INDEX + '/tc_sms/_search',
 }
@@ -196,7 +198,7 @@ def es_wrapper(index, domain=None, q=None, doc_type=None, fields=None,
         start_at=None, size=None, sort_by=None, order=None, return_count=False):
     """
     This is a flat wrapper for es_query.
-    
+
     To sort, specify the path to the relevant field
     and the order ("asc" or "desc")
     eg: sort_by=form.meta.timeStart, order="asc"
@@ -208,7 +210,7 @@ def es_wrapper(index, domain=None, q=None, doc_type=None, fields=None,
 
     # query components
     match_all = {"match_all": {}}
-    fuzzy_query = {"fuzzy_like_this": {"like_text": q}}
+    query_string = {"query_string": {"query": q}}
     doc_type_filter = {"term": {"doc_type": doc_type}}
     domain_filter = {"or": [
         {"term": {"domain.exact": domain}},
@@ -219,7 +221,7 @@ def es_wrapper(index, domain=None, q=None, doc_type=None, fields=None,
     query = {"query": {
         "filtered": {
             "filter": {"and": []},
-            "query": fuzzy_query if q else match_all
+            "query": query_string if q else match_all
         }
     }}
 
@@ -231,6 +233,7 @@ def es_wrapper(index, domain=None, q=None, doc_type=None, fields=None,
         filters.append(doc_type_filter)
     if not doc_type and not domain:
         filters.append(match_all)
+    filters.extend(ADD_TO_ES_FILTER.get(index, [])[:])
     if sort_by:
         assert(order in ["asc", "desc"]),\
             'To sort, you must specify the order as "asc" or "desc"'

@@ -28,7 +28,7 @@
 <p>
 {% blocktrans %}
     Hovering over the <i class="icon-info-sign"></i> icon will provide use cases for each plan. You may also
-    <a href="https://wiki.commcarehq.org/display/commcarepublic/CommCare+Plan+Details">visit the wiki
+    <a href="https://wiki.commcarehq.org/display/commcarepublic/CommCare+Plan+Details" target="_blank">visit the Help Site
     to learn more</a> about each plan.
 {% endblocktrans %}
 </p>
@@ -38,7 +38,7 @@
             <form action="{% url 'confirm_selected_plan' domain %}" method="post" class="form">
                 <input type="hidden" name="plan_edition" data-bind="value: selected_edition">
                 <div class="form-actions" data-bind="visible: isSubmitVisible">
-                    <button type="submit" class="btn btn-primary">{% trans 'Next' %}</button>
+                    <button type="submit" class="btn btn-primary btn-large">{% trans 'Next' %}</button>
                 </div>
                 <table class="table-pricing">
                 <thead>
@@ -98,10 +98,10 @@
                 </tfoot>
             </table>
                 <ul class="pricing-footnotes" data-bind="foreach: footer">
-                    <li data-bind="text: $data"></li>
+                    <li data-bind="html: $data"></li>
                 </ul>
                 <div class="form-actions" data-bind="visible: isSubmitVisible">
-                    <button type="submit" class="btn btn-primary">{% trans 'Next' %}</button>
+                    <button type="submit" class="btn btn-primary btn-large">{% trans 'Next' %}</button>
                 </div>
             </form>
         </article>

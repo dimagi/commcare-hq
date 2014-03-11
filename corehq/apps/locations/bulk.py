@@ -117,6 +117,13 @@ def import_location(domain, location_type, location_data):
     )
 
 
+def invalid_location_type(location_type, parent_obj, parent_relationships):
+    return (
+        parent_obj.location_type not in parent_relationships or
+        location_type not in parent_relationships[parent_obj.location_type]
+    )
+
+
 def check_parent_id(parent_id, domain, location_type):
     if parent_id:
         try:
@@ -129,7 +136,7 @@ def check_parent_id(parent_id, domain, location_type):
                 )
             }
         parent_relationships = parent_child(domain)
-        if location_type not in parent_relationships[parent_obj.location_type]:
+        if invalid_location_type(location_type, parent_obj, parent_relationships):
             return {
                 'id': None,
                 'message': 'Invalid parent type of {0} for child type {1}'.format(
@@ -161,7 +168,6 @@ def no_changes_needed(domain, existing, properties, form_data, consumption, sp=N
 
 def submit_form(domain, parent, form_data, properties, existing, location_type, consumption):
     # don't save if there is nothing to save
-    sp = SupplyPointCase.get_by_location(existing) if consumption else None
     if no_changes_needed(domain, existing, properties, form_data, consumption):
         return {
             'id': existing._id,
@@ -174,14 +180,19 @@ def submit_form(domain, parent, form_data, properties, existing, location_type, 
     form.strict = False  # optimization hack to turn off strict validation
     if form.is_valid():
         loc = form.save()
+
+        sp = SupplyPointCase.get_by_location(loc) if consumption else None
+
         if consumption and sp:
             for product_code, amount in consumption:
-                set_default_consumption_for_supply_point(
-                    domain,
-                    Product.get_by_code(domain, product_code)._id,
-                    sp._id,
-                    amount
-                )
+                # only set it if there is a non-negative/non-null value
+                if amount >= 0:
+                    set_default_consumption_for_supply_point(
+                        domain,
+                        Product.get_by_code(domain, product_code)._id,
+                        sp._id,
+                        amount
+                    )
         if existing:
             message = 'updated %s %s' % (location_type, loc.name)
         else:
@@ -197,7 +208,7 @@ def submit_form(domain, parent, form_data, properties, existing, location_type, 
         forms = filter(None, [form, form.sub_forms.get(location_type)])
         for k, v in itertools.chain(*(f.errors.iteritems() for f in forms)):
             if k != '__all__':
-                message += '{0} {1}; {2}: {3}. '.format(
+                message += u'{0} {1}; {2}: {3}. '.format(
                     location_type, form_data.get('name', 'unknown'), k, v[0]
                 )
 

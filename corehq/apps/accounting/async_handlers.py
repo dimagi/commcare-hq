@@ -1,11 +1,9 @@
 import json
+from corehq import Domain
 from corehq.apps.accounting.models import Feature, SoftwareProduct
 from corehq.apps.accounting.utils import fmt_feature_rate_dict, fmt_product_rate_dict, LazyEncoder
 from corehq.apps.hqwebapp.async_handler import BaseAsyncHandler, AsyncHandlerError
 from corehq.apps.users.models import WebUser
-from corehq.apps.accounting.utils import fmt_feature_rate_dict, fmt_product_rate_dict, fmt_role_dict
-from corehq.apps.hqwebapp.async_handler import BaseAsyncHandler, AsyncHandlerError
-from django_prbac.models import Role
 
 
 class BaseRateAsyncHandler(BaseAsyncHandler):
@@ -43,13 +41,13 @@ class FeatureRateAsyncHandler(BaseRateAsyncHandler):
 
     @property
     def create_response(self):
-        new_feature, is_new = Feature.objects.get_or_create(
+        if Feature.objects.filter(name=self.name).count() > 0:
+            raise AsyncHandlerError("Feature '%s' already exists, and likely already "
+                                    "in this Software Plan Version." % self.name)
+        new_feature, _ = Feature.objects.get_or_create(
             name=self.name,
             feature_type=self.rate_type,
         )
-        if not is_new:
-            raise AsyncHandlerError("Feature '%s' already exists, and likely already "
-                                    "in this Software Plan Version." % new_feature.name)
         return fmt_feature_rate_dict(new_feature)
 
     @property
@@ -66,13 +64,13 @@ class SoftwareProductRateAsyncHandler(BaseRateAsyncHandler):
 
     @property
     def create_response(self):
-        new_product, is_new = SoftwareProduct.objects.get_or_create(
+        if SoftwareProduct.objects.filter(name=self.name).count() > 0:
+            raise AsyncHandlerError("Product '%s' already exists, and likely already "
+                                    "in this Software Plan Version." % self.name)
+        new_product, _ = SoftwareProduct.objects.get_or_create(
             name=self.name,
             product_type=self.rate_type
         )
-        if not is_new:
-            raise AsyncHandlerError("Product '%s' already exists, and likely already "
-                                    "in this Software Plan Version." % new_product.name)
         return fmt_product_rate_dict(new_product)
 
     @property
@@ -84,51 +82,6 @@ class SoftwareProductRateAsyncHandler(BaseRateAsyncHandler):
             raise AsyncHandlerError("could not find an existing product")
 
 
-class RoleAsyncHandler(BaseAsyncHandler):
-    allowed_actions = [
-        'apply',
-        'create',
-    ]
-    slug = 'role_handler'
-
-    @property
-    def name(self):
-        return self.data.get('name')
-
-    # Be careful - this naming could get confusing
-    @property
-    def get_slug(self):
-        return self.data.get('slug')
-
-    @property
-    def create_response(self):
-        new_role, is_new = Role.objects.get_or_create(
-            slug=self.get_slug
-        )
-        if not is_new:
-            raise AsyncHandlerError("Role '%s' already exists." % new_role.name)
-        return fmt_role_dict(new_role)
-
-    @property
-    def apply_response(self):
-        try:
-            role = Role.objects.get(id=self.role_id)
-            return fmt_role_dict(role)
-        except Role.DoesNotExist:
-            raise AsyncHandlerError("could not find an existing role")
-
-
-class Select2RateAsyncHandler(BaseAsyncHandler):
-    """
-    For interacting with Select2FieldHandler
-    """
-    slug = 'select2_rate'
-    allowed_actions = [
-        'feature_id',
-        'product_id',
-    ]
-
-
 class BaseSelect2AsyncHandler(BaseAsyncHandler):
     @property
     def search_string(self):
@@ -138,14 +91,25 @@ class BaseSelect2AsyncHandler(BaseAsyncHandler):
     def existing(self):
         return self.data.getlist('existing[]')
 
+    def _fmt_success(self, response):
+        success = json.dumps({
+            'results': [{
+                'id': r[0],
+                'text': r[1],
+            } for r in response]
+        }, cls=LazyEncoder)
+        return success
+
 
 class Select2RateAsyncHandler(BaseSelect2AsyncHandler):
     """
-    For interacting with Select2FieldHandler
+    Handles the async responses for the select2 widget in the Features & Rates portion
+    of the SoftwarePlanVersion form.
     """
     slug = 'select2_rate'
     allowed_actions = [
-        'feature_id'
+        'feature_id',
+        'product_id',
     ]
 
     @property
@@ -166,24 +130,17 @@ class Select2RateAsyncHandler(BaseSelect2AsyncHandler):
             products = products.filter(name__startswith=self.search_string)
         return [(p.id, p.name, p.product_type) for p in products.all()]
 
-    @property
-    def role_response(self):
-        roles = Role.objects
-        if self.existing:
-            roles = roles.exclude(name__in=self.existing)
-        if self.search_string:
-            roles = roles.filter(name__startswith=self.search_string)
-        return [(r.id, r.slug, r.name) for r in roles.all()]
-
     def _fmt_success(self, response):
-        return json.dumps([
+        return json.dumps({
+            'results': [
             {
                 'id': r[0],
                 'name': r[1],
                 'rate_type': r[2],
                 'text': '%s (%s)' % (r[1], r[2]),
                 'isExisting': True,
-            } for r in response])
+            } for r in response]
+        })
 
 
 class Select2BillingInfoHandler(BaseSelect2AsyncHandler):
@@ -206,4 +163,21 @@ class Select2BillingInfoHandler(BaseSelect2AsyncHandler):
         admins = filter(lambda x: x.is_domain_admin and x.username != self.request.couch_user.username,
                         all_web_users)
         admins = filter(lambda x: x.username not in self.existing, admins)
+        if self.search_string:
+            admins = filter(lambda x: (x.username.lower().startswith(self.search_string.lower())
+                                       or self.search_string in x.full_name), admins)
         return [(a.username, "%s (%s)" % (a.full_name, a.username)) for a in admins]
+
+
+class Select2SubscriptionInfoHandler(BaseSelect2AsyncHandler):
+    slug = 'select2_billing'
+    allowed_actions = [
+        'domain'
+    ]
+
+    @property
+    def domain_response(self):
+        domain_names = [domain['key'] for domain in Domain.get_all(include_docs=False)]
+        if self.search_string:
+            domain_names = filter(lambda x: x.lower().startswith(self.search_string.lower()), domain_names)
+        return [(name, name) for name in domain_names]

@@ -1,13 +1,14 @@
 from corehq.apps.commtrack.util import num_periods_late
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import Location
-from corehq.apps.commtrack.models import Product
+from corehq.apps.commtrack.models import Product, SupplyPointCase
 from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.reports.api import ReportDataSource
-from datetime import datetime
-from casexml.apps.stock.models import StockState
+from datetime import datetime, timedelta
+from casexml.apps.stock.models import StockState, StockTransaction
 from django.db.models import Sum, Avg
-from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids
+from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, product_ids_filtered_by_program
+from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from casexml.apps.stock.utils import months_of_stock_remaining, stock_category
 
 # TODO make settings
@@ -18,8 +19,12 @@ REPORTING_PERIOD_ARGS = (1,)
 def is_timely(case, limit=0):
     return num_periods_late(case, REPORTING_PERIOD, *REPORTING_PERIOD_ARGS) <= limit
 
-def reporting_status(case, start_date, end_date):
-    last_reported = case.get_last_reported_date()
+def reporting_status(transaction, start_date, end_date):
+    if transaction:
+        last_reported = transaction.report.date.date()
+    else:
+        last_reported = None
+
     if last_reported and last_reported < start_date:
         return 'ontime'
     elif last_reported and start_date <= last_reported <= end_date:
@@ -55,18 +60,21 @@ class CommtrackDataSourceMixin(object):
         if prog_id != '':
             return prog_id
 
-
     @property
     def start_date(self):
         date = self.config.get('start_date')
         if date:
             return datetime.strptime(date, '%Y-%m-%d').date()
+        else:
+            return (datetime.now() - timedelta(30)).date()
 
     @property
     def end_date(self):
         date = self.config.get('end_date')
         if date:
             return datetime.strptime(date, '%Y-%m-%d').date()
+        else:
+            return datetime.now().date()
 
 
 class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
@@ -86,6 +94,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
         consumption: The current monthly consumption rate
         months_remaining: The number of months remaining until stock out
         category: The status category. See casexml.apps.stock.models.StockState.stock_category
+        resupply_quantity_needed: Max amount - current amount
 
     """
     slug = 'agg_stock_status'
@@ -100,8 +109,9 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
     SLUG_STOCKOUT_SINCE = 'stockout_since'
     SLUG_STOCKOUT_DURATION = 'stockout_duration'
     SLUG_LAST_REPORTED = 'last_reported'
-
     SLUG_CATEGORY = 'category'
+    SLUG_RESUPPLY_QUANTITY_NEEDED = 'resupply_quantity_needed'
+
     _slug_attrib_map = {
         SLUG_PRODUCT_NAME: lambda s: Product.get(s.product_id).name,
         SLUG_PRODUCT_ID: lambda s: s.product_id,
@@ -114,18 +124,42 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
         # SLUG_STOCKOUT_SINCE: 'stocked_out_since',
         # SLUG_STOCKOUT_DURATION: 'stockout_duration_in_months',
         SLUG_LAST_REPORTED: 'last_modified_date',
+        SLUG_RESUPPLY_QUANTITY_NEEDED: 'resupply_quantity_needed',
     }
 
     def slugs(self):
         return self._slug_attrib_map.keys()
 
+    def filter_by_program(self, stock_states):
+        return stock_states.filter(
+            product_id__in=product_ids_filtered_by_program(
+                self.domain,
+                self.program_id
+            )
+        )
+
     def get_data(self, slugs=None):
         sp_ids = get_relevant_supply_point_ids(self.domain, self.active_location)
+
         if len(sp_ids) == 1:
-            stock_states = StockState.objects.filter(case_id=sp_ids[0])
+            stock_states = StockState.objects.filter(
+                case_id=sp_ids[0],
+                section_id=STOCK_SECTION_TYPE
+            )
+
+            if self.program_id:
+                stock_states = self.filter_by_program(stock_states)
+
             return self.leaf_node_data(stock_states)
         else:
-            stock_states = StockState.objects.filter(case_id__in=sp_ids)
+            stock_states = StockState.objects.filter(
+                case_id__in=sp_ids,
+                section_id=STOCK_SECTION_TYPE,
+            )
+
+            if self.program_id:
+                stock_states = self.filter_by_program(stock_states)
+
             if self.config.get('aggregate'):
                 aggregates = stock_states.values('product_id').annotate(
                     avg_consumption=Avg('daily_consumption'),
@@ -133,24 +167,21 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                 )
                 return self.aggregated_data(aggregates)
             else:
-                return self.raw_cases(stock_states, slugs)
-
-        # TODO still need to support programs
-        # if self.program_id:
-        #    product_cases = filter(lambda c: Product.get(c.product).program_id == self.program_id, product_cases)
+                return self.raw_product_states(stock_states, slugs)
 
     def leaf_node_data(self, stock_states):
         for state in stock_states:
             product = Product.get(state.product_id)
             yield {
-                'category': state.stock_category(),
+                'category': state.stock_category,
                 'product_id': product._id,
-                'consumption': state.daily_consumption,
-                'months_remaining': state.months_remaining(),
+                'consumption': state.daily_consumption * 30,
+                'months_remaining': state.months_remaining,
                 'location_id': state.case_id,
                 'product_name': product.name,
                 'current_stock': state.stock_on_hand,
-                'location_lineage': None
+                'location_lineage': None,
+                'resupply_quantity_needed': state.resupply_quantity_needed
             }
 
     def aggregated_data(self, stock_states):
@@ -164,11 +195,12 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                 'location_id': None,
                 'product_name': product.name,
                 'current_stock': state['total_stock'],
-                'location_lineage': None
+                'location_lineage': None,
+                'resupply_quantity_needed': None
             }
 
 
-    def raw_cases(self, stock_states, slugs):
+    def raw_product_states(self, stock_states, slugs):
         def _slug_attrib(slug, attrib, product, output):
             if not slugs or slug in slugs:
                 if callable(attrib):
@@ -185,7 +217,6 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
 
 
 class StockStatusBySupplyPointDataSource(StockStatusDataSource):
-    
     def get_data(self):
         data = list(super(StockStatusBySupplyPointDataSource, self).get_data())
 
@@ -220,39 +251,35 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
     """
 
     def get_data(self):
-        # TODO this doesn't work post SPP era
-        raise NotImplementedError('this report needs to be rewritten')
-        # startkey = [self.domain, self.active_location._id if self.active_location else None]
-        # product_cases = SPPCase.view('commtrack/product_cases',
-                                     # startkey=startkey,
-                                     # endkey=startkey + [{}],
-                                     # include_docs=True)
-        product_cases = []
+        sp_ids = get_relevant_supply_point_ids(
+            self.domain,
+            self.active_location
+        )
 
+        products = Product.by_domain(self.domain)
         if self.program_id:
-            product_cases = filter(lambda c: Product.get(c.product).program_id == self.program_id, product_cases)
-        def latest_case(cases):
-            # getting last report date should probably be moved to a util function in a case wrapper class
-            return max(cases, key=lambda c: c.get_last_reported_date() or datetime(2000, 1, 1).date())
-        cases_by_site = map_reduce(lambda c: [(tuple(c.location_),)],
-                                   lambda v: reporting_status(latest_case(v), self.start_date, self.end_date),
-                                   data=product_cases, include_docs=True)
+            products = filter(
+                lambda product: product.program_id == self.program_id, products
+            )
 
-        # TODO if aggregating, won't want to fetch all these locs (will only want to fetch aggregation sites)
-        locs = dict((loc._id, loc) for loc in Location.view(
-                '_all_docs',
-                keys=[path[-1] for path in cases_by_site.keys()],
-                include_docs=True))
+        for sp_id in sp_ids:
+            for product in products:
+                loc = SupplyPointCase.get(sp_id).location
+                last_transaction = StockTransaction.latest(
+                    sp_id,
+                    STOCK_SECTION_TYPE,
+                    product._id
+                )
 
-        for path, status in cases_by_site.iteritems():
-            loc = locs[path[-1]]
-
-            yield {
-                'loc_id': loc._id,
-                'loc_path': loc.path,
-                'name': loc.name,
-                'type': loc.location_type,
-                'reporting_status': status,
-                'geo': loc._geopoint,
-            }
-
+                yield {
+                    'loc_id': loc._id,
+                    'loc_path': loc.path,
+                    'name': loc.name,
+                    'type': loc.location_type,
+                    'reporting_status': reporting_status(
+                        last_transaction,
+                        self.start_date,
+                        self.end_date
+                    ),
+                    'geo': loc._geopoint,
+                }

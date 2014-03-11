@@ -10,6 +10,7 @@ from corehq.apps.reports.models import (ReportNotification,
 from corehq.elastic import get_es, ES_URLS, stream_es_query, es_query
 from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
+from couchexport.files import Temp
 from couchexport.groupexports import export_for_group
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.logging import notify_exception
@@ -78,20 +79,21 @@ def create_metadata_export(download_id, domain, format, filename, datespan=None,
         def get_id(self):
             return '%s-form-metadata' % self.domain
 
-    return cache_file_to_be_served(tmp_path, FakeCheckpoint(domain), download_id, format, filename)
+    return cache_file_to_be_served(Temp(tmp_path), FakeCheckpoint(domain), download_id, format, filename)
 
 @periodic_task(run_every=crontab(hour="*", minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
-def daily_reports():    
+def daily_reports():
     # this should get called every hour by celery
     reps = ReportNotification.view("reportconfig/all_notifications",
-                                   key=["daily", datetime.utcnow().hour, None],
+                                   startkey=["daily", datetime.utcnow().hour],
+                                   endkey=["daily", datetime.utcnow().hour, {}],
                                    reduce=False,
                                    include_docs=True).all()
     for rep in reps:
         send_report.delay(rep._id)
 
 @periodic_task(run_every=crontab(hour="*", minute="1", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
-def weekly_reports():    
+def weekly_reports():
     # this should get called every hour by celery
     now = datetime.utcnow()
     reps = ReportNotification.view("reportconfig/all_notifications",
@@ -112,7 +114,7 @@ def monthly_reports():
         send_report.delay(rep._id)
 
 @periodic_task(run_every=crontab(hour=[22], minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
-def saved_exports():    
+def saved_exports():
     for group_config in HQGroupExportConfiguration.view("groupexport/by_domain", reduce=False,
                                                         include_docs=True).all():
         export_for_group(group_config, "couch")

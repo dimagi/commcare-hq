@@ -1,8 +1,15 @@
-var BillingContactInfoHandler = function (valid_email_text, domain) {
+var BillingContactInfoHandler = function (valid_email_text) {
     'use strict';
     var self = this;
 
     self.country = new AsyncSelect2Handler('country');
+    self.country.initSelection = function (element, callback) {
+        var data = {
+            text: element.data('countryname'),
+            id: element.val()
+        };
+        callback(data);
+    };
     self.billing_admins = new AsyncSelect2Handler('billing_admins', true);
     self.emails = new EmailSelect2Handler('emails', valid_email_text);
 
@@ -39,19 +46,19 @@ var AsyncSelect2Handler = function (field, multiple) {
                         };
                     },
                     results: function (data) {
-                        return {
-                            results: data
-                        };
+                        return data;
                     }
                 },
                 multiple: self.multiple,
-                initSelection: function (element, callback) {
-                    var data = (self.multiple) ? billingInfoUtils.getMultiResultsFromElement(element) :
-                        billingInfoUtils.getSingleResultFromElement(element);
-                    callback(data);
-                }
+                initSelection: self.initSelection
             });
         });
+    };
+
+    self.initSelection = function (element, callback) {
+        var data = (self.multiple) ? billingInfoUtils.getMultiResultsFromElement(element) :
+            billingInfoUtils.getSingleResultFromElement(element);
+        callback(data);
     };
 };
 

@@ -1,10 +1,16 @@
 import json
+import toggle
+from django_prbac.exceptions import PermissionDenied
+from django_prbac.utils import ensure_request_has_privilege
+from corehq import toggles, privileges
 from corehq.apps.reports.standard import export
 from corehq.apps.reports.models import FormExportSchema, HQGroupExportConfiguration, CaseExportSchema
 from corehq.apps.reports.standard.export import DeidExportReport
 from couchexport.models import ExportTable, ExportSchema, ExportColumn
 from django.utils.translation import ugettext as _
 from dimagi.utils.decorators.memoized import memoized
+from corehq.apps.commtrack.models import StockExportColumn
+from corehq.apps.domain.models import Domain
 
 
 USERNAME_TRANSFORM = 'corehq.apps.export.transforms.user_id_to_username'
@@ -40,10 +46,20 @@ class CustomExportHelper(object):
         return cls.subclasses_map[export_type](request, domain, export_id=export_id)
 
     def update_custom_params(self):
-        pass
+        if len(self.custom_export.tables) > 0:
+            if self.export_stock:
+                self.custom_export.tables[0].columns.append(
+                    StockExportColumn(domain=self.domain, index='_id')
+                )
 
     def format_config_for_javascript(self, table_configuration):
         return table_configuration
+
+    def has_stock_column(self):
+        return any(
+            col.doc_type == 'StockExportColumn'
+            for col in self.custom_export.tables[0].columns
+        ) if self.custom_export.tables else False
 
     class DEID(object):
         options = (
@@ -70,11 +86,14 @@ class CustomExportHelper(object):
             saved_group = HQGroupExportConfiguration.get_for_domain(self.domain)
             self.presave = export_id in saved_group.custom_export_ids
 
+            self.export_stock = self.has_stock_column()
+
             assert(self.custom_export.doc_type == 'SavedExportSchema')
             assert(self.custom_export.type == self.export_type)
             assert(self.custom_export.index[0] == domain)
         else:
             self.custom_export = self.ExportSchemaClass(type=self.export_type)
+            self.export_stock = False
 
     @property
     @memoized
@@ -101,6 +120,7 @@ class CustomExportHelper(object):
         self.custom_export.index = schema.index
 
         self.presave = post_data['presave']
+        self.export_stock = post_data['export_stock']
 
         self.custom_export.tables = [
             ExportTable.wrap(table)
@@ -135,9 +155,11 @@ class CustomExportHelper(object):
             'default_order': self.default_order,
             'deid_options': self.DEID.json_options,
             'presave': self.presave,
+            'export_stock': self.export_stock,
             'DeidExportReport_name': DeidExportReport.name,
             'table_configuration': table_configuration,
             'domain': self.domain,
+            'commtrack_domain': Domain.get_by_name(self.domain).commtrack_enabled,
             'helper': {
                 'back_url': self.ExportReport.get_url(domain=self.domain),
                 'export_title': self.export_title,
@@ -153,7 +175,6 @@ class FormCustomExportHelper(CustomExportHelper):
     ExportSchemaClass = FormExportSchema
     ExportReport = export.ExcelExportReport
 
-    allow_deid = True
     allow_repeats = True
 
     default_questions = ["form.case.@case_id", "form.meta.timeEnd", "_id", "id", "form.meta.username"]
@@ -167,6 +188,15 @@ class FormCustomExportHelper(CustomExportHelper):
         super(FormCustomExportHelper, self).__init__(request, domain, export_id)
         if not self.custom_export.app_id:
             self.custom_export.app_id = request.GET.get('app_id')
+
+    @property
+    def allow_deid(self):
+        if toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, self.request.user.username):
+            try:
+                ensure_request_has_privilege(self.request, privileges.DEIDENTIFIED_DATA)
+            except PermissionDenied:
+                return False
+        return True
 
     def update_custom_params(self):
         p = self.post_data['custom_export']

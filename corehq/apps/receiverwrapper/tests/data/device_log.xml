@@ -1,0 +1,6 @@
+<?xml version='1.0' standalone='no' ?>
+<device_report xmlns="http://code.javarosa.org/devicereport">
+    <case>
+        <thisShouldNotMatter/>
+    </case>
+</device_report>

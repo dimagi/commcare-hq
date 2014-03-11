@@ -1,4 +1,5 @@
 import logging
+from casexml.apps.case.xform import is_device_report
 from casexml.apps.stock.const import TRANSACTION_SUBTYPE_INFERRED, COMMTRACK_REPORT_XMLNS
 from dimagi.utils.decorators.log_exception import log_exception
 from corehq.apps.commtrack.models import CommtrackConfig, StockTransaction, NewStockReport
@@ -14,11 +15,17 @@ logger = logging.getLogger('commtrack.incoming')
 
 COMMTRACK_LEGACY_REPORT_XMLNS = 'http://commtrack.org/legacy/stock_report'
 
+def process_stock_signal_catcher(sender, xform, config=None, **kwargs):
+    return process_stock(xform)
+
 @log_exception()
-def process_stock(sender, xform, config=None, **kwargs):
+def process_stock(xform):
     """
     process the commtrack xml constructs in an incoming submission
     """
+    if is_device_report(xform):
+        return
+
     domain = xform.domain
 
     config = CommtrackConfig.for_domain(domain)
@@ -62,8 +69,13 @@ def process_stock(sender, xform, config=None, **kwargs):
     for report in stock_reports:
         report.create_models()
 
+    # TODO make this a signal
+    from corehq.apps.commtrack.signals import send_notifications, raise_events
+    send_notifications(xform, relevant_cases)
+    raise_events(xform, relevant_cases)
+
 def unpack_commtrack(xform, config):
-    xml = etree.fromstring(xform.get_xml())
+    xml = xform.get_xml_element()
 
     def commtrack_nodes(node):
         for child in node:
@@ -75,23 +87,3 @@ def unpack_commtrack(xform, config):
 
     for elem in commtrack_nodes(xml):
         yield NewStockReport.from_xml(xform, config, elem)
-
-
-from couchdbkit.ext.django.schema import *
-class LegacyStockTransaction(StockTransaction):
-    product_subcase = StringProperty()
-
-    def to_legacy_xml(self, E):
-        attr = {}
-        if self.subaction == TRANSACTION_SUBTYPE_INFERRED:
-            attr['inferred'] = 'true'
-        if self.processing_order is not None:
-            attr['order'] = str(self.processing_order + 1)
-
-        return E.transaction(
-            E.product(self.product_id),
-            E.product_entry(self.product_subcase),
-            E.action((self.subaction if self.subaction != TRANSACTION_SUBTYPE_INFERRED else None) or self.action),
-            E.value(str(self.quantity)),
-            **attr
-        )

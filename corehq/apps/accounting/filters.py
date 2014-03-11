@@ -74,6 +74,20 @@ class ActiveStatusFilter(BaseSingleOptionFilter):
     ]
 
 
+INVOICE = "SEND_INVOICE"
+DO_NOT_INVOICE = "DO_NOT_INVOICE"
+
+
+class DoNotInvoiceFilter(BaseSingleOptionFilter):
+    slug = 'do_not_invoice'
+    label = _('Do Not Invoice')
+    default_text = _('All')
+    options = [
+        (INVOICE, _('Send invoice')),
+        (DO_NOT_INVOICE, _('Do not invoice')),
+    ]
+
+
 class DateRangeFilter(BaseReportFilter):
     template = 'reports/filters/daterange.html'
     default_days = 7
@@ -115,7 +129,10 @@ class DateRangeFilter(BaseReportFilter):
 
     @property
     def datespan(self):
-        datespan = DateSpan.since(self.default_days, format="%Y-%m-%d", timezone=self.timezone)
+        datespan = DateSpan.since(self.default_days,
+                                  enddate=datetime.date.today(),
+                                  format="%Y-%m-%d",
+                                  timezone=self.timezone)
         if self.get_start_date(self.request) is not None:
             datespan.startdate = self.get_start_date(self.request)
         if self.get_end_date(self.request) is not None:
@@ -123,17 +140,40 @@ class DateRangeFilter(BaseReportFilter):
         return datespan
 
 
-class DateCreatedFilter(DateRangeFilter):
+class OptionalDateRangeFilter(DateRangeFilter):
+    template = 'reports/filters/optional_daterange.html'
+
+
+    @classmethod
+    def use_filter(cls, request):
+        return request.GET.get("report_filter_%s_use_filter" % cls.slug, None) == 'on'
+
+    @property
+    def filter_context(self):
+        context = super(OptionalDateRangeFilter, self).filter_context
+        context.update({
+            'showFilterName': self.use_filter(self.request),
+        })
+        return context
+
+    @classmethod
+    def date_passes_filter(cls, request, date):
+        return (date is None or not cls.use_filter(request) or
+            (super(OptionalDateRangeFilter, cls).get_start_date(request).date() <= date
+                and super(OptionalDateRangeFilter, cls).get_end_date(request).date() >= date))
+
+
+class DateCreatedFilter(OptionalDateRangeFilter):
     slug = 'date_created'
     label = _("Date Created")
 
 
-class StartDateFilter(DateRangeFilter):
+class StartDateFilter(OptionalDateRangeFilter):
     slug = 'start_date'
     label = _("Start Date")
 
 
-class EndDateFilter(DateRangeFilter):
+class EndDateFilter(OptionalDateRangeFilter):
     slug = 'end_date'
     label = _("End Date")
 

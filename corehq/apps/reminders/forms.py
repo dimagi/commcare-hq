@@ -110,6 +110,7 @@ RECIPIENT_CHOICES = (
     (RECIPIENT_PARENT_CASE, "The case's parent case"),
     (RECIPIENT_SUBCASE, "The case's child case(s)"),
     (RECIPIENT_SURVEY_SAMPLE, "Survey Sample"),
+    (RECIPIENT_USER_GROUP, _("User Group")),
 )
 
 MATCH_TYPE_DISPLAY_CHOICES = (
@@ -162,6 +163,28 @@ def validate_form_unique_id(form_unique_id, domain):
         assert app.domain == domain
     except Exception:
         raise ValidationError(_("Invalid form chosen."))
+
+def clean_group_id(group_id, expected_domain):
+    try:
+        assert group_id is not None
+        assert group_id != ""
+        group = Group.get(group_id)
+        assert group.doc_type == "Group"
+        assert group.domain == expected_domain
+        return group_id
+    except Exception:
+        raise ValidationError(_("Invalid selection."))
+
+def clean_case_group_id(group_id, expected_domain):
+    try:
+        assert group_id is not None
+        assert group_id != ""
+        group = CommCareCaseGroup.get(group_id)
+        assert group.doc_type == "CommCareCaseGroup"
+        assert group.domain == expected_domain
+        return group_id
+    except Exception:
+        raise ValidationError(_("Invalid selection."))
 
 # Used for validating the phone number from a UI. Returns the phone number if valid, otherwise raises a ValidationError.
 def validate_phone_number(value):
@@ -249,13 +272,14 @@ class ComplexCaseReminderForm(Form):
     _cchq_is_superuser = False
     _cchq_use_custom_content_handler = False
     _cchq_custom_content_handler = None
+    _cchq_domain = None
     use_custom_content_handler = BooleanField(required=False)
     custom_content_handler = TrimmedCharField(required=False)
     active = BooleanField(required=False)
     nickname = CharField(error_messages={"required":"Please enter the name of this reminder definition."})
     start_condition_type = CharField()
     case_type = CharField(required=False)
-    method = ChoiceField(choices=METHOD_CHOICES)
+    method = ChoiceField(choices=('sms', 'SMS'))
     recipient = ChoiceField(choices=RECIPIENT_CHOICES)
     start_match_type = ChoiceField(choices=MATCH_TYPE_DISPLAY_CHOICES)
     start_choice = ChoiceField(choices=START_CHOICES)
@@ -284,8 +308,10 @@ class ComplexCaseReminderForm(Form):
     recipient_case_match_type = ChoiceField(choices=MATCH_TYPE_DISPLAY_CHOICES,required=False)
     recipient_case_match_value = CharField(required=False)
     force_surveys_to_use_triggered_case = BooleanField(required=False)
+    user_group_id = CharField(required=False)
 
     def __init__(self, *args, **kwargs):
+        can_use_survey = kwargs.pop('can_use_survey', False)
         super(ComplexCaseReminderForm, self).__init__(*args, **kwargs)
         if "initial" in kwargs:
             initial = kwargs["initial"]
@@ -310,6 +336,9 @@ class ComplexCaseReminderForm(Form):
                 self.initial["start_choice"] = START_IMMEDIATELY
             else:
                 self.initial["start_choice"] = START_ON_DATE
+
+        if can_use_survey:
+            self.fields['method'].choices = METHOD_CHOICES
         
         enable_advanced_time_choices = False
         # Populate events
@@ -462,16 +491,21 @@ class ComplexCaseReminderForm(Form):
             return value
         else:
             return None
-    
+
     def clean_sample_id(self):
         if self.cleaned_data.get("recipient") == RECIPIENT_SURVEY_SAMPLE:
             value = self.cleaned_data.get("sample_id")
-            if value is None or value == "":
-                raise ValidationError("Please select a Survey Sample.")
-            return value
+            return clean_case_group_id(value, self._cchq_domain)
         else:
             return None
-    
+
+    def clean_user_group_id(self):
+        if self.cleaned_data.get("recipient") == RECIPIENT_USER_GROUP:
+            value = self.cleaned_data.get("user_group_id")
+            return clean_group_id(value, self._cchq_domain)
+        else:
+            return None
+
     def clean_schedule_length(self):
         try:
             value = self.cleaned_data.get("schedule_length")
@@ -794,7 +828,6 @@ class BaseScheduleCaseReminderForm(forms.Form):
         label="Send",
         choices=(
             (METHOD_SMS, "SMS"),
-            (METHOD_SMS_SURVEY, "SMS Survey"),
         ),
     )
 
@@ -885,7 +918,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
         label=_("For Surveys, force answers to affect case sending the survey."),
     )
 
-    def __init__(self, data=None, is_previewer=False, domain=None, is_edit=False, *args, **kwargs):
+    def __init__(self, data=None, is_previewer=False, domain=None, is_edit=False, can_use_survey=False, *args, **kwargs):
         self.initial_event = {
             'day_num': 1,
             'fire_time_type': FIRE_TIME_DEFAULT,
@@ -906,7 +939,12 @@ class BaseScheduleCaseReminderForm(forms.Form):
         self.domain = domain
         self.is_edit = is_edit
 
-        if is_previewer:
+        if can_use_survey:
+            method_choices = copy.copy(self.fields['method'].choices)
+            method_choices.append((METHOD_SMS_SURVEY, "SMS Survey"))
+            self.fields['method'].choices = method_choices
+
+        if is_previewer and can_use_survey:
             method_choices = copy.copy(self.fields['method'].choices)
             method_choices.extend([
                 (METHOD_IVR_SURVEY, "IVR Survey"),
@@ -1796,6 +1834,7 @@ def clean_selection(value):
     else:
         return value
 
+
 class OneTimeReminderForm(Form):
     _cchq_domain = None
     send_type = ChoiceField(choices=NOW_OR_LATER)
@@ -1805,36 +1844,32 @@ class OneTimeReminderForm(Form):
     recipient_type = ChoiceField(choices=ONE_TIME_RECIPIENT_CHOICES)
     case_group_id = CharField(required=False)
     user_group_id = CharField(required=False)
-    content_type = ChoiceField(choices=CONTENT_CHOICES)
+    content_type = ChoiceField(choices=(
+        (METHOD_SMS, _("SMS Message")),
+    ))
     message = TrimmedCharField(required=False)
     form_unique_id = CharField(required=False)
+
+    def __init__(self, *args, **kwargs):
+        can_use_survey = kwargs.pop('can_use_survey', False)
+        super(OneTimeReminderForm, self).__init__(*args, **kwargs)
+        if can_use_survey:
+            self.fields['content_type'].choices = CONTENT_CHOICES
 
     def clean_recipient_type(self):
         return clean_selection(self.cleaned_data.get("recipient_type"))
 
     def clean_case_group_id(self):
         if self.cleaned_data.get("recipient_type") == RECIPIENT_SURVEY_SAMPLE:
-            value = clean_selection(self.cleaned_data.get("case_group_id"))
-            try:
-                group = CommCareCaseGroup.get(value)
-                assert group.doc_type == "CommCareCaseGroup"
-                assert group.domain == self._cchq_domain
-            except Exception:
-                raise ValidationError(_("Invalid selection."))
-            return value
+            value = self.cleaned_data.get("case_group_id")
+            return clean_case_group_id(value, self._cchq_domain)
         else:
             return None
 
     def clean_user_group_id(self):
         if self.cleaned_data.get("recipient_type") == RECIPIENT_USER_GROUP:
-            value = clean_selection(self.cleaned_data.get("user_group_id"))
-            try:
-                group = Group.get(value)
-                assert group.doc_type == "Group"
-                assert group.domain == self._cchq_domain
-            except Exception:
-                raise ValidationError(_("Invalid selection."))
-            return value
+            value = self.cleaned_data.get("user_group_id")
+            return clean_group_id(value, self._cchq_domain)
         else:
             return None
 

@@ -8,6 +8,7 @@ import numpy
 import operator
 import pytz
 from corehq.apps.reports import util
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.reports.standard import ProjectReportParametersMixin, \
     DatespanMixin, ProjectReport, DATE_FORMAT
 from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, FormsByApplicationFilter, SingleFormByApplicationFilter
@@ -351,11 +352,9 @@ class DailyFormStatsReport(ElasticProjectInspectionReport, WorkerMonitoringRepor
     name = ugettext_noop("Daily Form Activity")
 
     fields = [
-        # 'corehq.apps.reports.fields.FilterUsersField',
-        # 'corehq.apps.reports.fields.GroupField',
         'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
         'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
-        'corehq.apps.reports.fields.DatespanField'
+        'corehq.apps.reports.fields.DatespanField',
     ]
 
     description = ugettext_noop("Number of submissions per day.")
@@ -386,6 +385,7 @@ class DailyFormStatsReport(ElasticProjectInspectionReport, WorkerMonitoringRepor
         return ("received_on" if self.by_submission_time
             else "form.meta.timeStart")
 
+<<<<<<< HEAD
     def get_row_from_user(self, user):
         """
         Assemble a list whose first element is the username,
@@ -427,6 +427,41 @@ class DailyFormStatsReport(ElasticProjectInspectionReport, WorkerMonitoringRepor
         # total = sum([entry['count'] for entry in res['facets']['date']['entries']])
         # return [self.get_raw_user_link(user)] + date_cols + [total]
         return [self.get_raw_user_link(user)] + date_cols + [sum(date_cols)]
+
+    def yedi_changes(self):
+        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
+        user_map = dict([(user.get('user_id'), i) for (i, user) in enumerate(users_data["combined_users"])])
+        date_map = dict([(date.strftime(DATE_FORMAT), i+1) for (i,date) in enumerate(self.dates)])
+        rows = [[0]*(2+len(date_map)) for _tmp in range(len(users_data["combined_users"]))]
+        total_row = [0]*(2+len(date_map))
+
+        user_ids = [user.get('user_id') for user in users_data["combined_users"]]
+        for result in results:
+            _tmp, _domain, date = result['key']
+            date = dateutil.parser.parse(date)
+            tz_offset = self.timezone.localize(self.datespan.enddate).strftime("%z")
+            date = date + datetime.timedelta(hours=int(tz_offset[0:3]), minutes=int(tz_offset[0]+tz_offset[3:5]))
+            date = date.isoformat()
+            val = result['value']
+            user_id = val.get("user_id")
+            if user_id in user_ids:
+                date_key = date_map.get(date[0:10], None)
+                if date_key:
+                    rows[user_map[user_id]][date_key] += 1
+
+        for i, user in enumerate(users_data["combined_users"]):
+            rows[i][0] = self.get_user_link(user)
+            total = sum(rows[i][1:-1])
+            rows[i][-1] = total
+            total_row[1:-1] = [total_row[ind+1]+val for ind, val in enumerate(rows[i][1:-1])]
+            total_row[-1] += total
+
+        total_row[0] = _("All Users")
+        self.total_row = total_row
+
+        for row in rows:
+            row[1:] = [self.table_cell(val) for val in row[1:]]
+        return rows
 
     @property
     def total_records(self):
@@ -895,11 +930,6 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
     ]
     fix_left_col = True
     emailable = True
-
-    @property
-    def special_notice(self):
-        if self.domain_object.case_sharing_included():
-            return _('This report currently does not fully support case sharing. There might be inconsistencies in the cases modified and average cases modified columns.')
 
     @property
     def view_by(self):

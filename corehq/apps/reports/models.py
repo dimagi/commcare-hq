@@ -10,7 +10,7 @@ from corehq.apps.app_manager.models import get_app
 from corehq.apps.app_manager.util import ParentCasePropertyBuilder
 from corehq.apps.reports.display import xmlns_to_name
 from couchdbkit.ext.django.schema import *
-from corehq.apps.reports.exportfilters import form_matches_users, is_commconnect_form
+from corehq.apps.reports.exportfilters import form_matches_users, is_commconnect_form, default_form_filter
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
 from couchexport.models import SavedExportSchema, GroupExportConfiguration
 from couchexport.transforms import couch_to_excel_datetime, identity
@@ -63,7 +63,7 @@ class HQToggle(object):
     type = None
     show = False
     name = None
-    
+
     def __init__(self, type, show, name):
         self.type = type
         self.name = name
@@ -79,7 +79,7 @@ class HQToggle(object):
 
 
 class HQUserToggle(HQToggle):
-    
+
     def __init__(self, type, show):
         name = _(HQUserType.human_readable[type])
         super(HQUserToggle, self).__init__(type, show, name)
@@ -204,7 +204,7 @@ class ReportConfig(Document):
 
         for key in self._extra_json_properties:
             json[key] = getattr(self, key)
-        
+
         return json
 
     @property
@@ -223,7 +223,7 @@ class ReportConfig(Document):
 
     def get_date_range(self):
         """Duplicated in reports.config.js"""
-        
+
         date_range = self.date_range
 
         # allow old report email notifications to represent themselves as a
@@ -290,7 +290,7 @@ class ReportConfig(Document):
     def url(self):
         try:
             from django.core.urlresolvers import reverse
-            
+
             return reverse(self._dispatcher.name(), kwargs=self.view_kwargs) \
                     + '?' + self.query_string
         except Exception:
@@ -408,7 +408,7 @@ class ReportNotification(Document):
             return False
         except AttributeError:
             return True
-        
+
     @classmethod
     def by_domain_and_owner(cls, domain, owner_id, stale=True, **kwargs):
         if stale:
@@ -548,6 +548,7 @@ class HQExportSchema(SavedExportSchema):
             self.domain = self.index[0]
         return self
 
+
 class FormExportSchema(HQExportSchema):
     doc_type = 'SavedExportSchema'
     app_id = StringProperty()
@@ -582,7 +583,6 @@ class FormExportSchema(HQExportSchema):
     def filter(self):
         user_ids = set(CouchUser.ids_by_domain(self.domain))
         user_ids.update(CouchUser.ids_by_domain(self.domain, is_active=False))
-
         def _top_level_filter(form):
             # careful, closures used
             return form_matches_users(form, user_ids) or is_commconnect_form(form)
@@ -592,7 +592,8 @@ class FormExportSchema(HQExportSchema):
             f.add(reports.util.app_export_filter, app_id=self.app_id)
         if not self.include_errors:
             f.add(couchforms.filters.instances)
-        return f
+        actual = SerializableFunction(default_form_filter, filter=f)
+        return actual
 
     @property
     def domain(self):
@@ -693,6 +694,21 @@ class HQGroupExportConfiguration(GroupExportConfiguration):
             custom_export = self._get_custom(custom)
             if custom_export:
                 yield _rewrap(custom_export)
+
+    def exports_of_type(self, type):
+        return self._saved_exports_from_configs([
+            config for config, schema in self.all_exports if schema.type == type
+        ])
+
+    @property
+    @memoized
+    def form_exports(self):
+        return self.exports_of_type('form')
+
+    @property
+    @memoized
+    def case_exports(self):
+        return self.exports_of_type('case')
 
     @classmethod
     def by_domain(cls, domain):

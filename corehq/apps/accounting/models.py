@@ -5,18 +5,25 @@ from couchdbkit.ext.django.schema import DateTimeProperty, StringProperty
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+from corehq import toggles
 from corehq.apps.accounting.downgrade import DomainDowngradeActionHandler
+from corehq.apps.accounting.utils import is_active_subscription
+from corehq.apps.users.models import WebUser
+from dimagi.utils.decorators.memoized import memoized
 
 from django_prbac.models import Role
 from dimagi.utils.couch.database import SafeSaveDocument
 
 from corehq.apps.accounting.exceptions import (CreditLineError, AccountingError, SubscriptionAdjustmentError,
                                                SubscriptionDowngradeError, NewSubscriptionError)
-from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES, assure_domain_instance, get_change_status, get_privileges
+from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES, assure_domain_instance, get_change_status
+import toggle
 
 global_logger = logging.getLogger(__name__)
+integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
 
 
 class BillingAccountType(object):
@@ -148,6 +155,16 @@ class Currency(models.Model):
 class BillingAccountAdmin(models.Model):
     web_user = models.CharField(max_length=80, unique=True, db_index=True)
 
+    @classmethod
+    def get_admin_status_and_account(cls, web_user, domain):
+        if not isinstance(web_user, WebUser):
+            raise ValueError("web_user should be an instance of WebUser")
+        account = BillingAccount.get_account_by_domain(domain)
+        if account is None:
+            return web_user.is_domain_admin(domain), None
+        admin = account.billing_admins.filter(web_user=web_user.username)
+        return admin.count() > 0, account
+
 
 class BillingAccount(models.Model):
     """
@@ -167,6 +184,7 @@ class BillingAccount(models.Model):
     billing_admins = models.ManyToManyField(BillingAccountAdmin, null=True)
     currency = models.ForeignKey(Currency, on_delete=models.PROTECT)
     is_auto_invoiceable = models.BooleanField(default=False)
+    date_confirmed_extra_charges = models.DateTimeField(null=True, blank=True)
     account_type = models.CharField(
         max_length=25,
         default=BillingAccountType.CONTRACT,
@@ -184,29 +202,39 @@ class BillingAccount(models.Model):
         First try to grab the account used for the last subscription.
         If an account is not found, create it.
         """
+        is_new = False
+        account = cls.get_account_by_domain(domain)
+        if account is None:
+            is_new = True
+            account_type = account_type or BillingAccountType.INVOICE_GENERATED
+            account = BillingAccount(
+                name="Account for Project %s" % domain,
+                created_by=created_by,
+                created_by_domain=domain,
+                currency=Currency.get_default(),
+                account_type=account_type,
+            )
+            account.save()
+            billing_admin = BillingAccountAdmin.objects.get_or_create(web_user=created_by)[0]
+            account.billing_admins.add(billing_admin)
+            account.save()
+        return account, is_new
+
+    @classmethod
+    def get_account_by_domain(cls, domain):
         try:
             last_subscription = Subscription.objects.filter(subscriber__domain=domain).latest('date_end')
-            return last_subscription.account, False
+            return last_subscription.account
         except ObjectDoesNotExist:
             pass
-        account_type = account_type or BillingAccountType.INVOICE_GENERATED
         try:
-            return cls.objects.get(created_by_domain=domain), False
+            return cls.objects.get(created_by_domain=domain)
         except cls.DoesNotExist:
             pass
         except cls.MultipleObjectsReturned:
             global_logger.error("Multiple billing accounts showed up for the domain '%s'. The "
                                 "latest one was served, but you should reconcile very soon." % domain)
-            return cls.objects.filter(created_by_domain=domain).latest('date_created'), False
-        account = BillingAccount(
-            name="Account for Project %s" % domain,
-            created_by=created_by,
-            created_by_domain=domain,
-            currency=Currency.get_default(),
-            account_type=account_type,
-        )
-        account.save()
-        return account, True
+            return cls.objects.filter(created_by_domain=domain).latest('date_created')
 
 
 class BillingContactInfo(models.Model):
@@ -260,7 +288,7 @@ class SoftwareProductRate(models.Model):
     is_active = models.BooleanField(default=True)
 
     def __str__(self):
-        return 'Product Rate: $%s /month' % self.monthly_fee
+        return '%s @ $%s /month' % (self.product.name, self.monthly_fee)
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__) or not self.product.pk == other.product.pk:
@@ -306,15 +334,16 @@ class FeatureRate(models.Model):
     monthly_fee = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2,
                                       verbose_name="Monthly Fee")
     monthly_limit = models.IntegerField(default=0,
-                                        verbose_name="Monthly Included Limit")
+                                        verbose_name="Monthly Included Limit",
+                                        validators=integer_field_validators)
     per_excess_fee = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2,
                                          verbose_name="Fee Per Excess of Limit")
     date_created = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
 
     def __str__(self):
-        return 'Feature Rate: $%s /month, $%s /excess, limit: %d' % (
-            self.monthly_fee, self.per_excess_fee, self.monthly_limit
+        return '%s @ $%s /month, $%s /excess, limit: %d' % (
+            self.feature.name, self.monthly_fee, self.per_excess_fee, self.monthly_limit
         )
 
     def __eq__(self, other):
@@ -427,11 +456,36 @@ class SoftwarePlanVersion(models.Model):
                 pass
         desc.update({
             'monthly_fee': 'USD %s' % product.monthly_fee,
-            'rates': [{'name': FEATURE_TYPE_TO_NAME[r.feature.feature_type], 'included': r.monthly_limit}
+            'rates': [{'name': FEATURE_TYPE_TO_NAME[r.feature.feature_type],
+                       'included': 'Infinite' if r.monthly_limit == -1 else r.monthly_limit}
                       for r in self.feature_rates.all()],
             'edition': self.plan.edition,
         })
         return desc
+
+    @property
+    @memoized
+    def user_feature(self):
+        user_features = self.feature_rates.filter(feature__feature_type=FeatureType.USER)
+        try:
+            user_feature = user_features.order_by('monthly_limit')[0]
+            if not user_feature.monthly_limit == -1:
+                user_feature = user_features.order_by('-monthly_limit')[0]
+            return user_feature
+        except IndexError:
+            pass
+
+
+    @property
+    def user_limit(self):
+        if self.user_feature is not None:
+            return self.user_feature.monthly_limit
+        return -1
+
+    @property
+    def user_fee(self):
+        if self.user_feature is not None:
+            return "USD %d" % self.user_feature.per_excess_fee
 
 
 class SubscriberManager(models.Manager):
@@ -457,9 +511,21 @@ class Subscriber(models.Model):
             return "ORGANIZATION %s" % self.organization
         return "DOMAIN %s" % self.domain
 
-    def downgrade(self, new_plan_version, downgraded_privileges):
+    def downgrade(self, downgraded_privileges=None, new_plan_version=None, web_user=None):
+        # don't actually perform downgrades until march 1st.
+        if web_user is None or not toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, web_user):
+            return
+
         if self.organization is not None:
             raise SubscriptionDowngradeError("Only domain downgrades are possible.")
+
+        if new_plan_version is None:
+            new_plan_version = DefaultProductPlan.get_default_plan_by_domain(self.domain)
+
+        if downgraded_privileges is None:
+            downgraded_privileges = get_change_status(None, new_plan_version)[1]
+        if not downgraded_privileges:
+            return
 
         downgrade_handler = DomainDowngradeActionHandler(self.domain, new_plan_version, downgraded_privileges)
         if not downgrade_handler.get_response():
@@ -479,12 +545,14 @@ class Subscription(models.Model):
     date_delay_invoicing = models.DateField(blank=True, null=True)
     date_created = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=False)
+    do_not_invoice = models.BooleanField(default=False)
 
     def cancel_subscription(self, adjustment_method=None, web_user=None, note=None):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
         today = datetime.date.today()
         if self.date_end is not None and today > self.date_end:
             raise SubscriptionAdjustmentError("The end date for this subscription already passed.")
+        self.subscriber.downgrade(web_user=web_user)
         self.date_end = today
         self.is_active = False
         self.save()
@@ -492,8 +560,9 @@ class Subscription(models.Model):
             self, reason=SubscriptionAdjustmentReason.CANCEL, method=adjustment_method, note=note, web_user=web_user,
         )
 
-    def change_plan(self, new_plan_version, date_end=None, salesforce_contract_id=None, note=None,
-                    web_user=None, adjustment_method=None):
+    def change_plan(self, new_plan_version, date_start=None, date_end=None, date_delay_invoicing=None,
+                    salesforce_contract_id=None, do_not_invoice=False,
+                    note=None, web_user=None, adjustment_method=None):
         """
         Changing a plan terminates the current subscription and creates a new subscription where the old plan
         left off.
@@ -501,23 +570,15 @@ class Subscription(models.Model):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
         adjustment_reason, downgrades, upgrades = get_change_status(self.plan_version, new_plan_version)
-        if adjustment_reason == SubscriptionAdjustmentReason.DOWNGRADE:
-            self.subscriber.downgrade(new_plan_version, downgrades)
+        self.subscriber.downgrade(downgraded_privileges=downgrades, new_plan_version=new_plan_version,
+                                  web_user=web_user)
 
         today = datetime.date.today()
-        new_start_date = today if self.date_start < today else self.date_start
+        new_start_date = today if self.date_start <= today else (date_start or self.date_start)
 
-        new_subscription = Subscription(
-            account=self.account,
-            plan_version=new_plan_version,
-            subscriber=self.subscriber,
-            salesforce_contract_id=salesforce_contract_id or self.salesforce_contract_id,
-            date_start=new_start_date,
-            date_end=date_end,
-            date_delay_invoicing=self.date_delay_invoicing,
-            is_active=self.is_active,
-        )
-        new_subscription.save()
+        new_is_active = is_active_subscription(new_start_date, date_end)
+        new_salesforce_contract_id = salesforce_contract_id \
+            if salesforce_contract_id is not None else self.salesforce_contract_id
 
         if self.date_start > today:
             self.date_start = today
@@ -528,9 +589,21 @@ class Subscription(models.Model):
         self.is_active = False
         self.save()
 
-        # record new subscription
-        SubscriptionAdjustment.record_adjustment(new_subscription,
-                                                 method=adjustment_method, note=note, web_user=web_user)
+        new_subscription =\
+            Subscription.new_domain_subscription(self.account,
+                                                 self.subscriber.domain,
+                                                 new_plan_version,
+                                                 date_start=new_start_date,
+                                                 date_end=date_end,
+                                                 date_delay_invoicing=date_delay_invoicing,
+                                                 salesforce_contract_id=new_salesforce_contract_id,
+                                                 is_active=new_is_active,
+                                                 do_not_invoice=do_not_invoice,
+                                                 adjustment_method=adjustment_method,
+                                                 note=note,
+                                                 web_user=web_user
+                                                 )
+
         # record transfer from old subscription
         SubscriptionAdjustment.record_adjustment(self, method=adjustment_method, note=note, web_user=web_user,
                                                  reason=adjustment_reason, related_subscription=new_subscription)
@@ -548,8 +621,7 @@ class Subscription(models.Model):
             current_subscription = active_subscriptions.latest('date_created')
             return current_subscription.plan_version, current_subscription
         except Subscription.DoesNotExist:
-            global_logger.error("A Subscriber object exists without a Subscription for the domain '%s'. "
-                                "This seems strange." % subscriber)
+            pass
         return None, None
 
     @classmethod
@@ -565,12 +637,20 @@ class Subscription(models.Model):
         """
         Returns SoftwarePlanVersion, Subscription for the given domain.
         """
-        domain = assure_domain_instance(domain)
+        domain_obj = assure_domain_instance(domain)
+        if domain_obj is None:
+            # need more info to troubleshoot this further
+            logging.error("Tried to fetch a subscription for a domain that was not properly located. "
+                          "Domain name is %s." % domain)
+            plan_version = DefaultProductPlan.objects.get(edition=SoftwarePlanEdition.COMMUNITY,
+                                                          product_type=SoftwareProductType.COMMCARE).plan.get_version()
+            return plan_version, None
+        domain = domain_obj
         subscriber = Subscriber.objects.safe_get(domain=domain.name, organization=None)
         plan_version, subscription = (cls._get_plan_by_subscriber(subscriber) if subscriber
                                       else cls.get_subscribed_plan_by_organization(domain.organization))
         if plan_version is None:
-            plan_version =  DefaultProductPlan.get_default_plan_by_domain(domain)
+            plan_version = DefaultProductPlan.get_default_plan_by_domain(domain)
         return plan_version, subscription
     
     @classmethod
@@ -594,9 +674,7 @@ class Subscription(models.Model):
         except (Subscription.DoesNotExist, IndexError):
             pass
 
-        downgrades = get_change_status(None, plan_version)[1]
-        if downgrades:
-            subscriber.downgrade(plan_version, downgrades)
+        subscriber.downgrade(new_plan_version=plan_version, web_user=web_user)
 
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
         subscription = Subscription(

@@ -1,9 +1,14 @@
+import logging
+
 from django.conf.urls.defaults import *
 from django.core.exceptions import ImproperlyConfigured
 from corehq.apps.reports.util import get_installed_custom_modules
 from corehq.apps.reports.dispatcher import (ProjectReportDispatcher, 
         CustomProjectReportDispatcher, BasicReportDispatcher)
-import logging
+
+# from .filters.urls import urlpatterns as filter_urls
+from .filters import urls as filter_urls
+
 
 dodoma_reports = patterns('corehq.apps.reports.dodoma',
     url('^household_verification_json$', 'household_verification_json'),
@@ -56,7 +61,7 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^dodoma/', include(dodoma_reports)),
 
 
-    # Create and Manage Custom Exports
+    # export API
     url(r"^export/$", 'export_data'),
 
     # Download Exports
@@ -99,6 +104,7 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^phonelog/', include(phonelog_reports)),
 
     url(r'^custom/', include(custom_report_urls)),
+    url(r'^filters/', include(filter_urls)),
     ProjectReportDispatcher.url_pattern(),
 )
 

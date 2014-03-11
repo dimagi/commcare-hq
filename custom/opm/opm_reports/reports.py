@@ -43,6 +43,7 @@ class BaseReport(MonthYearMixin, GenericTabularReport, CustomProjectReport):
     default_rows = 50
     printable = True
     exportable = True
+    export_format_override = "csv"
 
     @property
     def fields(self):
@@ -161,7 +162,7 @@ class BeneficiaryPaymentReport(BaseReport):
 
 
 class IncentivePaymentReport(BaseReport):
-    name = "Incentive Payment Report"
+    name = "AWW Payment Report"
     slug = 'incentive_payment_report'
     model = Worker
 

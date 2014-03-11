@@ -1,5 +1,5 @@
+from couchdbkit import ResourceNotFound
 from corehq.apps.cloudcare.api import es_filter_cases
-from couchdbkit.exceptions import ResourceNotFound
 from tastypie import fields
 
 from casexml.apps.case.models import CommCareCase

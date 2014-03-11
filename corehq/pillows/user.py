@@ -104,7 +104,7 @@ class UnknownUsersPillow(BulkPillow):
     """
     document_class = XFormInstance
     couch_filter = "couchforms/xforms"
-    include_docs = False
+    include_docs_when_preindexing = False
 
     def __init__(self, **kwargs):
         super(UnknownUsersPillow, self).__init__(**kwargs)
