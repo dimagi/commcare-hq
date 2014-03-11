@@ -29,7 +29,7 @@ from corehq.apps.accounting.models import (
     DefaultProductPlan, SoftwarePlanEdition, BillingAccount,
     BillingAccountType, BillingAccountAdmin
 )
-from corehq.apps.accounting.usage import FeatureUsage
+from corehq.apps.accounting.usage import FeatureUsageCalculator
 from corehq.apps.accounting.user_text import get_feature_name, PricingTable, DESC_BY_EDITION, PricingTableFeatures
 from corehq.apps.hqwebapp.models import ProjectSettingsTab
 from corehq.apps import receiverwrapper
@@ -572,7 +572,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
     def get_feature_summary(self, plan_version, subscription):
         feature_summary = []
         for feature_rate in plan_version.feature_rates.all():
-            usage = FeatureUsage(feature_rate, self.domain).get_usage()
+            usage = FeatureUsageCalculator(feature_rate, self.domain).get_usage()
             feature_info = {
                 'name': get_feature_name(feature_rate.feature.feature_type, self.product),
                 'usage': usage,

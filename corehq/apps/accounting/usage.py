@@ -5,10 +5,10 @@ from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.users.models import CommCareUser
 
 
-class FeatureUsage(object):
+class FeatureUsageCalculator(object):
 
     def __init__(self, feature_rate, domain_name):
-        super(FeatureUsage, self).__init__()
+        super(FeatureUsageCalculator, self).__init__()
         self.feature_rate = feature_rate
         self.domain = domain_name
 
