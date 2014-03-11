@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from couchdbkit.exceptions import ResourceNotFound
 from django.http.response import Http404
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.cloudcare.api import get_cloudcare_app
@@ -43,16 +44,20 @@ class PatientInfoReport(CustomProjectReport, DrilldownReportMixin, ElasticProjec
             case = None
 
         if case is None:
-            self.report_template_path = "nopatient.html"
+            self.report_template_path = "error.html"
             if has_error:
                 ret['error_message'] = "Patient not found"
             else:
                 ret['error_message'] = "No patient selected"
             return ret
 
-        app_dict = get_cloudcare_app(case['domain'], SUCCEED_CLOUD_APPNAME)
-        latest_build = ApplicationBase.get_latest_build(case['domain'], app_dict['_id'])['_id']
-
+        try:
+            app_dict = get_cloudcare_app(case['domain'], SUCCEED_CLOUD_APPNAME)
+            latest_build = ApplicationBase.get_latest_build(case['domain'], app_dict['_id'])['_id']
+        except ResourceNotFound as ex:
+            self.report_template_path = "error.html"
+            ret['error_message'] = ex.message
+            return ret
 
         def get_form_url(module_idx, form):
             base_url = '/a/%(domain)s/cloudcare/apps/view/%(build_id)s/%(module_id)s/%(form_id)s/enter/'
