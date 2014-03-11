@@ -71,3 +71,22 @@ class FieldWithHelpBubble(Field):
             'help_bubble_text': self.help_bubble_text,
         })
         return super(FieldWithHelpBubble, self).render(form, form_style, context, template_pack=template_pack)
+
+
+class TextField(Field):
+    """
+    Layout object.
+    Contains text specified in place of the field's normal input.
+    """
+    template = "hqwebapp/crispy/field/field_with_text.html"
+
+    def __init__(self, field_name, text, *args, **kwargs):
+        self.text = text
+        super(TextField, self).__init__(field_name, *args, **kwargs)
+
+    def render(self, form, form_style, context, template_pack=TEMPLATE_PACK):
+        context.update({
+            'field_text': self.text,
+        })
+        return super(TextField, self).render(form, form_style, context,
+                                             template_pack=template_pack)

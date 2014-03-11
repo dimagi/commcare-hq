@@ -280,8 +280,8 @@ HQ_APPS = (
     'custom.apps.crs_reports',
     'custom.hope',
     'custom.openlmis',
-
-    'custom.m4change'
+    'custom.m4change',
+    'custom.succeed'
 )
 
 TEST_APPS = ()
@@ -316,6 +316,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'south',
     'custom.apps.crs_reports',
     'custom.m4change',
+    'custom.succeed'
 
     # submodules with tests that run on travis
     'casexml.apps.case',
@@ -832,6 +833,7 @@ COUCHDB_APPS = [
     'psi',
     'trialconnect',
     'accounting',
+    'succeed',
     ('auditcare', 'auditcare'),
     ('couchlog', 'couchlog'),
     ('receiverwrapper', 'receiverwrapper'),
@@ -1013,6 +1015,7 @@ ES_CASE_FULL_INDEX_DOMAINS = [
     'commtrack-public-demo',
     'uth-rhd-test',
     'crs-remind',
+    'succeed',
     'opm',
 ]
 
@@ -1071,6 +1074,7 @@ DOMAIN_MODULE_MAP = {
     'crs-remind': 'custom.apps.crs_reports',
 
     'm4change': 'custom.m4change',
+    'succeed': 'custom.succeed',
     'test-pathfinder': 'custom.m4change'
 }
 

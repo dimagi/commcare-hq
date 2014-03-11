@@ -53,7 +53,7 @@ class OpmUserFluff(fluff.IndicatorDocument):
         returns a flat field with a callable looking for `property` on the user
         """
         return flat_field(lambda user: user.user_data.get(property))
-    
+
     document_class = CommCareUser
     domains = ('opm',)
     group_by = ('domain', )
@@ -66,6 +66,12 @@ class OpmUserFluff(fluff.IndicatorDocument):
     village = user_data('village')
 
 
+def _get_case_id(form):
+    case = form.form.get('case', {})
+    if hasattr(case, 'get'):
+        return case.get('@case_id')
+
+
 # This is a more typical fluff doc, storing arbitrary info pulled from forms.
 # Some stuff only pertains to case level queries, others to user level
 class OpmFormFluff(fluff.IndicatorDocument):
@@ -74,7 +80,7 @@ class OpmFormFluff(fluff.IndicatorDocument):
     domains = ('opm',)
     group_by = (
         'domain',
-        fluff.AttributeGetter('case_id', lambda form: form.form['case']['@case_id']),
+        fluff.AttributeGetter('case_id', _get_case_id),
     )
     save_direct_to_sql = True
 

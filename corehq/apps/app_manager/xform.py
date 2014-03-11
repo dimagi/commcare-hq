@@ -458,16 +458,16 @@ class XForm(WrappedNode):
         for d in duplicates:
             d = sorted(d, key=lambda ng: ng.id)
             reference = d[0]
-            new_ref = "jr:itext('{}')".format(reference.id)
+            new_ref = u"jr:itext('{}')".format(reference.id)
 
             for group in d[1:]:
-                itext_ref = '{{f}}text[@id="{}"]'.format(group.id)
+                itext_ref = u'{{f}}text[@id="{}"]'.format(group.id)
                 for lang in group.nodes.keys():
                     translation = translations[lang]
                     node = translation.find(itext_ref)
                     translation.remove(node.xml)
 
-                old_ref_xpath = './/*[@ref="jr:itext(\'{}\')"]'.format(group.id)
+                old_ref_xpath = u'.//*[@ref="jr:itext(\'{}\')"]'.format(group.id)
                 for ref in self.findall(old_ref_xpath):
                     if ref.xml is not None:
                         ref.attrib['ref'] = new_ref

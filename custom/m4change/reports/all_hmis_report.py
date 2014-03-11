@@ -6,6 +6,7 @@ from corehq.apps.reports.fields import AsyncLocationField
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin
 from corehq.apps.reports.standard.cases.basic import CaseListReport
+from custom.m4change.reports import validate_report_parameters
 from custom.m4change.reports.anc_hmis_report import AncHmisReport
 from custom.m4change.reports.immunization_hmis_report import ImmunizationHmisReport
 from custom.m4change.reports.ld_hmis_report import LdHmisReport
@@ -41,16 +42,11 @@ class AllHmisReport(MonthYearMixin, CustomProjectReport, CaseListReport, M4Chang
 
     @classmethod
     def get_report_data(cls, config):
-        if "location_id" not in config:
-            raise KeyError(_("Parameter 'location_id' is missing"))
-        if "datespan" not in config:
-            raise KeyError(_("Parameter 'datespan' is missing"))
-        if 'domain' not in config:
-            raise KeyError(_("Parameter 'domain' is missing"))
+        validate_report_parameters(["domain", "location_id", "datespan"], config)
 
-        domain = config.get('domain', None)
-        location_id = config.get("location_id", None)
-        datespan = config.get("datespan", None)
+        domain = config["domain"]
+        location_id = config["location_id"]
+        datespan = config["datespan"]
         sql_data = dict(
             AncHmisCaseSqlData(domain=domain, datespan=datespan).data.items() +\
             LdHmisCaseSqlData(domain=domain, datespan=datespan).data.items() +\
