@@ -121,7 +121,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         user_ids = filter(None, [u.get("user_id") for u in users_data["combined_users"]])
         group_owner_ids = []
         for user_id in user_ids:
-            group_owner_ids.append([group._id for group in Group.by_user(user_id) if group.case_sharing])
+            group_owner_ids.extend([group._id for group in Group.by_user(user_id) if group.case_sharing])
         return user_ids, filter(None, group_owner_ids)
 
     def get_case(self, row):
