@@ -459,9 +459,10 @@ class CreditForm(forms.Form):
             )
         )
 
-    def get_currency_str(self, id, is_account):
-        account = BillingAccount.objects.get(id=id) \
-            if is_account else Subscription.objects.get(id=id).account
+    def get_currency_str(self, obj_id, is_account):
+        account = BillingAccount.objects.get(
+            id=obj_id
+        ) if is_account else Subscription.objects.get(id=obj_id).account
         symbol = account.currency.symbol
         if len(symbol) != 0:
             return symbol
@@ -478,27 +479,32 @@ class CreditForm(forms.Form):
                                             'href="#reportIssueModal">Report an Issue</a>.'))
         return amount
 
-    def get_subscriptions(self, id, is_account):
-        return Subscription.objects.filter(account=BillingAccount.objects.get(id=id))\
-            if is_account else [Subscription.objects.get(id=id)]
+    def get_subscriptions(self, obj_id, is_account):
+        return Subscription.objects.filter(
+            account=BillingAccount.objects.get(id=obj_id)
+        ) if is_account else [Subscription.objects.get(id=obj_id)]
 
-    def get_product_rate_choices(self, id, is_account):
-        subscriptions = self.get_subscriptions(id, is_account)
-        product_rate_sets = [sub.plan_version.product_rates for sub in subscriptions]
+    def get_product_rate_choices(self, obj_id, is_account):
+        subscriptions = self.get_subscriptions(obj_id, is_account)
+        product_rate_sets = \
+            [sub.plan_version.product_rates for sub in subscriptions]
         product_rates = set()
         for product_rate_set in product_rate_sets:
             for product_rate in product_rate_set.all():
                 product_rates.add(product_rate)
-        return [(product_rate.id, str(product_rate)) for product_rate in product_rates]
+        return [(product_rate.id, str(product_rate))
+                for product_rate in product_rates]
 
-    def get_feature_choices(self, id, is_account):
-        subscriptions = self.get_subscriptions(id, is_account)
-        feature_rate_sets = [sub.plan_version.feature_rates for sub in subscriptions]
+    def get_feature_choices(self, obj_id, is_account):
+        subscriptions = self.get_subscriptions(obj_id, is_account)
+        feature_rate_sets = \
+            [sub.plan_version.feature_rates for sub in subscriptions]
         feature_rates = set()
         for feature_rate_set in feature_rate_sets:
             for feature_rate in feature_rate_set.all():
                 feature_rates.add(feature_rate)
-        return [(feature_rate.id, str(feature_rate)) for feature_rate in feature_rates]
+        return [(feature_rate.id, str(feature_rate))
+                for feature_rate in feature_rates]
 
     def get_rate_type_choices(self, product_choices, feature_choices):
         choices = [('Any', 'Any')]
