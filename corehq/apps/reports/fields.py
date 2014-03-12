@@ -695,7 +695,6 @@ class DeviceLogDevicesField(DeviceLogFilterField):
     view = "phonelog/devicelog_data_devices"
     filter_desc = ugettext_noop("Filter Logs by Device")
 
-
 class UserOrGroupField(ReportSelectField):
     """
         To Use: Subclass and specify what the field options should be
