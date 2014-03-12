@@ -247,7 +247,7 @@ def _handle_id_conflict(instance, attachments, process, use_locking=False):
         # after that delete the original document and resubmit.
         XFormInstance.get_db().delete_doc(conflict_id)
         return post_xform_to_couch(instance, attachments=attachments,
-                                   process=process)
+                                   process=process, use_locking=use_locking)
     else:
         # follow standard dupe handling
         new_doc_id = uid.new()
