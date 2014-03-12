@@ -13,8 +13,11 @@ from datetime import datetime
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from casexml.apps.stock.models import StockTransaction
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
-from receiver.xml import get_response_element, get_simple_response_xml,\
-    ResponseNature
+from couchforms.xml import (
+    ResponseNature,
+    get_response_element,
+    get_simple_response_xml,
+)
 from casexml.apps.case.xml import check_version, V1
 from casexml.apps.phone.fixtures import generator
 from django.http import HttpResponse, Http404
