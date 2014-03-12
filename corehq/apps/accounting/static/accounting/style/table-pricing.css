@@ -233,6 +233,7 @@ body {
 }
 .table-pricing thead .col-edition {
   padding: 0;
+  width: 112px;
 }
 .table-pricing thead .col-edition .tooltip.in {
   opacity: 1;
