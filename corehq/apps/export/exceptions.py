@@ -1,0 +1,3 @@
+
+class BadExportConfiguration(Exception):
+    pass

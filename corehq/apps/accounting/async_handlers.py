@@ -1,6 +1,6 @@
 import json
 from corehq import Domain
-from corehq.apps.accounting.models import Feature, SoftwareProduct
+from corehq.apps.accounting.models import Feature, SoftwareProduct, BillingAccount, SoftwarePlanVersion
 from corehq.apps.accounting.utils import fmt_feature_rate_dict, fmt_product_rate_dict, LazyEncoder
 from corehq.apps.hqwebapp.async_handler import BaseAsyncHandler, AsyncHandlerError
 from corehq.apps.users.models import WebUser
@@ -163,13 +163,18 @@ class Select2BillingInfoHandler(BaseSelect2AsyncHandler):
         admins = filter(lambda x: x.is_domain_admin and x.username != self.request.couch_user.username,
                         all_web_users)
         admins = filter(lambda x: x.username not in self.existing, admins)
+        if self.search_string:
+            admins = filter(lambda x: (x.username.lower().startswith(self.search_string.lower())
+                                       or self.search_string in x.full_name), admins)
         return [(a.username, "%s (%s)" % (a.full_name, a.username)) for a in admins]
 
 
 class Select2SubscriptionInfoHandler(BaseSelect2AsyncHandler):
     slug = 'select2_billing'
     allowed_actions = [
-        'domain'
+        'domain',
+        'account',
+        'plan_version',
     ]
 
     @property
@@ -178,3 +183,22 @@ class Select2SubscriptionInfoHandler(BaseSelect2AsyncHandler):
         if self.search_string:
             domain_names = filter(lambda x: x.lower().startswith(self.search_string.lower()), domain_names)
         return [(name, name) for name in domain_names]
+
+    @property
+    def account_response(self):
+        accounts = BillingAccount.objects
+        if self.search_string:
+            accounts = accounts.filter(name__contains=self.search_string)
+        return [(a.id, a.name) for a in accounts.order_by('name')]
+
+    @property
+    def plan_version_response(self):
+        edition = self.data.get('additionalData[edition]')
+        product = self.data.get('additionalData[product]')
+        plan_versions = SoftwarePlanVersion.objects.filter(
+            plan__edition=edition
+        ).filter(product_rates__product__product_type=product)
+        if self.search_string:
+            plan_versions = plan_versions.filter(
+                plan__name__contains=self.search_string)
+        return [(p.id, p.__str__()) for p in plan_versions.order_by('plan__name')]

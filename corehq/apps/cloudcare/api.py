@@ -1,4 +1,5 @@
 import json
+from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase, CASE_STATUS_ALL, CASE_STATUS_CLOSED, CASE_STATUS_OPEN
 from corehq.apps.locations.models import Location
@@ -11,6 +12,7 @@ from corehq.elastic import get_es
 import urllib
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.chunked import chunked
+from django.utils.translation import ugettext as _
 
 def api_closed_to_status(closed_string):
     # legacy api support
@@ -348,3 +350,11 @@ def look_up_app_json(domain, app_id):
     app = Application.get(app_id)
     assert(app.domain == domain)
     return get_app_json(app)
+
+def get_cloudcare_app(domain, app_name):
+    apps = get_cloudcare_apps(domain)
+    app = filter(lambda x: x['name'] == app_name, apps)[0]
+    if app:
+        return look_up_app_json(domain, app['_id'])
+    else:
+        raise ResourceNotFound(_("Not found application by name: %s") % app_name)

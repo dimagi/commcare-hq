@@ -108,12 +108,14 @@ urlpatterns = patterns('',
     url(r'^apache_license/$', 'corehq.apps.hqwebapp.views.apache_license', name='apache_license'),
     url(r'^bsd_license_basic/$', TemplateView.as_view(template_name='bsd_license.html'), name='bsd_license_basic'),
     url(r'^bsd_license/$', 'corehq.apps.hqwebapp.views.bsd_license', name='bsd_license'),
+    url(r'^product_agreement/$', 'corehq.apps.hqwebapp.views.product_agreement', name='product_agreement'),
     url(r'^exchange/cda_basic/$', TemplateView.as_view(template_name='cda.html'), name='cda_basic'),
     url(r'^exchange/cda/$', 'corehq.apps.hqwebapp.views.cda', name='cda'),
     url(r'^sms_in/$', 'corehq.apps.sms.views.sms_in', name='sms_in'),
     url(r'^unsubscribe/(?P<user_id>[\w-]+)/', 'corehq.apps.hqwebapp.views.unsubscribe', name='unsubscribe'),
     (r'^wisepill/', include('custom.apps.wisepill.urls')),
-    url(r'pro_bono/$', ProBonoStaticView.as_view(), name=ProBonoStaticView.urlname)
+    url(r'^pro_bono/$', ProBonoStaticView.as_view(),
+        name=ProBonoStaticView.urlname)
 ) + patterns('', *LOCAL_APP_URLS)
 
 # django rosetta support if configured

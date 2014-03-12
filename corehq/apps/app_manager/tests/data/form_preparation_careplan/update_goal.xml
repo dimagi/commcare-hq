@@ -80,12 +80,6 @@
 					<text id="update_description-label">
 						<value>Update the goal's description?</value>
 					</text>
-					<text id="update_description-yes-label">
-						<value>Yes</value>
-					</text>
-					<text id="update_description-no-label">
-						<value>No</value>
-					</text>
 					<text id="description-label">
 						<value>Goal Description</value>
 					</text>
@@ -147,11 +141,11 @@
 			<select1 ref="/data/description_group/update_description">
 				<label ref="jr:itext('update_description-label')" />
 				<item>
-					<label ref="jr:itext('update_description-yes-label')" />
+					<label ref="jr:itext('close_goal-yes-label')" />
 					<value>yes</value>
 				</item>
 				<item>
-					<label ref="jr:itext('update_description-no-label')" />
+					<label ref="jr:itext('close_goal-no-label')" />
 					<value>no</value>
 				</item>
 			</select1>

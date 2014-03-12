@@ -4,10 +4,10 @@ from corehq.apps.domain.shortcuts import create_domain
 from django.test.client import Client
 from django.core.urlresolvers import reverse
 import os
-from StringIO import StringIO
 from dimagi.utils.post import tmpfile
-from couchforms.models import SubmissionErrorLog, XFormInstance
-from couchforms.signals import xform_saved
+from couchforms.models import SubmissionErrorLog
+from couchforms.signals import successful_form_received
+
 
 def _clear_all_forms(domain):
     for item in SubmissionErrorLog.view("couchforms/all_submissions_by_domain",
@@ -86,32 +86,34 @@ class SubmissionErrorTest(TestCase):
         def fail(sender, xform, **kwargs):
             raise Exception(evil_laugh)
         
-        xform_saved.connect(fail)
+        successful_form_received.connect(fail)
         
         try:    
-            file = os.path.join(os.path.dirname(__file__), "data", "simple_form.xml")
+            file = os.path.join(os.path.dirname(__file__), "data",
+                                "simple_form.xml")
             with open(file) as f:
                 res = self.client.post(self.url, {
-                        "xml_submission_file": f
+                    "xml_submission_file": f
                 })
                 self.assertEqual(201, res.status_code)
                 self.assertTrue(evil_laugh in res.content)
-            
+
             # make sure we logged it
-            log = SubmissionErrorLog.view("couchforms/all_submissions_by_domain",
-                                          reduce=False,
-                                          include_docs=True,
-                                          startkey=[self.domain.name, "by_type", "XFormError"],
-                                          endkey=[self.domain.name, "by_type", "XFormError", {}],
-                                          classes={'XFormError': SubmissionErrorLog}).one()
-            
+            log = SubmissionErrorLog.view(
+                "couchforms/all_submissions_by_domain",
+                reduce=False,
+                include_docs=True,
+                startkey=[self.domain.name, "by_type", "XFormError"],
+                endkey=[self.domain.name, "by_type", "XFormError", {}],
+            ).one()
+
             self.assertTrue(log is not None)
             self.assertTrue(evil_laugh in log.problem)
             with open(file) as f:
                 self.assertEqual(f.read(), log.get_xml())
         
         finally:
-            xform_saved.disconnect(fail)
+            successful_form_received.disconnect(fail)
             
     def testSubmitBadXML(self):
         f, path = tmpfile()

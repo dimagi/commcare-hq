@@ -1,8 +1,15 @@
-var BillingContactInfoHandler = function (valid_email_text, domain) {
+var BillingContactInfoHandler = function (valid_email_text) {
     'use strict';
     var self = this;
 
     self.country = new AsyncSelect2Handler('country');
+    self.country.initSelection = function (element, callback) {
+        var data = {
+            text: element.data('countryname'),
+            id: element.val()
+        };
+        callback(data);
+    };
     self.billing_admins = new AsyncSelect2Handler('billing_admins', true);
     self.emails = new EmailSelect2Handler('emails', valid_email_text);
 
@@ -22,35 +29,46 @@ var AsyncSelect2Handler = function (field, multiple) {
 
     self.init = function () {
         $(function () {
-            $('[name="' + self.fieldName + '"]').select2({
-                minimumInputLength: 0,
-                allowClear: true,
-                ajax: {
-                    quietMillis: 150,
-                    url: '',
-                    dataType: 'json',
-                    type: 'post',
-                    data: function (term) {
-                        return {
-                            handler: 'select2_billing',
-                            action: self.fieldName,
-                            searchString: term,
-                            existing: $('[name="' + self.fieldName + '"]').val().split(',')
-                        };
+            var $field = $('[name="' + self.fieldName + '"]');
+            if ($field.attr('type') !== 'hidden') {
+                $field.select2({
+                    minimumInputLength: 0,
+                    allowClear: true,
+                    ajax: {
+                        quietMillis: 150,
+                        url: '',
+                        dataType: 'json',
+                        type: 'post',
+                        data: function (term) {
+                            return {
+                                handler: 'select2_billing',
+                                action: self.fieldName,
+                                searchString: term,
+                                existing: $('[name="' + self.fieldName + '"]').val().split(','),
+                                additionalData: self.getAdditionalData()
+                            };
+                        },
+                        results: function (data) {
+                            return data;
+                        }
                     },
-                    results: function (data) {
-                        return data;
-                    }
-                },
-                multiple: self.multiple,
-                initSelection: function (element, callback) {
-                    var data = (self.multiple) ? billingInfoUtils.getMultiResultsFromElement(element) :
-                        billingInfoUtils.getSingleResultFromElement(element);
-                    callback(data);
-                }
-            });
+                    multiple: self.multiple,
+                    initSelection: self.initSelection
+                });
+            }
         });
     };
+
+    self.initSelection = function (element, callback) {
+        var data = (self.multiple) ? billingInfoUtils.getMultiResultsFromElement(element) :
+            billingInfoUtils.getSingleResultFromElement(element);
+        callback(data);
+    };
+
+    self.getAdditionalData = function () {
+        return null;
+    };
+
 };
 
 var EmailSelect2Handler = function (field, valid_email_text) {

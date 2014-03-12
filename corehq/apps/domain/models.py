@@ -9,6 +9,7 @@ from couchdbkit.ext.django.schema import (Document, StringProperty, BooleanPrope
                                           StringListProperty, SchemaListProperty, SchemaDictProperty, TimeProperty)
 from django.core.cache import cache
 from django.utils.safestring import mark_safe
+from corehq import privileges
 from corehq.apps.appstore.models import Review, SnapshotMixin
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.decorators.memoized import memoized
@@ -563,6 +564,11 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             reduce=False,
             include_docs=True,
             wrapper=cls.wrap
+        )
+        from corehq.apps.accounting.utils import domain_has_privilege
+        result = filter(
+            lambda x: domain_has_privilege(x.name, privileges.CROSS_PROJECT_REPORTS),
+            result
         )
         return result
 

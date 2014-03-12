@@ -28,6 +28,7 @@
             filterSet: {{ report.filter_set|JSON }},
             needsFilters: {{ report.needs_filters|JSON }},
             isExportable: {{ report.is_exportable|JSON }},
+            isExportAll: {{ report.is_export_all|JSON }},
             isEmailable: {{ report.is_emailable|JSON }},
             emailDefaultSubject: {{ report.title|JSON }},
             emailSuccessMessage: "{% trans 'Report successfully emailed' %}",

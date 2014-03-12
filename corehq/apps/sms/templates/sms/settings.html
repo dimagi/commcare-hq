@@ -1,5 +1,4 @@
 {% extends 'hqwebapp/two_column.html' %}
-{% load url from future %}
 {% load i18n %}
 {% load hq_shared_tags %}
 
@@ -223,11 +222,13 @@
                     <td><input type="text" name="custom_chat_template" data-bind="value: custom_chat_template" /></td>
                     <td>{{ form.custom_chat_template.errors }}</td>
                 </tr>
+                {% if can_use_survey %}
                 <tr>
                     <td>{% trans "Hide SMS survey questions and responses from chat windows" %}</td>
                     <td><input type="checkbox" name="filter_surveys_from_chat" data-bind="checked: filter_surveys_from_chat" /></td>
                     <td>{{ form.filter_surveys_from_chat.errors }}</td>
                 </tr>
+                {% endif %}
                 <tr data-bind="visible: filter_surveys_from_chat">
                     <td class="dependent_field">{% trans "But show invalid SMS survey responses" %}</td>
                     <td><input type="checkbox" name="show_invalid_survey_responses_in_chat" data-bind="checked: show_invalid_survey_responses_in_chat" /></td>

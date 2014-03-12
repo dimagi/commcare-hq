@@ -15,6 +15,8 @@ import bisect
 from corehq.apps.hqcase.utils import submit_case_blocks
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
+from django.utils.text import slugify
+from unidecode import unidecode
 
 
 def all_supply_point_types(domain):
@@ -136,6 +138,7 @@ def bootstrap_commtrack_settings_if_necessary(domain, requisitions_enabled=False
 
     return c
 
+
 def get_default_requisition_config():
     return CommtrackRequisitionConfig(
         enabled=True,
@@ -145,15 +148,16 @@ def get_default_requisition_config():
                 keyword='req',
                 caption='Request',
             ),
+            # TODO not tested yet, so not included
+            # CommtrackActionConfig(
+            #    action=RequisitionActions.APPROVAL,
+            #    keyword='approve',
+            #    caption='Approved',
+            # ),
             CommtrackActionConfig(
-                action=RequisitionActions.APPROVAL,
-                keyword='approve',
-                caption='Approved',
-            ),
-            CommtrackActionConfig(
-                action=RequisitionActions.PACK,
-                keyword='pack',
-                caption='Packed',
+                action=RequisitionActions.FULFILL,
+                keyword='fulfill',
+                caption='Fulfilled',
             ),
             CommtrackActionConfig(
                 action=RequisitionActions.RECEIPTS,
@@ -249,8 +253,6 @@ def submit_mapping_case_block(user, index):
     submit_case_blocks(
         ElementTree.tostring(caseblock.as_xml()),
         user.domain,
-        user.username,
-        user._id
     )
 
 
@@ -258,8 +260,16 @@ def location_map_case_id(user):
     return 'user-owner-mapping-' + user._id
 
 
-def is_commtrack_location(user, domain):
-    return True if user and user.location_id and domain.commtrack_enabled else False
+def get_commtrack_location_id(user, domain):
+    if (
+        user and
+        user.get_domain_membership(domain.name) and
+        user.get_domain_membership(domain.name).location_id and
+        domain.commtrack_enabled
+    ):
+        return user.get_domain_membership(domain.name).location_id
+    else:
+        return None
 
 
 def get_case_wrapper(data):
@@ -271,3 +281,7 @@ def get_case_wrapper(data):
 
 def wrap_commtrack_case(case_json):
     return get_case_wrapper(case_json).wrap(case_json)
+
+
+def unicode_slug(text):
+    return slugify(unicode(unidecode(text)))

@@ -4,12 +4,16 @@ from django.utils.safestring import mark_safe, mark_for_escaping
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop, ugettext_lazy
-from corehq import toggles
+from corehq import toggles, privileges
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
+from corehq.apps.accounting.models import BillingAccountAdmin
 from corehq.apps.domain.utils import get_adm_enabled_domains
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
-import toggle
+from corehq.apps.reminders.util import can_use_survey_reminders
+from django_prbac.exceptions import PermissionDenied
+from django_prbac.models import Role, UserRole
+from django_prbac.utils import ensure_request_has_privilege
 
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
@@ -89,7 +93,7 @@ class UITab(object):
             return self.dispatcher.navigation_sections(context)
         else:
             return []
- 
+
     @property
     def is_viewable(self):
         """
@@ -112,7 +116,7 @@ class UITab(object):
                 return self.is_viewable
             except AttributeError:
                 return False
-    
+
     @property
     @memoized
     def url(self):
@@ -130,21 +134,33 @@ class UITab(object):
             return None
 
     @property
+    def is_active_shortcircuit(self):
+        return None
+
+    @property
+    def is_active_fast(self):
+        shortcircuit = self.is_active_shortcircuit
+        if shortcircuit is not None:
+            return shortcircuit
+
+        request_path = self._request.get_full_path()
+        return self.url and request_path.startswith(self.url)
+
+    @property
     @memoized
     def is_active(self):
-        if self.subtabs and any(st.is_active for st in self.subtabs):
-            return True
+        shortcircuit = self.is_active_shortcircuit
+        if shortcircuit is not None:
+            return shortcircuit
 
         request_path = self._request.get_full_path()
 
         if self.urls:
-            return (any(request_path.startswith(url) for url in self.urls) or
-                    self._current_url_name in self.subpage_url_names)
-
-        elif self.url:
-            return request_path.startswith(self.url)
-        else:
-            return False
+            if (any(request_path.startswith(url) for url in self.urls) or
+                    self._current_url_name in self.subpage_url_names):
+                return True
+        elif self.subtabs and any(st.is_active for st in self.subtabs):
+            return True
 
     @property
     @memoized
@@ -194,14 +210,12 @@ class UITab(object):
 class ProjectReportsTab(UITab):
     title = ugettext_noop("Project Reports")
     view = "corehq.apps.reports.views.default"
-   
+
     @property
-    def is_active(self):
+    def is_active_shortcircuit(self):
         # HACK. We need a more overarching way to avoid doing things this way
         if 'reports/adm' in self._request.get_full_path():
             return False
-
-        return super(ProjectReportsTab, self).is_active
 
     @property
     def is_viewable(self):
@@ -287,7 +301,12 @@ class CommTrackSetupTab(UITab):
         items = []
 
         # circular import
-        from corehq.apps.commtrack.views import ProductListView, NewProductView, EditProductView
+        from corehq.apps.commtrack.views import (
+            ProductListView,
+            NewProductView,
+            EditProductView,
+            DefaultConsumptionView,
+        )
         products_section = [
             {
                 'title': ProductListView.page_title,
@@ -303,6 +322,10 @@ class CommTrackSetupTab(UITab):
                     },
                 ]
             },
+            {
+                'title': DefaultConsumptionView.page_title,
+                'url': reverse(DefaultConsumptionView.urlname, args=[self.domain]),
+            }
         ]
         items.append([_("Products"), products_section])
 
@@ -502,6 +525,10 @@ class CloudcareTab(UITab):
 
     @property
     def is_viewable(self):
+        try:
+            ensure_request_has_privilege(self._request, privileges.CLOUDCARE)
+        except PermissionDenied:
+            return False
         return (self.domain
                 and (self.couch_user.can_edit_data() or self.couch_user.is_commcare_user())
                 and not self.project.commconnect_enabled)
@@ -513,9 +540,28 @@ class MessagingTab(UITab):
 
     @property
     def is_viewable(self):
-        return (self.project and not
-                (self.project.is_snapshot or
-                 self.couch_user.is_commcare_user()))
+        return (self.can_access_reminders or self.can_access_sms) and (
+            self.project and not (self.project.is_snapshot or
+                                  self.couch_user.is_commcare_user())
+        )
+
+    @property
+    @memoized
+    def can_access_sms(self):
+        try:
+            ensure_request_has_privilege(self._request, privileges.OUTBOUND_SMS)
+        except PermissionDenied:
+            return False
+        return True
+
+    @property
+    @memoized
+    def can_access_reminders(self):
+        try:
+            ensure_request_has_privilege(self._request, privileges.REMINDERS_FRAMEWORK)
+            return True
+        except PermissionDenied:
+            return False
 
     @property
     def sidebar_items(self):
@@ -526,87 +572,136 @@ class MessagingTab(UITab):
         def keyword_subtitle(keyword=None, **context):
             return keyword.keyword
 
-        if self.couch_user.username in [
-            'rhartford@dimagi.com',
-            'sshah@dimagi.com',
-            'biyeun@dimagi.com',
-            'rhartford+15@dimagi.com',
-        ]:
+        reminders_urls = []
+        if self.can_access_reminders:
+            if toggles.REMINDERS_UI_PREVIEW.enabled(self.couch_user.username):
+                from corehq.apps.reminders.views import (
+                    EditScheduledReminderView,
+                    CreateScheduledReminderView,
+                    RemindersListView,
+                )
+                reminders_list_url = reverse(RemindersListView.urlname, args=[self.domain])
+                edit_reminder_urlname = EditScheduledReminderView.urlname
+                new_reminder_urlname = CreateScheduledReminderView.urlname
+            else:
+                reminders_list_url = reverse('list_reminders', args=[self.domain])
+                edit_reminder_urlname = 'edit_complex'
+                new_reminder_urlname = 'add_complex_reminder_schedule'
+            reminders_urls.extend([
+                {
+                    'title': _("Reminders"),
+                    'url': reminders_list_url,
+                    'subpages': [
+                        {
+                            'title': reminder_subtitle,
+                            'urlname': edit_reminder_urlname
+                        },
+                        {
+                            'title': _("Schedule Reminder"),
+                            'urlname': new_reminder_urlname,
+                        },
+                        {
+                            'title': _("Schedule Multi Event Reminder"),
+                            'urlname': 'create_complex_reminder_schedule',
+                        },
+                    ],
+                },
+                {
+                    'title': _("Reminder Calendar"),
+                    'url': reverse('scheduled_reminders', args=[self.domain])
+                },
+            ])
+
+        can_use_survey = can_use_survey_reminders(self._request)
+        if can_use_survey:
+            from corehq.apps.reminders.views import KeywordsListView
+            if toggles.REMINDERS_UI_PREVIEW.enabled(self.couch_user.username):
+                keyword_list_url = reverse(KeywordsListView.urlname, args=[self.domain])
+            else:
+                keyword_list_url = reverse('manage_keywords', args=[self.domain])
+            reminders_urls.append({
+                'title': _("Keywords"),
+                'url': keyword_list_url,
+                'subpages': [
+                {
+                    'title': keyword_subtitle,
+                    'urlname': 'edit_keyword'
+                },
+                {
+                    'title': _("New Keyword"),
+                    'urlname': 'add_keyword',
+                },
+                ],
+            })
+
+        if self.can_access_reminders:
+            reminders_urls.append({
+                'title': _("Reminders in Error"),
+                'url': reverse('reminders_in_error', args=[self.domain])
+            })
+        items = []
+        messages_urls = []
+        if self.can_access_sms:
+            messages_urls.extend([
+                {
+                    'title': _('Compose SMS Message'),
+                    'url': reverse('sms_compose_message', args=[self.domain])
+                },
+            ])
+        if self.can_access_reminders:
+            messages_urls.extend([
+                {
+                    'title': _("Broadcast Messages"),
+                    'url': reverse('one_time_reminders', args=[self.domain]),
+                    'subpages': [
+                        {
+                            'title': _("Edit Broadcast"),
+                            'urlname': 'edit_one_time_reminder'
+                        },
+                        {
+                            'title': _("New Broadcast"),
+                            'urlname': 'add_one_time_reminder'
+                        },
+                        {
+                            'title': _("New Broadcast"),
+                            'urlname': 'copy_one_time_reminder'
+                        },
+                    ]
+                },
+            ])
+        if self.can_access_sms:
             from corehq.apps.sms.views import DomainSmsGatewayListView
-            from corehq.apps.reminders.views import (
-                EditScheduledReminderView,
-                CreateScheduledReminderView,
-                RemindersListView,
-                KeywordsListView,
-            )
-            sms_connectivity_url = reverse(DomainSmsGatewayListView.urlname, args=[self.domain])
-            reminders_list_url = reverse(RemindersListView.urlname, args=[self.domain])
-            edit_reminder_urlname = EditScheduledReminderView.urlname
-            new_reminder_urlname = CreateScheduledReminderView.urlname
-            keyword_list_url = reverse(KeywordsListView.urlname, args=[self.domain])
-        else:
-            sms_connectivity_url = reverse('list_domain_backends', args=[self.domain])
-            reminders_list_url = reverse('list_reminders', args=[self.domain])
-            edit_reminder_urlname = 'edit_complex'
-            new_reminder_urlname = 'add_complex_reminder_schedule'
-            keyword_list_url = reverse('manage_keywords', args=[self.domain])
+            if toggles.REMINDERS_UI_PREVIEW.enabled(self.couch_user.username):
+                sms_connectivity_url = reverse(DomainSmsGatewayListView.urlname, args=[self.domain])
+            else:
+                sms_connectivity_url = reverse('list_domain_backends', args=[self.domain])
+            messages_urls.extend([
+                {
+                    'title': _('Message Log'),
+                    'url': MessageLogReport.get_url(domain=self.domain)
+                },
+                {
+                    'title': _('SMS Connectivity'),
+                    'url': sms_connectivity_url,
+                    'subpages': [
+                        {
+                            'title': _('Add Connection'),
+                            'urlname': 'add_domain_backend'
+                        },
+                        {
+                            'title': _('Edit Connection'),
+                            'urlname': 'edit_domain_backend'
+                        },
+                    ]
+                },
+            ])
+        if messages_urls:
+            items.append((_("Messages"), messages_urls))
+        if reminders_urls:
+            items.append((_("Data Collection and Reminders"), reminders_urls))
 
-        from corehq.apps.sms.views import SubscribeSMSView
-
-        items = [
-            (_("Messages"), [
-                {'title': _('Compose SMS Message'),
-                 'url': reverse('sms_compose_message', args=[self.domain])},
-                {'title': _("Broadcast Messages"),
-                 'url': reverse('one_time_reminders', args=[self.domain]),
-                 'subpages': [
-                     {'title': _("Edit Broadcast"),
-                      'urlname': 'edit_one_time_reminder'},
-                     {'title': _("New Broadcast"),
-                      'urlname': 'add_one_time_reminder'},
-                     {'title': _("New Broadcast"),
-                      'urlname': 'copy_one_time_reminder'},
-                 ]},
-                {'title': _('Message Log'),
-                 'url': MessageLogReport.get_url(domain=self.domain)},
-                {'title': _('SMS Connectivity'),
-                 'url': sms_connectivity_url,
-                 'subpages': [
-                     {'title': _('Add Connection'),
-                      'urlname': 'add_domain_backend'},
-                     {'title': _('Edit Connection'),
-                      'urlname': 'edit_domain_backend'},
-                 ]},
-            ]),
-            (_("Data Collection and Reminders"), [
-                {'title': _("Reminders"),
-                 'url': reminders_list_url,
-                 'subpages': [
-                     {'title': reminder_subtitle,
-                      'urlname': edit_reminder_urlname},
-                     {'title': _("Schedule Reminder"),
-                      'urlname': new_reminder_urlname},
-                     {'title': _("Schedule Multi Event Reminder"),
-                      'urlname': 'create_complex_reminder_schedule'},
-                 ]},
-                {'title': _("Reminder Calendar"),
-                 'url': reverse('scheduled_reminders', args=[self.domain])},
-
-                {'title': _("Keywords"),
-                 'url': keyword_list_url,
-                 'subpages': [
-                     {'title': keyword_subtitle,
-                      'urlname': 'edit_keyword'},
-                     {'title': _("New Keyword"),
-                      'urlname': 'add_keyword'},
-                 ]},
-                #{'title': _("User Registration"),
-                 #'url': ...},
-                {'title': _("Reminders in Error"),
-                 'url': reverse('reminders_in_error', args=[self.domain])},
-            ]),
-        ]
         if self.project.commtrack_enabled:
+            from corehq.apps.sms.views import SubscribeSMSView
             items.append(
                 (_("CommTrack"), [
                     {'title': ugettext_lazy("Subscribe to SMS Reports"),
@@ -619,7 +714,7 @@ class MessagingTab(UITab):
                  'url': reverse('chat_contacts', args=[self.domain])}
             )
 
-        if self.project.survey_management_enabled:
+        if self.project.survey_management_enabled and can_use_survey:
             def sample_title(form=None, **context):
                 return form['name'].value
 
@@ -676,14 +771,25 @@ class ProjectUsersTab(UITab):
                                 self.couch_user.can_edit_web_users())
 
     @property
-    @memoized
-    def is_active(self):
+    def is_active_shortcircuit(self):
         if not self.domain:
             return False
+
+    @property
+    @memoized
+    def is_active(self):
         cloudcare_settings_url = reverse('cloudcare_app_settings', args=[self.domain])
         full_path = self._request.get_full_path()
         return (super(ProjectUsersTab, self).is_active
                 or full_path.startswith(cloudcare_settings_url))
+
+    @property
+    def can_view_cloudcare(self):
+        try:
+            ensure_request_has_privilege(self._request, privileges.CLOUDCARE)
+        except PermissionDenied:
+            return False
+        return self.couch_user.is_domain_admin()
 
     @property
     def sidebar_items(self):
@@ -699,7 +805,7 @@ class ProjectUsersTab(UITab):
                 else:
                     return None
 
-            from corehq.apps.users.views.mobile import EditCommCareUserView
+            from corehq.apps.users.views.mobile import EditCommCareUserView, ConfirmBillingAccountForExtraUsersView
             mobile_users_menu = [
                 {'title': _('Mobile Workers'),
                  'url': reverse('commcare_users', args=[self.domain]),
@@ -713,6 +819,8 @@ class ProjectUsersTab(UITab):
                       'urlname': 'upload_commcare_users'},
                      {'title': _('Transfer Mobile Workers'),
                       'urlname': 'user_domain_transfer'},
+                     {'title': ConfirmBillingAccountForExtraUsersView.page_title,
+                      'urlname': ConfirmBillingAccountForExtraUsersView.urlname},
                  ]},
                 {'title': _('Groups'),
                  'url': reverse('all_groups', args=[self.domain]),
@@ -726,7 +834,7 @@ class ProjectUsersTab(UITab):
                  ]}
             ]
 
-            if self.couch_user.is_domain_admin():
+            if self.can_view_cloudcare:
                 mobile_users_menu.append({
                     'title': _('CloudCare Permissions'),
                     'url': reverse('cloudcare_app_settings',
@@ -803,23 +911,21 @@ class ProjectSettingsTab(UITab):
                 }
             ])
 
-            try:
-                # so that corehq is not dependent on the billing submodule
-                from hqbilling.views import EditProjectBillingInfoView
-                project_info.append({
-                    'title': _(EditProjectBillingInfoView.page_title),
-                    'url': reverse(EditProjectBillingInfoView.urlname, args=[self.domain])
-                })
-            except ImportError:
-                pass
-
         from corehq.apps.domain.views import EditMyProjectSettingsView
         project_info.append({
             'title': _(EditMyProjectSettingsView.page_title),
             'url': reverse(EditMyProjectSettingsView.urlname, args=[self.domain])
         })
 
-        if user_is_admin:
+        can_view_orgs = (user_is_admin
+                         and self.project and self.project.organization)
+        if can_view_orgs:
+            try:
+                ensure_request_has_privilege(self._request, privileges.CROSS_PROJECT_REPORTS)
+            except PermissionDenied:
+                can_view_orgs = False
+
+        if can_view_orgs:
             from corehq.apps.domain.views import OrgSettingsView
             project_info.append({
                 'title': _(OrgSettingsView.page_title),
@@ -832,16 +938,7 @@ class ProjectSettingsTab(UITab):
             from corehq.apps.domain.views import (
                 BasicCommTrackSettingsView,
                 AdvancedCommTrackSettingsView,
-                DomainSubscriptionView,
-                SelectPlanView,
             )
-
-            subscription = [
-                {
-                    'title': DomainSubscriptionView.page_title,
-                    'url': reverse(DomainSubscriptionView.urlname, args=[self.domain]),
-                },
-            ]
 
             if self.project.commtrack_enabled:
                 commtrack_settings = [
@@ -884,7 +981,26 @@ class ProjectSettingsTab(UITab):
                  ]}
             ])
             items.append((_('Project Administration'), administration))
-            if toggle.shortcuts.toggle_enabled(toggles.ACCOUNTING_PREVIEW, self.couch_user.username):
+
+        from corehq.apps.users.models import WebUser
+        if isinstance(self.couch_user, WebUser):
+            user_is_billing_admin, billing_account = BillingAccountAdmin.get_admin_status_and_account(
+                self.couch_user, self.domain)
+            if user_is_billing_admin or self.couch_user.is_superuser:
+                from corehq.apps.domain.views import DomainSubscriptionView, EditExistingBillingAccountView
+                subscription = [
+                    {
+                        'title': DomainSubscriptionView.page_title,
+                        'url': reverse(DomainSubscriptionView.urlname, args=[self.domain]),
+                    },
+                ]
+                if billing_account is not None:
+                    subscription.append(
+                        {
+                            'title':  EditExistingBillingAccountView.page_title,
+                            'url': reverse(EditExistingBillingAccountView.urlname, args=[self.domain]),
+                        },
+                    )
                 items.append((_('Subscription'), subscription))
 
         if self.couch_user.is_superuser:
@@ -898,6 +1014,8 @@ class ProjectSettingsTab(UITab):
                 'url': reverse(EditInternalCalculationsView.urlname, args=[self.domain])
             }]
             items.append((_('Internal Data (Dimagi Only)'), internal_admin))
+
+
 
         return items
 
@@ -1012,7 +1130,14 @@ class AccountingTab(UITab):
 
     @property
     def is_viewable(self):
-        return self.couch_user and self.couch_user.is_superuser
+        roles = Role.objects.filter(slug=privileges.ACCOUNTING_ADMIN)
+        if not roles:
+            return False
+        privilege = roles[0].instantiate({})
+        try:
+            return self._request.user.prbac_role.has_privilege(privilege)
+        except UserRole.DoesNotExist:
+            return False
 
 
 class SMSAdminTab(UITab):
@@ -1084,10 +1209,14 @@ class AdminTab(UITab):
             format_submenu_context(mark_for_escaping(_("Commands")), url=reverse("management_commands")),
 #            format_submenu_context(mark_for_escaping("HQ Announcements"),
 #                url=reverse("default_announcement_admin")),
-            format_submenu_context(AccountingTab.title, url=reverse('accounting_default')),
         ]
         try:
-            submenu_context.append(format_submenu_context(mark_for_escaping(_("Billing")),
+            if AccountingTab(self._request, self._current_url_name).is_viewable:
+                submenu_context.append(format_submenu_context(AccountingTab.title, url=reverse('accounting_default')))
+        except Exception:
+            pass
+        try:
+            submenu_context.append(format_submenu_context(mark_for_escaping(_("Old SMS Billing")),
                 url=reverse("billing_default")))
         except Exception:
             pass

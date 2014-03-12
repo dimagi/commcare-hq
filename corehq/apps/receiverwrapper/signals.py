@@ -1,5 +1,5 @@
 from casexml.apps.case.signals import case_post_save
-from receiver.signals import successful_form_received
+from couchforms.signals import successful_form_received
 
 
 def create_form_repeat_records(sender, xform, **kwargs):

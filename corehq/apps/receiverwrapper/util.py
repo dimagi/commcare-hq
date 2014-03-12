@@ -1,7 +1,7 @@
 import re
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from couchforms.models import DefaultAuthContext
-import receiver
+import couchforms
 
 
 def get_submit_url(domain, app_id=None):
@@ -14,7 +14,7 @@ def get_submit_url(domain, app_id=None):
 def submit_form_locally(instance, domain, **kwargs):
     # intentionally leave these unauth'd for now
     kwargs['auth_context'] = kwargs.get('auth_context') or DefaultAuthContext()
-    response = receiver.SubmissionPost(
+    response = couchforms.SubmissionPost(
         domain=domain,
         instance=instance,
         **kwargs

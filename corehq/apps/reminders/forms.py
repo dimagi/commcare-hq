@@ -279,7 +279,7 @@ class ComplexCaseReminderForm(Form):
     nickname = CharField(error_messages={"required":"Please enter the name of this reminder definition."})
     start_condition_type = CharField()
     case_type = CharField(required=False)
-    method = ChoiceField(choices=METHOD_CHOICES)
+    method = ChoiceField(choices=('sms', 'SMS'))
     recipient = ChoiceField(choices=RECIPIENT_CHOICES)
     start_match_type = ChoiceField(choices=MATCH_TYPE_DISPLAY_CHOICES)
     start_choice = ChoiceField(choices=START_CHOICES)
@@ -311,6 +311,7 @@ class ComplexCaseReminderForm(Form):
     user_group_id = CharField(required=False)
 
     def __init__(self, *args, **kwargs):
+        can_use_survey = kwargs.pop('can_use_survey', False)
         super(ComplexCaseReminderForm, self).__init__(*args, **kwargs)
         if "initial" in kwargs:
             initial = kwargs["initial"]
@@ -335,6 +336,9 @@ class ComplexCaseReminderForm(Form):
                 self.initial["start_choice"] = START_IMMEDIATELY
             else:
                 self.initial["start_choice"] = START_ON_DATE
+
+        if can_use_survey:
+            self.fields['method'].choices = METHOD_CHOICES
         
         enable_advanced_time_choices = False
         # Populate events
@@ -824,7 +828,6 @@ class BaseScheduleCaseReminderForm(forms.Form):
         label="Send",
         choices=(
             (METHOD_SMS, "SMS"),
-            (METHOD_SMS_SURVEY, "SMS Survey"),
         ),
     )
 
@@ -915,7 +918,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
         label=_("For Surveys, force answers to affect case sending the survey."),
     )
 
-    def __init__(self, data=None, is_previewer=False, domain=None, is_edit=False, *args, **kwargs):
+    def __init__(self, data=None, is_previewer=False, domain=None, is_edit=False, can_use_survey=False, *args, **kwargs):
         self.initial_event = {
             'day_num': 1,
             'fire_time_type': FIRE_TIME_DEFAULT,
@@ -936,7 +939,12 @@ class BaseScheduleCaseReminderForm(forms.Form):
         self.domain = domain
         self.is_edit = is_edit
 
-        if is_previewer:
+        if can_use_survey:
+            method_choices = copy.copy(self.fields['method'].choices)
+            method_choices.append((METHOD_SMS_SURVEY, "SMS Survey"))
+            self.fields['method'].choices = method_choices
+
+        if is_previewer and can_use_survey:
             method_choices = copy.copy(self.fields['method'].choices)
             method_choices.extend([
                 (METHOD_IVR_SURVEY, "IVR Survey"),
@@ -1826,6 +1834,7 @@ def clean_selection(value):
     else:
         return value
 
+
 class OneTimeReminderForm(Form):
     _cchq_domain = None
     send_type = ChoiceField(choices=NOW_OR_LATER)
@@ -1835,9 +1844,17 @@ class OneTimeReminderForm(Form):
     recipient_type = ChoiceField(choices=ONE_TIME_RECIPIENT_CHOICES)
     case_group_id = CharField(required=False)
     user_group_id = CharField(required=False)
-    content_type = ChoiceField(choices=CONTENT_CHOICES)
+    content_type = ChoiceField(choices=(
+        (METHOD_SMS, _("SMS Message")),
+    ))
     message = TrimmedCharField(required=False)
     form_unique_id = CharField(required=False)
+
+    def __init__(self, *args, **kwargs):
+        can_use_survey = kwargs.pop('can_use_survey', False)
+        super(OneTimeReminderForm, self).__init__(*args, **kwargs)
+        if can_use_survey:
+            self.fields['content_type'].choices = CONTENT_CHOICES
 
     def clean_recipient_type(self):
         return clean_selection(self.cleaned_data.get("recipient_type"))

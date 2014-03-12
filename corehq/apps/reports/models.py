@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import logging
+from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.utils import html
 from django.utils.safestring import mark_safe
@@ -8,11 +9,12 @@ from corehq import Domain
 from corehq.apps import reports
 from corehq.apps.app_manager.models import get_app
 from corehq.apps.app_manager.util import ParentCasePropertyBuilder
+from corehq.apps.domain.middleware import CCHQPRBACMiddleware
 from corehq.apps.reports.display import xmlns_to_name
 from couchdbkit.ext.django.schema import *
 from corehq.apps.reports.exportfilters import form_matches_users, is_commconnect_form, default_form_filter
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
-from couchexport.models import SavedExportSchema, GroupExportConfiguration
+from couchexport.models import SavedExportSchema, GroupExportConfiguration, FakeSavedExportSchema
 from couchexport.transforms import couch_to_excel_datetime, identity
 from couchexport.util import SerializableFunction
 import couchforms
@@ -29,6 +31,8 @@ import calendar
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 from dimagi.utils.logging import notify_exception
+from dimagi.utils.web import get_url_base
+from django_prbac.exceptions import PermissionDenied
 
 
 class HQUserType(object):
@@ -50,6 +54,11 @@ class HQUserType(object):
         return [HQUserToggle(i, defaults[i]) for i in range(len(cls.human_readable))]
 
     @classmethod
+    def all_but_users(cls):
+        no_users = [False, True, True, True]
+        return [HQUserToggle(i, no_users[i]) for i in range(len(cls.human_readable))]
+
+    @classmethod
     def use_filter(cls, ufilter):
         return [HQUserToggle(i, unicode(i) in ufilter) for i in range(len(cls.human_readable))]
 
@@ -58,7 +67,7 @@ class HQToggle(object):
     type = None
     show = False
     name = None
-    
+
     def __init__(self, type, show, name):
         self.type = type
         self.name = name
@@ -74,7 +83,7 @@ class HQToggle(object):
 
 
 class HQUserToggle(HQToggle):
-    
+
     def __init__(self, type, show):
         name = _(HQUserType.human_readable[type])
         super(HQUserToggle, self).__init__(type, show, name)
@@ -199,7 +208,7 @@ class ReportConfig(Document):
 
         for key in self._extra_json_properties:
             json[key] = getattr(self, key)
-        
+
         return json
 
     @property
@@ -218,7 +227,7 @@ class ReportConfig(Document):
 
     def get_date_range(self):
         """Duplicated in reports.config.js"""
-        
+
         date_range = self.date_range
 
         # allow old report email notifications to represent themselves as a
@@ -285,7 +294,7 @@ class ReportConfig(Document):
     def url(self):
         try:
             from django.core.urlresolvers import reverse
-            
+
             return reverse(self._dispatcher.name(), kwargs=self.view_kwargs) \
                     + '?' + self.query_string
         except Exception:
@@ -364,6 +373,9 @@ class ReportConfig(Document):
 
         request.GET = QueryDict(self.query_string + '&filterSet=true')
 
+        # Make sure the request gets processed by PRBAC Middleware
+        CCHQPRBACMiddleware.process_request(request)
+
         try:
             response = self._dispatcher.dispatch(request, render_as='email',
                 **self.view_kwargs)
@@ -373,6 +385,19 @@ class ReportConfig(Document):
             else:
                 file_obj = None
             return json.loads(response.content)['report'], file_obj
+        except PermissionDenied:
+            return _("We are sorry, but your saved report '%(config_name)s' "
+                     "is no longer accessible because your subscription does "
+                     "not allow Custom Reporting. Please talk to your Project "
+                     "Administrator about enabling Custom Reports. If you "
+                     "want CommCare HQ to stop sending this message, please "
+                     "visit %(saved_reports_url)s to remove this "
+                     "Emailed Report.") % {
+                         'config_name': self.name,
+                         'saved_reports_url': "%s%s" % (
+                             get_url_base(), reverse(
+                                 'saved_reports', args=[request.domain])),
+                     }, None
         except Exception as e:
             notify_exception(None, "Error generating report")
             return _("An error occurred while generating this report."), None
@@ -403,7 +428,7 @@ class ReportNotification(Document):
             return False
         except AttributeError:
             return True
-        
+
     @classmethod
     def by_domain_and_owner(cls, domain, owner_id, stale=True, **kwargs):
         if stale:
@@ -668,6 +693,29 @@ class CaseExportSchema(HQExportSchema):
             props |= set(builder.get_properties(self.case_type))
         return props
 
+
+class FakeFormExportSchema(FakeSavedExportSchema):
+
+    def remap_tables(self, tables):
+        # kill the weird confusing stuff, and rename the main table to something sane
+        tables = _apply_removal(tables, ('#|#export_tag|#', '#|location_|#', '#|history|#'))
+        return _apply_mapping(tables, {
+            '#': 'Forms',
+        })
+
+
+def _apply_mapping(export_tables, mapping_dict):
+    def _clean(tabledata):
+        def _clean_tablename(tablename):
+            return mapping_dict.get(tablename, tablename)
+        return (_clean_tablename(tabledata[0]), tabledata[1])
+    return map(_clean, export_tables)
+
+
+def _apply_removal(export_tables, removal_list):
+    return [tabledata for tabledata in export_tables if not tabledata[0] in removal_list]
+
+
 class HQGroupExportConfiguration(GroupExportConfiguration):
     """
     HQ's version of a group export, tagged with a domain
@@ -689,6 +737,21 @@ class HQGroupExportConfiguration(GroupExportConfiguration):
             custom_export = self._get_custom(custom)
             if custom_export:
                 yield _rewrap(custom_export)
+
+    def exports_of_type(self, type):
+        return self._saved_exports_from_configs([
+            config for config, schema in self.all_exports if schema.type == type
+        ])
+
+    @property
+    @memoized
+    def form_exports(self):
+        return self.exports_of_type('form')
+
+    @property
+    @memoized
+    def case_exports(self):
+        return self.exports_of_type('case')
 
     @classmethod
     def by_domain(cls, domain):

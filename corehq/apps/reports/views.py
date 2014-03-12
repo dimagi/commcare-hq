@@ -23,6 +23,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.templatetags.case_tags import case_inline_display
 from couchdbkit.exceptions import ResourceNotFound
 from casexml.apps.case.xml import V2
+from corehq.apps.export.exceptions import BadExportConfiguration
 from corehq.apps.reports.exportfilters import default_form_filter
 import couchexport
 from couchexport import views as couchexport_views
@@ -54,7 +55,7 @@ from corehq.apps.export.custom_export_helpers import CustomExportHelper
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.export import export_cases_and_referrals
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher
-from corehq.apps.reports.models import ReportConfig, ReportNotification
+from corehq.apps.reports.models import ReportConfig, ReportNotification, FakeFormExportSchema
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.tasks import create_metadata_export
 from corehq.apps.reports import util
@@ -167,12 +168,11 @@ def export_data(req, domain):
     errors_filter = instances if not include_errors else None
 
     kwargs['filter'] = couchexport.util.intersect_functions(filter, errors_filter)
-
     if kwargs['format'] == 'raw':
         resp = export_raw_data([domain, export_tag], filename=export_tag)
     else:
         try:
-            resp = export_data_shared([domain,export_tag], **kwargs)
+            resp = export_data_shared([domain, export_tag], **kwargs)
         except UnsupportedExportFormat as e:
             return HttpResponseBadRequest(e)
     if resp:
@@ -211,7 +211,6 @@ def export_default_or_custom_data(request, domain, export_id=None, bulk_export=F
     """
     Export data from a saved export schema
     """
-
     deid = request.GET.get('deid') == 'true'
     if deid:
         return _export_deid(request, domain, export_id, bulk_export=bulk_export)
@@ -259,6 +258,9 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
                 return HttpResponseForbidden()
         except ResourceNotFound:
             raise Http404()
+        except BadExportConfiguration, e:
+            return HttpResponseBadRequest(str(e))
+
     elif safe_only:
         return HttpResponseForbidden()
     else:
@@ -274,10 +276,13 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
         assert(export_tag[0] == domain)
         # hack - also filter instances here rather than mess too much with trying to make this
         # look more like a FormExportSchema
+        export_class = FakeSavedExportSchema
         if export_type == 'form':
             filter &= SerializableFunction(instances)
+            export_class = FakeFormExportSchema
 
-        export_object = FakeSavedExportSchema(index=export_tag)
+        export_object = export_class(index=export_tag)
+
 
     if export_type == 'form':
         _filter = filter
@@ -319,7 +324,7 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
 @require_GET
 def hq_download_saved_export(req, domain, export_id):
     export = SavedBasicExport.get(export_id)
-    # quasi-security hack: the first key of the index is always assumed 
+    # quasi-security hack: the first key of the index is always assumed
     # to be the domain
     assert domain == export.configuration.index[0]
     return couchexport_views.download_saved_export(req, export_id)
@@ -382,7 +387,7 @@ def add_config(request, domain=None):
     POST = json.loads(request.raw_post_data)
     if 'name' not in POST or not POST['name']:
         return HttpResponseBadRequest()
-    
+
     user_configs = ReportConfig.by_domain_and_owner(domain, user_id)
     if not POST.get('_id') and POST['name'] in [c.name for c in user_configs]:
         return HttpResponseBadRequest()
@@ -406,7 +411,7 @@ def add_config(request, domain=None):
     exclude_filters = ['startdate', 'enddate']
     for field in exclude_filters:
         POST['filters'].pop(field, None)
-    
+
     config = ReportConfig.get_or_create(POST.get('_id', None))
 
     if config.owner_id:
@@ -493,13 +498,13 @@ def delete_config(request, domain, config_id):
         raise Http404()
 
     config.delete()
-    
+
     touch_saved_reports_views(request.couch_user, domain)
     return HttpResponse()
 
 
 @login_and_domain_required
-def edit_scheduled_report(request, domain, scheduled_report_id=None, 
+def edit_scheduled_report(request, domain, scheduled_report_id=None,
                           template="reports/edit_scheduled_report.html"):
     from corehq.apps.users.models import WebUser
     from corehq.apps.reports.forms import ScheduledReportForm
@@ -515,7 +520,7 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
             'section_name': ProjectReport.section_name,
         }
     }
-    
+
     user_id = request.couch_user._id
 
     configs = ReportConfig.by_domain_and_owner(domain, user_id)
@@ -544,7 +549,7 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
     kwargs = {'initial': initial}
     args = (request.POST,) if request.method == "POST" else ()
     form = ScheduledReportForm(*args, **kwargs)
-    
+
     form.fields['config_ids'].choices = config_choices
     form.fields['recipient_emails'].choices = web_user_emails
 
@@ -595,7 +600,7 @@ def delete_scheduled_report(request, domain, scheduled_report_id):
 def send_test_scheduled_report(request, domain, scheduled_report_id):
     from corehq.apps.reports.tasks import send_report
     from corehq.apps.users.models import CouchUser, CommCareUser, WebUser
-    
+
     user_id = request.couch_user._id
 
     notification = ReportNotification.get(scheduled_report_id)
@@ -624,7 +629,7 @@ def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
     """
     # todo: clean up this API?
     from django.http import HttpRequest
-    
+
     request = HttpRequest()
     request.couch_user = couch_user
     request.user = couch_user.get_django_user()
@@ -684,7 +689,7 @@ def view_scheduled_report(request, domain, scheduled_report_id):
 @login_and_domain_required
 @require_GET
 def case_details(request, domain, case_id):
-    timezone = util.get_timezone(request.couch_user.user_id, domain)
+    timezone = util.get_timezone(request.couch_user, domain)
 
     try:
         case = _get_case_or_404(domain, case_id)
@@ -705,12 +710,12 @@ def case_details(request, domain, case_id):
         username = CommCareUser.get_by_user_id(case.user_id, domain).raw_username
     except Exception:
         username = None
-    
+
     return render(request, "reports/reportdata/case_details.html", {
         "domain": domain,
         "case_id": case_id,
         "case": case,
-        "username": username, 
+        "username": username,
         "owner_name": owner_name,
         "slug": CaseListReport.slug,
         "report": dict(
@@ -828,7 +833,7 @@ def download_cases(request, domain):
 
 
 def _get_form_context(request, domain, instance_id):
-    timezone = util.get_timezone(request.couch_user.user_id, domain)
+    timezone = util.get_timezone(request.couch_user, domain)
     instance = _get_form_or_404(instance_id)
     try:
         assert domain == instance.domain
@@ -870,7 +875,7 @@ def form_data(request, domain, instance_id):
         form_name = context['instance'].form["@name"]
     except KeyError:
         form_name = "Untitled Form"
-   
+
     context.update({
         "slug": inspect.SubmitHistory.slug,
         "form_name": form_name,
@@ -917,14 +922,14 @@ def download_attachment(request, domain, instance_id):
 def archive_form(request, domain, instance_id):
     instance = _get_form_or_404(instance_id)
     assert instance.domain == domain
-    if instance.doc_type == "XFormInstance": 
+    if instance.doc_type == "XFormInstance":
         instance.archive(user=request.couch_user._id)
         notif_msg = _("Form was successfully archived.")
     elif instance.doc_type == "XFormArchived":
         notif_msg = _("Form was already archived.")
     else:
         notif_msg = _("Can't archive documents of type %s. How did you get here??") % instance.doc_type
-    
+
     params = {
         "notif": notif_msg,
         "undo": _("Undo"),
@@ -935,7 +940,7 @@ def archive_form(request, domain, instance_id):
         <form id="{id}" action="{url}" method="POST"></form>""" if instance.doc_type == "XFormArchived" else '%(notif)s'
     msg = msg_template.format(**params)
     messages.success(request, mark_safe(msg), extra_tags='html')
-    
+
     redirect = request.META.get('HTTP_REFERER')
     if not redirect:
         redirect = inspect.SubmitHistory.get_url(domain)
@@ -970,7 +975,8 @@ def unarchive_form(request, domain, instance_id):
     if not redirect:
         redirect = reverse('render_form_data', args=[domain, instance_id])
     return HttpResponseRedirect(redirect)
-    
+
+
 # Weekly submissions by xmlns
 def mk_date_range(start=None, end=None, ago=timedelta(days=7), iso=False):
     if isinstance(end, basestring):
@@ -985,7 +991,6 @@ def mk_date_range(start=None, end=None, ago=timedelta(days=7), iso=False):
         return json_format_datetime(start), json_format_datetime(end)
     else:
         return start, end
-
 
 
 @login_and_domain_required

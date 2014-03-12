@@ -1,4 +1,3 @@
-{% load url from future %}
 {% load i18n %}
 {% load xforms_extras %}
 <div id="languages-and-translations" class="tab-pane">
@@ -100,7 +99,7 @@
                                 </label>
                                 <div class="controls">
                                     {% if edit %}
-                                        <textarea class="span3" name="success_message">{{ app.success_message|trans:langs }}</textarea>
+                                        <textarea class="span3" name="success_message">{{ app.success_message|clean_trans:langs }}</textarea>
                                     {% else %}
                                         <p>{{ app.success_message|trans:langs }}</p>
                                     {% endif %}

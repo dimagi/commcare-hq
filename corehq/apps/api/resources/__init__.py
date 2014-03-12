@@ -1,6 +1,7 @@
 from tastypie.resources import Resource
 from tastypie.exceptions import InvalidSortError
 
+
 class dict_object(object):
     def __init__(self, dict):
         self.dict = dict
@@ -10,6 +11,7 @@ class dict_object(object):
 
     def __repr__(self):
         return 'dict_object(%r)' % self.dict
+
 
 class JsonResource(Resource):
     """
@@ -27,6 +29,7 @@ class JsonResource(Resource):
             format = 'application/json'
 
         return format
+
 
 class SimpleSortableResourceMixin(object):
     '''

@@ -3,6 +3,7 @@ from corehq.apps.app_manager.tests.util import add_build
 from corehq.apps.app_manager.util import add_odk_profile_after_build
 from dimagi.utils.decorators.memoized import memoized
 import os
+import codecs
 
 from django.test import TestCase
 from corehq.apps.app_manager.models import Application, DetailColumn, import_app, APP_V1, ApplicationBase, Module
@@ -11,7 +12,7 @@ from corehq.apps.domain.shortcuts import create_domain
 
 
 class AppManagerTest(TestCase):
-    with open(os.path.join(os.path.dirname(__file__), "data", "itext_form.xml")) as f:
+    with codecs.open(os.path.join(os.path.dirname(__file__), "data", "itext_form.xml"), encoding='utf-8') as f:
         xform_str = f.read()
 
     def setUp(self):

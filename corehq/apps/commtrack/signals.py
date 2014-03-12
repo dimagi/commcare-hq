@@ -4,7 +4,7 @@ from django.dispatch import Signal
 from casexml.apps.case.signals import cases_received
 from casexml.apps.case.xform import get_case_updates
 from corehq.apps.commtrack import const
-from corehq.apps.commtrack.const import is_commtrack_form, RequisitionStatus
+from corehq.apps.commtrack.const import is_supply_point_form, RequisitionStatus
 from corehq.apps.commtrack.models import RequisitionCase, CommtrackConfig, SupplyPointCase
 from corehq.apps.commtrack.util import bootstrap_commtrack_settings_if_necessary
 from corehq.apps.domain.signals import commcare_domain_post_save
@@ -12,7 +12,7 @@ from corehq.apps.locations.models import Location
 from corehq.apps.sms.api import send_sms_to_verified_number
 from dimagi.utils import create_unique_filter
 from corehq.apps.commtrack.processing import process_stock_signal_catcher
-from receiver.signals import successful_form_received
+from couchforms.signals import successful_form_received
 from custom.openlmis.commtrack import requisition_receipt, requisition_approved
 
 supply_point_modified = Signal(providing_args=['supply_point', 'created'])
@@ -98,11 +98,6 @@ def send_notifications(xform, cases):
 
 
 def raise_events(xform, cases):
-    supply_points = [SupplyPointCase.wrap(c._doc) for c in cases if c.type == const.SUPPLY_POINT_CASE_TYPE]
-    case_updates = get_case_updates(xform)
-    for sp in supply_points:
-        created = any(filter(lambda update: update.id == sp._id and update.creates_case(), case_updates))
-        supply_point_modified.send(sender=None, supply_point=sp, created=created)
     requisition_cases = [RequisitionCase.wrap(c._doc) for c in cases if c.type == const.REQUISITION_CASE_TYPE]
     if requisition_cases and requisition_cases[0].requisition_status == RequisitionStatus.APPROVED:
         requisition_approved.send(sender=None, requisitions=requisition_cases)
@@ -112,14 +107,21 @@ def raise_events(xform, cases):
     if requisition_cases and requisition_cases[0].requisition_status == RequisitionStatus.REQUESTED:
         requisition_modified.send(sender=None, cases=requisition_cases)
 
-def commtrack_processing(sender, xform, cases, **kwargs):
-    if is_commtrack_form(xform):
+
+def raise_supply_point_events(xform, cases):
+    supply_points = [SupplyPointCase.wrap(c._doc) for c in cases if c.type == const.SUPPLY_POINT_CASE_TYPE]
+    case_updates = get_case_updates(xform)
+    for sp in supply_points:
+        created = any(filter(lambda update: update.id == sp._id and update.creates_case(), case_updates))
+        supply_point_modified.send(sender=None, supply_point=sp, created=created)
+
+
+def supply_point_processing(sender, xform, cases, **kwargs):
+    if is_supply_point_form(xform):
         attach_locations(xform, cases)
-        send_notifications(xform, cases)
-        raise_events(xform, cases)
+        raise_supply_point_events(xform, cases)
 
-
-cases_received.connect(commtrack_processing)
+cases_received.connect(supply_point_processing)
 
 
 def bootstrap_commtrack_settings_if_necessary_signal(sender, **kwargs):

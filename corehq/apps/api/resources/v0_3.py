@@ -1,4 +1,4 @@
-from restkit import ResourceNotFound
+from couchdbkit import ResourceNotFound
 from corehq.apps.cloudcare.api import es_filter_cases
 from tastypie import fields
 

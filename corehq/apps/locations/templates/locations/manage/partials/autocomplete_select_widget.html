@@ -1,4 +1,5 @@
 {% load hq_shared_tags %}
+{% load i18n %}
 <link href="{% static 'hqwebapp/js/lib/select2/select2.css' %}" rel="stylesheet"/>
 <script src="{% static 'hqwebapp/js/lib/select2/select2.js' %}"></script>
 <script>
@@ -34,8 +35,15 @@ $("#{{ id }}").select2({
     formatSelection: function(e) { return e.name; }
 });
 
+$('#clear_location').click(function() {
+    $("#{{ id }}").val('');
+    $("#commtrack_form").submit();
+})
+
 });
 
 </script>
-
 <input type="hidden" id="{{ id }}" name="{{ name }}" value="{{ value }}" style="width: 30em;" />
+{% if value and is_admin %}
+    <button id="clear_location" class="btn btn-danger"><i class="icon-remove"></i> {% trans 'Delete' %}</button>
+{% endif %}

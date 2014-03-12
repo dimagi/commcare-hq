@@ -11,7 +11,6 @@ from casexml.apps.stock import const as stockconst
 from casexml.apps.stock.consumption import ConsumptionConfiguration
 from casexml.apps.stock.models import StockReport as DbStockReport, StockTransaction as DbStockTransaction
 from casexml.apps.case.xml import V2
-from corehq import Domain
 from corehq.apps.commtrack import const
 from corehq.apps.consumption.shortcuts import get_default_consumption
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -44,12 +43,12 @@ REQUISITION_ACTION_TYPES = [
     # request a product
     RequisitionActions.REQUEST,
 
-    # approve a requisition (it is allowed to be packed)
-    # using this is configurable and optional
+    # approve a requisition (it is allowed to be fulfilled)
+    # this is optional and depends on app config
     RequisitionActions.APPROVAL,
 
-    # pack a requisition (the order is ready)
-    RequisitionActions.PACK,
+    # fulfill a requisition (order is ready)
+    RequisitionActions.FULFILL,
 
     # receive the sock (closes the requisition)
     # NOTE: it's not totally clear if this is necessary or
@@ -162,44 +161,69 @@ class Product(Document):
         return [row['id'] for row in view_results]
 
 
-def product_fixture_generator(user, version, last_sync):
-    if not user.domain:
-        return []
-    domain = Domain.get_by_name(user.domain)
-    if not domain or not Domain.get_by_name(user.domain).commtrack_enabled:
-        return []
+    @classmethod
+    def count_by_domain(cls, domain):
+        """
+        Gets count of products in a domain
+        """
+        # todo: we should add a reduce so we can get this out of couch
+        return len(cls.ids_by_domain(domain))
 
-    root = ElementTree.Element('fixture',
-                               attrib={'id': 'commtrack:products',
-                                       'user_id': user.user_id})
-    products = ElementTree.Element('products')
-    root.append(products)
-    for product_data in Product.by_domain(user.domain):
-        product = (ElementTree.Element('product',
-                                       {'id': product_data.get_id}))
-        products.append(product)
-        product_fields = ['name',
-                          'unit',
-                          'code',
-                          'description',
-                          'category',
-                          'program_id',
-                          'cost']
-        for product_field in product_fields:
-            field = ElementTree.Element(product_field)
-            field.text = unicode(getattr(product_data, product_field) or '')
-            product.append(field)
 
-    return [root]
+    @classmethod
+    def _csv_attrs(cls):
+        return [
+            '_id',
+            'name',
+            'unit',
+            'code_',
+            'description',
+            'category',
+            'program_id',
+            ('cost', lambda a: Decimal(a) if a else None),
+        ]
+
+    def to_csv(self):
+        def _encode_if_needed(val):
+            return val.encode("utf8") if isinstance(val, unicode) else val
+
+        return [_encode_if_needed(getattr(self, attr[0] if isinstance(attr, tuple) else attr))
+                for attr in self._csv_attrs()]
+
+    @classmethod
+    def from_csv(cls, row):
+        if not row:
+            return None
+        id, row = row[0], row[1:]
+        if id:
+            p = cls.get(id)
+        else:
+            p = cls()
+        for i, attr in enumerate(cls._csv_attrs()[1:]):
+            try:
+                val = row[i].decode('utf-8')
+            except IndexError:
+                break
+            else:
+                if isinstance(attr, tuple):
+                    attr, f = attr
+                    val = f(val)
+                setattr(p, attr, val)
+
+        return p
 
 
 class CommtrackActionConfig(DocumentSchema):
-    action = StringProperty() # one of the base stock action types (see StockActions enum)
-    subaction = StringProperty() # (optional) to further distinguish different kinds of the base action
-        # (i.e., separately tracking consumption as 'dispensed' or 'lost'). note that when the system
-        # infers consumption/receipts from reported stock, it will be marked here as a subaction
-    _keyword = StringProperty() # sms code
-    caption = StringProperty() # display title
+    # one of the base stock action types (see StockActions enum)
+    action = StringProperty()
+    # (optional) to further distinguish different kinds of the base action
+    # (i.e., separately tracking consumption as 'dispensed' or 'lost'). note that when the system
+    # infers consumption/receipts from reported stock, it will be marked here as a subaction
+    subaction = StringProperty()
+    # sms code
+    _keyword = StringProperty()
+    # display title
+    caption = StringProperty()
 
     @classmethod
     def wrap(cls, data):
@@ -238,14 +262,23 @@ class CommtrackActionConfig(DocumentSchema):
     def is_requisition(self):
         return self.action in REQUISITION_ACTION_TYPES
 
+
 class LocationType(DocumentSchema):
     name = StringProperty()
+    code = StringProperty()
     allowed_parents = StringListProperty()
     administrative = BooleanProperty()
 
+    @classmethod
+    def wrap(cls, obj):
+        from corehq.apps.commtrack.util import unicode_slug
+        if not obj.get('code'):
+            obj['code'] = unicode_slug(obj['name'])
+        return super(LocationType, cls).wrap(obj)
+
+
 class CommtrackRequisitionConfig(DocumentSchema):
     # placeholder class for when this becomes fancier
-
     enabled = BooleanProperty(default=False)
 
     # requisitions have their own sets of actions
@@ -253,15 +286,14 @@ class CommtrackRequisitionConfig(DocumentSchema):
 
     def get_sorted_actions(self):
         def _action_key(a):
-
             # intentionally fails hard if misconfigured.
-            const.ORDERED_REQUISITION_ACTIONS.index(a.action_type)
+            const.ORDERED_REQUISITION_ACTIONS.index(a.action)
 
         return sorted(self.actions, key=_action_key)
 
     def get_next_action(self, previous_action_type):
         sorted_actions = self.get_sorted_actions()
-        sorted_types = [a.action_type for a in sorted_actions]
+        sorted_types = [a.action for a in sorted_actions]
         next_index = sorted_types.index(previous_action_type) + 1
         return sorted_actions[next_index] if next_index < len(sorted_actions) else None
 
@@ -315,7 +347,6 @@ class StockRestoreConfig(DocumentSchema):
 
 
 class CommtrackConfig(Document):
-
     domain = StringProperty()
 
     # supported stock actions for this commtrack domain
@@ -335,6 +366,8 @@ class CommtrackConfig(Document):
     # configured on Advanced Settings page
     use_auto_emergency_levels = BooleanProperty(default=False)
 
+    sync_location_fixtures = BooleanProperty(default=False)
+    sync_consumption_fixtures = BooleanProperty(default=False)
     use_auto_consumption = BooleanProperty(default=False)
     consumption_config = SchemaProperty(ConsumptionConfig)
     stock_levels_config = SchemaProperty(StockLevelsConfig)
@@ -521,7 +554,7 @@ class NewStockReport(object):
     def from_xml(cls, form, config, elem):
         tag = elem.tag
         tag = tag[tag.find('}')+1:] # strip out ns
-        timestamp = force_to_datetime(elem.attrib.get('date', form.received_on)).replace(tzinfo=None)
+        timestamp = force_to_datetime(elem.attrib.get('date') or form.received_on).replace(tzinfo=None)
         products = elem.findall('./{%s}entry' % stockconst.COMMTRACK_REPORT_XMLNS)
         transactions = [t for prod_entry in products for t in
                         StockTransaction.from_xml(config, timestamp, tag, elem, prod_entry)]
@@ -619,6 +652,11 @@ class StockTransaction(object):
                 return a
         return None
 
+    @property
+    def date(self):
+        if self.timestamp:
+            return dateparse.json_format_datetime(self.timestamp)
+
     @classmethod
     def from_xml(cls, config, timestamp, action_tag, action_node, product_node):
         action_type = action_node.attrib.get('type')
@@ -678,31 +716,9 @@ class StockTransaction(object):
         if not E:
             E = XML()
 
-        tx_type = 'balance' if self.action in (
-            StockActions.STOCKONHAND,
-            StockActions.STOCKOUT,
-        ) else 'transfer'
-
-        attr = {}
-        if self.timestamp:
-            attr['date'] = dateparse.json_format_datetime(self.timestamp)
-
-        attr['section-id'] = 'stock'
-        if tx_type == 'balance':
-            attr['entity-id'] = self.case_id
-        elif tx_type == 'transfer':
-            here, there = ('dest', 'src') if self.action == StockActions.RECEIPTS else ('src', 'dest')
-            attr[here] = self.case_id
-            # no 'there' for now
-            if self.subaction:
-                attr['type'] = self.subaction
-
-        return getattr(E, tx_type)(
-            E.entry(
-                id=self.product_id,
-                quantity=str(self.quantity if self.action != StockActions.STOCKOUT else 0),
-            ),
-            **attr
+        return E.entry(
+            id=self.product_id,
+            quantity=str(self.quantity if self.action != StockActions.STOCKOUT else 0),
         )
 
     @property
@@ -889,10 +905,10 @@ DAYS_PER_MONTH = 365.2425 / 12.
 
 # TODO make settings
 
-UNDERSTOCK_THRESHOLD = 0.5 # months
-OVERSTOCK_THRESHOLD = 2. # months
+UNDERSTOCK_THRESHOLD = 0.5  # months
+OVERSTOCK_THRESHOLD = 2.  # months
 
-DEFAULT_CONSUMPTION = 10. # per month
+DEFAULT_CONSUMPTION = 10.  # per month
 
 
 class RequisitionCase(CommCareCase):
@@ -904,34 +920,53 @@ class RequisitionCase(CommCareCase):
         # This is necessary otherwise syncdb will confuse this app with casexml
         app_label = "commtrack"
 
-    # supply_point = StringProperty() # todo, if desired
     requisition_status = StringProperty()
 
-    # this second field is added for auditing purposes
-    # the status can change, but once set - this one will not
+    # TODO none of these properties are supported on mobile currently
+    # we need to discuss what will be eventually so we know what we need
+    # to support here
     requested_on = DateTimeProperty()
     approved_on = DateTimeProperty()
-    packed_on = DateTimeProperty()
+    fulfilled_on = DateTimeProperty()
     received_on = DateTimeProperty()
-
     requested_by = StringProperty()
     approved_by = StringProperty()
-    packed_by = StringProperty()
+    fulfilled_by = StringProperty()
     received_by = StringProperty()
 
     @memoized
     def get_location(self):
-        if self.location_:
-            return Location.get(self.location_[-1])
+        try:
+            return SupplyPointCase.get(self.indices[0].referenced_id).location
+        except ResourceNotFound:
+            return None
 
     @memoized
     def get_requester(self):
-        return CommCareUser.get(self.requested_by)
+        # TODO this doesn't get set by mobile yet
+        # if self.requested_by:
+        #     return CommCareUser.get(self.requested_by)
+        return None
 
     def sms_format(self):
-        # TODO needs fixed
-        # return '%s:%s' % (self.get_product().code, self.get_default_value())
-        raise NotImplementedError()
+        if self.requisition_status == RequisitionStatus.REQUESTED:
+            section = 'ct-requested'
+        elif self.requisition_status == RequisitionStatus.APPROVED:
+            section = 'ct-approved'
+        else:
+            section = 'stock'
+
+        formatted_strings = []
+        states = StockState.objects.filter(
+            case_id=self._id,
+            section_id=section
+        )
+        for state in states:
+            product = Product.get(state.product_id)
+            formatted_strings.append(
+                '%s:%d' % (product.code, state.stock_on_hand)
+            )
+        return ' '.join(sorted(formatted_strings))
 
     def get_next_action(self):
         req_config = CommtrackConfig.for_domain(self.domain).requisition_config
@@ -944,33 +979,30 @@ class RequisitionCase(CommCareCase):
         """
         For a given location, return the IDs of all open requisitions at that location.
         """
-        results = cls.get_db().view('commtrack/requisitions',
-            endkey=[domain, location_id, 'open'],
-            startkey=[domain, location_id, 'open', {}],
+        try:
+            sp_id = Location.get(location_id).linked_supply_point()._id
+        except ResourceNotFound:
+            return []
+
+        results = cls.get_db().view(
+            'commtrack/requisitions',
+            endkey=[domain, sp_id, 'open'],
+            startkey=[domain, sp_id, 'open', {}],
             reduce=False,
             descending=True,
         )
         return [r['id'] for r in results]
 
-    def to_full_dict(self):
-        # TODO verify if this needs fixed or just deleted
-        raise NotImplementedError()
-
-        #data = super(RequisitionCase, self).to_full_dict()
-        #sp = self.get_supply_point_case()
-        #product = self.get_product_case()
-        #data['supply_point_name'] = sp['name'] if sp else ''
-        #data['product_name'] = product['name'] if product else ''
-        #data['balance'] = self.get_default_value()
-        #return data
-
     @classmethod
     def get_by_external_id(cls, domain, external_id):
-        return cls.view('hqcase/by_domain_external_id',
-            key=[domain, external_id],
-            include_docs=True, reduce=False,
-            classes={'CommCareCase': RequisitionCase}
-        ).all()
+        # only used by openlmis
+        raise NotImplementedError()
+
+        # return cls.view('hqcase/by_domain_external_id',
+        #     key=[domain, external_id],
+        #     include_docs=True, reduce=False,
+        #     classes={'CommCareCase': RequisitionCase}
+        # ).all()
 
     @classmethod
     def get_display_config(cls):
@@ -979,68 +1011,56 @@ class RequisitionCase(CommCareCase):
                 "layout": [
                     [
                         {
-                            "name": _("Supply Point"),
-                            "expr": "supply_point_name"
-                        }
-                    ],
-                    [
-                        {
-                            "name": _("Product"),
-                            "expr": "product_name"
-                        }
-                    ],
-                    [
-                        {
                             "name": _("Status"),
                             "expr": "requisition_status"
                         }
                     ],
-                    [
-                        {
-                            "name": _("Balance"),
-                            "expr": "balance"
-                        }
-                    ]
                 ]
             },
             {
                 "layout": [
                     [
                         {
-                            "name": _("Amount Requested"),
-                            "expr": "amount_requested",
-                        },
-                        {
                             "name": _("Requested On"),
                             "expr": "requested_on",
                             "parse_date": True
+                        },
+                        {
+                            "name": _("requested_by"),
+                            "expr": "requested_by"
                         }
                     ],
                     [
-                        {
-                            "name": _("Amount Approved"),
-                            "expr": "amount_approved",
-                        },
                         {
                             "name": _("Approved On"),
                             "expr": "approved_on",
                             "parse_date": True
+                        },
+                        {
+                            "name": _("approved_by"),
+                            "expr": "approved_by"
                         }
                     ],
                     [
                         {
-                            "name": _("Amount Received"),
-                            "expr": "amount_Received"
-                        },
-                        {
                             "name": _("Received On"),
                             "expr": "received_on",
                             "parse_date": True
+                        },
+                        {
+                            "name": _("received_by"),
+                            "expr": "received_by"
                         }
                     ]
                 ]
             }
         ]
+
+
+class RequisitionTransaction(StockTransaction):
+    @property
+    def category(self):
+        return 'requisition'
 
 
 class StockReport(object):
