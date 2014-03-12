@@ -196,8 +196,8 @@ class CachedObject(object):
                 return False
             else:
                 return True
-        except AssertionError as e:
-            logging.exception(e.message)
+        except AssertionError:
+            # maybe one of our keys was purged. Oh well.
             return False
 
     @property
