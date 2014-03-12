@@ -188,6 +188,7 @@ HQ_APPS = (
     'corehq.apps.hqcouchlog',
     'corehq.apps.hqwebapp',
     'corehq.apps.hqmedia',
+    'corehq.apps.loadtestendpoints',
     'corehq.apps.locations',
     'corehq.apps.commtrack',
     'corehq.apps.consumption',
