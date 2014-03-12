@@ -7,7 +7,7 @@ from django.template.loader import render_to_string
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.phone.models import SyncLogAssertionError, SyncLog
 from couchforms.models import XFormInstance
-from couchforms.util import post_xform_to_couch
+from couchforms.util import create_and_lock_xform
 from dimagi.utils.parsing import json_format_datetime
 
 
@@ -52,11 +52,11 @@ def post_case_blocks(case_blocks, form_extras=None):
     for block in case_blocks:
         form.append(block)
 
-    xform = post_xform_to_couch(ElementTree.tostring(form))
-    for k, v in form_extras.items():
-        setattr(xform, k, v)
-    process_cases(xform=xform)
-    return xform
+    with create_and_lock_xform(ElementTree.tostring(form)) as xform:
+        for k, v in form_extras.items():
+            setattr(xform, k, v)
+        process_cases(xform=xform)
+        return xform
 
 
 def reprocess_form_cases(form, config=None):

@@ -2,23 +2,22 @@ from django.test import TestCase
 import os
 from casexml.apps.case import settings
 from casexml.apps.case.models import CommCareCase
-from couchforms.util import post_xform_to_couch
+from couchforms.util import create_and_lock_xform
 from casexml.apps.case import process_cases
 from django.core.files.uploadedfile import UploadedFile
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 import hashlib
 
+
 class CaseAttachmentTest(TestCase):
     """
     Tests the use of attachments in cases
     """
-    
-    
+
     def setUp(self):
         settings.CASEXML_FORCE_DOMAIN_CHECK = False
         delete_all_cases()
         delete_all_xforms()
-
 
     def testAttachInCreate(self):
         self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False).all()))
@@ -31,22 +30,20 @@ class CaseAttachmentTest(TestCase):
         attachment_path = os.path.join(os.path.dirname(__file__), "data", "attachments", attach_name)
         with open(attachment_path, "rb") as attachment:
             uf = UploadedFile(attachment, attach_name)
-            form = post_xform_to_couch(xml_data, {attach_name: uf})
+            form_lock = create_and_lock_xform(xml_data, {attach_name: uf})
+        with form_lock as form:
             self.assertEqual(1, len(form.attachments))
             fileback = form.fetch_attachment(attach_name)
             # rewind the pointer before comparing
             attachment.seek(0) 
             self.assertEqual(hashlib.md5(fileback).hexdigest(), 
                              hashlib.md5(attachment.read()).hexdigest())
-            
-        
-        process_cases(form)
+            process_cases(form)
         case = CommCareCase.get(form.xpath("form/case/case_id"))
         self.assertEqual(1, len(case.attachments))
         self.assertEqual(form.get_id, case.attachments[0][0])
         self.assertEqual(attach_name, case.attachments[0][1])
-        
-    
+
     def testAttachInUpdate(self):
         self.testAttachInCreate()
         
@@ -58,19 +55,16 @@ class CaseAttachmentTest(TestCase):
         attachment_path = os.path.join(os.path.dirname(__file__), "data", "attachments", attach_name)
         with open(attachment_path, "rb") as attachment:
             uf = UploadedFile(attachment, attach_name)
-            form = post_xform_to_couch(xml_data, {attach_name: uf})
+            form_lock = create_and_lock_xform(xml_data, {attach_name: uf})
+        with form_lock as form:
             self.assertEqual(1, len(form.attachments))
             fileback = form.fetch_attachment(attach_name)
             # rewind the pointer before comparing
             attachment.seek(0) 
             self.assertEqual(hashlib.md5(fileback).hexdigest(), 
                              hashlib.md5(attachment.read()).hexdigest())
-            
-        
-        process_cases(form)
+            process_cases(form)
         case = CommCareCase.get(form.xpath("form/case/case_id"))
         self.assertEqual(2, len(case.attachments))
         self.assertEqual(form.get_id, case.attachments[1][0])
         self.assertEqual(attach_name, case.attachments[1][1])
-                
-        
