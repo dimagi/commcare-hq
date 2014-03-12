@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-03-12 17:38+0000\n"
+"POT-Creation-Date: 2014-03-12 17:41+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -11053,6 +11053,10 @@ msgstr ""
 msgid ""
 "Welcome to CommCareHQ! Is this phone used by %(name)s? If yes, reply "
 "'123'%(replyto)s to start using SMS with CommCareHQ."
+msgstr ""
+
+#: corehq/apps/sms/verify.py:9
+msgid "Thank you. This phone has been verified for using SMS with CommCareHQ"
 msgstr ""
 
 #: corehq/apps/sms/views.py:59
