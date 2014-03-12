@@ -1558,8 +1558,8 @@ class AdvancedCommTrackSettingsView(BaseCommTrackAdminView):
             self.commtrack_settings.stock_levels_config.to_json().items()))
 
         if self.request.method == 'POST':
-            return AdvancedSettingsForm(self.request.POST, initial=initial)
-        return AdvancedSettingsForm(initial=initial)
+            return AdvancedSettingsForm(self.request.POST, initial=initial, domain=self.domain)
+        return AdvancedSettingsForm(initial=initial, domain=self.domain)
 
     def set_ota_restore_config(self):
         """
@@ -1591,6 +1591,7 @@ class AdvancedCommTrackSettingsView(BaseCommTrackAdminView):
             self.commtrack_settings.use_auto_consumption = bool(data.get('use_auto_consumption'))
             self.commtrack_settings.sync_location_fixtures = bool(data.get('sync_location_fixtures'))
             self.commtrack_settings.sync_consumption_fixtures = bool(data.get('sync_consumption_fixtures'))
+            self.commtrack_settings.individual_consumption_defaults = bool(data.get('individual_consumption_defaults'))
 
             self.set_ota_restore_config()
 
