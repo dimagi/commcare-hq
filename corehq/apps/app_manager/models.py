@@ -3326,6 +3326,13 @@ def import_app(app_id_or_source, domain, name=None, validate_source_domain=None)
     cls = str_to_cls[source['doc_type']]
     app = cls.from_source(source, domain)
     app.save()
+
+    if not app.is_remote_app():
+        for _, m in app.get_media_objects():
+            if domain not in m.valid_domains:
+                m.valid_domains.append(domain)
+                m.save()
+
     for name, attachment in attachments.items():
         if re.match(ATTACHMENT_REGEX, name):
             app.put_attachment(attachment, name)

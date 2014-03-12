@@ -48,12 +48,10 @@ class CommCareMultimedia(SafeSaveDocument):
     aux_media = SchemaListProperty(AuxMedia)
 
     last_modified = DateTimeProperty()
-    valid_domains = StringListProperty() # appears to be mostly unused as well - timbauman
-    # add something about context from the form(s) its in
-
-    owners = StringListProperty(default=[])
+    valid_domains = StringListProperty()  # A list of domains that uses this file
+    owners = StringListProperty(default=[])  # list of domains that uploaded this file
     licenses = SchemaListProperty(HQMediaLicense, default=[])
-    shared_by = StringListProperty(default=[])
+    shared_by = StringListProperty(default=[])  # list of domains that can share this file
     tags = DictProperty(default={})  # dict of string lists
 
     @classmethod
