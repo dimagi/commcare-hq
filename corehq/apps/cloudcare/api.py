@@ -342,6 +342,8 @@ def get_cloudcare_apps(domain):
                                     startkey=[domain], endkey=[domain, {}]))
 
 def get_app_json(app):
+    if not app:
+        return None
     app_json = app.to_json()
     app_json['post_url'] = app.post_url
     return app_json
