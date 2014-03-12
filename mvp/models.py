@@ -46,8 +46,9 @@ class MVPDaysSinceLastTransmission(DynamicIndicatorDefinition):
                 reduce=False,
                 include_docs=False,
                 descending=True,
-                startkey=key+[enddate.isoformat(),{}],
-                endkey=key
+                startkey=key+[enddate.isoformat(), {}],
+                endkey=key,
+                limit=1
             ).first()
             try:
                 last_transmission = results['key'][-1]
