@@ -407,7 +407,15 @@ def pricing_table_json(request, product, locale):
     table = PricingTable.get_table_by_product(product)
     table_json = json.dumps(table, cls=LazyEncoder)
     translation.deactivate()
-    response = HttpResponse(table_json, content_type='application/json')
+
+    # This is necessary for responding to requests from Internet Explorer.
+    # IE you can FOAD.
+    callback = request.GET.get('callback') or request.POST.get('callback')
+    if callback is not None:
+        table_json = "%s(%s)" % (callback, table_json)
+
+    response = HttpResponse(table_json,
+                            content_type='application/json; charset=UTF-8')
     response["Access-Control-Allow-Origin"] = "*"
     response["Access-Control-Allow-Methods"] = "POST, GET, OPTIONS"
     response["Access-Control-Max-Age"] = "1000"
