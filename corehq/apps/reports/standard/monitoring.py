@@ -441,10 +441,10 @@ class DailyFormStatsReport(ElasticProjectInspectionReport, WorkerMonitoringRepor
     def users_by_username(self, order):
         start = self.pagination.start
         end = start + self.pagination.count
-        users = self.all_users[start:end]
+        users = self.all_users
         if order == "desc":
             users.reverse()
-        return users
+        return users[start:end]
 
     def users_by_range(self, start, end, order):
         query = {"filter": {"range": {
