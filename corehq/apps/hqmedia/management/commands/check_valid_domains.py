@@ -12,9 +12,17 @@ class Command(BaseCommand):
         domains = Domain.get_all()
         for d in domains:
             for m in d.all_media():
-                owners, valid_domains = settify(m.owners), settify(m.valid_domains)
-                if not valid_domains >= owners:
-                    m.valid_domains = list(valid_domains | owners)
+                owners, valid_domains, sharers = \
+                    settify(m.owners), settify(m.valid_domains), settify(m.shared_by)
+                new_valid_domains = valid_domains.copy()
+
+                if not new_valid_domains >= owners:
+                    new_valid_domains |= owners
+                if not new_valid_domains >= sharers:
+                    new_valid_domains |= sharers
+
+                if valid_domains != new_valid_domains:
+                    m.valid_domains = list(new_valid_domains)
                     self.stdout.write("updating media %s: %s => %s" %
                                       (m._id, list(valid_domains), m.valid_domains))
                     m.save()
