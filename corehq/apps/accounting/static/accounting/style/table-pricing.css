@@ -361,7 +361,6 @@ body {
 }
 .th-feature-section > h2 {
   position: relative;
-  writing-mode: tb-rl;
   margin: 0;
   font-weight: normal;
   font-size: 15.6px;
