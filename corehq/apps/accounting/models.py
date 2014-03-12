@@ -10,6 +10,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from corehq import toggles
+from corehq.apps.accounting.invoice_pdf import Address, InvoiceTemplate
 from corehq.apps.accounting.utils import is_active_subscription, get_privileges
 from corehq.apps.accounting.subscription_changes import (
     DomainDowngradeActionHandler, DomainUpgradeActionHandler,
@@ -882,7 +883,6 @@ class InvoicePdf(SafeSaveDocument):
         contact_info = BillingContactInfo.objects.get(
             account=invoice.subscription.account,
         )
-        from corehq.apps.accounting.invoicing import Address, InvoiceTemplate
         template = InvoiceTemplate(
             pdf_data.name,
             invoice_number=("INC-%d" %
