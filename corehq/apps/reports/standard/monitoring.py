@@ -362,7 +362,7 @@ class DailyFormStatsReport(ElasticProjectInspectionReport, WorkerMonitoringRepor
     ajax_pagination = True
     emailable = True
     is_cacheable = False
-    # default_sort = 
+    # default_sort =
 
     @property
     @memoized
@@ -383,9 +383,8 @@ class DailyFormStatsReport(ElasticProjectInspectionReport, WorkerMonitoringRepor
     @property
     def date_field(self):
         return ("received_on" if self.by_submission_time
-            else "form.meta.timeStart")
+                else "form.meta.timeStart")
 
-<<<<<<< HEAD
     def get_row_from_user(self, user):
         """
         Assemble a list whose first element is the username,
@@ -399,7 +398,7 @@ class DailyFormStatsReport(ElasticProjectInspectionReport, WorkerMonitoringRepor
         gte = self.datespan.startdate_param
         lte = self.datespan.enddate_param
         # TODO: delete this line
-        # gte = datetime.datetime(2010, 1, 1).strftime('%Y-%m-%d')
+        gte = datetime.datetime(2010, 1, 1).strftime('%Y-%m-%d')
         query = {"filter": {"range": {
                     self.date_field: {
                         "gte": gte,
@@ -424,77 +423,37 @@ class DailyFormStatsReport(ElasticProjectInspectionReport, WorkerMonitoringRepor
             for date in self.dates
         ]
         # TODO: delete these two lines:
-        # total = sum([entry['count'] for entry in res['facets']['date']['entries']])
-        # return [self.get_raw_user_link(user)] + date_cols + [total]
+        total = sum([entry['count'] for entry in res['facets']['date']['entries']])
+        return [self.get_raw_user_link(user)] + date_cols + [total]
         return [self.get_raw_user_link(user)] + date_cols + [sum(date_cols)]
-
-    def yedi_changes(self):
-        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
-        user_map = dict([(user.get('user_id'), i) for (i, user) in enumerate(users_data["combined_users"])])
-        date_map = dict([(date.strftime(DATE_FORMAT), i+1) for (i,date) in enumerate(self.dates)])
-        rows = [[0]*(2+len(date_map)) for _tmp in range(len(users_data["combined_users"]))]
-        total_row = [0]*(2+len(date_map))
-
-        user_ids = [user.get('user_id') for user in users_data["combined_users"]]
-        for result in results:
-            _tmp, _domain, date = result['key']
-            date = dateutil.parser.parse(date)
-            tz_offset = self.timezone.localize(self.datespan.enddate).strftime("%z")
-            date = date + datetime.timedelta(hours=int(tz_offset[0:3]), minutes=int(tz_offset[0]+tz_offset[3:5]))
-            date = date.isoformat()
-            val = result['value']
-            user_id = val.get("user_id")
-            if user_id in user_ids:
-                date_key = date_map.get(date[0:10], None)
-                if date_key:
-                    rows[user_map[user_id]][date_key] += 1
-
-        for i, user in enumerate(users_data["combined_users"]):
-            rows[i][0] = self.get_user_link(user)
-            total = sum(rows[i][1:-1])
-            rows[i][-1] = total
-            total_row[1:-1] = [total_row[ind+1]+val for ind, val in enumerate(rows[i][1:-1])]
-            total_row[-1] += total
-
-        total_row[0] = _("All Users")
-        self.total_row = total_row
-
-        for row in rows:
-            row[1:] = [self.table_cell(val) for val in row[1:]]
-        return rows
 
     @property
     def total_records(self):
-        count, _ = es_wrapper('users', self.domain, size=0,
-            doc_type="CommCareUser", return_count=True)
-        return count
-
-    def _filter(self):
-        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
-        user_map = dict([(user.get('user_id'), i) for (i, user) in enumerate(users_data["combined_users"])])
+        return len(self.all_users)
 
     @property
     @memoized
     def all_users(self):
-        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(
-            self.domain, self.request, True, True)
-        user_map = dict((user.get('user_id'), i)
-            for (i, user) in enumerate(users_data["combined_users"]))
-        return user_map
-
-    # Use user filter
-    def users_by_username(self, order):
-        # import ipdb; ipdb.set_trace()
-        # TODO: convert this and util._report_user_dict to use just a user dict
-        return map(
+        fields = ['_id', 'username', 'first_name', 'last_name',
+            'doc_type', 'is_active', 'email']
+        result = ExpandedMobileWorkerFilter.pull_users_from_es(
+            self.domain, self.request, fields=fields)
+        return sorted(map(
             util._report_user_dict,
-            CommCareUser.es_fakes(self.domain, order=order,
-                start_at=self.pagination.start, size=self.pagination.count)
-        )
+            [u['fields'] for u in result['hits']['hits']]
+        ), key=lambda u: u['username_in_report'])
+
+    def users_by_username(self, order):
+        start = self.pagination.start
+        end = start + self.pagination.count
+        users = self.all_users[start:end]
+        if order == "desc":
+            users.reverse()
+        return users
 
     def users_by_range(self, start, end, order):
         # TODO: delete this line
-        # start = datetime.datetime(2010, 1, 1)
+        start = datetime.datetime(2010, 1, 1)
         query = {"filter": {"range": {
                     self.date_field: {
                         "gte": start.strftime('%Y-%m-%d'),
@@ -515,15 +474,11 @@ class DailyFormStatsReport(ElasticProjectInspectionReport, WorkerMonitoringRepor
         return self.users_sorted_by_count(count_dict, order)
 
     def users_sorted_by_count(self, count_dict, order):
-        # Split users_by_username into those in count_dict and those not.
-        # Sort the former by count and return 
-        all_users = map(
-            util._report_user_dict,
-            CommCareUser.es_fakes(self.domain, order=order)
-        )
+        # Split all_users into those in count_dict and those not.
+        # Sort the former by count and return
         users_with_forms = []
         users_without_forms = []
-        for user in all_users:
+        for user in self.all_users:
             u_id = user['user_id']
             if u_id in count_dict:
                 users_with_forms.append((count_dict[u_id], user))
@@ -538,7 +493,8 @@ class DailyFormStatsReport(ElasticProjectInspectionReport, WorkerMonitoringRepor
             sorted_users = map(lambda u: u[1], users_with_forms)
             sorted_users += users_without_forms
         start = self.pagination.start
-        end = min(len(sorted_users), start+self.pagination.count)
+        end = start + self.pagination.count
+        # end = min(len(sorted_users), start+self.pagination.count)
         return sorted_users[start:end]
 
     @property
@@ -562,6 +518,7 @@ class DailyFormStatsReport(ElasticProjectInspectionReport, WorkerMonitoringRepor
             users = self.users_by_username(order)
         rows = [self.get_row_from_user(user) for user in users]
         return rows
+
 
 class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin):
     name = ugettext_noop("Form Completion Time")
@@ -707,7 +664,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, Mu
 
     description = ugettext_noop("Time lag between when forms were completed and when forms were successfully "
                                 "sent to CommCare HQ.")
-    
+
     fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
               'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
               'corehq.apps.reports.fields.DatespanField']
