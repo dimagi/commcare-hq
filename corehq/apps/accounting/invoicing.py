@@ -5,7 +5,7 @@ import os
 from django.db.models import ProtectedError
 
 from django.utils.translation import ugettext as _
-from corehq.apps.accounting.utils import assure_domain_instance
+from corehq.apps.accounting.utils import assure_domain_instance, get_money_str
 from dimagi.utils.decorators.memoized import memoized
 
 from corehq import Domain
@@ -466,17 +466,6 @@ def midpoint(x1, x2):
     return (x1 + x2) * 0.5
 
 
-def get_amount_str(value):
-    if value is not None:
-        if value < 0:
-            fmt = "-$%0.2f"
-            value = abs(value)
-        else:
-            fmt = "$%0.2f"
-        return fmt % value
-    return ""
-
-
 class InvoiceTemplate(object):
     def __init__(self, filename, logo_filename=LOGO_FILENAME,
                  from_address=Address(**settings.FROM_ADDRESS),
@@ -718,22 +707,22 @@ class InvoiceTemplate(object):
             self.canvas.drawCentredString(
                 midpoint(quantity_x, rate_x),
                 coord_y,
-                get_amount_str(item.rate)
+                get_money_str(item.rate)
             )
             self.canvas.drawCentredString(
                 midpoint(rate_x, subtotal_x),
                 coord_y,
-                get_amount_str(item.subtotal)
+                get_money_str(item.subtotal)
             )
             self.canvas.drawCentredString(
                 midpoint(subtotal_x, credits_x),
                 coord_y,
-                get_amount_str(item.credits)
+                get_money_str(item.credits)
             )
             self.canvas.drawCentredString(
                 midpoint(credits_x, total_x),
                 coord_y,
-                get_amount_str(item.total)
+                get_money_str(item.total)
             )
             coord_y -= inches(0.1)
             self.canvas.line(0, coord_y, total_x, coord_y)
@@ -750,21 +739,21 @@ class InvoiceTemplate(object):
 
         self.canvas.drawString(inches(6.2), inches(2.45), "Subtotal:")
         self.canvas.drawString(inches(6.2), inches(2.15),
-                               "Tax (%s%%):" % get_amount_str(self.tax_rate))
+                               "Tax (%s%%):" % get_money_str(self.tax_rate))
         self.canvas.drawString(inches(6.2), inches(1.85), "Credit:")
         self.canvas.drawString(inches(5.2), inches(1.25), "Total:")
         self.canvas.drawCentredString(midpoint(inches(7.0), inches(8.0)),
                                       inches(2.45),
-                                      get_amount_str(self.subtotal))
+                                      get_money_str(self.subtotal))
         self.canvas.drawCentredString(midpoint(inches(7.0), inches(8.0)),
                                       inches(2.15),
-                                      get_amount_str(self.applied_tax))
+                                      get_money_str(self.applied_tax))
         self.canvas.drawCentredString(midpoint(inches(7.0), inches(8.0)),
                                       inches(1.85),
-                                      get_amount_str(self.applied_credit))
+                                      get_money_str(self.applied_credit))
         self.canvas.drawCentredString(midpoint(inches(7.0), inches(8.0)),
                                       inches(1.25),
-                                      get_amount_str(self.total))
+                                      get_money_str(self.total))
 
         footer_text = ("Payable by check or wire transfer. "
                        "Wire transfer is preferred: "
