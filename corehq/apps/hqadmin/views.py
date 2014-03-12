@@ -6,6 +6,9 @@ from collections import defaultdict
 from StringIO import StringIO
 import socket
 
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
 from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_POST, require_GET
 from pytz import timezone
@@ -58,6 +61,7 @@ from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.django.email import send_HTML_email
 from pillowtop import get_all_pillows_json
 
+from .multimech import GlobalConfig
 
 @require_superuser
 def default(request):
@@ -864,3 +868,46 @@ def stats_data(request):
 
     stats_data = get_stats_data(domain_info, histo_type, request.datespan, interval=interval)
     return json_response(stats_data)
+
+
+@require_superuser
+def loadtest(request):
+    # The multimech results api is kinda all over the place.
+    # the docs are here: http://testutils.org/multi-mechanize/datastore.html
+
+    db_url = "postgresql://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}".format(
+        **settings.DATABASES["default"]
+    )
+    engine = create_engine(db_url)
+    session = sessionmaker(bind=engine)
+    current = session()
+
+    scripts = ['submit_form.py', 'ota_restore.py']
+
+    tests = []
+    # datetime info seems to be buried in GlobalConfig.results[0].run_id,
+    # which makes ORM-level sorting problematic
+    for gc in current.query(GlobalConfig).all()[::-1]:
+        gc.scripts = dict((uc.script, uc) for uc in gc.user_group_configs)
+        if gc.results:
+            for script, uc in gc.scripts.items():
+                uc.results = filter(
+                    lambda res: res.user_group_name == uc.user_group,
+                    gc.results
+                )
+            test = {
+                'datetime': gc.results[0].run_id,
+                'run_time': gc.run_time,
+                'results': gc.results,
+            }
+            for script in scripts:
+                test[script.split('.')[0]] = gc.scripts.get(script)
+            tests.append(test)
+
+    context = get_hqadmin_base_context(request)
+    context.update({
+        "tests": tests,
+        "hide_filters": True,
+    })
+    template = "hqadmin/loadtest.html"
+    return render(request, template, context)
