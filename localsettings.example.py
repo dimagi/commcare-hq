@@ -189,8 +189,8 @@ LOGSTASH_AUDITCARE_PORT = 10999
 LOGSTASH_HOST = 'localhost'
 
 LOCAL_PILLOWTOPS = {
-    'my_pillows': ['some.pillow.Class', ],
-    'and_more': []
+#    'my_pillows': ['some.pillow.Class', ],
+#    'and_more': []
 }
 
 #If there are existing doc_ids and case_ids you want to check directly - they are referenced

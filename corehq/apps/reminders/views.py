@@ -9,6 +9,8 @@ from django.http import HttpResponseRedirect, Http404, HttpResponse
 from django.shortcuts import render
 
 from django.utils.translation import ugettext as _, ugettext_noop
+from corehq import privileges, toggles
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import get_case_properties
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
@@ -52,13 +54,16 @@ from corehq.apps.reminders.models import (
     RECIPIENT_USER_GROUP,
     RECIPIENT_SENDER,
     RECIPIENT_OWNER,
+    METHOD_IVR_SURVEY,
 )
 from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CommCareUser, Permissions, CouchUser
 from dimagi.utils.decorators.memoized import memoized
+from django_prbac.exceptions import PermissionDenied
+from django_prbac.utils import ensure_request_has_privilege
 from .models import UI_SIMPLE_FIXED, UI_COMPLEX
-from .util import get_form_list, get_sample_list, get_recipient_name, get_form_name
+from .util import get_form_list, get_sample_list, get_recipient_name, get_form_name, can_use_survey_reminders
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.util import register_sms_contact, update_contact
 from corehq.apps.domain.models import Domain, DomainCounter
@@ -70,7 +75,17 @@ from dimagi.utils.timezones import utils as tz_utils
 from corehq.apps.reports import util as report_utils
 from dimagi.utils.couch.database import is_bigcouch, bigcouch_quorum_count, iter_docs
 
-reminders_permission = require_permission(Permissions.edit_data)
+reminders_framework_permission = lambda *args, **kwargs: (
+    require_permission(Permissions.edit_data)(
+        requires_privilege_with_fallback(privileges.REMINDERS_FRAMEWORK)(*args, **kwargs)
+    )
+)
+
+survey_reminders_permission = lambda *args, **kwargs: (
+    require_permission(Permissions.edit_data)(
+        requires_privilege_with_fallback(privileges.INBOUND_SMS)(*args, **kwargs)
+    )
+)
 
 def get_project_time_info(domain):
     timezone = report_utils.get_timezone(None, domain)
@@ -78,16 +93,23 @@ def get_project_time_info(domain):
     timezone_now = now.astimezone(timezone)
     return (timezone, now, timezone_now)
 
-@reminders_permission
+@reminders_framework_permission
 def default(request, domain):
     return HttpResponseRedirect(reverse('list_reminders', args=[domain]))
 
-@reminders_permission
+@reminders_framework_permission
 def list_reminders(request, domain, reminder_type=REMINDER_TYPE_DEFAULT):
     all_handlers = CaseReminderHandler.get_handlers(domain=domain).all()
     all_handlers = filter(lambda x : x.reminder_type == reminder_type, all_handlers)
     if reminder_type == REMINDER_TYPE_ONE_TIME:
         all_handlers.sort(key=lambda handler : handler.start_datetime)
+
+    if not can_use_survey_reminders(request):
+        all_handlers = filter(
+            lambda x: x.method not in [METHOD_IVR_SURVEY, METHOD_SMS_SURVEY],
+            all_handlers
+        )
+
     handlers = []
     utcnow = datetime.utcnow()
     timezone, now, timezone_now = get_project_time_info(domain)
@@ -133,7 +155,7 @@ def list_reminders(request, domain, reminder_type=REMINDER_TYPE_DEFAULT):
         'timezone_now' : timezone_now,
     })
 
-@reminders_permission
+@reminders_framework_permission
 def add_reminder(request, domain, handler_id=None, template="reminders/partial/add_reminder.html"):
 
     if handler_id:
@@ -198,7 +220,7 @@ def render_one_time_reminder_form(request, domain, form, handler_id):
 
     return render(request, "reminders/partial/add_one_time_reminder.html", context)
 
-@reminders_permission
+@reminders_framework_permission
 def add_one_time_reminder(request, domain, handler_id=None):
     if handler_id:
         handler = CaseReminderHandler.get(handler_id)
@@ -210,7 +232,7 @@ def add_one_time_reminder(request, domain, handler_id=None):
     timezone = report_utils.get_timezone(None, domain) # Use project timezone only
 
     if request.method == "POST":
-        form = OneTimeReminderForm(request.POST)
+        form = OneTimeReminderForm(request.POST, can_use_survey=can_use_survey_reminders(request))
         form._cchq_domain = domain
         if form.is_valid():
             content_type = form.cleaned_data.get("content_type")
@@ -259,11 +281,11 @@ def add_one_time_reminder(request, domain, handler_id=None):
         else:
             initial = {}
 
-        form = OneTimeReminderForm(initial=initial)
+        form = OneTimeReminderForm(initial=initial, can_use_survey=can_use_survey_reminders(request))
 
     return render_one_time_reminder_form(request, domain, form, handler_id)
 
-@reminders_permission
+@reminders_framework_permission
 def copy_one_time_reminder(request, domain, handler_id):
     handler = CaseReminderHandler.get(handler_id)
     initial = {
@@ -277,7 +299,7 @@ def copy_one_time_reminder(request, domain, handler_id):
     }
     return render_one_time_reminder_form(request, domain, OneTimeReminderForm(initial=initial), None)
 
-@reminders_permission
+@reminders_framework_permission
 def delete_reminder(request, domain, handler_id):
     handler = CaseReminderHandler.get(handler_id)
     if handler.doc_type != 'CaseReminderHandler' or handler.domain != domain:
@@ -286,7 +308,7 @@ def delete_reminder(request, domain, handler_id):
     view_name = "one_time_reminders" if handler.reminder_type == REMINDER_TYPE_ONE_TIME else "list_reminders"
     return HttpResponseRedirect(reverse(view_name, args=[domain]))
 
-@reminders_permission
+@reminders_framework_permission
 def scheduled_reminders(request, domain, template="reminders/partial/scheduled_reminders.html"):
     timezone = Domain.get_by_name(domain).default_timezone
     reminders = CaseReminderHandler.get_all_reminders(domain)
@@ -356,7 +378,7 @@ def get_events_scheduling_info(events):
         })
     return result
 
-@reminders_permission
+@reminders_framework_permission
 def add_complex_reminder_schedule(request, domain, handler_id=None):
     if handler_id:
         h = CaseReminderHandler.get(handler_id)
@@ -369,7 +391,7 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
     sample_list = get_sample_list(domain)
     
     if request.method == "POST":
-        form = ComplexCaseReminderForm(request.POST)
+        form = ComplexCaseReminderForm(request.POST, can_use_survey=can_use_survey_reminders(request))
         form._cchq_is_superuser = request.couch_user.is_superuser
         form._cchq_use_custom_content_handler = (h is not None and h.custom_content_handler is not None)
         form._cchq_custom_content_handler = h.custom_content_handler if h is not None else None
@@ -474,7 +496,7 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
                 "active" : True,
             }
         
-        form = ComplexCaseReminderForm(initial=initial)
+        form = ComplexCaseReminderForm(initial=initial, can_use_survey=can_use_survey_reminders(request))
     
     return render(request, "reminders/partial/add_complex_reminder.html", {
         "domain":       domain,
@@ -484,6 +506,7 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
         "sample_list":  sample_list,
         "is_superuser" : request.couch_user.is_superuser,
         "user_groups": Group.by_domain(domain),
+        'can_use_survey': can_use_survey_reminders(request),
     })
 
 
@@ -631,7 +654,7 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
     def _format_response(self, resp_list):
         return [{'text': r, 'id': r} for r in resp_list]
 
-    @method_decorator(reminders_permission)
+    @method_decorator(reminders_framework_permission)
     def dispatch(self, request, *args, **kwargs):
         return super(CreateScheduledReminderView, self).dispatch(request, *args, **kwargs)
 
@@ -686,12 +709,14 @@ class EditScheduledReminderView(CreateScheduledReminderView):
                 is_previewer=self.is_previewer,
                 domain=self.domain,
                 is_edit=True,
+                can_use_survey=can_use_survey_reminders(self.request),
             )
         return self.reminder_form_class(
             initial=initial,
             is_previewer=self.is_previewer,
             domain=self.domain,
             is_edit=True,
+            can_use_survey=can_use_survey_reminders(self.request),
         )
 
     @property
@@ -729,7 +754,7 @@ class EditScheduledReminderView(CreateScheduledReminderView):
         self.schedule_form.save(self.reminder_handler)
 
 
-@reminders_permission
+@reminders_framework_permission
 def manage_keywords(request, domain):
     context = {
         "domain" : domain,
@@ -737,7 +762,8 @@ def manage_keywords(request, domain):
     }
     return render(request, "reminders/partial/manage_keywords.html", context)
 
-@reminders_permission
+
+@survey_reminders_permission
 def add_keyword(request, domain, keyword_id=None):
     sk = None
     if keyword_id is not None:
@@ -855,7 +881,8 @@ def add_keyword(request, domain, keyword_id=None):
     
     return render(request, "reminders/partial/add_keyword.html", context)
 
-@reminders_permission
+
+@reminders_framework_permission
 def delete_keyword(request, domain, keyword_id):
     s = SurveyKeyword.get(keyword_id)
     if s.domain != domain or s.doc_type != "SurveyKeyword":
@@ -863,7 +890,8 @@ def delete_keyword(request, domain, keyword_id):
     s.retire()
     return HttpResponseRedirect(reverse("manage_keywords", args=[domain]))
 
-@reminders_permission
+
+@survey_reminders_permission
 def add_survey(request, domain, survey_id=None):
     survey = None
     
@@ -1093,7 +1121,8 @@ def add_survey(request, domain, survey_id=None):
     }
     return render(request, "reminders/partial/add_survey.html", context)
 
-@reminders_permission
+
+@survey_reminders_permission
 def survey_list(request, domain):
     context = {
         "domain" : domain,
@@ -1101,7 +1130,8 @@ def survey_list(request, domain):
     }
     return render(request, "reminders/partial/survey_list.html", context)
 
-@reminders_permission
+
+@survey_reminders_permission
 def add_sample(request, domain, sample_id=None):
     sample = None
     if sample_id is not None:
@@ -1198,7 +1228,8 @@ def add_sample(request, domain, sample_id=None):
     }
     return render(request, "reminders/partial/add_sample.html", context)
 
-@reminders_permission
+
+@survey_reminders_permission
 def sample_list(request, domain):
     context = {
         "domain" : domain,
@@ -1206,7 +1237,8 @@ def sample_list(request, domain):
     }
     return render(request, "reminders/partial/sample_list.html", context)
 
-@reminders_permission
+
+@reminders_framework_permission
 def edit_contact(request, domain, sample_id, case_id):
     case = CommCareCase.get(case_id)
     if case.domain != domain:
@@ -1237,7 +1269,8 @@ def edit_contact(request, domain, sample_id, case_id):
     }
     return render(request, "reminders/partial/edit_contact.html", context)
 
-@reminders_permission
+
+@reminders_framework_permission
 def reminders_in_error(request, domain):
     handler_map = {}
     if request.method == "POST":
@@ -1262,7 +1295,7 @@ def reminders_in_error(request, domain):
                 handler.set_next_fire(reminder, current_timestamp)
                 reminder.save(**kwargs)
     
-    timezone = report_utils.get_timezone(request.couch_user.user_id, domain)
+    timezone = report_utils.get_timezone(request.couch_user, domain)
     reminders = []
     for reminder in CaseReminder.view("reminders/reminders_in_error", startkey=[domain], endkey=[domain, {}], include_docs=True).all():
         if reminder.handler_id in handler_map:
@@ -1302,9 +1335,18 @@ class RemindersListView(BaseMessagingSectionView):
         return reverse(self.urlname, args=[self.domain])
 
     @property
+    def can_use_survey(self):
+        return can_use_survey_reminders(self.request)
+
+    @property
     def reminders(self):
         all_handlers = CaseReminderHandler.get_handlers(domain=self.domain).all()
         all_handlers = filter(lambda x : x.reminder_type == REMINDER_TYPE_DEFAULT, all_handlers)
+        if not self.can_use_survey:
+            all_handlers = filter(
+                lambda x: x.method not in [METHOD_IVR_SURVEY, METHOD_SMS_SURVEY],
+                all_handlers
+            )
         for handler in all_handlers:
             yield self._fmt_reminder_data(handler)
 

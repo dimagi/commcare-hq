@@ -1,6 +1,9 @@
+from doctest import Example
 import json
 import os
 from corehq.apps.builds.models import CommCareBuild
+from lxml.doctestcompare import LXMLOutputChecker
+import difflib
 
 
 class TestFileMixin(object):
@@ -20,6 +23,15 @@ class TestFileMixin(object):
 
     def get_xml(self, name):
         return self.get_file(name, 'xml')
+
+    def assertXmlEqual(self, want, got):
+        # snippet from http://stackoverflow.com/questions/321795/comparing-xml-in-a-unit-test-in-python/7060342#7060342
+        checker = LXMLOutputChecker()
+        if not checker.check_output(want, got, 0):
+            message = "XML mismatch\n\n"
+            for line in difflib.unified_diff(want.splitlines(1), got.splitlines(1), fromfile='want.xml', tofile='got.xml'):
+                message += line + '\n'
+            raise AssertionError(message)
 
 
 def add_build(version, build_number):

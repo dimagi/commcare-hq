@@ -25,6 +25,8 @@ from corehq.apps.api.fields import ToManyDocumentsField, ToOneDocumentField, Use
 from corehq.apps.api import es
 from corehq.apps.api.es import ESQuerySet, ESUserError
 from django.conf import settings
+from custom.hope.models import CC_BIHAR_PREGNANCY
+
 
 class FakeXFormES(object):
     """
@@ -294,6 +296,7 @@ class TestHOPECaseResource(APIResourceTest):
         modify_date = datetime.utcnow()
 
         backend_case = CommCareCase(server_modified_on=modify_date, domain=self.domain.name)
+        backend_case.type = CC_BIHAR_PREGNANCY
         backend_case.save()
 
         translated_doc = pillow.change_transform(backend_case.to_json())
@@ -306,9 +309,9 @@ class TestHOPECaseResource(APIResourceTest):
         self.assertEqual(response.status_code, 200)
 
         api_cases = simplejson.loads(response.content)['objects']
-        self.assertEqual(len(api_cases), 1)
+        self.assertEqual(len(api_cases), 2)
 
-        api_case = api_cases[0]
+        api_case = api_cases['mother_lists'][0]
         self.assertEqual(dateutil.parser.parse(api_case['server_date_modified']), backend_case.server_modified_on)
 
         backend_case.delete()

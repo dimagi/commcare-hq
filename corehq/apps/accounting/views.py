@@ -28,7 +28,6 @@ from corehq.apps.accounting.utils import LazyEncoder, fmt_feature_rate_dict, fmt
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq import toggles, privileges
 from django_prbac.decorators import requires_privilege_raise404
-from toggle.decorators import require_toggle
 
 
 @requires_privilege_raise404(privileges.ACCOUNTING_ADMIN)
@@ -258,6 +257,9 @@ class EditSubscriptionView(AccountingSectionView):
             'cancel_form': CancelForm(),
             'credit_form': self.get_appropriate_credit_form(self.subscription),
             'credit_list': CreditLine.objects.filter(subscription=self.subscription),
+            'disable_cancel': (
+                self.subscription.date_end is not None
+                and self.subscription.date_end < datetime.date.today()),
             'form': self.get_appropriate_subscription_form(self.subscription),
             'subscription': self.subscription,
             'subscription_canceled': self.subscription_canceled if hasattr(self, 'subscription_canceled') else False,

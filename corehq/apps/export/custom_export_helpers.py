@@ -1,4 +1,8 @@
 import json
+from django_prbac.exceptions import PermissionDenied
+from django_prbac.utils import ensure_request_has_privilege
+from corehq import toggles, privileges
+from corehq.apps.export.exceptions import BadExportConfiguration
 from corehq.apps.reports.standard import export
 from corehq.apps.reports.models import FormExportSchema, HQGroupExportConfiguration, CaseExportSchema
 from corehq.apps.reports.standard.export import DeidExportReport
@@ -84,9 +88,12 @@ class CustomExportHelper(object):
 
             self.export_stock = self.has_stock_column()
 
-            assert(self.custom_export.doc_type == 'SavedExportSchema')
-            assert(self.custom_export.type == self.export_type)
-            assert(self.custom_export.index[0] == domain)
+            try:
+                assert self.custom_export.doc_type == 'SavedExportSchema', 'bad export doc type'
+                assert self.custom_export.type == self.export_type, 'wrong export type specified'
+                assert self.custom_export.index[0] == domain, 'bad export doc domain'
+            except AssertionError, e:
+                raise BadExportConfiguration(str(e))
         else:
             self.custom_export = self.ExportSchemaClass(type=self.export_type)
             self.export_stock = False
@@ -137,6 +144,7 @@ class CustomExportHelper(object):
                 )
 
         self.update_custom_params()
+        self.custom_export.custom_validate()
         self.custom_export.save()
 
         if self.presave:
@@ -171,7 +179,6 @@ class FormCustomExportHelper(CustomExportHelper):
     ExportSchemaClass = FormExportSchema
     ExportReport = export.ExcelExportReport
 
-    allow_deid = True
     allow_repeats = True
 
     default_questions = ["form.case.@case_id", "form.meta.timeEnd", "_id", "id", "form.meta.username"]
@@ -185,6 +192,14 @@ class FormCustomExportHelper(CustomExportHelper):
         super(FormCustomExportHelper, self).__init__(request, domain, export_id)
         if not self.custom_export.app_id:
             self.custom_export.app_id = request.GET.get('app_id')
+
+    @property
+    def allow_deid(self):
+        try:
+            ensure_request_has_privilege(self.request, privileges.DEIDENTIFIED_DATA)
+            return True
+        except PermissionDenied:
+            return False
 
     def update_custom_params(self):
         p = self.post_data['custom_export']

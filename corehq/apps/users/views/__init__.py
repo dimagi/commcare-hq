@@ -2,13 +2,17 @@ from __future__ import absolute_import
 import json
 import re
 import urllib
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from django.utils.decorators import method_decorator
-from corehq import Domain
+from corehq import Domain, toggles, privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.locations.models import Location
 from corehq.apps.sms.mixin import BadSMSConfigException
 from corehq.apps.users.decorators import require_can_edit_web_users, require_permission_to_edit_user
 from dimagi.utils.decorators.memoized import memoized
+from django_prbac.exceptions import PermissionDenied
+from django_prbac.utils import ensure_request_has_privilege
 import langcodes
 from datetime import datetime
 from couchdbkit.exceptions import ResourceNotFound
@@ -194,8 +198,8 @@ class BaseEditUserView(BaseUserSettingsView):
 
     def post(self, request, *args, **kwargs):
         if self.request.POST['form_type'] == "commtrack":
-            self.editable_user.location_id = self.request.POST['supply_point']
-            self.editable_user.program_id = self.request.POST['program_id']
+            self.editable_user.get_domain_membership(self.domain).location_id = self.request.POST['supply_point']
+            self.editable_user.get_domain_membership(self.domain).program_id = self.request.POST['program_id']
             self.editable_user.save()
         elif self.request.POST['form_type'] == "update-user":
             if self.form_user_update.is_valid():
@@ -350,6 +354,14 @@ class ListWebUsersView(BaseUserSettingsView):
         return user_roles
 
     @property
+    def can_edit_roles(self):
+        try:
+            ensure_request_has_privilege(self.request, privileges.ROLE_BASED_ACCESS)
+        except PermissionDenied:
+            return False
+        return self.couch_user.is_domain_admin
+
+    @property
     @memoized
     def role_labels(self):
         role_labels = {}
@@ -370,6 +382,7 @@ class ListWebUsersView(BaseUserSettingsView):
     def page_context(self):
         return {
             'user_roles': self.user_roles,
+            'can_edit_roles': self.can_edit_roles,
             'default_role': UserRole.get_default(),
             'report_list': get_possible_reports(self.domain),
             'invitations': self.invitations,
@@ -407,6 +420,8 @@ def undo_remove_web_user(request, domain, record_id):
 @domain_admin_required
 @require_POST
 def post_user_role(request, domain):
+    if not domain_has_privilege(domain, privileges.ROLE_BASED_ACCESS):
+        return json_response({})
     role_data = json.loads(request.raw_post_data)
     role_data = dict([(p, role_data[p]) for p in set(UserRole.properties().keys() + ['_id', '_rev']) if p in role_data])
     role = UserRole.wrap(role_data)
@@ -450,8 +465,8 @@ class UserInvitationView(InvitationView):
         user.add_domain_membership(domain=self.domain)
         user.set_role(self.domain, invitation.role)
         if project.commtrack_enabled and not project.location_restriction_for_users:
-            user.location_id = invitation.supply_point
-            user.program_id = invitation.program
+            user.get_domain_membership(self.domain).location_id = invitation.supply_point
+            user.get_domain_membership(self.domain).program_id = invitation.program
         user.save()
 
 

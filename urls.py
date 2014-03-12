@@ -112,9 +112,12 @@ urlpatterns = patterns('',
     url(r'^exchange/cda_basic/$', TemplateView.as_view(template_name='cda.html'), name='cda_basic'),
     url(r'^exchange/cda/$', 'corehq.apps.hqwebapp.views.cda', name='cda'),
     url(r'^sms_in/$', 'corehq.apps.sms.views.sms_in', name='sms_in'),
-    url(r'^unsubscribe/(?P<user_id>[\w-]+)/', 'corehq.apps.hqwebapp.views.unsubscribe', name='unsubscribe'),
+    url(r'^unsubscribe/(?P<user_id>[\w-]+)/',
+        'corehq.apps.hqwebapp.views.unsubscribe', name='unsubscribe'),
     (r'^wisepill/', include('custom.apps.wisepill.urls')),
-    url(r'pro_bono/$', ProBonoStaticView.as_view(), name=ProBonoStaticView.urlname)
+    url(r'^pro_bono/$', ProBonoStaticView.as_view(),
+        name=ProBonoStaticView.urlname),
+    url(r'^loadtest/', include('corehq.apps.loadtestendpoints.urls')),
 ) + patterns('', *LOCAL_APP_URLS)
 
 # django rosetta support if configured

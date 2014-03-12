@@ -12,7 +12,7 @@ from django.conf import settings
 from xml.etree.ElementTree import XML, tostring
 from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.receiverwrapper.util import get_submit_url
-from receiver.util import spoof_submission
+from couchforms.util import spoof_submission
 from couchforms.models import XFormInstance
 import re
 

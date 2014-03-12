@@ -6,18 +6,100 @@
       <instance>
         <data xmlns="http://openrosa.org/formdesigner/E9760D33-ABD1-45D8-A08C-815E1F48713A" xmlns:jrm="http://dev.commcarehq.org/jr/xforms" uiVersion="1" version="1">
           <question1/>
+          <question2/>
+          <question3/>
+          <question4/>
         </data>
       </instance>
       <bind id="question1" nodeset="/data/question1" type="xsd:string"/>
+      <bind id="question2" nodeset="/data/question2" type="xsd:string"/>
+      <bind id="question3" nodeset="/data/question3" type="xsd:string"/>
+      <bind id="question4" nodeset="/data/question4" type="xsd:string"/>
       <itext>
         <translation lang="en">
           <text id="question1">
             <value>Q1</value>
           </text>
+          <text id="question2">
+            <value>q2-en</value>
+          </text>
+          <text id="question3">
+            <value>q3-en</value>
+          </text>
+          <text id="question4-ã">
+            <value>q3-en</value>
+          </text>
+          <text id="question4-1-label">
+            <value>q4-1-label-en</value>
+          </text>
+          <text id="question4-2-label">
+            <value>q2-en</value>
+          </text>
+          <text id="question4-3-label">
+            <value>q4-3-en</value>
+            <value form="image">q4-3-en-image</value>
+          </text>
+          <text id="question4-4-label">
+            <value>q4-3-en</value>
+            <value form="audio">q4-4-en-audio</value>
+          </text>
+          <text id="question4-5-label">
+            <value>q4-5-en</value>
+            <value form="image">q4-5-en-image</value>
+            <value form="audio">q4-5-en-audio</value>
+          </text>
+          <text id="question4-6-label">
+            <value>q4-6-en</value>
+            <value form="image">q4-5-en-audio</value>
+            <value form="audio">q4-5-en-audio</value>
+          </text>
+          <text id="question4-7-label">
+            <value>q4-5-en</value>
+            <value form="image">q4-5-en-image</value>
+            <value form="audio">q4-5-en-audio</value>
+          </text>
         </translation>
         <translation lang="pt">
           <text id="question1">
             <value>P1</value>
+          </text>
+          <text id="question2">
+            <value>q2-pt</value>
+          </text>
+          <text id="question3">
+            <value>q3-pt</value>
+          </text>
+          <text id="question4-ã">
+            <value>q3-pt</value>
+          </text>
+          <text id="question4-1-label">
+            <value>q2-pt</value>
+          </text>
+          <text id="question4-2-label">
+            <value>q2-pt</value>
+          </text>
+          <text id="question4-3-label">
+            <value>q4-3-pt</value>
+            <value form="image">q4-3-pt-image</value>
+          </text>
+          <text id="question4-4-label">
+            <value>q4-3-pt</value>
+            <value form="audio">q4-4-pt-audio</value>
+          </text>
+          <text id="question4-5-label">
+            <value>q4-5-pt</value>
+            <value form="image">q4-5-pt-image</value>
+            <value form="audio">q4-5-pt-audio</value>
+          </text>
+          <text id="question4-6-label">
+            <value>q4-6-pt</value>
+            <value form="image">q4-5-pt-image</value>
+            <value form="audio">q4-5-pt-audio</value>
+          </text>
+          <text id="question4-7-label">
+            <value>q4-5-pt</value>
+            <value form="image">q4-5-pt-image</value>
+            <value form="audio">q4-5-pt-audio</value>
           </text>
         </translation>
       </itext>
@@ -27,5 +109,42 @@
     <input bind="question1">
       <label>Question1</label>
     </input>
+    <input bind="question2">
+      <label ref="jr:itext('question2')"/>
+    </input>
+    <input bind="question3">
+      <label ref="jr:itext('question3')"/>
+    </input>
+    <select1 ref="/data/question4">
+      <label ref="jr:itext('question4-ã')"/>
+      <item>
+        <label ref="jr:itext('question4-1-label')"/>
+        <value>1</value>
+      </item>
+      <item>
+        <label ref="jr:itext('question4-2-label')"/>
+        <value>2</value>
+      </item>
+      <item>
+        <label ref="jr:itext('question4-3-label')"/>
+        <value>3</value>
+      </item>
+      <item>
+        <label ref="jr:itext('question4-4-label')"/>
+        <value>4</value>
+      </item>
+      <item>
+        <label ref="jr:itext('question4-5-label')"/>
+        <value>5</value>
+      </item>
+      <item>
+        <label ref="jr:itext('question4-6-label')"/>
+        <value>6</value>
+      </item>
+      <item>
+        <label ref="jr:itext('question4-7-label')"/>
+        <value>7</value>
+      </item>
+    </select1>
   </h:body>
 </h:html>

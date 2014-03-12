@@ -14,6 +14,7 @@ class MegamobileException(Exception):
 
 class MegamobileBackend(SMSBackend):
     api_account_name = StringProperty()
+    source_identifier = StringProperty()
 
     @classmethod
     def get_api_id(cls):
@@ -51,6 +52,7 @@ class MegamobileBackend(SMSBackend):
             "pid" : pid,
             "cel" : phone_number,
             "msg" : text,
+            "src" : self.source_identifier,
         })
         api_account_name = quote(self.api_account_name)
         url = "http://api.mymegamobile.com/%s?%s" % (api_account_name, params)

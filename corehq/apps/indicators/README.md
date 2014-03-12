@@ -116,3 +116,35 @@ indicator definitions.
 For the indicators that require ratios between two existing indicators (always referenced by their slugs), use
 `CombinedCouchViewIndicatorDefinition` and specify the `numerator_slug` and `denominator_slug`.
 
+
+## Dev instructions for setting up a test locally
+1. Create a doc called with id 'INDICATOR_CONFIGURATION' in the main db in couch with the following format:
+
+    ```json
+    {
+        "_id": "INDICATOR_CONFIGURATION",
+        "_rev": "3-a9b15be07f90fe19a55315c5f5036dec",
+        "namespaces": {
+            "indicator-project": [
+                ["my_indicators", "MY INDICATORS!"]
+            ]
+        }
+    }
+    ```
+    (`indicator-project` should be the name of the project you want to test on.)
+2. Make sure you have an app in your domain, and note down the XMLNS of a form
+3. Go to your domain > Reports > Administer Indicators > Form Label Indicators
+and add a new Form Label Indicator. (You'll need the XMLNS from step 2.)
+4. Run
+
+    ```bash
+    ./manage.py run_ptop --pillow-name=FormIndicatorPillow
+    ```
+5. Submit a form with that XMLNS to your domain. (Can even do from commandline with something like
+
+    ```bash
+    curl -v -X POST --digest -u <user>@indicator-project.commcarehq.org \
+    http://localhost:8000/a/indicator-project/receiver/secure/<app_id>/ -d @form.xml
+    ```
+6. Look up your form by id (it's in the 'X-CommCareHQ-FormID' header, so use -v/--verbose if using curl)
+in couch and make sure that the 'computed_' property is set to something like {"my_indicators": ...}

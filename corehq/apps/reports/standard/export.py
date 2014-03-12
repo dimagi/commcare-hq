@@ -4,6 +4,9 @@ import logging
 
 from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.http import Http404
+from django_prbac.exceptions import PermissionDenied
+from django_prbac.utils import ensure_request_has_privilege
+from corehq import toggles, privileges
 
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 
@@ -42,6 +45,14 @@ class FormExportReportBase(ExportReport, DatespanMixin):
               'corehq.apps.reports.fields.GroupField',
               'corehq.apps.reports.fields.DatespanField']
 
+    @property
+    def can_view_deid(self):
+        try:
+            ensure_request_has_privilege(self.request, privileges.DEIDENTIFIED_DATA)
+        except PermissionDenied:
+            return False
+        return True
+
     def get_saved_exports(self):
         # add saved exports. because of the way in which the key is stored
         # (serialized json) this is a little bit hacky, but works.
@@ -50,8 +61,9 @@ class FormExportReportBase(ExportReport, DatespanMixin):
         exports = FormExportSchema.view("couchexport/saved_export_schemas",
             startkey=startkey, endkey=endkey,
             include_docs=True)
-
         exports = filter(lambda x: x.type == "form", exports)
+        if not self.can_view_deid:
+            exports = filter(lambda x: not x.is_safe, exports)
         return exports
 
     @property
@@ -217,7 +229,11 @@ class ExcelExportReport(FormExportReportBase):
         context.update(
             forms=forms,
             edit=self.request.GET.get('edit') == 'true',
-            group_exports=groups
+            group_exports=[group.form_exports for group in groups
+                if group.form_exports],
+            # used to notify of UI change
+            # added 2014-02-25, remove eventually
+            has_case_exports=bool([group.case_exports for group in groups]),
         )
         return context
 
@@ -244,15 +260,18 @@ class CaseExportReport(ExportReport):
 
     @property
     def report_context(self):
+        context = super(CaseExportReport, self).report_context
         cases = get_db().view("hqcase/types_by_domain",
             startkey=[self.domain],
             endkey=[self.domain, {}],
             reduce=True,
             group=True,
             group_level=2).all()
-        context = super(CaseExportReport, self).report_context
+        groups = HQGroupExportConfiguration.by_domain(self.domain)
         context.update(
             case_types=[case['key'][1] for case in cases],
+            group_exports=[group.case_exports for group in groups
+                if group.case_exports],
         )
         return context
 

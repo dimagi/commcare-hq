@@ -4,6 +4,7 @@ function CommcareSettings(options) {
     self.sections = options.sections;
     self.edit = ko.observable(options.edit);
     self.user = options.user;
+    self.permissions = options.permissions;
 
     self.settings = [];
     self.settingsIndex = {};
@@ -14,7 +15,6 @@ function CommcareSettings(options) {
                 var setting = section.settings[j];
 
                 self.settings.push(setting);
-
                 if (!self.settingsIndex[setting.type]) {
                     self.settingsIndex[setting.type] = {};
                 }
@@ -22,11 +22,17 @@ function CommcareSettings(options) {
             }
         }
     }());
-    self.settingsIndex.$parent = {
-        doc_type: {
-            visibleValue: function () {
-                return initialValues.$parent.doc_type;
-            }
+
+    self.settingsIndex.$parent = {};
+    for (var attr in initialValues.$parent) {
+        if (initialValues.$parent.hasOwnProperty(attr)) {
+            self.settingsIndex.$parent[attr] = (function (attrib) {
+                return {
+                    visibleValue: function () {
+                        return initialValues.$parent[attrib];
+                    }
+                }
+            })(attr);
         }
     };
 
@@ -161,7 +167,8 @@ function CommcareSettings(options) {
             return !(
                 (setting.disabled && setting.visibleValue() === setting['default']) ||
                     (setting.hide_if_not_enabled && !setting.enabled()) ||
-                    (setting.preview && !self.user.is_previewer)
+                    (setting.preview && !self.user.is_previewer) ||
+                    (setting.permission && !self.permissions[setting.permission])
                 );
         });
         setting.disabledButHasValue = ko.computed(function () {
@@ -183,7 +190,7 @@ function CommcareSettings(options) {
         });
         var wrap = CommcareSettings.widgets[setting.widget];
         if (wrap) {
-            wrap(setting);
+            wrap(setting, self.settingsIndex);
         }
         setting.hasError = ko.computed(function () {
             return setting.disabledButHasValue() || !setting.valueIsLegal();
@@ -253,14 +260,14 @@ function CommcareSettings(options) {
 CommcareSettings.widgets = {};
 
 CommcareSettings.widgets.select = function (self) {
-    var values = ko.utils.unwrapObservable(self.values);
-    var value_names = ko.utils.unwrapObservable(self.value_names);
-    if (!values || !value_names || values.length !== value_names.length) {
-        console.error("Widget select requires values " +
-            "and value_names of equal length", self);
-        throw {};
-    }
-    self.options = ko.computed(function () {
+    self.updateOptions = function() {
+        var values = ko.utils.unwrapObservable(self.values);
+        var value_names = ko.utils.unwrapObservable(self.value_names);
+        if (!values || !value_names || values.length !== value_names.length) {
+            console.error("Widget select requires values " +
+                "and value_names of equal length", self);
+            throw {};
+        }
         var options = [];
         for (var i = 0; i < values.length; i++) {
             options.push({
@@ -269,8 +276,10 @@ CommcareSettings.widgets.select = function (self) {
                 value: values[i]
             });
         }
-        return options;
-    });
+        self.options(options)
+    }
+    self.options = ko.observable([]);
+    self.updateOptions();
     self.selectOption = function (selectedOption) {
         if (selectedOption) {
             self.visibleValue(selectedOption.value);
@@ -322,12 +331,25 @@ CommcareSettings.widgets.bool = function (self) {
     });
 };
 
-CommcareSettings.widgets.build_spec = function (self) {
+CommcareSettings.widgets.build_spec = function (self, settingsIndex) {
+    function update(appVersion) {
+        var major = appVersion.split('/')[0].split('.')[0];
+        var opts = self.options_map[major];
+        self.values = opts["values"];
+        self.value_names = opts["value_names"];
+        self["default"] = opts["default"];
+    }
+    update(self.default_app_version);
     CommcareSettings.widgets.select(self);
     self.widget_template = 'CommcareSettings.widgets.select';
     self.visibleValue.subscribe(function () {
         var majorVersion = self.visibleValue().split('/')[0].split('.').slice(0,2).join('.');
         COMMCAREHQ.app_manager.setCommcareVersion(majorVersion);
+    });
+    settingsIndex["hq"]["application_version"].value.subscribe(function (appVersion) {
+        update(appVersion);
+        self.updateOptions();
+        self.selectedOption(self["default"]);
     });
 };
 

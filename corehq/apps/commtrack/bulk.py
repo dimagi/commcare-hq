@@ -10,6 +10,9 @@ from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.commtrack import sms
 from dimagi.utils.logging import notify_exception
 from corehq.apps.commtrack.util import get_supply_point
+from django.utils.translation import ugettext as _
+from soil import DownloadBase
+
 
 def set_error(row, msg, override=False):
     """set an error message on a stock report to be imported"""
@@ -47,7 +50,36 @@ def import_stock_reports(domain, f):
             process_loc(domain, loc, rows, data_cols)
 
     return annotate_csv(data, reader.fieldnames)
-    
+
+
+def import_products(domain, download, task):
+    messages = []
+    products = []
+    data = download.get_content().split('\n')[1:]
+    processed = 0
+    total_rows = len(data)
+    reader = csv.reader(data)
+    for row in reader:
+        try:
+            p = Product.from_csv(row)
+            if p:
+                if p.domain:
+                    assert p.domain == domain, _('domain matched uploaded domain')
+                else:
+                    p.domain = domain
+                products.append(p)
+            if task:
+                processed += 1
+                DownloadBase.set_progress(task, processed, total_rows)
+        except Exception, e:
+            messages.append(str(e))
+    if products:
+        Product.get_db().bulk_save(products)
+        messages.insert(0, _('Successfullly updated {products} products with {errors} errors.').format(
+            products=len(products), errors=len(messages))
+        )
+
+
 def validate_headers(domain, headers):
     """validate the headers of the csv -- make sure required fields are present
     and stock actions/products are valid (and parse the action/product info out
