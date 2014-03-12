@@ -76,7 +76,7 @@ def import_products(domain, download, task):
     if products:
         Product.get_db().bulk_save(products)
         messages.insert(0, _('Successfullly updated {products} products with {errors} errors.').format(
-            products=len(products), messages=len(messages))
+            products=len(products), errors=len(messages))
         )
 
 
