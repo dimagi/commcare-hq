@@ -9,8 +9,8 @@ class TestNamespaces(TestCase):
     def testClosed(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "namespaces.xml")
         xml_data = open(file_path, "rb").read()
-        doc_id = create_xform_from_xml(xml_data)
-        xform = XFormInstance.get(doc_id)
+        with create_xform_from_xml(xml_data) as doc_id:
+            xform = XFormInstance.get(doc_id)
         self.assertEqual("http://commcarehq.org/test/ns", xform.xmlns)
         self.assertEqual("no namespace here", xform.xpath("form/empty"))
         self.assertEqual("http://commcarehq.org/test/flatns", xform.xpath("form/flat")["@xmlns"])

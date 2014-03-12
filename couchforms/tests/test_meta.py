@@ -10,8 +10,8 @@ class TestMeta(TestCase):
     def testClosed(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "meta.xml")
         xml_data = open(file_path, "rb").read()
-        doc_id = create_xform_from_xml(xml_data)
-        xform = XFormInstance.get(doc_id)
+        with create_xform_from_xml(xml_data) as doc_id:
+            xform = XFormInstance.get(doc_id)
         self.assertNotEqual(None, xform.metadata)
         self.assertEqual(date(2010,07,22), xform.metadata.timeStart.date())
         self.assertEqual(date(2010,07,23), xform.metadata.timeEnd.date())
@@ -40,8 +40,8 @@ class TestMeta(TestCase):
         
         file_path = os.path.join(os.path.dirname(__file__), "data", "decimalmeta.xml")
         xml_data = open(file_path, "rb").read()
-        doc_id = create_xform_from_xml(xml_data)
-        xform = XFormInstance.get(doc_id)
+        with create_xform_from_xml(xml_data) as doc_id:
+            xform = XFormInstance.get(doc_id)
         self.assertEqual(xform.metadata.appVersion, '2.0')
         self.assertEqual(xform.metadata.to_json(), {
             'username': u'admin',
@@ -59,40 +59,40 @@ class TestMeta(TestCase):
     def testMetaBadUsername(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "meta_bad_username.xml")
         xml_data = open(file_path, "rb").read()
-        doc_id = create_xform_from_xml(xml_data)
-        xform = XFormInstance.get(doc_id)
-        self.assertEqual(xform.metadata.appVersion, '2.0')
+        with create_xform_from_xml(xml_data) as doc_id:
+            xform = XFormInstance.get(doc_id)
+            self.assertEqual(xform.metadata.appVersion, '2.0')
 
-        self.assertEqual(xform.metadata.to_json(), {
-            'username': u'2013-07-19',
-            'doc_type': 'Metadata',
-            'instanceID': u'e8afaec3c66745ef80e48062d4b91b56',
-            'userID': u'f7f0c79e-8b79-11df-b7de-005056c00008',
-            'timeEnd': '2013-07-20T00:02:27Z',
-            'appVersion': u'2.0',
-            'timeStart': '2013-07-19T21:21:31Z',
-            'deprecatedID': None,
-            'deviceID': u'commconnect'
-        })
-        xform.delete()
+            self.assertEqual(xform.metadata.to_json(), {
+                'username': u'2013-07-19',
+                'doc_type': 'Metadata',
+                'instanceID': u'e8afaec3c66745ef80e48062d4b91b56',
+                'userID': u'f7f0c79e-8b79-11df-b7de-005056c00008',
+                'timeEnd': '2013-07-20T00:02:27Z',
+                'appVersion': u'2.0',
+                'timeStart': '2013-07-19T21:21:31Z',
+                'deprecatedID': None,
+                'deviceID': u'commconnect'
+            })
+            xform.delete()
 
     def testMetaAppVersionDict(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "meta_dict_appversion.xml")
         xml_data = open(file_path, "rb").read()
-        doc_id = create_xform_from_xml(xml_data)
-        xform = XFormInstance.get(doc_id)
-        self.assertEqual(xform.metadata.appVersion, '2.0')
+        with create_xform_from_xml(xml_data) as doc_id:
+            xform = XFormInstance.get(doc_id)
+            self.assertEqual(xform.metadata.appVersion, '2.0')
 
-        j = xform.metadata.to_json()
-        self.assertEqual(xform.metadata.to_json(), {
-            'username': u'some_username@test.commcarehq.org',
-            'doc_type': 'Metadata',
-            'instanceID': u'5d3d01561f584e85b53669a48bfc6039',
-            'userID': u'f7f0c79e-8b79-11df-b7de-005056c00008',
-            'timeEnd': '2013-07-20T00:02:27Z',
-            'appVersion': u'2.0',
-            'timeStart': '2013-07-19T21:21:31Z',
-            'deprecatedID': None,
-            'deviceID': u'commconnect'
-        })
-        xform.delete()
+            j = xform.metadata.to_json()
+            self.assertEqual(xform.metadata.to_json(), {
+                'username': u'some_username@test.commcarehq.org',
+                'doc_type': 'Metadata',
+                'instanceID': u'5d3d01561f584e85b53669a48bfc6039',
+                'userID': u'f7f0c79e-8b79-11df-b7de-005056c00008',
+                'timeEnd': '2013-07-20T00:02:27Z',
+                'appVersion': u'2.0',
+                'timeStart': '2013-07-19T21:21:31Z',
+                'deprecatedID': None,
+                'deviceID': u'commconnect'
+            })
+            xform.delete()

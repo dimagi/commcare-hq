@@ -96,8 +96,7 @@ def acquire_lock_for_xform(xform_id):
     return lock
 
 
-def create_xform_from_xml(xml_string, _id=None, process=None,
-                          use_locking=False):
+def create_xform_from_xml(xml_string, _id=None, process=None):
     """
     create and save an XFormInstance from an xform payload (xml_string)
     optionally set the doc _id to a predefined value (_id)
@@ -152,34 +151,41 @@ def create_xform_from_xml(xml_string, _id=None, process=None,
     if not lock:
         lock = acquire_lock_for_xform(_id)
 
-    if use_locking:
-        return LockManager(xform.get_id, lock)
-    else:
-        release_lock(lock, degrade_gracefully=True)
-        return xform.get_id
+    return LockManager(xform.get_id, lock)
 
 
-def post_xform_to_couch(instance, attachments=None, process=None,
-                        use_locking=False):
+def post_xform_to_couch(instance, attachments=None, process=None):
     """
-    Save a new xform to couchdb
-    Returns the newly created document from couchdb,
+    create a new xform and releases the lock
+
+    good for testing but not to be used in active code
+
+    """
+    xform_lock = create_and_lock_xform(instance, attachments=attachments,
+                                       process=process)
+    with xform_lock as xform:
+        return xform
+
+
+def create_and_lock_xform(instance, attachments=None, process=None):
+    """
+    Save a new xform to couchdb in a thread-safe manner
+    Returns a LockManager containing the new XFormInstance and its lock,
     or raises an exception if anything goes wrong.
 
     attachments is a dictionary of the request.FILES that are not the xform;
     key is parameter name, value is django MemoryFile object stream
+
     """
     attachments = attachments or {}
 
     try:
-        doc_id, lock = create_xform_from_xml(instance, process=process,
-                                             use_locking=True)
+        doc_id, lock = create_xform_from_xml(instance, process=process)
     except couchforms.XMLSyntaxError as e:
         doc = _log_hard_failure(instance, attachments, e)
         raise SubmissionError(doc)
     except DuplicateError:
-        return _handle_id_conflict(instance, attachments, process=process,
-                                   use_locking=use_locking)
+        return _handle_id_conflict(instance, attachments, process=process)
 
     try:
         xform = XFormInstance.get(doc_id)
@@ -198,11 +204,7 @@ def post_xform_to_couch(instance, attachments=None, process=None,
         xform.save()
         release_lock(lock, degrade_gracefully=True)
         lock = None
-    if use_locking:
-        return LockManager(xform, lock)
-    else:
-        release_lock(lock, degrade_gracefully=True)
-        return xform
+    return LockManager(xform, lock)
 
 
 def _has_errors(response, errors):
@@ -216,7 +218,7 @@ def _extract_id_from_raw_xml(xml):
     return _extract_meta_instance_id(json_form) or ''
 
 
-def _handle_id_conflict(instance, attachments, process, use_locking=False):
+def _handle_id_conflict(instance, attachments, process):
     """
     For id conflicts, we check if the files contain exactly the same content,
     If they do, we just log this as a dupe. If they don't, we deprecate the
@@ -246,14 +248,13 @@ def _handle_id_conflict(instance, attachments, process, use_locking=False):
 
         # after that delete the original document and resubmit.
         XFormInstance.get_db().delete_doc(conflict_id)
-        return post_xform_to_couch(instance, attachments=attachments,
-                                   process=process, use_locking=use_locking)
+        return create_and_lock_xform(instance, attachments=attachments,
+                                     process=process)
     else:
         # follow standard dupe handling
         new_doc_id = uid.new()
         new_form_id, lock = create_xform_from_xml(instance, _id=new_doc_id,
-                                                  process=process,
-                                                  use_locking=True)
+                                                  process=process)
 
         # create duplicate doc
         # get and save the duplicate to ensure the doc types are set correctly
@@ -261,11 +262,7 @@ def _handle_id_conflict(instance, attachments, process, use_locking=False):
         dupe = XFormDuplicate.get(new_form_id)
         dupe.problem = "Form is a duplicate of another! (%s)" % conflict_id
         dupe.save()
-        if use_locking:
-            return LockManager(dupe, lock)
-        else:
-            release_lock(lock, degrade_gracefully=True)
-            return dupe
+        return LockManager(dupe, lock)
 
 
 def _log_hard_failure(instance, attachments, error):
@@ -396,10 +393,9 @@ class SubmissionPost(object):
             scrub_meta(xform)
 
         try:
-            lock_manager = post_xform_to_couch(self.instance,
-                                               attachments=self.attachments,
-                                               process=process,
-                                               use_locking=True)
+            lock_manager = create_and_lock_xform(self.instance,
+                                                 attachments=self.attachments,
+                                                 process=process)
         except SubmissionError as e:
             logging.exception(
                 u"Problem receiving submission to %s. %s" % (
