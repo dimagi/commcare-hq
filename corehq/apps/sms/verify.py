@@ -6,7 +6,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.apps.sms import util
 
 OUTGOING = ugettext_noop("Welcome to CommCareHQ! Is this phone used by %(name)s? If yes, reply '123'%(replyto)s to start using SMS with CommCareHQ.")
-CONFIRM = "Thank you. This phone has been verified for using SMS with CommCareHQ"
+CONFIRM = ugettext_noop("Thank you. This phone has been verified for using SMS with CommCareHQ")
 
 def send_verification(domain, user, phone_number):
     backend = MobileBackend.auto_load(phone_number, domain)
@@ -49,7 +49,7 @@ def process_verification(phone_number, msg, backend_id=None):
 
     v = owner.save_verified_number(v.domain, phone_number, True, backend.name)
 
-    send_sms_to_verified_number(v, CONFIRM)
+    send_sms_to_verified_number(v, _(CONFIRM))
 
 def verification_response_ok(text):
     return text == '123'
