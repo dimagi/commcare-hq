@@ -885,7 +885,7 @@ class InvoicePdf(SafeSaveDocument):
         from corehq.apps.accounting.invoicing import Address, InvoiceTemplate
         template = InvoiceTemplate(
             pdf_data.name,
-            invoice_number=("HQ-%d" %
+            invoice_number=("INC-%d" %
                             (settings.STARTING_INVOICE_NUMBER + invoice.id)),
             to_address=Address(
                 name=("%s %s" %
