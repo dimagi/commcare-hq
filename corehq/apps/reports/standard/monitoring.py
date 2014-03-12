@@ -397,8 +397,6 @@ class DailyFormStatsReport(ElasticProjectInspectionReport, WorkerMonitoringRepor
         }}}
         gte = self.datespan.startdate_param
         lte = self.datespan.enddate_param
-        # TODO: delete this line
-        gte = datetime.datetime(2010, 1, 1).strftime('%Y-%m-%d')
         query = {"filter": {"range": {
                     self.date_field: {
                         "gte": gte,
@@ -422,9 +420,6 @@ class DailyFormStatsReport(ElasticProjectInspectionReport, WorkerMonitoringRepor
             counts_by_date.get(date.strftime(DATE_FORMAT), 0)
             for date in self.dates
         ]
-        # TODO: delete these two lines:
-        total = sum([entry['count'] for entry in res['facets']['date']['entries']])
-        return [self.get_raw_user_link(user)] + date_cols + [total]
         return [self.get_raw_user_link(user)] + date_cols + [sum(date_cols)]
 
     @property
@@ -452,8 +447,6 @@ class DailyFormStatsReport(ElasticProjectInspectionReport, WorkerMonitoringRepor
         return users
 
     def users_by_range(self, start, end, order):
-        # TODO: delete this line
-        start = datetime.datetime(2010, 1, 1)
         query = {"filter": {"range": {
                     self.date_field: {
                         "gte": start.strftime('%Y-%m-%d'),
