@@ -44,6 +44,15 @@ class FormPreparationV2Test(FormPrepBase):
         self.form.actions.update_case.condition.type = 'always'
         self.assertXmlEqual(self.get_xml('update_case'), self.form.render_xform())
 
+    def test_update_parent_case(self):
+        self.form.requires = 'case'
+        self.form.actions.update_case = UpdateCaseAction(update={
+            'question1': '/data/question1',
+            'parent/question1': '/data/question1',
+        })
+        self.form.actions.update_case.condition.type = 'always'
+        self.assertXmlEqual(self.get_xml('update_parent_case'), self.form.render_xform())
+
     def test_open_update_case(self):
         self.form.actions.open_case = OpenCaseAction(name_path="/data/question1", external_id=None)
         self.form.actions.open_case.condition.type = 'always'

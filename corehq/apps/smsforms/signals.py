@@ -1,6 +1,6 @@
 from touchforms.formplayer.signals import sms_form_complete
 from corehq.apps.receiverwrapper.util import get_submit_url
-from receiver.util import spoof_submission
+from couchforms.util import spoof_submission
 from couchforms.models import XFormInstance
 
 def handle_sms_form_complete(sender, session_id, form, **kwargs):

@@ -18,6 +18,6 @@ def export_users(users, workbook, mimic_upload=False):
             user_row["%s%s" % (data_prefix, key)] = user.user_data[key]
         user_rows.append(user_row)
         fields.update(user_row.keys())
-    workbook.open("User", list(user_keys) + sorted(fields - set(user_keys)))
+    workbook.open("Users", list(user_keys) + sorted(fields - set(user_keys)))
     for user_row in user_rows:
-        workbook.write_row('User', user_row)
+        workbook.write_row('Users', user_row)

@@ -1,10 +1,10 @@
-from couchdbkit import MultipleResultsFound
 from couchdbkit.ext.django.schema import Document, StringProperty, DateTimeProperty, StringListProperty, BooleanProperty
 from django.template.loader import render_to_string
 from corehq.apps.announcements.crud import HQAnnouncementCRUDManager
 from corehq.apps.crud.models import AdminCRUDDocumentMixin
 from dimagi.utils.couch.cache import cache_core
 from corehq.util import fix_urls
+from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 
 class HQAnnouncement(Document, AdminCRUDDocumentMixin):
@@ -74,7 +74,9 @@ class Notification(Document):
 
         try:
             if len(notifications) > 1:
-                raise MultipleResultsFound("Multiple results found for announcements.get_notification")
+                for dup_notification in notifications[1:]:  # delete the duplicates
+                    dup_notification.base_doc += DELETED_SUFFIX
+                    dup_notification.save()
             notification = notifications[0]
         except IndexError:
             notification = None

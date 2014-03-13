@@ -6,15 +6,6 @@ from django_prbac.decorators import requires_privilege
 from django_prbac.exceptions import PermissionDenied
 
 
-def is_accounting_previewer(request):
-    return (
-        (hasattr(request, 'user') and toggles.ACCOUNTING_PREVIEW.enabled(
-            request.user.username))
-        or (hasattr(request, 'domain') and toggles.ACCOUNTING_PREVIEW.enabled(
-            request.domain, namespace=toggles.NAMESPACE_DOMAIN))
-    )
-
-
 def require_billing_admin():
     def decorate(fn):
         """
@@ -44,8 +35,6 @@ def requires_privilege_with_fallback(slug, **assignment):
     """
     def decorate(fn):
         def wrapped(request, *args, **kwargs):
-            if not is_accounting_previewer(request):
-                return fn(request, *args, **kwargs)
             try:
                 return requires_privilege(slug, **assignment)(fn)(
                     request, *args, **kwargs
@@ -68,8 +57,6 @@ def requires_privilege_plaintext_response(slug,
     """
     def decorate(fn):
         def wrapped(request, *args, **kwargs):
-            if not is_accounting_previewer(request):
-                return fn(request, *args, **kwargs)
             try:
                 return requires_privilege(slug, **assignment)(fn)(
                     request, *args, **kwargs
@@ -107,8 +94,6 @@ def requires_privilege_json_response(slug, http_status_code=None,
 
     def decorate(fn):
         def wrapped(request, *args, **kwargs):
-            if not is_accounting_previewer(request):
-                return fn(request, *args, **kwargs)
             try:
                 return requires_privilege(slug, **assignment)(fn)(
                     request, *args, **kwargs)

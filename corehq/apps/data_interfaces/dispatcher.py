@@ -25,7 +25,7 @@ class DataInterfaceDispatcher(ProjectReportDispatcher):
         return super(DataInterfaceDispatcher, self).dispatch(request, *args, **kwargs)
 
     def permissions_check(self, report, request, domain=None, is_navigation_check=False):
-        if is_navigation_check and toggles.ACCOUNTING_PREVIEW.enabled(request.user.username):
+        if is_navigation_check:
             from corehq.apps.reports.standard.export import DeidExportReport
             if report.split('.')[-1] in [DeidExportReport.__name__]:
                 try:
@@ -52,7 +52,7 @@ class EditDataInterfaceDispatcher(ReportDispatcher):
         return super(EditDataInterfaceDispatcher, self).dispatch(request, *args, **kwargs)
 
     def permissions_check(self, report, request, domain=None, is_navigation_check=False):
-        if is_navigation_check and toggles.ACCOUNTING_PREVIEW.enabled(request.user.username):
+        if is_navigation_check:
             from corehq.apps.importer.base import ImportCases
             if report.split('.')[-1] in [ImportCases.__name__]:
                 try:

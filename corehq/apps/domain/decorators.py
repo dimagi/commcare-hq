@@ -8,6 +8,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponseForbidden
+from django.utils.decorators import method_decorator
 from django.utils.http import urlquote
 from django.utils.translation import ugettext as _
 
@@ -34,11 +35,10 @@ def load_domain(req, domain):
     domain = Domain.get_by_name(domain_name)
     req.project = domain
     req.can_see_organization = True
-    if toggles.ACCOUNTING_PREVIEW.enabled(req.user.username):
-        try:
-            ensure_request_has_privilege(req, privileges.CROSS_PROJECT_REPORTS)
-        except PermissionDenied:
-            req.can_see_organization = False
+    try:
+        ensure_request_has_privilege(req, privileges.CROSS_PROJECT_REPORTS)
+    except PermissionDenied:
+        req.can_see_organization = False
     return domain_name, domain
 
 ########################################################################################################
@@ -90,6 +90,12 @@ def login_and_domain_required(view_func):
         else:
             raise Http404
     return _inner
+
+
+class LoginAndDomainMixin(object):
+    @method_decorator(login_and_domain_required)
+    def dispatch(self, *args, **kwargs):
+        return super(LoginAndDomainMixin, self).dispatch(*args, **kwargs)
 
 
 def login_or_digest_ex(allow_cc_users=False):

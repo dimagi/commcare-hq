@@ -301,7 +301,12 @@ class CommTrackSetupTab(UITab):
         items = []
 
         # circular import
-        from corehq.apps.commtrack.views import ProductListView, NewProductView, EditProductView
+        from corehq.apps.commtrack.views import (
+            ProductListView,
+            NewProductView,
+            EditProductView,
+            DefaultConsumptionView,
+        )
         products_section = [
             {
                 'title': ProductListView.page_title,
@@ -317,6 +322,10 @@ class CommTrackSetupTab(UITab):
                     },
                 ]
             },
+            {
+                'title': DefaultConsumptionView.page_title,
+                'url': reverse(DefaultConsumptionView.urlname, args=[self.domain]),
+            }
         ]
         items.append([_("Products"), products_section])
 
@@ -516,11 +525,10 @@ class CloudcareTab(UITab):
 
     @property
     def is_viewable(self):
-        if toggles.ACCOUNTING_PREVIEW.enabled(self.couch_user.username):
-            try:
-                ensure_request_has_privilege(self._request, privileges.CLOUDCARE)
-            except PermissionDenied:
-                return False
+        try:
+            ensure_request_has_privilege(self._request, privileges.CLOUDCARE)
+        except PermissionDenied:
+            return False
         return (self.domain
                 and (self.couch_user.can_edit_data() or self.couch_user.is_commcare_user())
                 and not self.project.commconnect_enabled)
@@ -540,22 +548,20 @@ class MessagingTab(UITab):
     @property
     @memoized
     def can_access_sms(self):
-        if toggles.ACCOUNTING_PREVIEW.enabled(self.couch_user.username):
-            try:
-                ensure_request_has_privilege(self._request, privileges.OUTBOUND_SMS)
-            except PermissionDenied:
-                return False
+        try:
+            ensure_request_has_privilege(self._request, privileges.OUTBOUND_SMS)
+        except PermissionDenied:
+            return False
         return True
 
     @property
     @memoized
     def can_access_reminders(self):
-        if toggles.ACCOUNTING_PREVIEW.enabled(self.couch_user.username):
-            try:
-                ensure_request_has_privilege(self._request, privileges.REMINDERS_FRAMEWORK)
-            except PermissionDenied:
-                return False
-        return True
+        try:
+            ensure_request_has_privilege(self._request, privileges.REMINDERS_FRAMEWORK)
+            return True
+        except PermissionDenied:
+            return False
 
     @property
     def sidebar_items(self):
@@ -779,11 +785,10 @@ class ProjectUsersTab(UITab):
 
     @property
     def can_view_cloudcare(self):
-        if toggles.ACCOUNTING_PREVIEW.enabled(self.couch_user.username):
-            try:
-                ensure_request_has_privilege(self._request, privileges.CLOUDCARE)
-            except PermissionDenied:
-                return False
+        try:
+            ensure_request_has_privilege(self._request, privileges.CLOUDCARE)
+        except PermissionDenied:
+            return False
         return self.couch_user.is_domain_admin()
 
     @property
@@ -914,7 +919,7 @@ class ProjectSettingsTab(UITab):
 
         can_view_orgs = (user_is_admin
                          and self.project and self.project.organization)
-        if toggles.ACCOUNTING_PREVIEW.enabled(self.couch_user.username) and can_view_orgs:
+        if can_view_orgs:
             try:
                 ensure_request_has_privilege(self._request, privileges.CROSS_PROJECT_REPORTS)
             except PermissionDenied:

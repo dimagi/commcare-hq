@@ -40,6 +40,21 @@ class FRIRandomizedMessage(Document):
     message_bank_message_id = StringProperty() # Points to the _id of a MessageBankMessage
     order = IntegerProperty() # The order in which this message must be sent, from 0 - 279
 
+class FRIExtraMessage(Document):
+    """
+    Extra messages that get sent.
+    """
+    domain = StringProperty()
+    # defined in the api under MSG_ID_*
+    message_id = StringProperty()
+    message = StringProperty()
+
+    @classmethod
+    def get_by_message_id(cls, domain, message_id):
+        return FRIExtraMessage.view("fri/extra_message",
+                                    key=[domain, message_id],
+                                    include_docs=True).one()
+
 class FRISMSLog(SMSLog):
     fri_message_bank_lookup_completed = BooleanProperty(default=False)
     fri_message_bank_message_id = StringProperty()

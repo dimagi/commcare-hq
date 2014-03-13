@@ -1,5 +1,4 @@
 {% extends 'hqwebapp/base_page.html' %}
-{% load url from future %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load timezone_tags %}
@@ -88,22 +87,35 @@
     <div id="toggle_editing_ko">
         <div data-bind="saveButton: saveButton"></div>
         <h4>{% trans "Enabled toggle items" %}</h4>
-        {% if toggle_meta.namespaces %}
         <hr/>
         <div>
-            {% trans "Available namespaces:" %}
+            {% trans "Flag applicable to:" %}
         <span class="hq-help-template"
               data-title="{% trans "Toggle Items" %}"
-              data-content="{% trans "Toggle items are usually usernames but can also be namespaced items such as 'domain:somedomain'" %}"></span>
+              data-content="{% blocktrans %}
+                <p>This list shows what kind of items are checked agains this flag.</p>
+                <p>Toggle items are by default assumed to be usernames but can also be namespaced items such as 'domain:somedomain'.</p>
+                <p>The default namespace is 'user' which does not have to be specified.</p>
+                {% endblocktrans %}"></span>
             <ul>
                 {% for ns in toggle_meta.namespaces %}
-                <li>{{ ns }}</li>
+                    {% if ns == None %}
+                    <li>
+                        {% trans "user" %}<br/>
+                        <ul>
+                            <li>
+                                <span class="muted">{% trans "This is the default namespace so no prefix is required i.e. joe@dimagi.com not user:joe@dimagi.com" %}</span>
+                            </li>
+                        </ul>
+                    </li>
+                    {% else %}
+                    <li>{{ ns }}</li>
+                    {% endif %}
                 {% endfor %}
             </ul>
         </div>
         <hr/>
-        {% endif %}
-        <!-- ko foreach: users -->
+        <!-- ko foreach: items -->
         <div class="row">
             <div class="span1">
                 <a href="#" class="btn btn-danger" data-bind="click: $parent.removeItem"><i class="icon-trash"></i></a>

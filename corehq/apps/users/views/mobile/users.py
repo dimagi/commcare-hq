@@ -237,11 +237,10 @@ class ListCommCareUsersView(BaseUserSettingsView):
 
     @property
     def can_bulk_edit_users(self):
-        if toggles.ACCOUNTING_PREVIEW.enabled(self.couch_user.username):
-            try:
-                ensure_request_has_privilege(self.request, privileges.BULK_USER_MANAGEMENT)
-            except PermissionDenied:
-                return False
+        try:
+            ensure_request_has_privilege(self.request, privileges.BULK_USER_MANAGEMENT)
+        except PermissionDenied:
+            return False
         return True
 
     @property
@@ -281,6 +280,8 @@ class ListCommCareUsersView(BaseUserSettingsView):
     @property
     @memoized
     def users_list_total(self):
+        if self.query:
+            return self.total_users_from_es
         return CommCareUser.total_by_domain(self.domain, is_active=not self.show_inactive)
 
     @property
@@ -343,6 +344,7 @@ class ListCommCareUsersView(BaseUserSettingsView):
 
 class AsyncListCommCareUsersView(ListCommCareUsersView):
     urlname = 'user_list'
+    es_results = None
 
     @property
     def sort_by(self):
@@ -375,9 +377,7 @@ class AsyncListCommCareUsersView(ListCommCareUsersView):
             users.sort(key=lambda user: -user.form_count)
         return users
 
-    @property
-    @memoized
-    def users_from_es(self):
+    def query_es(self):
         q = {
             "query": { "query_string": { "query": self.query }},
             "filter": {"and": ADD_TO_ES_FILTER["users"][:]},
@@ -387,10 +387,23 @@ class AsyncListCommCareUsersView(ListCommCareUsersView):
             "domain": self.domain,
             "is_active": not self.show_inactive,
         }
-        results = es_query(params=params, q=q, es_url=ES_URLS["users"],
+        self.es_results = es_query(params=params, q=q, es_url=ES_URLS["users"],
                            size=self.users_list_limit, start_at=self.users_list_skip)
-        users = [res['_source'] for res in results.get('hits', {}).get('hits', [])]
+
+    @property
+    @memoized
+    def users_from_es(self):
+        if self.es_results is None:
+            self.query_es()
+        users = [res['_source'] for res in self.es_results.get('hits', {}).get('hits', [])]
         return [CommCareUser.wrap(user) for user in users]
+
+    @property
+    @memoized
+    def total_users_from_es(self):
+        if self.es_results is None:
+            self.query_es()
+        return self.es_results.get("hits", {}).get("total", 0)
 
     def get_archive_text(self, is_active):
         if is_active:
@@ -436,6 +449,7 @@ class AsyncListCommCareUsersView(ListCommCareUsersView):
         return HttpResponse(json.dumps({
             'success': True,
             'current_page': self.users_list_page,
+            'users_list_total': self.users_list_total,
             'users_list': self.users_list,
         }))
 
@@ -492,7 +506,9 @@ class ConfirmBillingAccountForExtraUsersView(BaseUserSettingsView, AsyncHandlerM
                     request, _("Billing contact information was successfully confirmed. "
                                "You may now add additional Mobile Workers.")
                 )
-                return HttpResponseRedirect(reverse(CreateCommCareUserView.urlname, args=[self.domain]))
+                return HttpResponseRedirect(reverse(
+                    ListCommCareUsersView.urlname, args=[self.domain]
+                ))
         return self.get(request, *args, **kwargs)
 
 

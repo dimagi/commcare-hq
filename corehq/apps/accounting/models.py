@@ -144,7 +144,10 @@ class Currency(models.Model):
     code = models.CharField(max_length=3, unique=True)
     name = models.CharField(max_length=25, db_index=True)
     symbol = models.CharField(max_length=10)
-    rate_to_default = models.DecimalField(default=1.0, max_digits=20, decimal_places=EXCHANGE_RATE_DECIMAL_PLACES)
+    rate_to_default = models.DecimalField(
+        default=Decimal('1.0'), max_digits=20,
+        decimal_places=EXCHANGE_RATE_DECIMAL_PLACES,
+    )
     date_updated = models.DateField(auto_now=True)
 
     @classmethod
@@ -156,10 +159,13 @@ class Currency(models.Model):
 class BillingAccountAdmin(models.Model):
     web_user = models.CharField(max_length=80, unique=True, db_index=True)
 
+    def __str__(self):
+        return "Billing Admin %s" % self.web_user
+
     @classmethod
     def get_admin_status_and_account(cls, web_user, domain):
         if not isinstance(web_user, WebUser):
-            raise ValueError("web_user should be an instance of WebUser")
+            return False, None
         account = BillingAccount.get_account_by_domain(domain)
         if account is None:
             return web_user.is_domain_admin(domain), None
@@ -247,18 +253,40 @@ class BillingContactInfo(models.Model):
         max_length=50, null=True, blank=True, verbose_name=_("Last Name")
     )
     emails = models.CharField(
-        max_length=200, null=True, blank=True, verbose_name=_("Additional Contact Emails"),
-        help_text=_("We will email communications to the emails specified here and the emails "
+        max_length=200, null=True, blank=True,
+        verbose_name=_("Additional Contact Emails"),
+        help_text=_("We will email communications to the emails specified "
+                    "here and the emails "
                     "of the Billing Administrators.")
     )
-    phone_number = models.CharField(max_length=20, null=True, blank=True, verbose_name=_("Phone Number"))
-    company_name = models.CharField(max_length=50, null=True, blank=True, verbose_name=_("Company / Organization"))
-    first_line = models.CharField(max_length=50, null=False, verbose_name=_("Address First Line"))
-    second_line = models.CharField(max_length=50, null=True, blank=True, verbose_name=_("Address Second Line"))
-    city = models.CharField(max_length=50, null=False, verbose_name=_("City"))
-    state_province_region = models.CharField(max_length=50, null=False, verbose_name=_("State / Province / Region"))
-    postal_code = models.CharField(max_length=20, null=False, verbose_name=_("Postal Code"))
-    country = models.CharField(max_length=50, null=False, verbose_name=_("Country"))
+    phone_number = models.CharField(
+        max_length=20, null=True, blank=True, verbose_name=_("Phone Number")
+    )
+    company_name = models.CharField(
+        max_length=50, null=True, blank=True,
+        verbose_name=_("Company / Organization")
+    )
+    first_line = models.CharField(
+        max_length=50, null=False, blank=True,
+        verbose_name=_("Address First Line")
+    )
+    second_line = models.CharField(
+        max_length=50, null=True, blank=True,
+        verbose_name=_("Address Second Line")
+    )
+    city = models.CharField(
+        max_length=50, null=False, blank=True, verbose_name=_("City")
+    )
+    state_province_region = models.CharField(
+        max_length=50, null=False, blank=True,
+        verbose_name=_("State / Province / Region"),
+    )
+    postal_code = models.CharField(
+        max_length=20, null=False, blank=True, verbose_name=_("Postal Code")
+    )
+    country = models.CharField(
+        max_length=50, null=False, blank=True, verbose_name=_("Country")
+    )
 
 
 class SoftwareProduct(models.Model):
@@ -458,7 +486,16 @@ class SoftwarePlanVersion(models.Model):
     role = models.ForeignKey(Role)
 
     def __str__(self):
-        return "Software Plan Version For Plan '%s' with Role '%s'" % (self.plan.name, self.role.slug)
+        return "%(plan_name)s (v%(version_num)d)" % {
+            'plan_name': self.plan.name,
+            'version_num': self.version,
+        }
+
+    @property
+    def version(self):
+        return (self.plan.softwareplanversion_set.count() -
+                self.plan.softwareplanversion_set.filter(
+                    date_created__gt=self.date_created).count())
 
     @property
     def user_facing_description(self):
@@ -520,8 +557,8 @@ class Subscriber(models.Model):
     """
     The objects that can be subscribed to a Subscription.
     """
-    domain = models.CharField(max_length=25, null=True, db_index=True)
-    organization = models.CharField(max_length=25, null=True, db_index=True)
+    domain = models.CharField(max_length=256, null=True, db_index=True)
+    organization = models.CharField(max_length=256, null=True, db_index=True)
 
     objects = SubscriberManager()
 
@@ -530,11 +567,10 @@ class Subscriber(models.Model):
             return "ORGANIZATION %s" % self.organization
         return "DOMAIN %s" % self.domain
 
-    def apply_upgrades_and_downgrades(self, downgraded_privileges=None, upgraded_privileges=None, web_user=None,
-                                      new_plan_version=None):
-        # don't actually perform downgrades until march 1st.
-        if web_user is None or not toggles.ACCOUNTING_PREVIEW.enabled(web_user):
-            return
+    def apply_upgrades_and_downgrades(self, downgraded_privileges=None,
+                                      upgraded_privileges=None,
+                                      new_plan_version=None,
+                                      verbose=False):
 
         if self.organization is not None:
             raise SubscriptionChangeError("Only domain upgrades and downgrades are possible.")
@@ -548,12 +584,18 @@ class Subscriber(models.Model):
             upgraded_privileges = upgraded_privileges or up
 
         if downgraded_privileges:
-            downgrade_handler = DomainDowngradeActionHandler(self.domain, new_plan_version, downgraded_privileges)
+            downgrade_handler = DomainDowngradeActionHandler(
+                self.domain, new_plan_version, downgraded_privileges,
+                verbose=verbose,
+            )
             if not downgrade_handler.get_response():
                 raise SubscriptionChangeError("The downgrade was not successful.")
 
         if upgraded_privileges:
-            upgrade_handler = DomainUpgradeActionHandler(self.domain, new_plan_version, upgraded_privileges)
+            upgrade_handler = DomainUpgradeActionHandler(
+                self.domain, new_plan_version, upgraded_privileges,
+                verbose=verbose,
+            )
             if not upgrade_handler.get_response():
                 raise SubscriptionChangeError("The upgrade was not successful.")
 
@@ -578,7 +620,7 @@ class Subscription(models.Model):
         today = datetime.date.today()
         if self.date_end is not None and today > self.date_end:
             raise SubscriptionAdjustmentError("The end date for this subscription already passed.")
-        self.subscriber.apply_upgrades_and_downgrades(web_user=web_user)
+        self.subscriber.apply_upgrades_and_downgrades()
         self.date_end = today
         self.is_active = False
         self.save()
@@ -596,8 +638,9 @@ class Subscription(models.Model):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
         adjustment_reason, downgrades, upgrades = get_change_status(self.plan_version, new_plan_version)
-        self.subscriber.apply_upgrades_and_downgrades(downgraded_privileges=downgrades, upgraded_privileges=upgrades,
-                                                      web_user=web_user, new_plan_version=new_plan_version)
+        self.subscriber.apply_upgrades_and_downgrades(
+            downgraded_privileges=downgrades, upgraded_privileges=upgrades,
+            new_plan_version=new_plan_version)
 
         today = datetime.date.today()
         new_start_date = today if self.date_start <= today else (date_start or self.date_start)
@@ -664,9 +707,6 @@ class Subscription(models.Model):
         """
         domain_obj = assure_domain_instance(domain)
         if domain_obj is None:
-            # need more info to troubleshoot this further
-            logging.error("Tried to fetch a subscription for a domain that was not properly located. "
-                          "Domain name is %s." % domain)
             plan_version = DefaultProductPlan.objects.get(edition=SoftwarePlanEdition.COMMUNITY,
                                                           product_type=SoftwareProductType.COMMCARE).plan.get_version()
             return plan_version, None
@@ -708,7 +748,7 @@ class Subscription(models.Model):
             **kwargs
         )
         subscription.save()
-        subscriber.apply_upgrades_and_downgrades(new_plan_version=plan_version, web_user=web_user)
+        subscriber.apply_upgrades_and_downgrades(new_plan_version=plan_version)
         SubscriptionAdjustment.record_adjustment(subscription, method=adjustment_method, note=note, web_user=web_user)
         return subscription
 

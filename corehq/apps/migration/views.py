@@ -1,11 +1,9 @@
 from copy import copy
 import json
-from django.views.decorators.http import require_POST
 import re
 from django.http import HttpResponse
 from django.shortcuts import render
 
-import restkit
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.groups.models import Group
 from corehq.apps.migration import tasks
@@ -17,10 +15,9 @@ from corehq.apps.migration.models import MigrationUser
 from corehq.apps.receiverwrapper.util import get_submit_url
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
-from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.web import json_response
-from receiver.util import spoof_submission
+from couchforms.util import spoof_submission
 
 
 class UserMap(object):

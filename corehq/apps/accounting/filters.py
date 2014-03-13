@@ -42,7 +42,7 @@ class SalesforceAccountIDFilter(BaseSingleOptionFilter):
 
 class SubscriberFilter(BaseSingleOptionFilter):
     slug = 'subscriber'
-    label = _('Subscriber')
+    label = _('Project Space')
     default_text = _("All")
 
     @property

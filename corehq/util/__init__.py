@@ -38,3 +38,13 @@ def fix_urls(text):
        text = text.replace(email[1], '<a href="mailto:%(email)s">%(email)s</a>' % {"email" : email[1]})
 
     return text
+
+
+def remove_dups(list_of_dicts, unique_key):
+    keys = set([])
+    ret = []
+    for d in list_of_dicts:
+        if d.get(unique_key) not in keys:
+            keys.add(d.get(unique_key))
+            ret.append(d)
+    return ret

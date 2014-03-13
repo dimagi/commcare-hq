@@ -1,5 +1,6 @@
 from collections import defaultdict
 from xml.etree import ElementTree
+from corehq.apps.commtrack.util import unicode_slug
 from .models import Location
 
 
@@ -16,14 +17,19 @@ def location_fixture_generator(user, version, last_sync):
     # todo: eventually this needs to not load all locations for any given user
     # as this will have performance implications
     locs = Location.root_locations(user.domain)
-    _append_children(root, locs)
+    loc_types = project.commtrack_settings.location_types
+    type_to_slug_mapping = dict((ltype.name, ltype.code) for ltype in loc_types)
+    def location_type_lookup(location_type):
+        return type_to_slug_mapping.get(location_type, unicode_slug(location_type))
+
+    _append_children(root, locs, location_type_lookup)
     return [root]
 
 
-def _append_children(node, locations):
+def _append_children(node, locations, type_lookup_function):
     by_type = _group_by_type(locations)
     for type, locs in by_type.items():
-        node.append(_types_to_fixture(type, locs))
+        node.append(_types_to_fixture(type, locs, type_lookup_function))
 
 
 def _group_by_type(locations):
@@ -33,15 +39,15 @@ def _group_by_type(locations):
     return by_type
 
 
-def _types_to_fixture(type, locs):
-    type_node = ElementTree.Element('%ss' % type)  # ghetto pluralization
+def _types_to_fixture(type, locs, type_lookup_function):
+    type_node = ElementTree.Element('%ss' % type_lookup_function(type))  # ghetto pluralization
     for loc in locs:
-        type_node.append(_location_to_fixture(loc))
+        type_node.append(_location_to_fixture(loc, type_lookup_function))
     return type_node
 
 
-def _location_to_fixture(location):
-    root = ElementTree.Element(location.location_type, {'id': location._id})
+def _location_to_fixture(location, type_lookup_function):
+    root = ElementTree.Element(type_lookup_function(location.location_type), {'id': location._id})
     fixture_fields = [
         'name',
         'site_code',
@@ -55,5 +61,5 @@ def _location_to_fixture(location):
         field_node.text = unicode(val if val is not None else '')
         root.append(field_node)
 
-    _append_children(root, location.children)
+    _append_children(root, location.children, type_lookup_function)
     return root

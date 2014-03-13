@@ -114,7 +114,8 @@ urlpatterns = patterns('',
     url(r'^sms_in/$', 'corehq.apps.sms.views.sms_in', name='sms_in'),
     url(r'^unsubscribe/(?P<user_id>[\w-]+)/', 'corehq.apps.hqwebapp.views.unsubscribe', name='unsubscribe'),
     (r'^wisepill/', include('custom.apps.wisepill.urls')),
-    url(r'pro_bono/$', ProBonoStaticView.as_view(), name=ProBonoStaticView.urlname)
+    url(r'^pro_bono/$', ProBonoStaticView.as_view(),
+        name=ProBonoStaticView.urlname)
 ) + patterns('', *LOCAL_APP_URLS)
 
 # django rosetta support if configured
