@@ -283,7 +283,7 @@ class AdvancedAction(DocumentSchema):
 
     @property
     def case_session_var(self):
-        return 'case_id_{}'.format(self.case_tag)
+        return 'case_id_{0}'.format(self.case_tag)
 
 
 class LoadUpdateAction(AdvancedAction):
@@ -1548,7 +1548,7 @@ class AdvancedModule(ModuleBase):
             if open:
                 base_action = AdvancedOpenCaseAction(
                     case_type=case_type,
-                    case_tag='open_{}_0'.format(case_type),
+                    case_tag='open_{0}_0'.format(case_type),
                     name_path=open.name_path,
                     open_condition=open.condition,
                     case_properties=update.update if update else {},
@@ -1557,7 +1557,7 @@ class AdvancedModule(ModuleBase):
             elif update or preload or close:
                 base_action = LoadUpdateAction(
                     case_type=case_type,
-                    case_tag='load_{}_0'.format(case_type),
+                    case_tag='load_{0}_0'.format(case_type),
                     case_properties=update.update if update else {},
                     preload=convert_preload(preload.preload) if preload else {}
                 )
@@ -1569,7 +1569,7 @@ class AdvancedModule(ModuleBase):
                 for i, subcase in enumerate(subcases):
                     open_subcase_action = AdvancedOpenCaseAction(
                         case_type=subcase.case_type,
-                        case_tag='open_{}_{}'.format(subcase.case_type, i+1),
+                        case_tag='open_{0}_{1}'.format(subcase.case_type, i+1),
                         name_path=subcase.case_name,
                         open_condition=subcase.condition,
                         case_properties=subcase.case_properties,

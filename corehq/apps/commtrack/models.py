@@ -666,10 +666,11 @@ class StockTransaction(object):
 
         def _txn(action, case_id, section_id, quantity):
             # warning: here be closures
+            quantity = Decimal(str(quantity)) if quantity is not None else None
             data = {
                 'timestamp': timestamp,
                 'product_id': product_id,
-                'quantity': Decimal(quantity),
+                'quantity': quantity,
                 'action': action,
                 'case_id': case_id,
                 'section_id': section_id,
