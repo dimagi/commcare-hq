@@ -77,10 +77,15 @@
             };
             ko.applyBindings(COMMCAREHQ.app_manager.module_view, $('#detail-screen-config-warning').get(0));
         });
+        $(function () {
+            COMMCAREHQ.app_manager.setupValidation(
+                '{% url "validate_module_for_build" domain app.id module.id %}');
+        });
     </script>
 {% endblock %}
 
 {% block form-view %}
+    <div id="build_errors"></div>
     {% if edit %}
     <div class="delete-me">
         <form action="{% url "delete_module" domain app.id module.id %}" method="post">

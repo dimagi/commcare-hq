@@ -1185,6 +1185,28 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
     return json_response(resp)
 
 
+def validate_module_for_build(request, domain, app_id, module_id, ajax=True):
+    app = get_app(domain, app_id)
+    try:
+        module = app.get_module(module_id)
+    except ModuleNotFoundException:
+        raise Http404()
+    errors = module.validate_for_build()
+    lang, langs = get_langs(request, app)
+
+    response_html = render_to_string('app_manager/partials/build_errors.html', {
+        'app': app,
+        'build_errors': errors,
+        'not_actual_build': True,
+        'domain': domain,
+        'langs': langs,
+        'lang': lang
+    })
+    if ajax:
+        return json_response({'error_html': response_html})
+    return HttpResponse(response_html)
+
+
 def _handle_media_edits(request, item, should_edit, resp):
     if not resp.has_key('corrections'):
         resp['corrections'] = {}
@@ -1682,7 +1704,7 @@ def rearrange(req, domain, app_id, key):
             'The form can not be moved into the desired module.'
         ))
         return back_to_main(req, domain, app_id=app_id, module_id=module_id)
-    except RearrangeError, ModuleNotFoundException:
+    except (RearrangeError, ModuleNotFoundException):
         messages.error(req, _(
             'Oops. '
             'Looks like you got out of sync with us. '
