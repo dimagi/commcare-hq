@@ -1,3 +1,4 @@
+from django.db import models
 from casexml.apps.case.models import CommCareCase
 from couchforms.models import XFormInstance
 import fluff
@@ -269,3 +270,13 @@ class McctMonthlyAggregateFormFluff(fluff.IndicatorDocument):
     eligible_due_to_immun_or_pnc_visit = mcct_monthly_aggregate_report_calcs.EligibleDueToImmunizationOrPncVisit()
 
 McctMonthlyAggregateFormFluffPillow = McctMonthlyAggregateFormFluff.pillow()
+
+
+class McctStatus(models.Model):
+    form_id = models.CharField(max_length=100, db_index=True)
+    status = models.CharField(max_length=20)
+    domain = models.CharField(max_length=256, null=True, db_index=True)
+
+    def update_status(self, new_status):
+        self.status = new_status
+        self.save()
