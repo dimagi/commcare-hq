@@ -69,7 +69,7 @@ var CaseManagement = function (o) {
 
             stringArray[0] = form_id;
             stringArray[1] = status;
-            stringArray[2] = form_domain;
+            stringArray[2] = self.domain;
             data_to_send.push(stringArray);
         }
         $.ajax({

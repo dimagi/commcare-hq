@@ -4,13 +4,13 @@ from custom.m4change.models import McctStatus
 
 
 @require_POST
-def update_service_status(request):
+def update_service_status(request, domain):
     forms = request.POST
     for lists in forms.lists():
         for list in lists:
             form_id = list[0]
             new_status = list[1] if list[1].__len__() is not 1 else None
-            domain = list[2]
+            #domain = list[2]
             if new_status is not None:
                 try:
                     mcct_status = McctStatus.objects.get(form_id=form_id, domain=domain)
