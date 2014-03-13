@@ -163,22 +163,6 @@ class MultiSelectGroupField(GroupFieldMixin, ReportMultiSelectField):
         opts.insert(0, {'text': 'All', 'val': '_all'})
         return opts
 
-class SelectReportingGroupField(GroupField):
-    name = ugettext_noop("Reporting Group")
-    default_option = ugettext_noop("All Groups")
-    cssClasses = "span6"
-
-    def update_params(self):
-        super(SelectReportingGroupField, self).update_params()
-        individual = self.request.GET.get('individual', '')
-        if individual:
-            try:
-                group = Group.get(individual)
-            except Exception:
-                group = None
-            if group:
-                self.hide_field = True
-        self.options = [dict(val=group.get_id, text=group.name) for group in self.groups if not group.case_sharing]
 
 class FilterUsersField(ReportField):
     slug = "ufilter"
@@ -269,19 +253,6 @@ class CaseTypeField(ReportSelectField):
                         yield 0
             yield sum(individual_counts())
 
-class SelectFormField(ReportSelectField):
-    slug = "form"
-    name = ugettext_noop("Form Type")
-    cssId = "form_select"
-    cssClasses = "span6"
-    default_option = ugettext_noop("Select a Form")
-
-    def update_params(self):
-        self.options = util.form_list(self.domain)
-        self.selected = self.request.GET.get(self.slug, None)
-
-class SelectAllFormField(SelectFormField):
-    default_option = ugettext_noop("Show All Forms")
 
 class SelectOpenCloseField(ReportSelectField):
     slug = "is_open"
@@ -403,25 +374,6 @@ class SelectMobileWorkerField(SelectMobileWorkerMixin, ReportField):
         self.context['default_option'] = self.default_option
         self.context['users'] = self.users
         self.context['individual'] = self.individual
-
-class MultiSelectMobileWorkerField(SelectMobileWorkerMixin, ReportMultiSelectField):
-    default_option = ['_all']
-    filter_users_field_class = FilterUsersField
-    placeholder = 'Click to select mobile workers'
-
-    def __init__(self, request, domain=None, timezone=pytz.utc, parent_report=None, filter_users_field_class=None):
-        super(MultiSelectMobileWorkerField, self).__init__(request, domain, timezone, parent_report)
-        if filter_users_field_class:
-            self.filter_users_field_class = filter_users_field_class
-
-    @property
-    def options(self):
-        self.user_filter, _ = self.filter_users_field_class.get_user_filter(self.request)
-        self.users = util.user_list(self.domain)
-        opts = [dict(val=u.get_id, text=u.raw_username + (' "%s"' % u.full_name if u.full_name else '')) for u in self.users]
-        default_text = 'All Mobile Workers'
-        opts.insert(0, {'text': self.get_default_text(self.user_filter, default_text), 'val': '_all'})
-        return opts
 
 
 class SelectCaseOwnerField(SelectMobileWorkerField):
@@ -709,63 +661,6 @@ class UserOrGroupField(ReportSelectField):
         self.selected = self.request.GET.get(self.slug, '')
         self.options = [{'val': 'groups', 'text': 'Groups'}]
 
-
-class CombinedSelectUsersField(ReportField):
-    """
-        A field that combines the FilterUsersField, MultiSelectMobileWorkerField, and MultiSelectGroupField
-    """
-    template = "reports/fields/combined_select_users.html"
-    filter_users_field_class = StrongFilterUsersField
-    select_mobile_worker_field_class = MultiSelectMobileWorkerField
-    select_group_field_class = MultiSelectGroupField
-    show_mobile_worker_field = True
-    show_group_field = True
-
-    def __init__(self, request, domain=None, timezone=pytz.utc, parent_report=None):
-        super(CombinedSelectUsersField, self).__init__(request, domain, timezone, parent_report)
-        self.filter_users_field = self.filter_users_field_class(request, domain, timezone, parent_report)
-        self.select_mobile_worker_field = self.select_mobile_worker_field_class(request, domain, timezone, parent_report,
-                                                                                filter_users_field_class=self.filter_users_field_class)
-        self.select_group_field = self.select_group_field_class(request, domain, timezone, parent_report)
-
-    def update_context(self):
-        self.filter_users_field.update_context()
-        ctxt = {"fuf": self.filter_users_field.context}
-        ctxt['fuf'].update({'field': self.filter_users_field})
-
-        all_groups = self.request.GET.get('all_groups', 'off') == 'on'
-        all_mws = self.request.GET.get('all_mws', 'off') == 'on'
-
-        if self.show_mobile_worker_field:
-            self.select_mobile_worker_field.update_context()
-            ctxt["smwf"] = self.select_mobile_worker_field.context
-            ctxt['smwf'].update({'field': self.select_mobile_worker_field})
-
-            if all_mws:
-                ctxt["smwf"]["select"]["selected"] = []
-            else: # remove the _all selection
-                ctxt["smwf"]["select"]["selected"] = filter(lambda s: s != '_all', ctxt["smwf"]["select"]["selected"])
-            ctxt["smwf"]["select"]["options"] = ctxt["smwf"]["select"]["options"][1:]
-
-        if self.show_group_field:
-            self.select_group_field.update_context()
-            ctxt["sgf"] = self.select_group_field.context
-            ctxt['sgf'].update({'field': self.select_group_field})
-
-            if all_groups:
-                ctxt["sgf"]["select"]["selected"] = []
-            else: # remove the _all selection
-                ctxt["sgf"]["select"]["selected"] = filter(lambda s: s != '_all', ctxt["sgf"]["select"]["selected"])
-            ctxt["sgf"]["select"]["options"] = ctxt["sgf"]["select"]["options"][1:]
-
-        if self.show_mobile_worker_field:
-            ctxt["smwf"]["checked"] = all_mws or (not ctxt["smwf"]["select"]["selected"] and not (
-                self.show_group_field and (ctxt["sgf"]["select"]["selected"] or all_groups)))
-
-        if self.show_group_field:
-            ctxt["sgf"]["checked"] = all_groups
-
-        self.context.update(ctxt)
 
 class SelectProgramField(ReportSelectField):
     slug = "program"
