@@ -1682,7 +1682,7 @@ def rearrange(req, domain, app_id, key):
             'The form can not be moved into the desired module.'
         ))
         return back_to_main(req, domain, app_id=app_id, module_id=module_id)
-    except RearrangeError, ModuleNotFoundException:
+    except (RearrangeError, ModuleNotFoundException):
         messages.error(req, _(
             'Oops. '
             'Looks like you got out of sync with us. '
