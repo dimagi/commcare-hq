@@ -20,7 +20,6 @@ setup(
         'django-digest',
         'lxml',
         'mock', # Actually a missing dimagi-utils dep?
-        'receiver>=1.0.0',
         'requests==2.0.0',
         'restkit',
         'python-digest',

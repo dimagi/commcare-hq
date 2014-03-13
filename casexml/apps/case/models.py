@@ -18,17 +18,19 @@ from casexml.apps.case.exceptions import MissingServerDate, ReconciliationError
 from dimagi.utils.django.cached_object import CachedObject, OBJECT_ORIGINAL, OBJECT_SIZE_MAP, CachedImage, IMAGE_SIZE_ORDERING
 from casexml.apps.phone.xml import get_case_element
 from casexml.apps.case.signals import case_post_save
-from casexml.apps.case.util import get_close_case_xml, get_close_referral_xml,\
-    couchable_property, get_case_xform_ids, reverse_indices
+from casexml.apps.case.util import (
+    couchable_property,
+    get_case_xform_ids,
+    reverse_indices,
+)
 from casexml.apps.case import const
 from dimagi.utils.modules import to_function
 from dimagi.utils import parsing, web
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.indicators import ComputedDocumentMixin
-from receiver.util import spoof_submission
 from couchforms.models import XFormInstance
 from casexml.apps.case.sharedmodels import IndexHoldingMixIn, CommCareCaseIndex, CommCareCaseAttachment
-from dimagi.utils.couch.database import get_db, SafeSaveDocument, iter_docs
+from dimagi.utils.couch.database import SafeSaveDocument, iter_docs
 from dimagi.utils.couch import (
     CouchDocLockableMixIn,
     LooselyEqualDocumentSchema,
