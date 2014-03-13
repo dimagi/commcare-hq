@@ -2,7 +2,7 @@ from optparse import make_option
 from django.core.management.base import BaseCommand
 from corehq import Domain
 
-
+DOMS_TO_IGNORE = ['bug-reports']  # we don't care about updating media to include this domain
 class Command(BaseCommand):
     help = 'Adds domains that have apps w/ media to that media files list of valid domains'
 
@@ -28,14 +28,19 @@ class Command(BaseCommand):
                 else:
                     continue
 
-            for app in d.full_applications():
-                try:
-                    if app.is_remote_app():
-                        continue
-                    for _, m in app.get_media_objects():
-                        if app.domain not in m.valid_domains:
-                            m.valid_domains.append(app.domain)
-                            self.stdout.write("adding domain %s to media file %s" % (app.domain, m._id))
-                            m.save()
-                except Exception as e:
-                    self.stdout.write("Error in app %s-%s: %s" % (app.domain, app._id, e))
+            if d.name in DOMS_TO_IGNORE:
+                continue
+            try:
+                for app in d.full_applications():
+                    try:
+                        if app.is_remote_app():
+                            continue
+                        for _, m in app.get_media_objects():
+                            if app.domain not in m.valid_domains:
+                                m.valid_domains.append(app.domain)
+                                self.stdout.write("adding domain %s to media file %s" % (app.domain, m._id))
+                                m.save()
+                    except Exception as e:
+                        self.stdout.write("Error in app %s-%s: %s" % (app.domain, app._id, e))
+            except Exception as e:
+                self.stdout.write("Error in domain %s: %s" % (d.name, e))
