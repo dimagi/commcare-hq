@@ -971,7 +971,12 @@ class CaseReminderHandler(Document):
                         if not reminder.retired:
                             handler.set_next_fire(reminder, now)
                             reminder.save()
-                reminder.release_lock()
+                try:
+                    reminder.release_lock()
+                except ResourceConflict:
+                    # This should go away once we move the locking to Redis
+                    reminder = CaseReminder.get(reminder._id)
+                    reminder.release_lock()
 
     def retire(self):
         reminders = self.get_reminders()
