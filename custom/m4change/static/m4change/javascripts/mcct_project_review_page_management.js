@@ -1,39 +1,36 @@
 ignore = false;
 
-var CaseManagement = function (o) {
+var McctProjectReviewPageManagement = function (o) {
     'use strict';
     var self = this;
 
     // What's checked in the table below
     self.selected_forms = ko.observableArray();
     self.selected_cases = ko.observableArray();
-    self.selected_domains = ko.observableArray();
     self.domain = o.domain;
 
-    var updateCaseRow = function () {
+    var updateRow = function () {
         return function(data) {
             for (var i = 0; i < self.selected_forms().length; i++) {
-                var $checkbox = $('#case-management input[data-formid="' + self.selected_forms()[i] + '"].selected-commcare-case'),
+                var $checkbox = $('#mcct_project_review_page_management input[data-formid="' + self.selected_forms()[i] + '"].selected-element'),
                     $selectedRow,
                     $row = $checkbox.parent().parent();
                 ignore = true;
                 $checkbox.attr("checked", false).change();
                 $selectedRow = $checkbox.parent().parent();
                 $selectedRow.removeClass('active');
-                $row.find('td:nth-child(7)').html(' <span class="label label-info">updated</span>');
+                $row.find('td:nth-child(9)').html(' <span class="label label-info">updated</span>');
             }
             self.clearSelection();
             ignore = false;
         }
     };
 
-    self.updateCaseSelection = function (data, event) {
+    self.updateSelection = function (data, event) {
         var $checkbox = $(event.currentTarget),
             caseID = $checkbox.data('caseid'),
             formID = $checkbox.data('formid'),
-            formDomain = $checkbox.data('domain');
-
-        var ind = self.selected_forms().indexOf(formID),
+            ind = self.selected_forms().indexOf(formID),
             $selectedRow = $checkbox.parent().parent();
 
         if ($checkbox.is(':checked')) {
@@ -42,21 +39,19 @@ var CaseManagement = function (o) {
                 self.selected_forms.push(formID);
             }
             self.selected_cases.push(caseID);
-            self.selected_domains.push(formDomain);
         } else if (!ignore) {
             $selectedRow.removeClass('active');
             if (ind >= 0) {
                 self.selected_forms.splice(ind, 1);
             }
             self.selected_cases.splice(self.selected_cases().indexOf(caseID));
-            self.selected_domains.splice(self.selected_domains().indexOf(formDomain), 1);
         }
     };
 
     self.clearSelection = function () {
         self.selected_forms.removeAll();
         self.selected_cases.removeAll();
-        self.selected_domains.removeAll();
+
     };
 
     self.updateStatus = function (status) {
@@ -64,8 +59,7 @@ var CaseManagement = function (o) {
             stringArray = new Array();
 
         for (var i = 0; i < self.selected_forms().length; i++) {
-            var form_id = self.selected_forms()[i],
-                form_domain = self.selected_domains()[i];
+            var form_id = self.selected_forms()[i];
 
             stringArray[0] = form_id;
             stringArray[1] = status;
@@ -76,24 +70,24 @@ var CaseManagement = function (o) {
             url: '/a/' + self.domain + '/update_service_status/',
             type: 'post',
             data: { requested_forms: data_to_send },
-            success: updateCaseRow()
+            success: updateRow()
         });
     };
 
-    self.updateCaseOwnersReview = function () {
-        self.updateStatus("approved");
+    self.updateStatusReview = function () {
+        self.updateStatus("reviewed");
     };
 
-     self.updateCaseOwnersCancel = function () {
+     self.updateStatusCancel = function () {
          self.updateStatus("canceled");
     };
 
-     self.updateCaseOwnersReject = function () {
+     self.updateStatusReject = function () {
          self.updateStatus("rejected");
     };
 };
 
-ko.bindingHandlers.caseReassignmentForm = {
+ko.bindingHandlers.mcctProjectReviewPage = {
     update: function(element, valueAccessor) {
         var value = valueAccessor()();
         if (value.length > 0) {

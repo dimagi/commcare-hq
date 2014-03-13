@@ -7,7 +7,7 @@
 {% block js %} {{ block.super }}
     <script src="{% static 'case/js/cheapxml.js' %}"></script>
     <script type="text/javascript" src="{% static 'case/js/casexml.js' %}"></script>
-    <script type="text/javascript" src="{% static 'm4change/javascripts/case_management.js' %}"></script>
+    <script type="text/javascript" src="{% static 'm4change/javascripts/mcct_project_review_page_management.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
@@ -23,24 +23,24 @@
         };
 
         function reapplyBindings() {
-            var caseManagementModel = new CaseManagement(OPTIONS);
-            var $caseManagement = $('#case-management');
-            var element = $caseManagement[0];
-            ko.applyBindings(caseManagementModel, element);
+            var managementModel = new McctProjectReviewPageManagement(OPTIONS);
+            var $mcctProjectReviewPageManagement = $('#mcct_project_review_page_management');
+            var element = $mcctProjectReviewPageManagement[0];
+            ko.applyBindings(managementModel, element);
 
-            $caseManagement.find('a.select-all').click(function () {
-                $caseManagement.find('input.selected-commcare-case').attr('checked', true).change();
+            $mcctProjectReviewPageManagement.find('a.select-all').click(function () {
+                $mcctProjectReviewPageManagement.find('input.selected-element').attr('checked', true).change();
                 return false;
             });
 
-            $caseManagement.find('a.select-none').click(function() {selectNone(); return false;});
-            $caseManagement.find('.dataTables_paginate a').mouseup(selectNone);
-            $caseManagement.find('.dataTables_length select').change(selectNone);
+            $mcctProjectReviewPageManagement.find('a.select-none').click(function() {selectNone(); return false;});
+            $mcctProjectReviewPageManagement.find('.dataTables_paginate a').mouseup(selectNone);
+            $mcctProjectReviewPageManagement.find('.dataTables_length select').change(selectNone);
 
             function selectNone() {
-                $caseManagement.find('input.selected-commcare-case:checked').attr('checked', false).change();
-                ko.cleanNode($caseManagement.find('table tbody')[0]);
-                ko.applyBindings(caseManagementModel, $caseManagement.find('table tbody')[0]);
+                $mcctProjectReviewPageManagement.find('input.selected-element:checked').attr('checked', false).change();
+                ko.cleanNode($mcctProjectReviewPageManagement.find('table tbody')[0]);
+                ko.applyBindings(managementModel, $mcctProjectReviewPageManagement.find('table tbody')[0]);
             }
         }
         var keepTrying = setInterval(function () {
@@ -55,53 +55,15 @@
 {% endblock %}
 
 {% block reportcontent %}
-    <div id="case-management">
+    <div id="mcct_project_review_page_management">
         <div class="row-fluid">
-            <form class="well form-inline" style="margin: 1em; display: none;" data-bind="submit: updateCaseOwnersReview, caseReassignmentForm: selected_cases">
-                <button class="btn" data-bind="click: updateCaseOwnersReview, caseReassignmentForm: selected_cases">{% trans 'Review' %}</button>
-                <button class="btn" data-bind="click: updateCaseOwnersCancel, caseReassignmentForm: selected_cases">{% trans 'Cancel' %}</button>
-                <button class="btn" data-bind="click: updateCaseOwnersReject, caseReassignmentForm: selected_cases">{% trans 'Reject' %}</button>
+            <form class="well form-inline" style="margin: 1em; display: none;" data-bind="mcctProjectReviewPage: selected_forms">
+                <button class="btn" data-bind="click: updateStatusReview, mcctProjectReviewPage: selected_forms">{% trans 'Review' %}</button>
+                <button class="btn" data-bind="click: updateStatusCancel, mcctProjectReviewPage: selected_forms">{% trans 'Cancel' %}</button>
+                <button class="btn" data-bind="click: updateStatusReject, mcctProjectReviewPage: selected_forms">{% trans 'Reject' %}</button>
             </form>
         </div>
         {{ block.super }}
     </div>
 {% endblock %}
 
-{% block modals %} {{ block.super }}
-    <div class="modal hide fade" id="caseManagementStatusModalReview">
-        <div class="modal-header">
-            <a class="close" data-dismiss="modal">&times;</a>
-            <h3>{% trans 'Review' %}</h3>
-        </div>
-        <div class="modal-body" id="modal-review">
-            --
-        </div>
-        <div class="modal-footer">
-            <button id="bug-report-cancel" class="btn" data-dismiss="modal">{% trans 'Close' %}</button>
-        </div>
-    </div>
-    <div class="modal hide fade" id="caseManagementStatusModalCancel">
-        <div class="modal-header">
-            <a class="close" data-dismiss="modal">&times;</a>
-            <h3>{% trans 'Cancel' %}</h3>
-        </div>
-        <div class="modal-body" id="modal-reject">
-            --
-        </div>
-        <div class="modal-footer">
-            <button id="bug-report-cancel" class="btn" data-dismiss="modal">{% trans 'Close' %}</button>
-        </div>
-    </div>
-    <div class="modal hide fade" id="caseManagementStatusModalReject">
-        <div class="modal-header">
-            <a class="close" data-dismiss="modal">&times;</a>
-            <h3>{% trans 'Reject' %}</h3>
-        </div>
-        <div class="modal-body" id="modal-reject">
-            --
-        </div>
-        <div class="modal-footer">
-            <button id="bug-report-cancel" class="btn" data-dismiss="modal">{% trans 'Close' %}</button>
-        </div>
-    </div>
-{% endblock %}

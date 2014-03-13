@@ -137,6 +137,7 @@ class McctProjectReview(CustomProjectReport, ElasticProjectInspectionReport, Pro
 
             modify_close = filter(None, [u'Modify/Close Client'])
             q["filter"]["and"].append({"not": {"terms": {"form.@name": modify_close}}})
+
             q["sort"] = self.get_sorting_block() if self.get_sorting_block() else [{"form.meta.timeEnd" : {"order": "desc"}}]
             self.es_response = es_query(params={"domain.exact": self.domain}, q=q, es_url=XFORM_INDEX + '/xform/_search',
                                         start_at=self.pagination.start, size=self.pagination.count)
@@ -158,7 +159,7 @@ class McctProjectReview(CustomProjectReport, ElasticProjectInspectionReport, Pro
                 case = EMPTY_FIELD
                 case_id = EMPTY_FIELD
 
-            checkbox = mark_safe('<input type="checkbox" class="selected-commcare-case" data-bind="event: {change: updateCaseSelection}" data-formid="%(form_id)s" data-caseid="%(case_id)s" data-servicetype="%(service_type)s" data-domain="%(domain)s" />')
+            checkbox = mark_safe('<input type="checkbox" class="selected-element" data-bind="event: {change: updateSelection}" data-formid="%(form_id)s" data-caseid="%(case_id)s" data-servicetype="%(service_type)s"/>')
             amount_due = EMPTY_FIELD
             service_type = EMPTY_FIELD
             visits = form["form"].get("visits")
@@ -204,6 +205,6 @@ class McctProjectReview(CustomProjectReport, ElasticProjectInspectionReport, Pro
                 location_parent_name,
                 get_property(case, "phone_number", EMPTY_FIELD),
                 amount_due,
-                checkbox % dict(form_id=form_id, case_id=case_id, service_type=service_type, domain=self.domain)
+                checkbox % dict(form_id=form_id, case_id=case_id, service_type=service_type)
             ]
 
