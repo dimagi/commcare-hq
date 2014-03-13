@@ -781,6 +781,11 @@ class Invoice(models.Model):
         return sum([line_item.total for line_item in self.lineitem_set.all()])
 
     @property
+    def invoice_number(self):
+        ops_num = settings.STARTING_INVOICE_NUMBER + self.id
+        return "%s%d" % (settings.INVOICE_PREFIX, ops_num)
+
+    @property
     def applied_tax(self):
         return self.tax_rate * self.subtotal
 
@@ -885,8 +890,7 @@ class InvoicePdf(SafeSaveDocument):
         )
         template = InvoiceTemplate(
             pdf_data.name,
-            invoice_number=("INC-%d" %
-                            (settings.STARTING_INVOICE_NUMBER + invoice.id)),
+            invoice_number=invoice.invoice_number,
             to_address=Address(
                 name=("%s %s" %
                       (contact_info.first_name, contact_info.last_name)),
