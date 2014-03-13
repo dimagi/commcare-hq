@@ -1185,6 +1185,28 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
     return json_response(resp)
 
 
+def validate_module_for_build(request, domain, app_id, module_id, ajax=True):
+    app = get_app(domain, app_id)
+    try:
+        module = app.get_module(module_id)
+    except ModuleNotFoundException:
+        raise Http404()
+    errors = module.validate_for_build()
+    lang, langs = get_langs(request, app)
+
+    response_html = render_to_string('app_manager/partials/build_errors.html', {
+        'app': app,
+        'build_errors': errors,
+        'not_actual_build': True,
+        'domain': domain,
+        'langs': langs,
+        'lang': lang
+    })
+    if ajax:
+        return json_response({'error_html': response_html})
+    return HttpResponse(response_html)
+
+
 def _handle_media_edits(request, item, should_edit, resp):
     if not resp.has_key('corrections'):
         resp['corrections'] = {}

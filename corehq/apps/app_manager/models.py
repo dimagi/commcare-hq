@@ -1167,6 +1167,20 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
                         'column': column,
                     }
 
+    def validate_for_build(self):
+        errors = []
+        if not self.forms:
+            errors.append({
+                'type': 'no forms',
+                'module': self.get_module_info(),
+            })
+        if self.requires_case_details():
+            errors.extend(self.get_case_errors(
+                needs_case_type=True,
+                needs_case_detail=True
+            ))
+        return errors
+
 
 class Module(ModuleBase):
     """
@@ -3055,16 +3069,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if not self.modules:
             errors.append({'type': "no modules"})
         for module in self.get_modules():
-            if not module.forms:
-                errors.append({
-                    'type': 'no forms',
-                    'module': module.get_module_info(),
-                })
-            if module.requires_case_details():
-                errors.extend(module.get_case_errors(
-                    needs_case_type=True,
-                    needs_case_detail=True
-                ))
+            errors.extend(module.validate_for_build())
 
         for form in self.get_forms():
             errors.extend(form.validate_for_build(validate_module=False))
