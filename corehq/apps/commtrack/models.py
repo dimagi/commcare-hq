@@ -372,6 +372,7 @@ class CommtrackConfig(Document):
     consumption_config = SchemaProperty(ConsumptionConfig)
     stock_levels_config = SchemaProperty(StockLevelsConfig)
     ota_restore_config = SchemaProperty(StockRestoreConfig)
+    individual_consumption_defaults = BooleanProperty(default=False)
 
     @property
     def multiaction_keyword(self):
