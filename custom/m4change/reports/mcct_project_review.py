@@ -2,6 +2,9 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 
 from jsonobject import DateTimeProperty
+from corehq import Domain
+from corehq.apps.commtrack.util import get_commtrack_location_id
+from corehq.apps.locations.models import Location
 
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
@@ -9,6 +12,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.fields import StrongFilterUsersField
 from corehq.apps.reports.generic import ElasticProjectInspectionReport
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
+from corehq.apps.users.models import CommCareUser
 from corehq.elastic import es_query
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
@@ -53,9 +57,9 @@ class McctProjectReview(CustomProjectReport, ElasticProjectInspectionReport, Pro
             DataTablesColumn(_("Date of service"), prop_name="form.meta.timeEnd"),
             DataTablesColumn(_("Client Name"), sortable=False),
             DataTablesColumn(_("Service Type"), sortable=False),
-            #DataTablesColumn(_("Health Facility"), sortable=False),
+            DataTablesColumn(_("Health Facility"), sortable=False),
             DataTablesColumn(_("Card No."), sortable=False),
-            #DataTablesColumn(_("LGA"), sortable=False),
+            DataTablesColumn(_("LGA"), sortable=False),
             DataTablesColumn(_("Phone No."), sortable=False),
             DataTablesColumn(_("Amount due"), sortable=False),
             DataTablesColumn(mark_safe('Status/Action  <a href="#" class="select-all btn btn-mini btn-inverse">all</a> <a href="#" class="select-none btn btn-mini btn-warning">none</a>'), sortable=False, span=3))
@@ -84,12 +88,6 @@ class McctProjectReview(CustomProjectReport, ElasticProjectInspectionReport, Pro
         return [res['_source']['_id'] for res in es_response.get('hits', {}).get('hits', [])]
 
     def es_query(self):
-        # try:
-        #     for ob in McctStatus.objects.filter(domain=self.domain):
-        #         ob.form_id
-        # except McctStatus.DoesNotExist:
-        #     status_list = None
-
         if not getattr(self, 'es_response', None):
             range = self.request_params.get('range', None)
             start_date = None
@@ -139,11 +137,6 @@ class McctProjectReview(CustomProjectReport, ElasticProjectInspectionReport, Pro
 
             modify_close = filter(None, [u'Modify/Close Client'])
             q["filter"]["and"].append({"not": {"terms": {"form.@name": modify_close}}})
-            # try:
-            #     for ob in McctStatus.objects.filter(domain=self.domain):
-            #         q["filter"][ob.form_id
-            # except McctStatus.DoesNotExist:
-            #     status_list = None
             q["sort"] = self.get_sorting_block() if self.get_sorting_block() else [{"form.meta.timeEnd" : {"order": "desc"}}]
             self.es_response = es_query(params={"domain.exact": self.domain}, q=q, es_url=XFORM_INDEX + '/xform/_search',
                                         start_at=self.pagination.start, size=self.pagination.count)
@@ -159,8 +152,8 @@ class McctProjectReview(CustomProjectReport, ElasticProjectInspectionReport, Pro
 
         for form in submissions:
             try:
-                case = CommCareCase.get(form["form"]["case"]["@case_id"])
                 case_id = form["form"]["case"]["@case_id"]
+                case = CommCareCase.get(case_id)
             except KeyError:
                 case = EMPTY_FIELD
                 case_id = EMPTY_FIELD
@@ -169,23 +162,24 @@ class McctProjectReview(CustomProjectReport, ElasticProjectInspectionReport, Pro
             amount_due = EMPTY_FIELD
             service_type = EMPTY_FIELD
             visits = form["form"].get("visits")
-            form_id = form["form"]["meta"].get("instanceID")
-            #location_name = EMPTY_FIELD
-            #location_parent_name = EMPTY_FIELD
+            form_id = form["_id"]
+            location_name = EMPTY_FIELD
+            location_parent_name = EMPTY_FIELD
 
-            #if case is not EMPTY_FIELD:
-            #opened_by = get_property(case, "opened_by", EMPTY_FIELD)
-            #owner = CommCareUser.get(opened_by)
-            #location_id = get_property(owner, "location_id", EMPTY_FIELD)
-            #location = Location.get(location_id)
-            #location_name = get_property(location, "name", EMPTY_FIELD)
-            #location_parent = get_property(location, "lineage", EMPTY_FIELD)[0]
-            #location_parent_name = get_property(Location.get(location_parent), "name", EMPTY_FIELD)
+            if case is not EMPTY_FIELD:
+                user_id = get_property(case, "user_id", EMPTY_FIELD)
+                user = CommCareUser.get(user_id)
+                location_id = get_commtrack_location_id(user, Domain.get_by_name(self.domain))
+                if location_id is not None:
+                    location = Location.get(location_id)
+                    location_name = location.name
+                    location_parent = location.parent
+                    location_parent_name = location_parent.name if location_parent is not None else EMPTY_FIELD
 
-            if "Immunization" in form["form"]["@name"]:
+            if form["xmlns"] in IMMUNIZATION_FORMS:
                 service_type = _("Immunization")
                 amount_due = 1000
-            elif "DELIVERY" in form["form"]["@name"]:
+            elif form["xmlns"] in BOOKED_AND_UNBOOKED_DELIVERY_FORMS:
                 service_type = _("Delivery")
                 amount_due = 2000
             elif visits == "1":
@@ -205,9 +199,9 @@ class McctProjectReview(CustomProjectReport, ElasticProjectInspectionReport, Pro
                 DateTimeProperty().wrap(form["form"]["meta"]["timeEnd"]).strftime("%Y-%m-%d"),
                 get_property(case, "full_name", EMPTY_FIELD),
                 service_type,
-                #location_name,
+                location_name,
                 get_property(case, "card_number", EMPTY_FIELD),
-                #location_parent_name,
+                location_parent_name,
                 get_property(case, "phone_number", EMPTY_FIELD),
                 amount_due,
                 checkbox % dict(form_id=form_id, case_id=case_id, service_type=service_type, domain=self.domain)
