@@ -300,7 +300,7 @@ class CallLog(MessageLog):
                 break
         return result
 
-class EventLog(Document):
+class EventLog(SafeSaveDocument):
     base_doc                    = "EventLog"
     domain                      = StringProperty()
     date                        = DateTimeProperty()
