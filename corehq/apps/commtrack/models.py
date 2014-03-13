@@ -1191,8 +1191,16 @@ class CommTrackUser(CommCareUser):
                 "There was no linked supply point for the location."
             )
 
-    def add_location(self, location):
+    def add_location(self, location, create_sp_if_missing=False):
         sp = location.linked_supply_point()
+
+        # hack: if location was created before administrative flag was
+        # removed there would be no SupplyPointCase already
+        if not sp and create_sp_if_missing:
+            sp = SupplyPointCase.create_from_location(
+                self.domain,
+                location
+            )
 
         from corehq.apps.commtrack.util import submit_mapping_case_block
         submit_mapping_case_block(self, self.supply_point_index_mapping(sp))
