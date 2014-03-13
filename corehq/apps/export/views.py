@@ -7,6 +7,7 @@ from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.utils.decorators import method_decorator
 import json
 from corehq.apps.export.custom_export_helpers import CustomExportHelper
+from corehq.apps.export.exceptions import ExportNotFound, ExportAppException
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.standard.export import ExcelExportReport, CaseExportReport
 from corehq.apps.settings.views import BaseProjectDataView
@@ -77,6 +78,8 @@ class BaseExportView(BaseProjectDataView):
                 })
                 response.status_code = 500
                 return response
+            elif isinstance(e, ExportAppException):
+                return HttpResponseRedirect(request.META['HTTP_REFERER'])
             else:
                 raise
         else:
@@ -191,7 +194,7 @@ class DeleteCustomExportView(BaseModifyCustomExportView):
         try:
             saved_export = SavedExportSchema.get(self.export_id)
         except ResourceNotFound:
-            return HttpResponseRedirect(request.META['HTTP_REFERER'])
+            raise ExportNotFound()
         self.export_type = saved_export.type
         saved_export.delete()
         messages.success(request, _("Custom export was deleted."))
