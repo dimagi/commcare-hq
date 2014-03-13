@@ -199,7 +199,6 @@ HQ_APPS = (
     'ctable_view',
     'dimagi.utils',
     'formtranslate',
-    'receiver',
     'langcodes',
     'corehq.apps.adm',
     'corehq.apps.announcements',
@@ -331,7 +330,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'fluff_filter',
     'freddy',
     'pillowtop',
-    'receiver',
 )
 
 INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
