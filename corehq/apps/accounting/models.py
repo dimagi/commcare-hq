@@ -1,6 +1,7 @@
 import datetime
 from decimal import Decimal
 import logging
+from tempfile import NamedTemporaryFile
 from couchdbkit.ext.django.schema import DateTimeProperty, StringProperty
 
 from django.conf import settings
@@ -9,6 +10,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from corehq import toggles
+from corehq.apps.accounting.invoice_pdf import Address, InvoiceTemplate
 from corehq.apps.accounting.utils import is_active_subscription, get_privileges
 from corehq.apps.accounting.subscription_changes import (
     DomainDowngradeActionHandler, DomainUpgradeActionHandler,
@@ -779,6 +781,11 @@ class Invoice(models.Model):
         return sum([line_item.total for line_item in self.lineitem_set.all()])
 
     @property
+    def invoice_number(self):
+        ops_num = settings.STARTING_INVOICE_NUMBER + self.id
+        return "%s%d" % (settings.INVOICE_PREFIX, ops_num)
+
+    @property
     def applied_tax(self):
         return self.tax_rate * self.subtotal
 
@@ -874,12 +881,55 @@ class InvoicePdf(SafeSaveDocument):
     invoice_id = StringProperty()
     date_created = DateTimeProperty()
 
-    def generate_pdf(self, invoice):
-        # todo generate pdf
-        invoice.pdf_data_id = self._id
-        # self.put_attachment(pdf_data)
-        self.invoice_id = invoice.id
+    def generate_pdf(self, billing_record):
+        self.save()
+        pdf_data = NamedTemporaryFile()
+        invoice = billing_record.invoice
+        contact_info = BillingContactInfo.objects.get(
+            account=invoice.subscription.account,
+        )
+        template = InvoiceTemplate(
+            pdf_data.name,
+            invoice_number=invoice.invoice_number,
+            to_address=Address(
+                name=("%s %s" %
+                      (contact_info.first_name, contact_info.last_name)),
+                first_line=contact_info.first_line,
+                second_line=contact_info.second_line,
+                city=contact_info.city,
+                region=contact_info.state_province_region,
+                country=contact_info.country,
+            ),
+            project_name=invoice.subscription.subscriber.domain,
+            invoice_date=invoice.date_created.date(),
+            due_date=invoice.date_due,
+            subtotal=invoice.subtotal,
+            tax_rate=invoice.tax_rate,
+            applied_tax=invoice.applied_tax,
+            applied_credit=invoice.applied_credit,
+            total=invoice.get_total(),
+        )
+
+        for line_item in LineItem.objects.filter(invoice=invoice):
+            description = (line_item.base_description
+                           or line_item.unit_description)
+            if line_item.quantity > 0:
+                template.add_item(description,
+                                  line_item.quantity,
+                                  line_item.unit_cost,
+                                  line_item.subtotal,
+                                  line_item.applied_credit,
+                                  line_item.total)
+
+        template.get_pdf()
+        self.put_attachment(pdf_data)
+        pdf_data.close()
+
+        billing_record.pdf_data_id = self._id
+        billing_record.save()
+        self.invoice_id = str(invoice.id)
         self.date_created = datetime.datetime.now()
+        self.save()
 
 
 class LineItemManager(models.Manager):

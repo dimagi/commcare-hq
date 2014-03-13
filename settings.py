@@ -713,6 +713,17 @@ LOGGING = {
     }
 }
 
+# Invoicing
+STARTING_INVOICE_NUMBER = 0
+INVOICE_PREFIX = ''
+TERMS = ''
+FROM_ADDRESS = {}
+BANK_ADDRESS = {}
+BANK_NAME = ''
+ACCOUNT_NUMBER = ''
+ROUTING_NUMBER = ''
+SWIFT_CODE = ''
+
 try:
     # try to see if there's an environmental variable set for local_settings
     if os.environ.get('CUSTOMSETTINGS', None) == "demo":
