@@ -12,7 +12,7 @@ from corehq.apps.accounting.exceptions import LineItemError, InvoiceError
 from corehq.apps.accounting.models import (
     LineItem, FeatureType, Invoice, DefaultProductPlan, Subscriber,
     Subscription, BillingAccount, SubscriptionAdjustment,
-    SubscriptionAdjustmentMethod, BillingRecord, InvoicePdf)
+    SubscriptionAdjustmentMethod, BillingRecord, InvoicePdf, BillingContactInfo)
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.users.models import CommCareUser
 
@@ -106,6 +106,10 @@ class CommunityInvoiceFactory(InvoiceFactory):
         If an account is not found, create it.
         """
         account, _ = BillingAccount.get_or_create_account_by_domain(self.domain.name, self.__class__.__name__)
+        # todo: fix so that contact_emails gets correctly populated.
+        BillingContactInfo.objects.get_or_create(
+            account=account
+        )
         return account
 
     @property
