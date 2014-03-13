@@ -14,6 +14,8 @@ LOGO_FILENAME = \
 
 
 def prepend_newline_if_not_empty(string):
+    if string is None:
+        return ""
     if len(string) > 0:
         return "\n" + string
     else:
