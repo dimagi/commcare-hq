@@ -817,16 +817,6 @@ def netstat_plnt():
 
 
 @roles(*ROLES_ALL_SERVICES)
-def services_start():
-    """Start the gunicorn servers"""
-    require('environment', provided_by=('staging', 'preview', 'production'))
-    _supervisor_command('update')
-    _supervisor_command('reload')
-    time.sleep(2)
-    _supervisor_command('start  all')
-
-
-@roles(*ROLES_ALL_SERVICES)
 def services_stop():
     """Stop the gunicorn servers"""
     require('environment', provided_by=('staging', 'preview', 'production'))
@@ -852,6 +842,7 @@ def services_restart():
 
     _supervisor_command('update')
     _supervisor_command('reload')
+    time.sleep(1)
     _supervisor_command('start  all')
 
 
