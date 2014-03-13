@@ -1,7 +1,7 @@
 from corehq.apps.users.models import  CouchUser
 from dimagi.utils.logging import notify_exception
 from pact.utils import get_case_id
-from receiver.signals import successful_form_received
+from couchforms.signals import successful_form_received
 import traceback
 
 #placeholder for doing blocking vs. async via celery
