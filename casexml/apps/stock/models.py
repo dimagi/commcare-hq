@@ -145,11 +145,12 @@ def update_stock_state(sender, instance, *args, **kwargs):
     else:
         consumption_calc = None
 
-    state.daily_consumption = compute_consumption(
+    computed_consumption = compute_consumption(
         instance.case_id,
         instance.product_id,
         instance.report.date,
         'stock',
         consumption_calc
     )
+    state.daily_consumption = Decimal(str(computed_consumption)) if computed_consumption is not None else None
     state.save()

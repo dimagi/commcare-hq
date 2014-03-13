@@ -1,3 +1,4 @@
+from decimal import Decimal
 from casexml.apps.stock.models import StockState
 from casexml.apps.stock.tests.base import StockTestBase
 
@@ -13,5 +14,5 @@ class StockStateTest(StockTestBase):
             product_id=self.product_id,
         )
 
-        self.assertEqual(10, state.stock_on_hand)
-        self.assertEqual(3.0, state.daily_consumption)
+        self.assertEqual(Decimal(10), state.stock_on_hand)
+        self.assertEqual(Decimal('3.0'), state.daily_consumption)

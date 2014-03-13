@@ -1,3 +1,4 @@
+from decimal import Decimal
 import functools
 import uuid
 from django.test import TestCase
@@ -29,7 +30,7 @@ def _stock_report(case_id, product_id, amount, days_ago):
         type=const.TRANSACTION_TYPE_STOCKONHAND,
         case_id=case_id,
         product_id=product_id,
-        stock_on_hand=amount,
+        stock_on_hand=Decimal(amount),
     )
     txn._test_config = ConsumptionConfiguration.test_config()
     txn.quantity = 0
