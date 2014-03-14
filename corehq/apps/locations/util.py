@@ -163,7 +163,14 @@ def lookup_by_property(domain, prop_name, val, scope, root=None):
     if root and not isinstance(root, basestring):
         root = root._id
 
-    index_view = 'locations/prop_index_%s' % prop_name
+    if prop_name == 'site_code':
+        index_view = 'locations/prop_index_site_code'
+    else:
+        # this was to be backwards compatible with the api
+        # if this ever comes up, please take a moment to decide whether it's
+        # worth changing the API to raise a less nonsensical error
+        # (or change this function to not sound so general!)
+        raise ResourceNotFound('missing prop_index_%s' % prop_name)
 
     startkey = [domain, val]
     if scope == 'global':
