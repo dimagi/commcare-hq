@@ -997,8 +997,26 @@ class CreditLine(models.Model):
     subscription = models.ForeignKey(Subscription, on_delete=models.PROTECT, null=True, blank=True)
     product_rate = models.ForeignKey(SoftwareProductRate, on_delete=models.PROTECT, null=True, blank=True)
     feature_rate = models.ForeignKey(FeatureRate, on_delete=models.PROTECT, null=True, blank=True)
+    product_type = models.CharField(max_length=25, null=True, blank=True,
+                                    choices=SoftwareProductType.CHOICES)
+    feature_type = models.CharField(max_length=10, null=True, blank=True,
+                                    choices=FeatureType.CHOICES)
     date_created = models.DateTimeField(auto_now_add=True)
     balance = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
+
+    def __str__(self):
+        credit_level = ("Account-Level" if self.subscription is None
+                        else "Subscription-Level")
+        return ("%(level)s credit [Account %(account_id)d]%(feature)s"
+                "%(product)s, balance %(balance)s" % {
+                    'level': credit_level,
+                    'account_id': self.account.id,
+                    'feature': (' for Feature %s' % self.feature_type
+                                if self.feature_type is None else ""),
+                    'product': (' for Product %s' % self.product_type
+                                if self.product_type is None else ""),
+                    'balance': self.balance,
+                })
 
     def adjust_credit_balance(self, amount, is_new=False, note=None, line_item=None, invoice=None):
         reason = CreditAdjustmentReason.MANUAL
@@ -1027,8 +1045,8 @@ class CreditLine(models.Model):
     def get_credits_for_line_item(cls, line_item):
         return cls.get_credits_by_subscription_and_features(
             line_item.invoice.subscription,
-            product_rate=line_item.product_rate,
-            feature_rate=line_item.feature_rate
+            product_type=line_item.product_rate.product.product_type,
+            feature_type=line_item.feature_rate.feature.feature_type,
         )
 
     @classmethod
@@ -1036,12 +1054,14 @@ class CreditLine(models.Model):
         return cls.get_credits_by_subscription_and_features(invoice.subscription)
 
     @classmethod
-    def get_credits_by_subscription_and_features(cls, subscription, feature_rate=None, product_rate=None):
+    def get_credits_by_subscription_and_features(cls, subscription,
+                                                 feature_type=None,
+                                                 product_type=None):
         return cls.objects.filter(
             models.Q(subscription=subscription) |
             models.Q(account=subscription.account, subscription__exact=None)
         ).filter(
-            product_rate__exact=product_rate, feature_rate__exact=feature_rate
+            product_type__exact=product_type, feature_type__exact=feature_type
         ).all()
 
     @classmethod
@@ -1050,8 +1070,8 @@ class CreditLine(models.Model):
         credit_line, is_created = cls.objects.get_or_create(
             account=account,
             subscription__exact=None,
-            product_rate__exact=None,
-            feature_rate__exact=None,
+            product_type__exact=None,
+            feature_type__exact=None,
         )
         credit_line.adjust_credit_balance(amount, is_new=is_created, note=note)
         return credit_line
@@ -1062,19 +1082,35 @@ class CreditLine(models.Model):
         credit_line, is_created = cls.objects.get_or_create(
             account=subscription.account,
             subscription=subscription,
-            product_rate__exact=None,
-            feature_rate__exact=None,
+            product_type__exact=None,
+            feature_type__exact=None,
         )
         credit_line.adjust_credit_balance(amount, is_new=is_created, note=note)
         return credit_line
 
     @classmethod
-    def add_rate_credit(cls, amount, account, product_rate=None, feature_rate=None, subscription=None, note=None):
-        if (feature_rate is None and product_rate is None) or (feature_rate is not None and product_rate is not None):
-            raise ValueError("You must specify a product rate OR a feature rate")
+    def add_product_credit(cls, amount, account, product_type,
+                           subscription=None, note=None):
         cls._validate_add_amount(amount)
         credit_line, is_created = cls.objects.get_or_create(
-            account=account, subscription=subscription, product_rate=product_rate, feature_rate=feature_rate,
+            account=account,
+            subscription=subscription,
+            product_type=product_type,
+            feature_type__exact=None,
+        )
+        credit_line.adjust_credit_balance(amount, is_new=is_created, note=note)
+        return credit_line
+
+    @classmethod
+    def add_feature_credit(cls, amount, account, feature_type,
+                           subscription=None, note=None):
+        cls._validate_add_amount(amount)
+        print "adding feature credit %s" % feature_type
+        credit_line, is_created = cls.objects.get_or_create(
+            account=account,
+            subscription=subscription,
+            product_type__exact=None,
+            feature_type=feature_type,
         )
         credit_line.adjust_credit_balance(amount, is_new=is_created, note=note)
         return credit_line
