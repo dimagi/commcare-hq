@@ -4,6 +4,7 @@ from corehq.apps.sms.api import send_sms, send_sms_to_verified_number
 from corehq.apps.sms.mixin import VerifiedNumber, MobileBackend
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.sms import util
+from corehq.util.translation import localize
 
 OUTGOING = ugettext_noop("Welcome to CommCareHQ! Is this phone used by %(name)s? If yes, reply '123'%(replyto)s to start using SMS with CommCareHQ.")
 CONFIRM = ugettext_noop("Thank you. This phone has been verified for using SMS with CommCareHQ")
@@ -12,17 +13,12 @@ def send_verification(domain, user, phone_number):
     backend = MobileBackend.auto_load(phone_number, domain)
     reply_phone = backend.reply_to_phone_number
 
-    # switch to the user language so we can properly translate
-    current_language = translation.get_language()
-    translation.activate(user.language or current_language)
-    try:
+    with localize(user.language):
         message = _(OUTGOING) % {
             'name': user.username.split('@')[0],
             'replyto': ' to %s' % util.clean_phone_number(reply_phone) if reply_phone else '',
         }
         send_sms(domain, user, phone_number, message)
-    finally:
-        translation.activate(current_language)
 
 def process_verification(phone_number, msg, backend_id=None):
     v = VerifiedNumber.by_phone(phone_number, True)
@@ -48,8 +44,8 @@ def process_verification(phone_number, msg, backend_id=None):
     owner = CommCareUser.get(v.owner_id)
 
     v = owner.save_verified_number(v.domain, phone_number, True, backend.name)
-
-    send_sms_to_verified_number(v, _(CONFIRM))
+    with localize(owner.language):
+        send_sms_to_verified_number(v, _(CONFIRM))
 
 def verification_response_ok(text):
     return text == '123'
