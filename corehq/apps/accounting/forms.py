@@ -335,9 +335,6 @@ class SubscriptionForm(forms.Form):
             if account_id is not None:
                 self.fields['account'].initial = account_id
 
-            self.fields['domain'].choices = [
-                (domain, domain) for domain in Domain.get_all()
-            ]
             domain_field = crispy.Field(
                 'domain', css_class="input-xxlarge",
                 placeholder="Search for Project Space"
@@ -348,7 +345,6 @@ class SubscriptionForm(forms.Form):
                 'plan_version', css_class="input-xxlarge",
                 placeholder="Search for Software Plan"
             )
-
 
         self.helper = FormHelper()
         self.helper.form_text_inline = True
