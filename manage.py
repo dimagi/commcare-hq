@@ -31,9 +31,15 @@ def _set_source_root_parent(source_root_parent):
     sys.path.append(os.path.join(filedir, source_root_parent))
 
 
+def _set_source_root(source_root):
+    filedir = os.path.dirname(__file__)
+    sys.path.insert(1, os.path.join(filedir, source_root))
+
+
 if __name__ == "__main__":
 
     _set_source_root_parent('submodules')
+    _set_source_root(os.path.join('custom', '_legacy'))
 
     # proxy for whether we're running gunicorn with -k gevent
     if "gevent" in sys.argv:
