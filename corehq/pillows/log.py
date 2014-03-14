@@ -24,7 +24,7 @@ class PhoneLogPillow(BasicPillow):
         domain = doc_dict.get('domain')
         logs = (form.get('log_subreport', {}) or {}).get('log', [])
         logged_in_user = 'unknown'
-        for log in force_list(logs):
+        for log in filter(None, force_list(logs)):
             if log["type"] == 'login':
                 logged_in_user = log["msg"].split('-')[1]
 
