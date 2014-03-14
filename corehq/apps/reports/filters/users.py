@@ -290,6 +290,14 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         return context
 
     @classmethod
+    def pull_groups(cls, domain, request):
+        emws = request.GET.getlist(cls.slug)
+        group_ids = [g[3:] for g in filter(lambda s: s.startswith("g__"), emws)]
+        if not group_ids:
+            return Group.get_reporting_groups(domain)
+        return [Group.get(g) for g in group_ids]
+
+    @classmethod
     def pull_users_from_es(cls, domain, request, initial_query=None, **kwargs):
         emws = request.GET.getlist(cls.slug)
         user_ids = [u[3:] for u in filter(lambda s: s.startswith("u__"), emws)]
