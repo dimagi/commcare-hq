@@ -70,7 +70,7 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
     @property
     @memoized
     def basics(self):
-        return [("_all_mobile_workers", _("[All mobile workers]"))] + \
+        return [("t__0", _("[All mobile workers]"))] + \
             [("t__%s" % (i+1), "[%s]" % name)
                 for i, name in enumerate(HQUserType.human_readable[1:])]
 
