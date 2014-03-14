@@ -39,7 +39,7 @@ class PatientInfoReport(CustomProjectReport, DrilldownReportMixin, ElasticProjec
         try:
             case = self.get_case()
             has_error = False
-        except Exception:
+        except ResourceNotFound:
             has_error = True
             case = None
 
@@ -60,7 +60,7 @@ class PatientInfoReport(CustomProjectReport, DrilldownReportMixin, ElasticProjec
             return ret
 
         def get_form_url(module_idx, form):
-            base_url = '/a/%(domain)s/cloudcare/apps/view/%(build_id)s/%(module_id)s/%(form_id)s/enter/'
+            base_url = '/a/%(domain)s/cloudcare/apps/view/%(build_id)s/%(module_id)s/%(form_id)s?preview=true'
             module = app_dict['modules'][module_idx]
             form_idx = [ix for (ix, f) in enumerate(module['forms']) if f['xmlns'] == form][0]
             return html.escape(base_url % dict(
@@ -89,13 +89,17 @@ class PatientInfoReport(CustomProjectReport, DrilldownReportMixin, ElasticProjec
             ret['chw_phone_url'] = get_form_url(CHW_MODULE, CHW3)
             ret['interaction_table'] = []
             for visit_key, visit in enumerate(VISIT_SCHEDULE):
-                target_date = (case["randomization_date"] + timedelta(days=visit['days'])).strftime(OUTPUT_DATE_FORMAT) if case["randomization_date"] else EMPTY_FIELD
+                if case["randomization_date"]:
+                    target_date = (case["randomization_date"] + timedelta(days=visit['days'])).strftime(OUTPUT_DATE_FORMAT)
+                else:
+                    target_date = EMPTY_FIELD
                 interaction = {
                     'url': '',
                     'name': visit['visit_name'],
                     'target_date': target_date,
                     'received_date': EMPTY_FIELD,
-                    'completed_by': EMPTY_FIELD
+                    'completed_by': EMPTY_FIELD,
+                    'scheduled_date': EMPTY_FIELD
                 }
                 for key, action in enumerate(case['actions']):
                     if visit['xmlns'] == action['xform_xmlns']:
@@ -105,7 +109,10 @@ class PatientInfoReport(CustomProjectReport, DrilldownReportMixin, ElasticProjec
                         del case['actions'][key]
                         break
                 if visit['show_button']:
-                            interaction['url'] = get_form_url(visit['module_idx'], visit['xmlns'])
+                    interaction['url'] = get_form_url(visit['module_idx'], visit['xmlns'])
+                if 'scheduled_source' in visit and case.get_case_property(visit['scheduled_source']):
+                    interaction['scheduled_date'] = (case.get_case_property(visit['scheduled_source'])).strftime(OUTPUT_DATE_FORMAT)
+
                 ret['interaction_table'].append(interaction)
 
         elif view_mode == 'plan':

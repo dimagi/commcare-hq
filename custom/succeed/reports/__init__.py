@@ -52,7 +52,8 @@ VISIT_SCHEDULE = [
         'xmlns': CM3,
         'days': 10,
         'module_idx': CM_MODULE,
-        'show_button': True
+        'show_button': True,
+        'scheduled_source': 'CM3_scheduled_date'
     },
     {
         'visit_name': _('CM Initial huddle'),
@@ -66,49 +67,56 @@ VISIT_SCHEDULE = [
         'xmlns': CHW1,
         'days': 35,
         'module_idx': CHW_MODULE,
-        'show_button': False
+        'show_button': False,
+        'scheduled_source': 'CHW1_scheduled_date'
     },
     {
         'visit_name': _('CM Clinic Visit 1'),
         'xmlns': CM4,
         'days': 49,
         'module_idx': CM_MODULE,
-        'show_button': True
+        'show_button': True,
+        'scheduled_source': 'CM4_scheduled_date'
     },
     {
         'visit_name': _('CHW Home Visit 2'),
         'xmlns': CHW2,
         'days': 100,
         'module_idx': CHW_MODULE,
-        'show_button': False
+        'show_button': False,
+        'scheduled_source': 'CHW2_scheduled_date'
     },
     {
         'visit_name': _('CM Clinic Visit 2'),
         'xmlns': CM5,
         'days': 130,
         'module_idx': CM_MODULE,
-        'show_button': True
+        'show_button': True,
+        'scheduled_source': 'CM5_scheduled_date'
     },
     {
         'visit_name': _('CHW CDSMP tracking'),
         'xmlns': CHW4,
         'days': 135,
         'module_idx': CHW_MODULE,
-        'show_button': False
+        'show_button': False,
+        'scheduled_source': 'CHW4_scheduled_date'
     },
     {
         'visit_name': _('CHW Home Visit 3'),
         'xmlns': CHW2,
         'days': 200,
         'module_idx': CHW_MODULE,
-        'show_button': False
+        'show_button': False,
+        'scheduled_source': 'CHW2-2_scheduled_date'
     },
     {
         'visit_name': _('CM Clinic Visit 3'),
         'xmlns': CM5,
         'days': 250,
         'module_idx': CM_MODULE,
-        'show_button': True
+        'show_button': 'CHW2-2_scheduled_date',
+        'scheduled_source': 'CM5-2_scheduled_date'
     },
 ]
 
