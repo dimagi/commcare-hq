@@ -32,7 +32,8 @@ def get_property(dict_obj, name, default=None):
         return default if default is not None else EMPTY_FIELD
 
 
-class McctProjectReview(CustomProjectReport, ElasticProjectInspectionReport, ProjectReport, ProjectReportParametersMixin, MultiFormDrilldownMixin, DatespanMixin):
+class McctProjectReview(CustomProjectReport, ElasticProjectInspectionReport, ProjectReport,
+                        ProjectReportParametersMixin, MultiFormDrilldownMixin, DatespanMixin):
     name = 'mCCT Project Review Page'
     slug = 'mcct_project_review_page'
     emailable = False
@@ -62,7 +63,9 @@ class McctProjectReview(CustomProjectReport, ElasticProjectInspectionReport, Pro
             DataTablesColumn(_("LGA"), sortable=False),
             DataTablesColumn(_("Phone No."), sortable=False),
             DataTablesColumn(_("Amount due"), sortable=False),
-            DataTablesColumn(mark_safe('Status/Action  <a href="#" class="select-all btn btn-mini btn-inverse">all</a> <a href="#" class="select-none btn btn-mini btn-warning">none</a>'), sortable=False, span=3))
+            DataTablesColumn(mark_safe('Status/Action  <a href="#" class="select-all btn btn-mini btn-inverse">all</a> '
+                                       '<a href="#" class="select-none btn btn-mini btn-warning">none</a>'),
+                                        sortable=False, span=3))
         return headers
 
     @property
@@ -138,7 +141,8 @@ class McctProjectReview(CustomProjectReport, ElasticProjectInspectionReport, Pro
             modify_close = filter(None, [u'Modify/Close Client'])
             q["filter"]["and"].append({"not": {"terms": {"form.@name": modify_close}}})
 
-            q["sort"] = self.get_sorting_block() if self.get_sorting_block() else [{"form.meta.timeEnd" : {"order": "desc"}}]
+            q["sort"] = self.get_sorting_block() \
+                if self.get_sorting_block() else [{"form.meta.timeEnd" : {"order": "desc"}}]
             self.es_response = es_query(params={"domain.exact": self.domain}, q=q, es_url=XFORM_INDEX + '/xform/_search',
                                         start_at=self.pagination.start, size=self.pagination.count)
         return self.es_response
@@ -159,7 +163,9 @@ class McctProjectReview(CustomProjectReport, ElasticProjectInspectionReport, Pro
                 case = EMPTY_FIELD
                 case_id = EMPTY_FIELD
 
-            checkbox = mark_safe('<input type="checkbox" class="selected-element" data-bind="event: {change: updateSelection}" data-formid="%(form_id)s" data-caseid="%(case_id)s" data-servicetype="%(service_type)s"/>')
+            checkbox = mark_safe('<input type="checkbox" class="selected-element" '
+                                 'data-bind="event: {change: updateSelection}" data-formid="%(form_id)s" '
+                                 'data-caseid="%(case_id)s" data-servicetype="%(service_type)s"/>')
             amount_due = EMPTY_FIELD
             service_type = EMPTY_FIELD
             visits = form["form"].get("visits")
