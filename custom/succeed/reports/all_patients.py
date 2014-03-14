@@ -196,7 +196,7 @@ class PatientListReportDisplay(CaseDisplay):
             rand_date = dateutil.parser.parse(self.randomization_date)
             tg_date = ((rand_date.date() + timedelta(days=next_visit['days'])) - datetime.now().date()).days
             if tg_date >= 7:
-                return (rand_date.date() + timedelta(days=next_visit['days'])).date()
+                return rand_date.date() + timedelta(days=next_visit['days'])
             elif 7 > tg_date > 0:
                 return "<span style='background-color: #FFFF00;padding: 5px;display: block;'> In %s day(s)</span>" % tg_date
             elif tg_date == 0:
