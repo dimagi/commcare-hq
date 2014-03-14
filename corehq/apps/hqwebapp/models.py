@@ -1155,6 +1155,21 @@ class AccountingTab(UITab):
         except UserRole.DoesNotExist:
             return False
 
+    @property
+    @memoized
+    def sidebar_items(self):
+        items = super(AccountingTab, self).sidebar_items
+
+        if toggles.INVOICE_TRIGGER.enabled(self.couch_user.username):
+            from corehq.apps.accounting.views import TriggerInvoiceView
+            items.append(('Other Actions', (
+                {
+                    'title': TriggerInvoiceView.page_title,
+                    'url': reverse(TriggerInvoiceView.urlname),
+                },
+            )))
+        return items
+
 
 class SMSAdminTab(UITab):
     title = ugettext_noop("SMS Connectivity")

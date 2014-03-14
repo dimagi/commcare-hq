@@ -14,16 +14,20 @@ from corehq.util.translation import localize
 
 from dimagi.utils.decorators.memoized import memoized
 
-from corehq.apps.accounting.forms import (BillingAccountForm, CreditForm, SubscriptionForm, CancelForm,
-                                          PlanInformationForm, SoftwarePlanVersionForm, FeatureRateForm,
-                                          ProductRateForm)
+from corehq.apps.accounting.forms import (
+    BillingAccountForm, CreditForm, SubscriptionForm, CancelForm,
+    PlanInformationForm, SoftwarePlanVersionForm, FeatureRateForm,
+    ProductRateForm, TriggerInvoiceForm
+)
 from corehq.apps.accounting.exceptions import NewSubscriptionError
 from corehq.apps.accounting.interface import AccountingInterface, SubscriptionInterface, SoftwarePlanInterface
 from corehq.apps.accounting.models import (SoftwareProductType, Invoice, BillingAccount, CreditLine, Subscription,
                                            SoftwarePlanVersion, SoftwarePlan)
-from corehq.apps.accounting.async_handlers import (FeatureRateAsyncHandler, Select2RateAsyncHandler,
-                                                   SoftwareProductRateAsyncHandler, Select2BillingInfoHandler,
-                                                   Select2SubscriptionInfoHandler)
+from corehq.apps.accounting.async_handlers import (
+    FeatureRateAsyncHandler, Select2RateAsyncHandler,
+    SoftwareProductRateAsyncHandler, Select2BillingInfoHandler,
+    Select2SubscriptionInfoHandler, Select2InvoiceTriggerHandler,
+)
 from corehq.apps.accounting.user_text import PricingTable
 from corehq.apps.accounting.utils import (
     LazyEncoder, fmt_feature_rate_dict, fmt_product_rate_dict,
@@ -387,6 +391,44 @@ class EditSoftwarePlanView(AccountingSectionView, AsyncHandlerMixin):
         elif self.plan_info_form.is_valid():
             self.plan_info_form.update_plan(self.plan)
             messages.success(request, "The %s Software Plan was successfully updated." % self.plan.name)
+        return self.get(request, *args, **kwargs)
+
+
+class TriggerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
+    urlname = 'accounting_trigger_invoice'
+    page_title = "Trigger Invoice"
+    template_name = 'accounting/trigger_invoice.html'
+    async_handlers = [
+        Select2InvoiceTriggerHandler,
+    ]
+
+    @method_decorator(toggles.INVOICE_TRIGGER.required_decorator())
+    def dispatch(self, request, *args, **kwargs):
+        return super(TriggerInvoiceView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    @memoized
+    def trigger_form(self):
+        if self.request.method == 'POST':
+            return TriggerInvoiceForm(self.request.POST)
+        return TriggerInvoiceForm()
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname)
+
+    @property
+    def page_context(self):
+        return {
+            'trigger_form': self.trigger_form,
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.async_response is not None:
+            return self.async_response
+        if self.trigger_form.is_valid():
+            if self.trigger_form.trigger_invoice():
+                messages.success(request, "Successfully triggered invoice for domain.")
         return self.get(request, *args, **kwargs)
 
 

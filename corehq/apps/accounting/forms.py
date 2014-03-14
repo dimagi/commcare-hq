@@ -9,6 +9,7 @@ from django import forms
 from django.core.urlresolvers import reverse
 from django.forms.util import ErrorList
 from django.template.loader import render_to_string
+from django.utils.dates import MONTHS
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop, ugettext as _, ugettext
 
@@ -16,7 +17,7 @@ from crispy_forms.bootstrap import FormActions, StrictButton, InlineField
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from django_countries.countries import COUNTRIES
-from corehq import privileges
+from corehq import privileges, toggles
 
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.email import send_HTML_email
@@ -1204,3 +1205,49 @@ class EnterprisePlanContactForm(forms.Form):
         """ % context
         send_HTML_email(subject, settings.BILLING_EMAIL, html_content, text_content,
                         email_from=settings.DEFAULT_FROM_EMAIL)
+
+
+class TriggerInvoiceForm(forms.Form):
+    month = forms.ChoiceField(label="Invoice Month")
+    year = forms.ChoiceField(label="Invoice Year")
+    domain = forms.CharField(label="Invoiced Project")
+
+    def __init__(self, *args, **kwargs):
+        super(TriggerInvoiceForm, self).__init__(*args, **kwargs)
+        today = datetime.date.today()
+
+        self.fields['month'].initial = today.month
+        self.fields['month'].choices = MONTHS.items()
+        self.fields['year'].initial = today.year
+        self.fields['year'].choices = [
+            (y, y) for y in range(today.year, 2012, -1)
+        ]
+
+        self.helper = FormHelper()
+        self.helper.form_class = 'form form-horizontal'
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                'Trigger Invoice Details',
+                crispy.Field('month', css_class="input-large"),
+                crispy.Field('year', css_class="input-large"),
+                crispy.Field('domain', css_class="input-xxlarge",
+                             placeholder="Search for Project")
+            ),
+            FormActions(
+                StrictButton(
+                    "Trigger Invoice",
+                    css_class="btn-primary",
+                    type="submit",
+                ),
+            )
+        )
+
+    def clean_domain(self):
+        domain = self.cleaned_data['domain']
+        if not toggles.ACCOUNTING_PREVIEW.enabled(domain):
+            raise ValidationError("Not an Accounting Preview domain.")
+        return domain
+
+    def trigger_invoice(self):
+        # todo
+        return True
