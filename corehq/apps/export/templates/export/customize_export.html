@@ -51,8 +51,6 @@
                             return {
                                 '#': "{% trans 'Cases' %}",
                                 'actions': "{% trans 'Case History' %}",
-                                'actions > indices': "{% trans 'Case History > Parent Cases' %}",
-                                'indices': "{% trans 'Parent Cases' %}"
                             }[stripped] || stripped;
                         }
                     },
@@ -137,14 +135,6 @@
                                 if (meta.hasOwnProperty(field)) {
                                     return {tags: ['info'].concat(tags), field: renamed_field};
                                 }
-                            } else if (/#\.indices\.#$/.exec(index)) {
-                                var rename_map = {
-                                    'identifier': 'relationship',
-                                    'referenced_id': 'case_id',
-                                    'referenced_type': 'case_type'
-                                };
-                                renamed_field = self.utils.rename(field, rename_map);
-
                             } else if (index === '#.actions.#') {
                                 stripped = field.replace(
                                     /^updated_(?:un)?known_properties\.(.*)$/,
@@ -372,7 +362,9 @@
             },
             excludedTables: {
                 '#.#export_tag.#': 0,
+                '#.actions.#.indices.#': 0,
                 '#.export_tag.#': 0,
+                '#.indices.#': 0,
                 '#.location_.#': 0,
                 '#.referrals.#': 0,
                 '#.xform_ids.#': 0
