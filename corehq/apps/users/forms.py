@@ -328,7 +328,7 @@ class CommtrackUserForm(forms.Form):
         if location_id:
             loc = Location.get(location_id)
             commtrack_user.clear_locations()
-            commtrack_user.add_location(loc)
+            commtrack_user.add_location(loc, create_sp_if_missing=True)
 
 
 class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):

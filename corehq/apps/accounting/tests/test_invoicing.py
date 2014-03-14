@@ -13,7 +13,7 @@ from corehq.apps.accounting import generator, tasks, utils
 from corehq.apps.accounting.models import (
     Invoice, FeatureType, LineItem, Subscriber, DefaultProductPlan,
     CreditAdjustment, CreditLine, SubscriptionAdjustment, SoftwareProductType,
-    SoftwarePlanEdition,
+    SoftwarePlanEdition, BillingRecord,
 )
 
 
@@ -45,6 +45,7 @@ class BaseInvoiceTestCase(BaseAccountingTest):
         CreditAdjustment.objects.all().delete()
         CreditLine.objects.all().delete()
 
+        BillingRecord.objects.all().delete()
         LineItem.objects.all().delete()
         SubscriptionAdjustment.objects.all().delete()
         Invoice.objects.all().delete()

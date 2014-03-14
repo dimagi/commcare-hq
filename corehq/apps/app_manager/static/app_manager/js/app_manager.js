@@ -261,4 +261,18 @@
         });
         COMMCAREHQ.app_manager.setCommcareVersion(args.commcareVersion);
     };
+
+    COMMCAREHQ.app_manager.setupValidation = function (validation_url) {
+        COMMCAREHQ.app_manager.fetchAndShowFormValidation = function () {
+            $.getJSON(validation_url, function (data) {
+                $('#build_errors').html(data.error_html);
+            });
+        };
+        if ($.cookie('suppress_build_errors')) {
+            $.cookie('suppress_build_errors', null, {path: '/'});
+        } else {
+            COMMCAREHQ.app_manager.fetchAndShowFormValidation();
+        }
+    };
+
 }());

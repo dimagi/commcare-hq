@@ -1,4 +1,7 @@
-from .models import Message, METHOD_SMS, METHOD_SMS_CALLBACK, METHOD_SMS_SURVEY, METHOD_IVR_SURVEY, METHOD_EMAIL, METHOD_TEST, METHOD_SMS_CALLBACK_TEST, RECIPIENT_USER, RECIPIENT_CASE, RECIPIENT_SURVEY_SAMPLE
+from .models import (Message, METHOD_SMS, METHOD_SMS_CALLBACK, 
+    METHOD_SMS_SURVEY, METHOD_IVR_SURVEY, METHOD_EMAIL, 
+    METHOD_TEST, METHOD_SMS_CALLBACK_TEST, RECIPIENT_USER, 
+    RECIPIENT_CASE, RECIPIENT_SURVEY_SAMPLE, CaseReminder)
 from corehq.apps.smsforms.app import submit_unfinished_form
 from corehq.apps.smsforms.models import XFormsSession
 from corehq.apps.sms.mixin import VerifiedNumber
@@ -287,6 +290,7 @@ def fire_ivr_survey_event(reminder, handler, recipients, verified_numbers):
             if initiate_outbound_call(verified_number, reminder.current_event.form_unique_id, handler.submit_partial_forms, handler.include_case_side_effects, handler.max_question_retries):
                 return True
             else:
+                reminder = CaseReminder.get(reminder._id)
                 reminder.error_retry_count += 1
                 if reminder.error_retry_count > getattr(settings, "IVR_OUTBOUND_RETRIES", DEFAULT_OUTBOUND_RETRIES):
                     return True

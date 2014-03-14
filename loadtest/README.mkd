@@ -4,12 +4,13 @@ multi-mechanize load tests for CommCare HQ
 Work in progress
 
 ###Running
-Requires [multi-mechanize](http://testutils.org/multi-mechanize/).  
+Requires [multi-mechanize](http://testutils.org/multi-mechanize/).
 
-From the root commcare-hq directory run 
+Copy loadtest/config.cfg.example to loadtest/config.cfg
+From the root commcare-hq directory run
 
     $ multimech-run loadtest
-    
+
 Currently has the following user profiles:
 
 * login - logs a user in and grabs an empty report page

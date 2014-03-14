@@ -16,6 +16,7 @@ from couchdbkit.resource import ResourceNotFound
 from corehq.apps.sms.util import create_task, close_task, update_task
 from corehq.apps.smsforms.app import submit_unfinished_form
 from dimagi.utils.couch import LockableMixIn
+from dimagi.utils.couch.database import SafeSaveDocument
 from random import randint
 
 METHOD_SMS = "sms"
@@ -970,7 +971,12 @@ class CaseReminderHandler(Document):
                         if not reminder.retired:
                             handler.set_next_fire(reminder, now)
                             reminder.save()
-                reminder.release_lock()
+                try:
+                    reminder.release_lock()
+                except ResourceConflict:
+                    # This should go away once we move the locking to Redis
+                    reminder = CaseReminder.get(reminder._id)
+                    reminder.release_lock()
 
     def retire(self):
         reminders = self.get_reminders()
@@ -982,7 +988,7 @@ class CaseReminderHandler(Document):
     def deleted(self):
         return self.doc_type != 'CaseReminderHandler'
 
-class CaseReminder(Document, LockableMixIn):
+class CaseReminder(SafeSaveDocument, LockableMixIn):
     """
     Where the CaseReminderHandler is the rule and schedule for sending out reminders,
     a CaseReminder is an instance of that rule as it is being applied to a specific

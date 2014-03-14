@@ -377,7 +377,7 @@ class LedgerXpathGenerator(BaseXpathGenerator):
 
     @property
     def xpath(self):
-        session_case_id = 'case_id_case_{}'.format(self.module.case_type)
+        session_case_id = 'case_id_case_{0}'.format(self.module.case_type)
         section = self.column.field_property
 
         return "if({0} = 0 or {1} = 0 or {2} = 0, '', {3})".format(

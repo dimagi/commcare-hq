@@ -372,6 +372,7 @@ class CommtrackConfig(Document):
     consumption_config = SchemaProperty(ConsumptionConfig)
     stock_levels_config = SchemaProperty(StockLevelsConfig)
     ota_restore_config = SchemaProperty(StockRestoreConfig)
+    individual_consumption_defaults = BooleanProperty(default=False)
 
     @property
     def multiaction_keyword(self):
@@ -665,10 +666,11 @@ class StockTransaction(object):
 
         def _txn(action, case_id, section_id, quantity):
             # warning: here be closures
+            quantity = Decimal(str(quantity)) if quantity is not None else None
             data = {
                 'timestamp': timestamp,
                 'product_id': product_id,
-                'quantity': Decimal(quantity),
+                'quantity': quantity,
                 'action': action,
                 'case_id': case_id,
                 'section_id': section_id,
@@ -1190,8 +1192,16 @@ class CommTrackUser(CommCareUser):
                 "There was no linked supply point for the location."
             )
 
-    def add_location(self, location):
+    def add_location(self, location, create_sp_if_missing=False):
         sp = location.linked_supply_point()
+
+        # hack: if location was created before administrative flag was
+        # removed there would be no SupplyPointCase already
+        if not sp and create_sp_if_missing:
+            sp = SupplyPointCase.create_from_location(
+                self.domain,
+                location
+            )
 
         from corehq.apps.commtrack.util import submit_mapping_case_block
         submit_mapping_case_block(self, self.supply_point_index_mapping(sp))

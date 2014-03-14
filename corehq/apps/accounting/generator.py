@@ -15,7 +15,7 @@ from dimagi.utils.data import generator as data_gen
 from corehq.apps.accounting.models import (
     Currency, BillingAccount, Subscription, Subscriber, SoftwareProductType,
     DefaultProductPlan, BillingAccountAdmin, SubscriptionAdjustment,
-    SoftwarePlanEdition,
+    SoftwarePlanEdition, BillingContactInfo,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser, CommCareUser
@@ -68,6 +68,20 @@ def billing_account(web_user_creator, web_user_contact, currency=None, save=True
     )
     if save:
         billing_account.save()
+        billing_contact = BillingContactInfo(
+            account=billing_account,
+            first_name=data_gen.arbitrary_firstname(),
+            last_name=data_gen.arbitrary_lastname(),
+            emails=web_user_creator.username,
+            phone_number="+15555555",
+            company_name="Company Name",
+            first_line="585 Mass Ave",
+            city="Cambridge",
+            state_province_region="MA",
+            postal_code="02139",
+            country="US",
+        )
+        billing_contact.save()
         billing_account.billing_admins =\
             [BillingAccountAdmin.objects.get_or_create(web_user=web_user_contact.username)[0]]
         billing_account.save()
@@ -76,6 +90,7 @@ def billing_account(web_user_creator, web_user_contact, currency=None, save=True
 
 
 def delete_all_accounts():
+    BillingContactInfo.objects.all().delete()
     BillingAccount.objects.all().delete()
     Currency.objects.all().delete()
 

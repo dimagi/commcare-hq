@@ -3,7 +3,6 @@ from django.core.urlresolvers import NoReverseMatch, reverse
 from django.utils.translation import ugettext as _, ugettext_noop
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.api.es import ReportCaseES
-from corehq.apps.cloudcare.api import get_cloudcare_app
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.standard import CustomProjectReport
@@ -15,10 +14,9 @@ from corehq.pillows.base import restore_property_dict
 from django.utils import html
 import dateutil
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
-from custom.succeed.utils import CONFIG, _is_succeed_admin, SUCCEED_CLOUD_APPNAME
+from custom.succeed.utils import CONFIG, _is_succeed_admin, SUCCEED_APPNAME, _get_app_by_name
 import logging
 import simplejson
-from corehq.apps.app_manager.models import ApplicationBase
 
 
 EMPTY_FIELD = "---"
@@ -126,8 +124,8 @@ class PatientListReportDisplay(CaseDisplay):
         self.next_visit = next_visit
         if last_inter:
             self.last_interaction = last_inter['date']
-        self.app_dict = get_cloudcare_app(report.domain, SUCCEED_CLOUD_APPNAME)
-        self.latest_build = ApplicationBase.get_latest_build(report.domain, self.app_dict['_id'])['_id']
+        self.app_dict = _get_app_by_name(report.domain, SUCCEED_APPNAME).to_json()
+        self.latest_build =  self.app_dict['_id']
         super(PatientListReportDisplay, self).__init__(report, case_dict)
 
     def get_property(self, key):
@@ -150,7 +148,7 @@ class PatientListReportDisplay(CaseDisplay):
 
     @property
     def edit_link(self):
-        base_url = '/a/%(domain)s/cloudcare/apps/view/%(build_id)s/%(module_id)s/%(form_id)s/enter/'
+        base_url = '/a/%(domain)s/cloudcare/apps/view/%(build_id)s/%(module_id)s/%(form_id)s?preview=true'
         module = self.app_dict['modules'][1]
         form_idx = [ix for (ix, f) in enumerate(module['forms']) if f['xmlns'] == CM7][0]
         return html.mark_safe("<a class='ajax_dialog' href='%s'>Edit</a>") \
@@ -198,7 +196,7 @@ class PatientListReportDisplay(CaseDisplay):
             rand_date = dateutil.parser.parse(self.randomization_date)
             tg_date = ((rand_date.date() + timedelta(days=next_visit['days'])) - datetime.now().date()).days
             if tg_date >= 7:
-                return (rand_date.date() + timedelta(days=next_visit['days'])).date()
+                return rand_date.date() + timedelta(days=next_visit['days'])
             elif 7 > tg_date > 0:
                 return "<span style='background-color: #FFFF00;padding: 5px;display: block;'> In %s day(s)</span>" % tg_date
             elif tg_date == 0:
