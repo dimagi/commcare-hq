@@ -171,7 +171,9 @@ class BillingAccountAdmin(models.Model):
         if account is None:
             return web_user.is_domain_admin(domain), None
         admin = account.billing_admins.filter(web_user=web_user.username)
-        return admin.count() > 0, account
+        is_billing_admin = (admin.count() > 0
+                            and web_user.is_domainB_admin(domain))
+        return is_billing_admin, account
 
 
 class BillingAccount(models.Model):
