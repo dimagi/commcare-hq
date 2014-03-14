@@ -32,8 +32,25 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
 
     def get(self, request, domain):
         self.domain = domain
-        q = self.request.GET.get('q', None)
-        self.q = '%s*' % q if q else None
+        self.q = self.request.GET.get('q', None)
+        if self.q:
+            tokens = self.q.split(' ')
+            queries = ['%s*' % tokens.pop()] + tokens
+            self.user_query = {"bool": {"must": [
+                {"query_string": {
+                    "query": q,
+                    "fields": ["first_name", "last_name", "username"],
+                }} for q in queries
+            ]}}
+            self.group_query = {"bool": {"must": [
+                {"query_string": {
+                    "query": q,
+                    "default_field": "name",
+                }} for q in queries
+            ]}}
+        else:
+            self.user_query = None
+            self.group_query = None
         self._init_counts()
         return self.render_json_response({
             'results': self.get_options(),
@@ -41,9 +58,9 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
         })
 
     def _init_counts(self):
-        groups, _ = es_wrapper('groups', domain=self.domain, q=self.q,
+        groups, _ = es_wrapper('groups', domain=self.domain, q=self.group_query,
             doc_type='Group', size=0, return_count=True)
-        users, _ = es_wrapper('users', domain=self.domain, q=self.q,
+        users, _ = es_wrapper('users', domain=self.domain, q=self.user_query,
             size=0, return_count=True)
         self.group_start = len(self.basics)
         self.user_start = self.group_start + groups
@@ -70,18 +87,19 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
     @property
     @memoized
     def basics(self):
-        return [("t__0", _("[All mobile workers]"))] + \
+        basics = [("t__0", _("[All mobile workers]"))] + \
             [("t__%s" % (i+1), "[%s]" % name)
                 for i, name in enumerate(HQUserType.human_readable[1:])]
+        return filter(lambda basic: self.q.lower() in basic[1].lower(), basics)
 
     def get_users(self, start, size):
         fields = ['_id', 'username', 'first_name', 'last_name']
-        users = es_wrapper('users', domain=self.domain, q=self.q,
-            fields=fields, start_at=start, size=size, sort_by='username', order='asc')
+        users = es_wrapper('users', domain=self.domain, q=self.user_query,
+            fields=fields, start_at=start, size=size, sort_by='username.exact', order='asc')
         return [user_tuple(u) for u in users]
 
     def get_groups(self, start, size):
         fields = ['_id', 'name']
-        groups = es_wrapper('groups', domain=self.domain, q=self.q, doc_type='Group',
-            fields=fields, start_at=start, size=size, sort_by='name', order='asc')
+        groups = es_wrapper('groups', domain=self.domain, q=self.group_query, doc_type='Group',
+            fields=fields, start_at=start, size=size, sort_by='name.exact', order='asc')
         return [group_tuple(g) for g in groups]
