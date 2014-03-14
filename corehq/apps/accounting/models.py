@@ -769,6 +769,7 @@ class Invoice(models.Model):
     date_received = models.DateField(blank=True, db_index=True, null=True)
     date_start = models.DateField()
     date_end = models.DateField()
+    is_hidden = models.BooleanField(default=False)
 
     @property
     def subtotal(self):
@@ -872,8 +873,9 @@ class BillingRecord(models.Model):
     This stores any interaction we have with the client in sending a physical / pdf invoice to their contact email.
     """
     invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT)
-    date_emailed = models.DateField(auto_now_add=True, db_index=True)
+    date_created = models.DateField(auto_now_add=True, db_index=True)
     emailed_to = models.CharField(max_length=254, db_index=True)
+    skipped_email = models.BooleanField(default=False)
     pdf_data_id = models.CharField(max_length=48)
 
     @property
