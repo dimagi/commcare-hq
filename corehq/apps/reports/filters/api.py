@@ -82,6 +82,8 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
 
     def get_groups(self, start, size):
         fields = ['_id', 'name']
-        groups = es_wrapper('groups', domain=self.domain, q=self.q, doc_type='Group',
-            fields=fields, start_at=start, size=size, sort_by='name', order='asc')
+        reporting_filter = {"term": {"reporting": "true"}}
+        groups = es_wrapper('groups', domain=self.domain, q=self.q,
+            doc_type='Group', fields=fields, start_at=start, size=size,
+            sort_by='name', order='asc', filters=[reporting_filter])
         return [group_tuple(g) for g in groups]
