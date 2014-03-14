@@ -12,24 +12,13 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.fields import StrongFilterUsersField
 from corehq.apps.reports.generic import ElasticProjectInspectionReport
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
-from corehq.apps.users.models import CommCareUser
 from corehq.elastic import es_query
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
-from casexml.apps.case.models import CommCareCase
 from custom.m4change.constants import BOOKING_FORMS, FOLLOW_UP_FORMS, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, IMMUNIZATION_FORMS
 from custom.m4change.models import McctStatus
-
-EMPTY_FIELD = "---"
-
-
-def get_property(dict_obj, name, default=None):
-    if name in dict_obj:
-        if type(dict_obj[name]) is dict:
-            return dict_obj[name]["#value"]
-        return dict_obj[name]
-    else:
-        return default if default is not None else EMPTY_FIELD
+from custom.m4change.utils import get_case_by_id, get_user_by_id, get_property
+from custom.m4change.constants import EMPTY_FIELD
 
 
 class McctProjectReview(CustomProjectReport, ElasticProjectInspectionReport, ProjectReport,
@@ -158,7 +147,7 @@ class McctProjectReview(CustomProjectReport, ElasticProjectInspectionReport, Pro
         for form in submissions:
             try:
                 case_id = form["form"]["case"]["@case_id"]
-                case = CommCareCase.get(case_id)
+                case = get_case_by_id(case_id)
             except KeyError:
                 case = EMPTY_FIELD
                 case_id = EMPTY_FIELD
@@ -175,7 +164,7 @@ class McctProjectReview(CustomProjectReport, ElasticProjectInspectionReport, Pro
 
             if case is not EMPTY_FIELD:
                 user_id = get_property(case, "user_id", EMPTY_FIELD)
-                user = CommCareUser.get(user_id)
+                user = get_user_by_id(user_id)
                 location_id = get_commtrack_location_id(user, Domain.get_by_name(self.domain))
                 if location_id is not None:
                     location = Location.get(location_id)
