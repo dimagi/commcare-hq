@@ -995,8 +995,6 @@ class CreditLine(models.Model):
     """
     account = models.ForeignKey(BillingAccount, on_delete=models.PROTECT)
     subscription = models.ForeignKey(Subscription, on_delete=models.PROTECT, null=True, blank=True)
-    product_rate = models.ForeignKey(SoftwareProductRate, on_delete=models.PROTECT, null=True, blank=True)
-    feature_rate = models.ForeignKey(FeatureRate, on_delete=models.PROTECT, null=True, blank=True)
     product_type = models.CharField(max_length=25, null=True, blank=True,
                                     choices=SoftwareProductType.CHOICES)
     feature_type = models.CharField(max_length=10, null=True, blank=True,
