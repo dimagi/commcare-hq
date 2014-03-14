@@ -204,3 +204,60 @@ class McctProjectReview(CustomProjectReport, ElasticProjectInspectionReport, Pro
                 checkbox % dict(form_id=form_id, case_id=case_id, service_type=service_type)
             ]
 
+class McctApprovedBeneficiaryListView(McctProjectReview):
+    name = 'mCCT Approved beneficiary list view'
+    slug = 'mcct_approved_beneficiary_list_view'
+    report_template_path = 'reports/approveStatus.html'
+
+    def es_query(self):
+        reviewed_form_ids = [mcct_status.form_id for mcct_status in McctStatus.objects.filter(domain=self.domain, status="reviewed")]
+        if len(reviewed_form_ids) > 0:
+            if not getattr(self, 'es_response', None):
+                form_ids_str = " OR ".join(reviewed_form_ids)
+                range = self.request_params.get('range', None)
+                start_date = None
+                end_date = None
+                if range is not None:
+                    dates = str(range).split(_(" to "))
+                    start_date = dates[0]
+                    end_date = dates[1]
+                filtered_case_ids = self._get_filtered_cases()
+                q = {
+                    "query": {
+                        "range": {
+                            "form.meta.timeEnd": {
+                                "from": start_date,
+                                "to": end_date,
+                                "include_upper": False
+                            }
+                        }
+                    },
+                    "filter": {
+                        "and": [{'query': {
+                            'query_string': {
+                                "default_field": "form.meta.instanceID",
+                                "query": form_ids_str
+                                }
+                        }}
+                        ]
+                    }
+                }
+
+                if len(filtered_case_ids) > 0:
+                    case_ids_str = " OR ".join(filtered_case_ids)
+                    q["filter"]["and"].append({
+                        "query": {
+                            "query_string": {
+                                "default_field": "form.case.@case_id",
+                                "query": case_ids_str
+                            }
+                        }
+                    })
+
+                q["sort"] = self.get_sorting_block() if self.get_sorting_block() else [{"form.meta.timeEnd" : {"order": "desc"}}]
+                self.es_response = es_query(params={"domain.exact": self.domain}, q=q, es_url=XFORM_INDEX + '/xform/_search',
+                                            start_at=self.pagination.start, size=self.pagination.count)
+        else:
+            self.es_response = {'hits': {'total': 0}}
+
+        return self.es_response

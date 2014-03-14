@@ -85,6 +85,10 @@ var McctProjectReviewPageManagement = function (o) {
      self.updateStatusReject = function () {
          self.updateStatus("rejected");
     };
+
+    self.updateStatusApprove = function () {
+        self.updateStatus("approved");
+    };
 };
 
 ko.bindingHandlers.mcctProjectReviewPage = {
