@@ -38,12 +38,13 @@ def sync_user_cases(commcare_user):
 
     close = commcare_user.to_be_deleted() or not commcare_user.is_active
 
+    owner_id = domain.call_center_config.case_owner_id
     if found:
         caseblock = CaseBlock(
             create=False,
             case_id=case._id,
             version=V2,
-            owner_id=domain.call_center_config.case_owner_id,
+            owner_id=owner_id,
             case_type=domain.call_center_config.case_type,
             close=close,
             update=fields
@@ -53,8 +54,8 @@ def sync_user_cases(commcare_user):
         caseblock = CaseBlock(
             create=True,
             case_id=uuid.uuid4().hex,
-            owner_id=domain.call_center_config.case_owner_id,
-            user_id=commcare_user._id,
+            owner_id=owner_id,
+            user_id=owner_id,
             version=V2,
             case_type=domain.call_center_config.case_type,
             update=fields
