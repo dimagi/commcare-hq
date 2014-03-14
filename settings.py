@@ -453,6 +453,7 @@ HQ_ACCOUNT_ROOT = "commcarehq.org"
 
 XFORMS_PLAYER_URL = "http://localhost:4444/"  # touchform's setting
 OFFLINE_TOUCHFORMS_PORT = 4444
+CLOUDCARE_SESSION_PERSIST_WINDOW = 72 # hours
 
 ####### Couchlog config #######
 

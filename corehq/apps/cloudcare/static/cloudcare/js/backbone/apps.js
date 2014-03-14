@@ -161,6 +161,22 @@ cloudCare.FormView = Selectable.extend({
     }
 });
 
+cloudCare.FormSession = Backbone.Model.extend({
+
+});
+
+cloudCare.OpenFormSessions = Backbone.Collection.extend({
+    initialize: function () {
+    },
+    model: cloudCare.FormSession,
+    url: '/a/test/cloudcare/api/sessions/abcdefg'  // TODO need to filter by form id
+                                                   // a) what is the best way to identify a form? it has to be with
+                                                   //    information available to touchforms
+                                                   // b) how do i 'parameterize' a backbone collection? i think the
+                                                   //    query is actually passed in through the fetch() method?
+});
+
+
 cloudCare.Module = LocalizableModel.extend({
     initialize: function () {
         this.constructor.__super__.initialize.apply(this, [this.options]);
@@ -520,6 +536,15 @@ cloudCare.AppView = Backbone.View.extend({
             var module = self.moduleListView.getModuleView(form.get('module_index')).model;
             // clear anything existing
             self._clearCaseView();
+
+            // fetch session list here
+            var x = new cloudCare.OpenFormSessions();
+            x.fetch({
+                success: function (collection, response) {
+                    debugger;
+                }
+            });
+
             if (form.get("requires") === "none") {
 	            // no requirements, go ahead and play it
 	            self.playForm(module, form);

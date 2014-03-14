@@ -19,7 +19,7 @@ from django.shortcuts import render
 from corehq.apps.app_manager.models import Application, ApplicationBase, get_app
 import json
 from corehq.apps.cloudcare.api import look_up_app_json, get_cloudcare_apps, get_filtered_cases, get_filters_from_request,\
-    api_closed_to_status, CaseAPIResult, CASE_STATUS_OPEN, get_app_json
+    api_closed_to_status, CaseAPIResult, CASE_STATUS_OPEN, get_app_json, get_open_form_sessions
 from dimagi.utils.parsing import string_to_boolean
 from django.conf import settings
 from corehq.apps.cloudcare import touchforms_api
@@ -308,6 +308,11 @@ def get_fixtures(request, domain, user_id, fixture_id=None):
                 assert len(fixture.getchildren()) == 1
                 return HttpResponse(ElementTree.tostring(fixture.getchildren()[0]), content_type="text/xml")
         raise Http404
+
+@cloudcare_api
+def get_sessions(request, domain, xform_id):
+    # is it ok to pull user from the request? other api calls seem to have an explicit 'user' param
+    return json_response(get_open_form_sessions(request.user, xform_id))
 
 
 class HttpResponseConflict(HttpResponse):
