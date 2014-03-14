@@ -114,19 +114,14 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
     @memoized
     def credit_form(self):
         if self.request.method == 'POST' and 'adjust_credit' in self.request.POST:
-            return CreditForm(self.account.id, True, self.request.POST)
-        return CreditForm(self.account.id, True)
-
-    def get_appropriate_credit_form(self, account):
-        if (not self.credit_form.is_bound) or (not self.credit_form.is_valid()):
-            return self.credit_form
-        return CreditForm(account.id, True)
+            return CreditForm(self.account, None, self.request.POST)
+        return CreditForm(self.account, None)
 
     @property
     def page_context(self):
         return {
             'account': self.account,
-            'credit_form': self.get_appropriate_credit_form(self.account),
+            'credit_form': self.credit_form,
             'credit_list': CreditLine.objects.filter(account=self.account),
             'form': self.account_form,
             'subscription_list': [
@@ -146,7 +141,8 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
         if 'account' in self.request.POST and self.account_form.is_valid():
             self.account_form.update_account_and_contacts(self.account)
         elif 'adjust_credit' in self.request.POST and self.credit_form.is_valid():
-            self.credit_form.adjust_credit(account=self.account)
+            if self.credit_form.adjust_credit():
+                return HttpResponseRedirect(self.page_url)
 
         return self.get(request, *args, **kwargs)
 
@@ -238,31 +234,22 @@ class EditSubscriptionView(AccountingSectionView):
             return SubscriptionForm(self.subscription, None, self.request.POST)
         return SubscriptionForm(self.subscription, None)
 
-    def get_appropriate_subscription_form(self, subscription):
-        if (not self.subscription_form.is_bound) or (not self.subscription_form.is_valid()):
-            return self.subscription_form
-        return SubscriptionForm(subscription, None)
-
     @property
     @memoized
     def credit_form(self):
         if self.request.method == 'POST' and 'adjust_credit' in self.request.POST:
-            return CreditForm(self.subscription_id, False, self.request.POST)
-        return CreditForm(self.subscription_id, False)
-
-    def get_appropriate_credit_form(self, subscription):
-        if (not self.credit_form.is_bound) or (not self.credit_form.is_valid()):
-            return self.credit_form
-        return CreditForm(subscription.id, False)
+            return CreditForm(self.subscription.account, self.subscription,
+                              self.request.POST)
+        return CreditForm(self.subscription.account, self.subscription)
 
     @property
     def page_context(self):
         return {
             'cancel_form': CancelForm(),
-            'credit_form': self.get_appropriate_credit_form(self.subscription),
+            'credit_form': self.credit_form,
             'credit_list': CreditLine.objects.filter(subscription=self.subscription),
             'disable_cancel': has_subscription_already_ended(self.subscription),
-            'form': self.get_appropriate_subscription_form(self.subscription),
+            'form': self.subscription_form,
             'subscription': self.subscription,
             'subscription_canceled': self.subscription_canceled if hasattr(self, 'subscription_canceled') else False,
         }
@@ -281,9 +268,12 @@ class EditSubscriptionView(AccountingSectionView):
     def post(self, request, *args, **kwargs):
         if 'set_subscription' in self.request.POST and self.subscription_form.is_valid():
             new_subscription = self.subscription_form.update_subscription(self.subscription)
-            return HttpResponseRedirect(reverse(self.urlname, args=(unicode(new_subscription.id),)))
+            return HttpResponseRedirect(
+                reverse(self.urlname, args=(unicode(new_subscription.id)))
+            )
         elif 'adjust_credit' in self.request.POST and self.credit_form.is_valid():
-            self.credit_form.adjust_credit(subscription=self.subscription)
+            if self.credit_form.adjust_credit():
+                return HttpResponseRedirect(self.page_url)
         elif 'cancel_subscription' in self.request.POST:
             self.cancel_subscription()
         return self.get(request, *args, **kwargs)
