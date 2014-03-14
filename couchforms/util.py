@@ -88,7 +88,8 @@ def convert_xform_to_json(xml_string):
 
 
 def acquire_lock_for_xform(xform_id):
-    lock = XFormInstance.get_obj_lock_by_id(xform_id)
+    # this is high, but I want to test if MVP conflicts disappear
+    lock = XFormInstance.get_obj_lock_by_id(xform_id, timeout_seconds=2*60)
     try:
         lock.acquire()
     except ConnectionError:
