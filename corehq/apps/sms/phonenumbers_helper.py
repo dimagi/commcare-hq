@@ -21,3 +21,8 @@ def parse_phone_number(number, region=None, keep_raw_input=False,
             raise PhoneNumberParseException()
         else:
             return None
+
+
+def get_country_code(number, failhard=False):
+    parsed = parse_phone_number(number, failhard=failhard)
+    return parsed.country_code if parsed else None
