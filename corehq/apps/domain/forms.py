@@ -697,15 +697,12 @@ class EditBillingAccountInfoForm(forms.ModelForm):
         )[0])
         return result
 
-    def _parse_number(self, number, country):
-        return parse_phone_number(number, country, failhard=False)
-
     def clean_phone_number(self):
         data = self.cleaned_data['phone_number']
         parsed_number = None
         if data:
             for country in ["US", "GB", None]:
-                parsed_number = self._parse_number(data, country)
+                parsed_number = parse_phone_number(data, country, failhard=False)
                 if parsed_number is not None:
                     break
             if parsed_number is None:
