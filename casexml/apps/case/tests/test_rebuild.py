@@ -81,6 +81,7 @@ class CaseRebuildTest(TestCase):
 
         # rebuild by flipping the actions
         case.actions = [case.actions[0], a2, a1]
+        case.xform_ids = [case.xform_ids[0], case.xform_ids[2], case.xform_ids[1]]
         case.rebuild()
         self.assertEqual(case.p1, 'p1-1') # original
         self.assertEqual(case.p2, 'p2-1') # updated (back!)
