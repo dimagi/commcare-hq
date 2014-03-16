@@ -19,9 +19,6 @@
 [submodule "submodules/commcare-translations"]
 	path = submodules/commcare-translations
 	url = git://github.com/dimagi/commcare-translations.git
-[submodule "submodules/receiver-src"]
-	path = submodules/receiver-src
-	url = git://github.com/dimagi/receiver.git
 [submodule "submodules/formtranslate-src"]
 	path = submodules/formtranslate-src
 	url = git://github.com/dimagi/formtranslate.git
@@ -46,48 +43,24 @@
 [submodule "submodules/formdesigner"]
 	path = submodules/formdesigner
 	url = git://github.com/dimagi/Vellum.git
-[submodule "submodules/pathfinder-reports"]
-	path = submodules/pathfinder-reports
-	url = git://github.com/dimagi/pathfinder-reports.git
 [submodule "submodules/django-soil-src"]
 	path = submodules/django-soil-src
 	url = git://github.com/dimagi/django-soil.git
 [submodule "submodules/hutch-src"]
 	path = submodules/hutch-src
 	url = git://github.com/dimagi/hutch.git
-[submodule "submodules/dca-reports"]
-	path = submodules/dca-reports
-	url = git://github.com/dimagi/dca-reports.git
-[submodule "submodules/hsph-reports"]
-	path = submodules/hsph-reports
-	url = git://github.com/dimagi/hsph-reports.git
-[submodule "submodules/pathindia-reports"]
-	path = submodules/pathindia-reports
-	url = git://github.com/dimagi/pathindia-reports.git
 [submodule "submodules/payments"]
 	path = submodules/payments
 	url = git://github.com/dimagi/payments.git
-[submodule "submodules/a5288-reports"]
-	path = submodules/a5288-reports
-	url = git://github.com/dimagi/a5288-reports.git
-[submodule "submodules/mvp-reports"]
-	path = submodules/mvp-reports
-	url = git://github.com/dimagi/mvp-reports.git
 [submodule "submodules/pillowtop-src"]
 	path = submodules/pillowtop-src
 	url = git://github.com/dimagi/pillowtop.git
-[submodule "submodules/pact-src"]
-	path = submodules/pact-src
-	url = git://github.com/dimagi/hq-pact.git
 [submodule "submodules/hqstyle-src"]
 	path = submodules/hqstyle-src
 	url = git://github.com/dimagi/hqstyle-src.git
 [submodule "submodules/couchdbkit-aggregate"]
 	path = submodules/couchdbkit-aggregate
 	url = git://github.com/dimagi/couchdbkit-aggregate.git
-[submodule "submodules/psi-reports"]
-	path = submodules/psi-reports
-	url = git://github.com/dimagi/psi-reports.git
 [submodule "submodules/freddy"]
 	path = submodules/freddy
 	url = git://github.com/dimagi/freddy.git

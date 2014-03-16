@@ -26,6 +26,7 @@ from fabric.api import run, roles, execute, task, sudo, env, parallel
 from fabric.contrib import files, console
 from fabric import utils
 import posixpath
+import time
 
 
 ROLES_ALL_SRC = ['django_monolith', 'django_app', 'django_celery', 'django_pillowtop', 'formsplayer', 'staticfiles']
@@ -816,15 +817,6 @@ def netstat_plnt():
 
 
 @roles(*ROLES_ALL_SERVICES)
-def services_start():
-    """Start the gunicorn servers"""
-    require('environment', provided_by=('staging', 'preview', 'production'))
-    _supervisor_command('update')
-    _supervisor_command('reload')
-    _supervisor_command('start  all')
-
-
-@roles(*ROLES_ALL_SERVICES)
 def services_stop():
     """Stop the gunicorn servers"""
     require('environment', provided_by=('staging', 'preview', 'production'))
@@ -850,6 +842,7 @@ def services_restart():
 
     _supervisor_command('update')
     _supervisor_command('reload')
+    time.sleep(1)
     _supervisor_command('start  all')
 
 

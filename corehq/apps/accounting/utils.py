@@ -119,3 +119,14 @@ def domain_has_privilege(domain, privilege_slug, **assignment):
     except AccountingError:
         pass
     return False
+
+
+def get_money_str(amount):
+    if amount is not None:
+        if amount < 0:
+            fmt = "-$%0.2f"
+            amount = abs(amount)
+        else:
+            fmt = "$%0.2f"
+        return fmt % amount
+    return ""

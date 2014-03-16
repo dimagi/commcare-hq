@@ -161,6 +161,58 @@ class Product(Document):
         return [row['id'] for row in view_results]
 
 
+    @classmethod
+    def count_by_domain(cls, domain):
+        """
+        Gets count of products in a domain
+        """
+        # todo: we should add a reduce so we can get this out of couch
+        return len(cls.ids_by_domain(domain))
+
+
+    @classmethod
+    def _csv_attrs(cls):
+        return [
+            '_id',
+            'name',
+            'unit',
+            'code_',
+            'description',
+            'category',
+            'program_id',
+            ('cost', lambda a: Decimal(a) if a else None),
+        ]
+
+    def to_csv(self):
+        def _encode_if_needed(val):
+            return val.encode("utf8") if isinstance(val, unicode) else val
+
+        return [_encode_if_needed(getattr(self, attr[0] if isinstance(attr, tuple) else attr))
+                for attr in self._csv_attrs()]
+
+    @classmethod
+    def from_csv(cls, row):
+        if not row:
+            return None
+        id, row = row[0], row[1:]
+        if id:
+            p = cls.get(id)
+        else:
+            p = cls()
+        for i, attr in enumerate(cls._csv_attrs()[1:]):
+            try:
+                val = row[i].decode('utf-8')
+            except IndexError:
+                break
+            else:
+                if isinstance(attr, tuple):
+                    attr, f = attr
+                    val = f(val)
+                setattr(p, attr, val)
+
+        return p
+
+
 class CommtrackActionConfig(DocumentSchema):
     # one of the base stock action types (see StockActions enum)
     action = StringProperty()
@@ -320,6 +372,7 @@ class CommtrackConfig(Document):
     consumption_config = SchemaProperty(ConsumptionConfig)
     stock_levels_config = SchemaProperty(StockLevelsConfig)
     ota_restore_config = SchemaProperty(StockRestoreConfig)
+    individual_consumption_defaults = BooleanProperty(default=False)
 
     @property
     def multiaction_keyword(self):
@@ -613,10 +666,11 @@ class StockTransaction(object):
 
         def _txn(action, case_id, section_id, quantity):
             # warning: here be closures
+            quantity = Decimal(str(quantity)) if quantity is not None else None
             data = {
                 'timestamp': timestamp,
                 'product_id': product_id,
-                'quantity': Decimal(quantity),
+                'quantity': quantity,
                 'action': action,
                 'case_id': case_id,
                 'section_id': section_id,
@@ -1138,8 +1192,16 @@ class CommTrackUser(CommCareUser):
                 "There was no linked supply point for the location."
             )
 
-    def add_location(self, location):
+    def add_location(self, location, create_sp_if_missing=False):
         sp = location.linked_supply_point()
+
+        # hack: if location was created before administrative flag was
+        # removed there would be no SupplyPointCase already
+        if not sp and create_sp_if_missing:
+            sp = SupplyPointCase.create_from_location(
+                self.domain,
+                location
+            )
 
         from corehq.apps.commtrack.util import submit_mapping_case_block
         submit_mapping_case_block(self, self.supply_point_index_mapping(sp))

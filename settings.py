@@ -188,6 +188,7 @@ HQ_APPS = (
     'corehq.apps.hqcouchlog',
     'corehq.apps.hqwebapp',
     'corehq.apps.hqmedia',
+    'corehq.apps.loadtestendpoints',
     'corehq.apps.locations',
     'corehq.apps.commtrack',
     'corehq.apps.consumption',
@@ -198,7 +199,6 @@ HQ_APPS = (
     'ctable_view',
     'dimagi.utils',
     'formtranslate',
-    'receiver',
     'langcodes',
     'corehq.apps.adm',
     'corehq.apps.announcements',
@@ -280,8 +280,8 @@ HQ_APPS = (
     'custom.apps.crs_reports',
     'custom.hope',
     'custom.openlmis',
-
-    'custom.m4change'
+    'custom.m4change',
+    'custom.succeed'
 )
 
 TEST_APPS = ()
@@ -316,6 +316,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'south',
     'custom.apps.crs_reports',
     'custom.m4change',
+    'custom.succeed'
 
     # submodules with tests that run on travis
     'casexml.apps.case',
@@ -329,7 +330,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'fluff_filter',
     'freddy',
     'pillowtop',
-    'receiver',
 )
 
 INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
@@ -603,6 +603,13 @@ FLUFF_PILLOW_TYPES_TO_SQL = {
     'UnicefMalawiFluff': 'SQL',
     'MalariaConsortiumFluff': 'SQL',
     'CareSAFluff': 'SQL',
+    'OpmCaseFluff': 'SQL',
+    'OpmUserFluff': 'SQL',
+    'OpmFormFluff': 'SQL',
+    'OpmHealthStatusFluff': 'SQL',
+    'OpmHealthStatusBasicInfoFluff': 'SQL',
+    'AncHmisCaseFluff': 'SQL',
+    'ImmunizationHmisCaseFluff': 'SQL',
 }
 
 PREVIEWER_RE = '^$'
@@ -705,6 +712,17 @@ LOGGING = {
         },
     }
 }
+
+# Invoicing
+STARTING_INVOICE_NUMBER = 0
+INVOICE_PREFIX = ''
+TERMS = ''
+FROM_ADDRESS = {}
+BANK_ADDRESS = {}
+BANK_NAME = ''
+ACCOUNT_NUMBER = ''
+ROUTING_NUMBER = ''
+SWIFT_CODE = ''
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -825,6 +843,7 @@ COUCHDB_APPS = [
     'psi',
     'trialconnect',
     'accounting',
+    'succeed',
     ('auditcare', 'auditcare'),
     ('couchlog', 'couchlog'),
     ('receiverwrapper', 'receiverwrapper'),
@@ -946,6 +965,9 @@ PILLOWTOPS = {
         'corehq.pillows.user.GroupToUserPillow',
         'corehq.pillows.user.UnknownUsersPillow',
     ],
+    'phonelog': [
+        'corehq.pillows.log.PhoneLogPillow',
+    ],
     'core_ext': [
         'corehq.pillows.reportcase.ReportCasePillow',
         'corehq.pillows.reportxform.ReportXFormPillow',
@@ -958,10 +980,13 @@ PILLOWTOPS = {
         'custom.opm.opm_reports.models.OpmCaseFluffPillow',
         'custom.opm.opm_reports.models.OpmUserFluffPillow',
         'custom.opm.opm_reports.models.OpmFormFluffPillow',
+        'custom.opm.opm_reports.models.OpmHealthStatusBasicInfoFluffPillow',
+        'custom.opm.opm_reports.models.OpmHealthStatusFluffPillow',
         'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
         'custom.reports.care_sa.models.CareSAFluffPillow',
         'custom.reports.mc.models.MalariaConsortiumFluffPillow',
         'custom.m4change.models.AncHmisCaseFluffPillow',
+        'custom.m4change.models.LdHmisCaseFluffPillow',
         'custom.m4change.models.ImmunizationHmisCaseFluffPillow',
         'custom.m4change.models.ProjectIndicatorsCaseFluffPillow',
         'custom.m4change.models.McctMonthlyAggregateFormFluffPillow'
@@ -1003,6 +1028,8 @@ ES_CASE_FULL_INDEX_DOMAINS = [
     'commtrack-public-demo',
     'uth-rhd-test',
     'crs-remind',
+    'succeed',
+    'opm',
 ]
 
 # Custom fully indexed domains for ReportXForm index/pillowtop --
@@ -1060,6 +1087,7 @@ DOMAIN_MODULE_MAP = {
     'crs-remind': 'custom.apps.crs_reports',
 
     'm4change': 'custom.m4change',
+    'succeed': 'custom.succeed',
     'test-pathfinder': 'custom.m4change'
 }
 

@@ -7,7 +7,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
 from datetime import datetime, timedelta
 from dimagi.utils.parsing import json_format_datetime
-from receiver.xml import get_simple_response_xml, ResponseNature
+from couchforms.xml import get_simple_response_xml, ResponseNature
 
 submission_template = """<?xml version='1.0' ?>
 <data xmlns="%(xmlns)s">

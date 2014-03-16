@@ -233,6 +233,7 @@ body {
 }
 .table-pricing thead .col-edition {
   padding: 0;
+  width: 112px;
 }
 .table-pricing thead .col-edition .tooltip.in {
   opacity: 1;
@@ -361,7 +362,6 @@ body {
 }
 .th-feature-section > h2 {
   position: relative;
-  writing-mode: tb-rl;
   margin: 0;
   font-weight: normal;
   font-size: 15.6px;

@@ -326,7 +326,7 @@ def deployments(request, template="appstore/deployments.html"):
 
     more_pages = False if len(d_results) <= page*10 else True
 
-    facets_sortables = generate_sortables_from_facets(results, params, inverse_dict(DEPLOYMENT_MAPPING))
+    facet_map = fill_mapping_with_facets(DEPLOYMENT_MAPPING, results, params)
     include_unapproved = True if request.GET.get('is_approved', "") == "false" else False
     vals = { 'deployments': d_results[(page-1)*10:page*10],
              'page': page,
@@ -334,7 +334,7 @@ def deployments(request, template="appstore/deployments.html"):
              'next_page': (page+1),
              'more_pages': more_pages,
              'include_unapproved': include_unapproved,
-             'sortables': facets_sortables,
+             'facet_map': facet_map,
              'query_str': request.META['QUERY_STRING'],
              'search_url': reverse('deployments'),
              'search_query': params.get('search', [""])[0]}

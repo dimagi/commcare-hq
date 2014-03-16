@@ -6,6 +6,9 @@ from collections import defaultdict
 from StringIO import StringIO
 import socket
 
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
 from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_POST, require_GET
 from pytz import timezone
@@ -57,7 +60,10 @@ from dimagi.utils.decorators.view import get_file
 from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.django.email import send_HTML_email
 from pillowtop import get_all_pillows_json
+from phonelog.models import Log
+from phonelog.reports import TAGS
 
+from .multimech import GlobalConfig
 
 @require_superuser
 def default(request):
@@ -349,19 +355,26 @@ def submissions_errors(request, template="hqadmin/submissions_errors_report.html
         ).all()
         num_forms_submitted = data[0].get('value', 0) if data else 0
 
-        key = [domain.name, "all_errors_only"]
-        data = get_db().view("phonelog/devicelog_data",
-            reduce=True,
-            startkey=key+[datespan.startdate_param_utc],
-            endkey=key+[datespan.enddate_param_utc],
-            #stale=settings.COUCH_STALE_QUERY,
-        ).first()
-        num_errors = 0
-        num_warnings = 0
-        if data:
-            data = data.get('value', {})
-            num_errors = data.get('errors', 0)
-            num_warnings = data.get('warnings', 0)
+        if request.GET.get('old') == 'true':  ## old reports
+            key = [domain.name, "all_errors_only"]
+            data = get_db().view("phonelog/devicelog_data",
+                reduce=True,
+                startkey=key+[datespan.startdate_param_utc],
+                endkey=key+[datespan.enddate_param_utc],
+                #stale=settings.COUCH_STALE_QUERY,
+            ).first()
+            num_errors = 0
+            num_warnings = 0
+            if data:
+                data = data.get('value', {})
+                num_errors = data.get('errors', 0)
+                num_warnings = data.get('warnings', 0)
+
+        else:
+            phonelogs = Log.objects.filter(domain__exact=domain.name,
+                date__range=[datespan.startdate_param_utc, datespan.enddate_param_utc])
+            num_errors = phonelogs.filter(type__in=TAGS["error"]).count()
+            num_warnings = phonelogs.filter(type__in=TAGS["warning"]).count()
 
         rows.append(dict(domain=domain.name,
                         active_users=num_active_users,
@@ -392,28 +405,40 @@ def submissions_errors(request, template="hqadmin/submissions_errors_report.html
 @require_superuser
 def mobile_user_reports(request):
     template = "hqadmin/mobile_user_reports.html"
-    domains = Domain.get_all()
 
     rows = []
-    for domain in domains:
-        data = get_db().view("phonelog/devicelog_data",
-            reduce=False,
-            startkey=[domain.name, "tag", "user-report"],
-            endkey=[domain.name, "tag", "user-report", {}],
-            #stale=settings.COUCH_STALE_QUERY,
-        ).all()
-        for report in data:
-            val = report.get('value')
-            version = val.get('version', 'unknown')
-            formatted_date = tz_utils.string_to_prertty_time(val['@date'], timezone(domain.default_timezone), fmt="%b %d, %Y %H:%M:%S")
-            rows.append(dict(domain=domain.name,
-                             time=formatted_date,
-                             user=val['user'],
-                             device_users=val['device_users'],
-                             message=val['msg'],
-                             version=version.split(' ')[0],
-                             detailed_version=html.escape(version),
-                             report_id=report['id']))
+
+    if request.GET.get('old') == 'true':  # old reports
+        for domain in Domain.get_all():
+            data = get_db().view("phonelog/devicelog_data",
+                reduce=False,
+                startkey=[domain.name, "tag", "user-report"],
+                endkey=[domain.name, "tag", "user-report", {}],
+                #stale=settings.COUCH_STALE_QUERY,
+            ).all()
+            for report in data:
+                val = report.get('value')
+                version = val.get('version', 'unknown')
+                formatted_date = tz_utils.string_to_prertty_time(val['@date'], timezone(domain.default_timezone), fmt="%b %d, %Y %H:%M:%S")
+                rows.append(dict(domain=domain.name,
+                                 time=formatted_date,
+                                 user=val['user'],
+                                 device_users=val['device_users'],
+                                 message=val['msg'],
+                                 version=version.split(' ')[0],
+                                 detailed_version=html.escape(version),
+                                 report_id=report['id']))
+    else:
+        logs = Log.objects.filter(type__exact="user-report").order_by('domain')
+        for log in logs:
+            rows.append(dict(domain=log.domain,
+                             time=log.date,
+                             user=log.username,
+                             device_users=[u.username for u in log.device_users.all()],
+                             message=log.msg,
+                             version=(log.app_version or 'unknown').split(' ')[0],
+                             detailed_version=html.escape(log.app_version or 'unknown'),
+                             report_id=log.xform_id))
 
     headers = DataTablesHeader(
         DataTablesColumn(_("View Form")),
@@ -864,3 +889,48 @@ def stats_data(request):
 
     stats_data = get_stats_data(domain_info, histo_type, request.datespan, interval=interval)
     return json_response(stats_data)
+
+
+@require_superuser
+def loadtest(request):
+    # The multimech results api is kinda all over the place.
+    # the docs are here: http://testutils.org/multi-mechanize/datastore.html
+
+    db_settings = settings.DATABASES["default"]
+    db_settings['PORT'] = db_settings.get('PORT', '') or '5432'
+    db_url = "postgresql://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}".format(
+        **db_settings
+    )
+    engine = create_engine(db_url)
+    session = sessionmaker(bind=engine)
+    current = session()
+
+    scripts = ['submit_form.py', 'ota_restore.py']
+
+    tests = []
+    # datetime info seems to be buried in GlobalConfig.results[0].run_id,
+    # which makes ORM-level sorting problematic
+    for gc in current.query(GlobalConfig).all()[::-1]:
+        gc.scripts = dict((uc.script, uc) for uc in gc.user_group_configs)
+        if gc.results:
+            for script, uc in gc.scripts.items():
+                uc.results = filter(
+                    lambda res: res.user_group_name == uc.user_group,
+                    gc.results
+                )
+            test = {
+                'datetime': gc.results[0].run_id,
+                'run_time': gc.run_time,
+                'results': gc.results,
+            }
+            for script in scripts:
+                test[script.split('.')[0]] = gc.scripts.get(script)
+            tests.append(test)
+
+    context = get_hqadmin_base_context(request)
+    context.update({
+        "tests": tests,
+        "hide_filters": True,
+    })
+    template = "hqadmin/loadtest.html"
+    return render(request, template, context)

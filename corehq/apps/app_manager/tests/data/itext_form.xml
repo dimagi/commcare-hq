@@ -26,7 +26,7 @@
           <text id="question3">
             <value>q3-en</value>
           </text>
-          <text id="question4">
+          <text id="question4-ã">
             <value>q3-en</value>
           </text>
           <text id="question4-1-label">
@@ -69,7 +69,7 @@
           <text id="question3">
             <value>q3-pt</value>
           </text>
-          <text id="question4">
+          <text id="question4-ã">
             <value>q3-pt</value>
           </text>
           <text id="question4-1-label">
@@ -116,7 +116,7 @@
       <label ref="jr:itext('question3')"/>
     </input>
     <select1 ref="/data/question4">
-      <label ref="jr:itext('question4')"/>
+      <label ref="jr:itext('question4-ã')"/>
       <item>
         <label ref="jr:itext('question4-1-label')"/>
         <value>1</value>
