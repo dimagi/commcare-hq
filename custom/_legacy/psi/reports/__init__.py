@@ -78,10 +78,10 @@ def get_village(req, id):
     return FixtureDataItem.by_field_value(req.domain, village_fdt, 'id', float(id)).one()
 
 def get_village_name(key, req):
-    return get_village(req, key[4]).fields.get("name", id)
+    return get_village(req, key[4]).fields_without_attributes.get("name", id)
 
 def get_village_class(key, req):
-    return get_village(req, key[4]).fields.get("village_class", "No data")
+    return get_village(req, key[4]).fields_without_attributes.get("village_class", "No data")
 
 class PSIReport(SummingTabularReport, CustomProjectReport, DatespanMixin):
     is_cacheable = True
