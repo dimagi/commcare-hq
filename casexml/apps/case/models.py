@@ -4,6 +4,7 @@ import re
 from datetime import datetime
 import logging
 import copy
+import sys
 from dimagi.utils.parsing import json_format_date, json_format_datetime
 
 from django.core.cache import cache
@@ -921,7 +922,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin,
         deduplicated_actions = _further_deduplicate(deduplicated_actions)
         sorted_actions = sorted(
             deduplicated_actions,
-            key=_action_cmp(self)
+            key=_action_sort_key_function(self)
         )
         if sorted_actions:
             if sorted_actions[0].action_type != const.CASE_ACTION_CREATE:
@@ -941,7 +942,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin,
         """
         # try to re-sort actions if necessary
         try:
-            self.actions = sorted(self.actions, key=_action_cmp(self))
+            self.actions = sorted(self.actions, key=_action_sort_key_function(self))
         except MissingServerDate:
             # only worry date reconciliation if in strict mode
             if strict:
@@ -1156,22 +1157,22 @@ class CommCareCaseGroup(Document):
         return data['value'] if data else 0
 
 
-def _action_cmp(case):
+def _action_sort_key_function(case):
     form_ids = list(case.xform_ids)
 
-    def _cmp_function(action):
+    def _sortkey(action):
         if not action.server_date or not action.date:
             raise MissingServerDate()
 
-        from sys import maxint
-        form_cmp = lambda form: form_ids.index(form) if form in form_ids else maxint
+        form_cmp = lambda form_id: (form_ids.index(form_id) if form_id in form_ids else sys.maxint, form_id)
         return (
             action.server_date,
+            action.date,
             form_cmp(action.xform_id),
-            _type_sort(action.action_type)
+            _type_sort(action.action_type),
         )
 
-    return _cmp_function
+    return _sortkey
 
 
 def _type_sort(action_type):
