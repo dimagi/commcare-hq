@@ -1,0 +1,381 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head profile="http://selenium-ide.openqa.org/profiles/test-case">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="selenium.base" href="http://localhost:8000/a/pact/reports/" />
+<title>selenium_browser_testpatient_cloudcare_contacts</title>
+</head>
+<body>
+<table cellpadding="1" cellspacing="1" border="1">
+<thead>
+<tr><td rowspan="1" colspan="3">selenium_browser_testpatient_cloudcare_contacts</td></tr>
+</thead><tbody>
+<tr>
+	<td>open</td>
+	<td>/a/pact/reports/custom/patient/?patient_id=66a4f2d0e9d5467e34122514c341ed92&amp;notabs</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForTextPresent</td>
+	<td>Contact Information&nbsp;&nbsp;</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>id=btn_contact_edit</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForTextPresent</td>
+	<td>Patient Information Update Form</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>id=textfield</td>
+	<td>617-621-8595</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>xpath=(//input[@id='textfield'])[2]</td>
+	<td>One Kendall Phone</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>xpath=(//input[@id='textfield'])[3]</td>
+	<td>617-580-3100</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>xpath=(//input[@id='textfield'])[4]</td>
+	<td>Schrafft Phone</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>xpath=(//input[@id='textfield'])[5]</td>
+	<td>617-649-2214</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>xpath=(//input[@id='textfield'])[6]</td>
+	<td>Central Phone</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>xpath=(//input[@id='textfield'])[9]</td>
+	<td>400 One Kendall Square Suite 400 Cambridge, MA</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>xpath=(//input[@id='textfield'])[10]</td>
+	<td>One Kendall</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>xpath=(//input[@id='textfield'])[11]</td>
+	<td>529 Main Suite 606 Charlestown, MA</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>xpath=(//input[@id='textfield'])[12]</td>
+	<td>Schrafft Center</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>xpath=(//input[@id='textfield'])[13]</td>
+	<td>585 Massachusetts Avenue Suite 3 Cambridge, MA</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>xpath=(//input[@id='textfield'])[14]</td>
+	<td>Central Square</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>id=submit</td>
+	<td></td>
+</tr>
+<tr>
+	<td>open</td>
+	<td>/a/pact/reports/custom/patient/?patient_id=66a4f2d0e9d5467e34122514c341ed92&amp;notabs</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForTextPresent</td>
+	<td>Contact Information</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td>One Kendall<br />400 One Kendall Square Suite 400 Cambridge, MA<br />Schrafft Center<br />529 Main Suite 606 Charlestown, MA<br />Central Square<br />585 Massachusetts Avenue Suite 3 Cambridge, MA</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td>One Kendall Phone&nbsp;&nbsp;<br />617-621-8595<br /> <br />Schrafft Phone&nbsp;&nbsp;<br />617-580-3100<br /> <br />Central Phone&nbsp;&nbsp;<br />617-649-2214</td>
+	<td></td>
+</tr>
+<tr>
+	<td>open</td>
+	<td>/a/pact/reports/case_data/66a4f2d0e9d5467e34122514c341ed92/</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForTextPresent</td>
+	<td>Case Details</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td>address1	400 One Kendall Square Suite 400 Cambridge, MA</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td>address1type	One Kendall</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td>address2	529 Main Suite 606 Charlestown, MA</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td>address2type	Schrafft Center</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td>address3	585 Massachusetts Avenue Suite 3 Cambridge, MA</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td>address3type	Central Square</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td>Phone1	617-621-8595</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td>Phone1Type	One Kendall Phone</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td>Phone2	617-580-3100</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td>Phone2Type	Schrafft Phone</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td>Phone3	617-649-2214</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td>Phone3Type	Central Phone</td>
+	<td></td>
+</tr>
+<tr>
+	<td>open</td>
+	<td>/a/pact/reports/custom/patient/?patient_id=66a4f2d0e9d5467e34122514c341ed92&amp;notabs</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForTextPresent</td>
+	<td>Contact Information&nbsp;&nbsp;</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>id=btn_contact_edit</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForTextPresent</td>
+	<td>Patient Information Update Form</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>xpath=(//input[@id='textfield'])[7]</td>
+	<td>617-649-2215</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>xpath=(//input[@id='textfield'])[8]</td>
+	<td>Foo Office Fax</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>xpath=(//input[@id='textfield'])[16]</td>
+	<td>200 Leopards Hill Road</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>xpath=(//input[@id='textfield'])[17]</td>
+	<td>Kaingo Lodge</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>id=submit</td>
+	<td></td>
+</tr>
+<tr>
+	<td>open</td>
+	<td>/a/pact/reports/custom/patient/?patient_id=66a4f2d0e9d5467e34122514c341ed92&amp;notabs</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForTextPresent</td>
+	<td>Contact Information&nbsp;&nbsp;</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td>Address(es)<br />	<br />One Kendall<br />400 One Kendall Square Suite 400 Cambridge, MA<br />Schrafft Center<br />529 Main Suite 606 Charlestown, MA<br />Central Square<br />585 Massachusetts Avenue Suite 3 Cambridge, MA<br />Kaingo Lodge<br />200 Leopards Hill Road</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td>Phone(s) 	<br />One Kendall Phone&nbsp;&nbsp;<br />617-621-8595<br /> <br />Schrafft Phone&nbsp;&nbsp;<br />617-580-3100<br /> <br />Central Phone&nbsp;&nbsp;<br />617-649-2214<br /> <br />Foo Office Fax&nbsp;&nbsp;<br />617-649-2215</td>
+	<td></td>
+</tr>
+<tr>
+	<td>open</td>
+	<td>/a/pact/reports/case_data/66a4f2d0e9d5467e34122514c341ed92/</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForTextPresent</td>
+	<td>Case Details</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td>Phone4	617-649-2215<br />Phone4Type	Foo Office Fax</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td>address4	200 Leopards Hill Road<br />address4type	Kaingo Lodge</td>
+	<td></td>
+</tr>
+<tr>
+	<td>open</td>
+	<td>/a/pact/reports/custom/patient/?patient_id=66a4f2d0e9d5467e34122514c341ed92&amp;notabs</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForTextPresent</td>
+	<td>Contact Information&nbsp;&nbsp;</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>id=btn_contact_edit</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForTextPresent</td>
+	<td>Patient Information Update Form</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>xpath=(//input[@id='textfield'])[8]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>xpath=(//input[@id='textfield'])[7]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>xpath=(//input[@id='textfield'])[16]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>xpath=(//input[@id='textfield'])[15]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>id=submit</td>
+	<td></td>
+</tr>
+<tr>
+	<td>open</td>
+	<td>/a/pact/reports/custom/patient/?patient_id=66a4f2d0e9d5467e34122514c341ed92&amp;notabs</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForTextPresent</td>
+	<td>Contact Information&nbsp;&nbsp;</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextNotPresent</td>
+	<td>Kaingo Lodge</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextNotPresent</td>
+	<td>Foo Office Fax</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextNotPresent</td>
+	<td>617-649-2215</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextNotPresent</td>
+	<td>200 Leopards Hill Road</td>
+	<td></td>
+</tr>
+<tr>
+	<td>open</td>
+	<td>/a/pact/reports/case_data/66a4f2d0e9d5467e34122514c341ed92/</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForTextPresent</td>
+	<td>Case Details</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextNotPresent</td>
+	<td>617-649-2215</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextNotPresent</td>
+	<td>200 Leopards Hill Road</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextNotPresent</td>
+	<td>Foo Office Fax</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextNotPresent</td>
+	<td>Kaingo Lodge</td>
+	<td></td>
+</tr>
+</tbody></table>
+</body>
+</html>

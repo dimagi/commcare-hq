@@ -1,0 +1,102 @@
+h2 > * {
+    font-size: .6em;
+}
+input.date {
+    width: 8em;
+    text-align: center;
+}
+
+table.calendar {
+    border-collapse: collapse;
+}
+table.calendar td, th {
+    vertical-align: top;
+    border: 1px solid #DDD;
+}
+table.calendar td {
+    width: 14%; /* one seventh */
+    padding: 0px;
+}
+table.calendar td.empty {
+    background-color: #EEE;
+}
+div.date-label {
+    border-bottom: 1px solid #888;
+    text-align: center;
+    margin: .2em .6em;
+    margin-bottom: 0;
+}
+
+div.date-notes-block {
+    border-top: 1px solid #888;
+    text-align: center;
+    margin: .2em .6em;
+    margin-bottom: 0;
+}
+div.calendar-cell {
+}
+div.drug-cell {
+    border-right: 1px solid #EEE;
+    width: 6em;
+    display: table-cell;
+}
+div.drug-cell:last-child {
+    border-right: none;
+}
+div.drug-label {
+    font-size: .8em;
+    border-bottom: 1px solid #EEE;
+    color: #BBB;
+    font-variant: small-caps;
+    text-align: center;
+}
+div.time-label {
+    font-size: .8em;
+    font-variant: small-caps;
+    color: #888;
+    margin-left: .2em;
+}
+div.time-cell {
+    height: 2em;
+}
+div.observation {
+    padding: .2em 0em;
+}
+div.observation div {
+    text-indent: -10000%;
+    font-size: .5em;
+    height: 16px;
+    float: left;
+    min-width: 20px;
+}
+.ob-empty {
+    background: url('{{ STATIC_URL }}dotsview/icons/check.jpg') no-repeat scroll top left;
+}
+.ob-partial {
+    background: url('{{ STATIC_URL }}dotsview/icons/exclamation-point.jpg') no-repeat scroll top left;
+}
+.ob-full {
+    background: url('{{ STATIC_URL }}dotsview/icons/x-mark.png') no-repeat scroll top left;
+}
+
+.ob-direct {
+    background: url('{{ STATIC_URL }}dotsview/icons/plus.png') no-repeat scroll top left;
+}
+.ob-self {
+    background: url('{{ STATIC_URL }}dotsview/icons/minus.png') no-repeat scroll top left;
+}
+.date-range-warning {
+    background: url('{{ STATIC_URL }}dotsview/icons/warning.png') no-repeat scroll top left;
+    text-indent: 24px;
+}
+.noday {
+    background: #DEDEDE;
+
+}
+.sat, .sun {
+    background: #DCE4FA;
+}
+.future {
+    background: #dedede;
+}
+
