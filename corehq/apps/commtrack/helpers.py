@@ -1,18 +1,11 @@
-import logging
-from casexml.apps.case.mock import CaseBlock
 from corehq.apps.commtrack.models import Product, CommtrackConfig,\
     CommtrackActionConfig, SupplyPointType, SupplyPointCase
-from corehq.apps.commtrack import const
-from casexml.apps.case.xml import V2
-import uuid
-from corehq.apps.hqcase.utils import submit_case_blocks
-from xml.etree import ElementTree
-from corehq.apps.users.cases import get_owner_id
 
 """
 helper code to populate the various commtrack models, for ease of
 development/testing, before we have proper UIs and imports
 """
+
 
 def make_product(domain, name, code):
     p = Product()

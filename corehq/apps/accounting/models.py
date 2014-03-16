@@ -9,7 +9,6 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-from corehq import toggles
 from corehq.apps.accounting.invoice_pdf import Address, InvoiceTemplate
 from corehq.apps.accounting.utils import is_active_subscription, get_privileges
 from corehq.apps.accounting.subscription_changes import (

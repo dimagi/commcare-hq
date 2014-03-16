@@ -23,7 +23,7 @@ from corehq.apps.users.models import CouchUser, Permissions
 
 from corehq.apps.api.resources import v0_1, v0_3, JsonResource, DomainSpecificResourceMixin, dict_object, SimpleSortableResourceMixin
 from corehq.apps.api.es import XFormES, CaseES, ESQuerySet, es_search
-from corehq.apps.api.fields import ToManyDocumentsField, UseIfRequested, ToManyDictField, ToManyListDictField, CallableCharField
+from corehq.apps.api.fields import ToManyDocumentsField, UseIfRequested, ToManyDictField, ToManyListDictField
 from corehq.apps.api.serializers import CommCareCaseSerializer
 
 

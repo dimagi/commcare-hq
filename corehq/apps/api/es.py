@@ -12,7 +12,7 @@ from dimagi.utils.logging import notify_exception
 
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.reports.filters.forms import FormsByApplicationFilter
-from corehq.elastic import get_es, es_query, ES_URLS
+from corehq.elastic import get_es
 from corehq.pillows.base import restore_property_dict, VALUE_TAG
 
 

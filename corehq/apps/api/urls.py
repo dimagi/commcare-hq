@@ -1,4 +1,3 @@
-import re
 from corehq.apps.api.object_fetch_api import CaseAttachmentAPI
 
 from corehq.apps.api.domainapi import DomainAPI

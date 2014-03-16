@@ -1,15 +1,8 @@
-import hashlib
-import simplejson
 from auditcare.models import AuditEvent
 from couchforms.models import XFormInstance
 from couchlog.models import ExceptionRecord
-from pillowtop.listener import  LogstashMonitoringPillow, AliasedElasticPillow
-from pillowtop.listener import ElasticPillow
-from casexml.apps.case.models import CommCareCase
-from corehq.apps.domain.models import Domain
-import logging
+from pillowtop.listener import LogstashMonitoringPillow
 from django.conf import settings
-from datetime import datetime
 
 
 DATE_FORMATS_ARR = ["yyyy-MM-dd",

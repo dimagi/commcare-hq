@@ -27,7 +27,7 @@ from corehq.apps.accounting.async_handlers import (FeatureRateAsyncHandler, Sele
 from corehq.apps.accounting.user_text import PricingTable
 from corehq.apps.accounting.utils import LazyEncoder, fmt_feature_rate_dict, fmt_product_rate_dict
 from corehq.apps.hqwebapp.views import BaseSectionPageView
-from corehq import toggles, privileges
+from corehq import privileges
 from django_prbac.decorators import requires_privilege_raise404
 
 

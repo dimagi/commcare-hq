@@ -1,15 +1,16 @@
 from datetime import datetime
-from corehq.elastic import es_query, ADD_TO_ES_FILTER, ES_URLS, ES_MAX_CLAUSE_COUNT
+from corehq.elastic import es_query
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop
 from corehq.apps.hqadmin.reports import AdminFacetedReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
-from corehq.apps.reports.dispatcher import BasicReportDispatcher, AdminReportDispatcher
-from corehq.apps.reports.generic import GenericTabularReport, ElasticTabularReport
+from corehq.apps.reports.dispatcher import BasicReportDispatcher
+from corehq.apps.reports.generic import GenericTabularReport
 from django.utils.translation import ugettext as _
 from corehq.apps.reports.util import numcell
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
+
 
 def format_date(dstr, default):
     return datetime.strptime(dstr, '%Y-%m-%dT%H:%M:%SZ').strftime('%Y/%m/%d %H:%M:%S') if dstr else default

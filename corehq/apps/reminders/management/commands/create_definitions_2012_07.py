@@ -1,6 +1,5 @@
-import hashlib
 from django.core.management.base import LabelCommand, CommandError
-from corehq.apps.reminders.models import CaseReminderHandler, CaseReminderEvent, MATCH_EXACT, MATCH_REGEX, EVENT_AS_SCHEDULE, RECIPIENT_CASE, REPEAT_SCHEDULE_INDEFINITELY
+from corehq.apps.reminders.models import CaseReminderHandler, CaseReminderEvent
 from datetime import time
 
 class Command(LabelCommand):
