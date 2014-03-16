@@ -1166,7 +1166,9 @@ def _action_sort_key_function(case):
 
         form_cmp = lambda form_id: (form_ids.index(form_id) if form_id in form_ids else sys.maxint, form_id)
         return (
-            action.server_date,
+            # this is sneaky - it's designed to use just the date for the
+            # server time in case the phone submits two forms quickly out of order
+            action.server_date.date(),
             action.date,
             form_cmp(action.xform_id),
             _type_sort(action.action_type),
