@@ -152,9 +152,6 @@ class McctProjectReview(CustomProjectReport, ElasticProjectInspectionReport, Pro
                 case = EMPTY_FIELD
                 case_id = EMPTY_FIELD
 
-            checkbox = mark_safe('<input type="checkbox" class="selected-element" '
-                                 'data-bind="event: {change: updateSelection}" data-formid="%(form_id)s" '
-                                 'data-caseid="%(case_id)s" data-servicetype="%(service_type)s"/>')
             amount_due = EMPTY_FIELD
             service_type = EMPTY_FIELD
             visits = form["form"].get("visits")
@@ -190,6 +187,10 @@ class McctProjectReview(CustomProjectReport, ElasticProjectInspectionReport, Pro
             elif visits == "4":
                 service_type = _("Fourth Antenatal")
                 amount_due = 400
+
+            checkbox = mark_safe('<input type="checkbox" class="selected-element" '
+                                 'data-bind="event: {change: updateSelection}" data-formid="%(form_id)s" '
+                                 'data-caseid="%(case_id)s" data-servicetype="%(service_type)s"/>')
 
             yield [
                 DateTimeProperty().wrap(form["form"]["meta"]["timeEnd"]).strftime("%Y-%m-%d"),
