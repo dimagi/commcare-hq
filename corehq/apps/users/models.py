@@ -1495,13 +1495,15 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def get_forms(self, deleted=False, wrap=True, include_docs=False):
         if deleted:
             view_name = 'users/deleted_forms_by_user'
+            startkey = [self.user_id]
         else:
-            view_name = 'couchforms/by_user'
+            view_name = 'reports_forms/all_forms'
+            startkey = ['submission user', self.domain, self.user_id]
 
         db = XFormInstance.get_db()
         doc_ids = [r['id'] for r in db.view(view_name,
-            startkey=[self.user_id],
-            endkey=[self.user_id, {}],
+            startkey=startkey,
+            endkey=startkey + [{}],
             reduce=False,
             include_docs=False,
         )]
@@ -1514,9 +1516,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     @property
     def form_count(self):
-        result = XFormInstance.view('couchforms/by_user',
-            startkey=[self.user_id],
-            endkey=[self.user_id, {}],
+        result = XFormInstance.view('reports_forms/all_forms',
+            startkey=['submission user', self.domain, self.user_id],
+            endkey=['submission user', self.domain, self.user_id, {}],
                 group_level=0
         ).one()
         if result:
