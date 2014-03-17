@@ -43,21 +43,27 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
               'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
               'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
               'corehq.apps.reports.fields.DatespanField',
-              'corehq.apps.reports.filters.forms.CustomPropsFilter']
+              'corehq.apps.reports.filters.forms.CustomPropsFilter',
+              'corehq.apps.reports.filters.forms.CustomFieldFilter']
     ajax_pagination = True
     filter_users_field_class = StrongFilterUsersField
     include_inactive = True
 
+    @property
+    def other_fields(self):
+        return self.request.GET.get('custom_field', "").split(",")
 
     @property
     def headers(self):
-        headers = DataTablesHeader(DataTablesColumn(_("View Form")),
+        h = [
+            DataTablesColumn(_("View Form")),
             DataTablesColumn(_("Username"), prop_name='form.meta.username'),
             DataTablesColumn(_("Submission Time") if self.by_submission_time else _("Completion Time"),
                              prop_name=self.time_field),
             DataTablesColumn(_("Form"), prop_name='form.@name'),
-        )
-        return headers
+        ]
+        h.extend([DataTablesColumn(field) for field in self.other_fields])
+        return DataTablesHeader(*h)
 
     @property
     def default_datespan(self):
@@ -131,12 +137,18 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
             except (ResourceNotFound, IncompatibleDocument):
                 name = "<b>[unregistered]</b>"
 
-            yield [
+            init_cells = [
                 form_data_link(form["_id"]),
                 (username or _('No data for username')) + (" %s" % name if name else ""),
                 DateTimeProperty().wrap(safe_index(form, self.time_field.split('.'))).strftime("%Y-%m-%d %H:%M:%S"),
                 xmlns_to_name(self.domain, form.get("xmlns"), app_id=form.get("app_id")),
             ]
+            def cell(field):
+                print form["form"].get(field)
+                return form["form"].get(field)
+            init_cells.extend([cell(field) for field in self.other_fields])
+            # print init_cells
+            yield init_cells
 
 
 class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):

@@ -722,3 +722,9 @@ class CustomPropsFilter(BaseTagsFilter):
     label = "Custom Property"
     default_text = "No properties specified"
     placeholder = ugettext_noop('Specify exact matches for form properties you want to filter by')
+
+class CustomFieldFilter(BaseTagsFilter):
+    slug = "custom_field"
+    label = "Columns"
+    default_text = "No columns specified"
+    placeholder = ugettext_noop('Stuff')
