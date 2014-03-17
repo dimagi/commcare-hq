@@ -5,6 +5,7 @@ from corehq.apps.accounting.filters import *
 from corehq.apps.accounting.models import (
     BillingAccount, Subscription, SoftwarePlan
 )
+from corehq.apps.accounting.utils import get_money_str
 from corehq.apps.reports.datatables import (
     DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 )
@@ -332,6 +333,7 @@ class InvoiceInterface(GenericTabularReport):
 
     @property
     def rows(self):
+        from corehq.apps.accounting.views import InvoiceSummaryView
         filters = {}
 
         return [
@@ -343,16 +345,15 @@ class InvoiceInterface(GenericTabularReport):
                 invoice.date_start,
                 invoice.date_end,
                 invoice.date_due,
-                # TODO - format decimal, add currency symbol
-                invoice.get_total(),
+                get_money_str(invoice.get_total()),
                 "Paid" if invoice.date_paid else "Not paid",
                 # TODO - Create helper function for action button HTML
                 # TODO - Add link to adjust balance
                 mark_safe('<a href="%s" class="btn">Adjust Balance</a>'
                           % 'LINK'),
-                # TODO - Add link to invoice
                 mark_safe('<a href="%s" class="btn">Go to Invoice</a>'
-                          % 'LINK'),
+                          % reverse(InvoiceSummaryView.urlname,
+                                    args=(invoice.id,))),
 
             ] for invoice in Invoice.objects.filter(**filters)
         ]
