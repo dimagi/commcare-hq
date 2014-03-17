@@ -21,7 +21,10 @@ from corehq.apps.accounting.forms import (
     ProductRateForm, TriggerInvoiceForm
 )
 from corehq.apps.accounting.exceptions import NewSubscriptionError, InvoiceError, CreditLineError
-from corehq.apps.accounting.interface import AccountingInterface, SubscriptionInterface, SoftwarePlanInterface
+from corehq.apps.accounting.interface import (
+    AccountingInterface, SubscriptionInterface, SoftwarePlanInterface,
+    InvoiceInterface
+)
 from corehq.apps.accounting.models import (SoftwareProductType, Invoice, BillingAccount, CreditLine, Subscription,
                                            SoftwarePlanVersion, SoftwarePlan)
 from corehq.apps.accounting.async_handlers import (
@@ -480,3 +483,28 @@ def pricing_table_json(request, product, locale):
     response["Access-Control-Max-Age"] = "1000"
     response["Access-Control-Allow-Headers"] = "*"
     return response
+
+
+class InvoiceSummaryView(AccountingSectionView):
+    template_name = 'accounting/invoice.html'
+    urlname = 'invoice_summary'
+
+    @property
+    @memoized
+    def invoice(self):
+        return Invoice.objects.get(id=self.args[0])
+
+    @property
+    def page_title(self):
+        return "Invoice #%s" % self.invoice.invoice_number
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=self.args)
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': InvoiceInterface.name,
+            'url': InvoiceInterface.get_url(),
+        }]
