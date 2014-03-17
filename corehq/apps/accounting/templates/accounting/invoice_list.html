@@ -1,0 +1,6 @@
+{% extends "accounting/report_filter_actions.html" %}
+
+{% block main_column %}
+    {% include 'accounting/adjust_balance.html' %}
+    {{ block.super }}
+{% endblock %}

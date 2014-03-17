@@ -304,7 +304,7 @@ class SoftwarePlanInterface(AddItemInterface):
 
 
 class InvoiceInterface(GenericTabularReport):
-    base_template = "accounting/report_filter_actions.html"
+    base_template = "accounting/invoice_list.html"
     section_name = "Accounting"
     dispatcher = AccountingAdminInterfaceDispatcher
     name = "Invoices"
@@ -348,9 +348,11 @@ class InvoiceInterface(GenericTabularReport):
                 get_money_str(invoice.get_total()),
                 "Paid" if invoice.date_paid else "Not paid",
                 # TODO - Create helper function for action button HTML
-                # TODO - Add link to adjust balance
-                mark_safe('<a href="%s" class="btn">Adjust Balance</a>'
-                          % 'LINK'),
+                mark_safe('<a data-toggle="modal"'
+                          ' data-target="#adjustBalanceModal"'
+                          ' href="#adjustBalanceModal"'
+                          ' class="btn">'
+                          'Adjust Balance</a>'),
                 mark_safe('<a href="%s" class="btn">Go to Invoice</a>'
                           % reverse(InvoiceSummaryView.urlname,
                                     args=(invoice.id,))),
