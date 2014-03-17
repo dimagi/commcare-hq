@@ -60,7 +60,7 @@ class PatientInfoReport(CustomProjectReport, DrilldownReportMixin, ElasticProjec
             return ret
 
         def get_form_url(module_idx, form):
-            base_url = '/a/%(domain)s/cloudcare/apps/view/%(build_id)s/%(module_id)s/%(form_id)s?preview=true'
+            base_url = '/a/%(domain)s/cloudcare/apps/view/%(build_id)s/%(module_id)s/%(form_id)s'
             module = app_dict['modules'][module_idx]
             form_idx = [ix for (ix, f) in enumerate(module['forms']) if f['xmlns'] == form][0]
             return html.escape(base_url % dict(
@@ -103,9 +103,12 @@ class PatientInfoReport(CustomProjectReport, DrilldownReportMixin, ElasticProjec
                 }
                 for key, action in enumerate(case['actions']):
                     if visit['xmlns'] == action['xform_xmlns']:
-                        user = CommCareUser.get(action['user_id'])
                         interaction['received_date'] = action['date'].strftime(OUTPUT_DATE_FORMAT)
-                        interaction['completed_by'] = user.raw_username
+                        try:
+                            user = CommCareUser.get(action['user_id'])
+                            interaction['completed_by'] = user.raw_username
+                        except ResourceNotFound:
+                            interaction['completed_by'] = EMPTY_FIELD
                         del case['actions'][key]
                         break
                 if visit['show_button']:
