@@ -50,7 +50,7 @@ class CaseObjectCacheTest(BaseCaseMultimediaTest):
         self.user.save()
         for item in CommCareCase.view("case/by_user", include_docs=True, reduce=False).all():
             item.delete()
-        for item in XFormInstance.view("couchforms/by_xmlns", include_docs=True, reduce=False).all():
+        for item in XFormInstance.view("hqadmin/forms_over_time", include_docs=True, reduce=False).all():
             item.delete()
         time.sleep(1)
 

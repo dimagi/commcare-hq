@@ -10,7 +10,7 @@ class Command(PtopReindexer):
     help = "Fast reindex of case elastic index by using the case view and reindexing cases"
 
     doc_class = XFormInstance
-    view_name = 'couchforms/by_xmlns'
+    view_name = 'hqadmin/forms_over_time'
     pillow_class = XFormPillow
 
     def custom_filter(self, view_row):

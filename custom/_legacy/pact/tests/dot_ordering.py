@@ -33,7 +33,7 @@ CTSIMS_ID = 'ff6c662bfc2a448dadc9084056a4abdf'
 class dotsOrderingTests(TestCase):
     def setUp(self):
         settings.TIME_ZONE = 'UTC'
-        for doc in XFormInstance.get_db().view('couchforms/by_xmlns', reduce=False,
+        for doc in XFormInstance.get_db().view('hqadmin/forms_over_time', reduce=False,
                                                include_docs=True).all():
             # purge all xforms prior to start
             if doc['doc']['xmlns'] in [XMLNS_DOTS_FORM, XMLNS_PATIENT_UPDATE_DOT]:
