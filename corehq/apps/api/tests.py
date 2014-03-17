@@ -6,7 +6,6 @@ import dateutil.parser
 from django.utils.http import urlencode
 from django.test import TestCase
 from django.core.urlresolvers import reverse
-from tastypie.exceptions import BadRequest
 from tastypie.resources import Resource
 from tastypie import fields
 from corehq.apps.groups.models import Group

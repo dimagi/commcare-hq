@@ -1,8 +1,5 @@
 from django import forms
-from corehq.apps.domain.models import Domain
-import re
-from corehq.apps.domain.utils import new_domain_re
-from corehq.apps.orgs.models import Organization
+
 
 class AddReviewForm(forms.Form):
 

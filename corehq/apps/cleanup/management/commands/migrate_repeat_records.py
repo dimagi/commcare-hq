@@ -1,4 +1,3 @@
-from datetime import datetime
 from dimagi.utils.couch.database import iter_docs
 from django.core.management.base import BaseCommand
 from corehq import Domain

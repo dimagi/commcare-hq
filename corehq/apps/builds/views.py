@@ -1,11 +1,10 @@
-import json
 from couchdbkit import ResourceNotFound
 from django.http import HttpResponseBadRequest, HttpResponse, Http404
 from django.views.decorators.http import require_GET
 from django.views.generic import TemplateView
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
-from dimagi.utils.web import json_response, json_request
+from dimagi.utils.web import json_request
 from dimagi.utils.couch.database import get_db
 
 from corehq.apps.api.models import require_api_user

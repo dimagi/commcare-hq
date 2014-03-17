@@ -1,6 +1,5 @@
 from corehq.apps.app_manager import suite_xml as sx
 from corehq.apps.app_manager.util import is_sort_only_column
-from corehq.apps.app_manager.const import CT_LEDGER_STOCK
 from corehq.apps.app_manager.xpath import dot_interpolate, CaseXPath, IndicatorXpath, LedgerdbXpath
 
 CASE_PROPERTY_MAP = {
