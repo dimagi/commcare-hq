@@ -15,8 +15,7 @@ from corehq.apps.app_manager.views import _clear_app_cache
 from corehq.apps.appstore.forms import AddReviewForm
 from corehq.apps.appstore.models import Review
 from corehq.apps.domain.decorators import require_superuser
-from corehq.apps.users.models import CouchUser
-from corehq.elastic import es_query, parse_args_for_es, generate_sortables_from_facets, fill_mapping_with_facets
+from corehq.elastic import es_query, parse_args_for_es, fill_mapping_with_facets
 from corehq.apps.domain.models import Domain
 from dimagi.utils.couch.database import apply_update
 

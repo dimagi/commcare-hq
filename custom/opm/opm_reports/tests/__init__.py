@@ -1,17 +1,13 @@
-from datetime import datetime
-import os, json, string
+import os
+import json
 
-from django.http import HttpRequest
 from django.test import TestCase
 
 from fluff.management.commands.ptop_fast_reindex_fluff import FluffPtopReindexer
 
-from corehq.apps.users.models import WebUser
-from corehq.apps.users.models import CommCareUser, CommCareCase
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.modules import to_function
 
-from custom.opm.opm_tasks.tasks import save_report
 from custom.opm.opm_tasks.models import OpmReportSnapshot
 from ..constants import *
 from ..beneficiary import Beneficiary

@@ -2,7 +2,7 @@ from collections import defaultdict
 from casexml.apps.case.xml import V2_NAMESPACE
 from corehq.apps.app_manager.const import APP_V1
 from lxml import etree as ET
-from .xpath import CaseIDXPath, session_var, XPath, CaseTypeXpath
+from .xpath import CaseIDXPath, session_var, CaseTypeXpath
 from .exceptions import XFormError, CaseError, XFormValidationError, BindNotFound
 import formtranslate.api
 
