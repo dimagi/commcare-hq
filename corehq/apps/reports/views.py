@@ -557,7 +557,6 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
         for k, v in form.cleaned_data.items():
             setattr(instance, k, v)
         instance.save()
-
         if is_new:
             messages.success(request, "Scheduled report added!")
         else:
@@ -660,11 +659,11 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
         report_outputs.append({
             'title': config.full_name,
             'url': config.url,
-            'content': content
+            'content': content,
+            'description': config.description,
         })
 
     date_range = config.get_date_range()
-
     return render(request, "reports/report_email.html", {
         "reports": report_outputs,
         "domain": domain,
@@ -672,7 +671,7 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
         "DNS_name": get_url_base(),
         "owner_name": couch_user.full_name or couch_user.get_email(),
         "email": email,
-        "notes": notes or getattr(config, "description", ""),
+        "notes": notes,
         "startdate": date_range["startdate"] if date_range else "",
         "enddate": date_range["enddate"] if date_range else "",
     }), excel_attachments
