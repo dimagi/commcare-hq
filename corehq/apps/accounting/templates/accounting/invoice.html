@@ -1,1 +1,22 @@
 {% extends 'hqwebapp/base_section.html' %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static 'accounting/js/stay-on-tab.js' %}"></script>
+{% endblock %}
+
+{% block main_column %}
+    <ul class="nav nav-tabs" id="user-settings-tabs">
+        <li><a href="#invoice" data-toggle="tab">{% trans "Invoice" %}</a></li>
+        <li><a href="#adjustments" data-toggle="tab">{% trans "Adjustments" %}</a></li>
+    </ul>
+
+    <div class="tab-content">
+        <div class="tab-pane" id="invoice">
+        </div>
+
+        <div class="tab-pane" id="adjustments">
+        </div>
+    </div>
+{% endblock %}
