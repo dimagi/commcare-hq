@@ -16,6 +16,19 @@ DATABASES = {
     }
 }
 
+CACHES = {
+    'default': {
+        'BACKEND': 'redis_cache.cache.RedisCache',
+        'LOCATION': 'localhost:6379:0',
+        'OPTIONS': {},
+    },
+    'redis': {
+        'BACKEND': 'redis_cache.cache.RedisCache',
+        'LOCATION': 'localhost:6379:0',
+        'OPTIONS': {},
+    }
+}
+
 
 
 ####### Couch Config ######
