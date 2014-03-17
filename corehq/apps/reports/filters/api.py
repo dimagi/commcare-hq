@@ -58,10 +58,8 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
         })
 
     def _init_counts(self):
-        groups, _ = es_wrapper('groups', domain=self.domain, q=self.group_query,
-            doc_type='Group', size=0, return_count=True)
-        users, _ = es_wrapper('users', domain=self.domain, q=self.user_query,
-            size=0, return_count=True)
+        groups, _ = self.group_es_call(size=0, return_count=True)
+        users, _ = self.user_es_call(size=0, return_count=True)
         self.group_start = len(self.basics)
         self.user_start = self.group_start + groups
         self.total_results = self.user_start + users
@@ -92,16 +90,22 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
                 for i, name in enumerate(HQUserType.human_readable[1:])]
         return filter(lambda basic: self.q.lower() in basic[1].lower(), basics)
 
+    def user_es_call(self, **kwargs):
+        return es_wrapper('users', domain=self.domain, q=self.user_query, **kwargs)
+
     def get_users(self, start, size):
         fields = ['_id', 'username', 'first_name', 'last_name']
-        users = es_wrapper('users', domain=self.domain, q=self.user_query,
-            fields=fields, start_at=start, size=size, sort_by='username.exact', order='asc')
+        users = self.user_es_call(fields=fields, start_at=start, size=size,
+            sort_by='username.exact', order='asc')
         return [user_tuple(u) for u in users]
+
+    def group_es_call(self, **kwargs):
+        reporting_filter = {"term": {"reporting": "true"}}
+        return es_wrapper('groups', domain=self.domain, q=self.group_query,
+            doc_type='Group', filters=[reporting_filter], **kwargs)
 
     def get_groups(self, start, size):
         fields = ['_id', 'name']
-        reporting_filter = {"term": {"reporting": "true"}}
-        groups = es_wrapper('groups', domain=self.domain, q=self.group_query,
-            doc_type='Group', fields=fields, start_at=start, size=size,
-            sort_by='name.exact', order='asc', filters=[reporting_filter])
+        groups = self.group_es_call(fields=fields, sort_by='name.exact',
+            order='asc', start_at=start, size=size)
         return [group_tuple(g) for g in groups]
