@@ -2,6 +2,7 @@ import os
 import uuid
 from datetime import datetime
 from xml.etree import ElementTree
+from couchdbkit.exceptions import ResourceNotFound
 
 from dimagi.utils.couch.database import safe_delete
 from dimagi.utils.dates import utcnow_sans_milliseconds
@@ -139,9 +140,12 @@ def post_util(create=False, case_id=None, user_id=None, owner_id=None,
     return case_id
 
 
-def _delete_all(db, viewname):
+def _delete_all(db, viewname, id_func=None):
     for row in db.view(viewname, reduce=False):
-        safe_delete(db, row['id'])
+        try:
+            safe_delete(db, id_func(row) if id_func else row['id'])
+        except ResourceNotFound:
+            pass
 
 def delete_all_cases():
     # handle with care
@@ -149,7 +153,7 @@ def delete_all_cases():
 
 def delete_all_xforms():
     # handle with care
-    _delete_all(XFormInstance.get_db(), 'couchforms/by_xmlns')
+    _delete_all(XFormInstance.get_db(), 'case/by_xform_id', id_func=lambda row: row['key'])
 
 def delete_all_sync_logs():
     # handle with care
