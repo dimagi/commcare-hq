@@ -75,17 +75,6 @@ def user_list(domain):
     users.sort(key=lambda user: (not user.is_active, user.username))
     return users
 
-def form_list(domain):
-    #todo cleanup
-    #referenced in fields SelectFormField
-    view = get_db().view("formtrends/form_duration_by_user",
-                         startkey=["xdu", domain, ""],
-                         endkey=["xdu", domain, {}],
-                         group=True,
-                         group_level=3,
-                         reduce=True)
-    return [{"text": xmlns_to_name(domain, r["key"][2], app_id=None), "val": r["key"][2]} for r in view]
-
 def get_group_params(domain, group='', users=None, user_id_only=False, **kwargs):
     # refrenced in reports/views and create_export_filter below
     if group:

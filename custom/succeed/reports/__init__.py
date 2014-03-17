@@ -38,14 +38,16 @@ VISIT_SCHEDULE = [
         'xmlns': CM1,
         'days': 5,
         'module_idx': CM_MODULE,
-        'show_button': True
+        'show_button': True,
+        'target_date_case_property': 'CM1_form_target'
     },
     {
         'visit_name': _('CM Medical Record Review'),
         'xmlns': CM2,
         'days': 7,
         'module_idx': CM_MODULE,
-        'show_button': True
+        'show_button': True,
+        'target_date_case_property': 'CM2_form_target'
     },
     {
         'visit_name': _('CM 1-week Telephone Call'),
@@ -53,14 +55,16 @@ VISIT_SCHEDULE = [
         'days': 10,
         'module_idx': CM_MODULE,
         'show_button': True,
-        'scheduled_source': 'CM3_scheduled_date'
+        'scheduled_source': 'CM3_scheduled_date',
+        'target_date_case_property': 'CM3_form_target'
     },
     {
         'visit_name': _('CM Initial huddle'),
         'xmlns': HUD1,
         'days': 21,
         'module_idx': HUD_MODULE,
-        'show_button': True
+        'show_button': True,
+        'target_date_case_property': 'HUD1_form_target'
     },
     {
         'visit_name': _('CHW Home Visit 1'),
@@ -68,7 +72,8 @@ VISIT_SCHEDULE = [
         'days': 35,
         'module_idx': CHW_MODULE,
         'show_button': False,
-        'scheduled_source': 'CHW1_scheduled_date'
+        'scheduled_source': 'CHW1_scheduled_date',
+        'target_date_case_property': 'CHW1_form_target'
     },
     {
         'visit_name': _('CM Clinic Visit 1'),
@@ -76,7 +81,8 @@ VISIT_SCHEDULE = [
         'days': 49,
         'module_idx': CM_MODULE,
         'show_button': True,
-        'scheduled_source': 'CM4_scheduled_date'
+        'scheduled_source': 'CM4_scheduled_date',
+        'target_date_case_property': 'CM4_form_target'
     },
     {
         'visit_name': _('CHW Home Visit 2'),
@@ -84,7 +90,8 @@ VISIT_SCHEDULE = [
         'days': 100,
         'module_idx': CHW_MODULE,
         'show_button': False,
-        'scheduled_source': 'CHW2_scheduled_date'
+        'scheduled_source': 'CHW2_scheduled_date',
+        'target_date_case_property': 'CHW2_form_target'
     },
     {
         'visit_name': _('CM Clinic Visit 2'),
@@ -92,7 +99,8 @@ VISIT_SCHEDULE = [
         'days': 130,
         'module_idx': CM_MODULE,
         'show_button': True,
-        'scheduled_source': 'CM5_scheduled_date'
+        'scheduled_source': 'CM5_scheduled_date',
+        'target_date_case_property': 'CM5_form_target'
     },
     {
         'visit_name': _('CHW CDSMP tracking'),
@@ -100,7 +108,8 @@ VISIT_SCHEDULE = [
         'days': 135,
         'module_idx': CHW_MODULE,
         'show_button': False,
-        'scheduled_source': 'CHW4_scheduled_date'
+        'scheduled_source': 'CHW4_scheduled_date',
+        'target_date_case_property': 'CHW4_form_target'
     },
     {
         'visit_name': _('CHW Home Visit 3'),
@@ -108,7 +117,8 @@ VISIT_SCHEDULE = [
         'days': 200,
         'module_idx': CHW_MODULE,
         'show_button': False,
-        'scheduled_source': 'CHW2-2_scheduled_date'
+        'scheduled_source': 'CHW2-2_scheduled_date',
+        'target_date_case_property': 'CHW2-2_form_target'
     },
     {
         'visit_name': _('CM Clinic Visit 3'),
@@ -116,7 +126,8 @@ VISIT_SCHEDULE = [
         'days': 250,
         'module_idx': CM_MODULE,
         'show_button': 'CHW2-2_scheduled_date',
-        'scheduled_source': 'CM5-2_scheduled_date'
+        'scheduled_source': 'CM5-2_scheduled_date',
+        'target_date_case_property': 'CM5-2_form_target'
     },
 ]
 

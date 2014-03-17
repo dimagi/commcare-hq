@@ -38,7 +38,7 @@ class HealthStatus(object):
         ('awc', "AWC"),
         ('beneficiaries_registered', "Total # of Beneficiaries Registered"),
         ('pregnant_women', "# of Pregnant Women Registered"),
-        ('mother', "# of Lactating Mothers Registered"),
+        ('mother', "# of Mothers of Children Aged 3 Years and Below Registered"),
         ('children', "# of Children Between 0 and 3 Years of Age Registered"),
         ('vhnd_monthly', "# of Beneficiaries Attending VHND Monthly"),
         ('ifa_tablets', "# of Pregnant Women Who Have Received at least 30 IFA Tablets"),
@@ -62,7 +62,7 @@ class HealthStatus(object):
         ('nutritional_status_mam', '# of Children Whose Nutritional Status is "MAM"'),
         ('nutritional_status_sam', '# of Children Whose Nutritional Status is "SAM"'),
         ('ors_zinc', '# of Children Who Have Received ORS and Zinc Treatment if He/She Contracts Diarrhea'),
-        ('breastfed', '# of Lactating Mothers Who Reported to Have Exclusively Breastfed Their Children for First 6 Months'),
+        ('breastfed', '# of Mothers of Children Aged 3 Years and Below Who Reported to Have Exclusively Breastfed Their Children for First 6 Months'),
         ('measles_vaccine', '# of Children Who Received Measles Vaccine'),
     ]
 

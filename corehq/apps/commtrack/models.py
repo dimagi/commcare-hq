@@ -184,7 +184,11 @@ class Product(Document):
         ]
 
     def to_csv(self):
-        return [getattr(self, attr[0] if isinstance(attr, tuple) else attr) for attr in self._csv_attrs()]
+        def _encode_if_needed(val):
+            return val.encode("utf8") if isinstance(val, unicode) else val
+
+        return [_encode_if_needed(getattr(self, attr[0] if isinstance(attr, tuple) else attr))
+                for attr in self._csv_attrs()]
 
     @classmethod
     def from_csv(cls, row):
@@ -197,7 +201,7 @@ class Product(Document):
             p = cls()
         for i, attr in enumerate(cls._csv_attrs()[1:]):
             try:
-                val = row[i]
+                val = row[i].decode('utf-8')
             except IndexError:
                 break
             else:
@@ -368,6 +372,7 @@ class CommtrackConfig(Document):
     consumption_config = SchemaProperty(ConsumptionConfig)
     stock_levels_config = SchemaProperty(StockLevelsConfig)
     ota_restore_config = SchemaProperty(StockRestoreConfig)
+    individual_consumption_defaults = BooleanProperty(default=False)
 
     @property
     def multiaction_keyword(self):
@@ -661,10 +666,11 @@ class StockTransaction(object):
 
         def _txn(action, case_id, section_id, quantity):
             # warning: here be closures
+            quantity = Decimal(str(quantity)) if quantity is not None else None
             data = {
                 'timestamp': timestamp,
                 'product_id': product_id,
-                'quantity': Decimal(quantity),
+                'quantity': quantity,
                 'action': action,
                 'case_id': case_id,
                 'section_id': section_id,
@@ -1186,8 +1192,16 @@ class CommTrackUser(CommCareUser):
                 "There was no linked supply point for the location."
             )
 
-    def add_location(self, location):
+    def add_location(self, location, create_sp_if_missing=False):
         sp = location.linked_supply_point()
+
+        # hack: if location was created before administrative flag was
+        # removed there would be no SupplyPointCase already
+        if not sp and create_sp_if_missing:
+            sp = SupplyPointCase.create_from_location(
+                self.domain,
+                location
+            )
 
         from corehq.apps.commtrack.util import submit_mapping_case_block
         submit_mapping_case_block(self, self.supply_point_index_mapping(sp))

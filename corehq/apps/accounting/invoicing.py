@@ -9,11 +9,13 @@ from dimagi.utils.decorators.memoized import memoized
 
 from corehq import Domain
 from corehq.apps.accounting.exceptions import LineItemError, InvoiceError
-from corehq.apps.accounting.models import (LineItem, FeatureType, Invoice, DefaultProductPlan, Subscriber,
-                                           Subscription, BillingAccount, SubscriptionAdjustment,
-                                           SubscriptionAdjustmentMethod)
+from corehq.apps.accounting.models import (
+    LineItem, FeatureType, Invoice, DefaultProductPlan, Subscriber,
+    Subscription, BillingAccount, SubscriptionAdjustment,
+    SubscriptionAdjustmentMethod, BillingRecord, InvoicePdf, BillingContactInfo)
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.users.models import CommCareUser
+
 
 DEFAULT_DAYS_UNTIL_DUE = 10
 
@@ -53,6 +55,7 @@ class InvoiceFactory(object):
         self.generate_line_items(invoice)
         invoice.update_balance()
         if invoice.balance == Decimal('0.0'):
+            invoice.billingrecord_set.all().delete()
             invoice.lineitem_set.all().delete()
             invoice.delete()
             return None
@@ -61,6 +64,11 @@ class InvoiceFactory(object):
         invoice.update_balance()
         # generate PDF
         invoice.save()
+
+        billing_record = BillingRecord(invoice=invoice)
+        invoice_pdf = InvoicePdf()
+        invoice_pdf.generate_pdf(billing_record)
+
         return invoice
 
     def generate_line_items(self, invoice):
@@ -99,6 +107,10 @@ class CommunityInvoiceFactory(InvoiceFactory):
         If an account is not found, create it.
         """
         account, _ = BillingAccount.get_or_create_account_by_domain(self.domain.name, self.__class__.__name__)
+        # todo: fix so that contact_emails gets correctly populated.
+        BillingContactInfo.objects.get_or_create(
+            account=account
+        )
         return account
 
     @property

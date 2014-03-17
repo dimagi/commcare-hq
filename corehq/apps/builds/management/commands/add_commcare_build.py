@@ -1,6 +1,6 @@
-from couchdbkit.exceptions import BadValueError
 from django.core.management.base import BaseCommand, CommandError
 from corehq.apps.builds.models import CommCareBuild
+
 
 class Command(BaseCommand):
     args = '<build_path> <version> <build_number>'

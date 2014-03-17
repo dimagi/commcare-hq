@@ -36,7 +36,13 @@ from django.utils.http import urlencode
 from django.views.decorators.http import require_GET
 from django.conf import settings
 from couchdbkit.resource import ResourceNotFound
-from corehq.apps.app_manager.const import APP_V1, CAREPLAN_GOAL, CAREPLAN_TASK, APP_V2, CT_REQUISITION_MODES
+from corehq.apps.app_manager.const import (
+    APP_V1,
+    APP_V2,
+    CAREPLAN_GOAL,
+    CAREPLAN_TASK,
+    MAJOR_RELEASE_TO_VERSION,
+)
 from corehq.apps.app_manager.success_message import SuccessMessage
 from corehq.apps.app_manager.util import is_valid_case_type, get_all_case_properties, add_odk_profile_after_build, ParentCasePropertyBuilder, commtrack_ledger_sections
 from corehq.apps.app_manager.util import save_xform, get_settings_values
@@ -54,7 +60,7 @@ from corehq.apps.app_manager.xform import XFormError, XFormValidationError, Case
     XForm
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions, CommCareUser
+from corehq.apps.users.models import Permissions
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.decorators.view import get_file
 from dimagi.utils.django.cache import make_template_fragment_key
@@ -436,21 +442,25 @@ def get_app_view_context(request, app):
     }
 
     build_config = CommCareBuildConfig.fetch()
-    version = app.application_version
-    options = build_config.get_menu(version)
+    options = build_config.get_menu()
     if not request.user.is_superuser:
         options = [option for option in options if not option.superuser_only]
-    options_labels = [option.get_label() for option in options]
-    options_builds = [option.build.to_string() for option in options]
+    options_map = defaultdict(lambda:{"values": [], "value_names": []})
+    for option in options:
+        builds = options_map[option.build.major_release()]
+        builds["values"].append(option.build.to_string())
+        builds["value_names"].append(option.get_label())
+        if "default" not in builds:
+            app_ver = MAJOR_RELEASE_TO_VERSION[option.build.major_release()]
+            builds["default"] = build_config.get_default(app_ver).to_string()
 
     (build_spec_setting,) = filter(
         lambda x: x['type'] == 'hq' and x['id'] == 'build_spec',
         [setting for section in context['settings_layout']
             for setting in section['settings']]
     )
-    build_spec_setting['values'] = options_builds
-    build_spec_setting['value_names'] = options_labels
-    build_spec_setting['default'] = build_config.get_default(app.application_version).to_string()
+    build_spec_setting['options_map'] = options_map
+    build_spec_setting['default_app_version'] = app.application_version
 
     if app.get_doc_type() == 'Application':
         try:
@@ -1181,6 +1191,28 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
     return json_response(resp)
 
 
+def validate_module_for_build(request, domain, app_id, module_id, ajax=True):
+    app = get_app(domain, app_id)
+    try:
+        module = app.get_module(module_id)
+    except ModuleNotFoundException:
+        raise Http404()
+    errors = module.validate_for_build()
+    lang, langs = get_langs(request, app)
+
+    response_html = render_to_string('app_manager/partials/build_errors.html', {
+        'app': app,
+        'build_errors': errors,
+        'not_actual_build': True,
+        'domain': domain,
+        'langs': langs,
+        'lang': lang
+    })
+    if ajax:
+        return json_response({'error_html': response_html})
+    return HttpResponse(response_html)
+
+
 def _handle_media_edits(request, item, should_edit, resp):
     if not resp.has_key('corrections'):
         resp['corrections'] = {}
@@ -1678,7 +1710,7 @@ def rearrange(req, domain, app_id, key):
             'The form can not be moved into the desired module.'
         ))
         return back_to_main(req, domain, app_id=app_id, module_id=module_id)
-    except RearrangeError, ModuleNotFoundException:
+    except (RearrangeError, ModuleNotFoundException):
         messages.error(req, _(
             'Oops. '
             'Looks like you got out of sync with us. '

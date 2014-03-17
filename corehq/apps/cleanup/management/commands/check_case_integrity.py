@@ -1,6 +1,5 @@
 from collections import defaultdict
 from optparse import make_option
-from couchdbkit import ResourceNotFound
 from django.core.management.base import BaseCommand
 from casexml.apps.case.cleanup import rebuild_case
 from casexml.apps.case.models import CommCareCase

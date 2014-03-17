@@ -1,9 +1,8 @@
-from datetime import datetime, date, timedelta
+from datetime import datetime
 import logging
-from corehq.apps.sms.util import clean_phone_number, clean_outgoing_sms_text, create_billable_for_sms
+from corehq.apps.sms.util import clean_phone_number, create_billable_for_sms
 from corehq.apps.sms.api import incoming
 from corehq.apps.sms.mixin import SMSBackend
-from django.conf import settings
 from urllib2 import urlopen
 from urllib import urlencode
 import pytz

@@ -1,6 +1,5 @@
 from django import forms
 from django.forms.widgets import Textarea
-from hqstyle.forms import fields as hq_fields
 from corehq.apps.announcements.models import HQAnnouncement, ReportAnnouncement
 from corehq.apps.crud.models import BaseAdminCRUDForm
 

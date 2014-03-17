@@ -24,6 +24,7 @@ tmp.sh
 /resource_versions.py
 /loadtest/results/
 /loadtest/localsettings.py
+/loadtest/config.cfg
 /staticfiles/
 *.db
 \#*\#

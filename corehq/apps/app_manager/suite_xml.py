@@ -1,11 +1,9 @@
 from collections import namedtuple
 from distutils.version import LooseVersion
+import urllib
 from django.core.urlresolvers import reverse
-from eulxml.xmlmap.fields import StringListField
 from lxml import etree
 from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, NodeField
-import toggle
-from corehq import toggles
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK
 from corehq.apps.hqmedia.models import HQMediaMapItem
@@ -530,7 +528,7 @@ class SuiteGenerator(object):
                 remote=get_url_base() + reverse(
                     'hqmedia_download',
                     args=[m.media_type, m.multimedia_id]
-                ) + name
+                ) + urllib.quote(name.encode('utf-8')) if name else name
             )
 
     @property
@@ -651,7 +649,7 @@ class SuiteGenerator(object):
                     media_audio=form.media_audio,
                 )
 
-                getattr(self, 'configure_entry_{}'.format(form.form_type))(module, e, form)
+                getattr(self, 'configure_entry_{0}'.format(form.form_type))(module, e, form)
                 yield e
 
             if hasattr(module, 'case_list') and module.case_list.show:

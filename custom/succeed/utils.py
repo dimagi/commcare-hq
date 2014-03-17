@@ -1,7 +1,9 @@
-from django.utils.translation import ugettext_noop
+from couchdbkit.exceptions import ResourceNotFound
+from django.utils.translation import ugettext as _, ugettext_noop
+from corehq.apps.app_manager.models import Application
 
 SUCCEED_DOMAIN = 'succeed'
-SUCCEED_CLOUD_APPNAME = 'SUCCEED Project'
+SUCCEED_CLOUD_APPNAME = 'SUCCEED CM app'
 
 CONFIG = {
     'groups': [
@@ -24,5 +26,3 @@ def _is_succeed_admin(user):
 
 def _is_pm_or_pi(user):
     return True if 'role' in user.user_date and user.user_data['role'] in [CONFIG['pm_role'], CONFIG['pi_role']] else False
-
-

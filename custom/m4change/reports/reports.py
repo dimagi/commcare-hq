@@ -13,6 +13,15 @@ class M4ChangeReport(object):
         """
         return {}
 
+    @classmethod
+    def get_initial_row_data(cls):
+        """
+        Intention: Override
+
+        :return: A dictionary containing initial report rows with values set to 0
+        """
+        return {}
+
 
 class M4ChangeReportDataSource(ReportDataSource):
     def get_data(self, slugs=None):

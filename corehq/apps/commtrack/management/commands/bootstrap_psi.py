@@ -1,12 +1,7 @@
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from optparse import make_option
 from corehq.apps.domain.models import Domain
-from corehq.apps.locations.models import Location
-from corehq.apps.users.models import CommCareUser
-from corehq.apps.sms.mixin import MobileBackend
 from corehq.apps.commtrack.helpers import *
-import sys
-import random
 
 PRODUCTS = [
     ('PSI kit', 'k'),

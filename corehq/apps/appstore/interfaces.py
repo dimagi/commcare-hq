@@ -1,15 +1,12 @@
 from corehq.apps.appstore.dispatcher import AppstoreDispatcher
 from corehq.apps.domain.models import Domain
-from corehq.apps.groups.models import Group
 from corehq.apps.reports.standard import DatespanMixin
 from django.core.urlresolvers import reverse
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.reports import util
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.generic import GenericReportView, GenericTabularReport
-from corehq.apps.reports.models import HQUserType
-from corehq.apps.users.models import WebUser
-from dimagi.utils.couch.database import get_db
+
 
 class AppstoreInterface(GenericReportView):
     section_name = "CommCare Exchange"

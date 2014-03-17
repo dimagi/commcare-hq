@@ -1,10 +1,8 @@
-from django.core.management.base import BaseCommand, CommandError
-from optparse import make_option
-from corehq.apps.domain.models import Domain
+from django.core.management.base import BaseCommand
 from corehq.apps.locations.models import Location
 from casexml.apps.case.models import CommCareCase
 from dimagi.utils.couch.loosechange import map_reduce
-import sys
+
 
 class Command(BaseCommand):
     args = 'domain'

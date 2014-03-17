@@ -1,0 +1,197 @@
+<script>
+    function post_schedule_delete(patient_id, schedule_id) {
+        //method = method || "post"; // Set method to post by default, if not specified.
+        method="post";
+
+        // The rest of this code assumes you are not using a library.
+        // It can be made less wordy if you use one.
+        var form = document.createElement("form");
+        form.setAttribute("method", method);
+        form.setAttribute("action", '');
+
+        var csrf = document.createElement("input");
+        csrf.setAttribute("type", "hidden");
+        csrf.setAttribute("name", "csrfmiddlewaretoken");
+        csrf.setAttribute("value", "{{ csrf_token }}");
+        form.appendChild(csrf);
+
+        var patientIDField = document.createElement("input");
+        patientIDField.setAttribute("type", "hidden");
+        patientIDField.setAttribute("name", "patient_id");
+        patientIDField.setAttribute("value", patient_id);
+        form.appendChild(patientIDField);
+
+        var scheduleIDField = document.createElement("input");
+        scheduleIDField.setAttribute("type", "hidden");
+        scheduleIDField.setAttribute("name", "schedule_id");
+        scheduleIDField.setAttribute("value", schedule_id);
+        form.appendChild(scheduleIDField);
+
+        document.body.appendChild(form);    // Not entirely sure if this is necessary
+//    form.submit();
+
+        var $form = $(form);
+        var values = $form.serializeArray();
+        var submit_dict = {};
+        for (var i = 0; i < values.length; i++) {
+            submit_dict[values[i]['name']] = values[i]['value'];
+        }
+
+        send_xhr = $.ajax({
+            "type": "POST",
+            "url":  "",
+            "data": submit_dict,
+            "success": function(data) {
+                location.reload();
+            }, //end success
+            "error": function(data) {
+                $('body').replaceWith(data.responseText);
+//                            alert("Error trying to save form, please try again: " + data);
+            }
+        });
+    }
+</script>
+
+{% if future_schedules %}
+    <strong><span style="font-size: 125%;"><em>Future Schedules</em></span></strong>
+    <table class="table table-striped table-bordered">
+        <thead>
+        <tr>
+            <th class="span1">Sun</th>
+            <th class="span1">Mon</th>
+            <th class="span1">Tue</th>
+            <th class="span1">Wed</th>
+            <th class="span1">Thu</th>
+            <th class="span1">Fri</th>
+            <th class="span1">Sat</th>
+            <th>Notes</th>
+        </tr>
+        </thead>
+
+        {% for fschedule in future_schedules %}
+
+            <tr>
+                <td> {{fschedule.sunday}}</td>
+                <td> {{fschedule.monday}}</td>
+                <td> {{fschedule.tuesday}}</td>
+                <td> {{fschedule.wednesday}}</td>
+                <td> {{fschedule.thursday}}</td>
+                <td> {{fschedule.friday}}</td>
+                <td> {{fschedule.saturday}}</td>
+                <td> {{fschedule.comment}}</td>
+            </tr>
+            <tr>
+                <td colspan="8" class="offset1">
+                    <small><em>
+                        Applies {{ fschedule.started|date }}
+                        {% if fschedule.ended %}
+                            - {{ fschedule.ended|date }}
+                        {% endif %}
+                        (<a href="javascript:post_schedule_delete('{{patient_doc.django_uuid }}', '{{ fschedule.schedule_id }}')">Remove</a>)
+                    </em></small>
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+{% endif %} {# Future schedules #}
+
+
+{% if current_schedule %}
+    {# Section current schedule #}
+    <strong><span style="font-size: 125%;">Current Schedule</span></strong>
+    <table class="table table-bordered">
+        <thead>
+        <tr>
+            <th class="span1">Sun</th>
+            <th class="span1">Mon</th>
+            <th class="span1">Tue</th>
+            <th class="span1">Wed</th>
+            <th class="span1">Thu</th>
+            <th class="span1">Fri</th>
+            <th class="span1">Sat</th>
+            <th>Notes</th>
+        </tr>
+        </thead>
+        <tr>
+            <td> {{current_schedule.sunday}}</td>
+            <td> {{current_schedule.monday}}</td>
+            <td> {{current_schedule.tuesday}}</td>
+            <td> {{current_schedule.wednesday}}</td>
+            <td> {{current_schedule.thursday}}</td>
+            <td> {{current_schedule.friday}}</td>
+            <td> {{current_schedule.saturday}}</td>
+            <td> {{current_schedule.comment}}</td>
+        </tr>
+        <tr>
+            <td colspan="8" class="offset1">
+                <small><em>
+                    Active {{ current_schedule.started|date }}
+                    {% if current_schedule.ended %}
+                        - {{ current_schedule.ended|date }}
+                    {% endif %}
+                </em></small>
+            </td>
+        </tr>
+    </table>
+{% else %}
+    <br>
+    <strong>No Current Schedule Set</strong> <br>
+{% endif %} {# current schedules #}
+
+
+{% if past_schedules %}
+    <small>
+        <a id="btn_show_all_schedules"
+           href="javascript:toggle_schedule('prior_schedules')"
+           class="fg-button ui-state-default ui-corner-all"> Show All Schedules ({{ patient_doc.weekly_schedule|length }})</a>
+    </small>
+    <hr>
+    <div id="prior_schedules" class="toggler">
+        <strong><span style="font-size: 125%;">Prior Schedules</span></strong>
+        <table class="table table-bordered">
+            <thead>
+            <tr>
+                <th class="span1">Sun</th>
+                <th class="span1">Mon</th>
+                <th class="span1">Tue</th>
+                <th class="span1">Wed</th>
+                <th class="span1">Thu</th>
+                <th class="span1">Fri</th>
+                <th class="span1">Sat</th>
+                <th>Notes</th>
+            </tr>
+            </thead>
+
+            {% for pschedule in past_schedules %}
+                <tr>
+                    <td> {{pschedule.sunday}}</td>
+                    <td> {{pschedule.monday}}</td>
+                    <td> {{pschedule.tuesday}}</td>
+                    <td> {{pschedule.wednesday}}</td>
+                    <td> {{pschedule.thursday}}</td>
+                    <td> {{pschedule.friday}}</td>
+                    <td> {{pschedule.saturday}}</td>
+                    <td> {{pschedule.comment}}</td>
+                </tr>
+                <tr>
+                    <td colspan="8" class="offset1">
+                        <small><em>
+                            Applied {{ pschedule.started|date }} -
+                            {% if pschedule.ended %}
+                                {{ pschedule.ended|date }}
+                            {% else %}
+                                and onward
+                            {% endif %}
+                            (<a href="javascript:post_schedule_delete('{{patient_doc.django_uuid }}', '{{ pschedule.schedule_id }}')">Remove</a>)
+                        </em></small>
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+    </div>
+{% endif %}
+
+
+
+
+

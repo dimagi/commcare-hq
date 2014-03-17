@@ -3,6 +3,7 @@ from django.core.urlresolvers import NoReverseMatch, reverse
 from django.utils.translation import ugettext as _, ugettext_noop
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.api.es import ReportCaseES
+from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.cloudcare.api import get_cloudcare_app
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
@@ -21,7 +22,7 @@ from custom.succeed.reports.patient_details import PatientInfoReport
 from custom.succeed.utils import CONFIG, _is_succeed_admin, SUCCEED_CLOUD_APPNAME
 import logging
 import simplejson
-from corehq.apps.app_manager.models import ApplicationBase
+from casexml.apps.case.models import CommCareCase
 
 
 class PatientListReportDisplay(CaseDisplay):
@@ -48,6 +49,7 @@ class PatientListReportDisplay(CaseDisplay):
         self.app_dict = get_cloudcare_app(report.domain, SUCCEED_CLOUD_APPNAME)
         self.latest_build = ApplicationBase.get_latest_build(report.domain, self.app_dict['_id'])['_id']
         super(PatientListReportDisplay, self).__init__(report, case_dict)
+        self.update_target_date_case_properties()
 
     def get_property(self, key):
         if key in self.case:
@@ -67,9 +69,22 @@ class PatientListReportDisplay(CaseDisplay):
         else:
             return "%s (bad ID format)" % self.case_name
 
+    def update_target_date_case_properties(self):
+        case = CommCareCase.get(self.case_id)
+        for visit_key, visit in enumerate(VISIT_SCHEDULE):
+            try:
+                next_visit = VISIT_SCHEDULE[visit_key + 1]
+            except IndexError:
+                next_visit = 'last'
+            if next_visit != 'last':
+                rand_date = dateutil.parser.parse(self.randomization_date)
+                tg_date = rand_date.date() + timedelta(days=next_visit['days'])
+                case.set_case_property(visit['target_date_case_property'], tg_date.strftime("%m/%d/%Y"))
+        case.save()
+
     @property
     def edit_link(self):
-        base_url = '/a/%(domain)s/cloudcare/apps/view/%(build_id)s/%(module_id)s/%(form_id)s/enter/'
+        base_url = '/a/%(domain)s/cloudcare/apps/view/%(build_id)s/%(module_id)s/%(form_id)s/case/%(case_id)s/enter/'
         module = self.app_dict['modules'][CM_MODULE]
         form_idx = [ix for (ix, f) in enumerate(module['forms']) if f['xmlns'] == CM7][0]
         return html.mark_safe("<a class='ajax_dialog' href='%s'>Edit</a>") \
@@ -116,7 +131,7 @@ class PatientListReportDisplay(CaseDisplay):
             rand_date = dateutil.parser.parse(self.randomization_date)
             tg_date = ((rand_date.date() + timedelta(days=next_visit['days'])) - datetime.now().date()).days
             if tg_date >= 7:
-                return (rand_date.date() + timedelta(days=next_visit['days'])).date()
+                return (rand_date.date() + timedelta(days=next_visit['days'])).strftime("%m/%d/%Y")
             elif 7 > tg_date > 0:
                 return "<span style='background-color: #FFFF00;padding: 5px;display: block;'> In %s day(s)</span>" % tg_date
             elif tg_date == 0:

@@ -1,7 +1,4 @@
-import datetime, copy
-
-from django.views.generic import TemplateView
-from django.http import HttpResponse
+import copy
 
 from couchdbkit.exceptions import ResourceNotFound
 from no_exceptions.exceptions import Http403, Http404
@@ -9,7 +6,6 @@ from no_exceptions.exceptions import Http403, Http404
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.standard import CustomProjectReport
-from dimagi.utils.couch.database import get_db
 
 from .models import LegacyWeeklyReport
 from .constants import *

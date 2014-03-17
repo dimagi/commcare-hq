@@ -1,6 +1,5 @@
 from corehq.apps.users.models import Permissions
 from corehq.apps.domain.decorators import login_and_domain_required
-from django.http import HttpResponseForbidden
 from corehq.apps.users.decorators import require_permission
 
 def require_cloudcare_access_ex():

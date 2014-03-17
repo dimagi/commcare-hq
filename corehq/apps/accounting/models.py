@@ -1,6 +1,7 @@
 import datetime
 from decimal import Decimal
 import logging
+from tempfile import NamedTemporaryFile
 from couchdbkit.ext.django.schema import DateTimeProperty, StringProperty
 
 from django.conf import settings
@@ -8,7 +9,7 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-from corehq import toggles
+from corehq.apps.accounting.invoice_pdf import Address, InvoiceTemplate
 from corehq.apps.accounting.utils import is_active_subscription, get_privileges
 from corehq.apps.accounting.subscription_changes import (
     DomainDowngradeActionHandler, DomainUpgradeActionHandler,
@@ -253,18 +254,40 @@ class BillingContactInfo(models.Model):
         max_length=50, null=True, blank=True, verbose_name=_("Last Name")
     )
     emails = models.CharField(
-        max_length=200, null=True, blank=True, verbose_name=_("Additional Contact Emails"),
-        help_text=_("We will email communications to the emails specified here and the emails "
+        max_length=200, null=True, blank=True,
+        verbose_name=_("Additional Contact Emails"),
+        help_text=_("We will email communications to the emails specified "
+                    "here and the emails "
                     "of the Billing Administrators.")
     )
-    phone_number = models.CharField(max_length=20, null=True, blank=True, verbose_name=_("Phone Number"))
-    company_name = models.CharField(max_length=50, null=True, blank=True, verbose_name=_("Company / Organization"))
-    first_line = models.CharField(max_length=50, null=False, verbose_name=_("Address First Line"))
-    second_line = models.CharField(max_length=50, null=True, blank=True, verbose_name=_("Address Second Line"))
-    city = models.CharField(max_length=50, null=False, verbose_name=_("City"))
-    state_province_region = models.CharField(max_length=50, null=False, verbose_name=_("State / Province / Region"))
-    postal_code = models.CharField(max_length=20, null=False, verbose_name=_("Postal Code"))
-    country = models.CharField(max_length=50, null=False, verbose_name=_("Country"))
+    phone_number = models.CharField(
+        max_length=20, null=True, blank=True, verbose_name=_("Phone Number")
+    )
+    company_name = models.CharField(
+        max_length=50, null=True, blank=True,
+        verbose_name=_("Company / Organization")
+    )
+    first_line = models.CharField(
+        max_length=50, null=False, blank=True,
+        verbose_name=_("Address First Line")
+    )
+    second_line = models.CharField(
+        max_length=50, null=True, blank=True,
+        verbose_name=_("Address Second Line")
+    )
+    city = models.CharField(
+        max_length=50, null=False, blank=True, verbose_name=_("City")
+    )
+    state_province_region = models.CharField(
+        max_length=50, null=False, blank=True,
+        verbose_name=_("State / Province / Region"),
+    )
+    postal_code = models.CharField(
+        max_length=20, null=False, blank=True, verbose_name=_("Postal Code")
+    )
+    country = models.CharField(
+        max_length=50, null=False, blank=True, verbose_name=_("Country")
+    )
 
 
 class SoftwareProduct(models.Model):
@@ -464,7 +487,16 @@ class SoftwarePlanVersion(models.Model):
     role = models.ForeignKey(Role)
 
     def __str__(self):
-        return "Software Plan Version For Plan '%s' with Role '%s'" % (self.plan.name, self.role.slug)
+        return "%(plan_name)s (v%(version_num)d)" % {
+            'plan_name': self.plan.name,
+            'version_num': self.version,
+        }
+
+    @property
+    def version(self):
+        return (self.plan.softwareplanversion_set.count() -
+                self.plan.softwareplanversion_set.filter(
+                    date_created__gt=self.date_created).count())
 
     @property
     def user_facing_description(self):
@@ -676,9 +708,6 @@ class Subscription(models.Model):
         """
         domain_obj = assure_domain_instance(domain)
         if domain_obj is None:
-            # need more info to troubleshoot this further
-            logging.error("Tried to fetch a subscription for a domain that was not properly located. "
-                          "Domain name is %s." % domain)
             plan_version = DefaultProductPlan.objects.get(edition=SoftwarePlanEdition.COMMUNITY,
                                                           product_type=SoftwareProductType.COMMCARE).plan.get_version()
             return plan_version, None
@@ -749,6 +778,11 @@ class Invoice(models.Model):
         if self.lineitem_set.count() == 0:
             return Decimal('0.0000')
         return sum([line_item.total for line_item in self.lineitem_set.all()])
+
+    @property
+    def invoice_number(self):
+        ops_num = settings.STARTING_INVOICE_NUMBER + self.id
+        return "%s%d" % (settings.INVOICE_PREFIX, ops_num)
 
     @property
     def applied_tax(self):
@@ -846,12 +880,55 @@ class InvoicePdf(SafeSaveDocument):
     invoice_id = StringProperty()
     date_created = DateTimeProperty()
 
-    def generate_pdf(self, invoice):
-        # todo generate pdf
-        invoice.pdf_data_id = self._id
-        # self.put_attachment(pdf_data)
-        self.invoice_id = invoice.id
+    def generate_pdf(self, billing_record):
+        self.save()
+        pdf_data = NamedTemporaryFile()
+        invoice = billing_record.invoice
+        contact_info = BillingContactInfo.objects.get(
+            account=invoice.subscription.account,
+        )
+        template = InvoiceTemplate(
+            pdf_data.name,
+            invoice_number=invoice.invoice_number,
+            to_address=Address(
+                name=("%s %s" %
+                      (contact_info.first_name, contact_info.last_name)),
+                first_line=contact_info.first_line,
+                second_line=contact_info.second_line,
+                city=contact_info.city,
+                region=contact_info.state_province_region,
+                country=contact_info.country,
+            ),
+            project_name=invoice.subscription.subscriber.domain,
+            invoice_date=invoice.date_created.date(),
+            due_date=invoice.date_due,
+            subtotal=invoice.subtotal,
+            tax_rate=invoice.tax_rate,
+            applied_tax=invoice.applied_tax,
+            applied_credit=invoice.applied_credit,
+            total=invoice.get_total(),
+        )
+
+        for line_item in LineItem.objects.filter(invoice=invoice):
+            description = (line_item.base_description
+                           or line_item.unit_description)
+            if line_item.quantity > 0:
+                template.add_item(description,
+                                  line_item.quantity,
+                                  line_item.unit_cost,
+                                  line_item.subtotal,
+                                  line_item.applied_credit,
+                                  line_item.total)
+
+        template.get_pdf()
+        self.put_attachment(pdf_data)
+        pdf_data.close()
+
+        billing_record.pdf_data_id = self._id
+        billing_record.save()
+        self.invoice_id = str(invoice.id)
         self.date_created = datetime.datetime.now()
+        self.save()
 
 
 class LineItemManager(models.Manager):

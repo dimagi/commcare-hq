@@ -1,15 +1,11 @@
 """
 Celery tasks to save a snapshot of the reports each month
 """
-import datetime, logging
+import logging
 
 from celery.task import periodic_task
 from celery.schedules import crontab
-from django.http import HttpRequest
 from django.conf import settings
-
-from dimagi.utils.dates import DateSpan
-from dimagi.utils.couch.database import get_db
 
 from ..opm_reports.reports import (BeneficiaryPaymentReport,
     IncentivePaymentReport, get_report, last_if_none)
