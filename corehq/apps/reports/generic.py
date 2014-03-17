@@ -9,7 +9,6 @@ from django.template.loader import render_to_string
 from django.shortcuts import render
 
 import pytz
-from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.reports.models import ReportConfig
 from corehq.apps.reports import util
 from corehq.apps.reports.datatables import DataTablesHeader
@@ -865,7 +864,7 @@ class GenericTabularReport(GenericReportView):
 
             return [_unformat_val(val) for val in row]
 
-        table = headers.as_table
+        table = headers.as_export_table
         rows = [_unformat_row(row) for row in formatted_rows]
         table.extend(rows)
         if self.total_row:

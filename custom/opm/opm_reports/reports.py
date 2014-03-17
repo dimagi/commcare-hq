@@ -551,7 +551,7 @@ class HealthStatusReport(DatespanMixin, BaseReport, SummingSqlTabularReport):
                     formatted_row.append(col)
             return formatted_row
 
-        table = headers.as_table
+        table = headers.as_export_table
         rows = [_unformat_row(row) for row in formatted_rows]
         table.extend(rows)
         if self.total_row:
