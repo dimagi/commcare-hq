@@ -1,16 +1,15 @@
-from django.http import HttpResponse, Http404
+from django.http import Http404
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
 from tastypie.http import HttpBadRequest
-from corehq.apps.crud.views import BaseAdminCRUDFormView, BaseCRUDFormView
+from corehq.apps.crud.views import BaseCRUDFormView
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.indicators.admin.crud import IndicatorCRUDFormRequestManager
 from corehq.apps.indicators.admin.forms import BulkCopyIndicatorsForm
 from corehq.apps.indicators.dispatcher import require_edit_indicators
-from corehq.apps.indicators.utils import get_namespaces, get_indicator_domains
+from corehq.apps.indicators.utils import get_indicator_domains
 from dimagi.utils.modules import to_function
-import settings
 
 
 @require_edit_indicators

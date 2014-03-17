@@ -1,4 +1,4 @@
-REPORT_CASE_INDEX="report_cases_dcd5bc06ca61664d109488f64f3c21a3"
+REPORT_CASE_INDEX="report_cases_ae5ce2b30b6c42dea585a223333290f1"
 
 REPORT_CASE_MAPPING={'_meta': {'comment': '2013-11-05 dmyung',
            'created': None},

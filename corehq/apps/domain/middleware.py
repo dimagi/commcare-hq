@@ -1,21 +1,11 @@
 # Use modern Python
 from __future__ import unicode_literals, print_function, absolute_import
 
-# Standard Library imports
-
-# Django imports
-from django.conf import settings
-import django.core.exceptions
-
 # External imports
-from redis_cache.exceptions import ConnectionInterrumped
 from corehq.apps.accounting.exceptions import AccountingError
 from corehq.apps.accounting.models import Subscription
-from dimagi.utils.couch.cache import cache_core
 from django_prbac.models import Role
 
-# CCHQ imports
-from corehq import toggles
 
 class CCHQPRBACMiddleware(object):
     """
@@ -53,5 +43,3 @@ class CCHQPRBACMiddleware(object):
             request.role = Role.objects.get(slug='community_plan_v0')
         except Role.DoesNotExist:
             request.role = Role()  # A fresh Role() has no privileges
-    
-############################################################################################################

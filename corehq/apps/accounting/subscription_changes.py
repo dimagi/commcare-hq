@@ -8,7 +8,7 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.orgs.models import Organization
 from corehq.apps.reminders.models import CaseReminderHandler, METHOD_SMS_SURVEY, METHOD_IVR_SURVEY
-from corehq.apps.users.models import CommCareUser, UserRole, WebUser
+from corehq.apps.users.models import CommCareUser, UserRole
 from couchexport.models import SavedExportSchema
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized

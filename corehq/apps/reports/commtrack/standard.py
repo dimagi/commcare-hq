@@ -1,9 +1,6 @@
-from collections import deque
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.api.es import CaseES
 from corehq.apps.commtrack.psi_hacks import is_psi_domain
-from corehq.apps.commtrack.util import supply_point_type_categories
-from corehq.apps.reports.commtrack.data_sources import StockStatusDataSource, ReportingStatusDataSource, is_timely
+from corehq.apps.reports.commtrack.data_sources import StockStatusDataSource, ReportingStatusDataSource
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.commtrack.models import Product, CommtrackConfig, CommtrackActionConfig, StockState

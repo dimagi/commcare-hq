@@ -29,10 +29,10 @@ from corehq.apps.users.models import CouchUser, Permissions
 from corehq.apps.users import models as user_models
 from corehq.apps.users.views.mobile.users import EditCommCareUserView
 from corehq.apps.sms.models import (
-    SMSLog, INCOMING, OUTGOING, ForwardingRule, CommConnectCase,
+    SMSLog, INCOMING, OUTGOING, ForwardingRule,
     LastReadMessage,
 )
-from corehq.apps.sms.mixin import MobileBackend, SMSBackend, BackendMapping, VerifiedNumber
+from corehq.apps.sms.mixin import SMSBackend, BackendMapping, VerifiedNumber
 from corehq.apps.sms.forms import ForwardingRuleForm, BackendMapForm, InitiateAddSMSBackendForm, SMSSettingsForm, SubscribeSMSForm
 from corehq.apps.sms.util import get_available_backends, get_contact
 from corehq.apps.groups.models import Group
@@ -44,8 +44,6 @@ from dimagi.utils.timezones import utils as tz_utils
 from django.views.decorators.csrf import csrf_exempt
 from corehq.apps.domain.models import Domain
 from django.utils.translation import ugettext as _, ugettext_noop
-from couchdbkit.resource import ResourceNotFound
-from casexml.apps.case.models import CommCareCase
 from dimagi.utils.parsing import json_format_datetime, string_to_boolean
 from dateutil.parser import parse
 from dimagi.utils.decorators.memoized import memoized

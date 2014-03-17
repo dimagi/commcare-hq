@@ -85,6 +85,8 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
         'edit_module_detail_screens', name='edit_module_detail_screens'),
     url(r'^edit_module_attr/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/(?P<attr>[\w-]+)/$',
         'edit_module_attr'),
+    url(r'^validate_module_for_build/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/$',
+        'validate_module_for_build', name='validate_module_for_build'),
 
     url(r'^commcare_profile/(?P<app_id>[\w-]+)/$', 'commcare_profile'),
     url(r'^edit_commcare_profile/(?P<app_id>[\w-]+)/$', 'edit_commcare_profile',

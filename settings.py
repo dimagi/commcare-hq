@@ -188,6 +188,7 @@ HQ_APPS = (
     'corehq.apps.hqcouchlog',
     'corehq.apps.hqwebapp',
     'corehq.apps.hqmedia',
+    'corehq.apps.loadtestendpoints',
     'corehq.apps.locations',
     'corehq.apps.commtrack',
     'corehq.apps.consumption',
@@ -198,7 +199,6 @@ HQ_APPS = (
     'ctable_view',
     'dimagi.utils',
     'formtranslate',
-    'receiver',
     'langcodes',
     'corehq.apps.adm',
     'corehq.apps.announcements',
@@ -330,7 +330,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'fluff_filter',
     'freddy',
     'pillowtop',
-    'receiver',
 )
 
 INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
@@ -714,6 +713,17 @@ LOGGING = {
     }
 }
 
+# Invoicing
+STARTING_INVOICE_NUMBER = 0
+INVOICE_PREFIX = ''
+TERMS = ''
+FROM_ADDRESS = {}
+BANK_ADDRESS = {}
+BANK_NAME = ''
+ACCOUNT_NUMBER = ''
+ROUTING_NUMBER = ''
+SWIFT_CODE = ''
+
 try:
     # try to see if there's an environmental variable set for local_settings
     if os.environ.get('CUSTOMSETTINGS', None) == "demo":
@@ -954,6 +964,9 @@ PILLOWTOPS = {
         'corehq.pillows.sms.SMSPillow',
         'corehq.pillows.user.GroupToUserPillow',
         'corehq.pillows.user.UnknownUsersPillow',
+    ],
+    'phonelog': [
+        'corehq.pillows.log.PhoneLogPillow',
     ],
     'core_ext': [
         'corehq.pillows.reportcase.ReportCasePillow',

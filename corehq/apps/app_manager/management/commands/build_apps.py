@@ -1,5 +1,5 @@
 import json
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from lxml import etree
 import os
 from corehq.apps.app_manager.models import Application, RemoteApp

@@ -48,12 +48,10 @@ class CommCareMultimedia(SafeSaveDocument):
     aux_media = SchemaListProperty(AuxMedia)
 
     last_modified = DateTimeProperty()
-    valid_domains = StringListProperty() # appears to be mostly unused as well - timbauman
-    # add something about context from the form(s) its in
-
-    owners = StringListProperty(default=[])
+    valid_domains = StringListProperty()  # A list of domains that uses this file
+    owners = StringListProperty(default=[])  # list of domains that uploaded this file
     licenses = SchemaListProperty(HQMediaLicense, default=[])
-    shared_by = StringListProperty(default=[])
+    shared_by = StringListProperty(default=[])  # list of domains that can share this file
     tags = DictProperty(default={})  # dict of string lists
 
     @classmethod
@@ -213,10 +211,6 @@ class CommCareMultimedia(SafeSaveDocument):
     def get_by_data(cls, data):
         file_hash = cls.generate_hash(data)
         return cls.get_by_hash(file_hash)
-
-    @classmethod
-    def get_all(cls):
-        return cls.view('hqmedia/by_doc_type', key=cls.__name__, include_docs=True)
 
     @classmethod
     def all_tags(cls):

@@ -2,12 +2,10 @@ from __future__ import absolute_import
 import json
 import re
 import urllib
-from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from django.utils.decorators import method_decorator
-from corehq import Domain, toggles, privileges
+from corehq import Domain, privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.views import BaseDomainView
-from corehq.apps.locations.models import Location
 from corehq.apps.sms.mixin import BadSMSConfigException
 from corehq.apps.users.decorators import require_can_edit_web_users, require_permission_to_edit_user
 from dimagi.utils.decorators.memoized import memoized
