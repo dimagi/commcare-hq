@@ -148,7 +148,7 @@ class DataTablesHeader(object):
         self.auto_width = bool(0 < self.span <= 12)
 
     @property
-    def as_table(self):
+    def as_export_table(self):
         head = list()
         groups = list()
         use_groups = False
