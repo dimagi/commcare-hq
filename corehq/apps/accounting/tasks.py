@@ -8,6 +8,7 @@ from corehq.apps.accounting import utils
 from corehq.apps.accounting.invoicing import SubscriptionInvoiceFactory, CommunityInvoiceFactory
 
 from corehq.apps.accounting.models import Subscription
+from corehq.apps.accounting.utils import has_subscription_already_ended
 from corehq.apps.orgs.models import Organization
 from dimagi.utils.couch.database import iter_docs
 
@@ -22,8 +23,9 @@ def activate_subscriptions(based_on_date=None):
     starting_date = based_on_date or datetime.date.today()
     starting_subscriptions = Subscription.objects.filter(date_start=starting_date)
     for subscription in starting_subscriptions:
-        subscription.is_active = True
-        subscription.save()
+        if not has_subscription_already_ended(subscription):
+            subscription.is_active = True
+            subscription.save()
 
 
 @periodic_task(run_every=crontab(minute=0, hour=0))
