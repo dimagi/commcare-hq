@@ -26,7 +26,9 @@ from corehq.apps.accounting.async_handlers import (
     FeatureRateAsyncHandler,
     SoftwareProductRateAsyncHandler,
 )
-from corehq.apps.accounting.utils import is_active_subscription
+from corehq.apps.accounting.utils import (
+    is_active_subscription, has_subscription_already_ended
+)
 from corehq.apps.hqwebapp.crispy import BootstrapMultiField, TextField
 from corehq.apps.domain.models import Domain
 from corehq.apps.accounting.models import (
@@ -307,8 +309,7 @@ class SubscriptionForm(forms.Form):
                     "%(start_date)s (already started)" % {
                     'start_date': self.fields['start_date'].initial,
                 })
-            if (subscription.date_end is not None
-                and subscription.date_end <= today):
+            if has_subscription_already_ended(subscription):
                 end_date_field = TextField(
                     'end_date',
                     "%(end_date)s (already ended)" % {

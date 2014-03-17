@@ -25,7 +25,10 @@ from corehq.apps.accounting.async_handlers import (FeatureRateAsyncHandler, Sele
                                                    SoftwareProductRateAsyncHandler, Select2BillingInfoHandler,
                                                    Select2SubscriptionInfoHandler)
 from corehq.apps.accounting.user_text import PricingTable
-from corehq.apps.accounting.utils import LazyEncoder, fmt_feature_rate_dict, fmt_product_rate_dict
+from corehq.apps.accounting.utils import (
+    LazyEncoder, fmt_feature_rate_dict, fmt_product_rate_dict,
+    has_subscription_already_ended
+)
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq import privileges
 from django_prbac.decorators import requires_privilege_raise404
@@ -258,11 +261,7 @@ class EditSubscriptionView(AccountingSectionView):
             'cancel_form': CancelForm(),
             'credit_form': self.get_appropriate_credit_form(self.subscription),
             'credit_list': CreditLine.objects.filter(subscription=self.subscription),
-            'disable_cancel': (
-                self.subscription.date_end is not None
-                and self.subscription.date_end <= datetime.date.today()
-                and not self.subscription.is_active
-            ),
+            'disable_cancel': has_subscription_already_ended(self.subscription),
             'form': self.get_appropriate_subscription_form(self.subscription),
             'subscription': self.subscription,
             'subscription_canceled': self.subscription_canceled if hasattr(self, 'subscription_canceled') else False,
