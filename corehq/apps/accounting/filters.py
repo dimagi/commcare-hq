@@ -1,5 +1,8 @@
 from corehq.apps.accounting.models import *
-from corehq.apps.reports.filters.base import BaseReportFilter, BaseSingleOptionFilter
+from corehq.apps.accounting.utils import get_full_name
+from corehq.apps.reports.filters.base import (
+    BaseReportFilter, BaseSingleOptionFilter
+)
 from dimagi.utils.dates import DateSpan
 from django.utils.translation import ugettext_noop as _
 
@@ -12,8 +15,8 @@ class AccountTypeFilter(BaseSingleOptionFilter):
 
 
 class NameFilter(BaseSingleOptionFilter):
-    slug = 'name'
-    label = _("Name")
+    slug = 'account_name'
+    label = _("Account Name")
     default_text = _("All")
 
     @property
@@ -178,9 +181,19 @@ class EndDateFilter(OptionalDateRangeFilter):
     label = _("End Date")
 
 
+class StatementPeriodFilter(OptionalDateRangeFilter):
+    slug = 'statement_period'
+    label = _("Statement Period")
+
+
+class DueDateFilter(OptionalDateRangeFilter):
+    slug = 'due_date'
+    label = _("Due Date")
+
+
 class SoftwarePlanNameFilter(BaseSingleOptionFilter):
-    slug = 'name'
-    label = _("Name")
+    slug = 'plan_name'
+    label = _("Plan Name")
     default_text = _("All")
 
     @property
@@ -200,3 +213,31 @@ class SoftwarePlanVisibilityFilter(BaseSingleOptionFilter):
     label = _("Visibility")
     default_text = _("All")
     options = SoftwarePlanVisibility.CHOICES
+
+
+class PaymentStatusFilter(BaseSingleOptionFilter):
+    slug = 'payment_status'
+    label = _("Payment Status")
+    default_text = _("All")
+    paid = "PAID"
+    not_paid = "NOT_PAID"
+    options = (
+        (paid, "Paid"),
+        (not_paid, "Not Paid"),
+    )
+
+
+class BillingContactFilter(BaseSingleOptionFilter):
+    slug = 'billing_contact'
+    label = _("Billing Contact Name")
+    default_text = _("All")
+
+    @property
+    def options(self):
+        return clean_options(
+            [
+                (get_full_name(contact), get_full_name(contact))
+                for contact in BillingContactInfo.objects.all()
+                if contact.first_name or contact.last_name
+            ]
+        )
