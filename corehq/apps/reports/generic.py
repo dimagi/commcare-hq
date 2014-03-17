@@ -457,9 +457,13 @@ class GenericReportView(CacheableRequestMixIn):
             Intention: This probably does not need to be overridden in general.
             Updates the context with filter information.
         """
-        self.context.update(report_filters=[dict(
+        report_filters=[dict(
             field=f.render(),
-            slug=f.slug) for f in self.filter_classes])
+            advanced=getattr(f, 'advanced', False),
+            slug=f.slug) for f in self.filter_classes]
+        advanced_filters = bool(filter(lambda f: getattr(f, 'advanced', False), self.filter_classes))
+        self.context.update(report_filters=report_filters, advanced_filters=advanced_filters)
+
 
     def update_template_context(self):
         """

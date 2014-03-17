@@ -1,4 +1,3 @@
-import datetime
 import os
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import inch

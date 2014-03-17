@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, time
 
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
+from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.users.util import WEIRD_USER_IDS
 
 from dimagi.utils.couch.database import get_db
@@ -137,9 +138,12 @@ def last_form_submission(domain, display=True):
     return display_time(row, display) if row else "No forms"
 
 def has_app(domain, *args):
-    domain = Domain.get_by_name(domain)
-    apps = domain.applications()
-    return len(apps) > 0
+    return bool(ApplicationBase.get_db().view(
+        'app_manager/applications_brief',
+        startkey=[domain],
+        endkey=[domain, {}],
+        limit=1
+    ).first())
 
 def app_list(domain, *args):
     domain = Domain.get_by_name(domain)

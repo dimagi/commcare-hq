@@ -1,4 +1,4 @@
-from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpResponseServerError
+from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_POST
 from corehq.apps.commtrack.views import BaseCommTrackManageView
@@ -19,12 +19,7 @@ from django.utils.translation import ugettext as _, ugettext_noop
 from dimagi.utils.decorators.memoized import memoized
 from custom.openlmis.tasks import bootstrap_domain_task
 from soil.util import expose_download, get_download_context
-import uuid
 from corehq.apps.commtrack.tasks import import_locations_async
-from soil import DownloadBase
-from django.shortcuts import render_to_response
-from django.template.context import RequestContext
-from soil.heartbeat import heartbeat_enabled, is_alive
 from couchexport.models import Format
 from corehq.apps.consumption.shortcuts import get_default_consumption
 

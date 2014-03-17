@@ -1,14 +1,9 @@
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
-from corehq.apps.reports.basic import Column, FunctionView, SummingTabularReport, BasicTabularReport
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 from corehq.apps.reports.fields import ReportSelectField
-from corehq.apps.reports.filters.base import BaseSingleOptionFilter, BaseDrilldownOptionFilter
+from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.filters.fixtures import MultiLocationFilter
-from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from util import get_unique_combinations
-from couchdbkit_aggregate.fn import mean, min, max
-from dimagi.utils.decorators.memoized import memoized
 
 
 class AsyncClinicField(MultiLocationFilter):

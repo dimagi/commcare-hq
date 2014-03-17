@@ -10,7 +10,7 @@ from django.conf import settings
 # Tastypie imports
 from tastypie import fields
 from tastypie.authentication import Authentication
-from tastypie.authorization import ReadOnlyAuthorization, Authorization
+from tastypie.authorization import ReadOnlyAuthorization
 from tastypie.exceptions import BadRequest
 from tastypie.throttle import CacheThrottle
 

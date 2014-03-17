@@ -36,7 +36,13 @@ from django.utils.http import urlencode
 from django.views.decorators.http import require_GET
 from django.conf import settings
 from couchdbkit.resource import ResourceNotFound
-from corehq.apps.app_manager.const import APP_V1, CAREPLAN_GOAL, CAREPLAN_TASK, APP_V2, CT_REQUISITION_MODES, MAJOR_RELEASE_TO_VERSION
+from corehq.apps.app_manager.const import (
+    APP_V1,
+    APP_V2,
+    CAREPLAN_GOAL,
+    CAREPLAN_TASK,
+    MAJOR_RELEASE_TO_VERSION,
+)
 from corehq.apps.app_manager.success_message import SuccessMessage
 from corehq.apps.app_manager.util import is_valid_case_type, get_all_case_properties, add_odk_profile_after_build, ParentCasePropertyBuilder, commtrack_ledger_sections
 from corehq.apps.app_manager.util import save_xform, get_settings_values
@@ -54,7 +60,7 @@ from corehq.apps.app_manager.xform import XFormError, XFormValidationError, Case
     XForm
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions, CommCareUser
+from corehq.apps.users.models import Permissions
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.decorators.view import get_file
 from dimagi.utils.django.cache import make_template_fragment_key

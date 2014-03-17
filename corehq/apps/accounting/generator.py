@@ -7,8 +7,6 @@ import datetime
 from django.conf import settings
 from django.core.management import call_command
 
-from django_prbac import arbitrary as role_gen
-
 from dimagi.utils.dates import add_months
 from dimagi.utils.data import generator as data_gen
 

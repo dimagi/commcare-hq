@@ -1,4 +1,4 @@
-from corehq.apps.app_manager.models import SavedAppBuild, Application
+from corehq.apps.app_manager.models import Application
 from django.core.management.base import BaseCommand
 
 
