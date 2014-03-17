@@ -161,6 +161,8 @@ class DataTablesHeader(object):
             else:
                 head.append(column.html)
                 groups.append(" ")
+
+        head = map(lambda h: h.decode('utf-8'), head)
         if use_groups:
             return [groups, head]
         else:
