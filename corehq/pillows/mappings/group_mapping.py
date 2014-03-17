@@ -1,4 +1,4 @@
-GROUP_INDEX="hqgroups_1w49s2gcvfkv6ky0h7fp48ok54yhjlxb"
+GROUP_INDEX="hqgroups_2g4222ug7mdk69tkh76p48oju38hre0k"
 GROUP_MAPPING= {
     "date_formats": [
         "yyyy-MM-dd", 
