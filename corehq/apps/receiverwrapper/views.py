@@ -38,8 +38,14 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             'request': unicode(request),
             'response': unicode(response),
         })
-        logging.error('Status code 400 for a form submission. '
-                      'See couchlog db for more info: %s' % db_response['id'])
+        logging.error(
+            'Status code 400 for a form submission. '
+            'Response is: \n{0}\n'
+            'See couchlog db for more info: {1}'.format(
+                unicode(response),
+                db_response['id'],
+            )
+        )
     return response
 
 
