@@ -4,6 +4,7 @@ import re
 from datetime import datetime
 import logging
 import copy
+import sys
 from dimagi.utils.parsing import json_format_date, json_format_datetime
 
 from django.core.cache import cache
@@ -921,7 +922,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin,
         deduplicated_actions = _further_deduplicate(deduplicated_actions)
         sorted_actions = sorted(
             deduplicated_actions,
-            key=lambda a: (a.server_date, a.xform_id, _type_sort(a.action_type))
+            key=_action_sort_key_function(self)
         )
         if sorted_actions:
             if sorted_actions[0].action_type != const.CASE_ACTION_CREATE:
@@ -941,7 +942,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin,
         """
         # try to re-sort actions if necessary
         try:
-            self.actions = sorted(self.actions, key=_action_cmp)
+            self.actions = sorted(self.actions, key=_action_sort_key_function(self))
         except MissingServerDate:
             # only worry date reconciliation if in strict mode
             if strict:
@@ -1156,14 +1157,24 @@ class CommCareCaseGroup(Document):
         return data['value'] if data else 0
 
 
-def _action_cmp(action):
-    if not action.server_date or not action.date:
-        raise MissingServerDate()
-    return '{server_date} {phone_date} {type}'.format(
-        server_date=json_format_date(action.server_date),
-        phone_date=json_format_datetime(action.date),
-        type=_type_sort(action.action_type),
-    )
+def _action_sort_key_function(case):
+    form_ids = list(case.xform_ids)
+
+    def _sortkey(action):
+        if not action.server_date or not action.date:
+            raise MissingServerDate()
+
+        form_cmp = lambda form_id: (form_ids.index(form_id) if form_id in form_ids else sys.maxint, form_id)
+        return (
+            # this is sneaky - it's designed to use just the date for the
+            # server time in case the phone submits two forms quickly out of order
+            action.server_date.date(),
+            action.date,
+            form_cmp(action.xform_id),
+            _type_sort(action.action_type),
+        )
+
+    return _sortkey
 
 
 def _type_sort(action_type):
