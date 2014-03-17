@@ -7,12 +7,12 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        
-        # Removing unique constraint on 'CaseDomainMapping', fields ['case_id', 'domain_name']
-        db.delete_unique(u'stock_casedomainmapping', ['case_id', 'domain_name'])
 
-        # Deleting model 'CaseDomainMapping'
-        db.delete_table(u'stock_casedomainmapping')
+        # Removing unique constraint on 'StockState', fields ['section_id', 'case_id', 'product_id']
+        db.delete_unique(u'stock_stockstate', ['section_id', 'case_id', 'product_id'])
+
+        # Deleting model 'StockState'
+        db.delete_table(u'stock_stockstate')
 
         # Adding model 'DocDomainMapping'
         db.create_table(u'stock_docdomainmapping', (
@@ -25,16 +25,20 @@ class Migration(SchemaMigration):
 
     def backwards(self, orm):
         
-        # Adding model 'CaseDomainMapping'
-        db.create_table(u'stock_casedomainmapping', (
+        # Adding model 'StockState'
+        db.create_table(u'stock_stockstate', (
             ('case_id', self.gf('django.db.models.fields.CharField')(max_length=100, db_index=True)),
-            ('domain_name', self.gf('django.db.models.fields.CharField')(max_length=100)),
+            ('stock_on_hand', self.gf('django.db.models.fields.DecimalField')(default='0', max_digits=20, decimal_places=5)),
+            ('product_id', self.gf('django.db.models.fields.CharField')(max_length=100, db_index=True)),
+            ('daily_consumption', self.gf('django.db.models.fields.DecimalField')(null=True, max_digits=20, decimal_places=5)),
+            ('last_modified_date', self.gf('django.db.models.fields.DateTimeField')()),
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('section_id', self.gf('django.db.models.fields.CharField')(max_length=100, db_index=True)),
         ))
-        db.send_create_signal(u'stock', ['CaseDomainMapping'])
+        db.send_create_signal(u'stock', ['StockState'])
 
-        # Adding unique constraint on 'CaseDomainMapping', fields ['case_id', 'domain_name']
-        db.create_unique(u'stock_casedomainmapping', ['case_id', 'domain_name'])
+        # Adding unique constraint on 'StockState', fields ['section_id', 'case_id', 'product_id']
+        db.create_unique(u'stock_stockstate', ['section_id', 'case_id', 'product_id'])
 
         # Deleting model 'DocDomainMapping'
         db.delete_table(u'stock_docdomainmapping')
@@ -53,16 +57,6 @@ class Migration(SchemaMigration):
             'form_id': ('django.db.models.fields.CharField', [], {'max_length': '100', 'db_index': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'type': ('django.db.models.fields.CharField', [], {'max_length': '20'})
-        },
-        u'stock.stockstate': {
-            'Meta': {'unique_together': "(('section_id', 'case_id', 'product_id'),)", 'object_name': 'StockState'},
-            'case_id': ('django.db.models.fields.CharField', [], {'max_length': '100', 'db_index': 'True'}),
-            'daily_consumption': ('django.db.models.fields.DecimalField', [], {'null': 'True', 'max_digits': '20', 'decimal_places': '5'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'last_modified_date': ('django.db.models.fields.DateTimeField', [], {}),
-            'product_id': ('django.db.models.fields.CharField', [], {'max_length': '100', 'db_index': 'True'}),
-            'section_id': ('django.db.models.fields.CharField', [], {'max_length': '100', 'db_index': 'True'}),
-            'stock_on_hand': ('django.db.models.fields.DecimalField', [], {'default': "'0'", 'max_digits': '20', 'decimal_places': '5'})
         },
         u'stock.stocktransaction': {
             'Meta': {'object_name': 'StockTransaction'},
