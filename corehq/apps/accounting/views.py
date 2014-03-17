@@ -260,7 +260,9 @@ class EditSubscriptionView(AccountingSectionView):
             'credit_list': CreditLine.objects.filter(subscription=self.subscription),
             'disable_cancel': (
                 self.subscription.date_end is not None
-                and self.subscription.date_end < datetime.date.today()),
+                and self.subscription.date_end <= datetime.date.today()
+                and not self.subscription.is_active
+            ),
             'form': self.get_appropriate_subscription_form(self.subscription),
             'subscription': self.subscription,
             'subscription_canceled': self.subscription_canceled if hasattr(self, 'subscription_canceled') else False,
