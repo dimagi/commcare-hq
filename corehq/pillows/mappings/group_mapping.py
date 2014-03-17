@@ -1,4 +1,4 @@
-GROUP_INDEX="hqgroups_2g4222ug7mdk69tkh76p48oju38hre0k"
+GROUP_INDEX="hqgroups_htj2o87ep2eug2g3k46hh2a67tn0r8d9"
 GROUP_MAPPING= {
     "date_formats": [
         "yyyy-MM-dd", 
@@ -41,8 +41,9 @@ GROUP_MAPPING= {
         "name": {
             "fields": {
                 "exact": {
-                    "index": "not_analyzed", 
-                    "type": "string"
+                    "index": "analyzed", 
+                    "type": "string",
+                    "analyzer": "sortable_exact"
                 }, 
                 "name": {
                     "index": "analyzed", 
