@@ -1,12 +1,12 @@
 from corehq.apps.commtrack.util import num_periods_late
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import Location
-from corehq.apps.commtrack.models import Product, SupplyPointCase
+from corehq.apps.commtrack.models import Product, SupplyPointCase, StockState
 from corehq.apps.domain.models import Domain
 from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.reports.api import ReportDataSource
 from datetime import datetime, timedelta
-from casexml.apps.stock.models import StockState, StockTransaction
+from casexml.apps.stock.models import StockTransaction
 from django.db.models import Sum, Avg
 from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, product_ids_filtered_by_program
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE

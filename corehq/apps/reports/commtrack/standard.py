@@ -6,7 +6,7 @@ from corehq.apps.commtrack.util import supply_point_type_categories
 from corehq.apps.reports.commtrack.data_sources import StockStatusDataSource, ReportingStatusDataSource, is_timely
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.commtrack.models import Product, CommtrackConfig, CommtrackActionConfig
+from corehq.apps.commtrack.models import Product, CommtrackConfig, CommtrackActionConfig, StockState
 from corehq.apps.reports.graph_models import PieChart, MultiBarChart, Axis
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin
 from dimagi.utils.couch.loosechange import map_reduce
@@ -16,7 +16,6 @@ from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
-from casexml.apps.stock.models import StockState
 from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, product_ids_filtered_by_program
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 
