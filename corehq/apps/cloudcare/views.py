@@ -1,6 +1,6 @@
 from couchdbkit import ResourceConflict
 from django.utils.decorators import method_decorator
-from corehq.apps.accounting.decorators import requires_privilege_plaintext_response, requires_privilege_for_commcare_user, requires_privilege_with_fallback
+from corehq.apps.accounting.decorators import requires_privilege_for_commcare_user, requires_privilege_with_fallback
 from dimagi.utils.couch.database import iter_docs
 from django.views.decorators.cache import cache_page
 from casexml.apps.case.models import CommCareCase

@@ -89,7 +89,7 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
                 q["filter"]["and"].append({"terms": {"xmlns.exact": xmlnss}})
 
             users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
-            if "_all_mobile_workers" not in self.request.GET.getlist("emw") or users_data["admin_and_demo_users"]:
+            if "t__0" not in self.request.GET.getlist("emw") or users_data["admin_and_demo_users"]:
                 q["filter"]["and"].append(
                     {"terms": {"form.meta.userID": filter(None, [u["user_id"] for u in users_data["combined_users"]])}})
             else:

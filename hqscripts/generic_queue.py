@@ -1,9 +1,6 @@
 from datetime import datetime
 from time import sleep
-from optparse import make_option
-from django.core.management.base import BaseCommand, CommandError
-from django.conf import settings
-from dimagi.utils.parsing import string_to_datetime, json_format_datetime
+from django.core.management.base import BaseCommand
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.logging import notify_exception
 from redis_cache.cache import RedisCache

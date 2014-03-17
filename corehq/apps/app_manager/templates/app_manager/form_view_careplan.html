@@ -42,17 +42,8 @@
     </script>
     <script>
         $(function () {
-            var validation_url = '{% url "validate_form_for_build" domain app.id form.unique_id %}';
-            COMMCAREHQ.app_manager.fetchAndShowFormValidation = function () {
-                $.getJSON(validation_url, function (data) {
-                    $('#form_build_errors').html(data.error_html);
-                });
-            };
-            if ($.cookie('suppress_build_errors')) {
-                $.cookie('suppress_build_errors', null, {path: '/'});
-            } else {
-                COMMCAREHQ.app_manager.fetchAndShowFormValidation();
-            }
+            COMMCAREHQ.app_manager.setupValidation(
+                '{% url "validate_form_for_build" domain app.id form.unique_id %}');
         });
     </script>
 {% endblock %}
@@ -62,7 +53,7 @@
 {% endblock %}
 {% block form-view %}
 
-    <div id="form_build_errors"></div>
+    <div id="build_errors"></div>
 
     <h3>
         <i class="icon icon-file-alt"></i>

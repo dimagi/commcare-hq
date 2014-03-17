@@ -10,6 +10,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest
 from django.utils.decorators import method_decorator
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
+from corehq.util.translation import localize
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -26,7 +27,7 @@ from corehq.apps.accounting.async_handlers import (FeatureRateAsyncHandler, Sele
 from corehq.apps.accounting.user_text import PricingTable
 from corehq.apps.accounting.utils import LazyEncoder, fmt_feature_rate_dict, fmt_product_rate_dict
 from corehq.apps.hqwebapp.views import BaseSectionPageView
-from corehq import toggles, privileges
+from corehq import privileges
 from django_prbac.decorators import requires_privilege_raise404
 
 
@@ -403,11 +404,19 @@ def pricing_table_json(request, product, locale):
         return HttpResponseBadRequest("Not a valid product")
     if locale not in [l[0] for l in settings.LANGUAGES]:
         return HttpResponseBadRequest("Not a supported language.")
-    translation.activate(locale)
-    table = PricingTable.get_table_by_product(product)
-    table_json = json.dumps(table, cls=LazyEncoder)
-    translation.deactivate()
-    response = HttpResponse(table_json, content_type='application/json')
+    with localize(locale):
+        table = PricingTable.get_table_by_product(product)
+        table_json = json.dumps(table, cls=LazyEncoder)
+
+
+    # This is necessary for responding to requests from Internet Explorer.
+    # IE you can FOAD.
+    callback = request.GET.get('callback') or request.POST.get('callback')
+    if callback is not None:
+        table_json = "%s(%s)" % (callback, table_json)
+
+    response = HttpResponse(table_json,
+                            content_type='application/json; charset=UTF-8')
     response["Access-Control-Allow-Origin"] = "*"
     response["Access-Control-Allow-Methods"] = "POST, GET, OPTIONS"
     response["Access-Control-Max-Age"] = "1000"

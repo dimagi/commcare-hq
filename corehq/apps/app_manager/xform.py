@@ -2,7 +2,7 @@ from collections import defaultdict
 from casexml.apps.case.xml import V2_NAMESPACE
 from corehq.apps.app_manager.const import APP_V1
 from lxml import etree as ET
-from .xpath import CaseIDXPath, session_var, XPath, CaseTypeXpath
+from .xpath import CaseIDXPath, session_var, CaseTypeXpath
 from .exceptions import XFormError, CaseError, XFormValidationError, BindNotFound
 import formtranslate.api
 
@@ -152,7 +152,7 @@ class ItextNodeGroup(object):
 
     def add_node(self, node):
         if self.nodes.get(node.lang):
-            raise Exception("Group already has node for lang: {}".format(node.lang))
+            raise Exception("Group already has node for lang: {0}".format(node.lang))
         else:
             self.nodes[node.lang] = node
 
@@ -165,10 +165,10 @@ class ItextNodeGroup(object):
         return True
 
     def __hash__(self):
-        return ''.join(["{}{}".format(n.lang, n.values) for n in self.nodes.values()]).__hash__()
+        return ''.join(["{0}{1}".format(n.lang, n.values) for n in self.nodes.values()]).__hash__()
 
     def __repr__(self):
-        return "{}, {}".format(self.id, self.nodes)
+        return "{0}, {1}".format(self.id, self.nodes)
 
 
 class ItextNode(object):
@@ -458,16 +458,16 @@ class XForm(WrappedNode):
         for d in duplicates:
             d = sorted(d, key=lambda ng: ng.id)
             reference = d[0]
-            new_ref = u"jr:itext('{}')".format(reference.id)
+            new_ref = u"jr:itext('{0}')".format(reference.id)
 
             for group in d[1:]:
-                itext_ref = u'{{f}}text[@id="{}"]'.format(group.id)
+                itext_ref = u'{{f}}text[@id="{0}"]'.format(group.id)
                 for lang in group.nodes.keys():
                     translation = translations[lang]
                     node = translation.find(itext_ref)
                     translation.remove(node.xml)
 
-                old_ref_xpath = u'.//*[@ref="jr:itext(\'{}\')"]'.format(group.id)
+                old_ref_xpath = u'.//*[@ref="jr:itext(\'{0}\')"]'.format(group.id)
                 for ref in self.findall(old_ref_xpath):
                     if ref.xml is not None:
                         ref.attrib['ref'] = new_ref
@@ -1052,12 +1052,12 @@ class XForm(WrappedNode):
         if not form.actions.get_all_actions():
             return
 
-        case_tag = lambda a: "case_{}".format(a.case_tag)
+        case_tag = lambda a: "case_{0}".format(a.case_tag)
 
         def create_case_block(action, bind_case_id_xpath=None):
             tag = case_tag(action)
             path = tag + '/'
-            base_node = _make_elem("{{x}}{}".format(tag))
+            base_node = _make_elem("{{x}}{0}".format(tag))
             self.data_node.append(base_node)
             case_block = CaseBlock(self, path=path)
 
@@ -1214,7 +1214,7 @@ class XForm(WrappedNode):
                 return node
 
             if base_node_path:
-                node_xpath = "{{x}}{}".format(base_node_path[:-1])
+                node_xpath = "{{x}}{0}".format(base_node_path[:-1])
                 base_node = self.data_node.find(node_xpath)
             else:
                 base_node = self.data_node

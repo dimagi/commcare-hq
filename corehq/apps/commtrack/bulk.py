@@ -75,8 +75,9 @@ def import_products(domain, download, task):
             messages.append(str(e))
     if products:
         Product.get_db().bulk_save(products)
-        messages.insert(0, _('Successfullly updated %s products with %s errors.') % (len(products), len(messages)))
-    return messages
+        messages.insert(0, _('Successfullly updated {products} products with {errors} errors.').format(
+            products=len(products), errors=len(messages))
+        )
 
 
 def validate_headers(domain, headers):

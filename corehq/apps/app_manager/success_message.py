@@ -1,6 +1,5 @@
 from datetime import timedelta, datetime
-import re
-from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.apps.users.models import CommCareUser
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.parsing import json_format_datetime
 from string import Template

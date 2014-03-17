@@ -1,12 +1,4 @@
-from django.core.urlresolvers import reverse
-from django.utils.datastructures import SortedDict
-import os
-import sys
-import logging
 from corehq.apps.app_manager.xform import XFormValidationError, XFormError
-from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import CouchUser
-from corehq.apps.hqmedia.models import CommCareMultimedia, CommCareAudio, CommCareImage, HQMediaMapItem
 from corehq.apps.domain.models import LICENSES
 
 MULTIMEDIA_PREFIX = "jr://file/"

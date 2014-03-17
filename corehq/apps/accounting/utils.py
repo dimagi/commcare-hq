@@ -3,7 +3,7 @@ import datetime
 import json
 from django.utils.encoding import force_unicode
 from django.utils.functional import Promise
-from corehq import Domain, privileges, toggles
+from corehq import Domain, privileges
 from corehq.apps.accounting.exceptions import AccountingError
 from dimagi.utils.dates import add_months
 from django_prbac.models import Role
@@ -119,3 +119,14 @@ def domain_has_privilege(domain, privilege_slug, **assignment):
     except AccountingError:
         pass
     return False
+
+
+def get_money_str(amount):
+    if amount is not None:
+        if amount < 0:
+            fmt = "-$%0.2f"
+            amount = abs(amount)
+        else:
+            fmt = "$%0.2f"
+        return fmt % amount
+    return ""

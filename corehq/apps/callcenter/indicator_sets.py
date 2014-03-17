@@ -1,6 +1,6 @@
 from datetime import date, timedelta
 from couchdbkit.exceptions import MultipleResultsFound
-from sqlagg.columns import SumColumn, SimpleColumn, SumWhen, CountUniqueColumn
+from sqlagg.columns import SumColumn, SimpleColumn, SumWhen, CountUniqueColumn, CountColumn
 from sqlagg import filters
 from corehq.apps.callcenter.utils import MAPPING_NAME_FORMS, MAPPING_NAME_CASES, MAPPING_NAME_CASE_OWNERSHIP
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
@@ -88,15 +88,15 @@ class CallCenter(SqlIndicatorSet):
                            format_fn=self.get_user_case_id,
                            sortable=False),
             DatabaseColumn('formsSubmittedWeek0',
-                           SumColumn('sumbission_count', alias='formsSubmittedWeek0'),
+                           CountColumn('date', alias='formsSubmittedWeek0'),
                            sortable=False),
             DatabaseColumn('formsSubmittedWeek1',
-                           SumColumn('sumbission_count',
+                           CountColumn('date',
                                      filters=filters_week1,
                                      alias='formsSubmittedWeek1'),
                            sortable=False),
             DatabaseColumn('formsSubmittedMonth0',
-                           SumColumn('sumbission_count',
+                           CountColumn('date',
                                      filters=filters_month0,
                                      alias='formsSubmittedMonth0'),
                            sortable=False),
@@ -140,7 +140,7 @@ class CallCenter(SqlIndicatorSet):
     def _get_form_sum_column(self, meta, slug_suffix, filters):
         slug = '%s%s' % (meta['slug'], slug_suffix)
         agg_col = SumWhen(
-            whens={"xmlns = '%s'" % meta['xmlns']: 'sumbission_count'},
+            whens={"xmlns = '%s'" % meta['xmlns']: 1},
             else_=0,
             filters=filters,
             alias=slug)
@@ -150,12 +150,12 @@ class CallCenter(SqlIndicatorSet):
         slug = '%s%s' % (meta['slug'], slug_suffix)
         when = "xmlns = '%s'" % meta['xmlns']
         dur_col = SumWhen(
-            whens={when: 'duration_sum'},
+            whens={when: 'duration'},
             else_=0,
             filters=filters,
             alias='%s_sum' % slug)
         count_col = SumWhen(
-            whens={when: 'sumbission_count'},
+            whens={when: 1},
             else_=0,
             filters=filters,
             alias='%s_count' % slug)

@@ -1,6 +1,7 @@
 from django.utils.translation import ugettext_noop
 from dimagi.utils.couch.database import get_db
 from corehq.apps.reports.filters.base import BaseReportFilter
+from phonelog.models import Log
 import settings
 
 
@@ -16,13 +17,9 @@ class DeviceLogTagFilter(BaseReportFilter):
         errors_only = bool(self.request.GET.get(self.errors_only_slug, False))
         selected_tags = self.request.GET.getlist(self.slug)
         show_all = bool(not selected_tags)
-        data = get_db().view('phonelog/device_log_tags',
-                             group=True,
-                             #stale=settings.COUCH_STALE_QUERY,
-        )
-        tags = [dict(name=item['key'],
-                    show=bool(show_all or item['key'] in selected_tags))
-                    for item in data]
+        tags = [dict(name=l['type'],
+                    show=bool(show_all or l['type'] in selected_tags))
+                    for l in Log.objects.values('type').distinct()]
         context = {
             'errors_only_slug': self.errors_only_slug,
             'default_on': show_all,
@@ -37,37 +34,32 @@ class BaseDeviceLogFilter(BaseReportFilter):
     # todo: make this better
     slug = "logfilter"
     template = "reports/filters/devicelog_filter.html"
-    view = "phonelog/devicelog_data"
+    field = None
     label = ugettext_noop("Filter Logs By")
+
+    def get_filters(self, selected):
+        show_all = bool(not selected)
+        it = Log.objects.filter(domain__exact=self.domain).values(self.field).distinct()
+        return [dict(name=f[self.field],
+                    show=bool(show_all or f[self.field] in selected))
+                    for f in it]
 
     @property
     def filter_context(self):
         selected = self.request.GET.getlist(self.slug)
-        show_all = bool(not selected)
-
-        data = get_db().view(
-            self.view,
-            startkey = [self.domain],
-            endkey = [self.domain, {}],
-            group=True,
-            #stale=settings.COUCH_STALE_QUERY,
-        )
-        filters = [dict(name=item['key'][-1],
-                    show=bool(show_all or item['key'][-1] in selected))
-                        for item in data]
         return {
-            'filters': filters,
-            'default_on': show_all
+            'filters': self.get_filters(selected),
+            'default_on': bool(not selected)
         }
 
 
 class DeviceLogUsersFilter(BaseDeviceLogFilter):
     slug = "loguser"
-    view = "phonelog/devicelog_data_users"
     label = ugettext_noop("Filter Logs by Username")
+    field = 'username'
 
 
 class DeviceLogDevicesFilter(BaseDeviceLogFilter):
     slug = "logdevice"
-    view = "phonelog/devicelog_data_devices"
     label = ugettext_noop("Filter Logs by Device")
+    field = 'device_id'

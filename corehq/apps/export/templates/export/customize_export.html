@@ -331,9 +331,10 @@
                     self.save.state('saving');
                     $.post(self.urls.save(), self.output()).done(function (data) {
                         window.location.href = data.redirect;
-                    }).fail(function () {
+                    }).fail(function (response) {
+                        var data = $.parseJSON(response.responseText);
                         self.save.state('error');
-                        alert('There was an error saving.');
+                        alert('There was an error saving: ' + data.error);
                     });
                 };
                 self.save.state = ko.observable('save');

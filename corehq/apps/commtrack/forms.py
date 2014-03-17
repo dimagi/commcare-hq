@@ -6,6 +6,7 @@ from crispy_forms.layout import Layout, Fieldset, ButtonHolder, Submit
 from corehq.apps.commtrack.models import Product, Program
 from corehq.apps.commtrack.util import all_sms_codes
 from corehq.apps.consumption.shortcuts import set_default_consumption_for_product, get_default_consumption
+from django.core.urlresolvers import reverse
 
 
 class CurrencyField(forms.DecimalField):
@@ -100,6 +101,10 @@ class AdvancedSettingsForm(forms.Form):
         label=ugettext_lazy("Minimum Window for Calculation (Days)"), required=False)
     consumption_optimal_window = forms.IntegerField(
         label=ugettext_lazy("Optimal Window for Calculation (Days)"), required=False)
+    individual_consumption_defaults = forms.BooleanField(
+        label=ugettext_lazy("Configure consumption defaults individually by supply point"),
+        required=False
+    )
 
     sync_location_fixtures = forms.BooleanField(
         label=ugettext_lazy("Sync location fixtures"), required=False)
@@ -142,6 +147,7 @@ class AdvancedSettingsForm(forms.Form):
                 'consumption_min_transactions',
                 'consumption_min_window',
                 'consumption_optimal_window',
+                'individual_consumption_defaults',
             ),
             Fieldset(
                 _('Phone Settings'),
@@ -153,7 +159,16 @@ class AdvancedSettingsForm(forms.Form):
             )
         )
 
+        from corehq.apps.locations.views import LocationImportView
+        url = reverse(
+            LocationImportView.urlname, args=[kwargs.pop('domain')]
+        )
+
         forms.Form.__init__(self, *args, **kwargs)
+
+        self.fields['individual_consumption_defaults'].help_text = _(
+            "This is configured on the <a href='{url}'>bulk location import page</a>."
+        ).format(url=url)
 
 
 class ConsumptionForm(forms.Form):
