@@ -3,6 +3,8 @@ from django.core.urlresolvers import NoReverseMatch, reverse
 from django.utils.translation import ugettext as _, ugettext_noop
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.api.es import ReportCaseES
+from corehq.apps.app_manager.models import ApplicationBase
+from corehq.apps.cloudcare.api import get_cloudcare_app
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.standard import CustomProjectReport
@@ -14,9 +16,10 @@ from corehq.pillows.base import restore_property_dict
 from django.utils import html
 import dateutil
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
-from custom.succeed.utils import CONFIG, _is_succeed_admin, SUCCEED_APPNAME, _get_app_by_name
+from custom.succeed.utils import CONFIG, _is_succeed_admin, SUCCEED_CLOUD_APPNAME
 import logging
 import simplejson
+from casexml.apps.case.models import CommCareCase
 
 
 EMPTY_FIELD = "---"
@@ -46,57 +49,68 @@ VISIT_SCHEDULE = [
     {
         'visit_name': _('CM Initial contact form'),
         'xmlns': CM1,
-        'days': 5
+        'days': 5,
+        'target_date_case_property': 'CM1_form_target'
     },
     {
         'visit_name': _('CM Medical Record Review'),
         'xmlns': CM2,
-        'days': 7
+        'days': 7,
+        'target_date_case_property': 'CM2_form_target'
     },
     {
         'visit_name': _('Cm 1-week Telephone Call'),
         'xmlns': CM3,
-        'days': 10
+        'days': 10,
+        'target_date_case_property': 'CM3_form_target'
     },
     {
         'visit_name': _('CM Initial huddle'),
         'xmlns': HUD1,
-        'days': 21
+        'days': 21,
+        'target_date_case_property': 'HUD1_form_target'
     },
     {
         'visit_name': _('CM Home Visit 1'),
         'xmlns': CHW1,
-        'days': 35
+        'days': 35,
+        'target_date_case_property': 'CHW1_form_target'
     },
     {
         'visit_name': _('CM Clinic Visit 1'),
         'xmlns': CM4,
-        'days': 49
+        'days': 49,
+        'target_date_case_property': 'CM4_form_target'
     },
     {
         'visit_name': _('CM Home Visit 2'),
         'xmlns': CHW2,
-        'days': 100
+        'days': 100,
+        'target_date_case_property': 'CHW2_form_target'
     },
     {
         'visit_name': _('CM Clinic Visit 2'),
         'xmlns': CM5,
-        'days': 130
+        'days': 130,
+        'target_date_case_property': 'CM5_form_target'
     },
     {
         'visit_name': _('CHW CDSMP tracking'),
         'xmlns': CHW4,
-        'days': 135
+        'days': 135,
+        'target_date_case_property': 'CHW4_form_target'
     },
     {
         'visit_name': _('CM Home Visit 3'),
         'xmlns': CHW2,
-        'days': 200
+        'days': 200,
+        'target_date_case_property': 'CHW2-2_form_target'
     },
     {
         'visit_name': _('CM Clinic Visit 3'),
         'xmlns': CM5,
-        'days': 250
+        'days': 250,
+        'target_date_case_property': 'CM5-2_form_target'
     },
 ]
 
@@ -124,9 +138,10 @@ class PatientListReportDisplay(CaseDisplay):
         self.next_visit = next_visit
         if last_inter:
             self.last_interaction = last_inter['date']
-        self.app_dict = _get_app_by_name(report.domain, SUCCEED_APPNAME).to_json()
-        self.latest_build =  self.app_dict['_id']
+        self.app_dict = get_cloudcare_app(report.domain, SUCCEED_CLOUD_APPNAME)
+        self.latest_build = ApplicationBase.get_latest_build(report.domain, self.app_dict['_id'])['_id']
         super(PatientListReportDisplay, self).__init__(report, case_dict)
+        self.update_target_date_case_properties()
 
     def get_property(self, key):
         if key in self.case:
@@ -146,10 +161,23 @@ class PatientListReportDisplay(CaseDisplay):
         else:
             return "%s (bad ID format)" % self.case_name
 
+    def update_target_date_case_properties(self):
+        case = CommCareCase.get(self.case_id)
+        for visit_key, visit in enumerate(VISIT_SCHEDULE):
+            try:
+                next_visit = VISIT_SCHEDULE[visit_key + 1]
+            except IndexError:
+                next_visit = 'last'
+            if next_visit != 'last':
+                rand_date = dateutil.parser.parse(self.randomization_date)
+                tg_date = rand_date.date() + timedelta(days=next_visit['days'])
+                case.set_case_property(visit['target_date_case_property'], tg_date.strftime("%m/%d/%Y"))
+        case.save()
+
     @property
     def edit_link(self):
-        base_url = '/a/%(domain)s/cloudcare/apps/view/%(build_id)s/%(module_id)s/%(form_id)s?preview=true'
-        module = self.app_dict['modules'][1]
+        base_url = '/a/%(domain)s/cloudcare/apps/view/%(build_id)s/%(module_id)s/%(form_id)s/case/%(case_id)s/enter/'
+        module = self.app_dict['modules'][0]
         form_idx = [ix for (ix, f) in enumerate(module['forms']) if f['xmlns'] == CM7][0]
         return html.mark_safe("<a class='ajax_dialog' href='%s'>Edit</a>") \
             % html.escape(base_url % dict(
@@ -157,7 +185,7 @@ class PatientListReportDisplay(CaseDisplay):
                 case_id=self.case_id,
                 domain=self.app_dict['domain'],
                 build_id=self.latest_build,
-                module_id=1
+                module_id=0
             )
         )
 
@@ -196,7 +224,7 @@ class PatientListReportDisplay(CaseDisplay):
             rand_date = dateutil.parser.parse(self.randomization_date)
             tg_date = ((rand_date.date() + timedelta(days=next_visit['days'])) - datetime.now().date()).days
             if tg_date >= 7:
-                return rand_date.date() + timedelta(days=next_visit['days'])
+                return (rand_date.date() + timedelta(days=next_visit['days'])).strftime("%m/%d/%Y")
             elif 7 > tg_date > 0:
                 return "<span style='background-color: #FFFF00;padding: 5px;display: block;'> In %s day(s)</span>" % tg_date
             elif tg_date == 0:
