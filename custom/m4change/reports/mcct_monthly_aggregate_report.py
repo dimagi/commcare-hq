@@ -1,12 +1,11 @@
 from django.utils.translation import ugettext as _
 
-from corehq.apps.locations.models import Location
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, NumericColumn
 from corehq.apps.reports.fields import AsyncLocationField
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin
 from corehq.apps.reports.standard.cases.basic import CaseListReport
-from custom.m4change.reports import validate_report_parameters
+from custom.m4change.reports import validate_report_parameters, get_location_hierarchy_by_id
 from custom.m4change.reports.reports import M4ChangeReport
 from custom.m4change.reports.sql_data import McctMonthlyAggregateFormSqlData
 
@@ -42,8 +41,7 @@ class McctMonthlyAggregateReport(MonthYearMixin, CustomProjectReport, CaseListRe
         domain = config["domain"]
         location_id = config["location_id"]
         sql_data = McctMonthlyAggregateFormSqlData(domain=domain, datespan=config["datespan"]).data
-        top_location = Location.get(location_id)
-        locations = [top_location.get_id] + [descendant.get_id for descendant in top_location.descendants]
+        locations = get_location_hierarchy_by_id(location_id, domain)
         row_data = McctMonthlyAggregateReport.get_initial_row_data()
 
         for location_id in locations:
