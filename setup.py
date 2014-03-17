@@ -8,10 +8,10 @@ setup(
     author='Dimagi',
     author_email='dev@dimagi.com',
     url='http://www.dimagi.com/',
-    install_requires = [
+    install_requires=[
         'celery==3.0.15',
         'jsonobject-couchdbkit>=0.6.5.2',
-        'couchforms==2.1.0',
+        'couchforms==3.0.0',
         'couchexport',
         'decorator',
         'dimagi-utils>=1.0.9',
@@ -19,21 +19,19 @@ setup(
         'requests==2.0.0',
         'django-digest',
         'lxml',
-        'mock', # Actually a missing dimagi-utils dep?
-        'receiver>=1.0.0',
+        'mock',  # Actually a missing dimagi-utils dep?
         'requests==2.0.0',
         'restkit',
         'python-digest',
         'pytz',
         'simplejson',
         'Pillow==2.0.0',
-        'unittest2', # Actually a missing dimagi-utils dep?
+        'unittest2',  # Actually a missing dimagi-utils dep?
     ],
-    tests_require = [
+    tests_require=[
         'coverage',
-        'django-coverage',    
+        'django-coverage',
     ],
-    packages = find_packages(exclude=['*.pyc']),
-    include_package_data=True
+    packages=find_packages(exclude=['*.pyc']),
+    include_package_data=True,
 )
-

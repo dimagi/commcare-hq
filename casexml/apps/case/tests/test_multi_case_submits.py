@@ -12,8 +12,8 @@ class MultiCaseTest(TestCase):
     
     def setUp(self):
         settings.CASEXML_FORCE_DOMAIN_CHECK = False
-        delete_all_cases()
         delete_all_xforms()
+        delete_all_cases()
 
     def testParallel(self):
         self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False).all()))
@@ -52,9 +52,6 @@ class MultiCaseTest(TestCase):
 
     def _get_cases(self):
         return CommCareCase.view("case/get_lite", reduce=False, include_docs=True).all()
-
-    def _get_forms(self):
-        return XFormInstance.view("couchforms/by_xmlns", reduce=False, include_docs=True).all()
 
     def _check_ids(self, form, cases):
         for case in cases:

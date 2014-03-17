@@ -81,10 +81,64 @@ class CaseRebuildTest(TestCase):
 
         # rebuild by flipping the actions
         case.actions = [case.actions[0], a2, a1]
+        case.xform_ids = [case.xform_ids[0], case.xform_ids[2], case.xform_ids[1]]
         case.rebuild()
         self.assertEqual(case.p1, 'p1-1') # original
         self.assertEqual(case.p2, 'p2-1') # updated (back!)
         self.assertEqual(case.p3, 'p3-2') # new
+
+    def testActionComparison(self):
+        case_id = post_util(create=True, property='a1 wins')
+        post_util(case_id=case_id, property='a2 wins')
+        post_util(case_id=case_id, property='a3 wins')
+
+        # check initial state
+        case = CommCareCase.get(case_id)
+        create, a1, a2, a3 = deepcopy(list(case.actions))
+        self.assertEqual('a3 wins', case.property)
+        self.assertEqual(a1.updated_unknown_properties['property'], 'a1 wins')
+        self.assertEqual(a2.updated_unknown_properties['property'], 'a2 wins')
+        self.assertEqual(a3.updated_unknown_properties['property'], 'a3 wins')
+
+        def _confirm_action_order(case, expected_actions):
+            actual_actions = case.actions[1:]  # always assume create is first and removed
+            for expected, actual in zip(expected_actions, actual_actions):
+                self.assertEqual(expected.updated_unknown_properties['property'],
+                                 actual.updated_unknown_properties['property'])
+
+        _confirm_action_order(case, [a1, a2, a3])
+
+        # test initial rebuild does nothing
+        case.rebuild()
+        _confirm_action_order(case, [a1, a2, a3])
+
+        # test sorting by server date
+        case.actions[2].server_date = case.actions[2].server_date + timedelta(days=1)
+        case.rebuild()
+        _confirm_action_order(case, [a1, a3, a2])
+
+        # test sorting by date within the same day
+        case = CommCareCase.get(case_id)
+        _confirm_action_order(case, [a1, a2, a3])
+        case.actions[2].date = case.actions[3].date + timedelta(minutes=1)
+        case.rebuild()
+        _confirm_action_order(case, [a1, a3, a2])
+
+        # test original form order
+        case = CommCareCase.get(case_id)
+        case.actions[3].server_date = case.actions[2].server_date
+        case.actions[3].date = case.actions[2].date
+        case.xform_ids = [a1.xform_id, a3.xform_id, a2.xform_id]
+        case.rebuild()
+        _confirm_action_order(case, [a1, a3, a2])
+
+        # test create comes before update
+        case = CommCareCase.get(case_id)
+        case.actions = [a1, create, a2, a3]
+        case.rebuild()
+        _confirm_action_order(case, [a1, a2, a3])
+
+
 
     def testRebuildEmpty(self):
         self.assertEqual(None, rebuild_case('notarealid'))

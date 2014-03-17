@@ -10,6 +10,7 @@ from django.core.files.uploadedfile import UploadedFile
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case import process_cases
+from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from casexml.apps.case.xml import V2
 from couchforms.models import XFormInstance
 from couchforms.util import post_xform_to_couch
@@ -37,10 +38,8 @@ TEST_DOMAIN = "test-domain"
 
 class BaseCaseMultimediaTest(TestCase):
     def setUp(self):
-        for item in CommCareCase.view("case/by_user", include_docs=True, reduce=False).all():
-            item.delete()
-        for item in XFormInstance.view("couchforms/by_xmlns", include_docs=True, reduce=False).all():
-            item.delete()
+        delete_all_cases()
+        delete_all_xforms()
 
     def _getXFormString(self, filename):
         file_path = os.path.join(os.path.dirname(__file__), "data", "multimedia", filename)
