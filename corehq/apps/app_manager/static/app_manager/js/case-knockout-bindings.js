@@ -1,6 +1,12 @@
 var utils = {
+    getIcon: function(question) {
+        if (question.tag === 'upload') {
+            return '<span class="icon-">&#xf0c6;</span> '; // fa-paperclip
+        }
+        return '';
+    },
     getDisplay: function (question, MAXLEN) {
-        return utils.getLabel(question, MAXLEN) + " (" + question.value + ")";
+        return utils.getIcon(question) + utils.getLabel(question, MAXLEN) + " (" + question.value + ")";
     },
     getLabel: function (question, MAXLEN) {
         return utils.truncateLabel((question.repeat ? '- ' : '') + question.label, question.tag == 'hidden' ? ' (Hidden)' : '', MAXLEN);
