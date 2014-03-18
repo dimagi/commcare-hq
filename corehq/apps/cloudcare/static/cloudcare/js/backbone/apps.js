@@ -23,7 +23,7 @@ cloudCare.AppNavigation = Backbone.Router.extend({
     },
     setView: function (view) {
         this.view = view;
-    },
+    }
 });
 
 
@@ -165,15 +165,80 @@ cloudCare.FormSession = Backbone.Model.extend({
 
 });
 
-cloudCare.OpenFormSessions = Backbone.Collection.extend({
+cloudCare.SessionView = Selectable.extend({
+    tagName: 'li',
+    initialize: function() {
+        _.bindAll(this, 'render', 'toggle', 'select', 'deselect', 'enable', 'disable');
+    },
+    render: function() {
+        $("<a />").text(this.model.get("name") + ' (' + this.model.get('last_activity_date') + ')').appendTo($(this.el));
+        return this;
+    }
+});
+
+cloudCare.SessionList = Backbone.Collection.extend({
     initialize: function () {
+        var self = this;
+        _.bindAll(self, 'url', 'setUrl');
+        self.casedb = {};
     },
     model: cloudCare.FormSession,
-    url: '/a/test/cloudcare/api/sessions/abcdefg'  // TODO need to filter by form id
-                                                   // a) what is the best way to identify a form? it has to be with
-                                                   //    information available to touchforms
-                                                   // b) how do i 'parameterize' a backbone collection? i think the
-                                                   //    query is actually passed in through the fetch() method?
+    url: function () {
+        return this.sessionUrl;
+    },
+    setUrl: function (url) {
+        this.sessionUrl = url;
+    }
+    // TODO need to filter by form id
+    // a) what is the best way to identify a form? it has to be with
+    //    information available to touchforms
+});
+
+cloudCare.SessionListView = Backbone.View.extend({
+    el: $('#sessions'),
+    initialize: function(){
+        var self = this;
+        _.bindAll(self, 'render', 'appendItem');
+        self.sessionList = new cloudCare.SessionList();
+        self.sessionList.setUrl(self.options.sessionUrl);
+        self._selectedSessionView = null;
+        self.sessionList.fetch({
+            success: function (collection, response) {
+                self.render();
+            }
+        });
+    },
+    render: function () {
+        var self = this;
+        if (self.sessionList.length) {
+            $(self.el).html('');
+            var ul = $("<ul />").addClass("nav nav-list").appendTo($(self.el));
+            $("<li />").addClass("nav-header").text("Previous Sessions").appendTo(ul);
+            _(self.sessionList.models).each(function(item){
+                self.appendItem(item);
+            });
+        }
+    },
+    appendItem: function (item) {
+        var self = this;
+        var sessionView = new cloudCare.SessionView({
+            model: item
+        });
+        sessionView.on("selected", function () {
+            if (self._selectedSessionView) {
+                self._selectedSessionView.deselect();
+            }
+            self._selectedSessionView = this;
+            cloudCare.dispatch.trigger("session:selected", this.model);
+
+        });
+        sessionView.on("deselected", function () {
+            self._selectedSessionView = null;
+            cloudCare.dispatch.trigger("session:deselected", this.model);
+
+        });
+        $('ul', this.el).append(sessionView.render().el);
+    }
 });
 
 
@@ -379,11 +444,17 @@ cloudCare.AppView = Backbone.View.extend({
             language: self.options.language
         });
         self.formListView = new cloudCare.FormListView({
-            language: self.options.language,
+            language: self.options.language
         });
 
         cloudCare.dispatch.on("form:selected", function (form) {
             self.selectForm(form);
+        });
+        cloudCare.dispatch.on("session:selected", function (session) {
+            self.playSession(session);
+        });
+        cloudCare.dispatch.on("session:deselected", function (session) {
+            self._clearFormPlayer();
         });
         cloudCare.dispatch.on("form:deselected", function (form) {
             self.selectForm(null);
@@ -464,16 +535,26 @@ cloudCare.AppView = Backbone.View.extend({
 
         return url;
     },
+    playSession: function (session) {
+        var self = this;
+        // get context
+        var url = getSessionContextUrl(self.options.sessionUrlRoot, session_id);
+        var session_id = session.get('id');
+        var resp = $.ajax({
+            url: getSessionContextUrl(self.options.sessionUrlRoot, session_id),
+            async: false,
+            dataType: "json"
+        });
+        resp.done(function (data) {
+            return self._playForm(data);
+        });
+
+    },
     playForm: function (module, form, caseModel) {
         // go play the form. this is a little sketchy
         var self = this;
         cloudCare.dispatch.trigger("form:enter", form, caseModel);
         var formUrl = self.getFormUrl(module, form, caseModel);
-        var selectedModule = self.formListView.model;
-        var submitUrl = self.model.getSubmitUrl();
-
-        // clear current case information
-        self._clearCaseView();
 
         // get context
         var resp = $.ajax({
@@ -482,49 +563,61 @@ cloudCare.AppView = Backbone.View.extend({
             dataType: "json"
         });
         resp.done(function (data) {
-            data.onsubmit = function (xml) {
-                window.mainView.router.view.dirty = false;
-                // post to receiver
-                $.ajax({
-                    type: 'POST',
-                    url: submitUrl,
-                    data: xml,
-                    success: function () {
-                        self._clearFormPlayer();
-                        self.showModule(selectedModule);
-                        showSuccess("Form successfully saved.", $("#cloudcare-notifications"), 2500);
-                    }
-                });
-            };
-            data.onerror = function (resp) {
-                showError(resp.message, $("#cloudcare-notifications"));
-                cloudCare.dispatch.trigger("form:error", form, caseModel);
-            };
-            data.onload = function (adapter, resp) {
-                cloudCare.dispatch.trigger("form:ready", form, caseModel);
-            };
-            data.resourceMap = function(resource_path) {
-                if (resource_path.substring(0, 7) === 'http://') {
-                    return resource_path;
-                } else if (self.model.attributes.hasOwnProperty("multimedia_map") &&
-                    self.model.attributes.multimedia_map.hasOwnProperty(resource_path)) {
-                    var resource = self.model.attributes.multimedia_map[resource_path];
-                    var id = resource.multimedia_id;
-                    var media_type = resource.media_type;
-                    var name = _.last(resource_path.split('/'));
-                    return '/hq/multimedia/file/' + media_type + '/' + id + '/' + name;
-                }
-            };
-            var loadSession = function() {
-                var sess = new WebFormSession(data);
-                // TODO: probably shouldn't hard code these divs
-                sess.load($('#webforms'), $('#loading'), self.options.language);
-            };
-            var promptForOffline = function(show) {
-                $('#offline-prompt')[show ? 'show' : 'hide']();
-            };
-            touchformsInit(data.xform_url, loadSession, promptForOffline);
+            self._playForm(data, {form: form, caseModel: caseModel});
         });
+    },
+    _playForm: function (data, options) {
+        var self = this;
+        options = options || {};
+
+        // clear current case information
+        self._clearMainPane();
+        var form = options.form;
+        var caseModel = options.caseModel;
+        var submitUrl = self.model.getSubmitUrl();
+        var selectedModule = self.formListView.model;
+        data.onsubmit = function (xml) {
+            window.mainView.router.view.dirty = false;
+            // post to receiver
+            $.ajax({
+                type: 'POST',
+                url: submitUrl,
+                data: xml,
+                success: function () {
+                    self._clearFormPlayer();
+                    self.showModule(selectedModule);
+                    showSuccess("Form successfully saved.", $("#cloudcare-notifications"), 2500);
+                }
+            });
+        };
+        data.onerror = function (resp) {
+            showError(resp.message, $("#cloudcare-notifications"));
+            cloudCare.dispatch.trigger("form:error", form, caseModel);
+        };
+        data.onload = function (adapter, resp) {
+            cloudCare.dispatch.trigger("form:ready", form, caseModel);
+        };
+        data.resourceMap = function(resource_path) {
+            if (resource_path.substring(0, 7) === 'http://') {
+                return resource_path;
+            } else if (self.model.attributes.hasOwnProperty("multimedia_map") &&
+                self.model.attributes.multimedia_map.hasOwnProperty(resource_path)) {
+                var resource = self.model.attributes.multimedia_map[resource_path];
+                var id = resource.multimedia_id;
+                var media_type = resource.media_type;
+                var name = _.last(resource_path.split('/'));
+                return '/hq/multimedia/file/' + media_type + '/' + id + '/' + name;
+            }
+        };
+        var loadSession = function() {
+            var sess = new WebFormSession(data);
+            // TODO: probably shouldn't hard code these divs
+            sess.load($('#webforms'), $('#loading'), self.options.language);
+        };
+        var promptForOffline = function(show) {
+            $('#offline-prompt')[show ? 'show' : 'hide']();
+        };
+        touchformsInit(data.xform_url, loadSession, promptForOffline);
     },
     selectForm: function (form) {
         var self = this;
@@ -538,11 +631,8 @@ cloudCare.AppView = Backbone.View.extend({
             self._clearCaseView();
 
             // fetch session list here
-            var x = new cloudCare.OpenFormSessions();
-            x.fetch({
-                success: function (collection, response) {
-                    debugger;
-                }
+            var view = new cloudCare.SessionListView({
+                sessionUrl: self.options.sessionUrlRoot
             });
 
             if (form.get("requires") === "none") {
@@ -603,6 +693,13 @@ cloudCare.AppView = Backbone.View.extend({
     _clearFormPlayer: function () {
         // TODO: clean hack/hard coded id
         $('#webforms').html("");
+    },
+    _clearSessionListView: function () {
+        var self = this,
+            caseView = self.formListView.caseView;
+        if (caseView) {
+            $(caseView.el).html("");
+        }
     }
 });
 
@@ -640,7 +737,8 @@ cloudCare.AppMainView = Backbone.View.extend({
             language: self.options.language,
             caseUrlRoot: self.options.caseUrlRoot,
             urlRoot: self.options.urlRoot,
-            submitUrlRoot: self.options.submitUrlRoot
+            sessionUrlRoot: self.options.sessionUrlRoot,
+			submitUrlRoot: self.options.submitUrlRoot
         });
 
         cloudCare.dispatch.on("app:selected", function (app) {

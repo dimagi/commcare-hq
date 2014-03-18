@@ -46,6 +46,7 @@
         var appUrlRoot = "{% url "cloudcare_get_apps" domain %}";
         var caseUrlRoot = "{% url "cloudcare_get_cases" domain %}";
         var submitUrlRoot = "{% url "receiver_post" domain %}";
+        var sessionUrlRoot = "{% url "cloudcare_get_sessions" domain %}";
         var language = "{{ language }}";
         var apps = {{ apps|JSON }};
         var initialApp = {{ app|JSON }};
@@ -56,6 +57,7 @@
 			urlRoot: urlRoot,
 			appUrlRoot: appUrlRoot,
 			caseUrlRoot: caseUrlRoot,
+			sessionUrlRoot: sessionUrlRoot,
 			submitUrlRoot: submitUrlRoot,
 			initialApp: initialApp,
 			initialCase: initialCase
@@ -144,8 +146,8 @@
             <img width="32" height="32" alt="Loading" src="{% static 'formplayer/img/loading_transparent.gif' %}" />
             {% trans "Loading" %}...
         </div>
-        <section id="cases">
-        </section>
+        <section id="sessions"></section>
+        <section id="cases"></section>
         <section id="webforms" style="min-width: 800px;"></section>
     </div>
 {% endblock %}

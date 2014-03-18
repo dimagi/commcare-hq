@@ -70,6 +70,11 @@ var getCaseFilterUrl = function(urlRoot, appId, moduleId, special) {
     return url
 };
 
+var getSessionContextUrl = function(sessionUrlRoot, session_id) {
+    // TODO: make this cleaner
+    return sessionUrlRoot + session_id;
+};
+
 var showError = function (message, location, autoHideTime) {
     if (message === undefined) {
         message = "sorry, there was an error";
