@@ -1,8 +1,12 @@
 import logging
-from couchdbkit import RequestFailed
-from django.utils.translation import ugettext_noop, ugettext
-from django.utils.translation import ugettext as _
 import simplejson
+
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_noop
+
+from couchdbkit import RequestFailed
+from dimagi.utils.decorators.memoized import memoized
+
 from corehq.apps.api.es import CaseES
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.api import ReportDataSource
@@ -11,12 +15,10 @@ from corehq.apps.reports.fields import SelectMobileWorkerField, SelectOpenCloseF
 from corehq.apps.reports.filters.search import SearchFilter
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.reports.generic import ElasticProjectInspectionReport
-from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReportParametersMixin
-from corehq.apps.reports.standard.cases.data_sources import CaseInfo, CaseDisplay
 from corehq.apps.reports.standard.inspect import ProjectInspectionReport
-from corehq.apps.users.models import CommCareUser
-from dimagi.utils.decorators.memoized import memoized
+
+from .data_sources import CaseInfo, CaseDisplay
 
 
 class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin):
