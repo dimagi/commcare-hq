@@ -35,6 +35,7 @@ from corehq.apps.app_manager.models import import_app
 from corehq.apps.domain.decorators import require_superuser,\
     login_and_domain_required
 from corehq.apps.domain.utils import normalize_domain_name, get_domain_from_url
+from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
 from corehq.apps.receiverwrapper.models import Repeater
 from corehq.apps.users.models import CouchUser
@@ -666,7 +667,7 @@ class CRUDPaginatedViewMixin(object):
         Return this in the post method of your view class.
         """
         response = getattr(self, '%s_response' % self.action)
-        return HttpResponse(json.dumps(response))
+        return HttpResponse(json.dumps(response, cls=LazyEncoder))
 
     @property
     def create_response(self):

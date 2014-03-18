@@ -10,6 +10,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest
 from django.utils.decorators import method_decorator
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
+from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.util.translation import localize
 
 from dimagi.utils.decorators.memoized import memoized
@@ -30,7 +31,7 @@ from corehq.apps.accounting.async_handlers import (
 )
 from corehq.apps.accounting.user_text import PricingTable
 from corehq.apps.accounting.utils import (
-    LazyEncoder, fmt_feature_rate_dict, fmt_product_rate_dict,
+    fmt_feature_rate_dict, fmt_product_rate_dict,
     has_subscription_already_ended
 )
 from corehq.apps.hqwebapp.views import BaseSectionPageView
