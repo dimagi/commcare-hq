@@ -904,15 +904,31 @@ class BillingRecord(models.Model):
     def pdf(self):
         return InvoicePdf.get(self.pdf_data_id)
 
+    @classmethod
+    def generate_record(cls, invoice):
+        record = cls(invoice=invoice)
+        invoice_pdf = InvoicePdf()
+        invoice_pdf.generate_pdf(record.invoice)
+        record.pdf_data_id = invoice_pdf._id
+        if record.invoice.subscription.do_not_invoice:
+            record.skipped_email = True
+            invoice.is_hidden = True
+            record.save()
+            invoice.save()
+            return
+        record.save()
+        # send emails
+
+
+
 
 class InvoicePdf(SafeSaveDocument):
     invoice_id = StringProperty()
     date_created = DateTimeProperty()
 
-    def generate_pdf(self, billing_record):
+    def generate_pdf(self, invoice):
         self.save()
         pdf_data = NamedTemporaryFile()
-        invoice = billing_record.invoice
         contact_info = BillingContactInfo.objects.get(
             account=invoice.subscription.account,
         )
@@ -953,8 +969,6 @@ class InvoicePdf(SafeSaveDocument):
         self.put_attachment(pdf_data)
         pdf_data.close()
 
-        billing_record.pdf_data_id = self._id
-        billing_record.save()
         self.invoice_id = str(invoice.id)
         self.date_created = datetime.datetime.now()
         self.save()
