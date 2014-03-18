@@ -454,7 +454,7 @@ class CreditForm(forms.Form):
         ),
         required=False,
     )
-    product_type = forms.ChoiceField( required=False, label=_("Product Type"))
+    product_type = forms.ChoiceField(required=False, label=_("Product Type"))
     feature_type = forms.ChoiceField(required=False, label=_("Feature Type"))
 
     def __init__(self, account, subscription, *args, **kwargs):
