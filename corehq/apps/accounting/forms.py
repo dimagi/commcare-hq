@@ -397,13 +397,13 @@ class SubscriptionForm(forms.Form):
         salesforce_contract_id = self.cleaned_data['salesforce_contract_id']
         is_active = is_active_subscription(date_start, date_end)
         do_not_invoice = self.cleaned_data['do_not_invoice']
-        return Subscription.new_domain_subscription(account, domain, plan_version,
-                                                    date_start=date_start,
-                                                    date_end=date_end,
-                                                    date_delay_invoicing=date_delay_invoicing,
-                                                    salesforce_contract_id=salesforce_contract_id,
-                                                    is_active=is_active,
-                                                    do_not_invoice=do_not_invoice)
+        return Subscription.new_domain_subscription(
+            account, domain, plan_version,
+            date_start=date_start,
+            salesforce_contract_id=salesforce_contract_id,
+            is_active=is_active,
+            do_not_invoice=do_not_invoice
+        )
 
     def update_subscription(self, subscription):
         kwargs = {

@@ -1052,7 +1052,8 @@ class CreditLine(models.Model):
                     'balance': self.balance,
                 })
 
-    def adjust_credit_balance(self, amount, is_new=False, note=None, line_item=None, invoice=None):
+    def adjust_credit_balance(self, amount, is_new=False, note=None,
+                              line_item=None, invoice=None):
         reason = CreditAdjustmentReason.MANUAL
         note = note or ""
         if line_item is not None and invoice is not None:
@@ -1156,7 +1157,9 @@ class CreditLine(models.Model):
             if balance == Decimal('0.0000'):
                 return
             if balance <= Decimal('0.0000'):
-                raise CreditLineError("A balance went below zero dollars when applying credits.")
+                raise CreditLineError(
+                    "A balance went below zero dollars when applying credits."
+                )
             adjustment_amount = min(credit_line.balance, balance)
             if adjustment_amount > Decimal('0.0000'):
                 credit_line.adjust_credit_balance(-adjustment_amount, **adjust_balance_kwarg)
