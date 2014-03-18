@@ -53,7 +53,7 @@ class Migration(DataMigration):
                                     "still being used."
                                     % (version.pk, plan.name))
 
-        for credit_line in CreditLine.objects.filter(feature_rate__isnull=False).all():
+        for credit_line in orm.CreditLine.objects.filter(feature_rate__isnull=False).all():
             latest_rate = credit_line.feature_rate.feature.get_rate()
             if credit_line.feature_rate.pk != latest_rate.pk:
                 credit_line.feature_rate = latest_rate
@@ -68,7 +68,7 @@ class Migration(DataMigration):
                                 "%d because it was still being used."
                                 % feature_rate.pk)
 
-        for credit_line in CreditLine.objects.filter(product_rate__isnull=False).all():
+        for credit_line in orm.CreditLine.objects.filter(product_rate__isnull=False).all():
             latest_rate = credit_line.product_rate.product.get_rate()
             if credit_line.product_rate.pk != latest_rate.pk:
                 credit_line.product_rate = latest_rate
