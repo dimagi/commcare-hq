@@ -241,6 +241,7 @@ HQ_APPS = (
     'corehq.apps.indicators',
     'corehq.apps.cachehq',
     'corehq.apps.toggle_ui',
+    'corehq.apps.sofabed',
     'corehq.couchapps',
     'custom.apps.wisepill',
     'custom.fri',
@@ -812,6 +813,7 @@ COUCHDB_APPS = [
     'reportfixtures',
     'prescriptions',
     'reports',
+    'sofabed',
     'sms',
     'smsforms',
     'telerivet',
@@ -964,6 +966,7 @@ PILLOWTOPS = {
         'corehq.pillows.sms.SMSPillow',
         'corehq.pillows.user.GroupToUserPillow',
         'corehq.pillows.user.UnknownUsersPillow',
+        'corehq.pillows.formdata.FormDataPillow',
     ],
     'phonelog': [
         'corehq.pillows.log.PhoneLogPillow',
