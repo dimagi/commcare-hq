@@ -920,8 +920,6 @@ class BillingRecord(models.Model):
         # send emails
 
 
-
-
 class InvoicePdf(SafeSaveDocument):
     invoice_id = StringProperty()
     date_created = DateTimeProperty()
@@ -955,23 +953,33 @@ class InvoicePdf(SafeSaveDocument):
         )
 
         for line_item in LineItem.objects.filter(invoice=invoice):
+            is_unit = line_item.unit_description is not None
             description = (line_item.base_description
                            or line_item.unit_description)
             if line_item.quantity > 0:
-                template.add_item(description,
-                                  line_item.quantity,
-                                  line_item.unit_cost,
-                                  line_item.subtotal,
-                                  line_item.applied_credit,
-                                  line_item.total)
+                template.add_item(
+                    description,
+                    line_item.quantity if is_unit else 1,
+                    line_item.unit_cost if is_unit else line_item.subtotal,
+                    line_item.subtotal,
+                    line_item.applied_credit,
+                    line_item.total
+                )
 
         template.get_pdf()
-        self.put_attachment(pdf_data)
+        filename = self.get_filename(invoice)
+        self.put_attachment(pdf_data, filename, 'application/pdf')
         pdf_data.close()
 
         self.invoice_id = str(invoice.id)
         self.date_created = datetime.datetime.now()
         self.save()
+
+    def get_filename(self, invoice):
+        return "statement_%(year)d_%(month)d.pdf" % {
+            'year': invoice.date_start.year,
+            'month': invoice.date_start.month,
+        }
 
 
 class LineItemManager(models.Manager):
