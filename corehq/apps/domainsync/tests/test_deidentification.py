@@ -11,7 +11,7 @@ class FormDeidentificationTestCase(TestCase):
     
     def setUp(self):
         
-        for item in XFormInstance.view("couchforms/by_xmlns", include_docs=True, reduce=False).all():
+        for item in XFormInstance.view("hqadmin/forms_over_time", include_docs=True, reduce=False).all():
             item.delete()
         
         
