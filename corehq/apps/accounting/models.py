@@ -966,7 +966,6 @@ class BillingRecord(models.Model):
         if not contact_emails:
             # fall back to the first billing admin added
             contact_emails.append(self.invoice.subscription.account.billing_admins.all()[0].web_user)
-        print "sending emails to", contact_emails
         for email in contact_emails:
             greeting = _("Hello,")
             can_view_statement = False
