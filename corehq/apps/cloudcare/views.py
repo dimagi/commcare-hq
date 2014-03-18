@@ -7,7 +7,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq import toggles, privileges
 from corehq.apps.app_manager.suite_xml import SuiteGenerator
 from corehq.apps.cloudcare.models import CaseSpec, ApplicationAccess
-from corehq.apps.cloudcare.touchforms_api import DELEGATION_STUB_CASE_TYPE
+from corehq.apps.cloudcare.touchforms_api import DELEGATION_STUB_CASE_TYPE, SessionDataHelper
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest_ex, domain_admin_required
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser, CommCareUser
@@ -310,10 +310,15 @@ def get_fixtures(request, domain, user_id, fixture_id=None):
         raise Http404
 
 @cloudcare_api
-def get_sessions(request, domain, xform_id):
+def get_sessions(request, domain):
     # is it ok to pull user from the request? other api calls seem to have an explicit 'user' param
-    return json_response(get_open_form_sessions(request.user, xform_id))
+    return json_response(get_open_form_sessions(request.user))
 
+
+@cloudcare_api
+def get_session_context(request, domain, session_id):
+    helper = SessionDataHelper(domain, request.couch_user)
+    return json_response(helper.get_full_context({'session_id': session_id}))
 
 class HttpResponseConflict(HttpResponse):
     status_code = 409
