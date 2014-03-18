@@ -97,20 +97,22 @@ class CaseIndicatorPillow(IndicatorPillowBase):
 
         for xform_id in xform_ids:
             try:
-                xform_doc = XFormInstance.get(xform_id)
-                if not xform_doc.xmlns:
-                    continue
-                related_xform_indicators = []
-                for namespace in namespaces:
-                    related_xform_indicators.extend(
-                        CaseDataInFormIndicatorDefinition.get_all(
-                            namespace,
-                            domain,
-                            xmlns=xform_doc.xmlns
+                with XFormInstance.get_locked_obj(_id=xform_id) as xform_doc:
+                    if not xform_doc.xmlns:
+                        continue
+                    related_xform_indicators = []
+                    for namespace in namespaces:
+                        related_xform_indicators.extend(
+                            CaseDataInFormIndicatorDefinition.get_all(
+                                namespace,
+                                domain,
+                                xmlns=xform_doc.xmlns
+                            )
                         )
+                    xform_doc.update_indicators_in_bulk(
+                        related_xform_indicators,
+                        logger=pillow_eval_logging,
                     )
-                xform_doc.update_indicators_in_bulk(related_xform_indicators,
-                                                    logger=pillow_eval_logging)
             except ResourceNotFound:
                 pillow_logging.error(
                     "[INDICATOR %(domain)s] Tried to form grab indicators "
