@@ -32,9 +32,6 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
 
     report_template_path = 'data_interfaces/interfaces/case_management.html'
 
-    asynchronous = False
-    ajax_pagination = True
-
     @property
     @memoized
     def all_case_sharing_groups(self):
