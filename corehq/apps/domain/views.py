@@ -4,6 +4,7 @@ import logging
 import uuid
 from couchdbkit import ResourceNotFound
 import dateutil
+from django.utils.dates import MONTHS
 from django.views.generic import View
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
@@ -49,7 +50,7 @@ from corehq.apps.domain.forms import (DomainGlobalSettingsForm, DomainMetadataFo
                                       ConfirmNewSubscriptionForm, ProBonoForm, EditBillingAccountInfoForm)
 from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.domain.utils import normalize_domain_name
-from corehq.apps.hqwebapp.views import BaseSectionPageView, BasePageView
+from corehq.apps.hqwebapp.views import BaseSectionPageView, BasePageView, CRUDPaginatedViewMixin
 from corehq.apps.orgs.models import Organization, OrgRequest, Team
 from corehq.apps.commtrack.util import all_sms_codes, unicode_slug
 from corehq.apps.domain.forms import ProjectSettingsForm
@@ -644,14 +645,77 @@ class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin
         return self.get(request, *args, **kwargs)
 
 
-class DomainBillingStatementsView(DomainAccountingSettings):
+class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMixin):
     template_name = 'domain/billing_statements.html'
     urlname = 'domain_billing_statements'
     page_title = ugettext_noop("Billing Statements")
 
+    limit_text = ugettext_noop("statements per page")
+    empty_notification = ugettext_noop("You have no Billing Statements yet.")
+    loading_message = ugettext_noop("Loading statements...")
+
     @property
     def page_context(self):
-        return {}
+        return {
+            'statements': list(self.statements),
+        }
+
+    @property
+    def parameters(self):
+        return self.request.POST if self.request.method == 'POST' else self.request.GET
+
+    @property
+    def invoices(self):
+        return Invoice.objects.filter(
+            subscription__subscriber__domain=self.domain, is_hidden=False,
+        ).order_by('-date_created').all()
+
+    @property
+    def total(self):
+        return Invoice.objects.filter(
+            subscription__subscriber__domain=self.domain, is_hidden=False
+        ).count()
+
+    @property
+    def column_names(self):
+        return [
+            _("Invoice Number"),
+            _("Plan"),
+            _("Start Date"),
+            _("End Date"),
+            _("Payment Received"),
+            _("PDF"),
+        ]
+
+    @property
+    def page_context(self):
+        return self.pagination_context
+
+    @property
+    def paginated_list(self):
+        for invoice in self.invoices:
+            last_billing_record = BillingRecord.objects.filter(
+                invoice=invoice
+            ).latest('date_created')
+            yield {
+                'itemData': {
+                    'id': invoice.id,
+                    'invoice_number': invoice.invoice_number,
+                    'start': invoice.date_start.strftime("%d %B %Y"),
+                    'end': invoice.date_end.strftime("%d %B %Y"),
+                    'plan': invoice.subscription.plan_version.user_facing_description,
+                    'payment_status': (_("YES (%s)") % invoice.date_paid.strftime("%d %B %Y")
+                                       if invoice.date_paid is not None else _("NO")),
+                    'pdfUrl': reverse(
+                        BillingStatementPdfView.urlname,
+                        args=[self.domain, last_billing_record.pdf_data_id]
+                    ),
+                },
+                'template': 'statement-row-template',
+            }
+
+    def post(self, *args, **kwargs):
+        return self.paginate_crud_response
 
     @method_decorator(toggles.ACCOUNTING_PREVIEW.required_decorator())
     def dispatch(self, request, *args, **kwargs):
