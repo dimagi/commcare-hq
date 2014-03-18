@@ -17,7 +17,7 @@ from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 
 from corehq.apps.domain.decorators import login_or_digest
-from corehq.apps.fixtures.exceptions import ExcelMalformatException, FixtureAPIException
+from corehq.apps.fixtures.exceptions import ExcelMalformatException, FixtureAPIException, DuplicateFixtureTagException
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem, _id_from_doc, FieldList, FixtureTypeField, FixtureItemField
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
@@ -199,7 +199,6 @@ def data_table(request, domain):
     else:
         messages.info(request, _("No items are added in this table type. Upload using excel to add some rows to this table"))
         data_table["rows"] = [["--" for x in range(0, len(headers))]]
-    print data_table
     return data_table
 
 DELETE_HEADER = "Delete(Y/N)"
@@ -301,7 +300,7 @@ def download_item_lists(request, domain, html_response=False):
 
     # Prepare 'types' sheet data
     types_sheet = {"headers": [], "rows": []}
-    types_sheet["headers"] = ["UID", DELETE_HEADER, "table_id", 'is_global?']
+    types_sheet["headers"] = [DELETE_HEADER, "table_id", 'is_global?']
     types_sheet["headers"].extend(["field %d" % x for x in range(1, max_fields + 1)])
     field_prop_headers = []
     for field_num, prop_num in enumerate(field_prop_count):
@@ -312,7 +311,7 @@ def download_item_lists(request, domain, html_response=False):
                 types_sheet["headers"].append(prop_key)
 
     for data_type in data_types_book:
-        common_vals = [str(_id_from_doc(data_type)), "N", data_type.tag, yesno(data_type.is_global)]
+        common_vals = ["N", data_type.tag, yesno(data_type.is_global)]
         field_vals = [field.field_name for field in data_type.fields] + empty_padding_list(max_fields - len(data_type.fields))
         prop_vals = []
         if type_field_properties.has_key(data_type.tag):
@@ -470,11 +469,14 @@ class UploadItemLists(TemplateView):
         except ExcelMalformatException as e:
             messages.error(request, _("Uploaded excel file has following formatting-problems: '%(e)s'") % {'e': e})
             return error_redirect()
+        except DuplicateFixtureTagException as e:
+            messages.error(request, e)
         except FixtureAPIException as e:
             messages.error(request, _(str(e)))
             return error_redirect()
         except Exception as e:
-            notify_exception(request)
+            notify_exception(request, message=str(e))
+            messages.error(request, str(e))
             messages.error(request, _("Fixture upload failed for some reason and we have noted this failure. "
                                       "Please make sure the excel file is correctly formatted and try again."))
             return error_redirect()
@@ -538,10 +540,12 @@ def upload_fixture_api(request, domain, **kwargs):
     except ExcelMalformatException as e:
         notify_exception(request)
         return _return_response(response_codes["fail"], str(e))
+    except DuplicateFixtureTagException as e:
+        return _return_response(response_codes["fail"], str(e))
     except FixtureAPIException as e:
         return _return_response(response_codes["fail"], str(e))
     except Exception as e:
-        notify_exception(request)
+        notify_exception(request, message=e)
         error_message = error_messages["unknown_fail"].format(attr=e)
         return _return_response(response_codes["fail"], error_message)
 
@@ -610,7 +614,19 @@ def run_upload(request, domain, workbook, replace=False):
    
     number_of_fixtures = -1
     with CouchTransaction() as transaction:
+        fixtures_tags = []
+        type_sheets = []
         for number_of_fixtures, dt in enumerate(data_types):
+            try:
+                tag = _get_or_raise(dt, 'table_id')
+            except ExcelMalformatException:
+                tag = _get_or_raise(dt, 'tag')
+            if tag in fixtures_tags:
+                error_message = "Upload Failed: Lookup-tables should have unique 'table_id'. There are two rows with table_id '{tag}' in 'types' sheet."
+                raise DuplicateFixtureTagException(_(error_message.format(tag=tag)))
+            fixtures_tags.append(tag)
+            type_sheets.append(dt)
+        for number_of_fixtures, dt in enumerate(type_sheets):
             try:
                 tag = _get_or_raise(dt, 'table_id')
             except ExcelMalformatException:
@@ -645,14 +661,18 @@ def run_upload(request, domain, workbook, replace=False):
                 fields=type_fields_with_properties,
             )
             try:
-                if dt['UID']:
+                tagged_fdt = FixtureDataType.fixture_tag_exists(domain, tag)
+                if tagged_fdt:
+                    data_type = tagged_fdt
+                # support old usage with 'UID'
+                elif 'UID' in dt and dt['UID']:
                     data_type = FixtureDataType.get(dt['UID'])
-                    if replace:
-                        data_type.recursive_delete(transaction)
-                        data_type = new_data_type
                 else:
                     data_type = new_data_type
                     pass
+                if replace:
+                    data_type.recursive_delete(transaction)
+                    data_type = new_data_type
                 data_type.fields = type_fields_with_properties
                 data_type.is_global = dt.get('is_global', False)
                 assert data_type.doc_type == FixtureDataType._doc_type
@@ -759,11 +779,10 @@ def run_upload(request, domain, workbook, replace=False):
                         old_data_item = new_data_item
                         pass
                     old_data_item.fields = item_fields   
-                    if old_data_item.domain != domain:
+                    if old_data_item.domain != domain or not old_data_item.data_type_id == data_type.get_id:
                         old_data_item = new_data_item
                         messages.error(request, _("'%(UID)s' is not a valid UID. But the new item is created.") % {'UID': di['UID']})
                     assert old_data_item.doc_type == FixtureDataItem._doc_type
-                    assert old_data_item.data_type_id == data_type.get_id
                     if di[DELETE_HEADER] == "Y" or di[DELETE_HEADER] == "y":
                         old_data_item.recursive_delete(transaction)
                         continue               

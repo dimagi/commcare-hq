@@ -56,7 +56,11 @@ class FixtureDataType(Document):
 
     @classmethod
     def fixture_tag_exists(cls, domain, tag):
-        return tag in [fdt.tag for fdt in FixtureDataType.by_domain(domain)]
+        fdts = FixtureDataType.by_domain(domain)
+        for fdt in fdts:
+            if tag == fdt.tag:
+                return fdt
+        return False
 
     def recursive_delete(self, transaction):
         item_ids = []

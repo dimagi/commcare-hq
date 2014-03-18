@@ -5,6 +5,7 @@ class FixtureException(Exception):
 class ExcelMalformatException(Exception):
     pass
 
+
 class FixtureAPIException(Exception):
     pass
 
@@ -14,4 +15,8 @@ class FixtureTypeCheckError(Exception):
 
 
 class FixtureVersionError(Exception):
+    pass
+
+
+class DuplicateFixtureTagException(Exception):
     pass
