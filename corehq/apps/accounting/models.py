@@ -1065,8 +1065,10 @@ class CreditLine(models.Model):
     def get_credits_for_line_item(cls, line_item):
         return cls.get_credits_by_subscription_and_features(
             line_item.invoice.subscription,
-            product_type=line_item.product_rate.product.product_type,
-            feature_type=line_item.feature_rate.feature.feature_type,
+            product_type=(line_item.product_rate.product.product_type
+                          if line_item.product_rate is not None else None),
+            feature_type=(line_item.feature_rate.feature.feature_type
+                          if line_item.feature_rate is not None else None),
         )
 
     @classmethod
