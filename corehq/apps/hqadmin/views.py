@@ -40,6 +40,7 @@ from corehq.apps.hqadmin.escheck import check_es_cluster_health, check_xform_es_
 from corehq.apps.hqadmin.system_info.checks import check_redis, check_rabbitmq, check_celery_health, check_memcached
 from corehq.apps.ota.views import get_restore_response, get_restore_params
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
+from corehq.apps.reports.graph_models import Axis, LineChart
 from corehq.apps.reports.standard.domains import es_domain_query
 from corehq.apps.reports.util import make_form_couch_key
 from corehq.apps.sms.models import SMSLog
@@ -932,5 +933,23 @@ def loadtest(request):
         "tests": tests,
         "hide_filters": True,
     })
+
+    date_axis = Axis(label="Date", dateFormat="%b %d")
+    tests_axis = Axis(label="Number of Tests in 30s")
+    chart = LineChart("HQ Load Test Performance", date_axis, tests_axis)
+    submit_data = []
+    ota_data = []
+    total_data = []
+    for test in tests:
+        date = test['datetime']
+        submit_data.append({'x': date, 'y': len(test['submit_form'].results)})
+        ota_data.append({'x': date, 'y': len(test['ota_restore'].results)})
+        total_data.append({'x': date, 'y': len(test['results'])})
+    chart.add_dataset("Form Submission Count", submit_data)
+    chart.add_dataset("OTA Restore Count", ota_data)
+    chart.add_dataset("Total Count", total_data)
+
+    context['charts'] = [chart]
+
     template = "hqadmin/loadtest.html"
     return render(request, template, context)
