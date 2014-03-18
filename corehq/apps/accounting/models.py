@@ -895,7 +895,7 @@ class BillingRecord(models.Model):
     This stores any interaction we have with the client in sending a physical / pdf invoice to their contact email.
     """
     invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT)
-    date_created = models.DateField(auto_now_add=True, db_index=True)
+    date_created = models.DateTimeField(auto_now_add=True, db_index=True)
     emailed_to = models.CharField(max_length=254, db_index=True)
     skipped_email = models.BooleanField(default=False)
     pdf_data_id = models.CharField(max_length=48)
