@@ -1,5 +1,10 @@
 from django.utils.datastructures import MultiValueDictKeyError
-from couchforms.const import MAGIC_PROPERTY, MULTIPART_FILENAME_ERROR
+from couchforms.const import (
+    EMPTY_PAYLOAD_ERROR,
+    MAGIC_PROPERTY,
+    MULTIPART_EMPTY_PAYLOAD_ERROR,
+    MULTIPART_FILENAME_ERROR,
+)
 import logging
 from datetime import datetime
 from django.conf import settings
@@ -24,9 +29,8 @@ def get_instance_and_attachment(request):
         pass
     attachments = {}
     if request.META['CONTENT_TYPE'].startswith('multipart/form-data'):
-        # it's an standard form submission (eg ODK)
-        # this does an assumption that ODK submissions submit using the form parameter xml_submission_file
-        # todo: this should be made more flexibly to handle differeing params for xform submission
+        # ODK submission; of the form
+        # $ curl --form 'xml_submission_file=@form.xml' $URL
         try:
             instance = request.FILES[MAGIC_PROPERTY].read()
         except MultiValueDictKeyError:
@@ -35,10 +39,14 @@ def get_instance_and_attachment(request):
             for key, item in request.FILES.items():
                 if key != MAGIC_PROPERTY:
                     attachments[key] = item
+        if not instance:
+            instance = MULTIPART_EMPTY_PAYLOAD_ERROR
     else:
-        #else, this is a raw post via a j2me client of xml (or touchforms)
-        #todo, multipart raw submissions need further parsing capacity.
+        # j2me and touchforms; of the form
+        # $ curl --data '@form.xml' $URL
         instance = request.raw_post_data
+        if not instance:
+            instance = EMPTY_PAYLOAD_ERROR
     request._instance_and_attachment = (instance, attachments)
     return instance, attachments
 

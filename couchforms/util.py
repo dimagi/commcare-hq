@@ -15,11 +15,14 @@ from django.http import (
 )
 from redis import ConnectionError
 
-import couchforms
-from couchforms.const import MAGIC_PROPERTY, MULTIPART_FILENAME_ERROR
-from couchforms.exceptions import DuplicateError
 from dimagi.utils.mixins import UnicodeMixIn
-from couchforms.models import (
+from dimagi.utils.couch import uid, LockManager, ReleaseOnError, release_lock
+import xml2json
+
+import couchforms
+from . import const
+from .exceptions import DuplicateError
+from .models import (
     DefaultAuthContext,
     SubmissionErrorLog,
     XFormDeprecated,
@@ -28,13 +31,11 @@ from couchforms.models import (
     XFormInstance,
     doc_types,
 )
-from couchforms.signals import (
+from .signals import (
     ReceiverResult,
     successful_form_received,
 )
-from dimagi.utils.couch import uid, LockManager, ReleaseOnError, release_lock
-from couchforms.xml import ResponseNature, OpenRosaResponse
-import xml2json
+from .xml import ResponseNature, OpenRosaResponse
 
 
 class SubmissionError(Exception, UnicodeMixIn):
@@ -88,7 +89,8 @@ def convert_xform_to_json(xml_string):
 
 
 def acquire_lock_for_xform(xform_id):
-    lock = XFormInstance.get_obj_lock_by_id(xform_id)
+    # this is high, but I want to test if MVP conflicts disappear
+    lock = XFormInstance.get_obj_lock_by_id(xform_id, timeout_seconds=2*60)
     try:
         lock.acquire()
     except ConnectionError:
@@ -331,11 +333,6 @@ def scrub_meta(xform):
 class SubmissionPost(object):
 
     failed_auth_response = HttpResponseForbidden('Bad auth')
-    bad_multipart_response = HttpResponseBadRequest((
-        'If you use multipart/form-data, please name your file %s.\n'
-        'You may also do a normal (non-multipart) post '
-        'with the xml submission as the request body instead.'
-    ) % MAGIC_PROPERTY)
 
     def __init__(self, instance=None, attachments=None,
                  auth_context=None, domain=None, app_id=None, path=None,
@@ -385,8 +382,8 @@ class SubmissionPost(object):
         if not self.auth_context.is_valid():
             return self.failed_auth_response
 
-        if self.instance is MULTIPART_FILENAME_ERROR:
-            return self.bad_multipart_response
+        if isinstance(self.instance, const.BadRequest):
+            return HttpResponseBadRequest(self.instance.message)
 
         def process(xform):
             self._attach_shared_props(xform)
