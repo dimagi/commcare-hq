@@ -1127,7 +1127,6 @@ class CreditLine(models.Model):
     def add_feature_credit(cls, amount, account, feature_type,
                            subscription=None, note=None):
         cls._validate_add_amount(amount)
-        print "adding feature credit %s" % feature_type
         credit_line, is_created = cls.objects.get_or_create(
             account=account,
             subscription=subscription,
