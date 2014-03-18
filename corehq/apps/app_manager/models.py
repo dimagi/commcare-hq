@@ -712,15 +712,17 @@ class IndexedFormBase(FormBase, IndexedSchema):
     def check_paths(self, paths):
         errors = []
         try:
-            valid_paths = set([question['value'] for question in self.get_questions(langs=[])])
+            valid_paths = dict((question['value'], question['tag'])
+                               for question in self.get_questions(langs=[]))
         except XFormError as e:
             errors.append({'type': 'invalid xml', 'message': unicode(e)})
         else:
-            unique_paths = set()
-            unique_paths.update(paths)
-            for path in unique_paths:
+            no_multimedia = not self.get_app().enable_multimedia_case_property
+            for path in set(paths):
                 if path not in valid_paths:
                     errors.append({'type': 'path error', 'path': path})
+                elif no_multimedia and valid_paths[path] == "upload":
+                    errors.append({'type': 'multimedia case property not supported', 'path': path})
 
         return errors
 
@@ -2674,6 +2676,13 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         Multi (tiered) sort is supported by apps version 2.2 or higher
         """
         return LooseVersion(self.build_spec.version) >= '2.2'
+
+    @property
+    def enable_multimedia_case_property(self):
+        """
+        Multimedia case properties are supported on apps over version 2.5
+        """
+        return LooseVersion(self.build_spec.version) > '2.5'
 
     @property
     def default_language(self):
