@@ -5,6 +5,7 @@ from jsonobject import DateTimeProperty
 from corehq import Domain
 from corehq.apps.commtrack.util import get_commtrack_location_id
 from corehq.apps.locations.models import Location
+from corehq.elastic import ES_URLS
 
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
@@ -13,11 +14,9 @@ from corehq.apps.reports.fields import StrongFilterUsersField
 from corehq.apps.reports.generic import ElasticProjectInspectionReport
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
 from corehq.elastic import es_query
-from corehq.pillows.mappings.case_mapping import CASE_INDEX
-from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from custom.m4change.constants import BOOKING_FORMS, FOLLOW_UP_FORMS, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, IMMUNIZATION_FORMS
 from custom.m4change.models import McctStatus
-from custom.m4change.utils import get_case_by_id, get_user_by_id, get_property
+from custom.m4change.utils import get_case_by_id, get_user_by_id, get_property, get_form_ids_by_status
 from custom.m4change.constants import EMPTY_FIELD
 
 
@@ -76,7 +75,7 @@ class McctProjectReview(CustomProjectReport, ElasticProjectInspectionReport, Pro
                 }
             }
         }
-        es_response = es_query(params={"domain.exact": self.domain}, q=query, es_url=CASE_INDEX + '/case/_search')
+        es_response = es_query(params={"domain.exact": self.domain}, q=query, es_url=ES_URLS.get('cases'))
         return [res['_source']['_id'] for res in es_response.get('hits', {}).get('hits', [])]
 
     def es_query(self):
@@ -132,7 +131,7 @@ class McctProjectReview(CustomProjectReport, ElasticProjectInspectionReport, Pro
 
             q["sort"] = self.get_sorting_block() \
                 if self.get_sorting_block() else [{"form.meta.timeEnd" : {"order": "desc"}}]
-            self.es_response = es_query(params={"domain.exact": self.domain}, q=q, es_url=XFORM_INDEX + '/xform/_search',
+            self.es_response = es_query(params={"domain.exact": self.domain}, q=q, es_url=ES_URLS.get('forms'),
                                         start_at=self.pagination.start, size=self.pagination.count)
         return self.es_response
 
@@ -204,13 +203,14 @@ class McctProjectReview(CustomProjectReport, ElasticProjectInspectionReport, Pro
                 checkbox % dict(form_id=form_id, case_id=case_id, service_type=service_type)
             ]
 
-class McctApprovedBeneficiaryListView(McctProjectReview):
-    name = 'mCCT Approved beneficiary list view'
-    slug = 'mcct_approved_beneficiary_list_view'
+class McctClientApprovalPage(McctProjectReview):
+    name = 'mCCT client Approval Page'
+    slug = 'mcct_client_approval_page'
     report_template_path = 'reports/approveStatus.html'
+    display_status = 'reviewed'
 
     def es_query(self):
-        reviewed_form_ids = [mcct_status.form_id for mcct_status in McctStatus.objects.filter(domain=self.domain, status="reviewed")]
+        reviewed_form_ids = get_form_ids_by_status(self.domain, getattr(self, 'display_status', None))
         if len(reviewed_form_ids) > 0:
             if not getattr(self, 'es_response', None):
                 form_ids_str = " OR ".join(reviewed_form_ids)
@@ -255,9 +255,23 @@ class McctApprovedBeneficiaryListView(McctProjectReview):
                     })
 
                 q["sort"] = self.get_sorting_block() if self.get_sorting_block() else [{"form.meta.timeEnd" : {"order": "desc"}}]
-                self.es_response = es_query(params={"domain.exact": self.domain}, q=q, es_url=XFORM_INDEX + '/xform/_search',
+                self.es_response = es_query(params={"domain.exact": self.domain}, q=q, es_url=ES_URLS.get('forms'),
                                             start_at=self.pagination.start, size=self.pagination.count)
         else:
             self.es_response = {'hits': {'total': 0}}
 
         return self.es_response
+
+
+class McctClientPaymentPage(McctClientApprovalPage):
+    name = 'mCCT client Payment Page'
+    slug = 'mcct_client_payment_page'
+    report_template_path = 'reports/paidStatus.html'
+    display_status = 'approved'
+
+
+class McctRejectedClientPage(McctClientApprovalPage):
+    name = 'mCCT Rejected clients Page'
+    slug = 'mcct_rejected_clients_page'
+    report_template_path = 'reports/activateStatus.html'
+    display_status = 'rejected'
