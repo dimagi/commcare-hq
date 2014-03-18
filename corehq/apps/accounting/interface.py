@@ -349,13 +349,23 @@ class InvoiceInterface(GenericTabularReport):
                 "Paid" if invoice.date_paid else "Not paid",
                 # TODO - Create helper function for action button HTML
                 mark_safe('<a data-toggle="modal"'
-                          ' data-target="#adjustBalanceModal"'
-                          ' href="#adjustBalanceModal"'
+                          ' data-target="#adjustBalanceModal-%(invoice_id)d"'
+                          ' href="#adjustBalanceModal-%(invoice_id)d"'
                           ' class="btn">'
-                          'Adjust Balance</a>'),
+                          'Adjust Balance</a>'
+                          % {'invoice_id': invoice.id}),
                 mark_safe('<a href="%s" class="btn">Go to Invoice</a>'
                           % reverse(InvoiceSummaryView.urlname,
                                     args=(invoice.id,))),
 
             ] for invoice in Invoice.objects.filter(**filters)
         ]
+
+    @property
+    def report_context(self):
+        context = super(InvoiceInterface, self).report_context
+        context.update(
+            # TODO - filter Invoices
+            invoices=Invoice.objects.all(),
+        )
+        return context

@@ -1,3 +1,11 @@
-<div class="modal hide fade" id="adjustBalanceModal">
+{% load i18n %}
 
-</div>
+
+{% for invoice in invoices %}
+    <div class="modal hide fade" id="adjustBalanceModal-{{ invoice.id }}">
+        <div class="modal-header">
+            <a class="close" data-dismiss="modal">&times;</a>
+            <h3>{% trans "Adjust Balance for Invoice #" %}{{ invoice.invoice_number }}</h3>
+        </div>
+    </div>
+{% endfor %}
