@@ -222,14 +222,14 @@ def get_default_column_data(domain, location_types):
     }
 
     if Domain.get_by_name(domain).commtrack_settings.individual_consumption_defaults:
-        products = Product.by_domain(domain, wrap=False)
+        products = Product.by_domain(domain)
 
         for loc_type in location_types:
             loc = get_loc_config(domain)[loc_type]
             if not loc.administrative:
                 data['headers'][loc_type] = [
                     'default_' +
-                    p['code_'] for p in products
+                    p.code for p in products
                 ]
 
                 locations = Location.filter_by_type(domain, loc_type)
@@ -237,7 +237,7 @@ def get_default_column_data(domain, location_types):
                     data['values'][loc._id] = [
                         get_default_consumption(
                             domain,
-                            p['_id'],
+                            p._id,
                             loc_type,
                             loc._id
                         ) or '' for p in products
