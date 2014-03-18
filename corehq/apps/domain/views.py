@@ -679,7 +679,7 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
     @property
     def column_names(self):
         return [
-            _("Invoice Number"),
+            _("Statement No."),
             _("Plan"),
             _("Start Date"),
             _("End Date"),
