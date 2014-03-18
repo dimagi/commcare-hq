@@ -2,7 +2,9 @@ import datetime
 from decimal import Decimal
 import logging
 import uuid
+from couchdbkit import ResourceNotFound
 import dateutil
+from django.views.generic import View
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
@@ -27,7 +29,8 @@ from django_prbac.utils import ensure_request_has_privilege
 from corehq.apps.accounting.models import (
     Subscription, CreditLine, SoftwareProductType,
     DefaultProductPlan, SoftwarePlanEdition, BillingAccount,
-    BillingAccountType, BillingAccountAdmin
+    BillingAccountType, BillingAccountAdmin,
+    Invoice, BillingRecord, InvoicePdf
 )
 from corehq.apps.accounting.usage import FeatureUsageCalculator
 from corehq.apps.accounting.user_text import get_feature_name, PricingTable, DESC_BY_EDITION, PricingTableFeatures
@@ -655,6 +658,49 @@ class DomainBillingStatementsView(DomainAccountingSettings):
         if self.account is None:
             raise Http404()
         return super(DomainBillingStatementsView, self).dispatch(request, *args, **kwargs)
+
+
+class BillingStatementPdfView(View):
+    urlname = 'domain_billing_statement_download'
+
+    @method_decorator(login_and_domain_required)
+    @method_decorator(require_billing_admin())
+    @method_decorator(toggles.ACCOUNTING_PREVIEW.required_decorator())
+    def dispatch(self, request, *args, **kwargs):
+        return super(BillingStatementPdfView, self).dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        domain = args[0]
+        statement_id = kwargs.get('statement_id')
+        if statement_id is None or domain is None:
+            raise Http404()
+        try:
+            invoice_pdf = InvoicePdf.get(statement_id)
+        except ResourceNotFound:
+            raise Http404()
+
+        # verify domain
+        try:
+            invoice = Invoice.objects.get(pk=invoice_pdf.invoice_id)
+        except Invoice.DoesNotExist:
+            raise Http404()
+        if invoice.subscription.subscriber.domain != domain:
+            raise Http404()
+
+        filename = "%(domain)s_%(edition)s_%(filename)s" % {
+            'domain': domain,
+            'edition': DESC_BY_EDITION[invoice.subscription.plan_version.plan.edition]['name'],
+            'filename': invoice_pdf.get_filename(invoice),
+        }
+        try:
+            data = invoice_pdf.get_data(invoice)
+            response = HttpResponse(data, content_type='application/pdf')
+            response['Content-Disposition'] = 'attachment; filename="%s"' % filename
+        except Exception as e:
+            logging.error('[Billing] Fetching invoice PDF failed: %s' % e)
+            return HttpResponse(_("Could not obtain billing statement. "
+                                  "An issue has been submitted."))
+        return response
 
 
 class SelectPlanView(DomainAccountingSettings):
