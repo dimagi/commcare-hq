@@ -212,7 +212,6 @@ class Select2InvoiceTriggerHandler(BaseSelect2AsyncHandler):
 
     @property
     def domain_response(self):
-        print 'getting domain response'
         domain_names = [domain['key'] for domain in Domain.get_all(include_docs=False)]
         domain_names = filter(lambda x: toggles.ACCOUNTING_PREVIEW.enabled(x), domain_names)
         if self.search_string:
