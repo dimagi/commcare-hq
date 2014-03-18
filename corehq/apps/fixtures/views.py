@@ -76,6 +76,16 @@ def tables(request, domain):
 
 @require_can_edit_fixtures
 def update_tables(request, domain, data_type_id, test_patch={}):
+    """
+    receives a JSON-update patch like following
+    {
+        "_id":"0920fe1c6d4c846e17ee33e2177b36d6",
+        "tag":"growth",
+        "view_link":"/a/gsid/fixtures/view_lookup_tables/?table_id:0920fe1c6d4c846e17ee33e2177b36d6",
+        "is_global":false,
+        "fields":{"genderr":{"update":"gender"},"grade":{}}
+    }
+    """
     if data_type_id:
         try:
             data_type = FixtureDataType.get(data_type_id)
@@ -105,7 +115,10 @@ def update_tables(request, domain, data_type_id, test_patch={}):
                 data_type = update_types(fields_patches, domain, data_type_id, data_tag, is_global, transaction)
                 update_items(fields_patches, domain, data_type_id, transaction)
             else:
-                data_type = create_types(fields_patches, domain, data_tag, is_global, transaction)
+                if FixtureDataType.fixture_tag_exists(domain, data_tag):
+                    return HttpResponseBadRequest("DuplicateFixture")
+                else:
+                    data_type = create_types(fields_patches, domain, data_tag, is_global, transaction)
         return json_response(strip_json(data_type))
 
 

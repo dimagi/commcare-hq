@@ -1,3 +1,4 @@
+var somethingWentWrong = $("#FailText").text();
 $(function () {
     "use strict";
     function log (x) {
@@ -99,10 +100,19 @@ $(function () {
                 url: UpdateTableUrl + (self._id() || ''),
                 data: JSON.stringify(self.serialize()),
                 dataType: 'json',
-                error: function() {
-                      $("#editFailure").show();
-                      self.cancel();
-                      self.saveState('saved');
+                error: function(data) {
+                    var error_message;
+                    if (data.responseText == "DuplicateFixture"){
+                        error_message = "Can not create table with table_id '"+self.tag()+"'. table_id should be unique.";
+                    }
+                    else{
+                        error_message = somethingWentWrong;
+                    }
+                    $("#FailText").text(error_message);
+                    $("#editFailure").show();
+                    self.cancel();
+                    self.saveState('saved');
+                    console.log(data.responseText);
                     },
                 success: function (data) {
                     self.saveState('saved');
@@ -302,5 +312,6 @@ $(function () {
     });
     $('.alert .close').live("click", function(e) {
     $(this).parent().hide();
+
 });
 });
