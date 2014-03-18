@@ -1032,9 +1032,9 @@ class CreditLine(models.Model):
                     'level': credit_level,
                     'account_id': self.account.id,
                     'feature': (' for Feature %s' % self.feature_type
-                                if self.feature_type is None else ""),
+                                if self.feature_type is not None else ""),
                     'product': (' for Product %s' % self.product_type
-                                if self.product_type is None else ""),
+                                if self.product_type is not None else ""),
                     'balance': self.balance,
                 })
 
