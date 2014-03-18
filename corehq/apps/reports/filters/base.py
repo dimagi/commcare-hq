@@ -284,7 +284,6 @@ class BaseDrilldownOptionFilter(BaseReportFilter):
 
 class BaseTagsFilter(BaseReportFilter):
     template = "reports/filters/base_tags_filter.html"
-    advanced = True
     tags = []
 
     @property

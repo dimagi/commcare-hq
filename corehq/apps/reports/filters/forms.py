@@ -720,11 +720,13 @@ class CompletionOrSubmissionTimeFilter(BaseSingleOptionFilter):
 class CustomPropsFilter(BaseTagsFilter):
     slug = "custom_props"
     label = "Custom Property"
+    advanced = True
     default_text = "No properties specified"
     placeholder = ugettext_noop('Specify exact matches for form properties you want to filter by')
 
 class CustomFieldFilter(BaseTagsFilter):
     slug = "custom_field"
     label = "Columns"
+    advanced = True
     default_text = "No columns specified"
     placeholder = ugettext_noop('Stuff')
