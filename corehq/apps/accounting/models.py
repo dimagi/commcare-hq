@@ -739,8 +739,10 @@ class Subscription(models.Model):
         return plan_version, subscription
     
     @classmethod
-    def new_domain_subscription(cls, account, domain, plan_version, date_start=None, adjustment_method=None,
-                                note=None, web_user=None, **kwargs):
+    def new_domain_subscription(cls, account, domain, plan_version,
+                                date_start=None, date_end=None, note=None,
+                                web_user=None, adjustment_method=None,
+                                **kwargs):
         subscriber = Subscriber.objects.get_or_create(domain=domain, organization=None)[0]
         today = datetime.date.today()
         future_subscriptions = Subscription.objects.filter(
@@ -765,6 +767,7 @@ class Subscription(models.Model):
             plan_version=plan_version,
             subscriber=subscriber,
             date_start=date_start or datetime.date.today(),
+            date_end=date_end,
             **kwargs
         )
         subscription.save()
