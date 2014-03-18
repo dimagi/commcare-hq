@@ -1,16 +1,19 @@
-from django.utils.safestring import mark_safe
-from corehq.apps.data_interfaces.dispatcher import EditDataInterfaceDispatcher
-from corehq.apps.groups.models import Group
 from django.core.urlresolvers import reverse
+from django.utils.safestring import mark_safe
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_noop
+
+from dimagi.utils.decorators.memoized import memoized
+
+from corehq.apps.groups.models import Group
 from corehq.apps.reports import util
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
-from dimagi.utils.decorators.memoized import memoized
-from django.utils.translation import ugettext_noop
-from django.utils.translation import ugettext as _
+
+from .dispatcher import EditDataInterfaceDispatcher
 
 
 class DataInterface(GenericReportView):
@@ -31,9 +34,6 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
     slug = "reassign_cases"
 
     report_template_path = 'data_interfaces/interfaces/case_management.html'
-
-    asynchronous = False
-    ajax_pagination = True
 
     @property
     @memoized
@@ -70,7 +70,7 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
         context = super(CaseReassignmentInterface, self).report_context
         active_users = self.get_all_users_by_domain(user_filter=tuple(HQUserType.use_defaults()), simplified=True)
         context.update(
-           users=[dict(ownerid=user.get('user_id'), name=user.get('username_in_report'), type="user")
+            users=[dict(ownerid=user.get('user_id'), name=user.get('username_in_report'), type="user")
                    for user in active_users],
             groups=[dict(ownerid=group.get_id, name=group.name, type="group")
                     for group in self.all_case_sharing_groups],
