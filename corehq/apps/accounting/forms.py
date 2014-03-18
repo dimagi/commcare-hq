@@ -1,3 +1,4 @@
+import calendar
 import datetime
 import json
 from django.conf import settings
@@ -18,6 +19,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from django_countries.countries import COUNTRIES
 from corehq import privileges, toggles
+from corehq.apps.accounting.invoicing import DomainInvoiceFactory
 
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.email import send_HTML_email
@@ -1245,5 +1247,11 @@ class TriggerInvoiceForm(forms.Form):
         return domain
 
     def trigger_invoice(self):
-        # todo
-        return True
+        year = int(self.cleaned_data['year'])
+        month = int(self.cleaned_data['month'])
+        last_day = calendar.monthrange(year, month)[1]
+        invoice_start = datetime.date(year, month, 1)
+        invoice_end = datetime.date(year, month, last_day)
+        domain = Domain.get_by_name(self.cleaned_data['domain'])
+        invoice_factory = DomainInvoiceFactory(invoice_start, invoice_end, domain)
+        invoice_factory.create_invoices()

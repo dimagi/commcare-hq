@@ -19,7 +19,7 @@ from corehq.apps.accounting.forms import (
     PlanInformationForm, SoftwarePlanVersionForm, FeatureRateForm,
     ProductRateForm, TriggerInvoiceForm
 )
-from corehq.apps.accounting.exceptions import NewSubscriptionError
+from corehq.apps.accounting.exceptions import NewSubscriptionError, InvoiceError, CreditLineError
 from corehq.apps.accounting.interface import AccountingInterface, SubscriptionInterface, SoftwarePlanInterface
 from corehq.apps.accounting.models import (SoftwareProductType, Invoice, BillingAccount, CreditLine, Subscription,
                                            SoftwarePlanVersion, SoftwarePlan)
@@ -34,7 +34,7 @@ from corehq.apps.accounting.utils import (
     has_subscription_already_ended
 )
 from corehq.apps.hqwebapp.views import BaseSectionPageView
-from corehq import privileges
+from corehq import privileges, toggles
 from django_prbac.decorators import requires_privilege_raise404
 
 
@@ -427,8 +427,14 @@ class TriggerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
         if self.async_response is not None:
             return self.async_response
         if self.trigger_form.is_valid():
-            if self.trigger_form.trigger_invoice():
-                messages.success(request, "Successfully triggered invoice for domain.")
+            try:
+                self.trigger_form.trigger_invoice()
+                messages.success(
+                    request, "Successfully triggered invoices for domain %s."
+                             % self.trigger_form.cleaned_data['domain'])
+                return HttpResponseRedirect(reverse(self.urlname))
+            except (CreditLineError, InvoiceError) as e:
+                messages.error(request, "Error generating invoices: %s" % e)
         return self.get(request, *args, **kwargs)
 
 
