@@ -83,23 +83,23 @@ class SessionDataHelper(object):
 
         return json.loads(response)
 
-    def get_full_context(self, form_url):
+    def get_full_context(self, extras=None):
         """
         Get the entire touchforms context for a given user/app/module/form/case
         """
+        extras = extras or {}
         session_data = self.get_session_data()
         # always tell touchforms to include footprinted cases in its case db
         session_data["additional_filters"] = {"footprint": True}
 
         online_url = reverse("xform_player_proxy")
         offline_url = 'http://localhost:%d' % settings.OFFLINE_TOUCHFORMS_PORT
-
-        return {
-            "form_url": form_url,
+        ret = {
             "session_data": session_data,
             "xform_url": offline_url if self.offline else online_url,
         }
-
+        ret.update(extras)
+        return ret
 
 
 def get_session_data(domain, couch_user, case_id=None, device_id=CLOUDCARE_DEVICE_ID, delegation=False):
@@ -109,4 +109,6 @@ def filter_cases(domain, couch_user, xpath, additional_filters=None, auth=None, 
     return SessionDataHelper(domain, couch_user, delegation=delegation).filter_cases(xpath, additional_filters, auth)
 
 def get_full_context(domain, user, app, form_url, case_id=None, delegation=False, offline=False):
-    return SessionDataHelper(domain, user, case_id, delegation=delegation, offline=offline).get_full_context(form_url)
+    return SessionDataHelper(domain, user, case_id, delegation=delegation, offline=offline).get_full_context({
+        'form_url': form_url
+    })
