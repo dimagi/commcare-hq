@@ -2,6 +2,7 @@ from corehq.apps.accounting.dispatcher import (
     AccountingAdminInterfaceDispatcher
 )
 from corehq.apps.accounting.filters import *
+from corehq.apps.accounting.forms import AdjustBalanceForm
 from corehq.apps.accounting.models import (
     BillingAccount, Subscription, SoftwarePlan
 )
@@ -365,6 +366,7 @@ class InvoiceInterface(GenericTabularReport):
     def report_context(self):
         context = super(InvoiceInterface, self).report_context
         context.update(
+            adjust_balance_form=AdjustBalanceForm(),
             # TODO - filter Invoices
             invoices=Invoice.objects.all(),
         )

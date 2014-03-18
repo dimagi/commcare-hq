@@ -1,3 +1,4 @@
+{% load crispy_forms_tags %}
 {% load i18n %}
 
 
@@ -7,5 +8,6 @@
             <a class="close" data-dismiss="modal">&times;</a>
             <h3>{% trans "Adjust Balance for Invoice #" %}{{ invoice.invoice_number }}</h3>
         </div>
+        {% crispy adjust_balance_form %}
     </div>
 {% endfor %}

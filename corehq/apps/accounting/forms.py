@@ -1293,3 +1293,60 @@ class TriggerInvoiceForm(forms.Form):
             else:
                 invoice.delete()
 
+
+class AdjustBalanceForm(forms.Form):
+    adjustment_type = forms.ChoiceField(
+        choices=(
+            ('current', 'Add Credit of Current Balance'),
+            ('credit', 'Add CREDIT of Another Amount'),
+            ('debit', 'Add DEBIT of Another Amount'),
+        ),
+        widget=forms.RadioSelect,
+    )
+
+    method = forms.ChoiceField(
+        choices=(
+            ('salesforce', 'Salesforce'),
+            ('check', 'Check'),
+            ('electronic', 'Electronic'),
+            ('correction', 'Correction'),
+        ),
+    )
+    note = forms.CharField(
+        required=False,
+        widget=forms.Textarea,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(AdjustBalanceForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_class = "form-horizontal"
+        self.helper.layout = crispy.Layout(
+            FormActions(
+                crispy.Div(
+                    crispy.Fieldset(
+                        '',
+                        #"What type of adjustment would you like to make?",
+                        'adjustment_type',
+                        'method',
+                        'note',
+                    ),
+                    css_class='modal-body',
+                ),
+                crispy.Div(
+                    crispy.ButtonHolder(
+                        crispy.Submit(
+                            'submit',
+                            'Apply',
+                            data_loading_text='Submitting...',
+                            ),
+                        crispy.Button(
+                            'close',
+                            'Close',
+                            data_dismiss='modal',
+                        ),
+                    ),
+                    css_class='modal-footer',
+                ),
+            ),
+        )
