@@ -845,8 +845,9 @@ class Invoice(models.Model):
 
     @classmethod
     def exists_for_domain(cls, domain):
-        # todo return cls.objects.filter(subscription__subscriber__domain=domain).exists()
-        return True
+        return cls.objects.filter(
+            subscription__subscriber__domain=domain, is_hidden=False
+        ).count() > 0
 
 
 class SubscriptionAdjustment(models.Model):
