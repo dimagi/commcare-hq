@@ -14,23 +14,27 @@ from corehq.util.translation import localize
 
 from dimagi.utils.decorators.memoized import memoized
 
-from corehq.apps.accounting.forms import (BillingAccountForm, CreditForm, SubscriptionForm, CancelForm,
-                                          PlanInformationForm, SoftwarePlanVersionForm, FeatureRateForm,
-                                          ProductRateForm)
-from corehq.apps.accounting.exceptions import NewSubscriptionError
+from corehq.apps.accounting.forms import (
+    BillingAccountForm, CreditForm, SubscriptionForm, CancelForm,
+    PlanInformationForm, SoftwarePlanVersionForm, FeatureRateForm,
+    ProductRateForm, TriggerInvoiceForm
+)
+from corehq.apps.accounting.exceptions import NewSubscriptionError, InvoiceError, CreditLineError
 from corehq.apps.accounting.interface import AccountingInterface, SubscriptionInterface, SoftwarePlanInterface
 from corehq.apps.accounting.models import (SoftwareProductType, Invoice, BillingAccount, CreditLine, Subscription,
                                            SoftwarePlanVersion, SoftwarePlan)
-from corehq.apps.accounting.async_handlers import (FeatureRateAsyncHandler, Select2RateAsyncHandler,
-                                                   SoftwareProductRateAsyncHandler, Select2BillingInfoHandler,
-                                                   Select2SubscriptionInfoHandler)
+from corehq.apps.accounting.async_handlers import (
+    FeatureRateAsyncHandler, Select2RateAsyncHandler,
+    SoftwareProductRateAsyncHandler, Select2BillingInfoHandler,
+    Select2SubscriptionInfoHandler, Select2InvoiceTriggerHandler,
+)
 from corehq.apps.accounting.user_text import PricingTable
 from corehq.apps.accounting.utils import (
     LazyEncoder, fmt_feature_rate_dict, fmt_product_rate_dict,
     has_subscription_already_ended
 )
 from corehq.apps.hqwebapp.views import BaseSectionPageView
-from corehq import privileges
+from corehq import privileges, toggles
 from django_prbac.decorators import requires_privilege_raise404
 
 
@@ -114,19 +118,14 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
     @memoized
     def credit_form(self):
         if self.request.method == 'POST' and 'adjust_credit' in self.request.POST:
-            return CreditForm(self.account.id, True, self.request.POST)
-        return CreditForm(self.account.id, True)
-
-    def get_appropriate_credit_form(self, account):
-        if (not self.credit_form.is_bound) or (not self.credit_form.is_valid()):
-            return self.credit_form
-        return CreditForm(account.id, True)
+            return CreditForm(self.account, None, self.request.POST)
+        return CreditForm(self.account, None)
 
     @property
     def page_context(self):
         return {
             'account': self.account,
-            'credit_form': self.get_appropriate_credit_form(self.account),
+            'credit_form': self.credit_form,
             'credit_list': CreditLine.objects.filter(account=self.account),
             'form': self.account_form,
             'subscription_list': [
@@ -146,7 +145,8 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
         if 'account' in self.request.POST and self.account_form.is_valid():
             self.account_form.update_account_and_contacts(self.account)
         elif 'adjust_credit' in self.request.POST and self.credit_form.is_valid():
-            self.credit_form.adjust_credit(account=self.account)
+            if self.credit_form.adjust_credit():
+                return HttpResponseRedirect(self.page_url)
 
         return self.get(request, *args, **kwargs)
 
@@ -238,31 +238,22 @@ class EditSubscriptionView(AccountingSectionView):
             return SubscriptionForm(self.subscription, None, self.request.POST)
         return SubscriptionForm(self.subscription, None)
 
-    def get_appropriate_subscription_form(self, subscription):
-        if (not self.subscription_form.is_bound) or (not self.subscription_form.is_valid()):
-            return self.subscription_form
-        return SubscriptionForm(subscription, None)
-
     @property
     @memoized
     def credit_form(self):
         if self.request.method == 'POST' and 'adjust_credit' in self.request.POST:
-            return CreditForm(self.subscription_id, False, self.request.POST)
-        return CreditForm(self.subscription_id, False)
-
-    def get_appropriate_credit_form(self, subscription):
-        if (not self.credit_form.is_bound) or (not self.credit_form.is_valid()):
-            return self.credit_form
-        return CreditForm(subscription.id, False)
+            return CreditForm(self.subscription.account, self.subscription,
+                              self.request.POST)
+        return CreditForm(self.subscription.account, self.subscription)
 
     @property
     def page_context(self):
         return {
             'cancel_form': CancelForm(),
-            'credit_form': self.get_appropriate_credit_form(self.subscription),
+            'credit_form': self.credit_form,
             'credit_list': CreditLine.objects.filter(subscription=self.subscription),
             'disable_cancel': has_subscription_already_ended(self.subscription),
-            'form': self.get_appropriate_subscription_form(self.subscription),
+            'form': self.subscription_form,
             'subscription': self.subscription,
             'subscription_canceled': self.subscription_canceled if hasattr(self, 'subscription_canceled') else False,
         }
@@ -281,9 +272,12 @@ class EditSubscriptionView(AccountingSectionView):
     def post(self, request, *args, **kwargs):
         if 'set_subscription' in self.request.POST and self.subscription_form.is_valid():
             new_subscription = self.subscription_form.update_subscription(self.subscription)
-            return HttpResponseRedirect(reverse(self.urlname, args=(unicode(new_subscription.id),)))
+            return HttpResponseRedirect(
+                reverse(self.urlname, args=(unicode(new_subscription.id)))
+            )
         elif 'adjust_credit' in self.request.POST and self.credit_form.is_valid():
-            self.credit_form.adjust_credit(subscription=self.subscription)
+            if self.credit_form.adjust_credit():
+                return HttpResponseRedirect(self.page_url)
         elif 'cancel_subscription' in self.request.POST:
             self.cancel_subscription()
         return self.get(request, *args, **kwargs)
@@ -397,6 +391,50 @@ class EditSoftwarePlanView(AccountingSectionView, AsyncHandlerMixin):
         elif self.plan_info_form.is_valid():
             self.plan_info_form.update_plan(self.plan)
             messages.success(request, "The %s Software Plan was successfully updated." % self.plan.name)
+        return self.get(request, *args, **kwargs)
+
+
+class TriggerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
+    urlname = 'accounting_trigger_invoice'
+    page_title = "Trigger Invoice"
+    template_name = 'accounting/trigger_invoice.html'
+    async_handlers = [
+        Select2InvoiceTriggerHandler,
+    ]
+
+    @method_decorator(toggles.INVOICE_TRIGGER.required_decorator())
+    def dispatch(self, request, *args, **kwargs):
+        return super(TriggerInvoiceView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    @memoized
+    def trigger_form(self):
+        if self.request.method == 'POST':
+            return TriggerInvoiceForm(self.request.POST)
+        return TriggerInvoiceForm()
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname)
+
+    @property
+    def page_context(self):
+        return {
+            'trigger_form': self.trigger_form,
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.async_response is not None:
+            return self.async_response
+        if self.trigger_form.is_valid():
+            try:
+                self.trigger_form.trigger_invoice()
+                messages.success(
+                    request, "Successfully triggered invoices for domain %s."
+                             % self.trigger_form.cleaned_data['domain'])
+                return HttpResponseRedirect(reverse(self.urlname))
+            except (CreditLineError, InvoiceError) as e:
+                messages.error(request, "Error generating invoices: %s" % e)
         return self.get(request, *args, **kwargs)
 
 

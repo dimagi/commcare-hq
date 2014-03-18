@@ -1,90 +1,34 @@
 # encoding: utf-8
 import datetime
-import logging
-from django.core.management import call_command
 from south.db import db
-from south.v2 import DataMigration
+from south.v2 import SchemaMigration
 from django.db import models
-from corehq.apps.accounting.models import (
-    FeatureType, Subscription, SoftwarePlanEdition, SoftwarePlan, FeatureRate,
-    CreditLine, SoftwareProductRate, DefaultProductPlan
-)
 
-logger = logging.getLogger(__name__)
-
-
-class Migration(DataMigration):
+class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        call_command('cchq_prbac_bootstrap')
-        call_command('cchq_software_plan_bootstrap')
+        
+        # Adding field 'Invoice.is_hidden'
+        db.add_column(u'accounting_invoice', 'is_hidden', self.gf('django.db.models.fields.BooleanField')(default=False), keep_default=False)
 
-        # Reset Subscription plan_version to the latest version for that plan
-        for subscription in Subscription.objects.all():
-            software_plan = subscription.plan_version.plan
-            latest_version = software_plan.get_version()
-            if subscription.plan_version.pk != latest_version.pk:
-                logger.info("%s reset to newest version."
-                            % subscription.subscriber.domain)
-                subscription.plan_version = latest_version
-                subscription.save()
+        # Adding field 'BillingRecord.skipped_email'
+        db.add_column(u'accounting_billingrecord', 'skipped_email', self.gf('django.db.models.fields.BooleanField')(default=False), keep_default=False)
 
-        # make sure that the default standard plan SMS FeatureRate
-        # has the monthly_limit set to 100
-        standard_plans = DefaultProductPlan.objects.filter(
-            edition=SoftwarePlanEdition.STANDARD)
-        for std_plan in standard_plans:
-            feature_rate = std_plan.plan.get_version().feature_rates.filter(
-                feature__feature_type=FeatureType.SMS
-            )[0]
-            if feature_rate.monthly_limit != 100:
-                feature_rate.monthly_limit = 100
-                feature_rate.save()
+        # Rename 'BillingRecord.date_emailed' to 'BillingRecord.date_created'
+        db.rename_column(u'accounting_billingrecord', 'date_emailed', 'date_created')
 
-        for plan in SoftwarePlan.objects.all():
-            default_version = plan.get_version()
-            for version in plan.softwareplanversion_set.all():
-                if version.pk != default_version.pk:
-                    try:
-                        version.delete()
-                    except models.ProtectedError:
-                        logger.info("Skipped deleting SoftwarePlanVersion "
-                                    "with id %d for plan %s because it was "
-                                    "still being used."
-                                    % (version.pk, plan.name))
-
-        for credit_line in orm.CreditLine.objects.filter(feature_rate__isnull=False).all():
-            latest_rate = credit_line.feature_rate.feature.get_rate()
-            if credit_line.feature_rate.pk != latest_rate.pk:
-                credit_line.feature_rate = latest_rate
-                credit_line.save()
-
-        for feature_rate in FeatureRate.objects.all():
-            if feature_rate.softwareplanversion_set.count() == 0:
-                try:
-                    feature_rate.delete()
-                except models.ProtectedError:
-                    logger.info("Skipped deleting FeatureRate with id "
-                                "%d because it was still being used."
-                                % feature_rate.pk)
-
-        for credit_line in orm.CreditLine.objects.filter(product_rate__isnull=False).all():
-            latest_rate = credit_line.product_rate.product.get_rate()
-            if credit_line.product_rate.pk != latest_rate.pk:
-                credit_line.product_rate = latest_rate
-                credit_line.save()
-
-        for product_rate in SoftwareProductRate.objects.all():
-            if product_rate.softwareplanversion_set.count() == 0:
-                try:
-                    product_rate.delete()
-                except models.ProtectedError:
-                    logger.info("Skipped deleting ProductRate with id "
-                                "%d because it was still being used."
-                                % product_rate.pk)
 
     def backwards(self, orm):
-        pass
+        
+        # Deleting field 'Invoice.is_hidden'
+        db.delete_column(u'accounting_invoice', 'is_hidden')
+
+        # Deleting field 'BillingRecord.skipped_email'
+        db.delete_column(u'accounting_billingrecord', 'skipped_email')
+
+        # Rename 'BillingRecord.date_created' to 'BillingRecord.date_emailed'
+        db.rename_column(u'accounting_billingrecord', 'date_created', 'date_emailed')
+
 
     models = {
         u'accounting.billingaccount': {
@@ -109,25 +53,26 @@ class Migration(DataMigration):
         u'accounting.billingcontactinfo': {
             'Meta': {'object_name': 'BillingContactInfo'},
             'account': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['accounting.BillingAccount']", 'unique': 'True', 'primary_key': 'True'}),
-            'city': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
+            'city': ('django.db.models.fields.CharField', [], {'max_length': '50', 'blank': 'True'}),
             'company_name': ('django.db.models.fields.CharField', [], {'max_length': '50', 'null': 'True', 'blank': 'True'}),
-            'country': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
+            'country': ('django.db.models.fields.CharField', [], {'max_length': '50', 'blank': 'True'}),
             'emails': ('django.db.models.fields.CharField', [], {'max_length': '200', 'null': 'True', 'blank': 'True'}),
-            'first_line': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
+            'first_line': ('django.db.models.fields.CharField', [], {'max_length': '50', 'blank': 'True'}),
             'first_name': ('django.db.models.fields.CharField', [], {'max_length': '50', 'null': 'True', 'blank': 'True'}),
             'last_name': ('django.db.models.fields.CharField', [], {'max_length': '50', 'null': 'True', 'blank': 'True'}),
             'phone_number': ('django.db.models.fields.CharField', [], {'max_length': '20', 'null': 'True', 'blank': 'True'}),
-            'postal_code': ('django.db.models.fields.CharField', [], {'max_length': '20'}),
+            'postal_code': ('django.db.models.fields.CharField', [], {'max_length': '20', 'blank': 'True'}),
             'second_line': ('django.db.models.fields.CharField', [], {'max_length': '50', 'null': 'True', 'blank': 'True'}),
-            'state_province_region': ('django.db.models.fields.CharField', [], {'max_length': '50'})
+            'state_province_region': ('django.db.models.fields.CharField', [], {'max_length': '50', 'blank': 'True'})
         },
         u'accounting.billingrecord': {
             'Meta': {'object_name': 'BillingRecord'},
-            'date_emailed': ('django.db.models.fields.DateField', [], {'auto_now_add': 'True', 'db_index': 'True', 'blank': 'True'}),
+            'date_created': ('django.db.models.fields.DateField', [], {'auto_now_add': 'True', 'db_index': 'True', 'blank': 'True'}),
             'emailed_to': ('django.db.models.fields.CharField', [], {'max_length': '254', 'db_index': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'invoice': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['accounting.Invoice']"}),
-            'pdf_data_id': ('django.db.models.fields.CharField', [], {'max_length': '48'})
+            'pdf_data_id': ('django.db.models.fields.CharField', [], {'max_length': '48'}),
+            'skipped_email': ('django.db.models.fields.BooleanField', [], {'default': 'False'})
         },
         u'accounting.creditadjustment': {
             'Meta': {'object_name': 'CreditAdjustment'},
@@ -193,6 +138,7 @@ class Migration(DataMigration):
             'date_received': ('django.db.models.fields.DateField', [], {'db_index': 'True', 'null': 'True', 'blank': 'True'}),
             'date_start': ('django.db.models.fields.DateField', [], {}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'is_hidden': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'subscription': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['accounting.Subscription']"}),
             'tax_rate': ('django.db.models.fields.DecimalField', [], {'default': "'0.0000'", 'max_digits': '10', 'decimal_places': '4'})
         },
@@ -242,9 +188,9 @@ class Migration(DataMigration):
         },
         u'accounting.subscriber': {
             'Meta': {'object_name': 'Subscriber'},
-            'domain': ('django.db.models.fields.CharField', [], {'max_length': '25', 'null': 'True', 'db_index': 'True'}),
+            'domain': ('django.db.models.fields.CharField', [], {'max_length': '256', 'null': 'True', 'db_index': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'organization': ('django.db.models.fields.CharField', [], {'max_length': '25', 'null': 'True', 'db_index': 'True'})
+            'organization': ('django.db.models.fields.CharField', [], {'max_length': '256', 'null': 'True', 'db_index': 'True'})
         },
         u'accounting.subscription': {
             'Meta': {'object_name': 'Subscription'},
