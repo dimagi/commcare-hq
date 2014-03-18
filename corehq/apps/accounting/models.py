@@ -1,3 +1,4 @@
+from StringIO import StringIO
 import datetime
 from decimal import Decimal
 import logging
@@ -16,6 +17,7 @@ from corehq.apps.accounting.subscription_changes import (
 )
 from corehq.apps.users.models import WebUser
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.django.cached_object import CachedObject
 
 from django_prbac.models import Role
 from dimagi.utils.couch.database import SafeSaveDocument
@@ -980,6 +982,17 @@ class InvoicePdf(SafeSaveDocument):
             'year': invoice.date_start.year,
             'month': invoice.date_start.month,
         }
+
+    def get_data(self, invoice):
+        obj = CachedObject('%s:InvoicePdfData' % self._id)
+        if not obj.is_cached():
+            data = self.fetch_attachment(self.get_filename(invoice), True)
+            buffer = StringIO(data)
+            obj.cache_put(buffer, {}, timeout=0)
+        else:
+            buffer = obj.get()[1]
+            data = buffer.getvalue()
+        return data
 
 
 class LineItemManager(models.Manager):
