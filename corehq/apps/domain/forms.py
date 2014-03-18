@@ -697,15 +697,12 @@ class EditBillingAccountInfoForm(forms.ModelForm):
         )[0])
         return result
 
-    def _parse_number(self, number, country):
-        return parse_phone_number(number, country, failhard=False)
-
     def clean_phone_number(self):
         data = self.cleaned_data['phone_number']
         parsed_number = None
         if data:
             for country in ["US", "GB", None]:
-                parsed_number = self._parse_number(data, country)
+                parsed_number = parse_phone_number(data, country, failhard=False)
                 if parsed_number is not None:
                     break
             if parsed_number is None:
@@ -796,8 +793,8 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
             else:
                 subscription = Subscription.new_domain_subscription(
                     self.account, self.domain, self.plan_version,
-                    web_user=self.creating_user, adjustment_method=SubscriptionAdjustmentMethod.USER
-                )
+                    web_user=self.creating_user,
+                    adjustment_method=SubscriptionAdjustmentMethod.USER)
                 subscription.is_active = True
                 if subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE:
                     # this point can only be reached if the initiating user was a superuser

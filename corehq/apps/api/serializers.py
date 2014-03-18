@@ -9,7 +9,7 @@ from tastypie.serializers import Serializer, get_type_string
 
 # External imports
 import defusedxml.lxml as lxml
-from lxml.etree import Element, tostring, LxmlError
+from lxml.etree import Element
 
 
 class CommCareCaseSerializer(Serializer):

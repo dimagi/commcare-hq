@@ -1,3 +1,4 @@
+from decimal import Decimal
 from lxml import etree
 import os
 import random
@@ -180,6 +181,11 @@ class CommTrackSubmissionTest(CommTrackTest):
         )
 
     def check_stock_models(self, case, product_id, expected_soh, expected_qty, section_id):
+        if not isinstance(expected_qty, Decimal):
+            expected_qty = Decimal(str(expected_qty))
+        if not isinstance(expected_soh, Decimal):
+            expected_soh = Decimal(str(expected_soh))
+
         latest_trans = StockTransaction.latest(case._id, section_id, product_id)
         self.assertIsNotNone(latest_trans)
         self.assertEqual(section_id, latest_trans.section_id)
@@ -216,8 +222,8 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
             inferred = amt - initial
             inferred_txn = StockTransaction.objects.get(case_id=self.sp._id, product_id=product,
                                               subtype=stockconst.TRANSACTION_SUBTYPE_INFERRED)
-            self.assertEqual(inferred, inferred_txn.quantity)
-            self.assertEqual(amt, inferred_txn.stock_on_hand)
+            self.assertEqual(Decimal(str(inferred)), inferred_txn.quantity)
+            self.assertEqual(Decimal(str(amt)), inferred_txn.stock_on_hand)
             self.assertEqual(stockconst.TRANSACTION_TYPE_CONSUMPTION, inferred_txn.type)
 
     def test_balance_submit_multiple_stocks(self):

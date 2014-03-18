@@ -1,4 +1,3 @@
-from doctest import Example
 import json
 import os
 from corehq.apps.builds.models import CommCareBuild

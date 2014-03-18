@@ -11,7 +11,7 @@ class AllEligibleClientsCalculator(fluff.Calculator):
     def total(self, form):
         if form.xmlns in ALL_ELIGIBLE_CLIENTS_FORMS:
             if form.xmlns in FOLLOW_UP_FORMS:
-                if form.form.get("visits", "") == "4":
+                if form.form.get("visits", 0) in range(1, 5):
                     yield [form.received_on, 1]
             else:
                 yield [form.received_on, 1]

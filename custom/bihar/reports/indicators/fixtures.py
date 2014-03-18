@@ -2,6 +2,7 @@ from xml.etree import ElementTree
 from django.utils import translation
 from django.utils.translation import ugettext as _
 from corehq.apps.groups.models import Group
+from corehq.util.translation import localize
 from custom.bihar import BIHAR_DOMAINS
 from custom.bihar.reports.indicators.indicators import IndicatorDataProvider, IndicatorConfig, INDICATOR_SETS
 
@@ -84,9 +85,7 @@ class IndicatorFixtureProvider(object):
             return ind_el
 
         # switch to hindi so we can use our builtin translations
-        current_language = translation.get_language()
-        translation.activate('hin')
-        try:
+        with localize('hin'):
             root = ElementTree.Element('fixture',
                 attrib={'id': self.id, 'user_id': self.user._id},
             )
@@ -102,10 +101,6 @@ class IndicatorFixtureProvider(object):
                 indicators.append(_indicator_to_fixture(indicator))
             group.append(indicators)
             return root
-        finally:
-            # i don't think this level of paranoia is actually necessary
-            # but it doesn't hurt.
-            translation.activate(current_language)
 
     def to_string(self):
         return ElementTree.tostring(self.to_fixture(), encoding="utf-8")

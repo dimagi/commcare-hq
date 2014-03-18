@@ -29,7 +29,7 @@ from corehq.apps.accounting.models import (
     DefaultProductPlan, SoftwarePlanEdition, BillingAccount,
     BillingAccountType, BillingAccountAdmin
 )
-from corehq.apps.accounting.usage import FeatureUsage
+from corehq.apps.accounting.usage import FeatureUsageCalculator
 from corehq.apps.accounting.user_text import get_feature_name, PricingTable, DESC_BY_EDITION, PricingTableFeatures
 from corehq.apps.hqwebapp.models import ProjectSettingsTab
 from corehq.apps import receiverwrapper
@@ -508,6 +508,15 @@ class DomainAccountingSettings(BaseAdminProjectSettingsView):
     def product(self):
         return SoftwareProductType.get_type_by_domain(self.domain_object)
 
+    @property
+    @memoized
+    def account(self):
+        return BillingAccount.get_account_by_domain(self.domain)
+
+    @property
+    def current_subscription(self):
+        return Subscription.get_subscribed_plan_by_domain(self.domain_object)[1]
+
 
 class DomainSubscriptionView(DomainAccountingSettings):
     urlname = 'domain_subscription_view'
@@ -563,7 +572,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
     def get_feature_summary(self, plan_version, subscription):
         feature_summary = []
         for feature_rate in plan_version.feature_rates.all():
-            usage = FeatureUsage(feature_rate, self.domain).get_usage()
+            usage = FeatureUsageCalculator(feature_rate, self.domain).get_usage()
             feature_info = {
                 'name': get_feature_name(feature_rate.feature.feature_type, self.product),
                 'usage': usage,
@@ -593,11 +602,6 @@ class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin
     async_handlers = [
         Select2BillingInfoHandler,
     ]
-
-    @property
-    @memoized
-    def account(self):
-        return BillingAccount.get_account_by_domain(self.domain)
 
     @property
     @memoized
@@ -637,16 +641,28 @@ class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin
         return self.get(request, *args, **kwargs)
 
 
+class DomainBillingStatementsView(DomainAccountingSettings):
+    template_name = 'domain/billing_statements.html'
+    urlname = 'domain_billing_statements'
+    page_title = ugettext_noop("Billing Statements")
+
+    @property
+    def page_context(self):
+        return {}
+
+    @method_decorator(toggles.ACCOUNTING_PREVIEW.required_decorator())
+    def dispatch(self, request, *args, **kwargs):
+        if self.account is None:
+            raise Http404()
+        return super(DomainBillingStatementsView, self).dispatch(request, *args, **kwargs)
+
+
 class SelectPlanView(DomainAccountingSettings):
     template_name = 'domain/select_plan.html'
     urlname = 'domain_select_plan'
     page_title = ugettext_noop("Change Plan")
     step_title = ugettext_noop("Select Plan")
     edition = None
-
-    @property
-    def current_subscription(self):
-        return Subscription.get_subscribed_plan_by_domain(self.domain_object)[1]
 
     @property
     def edition_name(self):
@@ -1152,7 +1168,7 @@ class ManageProjectMediaView(BaseAdminProjectSettingsView):
             if '%s_license' % m_file._id in request.POST:
                 m_file.update_or_add_license(self.domain,
                                              type=request.POST.get('%s_license' % m_file._id, 'public'),
-                                             should_save=False)
+                                             should_save=True)
             m_file.save()
         messages.success(request, _("Multimedia updated successfully!"))
         return self.get(request, *args, **kwargs)
@@ -1558,8 +1574,8 @@ class AdvancedCommTrackSettingsView(BaseCommTrackAdminView):
             self.commtrack_settings.stock_levels_config.to_json().items()))
 
         if self.request.method == 'POST':
-            return AdvancedSettingsForm(self.request.POST, initial=initial)
-        return AdvancedSettingsForm(initial=initial)
+            return AdvancedSettingsForm(self.request.POST, initial=initial, domain=self.domain)
+        return AdvancedSettingsForm(initial=initial, domain=self.domain)
 
     def set_ota_restore_config(self):
         """
@@ -1591,6 +1607,7 @@ class AdvancedCommTrackSettingsView(BaseCommTrackAdminView):
             self.commtrack_settings.use_auto_consumption = bool(data.get('use_auto_consumption'))
             self.commtrack_settings.sync_location_fixtures = bool(data.get('sync_location_fixtures'))
             self.commtrack_settings.sync_consumption_fixtures = bool(data.get('sync_consumption_fixtures'))
+            self.commtrack_settings.individual_consumption_defaults = bool(data.get('individual_consumption_defaults'))
 
             self.set_ota_restore_config()
 

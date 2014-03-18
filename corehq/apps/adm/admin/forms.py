@@ -2,7 +2,7 @@ from django import forms
 from django.forms.util import ErrorList
 from django.forms.widgets import Textarea
 from django.utils.safestring import mark_safe
-from corehq.apps.adm.models import BaseADMColumn, ReducedADMColumn, DaysSinceADMColumn, ConfigurableADMColumn,\
+from corehq.apps.adm.models import ReducedADMColumn, DaysSinceADMColumn,\
     CompareADMColumn, ADMReport, KEY_TYPE_OPTIONS, REPORT_SECTION_OPTIONS, \
     CASE_FILTER_OPTIONS, CASE_STATUS_OPTIONS, CaseCountADMColumn, ConfigurableADMColumn, CouchViewADMColumn, SORT_BY_DIRECTION_OPTIONS, UserDataADMColumn
 from corehq.apps.crud.models import BaseAdminCRUDForm

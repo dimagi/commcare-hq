@@ -44,6 +44,7 @@ class Command(BaseCommand):
         self.for_tests = testing
         if self.for_tests:
             logger.info("Initializing Plans and Roles for Testing")
+            logging.disable(logging.ERROR)
 
         if verbose:
             logger.setLevel(logging.DEBUG)

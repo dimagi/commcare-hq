@@ -75,17 +75,6 @@ def user_list(domain):
     users.sort(key=lambda user: (not user.is_active, user.username))
     return users
 
-def form_list(domain):
-    #todo cleanup
-    #referenced in fields SelectFormField
-    view = get_db().view("formtrends/form_duration_by_user",
-                         startkey=["xdu", domain, ""],
-                         endkey=["xdu", domain, {}],
-                         group=True,
-                         group_level=3,
-                         reduce=True)
-    return [{"text": xmlns_to_name(domain, r["key"][2], app_id=None), "val": r["key"][2]} for r in view]
-
 def get_group_params(domain, group='', users=None, user_id_only=False, **kwargs):
     # refrenced in reports/views and create_export_filter below
     if group:
@@ -327,8 +316,9 @@ def create_export_filter(request, domain, export_type='form'):
     else:
         filter = SerializableFunction(app_export_filter, app_id=app_id)
         datespan = request.datespan
-        datespan.set_timezone(get_timezone(request.couch_user, domain))
-        filter &= SerializableFunction(datespan_export_filter, datespan=datespan)
+        if datespan.is_valid():
+            datespan.set_timezone(get_timezone(request.couch_user, domain))
+            filter &= SerializableFunction(datespan_export_filter, datespan=datespan)
         if user_filters and use_user_filters:
             users_matching_filter = map(lambda x: x.get('user_id'), get_all_users_by_domain(domain,
                 user_filter=user_filters, simplified=True))

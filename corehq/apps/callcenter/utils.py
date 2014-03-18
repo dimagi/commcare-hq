@@ -38,12 +38,13 @@ def sync_user_cases(commcare_user):
 
     close = commcare_user.to_be_deleted() or not commcare_user.is_active
 
+    owner_id = domain.call_center_config.case_owner_id
     if found:
         caseblock = CaseBlock(
             create=False,
             case_id=case._id,
             version=V2,
-            owner_id=domain.call_center_config.case_owner_id,
+            owner_id=owner_id,
             case_type=domain.call_center_config.case_type,
             close=close,
             update=fields
@@ -53,8 +54,8 @@ def sync_user_cases(commcare_user):
         caseblock = CaseBlock(
             create=True,
             case_id=uuid.uuid4().hex,
-            owner_id=domain.call_center_config.case_owner_id,
-            user_id=commcare_user._id,
+            owner_id=owner_id,
+            user_id=owner_id,
             version=V2,
             case_type=domain.call_center_config.case_type,
             update=fields
@@ -76,18 +77,18 @@ def bootstrap_callcenter(domain):
 def create_form_mapping(domain):
     mapping = get_or_create_mapping(domain, MAPPING_NAME_FORMS)
 
-    mapping.couch_view = 'formtrends/form_duration_by_user'
-    mapping.couch_key_prefix = ['dux', domain.name]
+    mapping.couch_view = 'reports_forms/all_forms'
+    mapping.couch_key_prefix = ['submission', domain.name]
     mapping.columns = [
         ColumnDef(name="date", data_type="date", value_source="key", value_index=2,
-                  date_format="%Y-%m-%dT%H:%M:%S.%fZ"),
-        ColumnDef(name="user_id", data_type="string", value_source="key", value_index=3),
-        ColumnDef(name="xmlns", data_type="string", value_source="key", value_index=4),
-        ColumnDef(name="duration_sum", data_type="integer", value_source="value",
-                  value_attribute='sum'),
-        ColumnDef(name="sumbission_count", data_type="integer", value_source="value",
-                  value_attribute='count'),
+                  date_format="%Y-%m-%dT%H:%M:%SZ"),
+        ColumnDef(name="user_id", data_type="string", value_source="value", value_attribute="user_id"),
+        ColumnDef(name="xmlns", data_type="string", value_source="value", value_attribute="xmlns"),
+        ColumnDef(name="duration", data_type="integer", value_source="value", value_attribute="duration"),
     ]
+    mapping.couch_view_params = {
+        'reduce': False,
+    }
     mapping.save()
 
 
@@ -137,5 +138,6 @@ def get_or_create_mapping(domain, mapping_name, date_range=2):
     mapping.name = mapping_name
     mapping.active = True
     mapping.couch_date_range = date_range
+    mapping.couch_view_params = {}
 
     return mapping

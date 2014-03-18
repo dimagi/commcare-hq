@@ -3,7 +3,7 @@ import datetime
 import json
 from django.utils.encoding import force_unicode
 from django.utils.functional import Promise
-from corehq import Domain, privileges, toggles
+from corehq import Domain, privileges
 from corehq.apps.accounting.exceptions import AccountingError
 from dimagi.utils.dates import add_months
 from django_prbac.models import Role
@@ -28,7 +28,7 @@ def months_from_date(reference_date, months_from_date):
     return datetime.date(year, month, 1)
 
 
-def assure_domain_instance(domain):
+def ensure_domain_instance(domain):
     if not isinstance(domain, Domain):
         domain = Domain.get_by_name(domain)
     return domain
@@ -119,3 +119,20 @@ def domain_has_privilege(domain, privilege_slug, **assignment):
     except AccountingError:
         pass
     return False
+
+
+def has_subscription_already_ended(subscription):
+    return (subscription.date_end is not None
+            and subscription.date_end <= datetime.date.today()
+            and not subscription.is_active)
+
+
+def get_money_str(amount):
+    if amount is not None:
+        if amount < 0:
+            fmt = "-$%0.2f"
+            amount = abs(amount)
+        else:
+            fmt = "$%0.2f"
+        return fmt % amount
+    return ""

@@ -15,8 +15,7 @@ from corehq.apps.app_manager.views import _clear_app_cache
 from corehq.apps.appstore.forms import AddReviewForm
 from corehq.apps.appstore.models import Review
 from corehq.apps.domain.decorators import require_superuser
-from corehq.apps.users.models import CouchUser
-from corehq.elastic import es_query, parse_args_for_es, generate_sortables_from_facets, fill_mapping_with_facets
+from corehq.elastic import es_query, parse_args_for_es, fill_mapping_with_facets
 from corehq.apps.domain.models import Domain
 from dimagi.utils.couch.database import apply_update
 
@@ -326,7 +325,7 @@ def deployments(request, template="appstore/deployments.html"):
 
     more_pages = False if len(d_results) <= page*10 else True
 
-    facets_sortables = generate_sortables_from_facets(results, params, inverse_dict(DEPLOYMENT_MAPPING))
+    facet_map = fill_mapping_with_facets(DEPLOYMENT_MAPPING, results, params)
     include_unapproved = True if request.GET.get('is_approved', "") == "false" else False
     vals = { 'deployments': d_results[(page-1)*10:page*10],
              'page': page,
@@ -334,7 +333,7 @@ def deployments(request, template="appstore/deployments.html"):
              'next_page': (page+1),
              'more_pages': more_pages,
              'include_unapproved': include_unapproved,
-             'sortables': facets_sortables,
+             'facet_map': facet_map,
              'query_str': request.META['QUERY_STRING'],
              'search_url': reverse('deployments'),
              'search_query': params.get('search', [""])[0]}

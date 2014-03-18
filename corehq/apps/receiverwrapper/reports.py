@@ -1,4 +1,4 @@
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse, NoReverseMatch
 import pytz
 from corehq.apps.reports.standard.deployments import DeploymentsReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
@@ -111,10 +111,13 @@ class SubmissionErrorReport(DeploymentsReport):
                 view_name = 'render_form_data' \
                     if error_doc.doc_type in ["XFormInstance", "XFormArchived", "XFormError"] \
                     else 'download_form'
-                return "<a class='ajax_dialog' href='%(url)s'>%(text)s</a>" % {
-                    "url": reverse(view_name, args=[self.domain, doc_id]),
-                    "text": _("View Form")
-                }
+                try:
+                    return "<a class='ajax_dialog' href='%(url)s'>%(text)s</a>" % {
+                        "url": reverse(view_name, args=[self.domain, doc_id]),
+                        "text": _("View Form")
+                    }
+                except NoReverseMatch:
+                    return 'unable to view form'
             
             def _fmt_date(somedate):
                 time = tz_utils.adjust_datetime_to_timezone(somedate, pytz.utc.zone, self.timezone.zone)

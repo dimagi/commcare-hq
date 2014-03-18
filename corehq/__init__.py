@@ -4,6 +4,7 @@ from corehq.apps.reports.standard import (monitoring, inspect, export,
     deployments, sms, ivr)
 import corehq.apps.receiverwrapper.reports as receiverwrapper
 import phonelog.reports as phonelog
+import phonelog.old_reports as old_phonelog
 from corehq.apps.reports.commtrack import standard as commtrack_reports
 from corehq.apps.reports.commtrack import maps as commtrack_maps
 from corehq.apps.reports.commconnect import system_overview
@@ -34,11 +35,13 @@ def REPORTS(project):
         (ugettext_lazy("Manage Deployments"), (
             deployments.ApplicationStatusReport,
             receiverwrapper.SubmissionErrorReport,
-            phonelog.FormErrorReport,
-            phonelog.DeviceLogDetailsReport
+            old_phonelog.FormErrorReport,
+            old_phonelog.DeviceLogDetailsReport
         )),
         (ugettext_lazy("Demos for Previewers"), (
             DemoMapReport, DemoMapReport2, DemoMapCaseList,
+            phonelog.FormErrorReport,
+            phonelog.DeviceLogDetailsReport
         )),
     ]
     

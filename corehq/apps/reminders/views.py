@@ -9,7 +9,7 @@ from django.http import HttpResponseRedirect, Http404, HttpResponse
 from django.shortcuts import render
 
 from django.utils.translation import ugettext as _, ugettext_noop
-from corehq import privileges, toggles
+from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import get_case_properties
@@ -53,15 +53,12 @@ from corehq.apps.reminders.models import (
     METHOD_STRUCTURED_SMS,
     RECIPIENT_USER_GROUP,
     RECIPIENT_SENDER,
-    RECIPIENT_OWNER,
     METHOD_IVR_SURVEY,
 )
 from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import CommCareUser, Permissions, CouchUser
+from corehq.apps.users.models import CommCareUser, Permissions
 from dimagi.utils.decorators.memoized import memoized
-from django_prbac.exceptions import PermissionDenied
-from django_prbac.utils import ensure_request_has_privilege
 from .models import UI_SIMPLE_FIXED, UI_COMPLEX
 from .util import get_form_list, get_sample_list, get_recipient_name, get_form_name, can_use_survey_reminders
 from corehq.apps.sms.mixin import VerifiedNumber

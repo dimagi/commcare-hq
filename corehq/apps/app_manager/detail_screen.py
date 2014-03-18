@@ -1,6 +1,5 @@
 from corehq.apps.app_manager import suite_xml as sx
 from corehq.apps.app_manager.util import is_sort_only_column
-from corehq.apps.app_manager.const import CT_LEDGER_STOCK
 from corehq.apps.app_manager.xpath import dot_interpolate, CaseXPath, IndicatorXpath, LedgerdbXpath
 
 CASE_PROPERTY_MAP = {
@@ -377,7 +376,7 @@ class LedgerXpathGenerator(BaseXpathGenerator):
 
     @property
     def xpath(self):
-        session_case_id = 'case_id_case_{}'.format(self.module.case_type)
+        session_case_id = 'case_id_case_{0}'.format(self.module.case_type)
         section = self.column.field_property
 
         return "if({0} = 0 or {1} = 0 or {2} = 0, '', {3})".format(

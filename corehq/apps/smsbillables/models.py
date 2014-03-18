@@ -7,7 +7,7 @@ from corehq.apps.accounting import models as accounting
 from corehq.apps.accounting.models import Currency
 from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES
 from corehq.apps.sms.models import DIRECTION_CHOICES
-from corehq.apps.sms.phonenumbers_helper import parse_phone_number
+from corehq.apps.sms.phonenumbers_helper import get_country_code
 from corehq.apps.sms.util import clean_phone_number
 
 
@@ -230,8 +230,7 @@ class SmsBillable(models.Model):
         backend_api_id = message_log.backend_api
         backend_instance = message_log.backend_id
 
-        parsed_number = parse_phone_number(phone_number, failhard=False)
-        country_code = parsed_number.country_code if parsed_number else None
+        country_code = get_country_code(phone_number)
 
         billable.gateway_fee = SmsGatewayFee.get_by_criteria(
             backend_api_id, direction, backend_instance=backend_instance, country_code=country_code

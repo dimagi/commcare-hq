@@ -2,12 +2,10 @@ import functools
 from sqlagg.columns import *
 from sqlagg.base import AliasColumn
 from sqlagg.filters import *
-from sqlalchemy import func
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
-from corehq.apps.reports.basic import Column
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DataTablesColumnGroup, DTSortType
 from corehq.apps.reports.graph_models import MultiBarChart, LineChart, Axis
-from corehq.apps.reports.sqlreport import SqlTabularReport, DatabaseColumn, SummingSqlTabularReport, AggregateColumn, calculate_total_row
+from corehq.apps.reports.sqlreport import DatabaseColumn, SummingSqlTabularReport, AggregateColumn, calculate_total_row
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.reports.standard.maps import GenericMapReport
 from corehq.apps.reports.util import format_datatables_data
@@ -15,8 +13,6 @@ from dimagi.utils.decorators.memoized import memoized
 from util import get_unique_combinations,  capitalize_fn
 
 from datetime import datetime, timedelta
-
-import hashlib
 
 
 class StaticColumn(AliasColumn):

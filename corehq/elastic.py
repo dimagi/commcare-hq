@@ -195,7 +195,8 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
 
 
 def es_wrapper(index, domain=None, q=None, doc_type=None, fields=None,
-        start_at=None, size=None, sort_by=None, order=None, return_count=False):
+        start_at=None, size=None, sort_by=None, order=None, return_count=False,
+        filters=None):
     """
     This is a flat wrapper for es_query.
 
@@ -210,7 +211,10 @@ def es_wrapper(index, domain=None, q=None, doc_type=None, fields=None,
 
     # query components
     match_all = {"match_all": {}}
-    query_string = {"query_string": {"query": q}}
+    if isinstance(q, dict):
+        query_string = q
+    else:
+        query_string = {"query_string": {"query": q}}
     doc_type_filter = {"term": {"doc_type": doc_type}}
     domain_filter = {"or": [
         {"term": {"domain.exact": domain}},
@@ -226,14 +230,16 @@ def es_wrapper(index, domain=None, q=None, doc_type=None, fields=None,
     }}
 
     # add filters
-    filters = query["query"]["filtered"]["filter"]["and"]
+    es_filters = query["query"]["filtered"]["filter"]["and"]
     if domain:
-        filters.append(domain_filter)
+        es_filters.append(domain_filter)
     if doc_type:
-        filters.append(doc_type_filter)
+        es_filters.append(doc_type_filter)
     if not doc_type and not domain:
-        filters.append(match_all)
-    filters.extend(ADD_TO_ES_FILTER.get(index, [])[:])
+        es_filters.append(match_all)
+    if filters:
+        es_filters.extend(filters)
+    es_filters.extend(ADD_TO_ES_FILTER.get(index, [])[:])
     if sort_by:
         assert(order in ["asc", "desc"]),\
             'To sort, you must specify the order as "asc" or "desc"'

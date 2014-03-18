@@ -20,6 +20,8 @@
   widget: build_spec
   # this depends on builds are available, and on application_version
   # values, value_names, and default are magically set elsewhere
+  # the build_spec widget depends on application_version coming before it in
+  # this file
 
 - id: platform
   name: "Java Phone Platform"

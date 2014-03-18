@@ -1,4 +1,3 @@
-import os
 from django.test import TestCase
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.xform import XForm, XFormError

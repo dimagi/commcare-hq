@@ -314,6 +314,7 @@ class CaseCustomExportHelper(CustomExportHelper):
     export_type = 'case'
 
     default_properties = ["_id", "closed", "closed_on", "modified_on", "opened_on", "info.owner_name", "id"]
+    properties_to_show = ["identifier", "referenced_id", "referenced_type", "id", "doc_type"]
     default_transformed_properties = ["info.closed_by_username", "info.last_modified_by_username",
                                       "info.opened_by_username", "info.owner_name"]
     meta_properties = ["_id", "closed", "closed_by", "closed_on", "domain", "computed_modified_on_",
@@ -349,7 +350,7 @@ class CaseCustomExportHelper(CustomExportHelper):
         return table_configuration
 
     def update_table_conf(self, table_conf):
-        column_conf = table_conf[0].get("column_configuration", {})
+        column_conf = table_conf[0].get("column_configuration", [])
         current_properties = set(self.custom_export.case_properties)
         remaining_properties = current_properties.copy()
 
@@ -381,6 +382,12 @@ class CaseCustomExportHelper(CustomExportHelper):
         ])
 
         table_conf[0]["column_configuration"] = column_conf
+
+        for table in table_conf:
+            for col in table.get("column_configuration", []):
+                if col["index"] in self.properties_to_show:
+                    col["show"] = True
+
         return table_conf
 
     def get_context(self):

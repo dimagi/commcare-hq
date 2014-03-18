@@ -172,7 +172,7 @@ class OpmHealthStatusBasicInfoSqlData(SqlData):
         return [
             DatabaseColumn('# of Beneficiaries Registered', SumColumn('beneficiaries_registered_total')),
             DatabaseColumn('# of Pregnant Women Registered', SumColumn('lmp_total')),
-            DatabaseColumn('# of Lactating Mothers Registered', SumColumn('lactating_total')),
+            DatabaseColumn('# of Mothers of Children Aged 3 Years and Below Registered', SumColumn('lactating_total')),
             DatabaseColumn('# of Children Between 0 and 3 Years of Age Registered', SumColumn('children_total')),
         ]
 
@@ -241,7 +241,7 @@ class OpmHealthStatusSqlData(SqlData):
             DatabaseColumn('# of Children Whose Nutritional Status is "SAM"', SumColumn('nutritional_status_sam_total')),
             DatabaseColumn('# of Children Who Have Received ORS and Zinc Treatment if He/She Contracts Diarrhea', SumColumn('treated_total')),
             DatabaseColumn('# of Children Who Have Received ORS and Zinc Treatment if He/She Contracts Diarrhea', SumColumn('suffering_total')),
-            DatabaseColumn('# of Lactating Mothers Who Reported to Have Exclusively Breastfed Their Children for First 6 Months', SumColumn('excbreastfed_total')),
+            DatabaseColumn('# of Mothers of Children Aged 3 Years and Below Who Reported to Have Exclusively Breastfed Their Children for First 6 Months', SumColumn('excbreastfed_total')),
             DatabaseColumn('# of Children Who Received Measles Vaccine', SumColumn('measlesvacc_total')),
         ]
 
@@ -551,7 +551,7 @@ class HealthStatusReport(DatespanMixin, BaseReport, SummingSqlTabularReport):
                     formatted_row.append(col)
             return formatted_row
 
-        table = headers.as_table
+        table = headers.as_export_table
         rows = [_unformat_row(row) for row in formatted_rows]
         table.extend(rows)
         if self.total_row:

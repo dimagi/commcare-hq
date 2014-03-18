@@ -1,12 +1,11 @@
 from django.utils.translation import ugettext as _
 
-from corehq.apps.locations.models import Location
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, NumericColumn
 from corehq.apps.reports.fields import AsyncLocationField
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin
 from corehq.apps.reports.standard.cases.basic import CaseListReport
-from custom.m4change.reports import validate_report_parameters
+from custom.m4change.reports import validate_report_parameters, get_location_hierarchy_by_id
 from custom.m4change.reports.anc_hmis_report import AncHmisReport
 from custom.m4change.reports.immunization_hmis_report import ImmunizationHmisReport
 from custom.m4change.reports.ld_hmis_report import LdHmisReport
@@ -52,8 +51,7 @@ class AllHmisReport(MonthYearMixin, CustomProjectReport, CaseListReport, M4Chang
             LdHmisCaseSqlData(domain=domain, datespan=datespan).data.items() +\
             ImmunizationHmisCaseSqlData(domain=domain, datespan=datespan).data.items()
         )
-        top_location = Location.get(location_id)
-        locations = [location_id] + [descendant.get_id for descendant in top_location.descendants]
+        locations = get_location_hierarchy_by_id(location_id, domain)
         row_data = AllHmisReport.get_initial_row_data()
 
         for location_id in locations:
