@@ -83,52 +83,52 @@ class McctMonthlyAggregateReport(MonthYearMixin, CustomProjectReport, CaseListRe
             "eligible_due_to_immun_or_pnc_visit_total": {
                 "s/n": 9, "label": _("Eligible clients due to immunization or PNC visit"), "value": 0
             },
-            "reviewed_due_to_registration_total": {
+            "status_reviewed_due_to_registration": {
                 "s/n": 10, "label": _("Reviewed clients due to registration"), "value": 0
             },
-            "reviewed_due_to_4th_visit_total": {
+            "status_reviewed_due_to_4th_visit": {
                 "s/n": 11, "label": _("Reviewed clients due to 4th visit"), "value": 0
             },
-            "reviewed_due_to_delivery_total": {
+            "status_reviewed_due_to_delivery": {
                 "s/n": 12, "label": _("Reviewed clients due to delivery"), "value": 0
             },
-            "reviewed_due_to_immun_or_pnc_visit_total": {
+            "status_reviewed_due_to_immun_or_pnc_visit": {
                 "s/n": 13, "label": _("Reviewed clients due to immunization or PNC visit"), "value": 0
             },
-            "approved_due_to_registration_total": {
+            "status_approved_due_to_registration": {
                 "s/n": 14, "label": _("Approved clients due to registration"), "value": 0
             },
-            "approved_due_to_4th_visit_total": {
+            "status_approved_due_to_4th_visit": {
                 "s/n": 15, "label": _("Approved clients due to 4th visit"), "value": 0
             },
-            "approved_due_to_delivery_total": {
+            "status_approved_due_to_delivery": {
                 "s/n": 16, "label": _("Approved clients due to delivery"), "value": 0
             },
-            "approved_due_to_immun_or_pnc_visit_total": {
+            "status_approved_due_to_immun_or_pnc_visit": {
                 "s/n": 17, "label": _("Approved clients due to immunization or PNC visit"), "value": 0
             },
-            "paid_due_to_registration_total": {
+            "status_paid_due_to_registration": {
                 "s/n": 18, "label": _("Paid clients due to registration"), "value": 0
             },
-            "paid_due_to_4th_visit_total": {
+            "status_paid_due_to_4th_visit": {
                 "s/n": 19, "label": _("Paid clients due to 4th visit"), "value": 0
             },
-            "paid_due_to_delivery_total": {
+            "status_paid_due_to_delivery": {
                 "s/n": 20, "label": _("Paid clients due to delivery"), "value": 0
             },
-            "paid_due_to_immun_or_pnc_visit_total": {
+            "status_paid_due_to_immun_or_pnc_visit": {
                 "s/n": 21, "label": _("Paid clients due to immunization or PNC visit"), "value": 0
             },
-            "rejected_due_to_registration_total": {
+            "status_rejected_due_to_registration": {
                 "s/n": 22, "label": _("Rejected clients due to registration"), "value": 0
             },
-            "rejected_due_to_4th_visit_total": {
+            "status_rejected_due_to_4th_visit": {
                 "s/n": 23, "label": _("Rejected clients due to 4th visit"), "value": 0
             },
-            "rejected_due_to_delivery_total": {
+            "status_rejected_due_to_delivery": {
                 "s/n": 24, "label": _("Rejected clients due to delivery"), "value": 0
             },
-            "rejected_due_to_immun_or_pnc_visit_total": {
+            "status_rejected_due_to_immun_or_pnc_visit": {
                 "s/n": 25, "label": _("Rejected clients due to immunization or PNC visit"), "value": 0
             },
             "all_clients_status_view_total": {
