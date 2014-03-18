@@ -751,7 +751,8 @@ class BillingStatementPdfView(View):
         if invoice.subscription.subscriber.domain != domain:
             raise Http404()
 
-        filename = "%(domain)s_%(edition)s_%(filename)s" % {
+        filename = "%(pdf_id)s_%(domain)s_%(edition)s_%(filename)s" % {
+            'pdf_id': invoice_pdf._id,
             'domain': domain,
             'edition': DESC_BY_EDITION[invoice.subscription.plan_version.plan.edition]['name'],
             'filename': invoice_pdf.get_filename(invoice),
