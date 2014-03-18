@@ -143,7 +143,8 @@ class DomainInvoiceFactory(object):
         else:
             invoice_start = self.date_start
 
-        if subscription.date_end <= self.date_end:
+        if (subscription.date_end is not None
+           and subscription.date_end <= self.date_end):
             # Since the Subscription is actually terminated on date_end
             # have the invoice period be until the day before date_end.
             invoice_end = subscription.date_end - datetime.timedelta(days=1)
