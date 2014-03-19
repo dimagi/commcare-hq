@@ -8,8 +8,9 @@
         <div class="control-group">
             <label class="control-label">{% trans "Tag" %}</label>
             <input type="text" class="control" data-bind="value: tag"/>
-            <label class="control-label">{% trans "Visible to all users?" %}</label>
-            <input type="checkbox" class="select-bulk" data-bind="checked: is_global" />
+            <label class="control-label">{% trans "Visible to all users? " %}
+                <input type="checkbox" class="select-bulk" data-bind="checked: is_global" style="vertical-align: top;"/>
+            </label>
         </div>
         <h4>{% trans "Fields" %}</h4>
         <div>
@@ -31,7 +32,7 @@
                         <td>
                             <input type="text" class="input-small" data-bind="value: editTag, hasfocus: true"/>
                             <!-- ko if:is_new -->
-                            <button class="btn btn-danger" data-bind="click: remove_if_new ">
+                            <button class="btn btn-danger" data-bind="click: remove_if_new " style="vertical-align: top;">
                                     <i class="icon-white icon-trash"></i>
                             </button>
                             <!-- /ko -->
