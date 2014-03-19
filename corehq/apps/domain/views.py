@@ -694,25 +694,33 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
     @property
     def paginated_list(self):
         for invoice in self.invoices:
-            last_billing_record = BillingRecord.objects.filter(
-                invoice=invoice
-            ).latest('date_created')
-            yield {
-                'itemData': {
-                    'id': invoice.id,
-                    'invoice_number': invoice.invoice_number,
-                    'start': invoice.date_start.strftime("%d %B %Y"),
-                    'end': invoice.date_end.strftime("%d %B %Y"),
-                    'plan': invoice.subscription.plan_version.user_facing_description,
-                    'payment_status': (_("YES (%s)") % invoice.date_paid.strftime("%d %B %Y")
-                                       if invoice.date_paid is not None else _("NO")),
-                    'pdfUrl': reverse(
-                        BillingStatementPdfView.urlname,
-                        args=[self.domain, last_billing_record.pdf_data_id]
-                    ),
-                },
-                'template': 'statement-row-template',
-            }
+            try:
+                last_billing_record = BillingRecord.objects.filter(
+                    invoice=invoice
+                ).latest('date_created')
+                yield {
+                    'itemData': {
+                        'id': invoice.id,
+                        'invoice_number': invoice.invoice_number,
+                        'start': invoice.date_start.strftime("%d %B %Y"),
+                        'end': invoice.date_end.strftime("%d %B %Y"),
+                        'plan': invoice.subscription.plan_version.user_facing_description,
+                        'payment_status': (_("YES (%s)") % invoice.date_paid.strftime("%d %B %Y")
+                                           if invoice.date_paid is not None else _("NO")),
+                        'pdfUrl': reverse(
+                            BillingStatementPdfView.urlname,
+                            args=[self.domain, last_billing_record.pdf_data_id]
+                        ),
+                    },
+                    'template': 'statement-row-template',
+                }
+            except BillingRecord.DoesNotExist:
+                logging.error(
+                    "An invoice was generated for %(invoice_id)d "
+                    "(domain: %(domain)s), but no billing record!" % {
+                        'invoice_id': invoice.id,
+                        'domain': self.domain,
+                    })
 
     def post(self, *args, **kwargs):
         return self.paginate_crud_response
