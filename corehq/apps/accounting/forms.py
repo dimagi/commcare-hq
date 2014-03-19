@@ -405,7 +405,8 @@ class SubscriptionForm(forms.Form):
             date_start=date_start,
             salesforce_contract_id=salesforce_contract_id,
             is_active=is_active,
-            do_not_invoice=do_not_invoice
+            do_not_invoice=do_not_invoice,
+            web_user=self.web_user,
         )
 
     def update_subscription(self, subscription):

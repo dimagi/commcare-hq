@@ -170,7 +170,8 @@ class NewSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
     def subscription_form(self):
         if self.request.method == 'POST':
             return SubscriptionForm(
-                None, self.account_id, None, self.request.POST
+                None, self.account_id, self.request.user.username,
+                self.request.POST
             )
         return SubscriptionForm(None, self.account_id, None)
 
