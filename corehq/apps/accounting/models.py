@@ -962,7 +962,10 @@ class BillingRecord(models.Model):
             'statements_url': reverse(DomainBillingStatementsView.urlname,
                                       args=[domain]),
         }
-        contact_emails = self.invoice.subscription.account.billingcontactinfo.emails.split(',')
+
+        contact_emails = self.invoice.subscription.account.billingcontactinfo.emails
+        contact_emails = (contact_emails.split(',')
+                          if contact_emails is not None else [])
         if not contact_emails:
             # fall back to the first billing admin added
             contact_emails.append(self.invoice.subscription.account.billing_admins.all()[0].web_user)
