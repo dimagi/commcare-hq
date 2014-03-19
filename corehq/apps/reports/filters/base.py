@@ -295,7 +295,6 @@ class BaseTagsFilter(BaseReportFilter):
     def filter_context(self):
         return {
             'tags': self.tags,
-            'default_text': self.default_text,
             'selected': self.selected,
             'placeholder': self.placeholder,
         }

@@ -720,5 +720,5 @@ class CompletionOrSubmissionTimeFilter(BaseSingleOptionFilter):
 class CustomPropsFilter(BaseTagsFilter):
     slug = "custom_props"
     label = "Custom Property"
-    default_text = "No properties specified"
-    placeholder = ugettext_noop('Specify exact matches for form properties you want to filter by')
+    help_text = "Filter by the exact match of a property. Formatted as followed: <property>:<value_to_filter>"
+    placeholder = ugettext_noop('<property>:<value_to_filter>')
