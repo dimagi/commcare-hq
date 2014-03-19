@@ -274,7 +274,7 @@ class EditSubscriptionView(AccountingSectionView):
 
     @property
     def page_url(self):
-        return reverse(self.urlname, args=(self.args[0],))
+        return reverse(self.urlname, args=(self.subscription_id,))
 
     @property
     def parent_pages(self):
@@ -295,6 +295,7 @@ class EditSubscriptionView(AccountingSectionView):
         elif ('cancel_subscription' in self.request.POST
               and self.cancel_form.is_valid()):
             self.cancel_subscription()
+            return HttpResponseRedirect(self.page_url)
         return self.get(request, *args, **kwargs)
 
     def cancel_subscription(self):
