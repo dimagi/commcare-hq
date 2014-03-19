@@ -230,11 +230,12 @@ class SubscriptionForm(forms.Form):
         label=_("Do Not Invoice"), required=False
     )
 
-    def __init__(self, subscription, account_id, *args, **kwargs):
+    def __init__(self, subscription, account_id, web_user, *args, **kwargs):
         # account_id is not referenced if subscription is not None
         super(SubscriptionForm, self).__init__(*args, **kwargs)
         self.subscription = subscription
         self.is_existing = subscription is not None
+        self.web_user = web_user
         today = datetime.date.today()
 
         start_date_field = crispy.Field('start_date', css_class="date-picker")
@@ -404,13 +405,15 @@ class SubscriptionForm(forms.Form):
             date_start=date_start,
             salesforce_contract_id=salesforce_contract_id,
             is_active=is_active,
-            do_not_invoice=do_not_invoice
+            do_not_invoice=do_not_invoice,
+            web_user=self.web_user,
         )
 
     def update_subscription(self, subscription):
         kwargs = {
             'salesforce_contract_id': self.cleaned_data['salesforce_contract_id'],
             'do_not_invoice': self.cleaned_data['do_not_invoice'],
+            'web_user': self.web_user,
         }
 
         if self.fields['start_date'].required:
@@ -521,16 +524,26 @@ class CreditForm(forms.Form):
 
 
 class CancelForm(forms.Form):
+    note = forms.CharField(
+        widget=forms.TextInput,
+    )
 
     def __init__(self, *args, **kwargs):
         super(CancelForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
-        cancel_subscription_button = crispy.Button('cancel_subscription', 'CANCEL SUBSCRIPTION', css_class="btn-danger")
-        cancel_subscription_button.input_type = 'submit'
         self.helper.layout = crispy.Layout(
-            crispy.ButtonHolder(
-                cancel_subscription_button
-            )
+            crispy.Fieldset(
+                'Cancel Subscription',
+                'note',
+            ),
+            FormActions(
+                StrictButton(
+                    'CANCEL SUBSCRIPTION',
+                    css_class='btn-danger',
+                    name='cancel_subscription',
+                    type='submit',
+                )
+            ),
         )
 
 

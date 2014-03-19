@@ -32,6 +32,12 @@
         </div>
 
         <div class="tab-pane" id="actions">
+            <div class="alert alert-error">
+                Do this ONLY if absolutely necessary.
+                Do not cancel subscriptions just to change start dates.
+                Canceling will have real time effects to the domain like
+                shutting off reminders.
+            </div>
             <form class="form form-horizontal" method="post" id="cancel_form">
                 {% crispy cancel_form %}
             </form>
