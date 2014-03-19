@@ -728,5 +728,5 @@ class CustomFieldFilter(BaseTagsFilter):
     slug = "custom_field"
     label = "Columns"
     advanced = True
-    default_text = "No columns specified"
-    placeholder = ugettext_noop('Stuff')
+    help_text = "Each property entered here will show up as a column in the report."
+    placeholder = ugettext_noop('<name_of_column>')
