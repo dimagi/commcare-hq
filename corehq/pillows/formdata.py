@@ -10,10 +10,7 @@ import logging
 
 class FormDataPillow(BulkPillow):
     document_class = XFormInstance
-    couch_filter = 'fluff_filter/domain_type'
-    extra_args = {
-        'doc_type': 'XFormInstance'
-    }
+    couch_filter = 'couchforms/xforms'
 
     @transaction.commit_on_success
     def change_transport(self, doc_dict):
