@@ -166,22 +166,34 @@ class Currency(models.Model):
 
 
 class BillingAccountAdmin(models.Model):
-    web_user = models.CharField(max_length=80, unique=True, db_index=True)
+    web_user = models.CharField(max_length=80, db_index=True)
+    domain = models.CharField(
+        max_length=256, null=True, blank=True, db_index=True
+    )
 
     def __str__(self):
-        return "Billing Admin %s" % self.web_user
+        return "Billing Admin %(web_user)s for domain %(domain)s" % {
+            'web_user': self.web_user,
+            'domain': self.domain,
+        }
 
     @classmethod
     def get_admin_status_and_account(cls, web_user, domain):
         if not isinstance(web_user, WebUser):
             return False, None
         account = BillingAccount.get_account_by_domain(domain)
+        is_domain_admin = web_user.is_domain_admin(domain)
         if account is None:
-            return web_user.is_domain_admin(domain), None
-        admin = account.billing_admins.filter(web_user=web_user.username)
-        is_billing_admin = (admin.count() > 0
-                            and web_user.is_domain_admin(domain))
-        return is_billing_admin, account
+            return is_domain_admin, None
+        admins = account.billing_admins.filter(domain=domain)
+        if not admins.exists():
+            # BillingAccountAdmins for this domain have NOT been
+            # specified. This was likely an account created
+            # from the accounting admin side.
+            return is_domain_admin, account
+        # BillingAccountAdmins for this domain have been specified
+        admins = admins.filter(web_user=web_user.username)
+        return (admins.count() > 0 and is_domain_admin), account
 
 
 class BillingAccount(models.Model):
@@ -197,7 +209,7 @@ class BillingAccount(models.Model):
         help_text="This is how we link to the salesforce account",
     )
     created_by = models.CharField(max_length=80)
-    created_by_domain = models.CharField(max_length=25, null=True, blank=True)
+    created_by_domain = models.CharField(max_length=256, null=True, blank=True)
     date_created = models.DateTimeField(auto_now_add=True)
     billing_admins = models.ManyToManyField(BillingAccountAdmin, null=True)
     currency = models.ForeignKey(Currency, on_delete=models.PROTECT)
@@ -233,7 +245,9 @@ class BillingAccount(models.Model):
                 account_type=account_type,
             )
             account.save()
-            billing_admin = BillingAccountAdmin.objects.get_or_create(web_user=created_by)[0]
+            billing_admin = BillingAccountAdmin.objects.get_or_create(
+                domain=domain, web_user=created_by,
+            )[0]
             account.billing_admins.add(billing_admin)
             account.save()
         return account, is_new
@@ -264,11 +278,10 @@ class BillingContactInfo(models.Model):
         max_length=50, null=True, blank=True, verbose_name=_("Last Name")
     )
     emails = models.CharField(
-        max_length=200, null=True, blank=True,
-        verbose_name=_("Additional Contact Emails"),
-        help_text=_("We will email communications to the emails specified "
-                    "here and the emails "
-                    "of the Billing Administrators.")
+        max_length=200, null=True,
+        verbose_name=_("Contact Emails"),
+        help_text=_("We will email communications regarding your account "
+                    "to the emails specified here.")
     )
     phone_number = models.CharField(
         max_length=20, null=True, blank=True, verbose_name=_("Phone Number")
@@ -278,7 +291,7 @@ class BillingContactInfo(models.Model):
         verbose_name=_("Company / Organization")
     )
     first_line = models.CharField(
-        max_length=50, null=False, blank=True,
+        max_length=50, null=False,
         verbose_name=_("Address First Line")
     )
     second_line = models.CharField(
@@ -286,17 +299,17 @@ class BillingContactInfo(models.Model):
         verbose_name=_("Address Second Line")
     )
     city = models.CharField(
-        max_length=50, null=False, blank=True, verbose_name=_("City")
+        max_length=50, null=False, verbose_name=_("City")
     )
     state_province_region = models.CharField(
-        max_length=50, null=False, blank=True,
+        max_length=50, null=False,
         verbose_name=_("State / Province / Region"),
     )
     postal_code = models.CharField(
-        max_length=20, null=False, blank=True, verbose_name=_("Postal Code")
+        max_length=20, null=False, verbose_name=_("Postal Code")
     )
     country = models.CharField(
-        max_length=50, null=False, blank=True, verbose_name=_("Country")
+        max_length=50, null=False, verbose_name=_("Country")
     )
 
 
@@ -967,8 +980,9 @@ class BillingRecord(models.Model):
         contact_emails = (contact_emails.split(',')
                           if contact_emails is not None else [])
         if not contact_emails:
-            # fall back to the first billing admin added
-            contact_emails.append(self.invoice.subscription.account.billing_admins.all()[0].web_user)
+            logging.error(
+                "[Billing] Could not find an email to send the invoice "
+                "email to for the domain: %s" % domain)
         for email in contact_emails:
             greeting = _("Hello,")
             can_view_statement = False
