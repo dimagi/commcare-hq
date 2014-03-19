@@ -1,14 +1,20 @@
+from StringIO import StringIO
 import datetime
 from decimal import Decimal
 import logging
 from tempfile import NamedTemporaryFile
+from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django.schema import DateTimeProperty, StringProperty
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.files import File
+from django.core.urlresolvers import reverse
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
+from corehq import toggles
 from corehq.apps.accounting.invoice_pdf import Address, InvoiceTemplate
 from corehq.apps.accounting.utils import is_active_subscription, get_privileges
 from corehq.apps.accounting.subscription_changes import (
@@ -16,6 +22,8 @@ from corehq.apps.accounting.subscription_changes import (
 )
 from corehq.apps.users.models import WebUser
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.django.cached_object import CachedObject
+from dimagi.utils.django.email import send_HTML_email
 
 from django_prbac.models import Role
 from dimagi.utils.couch.database import SafeSaveDocument
@@ -495,6 +503,15 @@ class SoftwarePlanVersion(models.Model):
         }
 
     @property
+    def core_product(self):
+        try:
+            product_rate = self.product_rates.all()[0]
+            return product_rate.product.product_type
+        except (IndexError, SoftwareProductRate.DoesNotExist):
+            pass
+        return "CommCare"
+
+    @property
     def version(self):
         return (self.plan.softwareplanversion_set.count() -
                 self.plan.softwareplanversion_set.filter(
@@ -533,7 +550,6 @@ class SoftwarePlanVersion(models.Model):
             return user_feature
         except IndexError:
             pass
-
 
     @property
     def user_limit(self):
@@ -843,8 +859,9 @@ class Invoice(models.Model):
 
     @classmethod
     def exists_for_domain(cls, domain):
-        # todo return cls.objects.filter(subscription__subscriber__domain=domain).exists()
-        return True
+        return cls.objects.filter(
+            subscription__subscriber__domain=domain, is_hidden=False
+        ).count() > 0
 
 
 class SubscriptionAdjustment(models.Model):
@@ -913,12 +930,64 @@ class BillingRecord(models.Model):
         if record.invoice.subscription.do_not_invoice:
             record.skipped_email = True
             invoice.is_hidden = True
-            record.save()
-            invoice.save()
-            return
+        else:
+            pdf_attachment = {
+                'title': invoice_pdf.get_filename(invoice),
+                'file_obj': StringIO(invoice_pdf.get_data(invoice)),
+                'mimetype': 'application/pdf',
+            }
+            record.send_email(pdf_attachment)
         record.save()
-        # send emails
 
+    def send_email(self, pdf_attachment):
+        month_name = self.invoice.date_start.strftime("%B")
+        domain = self.invoice.subscription.subscriber.domain
+        title = "Your %(product)s Billing Statement for %(month)s" % {
+            'product': self.invoice.subscription.plan_version.core_product,
+            'month': month_name,
+        }
+        from corehq.apps.domain.views import DomainBillingStatementsView
+        context = {
+            'month_name': month_name,
+            'plan_name': "%(product)s %(name)s" % {
+                'product': self.invoice.subscription.plan_version.core_product,
+                'name': self.invoice.subscription.plan_version.plan.edition,
+            },
+            'domain': domain,
+            'statement_number': self.invoice.invoice_number,
+            'payment_status': (_("Paid") if self.invoice.date_paid is not None
+                               else _("Payment Required")),
+            'amount_due': _("USD %s")
+                          % self.invoice.balance.quantize(Decimal(10) ** -2),
+            'statements_url': reverse(DomainBillingStatementsView.urlname,
+                                      args=[domain]),
+        }
+        contact_emails = self.invoice.subscription.account.billingcontactinfo.emails.split(',')
+        if not contact_emails:
+            # fall back to the first billing admin added
+            contact_emails.append(self.invoice.subscription.account.billing_admins.all()[0].web_user)
+        for email in contact_emails:
+            greeting = _("Hello,")
+            can_view_statement = False
+            try:
+                web_user = WebUser.get_by_username(email)
+                if web_user is not None:
+                    greeting = _("Dear %s,") % web_user.first_name
+                    can_view_statement = web_user.is_domain_admin(domain)
+            except ResourceNotFound:
+                pass
+            context['greeting'] = greeting
+            context['can_view_statement'] = can_view_statement
+            email_html = render_to_string('accounting/invoice_email.html', context)
+            email_plaintext = render_to_string('accounting/invoice_email_plaintext.html', context)
+            if toggles.ACCOUNTING_PREVIEW.enabled(email):
+                send_HTML_email(
+                    title, email, email_html,
+                    text_content=email_plaintext,
+                    email_from=settings.INVOICING_CONTACT_EMAIL,
+                    file_attachments=[pdf_attachment]
+                )
+        self.emailed_to = ",".join(contact_emails)
 
 
 
@@ -955,23 +1024,44 @@ class InvoicePdf(SafeSaveDocument):
         )
 
         for line_item in LineItem.objects.filter(invoice=invoice):
+            is_unit = line_item.unit_description is not None
             description = (line_item.base_description
                            or line_item.unit_description)
             if line_item.quantity > 0:
-                template.add_item(description,
-                                  line_item.quantity,
-                                  line_item.unit_cost,
-                                  line_item.subtotal,
-                                  line_item.applied_credit,
-                                  line_item.total)
+                template.add_item(
+                    description,
+                    line_item.quantity if is_unit else 1,
+                    line_item.unit_cost if is_unit else line_item.subtotal,
+                    line_item.subtotal,
+                    line_item.applied_credit,
+                    line_item.total
+                )
 
         template.get_pdf()
-        self.put_attachment(pdf_data)
+        filename = self.get_filename(invoice)
+        self.put_attachment(pdf_data, filename, 'application/pdf')
         pdf_data.close()
 
         self.invoice_id = str(invoice.id)
         self.date_created = datetime.datetime.now()
         self.save()
+
+    def get_filename(self, invoice):
+        return "statement_%(year)d_%(month)d.pdf" % {
+            'year': invoice.date_start.year,
+            'month': invoice.date_start.month,
+        }
+
+    def get_data(self, invoice):
+        obj = CachedObject('%s:InvoicePdfData' % self._id)
+        if not obj.is_cached():
+            data = self.fetch_attachment(self.get_filename(invoice), True)
+            buffer = StringIO(data)
+            obj.cache_put(buffer, {}, timeout=0)
+        else:
+            buffer = obj.get()[1]
+            data = buffer.getvalue()
+        return data
 
 
 class LineItemManager(models.Manager):

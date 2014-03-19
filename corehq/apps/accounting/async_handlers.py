@@ -1,8 +1,9 @@
 import json
 from corehq import Domain, toggles
 from corehq.apps.accounting.models import Feature, SoftwareProduct, BillingAccount, SoftwarePlanVersion
-from corehq.apps.accounting.utils import fmt_feature_rate_dict, fmt_product_rate_dict, LazyEncoder
+from corehq.apps.accounting.utils import fmt_feature_rate_dict, fmt_product_rate_dict
 from corehq.apps.hqwebapp.async_handler import BaseAsyncHandler, AsyncHandlerError
+from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.users.models import WebUser
 
 
