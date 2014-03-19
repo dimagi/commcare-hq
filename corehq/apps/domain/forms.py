@@ -619,9 +619,12 @@ class EditBillingAccountInfoForm(forms.ModelForm):
     billing_admins = forms.CharField(
         required=False,
         label=ugettext_noop("Other Billing Admins"),
-        help_text=ugettext_noop(mark_safe("<p>These are the Web Users that will be able to access and modify your "
-                                "subscription and billing information. They will also receive billing-related "
-                                "emails from Dimagi.</p> <p>Your account is already a Billing Administrator.</p>")),
+        help_text=ugettext_noop(mark_safe(
+            "<p>These are the Web Users that will be able to access and "
+            "modify your account's subscription and billing information.</p> "
+            "<p>Your logged in account is already a Billing Administrator."
+            "</p>"
+        )),
     )
 
     class Meta:
