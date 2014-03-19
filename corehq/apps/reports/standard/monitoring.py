@@ -4,6 +4,7 @@ from urllib import urlencode
 import dateutil
 from django.core.urlresolvers import reverse
 import math
+from django.db.models.aggregates import Count
 import numpy
 import operator
 import pytz
@@ -15,6 +16,7 @@ from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, 
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType, DataTablesColumnGroup
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.util import make_form_couch_key, friendly_timedelta, format_datatables_data
+from corehq.apps.sofabed.models import FormData
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import es_query, ADD_TO_ES_FILTER
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
@@ -377,32 +379,30 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
 
     @property
     def rows(self):
-        key = make_form_couch_key(self.domain, by_submission_time=self.by_submission_time)
-        results = get_db().view("reports_forms/all_forms",
-            reduce=False,
-            startkey=key+[self.datespan.startdate_param_utc if self.by_submission_time else self.datespan.startdate_param],
-            endkey=key+[self.datespan.enddate_param_utc if self.by_submission_time else self.datespan.enddate_param]
-        ).all()
+        startdate = self.datespan.startdate_utc if self.by_submission_time else self.datespan.startdate
+        enddate = self.datespan.enddate_utc if self.by_submission_time else self.datespan.enddate_adjusted
+        date_field = 'received_on' if self.by_submission_time else 'time_end'
+        date_filter = {'%s__range' % date_field: (startdate, enddate)}
 
         users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
+        user_ids = [user.get('user_id') for user in users_data["combined_users"]]
+        results = FormData.objects \
+            .filter(doc_type='XFormInstance') \
+            .filter(**date_filter) \
+            .filter(user_id__in=user_ids) \
+            .extra({'date': "date(%s)" % date_field}) \
+            .values('user_id', 'date') \
+            .annotate(Count('user_id'))
+
         user_map = dict([(user.get('user_id'), i) for (i, user) in enumerate(users_data["combined_users"])])
         date_map = dict([(date.strftime(DATE_FORMAT), i+1) for (i,date) in enumerate(self.dates)])
         rows = [[0]*(2+len(date_map)) for _tmp in range(len(users_data["combined_users"]))]
         total_row = [0]*(2+len(date_map))
 
-        user_ids = [user.get('user_id') for user in users_data["combined_users"]]
         for result in results:
-            _tmp, _domain, date = result['key']
-            date = dateutil.parser.parse(date)
-            tz_offset = self.timezone.localize(self.datespan.enddate).strftime("%z")
-            date = date + datetime.timedelta(hours=int(tz_offset[0:3]), minutes=int(tz_offset[0]+tz_offset[3:5]))
-            date = date.isoformat()
-            val = result['value']
-            user_id = val.get("user_id")
-            if user_id in user_ids:
-                date_key = date_map.get(date[0:10], None)
-                if date_key:
-                    rows[user_map[user_id]][date_key] += 1
+            date = result['date'].isoformat()
+            date_key = date_map.get(date, None)
+            rows[user_map[result['user_id']]][date_key] = result['user_id__count']
 
         for i, user in enumerate(users_data["combined_users"]):
             rows[i][0] = self.get_user_link(user)
