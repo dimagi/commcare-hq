@@ -523,6 +523,10 @@ class CreditForm(forms.Form):
 
 
 class CancelForm(forms.Form):
+    note = forms.CharField(
+        required=False,
+        widget=forms.TextInput,
+    )
 
     def __init__(self, *args, **kwargs):
         super(CancelForm, self).__init__(*args, **kwargs)
@@ -530,9 +534,15 @@ class CancelForm(forms.Form):
         cancel_subscription_button = crispy.Button('cancel_subscription', 'CANCEL SUBSCRIPTION', css_class="btn-danger")
         cancel_subscription_button.input_type = 'submit'
         self.helper.layout = crispy.Layout(
-            crispy.ButtonHolder(
-                cancel_subscription_button
-            )
+            crispy.Fieldset(
+                'Cancel Subscription',
+                'note',
+            ),
+            FormActions(
+                crispy.ButtonHolder(
+                    cancel_subscription_button
+                ),
+            ),
         )
 
 

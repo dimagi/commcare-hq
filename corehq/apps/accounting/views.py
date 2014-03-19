@@ -253,9 +253,17 @@ class EditSubscriptionView(AccountingSectionView):
         return CreditForm(self.subscription.account, self.subscription)
 
     @property
+    @memoized
+    def cancel_form(self):
+        if (self.request.method == 'POST'
+            and 'cancel_subscription' in self.request.POST):
+            return CancelForm(self.request.POST)
+        return CancelForm()
+
+    @property
     def page_context(self):
         return {
-            'cancel_form': CancelForm(),
+            'cancel_form': self.cancel_form,
             'credit_form': self.credit_form,
             'credit_list': CreditLine.objects.filter(subscription=self.subscription),
             'disable_cancel': has_subscription_already_ended(self.subscription),
@@ -284,12 +292,16 @@ class EditSubscriptionView(AccountingSectionView):
         elif 'adjust_credit' in self.request.POST and self.credit_form.is_valid():
             if self.credit_form.adjust_credit():
                 return HttpResponseRedirect(self.page_url)
-        elif 'cancel_subscription' in self.request.POST:
+        elif ('cancel_subscription' in self.request.POST
+              and self.cancel_form.is_valid()):
             self.cancel_subscription()
         return self.get(request, *args, **kwargs)
 
     def cancel_subscription(self):
-        self.subscription.cancel_subscription()
+        self.subscription.cancel_subscription(
+            note=self.cancel_form.cleaned_data['note'],
+            web_user=self.request.user.username,
+        )
         self.subscription_canceled = True
 
 
