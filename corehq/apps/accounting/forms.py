@@ -524,7 +524,6 @@ class CreditForm(forms.Form):
 
 class CancelForm(forms.Form):
     note = forms.CharField(
-        required=False,
         widget=forms.TextInput,
     )
 
