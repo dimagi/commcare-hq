@@ -3,7 +3,15 @@
 DIR=`dirname $0`
 CODE_ROOT=`dirname $DIR`
 
-source $CODE_ROOT/../python_env/bin/activate
+VENV_FILE=$CODE_ROOT/../python_env/bin/activate
+if [ -f $VENV_FILE ]; then
+    source $VENV_FILE
+elif [ $VIRTUAL_ENV ]; then
+    source $VIRTUAL_ENV/bin/activate
+else
+    echo "Couldn't find virtual env"
+    exit 1
+fi
 
 # I would love to get rid of this:
 sudo apt-get build-dep python-matplotlib
