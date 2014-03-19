@@ -169,8 +169,10 @@ class NewSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
     @memoized
     def subscription_form(self):
         if self.request.method == 'POST':
-            return SubscriptionForm(None, self.account_id, self.request.POST)
-        return SubscriptionForm(None, self.account_id)
+            return SubscriptionForm(
+                None, self.account_id, None, self.request.POST
+            )
+        return SubscriptionForm(None, self.account_id, None)
 
     @property
     def page_context(self):
@@ -236,8 +238,11 @@ class EditSubscriptionView(AccountingSectionView):
     @memoized
     def subscription_form(self):
         if self.request.method == 'POST' and 'set_subscription' in self.request.POST:
-            return SubscriptionForm(self.subscription, None, self.request.POST)
-        return SubscriptionForm(self.subscription, None)
+            return SubscriptionForm(
+                self.subscription, None, self.request.user.username,
+                self.request.POST
+            )
+        return SubscriptionForm(self.subscription, None, None)
 
     @property
     @memoized

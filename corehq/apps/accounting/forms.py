@@ -230,11 +230,12 @@ class SubscriptionForm(forms.Form):
         label=_("Do Not Invoice"), required=False
     )
 
-    def __init__(self, subscription, account_id, *args, **kwargs):
+    def __init__(self, subscription, account_id, web_user, *args, **kwargs):
         # account_id is not referenced if subscription is not None
         super(SubscriptionForm, self).__init__(*args, **kwargs)
         self.subscription = subscription
         self.is_existing = subscription is not None
+        self.web_user = web_user
         today = datetime.date.today()
 
         start_date_field = crispy.Field('start_date', css_class="date-picker")
@@ -411,6 +412,7 @@ class SubscriptionForm(forms.Form):
         kwargs = {
             'salesforce_contract_id': self.cleaned_data['salesforce_contract_id'],
             'do_not_invoice': self.cleaned_data['do_not_invoice'],
+            'web_user': self.web_user,
         }
 
         if self.fields['start_date'].required:
