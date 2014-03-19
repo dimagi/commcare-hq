@@ -146,13 +146,20 @@ def form_context(request, domain, app_id, module_id, form_id):
     app = Application.get(app_id)
     form_url = "%s%s" % (get_url_base(), reverse('download_xform', args=[domain, app_id, module_id, form_id]))
     case_id = request.GET.get('case_id')
+
+    # make the name for the session we will use with the case and form
+    session_name = app.get_module(module_id).forms[int(form_id)].name.values()[0]
+    if case_id:
+        session_name = '{0} - {1}'.format(session_name, CommCareCase.get(case_id).name)
+
     delegation = request.GET.get('task-list') == 'true'
     offline = request.GET.get('offline') == 'true'
-    return json_response(
-        touchforms_api.get_full_context(domain, request.couch_user, 
-                                        app, form_url, case_id,
-                                        delegation=delegation, offline=offline))
-        
+    session_helper = SessionDataHelper(domain, request.couch_user, case_id, delegation=delegation, offline=offline)
+    return json_response(session_helper.get_full_context(
+        {'form_url': form_url,},
+        {'session_name': session_name}
+    ))
+
 
 cloudcare_api = login_or_digest_ex(allow_cc_users=True)
 
