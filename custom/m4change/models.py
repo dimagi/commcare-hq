@@ -278,5 +278,8 @@ class McctStatus(models.Model):
     domain = models.CharField(max_length=256, null=True, db_index=True)
 
     def update_status(self, new_status):
-        self.status = new_status
-        self.save()
+        if 'eligible' in new_status:
+            self.delete()
+        else:
+            self.status = new_status
+            self.save()
