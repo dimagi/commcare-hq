@@ -530,17 +530,18 @@ class CancelForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super(CancelForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
-        cancel_subscription_button = crispy.Button('cancel_subscription', 'CANCEL SUBSCRIPTION', css_class="btn-danger")
-        cancel_subscription_button.input_type = 'submit'
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 'Cancel Subscription',
                 'note',
             ),
             FormActions(
-                crispy.ButtonHolder(
-                    cancel_subscription_button
-                ),
+                StrictButton(
+                    'CANCEL SUBSCRIPTION',
+                    css_class='btn-danger',
+                    name='cancel_subscription',
+                    type='submit',
+                )
             ),
         )
 
