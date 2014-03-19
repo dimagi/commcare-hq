@@ -7,7 +7,8 @@ class FormData(models.Model):
     Data about a form submission.
     """
     
-    domain = models.CharField(max_length=255, blank=True, db_index=True)
+    doc_type = models.CharField(max_length=255, db_index=True)
+    domain = models.CharField(max_length=255, db_index=True)
     received_on = models.DateTimeField(db_index=True)
 
     instance_id = models.CharField(unique=True, primary_key=True, max_length=255)
@@ -51,6 +52,7 @@ class FormData(models.Model):
                                              (instance.get_id))
         
         
+        self.doc_type = instance.doc_type
         self.domain = instance.domain
         self.received_on = instance.received_on
 
@@ -66,7 +68,8 @@ class FormData(models.Model):
         self.xmlns = instance.xmlns
 
     def matches_exact(self, instance):
-        return self.domain == instance.domain and \
+        return self.doc_type == instance.doc_type and \
+               self.domain == instance.domain and \
                self.instance_id == instance.get_id and \
                self.time_start == instance.metadata.timeStart and \
                self.time_end == instance.metadata.timeEnd and \
@@ -101,6 +104,3 @@ class FormData(models.Model):
             val.save()
         
         return val
-    
-
-from . import signals
