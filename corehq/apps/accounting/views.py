@@ -274,7 +274,7 @@ class EditSubscriptionView(AccountingSectionView):
         if 'set_subscription' in self.request.POST and self.subscription_form.is_valid():
             new_subscription = self.subscription_form.update_subscription(self.subscription)
             return HttpResponseRedirect(
-                reverse(self.urlname, args=(unicode(new_subscription.id)))
+                reverse(self.urlname, args=(new_subscription.id,))
             )
         elif 'adjust_credit' in self.request.POST and self.credit_form.is_valid():
             if self.credit_form.adjust_credit():
