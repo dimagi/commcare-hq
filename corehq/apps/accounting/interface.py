@@ -335,7 +335,6 @@ class InvoiceInterface(GenericTabularReport):
     @property
     def rows(self):
         from corehq.apps.accounting.views import InvoiceSummaryView
-        filters = {}
 
         return [
             [
@@ -359,15 +358,29 @@ class InvoiceInterface(GenericTabularReport):
                           % reverse(InvoiceSummaryView.urlname,
                                     args=(invoice.id,))),
 
-            ] for invoice in Invoice.objects.filter(**filters)
+            ] for invoice in self.invoices
         ]
+
+    @property
+    @memoized
+    def filters(self):
+        # TODO - implement
+        return {}
+
+    @property
+    @memoized
+    def invoices(self):
+        return Invoice.objects.filter(**self.filters)
+
+    @property
+    @memoized
+    def adjust_balance_forms(self):
+        return [AdjustBalanceForm(invoice) for invoice in self.invoices]
 
     @property
     def report_context(self):
         context = super(InvoiceInterface, self).report_context
         context.update(
-            adjust_balance_form=AdjustBalanceForm(),
-            # TODO - filter Invoices
-            invoices=Invoice.objects.all(),
+            adjust_balance_forms=self.adjust_balance_forms,
         )
         return context

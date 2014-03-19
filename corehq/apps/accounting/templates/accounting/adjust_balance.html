@@ -2,11 +2,11 @@
 {% load i18n %}
 
 
-{% for invoice in invoices %}
-    <div class="modal hide fade" id="adjustBalanceModal-{{ invoice.id }}">
+{% for adjust_balance_form in adjust_balance_forms %}
+    <div class="modal hide fade" id="adjustBalanceModal-{{ adjust_balance_form.invoice.id }}">
         <div class="modal-header">
             <a class="close" data-dismiss="modal">&times;</a>
-            <h3>{% trans "Adjust Balance for Invoice #" %}{{ invoice.invoice_number }}</h3>
+            <h3>{% trans "Adjust Balance for Invoice #" %}{{ adjust_balance_form.invoice.invoice_number }}</h3>
         </div>
         {% crispy adjust_balance_form %}
     </div>

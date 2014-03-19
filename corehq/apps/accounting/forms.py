@@ -30,7 +30,7 @@ from corehq.apps.accounting.async_handlers import (
     SoftwareProductRateAsyncHandler,
 )
 from corehq.apps.accounting.utils import (
-    is_active_subscription, has_subscription_already_ended,
+    is_active_subscription, has_subscription_already_ended, get_money_str,
     get_first_last_days
 )
 from corehq.apps.hqwebapp.crispy import BootstrapMultiField, TextField
@@ -1296,11 +1296,6 @@ class TriggerInvoiceForm(forms.Form):
 
 class AdjustBalanceForm(forms.Form):
     adjustment_type = forms.ChoiceField(
-        choices=(
-            ('current', 'Add Credit of Current Balance'),
-            ('credit', 'Add CREDIT of Another Amount'),
-            ('debit', 'Add DEBIT of Another Amount'),
-        ),
         widget=forms.RadioSelect,
     )
 
@@ -1317,8 +1312,15 @@ class AdjustBalanceForm(forms.Form):
         widget=forms.Textarea,
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, invoice, *args, **kwargs):
+        self.invoice = invoice
         super(AdjustBalanceForm, self).__init__(*args, **kwargs)
+        self.fields['adjustment_type'].choices = (
+            ('current', 'Add Credit of Current Balance: %s' %
+                        get_money_str(self.invoice.balance)),
+            ('credit', 'Add CREDIT of Another Amount'),
+            ('debit', 'Add DEBIT of Another Amount'),
+        )
         self.helper = FormHelper()
         self.helper.form_class = "form-horizontal"
         self.helper.layout = crispy.Layout(
