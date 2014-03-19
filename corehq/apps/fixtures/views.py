@@ -446,6 +446,8 @@ class UploadItemLists(TemplateView):
             'domain': self.domain
         }
 
+    def get(self, request):
+        return HttpResponseRedirect(reverse("fixture_interface_dispatcher", args=[], kwargs={'domain': self.domain, 'report_slug': 'edit_lookup_tables'}))
     @method_decorator(get_file)
     def post(self, request):
         """View's dispatch method automatically calls this"""
