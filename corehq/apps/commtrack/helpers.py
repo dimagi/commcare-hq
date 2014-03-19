@@ -6,6 +6,29 @@ helper code to populate the various commtrack models, for ease of
 development/testing, before we have proper UIs and imports
 """
 
+PRODUCTS = [
+    ('PSI kit', 'k'),
+    ('non-PSI kit', 'nk'),
+    ('ORS', 'x'),
+    ('Zinc', 'z'),
+]
+
+
+def psi_one_time_setup(domain):
+    commtrack_enable_domain(domain)
+    make_psi_config(domain.name)
+    make_products(domain.name, PRODUCTS)
+
+
+def commtrack_enable_domain(domain):
+    domain.commtrack_enabled = True
+    domain.save()
+
+
+def make_products(domain, products):
+    for name, code in products:
+        make_product(domain, name, code)
+
 
 def make_product(domain, name, code):
     p = Product()
