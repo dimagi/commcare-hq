@@ -20,24 +20,102 @@ from custom.m4change.utils import get_case_by_id, get_user_by_id, get_property, 
 from custom.m4change.constants import EMPTY_FIELD
 
 
-class McctProjectReview(CustomProjectReport, ElasticProjectInspectionReport, ProjectReport,
-                        ProjectReportParametersMixin, MultiFormDrilldownMixin, DatespanMixin):
+def calculate_form_data(self, form):
+    try:
+        case_id = form["form"]["case"]["@case_id"]
+        case = get_case_by_id(case_id)
+    except KeyError:
+        case = EMPTY_FIELD
+        case_id = EMPTY_FIELD
+
+    amount_due = EMPTY_FIELD
+    service_type = EMPTY_FIELD
+    visits = form["form"].get("visits")
+    form_id = form["_id"]
+    location_name = EMPTY_FIELD
+    location_parent_name = EMPTY_FIELD
+
+    if case is not EMPTY_FIELD:
+        user_id = get_property(case, "user_id", EMPTY_FIELD)
+        user = get_user_by_id(user_id)
+        location_id = get_commtrack_location_id(user, Domain.get_by_name(self.domain))
+    if location_id is not None:
+        location = Location.get(location_id)
+        location_name = location.name
+        location_parent = location.parent
+        location_parent_name = location_parent.name if location_parent is not None else EMPTY_FIELD
+
+    if form["xmlns"] in IMMUNIZATION_FORMS:
+        service_type = _("Immunization")
+        amount_due = 1000
+    elif form["xmlns"] in BOOKED_AND_UNBOOKED_DELIVERY_FORMS:
+        service_type = _("Delivery")
+        amount_due = 2000
+    elif visits == "1":
+        service_type = _("First Antenatal")
+        amount_due = 1000
+    elif visits == "2":
+        service_type = _("Second Antenatal")
+        amount_due = 300
+    elif visits == "3":
+        service_type = _("Third Antenatal")
+        amount_due = 300
+    elif visits == "4":
+        service_type = _("Fourth Antenatal")
+        amount_due = 400
+
+    return {'case': case, 'service_type': service_type, 'location_name': location_name,
+            'location_parent_name': location_parent_name, 'amount_due': amount_due, 'form_id': form_id}
+
+
+class BaseReport(CustomProjectReport, ElasticProjectInspectionReport, ProjectReport,
+                 ProjectReportParametersMixin, MultiFormDrilldownMixin, DatespanMixin):
+
+        emailable = False
+        exportable = True
+        asynchronous = True
+        ajax_pagination = True
+        include_inactive = True
+
+        fields = [
+            'custom.m4change.fields.DateRangeField',
+            'custom.m4change.fields.CaseSearchField'
+        ]
+
+        base_template = 'reports/report.html'
+        report_template_path = 'reports/selectTemplate.html'
+        filter_users_field_class = StrongFilterUsersField
+
+        @property
+        def es_results(self):
+            if not getattr(self, 'es_response', None):
+                self.es_query()
+            return self.es_response
+
+        def _get_filtered_cases(self):
+            case_search = self.request.GET.get("case_search", "")
+            if len(case_search) == 0:
+                return []
+
+            query = {
+                "query": {
+                    "query_string": {
+                        "default_field": "_all",
+                        "query": case_search
+                    }
+                }
+            }
+            es_response = es_query(params={"domain.exact": self.domain}, q=query, es_url=ES_URLS.get('cases'))
+            return [res['_source']['_id'] for res in es_response.get('hits', {}).get('hits', [])]
+
+        @property
+        def total_records(self):
+            return int(self.es_results['hits']['total'])
+
+
+class McctProjectReview(BaseReport):
     name = 'mCCT Project Review Page'
     slug = 'mcct_project_review_page'
-    emailable = False
-    exportable = True
-    asynchronous = True
-    ajax_pagination = True
-    include_inactive = True
-
-    fields = [
-        'custom.m4change.fields.DateRangeField',
-        'custom.m4change.fields.CaseSearchField'
-    ]
-
-    base_template = 'reports/report.html'
-    report_template_path = 'reports/selectTemplate.html'
-    filter_users_field_class = StrongFilterUsersField
 
     @property
     def headers(self):
@@ -54,28 +132,6 @@ class McctProjectReview(CustomProjectReport, ElasticProjectInspectionReport, Pro
                                        '<a href="#" class="select-none btn btn-mini btn-warning">none</a>'),
                                         sortable=False, span=3))
         return headers
-
-    @property
-    def es_results(self):
-        if not getattr(self, 'es_response', None):
-            self.es_query()
-        return self.es_response
-
-    def _get_filtered_cases(self):
-        case_search = self.request.GET.get("case_search", "")
-        if len(case_search) == 0:
-            return []
-
-        query = {
-            "query": {
-                "query_string": {
-                    "default_field": "_all",
-                    "query": case_search
-                }
-            }
-        }
-        es_response = es_query(params={"domain.exact": self.domain}, q=query, es_url=ES_URLS.get('cases'))
-        return [res['_source']['_id'] for res in es_response.get('hits', {}).get('hits', [])]
 
     def es_query(self):
         if not getattr(self, 'es_response', None):
@@ -135,72 +191,25 @@ class McctProjectReview(CustomProjectReport, ElasticProjectInspectionReport, Pro
         return self.es_response
 
     @property
-    def total_records(self):
-        return int(self.es_results['hits']['total'])
-
-    @property
     def rows(self):
-        submissions = [res['_source'] for res in self.es_results.get('hits', {}).get('hits', [])]
+            submissions = [res['_source'] for res in self.es_results.get('hits', {}).get('hits', [])]
+            for form in submissions:
+                data = calculate_form_data(self, form)
+                checkbox = mark_safe('<input type="checkbox" class="selected-element" '
+                                     'data-bind="event: {change: updateSelection}" data-formid="%(form_id)s" '
+                                     'data-caseid="%(case_id)s" data-servicetype="%(service_type)s"/>')
 
-        for form in submissions:
-            try:
-                case_id = form["form"]["case"]["@case_id"]
-                case = get_case_by_id(case_id)
-            except KeyError:
-                case = EMPTY_FIELD
-                case_id = EMPTY_FIELD
-
-            amount_due = EMPTY_FIELD
-            service_type = EMPTY_FIELD
-            visits = form["form"].get("visits")
-            form_id = form["_id"]
-            location_name = EMPTY_FIELD
-            location_parent_name = EMPTY_FIELD
-
-            if case is not EMPTY_FIELD:
-                user_id = get_property(case, "user_id", EMPTY_FIELD)
-                user = get_user_by_id(user_id)
-                location_id = get_commtrack_location_id(user, Domain.get_by_name(self.domain))
-                if location_id is not None:
-                    location = Location.get(location_id)
-                    location_name = location.name
-                    location_parent = location.parent
-                    location_parent_name = location_parent.name if location_parent is not None else EMPTY_FIELD
-
-            if form["xmlns"] in IMMUNIZATION_FORMS:
-                service_type = _("Immunization")
-                amount_due = 1000
-            elif form["xmlns"] in BOOKED_AND_UNBOOKED_DELIVERY_FORMS:
-                service_type = _("Delivery")
-                amount_due = 2000
-            elif visits == "1":
-                service_type = _("First Antenatal")
-                amount_due = 1000
-            elif visits == "2":
-                service_type = _("Second Antenatal")
-                amount_due = 300
-            elif visits == "3":
-                service_type = _("Third Antenatal")
-                amount_due = 300
-            elif visits == "4":
-                service_type = _("Fourth Antenatal")
-                amount_due = 400
-
-            checkbox = mark_safe('<input type="checkbox" class="selected-element" '
-                                 'data-bind="event: {change: updateSelection}" data-formid="%(form_id)s" '
-                                 'data-caseid="%(case_id)s" data-servicetype="%(service_type)s"/>')
-
-            yield [
-                DateTimeProperty().wrap(form["form"]["meta"]["timeEnd"]).strftime("%Y-%m-%d"),
-                get_property(case, "full_name", EMPTY_FIELD),
-                service_type,
-                location_name,
-                get_property(case, "card_number", EMPTY_FIELD),
-                location_parent_name,
-                get_property(case, "phone_number", EMPTY_FIELD),
-                amount_due,
-                checkbox % dict(form_id=form_id, case_id=case_id, service_type=service_type)
-            ]
+                yield [
+                    DateTimeProperty().wrap(form["form"]["meta"]["timeEnd"]).strftime("%Y-%m-%d"),
+                    get_property(data.get('case'), "full_name", EMPTY_FIELD),
+                    data.get('service_type'),
+                    data.get('location_name'),
+                    get_property(data.get('case'), "card_number", EMPTY_FIELD),
+                    data.get('location_parent_name'),
+                    get_property(data.get('case'), "phone_number", EMPTY_FIELD),
+                    data.get('amount_due'),
+                    checkbox % dict(form_id=data.get('form_id'), case_id=data.get('case_id'), service_type=data.get('service_type'))
+                ]
 
 class McctClientApprovalPage(McctProjectReview):
     name = 'mCCT client Approval Page'
@@ -354,62 +363,22 @@ class McctClientLogPage(McctProjectReview):
         submissions = [res['_source'] for res in self.es_results.get('hits', {}).get('hits', [])]
 
         for form in submissions:
+            data = calculate_form_data(self, form)
             try:
-                case_id = form["form"]["case"]["@case_id"]
-                case = get_case_by_id(case_id)
-            except KeyError:
-                case = EMPTY_FIELD
-
-            amount_due = EMPTY_FIELD
-            service_type = EMPTY_FIELD
-            visits = form["form"].get("visits")
-            form_id = form["_id"]
-            location_name = EMPTY_FIELD
-            location_parent_name = EMPTY_FIELD
-
-            if case is not EMPTY_FIELD:
-                user_id = get_property(case, "user_id", EMPTY_FIELD)
-                user = get_user_by_id(user_id)
-                location_id = get_commtrack_location_id(user, Domain.get_by_name(self.domain))
-                if location_id is not None:
-                    location = Location.get(location_id)
-                    location_name = location.name
-                    location_parent = location.parent
-                    location_parent_name = location_parent.name if location_parent is not None else EMPTY_FIELD
-
-            if form["xmlns"] in IMMUNIZATION_FORMS:
-                service_type = _("Immunization")
-                amount_due = 1000
-            elif form["xmlns"] in BOOKED_AND_UNBOOKED_DELIVERY_FORMS:
-                service_type = _("Delivery")
-                amount_due = 2000
-            elif visits == "1":
-                service_type = _("First Antenatal")
-                amount_due = 1000
-            elif visits == "2":
-                service_type = _("Second Antenatal")
-                amount_due = 300
-            elif visits == "3":
-                service_type = _("Third Antenatal")
-                amount_due = 300
-            elif visits == "4":
-                service_type = _("Fourth Antenatal")
-                amount_due = 400
-            try:
-                status = McctStatus.objects.filter(domain=self.domain, form_id=form_id)[:1].get()
+                status = McctStatus.objects.filter(domain=self.domain, form_id=data.get('form_id'))[:1].get()
                 status = status.status
             except McctStatus.DoesNotExist:
                 status = 'eligible'
 
             yield [
                 DateTimeProperty().wrap(form["form"]["meta"]["timeEnd"]).strftime("%Y-%m-%d %H:%M"),
-                get_property(case, "full_name", EMPTY_FIELD),
-                service_type,
-                location_name,
-                get_property(case, "card_number", EMPTY_FIELD),
-                location_parent_name,
-                get_property(case, "phone_number", EMPTY_FIELD),
-                amount_due,
+                get_property(data.get('case'), "full_name", EMPTY_FIELD),
+                data.get('service_type'),
+                data.get('location_name'),
+                get_property(data.get('case'), "card_number", EMPTY_FIELD),
+                data.get('location_parent_name'),
+                get_property(data.get('case'), "phone_number", EMPTY_FIELD),
+                data.get('amount_due'),
                 status,
                 form["form"]["meta"]["username"]
             ]
