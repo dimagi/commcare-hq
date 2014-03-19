@@ -34,8 +34,6 @@ class Command(BaseCommand):
     )
 
     def handle(self, dry_run=False, verbose=False, fresh_start=False, testing=False, *args, **options):
-        if testing:
-            logging.disable(logging.ERROR)
 
         if verbose:
             logger.setLevel(logging.DEBUG)
