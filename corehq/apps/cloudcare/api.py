@@ -355,8 +355,8 @@ def look_up_app_json(domain, app_id):
 
 def get_cloudcare_app(domain, app_name):
     apps = get_cloudcare_apps(domain)
-    app = filter(lambda x: x['name'] == app_name, apps)[0]
+    app = filter(lambda x: x['name'] == app_name, apps)
     if app:
-        return look_up_app_json(domain, app['_id'])
+        return look_up_app_json(domain, app[0]['_id'])
     else:
         raise ResourceNotFound(_("Not found application by name: %s") % app_name)

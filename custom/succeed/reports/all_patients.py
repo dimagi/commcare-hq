@@ -16,105 +16,13 @@ from corehq.pillows.base import restore_property_dict
 from django.utils import html
 import dateutil
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
+from custom.succeed.reports import VISIT_SCHEDULE, LAST_INTERACTION_LIST, EMPTY_FIELD, CM7, PM3, CM_MODULE, \
+    OUTPUT_DATE_FORMAT, INPUT_DATE_FORMAT
+from custom.succeed.reports.patient_details import PatientInfoReport
 from custom.succeed.utils import CONFIG, _is_succeed_admin, SUCCEED_CLOUD_APPNAME
 import logging
 import simplejson
 from casexml.apps.case.models import CommCareCase
-
-
-EMPTY_FIELD = "---"
-
-PM1 = 'http://openrosa.org/formdesigner/111B09EB-DFFA-4613-9A16-A19BA6ED7D04'
-PM2 = 'http://openrosa.org/formdesigner/4B52ADB2-AA79-4056-A13E-BB34871876A1'
-PM3 = 'http://openrosa.org/formdesigner/5250590B-2EB2-46A8-9943-B7008CDA2BB9'
-PM4 = 'http://openrosa.org/formdesigner/876cec8f07c0e29b9f9e2bd0b33c5c85bf0192ee'
-CM1 = 'http://openrosa.org/formdesigner/9946952C-A2EB-43D5-A500-B386C56A49A7'
-CM2 = 'http://openrosa.org/formdesigner/BCFFFE7E-8C93-4B4E-9589-FF12C710C255'
-CM3 = 'http://openrosa.org/formdesigner/4EA3D459-7FB6-414F-B106-05E6E707568B'
-CM4 = 'http://openrosa.org/formdesigner/263cc99e9f0cdbc55d307359c7b45a1e555f35d1'
-CM5 = 'http://openrosa.org/formdesigner/8abd54794d8c5d592100b8cdf1f642903b7f4abe'
-CM6 = 'http://openrosa.org/formdesigner/9b47556945c6476438c2ac2f0583e2ca0055e46a'
-CM7 = 'http://openrosa.org/formdesigner/4b924f784e8dd6a23045649730e82f6a2e7ce7cf'
-HUD1 = 'http://openrosa.org/formdesigner/24433229c5f25d0bd3ceee9bf70c72093056d1af'
-HUD2 = 'http://openrosa.org/formdesigner/63f8287ac6e7dce0292ebac9b232b0d3bde327dc'
-PD1 = 'http://openrosa.org/formdesigner/9eb0eaf6954791425d6d5f0b66db9a484cacd264'
-PD2 = 'http://openrosa.org/formdesigner/69751bf3078369491e1c2f1e3c874895f762a4c1'
-CHW1 = 'http://openrosa.org/formdesigner/4b368b1d73862abeca3bce67b6e09724b8dca850'
-CHW2 = 'http://openrosa.org/formdesigner/cbc4e37437945bfda04e391d11006b6d02c24fc2'
-CHW3 = 'http://openrosa.org/formdesigner/5d77815bf7631a527d8647cdbaa5971e367f6548'
-CHW4 = 'http://openrosa.org/formdesigner/f8a741808584d772c4b899ef84db197da5b4d12a'
-CUSTOM_EDIT = 'http://commcarehq.org/cloudcare/custom-edit'
-
-VISIT_SCHEDULE = [
-    {
-        'visit_name': _('CM Initial contact form'),
-        'xmlns': CM1,
-        'days': 5,
-        'target_date_case_property': 'CM1_form_target'
-    },
-    {
-        'visit_name': _('CM Medical Record Review'),
-        'xmlns': CM2,
-        'days': 7,
-        'target_date_case_property': 'CM2_form_target'
-    },
-    {
-        'visit_name': _('Cm 1-week Telephone Call'),
-        'xmlns': CM3,
-        'days': 10,
-        'target_date_case_property': 'CM3_form_target'
-    },
-    {
-        'visit_name': _('CM Initial huddle'),
-        'xmlns': HUD1,
-        'days': 21,
-        'target_date_case_property': 'HUD1_form_target'
-    },
-    {
-        'visit_name': _('CM Home Visit 1'),
-        'xmlns': CHW1,
-        'days': 35,
-        'target_date_case_property': 'CHW1_form_target'
-    },
-    {
-        'visit_name': _('CM Clinic Visit 1'),
-        'xmlns': CM4,
-        'days': 49,
-        'target_date_case_property': 'CM4_form_target'
-    },
-    {
-        'visit_name': _('CM Home Visit 2'),
-        'xmlns': CHW2,
-        'days': 100,
-        'target_date_case_property': 'CHW2_form_target'
-    },
-    {
-        'visit_name': _('CM Clinic Visit 2'),
-        'xmlns': CM5,
-        'days': 130,
-        'target_date_case_property': 'CM5_form_target'
-    },
-    {
-        'visit_name': _('CHW CDSMP tracking'),
-        'xmlns': CHW4,
-        'days': 135,
-        'target_date_case_property': 'CHW4_form_target'
-    },
-    {
-        'visit_name': _('CM Home Visit 3'),
-        'xmlns': CHW2,
-        'days': 200,
-        'target_date_case_property': 'CHW2-2_form_target'
-    },
-    {
-        'visit_name': _('CM Clinic Visit 3'),
-        'xmlns': CM5,
-        'days': 250,
-        'target_date_case_property': 'CM5-2_form_target'
-    },
-]
-
-LAST_INTERACTION_LIST = [PM1, PM3, CM1, CM3, CM4, CM5, CM6, CHW1, CHW2, CHW3, CHW4]
 
 
 class PatientListReportDisplay(CaseDisplay):
@@ -157,7 +65,7 @@ class PatientListReportDisplay(CaseDisplay):
     def case_link(self):
         url = self.case_detail_url
         if url:
-            return html.mark_safe("<a class='ajax_dialog' href='' target='_blank'>%s</a>" % html.escape(self.case_name))
+            return html.mark_safe("<a class='ajax_dialog' href='%s' target='_blank'>%s</a>" % (url, html.escape(self.case_name)))
         else:
             return "%s (bad ID format)" % self.case_name
 
@@ -177,7 +85,7 @@ class PatientListReportDisplay(CaseDisplay):
     @property
     def edit_link(self):
         base_url = '/a/%(domain)s/cloudcare/apps/view/%(build_id)s/%(module_id)s/%(form_id)s/case/%(case_id)s/enter/'
-        module = self.app_dict['modules'][0]
+        module = self.app_dict['modules'][CM_MODULE]
         form_idx = [ix for (ix, f) in enumerate(module['forms']) if f['xmlns'] == CM7][0]
         return html.mark_safe("<a class='ajax_dialog' href='%s'>Edit</a>") \
             % html.escape(base_url % dict(
@@ -185,16 +93,15 @@ class PatientListReportDisplay(CaseDisplay):
                 case_id=self.case_id,
                 domain=self.app_dict['domain'],
                 build_id=self.latest_build,
-                module_id=0
+                module_id=CM_MODULE
             )
         )
 
     @property
     def case_detail_url(self):
-        try:
-            return reverse('case_details', args=[self.report.domain, self.case_id])
-        except NoReverseMatch:
-            return None
+        return html.escape(
+                PatientInfoReport.get_url(*[self.case["domain"]]) + "?patient_id=%s" % self.case["_id"])
+
 
     @property
     def mrn(self):
@@ -204,8 +111,8 @@ class PatientListReportDisplay(CaseDisplay):
     def randomization_date(self):
         rand_date = self.get_property("randomization_date")
         if rand_date != EMPTY_FIELD:
-            date = datetime.strptime(rand_date, "%Y-%m-%d")
-            return date.strftime("%m/%d/%Y")
+            date = datetime.strptime(rand_date, INPUT_DATE_FORMAT)
+            return date.strftime(OUTPUT_DATE_FORMAT)
         else:
             return EMPTY_FIELD
 
@@ -246,8 +153,8 @@ class PatientListReportDisplay(CaseDisplay):
     @property
     def patient_info(self):
         if self.last_interaction != EMPTY_FIELD:
-            date = datetime.strptime( self.last_interaction, "%Y-%m-%dT%H:%M:%SZ")
-            return date.strftime("%m/%d/%Y")
+            date = datetime.strptime(self.last_interaction, "%Y-%m-%dT%H:%M:%SZ")
+            return date.strftime(OUTPUT_DATE_FORMAT)
         else:
             return EMPTY_FIELD
 
