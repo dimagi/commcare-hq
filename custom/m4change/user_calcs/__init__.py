@@ -1,4 +1,3 @@
-import logging
 from couchdbkit import ResourceNotFound
 from corehq.apps.users.models import CommCareUser
 
