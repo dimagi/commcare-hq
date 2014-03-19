@@ -934,17 +934,32 @@ def loadtest(request):
         "hide_filters": True,
     })
 
-    date_axis = Axis(label="Date", dateFormat="%b %d")
+    date_axis = Axis(label="Date", dateFormat="%m/%d/%Y")
     tests_axis = Axis(label="Number of Tests in 30s")
     chart = LineChart("HQ Load Test Performance", date_axis, tests_axis)
     submit_data = []
     ota_data = []
     total_data = []
+    max_val = 0
+    max_date = None
+    min_date = None
     for test in tests:
         date = test['datetime']
+        total = len(test['results'])
+        max_val = total if total > max_val else max_val
+        max_date = date if not max_date or date > max_date else max_date
+        min_date = date if not min_date or date < min_date else min_date
         submit_data.append({'x': date, 'y': len(test['submit_form'].results)})
         ota_data.append({'x': date, 'y': len(test['ota_restore'].results)})
-        total_data.append({'x': date, 'y': len(test['results'])})
+        total_data.append({'x': date, 'y': total})
+
+    deployments = [row['key'][1] for row in HqDeploy.get_list(settings.SERVER_ENVIRONMENT, min_date, max_date)]
+    deploy_data = [{'x': min_date, 'y': 0}]
+    for date in deployments:
+        deploy_data.extend([{'x': date, 'y': 0}, {'x': date, 'y': max_val}, {'x': date, 'y': 0}])
+    deploy_data.append({'x': max_date, 'y': 0})
+
+    chart.add_dataset("Deployments", deploy_data)
     chart.add_dataset("Form Submission Count", submit_data)
     chart.add_dataset("OTA Restore Count", ota_data)
     chart.add_dataset("Total Count", total_data)
