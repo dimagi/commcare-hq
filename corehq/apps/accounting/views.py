@@ -528,6 +528,11 @@ class InvoiceSummaryView(AccountingSectionView):
 
     @property
     @memoized
+    def billing_records(self):
+        return self.invoice.billingrecord_set.all()
+
+    @property
+    @memoized
     def invoice_info_form(self):
         return InvoiceInfoForm(self.invoice)
 
@@ -536,6 +541,7 @@ class InvoiceSummaryView(AccountingSectionView):
         return {
             'adjust_balance_forms': [self.adjust_balance_form],
             'adjustment_list': self.adjustment_list,
+            'billing_records': self.billing_records,
             'invoice_info_form': self.invoice_info_form,
         }
 

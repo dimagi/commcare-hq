@@ -18,6 +18,26 @@
     <div class="tab-content">
         <div class="tab-pane" id="invoice">
             {% crispy invoice_info_form %}
+
+            <legend>Communication</legend>
+            <table class="table table-striped table-bordered">
+                <thead>
+                    <tr>
+                        <th>{% trans "Date" %}</th>
+                        <th>{% trans "Recipients" %}</th>
+                        <th>{% trans "View PDF" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for billing_record in billing_records %}
+                        <tr>
+                            <td>{{ billing_record.date_created }}</td>
+                            <td>{{ billing_record.emailed_to }}</td>
+                            <td>View PDF</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
 
         <div class="tab-pane" id="adjustments">
