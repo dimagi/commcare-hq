@@ -7,6 +7,7 @@ from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.cloudcare.api import get_cloudcare_app
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
+from corehq.apps.reports.filters.search import SearchFilter
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
@@ -166,10 +167,12 @@ class PatientListReport(CustomProjectReport, CaseListReport):
     name = ugettext_noop('Patient List')
     slug = 'patient_list'
     default_sort = {'target_date': 'asc'}
+    base_template_filters = 'succeed/report.html'
 
     fields = ['custom.succeed.fields.CareSite',
               'custom.succeed.fields.ResponsibleParty',
-              'custom.succeed.fields.PatientStatus']
+              'custom.succeed.fields.PatientStatus',
+              'corehq.apps.reports.standard.cases.filters.CaseSearchFilter']
 
     @property
     @memoized
@@ -220,7 +223,7 @@ class PatientListReport(CustomProjectReport, CaseListReport):
         }
         sorting_block = self.get_sorting_block()[0].keys()[0] if len(self.get_sorting_block()) != 0 else None
         order = self.get_sorting_block()[0].values()[0] if len(self.get_sorting_block()) != 0 else None
-
+        search_string = SearchFilter.get_value(self.request, self.domain)
 
         if sorting_block == 'last_interaction':
             sort = {
@@ -348,6 +351,10 @@ class PatientListReport(CustomProjectReport, CaseListReport):
 
         if self.case_type:
             q["query"]["bool"]["must"].append({"match": {"type.exact": 'participant'}})
+        if search_string:
+            query_block = { "query_string": {"query": search_string}}
+            #Todo apply custom query block
+
         logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, simplejson.dumps(q)))
         return es_query(q=q, es_url=REPORT_CASE_INDEX + '/_search', dict_only=False)
 
