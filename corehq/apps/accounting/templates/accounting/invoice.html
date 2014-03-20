@@ -45,7 +45,11 @@
                         <tr>
                             <td>{{ billing_record.date_created }}</td>
                             <td>{{ billing_record.emailed_to }}</td>
-                            <td>View PDF</td>
+                            <td>
+                                <a href="{% url 'domain_billing_statement_download' billing_record.invoice.subscription.subscriber.domain billing_record.pdf_data_id %}">
+                                    View PDF
+                                </a>
+                            </td>
                         </tr>
                     {% endfor %}
                 </tbody>
