@@ -39,6 +39,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.accounting.models import (
     BillingAccount,
     BillingContactInfo,
+    BillingRecord,
     CreditAdjustment,
     CreditLine,
     Currency,
@@ -1453,4 +1454,56 @@ class InvoiceInfoForm(forms.Form):
                     ),
                 ),
             ),
+        )
+
+
+class ResendEmailForm(forms.Form):
+
+    additional_recipients = forms.CharField(
+        label="Additional Recipients:",
+        required=False,
+    )
+
+    def __init__(self, invoice, *args, **kwargs):
+        self.invoice = invoice
+        super(ResendEmailForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_class = 'form-horizontal'
+        self.helper.layout = crispy.Layout(
+            crispy.Div(
+                crispy.HTML(
+                    'This will send an email to: %s.' %
+                    ', '.join(invoice.email_recipients)
+                ),
+                crispy.Field('additional_recipients'),
+                css_class='modal-body',
+            ),
+            FormActions(
+                crispy.ButtonHolder(
+                    crispy.Submit(
+                        'resend_email',
+                        'Send Email',
+                        data_loading_text='Submitting...',
+                    ),
+                    crispy.Button(
+                        'close',
+                        'Close',
+                        data_dismiss='modal',
+                    ),
+                ),
+                css_class='modal-footer',
+            ),
+        )
+
+    def clean_additional_recipients(self):
+        return [
+            email.strip()
+            for email in self.cleaned_data['additional_recipients'].split(',')
+        ]
+
+    def resend_email(self):
+        contact_emails = self.invoice.email_recipients
+        contact_emails += self.cleaned_data['additional_recipients']
+        BillingRecord.generate_record(
+            self.invoice, contact_emails=contact_emails
         )

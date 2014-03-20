@@ -18,7 +18,8 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.accounting.forms import (
     BillingAccountForm, CreditForm, SubscriptionForm, CancelForm,
     PlanInformationForm, SoftwarePlanVersionForm, FeatureRateForm,
-    ProductRateForm, TriggerInvoiceForm, InvoiceInfoForm, AdjustBalanceForm
+    ProductRateForm, TriggerInvoiceForm, InvoiceInfoForm, AdjustBalanceForm,
+    ResendEmailForm,
 )
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError, InvoiceError, CreditLineError
@@ -537,17 +538,29 @@ class InvoiceSummaryView(AccountingSectionView):
         return InvoiceInfoForm(self.invoice)
 
     @property
+    @memoized
+    def resend_email_form(self):
+        if self.request.method == 'POST':
+            return ResendEmailForm(self.invoice, self.request.POST)
+        return ResendEmailForm(self.invoice)
+
+    @property
     def page_context(self):
         return {
             'adjust_balance_forms': [self.adjust_balance_form],
             'adjustment_list': self.adjustment_list,
             'billing_records': self.billing_records,
             'invoice_info_form': self.invoice_info_form,
+            'resend_email_form': self.resend_email_form,
         }
 
     def post(self, request, *args, **kwargs):
         if 'adjust_balance' in self.request.POST:
             if self.adjust_balance_form.is_valid():
                 self.adjust_balance_form.adjust_balance()
+                return HttpResponseRedirect(self.page_url)
+        elif 'resend_email' in self.request.POST:
+            if self.resend_email_form.is_valid():
+                self.resend_email_form.resend_email()
                 return HttpResponseRedirect(self.page_url)
         return self.get(request, *args, **kwargs)
