@@ -599,6 +599,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, Mu
 
             where = '(app_id, xmlns) in (%s)' % (','.join(placeholders))
             results = FormData.objects \
+                .filter(doc_type='XFormInstance') \
                 .filter(received_on__range=(self.datespan.startdate_utc, self.datespan.enddate_utc)) \
                 .filter(user_id__in=user_map.keys()) \
                 .values('instance_id', 'user_id', 'time_end', 'received_on', 'xmlns')\
