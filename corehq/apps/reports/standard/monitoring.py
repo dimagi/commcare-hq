@@ -587,49 +587,53 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, Mu
         total_seconds = 0
         if self.all_relevant_forms:
             users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
-            for user in users_data["combined_users"]:
-                if not user.get('user_id'):
-                    # calling get_form_data with no user_id will return ALL form data which is not what we want
-                    continue
-                for form in self.all_relevant_forms.values():
-                    data = self.get_form_data(user.get('user_id'), form['xmlns'], form['app_id'])
-                    for item in data:
-                        vals = item.get('value')
-                        completion_time = dateutil.parser.parse(vals.get('completion_time')).replace(tzinfo=None)
-                        completion_dst = False if self.timezone == pytz.utc else\
-                        tz_utils.is_timezone_in_dst(self.timezone, completion_time)
-                        completion_time = self.timezone.localize(completion_time, is_dst=completion_dst)
-                        submission_time = dateutil.parser.parse(vals.get('submission_time'))
-                        submission_time = submission_time.replace(tzinfo=pytz.utc)
-                        submission_time = tz_utils.adjust_datetime_to_timezone(submission_time, pytz.utc.zone, self.timezone.zone)
-                        td = submission_time-completion_time
 
-                        td_total = (td.seconds + td.days * 24 * 3600)
-                        rows.append([
-                            self.get_user_link(user),
+            placeholders = []
+            params = []
+            user_map = dict([(user.get('user_id'), user) for user in users_data["combined_users"] if user.get('user_id')])
+            form_map = {}
+            for form in self.all_relevant_forms.values():
+                placeholders.append('(%s,%s)')
+                params.extend([form['app_id'], form['xmlns']])
+                form_map[form['xmlns']] = form
+
+            where = '(app_id, xmlns) in (%s)' % (','.join(placeholders))
+            results = FormData.objects \
+                .filter(received_on__range=(self.datespan.startdate_utc, self.datespan.enddate_utc)) \
+                .filter(user_id__in=user_map.keys()) \
+                .values('instance_id', 'user_id', 'time_end', 'received_on', 'xmlns')\
+                .extra(
+                    where=[where], params=params
+                )
+
+            for row in results:
+                completion_time = row['time_end'].replace(tzinfo=None)
+                completion_dst = False if self.timezone == pytz.utc else\
+                    tz_utils.is_timezone_in_dst(self.timezone, completion_time)
+                completion_time = self.timezone.localize(completion_time, is_dst=completion_dst)
+
+                submission_time = row['received_on'].replace(tzinfo=pytz.utc)
+                submission_time = tz_utils.adjust_datetime_to_timezone(submission_time, pytz.utc.zone, self.timezone.zone)
+
+                td = submission_time-completion_time
+                td_total = (td.seconds + td.days * 24 * 3600)
+                rows.append([
+                            self.get_user_link(user_map.get(row['user_id'])),
                             self._format_date(completion_time),
                             self._format_date(submission_time),
-                            form['name'],
-                            self._view_form_link(item.get('id', '')),
+                            form_map[row['xmlns']]['name'],
+                            self._view_form_link(row['instance_id']),
                             self.table_cell(td_total, self._format_td_status(td))
                         ])
 
-                        if td_total >= 0:
-                            total_seconds += td_total
-                            total += 1
+                if td_total >= 0:
+                    total_seconds += td_total
+                    total += 1
         else:
             rows.append(['No Submissions Available for this Date Range'] + ['--']*5)
 
         self.total_row = [_("Average"), "-", "-", "-", "-", self._format_td_status(int(total_seconds/total), False) if total > 0 else "--"]
         return rows
-
-    def get_form_data(self, user_id, xmlns, app_id):
-        key = make_form_couch_key(self.domain, user_id=user_id, xmlns=xmlns, app_id=app_id)
-        return get_db().view("reports_forms/all_forms",
-            reduce=False,
-            startkey=key+[self.datespan.startdate_param_utc],
-            endkey=key+[self.datespan.enddate_param_utc]
-        ).all()
 
     def _format_date(self, date, d_format="%d %b %Y, %H:%M:%S"):
         return self.table_cell(
