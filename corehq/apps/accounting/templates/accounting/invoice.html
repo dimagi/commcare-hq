@@ -10,6 +10,17 @@
 {% block main_column %}
     {% include 'accounting/adjust_balance.html' %}
 
+    <div class="modal hide fade" id="resendEmailModal">
+        <div class="modal-header">
+            <a class="close" data-dismiss="modal">&times;</a>
+            <h3>
+                {% blocktrans with invoice_number=invoice_info_form.invoice.invoice_number %}
+                    Resend Invoice #{{ invoice_number }} Email?
+                {% endblocktrans %}
+            </h3>
+        </div>
+    </div>
+
     <ul class="nav nav-tabs" id="user-settings-tabs">
         <li><a href="#invoice" data-toggle="tab">{% trans "Invoice" %}</a></li>
         <li><a href="#adjustments" data-toggle="tab">{% trans "Adjustments" %}</a></li>
@@ -38,6 +49,13 @@
                     {% endfor %}
                 </tbody>
             </table>
+            <input type="button"
+                   name="open-resend-modal"
+                   value="Re-Send Email"
+                   class="btn"
+                   data-target="#resendEmailModal"
+                   data-toggle="modal"
+            >
         </div>
 
         <div class="tab-pane" id="adjustments">

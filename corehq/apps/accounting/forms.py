@@ -1393,6 +1393,7 @@ class InvoiceInfoForm(forms.Form):
     current_balance = forms.CharField()
 
     def __init__(self, invoice, *args, **kwargs):
+        self.invoice = invoice
         subscription = invoice.subscription
         super(InvoiceInfoForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
