@@ -1347,7 +1347,7 @@ class AdjustBalanceForm(forms.Form):
             FormActions(
                 crispy.ButtonHolder(
                     crispy.Submit(
-                        'submit',
+                        'adjust_balance',
                         'Apply',
                         data_loading_text='Submitting...',
                     ),
@@ -1383,3 +1383,73 @@ class AdjustBalanceForm(forms.Form):
         )
         self.invoice.update_balance()
         self.invoice.save()
+
+
+class InvoiceInfoForm(forms.Form):
+
+    subscription = forms.CharField()
+    project = forms.CharField()
+    account = forms.CharField()
+    current_balance = forms.CharField()
+
+    def __init__(self, invoice, *args, **kwargs):
+        subscription = invoice.subscription
+        super(InvoiceInfoForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_class = 'form-horizontal'
+        from corehq.apps.accounting.views import (
+            EditSubscriptionView,
+            ManageBillingAccountView,
+        )
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                'Invoice #%s' % invoice.invoice_number,
+                TextField(
+                    'subscription',
+                    mark_safe(
+                        '<a href="%(subscription_link)s">'
+                        '%(plan_name)s'
+                        ' (%(start_date)s - %(end_date)s)'
+                        '</a>' % {
+                            'subscription_link': reverse(
+                                EditSubscriptionView.urlname,
+                                args=(subscription.id,)
+                            ),
+                            'plan_name': subscription.plan_version,
+                            'start_date': subscription.date_start,
+                            'end_date': subscription.date_end,
+                        }
+                    ),
+                ),
+                TextField(
+                    'project',
+                    subscription.subscriber.domain,
+                ),
+                TextField(
+                    'account',
+                    mark_safe(
+                        '<a href="%(account_link)s">'
+                        '%(account_name)s'
+                        '</a>' % {
+                            'account_link': reverse(
+                                ManageBillingAccountView.urlname,
+                                args=(subscription.account.id,)
+                            ),
+                            'account_name': subscription.account.name,
+                        }
+                    ),
+                ),
+                TextField(
+                    'current_balance',
+                    get_money_str(invoice.balance),
+                ),
+                crispy.ButtonHolder(
+                    crispy.Button(
+                        'submit',
+                        'Adjust Balance',
+                        data_toggle='modal',
+                        data_target='#adjustBalanceModal-%d' % invoice.id,
+                    ),
+                ),
+            ),
+        )

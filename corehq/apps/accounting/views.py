@@ -18,9 +18,11 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.accounting.forms import (
     BillingAccountForm, CreditForm, SubscriptionForm, CancelForm,
     PlanInformationForm, SoftwarePlanVersionForm, FeatureRateForm,
-    ProductRateForm, TriggerInvoiceForm
+    ProductRateForm, TriggerInvoiceForm, InvoiceInfoForm, AdjustBalanceForm
 )
-from corehq.apps.accounting.exceptions import NewSubscriptionError, InvoiceError, CreditLineError
+from corehq.apps.accounting.exceptions import (
+    NewSubscriptionError, InvoiceError, CreditLineError
+)
 from corehq.apps.accounting.interface import (
     AccountingInterface, SubscriptionInterface, SoftwarePlanInterface,
     InvoiceInterface
@@ -513,12 +515,33 @@ class InvoiceSummaryView(AccountingSectionView):
 
     @property
     @memoized
+    def adjust_balance_form(self):
+        if self.request.method == 'POST':
+            return AdjustBalanceForm(self.invoice, self.request.POST)
+        return AdjustBalanceForm(self.invoice)
+
+    @property
+    @memoized
     def adjustment_list(self):
         adjustment_list = CreditAdjustment.objects.filter(invoice=self.invoice)
         return adjustment_list.order_by('date_created')
 
     @property
+    @memoized
+    def invoice_info_form(self):
+        return InvoiceInfoForm(self.invoice)
+
+    @property
     def page_context(self):
         return {
+            'adjust_balance_forms': [self.adjust_balance_form],
             'adjustment_list': self.adjustment_list,
+            'invoice_info_form': self.invoice_info_form,
         }
+
+    def post(self, request, *args, **kwargs):
+        if 'adjust_balance' in self.request.POST:
+            if self.adjust_balance_form.is_valid():
+                self.adjust_balance_form.adjust_balance()
+                return HttpResponseRedirect(self.page_url)
+        return self.get(request, *args, **kwargs)
