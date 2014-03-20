@@ -229,18 +229,21 @@ class DateSpan(object):
         return []
 
     @property
-    def enddate_param(self):
+    def enddate_adjusted(self):
         if self.enddate:
             # you need to add a day to enddate if your dates are meant to be inclusive
             offset = datetime.timedelta(days=1 if self.inclusive else 0)
-            return (self.enddate + offset).strftime(self.format)
+            return self.enddate + offset
+
+    @property
+    def enddate_param(self):
+        if self.enddate:
+            return self.enddate_adjusted.strftime(self.format)
 
     @property
     def enddate_utc(self):
         if self.enddate:
-            adjusted_enddate = self.adjust_to_utc(self.enddate)
-            # you need to add a day to enddate if your dates are meant to be inclusive
-            adjusted_enddate = (adjusted_enddate + datetime.timedelta(days=1 if self.inclusive else 0))
+            adjusted_enddate = self.adjust_to_utc(self.enddate_adjusted)
             return adjusted_enddate
 
     @property
