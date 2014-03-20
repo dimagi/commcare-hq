@@ -664,6 +664,16 @@ class Subscription(models.Model):
     is_active = models.BooleanField(default=False)
     do_not_invoice = models.BooleanField(default=False)
 
+    def __str__(self):
+        return ("Subscription to %(plan_version)s for %(subscriber)s. "
+                "[%(date_start)s - %(date_end)s]" % {
+                    'plan_version': self.plan_version,
+                    'subscriber': self.subscriber,
+                    'date_start': self.date_start.strftime("%d %B %Y"),
+                    'date_end': (self.date_end.strftime("%d %B %Y")
+                                 if self.date_end is not None else "--"),
+                })
+
     def cancel_subscription(self, adjustment_method=None, web_user=None, note=None):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
         today = datetime.date.today()
