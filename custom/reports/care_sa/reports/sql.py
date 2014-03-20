@@ -1,7 +1,8 @@
 from sqlagg.columns import *
 from corehq.apps.reports.sqlreport import SqlTabularReport, DatabaseColumn
 from corehq.apps.reports.filters.fixtures import AsyncDrillableFilter
-from corehq.apps.reports.fields import GroupField, BooleanField
+from corehq.apps.reports.filters.select import GroupFilter
+from corehq.apps.reports.fields import BooleanField
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
@@ -26,7 +27,7 @@ class ShowGenderField(BooleanField):
     slug = "show_gender_field"
     template = "care_sa/reports/partials/checkbox.html"
 
-class CBOField(GroupField):
+class CBOField(GroupFilter):
     name = 'CBO'
     default_option = 'All'
 

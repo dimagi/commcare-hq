@@ -566,7 +566,7 @@ class PortfolioComparisonReport(GenericTabularReport, CustomProjectReport):
     slug = "portfolio_comparison"
     fields = ['corehq.apps.reports.fields.MonthField',
               'corehq.apps.reports.fields.YearField',
-              'corehq.apps.reports.fields.GroupField',
+              'corehq.apps.reports.filters.select.GroupFilter',
               'dca.reports.CurrencySelectionField']
     exportable = True
 
@@ -652,7 +652,7 @@ class PerformanceReport(GenericTabularReport, CustomProjectReport):
     use_datatables = False
     fields = ['corehq.apps.reports.fields.MonthField',
               'corehq.apps.reports.fields.YearField',
-              'corehq.apps.reports.fields.GroupField',
+              'corehq.apps.reports.filters.select.GroupFilter',
               'dca.reports.CurrencySelectionField']
 
 
@@ -775,7 +775,7 @@ class PerformanceRatiosReport(GenericTabularReport, CustomProjectReport):
     use_datatables = False
     fields = ['corehq.apps.reports.fields.MonthField',
               'corehq.apps.reports.fields.YearField',
-              'corehq.apps.reports.fields.GroupField',
+              'corehq.apps.reports.filters.select.GroupFilter',
               'dca.reports.CurrencySelectionField']
 
     _rows = [

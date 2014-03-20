@@ -14,7 +14,7 @@ class MVPIndicatorReport(CustomProjectReport, ProjectReportParametersMixin):
     """
     cache_indicators = True
     fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.GroupField']
+              'corehq.apps.reports.filters.select.GroupFilter']
 
 
     def indicator_cache_key(self, indicator_slug):

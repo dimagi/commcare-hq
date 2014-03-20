@@ -26,7 +26,7 @@ class PathfinderWardSummaryReport(CustomProjectReport):
     report_template_path = "pathfinder-reports/ward_summary.html"
     fields = ['corehq.apps.reports.fields.MonthField',
               'corehq.apps.reports.fields.YearField',
-              'corehq.apps.reports.fields.GroupField']
+              'corehq.apps.reports.filters.select.GroupFilter']
     flush_layout = True
 
     @property
@@ -106,7 +106,7 @@ class PathfinderHBCReport(CustomProjectReport):
     report_template_path = "pathfinder-reports/hbc.html"
     fields = ['corehq.apps.reports.fields.MonthField',
               'corehq.apps.reports.fields.YearField',
-              'corehq.apps.reports.fields.GroupField']
+              'corehq.apps.reports.filters.select.GroupFilter']
     flush_layout = True
 
     @property

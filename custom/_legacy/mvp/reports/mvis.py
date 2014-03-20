@@ -19,7 +19,7 @@ class HealthCoordinatorReport(MVPIndicatorReport):
     flush_layout = True
     hide_filters = True
     fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.GroupField']
+              'corehq.apps.reports.filters.select.GroupFilter']
     emailable = True
     
     @property

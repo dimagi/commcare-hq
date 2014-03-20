@@ -18,7 +18,7 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
     fix_left_col = True
     emailable = True
     fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.GroupField',
+              'corehq.apps.reports.filters.select.GroupFilter',
               'corehq.apps.reports.filters.dates.DatespanFilter']
 
     @property

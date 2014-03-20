@@ -28,7 +28,7 @@ class MCHBaseReport(CustomProjectReport, CaseListReport):
     model = None
 
     fields = [
-        'corehq.apps.reports.fields.GroupField',
+        'corehq.apps.reports.filters.select.GroupFilter',
         'corehq.apps.reports.filters.select.SelectOpenCloseFilter',
     ]
 
