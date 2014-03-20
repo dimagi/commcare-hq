@@ -8,6 +8,7 @@ var McctProjectReviewPageManagement = function (o) {
     self.selected_forms = ko.observableArray();
     self.selected_cases = ko.observableArray();
     self.domain = o.domain;
+    self.reject_reason = null;
 
     var updateRow = function () {
         return function(data) {
@@ -55,16 +56,14 @@ var McctProjectReviewPageManagement = function (o) {
     };
 
     self.updateStatus = function (status) {
-        var data_to_send = [],
-            stringArray = new Array();
+        var data_to_send = [];
 
         for (var i = 0; i < self.selected_forms().length; i++) {
-            var form_id = self.selected_forms()[i];
-
-            stringArray[0] = form_id;
-            stringArray[1] = status;
-            stringArray[2] = self.domain;
-            data_to_send.push(stringArray);
+            data_to_send.push([
+                self.selected_forms()[i],
+                status,
+                self.reject_reason
+            ]);
         }
         $.ajax({
             url: '/a/' + self.domain + '/update_service_status/',
@@ -73,28 +72,6 @@ var McctProjectReviewPageManagement = function (o) {
             success: updateRow()
         });
     };
-
-    self.updateStatusReview = function () {
-        self.updateStatus("reviewed");
-    };
-
-
-     self.updateStatusReject = function () {
-         self.updateStatus("rejected");
-    };
-
-    self.updateStatusApprove = function () {
-        self.updateStatus("approved");
-    };
-
-    self.updateStatusPaid = function () {
-        self.updateStatus("paid");
-    };
-
-    self.updateStatusEligible = function () {
-        self.updateStatus("eligible");
-    };
-
 };
 
 ko.bindingHandlers.mcctProjectReviewPage = {
