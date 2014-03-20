@@ -1,11 +1,5 @@
-<<<<<<< HEAD:corehq/apps/reports/templates/reports/fields/drillable_async.html
 {% load hq_shared_tags %}
 <label class="control-label">{{ control_name }}</label>
-=======
-{# todo: clean this up to properly inherit from filters/base.html #}
-
-<label class="control-label">{{ control_name }}</label> {# this is wrong, this should be inheriting the structure from filters/base.html, see base/drilldown_options #}
->>>>>>> - Renamed AsyncDrillableField to AsyncDrillableFilter:corehq/apps/reports/templates/reports/filters/drillable_async.html
 <div class="controls">
     <div data-bind="foreach: selected_path" style="display: inline-block;">
         <select data-bind="options: children, optionsText: 'display_name', value: selected_child"></select>

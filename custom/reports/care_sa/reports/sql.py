@@ -1,6 +1,7 @@
 from sqlagg.columns import *
 from corehq.apps.reports.sqlreport import SqlTabularReport, DatabaseColumn
-from corehq.apps.reports.fields import AsyncDrillableField, GroupField, BooleanField
+from corehq.apps.reports.filters.fixtures import AsyncDrillableFilter
+from corehq.apps.reports.fields import GroupField, BooleanField
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
@@ -10,7 +11,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from copy import copy
 
 
-class ProvinceField(AsyncDrillableField):
+class ProvinceField(AsyncDrillableFilter):
     label = "Province"
     slug = "province"
     hierarchy = [{"type": "province", "display": "name"}]
