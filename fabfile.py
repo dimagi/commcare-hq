@@ -762,10 +762,10 @@ def update_virtualenv(preindex=False):
     with cd(root_to_use):
         cmd_prefix = 'export HOME=/home/%s && source %s/bin/activate && ' % (
             env.sudo_user, env_to_use)
-        sudo('%s pip uninstall --requirement %s --yes' % (
-            cmd_prefix,
-            posixpath.join(requirements, 'uninstall-requirements.txt'),
-        ), user=env.sudo_user)
+        # uninstall requirements in uninstall-requirements.txt
+        # but only the ones that are actually installed (checks pip freeze)
+        sudo("%s bash scripts/uninstall-requirements.sh" % cmd_prefix,
+             user=env.sudo_user)
         sudo('%s pip install --requirement %s --requirement %s' % (
             cmd_prefix,
             posixpath.join(requirements, 'prod-requirements.txt'),
