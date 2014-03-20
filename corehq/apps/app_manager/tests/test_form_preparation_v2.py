@@ -81,6 +81,13 @@ class FormPreparationV2Test(FormPrepBase):
         self.form.actions.case_preload.condition.type = 'always'
         self.assertXmlEqual(self.get_xml('update_preload_case'), self.form.render_xform())
 
+    def test_update_attachment(self):
+        self.form.requires = 'case'
+        self.form.source = self.get_xml('attachment')
+        self.form.actions.update_case = UpdateCaseAction(update={'photo': '/data/thepicture'})
+        self.form.actions.update_case.condition.type = 'always'
+        self.assertXmlEqual(self.get_xml('update_attachment_case'), self.form.render_xform())
+
     def test_close_case(self):
         self.form.requires = 'case'
         self.form.actions.close_case = FormAction()
