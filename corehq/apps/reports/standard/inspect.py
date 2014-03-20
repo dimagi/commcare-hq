@@ -42,7 +42,7 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
               'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
               'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
               'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
-              'corehq.apps.reports.fields.DatespanField']
+              'corehq.apps.reports.filters.dates.DatespanFilter']
     ajax_pagination = True
     filter_users_field_class = StrongFilterUsersField
     include_inactive = True
@@ -151,7 +151,7 @@ class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):
 
     name = ugettext_noop('Generic Pie Chart (sandbox)')
     slug = 'generic_pie'
-    fields = ['corehq.apps.reports.fields.DatespanField',
+    fields = ['corehq.apps.reports.filters.dates.DatespanFilter',
               'corehq.apps.reports.fields.AsyncLocationField']
     # define in subclass
     #mode = 'case' or 'form'

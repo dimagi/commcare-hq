@@ -31,6 +31,113 @@ from corehq.apps.users.models import WebUser
     reporting structure.
 """
 
+# TODO: Delete this file and corehq/apps/reports/fields.py.orig
+# TODO: Delete from here
+class ReportField(CacheableRequestMixIn):
+    slug = ""
+    template = ""
+
+    def __init__(self, request, domain=None, timezone=pytz.utc, parent_report=None):
+        warnings.warn(
+            "ReportField (%s) is deprecated. Use ReportFilter instead." % (
+                self.__class__.__name__
+            ),
+            DeprecationWarning,
+        )
+        self.context = Context()
+        self.request = request
+        self.domain = domain
+        self.timezone = timezone
+        self.parent_report = parent_report
+
+    def render(self):
+        if not self.template: return ""
+        self.context["slug"] = self.slug
+        self.update_context()
+        return render_to_string(self.template, self.context)
+
+    def update_context(self):
+        """
+        If your select field needs some context (for example, to set the default) you can set that up here.
+        """
+        pass
+
+class ReportSelectField(ReportField):
+    slug = "generic_select"
+    name = ugettext_noop("Generic Select")
+    template = "reports/fields/select_generic.html"
+    default_option = ugettext_noop("Select Something...")
+    options = [dict(val="val", text="text")]
+    cssId = "generic_select_box"
+    cssClasses = "span4"
+    selected = None
+    hide_field = False
+    as_combo = False
+    placeholder = ''
+    help_text = ''
+
+    def __init__(self, *args, **kwargs):
+        super(ReportSelectField, self).__init__(*args, **kwargs)
+        # need to randomize cssId so knockout bindings won't clobber each other
+        # when multiple select controls on screen at once
+        nonce = uuid.uuid4().hex[-12:]
+        self.cssId = '%s-%s' % (self.cssId, nonce)
+
+    def update_params(self):
+        self.selected = self.request.GET.get(self.slug)
+
+    def update_context(self):
+        self.update_params()
+        self.context['hide_field'] = self.hide_field
+        self.context['help_text'] = self.help_text
+        self.context['select'] = dict(
+            options=self.options,
+            default=self.default_option,
+            cssId=self.cssId,
+            cssClasses=self.cssClasses,
+            label=self.name,
+            selected=self.selected,
+            use_combo_box=self.as_combo,
+            placeholder=self.placeholder,
+        )
+
+
+class FilterUsersField(ReportField):
+    slug = "ufilter"
+    template = "reports/fields/filter_users.html"
+    always_show_filter = False
+    can_be_empty = False
+
+    def update_context(self):
+        toggle, show_filter = self.get_user_filter(self.request)
+        self.context['show_user_filter'] = show_filter
+        self.context['toggle_users'] = toggle
+        self.context['can_be_empty'] = self.can_be_empty
+
+    @classmethod
+    def get_user_filter(cls, request):
+        ufilter = group = individual = None
+        try:
+            if request.GET.get('ufilter', ''):
+                ufilter = request.GET.getlist('ufilter')
+            group = request.GET.get('group', '')
+            individual = request.GET.get('individual', '')
+        except KeyError:
+            pass
+        except AttributeError:
+            pass
+
+        show_filter = True
+        toggle = HQUserType.use_defaults()
+
+        if not cls.always_show_filter and (group or individual):
+            show_filter = False
+        elif ufilter:
+            toggle = HQUserType.use_filter(ufilter)
+        return toggle, show_filter
+
+# TODO: Delete to here
+
 
 class BooleanField(ReportField):
     slug = "checkbox"

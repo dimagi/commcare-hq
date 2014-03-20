@@ -58,6 +58,7 @@ class SelectOrganizationFilter(BaseSingleOptionFilter):
     def options(self):
         return [(o.name, o.title) for o in  Organization.get_all()]
 
+
 class GroupFilterMixin(object):
     slug = "group"
     label = ugettext_noop("Group")
@@ -67,11 +68,14 @@ class GroupFilterMixin(object):
     def options(self):
         return [(group.get_id, group.name) for group in Group.get_reporting_groups(self.domain)]
 
+
 class GroupFilter(GroupFilterMixin, BaseSingleOptionFilter):
     placeholder = ugettext_noop('Click to select a group')
 
+
 class MultiGroupFilter(GroupFilterMixin, BaseMultipleOptionFilter):
     placeholder = ugettext_noop('Click to select groups')
+
 
 class YearFilter(BaseSingleOptionFilter):
     slug = "year"

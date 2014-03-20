@@ -39,7 +39,7 @@ class CareReport(SqlTabularReport,
     report_template_path = "care_sa/reports/grouped.html"
 
     fields = [
-        'corehq.apps.reports.fields.DatespanField',
+        'corehq.apps.reports.filters.dates.DatespanFilter',
         'custom.reports.care_sa.reports.sql.ProvinceField',
         'custom.reports.care_sa.reports.sql.CBOField',
         'custom.reports.care_sa.reports.sql.ShowAgeField',

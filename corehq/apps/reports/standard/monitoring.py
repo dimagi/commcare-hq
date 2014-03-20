@@ -780,7 +780,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
         'corehq.apps.reports.fields.MultiSelectGroupField',
         'corehq.apps.reports.fields.UserOrGroupField',
         'corehq.apps.reports.fields.CaseTypeField',
-        'corehq.apps.reports.fields.DatespanField',
+        'corehq.apps.reports.filters.dates.DatespanFilter',
     ]
     fix_left_col = True
     emailable = True
