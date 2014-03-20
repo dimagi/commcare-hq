@@ -525,7 +525,7 @@ class InvoiceSummaryView(AccountingSectionView):
     @memoized
     def adjustment_list(self):
         adjustment_list = CreditAdjustment.objects.filter(invoice=self.invoice)
-        return adjustment_list.order_by('date_created')
+        return adjustment_list.order_by('-date_created')
 
     @property
     @memoized
