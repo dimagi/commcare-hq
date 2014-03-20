@@ -4,7 +4,7 @@ from urllib import urlencode
 import dateutil
 from django.core.urlresolvers import reverse
 import math
-from django.db.models.aggregates import Count
+from django.db.models.aggregates import Max, Min, Avg, StdDev, Count
 import numpy
 import operator
 import pytz
@@ -463,7 +463,6 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin):
             return DataTablesHeader(DataTablesColumn(_("No Form Selected"), sortable=False))
         return DataTablesHeader(DataTablesColumn(_("User")),
             DataTablesColumn(_("Average"), sort_type=DTSortType.NUMERIC),
-            DataTablesColumn(_("Median"), sort_type=DTSortType.NUMERIC),
             DataTablesColumn(_("Std. Dev."), sort_type=DTSortType.NUMERIC),
             DataTablesColumn(_("Shortest"), sort_type=DTSortType.NUMERIC),
             DataTablesColumn(_("Longest"), sort_type=DTSortType.NUMERIC),
@@ -476,24 +475,22 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin):
             rows.append([_("You must select a specific form to view data.")])
             return rows
 
-        def to_duration(val_in_ms, d=None):
-            assert val_in_ms is not None
-            if d:
-                val_in_ms /= d
-            return datetime.timedelta(seconds=int((val_in_ms + 500)/1000))
+        def to_duration(val_in_s):
+            assert val_in_s is not None
+            return datetime.timedelta(seconds=val_in_s)
 
-        def to_minutes(val_in_ms, d=None):
-            if val_in_ms is None or d == 0:
+        def to_minutes(val_in_s):
+            if val_in_s is None:
                 return "--"
-            return friendly_timedelta(to_duration(val_in_ms, d))
+            return friendly_timedelta(to_duration(val_in_s))
 
-        def to_minutes_raw(val_in_ms):
+        def to_minutes_raw(val_in_s):
             """
             return a timestamp like 66:12:24 (the first number is hours
             """
-            if val_in_ms is None:
+            if val_in_s is None:
                 return '--'
-            td = to_duration(val_in_ms)
+            td = to_duration(val_in_s)
             hours, remainder = divmod(td.seconds, 3600)
             minutes, seconds = divmod(remainder, 60)
             return '{h}:{m}:{s}'.format(
@@ -508,52 +505,57 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin):
         def _fmt_ts(timestamp):
             return format_datatables_data(to_minutes(timestamp), timestamp, to_minutes_raw(timestamp))
 
-        durations = []
-        totalcount = 0
+        def get_data(users, group_by_user=True):
+            query = FormData.objects \
+                .filter(doc_type='XFormInstance') \
+                .filter(xmlns=self.selected_xmlns['xmlns']) \
+                .filter(time_end__range=(self.datespan.startdate_utc, self.datespan.enddate_utc))
+
+            if users:
+                query = query.filter(user_id__in=users)
+
+            if self.selected_xmlns['app_id'] is not None:
+                query = query.filter(app_id=self.selected_xmlns['app_id'])
+
+            if group_by_user:
+                query = query.values('user_id')
+                return query.annotate(Max('duration')) \
+                    .annotate(Min('duration')) \
+                    .annotate(Avg('duration')) \
+                    .annotate(StdDev('duration')) \
+                    .annotate(Count('duration'))
+            else:
+                return query.aggregate(
+                    Max('duration'),
+                    Min('duration'),
+                    Avg('duration'),
+                    StdDev('duration'),
+                    Count('duration')
+                )
+
         users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
+        user_ids = [user.get('user_id') for user in users_data["combined_users"]]
+
+        data_map = dict([(row['user_id'], row) for row in get_data(user_ids)])
+
         for user in users_data["combined_users"]:
-            stats = self.get_user_data(user.get('user_id'))
+            stats = data_map.get(user.get('user_id'), {})
             rows.append([self.get_user_link(user),
-                         stats['error_msg'] if stats['error_msg'] else _fmt_ts(stats['avg']),
-                         _fmt_ts(stats['med']),
-                         _fmt_ts(stats['std']),
-                         _fmt_ts(stats["min"]),
-                         _fmt_ts(stats["max"]),
-                         _fmt(lambda x: x, stats["count"]),
+                         _fmt_ts(stats.get('duration__avg')),
+                         _fmt_ts(stats.get('duration__stddev')),
+                         _fmt_ts(stats.get("duration__min")),
+                         _fmt_ts(stats.get("duration__max")),
+                         _fmt(lambda x: x, stats.get("duration__count", 0)),
             ])
-            durations.extend(stats['durations'])
-            totalcount += stats["count"]
 
-        if totalcount:
-            self.total_row = ["All Users",
-                              _fmt_ts(numpy.average(durations) if durations else None),
-                              _fmt_ts(numpy.median(durations) if durations else None),
-                              _fmt_ts(numpy.std(durations) if durations else None),
-                              _fmt_ts(numpy.min(durations) if durations else None),
-                              _fmt_ts(numpy.max(durations) if durations else None),
-                              totalcount]
+        total_data = get_data(user_ids, group_by_user=False)
+        self.total_row = ["All Users",
+                          _fmt_ts(total_data.get('duration__avg')),
+                          _fmt_ts(total_data.get('duration__stddev')),
+                          _fmt_ts(total_data.get('duration__min')),
+                          _fmt_ts(total_data.get('duration__max')),
+                          total_data.get('duration__count', 0)]
         return rows
-
-    def get_user_data(self, user_id):
-        key = make_form_couch_key(self.domain, by_submission_time=False, user_id=user_id,
-            xmlns=self.selected_xmlns['xmlns'], app_id=self.selected_xmlns['app_id'])
-        data = get_db().view("reports_forms/all_forms",
-            startkey=key+[self.datespan.startdate_param_utc],
-            endkey=key+[self.datespan.enddate_param_utc],
-            reduce=False
-        ).all()
-        durations = [d['value']['duration'] for d in data if d['value']['duration'] is not None]
-        error_msg = _("Problem retrieving form durations.") if (not durations and data) else None
-        return {
-            "count": len(data),
-            "max": numpy.max(durations) if durations else None,
-            "min": numpy.min(durations) if durations else None,
-            "avg": numpy.average(durations) if durations else None,
-            "med": numpy.median(durations) if durations else None,
-            "std": numpy.std(durations) if durations else None,
-            "durations": durations,
-            "error_msg": error_msg,
-        }
 
 
 class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, MultiFormDrilldownMixin, DatespanMixin):
