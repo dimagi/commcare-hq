@@ -219,7 +219,7 @@ class CaseReport(CaseListReport, CustomProjectReport, HSPHSiteDataMixin,
         'corehq.apps.reports.filters.dates.DatespanFilter',
         'hsph.fields.SiteField',
         #'hsph.fields.AllocatedToFilter',
-        'corehq.apps.reports.fields.SelectOpenCloseField',
+        'corehq.apps.reports.filters.select.SelectOpenCloseFilter',
     )
 
     default_case_type = 'birth'

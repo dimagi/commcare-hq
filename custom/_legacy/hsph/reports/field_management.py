@@ -401,7 +401,7 @@ class CaseReport(CaseListReport, CustomProjectReport, HSPHSiteDataMixin,
         'hsph.fields.SiteField',
         'hsph.fields.AllocatedToFilter',
         'hsph.fields.DCTLToFIDAFilter',
-        'corehq.apps.reports.fields.SelectOpenCloseField',
+        'corehq.apps.reports.filters.select.SelectOpenCloseFilter',
     )
 
     default_case_type = 'birth'

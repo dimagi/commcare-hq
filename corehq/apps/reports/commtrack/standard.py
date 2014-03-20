@@ -364,7 +364,7 @@ class RequisitionReport(CaseListReport):
     name = ugettext_noop('Requisition Report')
     slug = 'requisition_report'
     fields = ['corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
-              'corehq.apps.reports.fields.SelectOpenCloseField']
+              'corehq.apps.reports.filters.select.SelectOpenCloseFilter']
     exportable = True
     emailable = True
     asynchronous = True

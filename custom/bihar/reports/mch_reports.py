@@ -29,7 +29,7 @@ class MCHBaseReport(CustomProjectReport, CaseListReport):
 
     fields = [
         'corehq.apps.reports.fields.GroupField',
-        'corehq.apps.reports.fields.SelectOpenCloseField',
+        'corehq.apps.reports.filters.select.SelectOpenCloseFilter',
     ]
 
     @property
