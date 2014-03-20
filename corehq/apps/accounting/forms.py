@@ -1,6 +1,7 @@
 import calendar
 import datetime
 import json
+from decimal import Decimal
 from django.conf import settings
 
 from django.contrib import messages
@@ -1299,6 +1300,10 @@ class AdjustBalanceForm(forms.Form):
         widget=forms.RadioSelect,
     )
 
+    custom_amount = forms.DecimalField(
+        required=False,
+    )
+
     method = forms.ChoiceField(
         choices=(
             ('salesforce', 'Salesforce'),
@@ -1307,9 +1312,14 @@ class AdjustBalanceForm(forms.Form):
             ('correction', 'Correction'),
         ),
     )
+
     note = forms.CharField(
         required=False,
         widget=forms.Textarea,
+    )
+
+    invoice_id = forms.CharField(
+        widget=forms.HiddenInput(),
     )
 
     def __init__(self, invoice, *args, **kwargs):
@@ -1318,37 +1328,58 @@ class AdjustBalanceForm(forms.Form):
         self.fields['adjustment_type'].choices = (
             ('current', 'Add Credit of Current Balance: %s' %
                         get_money_str(self.invoice.balance)),
-            ('credit', 'Add CREDIT of Another Amount'),
-            ('debit', 'Add DEBIT of Another Amount'),
+            ('credit', 'Add CREDIT of Custom Amount'),
+            ('debit', 'Add DEBIT of Custom Amount'),
         )
+        self.fields['adjustment_type'].initial = 'current'
+        self.fields['invoice_id'].initial = invoice.id
         self.helper = FormHelper()
         self.helper.form_class = "form-horizontal"
         self.helper.layout = crispy.Layout(
+            crispy.Div(
+                crispy.Field('adjustment_type'),
+                crispy.Field('custom_amount'),
+                crispy.Field('method'),
+                crispy.Field('note'),
+                crispy.Field('invoice_id'),
+                css_class='modal-body',
+            ),
             FormActions(
-                crispy.Div(
-                    crispy.Fieldset(
-                        '',
-                        #"What type of adjustment would you like to make?",
-                        'adjustment_type',
-                        'method',
-                        'note',
+                crispy.ButtonHolder(
+                    crispy.Submit(
+                        'submit',
+                        'Apply',
+                        data_loading_text='Submitting...',
                     ),
-                    css_class='modal-body',
-                ),
-                crispy.Div(
-                    crispy.ButtonHolder(
-                        crispy.Submit(
-                            'submit',
-                            'Apply',
-                            data_loading_text='Submitting...',
-                            ),
-                        crispy.Button(
-                            'close',
-                            'Close',
-                            data_dismiss='modal',
-                        ),
+                    crispy.Button(
+                        'close',
+                        'Close',
+                        data_dismiss='modal',
                     ),
-                    css_class='modal-footer',
                 ),
+                css_class='modal-footer',
             ),
         )
+
+    @property
+    @memoized
+    def amount(self):
+        adjustment_type = self.cleaned_data['adjustment_type']
+        if adjustment_type == 'current':
+            return self.invoice.balance
+        elif adjustment_type == 'credit':
+            return Decimal(self.cleaned_data['custom_amount'])
+        elif adjustment_type == 'debit':
+            return -Decimal(self.cleaned_data['custom_amount'])
+        else:
+            raise ValidationError("Received invalid adjustment type: %s"
+                                  % adjustment_type)
+
+    def adjust_balance(self):
+        CreditLine.add_subscription_credit(
+            -self.amount, self.invoice.subscription,
+            note=self.cleaned_data['note'],
+            invoice=self.invoice,
+        )
+        self.invoice.update_balance()
+        self.invoice.save()

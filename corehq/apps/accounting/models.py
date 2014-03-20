@@ -1332,7 +1332,8 @@ class CreditLine(models.Model):
         return credit_line
 
     @classmethod
-    def add_subscription_credit(cls, amount, subscription, note=None):
+    def add_subscription_credit(cls, amount, subscription, note=None,
+                                invoice=None):
         cls._validate_add_amount(amount)
         credit_line, is_created = cls.objects.get_or_create(
             account=subscription.account,
@@ -1340,7 +1341,8 @@ class CreditLine(models.Model):
             product_type__exact=None,
             feature_type__exact=None,
         )
-        credit_line.adjust_credit_balance(amount, is_new=is_created, note=note)
+        credit_line.adjust_credit_balance(amount, is_new=is_created, note=note,
+                                          invoice=invoice)
         return credit_line
 
     @classmethod

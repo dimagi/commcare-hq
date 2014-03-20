@@ -7,6 +7,7 @@ from corehq.apps.accounting.models import (
     BillingAccount, Subscription, SoftwarePlan
 )
 from corehq.apps.accounting.utils import get_money_str
+from corehq.apps.reports.cache import request_cache
 from corehq.apps.reports.datatables import (
     DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 )
@@ -345,7 +346,7 @@ class InvoiceInterface(GenericTabularReport):
                 invoice.date_start,
                 invoice.date_end,
                 invoice.date_due,
-                get_money_str(invoice.get_total()),
+                get_money_str(invoice.balance),
                 "Paid" if invoice.date_paid else "Not paid",
                 # TODO - Create helper function for action button HTML
                 mark_safe('<a data-toggle="modal"'
@@ -384,3 +385,19 @@ class InvoiceInterface(GenericTabularReport):
             adjust_balance_forms=self.adjust_balance_forms,
         )
         return context
+
+    @property
+    @memoized
+    def adjust_balance_form(self):
+        return AdjustBalanceForm(
+            Invoice.objects.get(id=int(self.request.POST.get('invoice_id'))),
+            self.request.POST
+        )
+
+    @property
+    @request_cache("default")
+    def view_response(self):
+        if self.request.method == 'POST':
+            if self.adjust_balance_form.is_valid():
+                self.adjust_balance_form.adjust_balance()
+        return super(InvoiceInterface, self).view_response
