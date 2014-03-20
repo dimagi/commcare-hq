@@ -260,12 +260,14 @@ class McctStatus(models.Model):
     form_id = models.CharField(max_length=100, db_index=True)
     status = models.CharField(max_length=20)
     domain = models.CharField(max_length=256, null=True, db_index=True)
+    reason = models.CharField(max_length=32, null=True)
 
-    def update_status(self, new_status):
+    def update_status(self, new_status, reason):
         if 'eligible' in new_status:
             self.delete()
         else:
             self.status = new_status
+            self.reason = reason
             self.save()
 
     @classmethod
@@ -275,7 +277,7 @@ class McctStatus(models.Model):
         for mcct_status in mcct_status_list:
             if mcct_status.status not in status_dict:
                 status_dict[mcct_status.status] = set()
-            status_dict[mcct_status.status].add(mcct_status.form_id)
+            status_dict[mcct_status.status].add((mcct_status.form_id, mcct_status.reason))
         return status_dict
 
 
@@ -286,7 +288,6 @@ class McctMonthlyAggregateFormFluff(fluff.IndicatorDocument):
     save_direct_to_sql = True
 
     location_id = fluff.FlatField(_get_form_location_id)
-    all_eligible_clients = mcct_monthly_aggregate_report_calcs.AllEligibleClientsCalculator()
     eligible_due_to_registration = mcct_monthly_aggregate_report_calcs.EligibleDueToRegistrationCalculator()
     eligible_due_to_4th_visit = mcct_monthly_aggregate_report_calcs.EligibleDueTo4thVisitCalculator()
     eligible_due_to_delivery = mcct_monthly_aggregate_report_calcs.EligibleDueToDeliveryCalculator()
