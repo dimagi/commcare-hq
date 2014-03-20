@@ -1,27 +1,28 @@
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
+from corehq.apps.reports.filters.base import BaseSingleOptionFilter
+from corehq.apps.reports.filters.fixtures import AsyncDrillableFilter
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.reports.basic import Column, FunctionView, SummingTabularReport
-from corehq.apps.reports.fields import AsyncDrillableField, ReportSelectField
 from util import get_unique_combinations
 from couchdbkit_aggregate.fn import mean
 from dimagi.utils.decorators.memoized import memoized
 
 DEMO_TYPES = ["asha", "aww", "anm", "ngo", "cbo", "vhnd"]
 
-class StateDistrictField(AsyncDrillableField):
+class StateDistrictField(AsyncDrillableFilter):
     label = "State and District"
     slug = "location"
     hierarchy = [{"type": "state", "display": "name"},
                  {"type": "district", "parent_ref": "state_id", "references": "id", "display": "name"},]
 
-class StateDistrictBlockField(AsyncDrillableField):
+class StateDistrictBlockField(AsyncDrillableFilter):
     label = "State/District/Block"
     slug = "location"
     hierarchy = [{"type": "state", "display": "name"},
                  {"type": "district", "parent_ref": "state_id", "references": "id", "display": "name"},
                  {"type": "block", "parent_ref": "district_id", "references": "id", "display": "name"}]
 
-class AsyncPlaceField(AsyncDrillableField):
+class AsyncPlaceField(AsyncDrillableFilter):
     label = "State/District/Block/Village"
     slug = "location"
     hierarchy = [{"type": "state", "display": "name"},
@@ -30,43 +31,47 @@ class AsyncPlaceField(AsyncDrillableField):
                  {"type": "village", "parent_ref": "block_id", "references": "id", "display": "name"}]
 
 
-class DemoTypeField(ReportSelectField):
+class DemoTypeField(BaseSingleOptionFilter):
     slug = "demo_type"
-    name = "Worker Type"
-    cssId = "demo_type_select"
-    cssClasses = "span6"
-    default_option = "Aggregate"
+    label = "Worker Type"
+    default_text = "Aggregate"
 
-    def update_params(self):
-        self.selected = self.request.GET.get(self.slug, '')
-        self.options = [{'val': '_all', 'text': 'All worker types'}] + [{'val': dt, 'text': dt} for dt in DEMO_TYPES]
+    @property
+    def options(self):
+        return [('_all', 'All worker types')] + [(dt, dt) for dt in DEMO_TYPES]
 
-class AggregateAtField(ReportSelectField):
+
+class AggregateAtField(BaseSingleOptionFilter):
     """
         To Use: SUbclass and specify what the field options should be
     """
     slug = "aggregate_at"
-    name = "Aggregate at what level"
-    cssId = "aggregate_at_select"
-    cssClasses = "span6"
-    # default_option = "All Worker Types"
+    label = "Aggregate at what level"
 
     @property
     def default_option(self):
         return "Default: %s" % self.field_opts[-1]
 
-    def update_params(self):
-        self.selected = self.request.GET.get(self.slug, '')
-        self.options = [{'val': f.lower(), 'text': f} for f in [fo for fo in self.field_opts if fo != self.selected]]
+    @property
+    def field_opts(self):
+        raise NotImplementedError('Subclass me fully!')
+
+    @property
+    def options(self):
+        return [(f.lower(), f) for f in [fo for fo in self.field_opts if fo != self.selected]]
+
 
 class AASD(AggregateAtField):
     field_opts = ["State", "District"]
 
+
 class AASDB(AggregateAtField):
     field_opts = ["State", "District", "Block"]
 
+
 class AASDBV(AggregateAtField):
     field_opts = ["State", "District", "Block", "Village"]
+
 
 @memoized
 def get_village_fdt(domain):
@@ -86,7 +91,7 @@ def get_village_class(key, req):
 class PSIReport(SummingTabularReport, CustomProjectReport, DatespanMixin):
     is_cacheable = True
     update_after = True
-    fields = ['corehq.apps.reports.fields.DatespanField','psi.reports.AsyncPlaceField',]
+    fields = ['corehq.apps.reports.filters.dates.DatespanFilter','psi.reports.AsyncPlaceField',]
 
     state_name = Column("State", calculate_fn=lambda key, _: key[1])
 
@@ -132,7 +137,7 @@ class PSIReport(SummingTabularReport, CustomProjectReport, DatespanMixin):
 
 
 class PSIEventsReport(PSIReport):
-    fields = ['corehq.apps.reports.fields.DatespanField',
+    fields = ['corehq.apps.reports.filters.dates.DatespanFilter',
               'psi.reports.StateDistrictField',
               'psi.reports.AASD',]
     name = "Event Demonstration Report"
@@ -174,7 +179,7 @@ class PSIHDReport(PSIReport):
     emailable = True
     slug = "household_demonstations"
     section_name = "household demonstrations"
-    fields = ['corehq.apps.reports.fields.DatespanField',
+    fields = ['corehq.apps.reports.filters.dates.DatespanFilter',
               'psi.reports.AsyncPlaceField',
               'psi.reports.DemoTypeField',
               'psi.reports.AASDBV',]
@@ -242,7 +247,7 @@ class PSISSReport(PSIReport):
     emailable = True
     slug = "sensitization_sessions"
     section_name = "sensitization sessions"
-    fields = ['corehq.apps.reports.fields.DatespanField',
+    fields = ['corehq.apps.reports.filters.dates.DatespanFilter',
               'psi.reports.StateDistrictBlockField',
               'psi.reports.AASDB',]
     default_aggregation = 'block'
@@ -284,7 +289,7 @@ class PSITSReport(PSIReport):
     emailable = True
     slug = "training_sessions"
     section_name = "training sessions"
-    fields = ['corehq.apps.reports.fields.DatespanField',
+    fields = ['corehq.apps.reports.filters.dates.DatespanFilter',
               'psi.reports.StateDistrictField',
               'psi.reports.AASD',]
     default_aggregation = 'district'
