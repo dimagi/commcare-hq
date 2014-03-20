@@ -568,7 +568,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
             }
             if subscription is not None:
                 credit_lines = CreditLine.get_credits_by_subscription_and_features(
-                    subscription, product_rate=product_rate)
+                    subscription, product_type=product_rate.product.product_type)
                 product_info['credit'] = self._fmt_credit(self._credit_grand_total(credit_lines))
             product_summary.append(product_info)
         return product_summary
@@ -585,7 +585,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
             }
             if subscription is not None:
                 credit_lines = CreditLine.get_credits_by_subscription_and_features(
-                    subscription, feature_rate=feature_rate
+                    subscription, feature_type=feature_rate.feature.feature_type
                 )
                 feature_info['credit'] = self._fmt_credit(self._credit_grand_total(credit_lines))
             feature_summary.append(feature_info)
