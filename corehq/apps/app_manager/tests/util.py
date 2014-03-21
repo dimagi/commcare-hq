@@ -29,7 +29,7 @@ class TestFileMixin(object):
         if not checker.check_output(want, got, 0):
             message = "XML mismatch\n\n"
             for line in difflib.unified_diff(want.splitlines(1), got.splitlines(1), fromfile='want.xml', tofile='got.xml'):
-                message += line + '\n'
+                message += line
             raise AssertionError(message)
 
 
