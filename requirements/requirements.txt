@@ -62,7 +62,6 @@ sqlagg==0.2.0
 django-redis==3.3
 redis==2.8.0
 unittest2
-pycurl==7.19.0
 fakecouch==0.0.5
 # WeasyPrint==0.20.2
 twilio==3.6.4
