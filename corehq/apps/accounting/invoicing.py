@@ -9,7 +9,7 @@ from corehq.apps.accounting.utils import ensure_domain_instance
 from dimagi.utils.decorators.memoized import memoized
 
 from corehq import Domain
-from corehq.apps.accounting.exceptions import LineItemError, InvoiceError
+from corehq.apps.accounting.exceptions import LineItemError, InvoiceError, InvoiceEmailThrottledError
 from corehq.apps.accounting.models import (
     LineItem, FeatureType, Invoice, DefaultProductPlan, Subscriber,
     Subscription, BillingAccount, SubscriptionAdjustment,
@@ -173,7 +173,11 @@ class DomainInvoiceFactory(object):
         invoice.update_balance()
         invoice.save()
 
-        BillingRecord.generate_record(invoice)
+        record = BillingRecord.generate_record(invoice)
+        try:
+            record.send_email()
+        except InvoiceEmailThrottledError as e:
+            logger.error('[Billing] %s' % e)
 
         return invoice
 

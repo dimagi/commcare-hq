@@ -16,7 +16,9 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 from corehq import toggles
 from corehq.apps.accounting.invoice_pdf import Address, InvoiceTemplate
-from corehq.apps.accounting.utils import is_active_subscription, get_privileges
+from corehq.apps.accounting.utils import (
+    is_active_subscription, get_privileges, get_first_last_days
+)
 from corehq.apps.accounting.subscription_changes import (
     DomainDowngradeActionHandler, DomainUpgradeActionHandler,
 )
@@ -29,11 +31,13 @@ from django_prbac.models import Role
 from dimagi.utils.couch.database import SafeSaveDocument
 
 from corehq.apps.accounting.exceptions import (CreditLineError, AccountingError, SubscriptionAdjustmentError,
-                                               SubscriptionChangeError, NewSubscriptionError)
+                                               SubscriptionChangeError, NewSubscriptionError, InvoiceEmailThrottledError)
 from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES, ensure_domain_instance, get_change_status
 
 global_logger = logging.getLogger(__name__)
 integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
+
+MAX_INVOICE_COMMUNICATIONS = 5
 
 
 class BillingAccountType(object):
@@ -1013,9 +1017,12 @@ class BillingRecord(models.Model):
     skipped_email = models.BooleanField(default=False)
     pdf_data_id = models.CharField(max_length=48)
 
+    _pdf = None
     @property
     def pdf(self):
-        return InvoicePdf.get(self.pdf_data_id)
+        if self._pdf is None:
+            return InvoicePdf.get(self.pdf_data_id)
+        return self._pdf
 
     @classmethod
     def generate_record(cls, invoice):
@@ -1023,19 +1030,28 @@ class BillingRecord(models.Model):
         invoice_pdf = InvoicePdf()
         invoice_pdf.generate_pdf(record.invoice)
         record.pdf_data_id = invoice_pdf._id
+        record._pdf = invoice_pdf
         if record.invoice.subscription.do_not_invoice:
             record.skipped_email = True
             invoice.is_hidden = True
-        else:
-            pdf_attachment = {
-                'title': invoice_pdf.get_filename(invoice),
-                'file_obj': StringIO(invoice_pdf.get_data(invoice)),
-                'mimetype': 'application/pdf',
-            }
-            record.send_email(pdf_attachment)
         record.save()
+        return record
 
-    def send_email(self, pdf_attachment):
+    def is_email_throttled(self):
+        month = self.invoice.date_start.month
+        year = self.invoice.date_start.year
+        date_start, date_end = get_first_last_days(year, month)
+        return self.__class__.objects.filter(
+            invoice__date_start__lte=date_end, invoice__date_end__gte=date_start,
+            invoice__subscription__subscriber=self.invoice.subscription.subscriber
+        ).count() > MAX_INVOICE_COMMUNICATIONS
+
+    def send_email(self):
+        pdf_attachment = {
+            'title': self.pdf.get_filename(self.invoice),
+            'file_obj': StringIO(self.pdf.get_data(self.invoice)),
+            'mimetype': 'application/pdf',
+        }
         month_name = self.invoice.date_start.strftime("%B")
         domain = self.invoice.subscription.subscriber.domain
         title = "Your %(product)s Billing Statement for %(month)s" % {
@@ -1066,6 +1082,17 @@ class BillingRecord(models.Model):
             logging.error(
                 "[Billing] Could not find an email to send the invoice "
                 "email to for the domain: %s" % domain)
+        if self.is_email_throttled():
+            self.skipped_email = True
+            self.save()
+            raise InvoiceEmailThrottledError(
+                "Invoice communications exceeded the maximum limit of "
+                "%(max_limit)d for domain %(domain)s for the month of "
+                "%(month_name)s." % {
+                    'max_limit': MAX_INVOICE_COMMUNICATIONS,
+                    'domain': domain,
+                    'month_name': month_name,
+                })
         for email in contact_emails:
             greeting = _("Hello,")
             can_view_statement = False
@@ -1088,6 +1115,7 @@ class BillingRecord(models.Model):
                     file_attachments=[pdf_attachment]
                 )
         self.emailed_to = ",".join(contact_emails)
+        self.save()
 
 
 class InvoicePdf(SafeSaveDocument):
