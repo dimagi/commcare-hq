@@ -346,43 +346,6 @@ class InvoiceInterface(GenericTabularReport):
     def rows(self):
         from corehq.apps.accounting.views import InvoiceSummaryView
 
-        account_name = NameFilter.get_value(self.request, self.domain)
-        if account_name is not None:
-            filters.update(
-                subscription__account__name=account_name,
-            )
-        subscriber_domain = \
-            SubscriberFilter.get_value(self.request, self.domain)
-        if subscriber_domain is not None:
-            filters.update(
-                subscription__subscriber__domain=subscriber_domain,
-            )
-        payment_status = \
-            PaymentStatusFilter.get_value(self.request, self.domain)
-        if payment_status is not None:
-            pass  # TODO - add query for payment status (based on payment date value)
-        # TODO - add statement period
-        # TODO - add due date
-        salesforce_account_id = \
-            SalesforceAccountIDFilter.get_value(self.request, self.domain)
-        if salesforce_account_id is not None:
-            filters.update(
-                subscription__account__salesforce_account_id=
-                salesforce_account_id,
-            )
-        salesforce_contract_id = \
-            SalesforceContractIDFilter.get_value(self.request, self.domain)
-        if salesforce_contract_id is not None:
-            filters.update(
-                subscription__salesforce_contract_id=salesforce_contract_id,
-            )
-        plan_name = SoftwarePlanNameFilter.get_value(self.request, self.domain)
-        if plan_name is not None:
-            filters.update(
-                subscription__plan_version__plan__name=plan_name,
-            )
-        # TODO - add billing contact name (query involving both first and last name)
-
         return [
             [
                 invoice.subscription.account.name,
@@ -411,8 +374,51 @@ class InvoiceInterface(GenericTabularReport):
     @property
     @memoized
     def filters(self):
-        # TODO - implement
-        return {}
+        filters = {}
+
+        account_name = NameFilter.get_value(self.request, self.domain)
+        if account_name is not None:
+            filters.update(
+                subscription__account__name=account_name,
+            )
+
+        subscriber_domain = \
+            SubscriberFilter.get_value(self.request, self.domain)
+        if subscriber_domain is not None:
+            filters.update(
+                subscription__subscriber__domain=subscriber_domain,
+            )
+
+        payment_status = \
+            PaymentStatusFilter.get_value(self.request, self.domain)
+        if payment_status is not None:
+            pass  # TODO - add query for payment status (based on payment date value)
+        # TODO - add statement period
+        # TODO - add due date
+
+        salesforce_account_id = \
+            SalesforceAccountIDFilter.get_value(self.request, self.domain)
+        if salesforce_account_id is not None:
+            filters.update(
+                subscription__account__salesforce_account_id=
+                salesforce_account_id,
+            )
+
+        salesforce_contract_id = \
+            SalesforceContractIDFilter.get_value(self.request, self.domain)
+        if salesforce_contract_id is not None:
+            filters.update(
+                subscription__salesforce_contract_id=salesforce_contract_id,
+            )
+
+        plan_name = SoftwarePlanNameFilter.get_value(self.request, self.domain)
+        if plan_name is not None:
+            filters.update(
+                subscription__plan_version__plan__name=plan_name,
+            )
+        # TODO - add billing contact name (query involving both first and last name)
+
+        return filters
 
     @property
     @memoized
