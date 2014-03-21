@@ -1,7 +1,9 @@
+import logging
 from django.conf import settings
 from django.core import cache
 from django.core.cache import InvalidCacheBackendError
 
+log = logging.getLogger(__name__)
 
 COUCH_CACHE_TIMEOUT = 43200
 MOCK_REDIS_CACHE = None
@@ -37,11 +39,10 @@ def get_redis_default_cache():
 def get_redis_client():
     from redis_cache.cache import RedisCache
     rcache = get_redis_default_cache()
-    if not isinstance(rcache, RedisCache):
-        raise RedisClientError("Could not get redis connection.")
     try:
         client = rcache.raw_client
-    except:
+    except Exception:
+        log.error("Could not get redis connection.", exc_info=True)
         raise RedisClientError("Could not get redis connection.")
     return client
 
