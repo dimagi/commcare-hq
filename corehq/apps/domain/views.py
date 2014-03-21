@@ -665,10 +665,17 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
         return self.request.POST if self.request.method == 'POST' else self.request.GET
 
     @property
+    def show_hidden(self):
+        if not self.request.user.is_superuser:
+            return False
+        return bool(self.request.POST.get('additionalData[show_hidden]'))
+
+    @property
     def invoices(self):
-        return Invoice.objects.filter(
-            subscription__subscriber__domain=self.domain, is_hidden=False,
-        ).order_by('-date_created').all()
+        invoices = Invoice.objects.filter(subscription__subscriber__domain=self.domain)
+        if not self.show_hidden:
+            invoices = invoices.filter(is_hidden=False)
+        return invoices.order_by('-date_start', '-date_end').all()
 
     @property
     def total(self):
