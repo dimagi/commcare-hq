@@ -775,7 +775,7 @@ class BillingStatementPdfView(View):
         try:
             data = invoice_pdf.get_data(invoice)
             response = HttpResponse(data, content_type='application/pdf')
-            response['Content-Disposition'] = 'attachment; filename="%s"' % filename
+            response['Content-Disposition'] = 'inline;filename="%s' % filename
         except Exception as e:
             logging.error('[Billing] Fetching invoice PDF failed: %s' % e)
             return HttpResponse(_("Could not obtain billing statement. "

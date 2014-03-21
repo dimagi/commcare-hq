@@ -1180,14 +1180,15 @@ class InvoicePdf(SafeSaveDocument):
         }
 
     def get_data(self, invoice):
-        obj = CachedObject('%s:InvoicePdfData' % self._id)
+        obj = CachedObject('%s:InvoicePdf' % self._id)
         if not obj.is_cached():
-            data = self.fetch_attachment(self.get_filename(invoice), True)
-            buffer = StringIO(data)
-            obj.cache_put(buffer, {}, timeout=0)
+            data = self.fetch_attachment(self.get_filename(invoice), True).read()
+            metadata = {'content_type': 'application/pdf'}
+            buff = StringIO(data)
+            obj.cache_put(buff, metadata, timeout=0)
         else:
-            buffer = obj.get()[1]
-            data = buffer.getvalue()
+            buff = obj.get()[1]
+            data = buff.getvalue()
         return data
 
 
