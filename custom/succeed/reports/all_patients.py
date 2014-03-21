@@ -217,6 +217,8 @@ class PatientListReport(CustomProjectReport, CaseListReport):
                 }
             },
             'sort': self.get_sorting_block(),
+            'from': self.pagination.start,
+            'size': self.pagination.count,
         }
         sorting_block = self.get_sorting_block()[0].keys()[0] if len(self.get_sorting_block()) != 0 else None
         order = self.get_sorting_block()[0].values()[0] if len(self.get_sorting_block()) != 0 else None
