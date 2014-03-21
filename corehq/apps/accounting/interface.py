@@ -420,7 +420,17 @@ class InvoiceInterface(GenericTabularReport):
             filters.update(
                 subscription__plan_version__plan__name=plan_name,
             )
-        # TODO - add billing contact name (query involving both first and last name)
+
+        contact_name = \
+            BillingContactFilter.get_value(self.request, self.domain)
+        if contact_name is not None:
+            filters.update(
+                subscription__account__in=[
+                    contact_info.account.id
+                    for contact_info in BillingContactInfo.objects.all()
+                    if contact_name == get_full_name(contact_info)
+                ],
+            )
 
         return filters
 
