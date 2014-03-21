@@ -1,3 +1,4 @@
+import calendar
 import datetime
 import json
 from django.conf import settings
@@ -9,29 +10,48 @@ from django import forms
 from django.core.urlresolvers import reverse
 from django.forms.util import ErrorList
 from django.template.loader import render_to_string
+from django.utils.dates import MONTHS
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop, ugettext as _, ugettext
 
-from crispy_forms.bootstrap import FormActions, StrictButton, InlineField, InlineRadios
+from crispy_forms.bootstrap import FormActions, StrictButton, InlineField
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from django_countries.countries import COUNTRIES
-from corehq import privileges
+from corehq import privileges, toggles
+from corehq.apps.accounting.invoicing import DomainInvoiceFactory
 
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.email import send_HTML_email
 from django_prbac.models import Role, Grant
 
-from corehq.apps.accounting.async_handlers import (FeatureRateAsyncHandler, SoftwareProductRateAsyncHandler)
-from corehq.apps.accounting.utils import is_active_subscription
+from corehq.apps.accounting.async_handlers import (
+    FeatureRateAsyncHandler,
+    SoftwareProductRateAsyncHandler,
+)
+from corehq.apps.accounting.utils import (
+    is_active_subscription, has_subscription_already_ended
+)
 from corehq.apps.hqwebapp.crispy import BootstrapMultiField, TextField
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import WebUser
-from corehq.apps.accounting.models import (BillingContactInfo, Currency, SoftwarePlanVersion, BillingAccount,
-                                           Subscription, Subscriber, CreditLine, SoftwareProductRate,
-                                           FeatureRate, SoftwarePlanEdition, SoftwarePlanVisibility,
-                                           BillingAccountAdmin, SoftwarePlan, Feature, FeatureType,
-                                           SoftwareProduct, SoftwareProductType, CreditAdjustment)
+from corehq.apps.accounting.models import (
+    BillingAccount,
+    BillingContactInfo,
+    CreditAdjustment,
+    CreditLine,
+    Currency,
+    Feature,
+    FeatureRate,
+    FeatureType,
+    SoftwarePlan,
+    SoftwarePlanEdition,
+    SoftwarePlanVersion,
+    SoftwarePlanVisibility,
+    SoftwareProduct,
+    SoftwareProductRate,
+    SoftwareProductType,
+    Subscription,
+)
 
 
 class BillingAccountForm(forms.Form):
@@ -210,11 +230,12 @@ class SubscriptionForm(forms.Form):
         label=_("Do Not Invoice"), required=False
     )
 
-    def __init__(self, subscription, account_id, *args, **kwargs):
+    def __init__(self, subscription, account_id, web_user, *args, **kwargs):
         # account_id is not referenced if subscription is not None
         super(SubscriptionForm, self).__init__(*args, **kwargs)
         self.subscription = subscription
         self.is_existing = subscription is not None
+        self.web_user = web_user
         today = datetime.date.today()
 
         start_date_field = crispy.Field('start_date', css_class="date-picker")
@@ -292,8 +313,7 @@ class SubscriptionForm(forms.Form):
                     "%(start_date)s (already started)" % {
                     'start_date': self.fields['start_date'].initial,
                 })
-            if (subscription.date_end is not None
-                and subscription.date_end <= today):
+            if has_subscription_already_ended(subscription):
                 end_date_field = TextField(
                     'end_date',
                     "%(end_date)s (already ended)" % {
@@ -318,9 +338,6 @@ class SubscriptionForm(forms.Form):
             if account_id is not None:
                 self.fields['account'].initial = account_id
 
-            self.fields['domain'].choices = [
-                (domain, domain) for domain in Domain.get_all()
-            ]
             domain_field = crispy.Field(
                 'domain', css_class="input-xxlarge",
                 placeholder="Search for Project Space"
@@ -331,7 +348,6 @@ class SubscriptionForm(forms.Form):
                 'plan_version', css_class="input-xxlarge",
                 placeholder="Search for Software Plan"
             )
-
 
         self.helper = FormHelper()
         self.helper.form_text_inline = True
@@ -384,18 +400,20 @@ class SubscriptionForm(forms.Form):
         salesforce_contract_id = self.cleaned_data['salesforce_contract_id']
         is_active = is_active_subscription(date_start, date_end)
         do_not_invoice = self.cleaned_data['do_not_invoice']
-        return Subscription.new_domain_subscription(account, domain, plan_version,
-                                                    date_start=date_start,
-                                                    date_end=date_end,
-                                                    date_delay_invoicing=date_delay_invoicing,
-                                                    salesforce_contract_id=salesforce_contract_id,
-                                                    is_active=is_active,
-                                                    do_not_invoice=do_not_invoice)
+        return Subscription.new_domain_subscription(
+            account, domain, plan_version,
+            date_start=date_start,
+            salesforce_contract_id=salesforce_contract_id,
+            is_active=is_active,
+            do_not_invoice=do_not_invoice,
+            web_user=self.web_user,
+        )
 
     def update_subscription(self, subscription):
         kwargs = {
             'salesforce_contract_id': self.cleaned_data['salesforce_contract_id'],
             'do_not_invoice': self.cleaned_data['do_not_invoice'],
+            'web_user': self.web_user,
         }
 
         if self.fields['start_date'].required:
@@ -428,33 +446,42 @@ class SubscriptionForm(forms.Form):
 
 
 class CreditForm(forms.Form):
-    amount = forms.DecimalField()
+    amount = forms.DecimalField(label="Amount (USD)")
     note = forms.CharField(required=False)
-    rate_type = forms.ChoiceField()
-    product_rate = forms.ChoiceField(required=False, label=_("Product Rate"))
-    feature_rate = forms.ChoiceField(required=False, label=_("Feature Rate"))
+    rate_type = forms.ChoiceField(
+        label=_("Rate Type"),
+        choices=(
+            ('', 'Any'),
+            ('Product', 'Product'),
+            ('Feature', 'Feature'),
+        ),
+        required=False,
+    )
+    product_type = forms.ChoiceField(required=False, label=_("Product Type"))
+    feature_type = forms.ChoiceField(required=False, label=_("Feature Type"))
 
-    def __init__(self, obj_id, is_account, *args, **kwargs):
+    def __init__(self, account, subscription, *args, **kwargs):
+        self.account = account
+        self.subscription = subscription
         super(CreditForm, self).__init__(*args, **kwargs)
-        if not kwargs:
-            self.fields['product_rate'].choices = \
-                self.get_product_rate_choices(obj_id, is_account)
-            self.fields['feature_rate'].choices = \
-                self.get_feature_choices(obj_id, is_account)
-            self.fields['rate_type'].choices = \
-                self.get_rate_type_choices(self.fields['product_rate'].choices,
-                                           self.fields['feature_rate'].choices)
-        self.fields['amount'].label = \
-            _("Amount (%s)") % self.get_currency_str(obj_id, is_account)
+
+        product_choices = [('', 'Any')]
+        product_choices.extend(SoftwareProductType.CHOICES)
+        self.fields['product_type'].choices = product_choices
+
+        feature_choices = [('', 'Any')]
+        feature_choices.extend(FeatureType.CHOICES)
+        self.fields['feature_type'].choices = feature_choices
+
         self.helper = FormHelper()
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-            'Adjust %s Level Credit' % ('Account' if is_account else 'Subscription'),
+                'Add Credit',
                 'amount',
                 'note',
                 crispy.Field('rate_type', data_bind="value: rateType"),
-                crispy.Div('product_rate', data_bind="visible: showProduct"),
-                crispy.Div('feature_rate', data_bind="visible: showFeature"),
+                crispy.Div('product_type', data_bind="visible: showProduct"),
+                crispy.Div('feature_type', data_bind="visible: showFeature"),
             ),
             FormActions(
                 crispy.ButtonHolder(
@@ -463,113 +490,60 @@ class CreditForm(forms.Form):
             )
         )
 
-    def get_currency_str(self, obj_id, is_account):
-        account = BillingAccount.objects.get(
-            id=obj_id
-        ) if is_account else Subscription.objects.get(id=obj_id).account
-        symbol = account.currency.symbol
-        if len(symbol) != 0:
-            return symbol
-        else:
-            return account.currency.code
-
     def clean_amount(self):
         amount = self.cleaned_data['amount']
         field_metadata = CreditAdjustment._meta.get_field('amount')
         if amount >= 10 ** (field_metadata.max_digits - field_metadata.decimal_places):
-            raise ValidationError(mark_safe('Amount over maximum size.  If you need support '
-                                            'for quantities this large, please '
-                                            '<a data-toggle="modal" data-target="#reportIssueModal" '
-                                            'href="#reportIssueModal">Report an Issue</a>.'))
+            raise ValidationError(mark_safe(
+                'Amount over maximum size.  If you need support for '
+                'quantities this large, please <a data-toggle="modal" '
+                'data-target="#reportIssueModal" href="#reportIssueModal">'
+                'Report an Issue</a>.'
+            ))
         return amount
 
-    def get_subscriptions(self, obj_id, is_account):
-        return Subscription.objects.filter(
-            account=BillingAccount.objects.get(id=obj_id)
-        ) if is_account else [Subscription.objects.get(id=obj_id)]
-
-    def get_product_rate_choices(self, obj_id, is_account):
-        subscriptions = self.get_subscriptions(obj_id, is_account)
-        product_rate_sets = \
-            [sub.plan_version.product_rates for sub in subscriptions]
-        product_rates = set()
-        for product_rate_set in product_rate_sets:
-            for product_rate in product_rate_set.all():
-                product_rates.add(product_rate)
-        return [(product_rate.id, str(product_rate))
-                for product_rate in product_rates]
-
-    def get_feature_choices(self, obj_id, is_account):
-        subscriptions = self.get_subscriptions(obj_id, is_account)
-        feature_rate_sets = \
-            [sub.plan_version.feature_rates for sub in subscriptions]
-        feature_rates = set()
-        for feature_rate_set in feature_rate_sets:
-            for feature_rate in feature_rate_set.all():
-                feature_rates.add(feature_rate)
-        return [(feature_rate.id, str(feature_rate))
-                for feature_rate in feature_rates]
-
-    def get_rate_type_choices(self, product_choices, feature_choices):
-        choices = [('Any', 'Any')]
-        if len(product_choices) != 0:
-            choices.append(('Product', 'Product'))
-        if len(feature_choices) != 0:
-            choices.append(('Feature', 'Feature'))
-        return choices
-
-    def adjust_credit(self, account=None, subscription=None):
+    def adjust_credit(self):
         amount = self.cleaned_data['amount']
         note = self.cleaned_data['note']
 
-        def get_account_for_rate():
-            return account if account is not None else subscription.account
-
-        def add_product_rate():
-            CreditLine.add_rate_credit(amount, get_account_for_rate(),
-                                       product_rate=SoftwareProductRate.objects.get(
-                                           id=self.cleaned_data['product_rate']),
-                                       subscription=subscription,
-                                       note=note)
-
-        def add_feature_rate():
-            CreditLine.add_rate_credit(amount, get_account_for_rate(),
-                                       feature_rate=FeatureRate.objects.get(
-                                           id=self.cleaned_data['feature_rate']),
-                                       subscription=subscription,
-                                       note=note)
-
-        def add_account_level():
-            CreditLine.add_account_credit(amount, account,
-                                          note=note)
-
-        def add_subscription_level():
-            CreditLine.add_subscription_credit(amount, subscription,
-                                               note=note)
-
         if self.cleaned_data['rate_type'] == 'Product':
-            add_product_rate()
+            CreditLine.add_product_credit(
+                amount, self.account, self.cleaned_data['product_type'],
+                subscription=self.subscription, note=note,
+            )
         elif self.cleaned_data['rate_type'] == 'Feature':
-            add_feature_rate()
-        elif account is not None:
-            add_account_level()
-        elif self.is_existing:
-            add_subscription_level()
+            CreditLine.add_feature_credit(
+                amount, self.account, self.cleaned_data['feature_type'],
+                subscription=self.subscription, note=note,
+            )
+        elif self.subscription is not None:
+            CreditLine.add_subscription_credit(amount, self.subscription, note=note)
         else:
-            raise ValueError('invalid credit adjustment')
+            CreditLine.add_account_credit(amount, self.account, note=note)
+        return True
 
 
 class CancelForm(forms.Form):
+    note = forms.CharField(
+        widget=forms.TextInput,
+    )
 
     def __init__(self, *args, **kwargs):
         super(CancelForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
-        cancel_subscription_button = crispy.Button('cancel_subscription', 'CANCEL SUBSCRIPTION', css_class="btn-danger")
-        cancel_subscription_button.input_type = 'submit'
         self.helper.layout = crispy.Layout(
-            crispy.ButtonHolder(
-                cancel_subscription_button
-            )
+            crispy.Fieldset(
+                'Cancel Subscription',
+                'note',
+            ),
+            FormActions(
+                StrictButton(
+                    'CANCEL SUBSCRIPTION',
+                    css_class='btn-danger',
+                    name='cancel_subscription',
+                    type='submit',
+                )
+            ),
         )
 
 
@@ -1242,3 +1216,55 @@ class EnterprisePlanContactForm(forms.Form):
         """ % context
         send_HTML_email(subject, settings.BILLING_EMAIL, html_content, text_content,
                         email_from=settings.DEFAULT_FROM_EMAIL)
+
+
+class TriggerInvoiceForm(forms.Form):
+    month = forms.ChoiceField(label="Invoice Month")
+    year = forms.ChoiceField(label="Invoice Year")
+    domain = forms.CharField(label="Invoiced Project")
+
+    def __init__(self, *args, **kwargs):
+        super(TriggerInvoiceForm, self).__init__(*args, **kwargs)
+        today = datetime.date.today()
+
+        self.fields['month'].initial = today.month
+        self.fields['month'].choices = MONTHS.items()
+        self.fields['year'].initial = today.year
+        self.fields['year'].choices = [
+            (y, y) for y in range(today.year, 2012, -1)
+        ]
+
+        self.helper = FormHelper()
+        self.helper.form_class = 'form form-horizontal'
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                'Trigger Invoice Details',
+                crispy.Field('month', css_class="input-large"),
+                crispy.Field('year', css_class="input-large"),
+                crispy.Field('domain', css_class="input-xxlarge",
+                             placeholder="Search for Project")
+            ),
+            FormActions(
+                StrictButton(
+                    "Trigger Invoice",
+                    css_class="btn-primary",
+                    type="submit",
+                ),
+            )
+        )
+
+    def clean_domain(self):
+        domain = self.cleaned_data['domain']
+        if not toggles.ACCOUNTING_PREVIEW.enabled(domain):
+            raise ValidationError("Not an Accounting Preview domain.")
+        return domain
+
+    def trigger_invoice(self):
+        year = int(self.cleaned_data['year'])
+        month = int(self.cleaned_data['month'])
+        last_day = calendar.monthrange(year, month)[1]
+        invoice_start = datetime.date(year, month, 1)
+        invoice_end = datetime.date(year, month, last_day)
+        domain = Domain.get_by_name(self.cleaned_data['domain'])
+        invoice_factory = DomainInvoiceFactory(invoice_start, invoice_end, domain)
+        invoice_factory.create_invoices()

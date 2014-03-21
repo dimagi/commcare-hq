@@ -241,6 +241,7 @@ HQ_APPS = (
     'corehq.apps.indicators',
     'corehq.apps.cachehq',
     'corehq.apps.toggle_ui',
+    'corehq.apps.sofabed',
     'corehq.couchapps',
     'custom.apps.wisepill',
     'custom.fri',
@@ -401,6 +402,7 @@ DEFAULT_FROM_EMAIL = 'commcarehq-noreply@dimagi.com'
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 CCHQ_BUG_REPORT_EMAIL = 'commcarehq-bug-reports@dimagi.com'
 BILLING_EMAIL = 'billing-comm@dimagi.com'
+INVOICING_CONTACT_EMAIL = 'accounts@dimagi.com'
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 
 SERVER_ENVIRONMENT = 'localdev'
@@ -425,7 +427,7 @@ HQ_FIXTURE_GENERATORS = [
     "corehq.apps.locations.fixtures.location_fixture_generator",
     # custom
     "custom.bihar.reports.indicators.fixtures.generator",
-    "custom.m4change.reports.fixtures.generator",
+    "custom.m4change.fixtures.generator",
 ]
 
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
@@ -713,6 +715,17 @@ LOGGING = {
     }
 }
 
+# Invoicing
+STARTING_INVOICE_NUMBER = 0
+INVOICE_PREFIX = ''
+TERMS = ''
+FROM_ADDRESS = {}
+BANK_ADDRESS = {}
+BANK_NAME = ''
+ACCOUNT_NUMBER = ''
+ROUTING_NUMBER = ''
+SWIFT_CODE = ''
+
 try:
     # try to see if there's an environmental variable set for local_settings
     if os.environ.get('CUSTOMSETTINGS', None) == "demo":
@@ -801,6 +814,7 @@ COUCHDB_APPS = [
     'reportfixtures',
     'prescriptions',
     'reports',
+    'sofabed',
     'sms',
     'smsforms',
     'telerivet',
@@ -953,6 +967,7 @@ PILLOWTOPS = {
         'corehq.pillows.sms.SMSPillow',
         'corehq.pillows.user.GroupToUserPillow',
         'corehq.pillows.user.UnknownUsersPillow',
+        'corehq.pillows.formdata.FormDataPillow',
     ],
     'phonelog': [
         'corehq.pillows.log.PhoneLogPillow',

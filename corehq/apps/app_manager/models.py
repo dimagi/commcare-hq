@@ -9,7 +9,6 @@ import random
 import json
 import types
 import re
-import toggle
 from collections import defaultdict
 from datetime import datetime
 from functools import wraps
@@ -283,7 +282,7 @@ class AdvancedAction(DocumentSchema):
 
     @property
     def case_session_var(self):
-        return 'case_id_{}'.format(self.case_tag)
+        return 'case_id_{0}'.format(self.case_tag)
 
 
 class LoadUpdateAction(AdvancedAction):
@@ -1167,6 +1166,20 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
                         'column': column,
                     }
 
+    def validate_for_build(self):
+        errors = []
+        if not self.forms:
+            errors.append({
+                'type': 'no forms',
+                'module': self.get_module_info(),
+            })
+        if self.requires_case_details():
+            errors.extend(self.get_case_errors(
+                needs_case_type=True,
+                needs_case_detail=True
+            ))
+        return errors
+
 
 class Module(ModuleBase):
     """
@@ -1534,7 +1547,7 @@ class AdvancedModule(ModuleBase):
             if open:
                 base_action = AdvancedOpenCaseAction(
                     case_type=case_type,
-                    case_tag='open_{}_0'.format(case_type),
+                    case_tag='open_{0}_0'.format(case_type),
                     name_path=open.name_path,
                     open_condition=open.condition,
                     case_properties=update.update if update else {},
@@ -1543,7 +1556,7 @@ class AdvancedModule(ModuleBase):
             elif update or preload or close:
                 base_action = LoadUpdateAction(
                     case_type=case_type,
-                    case_tag='load_{}_0'.format(case_type),
+                    case_tag='load_{0}_0'.format(case_type),
                     case_properties=update.update if update else {},
                     preload=convert_preload(preload.preload) if preload else {}
                 )
@@ -1555,7 +1568,7 @@ class AdvancedModule(ModuleBase):
                 for i, subcase in enumerate(subcases):
                     open_subcase_action = AdvancedOpenCaseAction(
                         case_type=subcase.case_type,
-                        case_tag='open_{}_{}'.format(subcase.case_type, i+1),
+                        case_tag='open_{0}_{1}'.format(subcase.case_type, i+1),
                         name_path=subcase.case_name,
                         open_condition=subcase.condition,
                         case_properties=subcase.case_properties,
@@ -2086,7 +2099,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
     admin_password_charset = StringProperty(choices=['a', 'n', 'x'], default='n')
 
     # This is here instead of in Application because it needs to be available in stub representation
-    application_version = StringProperty(default=APP_V1, choices=[APP_V1, APP_V2], required=False)
+    application_version = StringProperty(default=APP_V2, choices=[APP_V1, APP_V2], required=False)
 
     langs = StringListProperty()
     # only the languages that go in the build
@@ -3055,16 +3068,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if not self.modules:
             errors.append({'type': "no modules"})
         for module in self.get_modules():
-            if not module.forms:
-                errors.append({
-                    'type': 'no forms',
-                    'module': module.get_module_info(),
-                })
-            if module.requires_case_details():
-                errors.extend(module.get_case_errors(
-                    needs_case_type=True,
-                    needs_case_detail=True
-                ))
+            errors.extend(module.validate_for_build())
 
         for form in self.get_forms():
             errors.extend(form.validate_for_build(validate_module=False))

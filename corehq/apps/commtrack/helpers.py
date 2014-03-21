@@ -1,18 +1,34 @@
-import logging
-from casexml.apps.case.mock import CaseBlock
 from corehq.apps.commtrack.models import Product, CommtrackConfig,\
     CommtrackActionConfig, SupplyPointType, SupplyPointCase
-from corehq.apps.commtrack import const
-from casexml.apps.case.xml import V2
-import uuid
-from corehq.apps.hqcase.utils import submit_case_blocks
-from xml.etree import ElementTree
-from corehq.apps.users.cases import get_owner_id
 
 """
 helper code to populate the various commtrack models, for ease of
 development/testing, before we have proper UIs and imports
 """
+
+PRODUCTS = [
+    ('PSI kit', 'k'),
+    ('non-PSI kit', 'nk'),
+    ('ORS', 'x'),
+    ('Zinc', 'z'),
+]
+
+
+def psi_one_time_setup(domain):
+    commtrack_enable_domain(domain)
+    make_psi_config(domain.name)
+    make_products(domain.name, PRODUCTS)
+
+
+def commtrack_enable_domain(domain):
+    domain.commtrack_enabled = True
+    domain.save()
+
+
+def make_products(domain, products):
+    for name, code in products:
+        make_product(domain, name, code)
+
 
 def make_product(domain, name, code):
     p = Product()

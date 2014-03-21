@@ -3,6 +3,9 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
+{% block title %}{{ form.name|html_trans:langs|safe }}{% endblock %}
+
+
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/js/lib/select2/select2.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/knockout.mapping.js' %}"></script>
@@ -105,17 +108,8 @@
     </script>
     <script>
         $(function () {
-            var validation_url = '{% url "validate_form_for_build" domain app.id form.unique_id %}';
-            COMMCAREHQ.app_manager.fetchAndShowFormValidation = function () {
-                $.getJSON(validation_url, function (data) {
-                    $('#form_build_errors').html(data.error_html);
-                });
-            };
-            if ($.cookie('suppress_build_errors')) {
-                $.cookie('suppress_build_errors', null, {path: '/'});
-            } else {
-                COMMCAREHQ.app_manager.fetchAndShowFormValidation();
-            }
+            COMMCAREHQ.app_manager.setupValidation(
+                '{% url "validate_form_for_build" domain app.id form.unique_id %}');
         });
     </script>
 {% endblock %}
@@ -198,7 +192,7 @@
 {% endblock %}
 {% block form-view %}
 
-    <div id="form_build_errors"></div>
+    <div id="build_errors"></div>
     {% if edit and not is_user_registration %}
         <div class="delete-me">
             <form action="{% url "delete_form" domain app.id module.id form.id %}" method="post">

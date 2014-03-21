@@ -1,13 +1,8 @@
-from datetime import datetime
-import hashlib
-import pprint
 from django.core.management.base import NoArgsCommand
 import sys
 import os
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqcase.management.commands.ptop_generate_mapping import MappingOutputCommand
-from corehq.pillows import dynamic
-from corehq.pillows.dynamic import DEFAULT_MAPPING_WRAPPER, case_special_types, case_nested_types
 from django.conf import settings
 from corehq.pillows.mappings import reportcase_mapping
 from corehq.pillows.reportcase import ReportCasePillow

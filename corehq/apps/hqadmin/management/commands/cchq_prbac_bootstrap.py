@@ -29,9 +29,12 @@ class Command(BaseCommand):
                     help='Enable debug output'),
         make_option('--fresh-start', action='store_true',  default=False,
                     help='We changed the core v0 plans, wipe all existing plans and start over. USE CAUTION.'),
+        make_option('--testing', action='store_true',  default=False,
+                    help='Run this command for tests.'),
     )
 
-    def handle(self, dry_run=False, verbose=False, fresh_start=False, *args, **options):
+    def handle(self, dry_run=False, verbose=False, fresh_start=False, testing=False, *args, **options):
+
         if verbose:
             logger.setLevel(logging.DEBUG)
 

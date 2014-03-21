@@ -1,0 +1,27 @@
+{% load i18n %}
+{% blocktrans %}
+{{ greeting }}
+
+Your {{ plan_name }} Billing Statement is now available for {{ month_name }}.
+
+Statement No.: {{ statement_number }}
+Project Space: {{ domain }}
+Software Plan: {{ plan_name }}
+Status: {{ payment_status }}
+Amount Due: {{ amount_due }}
+
+You can view the full statement under Subscription > Billing Statements
+in your Project Space Settings or by visiting this link: {{ statements_url }}.
+
+Thank you for using {{ plan_name }}. If you have any questions, please don't
+hesitate to contact admin@dimagi.com.
+
+Best Regards,
+The CommCare HQ Team
+www.commcarehq.org
+
+
+Statement From:
+CommCare HQ and the corporation Dimagi, Inc.
+585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA
+{% endblocktrans %}

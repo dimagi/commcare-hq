@@ -72,6 +72,11 @@ class HQPillow(AliasedElasticPillow):
                         "tokenizer": "whitespace",
                         "filter": ["lowercase"]
                     },
+                    "sortable_exact": {
+                        "type": "custom",
+                        "tokenizer": "keyword",
+                        "filter": ["lowercase"]
+                    }
                 }
             }
         }

@@ -1,3 +1,4 @@
+from django.db import models
 from casexml.apps.case.models import CommCareCase
 from couchforms.models import XFormInstance
 import fluff
@@ -7,7 +8,7 @@ from corehq.apps.users.models import CommCareUser
 from custom.m4change.user_calcs import anc_hmis_report_calcs, ld_hmis_report_calcs, immunization_hmis_report_calcs,\
     project_indicators_report_calcs, mcct_monthly_aggregate_report_calcs, is_valid_user_by_case
 from custom.m4change.constants import M4CHANGE_DOMAINS, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, BOOKED_DELIVERY_FORMS, \
-    UNBOOKED_DELIVERY_FORMS
+    UNBOOKED_DELIVERY_FORMS, BOOKING_FORMS, IMMUNIZATION_FORMS
 from custom.m4change.user_calcs.ld_hmis_report_calcs import form_passes_filter_date_delivery, \
     form_passes_filter_date_modified
 
@@ -255,6 +256,31 @@ class ProjectIndicatorsCaseFluff(fluff.IndicatorDocument):
 ProjectIndicatorsCaseFluffPillow = ProjectIndicatorsCaseFluff.pillow()
 
 
+class McctStatus(models.Model):
+    form_id = models.CharField(max_length=100, db_index=True)
+    status = models.CharField(max_length=20)
+    domain = models.CharField(max_length=256, null=True, db_index=True)
+    reason = models.CharField(max_length=32, null=True)
+
+    def update_status(self, new_status, reason):
+        if 'eligible' in new_status:
+            self.delete()
+        else:
+            self.status = new_status
+            self.reason = reason
+            self.save()
+
+    @classmethod
+    def get_status_dict(cls):
+        status_dict = dict()
+        mcct_status_list = McctStatus.objects.filter(domain__in=[name for name in M4CHANGE_DOMAINS])
+        for mcct_status in mcct_status_list:
+            if mcct_status.status not in status_dict:
+                status_dict[mcct_status.status] = set()
+            status_dict[mcct_status.status].add((mcct_status.form_id, mcct_status.reason))
+        return status_dict
+
+
 class McctMonthlyAggregateFormFluff(fluff.IndicatorDocument):
     document_class = XFormInstance
     domains = M4CHANGE_DOMAINS
@@ -262,10 +288,10 @@ class McctMonthlyAggregateFormFluff(fluff.IndicatorDocument):
     save_direct_to_sql = True
 
     location_id = fluff.FlatField(_get_form_location_id)
-    all_eligible_clients = mcct_monthly_aggregate_report_calcs.AllEligibleClientsCalculator()
     eligible_due_to_registration = mcct_monthly_aggregate_report_calcs.EligibleDueToRegistrationCalculator()
-    eligible_due_to_4th_visit = mcct_monthly_aggregate_report_calcs.EligibleDueTo4thVisit()
-    eligible_due_to_delivery = mcct_monthly_aggregate_report_calcs.EligibleDueToDelivery()
-    eligible_due_to_immun_or_pnc_visit = mcct_monthly_aggregate_report_calcs.EligibleDueToImmunizationOrPncVisit()
+    eligible_due_to_4th_visit = mcct_monthly_aggregate_report_calcs.EligibleDueTo4thVisitCalculator()
+    eligible_due_to_delivery = mcct_monthly_aggregate_report_calcs.EligibleDueToDeliveryCalculator()
+    eligible_due_to_immun_or_pnc_visit = mcct_monthly_aggregate_report_calcs.EligibleDueToImmunizationOrPncVisitCalculator()
+    status = mcct_monthly_aggregate_report_calcs.StatusCalculator()
 
 McctMonthlyAggregateFormFluffPillow = McctMonthlyAggregateFormFluff.pillow()

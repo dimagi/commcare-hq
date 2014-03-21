@@ -1,10 +1,10 @@
-from corehq.apps.hqcase.management.commands.ptop_fast_reindexer import PtopReindexer
+from corehq.apps.hqcase.management.commands.ptop_fast_reindexer import ElasticReindexer
 from corehq.pillows.reportxform import ReportXFormPillow
 from couchforms.models import XFormInstance
 from django.conf import settings
 
 
-class Command(PtopReindexer):
+class Command(ElasticReindexer):
     help = "Fast reindex of case elastic index by using the case view and reindexing cases"
 
     doc_class = XFormInstance

@@ -936,6 +936,9 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
         avg_datespan = DateSpan(self.datespan.startdate - (duration * self.num_avg_intervals),
                                 self.datespan.startdate - datetime.timedelta(days=1))
 
+        if avg_datespan.startdate.year < 1900:  # srftime() doesn't work for dates below 1900
+            avg_datespan.startdate = datetime.datetime(1900, 1, 1)
+
         form_data = self.es_form_submissions()
         submissions_by_user = dict([(t["term"], t["count"]) for t in form_data["facets"]["form.meta.userID"]["terms"]])
         avg_form_data = self.es_form_submissions(datespan=avg_datespan)

@@ -256,11 +256,24 @@ class McctMonthlyAggregateFormSqlData(SqlData):
     def columns(self):
         return [
             DatabaseColumn(_("Location ID"), SimpleColumn("location_id")),
-            DatabaseColumn(_("All eligible clients"), SumColumn("all_eligible_clients_total")),
             DatabaseColumn(_("Eligible clients due to registration"), SumColumn("eligible_due_to_registration_total")),
             DatabaseColumn(_("Eligible clients due to 4th visit"), SumColumn("eligible_due_to_4th_visit_total")),
             DatabaseColumn(_("Eligible clients due to delivery"), SumColumn("eligible_due_to_delivery_total")),
-            DatabaseColumn(_("Eligible clients due to immunization or PNC visit"), SumColumn("eligible_due_to_immun_or_pnc_visit_total")),
+            DatabaseColumn(_("Eligible clients due to immunization or PNC visit"),
+                           SumColumn("eligible_due_to_immun_or_pnc_visit_total")),
+            DatabaseColumn(_("Reviewed clients due to registration"), SumColumn("status_reviewed_due_to_registration")),
+            DatabaseColumn(_("Reviewed clients due to 4th visit"), SumColumn("status_reviewed_due_to_4th_visit")),
+            DatabaseColumn(_("Reviewed clients due to delivery"), SumColumn("status_reviewed_due_to_delivery")),
+            DatabaseColumn(_("Reviewed clients due to immunization or PNC visit"),
+                           SumColumn("status_reviewed_due_to_immun_or_pnc_visit")),
+            DatabaseColumn(_("Approved clients due to registration"), SumColumn("status_approved_due_to_registration")),
+            DatabaseColumn(_("Approved clients due to 4th visit"), SumColumn("status_approved_due_to_4th_visit")),
+            DatabaseColumn(_("Approved clients due to delivery"), SumColumn("status_approved_due_to_delivery")),
+            DatabaseColumn(_("Approved clients due to immunization or PNC visit"),
+                           SumColumn("status_approved_due_to_immun_or_pnc_visit")),
+            DatabaseColumn(_("Rejected clients due to incorrect phone number"), SumColumn("status_rejected_due_to_incorrect_phone_number")),
+            DatabaseColumn(_("Rejected clients due to double entry"), SumColumn("status_rejected_due_to_double_entry")),
+            DatabaseColumn(_("Rejected clients due to other errors"), SumColumn("status_rejected_due_to_other_errors"))
         ]
 
     @property

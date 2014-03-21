@@ -760,10 +760,17 @@ def update_virtualenv(preindex=False):
         env_to_use = env.virtualenv_root
     requirements = posixpath.join(root_to_use, 'requirements')
     with cd(root_to_use):
-        cmd = ['export HOME=/home/%s && source %s/bin/activate && pip install' % (env.sudo_user, env_to_use)]
-        cmd += ['--requirement %s' % posixpath.join(requirements, 'prod-requirements.txt')]
-        cmd += ['--requirement %s' % posixpath.join(requirements, 'requirements.txt')]
-        sudo(' '.join(cmd), user=env.sudo_user)
+        cmd_prefix = 'export HOME=/home/%s && source %s/bin/activate && ' % (
+            env.sudo_user, env_to_use)
+        # uninstall requirements in uninstall-requirements.txt
+        # but only the ones that are actually installed (checks pip freeze)
+        sudo("%s bash scripts/uninstall-requirements.sh" % cmd_prefix,
+             user=env.sudo_user)
+        sudo('%s pip install --requirement %s --requirement %s' % (
+            cmd_prefix,
+            posixpath.join(requirements, 'prod-requirements.txt'),
+            posixpath.join(requirements, 'requirements.txt'),
+        ), user=env.sudo_user)
 
 
 @roles(*ROLES_ALL_SERVICES)
@@ -817,16 +824,6 @@ def netstat_plnt():
 
 
 @roles(*ROLES_ALL_SERVICES)
-def services_start():
-    """Start the gunicorn servers"""
-    require('environment', provided_by=('staging', 'preview', 'production'))
-    _supervisor_command('update')
-    _supervisor_command('reload')
-    time.sleep(2)
-    _supervisor_command('start  all')
-
-
-@roles(*ROLES_ALL_SERVICES)
 def services_stop():
     """Stop the gunicorn servers"""
     require('environment', provided_by=('staging', 'preview', 'production'))
@@ -852,6 +849,7 @@ def services_restart():
 
     _supervisor_command('update')
     _supervisor_command('reload')
+    time.sleep(1)
     _supervisor_command('start  all')
 
 

@@ -48,7 +48,6 @@
                     xaxis_label: visualizations[key].xaxis_label,
                     ajax_url: "{% url "admin_stats_data" %}",
                     data: url_params,
-                    should_update_url: false,
                     interval: "{{ interval }}"
                 });
                 visualizations[key].viz.init();

@@ -1,9 +1,7 @@
-from couchdbkit.exceptions import ResourceNotFound
 from django.utils.translation import ugettext as _, ugettext_noop
-from corehq.apps.app_manager.models import Application
 
 SUCCEED_DOMAIN = 'succeed'
-SUCCEED_APPNAME = 'SUCCEED Project'
+SUCCEED_CLOUD_APPNAME = 'SUCCEED CM app'
 
 CONFIG = {
     'groups': [
@@ -26,15 +24,3 @@ def _is_succeed_admin(user):
 
 def _is_pm_or_pi(user):
     return True if 'role' in user.user_date and user.user_data['role'] in [CONFIG['pm_role'], CONFIG['pi_role']] else False
-
-
-def _get_app_by_name(domain, name):
-    app = Application.view('app_manager/applications_brief',
-                                 startkey=[domain, name, {}],
-                                 endkey=[domain, name],
-                                 descending=True,
-                                 limit=1).one()
-    if app:
-        return Application.get(app['_id'])
-    else:
-        raise ResourceNotFound(_("Not found application by name: %s") % name)

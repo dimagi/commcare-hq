@@ -1,0 +1,24 @@
+{% extends 'hqwebapp/base_section.html' %}
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+
+{% block head %} {{ block.super }}
+    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
+    <link href="{% static 'hqwebapp/js/lib/select2/select2.css' %}" rel="stylesheet"/>
+{% endblock %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static 'hqwebapp/js/lib/select2/select2.js' %}"></script>
+    <script src="{% static 'accounting/js/accounting.billing_info_handler.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+    <script type="text/javascript">
+        var domain_handler = new AsyncSelect2Handler('domain');
+        domain_handler.init();
+    </script>
+{% endblock %}
+
+{% block main_column %}
+    {% crispy trigger_form %}
+{% endblock %}

@@ -435,10 +435,10 @@ class ReportNotification(Document):
             kwargs['stale'] = settings.COUCH_STALE_QUERY
 
         key = [domain, owner_id]
-
         db = cls.get_db()
         result = cache_core.cached_view(db, "reportconfig/user_notifications", reduce=False,
-                                     include_docs=True, startkey=key, endkey=key + [{}], wrapper=cls.wrap, **kwargs)
+                                        include_docs=True, startkey=key, endkey=key + [{}],
+                                        wrapper=cls.wrap, **kwargs)
         return result
 
     @property

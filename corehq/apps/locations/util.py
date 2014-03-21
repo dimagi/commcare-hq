@@ -163,7 +163,14 @@ def lookup_by_property(domain, prop_name, val, scope, root=None):
     if root and not isinstance(root, basestring):
         root = root._id
 
-    index_view = 'locations/prop_index_%s' % prop_name
+    if prop_name == 'site_code':
+        index_view = 'locations/prop_index_site_code'
+    else:
+        # this was to be backwards compatible with the api
+        # if this ever comes up, please take a moment to decide whether it's
+        # worth changing the API to raise a less nonsensical error
+        # (or change this function to not sound so general!)
+        raise ResourceNotFound('missing prop_index_%s' % prop_name)
 
     startkey = [domain, val]
     if scope == 'global':
@@ -215,14 +222,14 @@ def get_default_column_data(domain, location_types):
     }
 
     if Domain.get_by_name(domain).commtrack_settings.individual_consumption_defaults:
-        products = Product.by_domain(domain, wrap=False)
+        products = Product.by_domain(domain)
 
         for loc_type in location_types:
             loc = get_loc_config(domain)[loc_type]
             if not loc.administrative:
                 data['headers'][loc_type] = [
                     'default_' +
-                    p['code_'] for p in products
+                    p.code for p in products
                 ]
 
                 locations = Location.filter_by_type(domain, loc_type)
@@ -230,7 +237,7 @@ def get_default_column_data(domain, location_types):
                     data['values'][loc._id] = [
                         get_default_consumption(
                             domain,
-                            p['_id'],
+                            p._id,
                             loc_type,
                             loc._id
                         ) or '' for p in products

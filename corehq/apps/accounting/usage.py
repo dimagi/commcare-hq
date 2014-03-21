@@ -5,12 +5,19 @@ from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.users.models import CommCareUser
 
 
-class FeatureUsage(object):
+class FeatureUsageCalculator(object):
 
-    def __init__(self, feature_rate, domain_name):
-        super(FeatureUsage, self).__init__()
+    def __init__(self, feature_rate, domain_name,
+                 start_date=None, end_date=None):
+        super(FeatureUsageCalculator, self).__init__()
         self.feature_rate = feature_rate
         self.domain = domain_name
+        today = datetime.date.today()
+        last_day = calendar.monthrange(today.year, today.month)[1]
+        self.start_date = start_date or datetime.date(
+            today.year, today.month, 1)
+        self.end_date = end_date or datetime.date(
+            today.year, today.month, last_day)
 
     def get_usage(self):
         try:
@@ -25,12 +32,8 @@ class FeatureUsage(object):
         return CommCareUser.total_by_domain(self.domain, is_active=True)
 
     def _get_sms_usage(self):
-        today = datetime.date.today()
-        _, last_day = calendar.monthrange(today.year, today.month)
-        first_of_month = datetime.date(today.year, today.month, 1)
-        last_of_month = datetime.date(today.year, today.month, last_day)
         return SmsBillable.objects.filter(
             domain__exact=self.domain,
             is_valid=True,
-            date_sent__range=[first_of_month, last_of_month]
+            date_sent__range=[self.start_date, self.end_date]
         ).count()

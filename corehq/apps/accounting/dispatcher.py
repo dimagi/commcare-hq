@@ -1,5 +1,5 @@
 from django.utils.decorators import method_decorator
-from corehq import toggles, privileges
+from corehq import privileges
 from corehq.apps.reports.dispatcher import ReportDispatcher
 from django_prbac.decorators import requires_privilege_raise404
 

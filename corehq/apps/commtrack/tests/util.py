@@ -155,9 +155,10 @@ class CommTrackTest(TestCase):
             u.delete()
         self.domain.delete() # domain delete cascades to everything else
 
-    def get_commtrack_forms(self):
-        return XFormInstance.view('couchforms/by_xmlns',
-            key=COMMTRACK_REPORT_XMLNS,
+    def get_commtrack_forms(self, domain):
+        return XFormInstance.view('reports_forms/all_forms',
+            startkey=['submission xmlns', domain, COMMTRACK_REPORT_XMLNS],
+            endkey=['submission xmlns', domain, COMMTRACK_REPORT_XMLNS, {}],
             reduce=False,
             include_docs=True
         )

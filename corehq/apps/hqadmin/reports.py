@@ -40,6 +40,9 @@ class AdminFacetedReport(AdminReport, ElasticTabularReport):
             'facet_prefix': self.es_prefix,
             'facet_report': self,
             'grouped_facets': True,
+            'startdate': self.request.GET.get('startdate', ''),
+            'enddate': self.request.GET.get('enddate', ''),
+            'interval': self.request.GET.get('interval', ''),
         })
         return ctxt
 

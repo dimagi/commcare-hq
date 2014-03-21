@@ -7,9 +7,7 @@ from django.contrib.auth.models import AnonymousUser
 from couchdbkit.ext.django.schema import (Document, StringProperty, BooleanProperty, DateTimeProperty, IntegerProperty,
                                           DocumentSchema, SchemaProperty, DictProperty, ListProperty,
                                           StringListProperty, SchemaListProperty, SchemaDictProperty, TimeProperty)
-from django.core.cache import cache
 from django.utils.safestring import mark_safe
-from corehq import privileges
 from corehq.apps.appstore.models import Review, SnapshotMixin
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.decorators.memoized import memoized
@@ -566,6 +564,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             wrapper=cls.wrap
         )
         from corehq.apps.accounting.utils import domain_has_privilege
+        from corehq import privileges
         result = filter(
             lambda x: domain_has_privilege(x.name, privileges.CROSS_PROJECT_REPORTS),
             result

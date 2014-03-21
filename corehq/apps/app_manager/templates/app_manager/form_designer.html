@@ -190,6 +190,7 @@
     </script>
 {% endblock %}
 
+{% block title %}{{ form.name|html_trans:langs|safe }}{% endblock %}
 
 {% block form-view %}
     <div id="formdesigner" class="clearfix"></div>

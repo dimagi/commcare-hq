@@ -1,27 +1,36 @@
+from StringIO import StringIO
 import datetime
 from decimal import Decimal
 import logging
+from tempfile import NamedTemporaryFile
+from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django.schema import DateTimeProperty, StringProperty
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.files import File
+from django.core.urlresolvers import reverse
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 from corehq import toggles
+from corehq.apps.accounting.invoice_pdf import Address, InvoiceTemplate
 from corehq.apps.accounting.utils import is_active_subscription, get_privileges
 from corehq.apps.accounting.subscription_changes import (
     DomainDowngradeActionHandler, DomainUpgradeActionHandler,
 )
 from corehq.apps.users.models import WebUser
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.django.cached_object import CachedObject
+from dimagi.utils.django.email import send_HTML_email
 
 from django_prbac.models import Role
 from dimagi.utils.couch.database import SafeSaveDocument
 
 from corehq.apps.accounting.exceptions import (CreditLineError, AccountingError, SubscriptionAdjustmentError,
                                                SubscriptionChangeError, NewSubscriptionError)
-from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES, assure_domain_instance, get_change_status
+from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES, ensure_domain_instance, get_change_status
 
 global_logger = logging.getLogger(__name__)
 integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
@@ -157,20 +166,34 @@ class Currency(models.Model):
 
 
 class BillingAccountAdmin(models.Model):
-    web_user = models.CharField(max_length=80, unique=True, db_index=True)
+    web_user = models.CharField(max_length=80, db_index=True)
+    domain = models.CharField(
+        max_length=256, null=True, blank=True, db_index=True
+    )
 
     def __str__(self):
-        return "Billing Admin %s" % self.web_user
+        return "Billing Admin %(web_user)s for domain %(domain)s" % {
+            'web_user': self.web_user,
+            'domain': self.domain,
+        }
 
     @classmethod
     def get_admin_status_and_account(cls, web_user, domain):
         if not isinstance(web_user, WebUser):
             return False, None
         account = BillingAccount.get_account_by_domain(domain)
+        is_domain_admin = web_user.is_domain_admin(domain)
         if account is None:
-            return web_user.is_domain_admin(domain), None
-        admin = account.billing_admins.filter(web_user=web_user.username)
-        return admin.count() > 0, account
+            return is_domain_admin, None
+        admins = account.billing_admins.filter(domain=domain)
+        if not admins.exists():
+            # BillingAccountAdmins for this domain have NOT been
+            # specified. This was likely an account created
+            # from the accounting admin side.
+            return is_domain_admin, account
+        # BillingAccountAdmins for this domain have been specified
+        admins = admins.filter(web_user=web_user.username)
+        return (admins.count() > 0 and is_domain_admin), account
 
 
 class BillingAccount(models.Model):
@@ -186,7 +209,7 @@ class BillingAccount(models.Model):
         help_text="This is how we link to the salesforce account",
     )
     created_by = models.CharField(max_length=80)
-    created_by_domain = models.CharField(max_length=25, null=True, blank=True)
+    created_by_domain = models.CharField(max_length=256, null=True, blank=True)
     date_created = models.DateTimeField(auto_now_add=True)
     billing_admins = models.ManyToManyField(BillingAccountAdmin, null=True)
     currency = models.ForeignKey(Currency, on_delete=models.PROTECT)
@@ -222,7 +245,9 @@ class BillingAccount(models.Model):
                 account_type=account_type,
             )
             account.save()
-            billing_admin = BillingAccountAdmin.objects.get_or_create(web_user=created_by)[0]
+            billing_admin = BillingAccountAdmin.objects.get_or_create(
+                domain=domain, web_user=created_by,
+            )[0]
             account.billing_admins.add(billing_admin)
             account.save()
         return account, is_new
@@ -253,11 +278,10 @@ class BillingContactInfo(models.Model):
         max_length=50, null=True, blank=True, verbose_name=_("Last Name")
     )
     emails = models.CharField(
-        max_length=200, null=True, blank=True,
-        verbose_name=_("Additional Contact Emails"),
-        help_text=_("We will email communications to the emails specified "
-                    "here and the emails "
-                    "of the Billing Administrators.")
+        max_length=200, null=True,
+        verbose_name=_("Contact Emails"),
+        help_text=_("We will email communications regarding your account "
+                    "to the emails specified here.")
     )
     phone_number = models.CharField(
         max_length=20, null=True, blank=True, verbose_name=_("Phone Number")
@@ -267,7 +291,7 @@ class BillingContactInfo(models.Model):
         verbose_name=_("Company / Organization")
     )
     first_line = models.CharField(
-        max_length=50, null=False, blank=True,
+        max_length=50, null=False,
         verbose_name=_("Address First Line")
     )
     second_line = models.CharField(
@@ -275,17 +299,17 @@ class BillingContactInfo(models.Model):
         verbose_name=_("Address Second Line")
     )
     city = models.CharField(
-        max_length=50, null=False, blank=True, verbose_name=_("City")
+        max_length=50, null=False, verbose_name=_("City")
     )
     state_province_region = models.CharField(
-        max_length=50, null=False, blank=True,
+        max_length=50, null=False,
         verbose_name=_("State / Province / Region"),
     )
     postal_code = models.CharField(
-        max_length=20, null=False, blank=True, verbose_name=_("Postal Code")
+        max_length=20, null=False, verbose_name=_("Postal Code")
     )
     country = models.CharField(
-        max_length=50, null=False, blank=True, verbose_name=_("Country")
+        max_length=50, null=False, verbose_name=_("Country")
     )
 
 
@@ -443,7 +467,7 @@ class DefaultProductPlan(models.Model):
 
     @classmethod
     def get_default_plan_by_domain(cls, domain, edition=None):
-        domain = assure_domain_instance(domain)
+        domain = ensure_domain_instance(domain)
         edition = edition or SoftwarePlanEdition.COMMUNITY
         product_type = SoftwareProductType.get_type_by_domain(domain)
         try:
@@ -492,6 +516,15 @@ class SoftwarePlanVersion(models.Model):
         }
 
     @property
+    def core_product(self):
+        try:
+            product_rate = self.product_rates.all()[0]
+            return product_rate.product.product_type
+        except (IndexError, SoftwareProductRate.DoesNotExist):
+            pass
+        return "CommCare"
+
+    @property
     def version(self):
         return (self.plan.softwareplanversion_set.count() -
                 self.plan.softwareplanversion_set.filter(
@@ -531,7 +564,6 @@ class SoftwarePlanVersion(models.Model):
         except IndexError:
             pass
 
-
     @property
     def user_limit(self):
         if self.user_feature is not None:
@@ -542,6 +574,23 @@ class SoftwarePlanVersion(models.Model):
     def user_fee(self):
         if self.user_feature is not None:
             return "USD %d" % self.user_feature.per_excess_fee
+
+    def feature_charges_exist_for_domain(self, domain,
+                                         start_date=None, end_date=None):
+        domain = ensure_domain_instance(domain)
+        if domain is None:
+            return False
+        from corehq.apps.accounting.usage import FeatureUsageCalculator
+        for feature_rate in self.feature_rates.all():
+            # -1 is the special infinity charge
+            if feature_rate.monthly_limit != -1:
+                calc = FeatureUsageCalculator(
+                    feature_rate, domain.name, start_date=start_date,
+                    end_date=end_date
+                )
+                if calc.get_usage() > feature_rate.monthly_limit:
+                    return True
+        return False
 
 
 class SubscriberManager(models.Manager):
@@ -705,7 +754,7 @@ class Subscription(models.Model):
         """
         Returns SoftwarePlanVersion, Subscription for the given domain.
         """
-        domain_obj = assure_domain_instance(domain)
+        domain_obj = ensure_domain_instance(domain)
         if domain_obj is None:
             plan_version = DefaultProductPlan.objects.get(edition=SoftwarePlanEdition.COMMUNITY,
                                                           product_type=SoftwareProductType.COMMCARE).plan.get_version()
@@ -719,8 +768,10 @@ class Subscription(models.Model):
         return plan_version, subscription
     
     @classmethod
-    def new_domain_subscription(cls, account, domain, plan_version, date_start=None, adjustment_method=None,
-                                note=None, web_user=None, **kwargs):
+    def new_domain_subscription(cls, account, domain, plan_version,
+                                date_start=None, date_end=None, note=None,
+                                web_user=None, adjustment_method=None,
+                                **kwargs):
         subscriber = Subscriber.objects.get_or_create(domain=domain, organization=None)[0]
         today = datetime.date.today()
         future_subscriptions = Subscription.objects.filter(
@@ -745,6 +796,7 @@ class Subscription(models.Model):
             plan_version=plan_version,
             subscriber=subscriber,
             date_start=date_start or datetime.date.today(),
+            date_end=date_end,
             **kwargs
         )
         subscription.save()
@@ -768,6 +820,7 @@ class Invoice(models.Model):
     date_received = models.DateField(blank=True, db_index=True, null=True)
     date_start = models.DateField()
     date_end = models.DateField()
+    is_hidden = models.BooleanField(default=False)
 
     @property
     def subtotal(self):
@@ -777,6 +830,11 @@ class Invoice(models.Model):
         if self.lineitem_set.count() == 0:
             return Decimal('0.0000')
         return sum([line_item.total for line_item in self.lineitem_set.all()])
+
+    @property
+    def invoice_number(self):
+        ops_num = settings.STARTING_INVOICE_NUMBER + self.id
+        return "%s%d" % (settings.INVOICE_PREFIX, ops_num)
 
     @property
     def applied_tax(self):
@@ -811,6 +869,12 @@ class Invoice(models.Model):
         current_total = self.get_total()
         credit_lines = CreditLine.get_credits_for_invoice(self)
         CreditLine.apply_credits_toward_balance(credit_lines, current_total, dict(invoice=self))
+
+    @classmethod
+    def exists_for_domain(cls, domain):
+        return cls.objects.filter(
+            subscription__subscriber__domain=domain, is_hidden=False
+        ).count() > 0
 
 
 class SubscriptionAdjustment(models.Model):
@@ -861,13 +925,87 @@ class BillingRecord(models.Model):
     This stores any interaction we have with the client in sending a physical / pdf invoice to their contact email.
     """
     invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT)
-    date_emailed = models.DateField(auto_now_add=True, db_index=True)
+    date_created = models.DateTimeField(auto_now_add=True, db_index=True)
     emailed_to = models.CharField(max_length=254, db_index=True)
+    skipped_email = models.BooleanField(default=False)
     pdf_data_id = models.CharField(max_length=48)
 
     @property
     def pdf(self):
         return InvoicePdf.get(self.pdf_data_id)
+
+    @classmethod
+    def generate_record(cls, invoice):
+        record = cls(invoice=invoice)
+        invoice_pdf = InvoicePdf()
+        invoice_pdf.generate_pdf(record.invoice)
+        record.pdf_data_id = invoice_pdf._id
+        if record.invoice.subscription.do_not_invoice:
+            record.skipped_email = True
+            invoice.is_hidden = True
+        else:
+            pdf_attachment = {
+                'title': invoice_pdf.get_filename(invoice),
+                'file_obj': StringIO(invoice_pdf.get_data(invoice)),
+                'mimetype': 'application/pdf',
+            }
+            record.send_email(pdf_attachment)
+        record.save()
+
+    def send_email(self, pdf_attachment):
+        month_name = self.invoice.date_start.strftime("%B")
+        domain = self.invoice.subscription.subscriber.domain
+        title = "Your %(product)s Billing Statement for %(month)s" % {
+            'product': self.invoice.subscription.plan_version.core_product,
+            'month': month_name,
+        }
+        from corehq.apps.domain.views import DomainBillingStatementsView
+        context = {
+            'month_name': month_name,
+            'plan_name': "%(product)s %(name)s" % {
+                'product': self.invoice.subscription.plan_version.core_product,
+                'name': self.invoice.subscription.plan_version.plan.edition,
+            },
+            'domain': domain,
+            'statement_number': self.invoice.invoice_number,
+            'payment_status': (_("Paid") if self.invoice.date_paid is not None
+                               else _("Payment Required")),
+            'amount_due': _("USD %s")
+                          % self.invoice.balance.quantize(Decimal(10) ** -2),
+            'statements_url': reverse(DomainBillingStatementsView.urlname,
+                                      args=[domain]),
+        }
+
+        contact_emails = self.invoice.subscription.account.billingcontactinfo.emails
+        contact_emails = (contact_emails.split(',')
+                          if contact_emails is not None else [])
+        if not contact_emails:
+            logging.error(
+                "[Billing] Could not find an email to send the invoice "
+                "email to for the domain: %s" % domain)
+        for email in contact_emails:
+            greeting = _("Hello,")
+            can_view_statement = False
+            try:
+                web_user = WebUser.get_by_username(email)
+                if web_user is not None:
+                    greeting = _("Dear %s,") % web_user.first_name
+                    can_view_statement = web_user.is_domain_admin(domain)
+            except ResourceNotFound:
+                pass
+            context['greeting'] = greeting
+            context['can_view_statement'] = can_view_statement
+            email_html = render_to_string('accounting/invoice_email.html', context)
+            email_plaintext = render_to_string('accounting/invoice_email_plaintext.html', context)
+            if toggles.ACCOUNTING_PREVIEW.enabled(email):
+                send_HTML_email(
+                    title, email, email_html,
+                    text_content=email_plaintext,
+                    email_from=settings.INVOICING_CONTACT_EMAIL,
+                    file_attachments=[pdf_attachment]
+                )
+        self.emailed_to = ",".join(contact_emails)
+
 
 
 class InvoicePdf(SafeSaveDocument):
@@ -875,11 +1013,72 @@ class InvoicePdf(SafeSaveDocument):
     date_created = DateTimeProperty()
 
     def generate_pdf(self, invoice):
-        # todo generate pdf
-        invoice.pdf_data_id = self._id
-        # self.put_attachment(pdf_data)
-        self.invoice_id = invoice.id
+        self.save()
+        pdf_data = NamedTemporaryFile()
+        contact_info = BillingContactInfo.objects.get(
+            account=invoice.subscription.account,
+        )
+        template = InvoiceTemplate(
+            pdf_data.name,
+            invoice_number=invoice.invoice_number,
+            to_address=Address(
+                name=("%s %s" %
+                      (contact_info.first_name, contact_info.last_name)),
+                first_line=contact_info.first_line,
+                second_line=contact_info.second_line,
+                city=contact_info.city,
+                region=contact_info.state_province_region,
+                country=contact_info.country,
+            ),
+            project_name=invoice.subscription.subscriber.domain,
+            invoice_date=invoice.date_created.date(),
+            due_date=invoice.date_due,
+            subtotal=invoice.subtotal,
+            tax_rate=invoice.tax_rate,
+            applied_tax=invoice.applied_tax,
+            applied_credit=invoice.applied_credit,
+            total=invoice.get_total(),
+        )
+
+        for line_item in LineItem.objects.filter(invoice=invoice):
+            is_unit = line_item.unit_description is not None
+            description = (line_item.base_description
+                           or line_item.unit_description)
+            if line_item.quantity > 0:
+                template.add_item(
+                    description,
+                    line_item.quantity if is_unit else 1,
+                    line_item.unit_cost if is_unit else line_item.subtotal,
+                    line_item.subtotal,
+                    line_item.applied_credit,
+                    line_item.total
+                )
+
+        template.get_pdf()
+        filename = self.get_filename(invoice)
+        self.put_attachment(pdf_data, filename, 'application/pdf')
+        pdf_data.close()
+
+        self.invoice_id = str(invoice.id)
         self.date_created = datetime.datetime.now()
+        self.save()
+
+    def get_filename(self, invoice):
+        return "statement_%(year)d_%(month)d.pdf" % {
+            'year': invoice.date_start.year,
+            'month': invoice.date_start.month,
+        }
+
+    def get_data(self, invoice):
+        obj = CachedObject('%s:InvoicePdfData' % self._id)
+        if not obj.is_cached():
+            data = self.fetch_attachment(self.get_filename(invoice), True)
+            buffer = StringIO(data)
+            obj.cache_put(buffer, {}, timeout=0)
+        else:
+            buffer = obj.get()[1]
+            data = buffer.getvalue()
+        return data
 
 
 class LineItemManager(models.Manager):
@@ -939,12 +1138,29 @@ class CreditLine(models.Model):
     """
     account = models.ForeignKey(BillingAccount, on_delete=models.PROTECT)
     subscription = models.ForeignKey(Subscription, on_delete=models.PROTECT, null=True, blank=True)
-    product_rate = models.ForeignKey(SoftwareProductRate, on_delete=models.PROTECT, null=True, blank=True)
-    feature_rate = models.ForeignKey(FeatureRate, on_delete=models.PROTECT, null=True, blank=True)
+    product_type = models.CharField(max_length=25, null=True, blank=True,
+                                    choices=SoftwareProductType.CHOICES)
+    feature_type = models.CharField(max_length=10, null=True, blank=True,
+                                    choices=FeatureType.CHOICES)
     date_created = models.DateTimeField(auto_now_add=True)
     balance = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
 
-    def adjust_credit_balance(self, amount, is_new=False, note=None, line_item=None, invoice=None):
+    def __str__(self):
+        credit_level = ("Account-Level" if self.subscription is None
+                        else "Subscription-Level")
+        return ("%(level)s credit [Account %(account_id)d]%(feature)s"
+                "%(product)s, balance %(balance)s" % {
+                    'level': credit_level,
+                    'account_id': self.account.id,
+                    'feature': (' for Feature %s' % self.feature_type
+                                if self.feature_type is not None else ""),
+                    'product': (' for Product %s' % self.product_type
+                                if self.product_type is not None else ""),
+                    'balance': self.balance,
+                })
+
+    def adjust_credit_balance(self, amount, is_new=False, note=None,
+                              line_item=None, invoice=None):
         reason = CreditAdjustmentReason.MANUAL
         note = note or ""
         if line_item is not None and invoice is not None:
@@ -971,8 +1187,10 @@ class CreditLine(models.Model):
     def get_credits_for_line_item(cls, line_item):
         return cls.get_credits_by_subscription_and_features(
             line_item.invoice.subscription,
-            product_rate=line_item.product_rate,
-            feature_rate=line_item.feature_rate
+            product_type=(line_item.product_rate.product.product_type
+                          if line_item.product_rate is not None else None),
+            feature_type=(line_item.feature_rate.feature.feature_type
+                          if line_item.feature_rate is not None else None),
         )
 
     @classmethod
@@ -980,12 +1198,14 @@ class CreditLine(models.Model):
         return cls.get_credits_by_subscription_and_features(invoice.subscription)
 
     @classmethod
-    def get_credits_by_subscription_and_features(cls, subscription, feature_rate=None, product_rate=None):
+    def get_credits_by_subscription_and_features(cls, subscription,
+                                                 feature_type=None,
+                                                 product_type=None):
         return cls.objects.filter(
             models.Q(subscription=subscription) |
             models.Q(account=subscription.account, subscription__exact=None)
         ).filter(
-            product_rate__exact=product_rate, feature_rate__exact=feature_rate
+            product_type__exact=product_type, feature_type__exact=feature_type
         ).all()
 
     @classmethod
@@ -994,8 +1214,8 @@ class CreditLine(models.Model):
         credit_line, is_created = cls.objects.get_or_create(
             account=account,
             subscription__exact=None,
-            product_rate__exact=None,
-            feature_rate__exact=None,
+            product_type__exact=None,
+            feature_type__exact=None,
         )
         credit_line.adjust_credit_balance(amount, is_new=is_created, note=note)
         return credit_line
@@ -1006,19 +1226,34 @@ class CreditLine(models.Model):
         credit_line, is_created = cls.objects.get_or_create(
             account=subscription.account,
             subscription=subscription,
-            product_rate__exact=None,
-            feature_rate__exact=None,
+            product_type__exact=None,
+            feature_type__exact=None,
         )
         credit_line.adjust_credit_balance(amount, is_new=is_created, note=note)
         return credit_line
 
     @classmethod
-    def add_rate_credit(cls, amount, account, product_rate=None, feature_rate=None, subscription=None, note=None):
-        if (feature_rate is None and product_rate is None) or (feature_rate is not None and product_rate is not None):
-            raise ValueError("You must specify a product rate OR a feature rate")
+    def add_product_credit(cls, amount, account, product_type,
+                           subscription=None, note=None):
         cls._validate_add_amount(amount)
         credit_line, is_created = cls.objects.get_or_create(
-            account=account, subscription=subscription, product_rate=product_rate, feature_rate=feature_rate,
+            account=account,
+            subscription=subscription,
+            product_type=product_type,
+            feature_type__exact=None,
+        )
+        credit_line.adjust_credit_balance(amount, is_new=is_created, note=note)
+        return credit_line
+
+    @classmethod
+    def add_feature_credit(cls, amount, account, feature_type,
+                           subscription=None, note=None):
+        cls._validate_add_amount(amount)
+        credit_line, is_created = cls.objects.get_or_create(
+            account=account,
+            subscription=subscription,
+            product_type__exact=None,
+            feature_type=feature_type,
         )
         credit_line.adjust_credit_balance(amount, is_new=is_created, note=note)
         return credit_line
@@ -1029,7 +1264,9 @@ class CreditLine(models.Model):
             if balance == Decimal('0.0000'):
                 return
             if balance <= Decimal('0.0000'):
-                raise CreditLineError("A balance went below zero dollars when applying credits.")
+                raise CreditLineError(
+                    "A balance went below zero dollars when applying credits."
+                )
             adjustment_amount = min(credit_line.balance, balance)
             if adjustment_amount > Decimal('0.0000'):
                 credit_line.adjust_credit_balance(-adjustment_amount, **adjust_balance_kwarg)
