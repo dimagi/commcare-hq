@@ -2,7 +2,7 @@ import datetime
 from dimagi.utils.dates import DateSpan
 from django.utils import simplejson
 from django.utils.translation import ugettext as _, ugettext_noop
-from corehq.apps.reports.fields import ReportField
+from corehq.apps.reports.dont_use.fields import ReportField
 
 
 class DateRangeField(ReportField):

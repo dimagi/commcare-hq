@@ -1,6 +1,6 @@
 from django.utils.translation import ugettext as _
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.fields import AsyncLocationField
+from corehq.apps.reports.dont_use.fields import AsyncLocationField
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from corehq.apps.reports.standard import MonthYearMixin, CustomProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListReport

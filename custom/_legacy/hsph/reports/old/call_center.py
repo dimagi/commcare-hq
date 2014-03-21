@@ -11,7 +11,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.pillows.base import restore_property_dict
 from hsph.reports import HSPHSiteDataMixin
 from hsph.fields import NameOfCATIField, AllocatedToFilter
-from corehq.apps.reports.fields import FilterUsersField
+from corehq.apps.reports.dont_use.fields import FilterUsersField
 from corehq.apps.reports.filters.dates import DatespanFilter
 from couchdbkit_aggregate.fn import mean, unique_count
 from casexml.apps.case import const

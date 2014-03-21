@@ -1,6 +1,6 @@
 from couchdbkit.ext.django.schema import Document
 from corehq.apps.reports.standard import CustomProjectReport
-from corehq.apps.reports.fields import ReportField
+from corehq.apps.reports.dont_use.fields import ReportField
 from datetime import date
 from pathfinder.views import retrieve_patient_group, get_patients_by_provider
 from django.http import Http404

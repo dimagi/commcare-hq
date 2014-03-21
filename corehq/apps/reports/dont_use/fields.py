@@ -99,6 +99,41 @@ class ReportSelectField(ReportField):
         )
 
 
+class FilterUsersField(ReportField):
+    slug = "ufilter"
+    template = "reports/dont_use_fields/filter_users.html"
+    always_show_filter = False
+    can_be_empty = False
+
+    def update_context(self):
+        toggle, show_filter = self.get_user_filter(self.request)
+        self.context['show_user_filter'] = show_filter
+        self.context['toggle_users'] = toggle
+        self.context['can_be_empty'] = self.can_be_empty
+
+    @classmethod
+    def get_user_filter(cls, request):
+        ufilter = group = individual = None
+        try:
+            if request.GET.get('ufilter', ''):
+                ufilter = request.GET.getlist('ufilter')
+            group = request.GET.get('group', '')
+            individual = request.GET.get('individual', '')
+        except KeyError:
+            pass
+        except AttributeError:
+            pass
+
+        show_filter = True
+        toggle = HQUserType.use_defaults()
+
+        if not cls.always_show_filter and (group or individual):
+            show_filter = False
+        elif ufilter:
+            toggle = HQUserType.use_filter(ufilter)
+        return toggle, show_filter
+
+
 class SelectMobileWorkerMixin(object):
     slug = "select_mw"
     name = ugettext_noop("Select Mobile Worker")
@@ -181,41 +216,6 @@ class SelectFilteredMobileWorkerField(SelectMobileWorkerField):
         return [dict(val=user.user_id,
             text=user.raw_username,
             is_active=user.is_active) for user in user_list]
-
-
-class FilterUsersField(ReportField):
-    slug = "ufilter"
-    template = "reports/dont_use_fields/filter_users.html"
-    always_show_filter = False
-    can_be_empty = False
-
-    def update_context(self):
-        toggle, show_filter = self.get_user_filter(self.request)
-        self.context['show_user_filter'] = show_filter
-        self.context['toggle_users'] = toggle
-        self.context['can_be_empty'] = self.can_be_empty
-
-    @classmethod
-    def get_user_filter(cls, request):
-        ufilter = group = individual = None
-        try:
-            if request.GET.get('ufilter', ''):
-                ufilter = request.GET.getlist('ufilter')
-            group = request.GET.get('group', '')
-            individual = request.GET.get('individual', '')
-        except KeyError:
-            pass
-        except AttributeError:
-            pass
-
-        show_filter = True
-        toggle = HQUserType.use_defaults()
-
-        if not cls.always_show_filter and (group or individual):
-            show_filter = False
-        elif ufilter:
-            toggle = HQUserType.use_filter(ufilter)
-        return toggle, show_filter
 
 
 class BooleanField(ReportField):

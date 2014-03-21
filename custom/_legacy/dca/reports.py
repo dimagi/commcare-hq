@@ -1,5 +1,5 @@
 from corehq.apps.reports.standard import CustomProjectReport
-from corehq.apps.reports.fields import ReportField
+from corehq.apps.reports.dont_use.fields import ReportField
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.generic import GenericTabularReport
 from dimagi.utils.couch.database import get_db
