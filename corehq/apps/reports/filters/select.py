@@ -96,7 +96,7 @@ class MonthFilter(BaseSingleOptionFilter):
         return [("%02d" % m, calendar.month_name[m]) for m in range(1, 13)]
 
 
-class CaseTypeFilter(BaseSingleOptionFilter):
+class CaseTypeMixin(object):
     slug = "case_type"
     label = ugettext_noop("Case Type")
     default_text = ugettext_noop("All Case Types")
@@ -108,14 +108,13 @@ class CaseTypeFilter(BaseSingleOptionFilter):
 
     @classmethod
     def get_case_types(cls, domain):
-        key = [domain]
-        for r in CommCareCase.get_db().view(
-                'hqcase/all_cases',
-                startkey=key,
-                endkey=key + [{}],
-                group_level=2
-            ).all():
-            _, case_type = r['key']
+        key = ['all type', domain]
+
+        for r in CommCareCase.get_db().view('case/all_cases',
+                      startkey=key,
+                      endkey=key + [{}],
+                      group_level=3).all():
+            _, _, case_type = r['key']
             if case_type:
                 yield case_type
 
@@ -125,21 +124,25 @@ class CaseTypeFilter(BaseSingleOptionFilter):
         Returns open count, all count
         """
         user_ids = user_ids or [{}]
-        for view_name in ('hqcase/open_cases', 'hqcase/all_cases'):
+        for status in ('all', 'open'):
             def individual_counts():
                 for user_id in user_ids:
-                    key = [domain, case_type or {}, user_id]
+                    key = CommCareCase.get_all_cases_key(domain, case_type=case_type, owner_id=user_id, status=status)
                     try:
-                        yield CommCareCase.get_db().view(
-                            view_name,
+                        yield CommCareCase.get_db().view('case/all_cases',
                             startkey=key,
                             endkey=key + [{}],
-                            group_level=0
+                            reduce=True
                         ).one()['value']
                     except TypeError:
                         yield 0
             yield sum(individual_counts())
 
+class CaseTypeFilter(CaseTypeMixin, BaseSingleOptionFilter):
+    placeholder = ugettext_noop('Click to select a case type')
+
+class MultiCaseTypeFilter(CaseTypeMixin, BaseMultipleOptionFilter):
+    placeholder = ugettext_noop('Click to select case types')
 
 class SelectOpenCloseFilter(BaseSingleOptionFilter):
     slug = "is_open"
