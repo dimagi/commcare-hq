@@ -941,6 +941,10 @@ class Invoice(models.Model):
 
     def update_balance(self):
         self.balance = self.get_total()
+        if self.balance <= 0:
+            self.date_paid = datetime.date.today()
+        else:
+            self.date_paid = None
 
     def calculate_credit_adjustments(self):
         """
