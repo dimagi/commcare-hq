@@ -170,16 +170,19 @@
     <script src="{% static 'appstore/js/facet_sidebar.js' %}"></script>
     <script>
         // This assures that all the result elements are the same height
-        $(window).load(function() {
+        function assure_correct_spacing() {
             $('.results').each(function(){
                 var highest = 0;
                 var $wells = $(this).find('.well');
                 $wells.each(function(){
-                    highest = ($(this).height() > highest) ? $(this).height() : highest;
+                    var height = $(this).children(":first").height();
+                    highest = (height > highest) ? height : highest;
                 });
                 $wells.css('height', highest + 'px');
             });
-        });
+        }
+        $(window).load(assure_correct_spacing);
+        $(window).resize(assure_correct_spacing);
     </script>
 {% endblock %}
 
