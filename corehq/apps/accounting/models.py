@@ -769,7 +769,9 @@ class Subscription(models.Model):
                 "Tried to reactivate a subscription, but the end date for "
                 "this subscription already passed."
             )
-        self.subscriber.apply_upgrades_and_downgrades()
+        self.subscriber.apply_upgrades_and_downgrades(
+            new_plan_version=self.plan_version
+        )
         self.date_end = date_end
         self.is_active = True
         for allowed_attr in self.allowed_attr_changes:
@@ -1086,7 +1088,6 @@ class BillingRecord(models.Model):
                     file_attachments=[pdf_attachment]
                 )
         self.emailed_to = ",".join(contact_emails)
-
 
 
 class InvoicePdf(SafeSaveDocument):
