@@ -152,7 +152,7 @@ class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):
     name = ugettext_noop('Generic Pie Chart (sandbox)')
     slug = 'generic_pie'
     fields = ['corehq.apps.reports.filters.dates.DatespanFilter',
-              'corehq.apps.reports.fields.AsyncLocationField']
+              'corehq.apps.reports.filters.fixtures.AsyncLocationFilter']
     # define in subclass
     #mode = 'case' or 'form'
     #submission_type = <case type> or <xform xmlns>
