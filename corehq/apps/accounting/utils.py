@@ -91,21 +91,6 @@ def get_change_status(from_plan_version, to_plan_version):
     return adjustment_reason, downgraded_privs, upgraded_privs
 
 
-class LazyEncoder(json.JSONEncoder):
-    """Taken from https://github.com/tomchristie/django-rest-framework/issues/87
-    This makes sure that ugettext_lazy refrences in a dict are properly evaluated
-    """
-    def default(self, obj):
-        if isinstance(obj, Promise):
-            return force_unicode(obj)
-        return super(LazyEncoder, self).default(obj)
-
-
-def is_active_subscription(date_start, date_end):
-    today = datetime.date.today()
-    return (date_start is None or date_start <= today) and (date_end is None or today <= date_end)
-
-
 def domain_has_privilege(domain, privilege_slug, **assignment):
     from corehq.apps.accounting.models import Subscription
     try:
@@ -119,6 +104,11 @@ def domain_has_privilege(domain, privilege_slug, **assignment):
     except AccountingError:
         pass
     return False
+
+
+def is_active_subscription(date_start, date_end):
+    today = datetime.date.today()
+    return (date_start is None or date_start <= today) and (date_end is None or today <= date_end)
 
 
 def has_subscription_already_ended(subscription):

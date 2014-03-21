@@ -4,11 +4,11 @@ from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpRespons
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
+from corehq.apps.commtrack.helpers import psi_one_time_setup
 from corehq.apps.commtrack.util import get_or_make_def_program
 
 from corehq.apps.domain.decorators import require_superuser, domain_admin_required, require_previewer, login_and_domain_required
 from corehq.apps.domain.models import Domain
-from corehq.apps.commtrack.management.commands import bootstrap_psi
 from corehq.apps.commtrack.models import Product, Program
 from corehq.apps.commtrack.forms import ProductForm, ProgramForm, ConsumptionForm
 from corehq.apps.domain.views import BaseDomainView
@@ -308,14 +308,13 @@ def bootstrap(request, domain):
         if D.commtrack_enabled:
             return HttpResponse('already configured', 'text/plain')
         else:
-            bootstrap_psi.one_time_setup(D)
+            psi_one_time_setup(D)
             return HttpResponse('set up successfully', 'text/plain')
 
     return render(request, 'commtrack/debug/bootstrap.html', {
         'domain': domain,
         }
     )
-
 
 @require_superuser
 def historical_import(request, domain):

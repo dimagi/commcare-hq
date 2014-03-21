@@ -1,3 +1,4 @@
+import copy
 import logging
 from urlparse import urlparse, parse_qs
 import dateutil
@@ -618,9 +619,12 @@ class EditBillingAccountInfoForm(forms.ModelForm):
     billing_admins = forms.CharField(
         required=False,
         label=ugettext_noop("Other Billing Admins"),
-        help_text=ugettext_noop(mark_safe("<p>These are the Web Users that will be able to access and modify your "
-                                "subscription and billing information. They will also receive billing-related "
-                                "emails from Dimagi.</p> <p>Your account is already a Billing Administrator.</p>")),
+        help_text=ugettext_noop(mark_safe(
+            "<p>These are the Web Users that will be able to access and "
+            "modify your account's subscription and billing information.</p> "
+            "<p>Your logged in account is already a Billing Administrator."
+            "</p>"
+        )),
     )
 
     class Meta:
@@ -646,7 +650,8 @@ class EditBillingAccountInfoForm(forms.ModelForm):
 
         super(EditBillingAccountInfoForm, self).__init__(data, *args, **kwargs)
 
-        other_admins = self.account.billing_admins.exclude(web_user=self.creating_user).all()
+        other_admins = self.account.billing_admins.filter(
+            domain=self.domain).exclude(web_user=self.creating_user).all()
         self.fields['billing_admins'].initial = ','.join([o.web_user for o in other_admins])
 
         self.helper = FormHelper()
@@ -690,10 +695,12 @@ class EditBillingAccountInfoForm(forms.ModelForm):
         for admin in all_admins:
             if admin and admin != u'':
                 result.append(BillingAccountAdmin.objects.get_or_create(
-                    web_user=admin
+                    web_user=admin,
+                    domain=self.domain,
                 )[0])
         result.append(BillingAccountAdmin.objects.get_or_create(
-            web_user=self.creating_user
+            web_user=self.creating_user,
+            domain=self.domain,
         )[0])
         return result
 
@@ -716,10 +723,13 @@ class EditBillingAccountInfoForm(forms.ModelForm):
         billing_contact_info.save()
 
         billing_admins = self.cleaned_data['billing_admins']
+        other_domain_admins = copy.copy(self.account.billing_admins.exclude(
+            domain=self.domain).all())
         self.account.billing_admins.clear()
+        for other_admin in other_domain_admins:
+            self.account.billing_admins.add(other_admin)
         for admin in billing_admins:
-            if not self.account.billing_admins.filter(web_user=admin.web_user).exists():
-                self.account.billing_admins.add(admin)
+            self.account.billing_admins.add(admin)
         self.account.save()
         return True
 

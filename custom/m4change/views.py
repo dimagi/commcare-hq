@@ -10,6 +10,7 @@ def update_service_status(request, domain):
         for list in lists:
             form_id = list[0]
             new_status = list[1] if list[1].__len__() is not 1 else None
+            reject_reason = list[2] if new_status == 'rejected' else None
             if new_status is not None:
                 try:
                     mcct_status = McctStatus.objects.get(form_id=form_id, domain=domain)
@@ -17,5 +18,5 @@ def update_service_status(request, domain):
                     mcct_status = None
                 if not mcct_status:
                     mcct_status = McctStatus(form_id=form_id, domain=domain, status=new_status)
-                mcct_status.update_status(new_status)
+                mcct_status.update_status(new_status, reject_reason)
     return HttpResponse(status=200)

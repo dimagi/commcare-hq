@@ -10,6 +10,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest
 from django.utils.decorators import method_decorator
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
+from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.util.translation import localize
 
 from dimagi.utils.decorators.memoized import memoized
@@ -30,7 +31,7 @@ from corehq.apps.accounting.async_handlers import (
 )
 from corehq.apps.accounting.user_text import PricingTable
 from corehq.apps.accounting.utils import (
-    LazyEncoder, fmt_feature_rate_dict, fmt_product_rate_dict,
+    fmt_feature_rate_dict, fmt_product_rate_dict,
     has_subscription_already_ended
 )
 from corehq.apps.hqwebapp.views import BaseSectionPageView
@@ -168,8 +169,11 @@ class NewSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
     @memoized
     def subscription_form(self):
         if self.request.method == 'POST':
-            return SubscriptionForm(None, self.account_id, self.request.POST)
-        return SubscriptionForm(None, self.account_id)
+            return SubscriptionForm(
+                None, self.account_id, self.request.user.username,
+                self.request.POST
+            )
+        return SubscriptionForm(None, self.account_id, None)
 
     @property
     def page_context(self):
@@ -235,8 +239,11 @@ class EditSubscriptionView(AccountingSectionView):
     @memoized
     def subscription_form(self):
         if self.request.method == 'POST' and 'set_subscription' in self.request.POST:
-            return SubscriptionForm(self.subscription, None, self.request.POST)
-        return SubscriptionForm(self.subscription, None)
+            return SubscriptionForm(
+                self.subscription, None, self.request.user.username,
+                self.request.POST
+            )
+        return SubscriptionForm(self.subscription, None, None)
 
     @property
     @memoized
@@ -247,9 +254,17 @@ class EditSubscriptionView(AccountingSectionView):
         return CreditForm(self.subscription.account, self.subscription)
 
     @property
+    @memoized
+    def cancel_form(self):
+        if (self.request.method == 'POST'
+            and 'cancel_subscription' in self.request.POST):
+            return CancelForm(self.request.POST)
+        return CancelForm()
+
+    @property
     def page_context(self):
         return {
-            'cancel_form': CancelForm(),
+            'cancel_form': self.cancel_form,
             'credit_form': self.credit_form,
             'credit_list': CreditLine.objects.filter(subscription=self.subscription),
             'disable_cancel': has_subscription_already_ended(self.subscription),
@@ -260,7 +275,7 @@ class EditSubscriptionView(AccountingSectionView):
 
     @property
     def page_url(self):
-        return reverse(self.urlname, args=(self.args[0],))
+        return reverse(self.urlname, args=(self.subscription_id,))
 
     @property
     def parent_pages(self):
@@ -273,17 +288,22 @@ class EditSubscriptionView(AccountingSectionView):
         if 'set_subscription' in self.request.POST and self.subscription_form.is_valid():
             new_subscription = self.subscription_form.update_subscription(self.subscription)
             return HttpResponseRedirect(
-                reverse(self.urlname, args=(unicode(new_subscription.id)))
+                reverse(self.urlname, args=(new_subscription.id,))
             )
         elif 'adjust_credit' in self.request.POST and self.credit_form.is_valid():
             if self.credit_form.adjust_credit():
                 return HttpResponseRedirect(self.page_url)
-        elif 'cancel_subscription' in self.request.POST:
+        elif ('cancel_subscription' in self.request.POST
+              and self.cancel_form.is_valid()):
             self.cancel_subscription()
+            return HttpResponseRedirect(self.page_url)
         return self.get(request, *args, **kwargs)
 
     def cancel_subscription(self):
-        self.subscription.cancel_subscription()
+        self.subscription.cancel_subscription(
+            note=self.cancel_form.cleaned_data['note'],
+            web_user=self.request.user.username,
+        )
         self.subscription_canceled = True
 
 
