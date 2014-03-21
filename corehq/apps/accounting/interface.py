@@ -392,7 +392,11 @@ class InvoiceInterface(GenericTabularReport):
         payment_status = \
             PaymentStatusFilter.get_value(self.request, self.domain)
         if payment_status is not None:
-            pass  # TODO - add query for payment status (based on payment date value)
+            filters.update(
+                date_paid__isnull=(
+                    payment_status == PaymentStatusFilter.not_paid
+                ),
+            )
         # TODO - add statement period
         # TODO - add due date
 
