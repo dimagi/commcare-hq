@@ -8,11 +8,24 @@ from corehq.apps.app_manager.util import new_careplan_module
 
 
 class FormPrepBase(TestCase, TestFileMixin):
-    def assertXmlEqual(self, expected, actual):
+    def assertXmlEqual(self, expected, actual, normalize=True):
         parser = lxml.etree.XMLParser(remove_blank_text=True)
-        parsed_expected = lxml.etree.tostring(lxml.etree.XML(expected, parser), pretty_print=True)
-        parsed_actual = lxml.etree.tostring(lxml.etree.XML(actual, parser), pretty_print=True)
-        super(FormPrepBase, self).assertXmlEqual(parsed_actual, parsed_expected)
+        if normalize:
+            parse = lambda *args: normalize_attributes(lxml.etree.XML(*args))
+        else:
+            parse = lxml.etree.XML
+        parsed_expected = lxml.etree.tostring(parse(expected, parser), pretty_print=True)
+        parsed_actual = lxml.etree.tostring(parse(actual, parser), pretty_print=True)
+        super(FormPrepBase, self).assertXmlEqual(parsed_expected, parsed_actual)
+
+def normalize_attributes(xml):
+    """Sort XML attributes to make it easier to find differences"""
+    for node in xml.iterfind(".//*"):
+        if node.attrib:
+            attrs = sorted(node.attrib.iteritems())
+            node.attrib.clear()
+            node.attrib.update(attrs)
+    return xml
 
 
 class FormPreparationV2Test(FormPrepBase):
@@ -67,6 +80,13 @@ class FormPreparationV2Test(FormPrepBase):
         self.form.actions.case_preload = PreloadAction(preload={'/data/question1': 'question1'})
         self.form.actions.case_preload.condition.type = 'always'
         self.assertXmlEqual(self.get_xml('update_preload_case'), self.form.render_xform())
+
+    def test_update_attachment(self):
+        self.form.requires = 'case'
+        self.form.source = self.get_xml('attachment')
+        self.form.actions.update_case = UpdateCaseAction(update={'photo': '/data/thepicture'})
+        self.form.actions.update_case.condition.type = 'always'
+        self.assertXmlEqual(self.get_xml('update_attachment_case'), self.form.render_xform())
 
     def test_close_case(self):
         self.form.requires = 'case'
