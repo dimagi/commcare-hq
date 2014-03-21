@@ -6,7 +6,7 @@ from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from couchdbkit.ext.django.schema import (Document, StringProperty, BooleanProperty, DateTimeProperty, IntegerProperty,
                                           DocumentSchema, SchemaProperty, DictProperty, ListProperty,
-                                          StringListProperty, SchemaListProperty, SchemaDictProperty, TimeProperty)
+                                          StringListProperty, SchemaListProperty, SchemaDictProperty, TimeProperty, DecimalProperty)
 from django.utils.safestring import mark_safe
 from corehq.apps.appstore.models import Review, SnapshotMixin
 from dimagi.utils.couch.cache import cache_core
@@ -176,6 +176,8 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
     platform = StringListProperty()
     project_manager = StringProperty()
     phone_model = StringProperty()
+    goal_time_period = IntegerProperty()
+    goal_followup_rate = DecimalProperty()
 
 
 class CaseDisplaySettings(DocumentSchema):
