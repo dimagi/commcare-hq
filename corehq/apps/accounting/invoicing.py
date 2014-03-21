@@ -49,24 +49,24 @@ class DomainInvoiceFactory(object):
 
     def get_subscriptions(self):
         subscriptions = Subscription.objects.filter(
-            subscriber=self.subscriber, date_start__lt=self.date_end
-        ).filter(Q(date_end=None) | Q(date_end__gte=self.date_start)
-        ).order_by('date_start').all()
+            subscriber=self.subscriber, date_start__lte=self.date_end
+        ).filter(Q(date_end=None) | Q(date_end__gt=self.date_start)
+        ).order_by('date_start', 'date_end').all()
         return list(subscriptions)
 
     def get_community_ranges(self, subscriptions):
         community_ranges = []
-        prev_sub_end = self.date_end
         if len(subscriptions) == 0:
             community_ranges.append((self.date_start, self.date_end))
         else:
+            prev_sub_end = self.date_end
             for ind, sub in enumerate(subscriptions):
                 if ind == 0 and sub.date_start > self.date_start:
                     # the first subscription started AFTER the beginning
                     # of the invoicing period
                     community_ranges.append((self.date_start, sub.date_start))
 
-                if prev_sub_end < self.date_end:
+                if prev_sub_end < self.date_end and sub.date_start > prev_sub_end:
                     community_ranges.append((prev_sub_end, sub.date_start))
                 prev_sub_end = sub.date_end
 
