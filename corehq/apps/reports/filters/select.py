@@ -1,9 +1,13 @@
 import datetime
 import calendar
+
 from django.conf import settings
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
+
 from casexml.apps.case.models import CommCareCase, CommCareCaseGroup
+from dimagi.utils.couch.database import get_db
+
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.groups.models import Group
@@ -112,14 +116,14 @@ class CaseTypeFilter(BaseSingleOptionFilter):
 
     @classmethod
     def get_case_types(cls, domain):
-        key = [domain]
-        for r in CommCareCase.get_db().view(
-                'hqcase/all_cases',
-                startkey=key,
-                endkey=key + [{}],
-                group_level=2
-            ).all():
-            _, case_type = r['key']
+        key = ['all type', domain]
+        for r in get_db().view(
+            'case/all_cases',
+            startkey=key,
+            endkey=key + [{}],
+            group_level=3,
+        ).all():
+            _, _, case_type = r['key']
             if case_type:
                 yield case_type
 
@@ -129,16 +133,21 @@ class CaseTypeFilter(BaseSingleOptionFilter):
         Returns open count, all count
         """
         user_ids = user_ids or [{}]
-        for view_name in ('hqcase/open_cases', 'hqcase/all_cases'):
+        for status in ('all', 'open'):
             def individual_counts():
                 for user_id in user_ids:
-                    key = [domain, case_type or {}, user_id]
+                    key = CommCareCase.get_all_cases_key(
+                        domain,
+                        case_type=case_type,
+                        owner_id=user_id,
+                        status=status,
+                    )
                     try:
-                        yield CommCareCase.get_db().view(
-                            view_name,
+                        yield get_db().view(
+                            'case/all_cases',
                             startkey=key,
                             endkey=key + [{}],
-                            group_level=0
+                            reduce=True,
                         ).one()['value']
                     except TypeError:
                         yield 0

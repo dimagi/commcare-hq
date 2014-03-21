@@ -342,7 +342,7 @@ class GroupFieldMixin():
 
 
 class ReportMultiSelectField(ReportSelectField):
-    template = "reports/fields/multiselect_generic.html"
+    template = "reports/dont_use_fields/multiselect_generic.html"
     selected = []
     # auto_select
     default_option = []
