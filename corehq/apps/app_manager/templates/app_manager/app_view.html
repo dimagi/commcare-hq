@@ -168,6 +168,8 @@
     {% endif %}
 {% endblock %}
 
+{% block title %}{{ app.name|html_name }}{% endblock %}
+
 {% block head %}{{ block.super }}
     <style>
         .sortable-handle {
