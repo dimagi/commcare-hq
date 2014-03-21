@@ -144,13 +144,15 @@ class DateRangeFilter(BaseReportFilter):
         return datespan
 
 
-class OptionalDateRangeFilter(DateRangeFilter):
-    template = 'reports/filters/optional_daterange.html'
-
-
+class OptionalFilterMixin(object):
     @classmethod
     def use_filter(cls, request):
-        return request.GET.get("report_filter_%s_use_filter" % cls.slug, None) == 'on'
+        return request.GET.get(
+            "report_filter_%s_use_filter" % cls.slug, None) == 'on'
+
+
+class OptionalDateRangeFilter(DateRangeFilter, OptionalFilterMixin):
+    template = 'reports/filters/optional_daterange.html'
 
     @property
     def filter_context(self):
@@ -182,13 +184,8 @@ class EndDateFilter(OptionalDateRangeFilter):
     label = _("End Date")
 
 
-class OptionalMonthYearFilter(BaseReportFilter):
+class OptionalMonthYearFilter(BaseReportFilter, OptionalFilterMixin):
     template = 'reports/filters/optional_month_year.html'
-
-    @classmethod
-    def use_filter(cls, request):
-        return request.GET.get(
-            "report_filter_%s_use_filter" % cls.slug, None) == 'on'
 
     @property
     def filter_context(self):
