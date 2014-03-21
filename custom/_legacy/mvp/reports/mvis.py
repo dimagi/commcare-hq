@@ -18,7 +18,7 @@ class HealthCoordinatorReport(MVPIndicatorReport):
     report_template_path = "mvp/reports/health_coordinator.html"
     flush_layout = True
     hide_filters = True
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
+    fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
               'corehq.apps.reports.filters.select.GroupFilter']
     emailable = True
     

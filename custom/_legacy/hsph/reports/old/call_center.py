@@ -11,7 +11,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.pillows.base import restore_property_dict
 from hsph.reports import HSPHSiteDataMixin
 from hsph.fields import NameOfCATIField, AllocatedToFilter
-from corehq.apps.reports.dont_use.fields import FilterUsersField
+from corehq.apps.reports.filters.users import UserTypeFilter
 from corehq.apps.reports.filters.dates import DatespanFilter
 from couchdbkit_aggregate.fn import mean, unique_count
 from casexml.apps.case import const
@@ -43,7 +43,7 @@ class CATIPerformanceReport(CustomProjectReport, ProjectReportParametersMixin,
                             DatespanMixin, BasicTabularReport):
     name = "CATI Performance Report"
     slug = "cati_performance"
-    field_classes = (FilterUsersField, DatespanFilter, NameOfCATIField)
+    field_classes = (UserTypeFilter, DatespanFilter, NameOfCATIField)
             
     filter_group_name = "CATI"
     
@@ -215,7 +215,7 @@ class CaseReport(CaseListReport, CustomProjectReport, HSPHSiteDataMixin,
     slug = 'case_report'
     
     fields = (
-        'corehq.apps.reports.fields.FilterUsersField',
+        'corehq.apps.reports.filters.users.UserTypeFilter',
         'corehq.apps.reports.filters.dates.DatespanFilter',
         'hsph.fields.SiteField',
         #'hsph.fields.AllocatedToFilter',

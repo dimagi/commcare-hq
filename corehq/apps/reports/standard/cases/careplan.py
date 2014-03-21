@@ -24,7 +24,7 @@ class CareplanCaseListReport(CaseListReport):
     slug = "careplan_caselist"
 
     fields = [
-        'corehq.apps.reports.fields.FilterUsersField',
+        'corehq.apps.reports.filters.users.UserTypeFilter',
         'corehq.apps.reports.fields.SelectCaseOwnerField',
         'corehq.apps.reports.filters.select.SelectOpenCloseFilter',
         'corehq.apps.reports.standard.cases.filters.CaseSearchFilter',

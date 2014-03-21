@@ -13,7 +13,7 @@ class MVPIndicatorReport(CustomProjectReport, ProjectReportParametersMixin):
         All MVP Reports with indicators should inherit from this.
     """
     cache_indicators = True
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
+    fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
               'corehq.apps.reports.filters.select.GroupFilter']
 
 

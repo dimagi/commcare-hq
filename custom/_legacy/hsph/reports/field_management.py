@@ -66,7 +66,7 @@ class FIDAPerformanceReport(GenericTabularReport, CustomProjectReport,
     slug = "hsph_fida_performance"
     
     fields = [
-        'corehq.apps.reports.fields.FilterUsersField',
+        'corehq.apps.reports.filters.users.UserTypeFilter',
         'corehq.apps.reports.filters.dates.DatespanFilter',
         'hsph.fields.DCTLToFIDAFilter',
     ]
@@ -214,7 +214,7 @@ class FacilityRegistrationsReport(GenericTabularReport, CustomProjectReport,
     """
     name = "Facility Registrations"
     slug = "hsph_facility_registrations"
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
+    fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
               'corehq.apps.reports.filters.dates.DatespanFilter',
               'hsph.fields.DCTLToFIDAFilter',
               'hsph.fields.SiteField']
@@ -396,7 +396,7 @@ class CaseReport(CaseListReport, CustomProjectReport, HSPHSiteDataMixin,
     slug = 'case_report'
     
     fields = (
-        'corehq.apps.reports.fields.FilterUsersField',
+        'corehq.apps.reports.filters.users.UserTypeFilter',
         'corehq.apps.reports.filters.dates.DatespanFilter',
         'hsph.fields.SiteField',
         'hsph.fields.AllocatedToFilter',

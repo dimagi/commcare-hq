@@ -73,7 +73,7 @@ class CATIPerformanceReport(GenericTabularReport, CustomProjectReport,
 
     fields = [
         'corehq.apps.reports.filters.dates.DatespanFilter',
-        'corehq.apps.reports.fields.FilterUsersField',
+        'corehq.apps.reports.filters.users.UserTypeFilter',
         'hsph.fields.NameOfCATIField',
     ]
 
@@ -201,7 +201,7 @@ class CATITeamLeaderReport(GenericTabularReport, CustomProjectReport,
 
     fields = [
         'corehq.apps.reports.filters.dates.DatespanFilter',
-        'corehq.apps.reports.fields.FilterUsersField',
+        'corehq.apps.reports.filters.users.UserTypeFilter',
         #'hsph.fields.NameOfCATITLField',
     ]
 

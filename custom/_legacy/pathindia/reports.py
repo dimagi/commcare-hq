@@ -4,7 +4,7 @@ from dimagi.utils.couch.database import get_db
 class PathIndiaKrantiReport(CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
     name = "Key Indicators"
     slug = "pathindia_key_indicators"
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
+    fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
                 'corehq.apps.reports.filters.select.GroupFilter',
                 'corehq.apps.reports.filters.dates.DatespanFilter']
     report_template_path = "pathindia/reports/kranti_report.html"
