@@ -677,6 +677,17 @@ class Subscription(models.Model):
                                  if self.date_end is not None else "--"),
                 })
 
+    def __eq__(self, other):
+        return (
+            other is not None
+            and other.__class__.__name__ == self.__class__.__name__
+            and other.plan_version.pk == self.plan_version.pk
+            and other.date_start == self.date_start
+            and other.date_end == self.date_end
+            and other.subscriber.pk == self.subscriber.pk
+            and other.account.pk == self.account.pk
+        )
+
     @property
     def allowed_attr_changes(self):
         # These are the attributes of a Subscription that can always be
