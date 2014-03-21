@@ -127,6 +127,8 @@ class CommTrackTest(TestCase):
         if self.requisitions_enabled:
             self.ct_settings.requisition_config = get_default_requisition_config()
             self.ct_settings.save()
+        from corehq.apps.domain.models import Domain
+        self.domain = Domain.get(self.domain._id)
 
         self.loc = make_loc('loc1')
         self.sp = make_supply_point(self.domain.name, self.loc)
