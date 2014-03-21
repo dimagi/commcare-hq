@@ -1339,7 +1339,17 @@ class AdjustBalanceForm(forms.Form):
         self.helper.layout = crispy.Layout(
             crispy.Div(
                 crispy.Field('adjustment_type'),
-                crispy.Field('custom_amount'),
+                crispy.HTML(
+                    '<div id="div_id_custom_amount" class="control-group">'
+                    '<label for="id_custom_amount" class="control-label ">'
+                    'Custom amount'
+                    '</label>'
+                    '<div class="controls">'
+                    '<input class="textinput textInput" id="id_custom_amount"'
+                    ' name="custom_amount" type="number" step="any">'
+                    '</div>'
+                    '</div>'
+                ),
                 crispy.Field('method'),
                 crispy.Field('note'),
                 crispy.Field('invoice_id'),
