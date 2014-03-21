@@ -318,7 +318,7 @@ class InvoiceInterface(GenericTabularReport):
         'corehq.apps.accounting.interface.SubscriberFilter',
         'corehq.apps.accounting.interface.PaymentStatusFilter',
         'corehq.apps.accounting.interface.StatementPeriodFilter',
-        'corehq.apps.accounting.interface.DueDateFilter',
+        'corehq.apps.accounting.interface.DueDatePeriodFilter',
         'corehq.apps.accounting.interface.SalesforceAccountIDFilter',
         'corehq.apps.accounting.interface.SalesforceContractIDFilter',
         'corehq.apps.accounting.interface.SoftwarePlanNameFilter',
@@ -397,8 +397,22 @@ class InvoiceInterface(GenericTabularReport):
                     payment_status == PaymentStatusFilter.not_paid
                 ),
             )
-        # TODO - add statement period
-        # TODO - add due date
+
+        statement_period = \
+            StatementPeriodFilter.get_value(self.request, self.domain)
+        if statement_period is not None:
+            filters.update(
+                date_start__gte=statement_period[0],
+                date_start__lte=statement_period[1],
+            )
+
+        due_date_period = \
+            DueDatePeriodFilter.get_value(self.request, self.domain)
+        if due_date_period is not None:
+            filters.update(
+                date_due__gte=due_date_period[0],
+                date_due__lte=due_date_period[1],
+            )
 
         salesforce_account_id = \
             SalesforceAccountIDFilter.get_value(self.request, self.domain)

@@ -1,3 +1,4 @@
+import calendar
 from corehq.apps.accounting.models import *
 from corehq.apps.accounting.utils import get_full_name
 from corehq.apps.reports.filters.base import (
@@ -181,12 +182,65 @@ class EndDateFilter(OptionalDateRangeFilter):
     label = _("End Date")
 
 
-class StatementPeriodFilter(OptionalDateRangeFilter):
+class OptionalMonthYearFilter(BaseReportFilter):
+    template = 'reports/filters/optional_month_year.html'
+
+    @classmethod
+    def use_filter(cls, request):
+        return request.GET.get(
+            "report_filter_%s_use_filter" % cls.slug, None) == 'on'
+
+    @property
+    def filter_context(self):
+        context = {}
+        context.update({
+            'showFilterName': self.use_filter(self.request),
+            'months': self.months(),
+            'years': range(2013, datetime.date.today().year + 1),
+            'selected_period': self.selected_period(),
+        })
+        return context
+
+    @classmethod
+    def get_value(cls, request, domain):
+        if not cls.use_filter(request):
+            return None
+        month = int(request.GET.get("report_filter_%s_month" % cls.slug))
+        year = int(request.GET.get("report_filter_%s_year" % cls.slug))
+        last_day_of_month = calendar.monthrange(year, month)[1]
+        return (datetime.date(year, month, 1),
+                datetime.date(year, month, last_day_of_month))
+
+    @classmethod
+    def months(cls):
+        month_pairs = []
+        for month_number in range(12):
+            month_pairs.append({
+                'name': calendar.month_name[month_number],
+                'value': month_number,
+            })
+        return month_pairs
+
+    def selected_period(self):
+        today = datetime.date.today()
+        month = today.month
+        year = today.year
+        period = self.get_value(self.request, self.domain)
+        if period is not None:
+            month = period[0].month
+            year = period[0].year
+        return {
+            'month': month,
+            'year': year,
+        }
+
+
+class StatementPeriodFilter(OptionalMonthYearFilter):
     slug = 'statement_period'
     label = _("Statement Period")
 
 
-class DueDateFilter(OptionalDateRangeFilter):
+class DueDatePeriodFilter(OptionalMonthYearFilter):
     slug = 'due_date'
     label = _("Due Date")
 
