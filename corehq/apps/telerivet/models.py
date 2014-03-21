@@ -51,7 +51,7 @@ class TelerivetBackend(SMSBackend):
             url,
             auth=(str(self.api_key), ''),
             data=params,
-            cert="%s/cacert.pem" % os.path.dirname(os.path.abspath(__file__)),
+            verify=True,
         )
 
         result = result.json()
