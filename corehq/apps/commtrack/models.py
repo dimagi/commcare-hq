@@ -12,7 +12,7 @@ from casexml.apps.stock.consumption import ConsumptionConfiguration
 from casexml.apps.stock.models import StockReport as DbStockReport, StockTransaction as DbStockTransaction, DocDomainMapping
 from casexml.apps.case.xml import V2
 from corehq.apps.commtrack import const
-from corehq.apps.consumption.shortcuts import get_default_consumption
+from corehq.apps.consumption.shortcuts import get_default_consumption, compute_default_consumption
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.couch.loosechange import map_reduce
@@ -1308,8 +1308,9 @@ class StockState(models.Model):
         if self.daily_consumption:
             return self.daily_consumption
         else:
-            config = self.get_domain().commtrack_settings.get_consumption_config()
-            return config.default_consumption_function(
+            domain = self.get_domain()
+            return compute_default_consumption(
+                domain,
                 self.case_id,
                 self.product_id
             )
@@ -1407,7 +1408,10 @@ def update_stock_state(sender, instance, *args, **kwargs):
         CommCareCase.get(instance.case_id).domain
     )
 
-    consumption_calc = domain.commtrack_settings.get_consumption_config()
+    if domain and domain.commtrack_settings:
+        consumption_calc = domain.commtrack_settings.get_consumption_config()
+    else:
+        consumption_calc = None
 
     state.daily_consumption = compute_consumption(
         instance.case_id,
