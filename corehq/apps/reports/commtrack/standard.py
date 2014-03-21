@@ -99,7 +99,7 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Stock Status by Product')
     slug = 'current_stock_status'
     fields = ['corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
-              'corehq.apps.reports.fields.SelectProgramField',
+              'corehq.apps.reports.dont_use.fields.SelectProgramField',
               'corehq.apps.reports.filters.dates.DatespanFilter']
     exportable = True
     emailable = True
@@ -206,7 +206,7 @@ class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Inventory')
     slug = StockStatusDataSource.slug
     fields = ['corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
-              'corehq.apps.reports.fields.SelectProgramField',
+              'corehq.apps.reports.dont_use.fields.SelectProgramField',
               'corehq.apps.reports.filters.dates.DatespanFilter',]
     exportable = True
     emailable = True
@@ -270,7 +270,7 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Reporting Rate')
     slug = 'reporting_rate'
     fields = ['corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
-              'corehq.apps.reports.fields.SelectProgramField',
+              'corehq.apps.reports.dont_use.fields.SelectProgramField',
               'corehq.apps.reports.filters.dates.DatespanFilter',]
     exportable = True
     emailable = True

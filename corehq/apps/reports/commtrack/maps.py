@@ -10,7 +10,7 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
     slug = "stockstatus_map"
 
     fields = ['corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
-              'corehq.apps.reports.fields.SelectProgramField']
+              'corehq.apps.reports.dont_use.fields.SelectProgramField']
 
     data_source = {
         'adapter': 'report',
@@ -134,7 +134,7 @@ class ReportingStatusMapReport(GenericMapReport, CommtrackReportMixin):
     slug = "reportingstatus_map"
 
     fields = ['corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
-              'corehq.apps.reports.fields.SelectProgramField']
+              'corehq.apps.reports.dont_use.fields.SelectProgramField']
 
     data_source = {
         'adapter': 'report',

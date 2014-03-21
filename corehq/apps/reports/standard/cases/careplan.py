@@ -25,7 +25,7 @@ class CareplanCaseListReport(CaseListReport):
 
     fields = [
         'corehq.apps.reports.filters.users.UserTypeFilter',
-        'corehq.apps.reports.fields.SelectCaseOwnerField',
+        'corehq.apps.reports.filters.users.SelectCaseOwnerFilter',
         'corehq.apps.reports.filters.select.SelectOpenCloseFilter',
         'corehq.apps.reports.standard.cases.filters.CaseSearchFilter',
     ]

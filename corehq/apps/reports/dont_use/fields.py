@@ -333,3 +333,34 @@ class DeviceLogDevicesField(DeviceLogFilterField):
     slug = "logdevice"
     view = "phonelog/devicelog_data_devices"
     filter_desc = ugettext_noop("Filter Logs by Device")
+
+
+class GroupFieldMixin():
+    slug = "group"
+    name = ugettext_noop("Group")
+    cssId = "group_select"
+
+
+class ReportMultiSelectField(ReportSelectField):
+    template = "reports/fields/multiselect_generic.html"
+    selected = []
+    # auto_select
+    default_option = []
+
+    # enfore as_combo = False ?
+
+    def update_params(self):
+        self.selected = self.request.GET.getlist(self.slug) or self.default_option
+
+
+class MultiSelectGroupField(GroupFieldMixin, ReportMultiSelectField):
+    default_option = ['_all']
+    placeholder = 'Click to select groups'
+    help_text = "Start typing to select one or more groups"
+
+    @property
+    def options(self):
+        self.groups = Group.get_reporting_groups(self.domain)
+        opts = [dict(val=group.get_id, text=group.name) for group in self.groups]
+        opts.insert(0, {'text': 'All', 'val': '_all'})
+        return opts
