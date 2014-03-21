@@ -100,8 +100,7 @@ log file settings are correct, as well as any settings required by any other
 functionality you want to use, such as SMS sending and Google Analytics.
 
 Ensure that the directories for `LOG_FILE` and `DJANGO_LOG_FILE` exist and are
-writeable. Increase `CCHQ_API_THROTTLE_REQUESTS` to prevent test failures when
-running the full test suite.
+writeable.
 
 ### Alternate steps for Windows
 On Windows it can be hard to compile some of the packages so we recommend installing those from their binary
