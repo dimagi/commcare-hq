@@ -175,8 +175,10 @@ def india():
     env.should_migrate = True
 
     _setup_path()
-    env.virtualenv_root = posixpath.join(env.home, '.virtualenvs/commcarehq')
-    env.virtualenv_root_preindex = posixpath.join(env.home, '.virtualenvs/commcarehq_preindex')
+    env.virtualenv_root = posixpath.join(
+        env.home, '.virtualenvs/commcarehq27')
+    env.virtualenv_root_preindex = posixpath.join(
+        env.home, '.virtualenvs/commcarehq27_preindex')
 
     env.roledefs = {
         'couch': [],
