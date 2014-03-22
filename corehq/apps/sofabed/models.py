@@ -64,7 +64,11 @@ class FormData(models.Model):
         self.device_id = instance.metadata.deviceID
         self.user_id = instance.metadata.userID
         self.username = instance.metadata.username
-        self.app_id = instance.app_id or '_MISSING_APP_ID'
+        missing = '_MISSING_APP_ID'
+        try:
+            self.app_id = instance.app_id or missing
+        except AttributeError:
+            self.app_id = missing
         self.xmlns = instance.xmlns
 
     def matches_exact(self, instance):
