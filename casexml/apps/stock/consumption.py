@@ -6,8 +6,6 @@ from datetime import datetime, timedelta
 from casexml.apps.stock import const
 from casexml.apps.stock.models import StockTransaction
 from dimagi.utils.dates import force_to_datetime
-from corehq.apps.consumption.shortcuts import compute_default_consumption
-from corehq.apps.domain.models import Domain
 
 DEFAULT_CONSUMPTION_FUNCTION = lambda case_id, product_id: None
 
@@ -117,6 +115,13 @@ def compute_consumption_or_default(case_id,
             product_id,
             configuration
         )
+
+
+def compute_default_consumption(case_id, product_id, configuration):
+    return configuration.default_consumption_function(
+        case_id,
+        product_id
+    )
 
 
 def get_transactions(case_id, product_id, section_id, window_start, window_end):
