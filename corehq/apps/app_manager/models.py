@@ -2924,21 +2924,24 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         module = self.get_module(module_id)
         return module.new_form(name, lang, attachment)
 
-    @parse_int([1, 2])
-    def delete_form(self, module_id, form_id):
+    def delete_form(self, module_id, form_unique_id):
+        module_id = int(module_id)
         module = self.get_module(module_id)
-        form = module['forms'][form_id]
-        record = DeleteFormRecord(
-            domain=self.domain,
-            app_id=self.id,
-            module_id=module_id,
-            form_id=form_id,
-            form=form,
-            datetime=datetime.utcnow()
-        )
-        record.save()
-        del module['forms'][form_id]
-        return record
+        for form_index in range(len(module['forms'])):
+            form = module['forms'][form_index]
+            if form.unique_id == form_unique_id:
+                record = DeleteFormRecord(
+                    domain=self.domain,
+                    app_id=self.id,
+                    module_id=module_id,
+                    form_id=form_index,
+                    form=form,
+                    datetime=datetime.utcnow()
+                )
+                record.save()
+                del module['forms'][form_index]
+                return record
+        return None
 
     def rename_lang(self, old_lang, new_lang):
         validate_lang(new_lang)

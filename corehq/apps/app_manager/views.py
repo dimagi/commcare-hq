@@ -395,6 +395,10 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
                     'module_type': module.doc_type
                 })
 
+    if not form.unique_id:
+        form.get_unique_id()
+        form.save()
+
     context = {
         'nav_form': form if not is_user_registration else '',
         'xform_languages': languages,
@@ -1013,15 +1017,18 @@ def undo_delete_module(request, domain, record_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def delete_form(req, domain, app_id, module_id, form_id):
+def delete_form(req, domain, app_id, module_id, form_unique_id):
     "Deletes a form from an app"
     app = get_app(domain, app_id)
-    record = app.delete_form(module_id, form_id)
-    messages.success(req,
-        'You have deleted a form. <a href="%s" class="post-link">Undo</a>' % reverse('undo_delete_form', args=[domain, record.get_id]),
-        extra_tags='html'
-    )
-    app.save()
+    record = app.delete_form(module_id, form_unique_id)
+    if record is not None:
+        messages.success(
+            req,
+            'You have deleted a form. <a href="%s" class="post-link">Undo</a>'
+            % reverse('undo_delete_form', args=[domain, record.get_id]),
+            extra_tags='html'
+        )
+        app.save()
     return back_to_main(req, domain, app_id=app_id, module_id=module_id)
 
 
