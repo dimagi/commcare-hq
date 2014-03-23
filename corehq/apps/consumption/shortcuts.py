@@ -20,13 +20,6 @@ def get_default_consumption(domain, product_id, location_type, case_id):
         return None
 
 
-def compute_default_consumption(case_id, product_id, configuration):
-    return configuration.default_consumption_function(
-        case_id,
-        product_id
-    )
-
-
 def set_default_consumption_for_domain(domain, amount):
     default = DefaultConsumption.get_domain_default(domain)
     return _update_or_create_default(domain, amount, default, TYPE_DOMAIN)

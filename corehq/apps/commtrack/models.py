@@ -8,11 +8,11 @@ from django.utils.translation import ugettext as _
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.stock import const as stockconst
-from casexml.apps.stock.consumption import ConsumptionConfiguration
+from casexml.apps.stock.consumption import ConsumptionConfiguration, compute_default_consumption
 from casexml.apps.stock.models import StockReport as DbStockReport, StockTransaction as DbStockTransaction, DocDomainMapping
 from casexml.apps.case.xml import V2
 from corehq.apps.commtrack import const
-from corehq.apps.consumption.shortcuts import get_default_consumption, compute_default_consumption
+from corehq.apps.consumption.shortcuts import get_default_consumption
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.couch.loosechange import map_reduce
