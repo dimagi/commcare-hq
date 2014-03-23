@@ -547,7 +547,7 @@ class InvoiceSummaryView(AccountingSectionView):
     @property
     def page_context(self):
         return {
-            'adjust_balance_forms': [self.adjust_balance_form],
+            'adjust_balance_form': self.adjust_balance_form,
             'adjustment_list': self.adjustment_list,
             'billing_records': self.billing_records,
             'invoice_info_form': self.invoice_info_form,
