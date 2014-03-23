@@ -100,7 +100,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         case_es = self.case_es
         user_ids, owner_ids = self.case_users_and_owners
         query = self.build_query(case_type=self.case_type, afilter=self.case_filter,
-                                 status=self.case_status, owner_ids=owner_ids, user_ids=user_ids,
+                                 status=self.case_status, owner_ids=owner_ids+user_ids, user_ids=user_ids,
                                  search_string=SearchFilter.get_value(self.request, self.domain))
         query_results = case_es.run_query(query)
 
@@ -119,8 +119,8 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     @property
     @memoized
     def case_users_and_owners(self):
-        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
-        user_ids = filter(None, [u.get("user_id") for u in users_data["combined_users"]])
+        users_data = ExpandedMobileWorkerFilter.pull_users_from_es(self.domain, self.request, fields=[])
+        user_ids = filter(None, [u["_id"] for u in users_data["hits"]["hits"]])
         group_owner_ids = []
         for user_id in user_ids:
             group_owner_ids.extend([group._id for group in Group.by_user(user_id) if group.case_sharing])

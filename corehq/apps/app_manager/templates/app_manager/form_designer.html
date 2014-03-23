@@ -211,6 +211,8 @@
     </script>
 {% endblock %}
 
+{% block title %}{{ form.name|html_trans:langs|safe }}{% endblock %}
+
 {% block head %}
     {{ block.super }}
 

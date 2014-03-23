@@ -1468,6 +1468,8 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             'can_use_data',
             'project_manager',
             'phone_model',
+            'goal_time_period',
+            'goal_followup_rate',
         ]
         for attr in internal_attrs:
             val = getattr(self.domain_object.internal, attr)
