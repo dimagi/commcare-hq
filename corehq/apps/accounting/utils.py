@@ -108,7 +108,8 @@ def domain_has_privilege(domain, privilege_slug, **assignment):
 
 def is_active_subscription(date_start, date_end):
     today = datetime.date.today()
-    return (date_start is None or date_start <= today) and (date_end is None or today <= date_end)
+    return ((date_start is None or date_start <= today)
+            and (date_end is None or today < date_end))
 
 
 def has_subscription_already_ended(subscription):
