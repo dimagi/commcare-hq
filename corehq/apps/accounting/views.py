@@ -296,7 +296,6 @@ class EditSubscriptionView(AccountingSectionView):
         elif ('cancel_subscription' in self.request.POST
               and self.cancel_form.is_valid()):
             self.cancel_subscription()
-            return HttpResponseRedirect(self.page_url)
         return self.get(request, *args, **kwargs)
 
     def cancel_subscription(self):
