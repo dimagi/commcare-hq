@@ -1,4 +1,4 @@
-from casexml.apps.stock.consumption import ConsumptionConfiguration, compute_consumption
+from casexml.apps.stock.consumption import ConsumptionConfiguration, compute_consumption, compute_consumption_or_default
 from casexml.apps.stock.tests.mock_consumption import now
 from casexml.apps.stock.tests.base import StockTestBase
 
@@ -28,7 +28,13 @@ class ConsumptionCaseTest(StockTestBase):
         self.assertEqual(None, compute_consumption(self.case_id, self.product_id,
                                                    now, configuration=ConsumptionConfiguration(min_periods=4)))
         _ten = lambda case_id, product_id: 10
-        self.assertAlmostEqual(10., compute_consumption(self.case_id, self.product_id, now,
-                                                        configuration=ConsumptionConfiguration(
-                                                            min_periods=4,
-                                                            default_consumption_function=_ten)))
+        self.assertAlmostEqual(10., compute_consumption_or_default(
+            self.case_id,
+            self.product_id,
+            now,
+            None,
+            configuration=ConsumptionConfiguration(
+                min_periods=4,
+                default_consumption_function=_ten
+            )
+        ))

@@ -6,6 +6,8 @@ from datetime import datetime, timedelta
 from casexml.apps.stock import const
 from casexml.apps.stock.models import StockTransaction
 from dimagi.utils.dates import force_to_datetime
+from corehq.apps.consumption.shortcuts import compute_default_consumption
+from corehq.apps.domain.models import Domain
 
 DEFAULT_CONSUMPTION_FUNCTION = lambda case_id, product_id: None
 
@@ -58,15 +60,63 @@ def span_days(start, end):
     return span.days + span.seconds / 86400.
 
 
-def compute_consumption(case_id, product_id, window_end, section_id=const.SECTION_TYPE_STOCK,
+def compute_consumption(case_id,
+                        product_id,
+                        window_end,
+                        section_id=const.SECTION_TYPE_STOCK,
                         configuration=None):
+    """
+    Computes the consumption for a product at a supply point.
+
+    Can optionally pass a section_id, but by default the 'stock'
+    value is used for computation.
+
+    Returns None if there is insufficient history.
+    """
+
     configuration = configuration or ConsumptionConfiguration()
     window_start = window_end - timedelta(days=configuration.max_window)
-    transactions = get_transactions(case_id, product_id, section_id, window_start, window_end)
+    transactions = get_transactions(
+        case_id,
+        product_id,
+        section_id,
+        window_start,
+        window_end
+    )
 
     return compute_consumption_from_transactions(
         transactions, window_start, configuration
     )
+
+
+def compute_consumption_or_default(case_id,
+                                   product_id,
+                                   window_end,
+                                   domain,
+                                   section_id=const.SECTION_TYPE_STOCK,
+                                   configuration=None):
+    """
+    Used when it's not important to know if the consumption
+    value is real or just a default value
+    """
+    configuration = configuration or ConsumptionConfiguration()
+
+    consumption = compute_consumption(
+        case_id,
+        product_id,
+        window_end,
+        section_id,
+        configuration
+    )
+
+    if consumption:
+        return consumption
+    else:
+        return compute_default_consumption(
+            case_id,
+            product_id,
+            configuration
+        )
 
 
 def get_transactions(case_id, product_id, section_id, window_start, window_end):

@@ -1,7 +1,7 @@
 from collections import defaultdict
 import hashlib
 from couchdbkit import ResourceConflict
-from casexml.apps.stock.consumption import compute_consumption
+from casexml.apps.stock.consumption import compute_consumption_or_default
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.exceptions import BadStateException, RestoreException
@@ -91,9 +91,15 @@ class RestoreConfig(object):
         def transaction_to_xml(trans):
             return entry_xml(trans.product_id, trans.stock_on_hand)
 
-        def consumption_entry(case_id, product_id, section_id):
-            consumption_value = compute_consumption(case_id, product_id, datetime.utcnow(), section_id,
-                                                    self.stock_settings.consumption_config)
+        def consumption_entry(case_id, product_id, section_id, domain):
+            consumption_value = compute_consumption_or_default(
+                case_id,
+                product_id,
+                datetime.utcnow(),
+                domain,
+                section_id,
+                self.stock_settings.consumption_config
+            )
             if consumption_value is not None:
                 return entry_xml(product_id, consumption_value)
 
@@ -128,7 +134,7 @@ class RestoreConfig(object):
 
                     yield E.balance(
                         *filter(lambda e: e is not None,
-                                [consumption_entry(commtrack_case._id, p, section_id)
+                                [consumption_entry(commtrack_case._id, p, section_id, commtrack_case.domain)
                                  for p in consumption_product_ids]),
                         **{'entity-id': commtrack_case._id, 'date': section_timestamp_map[section_id],
                            'section-id': consumption_section_id}
