@@ -1309,10 +1309,16 @@ class StockState(models.Model):
             return self.daily_consumption
         else:
             domain = self.get_domain()
+
+            if domain.commtrack_settings:
+                config = domain.commtrack_settings.get_consumption_config()
+            else:
+                config = None
+
             return compute_default_consumption(
-                domain,
                 self.case_id,
-                self.product_id
+                self.product_id,
+                config
             )
 
     class Meta:

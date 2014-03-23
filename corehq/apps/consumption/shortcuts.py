@@ -20,16 +20,11 @@ def get_default_consumption(domain, product_id, location_type, case_id):
         return None
 
 
-def compute_default_consumption(domain, case_id, product_id):
-    import bpdb; bpdb.set_trace()
-    if domain and domain.commtrack_settings:
-        config = domain.commtrack_settings.get_consumption_config()
-        return config.default_consumption_function(
-            case_id,
-            product_id
-        )
-    else:
-        return None
+def compute_default_consumption(case_id, product_id, configuration):
+    return configuration.default_consumption_function(
+        case_id,
+        product_id
+    )
 
 
 def set_default_consumption_for_domain(domain, amount):

@@ -9,6 +9,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.models import Location
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.util import get_default_requisition_config
 from corehq.apps.commtrack.models import CommTrackUser, SupplyPointCase, CommtrackConfig, ConsumptionConfig
 from corehq.apps.sms.backend import test
@@ -124,18 +125,17 @@ class CommTrackTest(TestCase):
         self.backend = test.bootstrap(TEST_BACKEND, to_console=True)
         self.domain = bootstrap_domain()
         self.ct_settings = CommtrackConfig.for_domain(self.domain.name)
-        ct_settings = CommtrackConfig.for_domain(self.domain.name)
-        ct_settings.consumption_config = ConsumptionConfig(
+        self.ct_settings.consumption_config = ConsumptionConfig(
             min_transactions=0,
             min_window=0,
             optimal_window=60,
             min_periods=0,
         )
-        ct_settings.save()
         if self.requisitions_enabled:
             self.ct_settings.requisition_config = get_default_requisition_config()
-            self.ct_settings.save()
-        from corehq.apps.domain.models import Domain
+
+        self.ct_settings.save()
+
         self.domain = Domain.get(self.domain._id)
 
         self.loc = make_loc('loc1')
