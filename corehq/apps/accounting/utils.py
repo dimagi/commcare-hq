@@ -114,8 +114,7 @@ def is_active_subscription(date_start, date_end):
 
 def has_subscription_already_ended(subscription):
     return (subscription.date_end is not None
-            and subscription.date_end <= datetime.date.today()
-            and not subscription.is_active)
+            and subscription.date_end <= datetime.date.today())
 
 
 def get_money_str(amount):
