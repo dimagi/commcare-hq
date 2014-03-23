@@ -1332,16 +1332,16 @@ class AdjustBalanceForm(forms.Form):
             ('credit', 'Add CREDIT of Custom Amount'),
             ('debit', 'Add DEBIT of Custom Amount'),
         )
-        self.fields['adjustment_type'].initial = 'current'
         self.fields['invoice_id'].initial = invoice.id
         self.helper = FormHelper()
         self.helper.form_class = "form-horizontal"
         self.helper.layout = crispy.Layout(
             crispy.Div(
-                crispy.Field('adjustment_type'),
+                crispy.Field('adjustment_type', data_bind="checked: adjustmentType"),
                 crispy.HTML(
-                    '<div id="div_id_custom_amount" class="control-group">'
-                    '<label for="id_custom_amount" class="control-label ">'
+                    '<div id="div_id_custom_amount" class="control-group"'
+                    ' data-bind="visible: showCustomAmount">'
+                    '<label for="id_custom_amount" class="control-label">'
                     'Custom amount'
                     '</label>'
                     '<div class="controls">'
@@ -1354,6 +1354,7 @@ class AdjustBalanceForm(forms.Form):
                 crispy.Field('note'),
                 crispy.Field('invoice_id'),
                 css_class='modal-body',
+                css_id="adjust-balance-form-%d" % invoice.id
             ),
             FormActions(
                 crispy.ButtonHolder(
