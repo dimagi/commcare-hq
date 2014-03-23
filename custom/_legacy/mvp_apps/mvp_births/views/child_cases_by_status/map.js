@@ -3,14 +3,16 @@ function (doc) {
     if (isChildCase(doc)) {
 
         function delivered_infacility(place, extra_no) {
+            var i = 0,
+                result,
+                arr = [];
             if (extra_no) {
-                var arr = ["hospital", "facility", "centre", "clinic", "no", "yes"];
+                arr = ["hospital", "facility", "centre", "clinic", "no", "yes"];
+            } else {
+                arr = ["hospital", "facility", "centre", "clinic", "yes"];
             }
-            else{
-                var arr = ["hospital", "facility", "centre", "clinic", "yes"];
-            }
-            for(var i=0; i<arr.length; i++) {
-                var result = arr[i];
+            for (i; i < arr.length; i++) {
+                result = arr[i];
                 if (place.indexOf(result) >= 0) {
                     return true;
                 }
