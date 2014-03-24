@@ -10,11 +10,6 @@ from corehq.apps.reports.dispatcher import (ProjectReportDispatcher,
 from .filters import urls as filter_urls
 
 
-dodoma_reports = patterns('corehq.apps.reports.dodoma',
-    url('^household_verification_json$', 'household_verification_json'),
-    url('^household_verification/$', 'household_verification'),
-)
-
 _phonelog_context = {
     'report': {
         'name': "Device Logs",
@@ -56,10 +51,6 @@ urlpatterns = patterns('corehq.apps.reports.views',
         'download_attachment', name='download_attachment'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/archive/$', 'archive_form', name='archive_form'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/unarchive/$', 'unarchive_form', name='unarchive_form'),
-
-    # Custom Hook for Dodoma TODO should this be here?
-    url(r'^dodoma/', include(dodoma_reports)),
-
 
     # export API
     url(r"^export/$", 'export_data'),
