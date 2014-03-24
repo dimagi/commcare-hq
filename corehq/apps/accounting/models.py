@@ -1061,12 +1061,7 @@ class BillingRecord(models.Model):
             record.skipped_email = True
             invoice.is_hidden = True
         else:
-            pdf_attachment = {
-                'title': invoice_pdf.get_filename(invoice),
-                'file_obj': StringIO(invoice_pdf.get_data(invoice)),
-                'mimetype': 'application/pdf',
-            }
-            record.send_email(pdf_attachment, contact_emails=contact_emails)
+            record.send_email(contact_emails=contact_emails)
         record.save()
         return record
 
@@ -1079,7 +1074,12 @@ class BillingRecord(models.Model):
             invoice__subscription__subscriber=self.invoice.subscription.subscriber
         ).count() > MAX_INVOICE_COMMUNICATIONS
 
-    def send_email(self, pdf_attachment, contact_emails=None):
+    def send_email(self, contact_emails=None):
+        pdf_attachment = {
+            'title': self.pdf.get_filename(self.invoice),
+            'file_obj': StringIO(self.pdf.get_data(self.invoice)),
+            'mimetype': 'application/pdf',
+        }
         month_name = self.invoice.date_start.strftime("%B")
         domain = self.invoice.subscription.subscriber.domain
         title = "Your %(product)s Billing Statement for %(month)s" % {
@@ -1104,12 +1104,6 @@ class BillingRecord(models.Model):
         }
 
         contact_emails = contact_emails or self.invoice.email_recipients
-        contact_emails = (contact_emails.split(',')
-                          if contact_emails is not None else [])
-        if not contact_emails:
-            logging.error(
-                "[Billing] Could not find an email to send the invoice "
-                "email to for the domain: %s" % domain)
         if self.is_email_throttled():
             self.skipped_email = True
             self.save()
