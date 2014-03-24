@@ -111,13 +111,13 @@ def domain_has_privilege(domain, privilege_slug, **assignment):
 
 def is_active_subscription(date_start, date_end):
     today = datetime.date.today()
-    return (date_start is None or date_start <= today) and (date_end is None or today <= date_end)
+    return ((date_start is None or date_start <= today)
+            and (date_end is None or today < date_end))
 
 
 def has_subscription_already_ended(subscription):
     return (subscription.date_end is not None
-            and subscription.date_end <= datetime.date.today()
-            and not subscription.is_active)
+            and subscription.date_end <= datetime.date.today())
 
 
 def get_money_str(amount):
