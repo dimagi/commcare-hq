@@ -1021,10 +1021,10 @@ def undo_delete_module(request, domain, record_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def delete_form(req, domain, app_id, module_id, form_unique_id):
+def delete_form(req, domain, app_id, module_unique_id, form_unique_id):
     "Deletes a form from an app"
     app = get_app(domain, app_id)
-    record = app.delete_form(module_id, form_unique_id)
+    record = app.delete_form(module_unique_id, form_unique_id)
     if record is not None:
         messages.success(
             req,
@@ -1033,7 +1033,9 @@ def delete_form(req, domain, app_id, module_id, form_unique_id):
             extra_tags='html'
         )
         app.save()
-    return back_to_main(req, domain, app_id=app_id, module_id=module_id)
+    return back_to_main(
+        req, domain, app_id=app_id,
+        module_id=app.get_module_by_unique_id(module_unique_id).id)
 
 
 @no_conflict_require_POST
@@ -1065,8 +1067,13 @@ def copy_form(req, domain, app_id, module_id, form_id):
 @require_can_edit_apps
 def undo_delete_form(request, domain, record_id):
     record = DeleteFormRecord.get(record_id)
-    record.undo()
-    messages.success(request, 'Form successfully restored.')
+    try:
+        record.undo()
+        messages.success(request, 'Form successfully restored.')
+    except ModuleNotFoundException:
+        messages.error(request,
+                       'Form could not be restored: module is missing.')
+
     return back_to_main(request, domain, app_id=record.app_id,
                         module_id=record.module_id, form_id=record.form_id)
 
