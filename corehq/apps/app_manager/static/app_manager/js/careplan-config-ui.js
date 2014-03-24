@@ -267,7 +267,7 @@ var CareplanConfig = (function () {
             };
 
             self.repeat_context = function () {
-                return self.careplanConfig.get_repeat_context(self.case_name);
+                return self.careplanConfig.get_repeat_context(self.case_name());
             };
 
             self.ensureBlankProperties = function () {
