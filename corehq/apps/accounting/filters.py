@@ -1,6 +1,5 @@
 import calendar
 from corehq.apps.accounting.models import *
-from corehq.apps.accounting.utils import get_full_name
 from corehq.apps.reports.filters.base import (
     BaseReportFilter, BaseSingleOptionFilter
 )
@@ -287,7 +286,7 @@ class BillingContactFilter(BaseSingleOptionFilter):
     def options(self):
         return clean_options(
             [
-                (get_full_name(contact), get_full_name(contact))
+                (contact.full_name, contact.full_name)
                 for contact in BillingContactInfo.objects.all()
                 if contact.first_name or contact.last_name
             ]

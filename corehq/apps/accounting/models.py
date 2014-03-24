@@ -319,6 +319,15 @@ class BillingContactInfo(models.Model):
         max_length=50, null=False, verbose_name=_("Country")
     )
 
+    @property
+    def full_name(self):
+        if not self.first_name:
+            return self.last_name
+        elif not self.last_name:
+            return self.first_name
+        else:
+            return "%s %s" % (self.first_name, self.last_name)
+
 
 class SoftwareProduct(models.Model):
     """

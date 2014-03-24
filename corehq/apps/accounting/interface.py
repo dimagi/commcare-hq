@@ -442,7 +442,7 @@ class InvoiceInterface(GenericTabularReport):
                 subscription__account__in=[
                     contact_info.account.id
                     for contact_info in BillingContactInfo.objects.all()
-                    if contact_name == get_full_name(contact_info)
+                    if contact_name == contact_info.full_name
                 ],
             )
 
