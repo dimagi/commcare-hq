@@ -109,6 +109,11 @@ def partial_escape(xpath):
 class ModuleNotFoundException(Exception):
     pass
 
+
+class FormNotFoundException(Exception):
+    pass
+
+
 class IncompatibleFormTypeException(Exception):
     pass
 
@@ -2890,7 +2895,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         for obj in self.get_forms(bare):
             if matches(obj if bare else obj['form']):
                 return obj
-        raise KeyError("Form in app '%s' with unique id '%s' not found" % (self.id, unique_form_id))
+        raise FormNotFoundException(
+            ("Form in app '%s' with unique id '%s' not found"
+             % (self.id, unique_form_id)))
 
     def get_form_location(self, unique_form_id):
         for m_index, module in enumerate(self.get_modules()):
@@ -2928,24 +2935,24 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         module = self.get_module(module_id)
         return module.new_form(name, lang, attachment)
 
-    def delete_form(self, module_id, form_unique_id):
-        module_id = int(module_id)
-        module = self.get_module(module_id)
-        for form_index in range(len(module['forms'])):
-            form = module['forms'][form_index]
-            if form.unique_id == form_unique_id:
-                record = DeleteFormRecord(
-                    domain=self.domain,
-                    app_id=self.id,
-                    module_id=module_id,
-                    form_id=form_index,
-                    form=form,
-                    datetime=datetime.utcnow()
-                )
-                record.save()
-                del module['forms'][form_index]
-                return record
-        return None
+    def delete_form(self, module_unique_id, form_unique_id):
+        try:
+            module = self.get_module_by_unique_id(module_unique_id)
+            form = self.get_form(form_unique_id)
+        except ModuleNotFoundException, FormNotFoundException:
+            return None
+
+        record = DeleteFormRecord(
+            domain=self.domain,
+            app_id=self.id,
+            module_unique_id=module_unique_id,
+            form_id=form.id,
+            form=form,
+            datetime=datetime.utcnow(),
+        )
+        record.save()
+        del module['forms'][form.id]
+        return record
 
     def rename_lang(self, old_lang, new_lang):
         validate_lang(new_lang)
@@ -3378,14 +3385,19 @@ class DeleteFormRecord(DeleteRecord):
 
     app_id = StringProperty()
     module_id = IntegerProperty()
+    module_unique_id = StringProperty()
     form_id = IntegerProperty()
     form = SchemaProperty(FormBase)
 
     def undo(self):
         app = Application.get(self.app_id)
-        forms = app.modules[self.module_id].forms
+        if self.module_unique_id is not None:
+            module = app.get_module_by_unique_id(self.module_unique_id)
+        else:
+            module = app.modules[self.module_id]
+        forms = module.forms
         forms.insert(self.form_id, self.form)
-        app.modules[self.module_id].forms = forms
+        module.forms = forms
         app.save()
 
 
