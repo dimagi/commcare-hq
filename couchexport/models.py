@@ -669,7 +669,7 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
         return config, updated_schema, export_schema_checkpoint
 
     def get_export_files(self, format=None, previous_export=None, filter=None, process=None, max_column_size=None,
-                         apply_transforms=True, **kwargs):
+                         apply_transforms=True, limit=0, **kwargs):
         from couchexport.export import get_writer, format_tables, create_intermediate_tables
         if not format:
             format = self.default_format or Format.XLS_2007
@@ -697,6 +697,8 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
             if process:
                 DownloadBase.set_progress(process, 0, total_docs)
             for i, doc in config.enum_docs():
+                if limit and i > limit:
+                    break
                 if self.transform and apply_transforms:
                     doc = self.transform(doc)
                 formatted_tables = self.trim(
@@ -715,13 +717,13 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
 
         return ExportFiles(path, export_schema_checkpoint, format)
 
-    def download_data(self, format="", previous_export=None, filter=None):
+    def download_data(self, format="", previous_export=None, filter=None, limit=0):
         """
         If there is data, return an HTTPResponse with the appropriate data.
         If there is not data returns None.
         """
         from couchexport.shortcuts import export_response
-        files = self.get_export_files(format, previous_export, filter)
+        files = self.get_export_files(format, previous_export, filter, limit=limit)
         return export_response(files.file, files.format, self.name)
 
     def to_export_config(self):
