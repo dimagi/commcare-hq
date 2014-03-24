@@ -1228,25 +1228,30 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             domain = domain or self.current_domain
         except AttributeError:
             domain = None
-        try:
-            if self.is_commcare_user():
-                role = self.get_role(domain)
-                if role is None:
-                    models = []
-                else:
-                    models = role.permissions.view_report_list
-            else:
-                models = self.get_domain_membership(domain).viewable_reports()
 
-            if slug:
-                return [to_function(m).slug for m in models]
-            if name:
-                return [to_function(m).name for m in models]
-            return models
-        except AttributeError:
-            # todo: what is this here for? we should really be catching something
-            # more specific and the try/catch should be more isolated.
-            return []
+        if self.is_commcare_user():
+            role = self.get_role(domain)
+            if role is None:
+                models = []
+            else:
+                models = role.permissions.view_report_list
+        else:
+            models = self.get_domain_membership(domain).viewable_reports()
+
+        def slug_name(model):
+            try:
+                if slug:
+                    return to_function(model).slug
+                if name:
+                    return to_function(model).name
+            except AttributeError:
+                logging.warning("Unable to load report model: %s", model)
+                return None
+
+        if slug or name:
+            return filter(None, [slug_name(m) for m in models])
+
+        return models
 
     def get_exportable_reports(self, domain=None):
         viewable_reports = self.get_viewable_reports(domain=domain, slug=True)
