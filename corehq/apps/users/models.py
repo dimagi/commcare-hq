@@ -1223,7 +1223,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     def is_deleted(self):
         return self.base_doc.endswith(DELETED_SUFFIX)
 
-    def get_viewable_reports(self, domain=None, name=True, slug=False):
+    def get_viewable_reports(self, domain=None, name=False, slug=False):
         try:
             domain = domain or self.current_domain
         except AttributeError:
