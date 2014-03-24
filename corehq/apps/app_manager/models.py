@@ -2866,7 +2866,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         for obj in self.get_modules():
             if matches(obj):
                 return obj
-        raise KeyError("Module in app '%s' with unique id '%s' not found" % (self.id, unique_id))
+        raise ModuleNotFoundException(
+            ("Module in app '%s' with unique id '%s' not found"
+             % (self.id, unique_id)))
 
     def get_forms(self, bare=True):
         if self.show_user_registration:
@@ -2909,7 +2911,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def delete_module(self, module_unique_id):
         try:
             module = self.get_module_by_unique_id(module_unique_id)
-        except KeyError:
+        except ModuleNotFoundException:
             return None
         record = DeleteModuleRecord(
             domain=self.domain,
