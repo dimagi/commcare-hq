@@ -394,7 +394,7 @@ class InvoiceInterface(GenericTabularReport):
         if payment_status is not None:
             filters.update(
                 date_paid__isnull=(
-                    payment_status == PaymentStatusFilter.not_paid
+                    payment_status == PaymentStatusFilter.NOT_PAID
                 ),
             )
 

@@ -270,11 +270,11 @@ class PaymentStatusFilter(BaseSingleOptionFilter):
     slug = 'payment_status'
     label = _("Payment Status")
     default_text = _("All")
-    paid = "PAID"
-    not_paid = "NOT_PAID"
+    PAID = "paid"
+    NOT_PAID = "not_paid"
     options = (
-        (paid, "Paid"),
-        (not_paid, "Not Paid"),
+        (PAID, "Paid"),
+        (NOT_PAID, "Not Paid"),
     )
 
 
