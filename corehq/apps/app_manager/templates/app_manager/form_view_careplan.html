@@ -47,6 +47,9 @@
         });
     </script>
 {% endblock %}
+
+{% block title %}{{ form.name|html_trans:langs|safe }}{% endblock %}
+
 {% block head %}
     {{ block.super }}
     <link href="{% static 'hqwebapp/js/lib/select2/select2.css' %}" rel="stylesheet"/>
