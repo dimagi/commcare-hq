@@ -19,7 +19,8 @@
                 </a>
             </td>
             <td>{{ row.domain }}</td>
-            <td>{{ row.time }}</td>
+            <td>{{ row.time.html|safe }}
+            <span title="{{ row.time.sort_key }}"></span></td>
             <td>{{ row.user }}</td>
             <td>
                 {% for user in row.device_users %}

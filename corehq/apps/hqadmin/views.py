@@ -1,4 +1,5 @@
 from datetime import timedelta, datetime
+import time
 import json
 from copy import deepcopy
 import logging
@@ -42,7 +43,7 @@ from corehq.apps.ota.views import get_restore_response, get_restore_params
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
 from corehq.apps.reports.graph_models import Axis, LineChart
 from corehq.apps.reports.standard.domains import es_domain_query
-from corehq.apps.reports.util import make_form_couch_key
+from corehq.apps.reports.util import make_form_couch_key, format_datatables_data
 from corehq.apps.sms.models import SMSLog
 from corehq.apps.users.models import  CommCareUser, WebUser
 from corehq.apps.users.util import format_username
@@ -432,8 +433,9 @@ def mobile_user_reports(request):
     else:
         logs = Log.objects.filter(type__exact="user-report").order_by('domain')
         for log in logs:
+            seconds_since_epoch = int(time.mktime(log.date.timetuple()) * 1000)
             rows.append(dict(domain=log.domain,
-                             time=log.date,
+                             time=format_datatables_data(text=log.date, sort_key=seconds_since_epoch),
                              user=log.username,
                              device_users=[u.username for u in log.device_users.all()],
                              message=log.msg,
