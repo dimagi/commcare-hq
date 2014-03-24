@@ -2706,7 +2706,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     # take the previous version's compiled form as-is
                     # (generation code may have changed since last build)
                     previous_source = previous_version.fetch_attachment(filename)
-                except (ResourceNotFound, KeyError):
+                except (ResourceNotFound, FormNotFoundException):
                     pass
                 else:
                     previous_hash = _hash(previous_source)
