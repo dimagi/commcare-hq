@@ -29,6 +29,7 @@ from django.template import loader
 from django.template.context import RequestContext
 from restkit import Resource
 
+from corehq.apps.accounting.models import Subscription
 from corehq.apps.announcements.models import Notification
 from corehq.apps.app_manager.models import BUG_REPORTS_DOMAIN
 from corehq.apps.app_manager.models import import_app
@@ -375,11 +376,17 @@ def bug_report(req):
         full_name = None
     report['full_name'] = full_name
 
+    report['software_plan'] = Subscription.objects.get(
+        is_active=True,
+        subscriber__domain=report['domain'],
+    ).plan_version
+
     subject = u'{subject} ({domain})'.format(**report)
     message = (
         u"username: {username}\n"
         u"full name: {full_name}\n"
         u"domain: {domain}\n"
+        u"software plan: {software_plan}\n"
         u"url: {url}\n"
         u"copy url: {copy_url}\n"
         u"datetime: {datetime}\n"
