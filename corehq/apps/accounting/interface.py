@@ -350,8 +350,8 @@ class InvoiceInterface(GenericTabularReport):
             [
                 invoice.subscription.account.name,
                 invoice.subscription.subscriber.domain,
-                invoice.subscription.account.salesforce_account_id,
-                invoice.subscription.salesforce_contract_id,
+                invoice.subscription.account.salesforce_account_id or "--",
+                invoice.subscription.salesforce_contract_id or "--",
                 invoice.date_start,
                 invoice.date_end,
                 invoice.date_due,
