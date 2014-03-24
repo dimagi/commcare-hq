@@ -731,6 +731,9 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
 
         if module_id:
             module = app.get_module(module_id)
+            if not module.unique_id:
+                module.get_or_create_unique_id()
+                module.save()
         if form_id:
             form = module.get_form(form_id)
     except ModuleNotFoundException:
@@ -992,18 +995,19 @@ def undo_delete_app(request, domain, record_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def delete_module(req, domain, app_id, module_id):
+def delete_module(req, domain, app_id, module_unique_id):
     "Deletes a module from an app"
     app = get_app(domain, app_id)
     try:
-        record = app.delete_module(module_id)
+        record = app.delete_module(module_unique_id)
     except ModuleNotFoundException:
         return bail(req, domain, app_id)
-    messages.success(req,
-        'You have deleted a module. <a href="%s" class="post-link">Undo</a>' % reverse('undo_delete_module', args=[domain, record.get_id]),
-        extra_tags='html'
-    )
-    app.save()
+    if record is not None:
+        messages.success(req,
+            'You have deleted a module. <a href="%s" class="post-link">Undo</a>' % reverse('undo_delete_module', args=[domain, record.get_id]),
+            extra_tags='html'
+        )
+        app.save()
     return back_to_main(req, domain, app_id=app_id)
 
 @no_conflict_require_POST
