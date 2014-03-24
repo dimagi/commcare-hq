@@ -6,12 +6,15 @@ from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.reports.api import ReportDataSource
 from datetime import datetime, timedelta
 from casexml.apps.stock.models import StockState, StockTransaction
+from couchforms.models import XFormInstance
 from django.db.models import Sum, Avg
 from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, product_ids_filtered_by_program
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from casexml.apps.stock.utils import months_of_stock_remaining, stock_category
 
 # TODO make settings
+from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
+
 REPORTING_PERIOD = 'weekly'
 REPORTING_PERIOD_ARGS = (1,)
 
@@ -75,6 +78,12 @@ class CommtrackDataSourceMixin(object):
             return datetime.strptime(date, '%Y-%m-%d').date()
         else:
             return datetime.now().date()
+
+    @property
+    def request(self):
+        request = self.config.get('request')
+        if request:
+            return request
 
 
 class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
@@ -247,7 +256,7 @@ class StockStatusBySupplyPointDataSource(StockStatusDataSource):
                                 ('current_stock', 'consumption', 'months_remaining', 'category')))
             yield rec
 
-class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
+class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, MultiFormDrilldownMixin):
     """
     Config:
         domain: The domain to report on.
@@ -281,15 +290,22 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             else:
                 last_transaction = None
 
-            yield {
-                'loc_id': loc._id,
-                'loc_path': loc.path,
-                'name': loc.name,
-                'type': loc.location_type,
-                'reporting_status': reporting_status(
-                    last_transaction,
-                    self.start_date,
-                    self.end_date
-                ),
-                'geo': loc._geopoint,
-            }
+            if self.all_relevant_forms:
+                forms_xmlns = []
+                for form in self.all_relevant_forms.values():
+                    forms_xmlns.append(form['xmlns'])
+                if last_transaction:
+                    form = XFormInstance.get(last_transaction.report.form_id)
+                    if form.xmlns in forms_xmlns:
+                        yield {
+                            'loc_id': loc._id,
+                            'loc_path': loc.path,
+                            'name': loc.name,
+                            'type': loc.location_type,
+                            'reporting_status': reporting_status(
+                                last_transaction,
+                                self.start_date,
+                                self.end_date
+                            ),
+                            'geo': loc._geopoint,
+                        }
