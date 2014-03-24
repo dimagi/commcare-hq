@@ -2,8 +2,8 @@
 This script generates fake data to use for load testing HQ.
 Go through and set the numbers and comment/uncomment as needed.
 
-You can run it either by opening a django shell and importing this file,
-or using the perf_script.py file
+You can run it by opening a django shell and importing this file,
+then running `>>> run()`
 
 First:
 Configure db settings to use "performance test" db
@@ -19,7 +19,7 @@ from gevent.pool import Pool
 
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
-from receiver.signals import successful_form_received
+from couchforms.signals import successful_form_received
 from corehq.apps.users.models import CommCareUser, WebUser, CommCareCase
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.models import Domain
@@ -27,14 +27,11 @@ from corehq.apps.domain.models import Domain
 from .make_users import make_web_user, make_cc_user, make_cc_users
 from .submit_forms import make_forms
 
-db = get_db()
 
 # Copied from Dan's stuff
 def disable_signals():
     print "Disabling signals"
     print len(successful_form_received.receivers)
-    from casexml.apps.phone.signals import send_default_response
-    successful_form_received.disconnect(send_default_response)
     from corehq.apps.app_manager.signals import get_custom_response_message
     successful_form_received.disconnect(get_custom_response_message)
     from corehq.apps.receiverwrapper.signals import create_case_repeat_records,\
@@ -52,7 +49,7 @@ disable_signals()
 ########################
 
 # domain = create_domain(domain_name)
-domain_name = 'esoergel'
+domain_name = 'bigdomain'
 
 # I copied this app over from HQ
 # https://www.commcarehq.org/a/amelia/apps/view/dec1dc1a2c1e16f41b42aca3f60d1334/?lang=en
@@ -78,25 +75,21 @@ def user_and_forms():
         domain_name,
         app_id,
         user,
-        cases=random.randint(0,200),
-        avg_updates=2
+        cases=random.randint(0, 860),
+        avg_updates=3.5
     )
     # print "created user %s" % user.username
 
 
-
 # Make sure you're using the correct db!
-# pool = Pool(10)
-# num_users = 10000
-# for i in range(num_users):
-    # # control verbosity
-    # if i%100 == 0:
-        # print "%d / %d users created (%s%%)" % (
-                # i, num_users, float(i)/num_users)
-    # pool.spawn(user_and_forms)
+pool = Pool(10)
+num_users = 500
+for i in range(num_users):
+    # control verbosity
+    # if i%1 == 0:
+    print "%d / %d users created (%s%%)" % (
+            i, num_users, float(i)/num_users)
+    pool.spawn(user_and_forms)
 
-
-make_cc_users(domain_name, 10000)
-
-# Estimate 2 hrs to get to 10k users with no cases or forms
-
+    # Estimate 2 hrs to get to 10k users with no cases or forms
+    # make_cc_users(domain_name, 10000)
