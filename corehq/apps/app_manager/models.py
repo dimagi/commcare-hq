@@ -2906,17 +2906,19 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         self.modules.append(module)
         return self.get_module(-1)
 
-    @parse_int([1])
-    def delete_module(self, module_id):
-        module = self.get_module(module_id)
+    def delete_module(self, module_unique_id):
+        try:
+            module = self.get_module_by_unique_id(module_unique_id)
+        except KeyError:
+            return None
         record = DeleteModuleRecord(
             domain=self.domain,
             app_id=self.id,
-            module_id=module_id,
+            module_id=module.id,
             module=module,
             datetime=datetime.utcnow()
         )
-        del self.modules[module_id]
+        del self.modules[module.id]
         record.save()
         return record
 
