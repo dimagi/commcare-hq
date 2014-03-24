@@ -117,7 +117,7 @@ class CaseAPIHelper(object):
         else:
             base_results = [CaseAPIResult(id=id, id_only=True) for id in case_id_list]
 
-        if self.filters:
+        if self.filters and not self.footprint:
             base_results = filter(_filter, base_results)
 
         link_locations(base_results)
