@@ -1,7 +1,16 @@
-from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
+from corehq.apps.accounting.dispatcher import (
+    AccountingAdminInterfaceDispatcher
+)
 from corehq.apps.accounting.filters import *
-from corehq.apps.accounting.models import BillingAccount, Subscription, SoftwarePlan
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
+from corehq.apps.accounting.forms import AdjustBalanceForm
+from corehq.apps.accounting.models import (
+    BillingAccount, Subscription, SoftwarePlan
+)
+from corehq.apps.accounting.utils import get_money_str
+from corehq.apps.reports.cache import request_cache
+from corehq.apps.reports.datatables import (
+    DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
+)
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from corehq.apps.reports.generic import GenericTabularReport
@@ -294,3 +303,181 @@ class SoftwarePlanInterface(AddItemInterface):
     slug = "software_plans"
 
     crud_item_type = "Software_Plan"
+
+
+class InvoiceInterface(GenericTabularReport):
+    base_template = "accounting/invoice_list.html"
+    section_name = "Accounting"
+    dispatcher = AccountingAdminInterfaceDispatcher
+    name = "Invoices"
+    description = "List of all invoices"
+    slug = "invoices"
+    exportable = True
+    fields = [
+        'corehq.apps.accounting.interface.NameFilter',
+        'corehq.apps.accounting.interface.SubscriberFilter',
+        'corehq.apps.accounting.interface.PaymentStatusFilter',
+        'corehq.apps.accounting.interface.StatementPeriodFilter',
+        'corehq.apps.accounting.interface.DueDatePeriodFilter',
+        'corehq.apps.accounting.interface.SalesforceAccountIDFilter',
+        'corehq.apps.accounting.interface.SalesforceContractIDFilter',
+        'corehq.apps.accounting.interface.SoftwarePlanNameFilter',
+        'corehq.apps.accounting.interface.BillingContactFilter',
+    ]
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn("Account Name"),
+            DataTablesColumn("Project Space"),
+            DataTablesColumn("Salesforce Account ID"),
+            DataTablesColumn("Salesforce Contract ID"),
+            DataTablesColumnGroup("Statement Period",
+                                  DataTablesColumn("Start"),
+                                  DataTablesColumn("End")),
+            DataTablesColumn("Date Due"),
+            DataTablesColumn("Amount Due"),
+            DataTablesColumn("Payment Status"),
+            DataTablesColumn("Action"),
+            DataTablesColumn("View Invoice"),
+        )
+
+    @property
+    def rows(self):
+        from corehq.apps.accounting.views import InvoiceSummaryView
+
+        return [
+            [
+                invoice.subscription.account.name,
+                invoice.subscription.subscriber.domain,
+                invoice.subscription.account.salesforce_account_id or "--",
+                invoice.subscription.salesforce_contract_id or "--",
+                invoice.date_start,
+                invoice.date_end,
+                invoice.date_due,
+                get_money_str(invoice.balance),
+                "Paid" if invoice.date_paid else "Not paid",
+                # TODO - Create helper function for action button HTML
+                mark_safe('<a data-toggle="modal"'
+                          ' data-target="#adjustBalanceModal-%(invoice_id)d"'
+                          ' href="#adjustBalanceModal-%(invoice_id)d"'
+                          ' class="btn">'
+                          'Adjust Balance</a>'
+                          % {'invoice_id': invoice.id}),
+                mark_safe('<a href="%s" class="btn">Go to Invoice</a>'
+                          % reverse(InvoiceSummaryView.urlname,
+                                    args=(invoice.id,))),
+
+            ] for invoice in self.invoices
+        ]
+
+    @property
+    @memoized
+    def filters(self):
+        filters = {}
+
+        account_name = NameFilter.get_value(self.request, self.domain)
+        if account_name is not None:
+            filters.update(
+                subscription__account__name=account_name,
+            )
+
+        subscriber_domain = \
+            SubscriberFilter.get_value(self.request, self.domain)
+        if subscriber_domain is not None:
+            filters.update(
+                subscription__subscriber__domain=subscriber_domain,
+            )
+
+        payment_status = \
+            PaymentStatusFilter.get_value(self.request, self.domain)
+        if payment_status is not None:
+            filters.update(
+                date_paid__isnull=(
+                    payment_status == PaymentStatusFilter.NOT_PAID
+                ),
+            )
+
+        statement_period = \
+            StatementPeriodFilter.get_value(self.request, self.domain)
+        if statement_period is not None:
+            filters.update(
+                date_start__gte=statement_period[0],
+                date_start__lte=statement_period[1],
+            )
+
+        due_date_period = \
+            DueDatePeriodFilter.get_value(self.request, self.domain)
+        if due_date_period is not None:
+            filters.update(
+                date_due__gte=due_date_period[0],
+                date_due__lte=due_date_period[1],
+            )
+
+        salesforce_account_id = \
+            SalesforceAccountIDFilter.get_value(self.request, self.domain)
+        if salesforce_account_id is not None:
+            filters.update(
+                subscription__account__salesforce_account_id=
+                salesforce_account_id,
+            )
+
+        salesforce_contract_id = \
+            SalesforceContractIDFilter.get_value(self.request, self.domain)
+        if salesforce_contract_id is not None:
+            filters.update(
+                subscription__salesforce_contract_id=salesforce_contract_id,
+            )
+
+        plan_name = SoftwarePlanNameFilter.get_value(self.request, self.domain)
+        if plan_name is not None:
+            filters.update(
+                subscription__plan_version__plan__name=plan_name,
+            )
+
+        contact_name = \
+            BillingContactFilter.get_value(self.request, self.domain)
+        if contact_name is not None:
+            filters.update(
+                subscription__account__in=[
+                    contact_info.account.id
+                    for contact_info in BillingContactInfo.objects.all()
+                    if contact_name == contact_info.full_name
+                ],
+            )
+
+        return filters
+
+    @property
+    @memoized
+    def invoices(self):
+        return Invoice.objects.filter(**self.filters)
+
+    @property
+    @memoized
+    def adjust_balance_forms(self):
+        return [AdjustBalanceForm(invoice) for invoice in self.invoices]
+
+    @property
+    def report_context(self):
+        context = super(InvoiceInterface, self).report_context
+        context.update(
+            adjust_balance_forms=self.adjust_balance_forms,
+        )
+        return context
+
+    @property
+    @memoized
+    def adjust_balance_form(self):
+        return AdjustBalanceForm(
+            Invoice.objects.get(id=int(self.request.POST.get('invoice_id'))),
+            self.request.POST
+        )
+
+    @property
+    @request_cache("default")
+    def view_response(self):
+        if self.request.method == 'POST':
+            if self.adjust_balance_form.is_valid():
+                self.adjust_balance_form.adjust_balance()
+        return super(InvoiceInterface, self).view_response

@@ -319,6 +319,15 @@ class BillingContactInfo(models.Model):
         max_length=50, null=False, verbose_name=_("Country")
     )
 
+    @property
+    def full_name(self):
+        if not self.first_name:
+            return self.last_name
+        elif not self.last_name:
+            return self.first_name
+        else:
+            return "%s %s" % (self.first_name, self.last_name)
+
 
 class SoftwareProduct(models.Model):
     """
@@ -941,6 +950,10 @@ class Invoice(models.Model):
 
     def update_balance(self):
         self.balance = self.get_total()
+        if self.balance <= 0:
+            self.date_paid = datetime.date.today()
+        else:
+            self.date_paid = None
 
     def calculate_credit_adjustments(self):
         """
@@ -962,6 +975,19 @@ class Invoice(models.Model):
         return cls.objects.filter(
             subscription__subscriber__domain=domain, is_hidden=False
         ).count() > 0
+
+    @property
+    def email_recipients(self):
+        contact_emails = \
+            self.subscription.account.billingcontactinfo.emails
+        contact_emails = (contact_emails.split(',')
+                          if contact_emails is not None else [])
+        if not contact_emails:
+            logging.error(
+                "[Billing] Could not find an email to send the invoice "
+                "email to for the domain: %s" %
+                self.subscription.subscriber.domain)
+        return contact_emails
 
 
 class SubscriptionAdjustment(models.Model):
@@ -1025,7 +1051,7 @@ class BillingRecord(models.Model):
         return self._pdf
 
     @classmethod
-    def generate_record(cls, invoice):
+    def generate_record(cls, invoice, contact_emails=None):
         record = cls(invoice=invoice)
         invoice_pdf = InvoicePdf()
         invoice_pdf.generate_pdf(record.invoice)
@@ -1034,6 +1060,8 @@ class BillingRecord(models.Model):
         if record.invoice.subscription.do_not_invoice:
             record.skipped_email = True
             invoice.is_hidden = True
+        else:
+            record.send_email(contact_emails=contact_emails)
         record.save()
         return record
 
@@ -1046,7 +1074,7 @@ class BillingRecord(models.Model):
             invoice__subscription__subscriber=self.invoice.subscription.subscriber
         ).count() > MAX_INVOICE_COMMUNICATIONS
 
-    def send_email(self):
+    def send_email(self, contact_emails=None):
         pdf_attachment = {
             'title': self.pdf.get_filename(self.invoice),
             'file_obj': StringIO(self.pdf.get_data(self.invoice)),
@@ -1075,13 +1103,7 @@ class BillingRecord(models.Model):
                                       args=[domain]),
         }
 
-        contact_emails = self.invoice.subscription.account.billingcontactinfo.emails
-        contact_emails = (contact_emails.split(',')
-                          if contact_emails is not None else [])
-        if not contact_emails:
-            logging.error(
-                "[Billing] Could not find an email to send the invoice "
-                "email to for the domain: %s" % domain)
+        contact_emails = contact_emails or self.invoice.email_recipients
         if self.is_email_throttled():
             self.skipped_email = True
             self.save()
@@ -1271,15 +1293,16 @@ class CreditLine(models.Model):
                 })
 
     def adjust_credit_balance(self, amount, is_new=False, note=None,
-                              line_item=None, invoice=None):
-        reason = CreditAdjustmentReason.MANUAL
+                              line_item=None, invoice=None, reason=None):
         note = note or ""
         if line_item is not None and invoice is not None:
             raise CreditLineError("You may only have an invoice OR a line item making this adjustment.")
-        if line_item is not None:
-            reason = CreditAdjustmentReason.LINE_ITEM
-        if invoice is not None:
-            reason = CreditAdjustmentReason.INVOICE
+        if reason is None:
+            reason = CreditAdjustmentReason.MANUAL
+            if line_item is not None:
+                reason = CreditAdjustmentReason.LINE_ITEM
+            if invoice is not None:
+                reason = CreditAdjustmentReason.INVOICE
         if is_new:
             note = "Initialization of credit line. %s" % note
         credit_adjustment = CreditAdjustment(
@@ -1332,7 +1355,9 @@ class CreditLine(models.Model):
         return credit_line
 
     @classmethod
-    def add_subscription_credit(cls, amount, subscription, note=None):
+    def add_subscription_credit(cls, amount, subscription, note=None,
+                                invoice=None,
+                                reason=None):
         cls._validate_add_amount(amount)
         credit_line, is_created = cls.objects.get_or_create(
             account=subscription.account,
@@ -1340,7 +1365,8 @@ class CreditLine(models.Model):
             product_type__exact=None,
             feature_type__exact=None,
         )
-        credit_line.adjust_credit_balance(amount, is_new=is_created, note=note)
+        credit_line.adjust_credit_balance(amount, is_new=is_created, note=note,
+                                          invoice=invoice, reason=reason)
         return credit_line
 
     @classmethod

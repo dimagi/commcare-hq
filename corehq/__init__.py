@@ -207,6 +207,7 @@ from corehq.apps.accounting.interface import (
     AccountingInterface,
     SubscriptionInterface,
     SoftwarePlanInterface,
+    InvoiceInterface,
 )
 
 ACCOUNTING_ADMIN_INTERFACES = (
@@ -214,6 +215,7 @@ ACCOUNTING_ADMIN_INTERFACES = (
         AccountingInterface,
         SubscriptionInterface,
         SoftwarePlanInterface,
+        InvoiceInterface,
     )),
 )
 

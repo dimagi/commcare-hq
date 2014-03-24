@@ -18,16 +18,24 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.accounting.forms import (
     BillingAccountForm, CreditForm, SubscriptionForm, CancelForm,
     PlanInformationForm, SoftwarePlanVersionForm, FeatureRateForm,
-    ProductRateForm, TriggerInvoiceForm
+    ProductRateForm, TriggerInvoiceForm, InvoiceInfoForm, AdjustBalanceForm,
+    ResendEmailForm,
 )
-from corehq.apps.accounting.exceptions import NewSubscriptionError, InvoiceError, CreditLineError
-from corehq.apps.accounting.interface import AccountingInterface, SubscriptionInterface, SoftwarePlanInterface
-from corehq.apps.accounting.models import (SoftwareProductType, Invoice, BillingAccount, CreditLine, Subscription,
-                                           SoftwarePlanVersion, SoftwarePlan)
+from corehq.apps.accounting.exceptions import (
+    NewSubscriptionError, InvoiceError, CreditLineError
+)
+from corehq.apps.accounting.interface import (
+    AccountingInterface, SubscriptionInterface, SoftwarePlanInterface,
+    InvoiceInterface
+)
 from corehq.apps.accounting.async_handlers import (
     FeatureRateAsyncHandler, Select2RateAsyncHandler,
     SoftwareProductRateAsyncHandler, Select2BillingInfoHandler,
     Select2SubscriptionInfoHandler, Select2InvoiceTriggerHandler,
+)
+from corehq.apps.accounting.models import (
+    SoftwareProductType, Invoice, BillingAccount, CreditLine, Subscription,
+    SoftwarePlanVersion, SoftwarePlan, CreditAdjustment
 )
 from corehq.apps.accounting.user_text import PricingTable
 from corehq.apps.accounting.utils import (
@@ -480,3 +488,79 @@ def pricing_table_json(request, product, locale):
     response["Access-Control-Max-Age"] = "1000"
     response["Access-Control-Allow-Headers"] = "*"
     return response
+
+
+class InvoiceSummaryView(AccountingSectionView):
+    template_name = 'accounting/invoice.html'
+    urlname = 'invoice_summary'
+
+    @property
+    @memoized
+    def invoice(self):
+        return Invoice.objects.get(id=self.args[0])
+
+    @property
+    def page_title(self):
+        return "Invoice #%s" % self.invoice.invoice_number
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=self.args)
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': InvoiceInterface.name,
+            'url': InvoiceInterface.get_url(),
+        }]
+
+    @property
+    @memoized
+    def adjust_balance_form(self):
+        if self.request.method == 'POST':
+            return AdjustBalanceForm(self.invoice, self.request.POST)
+        return AdjustBalanceForm(self.invoice)
+
+    @property
+    @memoized
+    def adjustment_list(self):
+        adjustment_list = CreditAdjustment.objects.filter(invoice=self.invoice)
+        return adjustment_list.order_by('-date_created')
+
+    @property
+    @memoized
+    def billing_records(self):
+        return self.invoice.billingrecord_set.all()
+
+    @property
+    @memoized
+    def invoice_info_form(self):
+        return InvoiceInfoForm(self.invoice)
+
+    @property
+    @memoized
+    def resend_email_form(self):
+        if self.request.method == 'POST':
+            return ResendEmailForm(self.invoice, self.request.POST)
+        return ResendEmailForm(self.invoice)
+
+    @property
+    def page_context(self):
+        return {
+            'adjust_balance_form': self.adjust_balance_form,
+            'adjustment_list': self.adjustment_list,
+            'billing_records': self.billing_records,
+            'invoice_info_form': self.invoice_info_form,
+            'resend_email_form': self.resend_email_form,
+        }
+
+    def post(self, request, *args, **kwargs):
+        if 'adjust_balance' in self.request.POST:
+            if self.adjust_balance_form.is_valid():
+                self.adjust_balance_form.adjust_balance()
+                return HttpResponseRedirect(self.page_url)
+        elif 'resend_email' in self.request.POST:
+            if self.resend_email_form.is_valid():
+                self.resend_email_form.resend_email()
+                return HttpResponseRedirect(self.page_url)
+        return self.get(request, *args, **kwargs)

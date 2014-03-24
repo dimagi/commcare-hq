@@ -1,0 +1,100 @@
+{% extends 'hqwebapp/base_section.html' %}
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static 'accounting/js/adjust-balance-modal.js' %}"></script>
+    <script src="{% static 'accounting/js/stay-on-tab.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+    <script>
+        var adjustBalanceFormModel = new AdjustBalanceFormModel();
+        ko.applyBindings(adjustBalanceFormModel, $('#adjust-balance-form-{{ invoice_info_form.invoice.id }}').get(0));
+    </script>
+{% endblock %}
+
+{% block main_column %}
+    {% include 'accounting/adjust_balance.html' %}
+
+    <div class="modal hide fade" id="resendEmailModal">
+        <div class="modal-header">
+            <a class="close" data-dismiss="modal">&times;</a>
+            <h3>
+                {% blocktrans with invoice_number=invoice_info_form.invoice.invoice_number %}
+                    Resend Invoice #{{ invoice_number }} Email?
+                {% endblocktrans %}
+            </h3>
+        </div>
+        {% crispy resend_email_form %}
+    </div>
+
+    <ul class="nav nav-tabs" id="user-settings-tabs">
+        <li><a href="#invoice" data-toggle="tab">{% trans "Invoice" %}</a></li>
+        <li><a href="#adjustments" data-toggle="tab">{% trans "Adjustments" %}</a></li>
+    </ul>
+
+    <div class="tab-content">
+        <div class="tab-pane" id="invoice">
+            {% crispy invoice_info_form %}
+
+            <h2>Communication</h2>
+            <table class="table table-striped table-bordered">
+                <thead>
+                    <tr>
+                        <th>{% trans "Date" %}</th>
+                        <th>{% trans "Recipients" %}</th>
+                        <th>{% trans "View PDF" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for billing_record in billing_records %}
+                        <tr>
+                            <td>{{ billing_record.date_created }}</td>
+                            <td>{{ billing_record.emailed_to }}</td>
+                            <td>
+                                <a href="{% url 'domain_billing_statement_download' billing_record.invoice.subscription.subscriber.domain billing_record.pdf_data_id %}">
+                                    View PDF
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <button name="open-resend-modal"
+                    class="btn"
+                    data-target="#resendEmailModal"
+                    data-toggle="modal"
+            >
+                Re-Send Email
+            </button>
+        </div>
+
+        <div class="tab-pane" id="adjustments">
+        <h2>Invoice Adjustments</h2>
+            <table class="table table-striped table-bordered">
+                <thead>
+                    <tr>
+                        <th>{% trans "Date" %}</th>
+                        <th>{% trans "Reason" %}</th>
+                        <th>{% trans "Note" %}</th>
+                        <th>{% trans "User" %}</th>
+                        <th>{% trans "Amount" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for adjustment in adjustment_list %}
+                        <tr>
+                            <td>{{ adjustment.date_created }}</td>
+                            <td>{{ adjustment.reason }}</td>
+                            <td>{{ adjustment.note }}</td>
+                            <td>{{ adjustment.web_user }}</td>
+                            <td>{{ adjustment.amount }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

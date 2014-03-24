@@ -1,6 +1,7 @@
 import calendar
 import datetime
 import json
+from decimal import Decimal
 from django.conf import settings
 
 from django.contrib import messages
@@ -30,7 +31,7 @@ from corehq.apps.accounting.async_handlers import (
     SoftwareProductRateAsyncHandler,
 )
 from corehq.apps.accounting.utils import (
-    is_active_subscription, has_subscription_already_ended,
+    is_active_subscription, has_subscription_already_ended, get_money_str,
     get_first_last_days
 )
 from corehq.apps.hqwebapp.crispy import BootstrapMultiField, TextField
@@ -38,6 +39,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.accounting.models import (
     BillingAccount,
     BillingContactInfo,
+    BillingRecord,
     CreditAdjustment,
     CreditLine,
     Currency,
@@ -52,7 +54,9 @@ from corehq.apps.accounting.models import (
     SoftwareProductRate,
     SoftwareProductType,
     Subscription,
-    Invoice)
+    Invoice,
+    CreditAdjustmentReason,
+)
 
 
 class BillingAccountForm(forms.Form):
@@ -1293,3 +1297,226 @@ class TriggerInvoiceForm(forms.Form):
             else:
                 invoice.delete()
 
+
+class AdjustBalanceForm(forms.Form):
+    adjustment_type = forms.ChoiceField(
+        widget=forms.RadioSelect,
+    )
+
+    custom_amount = forms.DecimalField(
+        required=False,
+    )
+
+    method = forms.ChoiceField(
+        choices=CreditAdjustmentReason.CHOICES,
+    )
+
+    note = forms.CharField(
+        required=False,
+        widget=forms.Textarea,
+    )
+
+    invoice_id = forms.CharField(
+        widget=forms.HiddenInput(),
+    )
+
+    def __init__(self, invoice, *args, **kwargs):
+        self.invoice = invoice
+        super(AdjustBalanceForm, self).__init__(*args, **kwargs)
+        self.fields['adjustment_type'].choices = (
+            ('current', 'Add Credit of Current Balance: %s' %
+                        get_money_str(self.invoice.balance)),
+            ('credit', 'Add CREDIT of Custom Amount'),
+            ('debit', 'Add DEBIT of Custom Amount'),
+        )
+        self.fields['invoice_id'].initial = invoice.id
+        self.helper = FormHelper()
+        self.helper.form_class = "form-horizontal"
+        self.helper.layout = crispy.Layout(
+            crispy.Div(
+                crispy.Field(
+                    'adjustment_type',
+                    data_bind="checked: adjustmentType",
+                ),
+                crispy.HTML('''
+                    <div id="div_id_custom_amount" class="control-group"
+                     data-bind="visible: showCustomAmount">
+                        <label for="id_custom_amount" class="control-label">
+                            Custom amount
+                        </label>
+                        <div class="controls">
+                            <input class="textinput textInput"
+                             id="id_custom_amount" name="custom_amount"
+                             type="number" step="any">
+                        </div>
+                    </div>
+                '''),
+                crispy.Field('method'),
+                crispy.Field('note'),
+                crispy.Field('invoice_id'),
+                css_class='modal-body',
+                css_id="adjust-balance-form-%d" % invoice.id
+            ),
+            FormActions(
+                crispy.ButtonHolder(
+                    crispy.Submit(
+                        'adjust_balance',
+                        'Apply',
+                        data_loading_text='Submitting...',
+                    ),
+                    crispy.Button(
+                        'close',
+                        'Close',
+                        data_dismiss='modal',
+                    ),
+                ),
+                css_class='modal-footer',
+            ),
+        )
+
+    @property
+    @memoized
+    def amount(self):
+        adjustment_type = self.cleaned_data['adjustment_type']
+        if adjustment_type == 'current':
+            return self.invoice.balance
+        elif adjustment_type == 'credit':
+            return Decimal(self.cleaned_data['custom_amount'])
+        elif adjustment_type == 'debit':
+            return -Decimal(self.cleaned_data['custom_amount'])
+        else:
+            raise ValidationError("Received invalid adjustment type: %s"
+                                  % adjustment_type)
+
+    def adjust_balance(self):
+        CreditLine.add_subscription_credit(
+            -self.amount, self.invoice.subscription,
+            note=self.cleaned_data['note'],
+            invoice=self.invoice,
+            reason=self.cleaned_data['method'],
+        )
+        self.invoice.update_balance()
+        self.invoice.save()
+
+
+class InvoiceInfoForm(forms.Form):
+
+    subscription = forms.CharField()
+    project = forms.CharField()
+    account = forms.CharField()
+    current_balance = forms.CharField()
+
+    def __init__(self, invoice, *args, **kwargs):
+        self.invoice = invoice
+        subscription = invoice.subscription
+        super(InvoiceInfoForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_class = 'form-horizontal'
+        from corehq.apps.accounting.views import (
+            EditSubscriptionView,
+            ManageBillingAccountView,
+        )
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                'Invoice #%s' % invoice.invoice_number,
+                TextField(
+                    'subscription',
+                    mark_safe(
+                        '<a href="%(subscription_link)s">'
+                        '%(plan_name)s'
+                        ' (%(start_date)s - %(end_date)s)'
+                        '</a>' % {
+                            'subscription_link': reverse(
+                                EditSubscriptionView.urlname,
+                                args=(subscription.id,)
+                            ),
+                            'plan_name': subscription.plan_version,
+                            'start_date': subscription.date_start,
+                            'end_date': subscription.date_end,
+                        }
+                    ),
+                ),
+                TextField(
+                    'project',
+                    subscription.subscriber.domain,
+                ),
+                TextField(
+                    'account',
+                    mark_safe(
+                        '<a href="%(account_link)s">'
+                        '%(account_name)s'
+                        '</a>' % {
+                            'account_link': reverse(
+                                ManageBillingAccountView.urlname,
+                                args=(subscription.account.id,)
+                            ),
+                            'account_name': subscription.account.name,
+                        }
+                    ),
+                ),
+                TextField(
+                    'current_balance',
+                    get_money_str(invoice.balance),
+                ),
+                crispy.ButtonHolder(
+                    crispy.Button(
+                        'submit',
+                        'Adjust Balance',
+                        data_toggle='modal',
+                        data_target='#adjustBalanceModal-%d' % invoice.id,
+                    ),
+                ),
+            ),
+        )
+
+
+class ResendEmailForm(forms.Form):
+
+    additional_recipients = forms.CharField(
+        label="Additional Recipients:",
+        required=False,
+    )
+
+    def __init__(self, invoice, *args, **kwargs):
+        self.invoice = invoice
+        super(ResendEmailForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_class = 'form-horizontal'
+        self.helper.layout = crispy.Layout(
+            crispy.Div(
+                crispy.HTML(
+                    'This will send an email to: %s.' %
+                    ', '.join(invoice.email_recipients)
+                ),
+                crispy.Field('additional_recipients'),
+                css_class='modal-body',
+            ),
+            FormActions(
+                crispy.ButtonHolder(
+                    crispy.Submit(
+                        'resend_email',
+                        'Send Email',
+                        data_loading_text='Submitting...',
+                    ),
+                    crispy.Button(
+                        'close',
+                        'Close',
+                        data_dismiss='modal',
+                    ),
+                ),
+                css_class='modal-footer',
+            ),
+        )
+
+    def clean_additional_recipients(self):
+        return [
+            email.strip()
+            for email in self.cleaned_data['additional_recipients'].split(',')
+        ]
+
+    def resend_email(self):
+        contact_emails = self.invoice.email_recipients
+        contact_emails += self.cleaned_data['additional_recipients']
+        BillingRecord.generate_record(
+            self.invoice, contact_emails=contact_emails
+        )
