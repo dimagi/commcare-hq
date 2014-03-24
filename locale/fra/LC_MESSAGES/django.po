@@ -9761,15 +9761,15 @@ msgid "Inventory"
 msgstr "Inventaire"
 
 #: corehq/apps/reports/commtrack/standard.py:226
-msgid "Total SOH"
+msgid "Stock on Hand"
 msgstr "Total SOH"
 
 #: corehq/apps/reports/commtrack/standard.py:227
-msgid "Total AMC"
+msgid "Monthly Consumption"
 msgstr "Total AMC"
 
 #: corehq/apps/reports/commtrack/standard.py:228
-msgid "Remaining MOS"
+msgid "Months of Stock"
 msgstr "MOS restant"
 
 #: corehq/apps/reports/commtrack/standard.py:229
