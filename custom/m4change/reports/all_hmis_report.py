@@ -54,21 +54,22 @@ class AllHmisReport(MonthYearMixin, CustomProjectReport, CaseListReport, M4Chang
         domain = config["domain"]
         location_id = config["location_id"]
         datespan = config["datespan"]
-        sql_data = dict(
-            AncHmisCaseSqlData(domain=domain, datespan=datespan).data.items() +\
-            LdHmisCaseSqlData(domain=domain, datespan=datespan).data.items() +\
-            ImmunizationHmisCaseSqlData(domain=domain, datespan=datespan).data.items() +\
-            AllHmisCaseSqlData(domain=domain, datespan=datespan).data.items()
-        )
+        sql_data = [
+            AncHmisCaseSqlData(domain=domain, datespan=datespan).data,
+            LdHmisCaseSqlData(domain=domain, datespan=datespan).data,
+            ImmunizationHmisCaseSqlData(domain=domain, datespan=datespan).data,
+            AllHmisCaseSqlData(domain=domain, datespan=datespan).data
+        ]
         locations = get_location_hierarchy_by_id(location_id, domain)
         row_data = AllHmisReport.get_initial_row_data()
 
-        for location_id in locations:
-            key = (domain, location_id)
-            if key in sql_data:
-                report_rows = _get_rows(row_data, sql_data, key)
-                for key in report_rows:
-                    row_data.get(key)["value"] += report_rows.get(key)
+        for data in sql_data:
+            for location_id in locations:
+                key = (domain, location_id)
+                if key in data:
+                    report_rows = _get_rows(row_data, data, key)
+                    for key in report_rows:
+                        row_data.get(key)["value"] += report_rows.get(key)
         return row_data
 
 
