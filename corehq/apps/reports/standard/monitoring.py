@@ -779,11 +779,19 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
     fields = [
         'corehq.apps.reports.fields.MultiSelectGroupField',
         'corehq.apps.reports.fields.UserOrGroupField',
-        'corehq.apps.reports.fields.CaseTypeField',
+        'corehq.apps.reports.filters.select.MultiCaseTypeFilter',
         'corehq.apps.reports.fields.DatespanField',
     ]
     fix_left_col = True
     emailable = True
+
+    @property
+    @memoized
+    def case_types_filter(self):
+        case_types = self.request.GET.getlist('case_type')
+        if case_types:
+            return {"terms": {"type.exact": case_types}}
+        return {}
 
     @property
     def view_by(self):
@@ -885,8 +893,9 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                                 "to": datespan.enddate_param,
                                 "include_upper": True}}}
                     ]}}}
-        if self.case_type:
-            q["query"]["bool"]["must"].append({"match": {"type.exact": self.case_type}})
+
+        if self.case_types_filter:
+            q["query"]["bool"]["must"].append(self.case_types_filter)
 
         facets = [user_field]
         return es_query(q=q, facets=facets, es_url=CASE_INDEX + '/case/_search', size=1, dict_only=dict_only)
@@ -908,8 +917,9 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                                         "from": datespan.startdate_param,
                                         "to": datespan.enddate_param,
                                         "include_upper": True}}}}}]}}}
-        if self.case_type:
-            q["query"]["bool"]["must"].append({"match": {"type.exact": self.case_type}})
+
+        if self.case_types_filter:
+            q["query"]["bool"]["must"].append(self.case_types_filter)
 
         facets = ['owner_id']
         return es_query(q=q, facets=facets, es_url=CASE_INDEX + '/case/_search', size=1, dict_only=dict_only)
@@ -923,8 +933,8 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                         {"range": {"opened_on": {"lte": datespan.enddate_param}}}],
                     "must_not": {"range": {"closed_on": {"lt": datespan.startdate_param}}}}}}
 
-        if self.case_type:
-            q["query"]["bool"]["must"].append({"match": {"type.exact": self.case_type}})
+        if self.case_types_filter:
+            q["query"]["bool"]["must"].append(self.case_types_filter)
 
         facets = ['owner_id']
         return es_query(q=q, facets=facets, es_url=CASE_INDEX + '/case/_search', size=1, dict_only=dict_only)
