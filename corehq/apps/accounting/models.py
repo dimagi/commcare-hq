@@ -1299,15 +1299,16 @@ class CreditLine(models.Model):
                 })
 
     def adjust_credit_balance(self, amount, is_new=False, note=None,
-                              line_item=None, invoice=None):
-        reason = CreditAdjustmentReason.MANUAL
+                              line_item=None, invoice=None, reason=None):
         note = note or ""
         if line_item is not None and invoice is not None:
             raise CreditLineError("You may only have an invoice OR a line item making this adjustment.")
-        if line_item is not None:
-            reason = CreditAdjustmentReason.LINE_ITEM
-        if invoice is not None:
-            reason = CreditAdjustmentReason.INVOICE
+        if reason is None:
+            reason = CreditAdjustmentReason.MANUAL
+            if line_item is not None:
+                reason = CreditAdjustmentReason.LINE_ITEM
+            if invoice is not None:
+                reason = CreditAdjustmentReason.INVOICE
         if is_new:
             note = "Initialization of credit line. %s" % note
         credit_adjustment = CreditAdjustment(
@@ -1361,7 +1362,8 @@ class CreditLine(models.Model):
 
     @classmethod
     def add_subscription_credit(cls, amount, subscription, note=None,
-                                invoice=None):
+                                invoice=None,
+                                reason=None):
         cls._validate_add_amount(amount)
         credit_line, is_created = cls.objects.get_or_create(
             account=subscription.account,
@@ -1370,7 +1372,7 @@ class CreditLine(models.Model):
             feature_type__exact=None,
         )
         credit_line.adjust_credit_balance(amount, is_new=is_created, note=note,
-                                          invoice=invoice)
+                                          invoice=invoice, reason=reason)
         return credit_line
 
     @classmethod

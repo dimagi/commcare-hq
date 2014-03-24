@@ -54,7 +54,9 @@ from corehq.apps.accounting.models import (
     SoftwareProductRate,
     SoftwareProductType,
     Subscription,
-    Invoice)
+    Invoice,
+    CreditAdjustmentReason,
+)
 
 
 class BillingAccountForm(forms.Form):
@@ -1306,12 +1308,7 @@ class AdjustBalanceForm(forms.Form):
     )
 
     method = forms.ChoiceField(
-        choices=(
-            ('salesforce', 'Salesforce'),
-            ('check', 'Check'),
-            ('electronic', 'Electronic'),
-            ('correction', 'Correction'),
-        ),
+        choices=CreditAdjustmentReason.CHOICES,
     )
 
     note = forms.CharField(
@@ -1396,6 +1393,7 @@ class AdjustBalanceForm(forms.Form):
             -self.amount, self.invoice.subscription,
             note=self.cleaned_data['note'],
             invoice=self.invoice,
+            reason=self.cleaned_data['method'],
         )
         self.invoice.update_balance()
         self.invoice.save()
