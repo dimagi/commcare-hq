@@ -91,11 +91,23 @@ class FormErrorReport(PhonelogReport):
             self.total_records = len(self.users)
             return sorted(self.users, reverse=direction=='desc')[paged]
         logs = {"errors": self.error_logs, "warnings": self.warning_logs}[by]
-        username_count = logs.values('username').annotate(usernames=Count('username'))[paged]
-        usernames = [uc["username"] for uc in username_count]
-        self.total_records = len(usernames)
-        user = lambda u: _report_user_dict(CommCareUser.get_by_username(u))
-        return [user('%s@%s.commcarehq.org' % (u, self.domain)) for u in usernames]
+        self.total_records = logs.values('username').annotate(usernames=Count('username')).count()
+
+        if direction == 'desc':
+            username_data = logs.values('username').annotate(usernames=Count('username'))\
+            .order_by('usernames')[paged]
+        else:
+            username_data = logs.values('username').annotate(usernames=Count('username'))\
+            .order_by('usernames').reverse()[paged]
+        usernames = [uc["username"] for uc in username_data]
+
+        def make_user(username):
+            user = CommCareUser.get_by_username('%s@%s.commcarehq.org' % (username, self.domain))
+            if user:
+                return _report_user_dict(user)
+            return {"raw_username": username, "username_in_report": username}
+
+        return [make_user(u) for u in usernames]
 
     @property
     def rows(self):
@@ -103,10 +115,8 @@ class FormErrorReport(PhonelogReport):
         query_string = self.request.META['QUERY_STRING']
         child_report_url = DeviceLogDetailsReport.get_url(domain=self.domain)
         for user in self.users_to_show:
-            phonelogs = Log.objects.filter(username__exact=user.get('raw_username'), domain__exact=self.domain,
-                date__range=[self.datespan.startdate_param_utc, self.datespan.enddate_param_utc])
-            error_count = phonelogs.filter(type__in=TAGS["error"]).count()
-            warning_count = phonelogs.filter(type__in=TAGS["warning"]).count()
+            error_count = self.error_logs.filter(username__exact=user.get('raw_username')).count()
+            warning_count = self.warning_logs.filter(username__exact=user.get('raw_username')).count()
 
             formatted_warning_count = '<span class="label label-warning">%d</span>' % warning_count if warning_count > 0\
                                         else '<span class="label">%d</span>' % warning_count
