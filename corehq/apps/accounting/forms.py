@@ -30,7 +30,8 @@ from corehq.apps.accounting.async_handlers import (
     SoftwareProductRateAsyncHandler,
 )
 from corehq.apps.accounting.utils import (
-    is_active_subscription, has_subscription_already_ended
+    is_active_subscription, has_subscription_already_ended,
+    get_first_last_days
 )
 from corehq.apps.hqwebapp.crispy import BootstrapMultiField, TextField
 from corehq.apps.domain.models import Domain
@@ -51,7 +52,7 @@ from corehq.apps.accounting.models import (
     SoftwareProductRate,
     SoftwareProductType,
     Subscription,
-)
+    Invoice)
 
 
 class BillingAccountForm(forms.Form):
@@ -1262,9 +1263,31 @@ class TriggerInvoiceForm(forms.Form):
     def trigger_invoice(self):
         year = int(self.cleaned_data['year'])
         month = int(self.cleaned_data['month'])
-        last_day = calendar.monthrange(year, month)[1]
-        invoice_start = datetime.date(year, month, 1)
-        invoice_end = datetime.date(year, month, last_day)
+        invoice_start, invoice_end = get_first_last_days(year, month)
         domain = Domain.get_by_name(self.cleaned_data['domain'])
+        self.clean_previous_invoices(invoice_start, invoice_end, domain.name)
         invoice_factory = DomainInvoiceFactory(invoice_start, invoice_end, domain)
         invoice_factory.create_invoices()
+
+    def clean_previous_invoices(self, invoice_start, invoice_end, domain_name):
+        last_generated_invoices = Invoice.objects.filter(
+            date_start__lte=invoice_end, date_end__gte=invoice_start,
+            subscription__subscriber__domain=domain_name
+        ).all()
+        for invoice in last_generated_invoices:
+            for record in invoice.billingrecord_set.all():
+                record.pdf.delete()
+                record.delete()
+            invoice.subscriptionadjustment_set.all().delete()
+            invoice.creditadjustment_set.all().delete()
+            invoice.lineitem_set.all().delete()
+            if invoice.subscription.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY:
+                community_sub = invoice.subscription
+                community_sub.subscriptionadjustment_set.all().delete()
+                community_sub.subscriptionadjustment_related.all().delete()
+                community_sub.creditline_set.all().delete()
+                invoice.delete()
+                community_sub.delete()
+            else:
+                invoice.delete()
+

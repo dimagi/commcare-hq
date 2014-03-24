@@ -16,7 +16,9 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 from corehq import toggles
 from corehq.apps.accounting.invoice_pdf import Address, InvoiceTemplate
-from corehq.apps.accounting.utils import is_active_subscription, get_privileges
+from corehq.apps.accounting.utils import (
+    is_active_subscription, get_privileges, get_first_last_days
+)
 from corehq.apps.accounting.subscription_changes import (
     DomainDowngradeActionHandler, DomainUpgradeActionHandler,
 )
@@ -29,11 +31,13 @@ from django_prbac.models import Role
 from dimagi.utils.couch.database import SafeSaveDocument
 
 from corehq.apps.accounting.exceptions import (CreditLineError, AccountingError, SubscriptionAdjustmentError,
-                                               SubscriptionChangeError, NewSubscriptionError)
+                                               SubscriptionChangeError, NewSubscriptionError, InvoiceEmailThrottledError)
 from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES, ensure_domain_instance, get_change_status
 
 global_logger = logging.getLogger(__name__)
 integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
+
+MAX_INVOICE_COMMUNICATIONS = 5
 
 
 class BillingAccountType(object):
@@ -124,13 +128,16 @@ class SubscriptionAdjustmentReason(object):
     UPGRADE = "UPGRADE"
     DOWNGRADE = "DOWNGRADE"
     SWITCH = "SWITCH"
+    REACTIVATE = "REACTIVATE"
     CHOICES = (
         (CREATE, "A new subscription created from scratch."),
         (MODIFY, "Some part of the subscription was modified...likely a date."),
         (CANCEL, "The subscription was cancelled with no followup subscription."),
         (UPGRADE, "The subscription was upgraded to the related subscription."),
         (DOWNGRADE, "The subscription was downgraded to the related subscription."),
-        (SWITCH, "The plan was changed to the related subscription and was neither an upgrade or downgrade.")
+        (SWITCH, "The plan was changed to the related subscription and "
+                 "was neither an upgrade or downgrade."),
+        (REACTIVATE, "The subscription was reactivated."),
     )
 
 
@@ -664,6 +671,33 @@ class Subscription(models.Model):
     is_active = models.BooleanField(default=False)
     do_not_invoice = models.BooleanField(default=False)
 
+    def __str__(self):
+        return ("Subscription to %(plan_version)s for %(subscriber)s. "
+                "[%(date_start)s - %(date_end)s]" % {
+                    'plan_version': self.plan_version,
+                    'subscriber': self.subscriber,
+                    'date_start': self.date_start.strftime("%d %B %Y"),
+                    'date_end': (self.date_end.strftime("%d %B %Y")
+                                 if self.date_end is not None else "--"),
+                })
+
+    def __eq__(self, other):
+        return (
+            other is not None
+            and other.__class__.__name__ == self.__class__.__name__
+            and other.plan_version.pk == self.plan_version.pk
+            and other.date_start == self.date_start
+            and other.date_end == self.date_end
+            and other.subscriber.pk == self.subscriber.pk
+            and other.account.pk == self.account.pk
+        )
+
+    @property
+    def allowed_attr_changes(self):
+        # These are the attributes of a Subscription that can always be
+        # changed while the subscription is active (or reactivated):
+        return ['do_not_invoice', 'salesforce_contract_id']
+
     def cancel_subscription(self, adjustment_method=None, web_user=None, note=None):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
         today = datetime.date.today()
@@ -726,6 +760,32 @@ class Subscription(models.Model):
                                                  reason=adjustment_reason, related_subscription=new_subscription)
 
         return new_subscription
+
+    def reactivate_subscription(self, date_end=None, note=None, web_user=None,
+                                adjustment_method=None, **kwargs):
+        # This assumes that a subscription was cancelled then recreated the
+        # same day as the cancellation (with no other subscriptions
+        # created in between).
+        adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
+        today = datetime.date.today()
+        if self.date_end is not None and today > self.date_end:
+            raise SubscriptionAdjustmentError(
+                "Tried to reactivate a subscription, but the end date for "
+                "this subscription already passed."
+            )
+        self.subscriber.apply_upgrades_and_downgrades(
+            new_plan_version=self.plan_version
+        )
+        self.date_end = date_end
+        self.is_active = True
+        for allowed_attr in self.allowed_attr_changes:
+            if allowed_attr in kwargs.keys():
+                setattr(self, allowed_attr, kwargs[allowed_attr])
+        self.save()
+        SubscriptionAdjustment.record_adjustment(
+            self, reason=SubscriptionAdjustmentReason.REACTIVATE,
+            method=adjustment_method, note=note, web_user=web_user,
+        )
 
     @classmethod
     def _get_plan_by_subscriber(cls, subscriber):
@@ -790,6 +850,17 @@ class Subscription(models.Model):
         except (Subscription.DoesNotExist, IndexError):
             pass
 
+        can_reactivate, last_subscription = cls.can_reactivate_domain_subscription(
+            account, domain, plan_version, date_start=date_start
+        )
+        if can_reactivate:
+            last_subscription.reactivate_subscription(
+                date_end=date_end, note=note, web_user=web_user,
+                adjustment_method=adjustment_method,
+                **kwargs
+            )
+            return last_subscription
+
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
         subscription = Subscription(
             account=account,
@@ -803,6 +874,22 @@ class Subscription(models.Model):
         subscriber.apply_upgrades_and_downgrades(new_plan_version=plan_version)
         SubscriptionAdjustment.record_adjustment(subscription, method=adjustment_method, note=note, web_user=web_user)
         return subscription
+
+    @classmethod
+    def can_reactivate_domain_subscription(cls, account, domain, plan_version,
+                                           date_start=None):
+        subscriber = Subscriber.objects.get_or_create(
+            domain=domain, organization=None)[0]
+        date_start = date_start or datetime.date.today()
+        last_subscription = Subscription.objects.filter(
+            subscriber=subscriber, date_end=date_start
+        )
+        if not last_subscription.exists():
+            return False, None
+        last_subscription = last_subscription.latest('date_created')
+        return (last_subscription.account.pk == account.pk and
+                last_subscription.plan_version.pk == plan_version.pk
+               ), last_subscription
 
 
 class Invoice(models.Model):
@@ -930,9 +1017,12 @@ class BillingRecord(models.Model):
     skipped_email = models.BooleanField(default=False)
     pdf_data_id = models.CharField(max_length=48)
 
+    _pdf = None
     @property
     def pdf(self):
-        return InvoicePdf.get(self.pdf_data_id)
+        if self._pdf is None:
+            return InvoicePdf.get(self.pdf_data_id)
+        return self._pdf
 
     @classmethod
     def generate_record(cls, invoice):
@@ -940,19 +1030,28 @@ class BillingRecord(models.Model):
         invoice_pdf = InvoicePdf()
         invoice_pdf.generate_pdf(record.invoice)
         record.pdf_data_id = invoice_pdf._id
+        record._pdf = invoice_pdf
         if record.invoice.subscription.do_not_invoice:
             record.skipped_email = True
             invoice.is_hidden = True
-        else:
-            pdf_attachment = {
-                'title': invoice_pdf.get_filename(invoice),
-                'file_obj': StringIO(invoice_pdf.get_data(invoice)),
-                'mimetype': 'application/pdf',
-            }
-            record.send_email(pdf_attachment)
         record.save()
+        return record
 
-    def send_email(self, pdf_attachment):
+    def is_email_throttled(self):
+        month = self.invoice.date_start.month
+        year = self.invoice.date_start.year
+        date_start, date_end = get_first_last_days(year, month)
+        return self.__class__.objects.filter(
+            invoice__date_start__lte=date_end, invoice__date_end__gte=date_start,
+            invoice__subscription__subscriber=self.invoice.subscription.subscriber
+        ).count() > MAX_INVOICE_COMMUNICATIONS
+
+    def send_email(self):
+        pdf_attachment = {
+            'title': self.pdf.get_filename(self.invoice),
+            'file_obj': StringIO(self.pdf.get_data(self.invoice)),
+            'mimetype': 'application/pdf',
+        }
         month_name = self.invoice.date_start.strftime("%B")
         domain = self.invoice.subscription.subscriber.domain
         title = "Your %(product)s Billing Statement for %(month)s" % {
@@ -983,6 +1082,17 @@ class BillingRecord(models.Model):
             logging.error(
                 "[Billing] Could not find an email to send the invoice "
                 "email to for the domain: %s" % domain)
+        if self.is_email_throttled():
+            self.skipped_email = True
+            self.save()
+            raise InvoiceEmailThrottledError(
+                "Invoice communications exceeded the maximum limit of "
+                "%(max_limit)d for domain %(domain)s for the month of "
+                "%(month_name)s." % {
+                    'max_limit': MAX_INVOICE_COMMUNICATIONS,
+                    'domain': domain,
+                    'month_name': month_name,
+                })
         for email in contact_emails:
             greeting = _("Hello,")
             can_view_statement = False
@@ -1005,7 +1115,7 @@ class BillingRecord(models.Model):
                     file_attachments=[pdf_attachment]
                 )
         self.emailed_to = ",".join(contact_emails)
-
+        self.save()
 
 
 class InvoicePdf(SafeSaveDocument):
@@ -1070,14 +1180,15 @@ class InvoicePdf(SafeSaveDocument):
         }
 
     def get_data(self, invoice):
-        obj = CachedObject('%s:InvoicePdfData' % self._id)
+        obj = CachedObject('%s:InvoicePdf' % self._id)
         if not obj.is_cached():
-            data = self.fetch_attachment(self.get_filename(invoice), True)
-            buffer = StringIO(data)
-            obj.cache_put(buffer, {}, timeout=0)
+            data = self.fetch_attachment(self.get_filename(invoice), True).read()
+            metadata = {'content_type': 'application/pdf'}
+            buff = StringIO(data)
+            obj.cache_put(buff, metadata, timeout=0)
         else:
-            buffer = obj.get()[1]
-            data = buffer.getvalue()
+            buff = obj.get()[1]
+            data = buff.getvalue()
         return data
 
 

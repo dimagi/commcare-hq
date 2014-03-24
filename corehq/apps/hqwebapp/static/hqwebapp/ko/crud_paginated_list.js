@@ -159,7 +159,8 @@ var CRUDPaginatedListModel = function (
                     action: 'paginate',
                     page: page,
                     limit: self.pageLimit(),
-                    sortBy: self.sortBy
+                    sortBy: self.sortBy,
+                    additionalData: self.getAdditionalData()
                 },
                 statusCode: self.handleStatusCode,
                 success: function (data) {
@@ -217,6 +218,10 @@ var CRUDPaginatedListModel = function (
                 self.utils.reloadList(data);
             }
         })
+    };
+
+    self.getAdditionalData = function () {
+        return null;
     };
 };
 
