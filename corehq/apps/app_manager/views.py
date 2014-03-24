@@ -1793,7 +1793,7 @@ def validate_form_for_build(request, domain, app_id, unique_form_id, ajax=True):
     app = get_app(domain, app_id)
     try:
         form = app.get_form(unique_form_id)
-    except KeyError:
+    except FormNotFoundException:
         # this can happen if you delete the form from another page
         raise Http404()
     errors = form.validate_for_build()
