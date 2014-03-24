@@ -993,7 +993,8 @@ PILLOWTOPS = {
         'custom.m4change.models.LdHmisCaseFluffPillow',
         'custom.m4change.models.ImmunizationHmisCaseFluffPillow',
         'custom.m4change.models.ProjectIndicatorsCaseFluffPillow',
-        'custom.m4change.models.McctMonthlyAggregateFormFluffPillow'
+        'custom.m4change.models.McctMonthlyAggregateFormFluffPillow',
+        'custom.m4change.models.AllHmisCaseFluffPillow',
     ],
     'mvp': [
         'corehq.apps.indicators.pillows.FormIndicatorPillow',
