@@ -1051,7 +1051,7 @@ class BillingRecord(models.Model):
         return self._pdf
 
     @classmethod
-    def generate_record(cls, invoice, contact_emails=None):
+    def generate_record(cls, invoice):
         record = cls(invoice=invoice)
         invoice_pdf = InvoicePdf()
         invoice_pdf.generate_pdf(record.invoice)
@@ -1060,8 +1060,6 @@ class BillingRecord(models.Model):
         if record.invoice.subscription.do_not_invoice:
             record.skipped_email = True
             invoice.is_hidden = True
-        else:
-            record.send_email(contact_emails=contact_emails)
         record.save()
         return record
 
@@ -1075,6 +1073,8 @@ class BillingRecord(models.Model):
         ).count() > MAX_INVOICE_COMMUNICATIONS
 
     def send_email(self, contact_emails=None):
+        if self.invoice.subscription.do_not_invoice:
+            return
         pdf_attachment = {
             'title': self.pdf.get_filename(self.invoice),
             'file_obj': StringIO(self.pdf.get_data(self.invoice)),

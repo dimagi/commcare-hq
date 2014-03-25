@@ -62,6 +62,7 @@
                     {% endfor %}
                 </tbody>
             </table>
+            {% if can_send_email %}
             <button name="open-resend-modal"
                     class="btn"
                     data-target="#resendEmailModal"
@@ -69,6 +70,10 @@
             >
                 Re-Send Email
             </button>
+            {% else %}
+            <p>You can't send any emails, as this
+                subscription is marked as "Do Not Invoice".</p>
+            {% endif %}
         </div>
 
         <div class="tab-pane" id="adjustments">
