@@ -17,6 +17,7 @@ from casexml.apps.stock.models import StockState
 from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, product_ids_filtered_by_program
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 
+
 def _enabled_hack(domain):
     return not is_psi_domain(domain)
 
@@ -281,6 +282,7 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
     slug = 'reporting_rate'
     fields = ['corehq.apps.reports.fields.AsyncLocationField',
               'corehq.apps.reports.fields.SelectProgramField',
+              'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
               'corehq.apps.reports.filters.dates.DatespanFilter',]
     exportable = True
     emailable = True
@@ -309,6 +311,7 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
             'program_id': self.request.GET.get('program'),
             'start_date': self.request.GET.get('startdate'),
             'end_date': self.request.GET.get('enddate'),
+            'request': self.request
         }
         statuses = list(ReportingStatusDataSource(config).get_data())
         def child_loc(path):
