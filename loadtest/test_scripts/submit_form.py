@@ -1,4 +1,3 @@
-from __future__ import division
 import time
 import requests
 from requests.auth import HTTPDigestAuth
@@ -104,10 +103,10 @@ class Transaction(HQTransaction):
         return requests.post(url, data=data, headers={
             'content-type': 'text/xml',
             'content-length': len(data),
-        }, auth=HTTPDigestAuth(self.mobile_username, self.mobile_password))
+        }, auth=HTTPDigestAuth(self.submissions_username, self.submissions_password))
 
     def _media_submit(self, url, data_dict):
-        return requests.post(url, files=data_dict, auth=HTTPDigestAuth(self.mobile_username, self.mobile_password))
+        return requests.post(url, files=data_dict, auth=HTTPDigestAuth(self.submissions_username, self.submissions_password))
 
     def do_submission(self, url, include_image, case_action):
         extras = LONG_FORM_DATA  # 5k filler
@@ -127,7 +126,7 @@ class Transaction(HQTransaction):
         start_timer = time.time()
         resp = submit_fn(url, data)
         return start_timer, resp, caseid
-    
+
     def run(self):
         include_image = random() < 12/15
         if CASE_IDS:  # if there are no caseids to update, just create some
