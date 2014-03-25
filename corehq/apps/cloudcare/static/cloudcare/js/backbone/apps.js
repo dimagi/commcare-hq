@@ -213,21 +213,24 @@ cloudCare.SessionListView = Backbone.View.extend({
     el: $('#sessions'),
     initialize: function(){
         var self = this;
-        _.bindAll(self, 'render', 'appendItem');
+        _.bindAll(self, 'render', 'appendItem', 'reset');
         self.sessionList = new cloudCare.SessionList();
         self.sessionList.setUrl(self.options.sessionUrl);
         self._selectedSessionView = null;
+        self.reset();
+        self.sessionList.on('remove', function () {
+                self.render()
+            }
+        )
+    },
+    reset: function () {
+        var self = this;
+        self.sessionList.reset();
         self.sessionList.fetch({
             success: function (collection, response) {
                 self.render();
             }
         });
-        self.sessionList.on('remove', function () {
-                console.log('collection change');
-                console.log(self.sessionList);
-                self.render()
-            }
-        )
     },
     render: function () {
         var self = this;
@@ -607,6 +610,7 @@ cloudCare.AppView = Backbone.View.extend({
                 success: function () {
                     self._clearFormPlayer();
                     self.showModule(selectedModule);
+                    cloudCare.dispatch.trigger("form:submitted");
                     showSuccess("Form successfully saved.", $("#cloudcare-notifications"), 2500);
                 }
             });
@@ -751,7 +755,7 @@ cloudCare.AppMainView = Backbone.View.extend({
         });
 
         // fetch session list here
-        self.sessionListview = new cloudCare.SessionListView({
+        self.sessionListView = new cloudCare.SessionListView({
             sessionUrl: self.options.sessionUrlRoot
         });
 
@@ -764,7 +768,10 @@ cloudCare.AppMainView = Backbone.View.extend({
             self.navigate("");
             self.selectApp(null);
         });
-        
+        cloudCare.dispatch.on("form:submitted", function (app) {
+            self.sessionListView.reset();
+        });
+
         // utilities
         var selectApp = function (appId) {
             self.appListView.getAppView(appId).select();
