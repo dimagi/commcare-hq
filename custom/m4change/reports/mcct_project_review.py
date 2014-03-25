@@ -220,7 +220,7 @@ class McctProjectReview(BaseReport):
             DataTablesColumn(_("Card No."), sortable=False),
             DataTablesColumn(_("LGA"), sortable=False),
             DataTablesColumn(_("Phone No."), sortable=False),
-            DataTablesColumn(_("Amount due"), sortable=False),
+            DataTablesColumn(_("Amount"), sortable=False),
             DataTablesColumn(mark_safe('Status/Action  <a href="#" class="select-all btn btn-mini btn-inverse">all</a> '
                                        '<a href="#" class="select-none btn btn-mini btn-warning">none</a>'),
                                         sortable=False, span=3))
@@ -376,7 +376,7 @@ class McctClientLogPage(McctProjectReview):
             DataTablesColumn(_("Card No."), sortable=False),
             DataTablesColumn(_("LGA"), sortable=False),
             DataTablesColumn(_("Phone No."), sortable=False),
-            DataTablesColumn(_("Amount due"), sortable=False),
+            DataTablesColumn(_("Amount"), sortable=False),
             DataTablesColumn(_("Status"), sortable=False),
             DataTablesColumn(_("User"), sortable=False))
         return headers
@@ -443,3 +443,10 @@ class McctClientLogPage(McctProjectReview):
                 status,
                 form["form"]["meta"]["username"]
             ]
+
+
+class McctPaidClientsPage(McctClientApprovalPage):
+    name = 'mCCT Paid clients Page'
+    slug = 'mcct_paid_clients_page'
+    report_template_path = 'reports/activateStatus.html'
+    display_status = 'paid'
