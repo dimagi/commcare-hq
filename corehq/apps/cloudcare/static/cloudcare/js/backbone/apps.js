@@ -162,7 +162,15 @@ cloudCare.FormView = Selectable.extend({
 });
 
 cloudCare.FormSession = Backbone.Model.extend({
-
+    initialize: function() {
+        _.bindAll(this, "url");
+    },
+    url: function () {
+        // HT: http://stackoverflow.com/questions/10555962/enable-django-and-tastypie-support-for-trailing-slashes
+        var original_url = Backbone.Model.prototype.url.call( this );
+        var parsed_url = original_url + ( original_url.charAt( original_url.length - 1 ) == '/' ? '' : '/' );
+        return parsed_url;
+    }
 });
 
 cloudCare.SessionView = Selectable.extend({
@@ -171,6 +179,13 @@ cloudCare.SessionView = Selectable.extend({
         _.bindAll(this, 'render', 'toggle', 'select', 'deselect', 'enable', 'disable');
     },
     render: function() {
+        var self = this;
+        var deleteEl = $("<a />").addClass("close").text("x");
+        deleteEl.appendTo($(this.el));
+        deleteEl.click(function (e) {
+            e.stopPropagation();
+            self.model.destroy();
+        });
         $("<a />").text(this.model.get("name") + ' (' + this.model.get('last_activity_date') + ')').appendTo($(this.el));
         return this;
     }
@@ -207,11 +222,17 @@ cloudCare.SessionListView = Backbone.View.extend({
                 self.render();
             }
         });
+        self.sessionList.on('remove', function () {
+                console.log('collection change');
+                console.log(self.sessionList);
+                self.render()
+            }
+        )
     },
     render: function () {
         var self = this;
+        $(self.el).html('');
         if (self.sessionList.length) {
-            $(self.el).html('');
             var ul = $("<ul />").addClass("nav nav-list").appendTo($(self.el));
             $("<li />").addClass("nav-header").text("Previous Sessions").appendTo(ul);
             _(self.sessionList.models).each(function(item){
@@ -630,11 +651,6 @@ cloudCare.AppView = Backbone.View.extend({
             // clear anything existing
             self._clearCaseView();
 
-            // fetch session list here
-            var view = new cloudCare.SessionListView({
-                sessionUrl: self.options.sessionUrlRoot
-            });
-
             if (form.get("requires") === "none") {
 	            // no requirements, go ahead and play it
 	            self.playForm(module, form);
@@ -739,6 +755,11 @@ cloudCare.AppMainView = Backbone.View.extend({
             urlRoot: self.options.urlRoot,
             sessionUrlRoot: self.options.sessionUrlRoot,
 			submitUrlRoot: self.options.submitUrlRoot
+        });
+
+        // fetch session list here
+        self.sessionListview = new cloudCare.SessionListView({
+            sessionUrl: self.options.sessionUrlRoot
         });
 
         cloudCare.dispatch.on("app:selected", function (app) {

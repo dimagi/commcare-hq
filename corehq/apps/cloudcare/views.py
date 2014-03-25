@@ -32,6 +32,7 @@ from corehq.apps.cloudcare.decorators import require_cloudcare_access
 import HTMLParser
 from django.contrib import messages
 from django.utils.translation import ugettext as _, ugettext_noop
+from touchforms.formplayer.models import EntrySession
 
 
 @require_cloudcare_access
@@ -324,8 +325,15 @@ def get_sessions(request, domain):
 
 @cloudcare_api
 def get_session_context(request, domain, session_id):
-    helper = SessionDataHelper(domain, request.couch_user)
-    return json_response(helper.get_full_context({'session_id': session_id}))
+    if request.method == 'DELETE':
+        try:
+            EntrySession.objects.get(session_id=session_id).delete()
+        except EntrySession.DoesNotExist:
+            pass
+        return json_response({'status': 'success'})
+    else:
+        helper = SessionDataHelper(domain, request.couch_user)
+        return json_response(helper.get_full_context({'session_id': session_id}))
 
 class HttpResponseConflict(HttpResponse):
     status_code = 409
