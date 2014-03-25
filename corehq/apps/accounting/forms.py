@@ -426,9 +426,62 @@ class SubscriptionForm(forms.Form):
         )
 
 
+class ChangeSubscriptionForm(forms.Form):
+    subscription_change_note = forms.CharField(
+        label=_("Note"),
+        required=True,
+        widget=forms.Textarea,
+    )
+    new_plan_product = forms.ChoiceField(
+        label=_("Core Product"), initial=SoftwareProductType.COMMCARE,
+        choices=SoftwareProductType.CHOICES,
+    )
+    new_plan_edition = forms.ChoiceField(
+        label=_("Edition"), initial=SoftwarePlanEdition.ENTERPRISE,
+        choices=SoftwarePlanEdition.CHOICES,
+    )
+    new_plan_version = forms.CharField(label=_("New Software Plan"))
+    new_date_end = forms.DateField(
+        label=_("End Date"), widget=forms.DateInput(), required=False
+    )
 
+    def __init__(self, subscription, web_user, *args, **kwargs):
+        self.subscription = subscription
+        self.web_user = web_user
+        super(ChangeSubscriptionForm, self).__init__(*args, **kwargs)
 
+        if self.subscription.date_end is not None:
+            self.fields['new_date_end'].initial = subscription.date_end
 
+        self.helper = FormHelper()
+        self.helper.form_class = "form-horizontal"
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                "Change Subscription",
+                crispy.Field('new_date_end', css_class="date-picker"),
+                'new_plan_product',
+                'new_plan_edition',
+                crispy.Field(
+                    'new_plan_version', css_class="input-xxlarge",
+                    placeholder="Search for Software Plan"
+                ),
+                'subscription_change_note',
+            ),
+            FormActions(
+                StrictButton(
+                    "Change Subscription",
+                    type="submit",
+                    css_class="btn-primary",
+                ),
+            ),
+        )
+
+    def change_subscription(self):
+        new_plan_version = SoftwarePlanVersion.objects.get(id=self.cleaned_data['new_plan_version'])
+        return self.subscription.change_plan(
+            new_plan_version, date_end=self.cleaned_data['new_date_end'],
+            web_user=self.web_user
+        )
 
 
 class CreditForm(forms.Form):

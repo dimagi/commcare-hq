@@ -9,15 +9,42 @@
 
 {% block js-inline %}{{ block.super }}
     {% if disable_cancel %}
-        <script>
-            $("#cancel_form :input").attr("disabled", true);
+        <script type="text/javascript">
+            $(function () {
+                $("#cancel_form :input").attr("disabled", true);
+            });
         </script>
     {% endif %}
+    <script type="text/javascript">
+        var new_plan_version = new AsyncSelect2Handler('new_plan_version');
+        new_plan_version.init();
+        new_plan_version.getAdditionalData = function () {
+            return {
+                'product': $('#id_new_plan_product').val(),
+                'edition': $('#id_new_plan_edition').val(),
+                'current_version': '{{ subscription.plan_version.id }}'
+            }
+        };
+        $(function () {
+            var deselectPlanVersion = function () {
+                var $planVer = $('#id_new_plan_version');
+                $planVer.val('');
+                $planVer.select2('val', '');
+            };
+            $('#id_new_plan_product').change(deselectPlanVersion);
+            $('#id_new_plan_edition').change(deselectPlanVersion);
+        });
+    </script>
 {% endblock %}
 
 {% block main_column %}
     <ul class="nav nav-tabs" id="user-settings-tabs">
         <li><a href="#subscription" data-toggle="tab">{% trans "Subscription" %}</a></li>
+        {% if can_change_subscription %}
+        <li><a href="#change-subscription-plan"
+               data-toggle="tab">{% trans "Upgrade / Downgrade" %}</a>
+        </li>
+        {% endif %}
         <li><a href="#credits" data-toggle="tab">{% trans "Credits" %}</a></li>
         <li><a href="#actions" data-toggle="tab">{% trans "Permanent Actions" %}</a></li>
     </ul>
@@ -26,6 +53,18 @@
         <div class="tab-pane" id="subscription">
             {{ block.super }}
         </div>
+
+        {% if can_change_subscription %}
+        <div class="tab-pane" id="change-subscription-plan">
+            <div class="alert alert-info">
+                Note that changing the software plan will cancel the current
+                subscription and create a new one with the new plan information.
+                It will also apply upgrades / downgrades of features
+                between the currently subscribed plan and the plan selected.
+            </div>
+            {% crispy change_subscription_form %}
+        </div>
+        {% endif %}
 
         <div class="tab-pane" id="credits">
             {% include 'accounting/credits_tab.html' %}
