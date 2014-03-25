@@ -375,6 +375,6 @@ def get_open_form_sessions(user):
                                 timedelta(hours=settings.CLOUDCARE_SESSION_PERSIST_WINDOW)).strftime('%Y-%m-%dT%H:%M:%S'),
         }
     return [session_to_json(sess) for sess in EntrySession.objects.filter(
-               last_activity_date__isnull=False,
-               user=user,
-            )] # TODO filter by xform
+        last_activity_date__isnull=False,
+        user=user,
+    )]
