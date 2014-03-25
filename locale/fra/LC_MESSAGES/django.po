@@ -30,7 +30,6 @@ msgid "Commtrack"
 msgstr "Commtrack"
 
 #: corehq/__init__.py:63
-#, fuzzy
 msgid "Care Plans"
 msgstr "Plan de soins"
 
@@ -1433,7 +1432,6 @@ msgstr "Description"
 
 #: corehq/apps/app_manager/models.py:1725
 #: corehq/apps/app_manager/models.py:1773
-#, fuzzy
 msgid "Followup date"
 msgstr "Date de suivi"
 
@@ -1482,9 +1480,7 @@ msgstr ""
 #: corehq/apps/app_manager/models.py:3186
 msgid ""
 "Problem loading suite file from profile file. Is your profile file correct?"
-msgstr ""
-"Un problème est survenu lors du chargement du fichier de suite à partir du "
-"fichier de profil. Est-ce que votre fichier de profil est correct?"
+msgstr "Un problème est survenu lors du chargement du fichier de suite à partir du fichier de profil. Est-ce que votre fichier de profil est correct?"
 
 #: corehq/apps/app_manager/views.py:923
 #, python-brace-format
@@ -1543,9 +1539,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/views.py:2304
 msgid "Something went wrong! Update failed. We're looking into it"
-msgstr ""
-"Une erreur est survenue ! La mise à jour a échoué. Nous tentons de "
-"déterminer de quoi il s'agit."
+msgstr "Une erreur est survenue ! La mise à jour a échoué. Nous tentons de déterminer de quoi il s'agit."
 
 #: corehq/apps/app_manager/views.py:2307
 msgid "UI Translations Updated!"
@@ -1567,14 +1561,11 @@ msgstr "Gérer les documents multimédia"
 
 #: corehq/apps/app_manager/templates/app_manager/app_view.html:247
 msgid "View, upload, and download your application's multimedia"
-msgstr ""
-"Visualiser, télécharger et téléverser les documents multimédia de votre "
-"application"
+msgstr "Visualiser, télécharger et téléverser les documents multimédia de votre application"
 
 #: corehq/apps/app_manager/templates/app_manager/app_view.html:249
 msgid "Multimedia Reference Checker</a> (opens in a new window)"
-msgstr ""
-"Vérificateur de référence multimédia</a> (s'ouvre dans une nouvelle fenêtre)"
+msgstr "Vérificateur de référence multimédia</a> (s'ouvre dans une nouvelle fenêtre)"
 
 #: corehq/apps/app_manager/templates/app_manager/app_view.html:251
 msgid "Download Multimedia Zip"
@@ -1601,12 +1592,8 @@ msgid "Applications"
 msgstr "Applications"
 
 #: corehq/apps/app_manager/templates/app_manager/apps_base.html:99
-msgid ""
-"Oops! We can't create that application; you already have one with the same "
-"name."
-msgstr ""
-"Oups ! Il est impossible de créer cette application car vous en possédez "
-"déjà une du même nom."
+msgid "Oops! We can't create that application; you already have one with the same name."
+msgstr "Oups ! Il est impossible de créer cette application car vous en possédez déjà une du même nom."
 
 #: corehq/apps/app_manager/templates/app_manager/apps_base.html:109
 msgid ""
@@ -2250,14 +2237,12 @@ msgid "Product Display Properties"
 msgstr "Propriétés d'affichage"
 
 #: corehq/apps/app_manager/templates/app_manager/module_view_careplan.html:120
-#, fuzzy
 msgid "Goal List"
-msgstr "Liste de dossiers"
+msgstr "Liste de objectifs"
 
 #: corehq/apps/app_manager/templates/app_manager/module_view_careplan.html:125
-#, fuzzy
 msgid "Task List"
-msgstr "Liste de dossiers"
+msgstr "Liste de tâches"
 
 #: corehq/apps/app_manager/templates/app_manager/module_view_careplan.html:145
 msgid "Attached to"
@@ -2762,7 +2747,6 @@ msgid "Select case type:"
 msgstr "Sélectionner un propriétaire de dossier"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/case_config_advanced.html:36
-#, fuzzy
 msgid "Case list:"
 msgstr "Liste de dossiers"
 
@@ -2974,7 +2958,6 @@ msgid "Select the module to attach the careplan to"
 msgstr "Sélectionnez le module cible pour le plan de soins"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/new_module_dialogs.html:28
-#, fuzzy
 msgid "Create New Module"
 msgstr "Créer un nouveau projet"
 
@@ -3898,9 +3881,8 @@ msgid "Available Programs"
 msgstr "Programmes disponibles"
 
 #: corehq/apps/commtrack/templates/commtrack/manage/programs.html:49
-#, fuzzy
 msgid "Loading programs..."
-msgstr "Chargement des produits..."
+msgstr "Chargement des programmes..."
 
 #: corehq/apps/commtrack/templates/commtrack/manage/programs.html:56
 msgid "There are no programs for this project yet."
@@ -5996,7 +5978,6 @@ msgid "Export stock columns?"
 msgstr "Exporter vers Excel"
 
 #: corehq/apps/export/templates/export/customize_export.html:432
-#, fuzzy
 msgid "Automatically convert dates for Excel"
 msgstr "Convertir automatiquement les dates pour Excel ?"
 
