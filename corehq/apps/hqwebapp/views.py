@@ -376,10 +376,15 @@ def bug_report(req):
         full_name = None
     report['full_name'] = full_name
 
-    report['software_plan'] = Subscription.objects.get(
+    matching_subscriptions = Subscription.objects.filter(
         is_active=True,
         subscriber__domain=report['domain'],
-    ).plan_version
+    )
+
+    if len(matching_subscriptions) >= 1:
+        report['software_plan'] = matching_subscriptions[0].plan_version
+    else:
+        report['software_plan'] = u'domain has no active subscription'
 
     subject = u'{subject} ({domain})'.format(**report)
     message = (
