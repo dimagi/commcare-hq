@@ -15,11 +15,11 @@ class FormData(models.Model):
     time_start = models.DateTimeField()
     time_end = models.DateTimeField(db_index=True)
     duration = models.IntegerField()
-    device_id = models.CharField(max_length=255, blank=True)
-    user_id = models.CharField(max_length=255, blank=True, db_index=True)
-    username = models.CharField(max_length=255, blank=True)
-    app_id = models.CharField(max_length=255, blank=True, db_index=True)
-    xmlns = models.CharField(max_length=1000, blank=True, db_index=True)
+    device_id = models.CharField(max_length=255, null=True)
+    user_id = models.CharField(max_length=255, null=True, db_index=True)
+    username = models.CharField(max_length=255, null=True)
+    app_id = models.CharField(max_length=255, null=True, db_index=True)
+    xmlns = models.CharField(max_length=1000, null=True, db_index=True)
 
     def __unicode__(self):
         return "FormData: %s" % self.instance_id
