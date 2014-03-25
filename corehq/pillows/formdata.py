@@ -1,30 +1,16 @@
 from django.db import transaction
 from corehq.apps.sofabed.exceptions import InvalidDataException
 from dimagi.utils.read_only import ReadOnlyObject
-from pillowtop.listener import PythonPillow
+from pillowtop.listener import BulkPillow
 from couchforms.models import XFormInstance
 from django.db.utils import DatabaseError
 from corehq.apps.sofabed.models import FormData
 import logging
 
-DEVICE_REPORT = "http://code.javarosa.org/devicereport"
 
-DOC_TYPES = [
-    "XFormInstance",
-    "XFormArchived",
-    "XFormDeprecated",
-    "XFormDuplicate",
-    "XFormInstance-Deleted",
-    "HQSubmission",
-]
-
-
-class FormDataPillow(PythonPillow):
+class FormDataPillow(BulkPillow):
     document_class = XFormInstance
-
-    def python_filter(self, doc):
-        assert self.doc_type is not None
-        return doc.get('doc_type', None) in DOC_TYPES and doc.get('xmlns', None) != DEVICE_REPORT
+    couch_filter = 'couchforms/xforms'
 
     @transaction.commit_on_success
     def change_transport(self, doc_dict):
