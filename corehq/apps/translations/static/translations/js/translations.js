@@ -47,7 +47,6 @@ var mk_translation_ui = function (spec) {
 
                 this.value.on('change', function () {
                     if (that.solid) {
-                        console.log('ok');
                         translation_ui.saveButton.fire('change');
                     }
                 });
@@ -114,7 +113,6 @@ var mk_translation_ui = function (spec) {
                 },
                 success: function (data) {
                     var key;
-                    console.log(data);
                     for (key in data) {
                         if (data.hasOwnProperty(key) && !translation_ui.translations[key]) {
                             translation_ui.addTranslation(Translation.init(key, data[key]));
