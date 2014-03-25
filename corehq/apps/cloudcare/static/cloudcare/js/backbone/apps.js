@@ -279,7 +279,7 @@ cloudCare.Module = LocalizableModel.extend({
             var index = 0,
                 sharedMeta = {
                     app_id: self.get('app_id'),
-                    module_index: self.get('index'),
+                    module_index: self.get('index')
                 };
 
             self.forms = _(self.get("forms")).map(function (form) {
@@ -709,13 +709,6 @@ cloudCare.AppView = Backbone.View.extend({
     _clearFormPlayer: function () {
         // TODO: clean hack/hard coded id
         $('#webforms').html("");
-    },
-    _clearSessionListView: function () {
-        var self = this,
-            caseView = self.formListView.caseView;
-        if (caseView) {
-            $(caseView.el).html("");
-        }
     }
 });
 
@@ -974,7 +967,7 @@ cloudCare.AppMainView = Backbone.View.extend({
             var app = self._appCache[appId];
             if (!app) {
                 app = new cloudCare.App({
-	                _id: appId,
+	                _id: appId
                 });
                 app.set("urlRoot", self.options.appUrlRoot);
                 showLoading();
