@@ -552,6 +552,7 @@ class InvoiceSummaryView(AccountingSectionView):
             'billing_records': self.billing_records,
             'invoice_info_form': self.invoice_info_form,
             'resend_email_form': self.resend_email_form,
+            'can_send_email': not self.invoice.subscription.do_not_invoice,
         }
 
     def post(self, request, *args, **kwargs):
@@ -561,6 +562,10 @@ class InvoiceSummaryView(AccountingSectionView):
                 return HttpResponseRedirect(self.page_url)
         elif 'resend_email' in self.request.POST:
             if self.resend_email_form.is_valid():
-                self.resend_email_form.resend_email()
-                return HttpResponseRedirect(self.page_url)
+                try:
+                    self.resend_email_form.resend_email()
+                    return HttpResponseRedirect(self.page_url)
+                except Exception as e:
+                    messages.error(request,
+                                   "Could not send emails due to: %s" % e)
         return self.get(request, *args, **kwargs)

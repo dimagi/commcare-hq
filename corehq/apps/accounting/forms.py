@@ -1517,6 +1517,5 @@ class ResendEmailForm(forms.Form):
     def resend_email(self):
         contact_emails = self.invoice.email_recipients
         contact_emails += self.cleaned_data['additional_recipients']
-        BillingRecord.generate_record(
-            self.invoice, contact_emails=contact_emails
-        )
+        record = BillingRecord.generate_record(self.invoice)
+        record.send_email(contact_emails=contact_emails)
