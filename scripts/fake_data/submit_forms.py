@@ -1,9 +1,9 @@
 import datetime, random, string
 import os.path
-from StringIO import StringIO
 
-from django.test.client import Client
-from django.test.client import RequestFactory
+import requests
+from requests.auth import HTTPDigestAuth
+
 from django.template.loader import get_template_from_string
 from django.template.context import Context
 
@@ -116,36 +116,36 @@ def make_forms(domain, app_id, user, cases, avg_updates=None):
     """
     make `cases` new cases each averaging `avg_updates` updates
     """
-    client = Client()
-    url_path = '/a/%s/receiver/%s/' % (domain, app_id)
+    print "making {cases} cases and {updates} updates".format(
+            cases=cases, updates=avg_updates)
 
     # This `last` and `now` business is to print the length each query takes
     # global last
     # last = datetime.datetime.utcnow()
 
-    def submit_form(form):
-        # global last
-        # now = datetime.datetime.utcnow()
-        # print "elapsed: %s" % (now-last)
-        # last = now
-        f = StringIO(form.render().encode('utf-8'))
-        f.name = "tempfile.xml"
-        kwargs = dict(HTTP_X_SUBMIT_TIME=json_format_datetime(form.submitted))
-        response = client.post("/a/{domain}/receiver/".format(domain=domain), {
-            'xml_submission_file': f,
-        }, **kwargs)
-        # print response
+
+    def submit_form1(form):
+        form = form.render()
+        response = requests.post(
+            "http://localhost:8000/a/{domain}/receiver/".format(domain=domain),
+            data=form,
+            headers={
+                'content-type': 'text/xml',
+                'content-length': len(form),
+            },
+            auth=HTTPDigestAuth(user.username, "root")
+        )
 
     # make new cases
     case_ids = []
     for i in range(cases):
         form = NewCaseForm(user)
         case_ids.append(form.case_id)
-        submit_form(form)
+        submit_form1(form)
 
     # submit updates to cases
     for case_id in case_ids:
         for i in range(random.randint(0, avg_updates*2)):
             form = UpdateCaseForm(user, case_id)
-            submit_form(form)
-
+            submit_form1(form)
+    print "finished making forms for case"

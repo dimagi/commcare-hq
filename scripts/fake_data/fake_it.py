@@ -2,8 +2,7 @@
 This script generates fake data to use for load testing HQ.
 Go through and set the numbers and comment/uncomment as needed.
 
-You can run it by opening a django shell and importing this file,
-then running `>>> run()`
+You can run it by opening a django shell and importing this file
 
 First:
 Configure db settings to use "performance test" db
@@ -69,8 +68,9 @@ app_id = 'eb70e5a3780f7fc40792ac951f8afd51'
 ########################
 
 def user_and_forms():
-    user = make_cc_user(domain_name)
-
+    user = None
+    while not user:
+        user = make_cc_user(domain_name)
     make_forms(
         domain_name,
         app_id,
@@ -78,7 +78,6 @@ def user_and_forms():
         cases=random.randint(0, 860),
         avg_updates=3.5
     )
-    # print "created user %s" % user.username
 
 
 # Make sure you're using the correct db!
@@ -91,5 +90,6 @@ for i in range(num_users):
             i, num_users, float(i)/num_users)
     pool.spawn(user_and_forms)
 
-    # Estimate 2 hrs to get to 10k users with no cases or forms
-    # make_cc_users(domain_name, 10000)
+
+# Estimate 2 hrs to get to 10k users with no cases or forms
+# make_cc_users(domain_name, 10000)
