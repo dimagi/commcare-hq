@@ -47,9 +47,9 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
     url(r'^new_form/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/$', 'new_form'),
 
     url(r'^delete_app/(?P<app_id>[\w-]+)/$', 'delete_app'),
-    url(r'^delete_module/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/$',
+    url(r'^delete_module/(?P<app_id>[\w-]+)/(?P<module_unique_id>[\w-]+)/$',
         'delete_module', name="delete_module"),
-    url(r'^delete_form/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/(?P<form_id>[\w-]+)/$',
+    url(r'^delete_form/(?P<app_id>[\w-]+)/(?P<module_unique_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/$',
         'delete_form', name="delete_form"),
 
     url(r'^copy_form/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/(?P<form_id>[\w-]+)/$',
