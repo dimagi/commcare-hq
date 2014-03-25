@@ -1236,7 +1236,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             else:
                 models = role.permissions.view_report_list
         else:
-            models = self.get_domain_membership(domain).viewable_reports()
+            dm = self.get_domain_membership(domain)
+            models = dm.viewable_reports() if dm else []
 
         def slug_name(model):
             try:
