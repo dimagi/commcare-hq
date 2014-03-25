@@ -6,7 +6,8 @@ var mk_translation_ui = function (spec) {
             url: spec.url,
             lang: spec.lang,
             doc_id: spec.doc_id,
-            edit: spec.edit
+            edit: spec.edit,
+            allow_autofill: spec.allow_autofill
         },
         suggestionURL = spec.suggestion_url,
         suggestionCache = {},
@@ -209,7 +210,9 @@ var mk_translation_ui = function (spec) {
             $home.append($("<p>No translations</p>"));
         }
         if (translation_ui.edit) {
-            $home.append($bootstrap);
+            if (translation_ui.allow_autofill) {
+                $home.append($bootstrap);
+            }
             translation_ui.appendAdder();
         }
         $home.append($table);

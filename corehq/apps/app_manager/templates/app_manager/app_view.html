@@ -162,6 +162,7 @@
                     suggestion_url: "{% url "get_translations" %}",
                     lang: "{{ lang }}",
                     edit: {{ edit|yesno:"true,false" }},
+                    allow_autofill: "{{ lang }}" !== 'en',
                     $home: $translation_ui
                 });
             });
