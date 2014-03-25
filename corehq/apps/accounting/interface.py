@@ -323,6 +323,7 @@ class InvoiceInterface(GenericTabularReport):
         'corehq.apps.accounting.interface.SalesforceContractIDFilter',
         'corehq.apps.accounting.interface.SoftwarePlanNameFilter',
         'corehq.apps.accounting.interface.BillingContactFilter',
+        'corehq.apps.accounting.interface.IsHiddenFilter',
     ]
 
     @property
@@ -444,6 +445,12 @@ class InvoiceInterface(GenericTabularReport):
                     for contact_info in BillingContactInfo.objects.all()
                     if contact_name == contact_info.full_name
                 ],
+            )
+
+        is_hidden = IsHiddenFilter.get_value(self.request, self.domain)
+        if is_hidden is not None:
+            filters.update(
+                is_hidden=(is_hidden == IsHiddenFilter.IS_HIDDEN),
             )
 
         return filters

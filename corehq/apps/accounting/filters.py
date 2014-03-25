@@ -91,6 +91,18 @@ class DoNotInvoiceFilter(BaseSingleOptionFilter):
     ]
 
 
+class IsHiddenFilter(BaseSingleOptionFilter):
+    slug = 'is_hidden'
+    label = _('Is Hidden')
+    default_text = _('All')
+    IS_HIDDEN = 'hidden'
+    IS_NOT_HIDDEN = 'not_hidden'
+    options = [
+        (IS_HIDDEN, 'Is Hidden'),
+        (IS_NOT_HIDDEN, 'Is Not Hidden'),
+    ]
+
+
 class DateRangeFilter(BaseReportFilter):
     template = 'reports/filters/daterange.html'
     default_days = 7
