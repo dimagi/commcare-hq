@@ -716,15 +716,15 @@ LOGGING = {
 }
 
 # Invoicing
-STARTING_INVOICE_NUMBER = 0
+INVOICE_STARTING_NUMBER = 0
 INVOICE_PREFIX = ''
-TERMS = ''
-FROM_ADDRESS = {}
+INVOICE_TERMS = ''
+INVOICE_FROM_ADDRESS = {}
 BANK_ADDRESS = {}
 BANK_NAME = ''
-ACCOUNT_NUMBER = ''
-ROUTING_NUMBER = ''
-SWIFT_CODE = ''
+BANK_ACCOUNT_NUMBER = ''
+BANK_ROUTING_NUMBER = ''
+BANK_SWIFT_CODE = ''
 
 try:
     # try to see if there's an environmental variable set for local_settings
