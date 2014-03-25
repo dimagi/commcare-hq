@@ -8,7 +8,7 @@ var mk_translation_ui = function (spec) {
             doc_id: spec.doc_id,
             edit: spec.edit
         },
-        suggestionURL = '/translations/api/suggestions/',
+        suggestionURL = spec.suggestion_url,
         suggestionCache = {},
         key,
         Translation = (function () {

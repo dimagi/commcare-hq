@@ -159,6 +159,7 @@
                 mk_translation_ui({
                     translations: {{ translations|JSON }},
                     url: "{% url "edit_app_translations" domain app.id %}",
+                    suggestion_url: "{% url "get_translations" %}",
                     lang: "{{ lang }}",
                     edit: {{ edit|yesno:"true,false" }},
                     $home: $translation_ui
