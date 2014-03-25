@@ -32,6 +32,7 @@ class AddItemInterface(GenericTabularReport):
         )
         return context
 
+
 class AccountingInterface(AddItemInterface):
     section_name = "Accounting"
     dispatcher = AccountingAdminInterfaceDispatcher
@@ -330,6 +331,7 @@ class InvoiceInterface(GenericTabularReport):
     def headers(self):
         return DataTablesHeader(
             DataTablesColumn("Account Name"),
+            DataTablesColumn("Subscription"),
             DataTablesColumn("Project Space"),
             DataTablesColumn("Salesforce Account ID"),
             DataTablesColumn("Salesforce Contract ID"),
@@ -339,17 +341,31 @@ class InvoiceInterface(GenericTabularReport):
             DataTablesColumn("Date Due"),
             DataTablesColumn("Amount Due"),
             DataTablesColumn("Payment Status"),
+            DataTablesColumn("Hidden (No Communication)"),
             DataTablesColumn("Action"),
             DataTablesColumn("View Invoice"),
         )
 
     @property
     def rows(self):
-        from corehq.apps.accounting.views import InvoiceSummaryView
+        from corehq.apps.accounting.views import (
+            InvoiceSummaryView, ManageBillingAccountView, EditSubscriptionView,
+        )
 
         return [
             [
-                invoice.subscription.account.name,
+                mark_safe('<a href="%(account_url)s">%(name)s</a>' % {
+                              'account_url': reverse(
+                                  ManageBillingAccountView.urlname,
+                                  args=[invoice.subscription.account.id]),
+                              'name': invoice.subscription.account.name,
+                            }),
+                mark_safe('<a href="%(sub_url)s">%(name)s v%(version)d</a>' % {
+                              'name': invoice.subscription.plan_version.plan.name,
+                              'version': invoice.subscription.plan_version.version,
+                              'sub_url': reverse(EditSubscriptionView.urlname,
+                                                 args=[invoice.subscription.id]),
+                            }),
                 invoice.subscription.subscriber.domain,
                 invoice.subscription.account.salesforce_account_id or "--",
                 invoice.subscription.salesforce_contract_id or "--",
@@ -358,6 +374,7 @@ class InvoiceInterface(GenericTabularReport):
                 invoice.date_due,
                 get_money_str(invoice.balance),
                 "Paid" if invoice.date_paid else "Not paid",
+                "YES" if invoice.is_hidden else "no",
                 # TODO - Create helper function for action button HTML
                 mark_safe('<a data-toggle="modal"'
                           ' data-target="#adjustBalanceModal-%(invoice_id)d"'
