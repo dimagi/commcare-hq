@@ -80,14 +80,16 @@ def midpoint(x1, x2):
 
 class InvoiceTemplate(object):
     def __init__(self, filename, logo_filename=LOGO_FILENAME,
-                 from_address=Address(**settings.FROM_ADDRESS),
+                 from_address=Address(**settings.INVOICE_FROM_ADDRESS),
                  to_address=None, project_name='',
-                 invoice_date=None, invoice_number='', terms=settings.TERMS,
+                 invoice_date=None, invoice_number='',
+                 terms=settings.INVOICE_TERMS,
                  due_date=None, bank_name=settings.BANK_NAME,
                  bank_address=Address(**settings.BANK_ADDRESS),
-                 account_number=settings.ACCOUNT_NUMBER,
-                 routing_number=settings.ROUTING_NUMBER,
-                 swift_code=settings.SWIFT_CODE, applied_credit=None,
+                 account_number=settings.BANK_ACCOUNT_NUMBER,
+                 routing_number=settings.BANK_ROUTING_NUMBER,
+                 swift_code=settings.BANK_SWIFT_CODE,
+                 applied_credit=None,
                  subtotal=None, tax_rate=None, applied_tax=None, total=None):
         self.canvas = Canvas(filename)
         self.canvas.setFontSize(DEFAULT_FONT_SIZE)

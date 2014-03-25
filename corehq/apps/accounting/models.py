@@ -929,7 +929,7 @@ class Invoice(models.Model):
 
     @property
     def invoice_number(self):
-        ops_num = settings.STARTING_INVOICE_NUMBER + self.id
+        ops_num = settings.INVOICE_STARTING_NUMBER + self.id
         return "%s%d" % (settings.INVOICE_PREFIX, ops_num)
 
     @property
