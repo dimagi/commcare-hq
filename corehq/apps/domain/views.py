@@ -16,6 +16,7 @@ from corehq.apps.accounting.subscription_changes import DomainDowngradeStatusHan
 from corehq.apps.accounting.forms import EnterprisePlanContactForm
 from corehq.apps.accounting.utils import get_change_status
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
+from corehq.toggles import NAMESPACE_DOMAIN
 from dimagi.utils.couch.resource_conflict import retry_resource
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -23,7 +24,7 @@ from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 
-from corehq import toggles, privileges
+from corehq import toggles, privileges, feature_previews
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
 
@@ -68,6 +69,9 @@ from dimagi.utils.post import simple_post
 import cStringIO
 from PIL import Image
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
+from django.core.cache import cache
+from toggle.models import Toggle, generate_toggle_id
+from toggle.shortcuts import get_toggle_cache_key
 
 
 # Domain not required here - we could be selecting it for the first time. See notes domain.decorators
@@ -1821,6 +1825,57 @@ class ProBonoView(ProBonoMixin, DomainAccountingSettings):
     @property
     def section_url(self):
         return self.page_url
+
+
+class FeaturePreviewsView(BaseAdminProjectSettingsView):
+    urlname = 'feature_previews'
+    page_title = ugettext_noop("Feature Previews")
+    template_name = 'domain/admin/feature_previews.html'
+
+    @memoized
+    def features(self):
+        features = []
+        for preview_name in dir(feature_previews):
+            if not preview_name.startswith('__'):
+                preview = getattr(feature_previews, preview_name)
+                if isinstance(preview, feature_previews.FeaturePreview) and preview.has_privilege(self.request):
+                    features.append((preview, preview.enabled(self.domain)))
+
+        return features
+
+    def get_toggle(self, slug):
+        if not slug in [f.slug for f, _ in self.features()]:
+            raise Http404()
+        try:
+            return Toggle.get(generate_toggle_id(slug))
+        except ResourceNotFound:
+            return Toggle(slug=slug)
+
+    @property
+    def page_context(self):
+        return {
+            'features': self.features(),
+        }
+
+    def post(self, request, *args, **kwargs):
+        for feature, enabled in self.features():
+            self.update_feature(feature, enabled, feature.slug in request.POST)
+
+        return redirect('feature_previews', domain=self.domain)
+
+    def update_feature(self, feature, current_state, new_state):
+        if current_state != new_state:
+            slug = feature.slug
+            toggle = self.get_toggle(slug)
+            item = '{0}:{1}'.format(NAMESPACE_DOMAIN, self.domain)
+            if new_state:
+                if not item in toggle.enabled_users:
+                    toggle.enabled_users.append(item)
+            else:
+                toggle.enabled_users.remove(item)
+            toggle.save()
+            cache_key = get_toggle_cache_key(slug, item)
+            cache.set(cache_key, new_state)
 
 
 @require_POST

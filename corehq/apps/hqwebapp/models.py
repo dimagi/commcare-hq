@@ -980,6 +980,11 @@ class ProjectSettingsTab(UITab):
                       'urlname': 'add_repeater'}
                  ]}
             ])
+
+            administration.append({
+                    'title': _('Feature Previews'),
+                    'url': reverse('feature_previews', args=[self.domain])
+            })
             items.append((_('Project Administration'), administration))
 
         from corehq.apps.users.models import WebUser
