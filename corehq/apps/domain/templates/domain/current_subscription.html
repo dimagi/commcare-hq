@@ -28,6 +28,22 @@
                         </a>
                     </div>
                 </div>
+                {% if plan.date_start %}
+                    <div class="control-group">
+                        <label class="control-label">{% trans 'Date Started' %}</label>
+                        <div class="controls">
+                            <p class="control-group-text">{{ plan.date_start }}</p>
+                        </div>
+                    </div>
+                {% endif %}
+                {% if plan.date_end %}
+                    <div class="control-group">
+                        <label class="control-label">{% trans 'Date Ending' %}</label>
+                        <div class="controls">
+                            <p class="control-group-text">{{ plan.date_end }}</p>
+                        </div>
+                    </div>
+                {% endif %}
                 {% for product in plan.products %}
                     {# todo handle multiproducts #}
                     <div class="control-group">
