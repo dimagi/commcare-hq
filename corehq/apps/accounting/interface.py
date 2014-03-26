@@ -354,6 +354,7 @@ class InvoiceInterface(GenericTabularReport):
             DataTablesColumn("Plan Cost"),
             DataTablesColumn("SMS Cost"),
             DataTablesColumn("User Cost"),
+            DataTablesColumn("Total"),
             DataTablesColumn("Payment Status"),
             DataTablesColumn("Hidden (No Communication)"),
             DataTablesColumn("Action"),
@@ -401,6 +402,10 @@ class InvoiceInterface(GenericTabularReport):
                     line_item.subtotal
                     for line_item in invoice.lineitem_set.get_feature_by_type(
                         FeatureType.USER).all()
+                ])),
+                get_money_str(sum([
+                    line_item.subtotal
+                    for line_item in invoice.lineitem_set.all()
                 ])),
                 "Paid" if invoice.date_paid else "Not paid",
                 "YES" if invoice.is_hidden else "no",
