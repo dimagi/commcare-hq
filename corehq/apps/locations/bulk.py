@@ -191,7 +191,6 @@ def submit_form(domain, parent, form_data, properties, existing, location_type, 
 
                     # only set it if there is a non-negative/non-null value
                     if amount and amount >= 0:
-                        print 'adding: ', sp._id
                         set_default_consumption_for_supply_point(
                             domain,
                             Product.get_by_code(domain, product_code)._id,
