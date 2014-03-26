@@ -474,9 +474,6 @@ cloudCare.AppView = Backbone.View.extend({
         cloudCare.dispatch.on("form:selected", function (form) {
             self.selectForm(form);
         });
-        cloudCare.dispatch.on("session:selected", function (session) {
-            self.playSession(session);
-        });
         cloudCare.dispatch.on("session:deselected", function (session) {
             self._clearFormPlayer();
         });
@@ -494,6 +491,7 @@ cloudCare.AppView = Backbone.View.extend({
         self.setModel(self.model);
     },
     setModel: function (app) {
+
         this.model = app;
     },
     selectCase: function (caseModel) {
@@ -561,8 +559,6 @@ cloudCare.AppView = Backbone.View.extend({
     },
     playSession: function (session) {
         var self = this;
-        // get context
-        var url = getSessionContextUrl(self.options.sessionUrlRoot, session_id);
         var session_id = session.get('id');
         var resp = $.ajax({
             url: getSessionContextUrl(self.options.sessionUrlRoot, session_id),
@@ -721,7 +717,7 @@ cloudCare.AppMainView = Backbone.View.extend({
 
     initialize: function () {
         var self = this;
-        _.bindAll(self, 'render', 'selectApp', "clearCases", "clearForms", 
+        _.bindAll(self, 'render', 'selectApp', "clearCases", "clearForms",
                   "clearModules", "clearAll", "navigate");
 
         self._appCache = {};
@@ -746,7 +742,7 @@ cloudCare.AppMainView = Backbone.View.extend({
 
         self.appView = new cloudCare.AppView({
             // if you pass in model: it will auto-populate the view
-            model: self.initialApp,  
+            model: self.initialApp,
             language: self.options.language,
             caseUrlRoot: self.options.caseUrlRoot,
             urlRoot: self.options.urlRoot,
@@ -841,7 +837,7 @@ cloudCare.AppMainView = Backbone.View.extend({
             selectApp(appId);
             selectModule(_stripParams(moduleIndex));
         }));
-        
+
         var clearAndSelectForm = function (appId, moduleIndex, formIndex) {
             self.clearForms();
             selectApp(appId);
@@ -876,7 +872,7 @@ cloudCare.AppMainView = Backbone.View.extend({
                 throw 'Bad initial state';
             }
         }));
-        
+
         // these are also incoming routes, that look funny because of how the event
         // spaghetti resolves.
         self.appView.moduleListView.on("modules:updated", function () {
@@ -931,7 +927,7 @@ cloudCare.AppMainView = Backbone.View.extend({
             if (typeof caseModel !== 'undefined') {
                 caseId = caseModel.id;
             }
-            var path = getFormEntryPath(form.get("app_id"), 
+            var path = getFormEntryPath(form.get("app_id"),
                                         form.get("module_index"),
                                         form.get("index"),
                                         caseId);
@@ -958,6 +954,9 @@ cloudCare.AppMainView = Backbone.View.extend({
             self.appView.selectCase(null);
 
         });
+        cloudCare.dispatch.on("session:selected", function (session) {
+            self.playSession(session);
+        });
     },
 
     navigate: function (path, options) {
@@ -965,9 +964,9 @@ cloudCare.AppMainView = Backbone.View.extend({
             this.router.navigate(path, options);
         }
     },
-
-    selectApp: function (appId) {
+    selectApp: function (appId, options) {
         var self = this;
+        options = options || {};
         if (appId === null) {
             self.clearAll();
         } else {
@@ -978,20 +977,30 @@ cloudCare.AppMainView = Backbone.View.extend({
                 });
                 app.set("urlRoot", self.options.appUrlRoot);
                 showLoading();
-                app.fetch({
-                    success: function (model, response) {
-                        self.appView.setModel(model);
-                        self.appView.render();
-                        hideLoading();
-                    }
-                });
-                self._appCache[appId] = app;
+                var callback = function (model) {
+                    self.appView.setModel(model);
+                    self.appView.render();
+                    hideLoading();
+                    self._appCache[appId] = app;
+                }
+                if (options.async === false) {
+                    app.fetch({async: false});
+                    callback(app);
+                }
+                else {
+                    app.fetch({success: callback});
+                }
             } else {
                 self.appView.setModel(app);
                 self.appView.render();
             }
             self.app = app;
 	    }
+    },
+    playSession: function (session) {
+        var self = this;
+        self.selectApp(session.get('app_id'), {async: false});
+        self.appView.playSession(session);
     },
     clearCases: function () {
         // TODO
