@@ -317,6 +317,22 @@ class SoftwarePlanInterface(AddItemInterface):
     crud_item_type = "Software_Plan"
 
 
+def get_column_formatted_str(subtotal, deduction):
+    return '%s (%s)' % (
+        get_money_str(subtotal),
+        get_money_str(deduction)
+    )
+
+
+def get_column_cost_str(line_items):
+    subtotal = 0
+    deduction = 0
+    for line_item in line_items:
+        subtotal += line_item.subtotal
+        deduction += line_item.applied_credit
+    return get_column_formatted_str(subtotal, deduction)
+
+
 class InvoiceInterface(GenericTabularReport):
     base_template = "accounting/invoice_list.html"
     section_name = "Accounting"
@@ -387,25 +403,13 @@ class InvoiceInterface(GenericTabularReport):
                 invoice.date_start,
                 invoice.date_end,
                 invoice.date_due,
-                get_money_str(sum([
-                    line_item.subtotal
-                    for line_item in invoice.lineitem_set.get_products().all()
-                    if line_item.product_rate is not None
-                ])),
-                get_money_str(sum([
-                    line_item.subtotal
-                    for line_item in invoice.lineitem_set.get_feature_by_type(
-                        FeatureType.SMS).all()
-                ])),
-                get_money_str(sum([
-                    line_item.subtotal
-                    for line_item in invoice.lineitem_set.get_feature_by_type(
-                        FeatureType.USER).all()
-                ])),
-                get_money_str(sum([
-                    line_item.subtotal
-                    for line_item in invoice.lineitem_set.all()
-                ])),
+                get_column_cost_str(invoice.lineitem_set.get_products().all()),
+                get_column_cost_str(invoice.lineitem_set.get_feature_by_type(
+                    FeatureType.SMS).all()),
+                get_column_cost_str(invoice.lineitem_set.get_feature_by_type(
+                    FeatureType.USER).all()),
+                get_column_formatted_str(invoice.subtotal,
+                                         invoice.applied_credit),
                 get_money_str(invoice.balance),
                 "Paid" if invoice.date_paid else "Not paid",
                 "YES" if invoice.is_hidden else "no",
