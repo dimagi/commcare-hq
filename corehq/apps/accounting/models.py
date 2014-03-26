@@ -720,53 +720,74 @@ class Subscription(models.Model):
             self, reason=SubscriptionAdjustmentReason.CANCEL, method=adjustment_method, note=note, web_user=web_user,
         )
 
-    def change_plan(self, new_plan_version, date_start=None, date_end=None, date_delay_invoicing=None,
-                    salesforce_contract_id=None, do_not_invoice=False,
+    def update_subscription(self, date_end=None, date_delay_invoicing=None,
+                            do_not_invoice=False, salesforce_contract_id=None,
+                            web_user=None, note=None, adjustment_method=None):
+        adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
+
+        today = datetime.date.today()
+        if self.date_end is None or self.date_end > today:
+            self.date_end = date_end
+
+        if self.date_delay_invoicing is None or self.date_delay_invoicing > today:
+            self.date_delay_invoicing = date_delay_invoicing
+
+        self.do_not_invoice = do_not_invoice
+        self.salesforce_contract_id = salesforce_contract_id
+        self.save()
+
+        SubscriptionAdjustment.record_adjustment(
+            self, method=adjustment_method, note=note, web_user=web_user,
+            reason=SubscriptionAdjustmentReason.MODIFY
+        )
+
+    def change_plan(self, new_plan_version, date_end=None,
                     note=None, web_user=None, adjustment_method=None):
         """
-        Changing a plan terminates the current subscription and creates a new subscription where the old plan
-        left off.
+        Changing a plan TERMINATES the current subscription and
+        creates a NEW SUBSCRIPTION where the old plan left off.
+        This is not the same thing as simply updating the subscription.
         """
+        date_end = date_end or self.date_end
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
         adjustment_reason, downgrades, upgrades = get_change_status(self.plan_version, new_plan_version)
         self.subscriber.apply_upgrades_and_downgrades(
             downgraded_privileges=downgrades, upgraded_privileges=upgrades,
-            new_plan_version=new_plan_version)
+            new_plan_version=new_plan_version
+        )
 
         today = datetime.date.today()
-        new_start_date = today if self.date_start <= today else (date_start or self.date_start)
+        new_start_date = today if self.date_start < today else self.date_start
 
-        new_is_active = is_active_subscription(new_start_date, date_end)
-        new_salesforce_contract_id = (
-            salesforce_contract_id if salesforce_contract_id is not None
-            else self.salesforce_contract_id)
+        new_subscription = Subscription(
+            account=self.account,
+            plan_version=new_plan_version,
+            subscriber=self.subscriber,
+            salesforce_contract_id=self.salesforce_contract_id,
+            date_start=new_start_date,
+            date_end=date_end,
+            date_delay_invoicing=self.date_delay_invoicing,
+            is_active=self.is_active,
+            do_not_invoice=self.do_not_invoice,
+        )
+        new_subscription.save()
 
         if self.date_start > today:
             self.date_start = today
         if self.date_end is None or self.date_end > today:
             self.date_end = today
-        if self.date_delay_invoicing is not None and self.date_delay_invoicing > today:
+        if (self.date_delay_invoicing is not None
+           and self.date_delay_invoicing > today):
             self.date_delay_invoicing = today
         self.is_active = False
         self.save()
 
-        new_subscription = Subscription.new_domain_subscription(
-            self.account, self.subscriber.domain, new_plan_version,
-            date_start=new_start_date,
-            date_end=date_end,
-            date_delay_invoicing=date_delay_invoicing,
-            salesforce_contract_id=new_salesforce_contract_id,
-            is_active=new_is_active,
-            do_not_invoice=do_not_invoice,
-            adjustment_method=adjustment_method,
-            note=note,
-            web_user=web_user
-         )
-
         # record transfer from old subscription
-        SubscriptionAdjustment.record_adjustment(self, method=adjustment_method, note=note, web_user=web_user,
-                                                 reason=adjustment_reason, related_subscription=new_subscription)
+        SubscriptionAdjustment.record_adjustment(
+            self, method=adjustment_method, note=note, web_user=web_user,
+            reason=adjustment_reason, related_subscription=new_subscription
+        )
 
         return new_subscription
 

@@ -19,7 +19,7 @@ from corehq.apps.accounting.forms import (
     BillingAccountForm, CreditForm, SubscriptionForm, CancelForm,
     PlanInformationForm, SoftwarePlanVersionForm, FeatureRateForm,
     ProductRateForm, TriggerInvoiceForm, InvoiceInfoForm, AdjustBalanceForm,
-    ResendEmailForm,
+    ResendEmailForm, ChangeSubscriptionForm,
 )
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError, InvoiceError, CreditLineError
@@ -228,10 +228,13 @@ class NewSubscriptionViewNoDefaultDomain(NewSubscriptionView):
         return reverse(self.urlname)
 
 
-class EditSubscriptionView(AccountingSectionView):
+class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
     page_title = 'Edit Subscription'
     template_name = 'accounting/subscriptions.html'
     urlname = 'edit_subscription'
+    async_handlers = [
+        Select2SubscriptionInfoHandler,
+    ]
 
     @property
     @memoized
@@ -255,6 +258,18 @@ class EditSubscriptionView(AccountingSectionView):
 
     @property
     @memoized
+    def change_subscription_form(self):
+        if (self.request.method == 'POST'
+           and 'subscription_change_note' in self.request.POST):
+            return ChangeSubscriptionForm(
+                self.subscription, self.request.user.username,
+                self.request.POST
+            )
+        return ChangeSubscriptionForm(self.subscription,
+                                      self.request.user.username)
+
+    @property
+    @memoized
     def credit_form(self):
         if self.request.method == 'POST' and 'adjust_credit' in self.request.POST:
             return CreditForm(self.subscription.account, self.subscription,
@@ -274,6 +289,8 @@ class EditSubscriptionView(AccountingSectionView):
         return {
             'cancel_form': self.cancel_form,
             'credit_form': self.credit_form,
+            'can_change_subscription': self.subscription.is_active,
+            'change_subscription_form': self.change_subscription_form,
             'credit_list': CreditLine.objects.filter(subscription=self.subscription),
             'disable_cancel': has_subscription_already_ended(self.subscription),
             'form': self.subscription_form,
@@ -293,17 +310,26 @@ class EditSubscriptionView(AccountingSectionView):
         }]
 
     def post(self, request, *args, **kwargs):
+        if self.async_response is not None:
+            return self.async_response
         if 'set_subscription' in self.request.POST and self.subscription_form.is_valid():
-            new_subscription = self.subscription_form.update_subscription(self.subscription)
-            return HttpResponseRedirect(
-                reverse(self.urlname, args=(new_subscription.id,))
-            )
+            self.subscription_form.update_subscription()
+            return HttpResponseRedirect(self.page_url)
         elif 'adjust_credit' in self.request.POST and self.credit_form.is_valid():
             if self.credit_form.adjust_credit():
                 return HttpResponseRedirect(self.page_url)
         elif ('cancel_subscription' in self.request.POST
               and self.cancel_form.is_valid()):
             self.cancel_subscription()
+        elif ('subscription_change_note' in self.request.POST
+              and self.change_subscription_form.is_valid()
+        ):
+            try:
+                new_sub = self.change_subscription_form.change_subscription()
+                return HttpResponseRedirect(reverse(self.urlname, args=[new_sub.id]))
+            except Exception as e:
+                messages.error(request,
+                               "Could not change subscription due to: %s" % e)
         return self.get(request, *args, **kwargs)
 
     def cancel_subscription(self):
