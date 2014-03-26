@@ -12,7 +12,9 @@ Turn off debug mode
 from gevent import monkey
 monkey.patch_all()
 
-import datetime, random
+import datetime
+import random
+from hashlib import md5
 
 from gevent.pool import Pool
 
@@ -43,6 +45,7 @@ def disable_signals():
 
 disable_signals()
 
+
 ########################
 # Domain and App setup #
 ########################
@@ -54,6 +57,7 @@ domain_name = 'bigdomain'
 # https://www.commcarehq.org/a/amelia/apps/view/dec1dc1a2c1e16f41b42aca3f60d1334/?lang=en
 # the forms are based on that app.
 app_id = 'eb70e5a3780f7fc40792ac951f8afd51'
+
 
 ##################
 # Make Web Users #
@@ -67,29 +71,72 @@ app_id = 'eb70e5a3780f7fc40792ac951f8afd51'
 # Make Users and Forms #
 ########################
 
-def user_and_forms():
+# def user_and_forms():
+    # user = None
+    # while not user:
+        # user = make_cc_user(domain_name)
+    # make_forms(
+        # domain_name,
+        # app_id,
+        # user,
+        # cases=random.randint(0, 860),
+        # avg_updates=3.5
+    # )
+
+# pool = Pool(10)
+# num_users = 500
+# for i in range(num_users):
+    # # control verbosity
+    # # if i%1 == 0:
+    # print "%d / %d users created (%s%%)" % (
+            # i, num_users, float(i)/num_users)
+    # pool.spawn(user_and_forms)
+
+# # I Estimate 2 hrs to get to 10k users with no cases or forms
+# make_cc_users(domain_name, 10000)
+
+
+########################################
+# Make Users and Forms with duplicates #
+########################################
+
+# the form submission process is too slow, do it once
+# then copy the resulting docs with the keys changed.
+
+users = 500
+cases = 430
+avg_updates = 2.5
+
+
+def init_user_and_forms():
     user = None
     while not user:
         user = make_cc_user(domain_name)
-    make_forms(
+    new_case_forms, update_forms = make_forms(
         domain_name,
         app_id,
         user,
-        cases=random.randint(0, 860),
-        avg_updates=3.5
+        cases=cases,
+        avg_updates=avg_updates,
     )
+    return user, new_case_forms, update_forms
 
+def hashed(id):
+    return md5(id).hexdigest()
 
-# Make sure you're using the correct db!
-pool = Pool(10)
-num_users = 500
-for i in range(num_users):
-    # control verbosity
-    # if i%1 == 0:
-    print "%d / %d users created (%s%%)" % (
-            i, num_users, float(i)/num_users)
-    pool.spawn(user_and_forms)
-
-
-# Estimate 2 hrs to get to 10k users with no cases or forms
-# make_cc_users(domain_name, 10000)
+def make_users():
+    user, new_case_forms, update_forms = init_user_and_forms()
+    forms = map(XFormInstance.get, new_case_forms + update_forms)
+    for i in range(users):
+        uuid = hashed(user._id)
+        user = None
+        while not user:
+            user = make_cc_user(domain_name, uuid=uuid)
+        print "**** User", user.username_in_report
+        print uuid
+        print datetime.datetime.now()
+        for form in forms:
+            form._id = hashed(form._id)
+            del form._rev
+            del form._attachments
+            form.save()

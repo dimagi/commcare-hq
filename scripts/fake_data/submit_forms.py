@@ -116,7 +116,8 @@ def make_forms(domain, app_id, user, cases, avg_updates=None):
     """
     make `cases` new cases each averaging `avg_updates` updates
     """
-    print "making {cases} cases and {updates} updates".format(
+    avg_updates = avg_updates or 0
+    print "making {cases} cases with {updates} updates each".format(
             cases=cases, updates=avg_updates)
 
     # This `last` and `now` business is to print the length each query takes
@@ -124,9 +125,9 @@ def make_forms(domain, app_id, user, cases, avg_updates=None):
     # last = datetime.datetime.utcnow()
 
 
-    def submit_form1(form):
+    def submit_form(form):
         form = form.render()
-        response = requests.post(
+        requests.post(
             "http://localhost:8000/a/{domain}/receiver/".format(domain=domain),
             data=form,
             headers={
@@ -136,16 +137,22 @@ def make_forms(domain, app_id, user, cases, avg_updates=None):
             auth=HTTPDigestAuth(user.username, "root")
         )
 
+    new_case_forms = []
     # make new cases
     case_ids = []
     for i in range(cases):
         form = NewCaseForm(user)
         case_ids.append(form.case_id)
-        submit_form1(form)
+        submit_form(form)
+        new_case_forms.append(form.id)
 
+    update_forms = []
     # submit updates to cases
     for case_id in case_ids:
         for i in range(random.randint(0, avg_updates*2)):
             form = UpdateCaseForm(user, case_id)
-            submit_form1(form)
-    print "finished making forms for case"
+            submit_form(form)
+            update_forms.append(form.id)
+        print "finished making forms for case", case_id
+
+    return new_case_forms, update_forms

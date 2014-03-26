@@ -25,7 +25,7 @@ from corehq.apps.domain.shortcuts import create_user
 
 from .names import names
 
-def make_user(creator, domain, number):
+def make_user(creator, domain, number=None, **kwargs):
     if number is None:
         number = random.randint(0, 10*3)
     today = datetime.date.today()
@@ -36,17 +36,17 @@ def make_user(creator, domain, number):
     created = today - datetime.timedelta(days=random.randint(0, 60))
     try:
         return creator(domain, username, 'root', email=email, date=created,
-            first_name=first, last_name=last)
+            first_name=first, last_name=last, **kwargs)
     except IntegrityError:
         pass
 
 
-def make_web_user(domain, number=None):
-    return make_user(WebUser.create, domain, number)
+def make_web_user(domain, number=None, **kwargs):
+    return make_user(WebUser.create, domain, number, **kwargs)
 
 
-def make_cc_user(domain, number=None):
-    return make_user(CommCareUser.create, domain, number)
+def make_cc_user(domain, number=None, **kwargs):
+    return make_user(CommCareUser.create, domain, number, **kwargs)
 
 
 # Below this point is for multiple users at once
