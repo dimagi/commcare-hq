@@ -389,22 +389,18 @@ class InvoiceInterface(GenericTabularReport):
                 get_money_str(invoice.balance),
                 get_money_str(sum([
                     line_item.subtotal
-                    for line_item in invoice.lineitem_set.all()
+                    for line_item in invoice.lineitem_set.get_products().all()
                     if line_item.product_rate is not None
                 ])),
                 get_money_str(sum([
                     line_item.subtotal
-                    for line_item in invoice.lineitem_set.all()
-                    if (line_item.feature_rate is not None and
-                        line_item.feature_rate.feature.feature_type
-                        == FeatureType.SMS)
+                    for line_item in invoice.lineitem_set.get_feature_by_type(
+                        FeatureType.SMS).all()
                 ])),
                 get_money_str(sum([
                     line_item.subtotal
-                    for line_item in invoice.lineitem_set.all()
-                    if (line_item.feature_rate is not None and
-                        line_item.feature_rate.feature.feature_type
-                        == FeatureType.USER)
+                    for line_item in invoice.lineitem_set.get_feature_by_type(
+                        FeatureType.USER).all()
                 ])),
                 "Paid" if invoice.date_paid else "Not paid",
                 "YES" if invoice.is_hidden else "no",
