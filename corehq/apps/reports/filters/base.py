@@ -21,7 +21,6 @@ class BaseReportFilter(CacheableRequestMixIn):   # (CacheableRequestMixIn):
     label = None
     css_class = "span4"
     help_text = None
-    advanced = False
 
     def __init__(self, request, domain=None, timezone=pytz.utc, parent_report=None):
         if self.slug is None:
@@ -60,7 +59,6 @@ class BaseReportFilter(CacheableRequestMixIn):   # (CacheableRequestMixIn):
             'css_id': 'report_filter_%s' % self.slug,
             'css_class': self.css_class,
             'help_text': self.help_text,
-            'advanced': self.advanced,
         })
         filter_context = self.filter_context
         if not (filter_context, dict):
@@ -297,3 +295,5 @@ class BaseTagsFilter(BaseReportFilter):
             'selected': self.selected,
             'placeholder': self.placeholder,
         }
+
+
