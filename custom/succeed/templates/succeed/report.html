@@ -1,7 +1,7 @@
 {% include "reports/async/filters.html" %}
 
 <script type="text/javascript">
-$(window).ready(function() {
+
     $('#group_search_query').hide();
 
     $search_bar = '<div id="report_table_case_activity_filter" class="dataTables_filter form-search"><label for="dataTables-filter-box"><i class="icon-search"></i></label><input placeholder="Search..." class="search-query input-medium" id="dataTables-filter-box" aria-controls="report_table_case_activity" type="text"></div>';
@@ -11,11 +11,12 @@ $(window).ready(function() {
 
     $('#dataTables-filter-box').val($('#report_filter_search_query').val());
 
-    $('#dataTables-filter-box').keypress(function(e) {
+    $('.accordion-heading').on('keypress', '#dataTables-filter-box', function(e) {
         if(e.which === 13) {
             $query = $('#dataTables-filter-box').val();
             $('#report_filter_search_query').val($query);
             asyncHQReport.filterForm.submit();
-        }});
-});
+        }
+    })
+
 </script>
