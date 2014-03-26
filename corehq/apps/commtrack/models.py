@@ -15,6 +15,8 @@ from corehq.apps.commtrack import const
 from corehq.apps.consumption.shortcuts import get_default_consumption
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
+from casexml.apps.stock.utils import months_of_stock_remaining, state_stock_category
+from corehq.apps.domain.models import Domain
 from dimagi.utils.couch.loosechange import map_reduce
 from couchforms.models import XFormInstance
 from dimagi.utils import parsing as dateparse
@@ -1278,7 +1280,7 @@ class StockState(models.Model):
 
     @property
     def months_remaining(self):
-        return utils.months_of_stock_remaining(
+        return months_of_stock_remaining(
             self.stock_on_hand,
             self.daily_consumption
         )
@@ -1296,7 +1298,7 @@ class StockState(models.Model):
 
     @property
     def stock_category(self):
-        return utils.state_stock_category(self)
+        return state_stock_category(self)
 
     def get_domain(self):
         return Domain.get_by_name(
