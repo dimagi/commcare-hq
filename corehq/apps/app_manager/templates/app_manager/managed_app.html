@@ -4,6 +4,9 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
+{% block title %}{{ module.name|html_trans:langs }}{% endblock %}
+
+
 {% block head %}{{ block.super }}
 <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-redmond-1.8.16.css' %}"/>
 {% include "imports/hq-oldstyle-js.html" %}

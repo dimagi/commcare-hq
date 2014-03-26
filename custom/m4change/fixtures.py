@@ -25,18 +25,24 @@ def _get_last_n_full_months(months):
 
 def generator(user, version, last_sync):
     if user.domain in M4CHANGE_DOMAINS:
-        return ReportFixtureProvider('reports:m4change-mobile', user).to_fixture()
+        domain = Domain.get_by_name(user.domain)
+        location_id = get_commtrack_location_id(user, domain)
+        if location_id is not None:
+            return [ReportFixtureProvider('reports:m4change-mobile', user, domain, location_id).to_fixture()]
+        else:
+            return []
     else:
         return []
 
 
 class ReportFixtureProvider(object):
 
-    def __init__(self, id, user):
+    def __init__(self, id, user, domain, location_id):
         self.id = id
         self.user = user
         self.dates = _get_last_n_full_months(2)
-        self.domain = Domain.get_by_name(user.domain)
+        self.domain = domain
+        self.location_id = location_id
 
     def to_fixture(self):
         """
@@ -127,10 +133,11 @@ class ReportFixtureProvider(object):
             return monthly_report_element
 
         root = ElementTree.Element('fixture', attrib={
+            'id': self.id,
             'user_id': self.user._id
         })
 
-        user_location = Location.get(get_commtrack_location_id(self.user, self.domain))
+        user_location = Location.get(self.location_id)
         locations =  [user_location] + [descendant for descendant in user_location.descendants]
         for date_tuple in self.dates:
             root.append(_month_to_fixture(date_tuple, locations))

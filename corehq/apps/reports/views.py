@@ -233,6 +233,7 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
     previous_export_id = request.GET.get("previous_export", None)
     filename = request.GET.get("filename", None)
     max_column_size = int(request.GET.get("max_column_size", 2000))
+    limit = int(request.GET.get("limit", 0))
 
     filter = util.create_export_filter(request, domain, export_type=export_type)
     if bulk_export:
@@ -241,7 +242,6 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
             export_tags = json.loads(request.GET.get("export_tags", "null") or "null")
         except ValueError:
             return HttpResponseBadRequest()
-
 
         export_helper = (CustomBulkExportHelper if is_custom else ApplicationBulkExportHelper)(
             domain=domain,
@@ -304,7 +304,7 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
         if not next:
             next = export.ExcelExportReport.get_url(domain=domain)
         try:
-            resp = export_object.download_data(format, filter=filter)
+            resp = export_object.download_data(format, filter=filter, limit=limit)
         except SchemaMismatchException, e:
             rebuild_schemas.delay(export_object.index)
             messages.error(
@@ -557,7 +557,6 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
         for k, v in form.cleaned_data.items():
             setattr(instance, k, v)
         instance.save()
-
         if is_new:
             messages.success(request, "Scheduled report added!")
         else:
@@ -660,11 +659,11 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
         report_outputs.append({
             'title': config.full_name,
             'url': config.url,
-            'content': content
+            'content': content,
+            'description': config.description,
         })
 
     date_range = config.get_date_range()
-
     return render(request, "reports/report_email.html", {
         "reports": report_outputs,
         "domain": domain,
@@ -672,7 +671,7 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
         "DNS_name": get_url_base(),
         "owner_name": couch_user.full_name or couch_user.get_email(),
         "email": email,
-        "notes": notes or getattr(config, "description", ""),
+        "notes": notes,
         "startdate": date_range["startdate"] if date_range else "",
         "enddate": date_range["enddate"] if date_range else "",
     }), excel_attachments

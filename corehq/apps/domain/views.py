@@ -2,7 +2,10 @@ import datetime
 from decimal import Decimal
 import logging
 import uuid
+from couchdbkit import ResourceNotFound
 import dateutil
+from django.utils.dates import MONTHS
+from django.views.generic import View
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
@@ -27,9 +30,10 @@ from django_prbac.utils import ensure_request_has_privilege
 from corehq.apps.accounting.models import (
     Subscription, CreditLine, SoftwareProductType,
     DefaultProductPlan, SoftwarePlanEdition, BillingAccount,
-    BillingAccountType, BillingAccountAdmin
+    BillingAccountType, BillingAccountAdmin,
+    Invoice, BillingRecord, InvoicePdf
 )
-from corehq.apps.accounting.usage import FeatureUsage
+from corehq.apps.accounting.usage import FeatureUsageCalculator
 from corehq.apps.accounting.user_text import get_feature_name, PricingTable, DESC_BY_EDITION, PricingTableFeatures
 from corehq.apps.hqwebapp.models import ProjectSettingsTab
 from corehq.apps import receiverwrapper
@@ -46,7 +50,7 @@ from corehq.apps.domain.forms import (DomainGlobalSettingsForm, DomainMetadataFo
                                       ConfirmNewSubscriptionForm, ProBonoForm, EditBillingAccountInfoForm)
 from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.domain.utils import normalize_domain_name
-from corehq.apps.hqwebapp.views import BaseSectionPageView, BasePageView
+from corehq.apps.hqwebapp.views import BaseSectionPageView, BasePageView, CRUDPaginatedViewMixin
 from corehq.apps.orgs.models import Organization, OrgRequest, Team
 from corehq.apps.commtrack.util import all_sms_codes, unicode_slug
 from corehq.apps.domain.forms import ProjectSettingsForm
@@ -508,6 +512,15 @@ class DomainAccountingSettings(BaseAdminProjectSettingsView):
     def product(self):
         return SoftwareProductType.get_type_by_domain(self.domain_object)
 
+    @property
+    @memoized
+    def account(self):
+        return BillingAccount.get_account_by_domain(self.domain)
+
+    @property
+    def current_subscription(self):
+        return Subscription.get_subscribed_plan_by_domain(self.domain_object)[1]
+
 
 class DomainSubscriptionView(DomainAccountingSettings):
     urlname = 'domain_subscription_view'
@@ -555,7 +568,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
             }
             if subscription is not None:
                 credit_lines = CreditLine.get_credits_by_subscription_and_features(
-                    subscription, product_rate=product_rate)
+                    subscription, product_type=product_rate.product.product_type)
                 product_info['credit'] = self._fmt_credit(self._credit_grand_total(credit_lines))
             product_summary.append(product_info)
         return product_summary
@@ -563,7 +576,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
     def get_feature_summary(self, plan_version, subscription):
         feature_summary = []
         for feature_rate in plan_version.feature_rates.all():
-            usage = FeatureUsage(feature_rate, self.domain).get_usage()
+            usage = FeatureUsageCalculator(feature_rate, self.domain).get_usage()
             feature_info = {
                 'name': get_feature_name(feature_rate.feature.feature_type, self.product),
                 'usage': usage,
@@ -572,7 +585,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
             }
             if subscription is not None:
                 credit_lines = CreditLine.get_credits_by_subscription_and_features(
-                    subscription, feature_rate=feature_rate
+                    subscription, feature_type=feature_rate.feature.feature_type
                 )
                 feature_info['credit'] = self._fmt_credit(self._credit_grand_total(credit_lines))
             feature_summary.append(feature_info)
@@ -593,11 +606,6 @@ class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin
     async_handlers = [
         Select2BillingInfoHandler,
     ]
-
-    @property
-    @memoized
-    def account(self):
-        return BillingAccount.get_account_by_domain(self.domain)
 
     @property
     @memoized
@@ -637,16 +645,150 @@ class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin
         return self.get(request, *args, **kwargs)
 
 
+class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMixin):
+    template_name = 'domain/billing_statements.html'
+    urlname = 'domain_billing_statements'
+    page_title = ugettext_noop("Billing Statements")
+
+    limit_text = ugettext_noop("statements per page")
+    empty_notification = ugettext_noop("You have no Billing Statements yet.")
+    loading_message = ugettext_noop("Loading statements...")
+
+    @property
+    def page_context(self):
+        return {
+            'statements': list(self.statements),
+        }
+
+    @property
+    def parameters(self):
+        return self.request.POST if self.request.method == 'POST' else self.request.GET
+
+    @property
+    def show_hidden(self):
+        if not self.request.user.is_superuser:
+            return False
+        return bool(self.request.POST.get('additionalData[show_hidden]'))
+
+    @property
+    def invoices(self):
+        invoices = Invoice.objects.filter(subscription__subscriber__domain=self.domain)
+        if not self.show_hidden:
+            invoices = invoices.filter(is_hidden=False)
+        return invoices.order_by('-date_start', '-date_end').all()
+
+    @property
+    def total(self):
+        return Invoice.objects.filter(
+            subscription__subscriber__domain=self.domain, is_hidden=False
+        ).count()
+
+    @property
+    def column_names(self):
+        return [
+            _("Statement No."),
+            _("Plan"),
+            _("Start Date"),
+            _("End Date"),
+            _("Payment Received"),
+            _("PDF"),
+        ]
+
+    @property
+    def page_context(self):
+        return self.pagination_context
+
+    @property
+    def paginated_list(self):
+        for invoice in self.invoices:
+            try:
+                last_billing_record = BillingRecord.objects.filter(
+                    invoice=invoice
+                ).latest('date_created')
+                yield {
+                    'itemData': {
+                        'id': invoice.id,
+                        'invoice_number': invoice.invoice_number,
+                        'start': invoice.date_start.strftime("%d %B %Y"),
+                        'end': invoice.date_end.strftime("%d %B %Y"),
+                        'plan': invoice.subscription.plan_version.user_facing_description,
+                        'payment_status': (_("YES (%s)") % invoice.date_paid.strftime("%d %B %Y")
+                                           if invoice.date_paid is not None else _("NO")),
+                        'pdfUrl': reverse(
+                            BillingStatementPdfView.urlname,
+                            args=[self.domain, last_billing_record.pdf_data_id]
+                        ),
+                    },
+                    'template': 'statement-row-template',
+                }
+            except BillingRecord.DoesNotExist:
+                logging.error(
+                    "An invoice was generated for %(invoice_id)d "
+                    "(domain: %(domain)s), but no billing record!" % {
+                        'invoice_id': invoice.id,
+                        'domain': self.domain,
+                    })
+
+    def post(self, *args, **kwargs):
+        return self.paginate_crud_response
+
+    @method_decorator(toggles.ACCOUNTING_PREVIEW.required_decorator())
+    def dispatch(self, request, *args, **kwargs):
+        if self.account is None:
+            raise Http404()
+        return super(DomainBillingStatementsView, self).dispatch(request, *args, **kwargs)
+
+
+class BillingStatementPdfView(View):
+    urlname = 'domain_billing_statement_download'
+
+    @method_decorator(login_and_domain_required)
+    @method_decorator(require_billing_admin())
+    @method_decorator(toggles.ACCOUNTING_PREVIEW.required_decorator())
+    def dispatch(self, request, *args, **kwargs):
+        return super(BillingStatementPdfView, self).dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        domain = args[0]
+        statement_id = kwargs.get('statement_id')
+        if statement_id is None or domain is None:
+            raise Http404()
+        try:
+            invoice_pdf = InvoicePdf.get(statement_id)
+        except ResourceNotFound:
+            raise Http404()
+
+        # verify domain
+        try:
+            invoice = Invoice.objects.get(pk=invoice_pdf.invoice_id)
+        except Invoice.DoesNotExist:
+            raise Http404()
+        if invoice.subscription.subscriber.domain != domain:
+            raise Http404()
+
+        filename = "%(pdf_id)s_%(domain)s_%(edition)s_%(filename)s" % {
+            'pdf_id': invoice_pdf._id,
+            'domain': domain,
+            'edition': DESC_BY_EDITION[invoice.subscription.plan_version.plan.edition]['name'],
+            'filename': invoice_pdf.get_filename(invoice),
+        }
+        try:
+            data = invoice_pdf.get_data(invoice)
+            response = HttpResponse(data, content_type='application/pdf')
+            response['Content-Disposition'] = 'inline;filename="%s' % filename
+        except Exception as e:
+            logging.error('[Billing] Fetching invoice PDF failed: %s' % e)
+            return HttpResponse(_("Could not obtain billing statement. "
+                                  "An issue has been submitted."))
+        return response
+
+
 class SelectPlanView(DomainAccountingSettings):
     template_name = 'domain/select_plan.html'
     urlname = 'domain_select_plan'
     page_title = ugettext_noop("Change Plan")
     step_title = ugettext_noop("Select Plan")
     edition = None
-
-    @property
-    def current_subscription(self):
-        return Subscription.get_subscribed_plan_by_domain(self.domain_object)[1]
 
     @property
     def edition_name(self):
@@ -1333,6 +1475,8 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             'can_use_data',
             'project_manager',
             'phone_model',
+            'goal_time_period',
+            'goal_followup_rate',
         ]
         for attr in internal_attrs:
             val = getattr(self.domain_object.internal, attr)

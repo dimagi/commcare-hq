@@ -1,0 +1,12 @@
+<?xml version='1.0' ?>
+<general xmlns="http://openrosa.org/app/general">
+	<meta>
+		<instanceID>THIS_IS_THE_INSTANCEID</instanceID>
+        <timeStart>2010-07-22T13:54:27.971</timeStart>
+		<timeEnd>2010-07-23T13:55:11.648</timeEnd>
+		<username>THIS_IS_THE_USERNAME</username>
+		<userID>THIS_IS_THE_USERID</userID>
+		<deviceID>THIS_IS_THE_DEVICEID</deviceID>
+	</meta>
+	<foo>bar</foo>
+</general>

@@ -1,8 +1,9 @@
 import json
-from corehq import Domain
+from corehq import Domain, toggles
 from corehq.apps.accounting.models import Feature, SoftwareProduct, BillingAccount, SoftwarePlanVersion
-from corehq.apps.accounting.utils import fmt_feature_rate_dict, fmt_product_rate_dict, LazyEncoder
+from corehq.apps.accounting.utils import fmt_feature_rate_dict, fmt_product_rate_dict
 from corehq.apps.hqwebapp.async_handler import BaseAsyncHandler, AsyncHandlerError
+from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.users.models import WebUser
 
 
@@ -202,3 +203,18 @@ class Select2SubscriptionInfoHandler(BaseSelect2AsyncHandler):
             plan_versions = plan_versions.filter(
                 plan__name__contains=self.search_string)
         return [(p.id, p.__str__()) for p in plan_versions.order_by('plan__name')]
+
+
+class Select2InvoiceTriggerHandler(BaseSelect2AsyncHandler):
+    slug = 'select2_billing'
+    allowed_actions = [
+        'domain',
+    ]
+
+    @property
+    def domain_response(self):
+        domain_names = [domain['key'] for domain in Domain.get_all(include_docs=False)]
+        domain_names = filter(lambda x: toggles.ACCOUNTING_PREVIEW.enabled(x), domain_names)
+        if self.search_string:
+            domain_names = filter(lambda x: x.lower().startswith(self.search_string.lower()), domain_names)
+        return [(d, d) for d in domain_names]

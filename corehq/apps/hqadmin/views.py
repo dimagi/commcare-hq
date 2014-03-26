@@ -1,4 +1,5 @@
 from datetime import timedelta, datetime
+import time
 import json
 from copy import deepcopy
 import logging
@@ -40,8 +41,9 @@ from corehq.apps.hqadmin.escheck import check_es_cluster_health, check_xform_es_
 from corehq.apps.hqadmin.system_info.checks import check_redis, check_rabbitmq, check_celery_health, check_memcached
 from corehq.apps.ota.views import get_restore_response, get_restore_params
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
+from corehq.apps.reports.graph_models import Axis, LineChart
 from corehq.apps.reports.standard.domains import es_domain_query
-from corehq.apps.reports.util import make_form_couch_key
+from corehq.apps.reports.util import make_form_couch_key, format_datatables_data
 from corehq.apps.sms.models import SMSLog
 from corehq.apps.users.models import  CommCareUser, WebUser
 from corehq.apps.users.util import format_username
@@ -431,8 +433,9 @@ def mobile_user_reports(request):
     else:
         logs = Log.objects.filter(type__exact="user-report").order_by('domain')
         for log in logs:
+            seconds_since_epoch = int(time.mktime(log.date.timetuple()) * 1000)
             rows.append(dict(domain=log.domain,
-                             time=log.date,
+                             time=format_datatables_data(text=log.date, sort_key=seconds_since_epoch),
                              user=log.username,
                              device_users=[u.username for u in log.device_users.all()],
                              message=log.msg,
@@ -932,5 +935,38 @@ def loadtest(request):
         "tests": tests,
         "hide_filters": True,
     })
+
+    date_axis = Axis(label="Date", dateFormat="%m/%d/%Y")
+    tests_axis = Axis(label="Number of Tests in 30s")
+    chart = LineChart("HQ Load Test Performance", date_axis, tests_axis)
+    submit_data = []
+    ota_data = []
+    total_data = []
+    max_val = 0
+    max_date = None
+    min_date = None
+    for test in tests:
+        date = test['datetime']
+        total = len(test['results'])
+        max_val = total if total > max_val else max_val
+        max_date = date if not max_date or date > max_date else max_date
+        min_date = date if not min_date or date < min_date else min_date
+        submit_data.append({'x': date, 'y': len(test['submit_form'].results)})
+        ota_data.append({'x': date, 'y': len(test['ota_restore'].results)})
+        total_data.append({'x': date, 'y': total})
+
+    deployments = [row['key'][1] for row in HqDeploy.get_list(settings.SERVER_ENVIRONMENT, min_date, max_date)]
+    deploy_data = [{'x': min_date, 'y': 0}]
+    for date in deployments:
+        deploy_data.extend([{'x': date, 'y': 0}, {'x': date, 'y': max_val}, {'x': date, 'y': 0}])
+    deploy_data.append({'x': max_date, 'y': 0})
+
+    chart.add_dataset("Deployments", deploy_data)
+    chart.add_dataset("Form Submission Count", submit_data)
+    chart.add_dataset("OTA Restore Count", ota_data)
+    chart.add_dataset("Total Count", total_data)
+
+    context['charts'] = [chart]
+
     template = "hqadmin/loadtest.html"
     return render(request, template, context)

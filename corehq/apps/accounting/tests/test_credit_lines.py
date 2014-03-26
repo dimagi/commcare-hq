@@ -23,10 +23,34 @@ class TestCreditLines(BaseInvoiceTestCase):
         CreditAdjustments are being recorded. Also that available credit lines are being applied to the
         invoices properly.
         """
-        rate_credit_by_account, rate_credit_by_subscription = self._generate_rate_credits_for_testing(
-            self.product_rate.monthly_fee, dict(product_rate=self.product_rate)
+        rate_credit_by_account = CreditLine.add_product_credit(
+            self.product_rate.monthly_fee, self.account,
+            self.product_rate.product.product_type
         )
-        self._test_line_item_crediting(lambda invoice: invoice.lineitem_set.get_products().get())
+        self.assertEqual(CreditAdjustment.objects.filter(
+            credit_line=rate_credit_by_account).count(), 1
+        )
+
+        rate_credit_by_subscription = CreditLine.add_product_credit(
+            self.product_rate.monthly_fee, self.account,
+            self.product_rate.product.product_type,
+            subscription=self.subscription
+        )
+        self.assertEqual(CreditAdjustment.objects.filter(
+            credit_line=rate_credit_by_subscription,
+        ).count(), 1)
+
+        subscription_credit = CreditLine.add_subscription_credit(
+            self.product_rate.monthly_fee,
+            self.subscription
+        )
+        self.assertEqual(CreditAdjustment.objects.filter(
+            credit_line=subscription_credit).count(), 1
+        )
+
+        self._test_line_item_crediting(
+            lambda invoice: invoice.lineitem_set.get_products().get()
+        )
         self._test_credit_use(rate_credit_by_account)
         self._test_credit_use(rate_credit_by_subscription)
         self._clean_credits()
@@ -37,10 +61,34 @@ class TestCreditLines(BaseInvoiceTestCase):
         CreditAdjustments are being recorded. Also that available credit lines are being applied to the
         invoices properly.
         """
-        rate_credit_by_account, rate_credit_by_subscription = self._generate_rate_credits_for_testing(
-            self.monthly_user_fee, dict(feature_rate=self.user_rate)
+        rate_credit_by_account = CreditLine.add_feature_credit(
+            self.monthly_user_fee, self.account,
+            self.user_rate.feature.feature_type,
         )
-        self._test_line_item_crediting(lambda invoice: invoice.lineitem_set.get_feature_by_type(FeatureType.USER).get())
+        self.assertEqual(CreditAdjustment.objects.filter(
+            credit_line=rate_credit_by_account).count(), 1
+        )
+
+        rate_credit_by_subscription = CreditLine.add_feature_credit(
+            self.monthly_user_fee, self.account,
+            self.user_rate.feature.feature_type,
+            subscription=self.subscription
+        )
+        self.assertEqual(CreditAdjustment.objects.filter(
+            credit_line=rate_credit_by_subscription
+        ).count(), 1)
+
+        subscription_credit = CreditLine.add_subscription_credit(
+            self.monthly_user_fee,
+            self.subscription
+        )
+        self.assertEqual(CreditAdjustment.objects.filter(
+            credit_line=subscription_credit).count(), 1
+        )
+
+        self._test_line_item_crediting(
+            lambda invoice: invoice.lineitem_set.get_feature_by_type(FeatureType.USER).get()
+        )
         self._test_credit_use(rate_credit_by_account)
         self._test_credit_use(rate_credit_by_subscription)
         self._clean_credits()
@@ -52,35 +100,6 @@ class TestCreditLines(BaseInvoiceTestCase):
         num_excess = num_active - user_rate.monthly_limit
         per_month_fee = num_excess * user_rate.per_excess_fee
         return user_rate, per_month_fee
-
-    def _generate_rate_credits_for_testing(self, fee, rate_kwarg, generate_invoice_credit=True):
-        """
-        Generates enough line item credit for two invoicing periods.
-        """
-        rate_credit_by_account = CreditLine.add_rate_credit(
-            fee,
-            self.account,
-            **rate_kwarg
-        )
-        self.assertEqual(CreditAdjustment.objects.filter(credit_line=rate_credit_by_account).count(), 1)
-
-        rate_credit_by_subscription = CreditLine.add_rate_credit(
-            fee,
-            self.account,
-            subscription=self.subscription,
-            **rate_kwarg
-        )
-        self.assertEqual(CreditAdjustment.objects.filter(credit_line=rate_credit_by_subscription).count(), 1)
-
-        if generate_invoice_credit:
-            # this credit should not count toward the line item
-            subscription_credit = CreditLine.add_subscription_credit(
-                fee,
-                self.subscription
-            )
-            self.assertEqual(CreditAdjustment.objects.filter(credit_line=subscription_credit).count(), 1)
-
-        return rate_credit_by_account, rate_credit_by_subscription
 
     def _test_line_item_crediting(self, get_line_item_from_invoice):
         """
@@ -141,16 +160,31 @@ class TestCreditLines(BaseInvoiceTestCase):
         and invoice credits get applied to the remaining balance.
         """
         self._clean_credits()
-        user_rate_credit_by_account, user_rate_credit_by_subscription = self._generate_rate_credits_for_testing(
-            self.monthly_user_fee, dict(feature_rate=self.user_rate), generate_invoice_credit=False
+
+        user_rate_credit_by_account = CreditLine.add_feature_credit(
+            self.monthly_user_fee, self.account,
+            self.user_rate.feature.feature_type,
         )
+        self.assertEqual(CreditAdjustment.objects.filter(
+            credit_line=user_rate_credit_by_account).count(), 1
+        )
+
+        user_rate_credit_by_subscription = CreditLine.add_feature_credit(
+            self.monthly_user_fee, self.account,
+            self.user_rate.feature.feature_type,
+            subscription=self.subscription
+        )
+        self.assertEqual(CreditAdjustment.objects.filter(
+            credit_line=user_rate_credit_by_subscription
+        ).count(), 1)
+
         subscription_credit, account_credit = self._generate_subscription_and_account_invoice_credits(
             self.product_rate.monthly_fee, self.subscription, self.account
         )
 
         self._test_final_invoice_balance()
 
-        self._test_credit_use(user_rate_credit_by_account)
+        self._test_credit_use(subscription_credit)
         self._test_credit_use(user_rate_credit_by_subscription)
         self._test_credit_use(subscription_credit)
         self._test_credit_use(account_credit)
@@ -186,16 +220,14 @@ class TestCreditLines(BaseInvoiceTestCase):
         """
         Makes sure that the balance is added to the same invoice and same line item credit.
         """
-        product_credit = CreditLine.add_rate_credit(
-            self.product_rate.monthly_fee,
-            self.account,
-            product_rate=self.product_rate,
+        product_credit = CreditLine.add_product_credit(
+            self.product_rate.monthly_fee, self.account,
+            self.product_rate.product.product_type,
         )
         self.assertEqual(CreditAdjustment.objects.filter(credit_line=product_credit).count(), 1)
-        CreditLine.add_rate_credit(
-            self.product_rate.monthly_fee,
-            self.account,
-            product_rate=self.product_rate,
+        CreditLine.add_product_credit(
+            self.product_rate.monthly_fee, self.account,
+            self.product_rate.product.product_type,
         )
         self.assertEqual(CreditAdjustment.objects.filter(credit_line=product_credit).count(), 2)
         current_product_credit = CreditLine.objects.get(id=product_credit.id)

@@ -21,11 +21,11 @@ def prepend_newline_if_not_empty(string):
         return string
 
 
-class InvoiceItem(object):
-    def __init__(self, description, quantity, rate, subtotal, credits, total):
+class PdfLineItem(object):
+    def __init__(self, description, quantity, unit_cost, subtotal, credits, total):
         self.description = description
         self.quantity = quantity
-        self.rate = rate
+        self.unit_cost = unit_cost
         self.subtotal = subtotal
         self.credits = credits
         self.total = total
@@ -80,14 +80,16 @@ def midpoint(x1, x2):
 
 class InvoiceTemplate(object):
     def __init__(self, filename, logo_filename=LOGO_FILENAME,
-                 from_address=Address(**settings.FROM_ADDRESS),
+                 from_address=Address(**settings.INVOICE_FROM_ADDRESS),
                  to_address=None, project_name='',
-                 invoice_date=None, invoice_number='', terms=settings.TERMS,
+                 invoice_date=None, invoice_number='',
+                 terms=settings.INVOICE_TERMS,
                  due_date=None, bank_name=settings.BANK_NAME,
                  bank_address=Address(**settings.BANK_ADDRESS),
-                 account_number=settings.ACCOUNT_NUMBER,
-                 routing_number=settings.ROUTING_NUMBER,
-                 swift_code=settings.SWIFT_CODE, applied_credit=None,
+                 account_number=settings.BANK_ACCOUNT_NUMBER,
+                 routing_number=settings.BANK_ROUTING_NUMBER,
+                 swift_code=settings.BANK_SWIFT_CODE,
+                 applied_credit=None,
                  subtotal=None, tax_rate=None, applied_tax=None, total=None):
         self.canvas = Canvas(filename)
         self.canvas.setFontSize(DEFAULT_FONT_SIZE)
@@ -112,9 +114,9 @@ class InvoiceTemplate(object):
 
         self.items = []
 
-    def add_item(self, description, quantity, rate, subtotal, credits, total):
-        self.items.append(InvoiceItem(description, quantity, rate, subtotal,
-                                      credits, total))
+    def add_item(self, description, quantity, unit_cost, subtotal, credits, total):
+        self.items.append(PdfLineItem(description, quantity, unit_cost,
+                                      subtotal, credits, total))
 
     def get_pdf(self):
         self.draw_logo()
@@ -277,19 +279,19 @@ class InvoiceTemplate(object):
 
         self.canvas.drawCentredString(midpoint(0, description_x),
                                       inches(0.1),
-                                      "Description")
+                                      "Product")
         self.canvas.drawCentredString(midpoint(description_x, quantity_x),
                                       inches(0.1),
                                       "Quantity")
         self.canvas.drawCentredString(midpoint(quantity_x, rate_x),
                                       inches(0.1),
-                                      "Rate")
+                                      "Unit Cost")
         self.canvas.drawCentredString(midpoint(rate_x, subtotal_x),
                                       inches(0.1),
                                       "Subtotal")
         self.canvas.drawCentredString(midpoint(subtotal_x, credits_x),
                                       inches(0.1),
-                                      "Credits")
+                                      "Credits Applied")
         self.canvas.drawCentredString(midpoint(credits_x, total_x),
                                       inches(0.1),
                                       "Total")
@@ -316,7 +318,7 @@ class InvoiceTemplate(object):
             self.canvas.drawCentredString(
                 midpoint(quantity_x, rate_x),
                 coord_y,
-                get_money_str(item.rate)
+                get_money_str(item.unit_cost)
             )
             self.canvas.drawCentredString(
                 midpoint(rate_x, subtotal_x),

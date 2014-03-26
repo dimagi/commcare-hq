@@ -2,7 +2,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqadmin.reports import AdminUserReport, AdminAppReport
 from corehq.apps.reports.standard import (monitoring, inspect, export,
     deployments, sms, ivr)
-import corehq.apps.receiverwrapper.reports as receiverwrapper
+from corehq.apps.receiverwrapper import reports as receiverwrapper
 import phonelog.reports as phonelog
 import phonelog.old_reports as old_phonelog
 from corehq.apps.reports.commtrack import standard as commtrack_reports
@@ -207,6 +207,7 @@ from corehq.apps.accounting.interface import (
     AccountingInterface,
     SubscriptionInterface,
     SoftwarePlanInterface,
+    InvoiceInterface,
 )
 
 ACCOUNTING_ADMIN_INTERFACES = (
@@ -214,6 +215,7 @@ ACCOUNTING_ADMIN_INTERFACES = (
         AccountingInterface,
         SubscriptionInterface,
         SoftwarePlanInterface,
+        InvoiceInterface,
     )),
 )
 

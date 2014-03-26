@@ -175,8 +175,10 @@ def india():
     env.should_migrate = True
 
     _setup_path()
-    env.virtualenv_root = posixpath.join(env.home, '.virtualenvs/commcarehq')
-    env.virtualenv_root_preindex = posixpath.join(env.home, '.virtualenvs/commcarehq_preindex')
+    env.virtualenv_root = posixpath.join(
+        env.home, '.virtualenvs/commcarehq27')
+    env.virtualenv_root_preindex = posixpath.join(
+        env.home, '.virtualenvs/commcarehq27_preindex')
 
     env.roledefs = {
         'couch': [],
@@ -760,10 +762,17 @@ def update_virtualenv(preindex=False):
         env_to_use = env.virtualenv_root
     requirements = posixpath.join(root_to_use, 'requirements')
     with cd(root_to_use):
-        cmd = ['export HOME=/home/%s && source %s/bin/activate && pip install' % (env.sudo_user, env_to_use)]
-        cmd += ['--requirement %s' % posixpath.join(requirements, 'prod-requirements.txt')]
-        cmd += ['--requirement %s' % posixpath.join(requirements, 'requirements.txt')]
-        sudo(' '.join(cmd), user=env.sudo_user)
+        cmd_prefix = 'export HOME=/home/%s && source %s/bin/activate && ' % (
+            env.sudo_user, env_to_use)
+        # uninstall requirements in uninstall-requirements.txt
+        # but only the ones that are actually installed (checks pip freeze)
+        sudo("%s bash scripts/uninstall-requirements.sh" % cmd_prefix,
+             user=env.sudo_user)
+        sudo('%s pip install --requirement %s --requirement %s' % (
+            cmd_prefix,
+            posixpath.join(requirements, 'prod-requirements.txt'),
+            posixpath.join(requirements, 'requirements.txt'),
+        ), user=env.sudo_user)
 
 
 @roles(*ROLES_ALL_SERVICES)

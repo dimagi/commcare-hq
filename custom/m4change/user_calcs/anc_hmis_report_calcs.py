@@ -1,9 +1,8 @@
 from . import update_value_for_date
 from datetime import datetime
 import fluff
-from corehq.apps.users.models import CommCareUser
-from custom.m4change.constants import BOOKING_FORMS, FOLLOW_UP_FORMS, BOOKING_AND_FOLLOW_UP_FORMS,\
-    PNC_CHILD_IMMUNIZATION_AND_REG_HOME_DELIVERED_FORMS, IMMUNIZATION_FORMS, BOOKED_AND_UNBOOKED_DELIVERY_FORMS
+from custom.m4change.constants import BOOKING_FORMS, FOLLOW_UP_FORMS, BOOKING_AND_FOLLOW_UP_FORMS, \
+    PNC_CHILD_IMMUNIZATION_AND_REG_HOME_DELIVERED_FORMS
 
 
 class AncAntenatalAttendanceCalculator(fluff.Calculator):
@@ -13,17 +12,14 @@ class AncAntenatalAttendanceCalculator(fluff.Calculator):
         dates = dict()
         for form in case.get_forms():
             if form.xmlns in BOOKING_AND_FOLLOW_UP_FORMS:
-                visits = str(form.form.get("visits", 0))
-                if not visits.isdigit():
-                    visits = 0
-                visits = int(visits)
-                if form.received_on not in dates:
-                    dates[form.received_on] = visits
-                else:
-                    dates[form.received_on] += visits
+                received_on = form.received_on.date()
+                if dates.get(received_on, None) is None:
+                    dates[received_on] = set()
+                if form.xmlns not in dates[received_on]:
+                    dates[received_on].add(form.xmlns)
         for date in dates:
-            yield [date, dates[date]]
-
+            for xmlns in dates[date]:
+                yield [date, 1]
 
 class AncAntenatalVisitBefore20WeeksCalculator(fluff.Calculator):
 

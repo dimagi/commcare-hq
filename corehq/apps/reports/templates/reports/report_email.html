@@ -35,6 +35,11 @@ td.null-entry {
     {% for report in reports %}
     <div class="pagebreak">
         <h2><a href="{{ DNS_name }}{{ report.url }}">{{ report.title }}</a></h2>
+        {% if report.description %}
+        <p>
+            {{ report.description }}
+        </p>
+        {% endif %}
         {{ report.content|safe }}
     </div>
     {% endfor %}

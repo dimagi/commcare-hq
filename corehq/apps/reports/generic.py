@@ -9,7 +9,6 @@ from django.template.loader import render_to_string
 from django.shortcuts import render
 
 import pytz
-from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.reports.models import ReportConfig
 from corehq.apps.reports import util
 from corehq.apps.reports.datatables import DataTablesHeader
@@ -865,7 +864,7 @@ class GenericTabularReport(GenericReportView):
 
             return [_unformat_val(val) for val in row]
 
-        table = headers.as_table
+        table = headers.as_export_table
         rows = [_unformat_row(row) for row in formatted_rows]
         table.extend(rows)
         if self.total_row:
@@ -981,21 +980,8 @@ class ProjectInspectionReportParamsMixin(object):
                 dict(name='ufilter', value=[f.type for f in self.user_filter if f.show])]
 
 
-class ElasticTabularReport(GenericTabularReport):
-    """
-    Tabular report that provides framework for doing elasticsearch backed tabular reports.
-
-    Main thing of interest is that you need es_results to hit ES, and that your datatable headers
-    must use prop_name kwarg to enable column sorting.
-    """
+class PaginatedReportMixin(object):
     default_sort = None
-
-    @property
-    def es_results(self):
-        """
-        Main meat - run your ES query and return the raw results here.
-        """
-        raise NotImplementedError("ES Query not implemented")
 
     def get_sorting_block(self):
         res = []
@@ -1013,6 +999,21 @@ class ElasticTabularReport(GenericTabularReport):
         if len(res) == 0 and self.default_sort is not None:
             res.append(self.default_sort)
         return res
+
+class ElasticTabularReport(GenericTabularReport, PaginatedReportMixin):
+    """
+    Tabular report that provides framework for doing elasticsearch backed tabular reports.
+
+    Main thing of interest is that you need es_results to hit ES, and that your datatable headers
+    must use prop_name kwarg to enable column sorting.
+    """
+
+    @property
+    def es_results(self):
+        """
+        Main meat - run your ES query and return the raw results here.
+        """
+        raise NotImplementedError("ES Query not implemented")
 
     @property
     def total_records(self):
