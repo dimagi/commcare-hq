@@ -142,10 +142,8 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
                 xmlns_to_name(self.domain, form.get("xmlns"), app_id=form.get("app_id")),
             ]
             def cell(field):
-                print form["form"].get(field)
                 return form["form"].get(field)
             init_cells.extend([cell(field) for field in self.other_fields])
-            # print init_cells
             yield init_cells
 
 class SubmitHistoryNew(SubmitHistory):
