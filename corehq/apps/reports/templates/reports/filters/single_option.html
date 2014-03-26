@@ -12,6 +12,6 @@
 <script type="text/javascript">
     $(function () {
         ko.applyBindings({select_params: {{ select.options|JSON }}, current_selection: ko.observable('{{ select.selected|safe|default:'' }}')}, $('#{{ css_id }}').parent().get(0));
+        $('#{{ css_id }}').select2();
     });
-    $('#{{ css_id }}').select2();
 </script>{% endblock %}
