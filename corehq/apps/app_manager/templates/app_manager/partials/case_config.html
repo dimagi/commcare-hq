@@ -54,11 +54,15 @@
     <div data-bind="with: caseConfigViewModel">
         <div>
             {% trans "Choose a type of form: " %}
+            {% trans "Does not use cases" as no_cases %}
+            {% trans "Registers a new case" as registers_case %}
+            {% trans "Updates or closes a case" as updates_case %}
+            {% trans "Registers a case (different module)" as different_module %}
             <select class="input-xlarge" data-bind="
-                optstr: [{value: 'none', label: '{% trans "Does not use cases" %}'},
-                         {value: 'open', label: '{% trans "Registers a new case" %}'},
-                         {value: 'update', label: '{% trans "Updates or closes a case" %}'},
-                         {value: 'open-other', label: '{% trans "Registers a case (different module)" %}'}],
+                optstr: [{value: 'none', label: '{{ no_cases|escapejs }}'},
+                         {value: 'open', label: '{{ registers_case|escapejs }}'},
+                         {value: 'update', label: '{{ updates_case|escapejs }}'},
+                         {value: 'open-other', label: '{{ different_module|escapejs }}'}],
                 value: actionType
             "></select>
         </div>

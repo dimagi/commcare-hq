@@ -36,7 +36,7 @@ class StockReportTest(SMSTests):
     user_definitions = [ROAMING_USER, FIXED_USER]
 
     def testStockReportRoaming(self):
-        self.assertEqual(0, len(self.get_commtrack_forms()))
+        self.assertEqual(0, len(self.get_commtrack_forms(self.domain.name)))
         amounts = {
             'pp': 10,
             'pq': 20,
@@ -48,7 +48,7 @@ class StockReportTest(SMSTests):
             report=' '.join('%s %s' % (k, v) for k, v in amounts.items())
         ))
         self.assertTrue(handled)
-        forms = list(self.get_commtrack_forms())
+        forms = list(self.get_commtrack_forms(self.domain.name))
         self.assertEqual(1, len(forms))
         self.assertEqual(_get_location_from_sp(self.sp), _get_location_from_form(forms[0]))
 
@@ -66,7 +66,7 @@ class StockReportTest(SMSTests):
             self.assertEqual(amt, trans.stock_on_hand)
 
     def testStockReportFixed(self):
-        self.assertEqual(0, len(self.get_commtrack_forms()))
+        self.assertEqual(0, len(self.get_commtrack_forms(self.domain.name)))
 
         amounts = {
             'pp': 10,
@@ -78,7 +78,7 @@ class StockReportTest(SMSTests):
             report=' '.join('%s %s' % (k, v) for k, v in amounts.items())
         ))
         self.assertTrue(handled)
-        forms = list(self.get_commtrack_forms())
+        forms = list(self.get_commtrack_forms(self.domain.name))
         self.assertEqual(1, len(forms))
         self.assertEqual(_get_location_from_sp(self.sp), _get_location_from_form(forms[0]))
 
@@ -208,7 +208,7 @@ class StockRequisitionTest(SMSTests):
     def testRequisition(self):
         # confirm we have a clean start
         self.assertEqual(0, len(RequisitionCase.open_for_location(self.domain.name, self.loc._id)))
-        self.assertEqual(0, len(self.get_commtrack_forms()))
+        self.assertEqual(0, len(self.get_commtrack_forms(self.domain.name)))
 
         amounts = {
             'pp': 10,

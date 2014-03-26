@@ -39,7 +39,7 @@
                 <div><p class="help-inline">{{ export.formname }}</p></div>
             </td>
             <td class="cell-vertical-centered">
-                <a class="btn" href='{% url "export_custom_data" domain export.get_id %}?format=html&{{ get_filter_params.urlencode|safe }}'>
+                <a class="btn" href='{% url "export_custom_data" domain export.get_id %}?format=html&limit=50&{{ get_filter_params.urlencode|safe }}'>
                     {% trans "HTML Preview" %}
                 </a>
             </td>

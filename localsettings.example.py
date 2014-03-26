@@ -200,7 +200,10 @@ ES_XFORM_CHECK_DIRECT_DOC_ID = None
 
 ####### API throttling #####
 
-CCHQ_API_THROTTLE_REQUESTS = 20  # number of requests allowed per timeframe
+CCHQ_API_THROTTLE_REQUESTS = 200  # number of requests allowed per timeframe
+                                  # Use a lower value in production. This is set
+                                  # to 200 to prevent AssertionError: 429 != 200
+                                  # test failures in development environsments.
 CCHQ_API_THROTTLE_TIMEFRAME = 10  # seconds
 
 ####### django-coverage config ########

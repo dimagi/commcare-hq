@@ -13,7 +13,7 @@ from corehq.apps.accounting import generator, tasks, utils
 from corehq.apps.accounting.models import (
     Invoice, FeatureType, LineItem, Subscriber, DefaultProductPlan,
     CreditAdjustment, CreditLine, SubscriptionAdjustment, SoftwareProductType,
-    SoftwarePlanEdition, BillingRecord,
+    SoftwarePlanEdition, BillingRecord, BillingAccount,
 )
 
 
@@ -109,7 +109,12 @@ class TestInvoice(BaseInvoiceTestCase):
         """
         domain = generator.arbitrary_domain()
         generator.create_excess_community_users(domain)
-
+        account = BillingAccount.get_or_create_account_by_domain(
+            domain, created_by=self.dimagi_user)[0]
+        billing_contact = generator.arbitrary_contact_info(account, self.dimagi_user)
+        billing_contact.save()
+        account.date_confirmed_extra_charges = datetime.date.today()
+        account.save()
         tasks.generate_invoices()
         subscriber = Subscriber.objects.get(domain=domain.name)
         invoices = Invoice.objects.filter(subscription__subscriber=subscriber)
@@ -117,52 +122,11 @@ class TestInvoice(BaseInvoiceTestCase):
         invoice = invoices.get()
         self.assertEqual(invoice.subscription.subscriber.domain, domain.name)
         self.assertEqual(invoice.subscription.date_start, invoice.date_start)
-        self.assertEqual(invoice.subscription.date_end, invoice.date_end)
+        self.assertEqual(
+            invoice.subscription.date_end - datetime.timedelta(days=1),
+            invoice.date_end
+        )
         domain.delete()
-
-    def test_use_prev_billing_account_for_community_invoice(self):
-        """
-        Make sure that if a billing account was already auto generated for a previous community invoice,
-        that a new one is not created.
-        """
-        domain = generator.arbitrary_domain()
-        generator.create_excess_community_users(domain)
-
-        second_invoicing_date = datetime.date.today()
-        second_invoice_start, second_invoice_end = utils.get_previous_month_date_range(second_invoicing_date)
-        first_invoicing_date = second_invoice_start - datetime.timedelta(days=random.randint(0, 365))
-
-        tasks.generate_invoices(first_invoicing_date)
-        tasks.generate_invoices(second_invoicing_date)
-        subscriber = Subscriber.objects.get(domain=domain.name)
-        invoices = Invoice.objects.filter(subscription__subscriber=subscriber)
-        self.assertEqual(invoices.count(), 2)
-        invoices = invoices.all()
-        self.assertNotEqual(invoices[0].subscription, invoices[1].subscription)
-        self.assertEqual(invoices[0].subscription.account, invoices[1].subscription.account)
-        for invoice in invoices:
-            self.assertEqual(invoice.subscription.subscriber.domain, domain.name)
-        domain.delete()
-
-    def test_product_plan_for_community_invoices(self):
-        """
-        Make sure that the different product domains get the different community plans by product type.
-        """
-        domains_by_product = generator.arbitrary_domains_by_product_type()
-        for domain in domains_by_product.values():
-            generator.create_excess_community_users(domain)
-
-        tasks.generate_invoices()
-        for product_type, domain in domains_by_product.items():
-            subscriber = Subscriber.objects.get(domain=domain.name)
-            self.assertEqual(subscriber.subscription_set.count(), 1)
-            subscription = subscriber.subscription_set.get()
-            self.assertEqual(subscription.invoice_set.count(), 1)
-            expected_community_plan = DefaultProductPlan.get_default_plan_by_domain(domain)
-            self.assertEqual(
-                subscription.plan_version.plan, expected_community_plan.plan
-            )
-            domain.delete()
 
 
 class TestProductLineItem(BaseInvoiceTestCase):
@@ -237,35 +201,6 @@ class TestProductLineItem(BaseInvoiceTestCase):
 
             # no adjustments
             self.assertEqual(product_line_item.total, product_line_item.unit_cost * product_line_item.quantity)
-
-    def test_community(self):
-        """
-        For Community plans (plan monthly fee is 0.0) that incur other rate charges, like users or SMS messages,
-        make sure that the following is true:
-        - base_description is None
-        - unit_description is None
-        - unit_cost is equal to 0
-        - quantity is equal to 0
-        - total and subtotal are 0.0
-        """
-        domain = generator.arbitrary_domain()
-        generator.create_excess_community_users(domain)
-
-        tasks.generate_invoices()
-        subscriber = Subscriber.objects.get(domain=domain.name)
-        invoice = Invoice.objects.filter(subscription__subscriber=subscriber).get()
-
-        product_line_items = invoice.lineitem_set.filter(feature_rate__exact=None)
-        self.assertEqual(product_line_items.count(), 1)
-        product_line_item = product_line_items.get()
-        self.assertIsNotNone(product_line_item.base_description)
-        self.assertIsNone(product_line_item.unit_description)
-        self.assertEqual(product_line_item.unit_cost, Decimal('0.0000'))
-        self.assertEqual(product_line_item.quantity, 1)
-        self.assertEqual(product_line_item.subtotal, Decimal('0.0000'))
-        self.assertEqual(product_line_item.total, Decimal('0.0000'))
-
-        domain.delete()
 
 
 class TestUserLineItem(BaseInvoiceTestCase):
@@ -351,6 +286,13 @@ class TestUserLineItem(BaseInvoiceTestCase):
         """
         domain = generator.arbitrary_domain()
         num_active = generator.create_excess_community_users(domain)
+
+        account = BillingAccount.get_or_create_account_by_domain(
+            domain, created_by=self.dimagi_user)[0]
+        billing_contact = generator.arbitrary_contact_info(account, self.dimagi_user)
+        billing_contact.save()
+        account.date_confirmed_extra_charges = datetime.date.today()
+        account.save()
 
         tasks.generate_invoices()
         subscriber = Subscriber.objects.get(domain=domain.name)
@@ -449,44 +391,6 @@ class TestSmsLineItem(BaseInvoiceTestCase):
         self.assertGreater(sms_line_item.total, Decimal('0.0000'))
 
         self._delete_sms_billables()
-
-    def test_community_over_limit(self):
-        """
-        For a domain under community (no subscription) with SMS over the community limit, make sure that:
-        - base_description is None
-        - base_cost is 0.0
-        - unit_description is not None
-        - unit_cost is greater than 0.0
-        - quantity is equal to 1
-        - total and subtotals are greater than zero
-        """
-        domain = generator.arbitrary_domain()
-        invoice_date = datetime.date.today()
-        sms_date = utils.months_from_date(invoice_date, -1)
-
-        num_sms = random.randint(1, 5)
-        generator.arbitrary_sms_billables_for_domain(
-            domain.name, INCOMING, sms_date, num_sms
-        )
-
-        tasks.generate_invoices(invoice_date)
-        subscriber = Subscriber.objects.get(domain=domain.name)
-        invoice = Invoice.objects.filter(subscription__subscriber=subscriber).get()
-        sms_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.SMS).get()
-
-        # there is no base cost
-        self.assertIsNone(sms_line_item.base_description)
-        self.assertEqual(sms_line_item.base_cost, Decimal('0.0000'))
-
-        self.assertEqual(sms_line_item.quantity, 1)
-        self.assertGreater(sms_line_item.unit_cost, Decimal('0.0000'))
-        self.assertIsNotNone(sms_line_item.unit_description)
-
-        self.assertGreater(sms_line_item.subtotal, Decimal('0.0000'))
-        self.assertGreater(sms_line_item.total, Decimal('0.0000'))
-
-        self._delete_sms_billables()
-        domain.delete()
 
     def _delete_sms_billables(self):
         SmsBillable.objects.all().delete()

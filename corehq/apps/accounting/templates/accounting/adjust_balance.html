@@ -1,0 +1,10 @@
+{% load crispy_forms_tags %}
+{% load i18n %}
+
+<div class="modal hide fade" id="adjustBalanceModal-{{ adjust_balance_form.invoice.id }}">
+    <div class="modal-header">
+        <a class="close" data-dismiss="modal">&times;</a>
+        <h3>{% trans "Adjust Balance for Invoice #" %}{{ adjust_balance_form.invoice.invoice_number }}</h3>
+    </div>
+    {% crispy adjust_balance_form %}
+</div>

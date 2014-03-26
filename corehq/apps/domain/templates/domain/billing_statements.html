@@ -1,0 +1,33 @@
+{% extends 'hqwebapp/base_paginated_crud.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% block js-inline %} {{ block.super }}
+    <script type="text/javascript">
+        paginatedListModel.getAdditionalData = function () {
+            if (window.location.href.split('?').length < 2)
+                return null;
+            return {
+                'show_hidden': _(window.location.href.split('?')[1].split('&')).contains('show_hidden=true')
+            }
+        }
+    </script>
+{% endblock %}
+
+{% block pagination_header %}
+    <h2>{% trans 'Billing Statements' %}</h2>
+{% endblock %}
+
+{% block pagination_templates %}
+    <script type="text/html" id="statement-row-template">
+        <td class="span2" data-bind="text: invoice_number"></td>
+        <td class="span2" data-bind="text: plan.name"></td>
+        <td class="span2" data-bind="text: start"></td>
+        <td class="span2" data-bind="text: end"></td>
+        <td class="span2" data-bind="text: payment_status"></td>
+        <td class="span2">
+            <a class="btn btn-primary"
+               data-bind="attr: { href: pdfUrl }">{% trans 'Download' %}</a>
+        </td>
+    </script>
+{% endblock %}

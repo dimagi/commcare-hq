@@ -1,0 +1,93 @@
+{% load i18n %}
+
+<p>{{ greeting }}</p>
+
+<p>
+    {% blocktrans %}
+    Your {{ plan_name }} Billing Statement is now available for {{ month_name }}.
+    {% endblocktrans %}
+</p>
+
+<table>
+    <tr>
+        <th>
+            {% trans 'Statement No.' %}:
+        </th>
+        <td>
+            {{ statement_number }}
+        </td>
+    </tr>
+    <tr>
+        <th>
+            {% trans 'Project Space' %}:
+        </th>
+        <td>
+            <a href="{% url 'domain_settings_default' domain %}">
+                {{ domain }}
+            </a>
+        </td>
+    </tr>
+    <tr>
+        <th>
+            {% trans 'Software Plan' %}:
+        </th>
+        <td>
+            {{ plan_name }}
+        </td>
+    </tr>
+    <tr>
+        <th>
+            {% trans 'Status' %}:
+        </th>
+        <td>
+            {{ payment_status }}
+        </td>
+    </tr>
+    <tr>
+        <th>
+            {% trans 'Amount Due' %}:
+        </th>
+        <td>
+            {{ amount_due }}
+        </td>
+    </tr>
+</table>
+
+<p>
+    {% if can_view_statement %}
+        {% blocktrans %}
+        You can <a href="{{ statements_url }}">view the full statement</a> under
+        Subscription > Billing Statements in your Project Space Settings or by
+        visiting this link: {{ statements_url }}.
+        {% endblocktrans %}
+    {% else %}
+        {% blocktrans %}
+        Your project's administrator can view the full statement under
+        Subscription > Billing Statements in Project Space Settings:
+        {{ statements_url }}.
+        {% endblocktrans %}
+    {% endif %}
+</p>
+
+<p>
+    {% blocktrans %}
+    Thank you for using {{ plan_name }}. If you have any questions, please don't
+    hesitate to contact accounts@dimagi.com.
+    {% endblocktrans %}
+</p>
+
+<p>
+    {% blocktrans %}
+    Best Regards,<br />
+    The CommCare HQ Team<br />
+    www.commcarehq.org
+    {% endblocktrans %}
+</p>
+
+<p>
+    {% blocktrans %}
+    Statement From:
+    CommCare HQ and the corporation Dimagi, Inc.
+    585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA
+    {% endblocktrans %}
+</p>

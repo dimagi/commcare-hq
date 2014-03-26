@@ -29,12 +29,14 @@ from django.template import loader
 from django.template.context import RequestContext
 from restkit import Resource
 
+from corehq.apps.accounting.models import Subscription
 from corehq.apps.announcements.models import Notification
 from corehq.apps.app_manager.models import BUG_REPORTS_DOMAIN
 from corehq.apps.app_manager.models import import_app
 from corehq.apps.domain.decorators import require_superuser,\
     login_and_domain_required
 from corehq.apps.domain.utils import normalize_domain_name, get_domain_from_url
+from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
 from corehq.apps.receiverwrapper.models import Repeater
 from corehq.apps.users.models import CouchUser
@@ -374,11 +376,22 @@ def bug_report(req):
         full_name = None
     report['full_name'] = full_name
 
+    matching_subscriptions = Subscription.objects.filter(
+        is_active=True,
+        subscriber__domain=report['domain'],
+    )
+
+    if len(matching_subscriptions) >= 1:
+        report['software_plan'] = matching_subscriptions[0].plan_version
+    else:
+        report['software_plan'] = u'domain has no active subscription'
+
     subject = u'{subject} ({domain})'.format(**report)
     message = (
         u"username: {username}\n"
         u"full name: {full_name}\n"
         u"domain: {domain}\n"
+        u"software plan: {software_plan}\n"
         u"url: {url}\n"
         u"copy url: {copy_url}\n"
         u"datetime: {datetime}\n"
@@ -666,7 +679,7 @@ class CRUDPaginatedViewMixin(object):
         Return this in the post method of your view class.
         """
         response = getattr(self, '%s_response' % self.action)
-        return HttpResponse(json.dumps(response))
+        return HttpResponse(json.dumps(response, cls=LazyEncoder))
 
     @property
     def create_response(self):

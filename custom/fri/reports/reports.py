@@ -245,7 +245,7 @@ class MessageReport(FRIReport, DatespanMixin):
             if message.couch_recipient_doc_type == "CommCareCase":
                 study_arm = case_cache.get(message.couch_recipient).get_case_property("study_arm")
 
-            timestamp = tz_utils.adjust_datetime_to_timezone(message.date, pytz.utc.zone, self.timezone.zone)
+            timestamp = tz_utils.adjust_datetime_to_timezone(message.date, pytz.utc.zone, self.domain_obj.default_timezone)
             result.append([
                 self._fmt(self._participant_id(recipient)),
                 self._fmt(study_arm or "-"),

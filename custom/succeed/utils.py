@@ -1,6 +1,4 @@
-from couchdbkit.exceptions import ResourceNotFound
 from django.utils.translation import ugettext as _, ugettext_noop
-from corehq.apps.app_manager.models import Application
 
 SUCCEED_DOMAIN = 'succeed'
 SUCCEED_CLOUD_APPNAME = 'SUCCEED CM app'

@@ -1,0 +1,10 @@
+{% extends 'reports/selectTemplate.html' %}
+{% load url from future %}
+{% load hq_shared_tags %}
+{% load report_tags %}
+{% load i18n %}
+
+{% block status_button %}
+    <button class="btn" data-bind="click: updateStatus.bind(undefined, 'approved'), mcctProjectReviewPage: selected_forms">{% trans 'Approve' %}</button>
+{% endblock %}
+

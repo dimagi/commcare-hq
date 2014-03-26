@@ -45,7 +45,7 @@
 			<bind nodeset="/data/task_repeat" />
 			<bind nodeset="/data/task_repeat/name" type="xsd:string" required="true()" />
 			<bind nodeset="/data/task_repeat/description" type="xsd:string"/>
-			<bind nodeset="/data/task_repeat/date_followup" type="xsd:date" />
+			<bind nodeset="/data/task_repeat/date_followup" type="xsd:date" required="true()"/>
 			
 			<itext>
 				<translation lang="en" default="">

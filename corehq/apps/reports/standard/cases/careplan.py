@@ -162,17 +162,27 @@ class CareplanReport(ProjectReport, GenericReportView, ProjectReportParametersMi
 
 
 def make_careplan_reports(config):
+    """
+    Creates new report classes based of the database config. These classes must have unique names
+    in order to work with the permissions framework correctly.
+    """
     for conf in config.app_configs.values():
-        class AppCareplanReport(CareplanReport):
-            slug = '{0}_{1}'.format(CareplanReport.slug, conf.case_type)
-            careplan_app_id = conf.latest_release
-            config = conf
+        params = dict(
+            slug='{0}_{1}'.format(CareplanReport.slug, conf.latest_release),
+            careplan_app_id=conf.latest_release,
+            config=conf,
+        )
+        class_name = str('AppCareplanReport%s' % conf.case_type)
+        AppCareplanReport = type(class_name, (CareplanReport,), params)
 
-        class AppCareplanListReport(CareplanCaseListReport):
-            name = conf.name
-            slug = '{0}_{1}'.format(CareplanCaseListReport.slug, conf.case_type)
-            default_case_type = conf.case_type
-            sub_report = AppCareplanReport
+        params = dict(
+            name=conf.name,
+            slug='{0}_{1}'.format(CareplanCaseListReport.slug, conf.latest_release),
+            default_case_type=conf.case_type,
+            sub_report=AppCareplanReport,
+        )
+        class_name = str('AppCareplanListReport%s' % conf.case_type)
+        AppCareplanListReport = type(class_name, (CareplanCaseListReport,), params)
 
         yield AppCareplanListReport
         yield AppCareplanReport

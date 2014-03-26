@@ -72,15 +72,17 @@ class Command(LabelCommand):
             xmlns = label['key'][-2]
             print "\n\nGetting Forms of Type %s and XMLNS %s for domain %s" % (label_name, xmlns, domain)
 
-            relevant_forms = get_db().view("couchforms/by_xmlns",
+            relevant_forms = get_db().view("reports_forms/all_forms",
                 reduce=True,
-                key=xmlns
+                startkey=['submission xmlns', domain, xmlns],
+                endkey=['submission xmlns', domain, xmlns, {}],
             ).first()
             num_forms = relevant_forms['value'] if relevant_forms else 0
-            get_forms = lambda skip, limit: XFormInstance.view("couchforms/by_xmlns",
+            get_forms = lambda skip, limit: XFormInstance.view("reports_forms/all_forms",
                 reduce=False,
                 include_docs=True,
-                key=xmlns,
+                startkey=['submission xmlns', domain, xmlns],
+                endkey=['submission xmlns', domain, xmlns, {}],
                 skip=skip,
                 limit=limit
             ).all()

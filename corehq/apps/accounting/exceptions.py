@@ -26,3 +26,7 @@ class NewSubscriptionError(Exception):
     pass
 
 
+class InvoiceEmailThrottledError(Exception):
+    pass
+
+

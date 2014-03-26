@@ -76,10 +76,10 @@ class CaseAssignmentTest(TestCase):
 
     def test_assign_noop(self):
         self._make_tree()
-        num_forms = XFormInstance.get_db().view('couchforms/by_xmlns').all()[0]['value']
+        num_forms = XFormInstance.get_db().view('hqadmin/forms_over_time').all()[0]['value']
         res = assign_case(self.primary, self.original_owner._id, include_subcases=True, include_parent_cases=True)
         self.assertEqual(0, len(res))
-        new_num_forms = XFormInstance.get_db().view('couchforms/by_xmlns').all()[0]['value']
+        new_num_forms = XFormInstance.get_db().view('hqadmin/forms_over_time').all()[0]['value']
         self.assertEqual(new_num_forms, num_forms)
 
     def test_assign_exclusion(self):

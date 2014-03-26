@@ -1,0 +1,40 @@
+{% extends "base_patient.html" %}
+{% load url from future %}
+{% load i18n %}
+{% block patient-tab-container %}
+    <div style="display: inline">
+        <span><a href="{{ problem_url }}" class="btn btn-large btn-success" style="margin: 2%">{% trans "Problem List" %}</a></span>
+        <span><a href="{{ medication_url }}" class="btn btn-large btn-success" style="margin: 2%">{% trans "Medication List" %}</a></span>
+        <span><a href="{{ huddle_url }}" class="btn btn-large btn-success" style="margin: 2%">{% trans "Follow-up Huddle" %}</a></span>
+        <span><a href="{{ cm_phone_url }}" class="btn btn-large btn-success" style="margin: 2%">{% trans "Follow-up CM Phone Call" %}</a></span>
+        <span><a href="{{ chw_phone_url }}" class="btn btn-large btn-success" style="margin: 2%">{% trans "Follow-up CHW Phone Call" %}</a></span>
+    </div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th></th>
+                <th>{% trans "Visit Name" %}</th>
+                <th>{% trans "Target Date" %}</th>
+                <th>{% trans "Completed Date" %}</th>
+                <th>{% trans "Completed By" %}</th>
+                <th>{% trans "Scheduled Date" %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for visit in interaction_table %}
+                <tr>
+                    {% if visit.url %}
+                        <td><a class="btn btn-info" href="{{ visit.url }}">{% trans "Open Form" %}</a></td>
+                    {% else %}
+                        <td></td>
+                    {%  endif %}
+                    <td>{{ visit.name }}</td>
+                    <td>{{ visit.target_date }}</td>
+                    <td>{{ visit.received_date }}</td>
+                    <td>{{ visit.completed_by }}</td>
+                    <td>{{ visit.scheduled_date }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

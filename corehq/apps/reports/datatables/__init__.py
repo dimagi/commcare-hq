@@ -148,7 +148,7 @@ class DataTablesHeader(object):
         self.auto_width = bool(0 < self.span <= 12)
 
     @property
-    def as_table(self):
+    def as_export_table(self):
         head = list()
         groups = list()
         use_groups = False
@@ -161,6 +161,8 @@ class DataTablesHeader(object):
             else:
                 head.append(column.html)
                 groups.append(" ")
+
+        head = map(lambda h: h.decode('utf-8'), head)
         if use_groups:
             return [groups, head]
         else:

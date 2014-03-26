@@ -85,6 +85,9 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
                 columns,
                 row
             )
+            if not any(fields_to_update.values()):
+                # if the row was blank, just skip it, no errors
+                continue
         except importer_util.InvalidDateException:
             invalid_dates.append(i + 1)
             continue
