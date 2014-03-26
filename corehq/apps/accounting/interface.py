@@ -351,6 +351,9 @@ class InvoiceInterface(GenericTabularReport):
                                   DataTablesColumn("End")),
             DataTablesColumn("Date Due"),
             DataTablesColumn("Amount Due"),
+            DataTablesColumn("Plan Cost"),
+            DataTablesColumn("SMS Cost"),
+            DataTablesColumn("User Cost"),
             DataTablesColumn("Payment Status"),
             DataTablesColumn("Hidden (No Communication)"),
             DataTablesColumn("Action"),
@@ -384,6 +387,25 @@ class InvoiceInterface(GenericTabularReport):
                 invoice.date_end,
                 invoice.date_due,
                 get_money_str(invoice.balance),
+                get_money_str(sum([
+                    line_item.subtotal
+                    for line_item in invoice.lineitem_set.all()
+                    if line_item.product_rate is not None
+                ])),
+                get_money_str(sum([
+                    line_item.subtotal
+                    for line_item in invoice.lineitem_set.all()
+                    if (line_item.feature_rate is not None and
+                        line_item.feature_rate.feature.feature_type
+                        == FeatureType.SMS)
+                ])),
+                get_money_str(sum([
+                    line_item.subtotal
+                    for line_item in invoice.lineitem_set.all()
+                    if (line_item.feature_rate is not None and
+                        line_item.feature_rate.feature.feature_type
+                        == FeatureType.USER)
+                ])),
                 "Paid" if invoice.date_paid else "Not paid",
                 "YES" if invoice.is_hidden else "no",
                 # TODO - Create helper function for action button HTML
