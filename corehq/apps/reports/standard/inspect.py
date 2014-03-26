@@ -42,12 +42,10 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
               'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
               'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
               'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
-              'corehq.apps.reports.fields.DatespanField',
-              'corehq.apps.reports.filters.forms.CustomPropsFilter']
+              'corehq.apps.reports.fields.DatespanField',]
     ajax_pagination = True
     filter_users_field_class = StrongFilterUsersField
     include_inactive = True
-
 
     @property
     def headers(self):
@@ -137,6 +135,17 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
                 DateTimeProperty().wrap(safe_index(form, self.time_field.split('.'))).strftime("%Y-%m-%d %H:%M:%S"),
                 xmlns_to_name(self.domain, form.get("xmlns"), app_id=form.get("app_id")),
             ]
+
+class SubmitHistoryNew(SubmitHistory):
+    """
+    This is Submit History along with the new filters
+    """
+    fields = [
+        'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
+        'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
+        'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
+        'corehq.apps.reports.fields.DatespanField',
+        'corehq.apps.reports.filters.forms.CustomPropsFilter']
 
 
 class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):
