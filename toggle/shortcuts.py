@@ -10,8 +10,8 @@ def toggle_enabled(slug, item, check_cache=True, namespace=None):
     item = '{namespace}:{item}'.format(
         namespace=namespace, item=item
     ) if namespace is not None else item
-    
-    cache_key = 'toggle-{slug}:{item}'.format(slug=slug, item=item)
+
+    cache_key = get_toggle_cache_key(slug, item)
     if check_cache:
         from_cache = cache.get(cache_key)
         if from_cache is not None:
@@ -23,3 +23,7 @@ def toggle_enabled(slug, item, check_cache=True, namespace=None):
         ret = False
     cache.set(cache_key, ret)
     return ret
+
+
+def get_toggle_cache_key(slug, item):
+    return 'toggle-{slug}:{item}'.format(slug=slug, item=item)
