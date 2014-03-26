@@ -25,6 +25,7 @@ update_case_template = get_template('update_case.xml')
 
 
 class Form(object):
+    template = None
     chars = list(string.uppercase + '1234567890')
     _context = None
 
@@ -69,14 +70,16 @@ class Form(object):
         return {}
 
     def render(self):
-        return new_case_template.render(Context(self.context))
+        return self.template.render(Context(self.context))
 
 
 class NewCaseForm(Form):
-    pass
+    template = new_case_template
 
 
 class UpdateCaseForm(Form):
+    template = update_case_template
+
     def additional_context(self):
         boolean = lambda: random.choice(['yes', 'no'])
         return {

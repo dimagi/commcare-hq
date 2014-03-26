@@ -124,6 +124,17 @@ def init_user_and_forms():
 def hashed(id):
     return md5(id).hexdigest()
 
+def update_form(form):
+    form.form['case']['@case_id'] = hashed(form.form['case']['@case_id'])
+    form.form['case']['@user_id'] = hashed(form.form['case']['@user_id'])
+    form.form['meta']['deviceID'] = hashed(form.form['meta']['deviceID'])
+    form.form['meta']['instanceID'] = hashed(form.form['meta']['instanceID'])
+    form.form['meta']['userID'] = hashed(form.form['meta']['userID'])
+    form._id = hashed(form._id)
+    del form._rev
+    del form._attachments
+    form.save()
+
 def make_users():
     user, new_case_forms, update_forms = init_user_and_forms()
     forms = map(XFormInstance.get, new_case_forms + update_forms)
@@ -132,11 +143,8 @@ def make_users():
         user = None
         while not user:
             user = make_cc_user(domain_name, uuid=uuid)
-        print "**** User", user.username_in_report
-        print uuid
+        print "**** User", uuid, user.username_in_report
         print datetime.datetime.now()
         for form in forms:
-            form._id = hashed(form._id)
-            del form._rev
-            del form._attachments
-            form.save()
+            update_form(form)
+            form.form['meta']['username'] = user.username
