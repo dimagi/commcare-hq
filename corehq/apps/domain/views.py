@@ -531,6 +531,10 @@ class DomainSubscriptionView(DomainAccountingSettings):
     def plan(self):
         plan_version, subscription = Subscription.get_subscribed_plan_by_domain(self.domain_object)
         products = self.get_product_summary(plan_version, subscription)
+        date_end = None
+        if subscription:
+            date_end = (subscription.date_end.strftime("%d %B %Y")
+                        if subscription.date_end is not None else "--")
         info = {
             'products': products,
             'is_multiproduct': len(products) > 1,
@@ -538,6 +542,9 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'subscription_credit': None,
             'css_class': "label-plan %s" % plan_version.plan.edition.lower(),
             'is_dimagi_subscription': subscription.do_not_invoice if subscription is not None else False,
+            'date_start': (subscription.date_start.strftime("%d %B %Y")
+                           if subscription is not None else None),
+            'date_end': date_end,
         }
         info.update(plan_version.user_facing_description)
         if subscription is not None:
