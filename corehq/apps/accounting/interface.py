@@ -351,6 +351,8 @@ class InvoiceInterface(GenericTabularReport):
                                   DataTablesColumn("End")),
             DataTablesColumn("Date Due"),
             DataTablesColumn("Amount Due"),
+            DataTablesColumn("Costs"),
+            DataTablesColumn("Credits"),
             DataTablesColumn("Payment Status"),
             DataTablesColumn("Hidden (No Communication)"),
             DataTablesColumn("Action"),
@@ -384,6 +386,18 @@ class InvoiceInterface(GenericTabularReport):
                 invoice.date_end,
                 invoice.date_due,
                 get_money_str(invoice.balance),
+                '; '.join([
+                    "%(description)s, %(amount)s" % {
+                        'amount': get_money_str(line_item.subtotal),
+                        'description': str(line_item.unit_description
+                                           or line_item.base_description),
+                    }
+                    for line_item in invoice.lineitem_set.all()
+                ]),
+                '; '.join([
+                    get_money_str(adjustment.amount)
+                    for adjustment in invoice.creditadjustment_set.all()
+                ]),
                 "Paid" if invoice.date_paid else "Not paid",
                 "YES" if invoice.is_hidden else "no",
                 # TODO - Create helper function for action button HTML
