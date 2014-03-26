@@ -35,7 +35,7 @@ def clean_options(options):
 class SalesforceAccountIDFilter(BaseSingleOptionFilter):
     slug = 'salesforce_account_id'
     label = _("Salesforce Account ID")
-    default_text = _("All")
+    default_text = _("Any")
 
     @property
     def options(self):
@@ -46,7 +46,7 @@ class SalesforceAccountIDFilter(BaseSingleOptionFilter):
 class SubscriberFilter(BaseSingleOptionFilter):
     slug = 'subscriber'
     label = _('Project Space')
-    default_text = _("All")
+    default_text = _("Any")
 
     @property
     def options(self):
@@ -57,7 +57,7 @@ class SubscriberFilter(BaseSingleOptionFilter):
 class SalesforceContractIDFilter(BaseSingleOptionFilter):
     slug = 'salesforce_contract_id'
     label = _('Salesforce Contract ID')
-    default_text = _("All")
+    default_text = _("Any")
 
     @property
     def options(self):
@@ -68,7 +68,7 @@ class SalesforceContractIDFilter(BaseSingleOptionFilter):
 class ActiveStatusFilter(BaseSingleOptionFilter):
     slug = 'active_status'
     label = _('Active Status')
-    default_text = _("All")
+    default_text = _("Any")
     active = 'Active'
     inactive = 'Inactive'
     options = [
@@ -83,8 +83,8 @@ DO_NOT_INVOICE = "DO_NOT_INVOICE"
 
 class DoNotInvoiceFilter(BaseSingleOptionFilter):
     slug = 'do_not_invoice'
-    label = _('Do Not Invoice')
-    default_text = _('All')
+    label = _('Invoicing Status')
+    default_text = _('Any')
     options = [
         (INVOICE, _('Send invoice')),
         (DO_NOT_INVOICE, _('Do not invoice')),
