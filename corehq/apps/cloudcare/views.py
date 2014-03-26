@@ -158,7 +158,7 @@ def form_context(request, domain, app_id, module_id, form_id):
     session_helper = SessionDataHelper(domain, request.couch_user, case_id, delegation=delegation, offline=offline)
     return json_response(session_helper.get_full_context(
         {'form_url': form_url,},
-        {'session_name': session_name}
+        {'session_name': session_name, 'app_id': app._id}
     ))
 
 
@@ -325,15 +325,20 @@ def get_sessions(request, domain):
 
 @cloudcare_api
 def get_session_context(request, domain, session_id):
+    try:
+        session = EntrySession.objects.get(session_id=session_id)
+    except EntrySession.DoesNotExist:
+        session = None
     if request.method == 'DELETE':
-        try:
-            EntrySession.objects.get(session_id=session_id).delete()
-        except EntrySession.DoesNotExist:
-            pass
+        if session:
+            session.delete()
         return json_response({'status': 'success'})
     else:
         helper = SessionDataHelper(domain, request.couch_user)
-        return json_response(helper.get_full_context({'session_id': session_id}))
+        return json_response(helper.get_full_context({
+            'session_id': session_id,
+            'app_id': session.app_id if session else None
+        }))
 
 class HttpResponseConflict(HttpResponse):
     status_code = 409

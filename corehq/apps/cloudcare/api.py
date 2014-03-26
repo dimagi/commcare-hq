@@ -368,6 +368,7 @@ def get_open_form_sessions(user):
     def session_to_json(sess):
         return {
             'id': sess.session_id,
+            'app_id': sess.app_id,
             'name': sess.session_name,
             'created_date': sess.created_date.strftime('%Y-%m-%dT%H:%M:%S'),
             'last_activity_date': sess.last_activity_date.strftime('%Y-%m-%dT%H:%M:%S'),
