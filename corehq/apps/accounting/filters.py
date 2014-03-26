@@ -103,6 +103,21 @@ class IsHiddenFilter(BaseSingleOptionFilter):
     ]
 
 
+class CreatedSubAdjMethodFilter(BaseSingleOptionFilter):
+    """
+    For filtering whether the initial subscription adjustment was
+    was internal or user-created.
+    """
+    slug = "sub_adj_method"
+    label = _("Created By")
+    default_text = _("Anyone")
+    options = (
+        (SubscriptionAdjustmentMethod.INTERNAL, "Operations Created"),
+        (SubscriptionAdjustmentMethod.USER, "User Created"),
+        (SubscriptionAdjustmentMethod.TASK, "Created During Invoicing"),
+    )
+
+
 class DateRangeFilter(BaseReportFilter):
     template = 'reports/filters/daterange.html'
     default_days = 7
