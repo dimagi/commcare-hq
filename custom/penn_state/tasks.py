@@ -115,8 +115,8 @@ def get_days_on(date):
     week = [week[0] - datetime.timedelta(days=1)] + week
     forms = XFormInstance.view(
         'reports_forms/all_forms',
-        startkey=['submission xmlns', DOMAIN, WEEKLY_SCHEDULE_XMLNS, week[0]],
-        endkey=['submission xmlns', DOMAIN, WEEKLY_SCHEDULE_XMLNS, week[-1]],
+        startkey=['submission xmlns', DOMAIN, WEEKLY_SCHEDULE_XMLNS, str(week[0])],
+        endkey=['submission xmlns', DOMAIN, WEEKLY_SCHEDULE_XMLNS, str(week[-1])],
         reduce=False,
         include_docs=True,
     ).all()
