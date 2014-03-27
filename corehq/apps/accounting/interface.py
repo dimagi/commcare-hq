@@ -406,18 +406,29 @@ class InvoiceInterface(GenericTabularReport):
         rows = []
         for invoice in self.invoices:
             column = [
-                mark_safe('<a href="%(account_url)s">%(name)s</a>' % {
-                              'account_url': reverse(
-                                  ManageBillingAccountView.urlname,
-                                  args=[invoice.subscription.account.id]),
-                              'name': invoice.subscription.account.name,
-                            }),
-                mark_safe('<a href="%(sub_url)s">%(name)s v%(version)d</a>' % {
-                              'name': invoice.subscription.plan_version.plan.name,
-                              'version': invoice.subscription.plan_version.version,
-                              'sub_url': reverse(EditSubscriptionView.urlname,
-                                                 args=[invoice.subscription.id]),
-                            }),
+                format_datatables_data(
+                    mark_safe(
+                        '<a href="%(account_url)s">%(name)s</a>' % {
+                            'account_url': reverse(
+                                ManageBillingAccountView.urlname,
+                                args=[invoice.subscription.account.id]),
+                            'name': invoice.subscription.account.name,
+                        }
+                    ),
+                    invoice.subscription.account.name
+                ),
+                format_datatables_data(
+                    mark_safe(
+                        '<a href="%(sub_url)s">%(name)s v%(version)d</a>' % {
+                            'name': invoice.subscription.plan_version.plan.name,
+                            'version': invoice.subscription.plan_version.version,
+                            'sub_url': reverse(
+                                EditSubscriptionView.urlname,
+                                args=[invoice.subscription.id]),
+                            }
+                    ),
+                    invoice.subscription.plan_version.plan.name
+                ),
                 invoice.subscription.subscriber.domain,
                 invoice.subscription.account.salesforce_account_id or "--",
                 invoice.subscription.salesforce_contract_id or "--",
