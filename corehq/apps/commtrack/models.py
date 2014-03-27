@@ -1300,6 +1300,7 @@ class StockState(models.Model):
     def stock_category(self):
         return state_stock_category(self)
 
+    @memoized
     def get_domain(self):
         return Domain.get_by_name(
             DocDomainMapping.objects.get(doc_id=self.case_id).domain_name
