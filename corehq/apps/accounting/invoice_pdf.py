@@ -316,8 +316,8 @@ class InvoiceTemplate(object):
 
         coord_y = 0
         for item_index in range(len(self.items)):
-            if item_index > 13:
-                raise InvoiceError("Too many line items to fit to invoice")
+            if coord_y < -height:
+                raise InvoiceError("Cannot fit line items on invoice")
             item = self.items[item_index]
 
             description = Paragraph(item.description,
