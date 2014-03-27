@@ -22,3 +22,13 @@ class AWCFilter(BaseMultipleOptionFilter):
     @property
     def options(self):
         return [(awc, awc) for awc in get_user_data_set()['awcs']]
+
+class SelectBlockFilter(BaseSingleOptionFilter):
+    slug = "block"
+    label = "Block"
+    default_text = None
+
+    @property
+    def options(self):
+        return [('atri', 'Atri'), ('wazirganj', 'Wazirganj')]
+

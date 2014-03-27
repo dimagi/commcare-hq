@@ -19,6 +19,7 @@ from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.sqlreport import SqlTabularReport, DatabaseColumn, SqlData, SummingSqlTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin, DatespanMixin
 from corehq.apps.reports.filters.select import SelectOpenCloseFilter
+from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.users.models import CommCareCase
 from dimagi.utils.dates import DateSpan
 from custom.opm.opm_reports.health_status import HealthStatus
