@@ -234,15 +234,7 @@ def get_default_column_data(domain, location_types):
 
                 locations = Location.filter_by_type(domain, loc_type)
                 for loc in locations:
-                    sp = SupplyPointCase.get_by_location(loc)
-
-                    # hack: if location was created before administrative flag
-                    # was removed there would be no SupplyPointCase already
-                    if not sp:
-                        sp = SupplyPointCase.create_from_location(
-                            domain,
-                            loc
-                        )
+                    sp = SupplyPointCase.get_or_create_by_location(loc)
 
                     data['values'][loc._id] = [
                         get_default_consumption(
