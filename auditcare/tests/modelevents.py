@@ -1,4 +1,4 @@
-import unittest
+from django.test import TestCase
 import time
 from django.test import Client
 from auditcare.inspect import history_for_doc
@@ -8,7 +8,7 @@ from auditcare.models import AuditEvent, ModelActionAudit
 from auditcare.tests.testutils import delete_all
 
 
-class ModelEventTestCase(unittest.TestCase):
+class ModelEventTestCase(TestCase):
     def setUp(self):
         if hasattr(_thread_locals, 'user'):
             delattr(_thread_locals, 'user')
