@@ -33,7 +33,7 @@ class Command(BaseCommand):
         old_db = settings.SQL_REPORTING_DATABASE_URL.split('/')[-1]
 
         db_settings = settings.DATABASES["default"]
-        db_settings['PORT'] = db_settings.get('PORT', '5432')
+        db_settings['PORT'] = db_settings.get('PORT', None) or '5432'
         maindb_url = "postgresql://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}".format(
             **db_settings
         )
