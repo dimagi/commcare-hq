@@ -128,6 +128,7 @@ class SubscriptionInterface(AddItemInterface):
               'corehq.apps.accounting.interface.SalesforceContractIDFilter',
               'corehq.apps.accounting.interface.ActiveStatusFilter',
               'corehq.apps.accounting.interface.DoNotInvoiceFilter',
+              'corehq.apps.accounting.interface.CreatedSubAdjMethodFilter',
               ]
     hide_filters = False
 
@@ -194,6 +195,16 @@ class SubscriptionInterface(AddItemInterface):
             filters.update(
                 do_not_invoice=(do_not_invoice == DO_NOT_INVOICE),
             )
+
+        filter_created_by = CreatedSubAdjMethodFilter.get_value(
+            self.request, self.domain)
+        if (filter_created_by is not None and filter_created_by in
+            [s[0] for s in SubscriptionAdjustmentMethod.CHOICES]
+        ):
+            filters.update({
+                'subscriptionadjustment__reason': SubscriptionAdjustmentReason.CREATE,
+                'subscriptionadjustment__method': filter_created_by,
+            })
 
         for subscription in Subscription.objects.filter(**filters):
             rows.append([subscription.subscriber.domain,

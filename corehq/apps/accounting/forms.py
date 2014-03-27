@@ -416,40 +416,72 @@ class SubscriptionForm(forms.Form):
             web_user=self.web_user,
         )
 
-    def update_subscription(self, subscription):
-        kwargs = {
-            'salesforce_contract_id': self.cleaned_data['salesforce_contract_id'],
-            'do_not_invoice': self.cleaned_data['do_not_invoice'],
-            'web_user': self.web_user,
-        }
+    def update_subscription(self):
+        self.subscription.update_subscription(
+            date_end=self.cleaned_data['end_date'],
+            date_delay_invoicing=self.cleaned_data['delay_invoice_until'],
+            do_not_invoice=self.cleaned_data['do_not_invoice'],
+            salesforce_contract_id=self.cleaned_data['salesforce_contract_id'],
+            web_user=self.web_user
+        )
 
-        if self.fields['start_date'].required:
-            kwargs.update({
-                'date_start': self.cleaned_data['start_date'],
-            })
 
-        if subscription.date_end is None or subscription.date_end > datetime.date.today():
-            kwargs.update({
-                'date_end': self.cleaned_data['end_date'],
-            })
-        else:
-           kwargs.update({
-                'date_end': subscription.date_end,
-            })
+class ChangeSubscriptionForm(forms.Form):
+    subscription_change_note = forms.CharField(
+        label=_("Note"),
+        required=True,
+        widget=forms.Textarea,
+    )
+    new_plan_product = forms.ChoiceField(
+        label=_("Core Product"), initial=SoftwareProductType.COMMCARE,
+        choices=SoftwareProductType.CHOICES,
+    )
+    new_plan_edition = forms.ChoiceField(
+        label=_("Edition"), initial=SoftwarePlanEdition.ENTERPRISE,
+        choices=SoftwarePlanEdition.CHOICES,
+    )
+    new_plan_version = forms.CharField(label=_("New Software Plan"))
+    new_date_end = forms.DateField(
+        label=_("End Date"), widget=forms.DateInput(), required=False
+    )
 
-        if (subscription.date_delay_invoicing is None
-            or subscription.date_delay_invoicing > datetime.date.today()):
-            kwargs.update({
-                'date_delay_invoicing': self.cleaned_data['delay_invoice_until'],
-            })
-        else:
-            kwargs.update({
-                'date_delay_invoicing': subscription.date_delay_invoicing,
-            })
+    def __init__(self, subscription, web_user, *args, **kwargs):
+        self.subscription = subscription
+        self.web_user = web_user
+        super(ChangeSubscriptionForm, self).__init__(*args, **kwargs)
 
-        new_plan_version = SoftwarePlanVersion.objects.get(id=self.cleaned_data['plan_version'])
+        if self.subscription.date_end is not None:
+            self.fields['new_date_end'].initial = subscription.date_end
 
-        return subscription.change_plan(new_plan_version, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_class = "form-horizontal"
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                "Change Subscription",
+                crispy.Field('new_date_end', css_class="date-picker"),
+                'new_plan_product',
+                'new_plan_edition',
+                crispy.Field(
+                    'new_plan_version', css_class="input-xxlarge",
+                    placeholder="Search for Software Plan"
+                ),
+                'subscription_change_note',
+            ),
+            FormActions(
+                StrictButton(
+                    "Change Subscription",
+                    type="submit",
+                    css_class="btn-primary",
+                ),
+            ),
+        )
+
+    def change_subscription(self):
+        new_plan_version = SoftwarePlanVersion.objects.get(id=self.cleaned_data['new_plan_version'])
+        return self.subscription.change_plan(
+            new_plan_version, date_end=self.cleaned_data['new_date_end'],
+            web_user=self.web_user
+        )
 
 
 class CreditForm(forms.Form):
