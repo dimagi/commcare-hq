@@ -444,7 +444,7 @@ CELERY_PERIODIC_QUEUE = 'celery'
 
 SKIP_SOUTH_TESTS = True
 #AUTH_PROFILE_MODULE = 'users.HqUserProfile'
-TEST_RUNNER = 'testrunner.HqTestSuiteRunner'
+TEST_RUNNER = 'testrunner.TwoStageTestRunner'
 # this is what gets appended to @domain after your accounts
 HQ_ACCOUNT_ROOT = "commcarehq.org"
 
