@@ -50,7 +50,6 @@ class DomainMigrations(DocumentSchema):
             domain.save()
 
 LICENSES = {
-#    'public': 'Public Domain', # public domain license is no longer being supported
     'cc': 'Creative Commons Attribution',
     'cc-sa': 'Creative Commons Attribution, Share Alike',
     'cc-nd': 'Creative Commons Attribution, No Derivatives',
@@ -58,6 +57,15 @@ LICENSES = {
     'cc-nc-sa': 'Creative Commons Attribution, Non-Commercial, and Share Alike',
     'cc-nc-nd': 'Creative Commons Attribution, Non-Commercial, and No Derivatives',
     }
+
+LICENSE_LINKS = {
+    'cc': 'http://creativecommons.org/licenses/by/4.0',
+    'cc-sa': 'http://creativecommons.org/licenses/by-sa/4.0',
+    'cc-nd': 'http://creativecommons.org/licenses/by-nd/4.0',
+    'cc-nc': 'http://creativecommons.org/licenses/by-nc/4.0',
+    'cc-nc-sa': 'http://creativecommons.org/licenses/by-nc-sa/4.0',
+    'cc-nc-nd': 'http://creativecommons.org/licenses/by-nc-nd/4.0',
+}
 
 def cached_property(method):
     def find_cached(self):
