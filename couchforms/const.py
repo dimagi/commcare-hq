@@ -14,6 +14,9 @@ ATTACHMENT_NAME = "form.xml"
 
 MAGIC_PROPERTY = 'xml_submission_file'
 
+RESERVED_WORDS = [TAG_TYPE, TAG_XML, TAG_VERSION, TAG_UIVERSION, TAG_NAMESPACE,
+                  TAG_NAME, TAG_META, ATTACHMENT_NAME, 'case', MAGIC_PROPERTY]
+
 
 class BadRequest(object):
     def __init__(self, message):
