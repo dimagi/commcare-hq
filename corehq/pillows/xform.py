@@ -50,7 +50,7 @@ class XFormPillow(HQPillow):
     #type level mapping
     default_mapping = XFORM_MAPPING
 
-    def change_transform(self, doc_dict):
+    def change_transform(self, doc_dict, include_props=True):
         if self.get_domain(doc_dict) is None:
             #If the domain is still None (especially when doing updates via the _changes feed)
             #skip and do nothing
@@ -86,8 +86,9 @@ class XFormPillow(HQPillow):
                         case_dict[object_key] = None
 
             doc_ret["__retrieved_case_ids"] = list(get_case_ids_from_form(doc_dict))
-            form_props = ["%s:%s" % (k, v) for k, v in flatten(doc_ret['form']).iteritems()]
-            doc_ret["__props_for_querying"] = form_props
+            if include_props:
+                form_props = ["%s:%s" % (k, v) for k, v in flatten(doc_ret['form']).iteritems()]
+                doc_ret["__props_for_querying"] = form_props
             return doc_ret
 
 
