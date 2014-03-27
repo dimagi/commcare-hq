@@ -10,29 +10,8 @@ from corehq.apps.reports.dispatcher import (ProjectReportDispatcher,
 from .filters import urls as filter_urls
 
 
-_phonelog_context = {
-    'report': {
-        'name': "Device Logs",
-    }
-}
-
 custom_report_urls = patterns('',
     CustomProjectReportDispatcher.url_pattern(),
-)
-
-phonelog_reports = patterns('',
-    url(r'^$', 'phonelog.views.devices', name="phonelog_devices", kwargs={
-        'template': 'reports/phonelog/devicelist.html',
-        'context': _phonelog_context
-    }),
-    url(r'^(?P<device>[\w\-]+)/$', 'phonelog.views.device_log', name="device_log", kwargs={
-        'template': 'reports/phonelog/devicelogs.html',
-        'context': _phonelog_context
-    }),
-    url(r'^(?P<device>[\w\-]+)/raw/$', 'phonelog.views.device_log_raw', name="device_log_raw", kwargs={
-        'template': 'reports/phonelog/devicelogs_raw.html',
-        'context': _phonelog_context
-    }),
 )
 
 urlpatterns = patterns('corehq.apps.reports.views',
@@ -90,9 +69,6 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r"^export/forms/all/$", 'export_all_form_metadata', name="export_all_form_metadata"),
     url(r"^export/forms/all/async/$", 'export_all_form_metadata_async', name="export_all_form_metadata_async"),
     url(r'^download/cases/$', 'download_cases', name='download_cases'),
-
-    # TODO should this even be here?
-    url(r'^phonelog/', include(phonelog_reports)),
 
     url(r'^custom/', include(custom_report_urls)),
     url(r'^filters/', include(filter_urls)),
