@@ -1,4 +1,5 @@
 from xml.etree import ElementTree
+from django.test import TestCase
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests import delete_all_cases, delete_all_xforms
 from casexml.apps.case.xml import V2
@@ -12,7 +13,6 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.commtrack.util import get_default_requisition_config
 from corehq.apps.commtrack.models import CommTrackUser, SupplyPointCase, CommtrackConfig
 from corehq.apps.sms.backend import test
-from django.utils.unittest.case import TestCase
 from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.apps.commtrack.models import Product
 from couchforms.models import XFormInstance

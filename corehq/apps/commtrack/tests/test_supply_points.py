@@ -1,4 +1,4 @@
-from unittest import TestCase
+from django.test import TestCase
 
 from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.apps.commtrack import const

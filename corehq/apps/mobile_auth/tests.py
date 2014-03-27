@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from django.utils.unittest.case import TestCase
+from django.test import TestCase
 from casexml.apps.case.tests import check_xml_line_by_line
 from corehq.apps.mobile_auth.utils import new_key_record, get_mobile_auth_payload
 from dimagi.utils.parsing import json_format_datetime

@@ -1,4 +1,4 @@
-from django.utils.unittest.case import TestCase
+from django.test.testcases import TestCase
 from corehq.apps.app_manager import suite_xml
 from corehq.apps.app_manager.models import Application, Module, Form, import_app
 from corehq.apps.app_manager.tests import add_build
