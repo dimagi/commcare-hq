@@ -276,11 +276,11 @@ class InvoiceTemplate(object):
         self.canvas.translate(origin_x, origin_y)
 
         height = inches(3.5)
-        description_x = inches(3)
-        quantity_x = inches(3.75)
-        rate_x = inches(4.5)
-        subtotal_x = inches(5.5)
-        credits_x = inches(6.5)
+        description_x = inches(2.4)
+        quantity_x = inches(3.15)
+        rate_x = inches(3.9)
+        subtotal_x = inches(5.1)
+        credits_x = inches(6.3)
         total_x = inches(7.5)
         header_height = inches(0.3)
 
@@ -316,8 +316,8 @@ class InvoiceTemplate(object):
 
         coord_y = 0
         for item_index in range(len(self.items)):
-            if item_index > 13:
-                raise InvoiceError("Too many line items to fit to invoice")
+            if coord_y < -height:
+                raise InvoiceError("Cannot fit line items on invoice")
             item = self.items[item_index]
 
             description = Paragraph(item.description,
@@ -366,10 +366,10 @@ class InvoiceTemplate(object):
                          fill=1)
         self.canvas.setFillColorRGB(*BLACK)
 
-        self.canvas.drawString(inches(6.2), inches(2.45), "Subtotal:")
-        self.canvas.drawString(inches(6.2), inches(2.15),
+        self.canvas.drawString(inches(5.6), inches(2.45), "Subtotal:")
+        self.canvas.drawString(inches(5.6), inches(2.15),
                                "Tax (%s%%):" % get_money_str(self.tax_rate))
-        self.canvas.drawString(inches(6.2), inches(1.85), "Credit:")
+        self.canvas.drawString(inches(5.6), inches(1.85), "Credit:")
         self.canvas.drawString(inches(5.2), inches(1.25), "Total:")
         self.canvas.drawCentredString(midpoint(inches(7.0), inches(8.0)),
                                       inches(2.45),
