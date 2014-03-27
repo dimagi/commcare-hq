@@ -60,7 +60,7 @@ class PatientListReportDisplay(CaseDisplay):
 
     @property
     def case_name(self):
-        return self.case["full_name"]
+        return self.get_property("full_name")
 
     @property
     def case_link(self):
