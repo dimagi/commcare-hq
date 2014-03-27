@@ -410,7 +410,7 @@ class SurveyResponsesReport(FRIReport):
         timestamp_start = timestamp_start.replace(tzinfo=None)
         timestamp_start = json_format_datetime(timestamp_start)
 
-        timestamp_end = datetime.combine(dt + timedelta(days=1), time(11, 0))
+        timestamp_end = datetime.combine(dt + timedelta(days=1), time(11, 45))
         timestamp_end = tz_utils.adjust_datetime_to_timezone(
             timestamp_end, self.domain_obj.default_timezone, pytz.utc.zone)
         timestamp_end = timestamp_end.replace(tzinfo=None)
