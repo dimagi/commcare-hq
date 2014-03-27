@@ -84,7 +84,8 @@ class InvoiceTemplate(object):
                  to_address=None, project_name='',
                  invoice_date=None, invoice_number='',
                  terms=settings.INVOICE_TERMS,
-                 due_date=None, bank_name=settings.BANK_NAME,
+                 due_date=None, date_start=None, date_end=None,
+                 bank_name=settings.BANK_NAME,
                  bank_address=Address(**settings.BANK_ADDRESS),
                  account_number=settings.BANK_ACCOUNT_NUMBER,
                  routing_number=settings.BANK_ROUTING_NUMBER,
@@ -101,6 +102,8 @@ class InvoiceTemplate(object):
         self.invoice_number = invoice_number
         self.terms = terms
         self.due_date = due_date
+        self.date_start = date_start
+        self.date_end = date_end
         self.bank_name = bank_name
         self.bank_address = bank_address
         self.account_number = account_number
@@ -123,6 +126,7 @@ class InvoiceTemplate(object):
         self.draw_from_address()
         self.draw_to_address()
         self.draw_project_name()
+        self.draw_statement_period()
         self.draw_invoice_label()
         self.draw_details()
         self.draw_table()
@@ -172,7 +176,7 @@ class InvoiceTemplate(object):
 
     def draw_project_name(self):
         origin_x = inches(1)
-        origin_y = inches(7)
+        origin_y = inches(7.4)
         self.canvas.translate(origin_x, origin_y)
 
         left = inches(0)
@@ -192,6 +196,20 @@ class InvoiceTemplate(object):
                                       "Project")
         self.canvas.drawString(middle_vertical + inches(0.2),
                                bottom + inches(0.1), self.project_name)
+
+        self.canvas.translate(-origin_x, -origin_y)
+
+    def draw_statement_period(self):
+        origin_x = inches(1)
+        origin_y = inches(6.75)
+        self.canvas.translate(origin_x, origin_y)
+
+        self.canvas.drawString(
+            0, 0, "Statement period from %s to %s" %
+                  (self.date_start.strftime("%d %B %Y")
+                   if self.date_start is not None else "",
+                   self.date_end.strftime("%d %B %Y")
+                   if self.date_end is not None else ""))
 
         self.canvas.translate(-origin_x, -origin_y)
 
@@ -365,6 +383,9 @@ class InvoiceTemplate(object):
         self.canvas.drawCentredString(midpoint(inches(7.0), inches(8.0)),
                                       inches(1.25),
                                       get_money_str(self.total))
+
+        self.canvas.drawString(inches(5), inches(0.8),
+                               "Thank you for using CommCare HQ.")
 
         footer_text = ("Payable by check or wire transfer. "
                        "Wire transfer is preferred: "
