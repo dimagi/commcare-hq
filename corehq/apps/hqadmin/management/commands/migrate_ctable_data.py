@@ -31,6 +31,8 @@ class Command(BaseCommand):
             print "\n-------- DRY RUN --------\n"
 
         old_db = settings.SQL_REPORTING_DATABASE_URL.split('/')[-1]
+        if '?' in old_db:
+            old_db = old_db.split('?')[0]
 
         db_settings = settings.DATABASES["default"]
         db_settings['PORT'] = db_settings.get('PORT', None) or '5432'
