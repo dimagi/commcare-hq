@@ -276,11 +276,11 @@ class InvoiceTemplate(object):
         self.canvas.translate(origin_x, origin_y)
 
         height = inches(3.5)
-        description_x = inches(3)
-        quantity_x = inches(3.75)
-        rate_x = inches(4.5)
-        subtotal_x = inches(5.5)
-        credits_x = inches(6.5)
+        description_x = inches(2.4)
+        quantity_x = inches(3.15)
+        rate_x = inches(3.9)
+        subtotal_x = inches(5.1)
+        credits_x = inches(6.3)
         total_x = inches(7.5)
         header_height = inches(0.3)
 
