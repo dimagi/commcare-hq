@@ -5,6 +5,8 @@ from jsonobject import DateTimeProperty
 from corehq import Domain
 from corehq.apps.commtrack.util import get_commtrack_location_id
 from corehq.apps.locations.models import Location
+from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
+from corehq.apps.users.models import CommCareUser
 from corehq.elastic import ES_URLS
 
 from corehq.apps.reports.standard import CustomProjectReport
@@ -16,8 +18,51 @@ from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
 from corehq.elastic import es_query
 from custom.m4change.constants import BOOKING_FORMS, FOLLOW_UP_FORMS, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, IMMUNIZATION_FORMS
 from custom.m4change.models import McctStatus
+from custom.m4change.reports import get_location_hierarchy_by_id
 from custom.m4change.utils import get_case_by_id, get_user_by_id, get_property, get_form_ids_by_status
 from custom.m4change.constants import EMPTY_FIELD
+
+
+CASE_FORM_SCRIPT_FILTER_NAMESPACES = BOOKED_AND_UNBOOKED_DELIVERY_FORMS + IMMUNIZATION_FORMS
+
+
+def _get_date_range(range):
+    if range is not None:
+        dates = str(range).split(_(" to "))
+        return (dates[0], dates[1])
+    return None
+
+
+def _get_case_form_script_filter(filtered_case_ids):
+    return {
+        "script": {
+            "script": """
+                ids_passed = false;
+                foreach (id : ids) {
+                    if (!ids_passed && id.equals(_source.?form.?case.get('@case_id'))) {
+                        ids_passed = true;
+                    }
+                }
+                if (!ids_passed) {
+                    return false;
+                }
+                foreach (form : forms) {
+                    if (form.equals(_source.xmlns)) {
+                        return true;
+                    }
+                }
+                if (_source.form != null && _source.form.visits != null &&
+                        _source.form.visits >= 1 && _source.form.visits <= 4) {
+                    return true;
+                }
+                return false;
+            """,
+            "params": {
+                "ids": filtered_case_ids,
+                "forms": CASE_FORM_SCRIPT_FILTER_NAMESPACES
+            }
+        }
+    }
 
 
 def calculate_form_data(self, form):
@@ -26,7 +71,6 @@ def calculate_form_data(self, form):
         case = get_case_by_id(case_id)
     except KeyError:
         case = EMPTY_FIELD
-        case_id = EMPTY_FIELD
 
     amount_due = EMPTY_FIELD
     service_type = EMPTY_FIELD
@@ -34,6 +78,7 @@ def calculate_form_data(self, form):
     form_id = form["_id"]
     location_name = EMPTY_FIELD
     location_parent_name = EMPTY_FIELD
+    location_id = None
 
     if case is not EMPTY_FIELD:
         user_id = get_property(case, "user_id", EMPTY_FIELD)
@@ -78,6 +123,7 @@ class BaseReport(CustomProjectReport, ElasticProjectInspectionReport, ProjectRep
         include_inactive = True
 
         fields = [
+            AsyncLocationFilter,
             'custom.m4change.fields.DateRangeField',
             'custom.m4change.fields.CaseSearchField'
         ]
@@ -92,19 +138,66 @@ class BaseReport(CustomProjectReport, ElasticProjectInspectionReport, ProjectRep
                 self.es_query()
             return self.es_response
 
-        def _get_filtered_cases(self):
-            case_search = self.request.GET.get("case_search", "")
-            if len(case_search) == 0:
-                return []
+        def _get_filtered_cases(self, start_date, end_date):
+            location_id = self.request.GET.get("location_id")
+            location_ids = get_location_hierarchy_by_id(location_id, self.domain)
+            domain = Domain.get_by_name(self.domain)
+            all_users = CommCareUser.by_domain(self.domain)
+            matching_user_ids = []
+            for user in all_users:
+                user_location_id = get_commtrack_location_id(user, domain)
+                if user_location_id in location_ids:
+                    matching_user_ids.append(user._id)
 
             query = {
                 "query": {
-                    "query_string": {
-                        "default_field": "_all",
-                        "query": case_search
+                    "range": {
+                        "modified_on": {
+                            "from": start_date,
+                            "to": end_date,
+                            "include_upper": False
+                        }
                     }
                 }
             }
+            case_search = self.request.GET.get("case_search", "")
+            if len(case_search) == 0:
+                query["filter"] = {
+                    "script": {
+                        "script": """
+                                foreach (id : ids) {
+                                    if (_source.user_id == id) {
+                                        return true;
+                                    }
+                                }
+                                return false;
+                            """,
+                        "params": {
+                            "ids": matching_user_ids
+                        }
+                    }
+                }
+            else:
+                query["filter"] = {
+                    "script": {
+                        "script": """
+                                if (!(_source.name contains name)) {
+                                    return false;
+                                }
+                                foreach (id : ids) {
+                                    if (_source.user_id == id) {
+                                        return true;
+                                    }
+                                }
+                                return false;
+                            """,
+                        "params": {
+                            "name": case_search,
+                            "ids": matching_user_ids
+                        }
+                    }
+                }
+
             es_response = es_query(params={"domain.exact": self.domain}, q=query, es_url=ES_URLS.get('cases'))
             return [res['_source']['_id'] for res in es_response.get('hits', {}).get('hits', [])]
 
@@ -142,7 +235,7 @@ class McctProjectReview(BaseReport):
                 dates = str(range).split(_(" to "))
                 start_date = dates[0]
                 end_date = dates[1]
-            filtered_case_ids = self._get_filtered_cases()
+            filtered_case_ids = self._get_filtered_cases(start_date, end_date)
             exclude_form_ids = [mcct_status.form_id for mcct_status in McctStatus.objects.filter(domain=self.domain)]
             q = {
                 "query": {
@@ -158,23 +251,14 @@ class McctProjectReview(BaseReport):
                     "and": [
                         {"term": {"doc_type": "xforminstance"}},
                         {"not": {"missing": {"field": "xmlns"}}},
-                        {"not": {"missing": {"field": "form.meta.userID"}}}
+                        {"not": {"missing": {"field": "form.meta.userID"}}},
+                        _get_case_form_script_filter(filtered_case_ids)
                     ]
                 }
             }
 
             if len(exclude_form_ids) > 0:
                 q["filter"]["and"].append({"not": {"ids": {"values": exclude_form_ids}}})
-            if len(filtered_case_ids) > 0:
-                case_ids_str = " OR ".join(filtered_case_ids)
-                q["filter"]["and"].append({
-                    "query": {
-                        "query_string": {
-                            "default_field": "form.case.@case_id",
-                            "query": case_ids_str
-                        }
-                    }
-                })
 
             allforms = BOOKING_FORMS + FOLLOW_UP_FORMS + BOOKED_AND_UNBOOKED_DELIVERY_FORMS + IMMUNIZATION_FORMS
             xmlnss = filter(None, [form for form in allforms])
@@ -221,46 +305,39 @@ class McctClientApprovalPage(McctProjectReview):
         reviewed_form_ids = get_form_ids_by_status(self.domain, getattr(self, 'display_status', None))
         if len(reviewed_form_ids) > 0:
             if not getattr(self, 'es_response', None):
-                form_ids_str = " OR ".join(reviewed_form_ids)
-                range = self.request_params.get('range', None)
-                start_date = None
-                end_date = None
-                if range is not None:
-                    dates = str(range).split(_(" to "))
-                    start_date = dates[0]
-                    end_date = dates[1]
-                filtered_case_ids = self._get_filtered_cases()
+                date_tuple = _get_date_range(self.request_params.get('range', None))
+                filtered_case_ids = self._get_filtered_cases(date_tuple[0], date_tuple[1])
                 q = {
                     "query": {
                         "range": {
                             "form.meta.timeEnd": {
-                                "from": start_date,
-                                "to": end_date,
+                                "from": date_tuple[0],
+                                "to": date_tuple[1],
                                 "include_upper": False
                             }
                         }
                     },
                     "filter": {
-                        "and": [{'query': {
-                            'query_string': {
-                                "default_field": "form.meta.instanceID",
-                                "query": form_ids_str
+                        "and": [
+                            {"ids": {"values": reviewed_form_ids}},
+                            {
+                                "script": {
+                                    "script": """
+                                        foreach (case_id : case_ids) {
+                                            if (case_id.equals(_source.?form.?case.get('@case_id'))) {
+                                                return true;
+                                            }
+                                        }
+                                        return false;
+                                    """,
+                                    "params": {
+                                        "case_ids": filtered_case_ids
+                                    }
                                 }
-                        }}
+                            }
                         ]
                     }
                 }
-
-                if len(filtered_case_ids) > 0:
-                    case_ids_str = " OR ".join(filtered_case_ids)
-                    q["filter"]["and"].append({
-                        "query": {
-                            "query_string": {
-                                "default_field": "form.case.@case_id",
-                                "query": case_ids_str
-                            }
-                        }
-                    })
 
                 q["sort"] = self.get_sorting_block() if self.get_sorting_block() else [{"form.meta.timeEnd" : {"order": "desc"}}]
                 self.es_response = es_query(params={"domain.exact": self.domain}, q=q, es_url=ES_URLS.get('forms'),
@@ -306,20 +383,14 @@ class McctClientLogPage(McctProjectReview):
 
     def es_query(self):
         if not getattr(self, 'es_response', None):
-            range = self.request_params.get('range', None)
-            start_date = None
-            end_date = None
-            if range is not None:
-                dates = str(range).split(_(" to "))
-                start_date = dates[0]
-                end_date = dates[1]
-            filtered_case_ids = self._get_filtered_cases()
+            date_tuple = _get_date_range(self.request_params.get('range', None))
+            filtered_case_ids = self._get_filtered_cases(date_tuple[0], date_tuple[1])
             q = {
                 "query": {
                     "range": {
                         "form.meta.timeEnd": {
-                            "from": start_date,
-                            "to": end_date,
+                            "from": date_tuple[0],
+                            "to": date_tuple[1],
                             "include_upper": False
                         }
                     }
@@ -328,21 +399,11 @@ class McctClientLogPage(McctProjectReview):
                     "and": [
                         {"term": {"doc_type": "xforminstance"}},
                         {"not": {"missing": {"field": "xmlns"}}},
-                        {"not": {"missing": {"field": "form.meta.userID"}}}
+                        {"not": {"missing": {"field": "form.meta.userID"}}},
+                        _get_case_form_script_filter(filtered_case_ids)
                     ]
                 }
             }
-
-            if len(filtered_case_ids) > 0:
-                case_ids_str = " OR ".join(filtered_case_ids)
-                q["filter"]["and"].append({
-                    "query": {
-                        "query_string": {
-                            "default_field": "form.case.@case_id",
-                            "query": case_ids_str
-                        }
-                    }
-                })
 
             allforms = BOOKING_FORMS + FOLLOW_UP_FORMS + BOOKED_AND_UNBOOKED_DELIVERY_FORMS + IMMUNIZATION_FORMS
             xmlnss = filter(None, [form for form in allforms])

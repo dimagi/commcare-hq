@@ -25,5 +25,5 @@ def get_property(dict_obj, name, default=None):
 
 
 def get_form_ids_by_status(domain, status):
-    return McctStatus.objects.filter(domain=domain, status=status).values_list('form_id', flat=True)
+    return [item.form_id for item in McctStatus.objects.filter(domain=domain, status=status)]
 
