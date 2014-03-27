@@ -360,7 +360,7 @@ class PatientListReport(CustomProjectReport, CaseListReport):
             es_filters["bool"]["must"].append({"term": {"type.exact": 'participant'}})
         if search_string:
             query_block = {"queryString": {"default_field": "full_name.#value", "query": "*" + search_string + "*"}}
-            q["query"] = query_block
+            q["query"]["filtered"]["query"] = query_block
         else:
             q["query"]["filtered"]["query"] = {"match_all": {}}
 
