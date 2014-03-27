@@ -14,6 +14,7 @@ from corehq.apps.reports.datatables import (
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from corehq.apps.reports.generic import GenericTabularReport
+from corehq.apps.reports.util import format_datatables_data
 
 
 class AddItemInterface(GenericTabularReport):
@@ -317,6 +318,29 @@ class SoftwarePlanInterface(AddItemInterface):
     crud_item_type = "Software_Plan"
 
 
+def get_exportable_column_cost(subtotal, deduction):
+    return format_datatables_data(
+        text=get_column_formatted_str(subtotal, deduction),
+        sort_key=subtotal,
+    )
+
+
+def get_column_formatted_str(subtotal, deduction):
+    return '%s (%s)' % (
+        get_money_str(subtotal),
+        get_money_str(deduction)
+    )
+
+
+def get_column_cost_str(line_items):
+    subtotal = 0
+    deduction = 0
+    for line_item in line_items:
+        subtotal += line_item.subtotal
+        deduction += line_item.applied_credit
+    return get_exportable_column_cost(subtotal, deduction)
+
+
 class InvoiceInterface(GenericTabularReport):
     base_template = "accounting/invoice_list.html"
     section_name = "Accounting"
@@ -350,6 +374,10 @@ class InvoiceInterface(GenericTabularReport):
                                   DataTablesColumn("Start"),
                                   DataTablesColumn("End")),
             DataTablesColumn("Date Due"),
+            DataTablesColumn("Plan Cost"),
+            DataTablesColumn("SMS Cost"),
+            DataTablesColumn("User Cost"),
+            DataTablesColumn("Total"),
             DataTablesColumn("Amount Due"),
             DataTablesColumn("Payment Status"),
             DataTablesColumn("Hidden (No Communication)"),
@@ -383,7 +411,19 @@ class InvoiceInterface(GenericTabularReport):
                 invoice.date_start,
                 invoice.date_end,
                 invoice.date_due,
-                get_money_str(invoice.balance),
+                get_column_cost_str(invoice.lineitem_set.get_products().all()),
+                get_column_cost_str(invoice.lineitem_set.get_feature_by_type(
+                    FeatureType.SMS).all()),
+                get_column_cost_str(invoice.lineitem_set.get_feature_by_type(
+                    FeatureType.USER).all()),
+                get_exportable_column_cost(
+                    invoice.subtotal,
+                    invoice.applied_credit
+                ),
+                format_datatables_data(
+                    text=get_money_str(invoice.balance),
+                    sort_key=invoice.balance,
+                ),
                 "Paid" if invoice.date_paid else "Not paid",
                 "YES" if invoice.is_hidden else "no",
                 # TODO - Create helper function for action button HTML
