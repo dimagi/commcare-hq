@@ -869,6 +869,17 @@ class SupplyPointCase(CommCareCase):
         ).one()
 
     @classmethod
+    def get_or_create_by_location(cls, location):
+        sp = cls.get_by_location(location)
+        if not sp:
+            sp = SupplyPointCase.create_from_location(
+                location.domain,
+                location
+            )
+
+        return sp
+
+    @classmethod
     def get_display_config(cls):
         return [
             {
@@ -1196,15 +1207,7 @@ class CommTrackUser(CommCareUser):
             )
 
     def add_location(self, location, create_sp_if_missing=False):
-        sp = location.linked_supply_point()
-
-        # hack: if location was created before administrative flag was
-        # removed there would be no SupplyPointCase already
-        if not sp and create_sp_if_missing:
-            sp = SupplyPointCase.create_from_location(
-                self.domain,
-                location
-            )
+        sp = SupplyPointCase.get_or_create_by_location(location)
 
         from corehq.apps.commtrack.util import submit_mapping_case_block
         submit_mapping_case_block(self, self.supply_point_index_mapping(sp))
