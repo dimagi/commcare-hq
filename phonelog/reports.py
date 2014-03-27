@@ -205,29 +205,6 @@ class DeviceLogDetailsReport(PhonelogReport):
 
         return self._filters
 
-    _devices_for_users = None
-    @property
-    def devices_for_users(self):
-        if self._devices_for_users is None:
-            device_ids_for_username = defaultdict(set)
-
-            for datum in get_db().view('phonelog/device_log_users',
-                                       startkey=[self.domain],
-                                       endkey=[self.domain, {}],
-                                       group=True,
-                                       reduce=True,
-                                       stale=settings.COUCH_STALE_QUERY):
-                # Begin dependency on particulars of view output
-                username = datum['key'][2]
-                device_id = datum['key'][1]
-                # end dependency
-                device_ids_for_username[username].add(device_id)
-
-            self._devices_for_users = set([device_id for user in self.device_log_users
-                                                     for device_id in device_ids_for_username[user]])
-
-        return self._devices_for_users
-
     @property
     def devices(self):
         return self.selected_devices
