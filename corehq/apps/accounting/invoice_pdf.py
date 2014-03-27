@@ -366,10 +366,10 @@ class InvoiceTemplate(object):
                          fill=1)
         self.canvas.setFillColorRGB(*BLACK)
 
-        self.canvas.drawString(inches(6.2), inches(2.45), "Subtotal:")
-        self.canvas.drawString(inches(6.2), inches(2.15),
+        self.canvas.drawString(inches(5.6), inches(2.45), "Subtotal:")
+        self.canvas.drawString(inches(5.6), inches(2.15),
                                "Tax (%s%%):" % get_money_str(self.tax_rate))
-        self.canvas.drawString(inches(6.2), inches(1.85), "Credit:")
+        self.canvas.drawString(inches(5.6), inches(1.85), "Credit:")
         self.canvas.drawString(inches(5.2), inches(1.25), "Total:")
         self.canvas.drawCentredString(midpoint(inches(7.0), inches(8.0)),
                                       inches(2.45),
