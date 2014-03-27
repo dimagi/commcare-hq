@@ -3,8 +3,6 @@ from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from casexml.apps.stock import const
 from decimal import Decimal
-from django.db.models.signals import post_save
-from casexml.apps.stock import utils as utils
 
 
 class StockReport(models.Model):
@@ -84,73 +82,11 @@ def create_reconciliation_transaction(sender, instance, *args, **kwargs):
             )
 
 
-class StockState(models.Model):
+class DocDomainMapping(models.Model):
     """
-    Read only reporting model for keeping computed stock states per case/product
+    Used to store the relationship between a doc and the
+    domain it belongs to for efficient lookup
     """
-    section_id = models.CharField(max_length=100, db_index=True)
-    case_id = models.CharField(max_length=100, db_index=True)
-    product_id = models.CharField(max_length=100, db_index=True)
-    stock_on_hand = models.DecimalField(max_digits=20, decimal_places=5, default=Decimal(0))
-    daily_consumption = models.DecimalField(max_digits=20, decimal_places=5, null=True)
-    last_modified_date = models.DateTimeField()
-
-    @property
-    def months_remaining(self):
-        return utils.months_of_stock_remaining(
-            self.stock_on_hand,
-            self.daily_consumption
-        )
-
-    @property
-    def resupply_quantity_needed(self):
-        if self.daily_consumption is not None:
-            needed_quantity = int(self.daily_consumption * 30 * Decimal(utils.OVERSTOCK_THRESHOLD))
-            return int(max(needed_quantity - self.stock_on_hand, 0))
-        else:
-            return None
-
-    @property
-    def stock_category(self):
-        return utils.stock_category(
-            self.stock_on_hand,
-            self.daily_consumption,
-        )
-
-    class Meta:
-        unique_together = ('section_id', 'case_id', 'product_id')
-
-
-@receiver(post_save, sender=StockTransaction)
-def update_stock_state(sender, instance, *args, **kwargs):
-    from casexml.apps.stock.consumption import compute_consumption
-    try:
-        state = StockState.objects.get(
-            section_id=instance.section_id,
-            case_id=instance.case_id,
-            product_id=instance.product_id,
-        )
-    except StockState.DoesNotExist:
-        state = StockState(
-            section_id=instance.section_id,
-            case_id=instance.case_id,
-            product_id=instance.product_id,
-        )
-
-    state.last_modified_date = instance.report.date
-    state.stock_on_hand = instance.stock_on_hand
-
-    if hasattr(instance, '_test_config'):
-        consumption_calc = instance._test_config
-    else:
-        consumption_calc = None
-
-    computed_consumption = compute_consumption(
-        instance.case_id,
-        instance.product_id,
-        instance.report.date,
-        'stock',
-        consumption_calc
-    )
-    state.daily_consumption = Decimal(str(computed_consumption)) if computed_consumption is not None else None
-    state.save()
+    doc_id = models.CharField(max_length=100, db_index=True, primary_key=True)
+    doc_type = models.CharField(max_length=100, db_index=True)
+    domain_name = models.CharField(max_length=100)
