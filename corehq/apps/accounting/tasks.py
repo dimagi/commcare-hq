@@ -5,6 +5,7 @@ from celery.utils.log import get_task_logger
 import datetime
 from django.conf import settings
 from django.http import HttpRequest, QueryDict
+from django.template.loader import render_to_string
 from corehq import Domain
 from corehq.apps.accounting import utils
 from corehq.apps.accounting.exceptions import InvoiceError, CreditLineError
@@ -13,6 +14,7 @@ from corehq.apps.accounting.invoicing import DomainInvoiceFactory
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.accounting.utils import has_subscription_already_ended
 from corehq.apps.users.models import FakeUser
+from couchexport.models import Format
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.django.email import send_HTML_email
 
@@ -85,7 +87,19 @@ def send_bookkeeper_email(month=None, year=None, emails=None):
         username="admin@dimagi.com",
     )
     invoice = InvoiceInterface(request)
-    email_content = invoice.email_response
+    first_of_month = datetime.date(year, month, 1)
+    email_context = {
+        'month': first_of_month.strftime("%B"),
+    }
+    email_content = render_to_string(
+        'accounting/bookkeeper_email.html', email_context)
+    email_content_plaintext = render_to_string(
+        'accounting/bookkeeper_email_plaintext.html', email_context)
+    excel_attachment = {
+        'title': 'Invoices_%s.xlsx' % first_of_month.strftime('%B_%Y'),
+        'mimetype': Format.FORMAT_DICT[Format.XLS_2007]['mimetype'],
+        'file_obj': invoice.excel_response,
+    }
 
     emails = emails or settings.BOOKKEEPER_CONTACT_EMAILS
     for email in emails:
@@ -93,7 +107,9 @@ def send_bookkeeper_email(month=None, year=None, emails=None):
             "Invoices for %s" % datetime.date(year, month, 1).strftime("%B %Y"),
             email,
             email_content,
-            email_from=settings.DEFAULT_FROM_EMAIL
+            email_from=settings.DEFAULT_FROM_EMAIL,
+            text_content=email_content_plaintext,
+            file_attachments=[excel_attachment],
         )
 
 
