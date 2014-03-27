@@ -234,7 +234,9 @@ class BillingAccount(models.Model):
         return 0.0
 
     @classmethod
-    def get_or_create_account_by_domain(cls, domain, created_by=None, account_type=None):
+    def get_or_create_account_by_domain(cls, domain,
+                                        created_by=None, account_type=None,
+                                        created_by_invoicing=False):
         """
         First try to grab the account used for the last subscription.
         If an account is not found, create it.
@@ -252,11 +254,12 @@ class BillingAccount(models.Model):
                 account_type=account_type,
             )
             account.save()
-            billing_admin = BillingAccountAdmin.objects.get_or_create(
-                domain=domain, web_user=created_by,
-            )[0]
-            account.billing_admins.add(billing_admin)
-            account.save()
+            if not created_by_invoicing:
+                billing_admin = BillingAccountAdmin.objects.get_or_create(
+                    domain=domain, web_user=created_by,
+                )[0]
+                account.billing_admins.add(billing_admin)
+                account.save()
         return account, is_new
 
     @classmethod
