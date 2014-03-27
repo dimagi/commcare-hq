@@ -42,8 +42,7 @@ class PhonelogReport(GetParamsMixin, DeploymentsReport, DatespanMixin, Paginated
 
 
 class FormErrorReport(PhonelogReport):
-    # report framework requires unique names todo: remove (New)
-    name = ugettext_noop("Errors & Warnings Summary (New)")
+    name = ugettext_noop("Errors & Warnings Summary")
     slug = "form_errors"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField',
@@ -135,8 +134,7 @@ class FormErrorReport(PhonelogReport):
         return rows
 
 class DeviceLogDetailsReport(PhonelogReport):
-    # report framework requires unique names todo: remove (New)
-    name = ugettext_noop("Device Log Details (New)")
+    name = ugettext_noop("Device Log Details")
     slug = "log_details"
     fields = ['corehq.apps.reports.fields.DatespanField',
               'corehq.apps.reports.filters.devicelog.DeviceLogTagFilter',
