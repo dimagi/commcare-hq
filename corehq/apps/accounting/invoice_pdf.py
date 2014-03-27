@@ -384,6 +384,9 @@ class InvoiceTemplate(object):
                                       inches(1.25),
                                       get_money_str(self.total))
 
+        self.canvas.drawString(inches(5), inches(0.8),
+                               "Thank you for using CommCare HQ.")
+
         footer_text = ("Payable by check or wire transfer. "
                        "Wire transfer is preferred: "
                        "Bank: %(bank_name)s "
