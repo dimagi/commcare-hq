@@ -19,6 +19,10 @@ def REPORTS(project):
     from corehq.apps.reports.standard.cases.careplan import make_careplan_reports
     from corehq.apps.reports.standard.maps import DemoMapReport, DemoMapReport2, DemoMapCaseList
 
+    submit_history_report = inspect.SubmitHistory
+    if toggles.SUBMIT_HISTORY_FILTERS.enabled(project.name):
+        submit_history_report = inspect.SubmitHistoryNew
+
     reports = [
         (ugettext_lazy("Monitor Workers"), (
             monitoring.WorkerActivityReport,
@@ -30,7 +34,7 @@ def REPORTS(project):
             monitoring.WorkerActivityTimes,
         )),
         (ugettext_lazy("Inspect Data"), (
-            inspect.SubmitHistory, CaseListReport,
+            submit_history_report, CaseListReport,
         )),
         (ugettext_lazy("Manage Deployments"), (
             deployments.ApplicationStatusReport,

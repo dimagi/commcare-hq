@@ -280,3 +280,20 @@ class BaseDrilldownOptionFilter(BaseReportFilter):
         return instance.GET_values, instance
 
 
+class BaseTagsFilter(BaseReportFilter):
+    template = "reports/filters/base_tags_filter.html"
+    tags = []
+
+    @property
+    def selected(self):
+        return self.get_value(self.request, self.domain) or ''
+
+    @property
+    def filter_context(self):
+        return {
+            'tags': self.tags,
+            'selected': self.selected,
+            'placeholder': self.placeholder,
+        }
+
+
