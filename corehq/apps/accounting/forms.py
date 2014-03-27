@@ -1330,6 +1330,50 @@ class TriggerInvoiceForm(forms.Form):
                 invoice.delete()
 
 
+class TriggerBookkeeperEmailForm(forms.Form):
+    month = forms.ChoiceField(label="Invoice Month")
+    year = forms.ChoiceField(label="Invoice Year")
+    emails = forms.CharField(label="Email To")
+
+    def __init__(self, *args, **kwargs):
+        super(TriggerBookkeeperEmailForm, self).__init__(*args, **kwargs)
+        today = datetime.date.today()
+
+        self.fields['month'].initial = today.month
+        self.fields['month'].choices = MONTHS.items()
+        self.fields['year'].initial = today.year
+        self.fields['year'].choices = [
+            (y, y) for y in range(today.year, 2012, -1)
+        ]
+
+        self.helper = FormHelper()
+        self.helper.form_class = 'form form-horizontal'
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                'Trigger Bookkeeper Email Details',
+                crispy.Field('emails', css_class='input-xxlarge'),
+                crispy.Field('month', css_class="input-large"),
+                crispy.Field('year', css_class="input-large"),
+            ),
+            FormActions(
+                StrictButton(
+                    "Trigger Bookkeeper Email",
+                    css_class="btn-primary",
+                    type="submit",
+                ),
+            )
+        )
+
+    def trigger_email(self):
+        from corehq.apps.accounting.tasks import send_bookkeeper_email
+        print self.cleaned_data['emails'].split(',')
+        send_bookkeeper_email(
+            month=int(self.cleaned_data['month']),
+            year=int(self.cleaned_data['year']),
+            emails=self.cleaned_data['emails'].split(',')
+        )
+
+
 class AdjustBalanceForm(forms.Form):
     adjustment_type = forms.ChoiceField(
         widget=forms.RadioSelect,

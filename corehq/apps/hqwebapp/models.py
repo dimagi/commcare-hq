@@ -1161,12 +1161,18 @@ class AccountingTab(UITab):
         items = super(AccountingTab, self).sidebar_items
 
         if toggles.INVOICE_TRIGGER.enabled(self.couch_user.username):
-            from corehq.apps.accounting.views import TriggerInvoiceView
+            from corehq.apps.accounting.views import (
+                TriggerInvoiceView, TriggerBookkeeperEmailView
+            )
             items.append(('Other Actions', (
                 {
                     'title': TriggerInvoiceView.page_title,
                     'url': reverse(TriggerInvoiceView.urlname),
                 },
+                {
+                    'title': TriggerBookkeeperEmailView.page_title,
+                    'url': reverse(TriggerBookkeeperEmailView.urlname),
+                }
             )))
         return items
 

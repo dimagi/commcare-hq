@@ -1938,6 +1938,10 @@ class FakeUser(WebUser):
     def save(self, **kwargs):
         raise NotImplementedError("You aren't allowed to do that!")
 
+    @property
+    def _id(self):
+        return "fake-user"
+
 
 class PublicUser(FakeUser):
     """

@@ -337,7 +337,7 @@ def get_exportable_column_cost(subtotal, deduction):
 
 
 def get_column_formatted_str(subtotal, deduction):
-    return '%s (%s)' % (
+    return mark_safe('%s<br />(%s)') % (
         get_money_str(subtotal),
         get_money_str(deduction)
     )
@@ -375,7 +375,7 @@ class InvoiceInterface(GenericTabularReport):
 
     @property
     def headers(self):
-        return DataTablesHeader(
+        header = DataTablesHeader(
             DataTablesColumn("Account Name"),
             DataTablesColumn("Subscription"),
             DataTablesColumn("Project Space"),
@@ -385,25 +385,27 @@ class InvoiceInterface(GenericTabularReport):
                                   DataTablesColumn("Start"),
                                   DataTablesColumn("End")),
             DataTablesColumn("Date Due"),
-            DataTablesColumn("Plan Cost"),
-            DataTablesColumn("SMS Cost"),
-            DataTablesColumn("User Cost"),
-            DataTablesColumn("Total"),
+            DataTablesColumn("Plan Cost (Credits)"),
+            DataTablesColumn("SMS Cost (Credits)"),
+            DataTablesColumn("User Cost (Credits)"),
+            DataTablesColumn("Total (Credits)"),
             DataTablesColumn("Amount Due"),
             DataTablesColumn("Payment Status"),
-            DataTablesColumn("Hidden (No Communication)"),
-            DataTablesColumn("Action"),
-            DataTablesColumn("View Invoice"),
+            DataTablesColumn("Hidden"),
         )
+        if not self.is_rendered_as_email:
+            header.add_column(DataTablesColumn("Action"))
+        header.add_column(DataTablesColumn("View Invoice"))
+        return header
 
     @property
     def rows(self):
         from corehq.apps.accounting.views import (
             InvoiceSummaryView, ManageBillingAccountView, EditSubscriptionView,
         )
-
-        return [
-            [
+        rows = []
+        for invoice in self.invoices:
+            column = [
                 mark_safe('<a href="%(account_url)s">%(name)s</a>' % {
                               'account_url': reverse(
                                   ManageBillingAccountView.urlname,
@@ -419,9 +421,9 @@ class InvoiceInterface(GenericTabularReport):
                 invoice.subscription.subscriber.domain,
                 invoice.subscription.account.salesforce_account_id or "--",
                 invoice.subscription.salesforce_contract_id or "--",
-                invoice.date_start,
-                invoice.date_end,
-                invoice.date_due,
+                invoice.date_start.strftime("%d %B %Y"),
+                invoice.date_end.strftime("%d %B %Y"),
+                invoice.date_due.strftime("%d %B %Y"),
                 get_column_cost_str(invoice.lineitem_set.get_products().all()),
                 get_column_cost_str(invoice.lineitem_set.get_feature_by_type(
                     FeatureType.SMS).all()),
@@ -437,19 +439,22 @@ class InvoiceInterface(GenericTabularReport):
                 ),
                 "Paid" if invoice.date_paid else "Not paid",
                 "YES" if invoice.is_hidden else "no",
+            ]
+            if not self.is_rendered_as_email:
                 # TODO - Create helper function for action button HTML
-                mark_safe('<a data-toggle="modal"'
-                          ' data-target="#adjustBalanceModal-%(invoice_id)d"'
-                          ' href="#adjustBalanceModal-%(invoice_id)d"'
-                          ' class="btn">'
-                          'Adjust Balance</a>'
-                          % {'invoice_id': invoice.id}),
-                mark_safe('<a href="%s" class="btn">Go to Invoice</a>'
-                          % reverse(InvoiceSummaryView.urlname,
-                                    args=(invoice.id,))),
-
-            ] for invoice in self.invoices
-        ]
+                column.append(
+                    mark_safe(
+                        '<a data-toggle="modal"'
+                        '   data-target="#adjustBalanceModal-%(invoice_id)d"'
+                        '   href="#adjustBalanceModal-%(invoice_id)d"'
+                        '   class="btn">Adjust Balance</a>' % {
+                            'invoice_id': invoice.id
+                        }))
+            column.append(mark_safe(
+                '<a href="%s" class="btn">Go to Invoice</a>'
+                % reverse(InvoiceSummaryView.urlname, args=(invoice.id,))))
+            rows.append(column)
+        return rows
 
     @property
     @memoized
@@ -567,3 +572,16 @@ class InvoiceInterface(GenericTabularReport):
             if self.adjust_balance_form.is_valid():
                 self.adjust_balance_form.adjust_balance()
         return super(InvoiceInterface, self).view_response
+
+    @property
+    def email_response(self):
+        self.is_rendered_as_email = True
+        statement_start = StatementPeriodFilter.get_value(
+            self.request, self.domain) or datetime.date.today()
+        return render_to_string('accounting/bookkeeper_email.html',
+            {
+                'headers': self.headers,
+                'month': statement_start.strftime("%B"),
+                'rows': self.rows,
+            }
+        )

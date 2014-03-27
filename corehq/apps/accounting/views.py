@@ -19,7 +19,7 @@ from corehq.apps.accounting.forms import (
     BillingAccountForm, CreditForm, SubscriptionForm, CancelForm,
     PlanInformationForm, SoftwarePlanVersionForm, FeatureRateForm,
     ProductRateForm, TriggerInvoiceForm, InvoiceInfoForm, AdjustBalanceForm,
-    ResendEmailForm, ChangeSubscriptionForm,
+    ResendEmailForm, ChangeSubscriptionForm, TriggerBookkeeperEmailForm,
 )
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError, InvoiceError, CreditLineError
@@ -488,6 +488,42 @@ class TriggerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
                 return HttpResponseRedirect(reverse(self.urlname))
             except (CreditLineError, InvoiceError) as e:
                 messages.error(request, "Error generating invoices: %s" % e)
+        return self.get(request, *args, **kwargs)
+
+
+class TriggerBookkeeperEmailView(AccountingSectionView, AsyncHandlerMixin):
+    urlname = 'accounting_trigger_bookkeeper_email'
+    page_title = "Trigger Bookkeeper Email"
+    template_name = 'accounting/trigger_bookkeeper.html'
+
+    @method_decorator(toggles.INVOICE_TRIGGER.required_decorator())
+    def dispatch(self, request, *args, **kwargs):
+        return super(TriggerBookkeeperEmailView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    @memoized
+    def trigger_email_form(self):
+        if self.request.method == 'POST':
+            return TriggerBookkeeperEmailForm(self.request.POST)
+        return TriggerBookkeeperEmailForm()
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname)
+
+    @property
+    def page_context(self):
+        return {
+            'trigger_email_form': self.trigger_email_form,
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.async_response is not None:
+            return self.async_response
+        if self.trigger_email_form.is_valid():
+            self.trigger_email_form.trigger_email()
+            messages.success(request, "Sent the Bookkeeper email!")
+            return HttpResponseRedirect(reverse(self.urlname))
         return self.get(request, *args, **kwargs)
 
 
