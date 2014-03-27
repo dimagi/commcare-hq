@@ -556,3 +556,16 @@ class InvoiceInterface(GenericTabularReport):
             if self.adjust_balance_form.is_valid():
                 self.adjust_balance_form.adjust_balance()
         return super(InvoiceInterface, self).view_response
+
+    @property
+    def email_response(self):
+        self.is_rendered_as_email = True
+        statement_start = StatementPeriodFilter.get_value(
+            self.request, self.domain) or datetime.date.today()
+        return render_to_string('accounting/bookkeeper_email.html',
+            {
+                'headers': self.headers,
+                'month': statement_start.strftime("%B"),
+                'rows': self.rows,
+            }
+        )
