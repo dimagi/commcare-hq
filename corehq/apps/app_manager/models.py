@@ -3041,9 +3041,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             xmlns_map[form.xmlns].append(form)
         return xmlns_map
 
-    def get_questions(self, xmlns):
+    def get_form_by_xmlns(self, xmlns):
         if xmlns == "http://code.javarosa.org/devicereport":
-            return []
+            return None
         forms = self.get_xmlns_map()[xmlns]
         if len(forms) != 1:
             logging.error('App %s in domain %s has %s forms with xmlns %s' % (
@@ -3052,9 +3052,15 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 len(forms),
                 xmlns,
             ))
-            return []
+            return None
         else:
             form, = forms
+        return form
+
+    def get_questions(self, xmlns):
+        form = self.get_form_by_xmlns(xmlns)
+        if not form:
+            return []
         return form.get_questions(self.langs)
 
     def validate_app(self):
