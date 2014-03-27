@@ -152,6 +152,7 @@ class SubscriptionInterface(AddItemInterface):
             DataTablesColumn("Start Date"),
             DataTablesColumn("End Date"),
             DataTablesColumn("Do Not Invoice"),
+            DataTablesColumn("Created By"),
             DataTablesColumn("Action"),
         )
 
@@ -208,6 +209,15 @@ class SubscriptionInterface(AddItemInterface):
             })
 
         for subscription in Subscription.objects.filter(**filters):
+            try:
+                created_by_adj = SubscriptionAdjustment.objects.filter(
+                    subscription=subscription,
+                    reason=SubscriptionAdjustmentReason.CREATE
+                ).order_by('date_created')[0]
+                created_by = dict(SubscriptionAdjustmentMethod.CHOICES).get(
+                    created_by_adj.method, "Unknown")
+            except (IndexError, SubscriptionAdjustment.DoesNotExist) as e:
+                created_by = "Unknown"
             rows.append([subscription.subscriber.domain,
                          mark_safe('<a href="%s">%s</a>'
                                    % (reverse(ManageBillingAccountView.urlname, args=(subscription.account.id,)),
@@ -218,6 +228,7 @@ class SubscriptionInterface(AddItemInterface):
                          subscription.date_start,
                          subscription.date_end,
                          subscription.do_not_invoice,
+                         created_by,
                          mark_safe('<a href="./%d" class="btn">Edit</a>' % subscription.id)])
 
         return rows

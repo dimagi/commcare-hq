@@ -146,9 +146,9 @@ class SubscriptionAdjustmentMethod(object):
     INTERNAL = "INTERNAL"
     TASK = "TASK"
     CHOICES = (
-        (USER, "This modification was made through a public UI."),
-        (INTERNAL, "This modification was made through an internal UI."),
-        (TASK, "The subscription was modified by a task (like an invoice)."),
+        (USER, "User"),
+        (INTERNAL, "Ops"),
+        (TASK, "Task (Invoicing)"),
     )
 
 
