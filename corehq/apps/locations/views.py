@@ -207,12 +207,37 @@ class EditLocationView(NewLocationView):
 
 class FacilitySyncView(BaseLocationView):
     urlname = 'sync_facilities'
-    page_title = ugettext_noop("Sync with External Systems")
+    page_title = ugettext_noop("OpenLMIS")
     template_name = 'locations/facility_sync.html'
 
     @property
     def page_context(self):
-        return {'lmis_config': self.domain_object.commtrack_settings.openlmis_config}
+        return {
+            'settings': self.settings_context,
+        }
+
+    @property
+    def settings_context(self):
+        return {
+            'openlmis_config': self.domain_object.commtrack_settings.openlmis_config._doc,
+        }
+
+    def post(self, request, *args, **kwargs):
+        payload = json.loads(request.POST.get('json'))
+
+        #TODO add server-side input validation here (currently validated on client)
+
+        if 'openlmis_config' in payload:
+            for item in payload['openlmis_config']:
+                setattr(
+                    self.domain_object.commtrack_settings.openlmis_config,
+                    item,
+                    payload['openlmis_config'][item]
+                )
+
+        self.domain_object.commtrack_settings.save()
+
+        return self.get(request, *args, **kwargs)
 
 
 class EditLocationHierarchy(BaseLocationView):
