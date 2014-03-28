@@ -112,11 +112,12 @@ class Site(object):
 
 def get_days_on(date):
     week = get_m_to_f(date)
-    week = [week[0] - datetime.timedelta(days=1)] + week
+    start = week[0] - datetime.timedelta(days=1)
+    end = week[-1] + datetime.timedelta(days=1)
     forms = XFormInstance.view(
         'reports_forms/all_forms',
-        startkey=['submission xmlns', DOMAIN, WEEKLY_SCHEDULE_XMLNS, str(week[0])],
-        endkey=['submission xmlns', DOMAIN, WEEKLY_SCHEDULE_XMLNS, str(week[-1])],
+        startkey=['submission xmlns', DOMAIN, WEEKLY_SCHEDULE_XMLNS, start.isoformat()],
+        endkey=['submission xmlns', DOMAIN, WEEKLY_SCHEDULE_XMLNS, end.isoformat()],
         reduce=False,
         include_docs=True,
     ).all()
