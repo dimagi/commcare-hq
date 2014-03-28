@@ -48,9 +48,9 @@ class Address(object):
 
     def __str__(self):
         return '''%(name)s
-        %(first_line)s%(second_line)s
-        %(city)s, %(region)s %(postal_code)s
-        %(country)s%(phone_number)s%(email_address)s%(website)s
+%(first_line)s%(second_line)s
+%(city)s, %(region)s %(postal_code)s
+%(country)s%(phone_number)s%(email_address)s%(website)s
         ''' % {
             'name': self.name,
             'first_line': self.first_line,
@@ -142,7 +142,8 @@ class InvoiceTemplate(object):
     def draw_text(self, string, x, y):
         text = self.canvas.beginText()
         text.setTextOrigin(x, y)
-        text.textLines(string)
+        for line in string.split('\n'):
+            text.textLine(line)
         self.canvas.drawText(text)
 
     def draw_from_address(self):
