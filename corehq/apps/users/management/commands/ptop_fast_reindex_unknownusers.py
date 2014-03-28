@@ -14,4 +14,6 @@ class Command(ElasticReindexer):
     pillow_class = UnknownUsersPillow
     indexing_pillow_class = UserPillow
     own_index_exists = False
-    couch_key = {'startkey': ['submissions'], 'endkey': ['submissions', {}]}
+
+    def get_extra_view_kwargs(self):
+        return {'startkey': ['submission'], 'endkey': ['submission', {}]}
