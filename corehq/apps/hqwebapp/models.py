@@ -415,6 +415,10 @@ class CommTrackSetupTab(UITab):
                         'title': EditLocationView.page_title,
                         'urlname': EditLocationView.urlname,
                     },
+                    {
+                        'title': LocationImportView.page_title,
+                        'urlname': LocationImportView.urlname,
+                    },
                 ]
             },
             # locations (advanced)
@@ -427,21 +431,8 @@ class CommTrackSetupTab(UITab):
                 'title': FacilitySyncView.page_title,
                 'url': reverse(FacilitySyncView.urlname, args=[self.domain]),
             },
-            # upload locations
-            {
-                'title': LocationImportView.page_title,
-                'url': reverse(LocationImportView.urlname, args=[self.domain]),
-            },
         ]])
         return items
-        # items.append([_("Products"), products_section])
-
-
-        # items.append([_("Programs"), programs_section])
-
-        # items.append([_("Locations"), locations_section])
-
-        # items.append([_("Integration (Advanced)"), advanced_locations_section])
 
 
 class ProjectDataTab(UITab):
