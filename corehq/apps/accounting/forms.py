@@ -1366,7 +1366,6 @@ class TriggerBookkeeperEmailForm(forms.Form):
 
     def trigger_email(self):
         from corehq.apps.accounting.tasks import send_bookkeeper_email
-        print self.cleaned_data['emails'].split(',')
         send_bookkeeper_email(
             month=int(self.cleaned_data['month']),
             year=int(self.cleaned_data['year']),
