@@ -966,17 +966,10 @@ class ProjectSettingsTab(UITab):
         items.append((_('Project Information'), project_info))
 
         if user_is_admin:
-            from corehq.apps.domain.views import (
-                BasicCommTrackSettingsView,
-                AdvancedCommTrackSettingsView,
-            )
+            from corehq.apps.domain.views import AdvancedCommTrackSettingsView
 
             if self.project.commtrack_enabled:
                 commtrack_settings = [
-                    {
-                        'title': _(BasicCommTrackSettingsView.page_title),
-                        'url': reverse(BasicCommTrackSettingsView.urlname, args=[self.domain])
-                    },
                     {
                         'title': _(AdvancedCommTrackSettingsView.page_title),
                         'url': reverse(AdvancedCommTrackSettingsView.urlname, args=[self.domain])
