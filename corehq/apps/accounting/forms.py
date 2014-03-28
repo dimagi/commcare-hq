@@ -305,7 +305,7 @@ class SubscriptionForm(forms.Form):
             })
 
             self.fields['start_date'].initial = subscription.date_start.isoformat()
-            self.fields['end_date'].initial = subscription.date_end
+            self.fields['end_date'].initial = subscription.date_end.isoformat()
             self.fields['delay_invoice_until'].initial = subscription.date_delay_invoicing
             self.fields['domain'].initial = subscription.subscriber.domain
             self.fields['salesforce_contract_id'].initial = subscription.salesforce_contract_id
@@ -1366,7 +1366,6 @@ class TriggerBookkeeperEmailForm(forms.Form):
 
     def trigger_email(self):
         from corehq.apps.accounting.tasks import send_bookkeeper_email
-        print self.cleaned_data['emails'].split(',')
         send_bookkeeper_email(
             month=int(self.cleaned_data['month']),
             year=int(self.cleaned_data['year']),
