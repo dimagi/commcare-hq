@@ -590,7 +590,7 @@ class FetchProductForProgramListView(EditProgramView):
 
 class SMSSettingsView(BaseCommTrackManageView):
     urlname = 'commtrack_sms_settings'
-    page_title = ugettext_noop("SMS Settings")
+    page_title = ugettext_noop("SMS")
     template_name = 'domain/admin/sms_settings.html'
 
     @property
