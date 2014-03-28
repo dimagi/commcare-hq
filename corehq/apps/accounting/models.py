@@ -33,7 +33,7 @@ from corehq.apps.accounting.exceptions import (CreditLineError, AccountingError,
                                                SubscriptionChangeError, NewSubscriptionError, InvoiceEmailThrottledError)
 from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES, ensure_domain_instance, get_change_status
 
-global_logger = logging.getLogger(__name__)
+logger = logging.getLogger('accounting')
 integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
 
 MAX_INVOICE_COMMUNICATIONS = 5
@@ -273,8 +273,12 @@ class BillingAccount(models.Model):
         except cls.DoesNotExist:
             pass
         except cls.MultipleObjectsReturned:
-            global_logger.error("Multiple billing accounts showed up for the domain '%s'. The "
-                                "latest one was served, but you should reconcile very soon." % domain)
+            logger.error(
+                "[BILLING] "
+                "Multiple billing accounts showed up for the domain '%s'. The "
+                "latest one was served, but you should reconcile very soon."
+                % domain
+            )
             return cls.objects.filter(created_by_domain=domain).latest('date_created')
 
 
@@ -824,9 +828,13 @@ class Subscription(models.Model):
         try:
             active_subscriptions = cls.objects.filter(subscriber=subscriber, is_active=True)
             if active_subscriptions.count() > 1:
-                global_logger.error("There seem to be multiple ACTIVE subscriptions for the subscriber %s. "
-                                    "Odd, right? The latest one by date_created was used, but consider this an "
-                                    "issue." % subscriber)
+                logger.error(
+                    "[BILLING] "
+                    "There seem to be multiple ACTIVE subscriptions for the "
+                    "subscriber %s. Odd, right? The latest one by "
+                    "date_created was used, but consider this an issue."
+                    % subscriber
+                )
             current_subscription = active_subscriptions.latest('date_created')
             return current_subscription.plan_version, current_subscription
         except Subscription.DoesNotExist:
@@ -1006,8 +1014,9 @@ class Invoice(models.Model):
         contact_emails = (contact_emails.split(',')
                           if contact_emails is not None else [])
         if not contact_emails:
-            logging.error(
-                "[Billing] Could not find an email to send the invoice "
+            logger.error(
+                "[BILLING] "
+                "Could not find an email to send the invoice "
                 "email to for the domain: %s" %
                 self.subscription.subscriber.domain)
         return contact_emails
@@ -1130,6 +1139,13 @@ class BillingRecord(models.Model):
         if self.is_email_throttled():
             self.skipped_email = True
             self.save()
+            logger.info(
+                "[BILLING] Throttled billing statements for domain %(domain)s "
+                "to %(emails)s." % {
+                    'domain': self.domain.name,
+                    'emails': ', '.join(contact_emails),
+                }
+            )
             raise InvoiceEmailThrottledError(
                 "Invoice communications exceeded the maximum limit of "
                 "%(max_limit)d for domain %(domain)s for the month of "
@@ -1161,6 +1177,13 @@ class BillingRecord(models.Model):
                 )
         self.emailed_to = ",".join(contact_emails)
         self.save()
+        logger.info(
+            "[BILLING] Sent billing statements for domain %(domain)s "
+            "to %(emails)s." % {
+                'domain': self.domain.name,
+                'emails': ', '.join(contact_emails),
+            }
+        )
 
 
 class InvoicePdf(SafeSaveDocument):

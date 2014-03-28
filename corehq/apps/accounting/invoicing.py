@@ -17,7 +17,7 @@ from corehq.apps.accounting.models import (
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.users.models import CommCareUser
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('accounting')
 
 
 DEFAULT_DAYS_UNTIL_DUE = 30
@@ -38,6 +38,7 @@ class DomainInvoiceFactory(object):
         self.date_start = date_start
         self.date_end = date_end
         self.domain = ensure_domain_instance(domain)
+        self.logged_throttle_error = False
         if self.domain is None:
             raise InvoiceError("Domain '%s' is not a valid domain on HQ!"
                                % domain)
@@ -96,7 +97,8 @@ class DomainInvoiceFactory(object):
             created_by_invoicing=True)[0]
         if account.date_confirmed_extra_charges is None:
             logger.error(
-                "[BILLING] Domain '%s' is going to get charged on "
+                "[BILLING] "
+                "Domain '%s' is going to get charged on "
                 "Community, but they haven't formally acknowledged this. "
                 "Someone on ops should reconcile this soon. To be on the "
                 "safe side, we've marked the invoices as Do Not Invoice."
@@ -178,7 +180,9 @@ class DomainInvoiceFactory(object):
         try:
             record.send_email()
         except InvoiceEmailThrottledError as e:
-            logger.error('[Billing] %s' % e)
+            if not self.logged_throttle_error:
+                logger.error("[BILLING] %s" % e)
+                self.logged_throttle_error = True
 
         return invoice
 
