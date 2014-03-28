@@ -1303,9 +1303,9 @@ class OrgReportTab(OrgTab):
     def dropdown_items(self):
         return [
             format_submenu_context(_("Projects Table"), url=reverse("orgs_report", args=(self.org.name,))),
-            format_submenu_context(_("Visualize Forms"), url=reverse("orgs_stats", args=(self.org.name, "forms"))),
-            format_submenu_context(_("Visualize Cases"), url=reverse("orgs_stats", args=(self.org.name, "cases"))),
-            format_submenu_context(_("Visualize Users"), url=reverse("orgs_stats", args=(self.org.name, "users"))),
+            format_submenu_context(_("Form Data"), url=reverse("orgs_stats", args=(self.org.name, "forms"))),
+            format_submenu_context(_("Case Data"), url=reverse("orgs_stats", args=(self.org.name, "cases"))),
+            format_submenu_context(_("User Data"), url=reverse("orgs_stats", args=(self.org.name, "users"))),
         ]
 
 class OrgSettingsTab(OrgTab):
