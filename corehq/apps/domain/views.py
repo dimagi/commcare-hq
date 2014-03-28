@@ -1711,10 +1711,10 @@ class SMSSettingsView(BaseCommTrackAdminView):
         return self.get(request, *args, **kwargs)
 
 
-class AdvancedCommTrackSettingsView(BaseCommTrackAdminView):
-    urlname = 'commtrack_settings_advanced'
-    page_title = ugettext_lazy("Advanced CommTrack Settings")
-    template_name = 'domain/admin/commtrack_settings_advanced.html'
+class CommTrackSettingsView(BaseCommTrackAdminView):
+    urlname = 'commtrack_settings'
+    page_title = ugettext_lazy("CommTrack Settings")
+    template_name = 'domain/admin/commtrack_settings.html'
 
     @property
     def page_context(self):
@@ -1725,7 +1725,7 @@ class AdvancedCommTrackSettingsView(BaseCommTrackAdminView):
     @property
     @memoized
     def commtrack_settings_form(self):
-        from corehq.apps.commtrack.forms import AdvancedSettingsForm
+        from corehq.apps.commtrack.forms import CommTrackSettingsForm
         initial = self.commtrack_settings.to_json()
         initial.update(dict(('consumption_' + k, v) for k, v in
             self.commtrack_settings.consumption_config.to_json().items()))
@@ -1733,8 +1733,8 @@ class AdvancedCommTrackSettingsView(BaseCommTrackAdminView):
             self.commtrack_settings.stock_levels_config.to_json().items()))
 
         if self.request.method == 'POST':
-            return AdvancedSettingsForm(self.request.POST, initial=initial, domain=self.domain)
-        return AdvancedSettingsForm(initial=initial, domain=self.domain)
+            return CommTrackSettingsForm(self.request.POST, initial=initial, domain=self.domain)
+        return CommTrackSettingsForm(initial=initial, domain=self.domain)
 
     def set_ota_restore_config(self):
         """

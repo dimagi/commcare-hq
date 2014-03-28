@@ -12,11 +12,11 @@ from corehq.apps.domain.views import (
     ExchangeSnapshotsView, CreateNewExchangeSnapshotView,
     ManageProjectMediaView, DomainForwardingOptionsView,
     AddRepeaterView, EditInternalDomainInfoView, EditInternalCalculationsView,
-    AdvancedCommTrackSettingsView, OrgSettingsView,
     DomainSubscriptionView, SelectPlanView, ConfirmSelectedPlanView,
     SelectedEnterprisePlanView, ConfirmBillingAccountInfoView, ProBonoView,
     EditExistingBillingAccountView, DomainBillingStatementsView,
-    BillingStatementPdfView, LocationSettingsView, SMSSettingsView
+    BillingStatementPdfView, LocationSettingsView, SMSSettingsView,
+    CommTrackSettingsView, OrgSettingsView,
 )
 
 #
@@ -111,7 +111,7 @@ domain_settings = patterns(
     url(r'^multimedia/$', ManageProjectMediaView.as_view(), name=ManageProjectMediaView.urlname),
     url(r'^commtrack/locations/$', LocationSettingsView.as_view(), name=LocationSettingsView.urlname),
     url(r'^commtrack/sms/$', SMSSettingsView.as_view(), name=SMSSettingsView.urlname),
-    url(r'^commtrack/advanced/$', AdvancedCommTrackSettingsView.as_view(), name=AdvancedCommTrackSettingsView.urlname),
+    url(r'^commtrack/settings/$', CommTrackSettingsView.as_view(), name=CommTrackSettingsView.urlname),
     url(r'^organization/$', OrgSettingsView.as_view(), name=OrgSettingsView.urlname),
     url(r'^organization/request/$', 'org_request', name='domain_org_request'),
     url(r'^internal/info/$', EditInternalDomainInfoView.as_view(), name=EditInternalDomainInfoView.urlname),
