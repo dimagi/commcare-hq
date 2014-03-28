@@ -250,6 +250,7 @@ class BaseEditProjectInfoView(BaseAdminProjectSettingsView):
             'call_center_enabled': self.domain_object.call_center_config.enabled,
             'restrict_superusers': self.domain_object.restrict_superusers,
             'ota_restore_caching': self.domain_object.ota_restore_caching,
+            'cloudcare_releases':  self.domain_object.cloudcare_releases,
         })
         return context
 
@@ -319,6 +320,7 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
                 'call_center_enabled': self.domain_object.call_center_config.enabled,
                 'call_center_case_owner': self.domain_object.call_center_config.case_owner_id,
                 'call_center_case_type': self.domain_object.call_center_config.case_type,
+                'cloudcare_releases': self.domain_object.cloudcare_releases,
             })
 
             return DomainMetadataForm(
