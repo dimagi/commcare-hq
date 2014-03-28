@@ -81,6 +81,7 @@ STATICFILES_DIRS = (
 )
 
 DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
+ACCOUNTING_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.accounting.log")
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
@@ -631,7 +632,6 @@ LOGGING = {
         'simple': {
             'format': '%(asctime)s %(levelname)s %(message)s'
         },
-
         'pillowtop': {
             'format': '%(asctime)s %(levelname)s %(module)s %(message)s'
         },
@@ -657,6 +657,12 @@ LOGGING = {
             'class': 'logging.FileHandler',
             'formatter': 'verbose',
             'filename': DJANGO_LOG_FILE
+        },
+        'accountinglog': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'formatter': 'verbose',
+            'filename': ACCOUNTING_LOG_FILE
         },
         'couchlog': {
             'level': 'WARNING',
@@ -710,6 +716,11 @@ LOGGING = {
         },
         'currency_update': {
             'handlers': ['file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'accounting': {
+            'handlers': ['accountinglog', 'sentry', 'console', 'couchlog'],
             'level': 'INFO',
             'propagate': False,
         },
