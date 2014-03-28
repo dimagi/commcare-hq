@@ -305,7 +305,10 @@ class SubscriptionForm(forms.Form):
             })
 
             self.fields['start_date'].initial = subscription.date_start.isoformat()
-            self.fields['end_date'].initial = subscription.date_end.isoformat()
+            self.fields['end_date'].initial = (
+                subscription.date_end.isoformat()
+                if subscription.date_end is not None else subscription.date_end
+            )
             self.fields['delay_invoice_until'].initial = subscription.date_delay_invoicing
             self.fields['domain'].initial = subscription.subscriber.domain
             self.fields['salesforce_contract_id'].initial = subscription.salesforce_contract_id
