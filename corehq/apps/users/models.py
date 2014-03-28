@@ -1516,10 +1516,11 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     @property
     def form_count(self):
+        key = ["submission user", self.domain, self.user_id]
         result = XFormInstance.view('reports_forms/all_forms',
-            startkey=['submission user', self.domain, self.user_id],
-            endkey=['submission user', self.domain, self.user_id, {}],
-                group_level=0
+            startkey=key,
+            endkey=key + [{}],
+            reduce=True
         ).one()
         if result:
             return result['value']
