@@ -1,11 +1,9 @@
 import json
-import datetime
 
 from django.conf import settings
 from django.contrib import messages
 from django.forms.forms import NON_FIELD_ERRORS
 from django.forms.util import ErrorList
-from django.utils import translation
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest
 from django.utils.decorators import method_decorator

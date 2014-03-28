@@ -8,7 +8,6 @@ from couchdbkit.ext.django.schema import DateTimeProperty, StringProperty
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from django.core.files import File
 from django.core.urlresolvers import reverse
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
@@ -17,7 +16,7 @@ from django.utils.translation import ugettext_lazy as _
 from corehq import toggles
 from corehq.apps.accounting.invoice_pdf import Address, InvoiceTemplate
 from corehq.apps.accounting.utils import (
-    is_active_subscription, get_privileges, get_first_last_days
+    get_privileges, get_first_last_days
 )
 from corehq.apps.accounting.subscription_changes import (
     DomainDowngradeActionHandler, DomainUpgradeActionHandler,
