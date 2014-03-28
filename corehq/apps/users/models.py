@@ -1599,20 +1599,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             case.save()
         self.save()
 
-    def transfer_to_domain(self, domain, app_id):
-        username = format_username(raw_username(self.username), domain)
-        self.change_username(username)
-        self.domain = domain
-        for form in self.get_forms():
-            form.domain = domain
-            form.app_id = app_id
-            form.save()
-        for case in self.get_cases():
-            case.domain = domain
-            case.save()
-        self.domain_membership = DomainMembership(domain=domain)
-        self.save()
-
     def get_group_fixture(self):
         return group_fixture(self.get_case_sharing_groups(), self)
 
