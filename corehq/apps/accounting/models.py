@@ -1142,7 +1142,7 @@ class BillingRecord(models.Model):
             logger.info(
                 "[BILLING] Throttled billing statements for domain %(domain)s "
                 "to %(emails)s." % {
-                    'domain': self.domain.name,
+                    'domain': domain,
                     'emails': ', '.join(contact_emails),
                 }
             )
@@ -1180,7 +1180,7 @@ class BillingRecord(models.Model):
         logger.info(
             "[BILLING] Sent billing statements for domain %(domain)s "
             "to %(emails)s." % {
-                'domain': self.domain.name,
+                'domain': domain,
                 'emails': ', '.join(contact_emails),
             }
         )
