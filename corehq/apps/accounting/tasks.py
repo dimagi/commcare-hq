@@ -1,12 +1,12 @@
 from urllib import urlencode
 from celery.schedules import crontab
-from celery.task import task, periodic_task
+from celery.task import periodic_task
 from celery.utils.log import get_task_logger
 import datetime
 from django.conf import settings
 from django.http import HttpRequest, QueryDict
 from django.template.loader import render_to_string
-from corehq import Domain
+from corehq import Domain, toggles
 from corehq.apps.accounting import utils
 from corehq.apps.accounting.exceptions import InvoiceError, CreditLineError
 from corehq.apps.accounting.invoicing import DomainInvoiceFactory
@@ -18,7 +18,7 @@ from couchexport.models import Format
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.django.email import send_HTML_email
 
-logger = get_task_logger(__name__)
+logger = get_task_logger('accounting')
 
 
 @periodic_task(run_every=crontab(minute=0, hour=0))
@@ -46,30 +46,41 @@ def deactivate_subscriptions(based_on_date=None):
         subscription.save()
 
 
-@task
+@periodic_task(run_every=crontab(hour=0, minute=0, day_of_month='30'))
 def generate_invoices(based_on_date=None):
     """
     Generates all invoices for the past month.
     """
     today = based_on_date or datetime.date.today()
     invoice_start, invoice_end = utils.get_previous_month_date_range(today)
-
+    logger.info("[Billing] Starting up invoices for %(start)s - %(end)s" % {
+        'start': invoice_start.strftime("%d %B %Y"),
+        'end': invoice_end.strftime("%d %B %Y"),
+    })
     all_domain_ids = [d['id'] for d in Domain.get_all(include_docs=False)]
     for domain_doc in iter_docs(Domain.get_db(), all_domain_ids):
-        domain = Domain.wrap(domain_doc)
-        try:
-            invoice_factory = DomainInvoiceFactory(invoice_start, invoice_end, domain)
-            invoice_factory.create_invoices()
-        except CreditLineError as e:
-            logger.error("There was an error utilizing credits for "
-                         "domain %s: %s" % (domain.name, e))
-        except InvoiceError as e:
-            logger.error("Could not create invoice for domain %s: %s" % (
-                domain.name, e
-            ))
+        if toggles.ACCOUNTING_PREVIEW.enabled(domain_doc.get('name')):
+            domain = Domain.wrap(domain_doc)
+            try:
+                invoice_factory = DomainInvoiceFactory(
+                    invoice_start, invoice_end, domain)
+                invoice_factory.create_invoices()
+                logger.info("[BILLING] Sent invoices for domain %s"
+                            % domain.name)
+            except CreditLineError as e:
+                logger.error(
+                    "[BILLING] There was an error utilizing credits for "
+                    "domain %s: %s" % (domain.name, e)
+                )
+            except InvoiceError as e:
+                logger.error(
+                    "[BILLING] Could not create invoice for domain %s: %s" % (
+                    domain.name, e
+                ))
+    # And finally...
+    send_bookkeeper_email()
 
 
-@task
 def send_bookkeeper_email(month=None, year=None, emails=None):
     today = datetime.date.today()
     month = month or today.month
@@ -111,5 +122,12 @@ def send_bookkeeper_email(month=None, year=None, emails=None):
             text_content=email_content_plaintext,
             file_attachments=[excel_attachment],
         )
+
+    logger.info(
+        "[BILLING] Sent Bookkeeper Invoice Summary for %(month)s "
+        "to %(emails)s." % {
+            'month': first_of_month.strftime("%B %Y"),
+            'emails': ", ".join(emails)
+        })
 
 
