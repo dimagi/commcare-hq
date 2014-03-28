@@ -1,8 +1,10 @@
 #from django.conf.urls.defaults import patterns, url
 from django.conf.urls.defaults import *
-from corehq.apps.commtrack.views import (ProductListView, FetchProductListView, NewProductView, EditProductView,
-    ProgramListView, FetchProgramListView, NewProgramView, EditProgramView, FetchProductForProgramListView,
-    DefaultConsumptionView, UploadProductView, ProductImportStatusView
+from corehq.apps.commtrack.views import (
+    ProductListView, FetchProductListView, NewProductView, EditProductView,
+    ProgramListView, FetchProgramListView, NewProgramView, EditProgramView,
+    FetchProductForProgramListView, DefaultConsumptionView, UploadProductView,
+    ProductImportStatusView, SMSSettingsView
 )
 
 urlpatterns = patterns('corehq.apps.commtrack.views',
@@ -34,4 +36,5 @@ settings_urls = patterns('corehq.apps.commtrack.views',
     url(r'^programs/(?P<prog_id>[\w-]+)/productlist/$', FetchProductForProgramListView.as_view(),
         name=FetchProductForProgramListView.urlname),
     url(r'^default_consumption/$', DefaultConsumptionView.as_view(), name=DefaultConsumptionView.urlname),
+    url(r'^sms/$', SMSSettingsView.as_view(), name=SMSSettingsView.urlname),
 )

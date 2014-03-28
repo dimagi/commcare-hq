@@ -297,17 +297,27 @@ class CommTrackSetupTab(UITab):
         # circular import
         from corehq.apps.commtrack.views import (
             ProductListView,
-            NewProductView,
-            EditProductView,
             DefaultConsumptionView,
+            ProgramListView,
+            SMSSettingsView,
         )
-        from corehq.apps.locations.views import LocationsListView
-        from corehq.apps.domain.views import LocationSettingsView, SMSSettingsView
+        from corehq.apps.locations.views import (
+            LocationsListView,
+            LocationSettingsView,
+        )
 
         return [
             format_submenu_context(
                 _("Products"),
                 url=reverse(ProductListView.urlname, args=[self.domain])
+            ),
+            format_submenu_context(
+                _("Programs"),
+                url=reverse(ProgramListView.urlname, args=[self.domain])
+            ),
+            format_submenu_context(
+                _("Consumption"),
+                url=reverse(DefaultConsumptionView.urlname, args=[self.domain])
             ),
             format_submenu_context(
                 _("SMS"),
@@ -329,16 +339,30 @@ class CommTrackSetupTab(UITab):
 
     @property
     def sidebar_items(self):
-        items = []
-
         # circular import
         from corehq.apps.commtrack.views import (
             ProductListView,
             NewProductView,
             EditProductView,
             DefaultConsumptionView,
+            ProgramListView,
+            NewProgramView,
+            EditProgramView,
+            SMSSettingsView,
         )
-        products_section = [
+        from corehq.apps.locations.views import (
+            LocationsListView,
+            NewLocationView,
+            EditLocationView,
+            FacilitySyncView,
+            LocationImportView,
+            LocationSettingsView,
+        )
+
+        items = []
+
+        items.append([_('CommTrack Setup'), [
+            # products
             {
                 'title': ProductListView.page_title,
                 'url': reverse(ProductListView.urlname, args=[self.domain]),
@@ -353,17 +377,7 @@ class CommTrackSetupTab(UITab):
                     },
                 ]
             },
-            {
-                'title': DefaultConsumptionView.page_title,
-                'url': reverse(DefaultConsumptionView.urlname, args=[self.domain]),
-            }
-        ]
-        items.append([_("Products"), products_section])
-
-
-        # circular import
-        from corehq.apps.commtrack.views import ProgramListView, NewProgramView, EditProgramView
-        programs_section = [
+            # programs
             {
                 'title': ProgramListView.page_title,
                 'url': reverse(ProgramListView.urlname, args=[self.domain]),
@@ -378,13 +392,17 @@ class CommTrackSetupTab(UITab):
                     },
                 ]
             },
-        ]
-        items.append([_("Programs"), programs_section])
-
-        # circular import
-        from corehq.apps.locations.views import (LocationsListView, NewLocationView, EditLocationView,
-                                                 FacilitySyncView, LocationImportView)
-        locations_section = [
+            # consumption
+            {
+                'title': DefaultConsumptionView.page_title,
+                'url': reverse(DefaultConsumptionView.urlname, args=[self.domain]),
+            },
+            # sms
+            {
+                'title': SMSSettingsView.page_title,
+                'url': reverse(SMSSettingsView.urlname, args=[self.domain]),
+            },
+            # locations
             {
                 'title': LocationsListView.page_title,
                 'url': reverse(LocationsListView.urlname, args=[self.domain]),
@@ -399,22 +417,31 @@ class CommTrackSetupTab(UITab):
                     },
                 ]
             },
-        ]
-        items.append([_("Locations"), locations_section])
-
-        advanced_locations_section = [
+            # locations (advanced)
+            {
+                'title': LocationSettingsView.page_title,
+                'url': reverse(LocationSettingsView.urlname, args=[self.domain]),
+            },
+            # external sync
             {
                 'title': FacilitySyncView.page_title,
                 'url': reverse(FacilitySyncView.urlname, args=[self.domain]),
             },
+            # upload locations
             {
                 'title': LocationImportView.page_title,
                 'url': reverse(LocationImportView.urlname, args=[self.domain]),
             },
-        ]
-        items.append([_("Integration (Advanced)"), advanced_locations_section])
-
+        ]])
         return items
+        # items.append([_("Products"), products_section])
+
+
+        # items.append([_("Programs"), programs_section])
+
+        # items.append([_("Locations"), locations_section])
+
+        # items.append([_("Integration (Advanced)"), advanced_locations_section])
 
 
 class ProjectDataTab(UITab):

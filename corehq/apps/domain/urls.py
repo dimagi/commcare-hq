@@ -15,8 +15,7 @@ from corehq.apps.domain.views import (
     DomainSubscriptionView, SelectPlanView, ConfirmSelectedPlanView,
     SelectedEnterprisePlanView, ConfirmBillingAccountInfoView, ProBonoView,
     EditExistingBillingAccountView, DomainBillingStatementsView,
-    BillingStatementPdfView, LocationSettingsView, SMSSettingsView,
-    CommTrackSettingsView, OrgSettingsView,
+    BillingStatementPdfView, CommTrackSettingsView, OrgSettingsView,
 )
 
 #
@@ -109,8 +108,6 @@ domain_settings = patterns(
     url(r'^snapshots/$', ExchangeSnapshotsView.as_view(), name=ExchangeSnapshotsView.urlname),
     url(r'^snapshots/new/$', CreateNewExchangeSnapshotView.as_view(), name=CreateNewExchangeSnapshotView.urlname),
     url(r'^multimedia/$', ManageProjectMediaView.as_view(), name=ManageProjectMediaView.urlname),
-    url(r'^commtrack/locations/$', LocationSettingsView.as_view(), name=LocationSettingsView.urlname),
-    url(r'^commtrack/sms/$', SMSSettingsView.as_view(), name=SMSSettingsView.urlname),
     url(r'^commtrack/settings/$', CommTrackSettingsView.as_view(), name=CommTrackSettingsView.urlname),
     url(r'^organization/$', OrgSettingsView.as_view(), name=OrgSettingsView.urlname),
     url(r'^organization/request/$', 'org_request', name='domain_org_request'),

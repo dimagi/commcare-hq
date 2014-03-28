@@ -52,7 +52,6 @@ from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.hqwebapp.views import BaseSectionPageView, BasePageView, CRUDPaginatedViewMixin
 from corehq.apps.orgs.models import Organization, OrgRequest, Team
-from corehq.apps.commtrack.util import all_sms_codes, unicode_slug
 from corehq.apps.domain.forms import ProjectSettingsForm
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.email import send_HTML_email
@@ -1595,120 +1594,6 @@ class BaseCommTrackAdminView(BaseAdminProjectSettingsView):
     @memoized
     def commtrack_settings(self):
         return self.domain_object.commtrack_settings
-
-
-class LocationSettingsView(BaseCommTrackAdminView):
-    urlname = 'domain_location_settings'
-    page_title = ugettext_noop("Location Settings")
-    template_name = 'domain/admin/location_settings.html'
-
-    @property
-    def page_context(self):
-        return {
-            'settings': self.settings_context,
-        }
-
-    @property
-    def settings_context(self):
-        return {
-            'loc_types': [self._get_loctype_info(l) for l in self.commtrack_settings.location_types],
-        }
-
-    def _get_loctype_info(self, loctype):
-        return {
-            'name': loctype.name,
-            'code': loctype.code,
-            'allowed_parents': [p or None for p in loctype.allowed_parents],
-            'administrative': loctype.administrative,
-        }
-
-    def post(self, request, *args, **kwargs):
-        from corehq.apps.commtrack.models import LocationType
-
-        payload = json.loads(request.POST.get('json'))
-
-        def mk_loctype(loctype):
-            loctype['allowed_parents'] = [p or '' for p in loctype['allowed_parents']]
-            cleaned_code = unicode_slug(loctype['code'])
-            if cleaned_code != loctype['code']:
-                err = _(
-                    'Location type code "{code}" is invalid. No spaces or special characters are allowed. '
-                    'It has been replaced with "{new_code}".'
-                )
-                messages.warning(request, err.format(code=loctype['code'], new_code=cleaned_code))
-                loctype['code'] = cleaned_code
-            return LocationType(**loctype)
-
-        #TODO add server-side input validation here (currently validated on client)
-
-        self.commtrack_settings.location_types = [mk_loctype(l) for l in payload['loc_types']]
-
-        self.commtrack_settings.save()
-
-        return self.get(request, *args, **kwargs)
-
-
-class SMSSettingsView(BaseCommTrackAdminView):
-    urlname = 'domain_sms_settings'
-    page_title = ugettext_noop("CommTrack SMS Settings")
-    template_name = 'domain/admin/sms_settings.html'
-
-    @property
-    def page_context(self):
-        return {
-            'other_sms_codes': dict(self.get_other_sms_codes()),
-            'settings': self.settings_context,
-        }
-
-    @property
-    def settings_context(self):
-        return {
-            'keyword': self.commtrack_settings.multiaction_keyword,
-            'actions': [self._get_action_info(a) for a in self.commtrack_settings.actions],
-            'requisition_config': {
-                'enabled': self.commtrack_settings.requisition_config.enabled,
-                'actions': [self._get_action_info(a) for a in self.commtrack_settings.requisition_config.actions],
-            },
-        }
-
-    # FIXME
-    def _get_action_info(self, action):
-        return {
-            'type': action.action,
-            'keyword': action.keyword,
-            'name': action.subaction,
-            'caption': action.caption,
-        }
-
-    def get_other_sms_codes(self):
-        for k, v in all_sms_codes(self.domain).iteritems():
-            if v[0] == 'product':
-                yield (k, (v[0], v[1].name))
-
-    def post(self, request, *args, **kwargs):
-        from corehq.apps.commtrack.models import CommtrackActionConfig
-
-        payload = json.loads(request.POST.get('json'))
-
-        self.commtrack_settings.multiaction_keyword = payload['keyword']
-
-        def mk_action(action):
-            return CommtrackActionConfig(**{
-                    'action': action['type'],
-                    'subaction': action['caption'],
-                    'keyword': action['keyword'],
-                    'caption': action['caption'],
-                })
-
-        #TODO add server-side input validation here (currently validated on client)
-
-        self.commtrack_settings.actions = [mk_action(a) for a in payload['actions']]
-        self.commtrack_settings.requisition_config.enabled = payload['requisition_config']['enabled']
-        self.commtrack_settings.requisition_config.actions =  [mk_action(a) for a in payload['requisition_config']['actions']]
-
-        self.commtrack_settings.save()
-
-        return self.get(request, *args, **kwargs)
 
 
 class CommTrackSettingsView(BaseCommTrackAdminView):
