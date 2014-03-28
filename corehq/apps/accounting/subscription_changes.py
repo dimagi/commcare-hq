@@ -13,7 +13,7 @@ from couchexport.models import SavedExportSchema
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 
-global_logger = logging.getLogger(__name__)
+logger = logging.getLogger('accounting')
 
 
 class BaseModifySubscriptionHandler(object):
@@ -94,7 +94,10 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
                     print ("Deactivated Reminder %s [%s]"
                            % (reminder.nickname, reminder._id))
         except Exception:
-            logging.exception("Failed to downgrade outbound sms for domain %s." % self.domain.name)
+            logger.exception(
+                "[BILLING] Failed to downgrade outbound sms for domain %s."
+                % self.domain.name
+            )
             return False
         return True
 
@@ -112,7 +115,10 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
                     print ("Deactivated Survey %s [%s]"
                            % (survey.nickname, survey._id))
         except Exception:
-            logging.exception("Failed to downgrade outbound sms for domain %s." % self.domain.name)
+            logger.exception(
+                "[Billing] Failed to downgrade outbound sms for domain %s."
+                % self.domain.name
+            )
             return False
         return True
 
@@ -398,11 +404,12 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                     }
                 )
         except FeatureRate.DoesNotExist:
-            global_logger.error(
+            logger.error(
+                "[BILLING] "
                 "It seems that the plan %s did not have rate for Mobile "
                 "Workers. This is problematic." %
                     self.new_plan_version.plan.name
-                )
+            )
 
     @property
     def response_role_based_access(self):
