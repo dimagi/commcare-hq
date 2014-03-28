@@ -98,8 +98,8 @@ class Command(LabelCommand):
             for user_id in group.users:
                 xform_ids.update(res['id'] for res in sourcedb.view(
                     'reports_forms/all_forms',
-                    startkey=['submissoin user', domain.name, user_id],
-                    endkey=['submissoin user', domain.name, user_id, {}],
+                    startkey=['submission user', domain.name, user_id],
+                    endkey=['submission user', domain.name, user_id, {}],
                     reduce=False
                 ))
 
