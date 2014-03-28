@@ -1597,6 +1597,32 @@ class BaseCommTrackAdminView(BaseAdminProjectSettingsView):
         return self.domain_object.commtrack_settings
 
 
+class LocationSettingsView(BaseCommTrackAdminView):
+    urlname = 'domain_location_settings'
+    page_title = ugettext_noop("Location Settings")
+    template_name = 'domain/admin/location_settings.html'
+
+    @property
+    def page_context(self):
+        return {
+            'settings': self.settings_context,
+        }
+
+    @property
+    def settings_context(self):
+        return {
+            'loc_types': [self._get_loctype_info(l) for l in self.commtrack_settings.location_types],
+        }
+
+    def _get_loctype_info(self, loctype):
+        return {
+            'name': loctype.name,
+            'code': loctype.code,
+            'allowed_parents': [p or None for p in loctype.allowed_parents],
+            'administrative': loctype.administrative,
+        }
+
+
 class BasicCommTrackSettingsView(BaseCommTrackAdminView):
     urlname = 'domain_commtrack_settings'
     page_title = ugettext_noop("Basic CommTrack Settings")
@@ -1614,20 +1640,11 @@ class BasicCommTrackSettingsView(BaseCommTrackAdminView):
         return {
             'keyword': self.commtrack_settings.multiaction_keyword,
             'actions': [self._get_action_info(a) for a in self.commtrack_settings.actions],
-            'loc_types': [self._get_loctype_info(l) for l in self.commtrack_settings.location_types],
             'requisition_config': {
                 'enabled': self.commtrack_settings.requisition_config.enabled,
                 'actions': [self._get_action_info(a) for a in self.commtrack_settings.requisition_config.actions],
             },
             'openlmis_config': self.commtrack_settings.openlmis_config._doc,
-        }
-
-    def _get_loctype_info(self, loctype):
-        return {
-            'name': loctype.name,
-            'code': loctype.code,
-            'allowed_parents': [p or None for p in loctype.allowed_parents],
-            'administrative': loctype.administrative,
         }
 
     # FIXME

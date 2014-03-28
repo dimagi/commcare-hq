@@ -293,6 +293,37 @@ class CommTrackSetupTab(UITab):
     view = "corehq.apps.commtrack.views.default"
 
     @property
+    def dropdown_items(self):
+        # circular import
+        from corehq.apps.commtrack.views import (
+            ProductListView,
+            NewProductView,
+            EditProductView,
+            DefaultConsumptionView,
+        )
+        from corehq.apps.locations.views import LocationsListView
+        from corehq.apps.domain.views import LocationSettingsView
+
+        return [
+            format_submenu_context(
+                _("Products"),
+                url=reverse(ProductListView.urlname, args=[self.domain])
+            ),
+            format_submenu_context(
+                _("SMS"),
+                url=reverse("domain_snapshot_settings", args=[self.domain])
+            ),
+            format_submenu_context(
+                _("Locations"),
+                url=reverse(LocationsListView.urlname, args=[self.domain])
+            ),
+            format_submenu_context(
+                _("Locations (Advanced)"),
+                url=reverse(LocationSettingsView.urlname, args=[self.domain])
+            )
+        ]
+
+    @property
     def is_viewable(self):
         return self.project.commtrack_enabled and self.couch_user.is_domain_admin()
 
