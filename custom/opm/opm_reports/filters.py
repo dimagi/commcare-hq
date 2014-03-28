@@ -32,3 +32,13 @@ class SelectBlockFilter(BaseSingleOptionFilter):
     def options(self):
         return [('atri', 'Atri'), ('wazirganj', 'Wazirganj')]
 
+
+class GramPanchayatFilter(BaseSingleOptionFilter):
+    slug = 'gp'
+    label = "Gram Panchayat"
+    default_text = None
+
+    @property
+    def options(self):
+        return [(awc, awc) for awc in get_user_data_set()['gp']]
+

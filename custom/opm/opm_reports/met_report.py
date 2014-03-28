@@ -5,7 +5,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter, SelectOpenCloseFilter
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListReport
-from custom.opm.opm_reports.filters import SelectBlockFilter, AWCFilter
+from custom.opm.opm_reports.filters import SelectBlockFilter, AWCFilter, GramPanchayatFilter
 
 
 class MetReport(CustomProjectReport, CaseListReport):
@@ -16,6 +16,7 @@ class MetReport(CustomProjectReport, CaseListReport):
     fields = [
         SelectBlockFilter,
         AWCFilter,
+        GramPanchayatFilter,
         MonthFilter,
         YearFilter,
         SelectOpenCloseFilter
