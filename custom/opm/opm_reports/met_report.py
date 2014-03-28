@@ -2,18 +2,24 @@ from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.api.es import ReportCaseES
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
+from corehq.apps.reports.filters.select import MonthFilter, YearFilter, SelectOpenCloseFilter
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListReport
+from custom.opm.opm_reports.filters import SelectBlockFilter, AWCFilter
 
 
 class MetReport(CustomProjectReport, CaseListReport):
     name = ugettext_noop("Conditions Met Report")
     slug = "met_report"
+    report_template_path = 'opm/met_report.html'
 
-    fields = ['custom.opm.opm_reports.filters.SelectBlockFilter',
-              'custom.opm.opm_reports.filters.AWCFilter',
-              'corehq.apps.reports.filters.select.SelectOpenCloseFilter'
-              ]
+    fields = [
+        SelectBlockFilter,
+        AWCFilter,
+        MonthFilter,
+        YearFilter,
+        SelectOpenCloseFilter
+    ]
 
     @property
     @memoized
