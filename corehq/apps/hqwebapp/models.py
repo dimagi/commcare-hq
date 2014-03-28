@@ -306,31 +306,20 @@ class CommTrackSetupTab(UITab):
             LocationSettingsView,
         )
 
+        dropdown_items = [
+            (_("Products"), ProductListView),
+            (_("Programs"), ProgramListView),
+            (_("Consumption"), DefaultConsumptionView),
+            (_("SMS"), SMSSettingsView),
+            (_("Locations"), LocationsListView),
+            (_("Locations (Advanced)"), LocationSettingsView),
+        ]
+
         return [
             format_submenu_context(
-                _("Products"),
-                url=reverse(ProductListView.urlname, args=[self.domain])
-            ),
-            format_submenu_context(
-                _("Programs"),
-                url=reverse(ProgramListView.urlname, args=[self.domain])
-            ),
-            format_submenu_context(
-                _("Consumption"),
-                url=reverse(DefaultConsumptionView.urlname, args=[self.domain])
-            ),
-            format_submenu_context(
-                _("SMS"),
-                url=reverse(SMSSettingsView.urlname, args=[self.domain])
-            ),
-            format_submenu_context(
-                _("Locations"),
-                url=reverse(LocationsListView.urlname, args=[self.domain])
-            ),
-            format_submenu_context(
-                _("Locations (Advanced)"),
-                url=reverse(LocationSettingsView.urlname, args=[self.domain])
-            )
+                item[0],
+                url=reverse(item[1].urlname, args=[self.domain])
+            ) for item in dropdown_items
         ]
 
     @property
