@@ -33,55 +33,6 @@ var other_sms_codes = {{ other_sms_codes|JSON }};
 
 <form id="settings" class="form form-horizontal" method="post">
 
-<fieldset>
-    <legend>{% trans 'SMS Keywords' %}</legend>
-    <div class="control-group" data-bind="css: { 'error': keyword_error }">
-        <label class="control-label" for="keyword_stock_report">{% trans 'Stock Report' %}</label>
-        <div class="controls">
-            <input id="keyword_stock_report" type="text" data-bind="value: keyword"/>
-            <div class="help-inline" data-bind="text: keyword_error"></div>
-        </div>
-    </div>
-</fieldset>
-
-<fieldset>
-    <legend>{% trans 'Stock Actions' %}</legend>
-    <div class="control-group">
-        <label class="control-label">{% trans 'Edit Actions' %}</label>
-        <div class="controls">
-            <p><i class="icon-info-sign"></i>
-                {% blocktrans %}For a given incoming stock report, stock actions will be applied in the order listed below.{% endblocktrans %}
-            </p>
-            {% include "domain/admin/commtrack_action_table.html" %}
-            <button type="button" class="btn" data-bind="click: new_action">
-                <i class="icon-plus"></i> {% trans "New Action" %}
-            </button>
-        </div>
-    </div>
-</fieldset>
-
-<fieldset>
-    <legend>{% trans "Requisitions" %}</legend>
-    <div class="control-group" >
-    <label class="control-label"></label>
-    <div class="controls">
-      <label class="checkbox">
-          <input id="requisitions_enabled" type="checkbox" data-bind="checked: requisition_config().enabled" /> {% trans "Enable Requisitions" %}
-      </label>
-    </div>
-  </div>
-</fieldset>
-
-<fieldset data-bind="with: requisition_config(), visible: requisition_config().enabled">
-    <legend>{% trans "Requisitions Actions" %}</legend>
-    <div class="control-group">
-        <label class="control-label">{% trans 'Edit Actions' %}</label>
-        <div class="controls">
-            {% include "domain/admin/commtrack_action_table.html" %}
-        <button type="button" class="btn" data-bind="click: new_action"><i class="icon-white"></i> {% trans "New Action" %}</button>
-        </div>
-    </div>
-</fieldset>
 
 {% if request.couch_user.is_previewer %}
 <h3>{% trans "OpenLMIS Integration" %}</h3>

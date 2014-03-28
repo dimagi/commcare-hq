@@ -302,7 +302,7 @@ class CommTrackSetupTab(UITab):
             DefaultConsumptionView,
         )
         from corehq.apps.locations.views import LocationsListView
-        from corehq.apps.domain.views import LocationSettingsView
+        from corehq.apps.domain.views import LocationSettingsView, SMSSettingsView
 
         return [
             format_submenu_context(
@@ -311,7 +311,7 @@ class CommTrackSetupTab(UITab):
             ),
             format_submenu_context(
                 _("SMS"),
-                url=reverse("domain_snapshot_settings", args=[self.domain])
+                url=reverse(SMSSettingsView.urlname, args=[self.domain])
             ),
             format_submenu_context(
                 _("Locations"),

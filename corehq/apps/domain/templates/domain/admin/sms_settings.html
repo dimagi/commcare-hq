@@ -1,0 +1,80 @@
+{% extends "settings/base_template.html" %}
+{% load hqstyle_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/jquery-ui-1.8.17.custom.datepicker.min.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
+    <script src="{% static 'commtrack/ko/sms.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %} {{ block.super }}
+    <script type="text/javascript">
+        var settings = {{ settings|JSON }};
+        var other_sms_codes = {{ other_sms_codes|JSON }};
+    </script>
+{% endblock %}
+
+{% block main_column %}
+    <form id="settings" class="form form-horizontal" method="post">
+        <fieldset>
+            <legend>{% trans 'SMS Keywords' %}</legend>
+            <div class="control-group" data-bind="css: { 'error': keyword_error }">
+                <label class="control-label" for="keyword_stock_report">{% trans 'Stock Report' %}</label>
+                <div class="controls">
+                    <input id="keyword_stock_report" type="text" data-bind="value: keyword"/>
+                    <div class="help-inline" data-bind="text: keyword_error"></div>
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>{% trans 'Stock Actions' %}</legend>
+            <div class="control-group">
+                <label class="control-label">{% trans 'Edit Actions' %}</label>
+                <div class="controls">
+                    <p><i class="icon-info-sign"></i>
+                        {% blocktrans %}For a given incoming stock report, stock actions will be applied in the order listed below.{% endblocktrans %}
+                    </p>
+                    {% include "domain/admin/commtrack_action_table.html" %}
+                    <button type="button" class="btn" data-bind="click: new_action">
+                        <i class="icon-plus"></i> {% trans "New Action" %}
+                    </button>
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>{% trans "Requisitions" %}</legend>
+            <div class="control-group" >
+            <label class="control-label"></label>
+            <div class="controls">
+              <label class="checkbox">
+                  <input id="requisitions_enabled" type="checkbox" data-bind="checked: requisition_config().enabled" /> {% trans "Enable Requisitions" %}
+              </label>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset data-bind="with: requisition_config(), visible: requisition_config().enabled">
+            <legend>{% trans "Requisitions Actions" %}</legend>
+            <div class="control-group">
+                <label class="control-label">{% trans 'Edit Actions' %}</label>
+                <div class="controls">
+                    {% include "domain/admin/commtrack_action_table.html" %}
+                <button type="button" class="btn" data-bind="click: new_action"><i class="icon-white"></i> {% trans "New Action" %}</button>
+                </div>
+            </div>
+        </fieldset>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+                {% trans "Save Settings" %}
+            </button>
+        </div>
+
+        <input name="json" type="hidden" data-bind="value: json_payload" />
+    </form>
+{% endblock %}

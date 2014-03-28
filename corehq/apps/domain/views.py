@@ -1648,10 +1648,10 @@ class LocationSettingsView(BaseCommTrackAdminView):
         return self.get(request, *args, **kwargs)
 
 
-class BasicCommTrackSettingsView(BaseCommTrackAdminView):
-    urlname = 'domain_commtrack_settings'
-    page_title = ugettext_noop("Basic CommTrack Settings")
-    template_name = 'domain/admin/commtrack_settings.html'
+class SMSSettingsView(BaseCommTrackAdminView):
+    urlname = 'domain_sms_settings'
+    page_title = ugettext_noop("CommTrack SMS Settings")
+    template_name = 'domain/admin/sms_settings.html'
 
     @property
     def page_context(self):
@@ -1669,7 +1669,6 @@ class BasicCommTrackSettingsView(BaseCommTrackAdminView):
                 'enabled': self.commtrack_settings.requisition_config.enabled,
                 'actions': [self._get_action_info(a) for a in self.commtrack_settings.requisition_config.actions],
             },
-            'openlmis_config': self.commtrack_settings.openlmis_config._doc,
         }
 
     # FIXME
@@ -1685,6 +1684,45 @@ class BasicCommTrackSettingsView(BaseCommTrackAdminView):
         for k, v in all_sms_codes(self.domain).iteritems():
             if v[0] == 'product':
                 yield (k, (v[0], v[1].name))
+
+    def post(self, request, *args, **kwargs):
+        from corehq.apps.commtrack.models import CommtrackActionConfig
+
+        payload = json.loads(request.POST.get('json'))
+
+        self.commtrack_settings.multiaction_keyword = payload['keyword']
+
+        def mk_action(action):
+            return CommtrackActionConfig(**{
+                    'action': action['type'],
+                    'subaction': action['caption'],
+                    'keyword': action['keyword'],
+                    'caption': action['caption'],
+                })
+
+        #TODO add server-side input validation here (currently validated on client)
+
+        self.commtrack_settings.actions = [mk_action(a) for a in payload['actions']]
+        self.commtrack_settings.requisition_config.enabled = payload['requisition_config']['enabled']
+        self.commtrack_settings.requisition_config.actions =  [mk_action(a) for a in payload['requisition_config']['actions']]
+
+        self.commtrack_settings.save()
+
+        return self.get(request, *args, **kwargs)
+
+
+
+class BasicCommTrackSettingsView(BaseCommTrackAdminView):
+    urlname = 'domain_commtrack_settings'
+    page_title = ugettext_noop("Basic CommTrack Settings")
+    template_name = 'domain/admin/commtrack_settings.html'
+
+
+    @property
+    def settings_context(self):
+        return {
+            'openlmis_config': self.commtrack_settings.openlmis_config._doc,
+        }
 
     def post(self, request, *args, **kwargs):
         from corehq.apps.commtrack.models import CommtrackActionConfig
