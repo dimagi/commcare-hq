@@ -16,6 +16,7 @@ import datetime
 import random
 from hashlib import md5
 
+from django.db import transaction, DatabaseError
 from gevent.pool import Pool
 
 from couchforms.models import XFormInstance
@@ -103,7 +104,7 @@ app_id = 'eb70e5a3780f7fc40792ac951f8afd51'
 # the form submission process is too slow, do it once
 # then copy the resulting docs with the keys changed.
 
-users = 500
+users = 4320
 cases = 430
 avg_updates = 2.5
 
@@ -133,7 +134,10 @@ def update_form(form):
     form._id = hashed(form._id)
     del form._rev
     del form._attachments
-    form.save()
+    try:
+        form.save()
+    except DatabaseError:
+        transaction.rollback()
 
 def make_users():
     user, new_case_forms, update_forms = init_user_and_forms()
@@ -143,7 +147,7 @@ def make_users():
         user = None
         while not user:
             user = make_cc_user(domain_name, uuid=uuid)
-        print "**** User", uuid, user.username_in_report
+        print "**** User", i, uuid, user.username_in_report
         print datetime.datetime.now()
         for form in forms:
             update_form(form)

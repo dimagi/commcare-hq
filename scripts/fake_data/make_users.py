@@ -19,6 +19,7 @@ CommCareUser:
 import datetime, random
 
 from django.db import IntegrityError
+from django.db import transaction, DatabaseError
 
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.domain.shortcuts import create_user
@@ -37,6 +38,8 @@ def make_user(creator, domain, number=None, **kwargs):
     try:
         return creator(domain, username, 'root', email=email, date=created,
             first_name=first, last_name=last, **kwargs)
+    except DatabaseError:
+        transaction.rollback()
     except IntegrityError:
         pass
 
