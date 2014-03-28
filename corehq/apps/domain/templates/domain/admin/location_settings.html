@@ -13,7 +13,28 @@
 {% block js-inline %} {{ block.super }}
 <script type="text/javascript">
 
-var settings = {{ settings|JSON }};
+    var settings = {{ settings|JSON }};
+
+    var _post = function (elem, url, options) {
+        var options = options || {};
+        var success = options.success || '{% trans "Sync Successful" %}';
+        var error = options.error || '{% trans "Error!" %}';
+        $(elem).addClass("disabled").html('{% trans "Syncing..." %}');
+        $.ajax({
+            type: 'POST',
+            url: url,
+            success: function() {
+                $(elem).html(success);
+            },
+            error: function() {
+                $(elem).html(error).addClass("btn-danger");
+            }
+        });
+    };
+    $("#sync_facilities").click(function() {
+        var url = '{% url "sync_facilities_with_locations" domain %}';
+        _post(this, url);
+    });
 
 </script>
 {% endblock %}
@@ -76,5 +97,24 @@ var settings = {{ settings|JSON }};
         </div>
         <input name="json" type="hidden" data-bind="value: json_payload" />
     </form>
+
+    {% if request.couch_user.is_previewer %}
+    <header>
+        <div class="row-fluid">
+            <div class="span8">
+                <h2>{% trans "Sync Locations with Facility Registry" %}</h2>
+            </div>
+        </div>
+    </header>
+    <div class="row-fluid">
+        <div class="span12">
+            <div class="btn-toolbar">
+                <a class="btn" id="sync_facilities">
+                    {% trans "Sync Now" %}
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
 {% endblock %}
