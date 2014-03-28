@@ -1,5 +1,8 @@
+import calendar
 from corehq.apps.accounting.models import *
-from corehq.apps.reports.filters.base import BaseReportFilter, BaseSingleOptionFilter
+from corehq.apps.reports.filters.base import (
+    BaseReportFilter, BaseSingleOptionFilter
+)
 from dimagi.utils.dates import DateSpan
 from django.utils.translation import ugettext_noop as _
 
@@ -12,8 +15,8 @@ class AccountTypeFilter(BaseSingleOptionFilter):
 
 
 class NameFilter(BaseSingleOptionFilter):
-    slug = 'name'
-    label = _("Name")
+    slug = 'account_name'
+    label = _("Account Name")
     default_text = _("All")
 
     @property
@@ -32,7 +35,7 @@ def clean_options(options):
 class SalesforceAccountIDFilter(BaseSingleOptionFilter):
     slug = 'salesforce_account_id'
     label = _("Salesforce Account ID")
-    default_text = _("All")
+    default_text = _("Any")
 
     @property
     def options(self):
@@ -43,7 +46,7 @@ class SalesforceAccountIDFilter(BaseSingleOptionFilter):
 class SubscriberFilter(BaseSingleOptionFilter):
     slug = 'subscriber'
     label = _('Project Space')
-    default_text = _("All")
+    default_text = _("Any")
 
     @property
     def options(self):
@@ -54,7 +57,7 @@ class SubscriberFilter(BaseSingleOptionFilter):
 class SalesforceContractIDFilter(BaseSingleOptionFilter):
     slug = 'salesforce_contract_id'
     label = _('Salesforce Contract ID')
-    default_text = _("All")
+    default_text = _("Any")
 
     @property
     def options(self):
@@ -65,7 +68,7 @@ class SalesforceContractIDFilter(BaseSingleOptionFilter):
 class ActiveStatusFilter(BaseSingleOptionFilter):
     slug = 'active_status'
     label = _('Active Status')
-    default_text = _("All")
+    default_text = _("Any")
     active = 'Active'
     inactive = 'Inactive'
     options = [
@@ -80,12 +83,39 @@ DO_NOT_INVOICE = "DO_NOT_INVOICE"
 
 class DoNotInvoiceFilter(BaseSingleOptionFilter):
     slug = 'do_not_invoice'
-    label = _('Do Not Invoice')
-    default_text = _('All')
+    label = _('Invoicing Status')
+    default_text = _('Any')
     options = [
         (INVOICE, _('Send invoice')),
         (DO_NOT_INVOICE, _('Do not invoice')),
     ]
+
+
+class IsHiddenFilter(BaseSingleOptionFilter):
+    slug = 'is_hidden'
+    label = _('Is Hidden')
+    default_text = _('All')
+    IS_HIDDEN = 'hidden'
+    IS_NOT_HIDDEN = 'not_hidden'
+    options = [
+        (IS_HIDDEN, 'Is Hidden'),
+        (IS_NOT_HIDDEN, 'Is Not Hidden'),
+    ]
+
+
+class CreatedSubAdjMethodFilter(BaseSingleOptionFilter):
+    """
+    For filtering whether the initial subscription adjustment was
+    was internal or user-created.
+    """
+    slug = "sub_adj_method"
+    label = _("Created By")
+    default_text = _("Anyone")
+    options = (
+        (SubscriptionAdjustmentMethod.INTERNAL, "Operations Created"),
+        (SubscriptionAdjustmentMethod.USER, "User Created"),
+        (SubscriptionAdjustmentMethod.TASK, "Created During Invoicing"),
+    )
 
 
 class DateRangeFilter(BaseReportFilter):
@@ -140,13 +170,15 @@ class DateRangeFilter(BaseReportFilter):
         return datespan
 
 
-class OptionalDateRangeFilter(DateRangeFilter):
-    template = 'reports/filters/optional_daterange.html'
-
-
+class OptionalFilterMixin(object):
     @classmethod
     def use_filter(cls, request):
-        return request.GET.get("report_filter_%s_use_filter" % cls.slug, None) == 'on'
+        return request.GET.get(
+            "report_filter_%s_use_filter" % cls.slug, None) == 'on'
+
+
+class OptionalDateRangeFilter(DateRangeFilter, OptionalFilterMixin):
+    template = 'reports/filters/optional_daterange.html'
 
     @property
     def filter_context(self):
@@ -178,9 +210,67 @@ class EndDateFilter(OptionalDateRangeFilter):
     label = _("End Date")
 
 
+class OptionalMonthYearFilter(BaseReportFilter, OptionalFilterMixin):
+    template = 'reports/filters/optional_month_year.html'
+
+    @property
+    def filter_context(self):
+        context = {}
+        context.update({
+            'showFilterName': self.use_filter(self.request),
+            'months': self.months(),
+            'years': range(2013, datetime.date.today().year + 1),
+            'selected_period': self.selected_period(),
+        })
+        return context
+
+    @classmethod
+    def get_value(cls, request, domain):
+        if not cls.use_filter(request):
+            return None
+        month = int(request.GET.get("report_filter_%s_month" % cls.slug))
+        year = int(request.GET.get("report_filter_%s_year" % cls.slug))
+        last_day_of_month = calendar.monthrange(year, month)[1]
+        return (datetime.date(year, month, 1),
+                datetime.date(year, month, last_day_of_month))
+
+    @classmethod
+    def months(cls):
+        month_pairs = []
+        for month_number in range(12):
+            month_pairs.append({
+                'name': calendar.month_name[month_number],
+                'value': month_number,
+            })
+        return month_pairs
+
+    def selected_period(self):
+        today = datetime.date.today()
+        month = today.month
+        year = today.year
+        period = self.get_value(self.request, self.domain)
+        if period is not None:
+            month = period[0].month
+            year = period[0].year
+        return {
+            'month': month,
+            'year': year,
+        }
+
+
+class StatementPeriodFilter(OptionalMonthYearFilter):
+    slug = 'statement_period'
+    label = _("Statement Period")
+
+
+class DueDatePeriodFilter(OptionalMonthYearFilter):
+    slug = 'due_date'
+    label = _("Due Date")
+
+
 class SoftwarePlanNameFilter(BaseSingleOptionFilter):
-    slug = 'name'
-    label = _("Name")
+    slug = 'plan_name'
+    label = _("Plan Name")
     default_text = _("All")
 
     @property
@@ -200,3 +290,31 @@ class SoftwarePlanVisibilityFilter(BaseSingleOptionFilter):
     label = _("Visibility")
     default_text = _("All")
     options = SoftwarePlanVisibility.CHOICES
+
+
+class PaymentStatusFilter(BaseSingleOptionFilter):
+    slug = 'payment_status'
+    label = _("Payment Status")
+    default_text = _("All")
+    PAID = "paid"
+    NOT_PAID = "not_paid"
+    options = (
+        (PAID, "Paid"),
+        (NOT_PAID, "Not Paid"),
+    )
+
+
+class BillingContactFilter(BaseSingleOptionFilter):
+    slug = 'billing_contact'
+    label = _("Billing Contact Name")
+    default_text = _("All")
+
+    @property
+    def options(self):
+        return clean_options(
+            [
+                (contact.full_name, contact.full_name)
+                for contact in BillingContactInfo.objects.all()
+                if contact.first_name or contact.last_name
+            ]
+        )

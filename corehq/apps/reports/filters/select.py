@@ -104,7 +104,7 @@ class MonthFilter(BaseSingleOptionFilter):
         return [("%02d" % m, calendar.month_name[m]) for m in range(1, 13)]
 
 
-class CaseTypeFilter(BaseSingleOptionFilter):
+class CaseTypeMixin(object):
     slug = "case_type"
     label = ugettext_noop("Case Type")
     default_text = ugettext_noop("All Case Types")
@@ -153,6 +153,11 @@ class CaseTypeFilter(BaseSingleOptionFilter):
                         yield 0
             yield sum(individual_counts())
 
+class CaseTypeFilter(CaseTypeMixin, BaseSingleOptionFilter):
+    placeholder = ugettext_noop('Click to select a case type')
+
+class MultiCaseTypeFilter(CaseTypeMixin, BaseMultipleOptionFilter):
+    placeholder = ugettext_noop('Click to select case types')
 
 class SelectOpenCloseFilter(BaseSingleOptionFilter):
     slug = "is_open"

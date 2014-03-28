@@ -531,6 +531,10 @@ class DomainSubscriptionView(DomainAccountingSettings):
     def plan(self):
         plan_version, subscription = Subscription.get_subscribed_plan_by_domain(self.domain_object)
         products = self.get_product_summary(plan_version, subscription)
+        date_end = None
+        if subscription:
+            date_end = (subscription.date_end.strftime("%d %B %Y")
+                        if subscription.date_end is not None else "--")
         info = {
             'products': products,
             'is_multiproduct': len(products) > 1,
@@ -538,6 +542,9 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'subscription_credit': None,
             'css_class': "label-plan %s" % plan_version.plan.edition.lower(),
             'is_dimagi_subscription': subscription.do_not_invoice if subscription is not None else False,
+            'date_start': (subscription.date_start.strftime("%d %B %Y")
+                           if subscription is not None else None),
+            'date_end': date_end,
         }
         info.update(plan_version.user_facing_description)
         if subscription is not None:
@@ -665,10 +672,17 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
         return self.request.POST if self.request.method == 'POST' else self.request.GET
 
     @property
+    def show_hidden(self):
+        if not self.request.user.is_superuser:
+            return False
+        return bool(self.request.POST.get('additionalData[show_hidden]'))
+
+    @property
     def invoices(self):
-        return Invoice.objects.filter(
-            subscription__subscriber__domain=self.domain, is_hidden=False,
-        ).order_by('-date_created').all()
+        invoices = Invoice.objects.filter(subscription__subscriber__domain=self.domain)
+        if not self.show_hidden:
+            invoices = invoices.filter(is_hidden=False)
+        return invoices.order_by('-date_start', '-date_end').all()
 
     @property
     def total(self):
@@ -768,7 +782,7 @@ class BillingStatementPdfView(View):
         try:
             data = invoice_pdf.get_data(invoice)
             response = HttpResponse(data, content_type='application/pdf')
-            response['Content-Disposition'] = 'attachment; filename="%s"' % filename
+            response['Content-Disposition'] = 'inline;filename="%s' % filename
         except Exception as e:
             logging.error('[Billing] Fetching invoice PDF failed: %s' % e)
             return HttpResponse(_("Could not obtain billing statement. "

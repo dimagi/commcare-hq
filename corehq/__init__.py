@@ -4,7 +4,6 @@ from corehq.apps.reports.standard import (monitoring, inspect, export,
     deployments, sms, ivr)
 from corehq.apps.receiverwrapper import reports as receiverwrapper
 import phonelog.reports as phonelog
-import phonelog.old_reports as old_phonelog
 from corehq.apps.reports.commtrack import standard as commtrack_reports
 from corehq.apps.reports.commtrack import maps as commtrack_maps
 from corehq.apps.reports.commconnect import system_overview
@@ -19,6 +18,10 @@ def REPORTS(project):
     from corehq.apps.reports.standard.cases.careplan import make_careplan_reports
     from corehq.apps.reports.standard.maps import DemoMapReport, DemoMapReport2, DemoMapCaseList
 
+    submit_history_report = inspect.SubmitHistory
+    if toggles.SUBMIT_HISTORY_FILTERS.enabled(project.name):
+        submit_history_report = inspect.SubmitHistoryNew
+
     reports = [
         (ugettext_lazy("Monitor Workers"), (
             monitoring.WorkerActivityReport,
@@ -30,18 +33,16 @@ def REPORTS(project):
             monitoring.WorkerActivityTimes,
         )),
         (ugettext_lazy("Inspect Data"), (
-            inspect.SubmitHistory, CaseListReport,
+            submit_history_report, CaseListReport,
         )),
         (ugettext_lazy("Manage Deployments"), (
             deployments.ApplicationStatusReport,
             receiverwrapper.SubmissionErrorReport,
-            old_phonelog.FormErrorReport,
-            old_phonelog.DeviceLogDetailsReport
+            phonelog.FormErrorReport,
+            phonelog.DeviceLogDetailsReport
         )),
         (ugettext_lazy("Demos for Previewers"), (
             DemoMapReport, DemoMapReport2, DemoMapCaseList,
-            phonelog.FormErrorReport,
-            phonelog.DeviceLogDetailsReport
         )),
     ]
     
@@ -207,6 +208,7 @@ from corehq.apps.accounting.interface import (
     AccountingInterface,
     SubscriptionInterface,
     SoftwarePlanInterface,
+    InvoiceInterface,
 )
 
 ACCOUNTING_ADMIN_INTERFACES = (
@@ -214,6 +216,7 @@ ACCOUNTING_ADMIN_INTERFACES = (
         AccountingInterface,
         SubscriptionInterface,
         SoftwarePlanInterface,
+        InvoiceInterface,
     )),
 )
 

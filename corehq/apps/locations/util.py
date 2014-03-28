@@ -1,5 +1,5 @@
 from corehq.apps.commtrack.psi_hacks import is_psi_domain
-from corehq.apps.commtrack.models import Product
+from corehq.apps.commtrack.models import Product, SupplyPointCase
 from corehq.apps.locations.models import Location, root_locations, CustomProperty
 from corehq.apps.domain.models import Domain
 from couchdbkit import ResourceNotFound
@@ -234,12 +234,14 @@ def get_default_column_data(domain, location_types):
 
                 locations = Location.filter_by_type(domain, loc_type)
                 for loc in locations:
+                    sp = SupplyPointCase.get_or_create_by_location(loc)
+
                     data['values'][loc._id] = [
                         get_default_consumption(
                             domain,
                             p._id,
                             loc_type,
-                            loc._id
+                            sp._id
                         ) or '' for p in products
                     ]
             else:

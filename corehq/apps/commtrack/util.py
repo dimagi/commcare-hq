@@ -82,7 +82,7 @@ def get_or_make_def_program(domain):
 
 
 def bootstrap_commtrack_settings_if_necessary(domain, requisitions_enabled=False):
-    if not(domain and domain.commtrack_enabled and not domain.commtrack_settings):
+    if not(domain and domain.commtrack_enabled and not CommtrackConfig.for_domain(domain.name)):
         return
 
     c = CommtrackConfig(

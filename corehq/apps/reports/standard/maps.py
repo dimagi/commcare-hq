@@ -113,6 +113,7 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
         config = dict(filters)
         config.update(params.get('report_params', {}))
         config['domain'] = self.domain
+        config['request'] = self.request
 
         DataSource = to_function(params['report'])
 

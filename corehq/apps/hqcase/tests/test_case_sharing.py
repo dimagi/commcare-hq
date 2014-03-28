@@ -1,4 +1,4 @@
-from django.utils.unittest.case import TestCase
+from django.test import TestCase
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import check_user_has_case

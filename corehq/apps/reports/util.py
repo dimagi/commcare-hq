@@ -330,23 +330,25 @@ def create_export_filter(request, domain, export_type='form'):
     return filter
 
 
-def get_possible_reports(domain):
+def get_possible_reports(domain_name):
     from corehq.apps.reports.dispatcher import (ProjectReportDispatcher, CustomProjectReportDispatcher)
     from corehq.apps.adm.dispatcher import ADMSectionDispatcher
     from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 
     # todo: exports should be its own permission at some point?
-    report_map = (ProjectReportDispatcher().get_reports(domain) +
-                  CustomProjectReportDispatcher().get_reports(domain) +
-                  ADMSectionDispatcher().get_reports(domain) +
-                  DataInterfaceDispatcher().get_reports(domain))
+    report_map = (ProjectReportDispatcher().get_reports(domain_name) +
+                  CustomProjectReportDispatcher().get_reports(domain_name) +
+                  ADMSectionDispatcher().get_reports(domain_name) +
+                  DataInterfaceDispatcher().get_reports(domain_name))
     reports = []
+    domain = Domain.get_by_name(domain_name)
     for heading, models in report_map:
         for model in models:
-            reports.append({
-                'path': model.__module__ + '.' + model.__name__,
-                'name': model.name
-            })
+            if model.show_in_navigation(domain=domain_name, project=domain):
+                reports.append({
+                    'path': model.__module__ + '.' + model.__name__,
+                    'name': model.name
+                })
     return reports
 
 

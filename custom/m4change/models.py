@@ -2,15 +2,16 @@ from django.db import models
 from casexml.apps.case.models import CommCareCase
 from couchforms.models import XFormInstance
 import fluff
+import operator
 from corehq import Domain
 from corehq.apps.commtrack.util import get_commtrack_location_id
 from corehq.apps.users.models import CommCareUser
 from custom.m4change.user_calcs import anc_hmis_report_calcs, ld_hmis_report_calcs, immunization_hmis_report_calcs,\
-    project_indicators_report_calcs, mcct_monthly_aggregate_report_calcs, is_valid_user_by_case
+    all_hmis_report_calcs, project_indicators_report_calcs, mcct_monthly_aggregate_report_calcs, is_valid_user_by_case, \
+    form_passes_filter_date_delivery, form_passes_filter_date_modified, case_passes_filter_date_modified, \
+    case_passes_filter_date_delivery
 from custom.m4change.constants import M4CHANGE_DOMAINS, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, BOOKED_DELIVERY_FORMS, \
-    UNBOOKED_DELIVERY_FORMS, BOOKING_FORMS, IMMUNIZATION_FORMS
-from custom.m4change.user_calcs.ld_hmis_report_calcs import form_passes_filter_date_delivery, \
-    form_passes_filter_date_modified
+    UNBOOKED_DELIVERY_FORMS
 
 NO_LOCATION_VALUE_STRING = "None"
 
@@ -295,3 +296,80 @@ class McctMonthlyAggregateFormFluff(fluff.IndicatorDocument):
     status = mcct_monthly_aggregate_report_calcs.StatusCalculator()
 
 McctMonthlyAggregateFormFluffPillow = McctMonthlyAggregateFormFluff.pillow()
+
+
+class AllHmisCaseFluff(fluff.IndicatorDocument):
+    document_class = CommCareCase
+    domains = M4CHANGE_DOMAINS
+    group_by = ("domain",)
+    save_direct_to_sql = True
+
+    location_id = fluff.FlatField(_get_case_location_id)
+    pregnant_mothers_referred_out = all_hmis_report_calcs.CaseComparisonCalculator(
+        [("client_status", operator.eq, "referred_out")], case_passes_filter_date_modified
+    )
+    anc_anemia_test_done = all_hmis_report_calcs.CaseComparisonCalculator(
+        [("tests_conducted", operator.contains, "hb")], case_passes_filter_date_modified
+    )
+    anc_anemia_test_positive = all_hmis_report_calcs.CaseComparisonCalculator(
+        [("hb_test_result", operator.eq, "positive")], case_passes_filter_date_modified
+    )
+    anc_proteinuria_test_done = all_hmis_report_calcs.CaseComparisonCalculator(
+        [("tests_conducted", operator.contains, "hb")], case_passes_filter_date_modified
+    )
+    anc_proteinuria_test_positive = all_hmis_report_calcs.CaseComparisonCalculator(
+        [("protein_test_result", operator.eq, "positive")], case_passes_filter_date_modified
+    )
+    hiv_rapid_antibody_test_done = all_hmis_report_calcs.CaseComparisonCalculator(
+        [("tests_conducted", operator.contains, "hiv")], case_passes_filter_date_modified
+    )
+    deaths_of_women_related_to_pregnancy = all_hmis_report_calcs.CaseComparisonCalculator(
+        [("pregnancy_outcome", operator.eq, "maternal_death")], case_passes_filter_date_delivery
+    )
+    pregnant_mothers_tested_for_hiv = all_hmis_report_calcs.CaseComparisonCalculator(
+        [("hiv_test_result", operator.eq, "positive")], case_passes_filter_date_modified
+    )
+    pregnant_mothers_with_confirmed_malaria = all_hmis_report_calcs.CaseComparisonCalculator(
+        [("malaria_test_result", operator.eq, "positive")], case_passes_filter_date_modified
+    )
+    partners_of_hiv_positive_women_tested_negative = all_hmis_report_calcs.CaseComparisonCalculator(
+        [("partner_hiv_status", operator.eq, "negative")], case_passes_filter_date_modified
+    )
+    partners_of_hiv_positive_women_tested_positive = all_hmis_report_calcs.CaseComparisonCalculator(
+        [("partner_hiv_status", operator.eq, "positive")], case_passes_filter_date_modified
+    )
+    assessed_for_clinical_stage_eligibility = all_hmis_report_calcs.CaseComparisonCalculator(
+        [("eligibility_assessment", operator.eq, "clinical_stage")], case_passes_filter_date_modified
+    )
+    assessed_for_clinical_cd4_eligibility = all_hmis_report_calcs.CaseComparisonCalculator(
+        [("eligibility_assessment", operator.eq, "cd4")], case_passes_filter_date_modified
+    )
+    pregnant_hiv_positive_women_received_art = all_hmis_report_calcs.CaseComparisonCalculator(
+        [("commenced_drugs", operator.contains, "3tc")], case_passes_filter_date_modified
+    )
+    pregnant_hiv_positive_women_received_arv = all_hmis_report_calcs.CaseComparisonCalculator(
+        [("commenced_drugs", operator.contains, ["3tc", "mother_sdnvp"])], case_passes_filter_date_modified
+    )
+    pregnant_hiv_positive_women_received_azt = all_hmis_report_calcs.CaseComparisonCalculator(
+        [("commenced_drugs", operator.contains, "azt")], case_passes_filter_date_modified
+    )
+    pregnant_hiv_positive_women_received_mother_sdnvp = all_hmis_report_calcs.CaseComparisonCalculator(
+        [("commenced_drugs", operator.contains, "mother_sdnvp")], case_passes_filter_date_modified
+    )
+    infants_hiv_women_cotrimoxazole_lt_2_months = \
+        all_hmis_report_calcs.InfantsBornToHivInfectedWomenCotrimoxazoleLt2Months()
+    infants_hiv_women_cotrimoxazole_gte_2_months = \
+        all_hmis_report_calcs.InfantsBornToHivInfectedWomenCotrimoxazoleGte2Months()
+    infants_hiv_women_received_hiv_test_lt_2_months = \
+        all_hmis_report_calcs.InfantsBornToHivInfectedWomenReceivedHivTestLt2Months()
+    infants_hiv_women_received_hiv_test_gte_2_months = \
+        all_hmis_report_calcs.InfantsBornToHivInfectedWomenReceivedHivTestGte2Months()
+    infants_hiv_women_received_hiv_test_lt_18_months = \
+        all_hmis_report_calcs.InfantsBornToHivInfectedWomenReceivedHivTestLt18Months()
+    infants_hiv_women_received_hiv_test_gte_18_months = \
+        all_hmis_report_calcs.InfantsBornToHivInfectedWomenReceivedHivTestGte18Months()
+    hiv_exposed_infants_breast_feeding_receiving_arv = all_hmis_report_calcs.CaseComparisonCalculator(
+        [("commenced_drugs", operator.contains, "infant_nvp")], case_passes_filter_date_modified
+    )
+
+AllHmisCaseFluffPillow = AllHmisCaseFluff.pillow()

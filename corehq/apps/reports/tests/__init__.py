@@ -2,7 +2,6 @@ try:
     from .test_case_export import *
     from .test_cache import *
     from corehq.apps.reports.tests.test_export_api import *
-    from corehq.apps.reports.tests.test_household_verification import *
     from corehq.apps.reports.tests.test_sql_reports import *
     from corehq.apps.reports.tests.test_form_export import *
     from corehq.apps.reports.tests.test_report_api import *

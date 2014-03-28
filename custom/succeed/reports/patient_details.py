@@ -6,7 +6,7 @@ from corehq.apps.cloudcare.api import get_cloudcare_app
 from corehq.apps.reports.generic import ElasticProjectInspectionReport
 from corehq.apps.reports.standard import CustomProjectReport
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CouchUser
 from custom.succeed.reports import DrilldownReportMixin, VISIT_SCHEDULE, PD_MODULE, HUD_MODULE, CM_MODULE, CHW_MODULE, \
     EMPTY_FIELD, OUTPUT_DATE_FORMAT, INPUT_DATE_FORMAT
 from custom.succeed.reports import PD1, PD2, HUD2, CM6, CHW3
@@ -105,7 +105,7 @@ class PatientInfoReport(CustomProjectReport, DrilldownReportMixin, ElasticProjec
                     if visit['xmlns'] == action['xform_xmlns']:
                         interaction['received_date'] = action['date'].strftime(OUTPUT_DATE_FORMAT)
                         try:
-                            user = CommCareUser.get(action['user_id'])
+                            user = CouchUser.get(action['user_id'])
                             interaction['completed_by'] = user.raw_username
                         except ResourceNotFound:
                             interaction['completed_by'] = EMPTY_FIELD

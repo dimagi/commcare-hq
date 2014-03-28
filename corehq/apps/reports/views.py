@@ -233,6 +233,7 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
     previous_export_id = request.GET.get("previous_export", None)
     filename = request.GET.get("filename", None)
     max_column_size = int(request.GET.get("max_column_size", 2000))
+    limit = int(request.GET.get("limit", 0))
 
     filter = util.create_export_filter(request, domain, export_type=export_type)
     if bulk_export:
@@ -241,7 +242,6 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
             export_tags = json.loads(request.GET.get("export_tags", "null") or "null")
         except ValueError:
             return HttpResponseBadRequest()
-
 
         export_helper = (CustomBulkExportHelper if is_custom else ApplicationBulkExportHelper)(
             domain=domain,
@@ -304,7 +304,7 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
         if not next:
             next = export.ExcelExportReport.get_url(domain=domain)
         try:
-            resp = export_object.download_data(format, filter=filter)
+            resp = export_object.download_data(format, filter=filter, limit=limit)
         except SchemaMismatchException, e:
             rebuild_schemas.delay(export_object.index)
             messages.error(

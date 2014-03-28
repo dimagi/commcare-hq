@@ -23,7 +23,7 @@ class ReportXFormPillow(XFormPillow):
     default_mapping = REPORT_XFORM_MAPPING
 
     def change_transform(self, doc_dict):
-        doc_ret = super(ReportXFormPillow, self).change_transform(doc_dict)
+        doc_ret = super(ReportXFormPillow, self).change_transform(doc_dict, include_props=False)
 
         if doc_ret:
             domain = self.get_domain(doc_dict)

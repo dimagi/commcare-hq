@@ -134,7 +134,8 @@ class ReportingStatusMapReport(GenericMapReport, CommtrackReportMixin):
     slug = "reportingstatus_map"
 
     fields = ['corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
-              'corehq.apps.reports.dont_use.fields.SelectProgramField']
+              'corehq.apps.reports.dont_use.fields.SelectProgramField',
+              'corehq.apps.reports.filters.forms.FormsByApplicationFilter']
 
     data_source = {
         'adapter': 'report',

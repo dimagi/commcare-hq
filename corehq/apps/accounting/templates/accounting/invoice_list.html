@@ -1,0 +1,22 @@
+{% extends "accounting/report_filter_actions.html" %}
+{% load hq_shared_tags %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static 'accounting/js/adjust-balance-modal.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+    {% for adjust_balance_form in adjust_balance_forms %}
+        <script>
+            var adjustBalanceFormModel = new AdjustBalanceFormModel();
+            ko.applyBindings(adjustBalanceFormModel, $('#adjust-balance-form-{{ adjust_balance_form.invoice.id }}').get(0));
+        </script>
+    {% endfor %}
+{% endblock %}
+
+{% block main_column %}
+    {% for adjust_balance_form in adjust_balance_forms %}
+        {% include 'accounting/adjust_balance.html' %}
+    {% endfor %}
+    {{ block.super }}
+{% endblock %}
