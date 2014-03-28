@@ -47,24 +47,33 @@ var settings = {{ settings|JSON }};
                                     <div class="help-inline" data-bind="text: code_error"></div>
                                 </td>
                                 <td class="control-group" data-bind="css: { 'error': allowed_parents_error }">
-                                    <select multiple="true" data-bind="options: $root.loc_types, optionsText: 'name', optionsValue: 'name', selectedOptions: allowed_parents, optionsCaption: '\u2013top level\u2013'"></select>
+                                    <select multiple="true" data-bind="options: $root.loc_types, optionsText: 'name', optionsValue: 'name', selectedOptions: allowed_parents, optionsCaption: '\u2013top level\u2013'">
+                                    </select>
                                     <div class="help-inline" data-bind="text: allowed_parents_error"></div>
                                 </td>
                                 <td>
                                     <input data-bind="checked: administrative" type="checkbox" />
                                 </td>
                                 <td>
-                                    <button type="button" class="btn btn-danger" data-bind="click: $root.remove_loctype"><i class="icon-trash icon-white"></i> {% trans "Remove" %}</button>
+                                    <button type="button" class="btn btn-danger" data-bind="click: $root.remove_loctype">
+                                        <i class="icon-trash icon-white"></i> {% trans "Remove" %}
+                                    </button>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
-                    <button type="button" class="btn" data-bind="click: new_loctype"><i class="icon-plus"></i> {% trans "New Location Type" %}</button>
+                    <button type="button" class="btn" data-bind="click: new_loctype">
+                        <i class="icon-plus"></i> {% trans "New Location Type" %}
+                    </button>
                 </div>
             </div>
         </fieldset>
 
-        <div class="form-actions"><button type="submit" class="btn btn-primary">{% trans "Save Location Hierarchy" %}</button></div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+                {% trans "Save Location Hierarchy" %}
+            </button>
+        </div>
         <input name="json" type="hidden" data-bind="value: json_payload" />
     </form>
 
