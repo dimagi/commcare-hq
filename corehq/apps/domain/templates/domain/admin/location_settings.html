@@ -7,7 +7,7 @@
 <script src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
 <script src="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/jquery-ui-1.8.17.custom.datepicker.min.js' %}"></script>
 <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
-<script src="{% static 'commtrack/ko/settings.js' %}"></script>
+<script src="{% static 'commtrack/ko/locations.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
@@ -63,6 +63,9 @@ var settings = {{ settings|JSON }};
                 </div>
             </div>
         </fieldset>
+
+        <div class="form-actions"><button type="submit" class="btn btn-primary">{% trans "Save Location Hierarchy" %}</button></div>
+        <input name="json" type="hidden" data-bind="value: json_payload" />
     </form>
 
 {% endblock %}

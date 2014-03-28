@@ -1622,6 +1622,31 @@ class LocationSettingsView(BaseCommTrackAdminView):
             'administrative': loctype.administrative,
         }
 
+    def post(self, request, *args, **kwargs):
+        from corehq.apps.commtrack.models import LocationType
+
+        payload = json.loads(request.POST.get('json'))
+
+        def mk_loctype(loctype):
+            loctype['allowed_parents'] = [p or '' for p in loctype['allowed_parents']]
+            cleaned_code = unicode_slug(loctype['code'])
+            if cleaned_code != loctype['code']:
+                err = _(
+                    'Location type code "{code}" is invalid. No spaces or special characters are allowed. '
+                    'It has been replaced with "{new_code}".'
+                )
+                messages.warning(request, err.format(code=loctype['code'], new_code=cleaned_code))
+                loctype['code'] = cleaned_code
+            return LocationType(**loctype)
+
+        #TODO add server-side input validation here (currently validated on client)
+
+        self.commtrack_settings.location_types = [mk_loctype(l) for l in payload['loc_types']]
+
+        self.commtrack_settings.save()
+
+        return self.get(request, *args, **kwargs)
+
 
 class BasicCommTrackSettingsView(BaseCommTrackAdminView):
     urlname = 'domain_commtrack_settings'
@@ -1662,7 +1687,7 @@ class BasicCommTrackSettingsView(BaseCommTrackAdminView):
                 yield (k, (v[0], v[1].name))
 
     def post(self, request, *args, **kwargs):
-        from corehq.apps.commtrack.models import CommtrackActionConfig, LocationType
+        from corehq.apps.commtrack.models import CommtrackActionConfig
 
         payload = json.loads(request.POST.get('json'))
 
@@ -1676,22 +1701,9 @@ class BasicCommTrackSettingsView(BaseCommTrackAdminView):
                     'caption': action['caption'],
                 })
 
-        def mk_loctype(loctype):
-            loctype['allowed_parents'] = [p or '' for p in loctype['allowed_parents']]
-            cleaned_code = unicode_slug(loctype['code'])
-            if cleaned_code != loctype['code']:
-                err = _(
-                    'Location type code "{code}" is invalid. No spaces or special characters are allowed. '
-                    'It has been replaced with "{new_code}".'
-                )
-                messages.warning(request, err.format(code=loctype['code'], new_code=cleaned_code))
-                loctype['code'] = cleaned_code
-            return LocationType(**loctype)
-
         #TODO add server-side input validation here (currently validated on client)
 
         self.commtrack_settings.actions = [mk_action(a) for a in payload['actions']]
-        self.commtrack_settings.location_types = [mk_loctype(l) for l in payload['loc_types']]
         self.commtrack_settings.requisition_config.enabled = payload['requisition_config']['enabled']
         self.commtrack_settings.requisition_config.actions =  [mk_action(a) for a in payload['requisition_config']['actions']]
 
