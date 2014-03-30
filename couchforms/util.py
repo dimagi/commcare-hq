@@ -334,8 +334,8 @@ class SubmissionPost(object):
 
     failed_auth_response = HttpResponseForbidden('Bad auth')
 
-    def __init__(self, instance=None, attachments=None,
-                 auth_context=None, domain=None, app_id=None, path=None,
+    def __init__(self, instance=None, attachments=None, auth_context=None,
+                 domain=None, app_id=None, build_id=None, path=None,
                  location=None, submit_ip=None, openrosa_headers=None,
                  last_sync_token=None, received_on=None, date_header=None):
         assert domain, domain
@@ -344,6 +344,7 @@ class SubmissionPost(object):
         # get_location has good default
         self.domain = domain
         self.app_id = app_id
+        self.build_id = build_id
         self.location = location or couchforms.get_location()
         self.received_on = received_on
         self.date_header = date_header
@@ -374,6 +375,7 @@ class SubmissionPost(object):
 
         doc['domain'] = self.domain
         doc['app_id'] = self.app_id
+        doc['build_id'] = self.build_id
         doc['#export_tag'] = ["domain", "xmlns"]
 
         return doc
