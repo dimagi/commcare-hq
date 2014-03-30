@@ -71,7 +71,7 @@ def couch_check():
     # work, and if other error handling allows the request to get this far.
 
     try:
-        xforms = XFormInstance.view('couchforms/by_user', limit=1).all()
+        xforms = XFormInstance.view('reports_forms/all_forms', limit=1).all()
     except:
         xforms = None
     return isinstance(xforms, list)
