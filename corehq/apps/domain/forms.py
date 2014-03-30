@@ -6,6 +6,8 @@ import re
 import io
 from PIL import Image
 import uuid
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 import settings
 
@@ -452,7 +454,7 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
             self.fields['restrict_superusers'].widget = forms.HiddenInput()
 
         project = Domain.get_by_name(domain)
-        if project.cloudcare_releases == 'default':
+        if project.cloudcare_releases == 'default' or not domain_has_privilege(domain, privileges.CLOUDCARE):
             # if the cloudcare_releases flag was just defaulted, don't bother showing
             # this setting at all
             self.fields['cloudcare_releases'].widget = forms.HiddenInput()
