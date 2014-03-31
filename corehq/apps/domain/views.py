@@ -1778,8 +1778,8 @@ class ProBonoMixin():
     @memoized
     def pro_bono_form(self):
         if self.request.method == 'POST':
-            return ProBonoForm(self.request.POST)
-        return ProBonoForm()
+            return ProBonoForm(self.use_domain_field, self.request.POST)
+        return ProBonoForm(self.use_domain_field)
 
     @property
     def page_context(self):
@@ -1802,15 +1802,17 @@ class ProBonoMixin():
 class ProBonoStaticView(ProBonoMixin, BasePageView):
     template_name = 'domain/pro_bono/static.html'
     urlname = 'pro_bono_static'
+    use_domain_field = True
 
     @property
     def requesting_domain(self):
-        return None
+        return self.pro_bono_form.cleaned_data['domain']
 
 
 class ProBonoView(ProBonoMixin, DomainAccountingSettings):
     template_name = 'domain/pro_bono/domain.html'
     urlname = 'pro_bono'
+    use_domain_field = False
 
     @property
     def requesting_domain(self):
