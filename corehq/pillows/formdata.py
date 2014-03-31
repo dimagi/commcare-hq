@@ -14,6 +14,7 @@ logger = logging.getLogger('pillowtop')
 class FormDataPillow(BulkPillow):
     document_class = XFormInstance
     couch_filter = 'couchforms/xforms'
+    include_docs = False
 
     @db.transaction.commit_on_success
     def change_transport(self, doc_dict):
