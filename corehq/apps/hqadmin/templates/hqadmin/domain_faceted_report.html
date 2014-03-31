@@ -48,7 +48,6 @@
                     xaxis_label: visualizations[key].xaxis_label,
                     ajax_url: "{% url "admin_stats_data" %}",
                     data: url_params,
-                    should_update_url: false,
                     interval: "{{ interval }}"
                 });
                 visualizations[key].viz.init();
@@ -94,12 +93,12 @@
         </span>
     </form>
 
-    <h2>{% trans "Visualize Project Spaces" %}</h2>
+    <h2>{% trans "Project Spaces" %}</h2>
     {% include "orgs/partials/visualizations.html" with chart_name="domains" date_field_opts=domain_datefields %}
-    <h2>{% trans "Visualize Forms" %}</h2>
+    <h2>{% trans "Forms" %}</h2>
     {% include "orgs/partials/visualizations.html" with chart_name="forms" %}
-    <h2>{% trans "Visualize Cases" %}</h2>
+    <h2>{% trans "Cases" %}</h2>
     {% include "orgs/partials/visualizations.html" with chart_name="cases" %}
-    <h2>{% trans "Visualize Users" %}</h2>
+    <h2>{% trans "Users" %}</h2>
     {% include "orgs/partials/visualizations.html" with chart_name="users" %}
 {% endblock %}

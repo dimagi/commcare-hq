@@ -1,4 +1,5 @@
 from xml.etree import ElementTree
+from django.test import TestCase
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests import delete_all_cases, delete_all_xforms
 from casexml.apps.case.xml import V2
@@ -13,7 +14,6 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.util import get_default_requisition_config
 from corehq.apps.commtrack.models import CommTrackUser, SupplyPointCase, CommtrackConfig, ConsumptionConfig
 from corehq.apps.sms.backend import test
-from django.utils.unittest.case import TestCase
 from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.apps.commtrack.models import Product
 from couchforms.models import XFormInstance
@@ -165,9 +165,10 @@ class CommTrackTest(TestCase):
             u.delete()
         self.domain.delete() # domain delete cascades to everything else
 
-    def get_commtrack_forms(self):
-        return XFormInstance.view('couchforms/by_xmlns',
-            key=COMMTRACK_REPORT_XMLNS,
+    def get_commtrack_forms(self, domain):
+        return XFormInstance.view('reports_forms/all_forms',
+            startkey=['submission xmlns', domain, COMMTRACK_REPORT_XMLNS],
+            endkey=['submission xmlns', domain, COMMTRACK_REPORT_XMLNS, {}],
             reduce=False,
             include_docs=True
         )

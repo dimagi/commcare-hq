@@ -1,8 +1,5 @@
 import calendar
 import datetime
-import json
-from django.utils.encoding import force_unicode
-from django.utils.functional import Promise
 from corehq import Domain, privileges
 from corehq.apps.accounting.exceptions import AccountingError
 from dimagi.utils.dates import add_months
@@ -12,15 +9,18 @@ from django_prbac.models import Role
 EXCHANGE_RATE_DECIMAL_PLACES = 9
 
 
+def get_first_last_days(year, month):
+    last_day = calendar.monthrange(year, month)[1]
+    date_start = datetime.date(year, month, 1)
+    date_end = datetime.date(year, month, last_day)
+    return date_start, date_end
+
+
 def get_previous_month_date_range(reference_date=None):
     reference_date = reference_date or datetime.date.today()
 
     last_month_year, last_month = add_months(reference_date.year, reference_date.month, -1)
-    _, last_day = calendar.monthrange(last_month_year, last_month)
-    date_start = datetime.date(last_month_year, last_month, 1)
-    date_end = datetime.date(last_month_year, last_month, last_day)
-
-    return date_start, date_end
+    return get_first_last_days(last_month_year, last_month)
 
 
 def months_from_date(reference_date, months_from_date):
@@ -28,7 +28,7 @@ def months_from_date(reference_date, months_from_date):
     return datetime.date(year, month, 1)
 
 
-def assure_domain_instance(domain):
+def ensure_domain_instance(domain):
     if not isinstance(domain, Domain):
         domain = Domain.get_by_name(domain)
     return domain
@@ -91,21 +91,6 @@ def get_change_status(from_plan_version, to_plan_version):
     return adjustment_reason, downgraded_privs, upgraded_privs
 
 
-class LazyEncoder(json.JSONEncoder):
-    """Taken from https://github.com/tomchristie/django-rest-framework/issues/87
-    This makes sure that ugettext_lazy refrences in a dict are properly evaluated
-    """
-    def default(self, obj):
-        if isinstance(obj, Promise):
-            return force_unicode(obj)
-        return super(LazyEncoder, self).default(obj)
-
-
-def is_active_subscription(date_start, date_end):
-    today = datetime.date.today()
-    return (date_start is None or date_start <= today) and (date_end is None or today <= date_end)
-
-
 def domain_has_privilege(domain, privilege_slug, **assignment):
     from corehq.apps.accounting.models import Subscription
     try:
@@ -119,6 +104,17 @@ def domain_has_privilege(domain, privilege_slug, **assignment):
     except AccountingError:
         pass
     return False
+
+
+def is_active_subscription(date_start, date_end):
+    today = datetime.date.today()
+    return ((date_start is None or date_start <= today)
+            and (date_end is None or today < date_end))
+
+
+def has_subscription_already_ended(subscription):
+    return (subscription.date_end is not None
+            and subscription.date_end <= datetime.date.today())
 
 
 def get_money_str(amount):

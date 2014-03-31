@@ -256,13 +256,99 @@ class McctMonthlyAggregateFormSqlData(SqlData):
     def columns(self):
         return [
             DatabaseColumn(_("Location ID"), SimpleColumn("location_id")),
-            DatabaseColumn(_("All eligible clients"), SumColumn("all_eligible_clients_total")),
             DatabaseColumn(_("Eligible clients due to registration"), SumColumn("eligible_due_to_registration_total")),
             DatabaseColumn(_("Eligible clients due to 4th visit"), SumColumn("eligible_due_to_4th_visit_total")),
             DatabaseColumn(_("Eligible clients due to delivery"), SumColumn("eligible_due_to_delivery_total")),
-            DatabaseColumn(_("Eligible clients due to immunization or PNC visit"), SumColumn("eligible_due_to_immun_or_pnc_visit_total")),
+            DatabaseColumn(_("Eligible clients due to immunization or PNC visit"),
+                           SumColumn("eligible_due_to_immun_or_pnc_visit_total")),
+            DatabaseColumn(_("Reviewed clients due to registration"), SumColumn("status_reviewed_due_to_registration")),
+            DatabaseColumn(_("Reviewed clients due to 4th visit"), SumColumn("status_reviewed_due_to_4th_visit")),
+            DatabaseColumn(_("Reviewed clients due to delivery"), SumColumn("status_reviewed_due_to_delivery")),
+            DatabaseColumn(_("Reviewed clients due to immunization or PNC visit"),
+                           SumColumn("status_reviewed_due_to_immun_or_pnc_visit")),
+            DatabaseColumn(_("Approved clients due to registration"), SumColumn("status_approved_due_to_registration")),
+            DatabaseColumn(_("Approved clients due to 4th visit"), SumColumn("status_approved_due_to_4th_visit")),
+            DatabaseColumn(_("Approved clients due to delivery"), SumColumn("status_approved_due_to_delivery")),
+            DatabaseColumn(_("Approved clients due to immunization or PNC visit"),
+                           SumColumn("status_approved_due_to_immun_or_pnc_visit")),
+            DatabaseColumn(_("Rejected clients due to incorrect phone number"), SumColumn("status_rejected_due_to_incorrect_phone_number")),
+            DatabaseColumn(_("Rejected clients due to double entry"), SumColumn("status_rejected_due_to_double_entry")),
+            DatabaseColumn(_("Rejected clients due to other errors"), SumColumn("status_rejected_due_to_other_errors"))
         ]
 
     @property
     def group_by(self):
         return ["domain","location_id"]
+
+
+class AllHmisCaseSqlData(SqlData):
+
+    table_name = "fluff_AllHmisCaseFluff"
+
+    def __init__(self, domain, datespan):
+        self.domain = domain
+        self.datespan = datespan
+
+    @property
+    def filter_values(self):
+        return dict(
+            domain=self.domain,
+            startdate=self.datespan.startdate_utc.date(),
+            enddate=self.datespan.enddate_utc.date()
+        )
+
+    @property
+    def filters(self):
+        return [
+            "domain = :domain",
+            "date between :startdate and :enddate"
+        ]
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn(_("Pregnant Mothers Referred out"), SumColumn("pregnant_mothers_referred_out_total")),
+            DatabaseColumn(_("ANC Anemia test done"), SumColumn("anc_anemia_test_done_total")),
+            DatabaseColumn(_("ANC Anemia test positive"), SumColumn("anc_anemia_test_positive_total")),
+            DatabaseColumn(_("ANC Proteinuria Test done"), SumColumn("anc_proteinuria_test_done_total")),
+            DatabaseColumn(_("ANC Proteinuria test positive"), SumColumn("anc_proteinuria_test_positive_total")),
+            DatabaseColumn(_("HIV rapid antibody test done"), SumColumn("hiv_rapid_antibody_test_done_total")),
+            DatabaseColumn(_("Deaths of women related to pregnancy"),
+                           SumColumn("deaths_of_women_related_to_pregnancy_total")),
+            DatabaseColumn(_("Pregnant Mothers tested for HIV"),
+                           SumColumn("pregnant_mothers_tested_for_hiv_total")),
+            DatabaseColumn(_("Pregnant Mothers with confirmed Malaria"),
+                           SumColumn("pregnant_mothers_with_confirmed_malaria_total")),
+            DatabaseColumn(_("Partners of HIV positive women who tested HIV negative"),
+                           SumColumn("partners_of_hiv_positive_women_tested_negative_total")),
+            DatabaseColumn(_("Partners of HIV positive women who tested positive"),
+                           SumColumn("partners_of_hiv_positive_women_tested_positive_total")),
+            DatabaseColumn(_("Assessed for clinical stage eligibility"),
+                           SumColumn("assessed_for_clinical_stage_eligibility_total")),
+            DatabaseColumn(_("Assessed for cd4-count eligibility"),
+                           SumColumn("assessed_for_clinical_cd4_eligibility_total")),
+            DatabaseColumn(_("Pregnant HIV positive women who received ART prophylaxis for PMTCT (Triple)"),
+                           SumColumn("pregnant_hiv_positive_women_received_art_total")),
+            DatabaseColumn(_("Pregnant HIV positive woman who received ARV prophylaxis for PMTCT (AZT)"),
+                           SumColumn("pregnant_hiv_positive_women_received_azt_total")),
+            DatabaseColumn(_("Pregnant positive women who received ARV prophylaxis(SdNvP in Labor + (AZT + 3TC))"),
+                           SumColumn("pregnant_hiv_positive_women_received_mother_sdnvp_total")),
+            DatabaseColumn(_("Infants born to HIV infected women started on cotrimoxazole prophylaxis within 2 months"),
+                           SumColumn("infants_hiv_women_cotrimoxazole_lt_2_months_total")),
+            DatabaseColumn(_("Infants born to HIV infected women started on cotrimoxazole prophylaxis 2 months & above"),
+                           SumColumn("infants_hiv_women_cotrimoxazole_gte_2_months_total")),
+            DatabaseColumn(_("Infants born to HIV infected women who received an HIV test within two months of birth - (DNA -PCR)"),
+                           SumColumn("infants_hiv_women_received_hiv_test_lt_2_months_total")),
+            DatabaseColumn(_("Infants born to HIV infected women who received an HIV test after two months of birth - (DNA - PCR)"),
+                           SumColumn("infants_hiv_women_received_hiv_test_gte_2_months_total")),
+            DatabaseColumn(_("Infants born to HIV infected women who received an HIV test at 18 months - (HIV Rapid test)"),
+                           SumColumn("infants_hiv_women_received_hiv_test_lt_18_months_total")),
+            DatabaseColumn(_("Infant born to HIV infected women who tested negative to HIV Rapid test at 18 months"),
+                           SumColumn("infants_hiv_women_received_hiv_test_gte_18_months_total")),
+            DatabaseColumn(_("HIV exposed infants breast feeding and receiving ARV prophylaxis"),
+                           SumColumn("hiv_exposed_infants_breast_feeding_receiving_arv_total"))
+        ]
+
+    @property
+    def group_by(self):
+        return ["domain", "location_id"]

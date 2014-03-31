@@ -29,11 +29,13 @@ class Command(BaseCommand):
                     help='Enable debug output'),
         make_option('--fresh-start', action='store_true',  default=False,
                     help='We changed the core v0 plans, wipe all existing plans and start over. USE CAUTION.'),
+        make_option('--testing', action='store_true',  default=False,
+                    help='Run this command for tests.'),
     )
 
-    def handle(self, dry_run=False, verbose=False, fresh_start=False, *args, **options):
-        if verbose:
-            logger.setLevel(logging.DEBUG)
+    def handle(self, dry_run=False, verbose=False, fresh_start=False, testing=False, *args, **options):
+
+        self.verbose = verbose
 
         if fresh_start:
             confirm_fresh_start = raw_input("Are you sure you want to delete all Roles and start over? You can't do this"
@@ -70,7 +72,8 @@ class Command(BaseCommand):
             if dry_run:
                 logger.info('[DRY RUN] Creating role: %s', role.name)
             else:
-                logger.info('Creating role: %s', role.name)
+                if self.verbose:
+                    logger.info('Creating role: %s', role.name)
                 role.save()
 
     def ensure_grant(self, grantee_slug, priv_slug, dry_run=False):
@@ -88,9 +91,11 @@ class Command(BaseCommand):
             priv = Role.objects.get(slug=priv_slug)
 
             if grantee.has_privilege(priv):
-                logger.info('Privilege already granted: %s => %s', grantee.slug, priv.slug)
+                if self.verbose:
+                    logger.info('Privilege already granted: %s => %s', grantee.slug, priv.slug)
             else:
-                logger.info('Granting privilege: %s => %s', grantee.slug, priv.slug)
+                if self.verbose:
+                    logger.info('Granting privilege: %s => %s', grantee.slug, priv.slug)
                 Grant.objects.create(
                     from_role=grantee,
                     to_role=priv,

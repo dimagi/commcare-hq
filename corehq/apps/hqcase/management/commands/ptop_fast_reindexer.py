@@ -61,7 +61,6 @@ class PtopReindexer(NoArgsCommand):
     pillow_class = None  # the pillow where the main indexing logic is
     indexing_pillow_class = None  # the pillow that points to the index you want to index. By default this == self.pillow_class
     file_prefix = "ptop_fast_reindex_"
-    own_index_exists = True
 
     def __init__(self):
         super(PtopReindexer, self).__init__()
@@ -207,13 +206,7 @@ class PtopReindexer(NoArgsCommand):
         print "using chunk size %s" % self.chunk_size
 
         if not self.resume:
-            if self.own_index_exists:
-                #delete the existing index.
-                print "Deleting index"
-                self.indexing_pillow.delete_index()
-                print "Recreating index"
-                self.indexing_pillow.create_index()
-                self.indexing_pillow.seen_types = {}
+            self.pre_load_hook()
             self.load_from_view()
         else:
             if self.runfile is None:
@@ -229,8 +222,7 @@ class PtopReindexer(NoArgsCommand):
             self.set_seq_prefix(runparts[-1])
         seq = self.load_seq_from_disk()
 
-        #configure index to indexing mode
-        self.indexing_pillow.set_index_reindex_settings()
+        self.post_load_hook()
 
         if self.bulk:
             print "Preparing Bulk Payload"
@@ -240,9 +232,7 @@ class PtopReindexer(NoArgsCommand):
             self.load_traditional()
         end = datetime.utcnow()
 
-        print "setting index settings to normal search configuration and refreshing index"
-        self.indexing_pillow.set_index_normal_settings()
-        self.indexing_pillow.refresh_index()
+        self.pre_complete_hook()
         print "done in %s seconds" % (end - start).seconds
 
     def process_row(self, row, count):
@@ -305,10 +295,42 @@ class PtopReindexer(NoArgsCommand):
             try:
                 self.pillow.process_bulk(filtered_slice)
                 break
-            except Exception, ex:
+            except Exception as ex:
                 retries += 1
                 retry_time = (datetime.utcnow() - bulk_start).seconds + retries * RETRY_TIME_DELAY_FACTOR
                 print "\t%s: Exception sending slice %d:%d, %s, retrying in %s seconds" % (datetime.now().isoformat(), start, end, ex, retry_time)
                 time.sleep(retry_time)
                 print "\t%s: Retrying again %d:%d..." % (datetime.now().isoformat(), start, end)
                 bulk_start = datetime.utcnow() #reset timestamp when looping again
+
+    def pre_load_hook(self):
+        pass
+
+    def post_load_hook(self):
+        pass
+
+    def pre_complete_hook(self):
+        pass
+
+
+class ElasticReindexer(PtopReindexer):
+
+    own_index_exists = True
+
+    def pre_load_hook(self):
+        if self.own_index_exists:
+            #delete the existing index.
+            print "Deleting index"
+            self.indexing_pillow.delete_index()
+            print "Recreating index"
+            self.indexing_pillow.create_index()
+            self.indexing_pillow.seen_types = {}
+
+    def post_load_hook(self):
+        #configure index to indexing mode
+        self.indexing_pillow.set_index_reindex_settings()
+
+    def pre_complete_hook(self):
+        print "setting index settings to normal search configuration and refreshing index"
+        self.indexing_pillow.set_index_normal_settings()
+        self.indexing_pillow.refresh_index()

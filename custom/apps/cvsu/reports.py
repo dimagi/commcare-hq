@@ -88,7 +88,7 @@ class MultiReportPage(CustomProjectReport, ProjectReportParametersMixin, Datespa
         def _unformat_row(row):
             return [col.get("sort_key", col) if isinstance(col, dict) else col for col in row]
 
-        table = headers.as_table
+        table = headers.as_export_table
         rows = [_unformat_row(row) for row in formatted_rows]
         table.extend(rows)
         if total_row:

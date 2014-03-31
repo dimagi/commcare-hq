@@ -435,10 +435,10 @@ class ReportNotification(Document):
             kwargs['stale'] = settings.COUCH_STALE_QUERY
 
         key = [domain, owner_id]
-
         db = cls.get_db()
         result = cache_core.cached_view(db, "reportconfig/user_notifications", reduce=False,
-                                     include_docs=True, startkey=key, endkey=key + [{}], wrapper=cls.wrap, **kwargs)
+                                        include_docs=True, startkey=key, endkey=key + [{}],
+                                        wrapper=cls.wrap, **kwargs)
         return result
 
     @property
@@ -654,6 +654,12 @@ class FormExportSchema(HQExportSchema):
 
     def get_default_order(self):
         return {'#': self.question_order}
+
+    def uses_cases(self):
+        form = self.app.get_form_by_xmlns(self.xmlns)
+        if form:
+            return bool(form.active_actions())
+        return False
 
 
 class FormDeidExportSchema(FormExportSchema):

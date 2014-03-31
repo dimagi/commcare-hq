@@ -179,7 +179,7 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
         q["query"]["filtered"]["query"] = query if query else {"match_all": {}}
 
 
-    if fields:
+    if fields is not None:
         q["fields"] = q.get("fields", [])
         q["fields"].extend(fields)
 
@@ -211,7 +211,10 @@ def es_wrapper(index, domain=None, q=None, doc_type=None, fields=None,
 
     # query components
     match_all = {"match_all": {}}
-    query_string = {"query_string": {"query": q}}
+    if isinstance(q, dict):
+        query_string = q
+    else:
+        query_string = {"query_string": {"query": q}}
     doc_type_filter = {"term": {"doc_type": doc_type}}
     domain_filter = {"or": [
         {"term": {"domain.exact": domain}},

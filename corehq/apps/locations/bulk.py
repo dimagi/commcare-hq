@@ -6,6 +6,7 @@ from soil import DownloadBase
 from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.consumption.shortcuts import get_default_consumption, set_default_consumption_for_supply_point
 from corehq.apps.commtrack.models import Product, SupplyPointCase
+from decimal import Decimal, InvalidOperation
 
 
 class LocationCache(object):
@@ -184,15 +185,24 @@ def submit_form(domain, parent, form_data, properties, existing, location_type, 
         sp = SupplyPointCase.get_by_location(loc) if consumption else None
 
         if consumption and sp:
-            for product_code, amount in consumption:
-                # only set it if there is a non-negative/non-null value
-                if amount >= 0:
-                    set_default_consumption_for_supply_point(
-                        domain,
-                        Product.get_by_code(domain, product_code)._id,
-                        sp._id,
-                        amount
-                    )
+            for product_code, value in consumption:
+                try:
+                    amount = Decimal(value)
+
+                    # only set it if there is a non-negative/non-null value
+                    if amount and amount >= 0:
+                        set_default_consumption_for_supply_point(
+                            domain,
+                            Product.get_by_code(domain, product_code)._id,
+                            sp._id,
+                            amount
+                        )
+                except (TypeError, InvalidOperation):
+                    # should inform user, but failing hard due to non numbers
+                    # being used on consumption is strange since the
+                    # locations would be in a very inconsistent state
+                    continue
+
         if existing:
             message = 'updated %s %s' % (location_type, loc.name)
         else:

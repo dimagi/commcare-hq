@@ -6,10 +6,8 @@ from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from couchdbkit.ext.django.schema import (Document, StringProperty, BooleanProperty, DateTimeProperty, IntegerProperty,
                                           DocumentSchema, SchemaProperty, DictProperty, ListProperty,
-                                          StringListProperty, SchemaListProperty, SchemaDictProperty, TimeProperty)
-from django.core.cache import cache
+                                          StringListProperty, SchemaListProperty, SchemaDictProperty, TimeProperty, DecimalProperty)
 from django.utils.safestring import mark_safe
-from corehq import privileges
 from corehq.apps.appstore.models import Review, SnapshotMixin
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.decorators.memoized import memoized
@@ -52,7 +50,6 @@ class DomainMigrations(DocumentSchema):
             domain.save()
 
 LICENSES = {
-#    'public': 'Public Domain', # public domain license is no longer being supported
     'cc': 'Creative Commons Attribution',
     'cc-sa': 'Creative Commons Attribution, Share Alike',
     'cc-nd': 'Creative Commons Attribution, No Derivatives',
@@ -60,6 +57,15 @@ LICENSES = {
     'cc-nc-sa': 'Creative Commons Attribution, Non-Commercial, and Share Alike',
     'cc-nc-nd': 'Creative Commons Attribution, Non-Commercial, and No Derivatives',
     }
+
+LICENSE_LINKS = {
+    'cc': 'http://creativecommons.org/licenses/by/4.0',
+    'cc-sa': 'http://creativecommons.org/licenses/by-sa/4.0',
+    'cc-nd': 'http://creativecommons.org/licenses/by-nd/4.0',
+    'cc-nc': 'http://creativecommons.org/licenses/by-nc/4.0',
+    'cc-nc-sa': 'http://creativecommons.org/licenses/by-nc-sa/4.0',
+    'cc-nc-nd': 'http://creativecommons.org/licenses/by-nc-nd/4.0',
+}
 
 def cached_property(method):
     def find_cached(self):
@@ -178,6 +184,8 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
     platform = StringListProperty()
     project_manager = StringProperty()
     phone_model = StringProperty()
+    goal_time_period = IntegerProperty()
+    goal_followup_rate = DecimalProperty()
 
 
 class CaseDisplaySettings(DocumentSchema):
@@ -504,7 +512,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             limit=1).all()
         if len(res) > 0: # if there have been any submissions in the past 30 days
             return (datetime.now() <=
-                    datetime.strptime(res[0]['value']['submission_time'], "%Y-%m-%dT%H:%M:%SZ")
+                    datetime.strptime(res[0]['key'][2], "%Y-%m-%dT%H:%M:%SZ")
                     + timedelta(days=30))
         else:
             return False
@@ -566,6 +574,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             wrapper=cls.wrap
         )
         from corehq.apps.accounting.utils import domain_has_privilege
+        from corehq import privileges
         result = filter(
             lambda x: domain_has_privilege(x.name, privileges.CROSS_PROJECT_REPORTS),
             result

@@ -50,12 +50,12 @@ domain_specific = patterns('',
     (r'^', include(hqwebapp_domain_specific)),
     (r'^case/', include('corehq.apps.hqcase.urls')),
     (r'^cleanup/', include('corehq.apps.cleanup.urls')),
-    (r'^phonelog/', include('phonelog.urls')),
     (r'^cloudcare/', include('corehq.apps.cloudcare.urls')),
     (r'^fixtures/', include('corehq.apps.fixtures.urls')),
     (r'^importer/', include('corehq.apps.importer.urls')),
     (r'^sqlextract/', include('ctable_view.urls')),
     (r'^fri/', include('custom.fri.urls')),
+    (r'^', include('custom.m4change.urls')),
 )
 
 urlpatterns = patterns('',

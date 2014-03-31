@@ -1,0 +1,15 @@
+{% extends 'reports/filters/base.html' %}
+{% load hq_shared_tags %}
+{% block filter_content %}
+    <input id="{{ css_id }}" class="{{ css_class }}" name="{{ slug }}" placeholder="{{ placeholder }}" value="{{ selected }}"/>
+{% endblock %}
+{% block filter_js %}
+<link href="{% static 'hqwebapp/js/lib/select2/select2.css' %}" rel="stylesheet"/>
+<script src="{% static 'hqwebapp/js/lib/select2/select2.js' %}"></script>
+<script type="text/javascript">
+    $('#{{ css_id }}').select2({tags:{{ tags|JSON }}, allowClear: true});
+
+    //hack to fix issues with placeholder not showing up fully
+    $('.select2-search-field').width('100%').find('.select2-input').width('100%')
+</script>
+{% endblock %}

@@ -68,6 +68,12 @@ ACCOUNTING_PREVIEW = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+INVOICE_TRIGGER = StaticToggle(
+    'invoice_trigger',
+    'Accounting Trigger Invoices',
+    [NAMESPACE_USER]
+)
+
 OFFLINE_CLOUDCARE = StaticToggle(
     'offline-cloudcare',
     'Offline Cloudcare'
@@ -81,5 +87,11 @@ REMINDERS_UI_PREVIEW = StaticToggle(
 CALC_XPATHS = StaticToggle(
     'calc_xpaths',
     'Enabling custom calculated xpaths',
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+SUBMIT_HISTORY_FILTERS = StaticToggle(
+    'submit_history_filters',
+    'Enabling new submit history filters',
     namespaces=[NAMESPACE_DOMAIN],
 )

@@ -6,7 +6,7 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop, ugettext_lazy
 from corehq import toggles, privileges
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
-from corehq.apps.accounting.models import BillingAccountAdmin
+from corehq.apps.accounting.models import BillingAccountAdmin, Invoice
 from corehq.apps.domain.utils import get_adm_enabled_domains
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
@@ -817,8 +817,6 @@ class ProjectUsersTab(UITab):
                       'urlname': 'add_commcare_account'},
                      {'title': _('Bulk Upload'),
                       'urlname': 'upload_commcare_users'},
-                     {'title': _('Transfer Mobile Workers'),
-                      'urlname': 'user_domain_transfer'},
                      {'title': ConfirmBillingAccountForExtraUsersView.page_title,
                       'urlname': ConfirmBillingAccountForExtraUsersView.urlname},
                  ]},
@@ -987,7 +985,10 @@ class ProjectSettingsTab(UITab):
             user_is_billing_admin, billing_account = BillingAccountAdmin.get_admin_status_and_account(
                 self.couch_user, self.domain)
             if user_is_billing_admin or self.couch_user.is_superuser:
-                from corehq.apps.domain.views import DomainSubscriptionView, EditExistingBillingAccountView
+                from corehq.apps.domain.views import (
+                    DomainSubscriptionView, EditExistingBillingAccountView,
+                    DomainBillingStatementsView,
+                )
                 subscription = [
                     {
                         'title': DomainSubscriptionView.page_title,
@@ -1000,6 +1001,17 @@ class ProjectSettingsTab(UITab):
                             'title':  EditExistingBillingAccountView.page_title,
                             'url': reverse(EditExistingBillingAccountView.urlname, args=[self.domain]),
                         },
+                    )
+                if ((toggles.ACCOUNTING_PREVIEW.enabled(self.couch_user.username)
+                     or toggles.ACCOUNTING_PREVIEW.enabled(self.domain))
+                    and billing_account is not None
+                    and Invoice.exists_for_domain(self.domain)
+                ):
+                    subscription.append(
+                        {
+                            'title': DomainBillingStatementsView.page_title,
+                            'url': reverse(DomainBillingStatementsView.urlname, args=[self.domain]),
+                        }
                     )
                 items.append((_('Subscription'), subscription))
 
@@ -1141,6 +1153,27 @@ class AccountingTab(UITab):
         except UserRole.DoesNotExist:
             return False
 
+    @property
+    @memoized
+    def sidebar_items(self):
+        items = super(AccountingTab, self).sidebar_items
+
+        if toggles.INVOICE_TRIGGER.enabled(self.couch_user.username):
+            from corehq.apps.accounting.views import (
+                TriggerInvoiceView, TriggerBookkeeperEmailView
+            )
+            items.append(('Other Actions', (
+                {
+                    'title': TriggerInvoiceView.page_title,
+                    'url': reverse(TriggerInvoiceView.urlname),
+                },
+                {
+                    'title': TriggerBookkeeperEmailView.page_title,
+                    'url': reverse(TriggerBookkeeperEmailView.urlname),
+                }
+            )))
+        return items
+
 
 class SMSAdminTab(UITab):
     title = ugettext_noop("SMS Connectivity")
@@ -1270,9 +1303,9 @@ class OrgReportTab(OrgTab):
     def dropdown_items(self):
         return [
             format_submenu_context(_("Projects Table"), url=reverse("orgs_report", args=(self.org.name,))),
-            format_submenu_context(_("Visualize Forms"), url=reverse("orgs_stats", args=(self.org.name, "forms"))),
-            format_submenu_context(_("Visualize Cases"), url=reverse("orgs_stats", args=(self.org.name, "cases"))),
-            format_submenu_context(_("Visualize Users"), url=reverse("orgs_stats", args=(self.org.name, "users"))),
+            format_submenu_context(_("Form Data"), url=reverse("orgs_stats", args=(self.org.name, "forms"))),
+            format_submenu_context(_("Case Data"), url=reverse("orgs_stats", args=(self.org.name, "cases"))),
+            format_submenu_context(_("User Data"), url=reverse("orgs_stats", args=(self.org.name, "users"))),
         ]
 
 class OrgSettingsTab(OrgTab):

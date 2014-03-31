@@ -81,6 +81,7 @@ STATICFILES_DIRS = (
 )
 
 DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
+ACCOUNTING_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.accounting.log")
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
@@ -241,6 +242,7 @@ HQ_APPS = (
     'corehq.apps.indicators',
     'corehq.apps.cachehq',
     'corehq.apps.toggle_ui',
+    'corehq.apps.sofabed',
     'corehq.couchapps',
     'custom.apps.wisepill',
     'custom.fri',
@@ -401,6 +403,8 @@ DEFAULT_FROM_EMAIL = 'commcarehq-noreply@dimagi.com'
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 CCHQ_BUG_REPORT_EMAIL = 'commcarehq-bug-reports@dimagi.com'
 BILLING_EMAIL = 'billing-comm@dimagi.com'
+INVOICING_CONTACT_EMAIL = 'accounts@dimagi.com'
+BOOKKEEPER_CONTACT_EMAILS = []
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 
 SERVER_ENVIRONMENT = 'localdev'
@@ -425,7 +429,7 @@ HQ_FIXTURE_GENERATORS = [
     "corehq.apps.locations.fixtures.location_fixture_generator",
     # custom
     "custom.bihar.reports.indicators.fixtures.generator",
-    "custom.m4change.reports.fixtures.generator",
+    "custom.m4change.fixtures.generator",
 ]
 
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
@@ -442,7 +446,7 @@ CELERY_PERIODIC_QUEUE = 'celery'
 
 SKIP_SOUTH_TESTS = True
 #AUTH_PROFILE_MODULE = 'users.HqUserProfile'
-TEST_RUNNER = 'testrunner.HqTestSuiteRunner'
+TEST_RUNNER = 'testrunner.TwoStageTestRunner'
 # this is what gets appended to @domain after your accounts
 HQ_ACCOUNT_ROOT = "commcarehq.org"
 
@@ -628,7 +632,6 @@ LOGGING = {
         'simple': {
             'format': '%(asctime)s %(levelname)s %(message)s'
         },
-
         'pillowtop': {
             'format': '%(asctime)s %(levelname)s %(module)s %(message)s'
         },
@@ -654,6 +657,12 @@ LOGGING = {
             'class': 'logging.FileHandler',
             'formatter': 'verbose',
             'filename': DJANGO_LOG_FILE
+        },
+        'accountinglog': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'formatter': 'verbose',
+            'filename': ACCOUNTING_LOG_FILE
         },
         'couchlog': {
             'level': 'WARNING',
@@ -710,19 +719,24 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
+        'accounting': {
+            'handlers': ['accountinglog', 'sentry', 'console', 'couchlog'],
+            'level': 'INFO',
+            'propagate': False,
+        },
     }
 }
 
 # Invoicing
-STARTING_INVOICE_NUMBER = 0
+INVOICE_STARTING_NUMBER = 0
 INVOICE_PREFIX = ''
-TERMS = ''
-FROM_ADDRESS = {}
+INVOICE_TERMS = ''
+INVOICE_FROM_ADDRESS = {}
 BANK_ADDRESS = {}
 BANK_NAME = ''
-ACCOUNT_NUMBER = ''
-ROUTING_NUMBER = ''
-SWIFT_CODE = ''
+BANK_ACCOUNT_NUMBER = ''
+BANK_ROUTING_NUMBER = ''
+BANK_SWIFT_CODE = ''
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -812,6 +826,7 @@ COUCHDB_APPS = [
     'reportfixtures',
     'prescriptions',
     'reports',
+    'sofabed',
     'sms',
     'smsforms',
     'telerivet',
@@ -964,6 +979,7 @@ PILLOWTOPS = {
         'corehq.pillows.sms.SMSPillow',
         'corehq.pillows.user.GroupToUserPillow',
         'corehq.pillows.user.UnknownUsersPillow',
+        'corehq.pillows.formdata.FormDataPillow',
     ],
     'phonelog': [
         'corehq.pillows.log.PhoneLogPillow',
@@ -989,7 +1005,8 @@ PILLOWTOPS = {
         'custom.m4change.models.LdHmisCaseFluffPillow',
         'custom.m4change.models.ImmunizationHmisCaseFluffPillow',
         'custom.m4change.models.ProjectIndicatorsCaseFluffPillow',
-        'custom.m4change.models.McctMonthlyAggregateFormFluffPillow'
+        'custom.m4change.models.McctMonthlyAggregateFormFluffPillow',
+        'custom.m4change.models.AllHmisCaseFluffPillow',
     ],
     'mvp': [
         'corehq.apps.indicators.pillows.FormIndicatorPillow',
