@@ -2,7 +2,5 @@
 {% load crispy_forms_tags %}
 
 {% block main_column %}
-    <form class="form form-horizontal" method="post">
-        {% crispy form %}
-    </form>
+    {% crispy basic_form %}
 {% endblock %}

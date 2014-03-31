@@ -14,7 +14,8 @@ from corehq.util.translation import localize
 from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.accounting.forms import (
-    BillingAccountForm, CreditForm, SubscriptionForm, CancelForm,
+    BillingAccountBasicForm, BillingAccountContactForm, CreditForm,
+    SubscriptionForm, CancelForm,
     PlanInformationForm, SoftwarePlanVersionForm, FeatureRateForm,
     ProductRateForm, TriggerInvoiceForm, InvoiceInfoForm, AdjustBalanceForm,
     ResendEmailForm, ChangeSubscriptionForm, TriggerBookkeeperEmailForm,
@@ -80,13 +81,13 @@ class NewBillingAccountView(BillingAccountsSectionView):
     @memoized
     def account_form(self):
         if self.request.method == 'POST':
-            return BillingAccountForm(None, self.request.POST)
-        return BillingAccountForm(None)
+            return BillingAccountBasicForm(None, self.request.POST)
+        return BillingAccountBasicForm(None)
 
     @property
     def page_context(self):
         return {
-            'form': self.account_form,
+            'basic_form': self.account_form,
         }
 
     @property
@@ -116,15 +117,25 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
 
     @property
     @memoized
-    def account_form(self):
-        if self.request.method == 'POST' and 'account' in self.request.POST:
-            return BillingAccountForm(self.account, self.request.POST)
-        return BillingAccountForm(self.account)
+    def basic_account_form(self):
+        if (self.request.method == 'POST'
+                and 'account_basic' in self.request.POST):
+            return BillingAccountBasicForm(self.account, self.request.POST)
+        return BillingAccountBasicForm(self.account)
+
+    @property
+    @memoized
+    def contact_form(self):
+        if (self.request.method == 'POST'
+                and 'account_contact' in self.request.POST):
+            return BillingAccountContactForm(self.account, self.request.POST)
+        return BillingAccountContactForm(self.account)
 
     @property
     @memoized
     def credit_form(self):
-        if self.request.method == 'POST' and 'adjust_credit' in self.request.POST:
+        if (self.request.method == 'POST'
+                and 'adjust_credit' in self.request.POST):
             return CreditForm(self.account, None, self.request.POST)
         return CreditForm(self.account, None)
 
@@ -134,7 +145,8 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
             'account': self.account,
             'credit_form': self.credit_form,
             'credit_list': CreditLine.objects.filter(account=self.account),
-            'form': self.account_form,
+            'basic_form': self.basic_account_form,
+            'contact_form': self.contact_form,
             'subscription_list': [
                 (sub, Invoice.objects.filter(subscription=sub).latest('date_due').date_due # TODO - check query
                       if len(Invoice.objects.filter(subscription=sub)) != 0 else 'None on record',
@@ -149,9 +161,16 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:
             return self.async_response
-        if 'account' in self.request.POST and self.account_form.is_valid():
-            self.account_form.update_account_and_contacts(self.account)
-        elif 'adjust_credit' in self.request.POST and self.credit_form.is_valid():
+        if ('account_basic' in self.request.POST
+                and self.basic_account_form.is_valid()):
+            self.basic_account_form.update_basic_info(self.account)
+            return HttpResponseRedirect(self.page_url)
+        elif ('account_contact' in self.request.POST
+              and self.contact_form.is_valid()):
+            self.contact_form.update_contact_info(self.account)
+            return HttpResponseRedirect(self.page_url)
+        elif ('adjust_credit' in self.request.POST
+              and self.credit_form.is_valid()):
             if self.credit_form.adjust_credit():
                 return HttpResponseRedirect(self.page_url)
 
