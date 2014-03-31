@@ -146,7 +146,7 @@ class UserTypeFilter(BaseReportFilter):
                 ufilter = request.GET.getlist('ufilter')
             group = request.GET.get('group', '')
             individual = request.GET.get('individual', '')
-        except KeyError:
+        except (KeyError, AttributeError):
             pass
         show_filter = True
         toggle = HQUserType.use_defaults()
