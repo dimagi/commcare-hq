@@ -830,9 +830,12 @@ class ProBonoForm(forms.Form):
                                                       "12 months at a time. After 12 months "
                                                       "groups must reapply to renew their "
                                                       "pro-bono subscription."))
+    domain = forms.CharField(label=_("Project Space"))
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, use_domain_field, *args, **kwargs):
         super(ProBonoForm, self).__init__(*args, **kwargs)
+        if not use_domain_field:
+            self.fields['domain'].required = False
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
         self.helper.layout = crispy.Layout(
@@ -840,6 +843,10 @@ class ProBonoForm(forms.Form):
             _('Pro-Bono Application'),
                 'contact_email',
                 'organization',
+                crispy.Div(
+                    'domain',
+                    style=('' if use_domain_field else 'display:none'),
+                ),
                 'project_overview',
                 'pay_only_features_needed',
                 'duration_of_project',
