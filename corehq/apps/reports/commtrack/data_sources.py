@@ -12,16 +12,8 @@ from django.db.models import Sum, Avg
 from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, product_ids_filtered_by_program
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from casexml.apps.stock.utils import months_of_stock_remaining, stock_category
-
-# TODO make settings
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
 
-REPORTING_PERIOD = 'weekly'
-REPORTING_PERIOD_ARGS = (1,)
-
-
-def is_timely(case, limit=0):
-    return num_periods_late(case, REPORTING_PERIOD, *REPORTING_PERIOD_ARGS) <= limit
 
 def reporting_status(transaction, start_date, end_date):
     if transaction:
