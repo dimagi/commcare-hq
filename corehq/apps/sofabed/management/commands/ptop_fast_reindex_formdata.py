@@ -2,6 +2,8 @@ from corehq.apps.hqcase.management.commands.ptop_fast_reindexer import PtopReind
 from corehq.pillows.formdata import FormDataPillow
 from couchforms.models import XFormInstance
 
+DEVICEREPORT = 'http://code.javarosa.org/devicereport'
+
 CHUNK_SIZE = 500
 POOL_SIZE = 15
 
@@ -10,7 +12,7 @@ class Command(PtopReindexer):
     help = "Fast reindex of SQL form data index"
 
     doc_class = XFormInstance
-    view_name = 'hqadmin/forms_over_time'
+    view_name = 'couchforms/by_xmlns'
     pillow_class = FormDataPillow
     own_index_exists = False
 
@@ -20,10 +22,15 @@ class Command(PtopReindexer):
 
         Return true if to index, false if to SKIP
         """
+        if 'doc' in view_row:
+            view_row = view_row['doc']
+
         if 'xmlns' in view_row:
-            return view_row['xmlns'] != 'http://code.javarosa.org/devicereport'
+            return view_row['xmlns'] != DEVICEREPORT
         elif 'key' in view_row:
-            return view_row['key'] != 'http://code.javarosa.org/devicereport'
+            return view_row['key'] != DEVICEREPORT
+        elif 'doc' in view_row and 'xmlns' in view_row['doc']:
+            return view_row['doc']['xmlns'] != DEVICEREPORT
         else:
             return True
 
