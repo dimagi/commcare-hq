@@ -19,7 +19,10 @@ class Log(models.Model):
     @property
     @memoized
     def device_users(self):
-        return UserLog.objects.filter(xform_id__exact=self.xform_id)
+        return list(
+            UserLog.objects.filter(xform_id__exact=self.xform_id)
+            .distinct('username').values_list('username', flat=True)
+        )
 
 
 class UserLog(models.Model):

@@ -400,7 +400,7 @@ def mobile_user_reports(request):
         rows.append(dict(domain=log.domain,
                          time=format_datatables_data(text=log.date, sort_key=seconds_since_epoch),
                          user=log.username,
-                         device_users=[u.username for u in log.device_users.all()],
+                         device_users=log.device_users,
                          message=log.msg,
                          version=(log.app_version or 'unknown').split(' ')[0],
                          detailed_version=html.escape(log.app_version or 'unknown'),
