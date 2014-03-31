@@ -1316,7 +1316,7 @@ class StockState(models.Model):
         else:
             domain = self.get_domain()
 
-            if domain.commtrack_settings:
+            if domain and domain.commtrack_settings:
                 config = domain.commtrack_settings.get_consumption_config()
             else:
                 config = None
