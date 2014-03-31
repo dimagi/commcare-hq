@@ -90,7 +90,6 @@ def compute_consumption(case_id,
 def compute_consumption_or_default(case_id,
                                    product_id,
                                    window_end,
-                                   domain,
                                    section_id=const.SECTION_TYPE_STOCK,
                                    configuration=None):
     """

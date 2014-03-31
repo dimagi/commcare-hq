@@ -91,12 +91,11 @@ class RestoreConfig(object):
         def transaction_to_xml(trans):
             return entry_xml(trans.product_id, trans.stock_on_hand)
 
-        def consumption_entry(case_id, product_id, section_id, domain):
+        def consumption_entry(case_id, product_id, section_id):
             consumption_value = compute_consumption_or_default(
                 case_id,
                 product_id,
                 datetime.utcnow(),
-                domain,
                 section_id,
                 self.stock_settings.consumption_config
             )
@@ -134,7 +133,7 @@ class RestoreConfig(object):
 
                     yield E.balance(
                         *filter(lambda e: e is not None,
-                                [consumption_entry(commtrack_case._id, p, section_id, commtrack_case.domain)
+                                [consumption_entry(commtrack_case._id, p, section_id)
                                  for p in consumption_product_ids]),
                         **{'entity-id': commtrack_case._id, 'date': section_timestamp_map[section_id],
                            'section-id': consumption_section_id}

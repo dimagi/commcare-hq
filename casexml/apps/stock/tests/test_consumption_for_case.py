@@ -32,7 +32,6 @@ class ConsumptionCaseTest(StockTestBase):
             self.case_id,
             self.product_id,
             now,
-            None,
             configuration=ConsumptionConfiguration(
                 min_periods=4,
                 default_consumption_function=_ten
