@@ -354,7 +354,7 @@ class DailyFormStatsReport(ElasticProjectInspectionReport, WorkerMonitoringRepor
     fields = [
         'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
         'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
-        'corehq.apps.reports.fields.DatespanField',
+        'corehq.apps.reports.filters.dates.DatespanFilter',
     ]
 
     description = ugettext_noop("Number of submissions per day.")
