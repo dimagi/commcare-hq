@@ -46,15 +46,14 @@ def deactivate_subscriptions(based_on_date=None):
         subscription.save()
 
 
-@periodic_task(run_every=crontab(hour=0, minute=0, day_of_month='30'))
+@periodic_task(run_every=crontab(hour=13, minute=0, day_of_month='1'))
 def generate_invoices(based_on_date=None, as_test=False):
     """
     Generates all invoices for the past month.
     """
 
     if not as_test:
-        # the extra timedelta is for the TRIAL RUN todo: remove
-        today = based_on_date or datetime.date.today() + datetime.timedelta(days=2)
+        today = based_on_date or datetime.date.today()
     else:
         today = based_on_date or datetime.date.today()
     invoice_start, invoice_end = utils.get_previous_month_date_range(today)
