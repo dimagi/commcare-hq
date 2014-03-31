@@ -1,9 +1,11 @@
 import hashlib
 from django.db import IntegrityError
+from psycopg2._psycopg import InterfaceError
 from pillowtop.listener import BasicPillow
 from couchforms.models import XFormInstance
 from phonelog.models import UserLog, Log
 import dateutil.parser as dparser
+from django import db
 
 def force_list(obj_or_list):
     return obj_or_list if isinstance(obj_or_list, list) else [obj_or_list]
@@ -44,3 +46,6 @@ class PhoneLogPillow(BasicPillow):
                                          username=logged_in_user)
             except IntegrityError:
                 pass
+            except InterfaceError:
+                # force closing the connection to prevent Django from tyring to reuse it.
+                db.connection.close()
