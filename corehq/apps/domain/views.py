@@ -16,6 +16,7 @@ from corehq.apps.accounting.subscription_changes import DomainDowngradeStatusHan
 from corehq.apps.accounting.forms import EnterprisePlanContactForm
 from corehq.apps.accounting.utils import get_change_status
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
+from corehq.toggles import NAMESPACE_DOMAIN
 from dimagi.utils.couch.resource_conflict import retry_resource
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -23,7 +24,7 @@ from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 
-from corehq import toggles, privileges
+from corehq import toggles, privileges, feature_previews
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
 
@@ -52,7 +53,6 @@ from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.hqwebapp.views import BaseSectionPageView, BasePageView, CRUDPaginatedViewMixin
 from corehq.apps.orgs.models import Organization, OrgRequest, Team
-from corehq.apps.commtrack.util import all_sms_codes, unicode_slug
 from corehq.apps.domain.forms import ProjectSettingsForm
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.email import send_HTML_email
@@ -68,6 +68,9 @@ from dimagi.utils.post import simple_post
 import cStringIO
 from PIL import Image
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
+from django.core.cache import cache
+from toggle.models import Toggle, generate_toggle_id
+from toggle.shortcuts import get_toggle_cache_key
 
 
 # Domain not required here - we could be selecting it for the first time. See notes domain.decorators
@@ -1597,100 +1600,10 @@ class BaseCommTrackAdminView(BaseAdminProjectSettingsView):
         return self.domain_object.commtrack_settings
 
 
-class BasicCommTrackSettingsView(BaseCommTrackAdminView):
-    urlname = 'domain_commtrack_settings'
-    page_title = ugettext_noop("Basic CommTrack Settings")
+class CommTrackSettingsView(BaseCommTrackAdminView):
+    urlname = 'commtrack_settings'
+    page_title = ugettext_lazy("CommTrack Settings")
     template_name = 'domain/admin/commtrack_settings.html'
-
-    @property
-    def page_context(self):
-        return {
-            'other_sms_codes': dict(self.get_other_sms_codes()),
-            'settings': self.settings_context,
-        }
-
-    @property
-    def settings_context(self):
-        return {
-            'keyword': self.commtrack_settings.multiaction_keyword,
-            'actions': [self._get_action_info(a) for a in self.commtrack_settings.actions],
-            'loc_types': [self._get_loctype_info(l) for l in self.commtrack_settings.location_types],
-            'requisition_config': {
-                'enabled': self.commtrack_settings.requisition_config.enabled,
-                'actions': [self._get_action_info(a) for a in self.commtrack_settings.requisition_config.actions],
-            },
-            'openlmis_config': self.commtrack_settings.openlmis_config._doc,
-        }
-
-    def _get_loctype_info(self, loctype):
-        return {
-            'name': loctype.name,
-            'code': loctype.code,
-            'allowed_parents': [p or None for p in loctype.allowed_parents],
-            'administrative': loctype.administrative,
-        }
-
-    # FIXME
-    def _get_action_info(self, action):
-        return {
-            'type': action.action,
-            'keyword': action.keyword,
-            'name': action.subaction,
-            'caption': action.caption,
-        }
-
-    def get_other_sms_codes(self):
-        for k, v in all_sms_codes(self.domain).iteritems():
-            if v[0] == 'product':
-                yield (k, (v[0], v[1].name))
-
-    def post(self, request, *args, **kwargs):
-        from corehq.apps.commtrack.models import CommtrackActionConfig, LocationType
-
-        payload = json.loads(request.POST.get('json'))
-
-        self.commtrack_settings.multiaction_keyword = payload['keyword']
-
-        def mk_action(action):
-            return CommtrackActionConfig(**{
-                    'action': action['type'],
-                    'subaction': action['caption'],
-                    'keyword': action['keyword'],
-                    'caption': action['caption'],
-                })
-
-        def mk_loctype(loctype):
-            loctype['allowed_parents'] = [p or '' for p in loctype['allowed_parents']]
-            cleaned_code = unicode_slug(loctype['code'])
-            if cleaned_code != loctype['code']:
-                err = _(
-                    'Location type code "{code}" is invalid. No spaces or special characters are allowed. '
-                    'It has been replaced with "{new_code}".'
-                )
-                messages.warning(request, err.format(code=loctype['code'], new_code=cleaned_code))
-                loctype['code'] = cleaned_code
-            return LocationType(**loctype)
-
-        #TODO add server-side input validation here (currently validated on client)
-
-        self.commtrack_settings.actions = [mk_action(a) for a in payload['actions']]
-        self.commtrack_settings.location_types = [mk_loctype(l) for l in payload['loc_types']]
-        self.commtrack_settings.requisition_config.enabled = payload['requisition_config']['enabled']
-        self.commtrack_settings.requisition_config.actions =  [mk_action(a) for a in payload['requisition_config']['actions']]
-
-        if 'openlmis_config' in payload:
-            for item in payload['openlmis_config']:
-                setattr(self.commtrack_settings.openlmis_config, item, payload['openlmis_config'][item])
-
-        self.commtrack_settings.save()
-
-        return self.get(request, *args, **kwargs)
-
-
-class AdvancedCommTrackSettingsView(BaseCommTrackAdminView):
-    urlname = 'commtrack_settings_advanced'
-    page_title = ugettext_lazy("Advanced CommTrack Settings")
-    template_name = 'domain/admin/commtrack_settings_advanced.html'
 
     @property
     def page_context(self):
@@ -1701,7 +1614,7 @@ class AdvancedCommTrackSettingsView(BaseCommTrackAdminView):
     @property
     @memoized
     def commtrack_settings_form(self):
-        from corehq.apps.commtrack.forms import AdvancedSettingsForm
+        from corehq.apps.commtrack.forms import CommTrackSettingsForm
         initial = self.commtrack_settings.to_json()
         initial.update(dict(('consumption_' + k, v) for k, v in
             self.commtrack_settings.consumption_config.to_json().items()))
@@ -1709,8 +1622,8 @@ class AdvancedCommTrackSettingsView(BaseCommTrackAdminView):
             self.commtrack_settings.stock_levels_config.to_json().items()))
 
         if self.request.method == 'POST':
-            return AdvancedSettingsForm(self.request.POST, initial=initial, domain=self.domain)
-        return AdvancedSettingsForm(initial=initial, domain=self.domain)
+            return CommTrackSettingsForm(self.request.POST, initial=initial, domain=self.domain)
+        return CommTrackSettingsForm(initial=initial, domain=self.domain)
 
     def set_ota_restore_config(self):
         """
@@ -1828,6 +1741,57 @@ class ProBonoView(ProBonoMixin, DomainAccountingSettings):
     @property
     def section_url(self):
         return self.page_url
+
+
+class FeaturePreviewsView(BaseAdminProjectSettingsView):
+    urlname = 'feature_previews'
+    page_title = ugettext_noop("Feature Previews")
+    template_name = 'domain/admin/feature_previews.html'
+
+    @memoized
+    def features(self):
+        features = []
+        for preview_name in dir(feature_previews):
+            if not preview_name.startswith('__'):
+                preview = getattr(feature_previews, preview_name)
+                if isinstance(preview, feature_previews.FeaturePreview) and preview.has_privilege(self.request):
+                    features.append((preview, preview.enabled(self.domain)))
+
+        return features
+
+    def get_toggle(self, slug):
+        if not slug in [f.slug for f, _ in self.features()]:
+            raise Http404()
+        try:
+            return Toggle.get(generate_toggle_id(slug))
+        except ResourceNotFound:
+            return Toggle(slug=slug)
+
+    @property
+    def page_context(self):
+        return {
+            'features': self.features(),
+        }
+
+    def post(self, request, *args, **kwargs):
+        for feature, enabled in self.features():
+            self.update_feature(feature, enabled, feature.slug in request.POST)
+
+        return redirect('feature_previews', domain=self.domain)
+
+    def update_feature(self, feature, current_state, new_state):
+        if current_state != new_state:
+            slug = feature.slug
+            toggle = self.get_toggle(slug)
+            item = '{0}:{1}'.format(NAMESPACE_DOMAIN, self.domain)
+            if new_state:
+                if not item in toggle.enabled_users:
+                    toggle.enabled_users.append(item)
+            else:
+                toggle.enabled_users.remove(item)
+            toggle.save()
+            cache_key = get_toggle_cache_key(slug, item)
+            cache.set(cache_key, new_state)
 
 
 @require_POST
