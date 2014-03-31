@@ -1,5 +1,6 @@
 from corehq.apps.reports.generic import GenericReportView, GenericTabularReport
 from corehq.apps.reports.fields import ReportSelectField
+from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.fixtures.dispatcher import FixtureInterfaceDispatcher
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem, _id_from_doc, FieldList, FixtureTypeField, FixtureItemField
 from corehq.apps.fixtures.views import data_table, require_can_edit_fixtures
@@ -41,13 +42,31 @@ class FixtureSelectField(ReportSelectField):
         self.options = [{'val': _id_from_doc(f), 'text': f.tag} for f in unselected_list]
 
 
+class FixtureSelectFilter(BaseSingleOptionFilter):
+    slug = "table_id"
+    label = "Select a Table"
+    placeholder = "place"
+    default_text = "Hello"
+
+    @property
+    @memoized
+    def fixtures(self):
+        fdts = list(FixtureDataType.by_domain(self.domain))
+        return fdts
+
+    @property
+    @memoized
+    def options(self):
+        return [(_id_from_doc(f), f.tag) for f in self.fixtures]
+
+
 class FixtureViewInterface(GenericTabularReport, FixtureInterface):
     name = ugettext_noop("View Tables")
     slug = "view_lookup_tables"
 
     report_template_path = 'fixtures/view_table.html'
 
-    fields = ['corehq.apps.fixtures.interface.FixtureSelectField']
+    fields = ['corehq.apps.fixtures.interface.FixtureSelectFilter']
 
     @property
     def report_context(self):
