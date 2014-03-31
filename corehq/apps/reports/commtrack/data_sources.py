@@ -1,4 +1,3 @@
-from corehq.apps.commtrack.util import num_periods_late
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import Location
 from corehq.apps.commtrack.models import Product, SupplyPointCase, StockState
@@ -276,7 +275,6 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
             loc = SupplyPointCase.get(sp_id).location
             transactions = StockTransaction.objects.filter(
                 case_id=sp_id,
-                section_id=STOCK_SECTION_TYPE,
             )
 
             if transactions:
