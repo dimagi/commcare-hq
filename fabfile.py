@@ -305,7 +305,10 @@ def staging():
     env.django_port = '9010'
 
     env.should_migrate = True
-    env.sms_queue_enabled = True
+    # We should not enable the sms queue on staging because replication
+    # can cause sms to be processed again if an sms is replicated in its
+    # queued state.
+    env.sms_queue_enabled = False
 
     env.roledefs = {
         'couch': ['hqdb0-staging.internal.commcarehq.org'],
