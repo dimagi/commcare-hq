@@ -345,9 +345,11 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
     slug = "daily_form_stats"
     name = ugettext_noop("Daily Form Activity")
 
-    fields = [  'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
-                'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
-                'corehq.apps.reports.filters.dates.DatespanFilter']
+    fields = [
+        'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
+        'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
+        'corehq.apps.reports.filters.dates.DatespanFilter',
+    ]
 
     description = ugettext_noop("Number of submissions per day.")
 
