@@ -6,6 +6,8 @@ import re
 import io
 from PIL import Image
 import uuid
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 import settings
 
@@ -26,7 +28,7 @@ from corehq.apps.accounting.models import BillingContactInfo, BillingAccountAdmi
 from corehq.apps.app_manager.models import Application, FormBase
 
 from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
-    AREA_CHOICES, SUB_AREA_CHOICES)
+    AREA_CHOICES, SUB_AREA_CHOICES, Domain)
 from corehq.apps.reminders.models import CaseReminderHandler
 
 from corehq.apps.users.models import WebUser, CommCareUser
@@ -426,6 +428,17 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
                     "mobile workers. To use, all of your deployed applications "
                     "must be using secure submissions."),
     )
+    cloudcare_releases = ChoiceField(
+        label=_("CloudCare should use"),
+        initial=None,
+        required=False,
+        choices=(
+            ('stars', _('Latest starred build')),
+            ('nostars', _('Every build (not recommended)')),
+        ),
+        help_text=_("Choose whether CloudCare should use the latest "
+                    "starred build or every build in your application.")
+    )
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
@@ -439,6 +452,12 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
 
         if not (user and user.is_staff):
             self.fields['restrict_superusers'].widget = forms.HiddenInput()
+
+        project = Domain.get_by_name(domain)
+        if project.cloudcare_releases == 'default' or not domain_has_privilege(domain, privileges.CLOUDCARE):
+            # if the cloudcare_releases flag was just defaulted, don't bother showing
+            # this setting at all
+            self.fields['cloudcare_releases'].widget = forms.HiddenInput()
 
         if domain is not None:
             groups = Group.get_case_sharing_groups(domain)
@@ -503,6 +522,7 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
                 domain.call_center_config.case_type = self.cleaned_data.get('call_center_case_type', None)
             domain.restrict_superusers = self.cleaned_data.get('restrict_superusers', False)
             domain.ota_restore_caching = self.cleaned_data.get('ota_restore_caching', False)
+            domain.cloudcare_releases = self.cleaned_data.get('cloudcare_releases')
             domain.secure_submissions = self.cleaned_data.get('secure_submissions', False)
             domain.save()
             return True
@@ -830,9 +850,12 @@ class ProBonoForm(forms.Form):
                                                       "12 months at a time. After 12 months "
                                                       "groups must reapply to renew their "
                                                       "pro-bono subscription."))
+    domain = forms.CharField(label=_("Project Space"))
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, use_domain_field, *args, **kwargs):
         super(ProBonoForm, self).__init__(*args, **kwargs)
+        if not use_domain_field:
+            self.fields['domain'].required = False
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
         self.helper.layout = crispy.Layout(
@@ -840,6 +863,10 @@ class ProBonoForm(forms.Form):
             _('Pro-Bono Application'),
                 'contact_email',
                 'organization',
+                crispy.Div(
+                    'domain',
+                    style=('' if use_domain_field else 'display:none'),
+                ),
                 'project_overview',
                 'pay_only_features_needed',
                 'duration_of_project',

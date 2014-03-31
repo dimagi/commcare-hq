@@ -250,6 +250,7 @@ class BaseEditProjectInfoView(BaseAdminProjectSettingsView):
             'call_center_enabled': self.domain_object.call_center_config.enabled,
             'restrict_superusers': self.domain_object.restrict_superusers,
             'ota_restore_caching': self.domain_object.ota_restore_caching,
+            'cloudcare_releases':  self.domain_object.cloudcare_releases,
         })
         return context
 
@@ -319,6 +320,7 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
                 'call_center_enabled': self.domain_object.call_center_config.enabled,
                 'call_center_case_owner': self.domain_object.call_center_config.case_owner_id,
                 'call_center_case_type': self.domain_object.call_center_config.case_type,
+                'cloudcare_releases': self.domain_object.cloudcare_releases,
             })
 
             return DomainMetadataForm(
@@ -1778,8 +1780,8 @@ class ProBonoMixin():
     @memoized
     def pro_bono_form(self):
         if self.request.method == 'POST':
-            return ProBonoForm(self.request.POST)
-        return ProBonoForm()
+            return ProBonoForm(self.use_domain_field, self.request.POST)
+        return ProBonoForm(self.use_domain_field)
 
     @property
     def page_context(self):
@@ -1802,15 +1804,17 @@ class ProBonoMixin():
 class ProBonoStaticView(ProBonoMixin, BasePageView):
     template_name = 'domain/pro_bono/static.html'
     urlname = 'pro_bono_static'
+    use_domain_field = True
 
     @property
     def requesting_domain(self):
-        return None
+        return self.pro_bono_form.cleaned_data['domain']
 
 
 class ProBonoView(ProBonoMixin, DomainAccountingSettings):
     template_name = 'domain/pro_bono/domain.html'
     urlname = 'pro_bono'
+    use_domain_field = False
 
     @property
     def requesting_domain(self):

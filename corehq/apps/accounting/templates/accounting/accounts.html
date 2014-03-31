@@ -1,4 +1,5 @@
 {% extends 'accounting/accounts_base.html' %}
+{% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
@@ -31,6 +32,7 @@
     <div class="tab-content">
         <div class="tab-pane" id="account">
             {{ block.super }}
+            {% crispy contact_form %}
         </div>
 
         <div class="tab-pane" id="subscriptions">

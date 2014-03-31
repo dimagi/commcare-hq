@@ -9,6 +9,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MinLengthValidator, validate_slug
 from django import forms
 from django.core.urlresolvers import reverse
+from django.db.models import ProtectedError
 from django.forms.util import ErrorList
 from django.template.loader import render_to_string
 from django.utils.dates import MONTHS
@@ -59,7 +60,7 @@ from corehq.apps.accounting.models import (
 )
 
 
-class BillingAccountForm(forms.Form):
+class BillingAccountBasicForm(forms.Form):
     name = forms.CharField(label="Name")
     salesforce_account_id = forms.CharField(label=_("Salesforce Account ID"),
                                             max_length=80,
@@ -71,16 +72,6 @@ class BillingAccountForm(forms.Form):
         widget=forms.Textarea,
         max_length=BillingContactInfo._meta.get_field('emails').max_length,
     )
-    first_name = forms.CharField(label='First Name', required=False)
-    last_name = forms.CharField(label='Last Name', required=False)
-    company_name = forms.CharField(label='Company Name', required=False)
-    phone_number = forms.CharField(label='Phone Number', required=False)
-    address_line_1 = forms.CharField(label='Address Line 1')
-    address_line_2 = forms.CharField(label='Address Line 2', required=False)
-    city = forms.CharField()
-    region = forms.CharField(label="State/Province/Region")
-    postal_code = forms.CharField(label="Postal Code")
-    country = forms.CharField()
 
     def __init__(self, account, *args, **kwargs):
         if account is not None:
@@ -90,57 +81,31 @@ class BillingAccountForm(forms.Form):
                 'salesforce_account_id': account.salesforce_account_id,
                 'currency': account.currency.code,
                 'contact_emails': contact_info.emails,
-                'first_name': contact_info.first_name,
-                'last_name': contact_info.last_name,
-                'company_name': contact_info.company_name,
-                'phone_number': contact_info.phone_number,
-                'address_line_1': contact_info.first_line,
-                'address_line_2': contact_info.second_line,
-                'city': contact_info.city,
-                'region': contact_info.state_province_region,
-                'postal_code': contact_info.postal_code,
-                'country': contact_info.country,
             }
         else:
             kwargs['initial'] = {
                 'currency': Currency.get_default().code,
             }
-        super(BillingAccountForm, self).__init__(*args, **kwargs)
-        if account is None:
-            self.fields['address_line_1'].required = False
-            self.fields['city'].required = False
-            self.fields['region'].required = False
-            self.fields['postal_code'].required = False
-            self.fields['country'].required = False
+        super(BillingAccountBasicForm, self).__init__(*args, **kwargs)
         self.fields['currency'].choices =\
             [(cur.code, cur.code) for cur in Currency.objects.order_by('code')]
         self.helper = FormHelper()
+        self.helper.form_class = "form-horizontal"
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-            'Basic Information',
+                'Basic Information',
                 'name',
                 'contact_emails',
                 'salesforce_account_id',
                 'currency',
             ),
-            crispy.Fieldset(
-            'Contact Information',
-                'first_name',
-                'last_name',
-                'company_name',
-                'phone_number',
-                'address_line_1',
-                'address_line_2',
-                'city',
-                'region',
-                'postal_code',
-                crispy.Field('country', css_class="input-xlarge",
-                             data_countryname=dict(COUNTRIES).get(
-                                 args[0].get('country') if len(args) > 0 else account.billingcontactinfo.country, '')),
-            ) if account is not None else None,
             FormActions(
                 crispy.ButtonHolder(
-                    crispy.Submit('account', 'Update Account' if account is not None else 'Add New Account')
+                    crispy.Submit(
+                        'account_basic',
+                        'Update Basic Information'
+                        if account is not None else 'Add New Account'
+                    )
                 )
             )
         )
@@ -179,7 +144,7 @@ class BillingAccountForm(forms.Form):
 
         return account
 
-    def update_account_and_contacts(self, account):
+    def update_basic_info(self, account):
         account.name = self.cleaned_data['name']
         account.salesforce_account_id = \
             self.cleaned_data['salesforce_account_id']
@@ -192,6 +157,76 @@ class BillingAccountForm(forms.Form):
             account=account,
         )
         contact_info.emails = self.cleaned_data['contact_emails']
+        contact_info.save()
+
+
+class BillingAccountContactForm(forms.Form):
+    first_name = forms.CharField(label='First Name', required=False)
+    last_name = forms.CharField(label='Last Name', required=False)
+    company_name = forms.CharField(label='Company Name', required=False)
+    phone_number = forms.CharField(label='Phone Number', required=False)
+    address_line_1 = forms.CharField(label='Address Line 1')
+    address_line_2 = forms.CharField(label='Address Line 2', required=False)
+    city = forms.CharField()
+    region = forms.CharField(label="State/Province/Region")
+    postal_code = forms.CharField(label="Postal Code")
+    country = forms.CharField()
+
+    def __init__(self, account, *args, **kwargs):
+        contact_info, _ = BillingContactInfo.objects.get_or_create(
+            account=account,
+        )
+        kwargs['initial'] = {
+            'first_name': contact_info.first_name,
+            'last_name': contact_info.last_name,
+            'company_name': contact_info.company_name,
+            'phone_number': contact_info.phone_number,
+            'address_line_1': contact_info.first_line,
+            'address_line_2': contact_info.second_line,
+            'city': contact_info.city,
+            'region': contact_info.state_province_region,
+            'postal_code': contact_info.postal_code,
+            'country': contact_info.country,
+        }
+        super(BillingAccountContactForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_class = "form-horizontal"
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                'Contact Information',
+                'first_name',
+                'last_name',
+                'company_name',
+                'phone_number',
+                'address_line_1',
+                'address_line_2',
+                'city',
+                'region',
+                'postal_code',
+                crispy.Field(
+                    'country',
+                    css_class="input-xlarge",
+                    data_countryname=dict(COUNTRIES).get(
+                        args[0].get('country') if len(args) > 0
+                        else account.billingcontactinfo.country,
+                        ''
+                    )
+                ),
+            ),
+            FormActions(
+                crispy.ButtonHolder(
+                    crispy.Submit(
+                        'account_contact',
+                        'Update Contact Information'
+                    )
+                )
+            ),
+        )
+
+    def update_contact_info(self, account):
+        contact_info, _ = BillingContactInfo.objects.get_or_create(
+            account=account,
+        )
         contact_info.first_name = self.cleaned_data['first_name']
         contact_info.last_name = self.cleaned_data['last_name']
         contact_info.company_name = self.cleaned_data['company_name']
@@ -1328,7 +1363,10 @@ class TriggerInvoiceForm(forms.Form):
                 community_sub.subscriptionadjustment_related.all().delete()
                 community_sub.creditline_set.all().delete()
                 invoice.delete()
-                community_sub.delete()
+                try:
+                    community_sub.delete()
+                except ProtectedError:
+                    pass
             else:
                 invoice.delete()
 

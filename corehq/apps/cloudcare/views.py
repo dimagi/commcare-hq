@@ -16,7 +16,7 @@ from dimagi.utils.web import json_response, get_url_base
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404,\
     HttpResponseServerError
 from django.shortcuts import render
-from corehq.apps.app_manager.models import Application, ApplicationBase
+from corehq.apps.app_manager.models import Application, ApplicationBase, get_app
 import json
 from corehq.apps.cloudcare.api import look_up_app_json, get_cloudcare_apps, get_filtered_cases, get_filters_from_request,\
     api_closed_to_status, CaseAPIResult, CASE_STATUS_OPEN, get_app_json
@@ -59,8 +59,15 @@ def cloudcare_main(request, domain, urlPath):
 
     if not preview:
         apps = get_cloudcare_apps(domain)
-        # replace the apps with the last build of each app
-        apps = [get_app_json(ApplicationBase.get_latest_build(domain, app['_id'])) for app in apps]
+        if request.project.use_cloudcare_releases:
+            # replace the apps with the last starred build of each app, removing the ones that aren't starred
+            apps = filter(lambda app: app.is_released, [get_app(domain, app['_id'], latest=True) for app in apps])
+            # convert to json
+            apps = [get_app_json(app) for app in apps]
+        else:
+            # legacy functionality - use the latest build regardless of stars
+            apps = [get_app_json(ApplicationBase.get_latest_build(domain, app['_id'])) for app in apps]
+
     else:
         apps = ApplicationBase.view('app_manager/applications_brief', startkey=[domain], endkey=[domain, {}])
         apps = [get_app_json(app) for app in apps if app and app.application_version == V2]
