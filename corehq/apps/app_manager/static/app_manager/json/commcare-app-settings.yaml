@@ -139,9 +139,10 @@
   name: 'Translations Strategy'
   values: ['dump-known', 'select-known', 'simple']
   value_names:
-   - 'Version 1 translations (old and reliable)'
-   - 'Version 2 translations (not well tested)'
+   - 'Version 1 translations (old)'
+   - 'Version 2 translations (recommended)'
    - 'Simple (FOR TESTING ONLY: crashes with any unrecognized user-defined translations)'
-  default: 'dump-known'
+  default: 'select-known'
   requires: "{$parent.doc_type}='Application'"
   preview: true
+  disabled: true
