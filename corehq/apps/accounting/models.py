@@ -7,6 +7,7 @@ from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django.schema import DateTimeProperty, StringProperty
 
 from django.conf import settings
+from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.urlresolvers import reverse
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -1118,7 +1119,9 @@ class BillingRecord(models.Model):
             'product': self.invoice.subscription.plan_version.core_product,
             'month': month_name,
         }
-        from corehq.apps.domain.views import DomainBillingStatementsView
+        from corehq.apps.domain.views import (
+            DomainBillingStatementsView, DefaultProjectSettingsView,
+        )
         context = {
             'month_name': month_name,
             'plan_name': "%(product)s %(name)s" % {
@@ -1126,13 +1129,18 @@ class BillingRecord(models.Model):
                 'name': self.invoice.subscription.plan_version.plan.edition,
             },
             'domain': domain,
+            'domain_url': "http://%s%s" % (
+                Site.objects.get_current().domain,
+                reverse(DefaultProjectSettingsView.urlname, args=[domain])
+            ),
             'statement_number': self.invoice.invoice_number,
             'payment_status': (_("Paid") if self.invoice.date_paid is not None
                                else _("Payment Required")),
-            'amount_due': _("USD %s")
-                          % self.invoice.balance.quantize(Decimal(10) ** -2),
-            'statements_url': reverse(DomainBillingStatementsView.urlname,
-                                      args=[domain]),
+            'amount_due': _("USD %s") % self.invoice.balance.quantize(Decimal(10) ** -2),
+            'statements_url': "http://%s%s" % (
+                Site.objects.get_current().domain,
+                reverse(DomainBillingStatementsView.urlname,args=[domain])
+            ),
         }
 
         contact_emails = contact_emails or self.invoice.email_recipients
@@ -1172,7 +1180,10 @@ class BillingRecord(models.Model):
                 send_HTML_email(
                     title, email, email_html,
                     text_content=email_plaintext,
-                    email_from=settings.INVOICING_CONTACT_EMAIL,
+                    email_from="Dimagi %(product)s Accounts <%(email)s>" % {
+                        'product': self.invoice.subscription.plan_version.core_product,
+                        'email': settings.INVOICING_CONTACT_EMAIL,
+                    },
                     file_attachments=[pdf_attachment]
                 )
         self.emailed_to = ",".join(contact_emails)

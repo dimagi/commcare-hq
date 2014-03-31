@@ -8,9 +8,9 @@
     {% endblocktrans %}
 </p>
 
-<table>
+<table cellpadding="2">
     <tr>
-        <th>
+        <th align="right">
             {% trans 'Statement No.' %}:
         </th>
         <td>
@@ -18,17 +18,17 @@
         </td>
     </tr>
     <tr>
-        <th>
+        <th align="right">
             {% trans 'Project Space' %}:
         </th>
         <td>
-            <a href="{% url 'domain_settings_default' domain %}">
+            <a href="{{ domain_url }}">
                 {{ domain }}
             </a>
         </td>
     </tr>
     <tr>
-        <th>
+        <th align="right">
             {% trans 'Software Plan' %}:
         </th>
         <td>
@@ -36,7 +36,7 @@
         </td>
     </tr>
     <tr>
-        <th>
+        <th align="right">
             {% trans 'Status' %}:
         </th>
         <td>
@@ -44,7 +44,7 @@
         </td>
     </tr>
     <tr>
-        <th>
+        <th align="right">
             {% trans 'Amount Due' %}:
         </th>
         <td>
