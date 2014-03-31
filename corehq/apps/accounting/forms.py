@@ -9,6 +9,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MinLengthValidator, validate_slug
 from django import forms
 from django.core.urlresolvers import reverse
+from django.db.models import ProtectedError
 from django.forms.util import ErrorList
 from django.template.loader import render_to_string
 from django.utils.dates import MONTHS
@@ -1362,7 +1363,10 @@ class TriggerInvoiceForm(forms.Form):
                 community_sub.subscriptionadjustment_related.all().delete()
                 community_sub.creditline_set.all().delete()
                 invoice.delete()
-                community_sub.delete()
+                try:
+                    community_sub.delete()
+                except ProtectedError:
+                    pass
             else:
                 invoice.delete()
 
