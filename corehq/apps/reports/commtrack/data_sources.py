@@ -18,7 +18,7 @@ def reporting_status(transaction, start_date, end_date):
     # for now we have decided to remove the "late" distinction
     # so we are only checking if a time even exists in this period
     if transaction:
-        return 'ontime'
+        return 'reporting'
     else:
         return 'nonreporting'
 
