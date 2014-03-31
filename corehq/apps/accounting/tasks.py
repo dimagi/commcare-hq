@@ -64,26 +64,23 @@ def generate_invoices(based_on_date=None, as_test=False):
     })
     all_domain_ids = [d['id'] for d in Domain.get_all(include_docs=False)]
     for domain_doc in iter_docs(Domain.get_db(), all_domain_ids):
-        if (toggles.ACCOUNTING_PREVIEW.enabled(domain_doc.get('name'))
-            or as_test
-        ):
-            domain = Domain.wrap(domain_doc)
-            try:
-                invoice_factory = DomainInvoiceFactory(
-                    invoice_start, invoice_end, domain)
-                invoice_factory.create_invoices()
-                logger.info("[BILLING] Sent invoices for domain %s"
-                            % domain.name)
-            except CreditLineError as e:
-                logger.error(
-                    "[BILLING] There was an error utilizing credits for "
-                    "domain %s: %s" % (domain.name, e)
-                )
-            except InvoiceError as e:
-                logger.error(
-                    "[BILLING] Could not create invoice for domain %s: %s" % (
-                    domain.name, e
-                ))
+        domain = Domain.wrap(domain_doc)
+        try:
+            invoice_factory = DomainInvoiceFactory(
+                invoice_start, invoice_end, domain)
+            invoice_factory.create_invoices()
+            logger.info("[BILLING] Sent invoices for domain %s"
+                        % domain.name)
+        except CreditLineError as e:
+            logger.error(
+                "[BILLING] There was an error utilizing credits for "
+                "domain %s: %s" % (domain.name, e)
+            )
+        except InvoiceError as e:
+            logger.error(
+                "[BILLING] Could not create invoice for domain %s: %s" % (
+                domain.name, e
+            ))
     # And finally...
     send_bookkeeper_email()
 
