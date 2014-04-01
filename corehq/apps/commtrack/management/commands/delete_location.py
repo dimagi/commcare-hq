@@ -1,3 +1,4 @@
+from optparse import make_option
 from django.core.management.base import BaseCommand
 from corehq.apps.locations.models import Location
 from dimagi.utils.couch.database import get_db
@@ -5,14 +6,26 @@ from dimagi.utils.couch.database import get_db
 class Command(BaseCommand):
     args = 'loc_uuid'
     help = 'DELETE a location, all its sub-locations, and all associated data'
+    option_list = BaseCommand.option_list + (
+        make_option('--dryrun',
+                    action='store_true',
+                    dest='dryrun',
+                    default=False,
+                    help='Do not actually delete anything, just verbosely log what happens.'),
+    )
+
 
     def handle(self, *args, **options):
+        self.dryrun = options['dryrun']
         try:
             loc_uuid = args[0]
         except IndexError:
             self.stderr.write('location uuid required\n')
             return
 
+        self._delete_location_id(loc_uuid)
+
+    def _delete_location_id(self, loc_uuid):
         try:
             loc = Location.get(loc_uuid)
             if not loc or loc.doc_type != 'Location':
@@ -39,7 +52,9 @@ class Command(BaseCommand):
             success = success and self.delete_doc(k['doc'], loc)
 
         if success:
-            self.db.delete_doc(loc)
+            self.println('deleted location %s' % loc._id)
+            if not self.dryrun:
+                self.db.delete_doc(loc)
         else:
             self.stderr.write('not deleting %s because there were errors' % loc._id)
 
@@ -66,9 +81,12 @@ class Command(BaseCommand):
             self.println('deleted %s (%s:%s)' %
                 (id, doc.get('doc_type', 'unknown type'), doc.get('name', 'unknown name'))
             )
-            self.db.delete_doc(id)
+            if not self.dryrun:
+                self.db.delete_doc(id)
+            return True
         else:
             self.stderr.write('sanity check failed (%s)!\n' % id)
+            return False
         
 
     def println(self, msg):
