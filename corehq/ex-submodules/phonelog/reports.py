@@ -326,8 +326,7 @@ class DeviceLogDetailsReport(PhonelogReport):
                 "username": username
             }
 
-            device_users = [u["username"]
-                            for u in log.device_users.values('username').all()]
+            device_users = log.device_users
             device_users_fmt = ', '.join([
                 '<a href="%(url)s">%(username)s</a>' % {
                     "url": "%s?%s=%s&%s" % (self.get_url(domain=self.domain),
