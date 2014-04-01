@@ -385,9 +385,10 @@ class DailyFormStatsReport(ElasticProjectInspectionReport, WorkerMonitoringRepor
         return ("received_on" if self.by_submission_time
                 else "form.meta.timeStart")
 
-    def get_row_from_user(self, user):
+    def get_row(self, user=None):
         """
-        Assemble a list whose first element is the username,
+        Assemble a row for a given user.
+        If no user is passed, assemble a totals row
         then the number of forms filled out per day for the datespan,
         and finally the total forms filled out in the datespan.
         """
@@ -402,16 +403,16 @@ class DailyFormStatsReport(ElasticProjectInspectionReport, WorkerMonitoringRepor
                         "gte": gte,
                         "lte": lte}
                 }}}
+        params = {'xform.form.meta.userID': user.get('user_id')} if user else None
         res = es_query(
             q=query,
-            params={'xform.form.meta.userID': user.get('user_id')},
+            params=params,
             facets=facets,
             es_url=ES_URLS["forms"],
             size=0,
             fields=None,
         )
-        assert('error' not in res), "Bad ES query for user %s: %s" % (
-            user.get('user_id'), res['error'])
+        assert('error' not in res), "Bad ES query: %s" % (res['error'])
         def parse(entry):
             date = datetime.datetime.fromtimestamp(entry['time']/1000)
             return (date.strftime(DATE_FORMAT), entry['count'])
@@ -420,7 +421,8 @@ class DailyFormStatsReport(ElasticProjectInspectionReport, WorkerMonitoringRepor
             counts_by_date.get(date.strftime(DATE_FORMAT), 0)
             for date in self.dates
         ]
-        return [self.get_raw_user_link(user)] + date_cols + [sum(date_cols)]
+        first_col = self.get_raw_user_link(user) if user else _("Total")
+        return [first_col] + date_cols + [sum(date_cols)]
 
     @property
     def total_records(self):
@@ -509,7 +511,8 @@ class DailyFormStatsReport(ElasticProjectInspectionReport, WorkerMonitoringRepor
             users = self.users_by_range(start, end, order)
         else:
             users = self.users_by_username(order)
-        rows = [self.get_row_from_user(user) for user in users]
+        rows = [self.get_row(user) for user in users]
+        self.total_row = self.get_row()
         return rows
 
 
