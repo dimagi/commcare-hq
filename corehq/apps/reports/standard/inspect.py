@@ -154,7 +154,7 @@ class SubmitHistoryNew(SubmitHistory):
         'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
         'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
         'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
-        'corehq.apps.reports.fields.DatespanField',
+        'corehq.apps.reports.filters.dates.DatespanFilter',
         'corehq.apps.reports.filters.forms.CustomPropsFilter',
         'corehq.apps.reports.filters.forms.CustomFieldFilter']
 
