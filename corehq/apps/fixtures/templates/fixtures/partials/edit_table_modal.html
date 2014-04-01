@@ -31,14 +31,14 @@
                         <!-- ko ifnot: with_props -->
                         <td>
                             <input type="text" class="input-small" data-bind="value: editTag, hasfocus: true"/>
+                        </td>
+                        <td>
+                            <input type="checkbox" class="select-bulk" data-bind="checked: remove, visible: !is_new()"/>  
                             <!-- ko if:is_new -->
                             <button class="btn btn-danger" data-bind="click: remove_if_new " style="vertical-align: top;">
                                     <i class="icon-white icon-trash"></i>
                             </button>
-                            <!-- /ko -->
-                        </td>
-                        <td>
-                            <input type="checkbox" class="select-bulk" data-bind="checked: remove, attr: {'disabled': is_new}" />                        
+                            <!-- /ko -->                      
                         </td>
                         <!-- /ko -->
                         <!-- ko if: with_props -->
