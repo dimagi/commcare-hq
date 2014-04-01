@@ -1,4 +1,5 @@
 import logging
+from psycopg2._psycopg import InterfaceError
 import pytz
 from datetime import datetime
 import hashlib
@@ -19,6 +20,7 @@ from pillowtop.couchdb import CachedCouchDB
 from .utils import import_settings
 
 from couchdbkit.changes import ChangesStream
+from django import db
 
 
 pillow_logging = logging.getLogger("pillowtop")
@@ -838,3 +840,26 @@ class LogstashMonitoringPillow(NetworkPillow):
             return {}
         else:
             return super(NetworkPillow, self).processor(change)
+
+
+class SQLPillow(BasicPillow):
+
+    @db.transaction.commit_on_success
+    def change_transport(self, doc_dict, retry=True):
+        try:
+            self.sql_process(doc_dict)
+        except Exception, e:
+            logging.exception("problem in form listener for line: %s\n%s" % (doc_dict, e))
+            if isinstance(e, db.utils.DatabaseError):
+                # we have to do this manually to avoid issues with
+                # open transactions and already closed connections
+                db.transaction.rollback()
+            elif isinstance(e, InterfaceError):
+                # force closing the connection to prevent Django from trying to reuse it.
+                # http://www.tryolabs.com/Blog/2014/02/12/long-time-running-process-and-django-orm/
+                db.connection.close()
+                if retry:
+                    self.change_transport(doc_dict, retry=False)
+
+    def process_sql(self, doc_dict):
+        pass
