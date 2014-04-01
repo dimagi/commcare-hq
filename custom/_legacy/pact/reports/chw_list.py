@@ -55,17 +55,18 @@ class PactCHWDashboard(GenericTabularReport, ProjectReportParametersMixin, Custo
         def last_submit_time(user_id):
             #need to call it directly due to reversed not liking the keys set the regular way
             key = make_form_couch_key(self.domain, user_id=user_id)
-            v = XFormInstance.view('reports_forms/all_forms',
-                                   endkey=key,
-                                   startkey=key + [{}],
-                                   reduce=False,
-                                   include_docs=False,
-                                   descending=True, limit=1)
+            v = XFormInstance.get_db().view('reports_forms/all_forms',
+                endkey=key,
+                startkey=key + [{}],
+                reduce=False,
+                include_docs=False,
+                descending=True, limit=1
+            )
             res = v.one()
             if res is None:
                 return None
             else:
-                return datetime.strftime(res['key'][3], "%Y-%m-%dT%H:%M:%SZ").strftime("%m/%d/%Y")
+                return datetime.strptime(res['key'][3], "%Y-%m-%dT%H:%M:%SZ").strftime("%m/%d/%Y")
 
 
         for user in self.users:
