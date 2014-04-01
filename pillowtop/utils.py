@@ -31,7 +31,7 @@ def import_pillow_string(full_class_str, instantiate=True):
         mod = importlib.import_module(mod_path)
         pillowtop_class = getattr(mod, pillow_class_name)
         return pillowtop_class() if instantiate else pillowtop_class
-    except (AttributeError, ImportError):
+    except (AttributeError, ImportError) as e:
         raise ValueError("Could not find pillowtop class '%s'" % full_class_str)
 
 def get_all_pillows(instantiate=True):

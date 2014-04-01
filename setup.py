@@ -25,5 +25,7 @@ setup(
     ],
     tests_require=[
         'unittest2',
+        'fakecouch>=0.0.3',
+        'mock>=0.0.8'
     ]
 )
