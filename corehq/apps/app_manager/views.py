@@ -397,7 +397,7 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
 
     if not form.unique_id:
         form.get_unique_id()
-        form.save()
+        form.get_app().save()
 
     context = {
         'nav_form': form if not is_user_registration else '',
@@ -733,7 +733,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
             module = app.get_module(module_id)
             if not module.unique_id:
                 module.get_or_create_unique_id()
-                module.save()
+                app.save()
         if form_id:
             form = module.get_form(form_id)
     except ModuleNotFoundException:
