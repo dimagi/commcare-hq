@@ -902,11 +902,11 @@ DEFAULT_CURRENCY = "USD"
 DEFAULT_CURRENCY_SYMBOL = "$"
 
 SMS_HANDLERS = [
-    'corehq.apps.sms.api.forwarding_handler',
+    'corehq.apps.sms.handlers.forwarding.forwarding_handler',
     'corehq.apps.commtrack.sms.handle',
-    'corehq.apps.sms.api.sms_keyword_handler',
-    'corehq.apps.sms.api.form_session_handler',
-    'corehq.apps.sms.api.fallback_handler',
+    'corehq.apps.sms.handlers.keyword.sms_keyword_handler',
+    'corehq.apps.sms.handlers.form_session.form_session_handler',
+    'corehq.apps.sms.handlers.fallback.fallback_handler',
 ]
 
 SMS_LOADED_BACKENDS = [

@@ -1,0 +1,377 @@
+from corehq.apps.sms.api import (
+    MessageMetadata,
+    add_msg_tags,
+    send_sms_to_verified_number,
+)
+from corehq.apps.sms.models import WORKFLOW_KEYWORD
+from corehq.apps.sms.messages import *
+from corehq.apps.sms.handlers.form_session import validate_answer
+from corehq.apps.smsforms.models import XFormsSession
+from corehq.apps.reminders.models import (
+    SurveyKeyword,
+    RECIPIENT_SENDER,
+    RECIPIENT_OWNER,
+    RECIPIENT_USER_GROUP,
+    METHOD_SMS,
+    METHOD_SMS_SURVEY,
+    METHOD_STRUCTURED_SMS,
+    REMINDER_TYPE_KEYWORD_INITIATED,
+)
+from corehq.apps.reminders.util import create_immediate_reminder
+from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
+from corehq.apps.groups.models import Group
+from touchforms.formplayer.api import current_question
+
+class StructuredSMSException(Exception):
+    def __init__(self, *args, **kwargs):
+        response_text = kwargs.pop("response_text", "")
+        self.response_text = response_text
+        super(StructuredSMSException, self).__init__(*args, **kwargs)
+
+def contact_can_use_keyword(v, keyword):
+    has_keyword_restrictions = len(keyword.initiator_doc_type_filter) > 0
+    can_initiate = v.owner_doc_type in keyword.initiator_doc_type_filter
+    if has_keyword_restrictions and not can_initiate:
+        return False
+    else:
+        return True
+
+def handle_global_keywords(v, text, msg, text_words, open_sessions):
+    global_keyword = text_words[0]
+
+    global_keywords = {
+        "#START", global_keyword_start,
+        "#STOP", global_keyword_stop,
+        "#CURRENT", global_keyword_current,
+    }
+
+    inbound_metadata = MessageMetadata(
+        workflow=WORKFLOW_KEYWORD,
+    )
+    add_msg_tags(msg, inbound_metadata)
+
+    fcn = global_keywords.get(global_keyword, global_keyword_unknown)
+    return fcn(v, text, msg, text_words, open_sessions)
+
+def global_keyword_start(v, text, msg, text_words, open_sessions):
+    from corehq.apps.reminders.models import SurveyKeyword
+
+    outbound_metadata = MessageMetadata(
+        workflow=WORKFLOW_KEYWORD,
+    )
+
+    if len(text_words) > 1:
+        keyword = text_words[1]
+        sk = SurveyKeyword.get_keyword(v.domain, keyword)
+        if sk:
+            if not contact_can_use_keyword(v, sk):
+                return False
+            process_survey_keyword_actions(v, sk, text[6:].strip(), msg)
+        else:
+            message = get_message(MSG_KEYWORD_NOT_FOUND, v, {"keyword": keyword})
+            send_sms_to_verified_number(v, message, metadata=outbound_metadata)
+    else:
+        message = get_message(MSG_START_KEYWORD_USAGE, v, 
+            {"start_keyword": text_words[0]})
+        send_sms_to_verified_number(v, message, metadata=outbound_metadata)
+    return True
+
+def global_keyword_stop(v, text, msg, text_words, open_sessions):
+    XFormsSession.close_all_open_sms_sessions(v.domain, v.owner_id)
+    return True
+
+def global_keyword_current(v, text, msg, text_words, open_sessions):
+    if len(open_sessions) == 1:
+        session = open_sessions[0]
+        outbound_metadata = MessageMetadata(
+            workflow=session.workflow,
+            reminder_id=session.reminder_id,
+            xforms_session_couch_id=session._id,
+        )
+        
+        resp = current_question(session.session_id)
+        send_sms_to_verified_number(v, resp.event.text_prompt,
+            metadata=outbound_metadata)
+    return True
+
+def global_keyword_unknown(v, text, msg, text_words, open_sessions):
+    message = get_message(MSG_UNKNOWN_COMMAND, v, {"keyword": text_words[0]})
+    send_sms_to_verified_number(v, message)
+    return True
+
+def handle_domain_keywords(v, text, msg, text_words, sessions):
+    any_session_open = len(sessions) > 0
+    for survey_keyword in SurveyKeyword.get_all(v.domain):
+        if survey_keyword.delimiter is not None:
+            args = text.split(survey_keyword.delimiter)
+        else:
+            args = text.split()
+
+        keyword = args[0].strip().upper()
+        if keyword == survey_keyword.keyword.upper():
+            if any_session_open and not survey_keyword.override_open_sessions:
+                # We don't want to override any open sessions, so just pass and
+                # let the form session handler handle the message
+                return False
+            elif not contact_can_use_keyword(v, survey_keyword):
+                # The contact type is not allowed to invoke this keyword
+                return False
+            else:
+                inbound_metadata = MessageMetadata(
+                    workflow=WORKFLOW_KEYWORD,
+                )
+                add_msg_tags(msg, inbound_metadata)
+                process_survey_keyword_actions(v, survey_keyword, text, msg)
+                return True
+    # No keywords matched, so pass the message onto the next handler
+    return False
+
+def sms_keyword_handler(v, text, msg):
+    text = text.strip()
+    if text == "":
+        return False
+
+    sessions = XFormsSession.get_all_open_sms_sessions(v.domain, v.owner_id)
+    text_words = text.upper().split()
+
+    if text.startswith("#"):
+        return handle_global_keywords(v, text, msg, text_words, sessions)
+    else:
+        return handle_domain_keywords(v, text, msg, text_words, sessions)
+
+def _handle_structured_sms(domain, args, contact_id, session,
+    first_question, verified_number, xpath_answer=None):
+
+    form_complete = False
+    current_question = first_question
+    internal_error_msg = get_message(MSG_TOUCHFORMS_DOWN, verified_number)
+
+    used_named_args = xpath_answer is not None
+    answer_num = 0
+    while not form_complete:
+        if current_question.is_error:
+            error_msg = current_question.text_prompt or internal_error_msg
+            raise StructuredSMSException(response_text=error_msg)
+
+        xpath = current_question.event._dict["binding"]
+        if used_named_args and xpath in xpath_answer:
+            valid, answer, error_msg = validate_answer(current_question.event,
+                xpath_answer[xpath])
+            if not valid:
+                raise StructuredSMSException(response_text=error_msg)
+        elif not used_named_args and answer_num < len(args):
+            answer = args[answer_num].strip()
+            valid, answer, error_msg = validate_answer(current_question.event,
+                answer)
+            if not valid:
+                raise StructuredSMSException(response_text=error_msg)
+        else:
+            # We're out of arguments, so try to leave each remaining question
+            # blank and continue
+            answer = ""
+            if current_question.event._dict.get("required", False):
+                question_id = get_question_id(current_question)
+                error_msg = get_message(MSG_STRUCTURED_SMS_QUESTION_REQUIRED,
+                    verified_number, {"field_name": question_id})
+                raise StructuredSMSException(response_text=error_msg)
+
+        responses = _get_responses(domain, contact_id, answer, 
+            yield_responses=True, session_id=session.session_id,
+            update_timestamp=False)
+        current_question = responses[-1]
+
+        form_complete = is_form_complete(current_question)
+        answer_num += 1
+
+def parse_structured_sms_named_args(args, action):
+    """
+    Returns a dictionary of {xpath: answer}
+    """
+    xpath_answer = {}
+    for answer in args:
+        answer = answer.strip()
+        answer_upper = answer.upper()
+        if action.named_args_separator is not None:
+            # A separator is used for naming arguments; for example, the "="
+            # in "register name=joe age=25"
+            answer_parts = answer.partition(action.named_args_separator)
+            if answer_parts[1] != action.named_args_separator:
+                error_msg = get_message(MSG_EXPECTED_NAMED_ARGS_SEPARATOR,
+                    verified_number, {"separator": action.named_args_separator})
+                raise StructuredSMSException(response_text=error_msg)
+            else:
+                arg_name = answer_parts[0].upper().strip()
+                xpath = action.named_args.get(arg_name, None)
+                if xpath is not None:
+                    if xpath in xpath_answer:
+                        error_msg = get_message(MSG_MULTIPLE_ANSWERS_FOUND,
+                            verified_number,
+                            {"arg_name": arg_name})
+                        raise StructuredSMSException(response_text=error_msg)
+
+                    xpath_answer[xpath] = answer_parts[2].strip()
+                else:
+                    # Ignore unexpected named arguments
+                    pass
+        else:
+            # No separator is used for naming arguments
+            # for example, "update a100 b34 c5"
+            matches = 0
+            for k, v in action.named_args.items():
+                if answer_upper.startswith(k):
+                    matches += 1
+                    if matches > 1:
+                        error_msg = get_message(MSG_MULTIPLE_QUESTIONS_MATCH,
+                            verified_number,
+                            {"answer": answer})
+                        raise StructuredSMSException(response_text=error_msg)
+
+                    if v in xpath_answer:
+                        error_msg = get_message(MSG_MULTIPLE_ANSWERS_FOUND,
+                            verified_number,
+                            {"arg_name": k})
+                        raise StructuredSMSException(response_text=error_msg)
+
+                    xpath_answer[v] = answer[len(k):].strip()
+
+            if matches == 0:
+                # Ignore unexpected named arguments
+                pass
+    return xpath_answer
+
+def split_args(text, survey_keyword):
+    text = text.strip()
+    if survey_keyword.delimiter is not None:
+        args = text.split(survey_keyword.delimiter)
+    else:
+        args = text.split()
+    args = [arg.strip() for arg in args]
+    return args
+
+def handle_structured_sms(survey_keyword, survey_keyword_action, contact,
+    verified_number, text, send_response=False, msg=None):
+
+    domain = contact.domain
+    contact_doc_type = contact.doc_type
+    contact_id = contact._id
+
+    args = split_args(text, survey_keyword)
+    keyword = args[0].upper()
+
+    error_occurred = False
+    error_msg = None
+    session = None
+
+    try:
+        # Start the session
+        form = Form.get_form(survey_keyword_action.form_unique_id)
+        app = form.get_app()
+        module = form.get_module()
+
+        if contact_doc_type == "CommCareCase":
+            case_id = contact_id
+        else:
+            #TODO: Need a way to choose the case when it's a user that's playing the form
+            case_id = None
+
+        session, responses = start_session(domain, contact, app, module,
+            form, case_id=case_id, yield_responses=True)
+        session.workflow = WORKFLOW_KEYWORD
+        session.save()
+        assert len(responses) > 0, "There should be at least one response."
+
+        first_question = responses[-1]
+        if not is_form_complete(first_question):
+            if survey_keyword_action.use_named_args:
+                # Arguments in the sms are named
+                xpath_answer = parse_structured_sms_named_args(args[1:],
+                    survey_keyword_action)
+                _handle_structured_sms(domain, args[1:], contact_id, session,
+                    first_question, verified_number, xpath_answer)
+            else:
+                # Arguments in the sms are not named; pass each argument to
+                # each question in order
+                _handle_structured_sms(domain, args[1:], contact_id, session,
+                    first_question, verified_number)
+
+    except StructuredSMSException as sse:
+        error_occurred = True
+        error_msg = sse.response_text
+    except Exception:
+        logging.exception("Could not process structured sms for contact %s, "
+            "domain %s, keyword %s" % (contact_id, domain, keyword))
+        error_occurred = True
+        error_msg = get_message(MSG_TOUCHFORMS_ERROR, verified_number)
+
+    if session is not None:
+        session = XFormsSession.get(session._id)
+        if session.is_open:
+            session.end(False)
+            session.save()
+
+    metadata = MessageMetadata(
+        workflow=WORKFLOW_KEYWORD,
+        xforms_session_couch_id=session._id if session else None,
+    )
+
+    if msg:
+        add_msg_tags(msg, metadata)
+
+    if error_occurred and verified_number is not None and send_response:
+        send_sms_to_verified_number(verified_number, error_msg, metadata=metadata)
+
+def get_question_id(xformsresponse):
+    binding = xformsresponse.event._dict.get("binding", None)
+    question_id = None
+    if binding:
+        question_id = binding.split("/")[-1]
+    return question_id
+
+def is_form_complete(current_question):
+    # Force a return value of either True or False (instead of None)
+    if current_question.event and current_question.event.type == "form-complete":
+        return True
+    else:
+        return False
+
+def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
+    sender = verified_number.owner
+    if sender.doc_type == "CommCareCase":
+        case = sender
+    else:
+        case = None
+    for survey_keyword_action in survey_keyword.actions:
+        if survey_keyword_action.recipient == RECIPIENT_SENDER:
+            contact = sender
+        elif survey_keyword_action.recipient == RECIPIENT_OWNER:
+            if sender.doc_type == "CommCareCase":
+                contact = get_wrapped_owner(get_owner_id(sender))
+            else:
+                contact = None
+        elif survey_keyword_action.recipient == RECIPIENT_USER_GROUP:
+            try:
+                contact = Group.get(survey_keyword_action.recipient_id)
+                assert contact.doc_type == "Group"
+                assert contact.domain == verified_number.domain
+            except Exception:
+                contact = None
+        else:
+            contact = None
+
+        if contact is None:
+            continue
+
+        if survey_keyword_action.action == METHOD_SMS:
+            create_immediate_reminder(contact, METHOD_SMS, 
+                reminder_type=REMINDER_TYPE_KEYWORD_INITIATED,
+                message=survey_keyword_action.message_content,
+                case=case)
+        elif survey_keyword_action.action == METHOD_SMS_SURVEY:
+            create_immediate_reminder(contact, METHOD_SMS_SURVEY,
+                reminder_type=REMINDER_TYPE_KEYWORD_INITIATED,
+                form_unique_id=survey_keyword_action.form_unique_id,
+                case=case)
+        elif survey_keyword_action.action == METHOD_STRUCTURED_SMS:
+            handle_structured_sms(survey_keyword, survey_keyword_action,
+                sender, verified_number, text, send_response=True, msg=msg)
+
