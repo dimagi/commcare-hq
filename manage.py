@@ -39,7 +39,7 @@ def _set_source_root(source_root):
 if __name__ == "__main__":
 
     _set_source_root_parent('submodules')
-    _set_source_root_parent(os.path.join('corehq', 'ex-submodules'))
+    _set_source_root(os.path.join('corehq', 'ex-submodules'))
     _set_source_root(os.path.join('custom', '_legacy'))
 
     # proxy for whether we're running gunicorn with -k gevent
