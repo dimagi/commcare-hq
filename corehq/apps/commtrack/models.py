@@ -1367,11 +1367,10 @@ class StockExportColumn(ComplexExportColumn):
         values = [None] * len(self._column_tuples)
 
         for state in states:
-            state_index = self._column_tuples.index((
-                state.product_id,
-                state.section_id
-            ))
-            values[state_index] = state.stock_on_hand
+            column_tuple = (state.product_id, state.section_id)
+            if column_tuple in self._column_tuples:
+                state_index = self._column_tuples.index(column_tuple)
+                values[state_index] = state.stock_on_hand
         return values
 
 
