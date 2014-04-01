@@ -847,7 +847,7 @@ class SQLPillow(BasicPillow):
     @db.transaction.commit_on_success
     def change_transport(self, doc_dict, retry=True):
         try:
-            self.sql_process(doc_dict)
+            self.process_sql(doc_dict)
         except Exception, e:
             logging.exception("problem in form listener for line: %s\n%s" % (doc_dict, e))
             if isinstance(e, db.utils.DatabaseError):
