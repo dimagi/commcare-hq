@@ -555,8 +555,6 @@ class testReportCaseProcessing(TestCase):
         unknown_terms = ['gender', 'notes', 'sms_reminder', 'hamlet_name', 'actions.dob',
                          'actions.dots', 'actions.hp']
         unknown_terms_query = report_term_filter(unknown_terms, REPORT_CASE_MAPPING)
-        print unknown_terms
-        print unknown_terms_query
 
         manually_set = ['%s.%s' % (x, VALUE_TAG) for x in unknown_terms]
         self.assertEqual(manually_set, unknown_terms_query)
@@ -565,8 +563,6 @@ class testReportCaseProcessing(TestCase):
                        'actions.indices.doc_type']
         known_terms_query = report_term_filter(known_terms, REPORT_CASE_MAPPING)
 
-        print known_terms
-        print known_terms_query
         self.assertEqual(known_terms_query, known_terms)
 
 
