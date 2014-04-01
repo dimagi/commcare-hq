@@ -12,18 +12,29 @@ class Command(BaseCommand):
                     dest='dryrun',
                     default=False,
                     help='Do not actually delete anything, just verbosely log what happens.'),
+        make_option('--bulk',
+                    action='store_true',
+                    dest='bulk',
+                    default=False,
+                    help='Instead of passing an ID, pass a text file containing one line per ID.'),
     )
 
 
     def handle(self, *args, **options):
         self.dryrun = options['dryrun']
+        self.bulk = options['bulk']
         try:
-            loc_uuid = args[0]
+            arg = args[0]
         except IndexError:
             self.stderr.write('location uuid required\n')
             return
 
-        self._delete_location_id(loc_uuid)
+        if not self.bulk:
+            self._delete_location_id(arg)
+        else:
+            with open(arg) as f:
+                for line in f:
+                    self._delete_location_id(line.strip())
 
     def _delete_location_id(self, loc_uuid):
         try:
@@ -52,7 +63,7 @@ class Command(BaseCommand):
             success = success and self.delete_doc(k['doc'], loc)
 
         if success:
-            self.println('deleted location %s' % loc._id)
+            self.println('deleted location %s (%s)' % (loc._id, loc.name))
             if not self.dryrun:
                 self.db.delete_doc(loc)
         else:
