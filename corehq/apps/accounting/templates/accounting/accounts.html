@@ -6,19 +6,6 @@
 {% block js %}{{ block.super }}
     <script src="{% static 'accounting/js/credits-tab.js' %}"></script>
     <script src="{% static 'accounting/js/stay-on-tab.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/select2/select2.js' %}"></script>
-    <script src="{% static 'accounting/js/accounting.billing_info_handler.js' %}"></script>
-{% endblock %}
-
-{% block head %}{{ block.super }}
-    <link href="{% static 'hqwebapp/js/lib/select2/select2.css' %}" rel="stylesheet"/>
-{% endblock %}
-
-{% block js-inline %}{{ block.super }}
-    <script>
-        var billingInfoHandler = new BillingContactInfoHandler(null);
-        billingInfoHandler.init();
-    </script>
 {% endblock %}
 
 {% block main_column %}
