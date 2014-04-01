@@ -1,4 +1,3 @@
-from corehq.apps.commtrack.util import num_periods_late
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import Location
 from corehq.apps.commtrack.models import Product, SupplyPointCase, StockState
@@ -12,27 +11,14 @@ from django.db.models import Sum, Avg
 from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, product_ids_filtered_by_program
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from casexml.apps.stock.utils import months_of_stock_remaining, stock_category
-
-# TODO make settings
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
 
-REPORTING_PERIOD = 'weekly'
-REPORTING_PERIOD_ARGS = (1,)
-
-
-def is_timely(case, limit=0):
-    return num_periods_late(case, REPORTING_PERIOD, *REPORTING_PERIOD_ARGS) <= limit
 
 def reporting_status(transaction, start_date, end_date):
+    # for now we have decided to remove the "late" distinction
+    # so we are only checking if a time even exists in this period
     if transaction:
-        last_reported = transaction.report.date.date()
-    else:
-        last_reported = None
-
-    if last_reported and last_reported < start_date:
-        return 'ontime'
-    elif last_reported and start_date <= last_reported <= end_date:
-        return 'late'
+        return 'reporting'
     else:
         return 'nonreporting'
 
@@ -284,7 +270,10 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
             loc = SupplyPointCase.get(sp_id).location
             transactions = StockTransaction.objects.filter(
                 case_id=sp_id,
-                section_id=STOCK_SECTION_TYPE,
+            ).exclude(
+                report__date__lte=self.start_date
+            ).exclude(
+                report__date__gte=self.end_date
             )
 
             if transactions:
