@@ -1,13 +1,9 @@
-from django.core.management.base import BaseCommand, CommandError
-from optparse import make_option
+from django.core.management.base import BaseCommand
 from corehq.apps.locations.models import Location
 from dimagi.utils.couch.database import get_db
-import sys
 
 class Command(BaseCommand):
     args = 'loc_uuid'
-#    option_list = BaseCommand.option_list + (
-#         )
     help = 'DELETE a location, all its sub-locations, and all associated data'
 
     def handle(self, *args, **options):
@@ -38,14 +34,17 @@ class Command(BaseCommand):
 
         startkey = [loc.domain, loc._id]
         linked = self.db.view('locations/linked_docs', startkey=startkey, endkey=startkey + [{}], include_docs=True)
+        success = True
         for k in linked:
-            self.delete_doc(k['doc'], loc)
+            success = success and self.delete_doc(k['doc'], loc)
 
-        self.delete_doc(loc, loc)
+        if success:
+            self.db.delete_doc(loc)
+        else:
+            self.stderr.write('not deleting %s because there were errors' % loc._id)
 
     def delete_doc(self, doc, ref):
         id = doc['_id']
-
         def _get(field, default=None):
             try:
                 return doc[field]
@@ -64,8 +63,10 @@ class Command(BaseCommand):
 
         if domain and domain == ref.domain and path and path[:len(ref.path)] == ref.path:
             # DANGER!!
+            self.println('deleted %s (%s:%s)' %
+                (id, doc.get('doc_type', 'unknown type'), doc.get('name', 'unknown name'))
+            )
             self.db.delete_doc(id)
-            self.println('deleted %s' % id)
         else:
             self.stderr.write('sanity check failed (%s)!\n' % id)
         
