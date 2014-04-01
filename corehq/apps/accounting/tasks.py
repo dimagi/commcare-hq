@@ -47,15 +47,11 @@ def deactivate_subscriptions(based_on_date=None):
 
 
 @periodic_task(run_every=crontab(hour=13, minute=0, day_of_month='1'))
-def generate_invoices(based_on_date=None, as_test=False):
+def generate_invoices(based_on_date=None):
     """
     Generates all invoices for the past month.
     """
-
-    if not as_test:
-        today = based_on_date or datetime.date.today()
-    else:
-        today = based_on_date or datetime.date.today()
+    today = based_on_date or datetime.date.today()
     invoice_start, invoice_end = utils.get_previous_month_date_range(today)
     logger.info("[Billing] Starting up invoices for %(start)s - %(end)s" % {
         'start': invoice_start.strftime("%d %B %Y"),
