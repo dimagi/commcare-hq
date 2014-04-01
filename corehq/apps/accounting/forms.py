@@ -95,7 +95,7 @@ class BillingAccountBasicForm(forms.Form):
             crispy.Fieldset(
                 'Basic Information',
                 'name',
-                'emails',
+                crispy.Field('emails', css_class='input-xxlarge'),
                 'salesforce_account_id',
                 'currency',
             ),
