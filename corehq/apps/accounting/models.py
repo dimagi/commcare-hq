@@ -1210,8 +1210,13 @@ class InvoicePdf(SafeSaveDocument):
             pdf_data.name,
             invoice_number=invoice.invoice_number,
             to_address=Address(
-                name=("%s %s" %
-                      (contact_info.first_name, contact_info.last_name)),
+                name=(
+                    "%s %s" %
+                    (contact_info.first_name
+                     if contact_info.first_name is not None else "",
+                     contact_info.last_name
+                     if contact_info.last_name is not None else "")
+                ),
                 first_line=contact_info.first_line,
                 second_line=contact_info.second_line,
                 city=contact_info.city,
