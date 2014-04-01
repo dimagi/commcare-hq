@@ -110,15 +110,3 @@ class ConsumptionCalcTest(TestCase):
         self.assertAlmostEqual(consumption(tx, 60, {'min_periods': 3}), 44/15.)
         self.assertEqual(consumption(tx, 60, {'min_window': 16}), None)
         self.assertAlmostEqual(consumption(tx, 60, {'min_window': 15}), 44/15.)
-
-    def test_defaults(self):
-        tx = [
-            _tx('stockonhand', 25, 15),
-            _tx('stockonhand', 10, 10),
-
-        ]
-        self.assertEqual(consumption(tx, 60, {'min_periods': 4}), None)
-        self.assertEqual(
-            compute_consumption_from_transactions(tx, now, ConsumptionConfiguration(min_periods=4), lambda: 10.),
-            10.
-        )

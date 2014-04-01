@@ -1,7 +1,7 @@
 from collections import defaultdict
 import hashlib
 from couchdbkit import ResourceConflict
-from casexml.apps.stock.consumption import compute_consumption
+from casexml.apps.stock.consumption import compute_consumption_or_default
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.exceptions import BadStateException, RestoreException
@@ -92,8 +92,13 @@ class RestoreConfig(object):
             return entry_xml(trans.product_id, trans.stock_on_hand)
 
         def consumption_entry(case_id, product_id, section_id):
-            consumption_value = compute_consumption(case_id, product_id, datetime.utcnow(), section_id,
-                                                    self.stock_settings.consumption_config)
+            consumption_value = compute_consumption_or_default(
+                case_id,
+                product_id,
+                datetime.utcnow(),
+                section_id,
+                self.stock_settings.consumption_config
+            )
             if consumption_value is not None:
                 return entry_xml(product_id, consumption_value)
 

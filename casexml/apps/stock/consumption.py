@@ -58,17 +58,68 @@ def span_days(start, end):
     return span.days + span.seconds / 86400.
 
 
-def compute_consumption(case_id, product_id, window_end, section_id=const.SECTION_TYPE_STOCK,
+def compute_consumption(case_id,
+                        product_id,
+                        window_end,
+                        section_id=const.SECTION_TYPE_STOCK,
                         configuration=None):
+    """
+    Computes the consumption for a product at a supply point.
+
+    Can optionally pass a section_id, but by default the 'stock'
+    value is used for computation.
+
+    Returns None if there is insufficient history.
+    """
+
     configuration = configuration or ConsumptionConfiguration()
     window_start = window_end - timedelta(days=configuration.max_window)
-    transactions = get_transactions(case_id, product_id, section_id, window_start, window_end)
+    transactions = get_transactions(
+        case_id,
+        product_id,
+        section_id,
+        window_start,
+        window_end
+    )
 
-    # this is annoying but necessary unless we want to force case and product to be part
-    # of the consumption-by-transaction api
-    get_default_value = functools.partial(configuration.default_consumption_function, case_id, product_id)
     return compute_consumption_from_transactions(
-        transactions, window_start, configuration, get_default_value
+        transactions, window_start, configuration
+    )
+
+
+def compute_consumption_or_default(case_id,
+                                   product_id,
+                                   window_end,
+                                   section_id=const.SECTION_TYPE_STOCK,
+                                   configuration=None):
+    """
+    Used when it's not important to know if the consumption
+    value is real or just a default value
+    """
+    configuration = configuration or ConsumptionConfiguration()
+
+    consumption = compute_consumption(
+        case_id,
+        product_id,
+        window_end,
+        section_id,
+        configuration
+    )
+
+    if consumption:
+        return consumption
+    else:
+        return compute_default_consumption(
+            case_id,
+            product_id,
+            configuration
+        )
+
+
+def compute_default_consumption(case_id, product_id, configuration):
+    return configuration.default_consumption_function(
+        case_id,
+        product_id
     )
 
 
@@ -113,8 +164,7 @@ def get_transactions(case_id, product_id, section_id, window_start, window_end):
         yield _to_consumption_tx(db_tx)
 
 
-def compute_consumption_from_transactions(transactions, window_start, configuration=None,
-                                          get_default_value=lambda: None):
+def compute_consumption_from_transactions(transactions, window_start, configuration=None):
     configuration = configuration or ConsumptionConfiguration()
 
     class ConsumptionPeriod(object):
@@ -176,6 +226,6 @@ def compute_consumption_from_transactions(transactions, window_start, configurat
 
     # check minimum statistical significance thresholds
     if len(periods) < configuration.min_periods or total_length < configuration.min_window:
-        return get_default_value()
+        return None
 
-    return total_consumption / float(total_length) if total_length else get_default_value()
+    return total_consumption / float(total_length) if total_length else None
