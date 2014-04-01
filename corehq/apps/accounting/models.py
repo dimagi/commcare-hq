@@ -1176,16 +1176,15 @@ class BillingRecord(models.Model):
             context['can_view_statement'] = can_view_statement
             email_html = render_to_string('accounting/invoice_email.html', context)
             email_plaintext = render_to_string('accounting/invoice_email_plaintext.html', context)
-            if toggles.ACCOUNTING_PREVIEW.enabled(email):
-                send_HTML_email(
-                    title, email, email_html,
-                    text_content=email_plaintext,
-                    email_from="Dimagi %(product)s Accounts <%(email)s>" % {
-                        'product': self.invoice.subscription.plan_version.core_product,
-                        'email': settings.INVOICING_CONTACT_EMAIL,
-                    },
-                    file_attachments=[pdf_attachment]
-                )
+            send_HTML_email(
+                title, email, email_html,
+                text_content=email_plaintext,
+                email_from="Dimagi %(product)s Accounts <%(email)s>" % {
+                    'product': self.invoice.subscription.plan_version.core_product,
+                    'email': settings.INVOICING_CONTACT_EMAIL,
+                },
+                file_attachments=[pdf_attachment]
+            )
         self.emailed_to = ",".join(contact_emails)
         self.save()
         logger.info(

@@ -741,7 +741,6 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
     def post(self, *args, **kwargs):
         return self.paginate_crud_response
 
-    @method_decorator(toggles.ACCOUNTING_PREVIEW.required_decorator())
     def dispatch(self, request, *args, **kwargs):
         if self.account is None:
             raise Http404()
@@ -753,7 +752,6 @@ class BillingStatementPdfView(View):
 
     @method_decorator(login_and_domain_required)
     @method_decorator(require_billing_admin())
-    @method_decorator(toggles.ACCOUNTING_PREVIEW.required_decorator())
     def dispatch(self, request, *args, **kwargs):
         return super(BillingStatementPdfView, self).dispatch(request, *args, **kwargs)
 
