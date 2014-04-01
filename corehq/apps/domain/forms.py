@@ -433,8 +433,8 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         initial=None,
         required=False,
         choices=(
-            ('stars', _('Latest starred build')),
-            ('nostars', _('Every build (not recommended)')),
+            ('stars', _('Latest starred version')),
+            ('nostars', _('Every version (not recommended)')),
         ),
         help_text=_("Choose whether CloudCare should use the latest "
                     "starred build or every build in your application.")
