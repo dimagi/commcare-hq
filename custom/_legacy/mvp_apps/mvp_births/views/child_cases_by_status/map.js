@@ -3,21 +3,11 @@ function (doc) {
     if (isChildCase(doc)) {
 
         function delivered_infacility(place, extra_no) {
-            var i = 0,
-                result,
-                arr = [];
+            var arr = ["hospital", "facility", "centre", "clinic", "yes"];
             if (extra_no) {
-                arr = ["hospital", "facility", "centre", "clinic", "no", "yes"];
-            } else {
-                arr = ["hospital", "facility", "centre", "clinic", "yes"];
+                arr.push("no");
             }
-            for (i; i < arr.length; i++) {
-                result = arr[i];
-                if (place.indexOf(result) >= 0) {
-                    return true;
-                }
-            }
-            return false;
+            return place && (arr.indexOf(place.trim()) >= 0);
         }
 
         var indicator_entries_open = {},
