@@ -16,7 +16,9 @@
 
 {% block js-inline %}{{ block.super }}
     <script>
-        var billingInfoHandler = new BillingContactInfoHandler(null);
+        var billingInfoHandler = new BillingContactInfoHandler(
+            '{% trans "Please enter a valid email." %}'
+        );
         billingInfoHandler.init();
     </script>
 {% endblock %}
