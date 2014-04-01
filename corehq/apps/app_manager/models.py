@@ -2939,7 +2939,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         try:
             module = self.get_module_by_unique_id(module_unique_id)
             form = self.get_form(form_unique_id)
-        except ModuleNotFoundException, FormNotFoundException:
+        except (ModuleNotFoundException, FormNotFoundException):
             return None
 
         record = DeleteFormRecord(
