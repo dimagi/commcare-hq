@@ -349,6 +349,17 @@ class StockRestoreConfig(DocumentSchema):
     force_consumption_case_types = ListProperty()
     use_dynamic_product_list = BooleanProperty(default=False)
 
+    @classmethod
+    def wrap(cls, obj):
+        # todo: remove this cruft at some point
+        if 'force_to_consumption_case_types' in obj:
+            realval = obj['force_to_consumption_case_types']
+            oldval = obj.get('force_consumption_case_types')
+            if realval and not oldval:
+                obj['force_consumption_case_types'] = realval
+                del obj['force_to_consumption_case_types']
+        return super(StockRestoreConfig, cls).wrap(obj)
+
 
 class CommtrackConfig(Document):
     domain = StringProperty()
