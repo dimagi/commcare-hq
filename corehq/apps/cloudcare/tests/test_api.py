@@ -1,4 +1,4 @@
-from django.utils.unittest.case import TestCase
+from django.test import TestCase
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import post_case_blocks
@@ -185,10 +185,11 @@ class CaseAPITest(TestCase):
         list = get_filtered_cases(self.domain, user_id=self.test_user_id, status=CASE_STATUS_ALL,
                                   footprint=True,
                                   filters={"properties/case_name": name})
-        self.assertEqual(2, len(list))
-        # make sure at least one doesn't actually have the right property
-        # but was included in the footprint
-        self.assertEqual(1, len([c for c in list if c['properties']['case_name'] != name]))
+        # when filtering with footprint, the filters get intentionally ignored
+        # so just ensure the whole footprint including open and closed is available
+        self.assertEqual(self.expectedOpenByUserWithFootprint + self.expectedClosedByUserWithFootprint, len(list))
+
+
 def _child_case_type(type):
     return "%s-child" % type
 

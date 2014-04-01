@@ -179,7 +179,7 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
         q["query"]["filtered"]["query"] = query if query else {"match_all": {}}
 
 
-    if fields:
+    if fields is not None:
         q["fields"] = q.get("fields", [])
         q["fields"].extend(fields)
 

@@ -281,11 +281,11 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
             DataTablesColumn(_("# Mobile Workers (Submitted Form)"), sort_type=DTSortType.NUMERIC,
                              prop_name="cp_n_users_submitted_form"),
             DataTablesColumn(_("# Cases in last 60"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_60_day_cases",
-                help_text=_("The number of cases modified in the last 60 days")),
+                help_text=_("The number of *currently open* cases created or updated in the last 60 days")),
             DataTablesColumn(_("# Active Cases"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_active_cases",
-                help_text=_("The number of cases modified in the last 120 days")),
+                help_text=_("The number of *currently open* cases created or updated in the last 120 days")),
             DataTablesColumn(_("# Inactive Cases"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_inactive_cases",
-                help_text=_("The number of open cases not modified in the last 120 days")),
+                help_text=_("The number of open cases not created or updated in the last 120 days")),
             DataTablesColumn(_("# Cases"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_cases"),
             DataTablesColumn(_("# Form Submissions"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_forms"),
             DataTablesColumn(_("First Form Submission"), prop_name="cp_first_form"),
@@ -296,7 +296,8 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
             DataTablesColumn(_("Project State"), prop_name="internal.project_state"),
             DataTablesColumn(_("Using ADM?"), prop_name="internal.using_adm"),
             DataTablesColumn(_("Using Call Center?"), prop_name="internal.using_call_center"),
-            DataTablesColumn(_("Date Last Updated"), prop_name="cp_last_updated"),
+            DataTablesColumn(_("Date Last Updated"), prop_name="cp_last_updated",
+                help_text=_("The time when these indicators were last calculated")),
         )
         return headers
 

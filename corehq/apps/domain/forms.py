@@ -1,3 +1,4 @@
+import copy
 import logging
 from urlparse import urlparse, parse_qs
 import dateutil
@@ -5,6 +6,8 @@ import re
 import io
 from PIL import Image
 import uuid
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 import settings
 
@@ -15,7 +18,7 @@ from crispy_forms import layout as crispy
 from django.core.urlresolvers import reverse
 
 from django.forms.fields import (ChoiceField, CharField, BooleanField,
-    ImageField)
+    ImageField, DecimalField, IntegerField)
 from django.forms.widgets import  Select
 from django.utils.encoding import smart_str
 from django.contrib.auth.forms import PasswordResetForm
@@ -25,7 +28,7 @@ from corehq.apps.accounting.models import BillingContactInfo, BillingAccountAdmi
 from corehq.apps.app_manager.models import Application, FormBase
 
 from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
-    AREA_CHOICES, SUB_AREA_CHOICES)
+    AREA_CHOICES, SUB_AREA_CHOICES, Domain)
 from corehq.apps.reminders.models import CaseReminderHandler
 
 from corehq.apps.users.models import WebUser, CommCareUser
@@ -425,6 +428,17 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
                     "mobile workers. To use, all of your deployed applications "
                     "must be using secure submissions."),
     )
+    cloudcare_releases = ChoiceField(
+        label=_("CloudCare should use"),
+        initial=None,
+        required=False,
+        choices=(
+            ('stars', _('Latest starred version')),
+            ('nostars', _('Every version (not recommended)')),
+        ),
+        help_text=_("Choose whether CloudCare should use the latest "
+                    "starred build or every build in your application.")
+    )
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
@@ -438,6 +452,12 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
 
         if not (user and user.is_staff):
             self.fields['restrict_superusers'].widget = forms.HiddenInput()
+
+        project = Domain.get_by_name(domain)
+        if project.cloudcare_releases == 'default' or not domain_has_privilege(domain, privileges.CLOUDCARE):
+            # if the cloudcare_releases flag was just defaulted, don't bother showing
+            # this setting at all
+            self.fields['cloudcare_releases'].widget = forms.HiddenInput()
 
         if domain is not None:
             groups = Group.get_case_sharing_groups(domain)
@@ -502,6 +522,7 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
                 domain.call_center_config.case_type = self.cleaned_data.get('call_center_case_type', None)
             domain.restrict_superusers = self.cleaned_data.get('restrict_superusers', False)
             domain.ota_restore_caching = self.cleaned_data.get('ota_restore_caching', False)
+            domain.cloudcare_releases = self.cleaned_data.get('cloudcare_releases')
             domain.secure_submissions = self.cleaned_data.get('secure_submissions', False)
             domain.save()
             return True
@@ -562,6 +583,8 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                                          choices=tuple_of_copies(["java", "android", "cloudcare"], blank=False), required=False)
     phone_model = CharField(label=ugettext_noop("Phone Model"), required=False)
     project_manager = CharField(label=ugettext_noop("Project Manager's Email"), required=False)
+    goal_time_period = IntegerField(label=ugettext_noop("Goal time period (in days)"), required=False)
+    goal_followup_rate = DecimalField(label=ugettext_noop("Goal followup rate (percentage in decimal format. e.g. 70% is .7)"), required=False)
 
     def save(self, domain):
         kw = {"workshop_region": self.cleaned_data["workshop_region"]} if self.cleaned_data["workshop_region"] else {}
@@ -583,6 +606,8 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             platform=self.cleaned_data['platform'],
             project_manager=self.cleaned_data['project_manager'],
             phone_model=self.cleaned_data['phone_model'],
+            goal_time_period=self.cleaned_data['goal_time_period'],
+            goal_followup_rate=self.cleaned_data['goal_followup_rate'],
             **kw
         )
 
@@ -618,9 +643,12 @@ class EditBillingAccountInfoForm(forms.ModelForm):
     billing_admins = forms.CharField(
         required=False,
         label=ugettext_noop("Other Billing Admins"),
-        help_text=ugettext_noop(mark_safe("<p>These are the Web Users that will be able to access and modify your "
-                                "subscription and billing information. They will also receive billing-related "
-                                "emails from Dimagi.</p> <p>Your account is already a Billing Administrator.</p>")),
+        help_text=ugettext_noop(mark_safe(
+            "<p>These are the Web Users that will be able to access and "
+            "modify your account's subscription and billing information.</p> "
+            "<p>Your logged in account is already a Billing Administrator."
+            "</p>"
+        )),
     )
 
     class Meta:
@@ -646,7 +674,8 @@ class EditBillingAccountInfoForm(forms.ModelForm):
 
         super(EditBillingAccountInfoForm, self).__init__(data, *args, **kwargs)
 
-        other_admins = self.account.billing_admins.exclude(web_user=self.creating_user).all()
+        other_admins = self.account.billing_admins.filter(
+            domain=self.domain).exclude(web_user=self.creating_user).all()
         self.fields['billing_admins'].initial = ','.join([o.web_user for o in other_admins])
 
         self.helper = FormHelper()
@@ -690,10 +719,12 @@ class EditBillingAccountInfoForm(forms.ModelForm):
         for admin in all_admins:
             if admin and admin != u'':
                 result.append(BillingAccountAdmin.objects.get_or_create(
-                    web_user=admin
+                    web_user=admin,
+                    domain=self.domain,
                 )[0])
         result.append(BillingAccountAdmin.objects.get_or_create(
-            web_user=self.creating_user
+            web_user=self.creating_user,
+            domain=self.domain,
         )[0])
         return result
 
@@ -716,10 +747,13 @@ class EditBillingAccountInfoForm(forms.ModelForm):
         billing_contact_info.save()
 
         billing_admins = self.cleaned_data['billing_admins']
+        other_domain_admins = copy.copy(self.account.billing_admins.exclude(
+            domain=self.domain).all())
         self.account.billing_admins.clear()
+        for other_admin in other_domain_admins:
+            self.account.billing_admins.add(other_admin)
         for admin in billing_admins:
-            if not self.account.billing_admins.filter(web_user=admin.web_user).exists():
-                self.account.billing_admins.add(admin)
+            self.account.billing_admins.add(admin)
         self.account.save()
         return True
 
@@ -816,9 +850,12 @@ class ProBonoForm(forms.Form):
                                                       "12 months at a time. After 12 months "
                                                       "groups must reapply to renew their "
                                                       "pro-bono subscription."))
+    domain = forms.CharField(label=_("Project Space"))
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, use_domain_field, *args, **kwargs):
         super(ProBonoForm, self).__init__(*args, **kwargs)
+        if not use_domain_field:
+            self.fields['domain'].required = False
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
         self.helper.layout = crispy.Layout(
@@ -826,6 +863,10 @@ class ProBonoForm(forms.Form):
             _('Pro-Bono Application'),
                 'contact_email',
                 'organization',
+                crispy.Div(
+                    'domain',
+                    style=('' if use_domain_field else 'display:none'),
+                ),
                 'project_overview',
                 'pay_only_features_needed',
                 'duration_of_project',

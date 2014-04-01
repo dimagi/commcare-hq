@@ -817,8 +817,6 @@ class ProjectUsersTab(UITab):
                       'urlname': 'add_commcare_account'},
                      {'title': _('Bulk Upload'),
                       'urlname': 'upload_commcare_users'},
-                     {'title': _('Transfer Mobile Workers'),
-                      'urlname': 'user_domain_transfer'},
                      {'title': ConfirmBillingAccountForExtraUsersView.page_title,
                       'urlname': ConfirmBillingAccountForExtraUsersView.urlname},
                  ]},
@@ -1004,9 +1002,7 @@ class ProjectSettingsTab(UITab):
                             'url': reverse(EditExistingBillingAccountView.urlname, args=[self.domain]),
                         },
                     )
-                if ((toggles.ACCOUNTING_PREVIEW.enabled(self.couch_user.username)
-                     or toggles.ACCOUNTING_PREVIEW.enabled(self.domain))
-                    and billing_account is not None
+                if (billing_account is not None
                     and Invoice.exists_for_domain(self.domain)
                 ):
                     subscription.append(
@@ -1161,12 +1157,18 @@ class AccountingTab(UITab):
         items = super(AccountingTab, self).sidebar_items
 
         if toggles.INVOICE_TRIGGER.enabled(self.couch_user.username):
-            from corehq.apps.accounting.views import TriggerInvoiceView
+            from corehq.apps.accounting.views import (
+                TriggerInvoiceView, TriggerBookkeeperEmailView
+            )
             items.append(('Other Actions', (
                 {
                     'title': TriggerInvoiceView.page_title,
                     'url': reverse(TriggerInvoiceView.urlname),
                 },
+                {
+                    'title': TriggerBookkeeperEmailView.page_title,
+                    'url': reverse(TriggerBookkeeperEmailView.urlname),
+                }
             )))
         return items
 
@@ -1299,9 +1301,9 @@ class OrgReportTab(OrgTab):
     def dropdown_items(self):
         return [
             format_submenu_context(_("Projects Table"), url=reverse("orgs_report", args=(self.org.name,))),
-            format_submenu_context(_("Visualize Forms"), url=reverse("orgs_stats", args=(self.org.name, "forms"))),
-            format_submenu_context(_("Visualize Cases"), url=reverse("orgs_stats", args=(self.org.name, "cases"))),
-            format_submenu_context(_("Visualize Users"), url=reverse("orgs_stats", args=(self.org.name, "users"))),
+            format_submenu_context(_("Form Data"), url=reverse("orgs_stats", args=(self.org.name, "forms"))),
+            format_submenu_context(_("Case Data"), url=reverse("orgs_stats", args=(self.org.name, "cases"))),
+            format_submenu_context(_("User Data"), url=reverse("orgs_stats", args=(self.org.name, "users"))),
         ]
 
 class OrgSettingsTab(OrgTab):

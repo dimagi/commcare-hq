@@ -57,7 +57,8 @@ var HQVisualizations = function (options) {
                 self.loadChartData(update_active_chart, startdate, enddate);
 
                 if (self.should_update_url) {
-                    var new_url = "?datefield=" + datefield + "interval=" + self.interval + "&startdate=" + startdate + "&enddate=" + enddate + window.location.hash;
+                    datefield = datefield || "";
+                    var new_url = "?datefield=" + datefield + "&interval=" + self.interval + "&startdate=" + startdate + "&enddate=" + enddate + window.location.hash;
                     History.pushState(null, "Reloaded Chart", new_url);
 
                     // keep the urls for the other data visualizations consistent with this datespan

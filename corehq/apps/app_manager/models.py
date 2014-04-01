@@ -2099,7 +2099,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
     admin_password_charset = StringProperty(choices=['a', 'n', 'x'], default='n')
 
     # This is here instead of in Application because it needs to be available in stub representation
-    application_version = StringProperty(default=APP_V1, choices=[APP_V1, APP_V2], required=False)
+    application_version = StringProperty(default=APP_V2, choices=[APP_V1, APP_V2], required=False)
 
     langs = StringListProperty()
     # only the languages that go in the build
@@ -2591,7 +2591,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     profile = DictProperty()
     use_custom_suite = BooleanProperty(default=False)
     cloudcare_enabled = BooleanProperty(default=False)
-    translation_strategy = StringProperty(default='dump-known',
+    translation_strategy = StringProperty(default='select-known',
                                           choices=app_strings.CHOICES.keys())
     commtrack_enabled = BooleanProperty(default=False)
     commtrack_requisition_mode = StringProperty(choices=CT_REQUISITION_MODES)
@@ -3041,9 +3041,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             xmlns_map[form.xmlns].append(form)
         return xmlns_map
 
-    def get_questions(self, xmlns):
+    def get_form_by_xmlns(self, xmlns):
         if xmlns == "http://code.javarosa.org/devicereport":
-            return []
+            return None
         forms = self.get_xmlns_map()[xmlns]
         if len(forms) != 1:
             logging.error('App %s in domain %s has %s forms with xmlns %s' % (
@@ -3052,9 +3052,15 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 len(forms),
                 xmlns,
             ))
-            return []
+            return None
         else:
             form, = forms
+        return form
+
+    def get_questions(self, xmlns):
+        form = self.get_form_by_xmlns(xmlns)
+        if not form:
+            return []
         return form.get_questions(self.langs)
 
     def validate_app(self):

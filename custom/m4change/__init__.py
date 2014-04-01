@@ -10,6 +10,9 @@ CUSTOM_REPORTS = (
         project_indicators_report.ProjectIndicatorsReport,
         aggregate_facility_web_hmis_report.AggregateFacilityWebHmisReport,
         mcct_project_review.McctProjectReview,
+        mcct_project_review.McctClientApprovalPage,
+        mcct_project_review.McctClientPaymentPage,
+        mcct_project_review.McctRejectedClientPage,
         mcct_monthly_aggregate_report.McctMonthlyAggregateReport
     )),
 )

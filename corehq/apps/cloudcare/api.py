@@ -117,7 +117,7 @@ class CaseAPIHelper(object):
         else:
             base_results = [CaseAPIResult(id=id, id_only=True) for id in case_id_list]
 
-        if self.filters:
+        if self.filters and not self.footprint:
             base_results = filter(_filter, base_results)
 
         link_locations(base_results)
@@ -355,8 +355,8 @@ def look_up_app_json(domain, app_id):
 
 def get_cloudcare_app(domain, app_name):
     apps = get_cloudcare_apps(domain)
-    app = filter(lambda x: x['name'] == app_name, apps)[0]
+    app = filter(lambda x: x['name'] == app_name, apps)
     if app:
-        return look_up_app_json(domain, app['_id'])
+        return look_up_app_json(domain, app[0]['_id'])
     else:
         raise ResourceNotFound(_("Not found application by name: %s") % app_name)

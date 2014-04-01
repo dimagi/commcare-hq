@@ -266,13 +266,13 @@ var insertLinebreaks = function (d) {
 };
 
 function formatDataForLineGraph(data) {
-    var starting_time = Infinity, ending_time = 0;
+    var starting_time = 0, ending_time = Infinity;
     ends = findEnds(data, starting_time, ending_time);
     starting_time = ends.start, ending_time = ends.end;
     if (starting_time === Infinity) {
         starting_time = undefined, ending_time = undefined;
     }
-    data = format_data(data, starting_time, ending_time, INTERVAL_VALUES.day, true);
+    data = format_data(data, starting_time, ending_time, 'day', true);
     return _.map(data, function (datum) {
         var ret = {"key": datum.key, "values": []};
         for (var i = 0; i < datum.values.length; i++) {

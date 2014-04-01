@@ -655,6 +655,12 @@ class FormExportSchema(HQExportSchema):
     def get_default_order(self):
         return {'#': self.question_order}
 
+    def uses_cases(self):
+        form = self.app.get_form_by_xmlns(self.xmlns)
+        if form:
+            return bool(form.active_actions())
+        return False
+
 
 class FormDeidExportSchema(FormExportSchema):
 

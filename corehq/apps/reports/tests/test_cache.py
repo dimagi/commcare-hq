@@ -1,6 +1,6 @@
 import uuid
 from django.http import HttpRequest
-from django.utils.unittest.case import TestCase
+from django.test import TestCase
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.reports.cache import CacheableRequestMixIn, request_cache
 from corehq.apps.users.models import WebUser

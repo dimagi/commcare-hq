@@ -1,36 +1,44 @@
 import json
-import datetime
 
 from django.conf import settings
 from django.contrib import messages
 from django.forms.forms import NON_FIELD_ERRORS
 from django.forms.util import ErrorList
-from django.utils import translation
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest
 from django.utils.decorators import method_decorator
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
+from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.util.translation import localize
 
 from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.accounting.forms import (
-    BillingAccountForm, CreditForm, SubscriptionForm, CancelForm,
+    BillingAccountBasicForm, BillingAccountContactForm, CreditForm,
+    SubscriptionForm, CancelForm,
     PlanInformationForm, SoftwarePlanVersionForm, FeatureRateForm,
-    ProductRateForm, TriggerInvoiceForm
+    ProductRateForm, TriggerInvoiceForm, InvoiceInfoForm, AdjustBalanceForm,
+    ResendEmailForm, ChangeSubscriptionForm, TriggerBookkeeperEmailForm,
 )
-from corehq.apps.accounting.exceptions import NewSubscriptionError, InvoiceError, CreditLineError
-from corehq.apps.accounting.interface import AccountingInterface, SubscriptionInterface, SoftwarePlanInterface
-from corehq.apps.accounting.models import (SoftwareProductType, Invoice, BillingAccount, CreditLine, Subscription,
-                                           SoftwarePlanVersion, SoftwarePlan)
+from corehq.apps.accounting.exceptions import (
+    NewSubscriptionError, InvoiceError, CreditLineError
+)
+from corehq.apps.accounting.interface import (
+    AccountingInterface, SubscriptionInterface, SoftwarePlanInterface,
+    InvoiceInterface
+)
 from corehq.apps.accounting.async_handlers import (
     FeatureRateAsyncHandler, Select2RateAsyncHandler,
     SoftwareProductRateAsyncHandler, Select2BillingInfoHandler,
     Select2SubscriptionInfoHandler, Select2InvoiceTriggerHandler,
 )
+from corehq.apps.accounting.models import (
+    SoftwareProductType, Invoice, BillingAccount, CreditLine, Subscription,
+    SoftwarePlanVersion, SoftwarePlan, CreditAdjustment
+)
 from corehq.apps.accounting.user_text import PricingTable
 from corehq.apps.accounting.utils import (
-    LazyEncoder, fmt_feature_rate_dict, fmt_product_rate_dict,
+    fmt_feature_rate_dict, fmt_product_rate_dict,
     has_subscription_already_ended
 )
 from corehq.apps.hqwebapp.views import BaseSectionPageView
@@ -73,13 +81,13 @@ class NewBillingAccountView(BillingAccountsSectionView):
     @memoized
     def account_form(self):
         if self.request.method == 'POST':
-            return BillingAccountForm(None, self.request.POST)
-        return BillingAccountForm(None)
+            return BillingAccountBasicForm(None, self.request.POST)
+        return BillingAccountBasicForm(None)
 
     @property
     def page_context(self):
         return {
-            'form': self.account_form,
+            'basic_form': self.account_form,
         }
 
     @property
@@ -109,15 +117,25 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
 
     @property
     @memoized
-    def account_form(self):
-        if self.request.method == 'POST' and 'account' in self.request.POST:
-            return BillingAccountForm(self.account, self.request.POST)
-        return BillingAccountForm(self.account)
+    def basic_account_form(self):
+        if (self.request.method == 'POST'
+                and 'account_basic' in self.request.POST):
+            return BillingAccountBasicForm(self.account, self.request.POST)
+        return BillingAccountBasicForm(self.account)
+
+    @property
+    @memoized
+    def contact_form(self):
+        if (self.request.method == 'POST'
+                and 'account_contact' in self.request.POST):
+            return BillingAccountContactForm(self.account, self.request.POST)
+        return BillingAccountContactForm(self.account)
 
     @property
     @memoized
     def credit_form(self):
-        if self.request.method == 'POST' and 'adjust_credit' in self.request.POST:
+        if (self.request.method == 'POST'
+                and 'adjust_credit' in self.request.POST):
             return CreditForm(self.account, None, self.request.POST)
         return CreditForm(self.account, None)
 
@@ -127,7 +145,8 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
             'account': self.account,
             'credit_form': self.credit_form,
             'credit_list': CreditLine.objects.filter(account=self.account),
-            'form': self.account_form,
+            'basic_form': self.basic_account_form,
+            'contact_form': self.contact_form,
             'subscription_list': [
                 (sub, Invoice.objects.filter(subscription=sub).latest('date_due').date_due # TODO - check query
                       if len(Invoice.objects.filter(subscription=sub)) != 0 else 'None on record',
@@ -142,9 +161,16 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:
             return self.async_response
-        if 'account' in self.request.POST and self.account_form.is_valid():
-            self.account_form.update_account_and_contacts(self.account)
-        elif 'adjust_credit' in self.request.POST and self.credit_form.is_valid():
+        if ('account_basic' in self.request.POST
+                and self.basic_account_form.is_valid()):
+            self.basic_account_form.update_basic_info(self.account)
+            return HttpResponseRedirect(self.page_url)
+        elif ('account_contact' in self.request.POST
+              and self.contact_form.is_valid()):
+            self.contact_form.update_contact_info(self.account)
+            return HttpResponseRedirect(self.page_url)
+        elif ('adjust_credit' in self.request.POST
+              and self.credit_form.is_valid()):
             if self.credit_form.adjust_credit():
                 return HttpResponseRedirect(self.page_url)
 
@@ -168,8 +194,11 @@ class NewSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
     @memoized
     def subscription_form(self):
         if self.request.method == 'POST':
-            return SubscriptionForm(None, self.account_id, self.request.POST)
-        return SubscriptionForm(None, self.account_id)
+            return SubscriptionForm(
+                None, self.account_id, self.request.user.username,
+                self.request.POST
+            )
+        return SubscriptionForm(None, self.account_id, None)
 
     @property
     def page_context(self):
@@ -216,10 +245,13 @@ class NewSubscriptionViewNoDefaultDomain(NewSubscriptionView):
         return reverse(self.urlname)
 
 
-class EditSubscriptionView(AccountingSectionView):
+class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
     page_title = 'Edit Subscription'
     template_name = 'accounting/subscriptions.html'
     urlname = 'edit_subscription'
+    async_handlers = [
+        Select2SubscriptionInfoHandler,
+    ]
 
     @property
     @memoized
@@ -235,8 +267,23 @@ class EditSubscriptionView(AccountingSectionView):
     @memoized
     def subscription_form(self):
         if self.request.method == 'POST' and 'set_subscription' in self.request.POST:
-            return SubscriptionForm(self.subscription, None, self.request.POST)
-        return SubscriptionForm(self.subscription, None)
+            return SubscriptionForm(
+                self.subscription, None, self.request.user.username,
+                self.request.POST
+            )
+        return SubscriptionForm(self.subscription, None, None)
+
+    @property
+    @memoized
+    def change_subscription_form(self):
+        if (self.request.method == 'POST'
+           and 'subscription_change_note' in self.request.POST):
+            return ChangeSubscriptionForm(
+                self.subscription, self.request.user.username,
+                self.request.POST
+            )
+        return ChangeSubscriptionForm(self.subscription,
+                                      self.request.user.username)
 
     @property
     @memoized
@@ -247,10 +294,20 @@ class EditSubscriptionView(AccountingSectionView):
         return CreditForm(self.subscription.account, self.subscription)
 
     @property
+    @memoized
+    def cancel_form(self):
+        if (self.request.method == 'POST'
+            and 'cancel_subscription' in self.request.POST):
+            return CancelForm(self.request.POST)
+        return CancelForm()
+
+    @property
     def page_context(self):
         return {
-            'cancel_form': CancelForm(),
+            'cancel_form': self.cancel_form,
             'credit_form': self.credit_form,
+            'can_change_subscription': self.subscription.is_active,
+            'change_subscription_form': self.change_subscription_form,
             'credit_list': CreditLine.objects.filter(subscription=self.subscription),
             'disable_cancel': has_subscription_already_ended(self.subscription),
             'form': self.subscription_form,
@@ -260,7 +317,7 @@ class EditSubscriptionView(AccountingSectionView):
 
     @property
     def page_url(self):
-        return reverse(self.urlname, args=(self.args[0],))
+        return reverse(self.urlname, args=(self.subscription_id,))
 
     @property
     def parent_pages(self):
@@ -270,20 +327,33 @@ class EditSubscriptionView(AccountingSectionView):
         }]
 
     def post(self, request, *args, **kwargs):
+        if self.async_response is not None:
+            return self.async_response
         if 'set_subscription' in self.request.POST and self.subscription_form.is_valid():
-            new_subscription = self.subscription_form.update_subscription(self.subscription)
-            return HttpResponseRedirect(
-                reverse(self.urlname, args=(unicode(new_subscription.id)))
-            )
+            self.subscription_form.update_subscription()
+            return HttpResponseRedirect(self.page_url)
         elif 'adjust_credit' in self.request.POST and self.credit_form.is_valid():
             if self.credit_form.adjust_credit():
                 return HttpResponseRedirect(self.page_url)
-        elif 'cancel_subscription' in self.request.POST:
+        elif ('cancel_subscription' in self.request.POST
+              and self.cancel_form.is_valid()):
             self.cancel_subscription()
+        elif ('subscription_change_note' in self.request.POST
+              and self.change_subscription_form.is_valid()
+        ):
+            try:
+                new_sub = self.change_subscription_form.change_subscription()
+                return HttpResponseRedirect(reverse(self.urlname, args=[new_sub.id]))
+            except Exception as e:
+                messages.error(request,
+                               "Could not change subscription due to: %s" % e)
         return self.get(request, *args, **kwargs)
 
     def cancel_subscription(self):
-        self.subscription.cancel_subscription()
+        self.subscription.cancel_subscription(
+            note=self.cancel_form.cleaned_data['note'],
+            web_user=self.request.user.username,
+        )
         self.subscription_canceled = True
 
 
@@ -438,6 +508,42 @@ class TriggerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
         return self.get(request, *args, **kwargs)
 
 
+class TriggerBookkeeperEmailView(AccountingSectionView, AsyncHandlerMixin):
+    urlname = 'accounting_trigger_bookkeeper_email'
+    page_title = "Trigger Bookkeeper Email"
+    template_name = 'accounting/trigger_bookkeeper.html'
+
+    @method_decorator(toggles.INVOICE_TRIGGER.required_decorator())
+    def dispatch(self, request, *args, **kwargs):
+        return super(TriggerBookkeeperEmailView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    @memoized
+    def trigger_email_form(self):
+        if self.request.method == 'POST':
+            return TriggerBookkeeperEmailForm(self.request.POST)
+        return TriggerBookkeeperEmailForm()
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname)
+
+    @property
+    def page_context(self):
+        return {
+            'trigger_email_form': self.trigger_email_form,
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.async_response is not None:
+            return self.async_response
+        if self.trigger_email_form.is_valid():
+            self.trigger_email_form.trigger_email()
+            messages.success(request, "Sent the Bookkeeper email!")
+            return HttpResponseRedirect(reverse(self.urlname))
+        return self.get(request, *args, **kwargs)
+
+
 def pricing_table_json(request, product, locale):
     if product not in [c[0] for c in SoftwareProductType.CHOICES]:
         return HttpResponseBadRequest("Not a valid product")
@@ -461,3 +567,84 @@ def pricing_table_json(request, product, locale):
     response["Access-Control-Max-Age"] = "1000"
     response["Access-Control-Allow-Headers"] = "*"
     return response
+
+
+class InvoiceSummaryView(AccountingSectionView):
+    template_name = 'accounting/invoice.html'
+    urlname = 'invoice_summary'
+
+    @property
+    @memoized
+    def invoice(self):
+        return Invoice.objects.get(id=self.args[0])
+
+    @property
+    def page_title(self):
+        return "Invoice #%s" % self.invoice.invoice_number
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=self.args)
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': InvoiceInterface.name,
+            'url': InvoiceInterface.get_url(),
+        }]
+
+    @property
+    @memoized
+    def adjust_balance_form(self):
+        if self.request.method == 'POST':
+            return AdjustBalanceForm(self.invoice, self.request.POST)
+        return AdjustBalanceForm(self.invoice)
+
+    @property
+    @memoized
+    def adjustment_list(self):
+        adjustment_list = CreditAdjustment.objects.filter(invoice=self.invoice)
+        return adjustment_list.order_by('-date_created')
+
+    @property
+    @memoized
+    def billing_records(self):
+        return self.invoice.billingrecord_set.all()
+
+    @property
+    @memoized
+    def invoice_info_form(self):
+        return InvoiceInfoForm(self.invoice)
+
+    @property
+    @memoized
+    def resend_email_form(self):
+        if self.request.method == 'POST':
+            return ResendEmailForm(self.invoice, self.request.POST)
+        return ResendEmailForm(self.invoice)
+
+    @property
+    def page_context(self):
+        return {
+            'adjust_balance_form': self.adjust_balance_form,
+            'adjustment_list': self.adjustment_list,
+            'billing_records': self.billing_records,
+            'invoice_info_form': self.invoice_info_form,
+            'resend_email_form': self.resend_email_form,
+            'can_send_email': not self.invoice.subscription.do_not_invoice,
+        }
+
+    def post(self, request, *args, **kwargs):
+        if 'adjust_balance' in self.request.POST:
+            if self.adjust_balance_form.is_valid():
+                self.adjust_balance_form.adjust_balance()
+                return HttpResponseRedirect(self.page_url)
+        elif 'resend_email' in self.request.POST:
+            if self.resend_email_form.is_valid():
+                try:
+                    self.resend_email_form.resend_email()
+                    return HttpResponseRedirect(self.page_url)
+                except Exception as e:
+                    messages.error(request,
+                                   "Could not send emails due to: %s" % e)
+        return self.get(request, *args, **kwargs)

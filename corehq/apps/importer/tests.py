@@ -32,6 +32,9 @@ def default_row_generator(excel_file, index):
     # by default, just return [propertyname-rowid] for every cell
     return ['{col}-{row}'.format(row=index, col=col) for col in excel_file.header_columns]
 
+def blank_row_generator(excel_file, index):
+    return [''.format(row=index, col=col) for col in excel_file.header_columns]
+
 def id_match_generator(id):
     def match(excel_file, index):
         return [id] + ['{col}-{row}'.format(row=index, col=col) for col in excel_file.header_columns[1:]]
@@ -180,10 +183,24 @@ class ImporterTest(TestCase):
         # shouldn't create any more cases, just the one
         self.assertEqual(1, len(get_case_ids_in_domain(self.domain)))
 
-
     def testNoCreateNew(self):
         config = self._config(self.default_headers, create_new_cases=False)
         file = MockExcelFile(header_columns=self.default_headers, num_rows=5)
+        res = do_import(file, config, self.domain)
+
+        # no matching and no create new set - should do nothing
+        self.assertEqual(0, res['created_count'])
+        self.assertEqual(0, res['match_count'])
+        self.assertEqual(0, len(get_case_ids_in_domain(self.domain)))
+
+    def testBlankRows(self):
+        # don't create new cases for rows left blank
+        config = self._config(self.default_headers, create_new_cases=True)
+        file = MockExcelFile(
+            header_columns=self.default_headers,
+            num_rows=5,
+            row_generator=blank_row_generator
+        )
         res = do_import(file, config, self.domain)
 
         # no matching and no create new set - should do nothing

@@ -1,4 +1,4 @@
-from django.utils.unittest.case import TestCase
+from django.test import TestCase
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.suite_xml import dot_interpolate

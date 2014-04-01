@@ -1,4 +1,5 @@
 from datetime import timedelta, datetime
+import time
 import json
 from copy import deepcopy
 import logging
@@ -42,7 +43,7 @@ from corehq.apps.ota.views import get_restore_response, get_restore_params
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
 from corehq.apps.reports.graph_models import Axis, LineChart
 from corehq.apps.reports.standard.domains import es_domain_query
-from corehq.apps.reports.util import make_form_couch_key
+from corehq.apps.reports.util import make_form_couch_key, format_datatables_data
 from corehq.apps.sms.models import SMSLog
 from corehq.apps.users.models import  CommCareUser, WebUser
 from corehq.apps.users.util import format_username
@@ -356,26 +357,10 @@ def submissions_errors(request, template="hqadmin/submissions_errors_report.html
         ).all()
         num_forms_submitted = data[0].get('value', 0) if data else 0
 
-        if request.GET.get('old') == 'true':  ## old reports
-            key = [domain.name, "all_errors_only"]
-            data = get_db().view("phonelog/devicelog_data",
-                reduce=True,
-                startkey=key+[datespan.startdate_param_utc],
-                endkey=key+[datespan.enddate_param_utc],
-                #stale=settings.COUCH_STALE_QUERY,
-            ).first()
-            num_errors = 0
-            num_warnings = 0
-            if data:
-                data = data.get('value', {})
-                num_errors = data.get('errors', 0)
-                num_warnings = data.get('warnings', 0)
-
-        else:
-            phonelogs = Log.objects.filter(domain__exact=domain.name,
-                date__range=[datespan.startdate_param_utc, datespan.enddate_param_utc])
-            num_errors = phonelogs.filter(type__in=TAGS["error"]).count()
-            num_warnings = phonelogs.filter(type__in=TAGS["warning"]).count()
+        phonelogs = Log.objects.filter(domain__exact=domain.name,
+            date__range=[datespan.startdate_param_utc, datespan.enddate_param_utc])
+        num_errors = phonelogs.filter(type__in=TAGS["error"]).count()
+        num_warnings = phonelogs.filter(type__in=TAGS["warning"]).count()
 
         rows.append(dict(domain=domain.name,
                         active_users=num_active_users,
@@ -409,37 +394,17 @@ def mobile_user_reports(request):
 
     rows = []
 
-    if request.GET.get('old') == 'true':  # old reports
-        for domain in Domain.get_all():
-            data = get_db().view("phonelog/devicelog_data",
-                reduce=False,
-                startkey=[domain.name, "tag", "user-report"],
-                endkey=[domain.name, "tag", "user-report", {}],
-                #stale=settings.COUCH_STALE_QUERY,
-            ).all()
-            for report in data:
-                val = report.get('value')
-                version = val.get('version', 'unknown')
-                formatted_date = tz_utils.string_to_prertty_time(val['@date'], timezone(domain.default_timezone), fmt="%b %d, %Y %H:%M:%S")
-                rows.append(dict(domain=domain.name,
-                                 time=formatted_date,
-                                 user=val['user'],
-                                 device_users=val['device_users'],
-                                 message=val['msg'],
-                                 version=version.split(' ')[0],
-                                 detailed_version=html.escape(version),
-                                 report_id=report['id']))
-    else:
-        logs = Log.objects.filter(type__exact="user-report").order_by('domain')
-        for log in logs:
-            rows.append(dict(domain=log.domain,
-                             time=log.date,
-                             user=log.username,
-                             device_users=[u.username for u in log.device_users.all()],
-                             message=log.msg,
-                             version=(log.app_version or 'unknown').split(' ')[0],
-                             detailed_version=html.escape(log.app_version or 'unknown'),
-                             report_id=log.xform_id))
+    logs = Log.objects.filter(type__exact="user-report").order_by('domain')
+    for log in logs:
+        seconds_since_epoch = int(time.mktime(log.date.timetuple()) * 1000)
+        rows.append(dict(domain=log.domain,
+                         time=format_datatables_data(text=log.date, sort_key=seconds_since_epoch),
+                         user=log.username,
+                         device_users=log.device_users,
+                         message=log.msg,
+                         version=(log.app_version or 'unknown').split(' ')[0],
+                         detailed_version=html.escape(log.app_version or 'unknown'),
+                         report_id=log.xform_id))
 
     headers = DataTablesHeader(
         DataTablesColumn(_("View Form")),
@@ -934,17 +899,32 @@ def loadtest(request):
         "hide_filters": True,
     })
 
-    date_axis = Axis(label="Date", dateFormat="%b %d")
+    date_axis = Axis(label="Date", dateFormat="%m/%d/%Y")
     tests_axis = Axis(label="Number of Tests in 30s")
     chart = LineChart("HQ Load Test Performance", date_axis, tests_axis)
     submit_data = []
     ota_data = []
     total_data = []
+    max_val = 0
+    max_date = None
+    min_date = None
     for test in tests:
         date = test['datetime']
+        total = len(test['results'])
+        max_val = total if total > max_val else max_val
+        max_date = date if not max_date or date > max_date else max_date
+        min_date = date if not min_date or date < min_date else min_date
         submit_data.append({'x': date, 'y': len(test['submit_form'].results)})
         ota_data.append({'x': date, 'y': len(test['ota_restore'].results)})
-        total_data.append({'x': date, 'y': len(test['results'])})
+        total_data.append({'x': date, 'y': total})
+
+    deployments = [row['key'][1] for row in HqDeploy.get_list(settings.SERVER_ENVIRONMENT, min_date, max_date)]
+    deploy_data = [{'x': min_date, 'y': 0}]
+    for date in deployments:
+        deploy_data.extend([{'x': date, 'y': 0}, {'x': date, 'y': max_val}, {'x': date, 'y': 0}])
+    deploy_data.append({'x': max_date, 'y': 0})
+
+    chart.add_dataset("Deployments", deploy_data)
     chart.add_dataset("Form Submission Count", submit_data)
     chart.add_dataset("OTA Restore Count", ota_data)
     chart.add_dataset("Total Count", total_data)

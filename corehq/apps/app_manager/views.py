@@ -1540,19 +1540,19 @@ def edit_app_langs(request, domain, app_id):
     app.save()
     return json_response(langs)
 
+
 @require_can_edit_apps
 @no_conflict_require_POST
 def edit_app_translations(request, domain, app_id):
-    params  = json_request(request.POST)
-    lang    = params.get('lang')
+    params = json_request(request.POST)
+    lang = params.get('lang')
     translations = params.get('translations')
-    #    key     = params.get('key')
-    #    value   = params.get('value')
     app = get_app(domain, app_id)
     app.set_translations(lang, translations)
     response = {}
     app.save(response)
     return json_response(response)
+
 
 @no_conflict_require_POST
 @require_can_edit_apps

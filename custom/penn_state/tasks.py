@@ -5,6 +5,7 @@ from celery.schedules import crontab
 from django.conf import settings
 
 from corehq.apps.groups.models import Group
+from corehq.apps.reports.util import make_form_couch_key
 from couchforms.models import XFormInstance
 
 from .models import LegacyWeeklyReport
@@ -64,10 +65,15 @@ class Site(object):
                 'game': self.schedule,
             }
         # process this week's forms
-        for form in XFormInstance.get_forms_by_user(
-                user, self.week[0], self.week[-1]):
-            if form.xmlns == DAILY_DATA_XMLNS:
-                self.process_form(form, username)
+        key = make_form_couch_key(user.domain, user_id=user.user_id, xmlns=DAILY_DATA_XMLNS)
+        forms = XFormInstance.view(
+            "reports_forms/all_forms",
+            startkey=key + [str(self.week[0])],
+            endkey=key + [str(self.week[-1] + datetime.timedelta(days=1))],
+            include_docs=True
+        ).all()
+        for form in forms:
+            self.process_form(form, username)
         # get and extend weekly totals
         try:
             weekly_totals = self.last_week.individual[username]['weekly_totals']
@@ -112,11 +118,12 @@ class Site(object):
 
 def get_days_on(date):
     week = get_m_to_f(date)
-    week = [week[0] - datetime.timedelta(days=1)] + week
+    start = week[0] - datetime.timedelta(days=1)
+    end = week[-1] + datetime.timedelta(days=1)
     forms = XFormInstance.view(
         'reports_forms/all_forms',
-        startkey=['submission xmlns', DOMAIN, WEEKLY_SCHEDULE_XMLNS, week[0]],
-        endkey=['submission xmlns', DOMAIN, WEEKLY_SCHEDULE_XMLNS, week[-1]],
+        startkey=['submission xmlns', DOMAIN, WEEKLY_SCHEDULE_XMLNS, start.isoformat()],
+        endkey=['submission xmlns', DOMAIN, WEEKLY_SCHEDULE_XMLNS, end.isoformat()],
         reduce=False,
         include_docs=True,
     ).all()

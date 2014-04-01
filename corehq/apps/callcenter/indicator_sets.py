@@ -8,10 +8,13 @@ from corehq.apps.reportfixtures.indicator_sets import SqlIndicatorSet
 from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.decorators.memoized import memoized
+from django.conf import settings
 
 NO_CASE_TAG = 'NO CASE'
 TYPE_DURATION = 'duration'
 TYPE_SUM = 'sum'
+
+TABLE_PREFIX = '%s_' % settings.CTABLE_PREFIX if hasattr(settings, 'CTABLE_PREFIX') else ''
 
 PER_DOMAIN_FORM_INDICATORS = {
     'aarohi': [
@@ -56,7 +59,7 @@ class CallCenter(SqlIndicatorSet):
 
     @property
     def table_name(self):
-        return '%s_%s' % (self.domain.name, MAPPING_NAME_FORMS)
+        return '%s%s_%s' % (TABLE_PREFIX, self.domain.name, MAPPING_NAME_FORMS)
 
     @property
     def filters(self):
@@ -79,8 +82,8 @@ class CallCenter(SqlIndicatorSet):
 
     @property
     def columns(self):
-        case_table_name = '%s_%s' % (self.domain.name, MAPPING_NAME_CASES)
-        case_ownership_table_name = '%s_%s' % (self.domain.name, MAPPING_NAME_CASE_OWNERSHIP)
+        case_table_name = '%s%s_%s' % (TABLE_PREFIX, self.domain.name, MAPPING_NAME_CASES)
+        case_ownership_table_name = '%s%s_%s' % (TABLE_PREFIX, self.domain.name, MAPPING_NAME_CASE_OWNERSHIP)
         case_type_filters = [filters.NOTEQ('case_type', 'ccCaseType')]
 
         columns = [

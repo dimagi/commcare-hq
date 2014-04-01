@@ -35,7 +35,7 @@ def submission_wrap(products, user, sp, sp2, insides):
                 <timeEnd>2013-12-10T17:08:57.887-05</timeEnd>
                 <username>{username}</username>
                 <userID>{user_id}</userID>
-                <instanceID>398c9e36-b645-4b68-81b6-6957a2d3cf90</instanceID>
+                <instanceID>{instance_id}</instanceID>
                 <appVersion>CommTrack Unit tests</appVersion>
             </meta>
             <num_products>3</num_products>
@@ -49,6 +49,7 @@ def submission_wrap(products, user, sp, sp2, insides):
         product1=products[1]._id,
         product2=products[2]._id,
         user_id=user._id,
+        instance_id=uuid.uuid4().hex,
         username=user.username,
         long_date=long_date(),
     )

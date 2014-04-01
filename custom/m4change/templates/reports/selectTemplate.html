@@ -58,9 +58,19 @@
     <div id="mcct_project_review_page_management">
         <div class="row-fluid">
             <form class="well form-inline" style="margin: 1em; display: none;" data-bind="mcctProjectReviewPage: selected_forms">
-                <button class="btn" data-bind="click: updateStatusReview, mcctProjectReviewPage: selected_forms">{% trans 'Review' %}</button>
-                <button class="btn" data-bind="click: updateStatusCancel, mcctProjectReviewPage: selected_forms">{% trans 'Cancel' %}</button>
-                <button class="btn" data-bind="click: updateStatusReject, mcctProjectReviewPage: selected_forms">{% trans 'Reject' %}</button>
+                {% block status_button %}
+                    <button class="btn" data-bind="click: updateStatus.bind(undefined, 'reviewed'), mcctProjectReviewPage: selected_forms">{% trans 'Review' %}</button>
+                {% endblock %}
+                <a class="btn" href="/homepage/">{% trans 'Cancel' %}</a>
+                {%  block reject_button %}
+                    <button id="reject_button" class="btn" data-bind="click: updateStatus.bind(undefined, 'rejected'), mcctProjectReviewPage: selected_forms">{% trans 'Reject' %}</button>
+                    <label for="reject_reason">{% trans 'Reason' %}:</label>
+                    <select id="reject_reason" data-bind="value: reject_reason">
+                        <option value="phone_number">{% trans 'Incorrect phone number' %}</option>
+                        <option value="double">{% trans 'Double entry' %}</option>
+                        <option value="other">{% trans 'Other errors' %}</option>
+                    </select>
+                {% endblock %}
             </form>
         </div>
         {{ block.super }}

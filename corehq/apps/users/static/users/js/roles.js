@@ -43,24 +43,6 @@ $(function () {
             }
         };
 
-        function wrapRole(role) {
-            role.permissions.viewReportList = ko.computed({
-                read: function () {
-                    return ko.utils.arrayMap(role.permissions.view_report_list(), function (reportPath) {
-                        return self.getReportObject(reportPath);
-                    });
-                },
-                write: function (reports) {
-                    var reportPaths = ko.utils.arrayMap(reports, function (report) {
-                        return report.path;
-                    });
-                    role.permissions.view_report_list.removeAll();
-                    ko.utils.arrayForEach(reportPaths, function (path) {
-                        role.permissions.view_report_list.push(path);
-                    });
-                }
-            });
-        }
         self.allowEdit = o.allowEdit;
         self.reportOptions = o.reportOptions;
         self.getReportObject = function (path) {
@@ -81,7 +63,6 @@ $(function () {
 
         self.addOrReplaceRole = function (role) {
             var newRole = UserRole.wrap(role);
-            wrapRole(newRole);
             var i;
             for (i = 0; i < self.userRoles().length; i++) {
                 if (ko.utils.unwrapObservable(self.userRoles()[i]._id) === newRole._id()) {

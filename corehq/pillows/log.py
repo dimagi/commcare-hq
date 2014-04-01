@@ -1,6 +1,6 @@
 import hashlib
 from django.db import IntegrityError
-from pillowtop.listener import BasicPillow
+from pillowtop.listener import SQLPillow
 from couchforms.models import XFormInstance
 from phonelog.models import UserLog, Log
 import dateutil.parser as dparser
@@ -14,11 +14,11 @@ def get_logs(form, report_name, report_slug):
         return filter(None, [log.get(report_slug) for log in report])
     return report.get(report_slug, [])
 
-class PhoneLogPillow(BasicPillow):
+class PhoneLogPillow(SQLPillow):
     document_class = XFormInstance
     couch_filter = 'phonelog/all_logs'
 
-    def change_transport(self, doc_dict):
+    def process_sql(self, doc_dict):
         xform_id = doc_dict.get('_id')
         form = doc_dict.get('form', {})
         userlogs = get_logs(form, 'user_subreport', 'user')

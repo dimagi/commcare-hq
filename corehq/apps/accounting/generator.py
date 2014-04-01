@@ -66,12 +66,8 @@ def billing_account(web_user_creator, web_user_contact, currency=None, save=True
     )
     if save:
         billing_account.save()
-        billing_contact = arbitrary_contact_info(billing_account, web_user_creator)
+        billing_contact = arbitrary_contact_info(billing_account, web_user_contact)
         billing_contact.save()
-        billing_account.billing_admins =\
-            [BillingAccountAdmin.objects.get_or_create(web_user=web_user_contact.username)[0]]
-        billing_account.save()
-
     return billing_account
 
 

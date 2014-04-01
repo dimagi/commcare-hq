@@ -6,9 +6,10 @@ var mk_translation_ui = function (spec) {
             url: spec.url,
             lang: spec.lang,
             doc_id: spec.doc_id,
-            edit: spec.edit
+            edit: spec.edit,
+            allow_autofill: spec.allow_autofill
         },
-        suggestionURL = '/translations/api/suggestions/',
+        suggestionURL = spec.suggestion_url,
         suggestionCache = {},
         key,
         Translation = (function () {
@@ -47,7 +48,6 @@ var mk_translation_ui = function (spec) {
 
                 this.value.on('change', function () {
                     if (that.solid) {
-                        console.log('ok');
                         translation_ui.saveButton.fire('change');
                     }
                 });
@@ -114,7 +114,6 @@ var mk_translation_ui = function (spec) {
                 },
                 success: function (data) {
                     var key;
-                    console.log(data);
                     for (key in data) {
                         if (data.hasOwnProperty(key) && !translation_ui.translations[key]) {
                             translation_ui.addTranslation(Translation.init(key, data[key]));
@@ -211,7 +210,9 @@ var mk_translation_ui = function (spec) {
             $home.append($("<p>No translations</p>"));
         }
         if (translation_ui.edit) {
-            $home.append($bootstrap);
+            if (translation_ui.allow_autofill) {
+                $home.append($bootstrap);
+            }
             translation_ui.appendAdder();
         }
         $home.append($table);

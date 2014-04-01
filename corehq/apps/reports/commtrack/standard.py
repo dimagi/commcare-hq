@@ -3,7 +3,7 @@ from corehq.apps.commtrack.psi_hacks import is_psi_domain
 from corehq.apps.reports.commtrack.data_sources import StockStatusDataSource, ReportingStatusDataSource
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.commtrack.models import Product, CommtrackConfig, CommtrackActionConfig
+from corehq.apps.commtrack.models import Product, CommtrackConfig, CommtrackActionConfig, StockState
 from corehq.apps.reports.graph_models import PieChart, MultiBarChart, Axis
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin
 from dimagi.utils.couch.loosechange import map_reduce
@@ -13,9 +13,9 @@ from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
-from casexml.apps.stock.models import StockState
 from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, product_ids_filtered_by_program
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
+
 
 def _enabled_hack(domain):
     return not is_psi_domain(domain)
@@ -218,14 +218,24 @@ class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
 
     @property
     def headers(self):
-        return DataTablesHeader(*(DataTablesColumn(text) for text in [
-                    _('Product'),
-                    _('Total SOH'),
-                    _('Total AMC'),
-                    _('Remaining MOS'),
-                    _('Stock Status'),
-                    _('Resupply Quantity Suggested'),
-                ]))
+        columns = [
+            DataTablesColumn(_('Product')),
+            DataTablesColumn(_('Stock on Hand'),
+                help_text=_('Total stock on hand for all locations matching the filters.')),
+            DataTablesColumn(_('Monthly Consumption'),
+                help_text=_('Total average monthly consumption for all locations matching the filters.')),
+            DataTablesColumn(_('Months of Stock'),
+                help_text=_('Number of months of stock remaining for all locations matching the filters. \
+                            Computed by calculating stock on hand divided by monthly consumption.')),
+            DataTablesColumn(_('Stock Status'),
+                help_text=_('Stock status prediction made using calculated consumption \
+                            or project specific default values. "No Data" means that \
+                            there is not enough data to compute consumption and default \
+                            values have not been uploaded yet.')),
+            # DataTablesColumn(_('Resupply Quantity Suggested')),
+        ]
+
+        return DataTablesHeader(*columns)
 
     @property
     def product_data(self):
@@ -262,7 +272,7 @@ class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
                     fmt(row[StockStatusDataSource.SLUG_CONSUMPTION], int),
                     fmt(row[StockStatusDataSource.SLUG_MONTHS_REMAINING], lambda k: '%.1f' % k),
                     fmt(row[StockStatusDataSource.SLUG_CATEGORY], lambda k: statuses.get(k, k)),
-                    fmt(row[StockStatusDataSource.SLUG_RESUPPLY_QUANTITY_NEEDED])
+                    # fmt(row[StockStatusDataSource.SLUG_RESUPPLY_QUANTITY_NEEDED])
                 ]
 
 
@@ -271,6 +281,7 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
     slug = 'reporting_rate'
     fields = ['corehq.apps.reports.fields.AsyncLocationField',
               'corehq.apps.reports.fields.SelectProgramField',
+              'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
               'corehq.apps.reports.filters.dates.DatespanFilter',]
     exportable = True
     emailable = True
@@ -285,8 +296,7 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
         return DataTablesHeader(*(DataTablesColumn(text) for text in [
                     _('Location'),
                     _('# Sites'),
-                    _('On-time'),
-                    _('Late'),
+                    _('Reporting'),
                     _('Non-reporting'),
                 ]))
 
@@ -299,6 +309,7 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
             'program_id': self.request.GET.get('program'),
             'start_date': self.request.GET.get('startdate'),
             'end_date': self.request.GET.get('enddate'),
+            'request': self.request
         }
         statuses = list(ReportingStatusDataSource(config).get_data())
         def child_loc(path):
@@ -337,7 +348,7 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
         def _rows():
             for loc in locs:
                 num_sites = len(sites_by_agg_site[loc._id])
-                yield [loc.name, len(sites_by_agg_site[loc._id])] + [fmt_col(loc, k) for k in ('ontime', 'late', 'nonreporting')]
+                yield [loc.name, len(sites_by_agg_site[loc._id])] + [fmt_col(loc, k) for k in ('reporting', 'nonreporting')]
 
         return master_tally, _rows()
 
@@ -348,11 +359,10 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
     def master_pie_chart_data(self):
         tally = self._data[0]
         labels = {
-            'ontime': _('On-time'),
-            'late': _('Late'),
+            'reporting': _('Reporting'),
             'nonreporting': _('Non-reporting'),
         }
-        return [{'label': labels[k], 'value': tally.get(k, {'count': 0.})['count']} for k in ('ontime', 'late', 'nonreporting')]
+        return [{'label': labels[k], 'value': tally.get(k, {'count': 0.})['count']} for k in ('reporting', 'nonreporting')]
 
     @property
     def charts(self):
