@@ -1728,7 +1728,7 @@ class AdvancedCommTrackSettingsView(BaseCommTrackAdminView):
                 section_to_consumption_types={
                     'stock': 'consumption'
                 },
-                force_to_consumption_case_types=[
+                force_consumption_case_types=[
                     'supply-point'
                 ],
                 use_dynamic_product_list=True,
