@@ -23,7 +23,8 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.timezones import utils as tz_utils
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop
-from phonelog.models import DeviceReportEntry
+from .models import DeviceReportEntry
+from .utils import device_users_by_xform
 
 logger = logging.getLogger(__name__)
 
@@ -309,11 +310,13 @@ class DeviceLogDetailsReport(PhonelogReport):
         return '-' + by if direction == 'desc' else by
 
     def _create_rows(self, logs, matching_id=None):
+        _device_users_by_xform = memoized(device_users_by_xform)
         row_set = []
         user_query = self._filter_query_by_slug(DeviceLogUsersFilter.slug)
         device_query = self._filter_query_by_slug(DeviceLogDevicesFilter.slug)
         paged = slice(self.pagination.start,
                       self.pagination.start + self.pagination.count + 1)
+
         self.total_records = logs.count()
         for log in logs.order_by(self.ordering)[paged]:
             date = str(log.date)
@@ -334,7 +337,7 @@ class DeviceLogDetailsReport(PhonelogReport):
                 )
             }
 
-            device_users = log.device_users
+            device_users = _device_users_by_xform(log.xform_id)
             device_users_fmt = ', '.join([
                 '<a href="%(url)s">%(username)s</a>' % {
                     "url": "%s?%s=%s&%s" % (self.get_url(domain=self.domain),
