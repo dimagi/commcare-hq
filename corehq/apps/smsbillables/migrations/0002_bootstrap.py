@@ -1,5 +1,6 @@
 # encoding: utf-8
 import datetime
+from django.conf import settings
 from django.core.management import call_command
 from south.db import db
 from south.v2 import DataMigration
@@ -8,14 +9,15 @@ from django.db import models
 class Migration(DataMigration):
 
     def forwards(self, orm):
+        # ensure default currency
+        orm['accounting.Currency'].objects.get_or_create(code=settings.DEFAULT_CURRENCY)
+        orm['accounting.Currency'].objects.get_or_create(code='EUR')
         call_command('bootstrap_grapevine_gateway')
         call_command('bootstrap_mach_gateway')
         call_command('bootstrap_tropo_gateway')
         call_command('bootstrap_twilio_gateway')
         call_command('bootstrap_unicel_gateway')
         call_command('bootstrap_usage_fees')
-
-
 
     def backwards(self, orm):
         pass
