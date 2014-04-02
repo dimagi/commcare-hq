@@ -395,6 +395,10 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
                     'module_type': module.doc_type
                 })
 
+    if not form.unique_id:
+        form.get_unique_id()
+        form.get_app().save()
+
     context = {
         'nav_form': form if not is_user_registration else '',
         'xform_languages': languages,
@@ -727,6 +731,9 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
 
         if module_id:
             module = app.get_module(module_id)
+            if not module.unique_id:
+                module.get_or_create_unique_id()
+                app.save()
         if form_id:
             form = module.get_form(form_id)
     except ModuleNotFoundException:
@@ -988,18 +995,19 @@ def undo_delete_app(request, domain, record_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def delete_module(req, domain, app_id, module_id):
+def delete_module(req, domain, app_id, module_unique_id):
     "Deletes a module from an app"
     app = get_app(domain, app_id)
     try:
-        record = app.delete_module(module_id)
+        record = app.delete_module(module_unique_id)
     except ModuleNotFoundException:
         return bail(req, domain, app_id)
-    messages.success(req,
-        'You have deleted a module. <a href="%s" class="post-link">Undo</a>' % reverse('undo_delete_module', args=[domain, record.get_id]),
-        extra_tags='html'
-    )
-    app.save()
+    if record is not None:
+        messages.success(req,
+            'You have deleted a module. <a href="%s" class="post-link">Undo</a>' % reverse('undo_delete_module', args=[domain, record.get_id]),
+            extra_tags='html'
+        )
+        app.save()
     return back_to_main(req, domain, app_id=app_id)
 
 @no_conflict_require_POST
@@ -1013,16 +1021,21 @@ def undo_delete_module(request, domain, record_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def delete_form(req, domain, app_id, module_id, form_id):
+def delete_form(req, domain, app_id, module_unique_id, form_unique_id):
     "Deletes a form from an app"
     app = get_app(domain, app_id)
-    record = app.delete_form(module_id, form_id)
-    messages.success(req,
-        'You have deleted a form. <a href="%s" class="post-link">Undo</a>' % reverse('undo_delete_form', args=[domain, record.get_id]),
-        extra_tags='html'
-    )
-    app.save()
-    return back_to_main(req, domain, app_id=app_id, module_id=module_id)
+    record = app.delete_form(module_unique_id, form_unique_id)
+    if record is not None:
+        messages.success(
+            req,
+            'You have deleted a form. <a href="%s" class="post-link">Undo</a>'
+            % reverse('undo_delete_form', args=[domain, record.get_id]),
+            extra_tags='html'
+        )
+        app.save()
+    return back_to_main(
+        req, domain, app_id=app_id,
+        module_id=app.get_module_by_unique_id(module_unique_id).id)
 
 
 @no_conflict_require_POST
@@ -1054,8 +1067,13 @@ def copy_form(req, domain, app_id, module_id, form_id):
 @require_can_edit_apps
 def undo_delete_form(request, domain, record_id):
     record = DeleteFormRecord.get(record_id)
-    record.undo()
-    messages.success(request, 'Form successfully restored.')
+    try:
+        record.undo()
+        messages.success(request, 'Form successfully restored.')
+    except ModuleNotFoundException:
+        messages.error(request,
+                       'Form could not be restored: module is missing.')
+
     return back_to_main(request, domain, app_id=record.app_id,
                         module_id=record.module_id, form_id=record.form_id)
 
@@ -1775,7 +1793,7 @@ def validate_form_for_build(request, domain, app_id, unique_form_id, ajax=True):
     app = get_app(domain, app_id)
     try:
         form = app.get_form(unique_form_id)
-    except KeyError:
+    except FormNotFoundException:
         # this can happen if you delete the form from another page
         raise Http404()
     errors = form.validate_for_build()

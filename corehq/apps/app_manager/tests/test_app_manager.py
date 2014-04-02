@@ -62,13 +62,14 @@ class AppManagerTest(TestCase):
         self.app.create_jadjar()
 
     def testDeleteForm(self):
-        self.app.delete_form(0,0)
+        self.app.delete_form(self.app.modules[0].unique_id,
+                             self.app.modules[0].forms[0].unique_id)
         self.assertEqual(len(self.app.modules), 3)
         for module, i in zip(self.app.get_modules(), [2,3,3]):
             self.assertEqual(len(module.forms), i)
 
     def testDeleteModule(self):
-        self.app.delete_module(0)
+        self.app.delete_module(self.app.modules[0].unique_id)
         self.assertEqual(len(self.app.modules), 2)
 
     def testSwapModules(self):
