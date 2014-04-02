@@ -41,12 +41,15 @@ function HQReportDataTables(options) {
         $('[data-datatable-highlight-closest]').each(function () {
            $(this).closest($(this).attr('data-datatable-highlight-closest')).addClass('active');
         });
-        $('[data-datatable-tooltip]').each(function () {
-            $(this).tooltip({
-                placement: $(this).attr('data-datatable-tooltip'),
-                title: $(this).attr('data-datatable-tooltip-text')
+        function applyBootstrapMagic() {
+            $('[data-datatable-tooltip]').each(function () {
+                $(this).tooltip({
+                    placement: $(this).attr('data-datatable-tooltip'),
+                    title: $(this).attr('data-datatable-tooltip-text')
+                });
             });
-        });
+        }
+        applyBootstrapMagic();
 
         var dataTablesDom = "frt<'row-fluid dataTables_control'<'span5'il><'span7'p>>";
         $(self.dataTableElem).each(function(){
@@ -89,6 +92,7 @@ function HQReportDataTables(options) {
                                self.render_footer_row('ajax_stat_row-' + i, data['statistics_rows'][i]);
                             }
                         }
+                        applyBootstrapMagic();
                         return result
                     };
 
