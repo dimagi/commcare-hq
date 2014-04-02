@@ -18,8 +18,6 @@ DATABASES = {
     }
 }
 
-
-
 ####### Couch Config ######
 COUCH_HTTPS = False # recommended production value is True if enabling https
 COUCH_SERVER_ROOT = '127.0.0.1:5984' #6984 for https couch
@@ -27,7 +25,7 @@ COUCH_USERNAME = ''
 COUCH_PASSWORD = ''
 COUCH_DATABASE_NAME = 'pillowtop'
 
-COUCH_DATABASE = 'http://127.0.0.1:5984/pillowtop_test'
+COUCH_DATABASE = 'http://127.0.0.1:5984/pillowtop'
 
 COUCHDB_DATABASES = [ (app, 'http://127.0.0.1:5984/pillowtop') for app in ['pillow_retry'] ]
 
