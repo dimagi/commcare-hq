@@ -44,9 +44,14 @@ class FixtureSelectField(ReportSelectField):
 
 class FixtureSelectFilter(BaseSingleOptionFilter):
     slug = "table_id"
-    label = "Select a Table"
+    label = ""
     placeholder = "place"
-    default_text = "Hello"
+    default_text = "Select a Table"
+
+    @property
+    def selected(self):
+        # ko won't display default selected-value as it should, display default_text instead
+        return ""
 
     @property
     @memoized
@@ -73,6 +78,7 @@ class FixtureViewInterface(GenericTabularReport, FixtureInterface):
         context = super(FixtureViewInterface, self).report_context
         if not context["report_table"].get("rows"):
             self.report_template_path = 'fixtures/no_table.html'
+        context.update({"selected_table": self.table.get("table_id", "")})
         return context
 
     @property

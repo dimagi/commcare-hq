@@ -4,6 +4,18 @@
 {% load i18n %}
 
 {% block main_column %}
+<header>
+    <div class="row-fluid">
+        <div class="span8">
+            <h3>
+                {% blocktrans %}
+                    Table with table_id 
+                {% endblocktrans %}
+                <strong>'{{ selected_table }}'</strong>
+            </h3>
+        </div>
+    </div>
+</header>
 {% block reportcontent %}
 {% block reporttable %}
 <form>
@@ -15,7 +27,7 @@
         </fieldset>
     {% endfor %}
     {% block report_filter_actions %}
-    <button type="submit" class="btn btn-primary" data-standard-text="Apply">
+    <button type="submit" class="btn btn-primary" style="margin-top: 5px" data-standard-text="Apply">
         {% trans "Apply" %}
     </button>
     {% endblock %}

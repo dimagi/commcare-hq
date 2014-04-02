@@ -201,9 +201,11 @@ def data_table(request, domain):
             "rows": []
         }
     selected_sheet = sheets.values()[0]
+    selected_sheet_tag = sheets.keys()[0]
     data_table = {
         "headers": None,
-        "rows": None
+        "rows": None,
+        "table_id": selected_sheet_tag
     }
     headers = [DataTablesColumn(header) for header in selected_sheet["headers"]]
     data_table["headers"] = DataTablesHeader(*headers)
