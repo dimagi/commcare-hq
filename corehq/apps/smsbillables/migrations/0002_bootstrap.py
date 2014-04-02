@@ -12,6 +12,7 @@ class Migration(DataMigration):
         # ensure default currency
         orm['accounting.Currency'].objects.get_or_create(code=settings.DEFAULT_CURRENCY)
         orm['accounting.Currency'].objects.get_or_create(code='EUR')
+        orm['accounting.Currency'].objects.get_or_create(code='INR')
         call_command('bootstrap_grapevine_gateway')
         call_command('bootstrap_mach_gateway')
         call_command('bootstrap_tropo_gateway')

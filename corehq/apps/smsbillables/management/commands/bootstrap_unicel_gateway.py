@@ -16,7 +16,7 @@ class Command(LabelCommand):
 
     def handle(self, *labels, **options):
         SmsGatewayFee.create_new(UnicelBackend.get_api_id(), INCOMING, 0.50,
-                                 currency=Currency.objects.get(code="USD"))
+                                 currency=Currency.objects.get(code="INR"))
         SmsGatewayFee.create_new(UnicelBackend.get_api_id(), OUTGOING, 0.50,
-                                 currency=Currency.objects.get(code="USD"))
+                                 currency=Currency.objects.get(code="INR"))
         logger.info("Updated Unicel gateway fees.")
