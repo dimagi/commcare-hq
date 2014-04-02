@@ -23,7 +23,7 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.timezones import utils as tz_utils
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop
-from phonelog.models import Log
+from phonelog.models import DeviceReportEntry
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +74,7 @@ class FormErrorReport(PhonelogReport):
     @property
     @memoized
     def all_logs(self):
-        return Log.objects.filter(
+        return DeviceReportEntry.objects.filter(
             domain__exact=self.domain,
             date__range=[self.datespan.startdate_param_utc,
                          self.datespan.enddate_param_utc],
@@ -275,16 +275,16 @@ class DeviceLogDetailsReport(PhonelogReport):
     @property
     def rows(self):
         if self.goto_key:
-            log = Log.objects.get(pk=self.goto_key)
+            log = DeviceReportEntry.objects.get(pk=self.goto_key)
             assert log.domain == self.domain
-            logs = Log.objects.filter(
+            logs = DeviceReportEntry.objects.filter(
                 date__lte=log.date,
                 domain__exact=self.domain,
                 device_id__exact=log.device_id,
             )
             return self._create_rows(logs, matching_id=log.id)
         else:
-            logs = Log.objects.filter(
+            logs = DeviceReportEntry.objects.filter(
                 date__range=[self.datespan.startdate_param_utc,
                              self.datespan.enddate_param_utc],
                 domain__exact=self.domain,
