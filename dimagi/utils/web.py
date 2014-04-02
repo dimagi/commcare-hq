@@ -19,9 +19,12 @@ from decimal import Decimal
 def get_url_base():
     try:
         protocol = settings.DEFAULT_PROTOCOL
-    except:
+    except AttributeError:
         protocol = 'http'
-    return '%s://%s' % (protocol, Site.objects.get(id = settings.SITE_ID).domain)
+    address = getattr(settings, "BASE_ADDRESS", None)
+    if address is None:
+        address = Site.objects.get(id = settings.SITE_ID).domain
+    return '%s://%s' % (protocol, address)
 
 def get_secure_url_base():
     return 'https://%s' % Site.objects.get(id = settings.SITE_ID).domain
