@@ -9,10 +9,11 @@ from corehq import Domain
 from corehq.apps.commtrack.util import get_commtrack_location_id
 from corehq.apps.locations.models import Location
 from custom.m4change.constants import M4CHANGE_DOMAINS
+from custom.m4change.models import FixtureReportResult
 from custom.m4change.reports.reports import M4ChangeReportDataSource
 
 
-def _get_last_n_full_months(months):
+def get_last_n_full_months(months):
     ranges = []
     today = datetime.utcnow()
     for month in range(1, months + 1):
@@ -40,7 +41,7 @@ class ReportFixtureProvider(object):
     def __init__(self, id, user, domain, location_id):
         self.id = id
         self.user = user
-        self.dates = _get_last_n_full_months(2)
+        self.dates = get_last_n_full_months(2)
         self.domain = domain
         self.location_id = location_id
 
@@ -114,12 +115,11 @@ class ReportFixtureProvider(object):
                 'id': facility_id,
                 'name': _(facility.name)
             })
-            report_data = M4ChangeReportDataSource(config={
-                'startdate': startdate,
-                'enddate': enddate,
-                'location_id': facility_id,
-                'domain': self.domain.name
-            }).get_data()
+            report_slugs = M4ChangeReportDataSource().get_report_slugs()
+            report_data = {}
+            for report_slug in report_slugs:
+                report_data[report_slug] = FixtureReportResult.by_composite_key(self.domain, facility_id, startdate,
+                                                                                enddate, report_slug)
             facility_element.append(_reports_to_fixture(report_data, facility_id, facility_element))
             return facility_element
 
