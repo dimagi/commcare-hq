@@ -36,21 +36,40 @@ class BaseDeviceLogFilter(BaseReportFilter):
     template = "reports/filters/devicelog_filter.html"
     field = None
     label = ugettext_noop("Filter Logs By")
+    url_param_map = {'Unknown': None}
 
     def get_filters(self, selected):
         show_all = bool(not selected)
-        it = DeviceReportEntry.objects.filter(domain__exact=self.domain).values(self.field).distinct()
-        return [dict(name=f[self.field],
-                    show=bool(show_all or f[self.field] in selected))
-                    for f in it]
+        values = (DeviceReportEntry.objects.filter(domain=self.domain)
+                  .distinct(self.field).values_list(self.field, flat=True))
+        return [{
+            'name': self.value_to_param(value),
+            'show': bool(show_all or value in selected)
+        } for value in values]
 
     @property
     def filter_context(self):
-        selected = self.request.GET.getlist(self.slug)
+        selected = self.get_selected(self.request)
         return {
             'filters': self.get_filters(selected),
             'default_on': bool(not selected)
         }
+
+    @classmethod
+    def get_selected(cls, request):
+        return [cls.param_to_value(param)
+                for param in request.GET.getlist(cls.slug)]
+
+    @classmethod
+    def param_to_value(cls, param):
+        return cls.url_param_map.get(param, param)
+
+    @classmethod
+    def value_to_param(cls, value):
+        for param, value_ in cls.url_param_map.items():
+            if value_ == value:
+                return param
+        return value
 
 
 class DeviceLogUsersFilter(BaseDeviceLogFilter):

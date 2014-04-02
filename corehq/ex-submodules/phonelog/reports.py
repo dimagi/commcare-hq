@@ -1,6 +1,6 @@
 import json
 import logging
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.utils import html
 from corehq.apps.reports.datatables.DTSortType import DATE
 from corehq.apps.reports.filters.devicelog import (
@@ -199,7 +199,7 @@ class DeviceLogDetailsReport(PhonelogReport):
     @property
     @memoized
     def device_log_users(self):
-        return self.request.GET.getlist(DeviceLogUsersFilter.slug)
+        return DeviceLogUsersFilter.get_selected(self.request)
 
     @property
     @memoized
@@ -295,7 +295,10 @@ class DeviceLogDetailsReport(PhonelogReport):
                 logs = logs.filter(type__in=self.selected_tags)
 
             if 'user' in self.filters:
-                logs = logs.filter(username__in=self.device_log_users)
+                user_q = Q(username__in=self.device_log_users)
+                if None in self.device_log_users:
+                    user_q |= Q(username=None)
+                logs = logs.filter(user_q)
             if 'device' in self.filters:
                 logs = logs.filter(device_id__in=self.selected_devices)
             return self._create_rows(logs)
@@ -317,13 +320,18 @@ class DeviceLogDetailsReport(PhonelogReport):
             date_fmt = tz_utils.string_to_prertty_time(
                 date, self.timezone, fmt="%b %d, %Y %H:%M:%S")
 
-            username = log.username or 'unknown'
+            username = log.username
             username_fmt = '<a href="%(url)s">%(username)s</a>' % {
-                "url": "%s?%s=%s&%s" % (self.get_url(domain=self.domain),
-                                        DeviceLogUsersFilter.slug,
-                                        username,
-                                        user_query),
-                "username": username
+                "url": "%s?%s=%s&%s" % (
+                    self.get_url(domain=self.domain),
+                    DeviceLogUsersFilter.slug,
+                    DeviceLogUsersFilter.value_to_param(username),
+                    user_query,
+                ),
+                "username": (
+                    username if username
+                    else '<span class="label label-info">Unknown</span>'
+                )
             }
 
             device_users = log.device_users
