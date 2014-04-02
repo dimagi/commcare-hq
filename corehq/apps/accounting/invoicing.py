@@ -2,7 +2,7 @@ import calendar
 from decimal import Decimal
 import datetime
 import logging
-from django.db.models import Q
+from django.db.models import F, Q
 
 from django.utils.translation import ugettext as _
 from corehq.apps.accounting.utils import ensure_domain_instance
@@ -52,6 +52,7 @@ class DomainInvoiceFactory(object):
         subscriptions = Subscription.objects.filter(
             subscriber=self.subscriber, date_start__lte=self.date_end
         ).filter(Q(date_end=None) | Q(date_end__gt=self.date_start)
+        ).filter(Q(date_end=None) | Q(date_end__gt=F('date_start'))
         ).order_by('date_start', 'date_end').all()
         return list(subscriptions)
 
