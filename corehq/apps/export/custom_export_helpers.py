@@ -214,6 +214,7 @@ class FormCustomExportHelper(CustomExportHelper):
 
     def update_table_conf_with_questions(self, table_conf):
         column_conf = table_conf[0].get("column_configuration", [])
+
         current_questions = set(self.custom_export.question_order)
         remaining_questions = current_questions.copy()
 
@@ -224,13 +225,24 @@ class FormCustomExportHelper(CustomExportHelper):
         def generate_additional_columns(requires_case):
             ret = []
             case_name_col = CustomColumn(slug='case_name', index='form.case.@case_id', display='info.case_name',
-                                     transform=CASENAME_TRANSFORM, show=True, selected=True)
+                                         transform=CASENAME_TRANSFORM, show=True, selected=True)
             if not requires_case:
                 case_name_col.show, case_name_col.selected, case_name_col.tag = False, False, 'deleted'
             matches = filter(case_name_col.match, column_conf)
             if matches:
+                # hack/annoying - also might have to re-add the case id column which can get
+                # overwritten by case name if only that is set.
+                case_id_cols = filter(lambda col: col['index'] == 'form.case.@case_id', column_conf)
+                if len(case_id_cols) <= 1:
+                    ret.append(ExportColumn(
+                        index='form.case.@case_id',
+                        display='info.case_id',
+                        show=True,
+                    ).to_config_format(selected=False))
+
                 for match in matches:
                     case_name_col.format_for_javascript(match)
+
             elif filter(lambda col: col["index"] == case_name_col.index, column_conf):
                 ret.append(case_name_col.default_column())
             return ret
