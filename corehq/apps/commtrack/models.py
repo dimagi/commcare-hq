@@ -1322,7 +1322,7 @@ class StockState(models.Model):
         )
 
     def get_consumption(self):
-        if self.daily_consumption:
+        if self.daily_consumption is not None:
             return self.daily_consumption
         else:
             domain = self.get_domain()
