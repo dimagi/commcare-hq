@@ -216,7 +216,7 @@ class BasicPillow(object):
         """
         self.processor(simplejson.loads(change))
 
-    def process_change(self, change):
+    def process_change(self, change, is_retry_attempt=False):
         try:
             with lock_manager(self.change_trigger(change)) as t:
                 if t is not None:
@@ -224,17 +224,20 @@ class BasicPillow(object):
                     if tr is not None:
                         self.change_transport(tr)
         except Exception, ex:
-            error = PillowError.get_or_create(change, self)
-            error.add_attempt(ex, sys.exc_info()[2])
-            error.save()
-            pillow_logging.exception(
-                "[%s] Error on change: %s, %s. Logged as: %s" % (
-                    self.get_name(),
-                    change['id'],
-                    ex,
-                    error.get_id
+            if not is_retry_attempt:
+                error = PillowError.get_or_create(change, self)
+                error.add_attempt(ex, sys.exc_info()[2])
+                error.save()
+                pillow_logging.exception(
+                    "[%s] Error on change: %s, %s. Logged as: %s" % (
+                        self.get_name(),
+                        change['id'],
+                        ex,
+                        error.get_id
+                    )
                 )
-            )
+            else:
+                raise
 
     def processor(self, change, do_set_checkpoint=True):
         """

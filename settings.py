@@ -18,6 +18,23 @@ DATABASES = {
     }
 }
 
+
+####### Pillow Retry Queue Settings #######
+
+# Number of minutes a celery task will alot for itself (via lock timeout)
+PILLOW_RETRY_PROCESSING_LOCK_TIMEOUT = 5
+
+# Number of minutes to wait before retrying an unsuccessful processing attempt
+PILLOW_RETRY_REPROCESS_INTERVAL = 5
+
+# Max number of processing attempts before giving up on processing the error
+PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS = 3
+
+# The backoff factor by which to increase re-process intervals by.
+# next_interval = PILLOW_RETRY_REPROCESS_INTERVAL * attempts^PILLOW_RETRY_BACKOFF_FACTOR
+PILLOW_RETRY_BACKOFF_FACTOR = 2
+
+
 ####### Couch Config ######
 COUCH_HTTPS = False # recommended production value is True if enabling https
 COUCH_SERVER_ROOT = '127.0.0.1:5984' #6984 for https couch
