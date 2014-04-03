@@ -221,10 +221,12 @@ class FormCustomExportHelper(CustomExportHelper):
             return any([q.startswith('form.#'), q.startswith('form.@'), q.startswith('form.case.'),
                         q.startswith('form.meta.'), q.startswith('form.subcase_')])
 
-        def generate_additional_columns():
+        def generate_additional_columns(requires_case):
             ret = []
             case_name_col = CustomColumn(slug='case_name', index='form.case.@case_id', display='info.case_name',
                                      transform=CASENAME_TRANSFORM, show=True, selected=True)
+            if not requires_case:
+                case_name_col.show, case_name_col.selected, case_name_col.tag = False, False, 'deleted'
             matches = filter(case_name_col.match, column_conf)
             if matches:
                 for match in matches:
@@ -246,7 +248,25 @@ class FormCustomExportHelper(CustomExportHelper):
             if self.creating_new_export and (question in self.default_questions or question in current_questions):
                 col["selected"] = True
 
-        column_conf.extend(generate_additional_columns())
+        requires_case = self.custom_export.uses_cases()
+
+        case_cols = filter(lambda col: col["index"] == 'form.case.@case_id', column_conf)
+        if not requires_case:
+            for col in case_cols:
+                if col['index'] == 'form.case.@case_id':
+                    col['tag'], col['show'], col['selected'] = 'deleted', False, False
+        elif not case_cols:
+            column_conf.append({
+                'index': 'form.case.@case_id',
+                'show': True,
+                'is_sensitive': False,
+                'selected': True,
+                'transform': None,
+                'tag': None,
+                'display': ''
+            })
+
+        column_conf.extend(generate_additional_columns(requires_case))
         column_conf.extend([
             ExportColumn(
                 index=q,

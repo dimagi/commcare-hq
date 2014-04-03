@@ -8,6 +8,11 @@ import os
 from django.core.files.uploadedfile import UploadedFile
 from random import random, sample
 
+try:
+    from localsettings import URL_TEMPLATE
+except ImportError:
+    URL_TEMPLATE = '/a/{domain}/receiver/secure/'
+
 SUBMIT_TEMPLATE = """<?xml version='1.0'?>
 <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://www.commcarehq.org/loadtest">
     <meta>
@@ -94,10 +99,18 @@ def _prepAttachments():
     dict_attachments = {PIC_NAME: _attachmentFileStream(PIC_NAME)}
     return attachment_block, dict_attachments
 
+
 class Transaction(HQTransaction):
     """
-        Out of 15 forms: 5 should create a new case, 10 should update a case, and 12 should include multimedia
+    Out of 15 forms:
+        - 5 should create a new case
+        - 10 should update a case
+        - 12 should include multimedia
+
     """
+    def __init__(self):
+        self.url_template = URL_TEMPLATE
+        super(Transaction, self).__init__()
 
     def _normal_submit(self, url, data):
         return requests.post(url, data=data, headers={
@@ -127,13 +140,17 @@ class Transaction(HQTransaction):
         resp = submit_fn(url, data)
         return start_timer, resp, caseid
 
+    @property
+    def url(self):
+        return self.url_template.format(domain=self.domain)
+
     def run(self):
         include_image = random() < 12/15
         if CASE_IDS:  # if there are no caseids to update, just create some
             case_action = "update" if random() > 5/15 else "create"
         else:
             case_action = "create"
-        url = '%s%s' % (self.base_url, '/a/%s/receiver/secure/' % self.domain)
+        url = '%s%s' % (self.base_url, self.url)
         start_timer, resp, caseid = self.do_submission(url, include_image, case_action)
         latency = time.time() - start_timer
         self.custom_timers['submission'] = latency

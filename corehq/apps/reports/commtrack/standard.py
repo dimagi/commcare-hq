@@ -3,7 +3,7 @@ from corehq.apps.commtrack.psi_hacks import is_psi_domain
 from corehq.apps.reports.commtrack.data_sources import StockStatusDataSource, ReportingStatusDataSource
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.commtrack.models import Product, CommtrackConfig, CommtrackActionConfig
+from corehq.apps.commtrack.models import Product, CommtrackConfig, CommtrackActionConfig, StockState
 from corehq.apps.reports.graph_models import PieChart, MultiBarChart, Axis
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin
 from dimagi.utils.couch.loosechange import map_reduce
@@ -13,7 +13,6 @@ from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
-from casexml.apps.stock.models import StockState
 from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, product_ids_filtered_by_program
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 
@@ -297,8 +296,7 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
         return DataTablesHeader(*(DataTablesColumn(text) for text in [
                     _('Location'),
                     _('# Sites'),
-                    _('On-time'),
-                    _('Late'),
+                    _('Reporting'),
                     _('Non-reporting'),
                 ]))
 
@@ -350,7 +348,7 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
         def _rows():
             for loc in locs:
                 num_sites = len(sites_by_agg_site[loc._id])
-                yield [loc.name, len(sites_by_agg_site[loc._id])] + [fmt_col(loc, k) for k in ('ontime', 'late', 'nonreporting')]
+                yield [loc.name, len(sites_by_agg_site[loc._id])] + [fmt_col(loc, k) for k in ('reporting', 'nonreporting')]
 
         return master_tally, _rows()
 
@@ -361,11 +359,10 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
     def master_pie_chart_data(self):
         tally = self._data[0]
         labels = {
-            'ontime': _('On-time'),
-            'late': _('Late'),
+            'reporting': _('Reporting'),
             'nonreporting': _('Non-reporting'),
         }
-        return [{'label': labels[k], 'value': tally.get(k, {'count': 0.})['count']} for k in ('ontime', 'late', 'nonreporting')]
+        return [{'label': labels[k], 'value': tally.get(k, {'count': 0.})['count']} for k in ('reporting', 'nonreporting')]
 
     @property
     def charts(self):

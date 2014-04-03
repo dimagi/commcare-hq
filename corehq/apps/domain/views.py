@@ -250,6 +250,7 @@ class BaseEditProjectInfoView(BaseAdminProjectSettingsView):
             'call_center_enabled': self.domain_object.call_center_config.enabled,
             'restrict_superusers': self.domain_object.restrict_superusers,
             'ota_restore_caching': self.domain_object.ota_restore_caching,
+            'cloudcare_releases':  self.domain_object.cloudcare_releases,
         })
         return context
 
@@ -319,6 +320,7 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
                 'call_center_enabled': self.domain_object.call_center_config.enabled,
                 'call_center_case_owner': self.domain_object.call_center_config.case_owner_id,
                 'call_center_case_type': self.domain_object.call_center_config.case_type,
+                'cloudcare_releases': self.domain_object.cloudcare_releases,
             })
 
             return DomainMetadataForm(
@@ -739,7 +741,6 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
     def post(self, *args, **kwargs):
         return self.paginate_crud_response
 
-    @method_decorator(toggles.ACCOUNTING_PREVIEW.required_decorator())
     def dispatch(self, request, *args, **kwargs):
         if self.account is None:
             raise Http404()
@@ -751,7 +752,6 @@ class BillingStatementPdfView(View):
 
     @method_decorator(login_and_domain_required)
     @method_decorator(require_billing_admin())
-    @method_decorator(toggles.ACCOUNTING_PREVIEW.required_decorator())
     def dispatch(self, request, *args, **kwargs):
         return super(BillingStatementPdfView, self).dispatch(request, *args, **kwargs)
 
@@ -1728,7 +1728,7 @@ class AdvancedCommTrackSettingsView(BaseCommTrackAdminView):
                 section_to_consumption_types={
                     'stock': 'consumption'
                 },
-                force_to_consumption_case_types=[
+                force_consumption_case_types=[
                     'supply-point'
                 ],
                 use_dynamic_product_list=True,
@@ -1778,8 +1778,8 @@ class ProBonoMixin():
     @memoized
     def pro_bono_form(self):
         if self.request.method == 'POST':
-            return ProBonoForm(self.request.POST)
-        return ProBonoForm()
+            return ProBonoForm(self.use_domain_field, self.request.POST)
+        return ProBonoForm(self.use_domain_field)
 
     @property
     def page_context(self):
@@ -1802,15 +1802,17 @@ class ProBonoMixin():
 class ProBonoStaticView(ProBonoMixin, BasePageView):
     template_name = 'domain/pro_bono/static.html'
     urlname = 'pro_bono_static'
+    use_domain_field = True
 
     @property
     def requesting_domain(self):
-        return None
+        return self.pro_bono_form.cleaned_data['domain']
 
 
 class ProBonoView(ProBonoMixin, DomainAccountingSettings):
     template_name = 'domain/pro_bono/domain.html'
     urlname = 'pro_bono'
+    use_domain_field = False
 
     @property
     def requesting_domain(self):

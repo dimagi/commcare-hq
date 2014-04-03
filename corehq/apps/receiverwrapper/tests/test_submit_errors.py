@@ -1,4 +1,4 @@
-from django.utils.unittest.case import TestCase
+from django.test import TestCase
 from corehq.apps.users.models import WebUser
 from corehq.apps.domain.shortcuts import create_domain
 from django.test.client import Client

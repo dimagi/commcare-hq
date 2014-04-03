@@ -1495,13 +1495,15 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def get_forms(self, deleted=False, wrap=True, include_docs=False):
         if deleted:
             view_name = 'users/deleted_forms_by_user'
+            startkey = [self.user_id]
         else:
-            view_name = 'couchforms/by_user'
+            view_name = 'reports_forms/all_forms'
+            startkey = ['submission user', self.domain, self.user_id]
 
         db = XFormInstance.get_db()
         doc_ids = [r['id'] for r in db.view(view_name,
-            startkey=[self.user_id],
-            endkey=[self.user_id, {}],
+            startkey=startkey,
+            endkey=startkey + [{}],
             reduce=False,
             include_docs=False,
         )]
@@ -1514,10 +1516,11 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     @property
     def form_count(self):
-        result = XFormInstance.view('couchforms/by_user',
-            startkey=[self.user_id],
-            endkey=[self.user_id, {}],
-                group_level=0
+        key = ["submission user", self.domain, self.user_id]
+        result = XFormInstance.view('reports_forms/all_forms',
+            startkey=key,
+            endkey=key + [{}],
+            reduce=True
         ).one()
         if result:
             return result['value']
@@ -1597,20 +1600,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         for case in self.get_cases(deleted=True):
             case.doc_type = chop_suffix(case.doc_type)
             case.save()
-        self.save()
-
-    def transfer_to_domain(self, domain, app_id):
-        username = format_username(raw_username(self.username), domain)
-        self.change_username(username)
-        self.domain = domain
-        for form in self.get_forms():
-            form.domain = domain
-            form.app_id = app_id
-            form.save()
-        for case in self.get_cases():
-            case.domain = domain
-            case.save()
-        self.domain_membership = DomainMembership(domain=domain)
         self.save()
 
     def get_group_fixture(self):
@@ -1937,6 +1926,10 @@ class FakeUser(WebUser):
     """
     def save(self, **kwargs):
         raise NotImplementedError("You aren't allowed to do that!")
+
+    @property
+    def _id(self):
+        return "fake-user"
 
 
 class PublicUser(FakeUser):

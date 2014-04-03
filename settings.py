@@ -81,6 +81,7 @@ STATICFILES_DIRS = (
 )
 
 DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
+ACCOUNTING_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.accounting.log")
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
@@ -211,7 +212,6 @@ HQ_APPS = (
     'corehq.apps.fixtures',
     'corehq.apps.importer',
     'corehq.apps.reminders',
-    'corehq.apps.prescriptions',
     'corehq.apps.reportfixtures',
     'corehq.apps.translations',
     'corehq.apps.users',
@@ -403,6 +403,7 @@ SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 CCHQ_BUG_REPORT_EMAIL = 'commcarehq-bug-reports@dimagi.com'
 BILLING_EMAIL = 'billing-comm@dimagi.com'
 INVOICING_CONTACT_EMAIL = 'accounts@dimagi.com'
+BOOKKEEPER_CONTACT_EMAILS = []
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 
 SERVER_ENVIRONMENT = 'localdev'
@@ -444,7 +445,7 @@ CELERY_PERIODIC_QUEUE = 'celery'
 
 SKIP_SOUTH_TESTS = True
 #AUTH_PROFILE_MODULE = 'users.HqUserProfile'
-TEST_RUNNER = 'testrunner.HqTestSuiteRunner'
+TEST_RUNNER = 'testrunner.TwoStageTestRunner'
 # this is what gets appended to @domain after your accounts
 HQ_ACCOUNT_ROOT = "commcarehq.org"
 
@@ -630,7 +631,6 @@ LOGGING = {
         'simple': {
             'format': '%(asctime)s %(levelname)s %(message)s'
         },
-
         'pillowtop': {
             'format': '%(asctime)s %(levelname)s %(module)s %(message)s'
         },
@@ -656,6 +656,12 @@ LOGGING = {
             'class': 'logging.FileHandler',
             'formatter': 'verbose',
             'filename': DJANGO_LOG_FILE
+        },
+        'accountinglog': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'formatter': 'verbose',
+            'filename': ACCOUNTING_LOG_FILE
         },
         'couchlog': {
             'level': 'WARNING',
@@ -709,6 +715,11 @@ LOGGING = {
         },
         'currency_update': {
             'handlers': ['file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'accounting': {
+            'handlers': ['accountinglog', 'sentry', 'console', 'couchlog'],
             'level': 'INFO',
             'propagate': False,
         },
@@ -812,7 +823,6 @@ COUCHDB_APPS = [
     'phone',
     'reminders',
     'reportfixtures',
-    'prescriptions',
     'reports',
     'sofabed',
     'sms',

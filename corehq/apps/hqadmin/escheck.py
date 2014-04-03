@@ -172,15 +172,14 @@ def _get_latest_doc_id(db, doc_type, skip=0, limit=100, skipfunc=None):
         raise Exception("Don't know what to do with that doc_type to check an index: %s" % doc_type)
     def _call_view(skip, limit):
         return db.view(view_name, reduce=False, limit=limit, skip=skip, include_docs=True, descending=True)
-    raw_docs = _call_view(skip, limit)
     filtered_docs = []
 
     while True:
+        raw_docs = _call_view(skip, limit)
         filtered_docs = filter(skipfunc, raw_docs)
         if len(filtered_docs) > 0:
             break
         skip += limit
-        raw_docs = _call_view(skip, limit)
         if skip == 5000:
             #sanity check if we get a deluge of bad data, just return anything we got
             break

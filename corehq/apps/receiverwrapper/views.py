@@ -6,6 +6,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xform import is_device_report
 from corehq.apps.domain.decorators import login_or_digest_ex
 from corehq.apps.receiverwrapper.auth import AuthContext, WaivedAuthContext
+from corehq.apps.receiverwrapper.util import get_app_and_build_ids
 from couchforms import convert_xform_to_json
 import couchforms
 from django.views.decorators.http import require_POST
@@ -15,11 +16,13 @@ from django.views.decorators.csrf import csrf_exempt
 def _process_form(request, domain, app_id, user_id, authenticated,
                   auth_cls=AuthContext):
     instance, attachments = couchforms.get_instance_and_attachment(request)
+    app_id, build_id = get_app_and_build_ids(domain, app_id)
     response = couchforms.SubmissionPost(
         instance=instance,
         attachments=attachments,
         domain=domain,
         app_id=app_id,
+        build_id=build_id,
         auth_context=auth_cls(
             domain=domain,
             user_id=user_id,
