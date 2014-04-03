@@ -17,6 +17,7 @@ USERNAME_TRANSFORM = 'corehq.apps.export.transforms.user_id_to_username'
 OWNERNAME_TRANSFORM = 'corehq.apps.export.transforms.owner_id_to_display'
 CASENAME_TRANSFORM = 'corehq.apps.export.transforms.case_id_to_case_name'
 
+FORM_CASE_ID_PATH = 'form.case.@case_id'
 
 
 class AbstractProperty(object):
@@ -182,7 +183,7 @@ class FormCustomExportHelper(CustomExportHelper):
 
     allow_repeats = True
 
-    default_questions = ["form.case.@case_id", "form.meta.timeEnd", "_id", "id", "form.meta.username"]
+    default_questions = [FORM_CASE_ID_PATH, "form.meta.timeEnd", "_id", "id", "form.meta.username"]
     questions_to_show = default_questions + ["form.meta.timeStart", "received_on"]
 
     @property
@@ -225,7 +226,7 @@ class FormCustomExportHelper(CustomExportHelper):
 
         def generate_additional_columns(requires_case):
             ret = []
-            case_name_col = CustomColumn(slug='case_name', index='form.case.@case_id', display='info.case_name',
+            case_name_col = CustomColumn(slug='case_name', index=FORM_CASE_ID_PATH, display='info.case_name',
                                          transform=CASENAME_TRANSFORM, show=True, selected=True)
             if not requires_case:
                 case_name_col.show, case_name_col.selected, case_name_col.tag = False, False, 'deleted'
@@ -233,10 +234,10 @@ class FormCustomExportHelper(CustomExportHelper):
             if matches:
                 # hack/annoying - also might have to re-add the case id column which can get
                 # overwritten by case name if only that is set.
-                case_id_cols = filter(lambda col: col['index'] == 'form.case.@case_id', column_conf)
+                case_id_cols = filter(lambda col: col['index'] == FORM_CASE_ID_PATH, column_conf)
                 if len(case_id_cols) <= 1:
                     ret.append(ExportColumn(
-                        index='form.case.@case_id',
+                        index=FORM_CASE_ID_PATH,
                         display='info.case_id',
                         show=True,
                     ).to_config_format(selected=False))
@@ -263,14 +264,14 @@ class FormCustomExportHelper(CustomExportHelper):
 
         requires_case = self.custom_export.uses_cases()
 
-        case_cols = filter(lambda col: col["index"] == 'form.case.@case_id', column_conf)
+        case_cols = filter(lambda col: col["index"] == FORM_CASE_ID_PATH, column_conf)
         if not requires_case:
             for col in case_cols:
-                if col['index'] == 'form.case.@case_id':
+                if col['index'] == FORM_CASE_ID_PATH:
                     col['tag'], col['show'], col['selected'] = 'deleted', False, False
         elif not case_cols:
             column_conf.append({
-                'index': 'form.case.@case_id',
+                'index': FORM_CASE_ID_PATH,
                 'show': True,
                 'is_sensitive': False,
                 'selected': True,
