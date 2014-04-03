@@ -116,7 +116,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
         SLUG_LOCATION_ID: lambda s: SupplyPointCase.get(s.case_id).location_[-1],
         # SLUG_LOCATION_LINEAGE: lambda p: list(reversed(p.location_[:-1])),
         SLUG_CURRENT_STOCK: 'stock_on_hand',
-        SLUG_CONSUMPTION: lambda s: s.get_consumption() * 30 if s.get_consumption() else None,
+        SLUG_CONSUMPTION: lambda s: s.get_consumption() * 30 if s.get_consumption() is not None else None,
         SLUG_MONTHS_REMAINING: 'months_remaining',
         SLUG_CATEGORY: 'stock_category',
         # SLUG_STOCKOUT_SINCE: 'stocked_out_since',
@@ -177,7 +177,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             yield {
                 'category': state.stock_category,
                 'product_id': product._id,
-                'consumption': state.get_consumption() * 30 if state.get_consumption() else None,
+                'consumption': state.get_consumption() * 30 if state.get_consumption() is not None else None,
                 'months_remaining': state.months_remaining,
                 'location_id': SupplyPointCase.get(state.case_id).location_id,
                 'product_name': product.name,
