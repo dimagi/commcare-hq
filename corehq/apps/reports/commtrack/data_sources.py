@@ -52,7 +52,8 @@ class CommtrackDataSourceMixin(object):
 
     @property
     def start_date(self):
-        date = self.config.get('start_date')
+        # dates come differently depending on report type
+        date = self.config.get('start_date') or self.request.GET.get('startdate')
         if date:
             return datetime.strptime(date, '%Y-%m-%d').date()
         else:
@@ -60,7 +61,8 @@ class CommtrackDataSourceMixin(object):
 
     @property
     def end_date(self):
-        date = self.config.get('end_date')
+        # dates come differently depending on report type
+        date = self.config.get('end_date') or self.request.GET.get('enddate')
         if date:
             return datetime.strptime(date, '%Y-%m-%d').date()
         else:

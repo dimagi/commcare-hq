@@ -10,7 +10,8 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
     slug = "stockstatus_map"
 
     fields = ['corehq.apps.reports.fields.AsyncLocationField',
-              'corehq.apps.reports.fields.SelectProgramField']
+              'corehq.apps.reports.fields.SelectProgramField',
+              'corehq.apps.reports.filters.dates.DatespanFilter',]
 
     data_source = {
         'adapter': 'report',
