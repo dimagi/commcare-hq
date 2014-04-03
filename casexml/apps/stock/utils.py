@@ -35,6 +35,6 @@ def stock_category(stock, daily_consumption, domain):
 def state_stock_category(state):
     return stock_category(
         state.stock_on_hand,
-        state.daily_consumption,
+        state.get_consumption(),
         state.get_domain()
     )
