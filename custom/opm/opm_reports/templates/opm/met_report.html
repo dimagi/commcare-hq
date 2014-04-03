@@ -5,6 +5,7 @@
 
 {% block pretable %}
 <link rel="stylesheet" href="{% static "opm/css/report.css" %}">
+<link rel="stylesheet" href="{% static "opm/css/met_report.css" %}">
 {% if not report.needs_filters %}
     {% if rendered_as == 'print' %}
         <div id="opm-report-print">
