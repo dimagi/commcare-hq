@@ -105,7 +105,7 @@ class BaseCaseMultimediaTest(TestCase):
         xml_data = self._getXFormString('multimedia_create.xml')
         attachment_block, dict_attachments = self._prepAttachments(attachments)
         final_xml = self._formatXForm(CREATE_XFORM_ID, xml_data, attachment_block)
-        form = self._submit_and_verify(CREATE_XFORM_ID, final_xml, dict_attachments)
+        self._submit_and_verify(CREATE_XFORM_ID, final_xml, dict_attachments)
 
     def _doSubmitUpdateWithMultimedia(self, new_attachments=['commcare_logo_file', 'dimagi_logo_file'],
                                       removes=['fruity_file']):
