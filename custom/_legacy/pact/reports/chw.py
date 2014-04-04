@@ -63,8 +63,8 @@ class PactCHWProfileReport(PactDrilldownReportMixin, PactElasticTabularReportMix
 
     def get_fields(self):
         if self.view_mode == 'submissions':
-            yield 'corehq.apps.reports.fields.FilterUsersField'
-            yield 'corehq.apps.reports.fields.DatespanField'
+            yield 'corehq.apps.reports.filters.users.UserTypeFilter'
+            yield 'corehq.apps.reports.filters.dates.DatespanFilter'
 
 
     @memoized

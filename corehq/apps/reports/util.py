@@ -69,11 +69,12 @@ def all_xmlns_in_domain(domain):
 
 def user_list(domain):
     #todo cleanup
-    #referenced in fields -> SelectMobileWorkerField
+    #referenced in filters.users.SelectMobileWorkerFilter
     users = list(CommCareUser.by_domain(domain))
     users.extend(CommCareUser.by_domain(domain, is_active=False))
     users.sort(key=lambda user: (not user.is_active, user.username))
     return users
+
 
 def get_group_params(domain, group='', users=None, user_id_only=False, **kwargs):
     # refrenced in reports/views and create_export_filter below
@@ -299,13 +300,14 @@ def group_filter(doc, group):
     else:
         return True
 
+
 def create_export_filter(request, domain, export_type='form'):
-    from corehq.apps.reports.fields import FilterUsersField
+    from corehq.apps.reports.filters.users import UserTypeFilter
     app_id = request.GET.get('app_id', None)
 
     group, users = get_group_params(domain, **json_request(request.GET))
 
-    user_filters, use_user_filters = FilterUsersField.get_user_filter(request)
+    user_filters, use_user_filters = UserTypeFilter.get_user_filter(request)
 
     if export_type == 'case':
         if user_filters and use_user_filters:

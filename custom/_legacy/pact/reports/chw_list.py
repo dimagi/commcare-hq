@@ -14,7 +14,7 @@ class PactCHWDashboard(GenericTabularReport, ProjectReportParametersMixin, Custo
     name = "CHW Management"
     slug = "chws"
     hide_filters = True
-    fields = ['corehq.apps.reports.fields.FilterUsersField', ]
+    fields = ['corehq.apps.reports.filters.users.UserTypeFilter', ]
 
     #    asynchronous = False
     @property

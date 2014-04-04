@@ -40,9 +40,9 @@ TAGS = {
 
 class PhonelogReport(GetParamsMixin, DeploymentsReport, DatespanMixin,
                      PaginatedReportMixin):
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.GroupField',
-              'corehq.apps.reports.fields.DatespanField']
+    fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
+              'corehq.apps.reports.filters.select.GroupFilter',
+              'corehq.apps.reports.filters.dates.DatespanFilter']
 
     special_notice = DATA_NOTICE
     ajax_pagination = True
@@ -52,9 +52,9 @@ class PhonelogReport(GetParamsMixin, DeploymentsReport, DatespanMixin,
 class FormErrorReport(PhonelogReport):
     name = ugettext_noop("Errors & Warnings Summary")
     slug = "form_errors"
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.GroupField',
-              'corehq.apps.reports.fields.DatespanField']
+    fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
+              'corehq.apps.reports.filters.select.GroupFilter',
+              'corehq.apps.reports.filters.dates.DatespanFilter']
 
     special_notice = DATA_NOTICE
     is_cacheable = False
@@ -160,7 +160,7 @@ class FormErrorReport(PhonelogReport):
 class DeviceLogDetailsReport(PhonelogReport):
     name = ugettext_noop("Device Log Details")
     slug = "log_details"
-    fields = ['corehq.apps.reports.fields.DatespanField',
+    fields = ['corehq.apps.reports.filters.dates.DatespanFilter',
               'corehq.apps.reports.filters.devicelog.DeviceLogTagFilter',
               'corehq.apps.reports.filters.devicelog.DeviceLogUsersFilter',
               'corehq.apps.reports.filters.devicelog.DeviceLogDevicesFilter']

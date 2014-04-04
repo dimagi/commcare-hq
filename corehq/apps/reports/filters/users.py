@@ -1,9 +1,9 @@
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
+from corehq.apps.groups.models import Group
+from corehq.apps.reports import util
 
-from corehq.apps.groups.hierarchy import (get_hierarchy,
-    get_user_data_from_hierarchy)
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import es_query, ES_URLS
@@ -146,7 +146,7 @@ class UserTypeFilter(BaseReportFilter):
                 ufilter = request.GET.getlist('ufilter')
             group = request.GET.get('group', '')
             individual = request.GET.get('individual', '')
-        except KeyError:
+        except (KeyError, AttributeError):
             pass
         show_filter = True
         toggle = HQUserType.use_defaults()

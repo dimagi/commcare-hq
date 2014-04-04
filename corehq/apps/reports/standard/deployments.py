@@ -2,9 +2,9 @@ from corehq.apps.receiverwrapper.util import get_meta_appversion_text, get_build
 from couchdbkit import ResourceNotFound
 from corehq.apps.app_manager.models import get_app
 from corehq.apps.reports import util
+from corehq.apps.reports.filters.select import SelectApplicationFilter
 from corehq.apps.reports.standard import ProjectReportParametersMixin, ProjectReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
-from corehq.apps.reports.fields import SelectApplicationField
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.util import make_form_couch_key
 from couchforms.models import XFormInstance
@@ -24,9 +24,9 @@ class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParame
 class ApplicationStatusReport(DeploymentsReport):
     name = ugettext_noop("Application Status")
     slug = "app_status"
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.GroupField',
-              'corehq.apps.reports.fields.SelectApplicationField']
+    fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
+              'corehq.apps.reports.filters.select.GroupFilter',
+              'corehq.apps.reports.filters.select.SelectApplicationFilter']
 
     @property
     def headers(self):
@@ -37,7 +37,7 @@ class ApplicationStatusReport(DeploymentsReport):
     @property
     def rows(self):
         rows = []
-        selected_app = self.request_params.get(SelectApplicationField.slug, '')
+        selected_app = self.request_params.get(SelectApplicationFilter.slug, '')
         UNKNOWN = _("unknown")
 
         for user in self.users:

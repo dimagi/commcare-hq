@@ -352,7 +352,7 @@ class MCBase(ComposedTabularReport, CustomProjectReport, DatespanMixin):
     emailable = True
     report_template_path = "mc/reports/sectioned_tabular.html"
     fields = [
-        'corehq.apps.reports.fields.DatespanField',
+        'corehq.apps.reports.filters.dates.DatespanFilter',
     ]
     SECTIONS = None  # override
     format_class = None # override
@@ -382,7 +382,7 @@ class MCBase(ComposedTabularReport, CustomProjectReport, DatespanMixin):
 class HeathFacilityMonthly(MCBase):
     slug = 'hf_monthly'
     fields = [
-        'corehq.apps.reports.fields.DatespanField',
+        'corehq.apps.reports.filters.dates.DatespanFilter',
         'custom.reports.mc.reports.fields.HealthFacilityField',
     ]
     name = ugettext_noop("Health Facility Monthly Report")
@@ -391,7 +391,7 @@ class HeathFacilityMonthly(MCBase):
 
 class DistrictMonthly(MCBase):
     fields = [
-        'corehq.apps.reports.fields.DatespanField',
+        'corehq.apps.reports.filters.dates.DatespanFilter',
         'custom.reports.mc.reports.fields.DistrictField',
     ]
     slug = 'district_monthly'
@@ -401,7 +401,7 @@ class DistrictMonthly(MCBase):
 
 class DistrictWeekly(MCBase):
     fields = [
-        'corehq.apps.reports.fields.DatespanField',
+        'corehq.apps.reports.filters.dates.DatespanFilter',
         'custom.reports.mc.reports.fields.DistrictField',
     ]
     slug = 'district_weekly'
@@ -468,7 +468,7 @@ class HealthFacilityWeekly(MCBase):
     report_template_path = "mc/reports/hf_weekly.html"
     extra_context_providers = [section_context, hf_message_content]
     fields = [
-        'corehq.apps.reports.fields.DatespanField',
+        'corehq.apps.reports.filters.dates.DatespanFilter',
         'custom.reports.mc.reports.fields.HealthFacilityField',
     ]
     slug = 'hf_weekly'

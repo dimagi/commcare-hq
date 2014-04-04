@@ -98,8 +98,8 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
 class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Stock Status by Product')
     slug = 'current_stock_status'
-    fields = ['corehq.apps.reports.fields.AsyncLocationField',
-              'corehq.apps.reports.fields.SelectProgramField',
+    fields = ['corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
+              'corehq.apps.reports.dont_use.fields.SelectProgramField',
               'corehq.apps.reports.filters.dates.DatespanFilter']
     exportable = True
     emailable = True
@@ -205,8 +205,8 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
 class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Inventory')
     slug = StockStatusDataSource.slug
-    fields = ['corehq.apps.reports.fields.AsyncLocationField',
-              'corehq.apps.reports.fields.SelectProgramField',
+    fields = ['corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
+              'corehq.apps.reports.dont_use.fields.SelectProgramField',
               'corehq.apps.reports.filters.dates.DatespanFilter',]
     exportable = True
     emailable = True
@@ -279,8 +279,8 @@ class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
 class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Reporting Rate')
     slug = 'reporting_rate'
-    fields = ['corehq.apps.reports.fields.AsyncLocationField',
-              'corehq.apps.reports.fields.SelectProgramField',
+    fields = ['corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
+              'corehq.apps.reports.dont_use.fields.SelectProgramField',
               'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
               'corehq.apps.reports.filters.dates.DatespanFilter',]
     exportable = True
@@ -373,7 +373,8 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
 class RequisitionReport(CaseListReport):
     name = ugettext_noop('Requisition Report')
     slug = 'requisition_report'
-    fields = ['corehq.apps.reports.fields.AsyncLocationField', 'corehq.apps.reports.fields.SelectOpenCloseField']
+    fields = ['corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
+              'corehq.apps.reports.filters.select.SelectOpenCloseFilter']
     exportable = True
     emailable = True
     asynchronous = True
