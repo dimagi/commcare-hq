@@ -28,6 +28,7 @@ from .beneficiary import Beneficiary
 from .incentive import Worker
 from .constants import *
 from .filters import BlockFilter, AWCFilter
+from corehq.apps.reports.standard.maps import GenericMapReport
 
 
 class OpmCaseSqlData(SqlData):
@@ -509,8 +510,13 @@ class HealthStatusReport(DatespanMixin, BaseReport, SummingSqlTabularReport):
     def fields(self):
         return [BlockFilter, AWCFilter, SelectOpenCloseFilter, DatespanFilter]
 
-    def get_rows(self, dataspan):
+    @property
+    @memoized
+    def get_users(self):
         return CommCareUser.by_domain(DOMAIN)
+
+    def get_rows(self, dataspan):
+        return self.get_users
 
     def get_row_data(self, row):
         basic_info = OpmHealthStatusBasicInfoSqlData(DOMAIN, row._id, self.datespan)
@@ -536,20 +542,6 @@ class HealthStatusReport(DatespanMixin, BaseReport, SummingSqlTabularReport):
         headers = self.headers
         formatted_rows = self.rows
 
-        regexp = re.compile('(.*?)>([0-9]+)(<.*?)>([0-9]*).*')
-
-        def _unformat_row(row):
-
-            formatted_row = []
-            for col in row:
-                if regexp.match(col):
-                    formated_col = "%s" % (regexp.match(col).group(2))
-                    if regexp.match(col).group(4) != "":
-                        formated_col = "%s - %s%%" % (formated_col, regexp.match(col).group(4))
-                    formatted_row.append(formated_col)
-                else:
-                    formatted_row.append(col)
-            return formatted_row
 
         table = headers.as_export_table
         rows = [_unformat_row(row) for row in formatted_rows]
@@ -589,4 +581,105 @@ def calculate_total_row(rows):
                     total_row.append('')
 
     return total_row
+
+def _unformat_row(row):
+    regexp = re.compile('(.*?)>([0-9]+)(<.*?)>([0-9]*).*')
+    formatted_row = []
+    for col in row:
+        if regexp.match(col):
+            formated_col = "%s" % (regexp.match(col).group(2))
+            if regexp.match(col).group(4) != "":
+                formated_col = "%s - %s%%" % (formated_col, regexp.match(col).group(4))
+            formatted_row.append(formated_col)
+        else:
+            formatted_row.append(col)
+    return formatted_row
+
+class HealthMapSource(HealthStatusReport):
+
+    @property
+    def gps_mapping(self):
+        users = self.get_users
+        mapping = {}
+        for user in users:
+            aww_name = user.first_name + " " + user.last_name
+            meta_data = user.user_data
+            awc = meta_data.get("awc", "")
+            block = meta_data.get("block", "")
+            gp = meta_data.get("gp", "")
+            gps = meta_data.get("gps", "")
+            mapping[awc] = {
+                "AWW": aww_name,
+                "Block": block,
+                "GP": gp,
+                "gps": gps
+            }
+        return mapping
+
+    @property
+    def headers(self):
+        ret = super(HealthMapSource, self).headers
+        for key in ["GP", "Block", "AWW", "gps"]:
+            ret.prepend_column(DataTablesColumn(key))
+        return ret
+
+    @property
+    def rows(self):
+        gps_mapping = self.gps_mapping
+        ret = super(HealthMapSource, self).rows
+        new_rows = []
+        for row in ret:
+            awc = row[0]
+            awc_map = gps_mapping.get(awc, None) or ""
+            gps = awc_map["gps"] if awc_map else "--"
+            extra_columns = ["--"] * 4
+            if awc_map:
+                extra_columns = []
+                for key in ["gps", "AWW", "Block", "GP"]:
+                    extra_columns.append(awc_map.get(key, "--"))
+            escaped_row = [row[0]]
+            for cell in row[1:]:
+                # _unformat_row([<html>] => ["N - f%"])
+                html_cell = {"html": cell, "sort_key": int(_unformat_row([cell])[0][-2])}
+                escaped_row.append(html_cell)
+            new_rows.append(extra_columns + escaped_row)
+        return new_rows
+
+
+class HealthMapReport(GenericMapReport, CustomProjectReport):
+    name = "Health Status (Map)"
+    slug = "health_status_map"
+
+    fields = [BlockFilter, AWCFilter, SelectOpenCloseFilter, DatespanFilter]
+
+    data_source = {
+        'adapter': 'legacyreport',
+        'geo_column': 'gps',
+        'report': 'custom.opm.opm_reports.reports.HealthMapSource',
+    }
+
+    @property
+    def display_config(self):
+        columns = ["AWW", "Block", "GP"] + [
+            "AWC",
+            "# of Pregnant Women Registered",
+            "# of Children Whose Birth Was Registered",
+            "# of Beneficiaries Attending VHND Monthly",
+            '# of Children Whose Nutritional Status is "SAM"',
+            '# of Children Whose Nutritional Status is "MAM"',
+            '# of Children Whose Nutritional Status is Normal'
+        ]
+        return {
+            "detail_columns": columns[0:5],
+            "table_columns": columns,
+            "column_titles": {
+                "AWC": "AWC",
+                "# of Pregnant Women Registered": "Pregnant Women Registered",
+                "# of Children Whose Birth Was Registered": "Children Whose Birth Was Registered",
+                "# of Beneficiaries Attending VHND Monthly": "Beneficiaries Attending VHND Monthly",
+                '# of Children Whose Nutritional Status is "SAM"': 'Children Whose Nutritional Status is "SAM"',
+                '# of Children Whose Nutritional Status is "MAM"': 'Children Whose Nutritional Status is "MAM"',
+                '# of Children Whose Nutritional Status is Normal': 'Children Whose Nutritional Status is Normal'
+            }
+        }
 
