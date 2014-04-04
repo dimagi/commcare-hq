@@ -1,28 +1,11 @@
 from __future__ import absolute_import
 
-import uuid
 from xml.etree import ElementTree
 from couchdbkit.schema.properties import LazyDict
-from django.template.loader import render_to_string
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.phone.models import SyncLogAssertionError, SyncLog
 from couchforms.models import XFormInstance
 from couchforms.util import create_and_lock_xform
-from dimagi.utils.parsing import json_format_datetime
-
-
-def get_close_case_xml(time, case_id, uid=None):
-    if not uid:
-        uid = uuid.uuid4().hex
-    time = json_format_datetime(time)
-    return render_to_string("case/data/close.xml", locals())
-
-
-def get_close_referral_xml(time, case_id, referral_id, referral_type, uid=None):
-    if not uid:
-        uid = uuid.uuid4().hex
-    time = json_format_datetime(time)
-    return render_to_string("case/data/close_referral.xml", locals())
 
 
 def couchable_property(prop):
