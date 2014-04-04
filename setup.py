@@ -10,7 +10,7 @@ setup(
     author_email='dev@dimagi.com',
     url='http://www.dimagi.com/',
     install_requires=[
-        "couchdbkit",
+        "jsonobject-couchdbkit",
         "couchexport",
         "dimagi-utils>=1.0.11",
         "django",
