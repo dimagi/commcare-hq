@@ -886,7 +886,6 @@ COUCHDB_APPS = [
     ('auditcare', 'auditcare'),
     ('couchlog', 'couchlog'),
     ('receiverwrapper', 'receiverwrapper'),
-    ('pillow_retry', 'pillow_retry'),
     # needed to make couchdbkit happy
     ('fluff', 'fluff-bihar'),
     ('bihar', 'fluff-bihar'),
