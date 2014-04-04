@@ -73,7 +73,7 @@ class StockReportParser(object):
 
         if domain.commtrack_enabled:
             # if user is not actually a user, we let someone else process
-            if not issubclass(type(u), CouchUser):
+            if not isinstance(u, CouchUser):
                 self.failed_init = True
                 return
 
