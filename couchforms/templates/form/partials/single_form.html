@@ -108,20 +108,24 @@ requires imports/proptable.html to be included in the main template
 
             <p>
                 {% if not is_archived %}
-                <form action="{% url "archive_form" domain instance.get_id %}" method="POST">
+                <form action="{% url "archive_form" domain instance.get_id %}" method="POST"
+                      id="archive-form">
                     <span class="help_popover" data-help-key="{% trans "Archiving Forms" %}">
                         <i class="icon icon-question-sign"></i>
                     </span>
-                    <input type="submit" class="btn btn-danger" value="{% trans "Archive this form" %}">
+                    <input type="submit" class="btn btn-danger" value="{% trans "Archive this form" %}"
+                            id="archive-form-btn"
+                            onclick="document.getElementById('archive-form-btn').disabled = true;document.getElementById('archive-form').submit();">
                 </form>
                 {% else %}
-                <form action="{% url "unarchive_form" domain instance.get_id %}" method="POST">
+                <form action="{% url "unarchive_form" domain instance.get_id %}" method="POST"
+                      id="unarchive-form">
                     <span class="help_popover" data-help-key="{% trans "Restoring Forms" %}">
                         <i class="icon icon-question-sign"></i>
                     </span>
                     <input type="submit" class="btn btn-primary" value="{% trans "Restore this form" %}"
-                            id="nick"
-                            onclick="document.getElementById('nick').disabled = true;">
+                           id="unarchive-form-btn"
+                           onclick="document.getElementById('unarchive-form-btn').disabled = true;document.getElementById('unarchive-form').submit();">
                 </form>
                 {% endif %}
             </p>
