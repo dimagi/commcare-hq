@@ -52,7 +52,7 @@
         $("[data-field=user_id]").each(function() {
             var user_id = $(this).text().trim();
             if ( maybe_username ) {
-                var params = $.param({individual: user_id});
+                var params = $.param({emw: "u__"+user_id});
                 var body = user_template
                              .replace(":username", maybe_username)
                              .replace(":case_list_url", case_list_url + "?" + params)
