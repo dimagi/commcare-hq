@@ -73,13 +73,11 @@ class RepeaterTest(TestCase):
             domain=self.domain,
             url='case-repeater-url',
             version=V1,
-            next_check=datetime.utcnow() - timedelta(seconds=5),
         )
         self.case_repeater.save()
         self.form_repeater = FormRepeater(
             domain=self.domain,
             url='form-repeater-url',
-            next_check=datetime.utcnow() - timedelta(seconds=10),
         )
         self.form_repeater.save()
         self.log = []
@@ -153,20 +151,29 @@ class RepeaterTest(TestCase):
         )
         self.assertEqual(len(repeat_records), 2)
 
-        for repeat_record in sorted(repeat_records,
-                                    key=lambda rr: rr.next_check):
+        for repeat_record in repeat_records:
             self.assertLess(abs(next_check_time - repeat_record.next_check),
                             timedelta(seconds=2))
             repeat_record.fire(post_fn=self.make_post_fn([404, 200]))
             repeat_record.save()
 
         self.assertEqual(len(self.log), 4)
-        self.assertEqual(self.log[1][:3],
+
+        # The following is pretty fickle and depends on which of
+        #   - corehq.apps.receiverwrapper.signals
+        #   - casexml.apps.case.signals
+        # gets loaded first.
+        # This is deterministic but easily affected by minor code changes
+
+        # check case stuff
+        self.assertEqual(self.log[1][:2], (self.case_repeater.url, 200))
+        self.assertIn('server-modified-on', self.log[1][3])
+        check_xml_line_by_line(self, self.log[1][2], case_block)
+
+        # check form stuff
+        self.assertEqual(self.log[3][:3],
                          (self.form_repeater.url, 200, xform_xml))
-        self.assertIn('received-on', self.log[1][3])
-        self.assertEqual(self.log[3][:2], (self.case_repeater.url, 200))
-        self.assertIn('server-modified-on', self.log[3][3])
-        check_xml_line_by_line(self, self.log[3][2], case_block)
+        self.assertIn('received-on', self.log[3][3])
 
         repeat_records = RepeatRecord.all(
             domain=self.domain,
