@@ -25,7 +25,6 @@ MEDIA_FILES = {
     "commcare_logo_file": os.path.join(media_path, "commcare-logo.png"),
     "globe_file": os.path.join(media_path, "globe.pdf"),
     "house_file": os.path.join(media_path, "house.jpg"),
-    "escape_file": os.path.join(media_path, "13.15.20 hrs __[0000233].jpg")
 }
 
 TEST_DOMAIN = "test-domain"
