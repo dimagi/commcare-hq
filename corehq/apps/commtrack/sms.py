@@ -7,6 +7,7 @@ from lxml import etree
 import logging
 from dimagi.utils.couch.loosechange import map_reduce
 from dimagi.utils.parsing import json_format_datetime
+from jsonobject.exceptions import WrappingAttributeError
 from datetime import datetime
 from corehq.apps.commtrack.util import get_supply_point
 from corehq.apps.commtrack.xmlutil import XML
@@ -68,9 +69,14 @@ class StockReportParser(object):
 
         self.location = None
         u = v.owner
+
         if domain.commtrack_enabled:
             # currently only support one location on the UI
-            linked_loc = CommTrackUser.wrap(u.to_json()).location
+            try:
+                linked_loc = CommTrackUser.wrap(u.to_json()).location
+            except WrappingAttributeError:
+                # if we can't wrap as a user, let someone else handle
+                return None
             if linked_loc:
                 self.location = get_supply_point(self.domain.name, loc=linked_loc)
 
