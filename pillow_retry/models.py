@@ -7,13 +7,13 @@ from django.db.models.aggregates import Count
 
 
 def _get_extra_args(limit, reduce, skip):
-        extra_args = dict()
-        if not reduce and limit is not None:
-                extra_args.update(
-                    limit=limit,
-                    skip=skip
-                )
-        return extra_args
+    extra_args = dict()
+    if not reduce and limit is not None:
+            extra_args.update(
+                limit=limit,
+                skip=skip
+            )
+    return extra_args
 
 def name_path_from_object(obj):
         name = obj.__class__.__name__
@@ -59,9 +59,6 @@ class PillowError(models.Model):
         try:
             error = cls.objects.get(doc_id=doc_id)
         except cls.DoesNotExist:
-            error = None
-
-        if not error:
             now = datetime.utcnow()
             error = PillowError(
                 doc_id=doc_id,

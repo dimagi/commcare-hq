@@ -26,13 +26,13 @@ def process_pillow_retry(error_doc_id):
             error_doc = PillowError.objects.get(id=error_doc_id)
         except PillowError.DoesNotExist:
             return
-        
+
         doc_id = error_doc.doc_id
         pillow_class = error_doc.pillow
         try:
             pillow = import_pillow_string(pillow_class)
             pillow.process_change({'id': doc_id}, is_retry_attempt=True)
-        except:
+        except Exception:
             ex_type, ex_value, ex_tb = sys.exc_info()
             error_doc.add_attempt(ex_value, ex_tb)
             error_doc.save()
