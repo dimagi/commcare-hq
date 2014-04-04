@@ -83,10 +83,10 @@ class CommCareCaseAttachment(LooselyEqualDocumentSchema, UnicodeMixIn):
                 mime_type = None
 
             ret = cls(identifier=attachment.identifier,
-                       attachment_src=attachment.attachment_src,
-                       attachment_from=attachment.attachment_from,
-                       attachment_name=attachment.attachment_name,
-                       server_mime=mime_type)
+                      attachment_src=attachment.attachment_src,
+                      attachment_from=attachment.attachment_from,
+                      attachment_name=attachment.attachment_name,
+                      server_mime=mime_type)
         else:
             ret = cls(identifier=attachment.identifier)
         return ret
