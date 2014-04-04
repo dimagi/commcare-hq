@@ -314,7 +314,6 @@ class ApplicationResource(JsonResource, DomainSpecificResourceMixin):
         # There should be few enough apps per domain that doing an explicit refresh for each is OK.
         # This is the easiest way to filter remote apps
         # Later we could serialize them to their URL or whatevs but it is not that useful yet
-
         application_bases = ApplicationBase.by_domain(domain)
 
         # This wraps in the appropriate class so that is_remote_app() returns the correct answer
@@ -323,7 +322,7 @@ class ApplicationResource(JsonResource, DomainSpecificResourceMixin):
         return [app for app in applications if not app.is_remote_app()]
 
     def obj_get(self, bundle, **kwargs):
-        return get_object_or_not_exist(Application, kwargs['domain'], kwargs['pk'])
+        return get_object_or_not_exist(Application, kwargs['pk'], kwargs['domain'])
 
     class Meta(CustomResourceMeta):
         authentication = RequirePermissionAuthentication(Permissions.edit_apps)

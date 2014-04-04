@@ -49,13 +49,13 @@ class Address(object):
     def __str__(self):
         return '''%(name)s
 %(first_line)s%(second_line)s
-%(city)s, %(region)s %(postal_code)s
+%(city)s%(region)s %(postal_code)s
 %(country)s%(phone_number)s%(email_address)s%(website)s
         ''' % {
             'name': self.name,
             'first_line': self.first_line,
             'second_line': prepend_newline_if_not_empty(self.second_line),
-            'city': self.city,
+            'city': "%s, " % self.city if self.city else "",
             'region': self.region,
             'postal_code': self.postal_code,
             'country': self.country,

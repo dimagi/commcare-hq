@@ -67,7 +67,7 @@ class BillingAccountBasicForm(forms.Form):
                                             required=False)
     currency = forms.ChoiceField(label="Currency")
 
-    contact_emails = forms.CharField(
+    emails = forms.CharField(
         label=_('Additional Contact Emails'),
         widget=forms.Textarea,
         max_length=BillingContactInfo._meta.get_field('emails').max_length,
@@ -80,7 +80,7 @@ class BillingAccountBasicForm(forms.Form):
                 'name': account.name,
                 'salesforce_account_id': account.salesforce_account_id,
                 'currency': account.currency.code,
-                'contact_emails': contact_info.emails,
+                'emails': contact_info.emails,
             }
         else:
             kwargs['initial'] = {
@@ -95,7 +95,7 @@ class BillingAccountBasicForm(forms.Form):
             crispy.Fieldset(
                 'Basic Information',
                 'name',
-                'contact_emails',
+                crispy.Field('emails', css_class='input-xxlarge'),
                 'salesforce_account_id',
                 'currency',
             ),
@@ -110,8 +110,8 @@ class BillingAccountBasicForm(forms.Form):
             )
         )
 
-    def clean_contact_emails(self):
-        account_contact_emails = self.cleaned_data['contact_emails']
+    def clean_emails(self):
+        account_contact_emails = self.cleaned_data['emails']
         if account_contact_emails != '':
             invalid_emails = []
             for email in account_contact_emails.split(','):
@@ -139,7 +139,7 @@ class BillingAccountBasicForm(forms.Form):
         contact_info, _ = BillingContactInfo.objects.get_or_create(
             account=account,
         )
-        contact_info.emails = self.cleaned_data['contact_emails']
+        contact_info.emails = self.cleaned_data['emails']
         contact_info.save()
 
         return account
@@ -156,7 +156,7 @@ class BillingAccountBasicForm(forms.Form):
         contact_info, _ = BillingContactInfo.objects.get_or_create(
             account=account,
         )
-        contact_info.emails = self.cleaned_data['contact_emails']
+        contact_info.emails = self.cleaned_data['emails']
         contact_info.save()
 
 

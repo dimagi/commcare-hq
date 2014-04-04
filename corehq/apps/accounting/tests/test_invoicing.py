@@ -63,12 +63,12 @@ class TestInvoice(BaseInvoiceTestCase):
         """
         No invoice gets created if the subscription didn't start in the previous month.
         """
-        tasks.generate_invoices(self.subscription.date_start, as_test=True)
+        tasks.generate_invoices(self.subscription.date_start)
         self.assertEqual(self.subscription.invoice_set.count(), 0)
 
     def test_subscription_invoice(self):
         invoice_date = utils.months_from_date(self.subscription.date_start, random.randint(2, self.subscription_length))
-        tasks.generate_invoices(invoice_date, as_test=True)
+        tasks.generate_invoices(invoice_date)
         self.assertEqual(self.subscription.invoice_set.count(), 1)
         self.assertEqual(self.subscription.subscriber.domain, self.domain.name)
 
@@ -87,7 +87,7 @@ class TestInvoice(BaseInvoiceTestCase):
         No invoices should be generated for the months after the end date of the subscription.
         """
         invoice_date = utils.months_from_date(self.subscription.date_end, 2)
-        tasks.generate_invoices(invoice_date, as_test=True)
+        tasks.generate_invoices(invoice_date)
         self.assertEqual(self.subscription.invoice_set.count(), 0)
 
     def test_community_no_charges_no_invoice(self):
@@ -96,7 +96,7 @@ class TestInvoice(BaseInvoiceTestCase):
         have any per_excess charges on users or SMS messages
         """
         domain = generator.arbitrary_domain()
-        tasks.generate_invoices(as_test=True)
+        tasks.generate_invoices()
         self.assertRaises(ObjectDoesNotExist,
                           lambda: Invoice.objects.get(subscription__subscriber__domain=domain.name))
         domain.delete()
@@ -115,7 +115,7 @@ class TestInvoice(BaseInvoiceTestCase):
         billing_contact.save()
         account.date_confirmed_extra_charges = datetime.date.today()
         account.save()
-        tasks.generate_invoices(as_test=True)
+        tasks.generate_invoices()
         subscriber = Subscriber.objects.get(domain=domain.name)
         invoices = Invoice.objects.filter(subscription__subscriber=subscriber)
         self.assertEqual(invoices.count(), 1)
@@ -150,7 +150,7 @@ class TestProductLineItem(BaseInvoiceTestCase):
         - subtotal = monthly fee
         """
         invoice_date = utils.months_from_date(self.subscription.date_start, random.randint(2, self.subscription_length))
-        tasks.generate_invoices(invoice_date, as_test=True)
+        tasks.generate_invoices(invoice_date)
         invoice = self.subscription.invoice_set.latest('date_created')
 
         product_line_items = invoice.lineitem_set.filter(feature_rate__exact=None)
@@ -180,9 +180,9 @@ class TestProductLineItem(BaseInvoiceTestCase):
         - subtotal = unit_cost * quantity
         """
         first_invoice_date = utils.months_from_date(self.subscription.date_start, 1)
-        tasks.generate_invoices(first_invoice_date, as_test=True)
+        tasks.generate_invoices(first_invoice_date)
         last_invoice_date = utils.months_from_date(self.subscription.date_end, 1)
-        tasks.generate_invoices(last_invoice_date, as_test=True)
+        tasks.generate_invoices(last_invoice_date)
 
         for invoice in self.subscription.invoice_set.all():
             product_line_items = invoice.lineitem_set.filter(feature_rate__exact=None)
@@ -228,7 +228,7 @@ class TestUserLineItem(BaseInvoiceTestCase):
         num_inactive = num_users()
         generator.arbitrary_commcare_users_for_domain(self.domain.name, num_inactive, is_active=False)
 
-        tasks.generate_invoices(invoice_date, as_test=True)
+        tasks.generate_invoices(invoice_date)
         invoice = self.subscription.invoice_set.latest('date_created')
         user_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.USER).get()
 
@@ -259,7 +259,7 @@ class TestUserLineItem(BaseInvoiceTestCase):
         num_inactive = num_users()
         generator.arbitrary_commcare_users_for_domain(self.domain.name, num_inactive, is_active=False)
 
-        tasks.generate_invoices(invoice_date, as_test=True)
+        tasks.generate_invoices(invoice_date)
         invoice = self.subscription.invoice_set.latest('date_created')
         user_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.USER).get()
 
@@ -294,7 +294,7 @@ class TestUserLineItem(BaseInvoiceTestCase):
         account.date_confirmed_extra_charges = datetime.date.today()
         account.save()
 
-        tasks.generate_invoices(as_test=True)
+        tasks.generate_invoices()
         subscriber = Subscriber.objects.get(domain=domain.name)
         invoice = Invoice.objects.filter(subscription__subscriber=subscriber).get()
         user_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.USER).get()
@@ -338,7 +338,7 @@ class TestSmsLineItem(BaseInvoiceTestCase):
             self.subscription.subscriber.domain, OUTGOING, sms_date, num_sms
         )
 
-        tasks.generate_invoices(invoice_date, as_test=True)
+        tasks.generate_invoices(invoice_date)
         invoice = self.subscription.invoice_set.latest('date_created')
         sms_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.SMS).get()
 
@@ -375,7 +375,7 @@ class TestSmsLineItem(BaseInvoiceTestCase):
             self.subscription.subscriber.domain, OUTGOING, sms_date, num_sms
         )
 
-        tasks.generate_invoices(invoice_date, as_test=True)
+        tasks.generate_invoices(invoice_date)
         invoice = self.subscription.invoice_set.latest('date_created')
         sms_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.SMS).get()
 

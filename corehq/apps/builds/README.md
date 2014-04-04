@@ -74,17 +74,8 @@ The easiest way to check this is to see what url is shown below the barcode on
 the deploy screen.
 
 If it is currently displaying a `localhost:8000/a/yourapp/...` url then open
-`submodules/dimagi-utils-src/dimagi/utils/web.py` and change the line defining
-the IP address (at line 22 at time of writing this, but may have changed).
-
-Delete this line:
-
-    return '%s://%s' % (protocol, Site.objects.get(id = settings.SITE_ID).domain)
-
-And replace it with:
-
-    ip_address = '192.168.1.4' # use your local ip address here
-    return '%s://%s:8000' % (protocol, ip_address)
+`localsettings.py` and set `BASE_ADDRESS = "192.168.1.5:8000"` substituting
+`192.168.1.5` with your local IP address.
 
 ### Try it out
 

@@ -8,7 +8,7 @@ from django.utils.translation import ugettext as _
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.stock import const as stockconst
-from casexml.apps.stock.consumption import ConsumptionConfiguration
+from casexml.apps.stock.consumption import ConsumptionConfiguration, compute_default_consumption
 from casexml.apps.stock.models import StockReport as DbStockReport, StockTransaction as DbStockTransaction, DocDomainMapping
 from casexml.apps.case.xml import V2
 from corehq.apps.commtrack import const
@@ -32,6 +32,7 @@ from couchexport.models import register_column_type, ComplexExportColumn
 from dimagi.utils.dates import force_to_datetime
 from django.db import models
 from django.db.models.signals import post_save
+from corehq.apps.domain.models import Domain
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -347,6 +348,17 @@ class StockRestoreConfig(DocumentSchema):
     section_to_consumption_types = DictProperty()
     force_consumption_case_types = ListProperty()
     use_dynamic_product_list = BooleanProperty(default=False)
+
+    @classmethod
+    def wrap(cls, obj):
+        # todo: remove this cruft at some point
+        if 'force_to_consumption_case_types' in obj:
+            realval = obj['force_to_consumption_case_types']
+            oldval = obj.get('force_consumption_case_types')
+            if realval and not oldval:
+                obj['force_consumption_case_types'] = realval
+                del obj['force_to_consumption_case_types']
+        return super(StockRestoreConfig, cls).wrap(obj)
 
 
 class CommtrackConfig(Document):
@@ -1285,15 +1297,15 @@ class StockState(models.Model):
     def months_remaining(self):
         return months_of_stock_remaining(
             self.stock_on_hand,
-            self.daily_consumption
+            self.get_consumption()
         )
 
     @property
     def resupply_quantity_needed(self):
-        if self.daily_consumption is not None:
+        if self.get_consumption() is not None:
             stock_levels = self.get_domain().commtrack_settings.stock_levels_config
             needed_quantity = int(
-                self.daily_consumption * 30 * stock_levels.overstock_threshold
+                self.get_consumption() * 30 * stock_levels.overstock_threshold
             )
             return int(max(needed_quantity - self.stock_on_hand, 0))
         else:
@@ -1308,6 +1320,23 @@ class StockState(models.Model):
         return Domain.get_by_name(
             DocDomainMapping.objects.get(doc_id=self.case_id).domain_name
         )
+
+    def get_consumption(self):
+        if self.daily_consumption is not None:
+            return self.daily_consumption
+        else:
+            domain = self.get_domain()
+
+            if domain and domain.commtrack_settings:
+                config = domain.commtrack_settings.get_consumption_config()
+            else:
+                config = None
+
+            return compute_default_consumption(
+                self.case_id,
+                self.product_id,
+                config
+            )
 
     class Meta:
         unique_together = ('section_id', 'case_id', 'product_id')
@@ -1349,11 +1378,10 @@ class StockExportColumn(ComplexExportColumn):
         values = [None] * len(self._column_tuples)
 
         for state in states:
-            state_index = self._column_tuples.index((
-                state.product_id,
-                state.section_id
-            ))
-            values[state_index] = state.stock_on_hand
+            column_tuple = (state.product_id, state.section_id)
+            if column_tuple in self._column_tuples:
+                state_index = self._column_tuples.index(column_tuple)
+                values[state_index] = state.stock_on_hand
         return values
 
 
@@ -1398,8 +1426,12 @@ def update_stock_state(sender, instance, *args, **kwargs):
     state.last_modified_date = instance.report.date
     state.stock_on_hand = instance.stock_on_hand
 
-    if hasattr(instance, '_test_config'):
-        consumption_calc = instance._test_config
+    domain = Domain.get_by_name(
+        CommCareCase.get(instance.case_id).domain
+    )
+
+    if domain and domain.commtrack_settings:
+        consumption_calc = domain.commtrack_settings.get_consumption_config()
     else:
         consumption_calc = None
 

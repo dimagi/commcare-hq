@@ -1,4 +1,4 @@
-GROUP_INDEX = "hqgroups_htj2o87ep2eug2g3k46hh2a67tn0r8d9"
+GROUP_INDEX = "hqgroups_htj2o87ep2rugag3k46hh2a67tn0r8d9"
 GROUP_MAPPING = {
     "date_formats": [
         "yyyy-MM-dd",
@@ -16,7 +16,7 @@ GROUP_MAPPING = {
     ],
     "dynamic": False,
     "_meta": {
-        "comment": "Ethan created on 2014-02-11",
+        "comment": "Ethan updated on 2014-04-02",
         "created": None
     },
     "date_detection": False,

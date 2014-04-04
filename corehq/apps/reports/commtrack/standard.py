@@ -296,8 +296,7 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
         return DataTablesHeader(*(DataTablesColumn(text) for text in [
                     _('Location'),
                     _('# Sites'),
-                    _('On-time'),
-                    _('Late'),
+                    _('Reporting'),
                     _('Non-reporting'),
                 ]))
 
@@ -349,7 +348,7 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
         def _rows():
             for loc in locs:
                 num_sites = len(sites_by_agg_site[loc._id])
-                yield [loc.name, len(sites_by_agg_site[loc._id])] + [fmt_col(loc, k) for k in ('ontime', 'late', 'nonreporting')]
+                yield [loc.name, len(sites_by_agg_site[loc._id])] + [fmt_col(loc, k) for k in ('reporting', 'nonreporting')]
 
         return master_tally, _rows()
 
@@ -360,11 +359,10 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
     def master_pie_chart_data(self):
         tally = self._data[0]
         labels = {
-            'ontime': _('On-time'),
-            'late': _('Late'),
+            'reporting': _('Reporting'),
             'nonreporting': _('Non-reporting'),
         }
-        return [{'label': labels[k], 'value': tally.get(k, {'count': 0.})['count']} for k in ('ontime', 'late', 'nonreporting')]
+        return [{'label': labels[k], 'value': tally.get(k, {'count': 0.})['count']} for k in ('reporting', 'nonreporting')]
 
     @property
     def charts(self):
