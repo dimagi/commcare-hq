@@ -1,7 +1,11 @@
 from __future__ import absolute_import
 
-import datetime, hashlib, logging, time
+import datetime
+import hashlib
+import logging
+import time
 from copy import copy
+from jsonobject.base import DefaultProperty
 from lxml import etree
 from xml.etree import ElementTree
 
@@ -16,7 +20,6 @@ from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.database import get_safe_read_kwargs, SafeSaveDocument
 from dimagi.utils.mixins import UnicodeMixIn
-from dimagi.utils.couch.database import get_db, iter_docs
 
 from couchforms.signals import xform_archived, xform_unarchived
 from couchforms.const import ATTACHMENT_NAME
@@ -92,11 +95,24 @@ class XFormOperation(DocumentSchema):
 class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
                     CouchDocLockableMixIn):
     """An XForms instance."""
+    domain = StringProperty()
+    app_id = StringProperty()
     xmlns = StringProperty()
-    received_on = DateTimeProperty()
-    partial_submission = BooleanProperty(default=False) # Used to tag forms that were forcefully submitted without a touchforms session completing normally
-    history = SchemaListProperty(XFormOperation)
     form = DictProperty()
+    received_on = DateTimeProperty()
+    # Used to tag forms that were forcefully submitted
+    # without a touchforms session completing normally
+    partial_submission = BooleanProperty(default=False)
+    history = SchemaListProperty(XFormOperation)
+    auth_context = DictProperty()
+    submit_ip = StringProperty()
+    path = StringProperty()
+    openrosa_headers = DictProperty()
+    last_sync_token = StringProperty()
+    # almost always a datetime, but if it's not parseable it'll be a string
+    date_header = DefaultProperty()
+    build_id = StringProperty()
+    export_tag = DefaultProperty(name='#export_tag')
 
     @classmethod
     def get(cls, docid, rev=None, db=None, dynamic_properties=True):

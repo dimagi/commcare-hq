@@ -127,7 +127,6 @@ def create_xform_from_xml(xml_string, _id=None, process=None):
         form=json_form,
         xmlns=json_form.get('@xmlns'),
         received_on=datetime.datetime.utcnow(),
-        **{'#export_tag': 'xmlns'}
     )
     if _id:
         kwargs['_id'] = _id
@@ -383,24 +382,23 @@ class SubmissionPost(object):
     def _attach_shared_props(self, doc):
         # attaches shared properties of the request to the document.
         # used on forms and errors
-        doc['auth_context'] = self.auth_context.to_json()
-        doc['submit_ip'] = self.submit_ip
-        doc['path'] = self.path
+        doc.auth_context = self.auth_context.to_json()
+        doc.submit_ip = self.submit_ip
+        doc.path = self.path
 
-        doc['openrosa_headers'] = self.openrosa_headers
-
-        doc['last_sync_token'] = self.last_sync_token
+        doc.openrosa_headers = self.openrosa_headers
+        doc.last_sync_token = self.last_sync_token
 
         if self.received_on:
             doc.received_on = self.received_on
 
         if self.date_header:
-            doc['date_header'] = self.date_header
+            doc.date_header = self.date_header
 
-        doc['domain'] = self.domain
-        doc['app_id'] = self.app_id
-        doc['build_id'] = self.build_id
-        doc['#export_tag'] = ["domain", "xmlns"]
+        doc.domain = self.domain
+        doc.app_id = self.app_id
+        doc.build_id = self.build_id
+        doc.export_tag = ["domain", "xmlns"]
 
         return doc
 
