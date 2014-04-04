@@ -4,7 +4,7 @@ from django.core import cache
 from django.core.urlresolvers import reverse, NoReverseMatch
 from django.template.defaultfilters import yesno
 from django.utils import html
-from django.utils.translation import ugettext as _, ugettext
+from django.utils.translation import ugettext as _
 import simplejson
 from casexml.apps.case.models import CommCareCaseAction
 from corehq.apps.groups.models import Group
@@ -28,6 +28,10 @@ class CaseInfo(object):
     @property
     def case_name(self):
         return self.case['name']
+
+    @property
+    def case_name_display(self):
+        return self.case_name or _('[no name]')
 
     @property
     def case_id(self):
@@ -188,7 +192,7 @@ class CaseDisplay(CaseInfo):
         url = self.case_detail_url
         if url:
             return html.mark_safe("<a class='ajax_dialog' href='%s' target='_blank'>%s</a>" % (
-                self.case_detail_url, html.escape(self.case_name)))
+                self.case_detail_url, html.escape(self.case_name_display)))
         else:
             return "%s (bad ID format)" % self.case_name
 

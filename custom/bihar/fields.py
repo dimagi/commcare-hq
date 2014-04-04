@@ -1,8 +1,8 @@
 from django.utils.translation import ugettext_noop
 from corehq.apps.groups.models import Group
-from corehq.apps.reports.fields import GroupField
+from corehq.apps.reports.filters.select import GroupFilter
 
-class SelectCaseSharingGroupField(GroupField):
+class SelectCaseSharingGroupField(GroupFilter):
 
     def update_params(self):
         super(SelectCaseSharingGroupField, self).update_params()

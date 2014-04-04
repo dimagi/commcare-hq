@@ -11,7 +11,8 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.pillows.base import restore_property_dict
 from hsph.reports import HSPHSiteDataMixin
 from hsph.fields import NameOfCATIField, AllocatedToFilter
-from corehq.apps.reports.fields import FilterUsersField, DatespanField
+from corehq.apps.reports.filters.users import UserTypeFilter
+from corehq.apps.reports.filters.dates import DatespanFilter
 from couchdbkit_aggregate.fn import mean, unique_count
 from casexml.apps.case import const
 from dimagi.utils.decorators.memoized import memoized
@@ -42,7 +43,7 @@ class CATIPerformanceReport(CustomProjectReport, ProjectReportParametersMixin,
                             DatespanMixin, BasicTabularReport):
     name = "CATI Performance Report"
     slug = "cati_performance"
-    field_classes = (FilterUsersField, DatespanField, NameOfCATIField)
+    field_classes = (UserTypeFilter, DatespanFilter, NameOfCATIField)
             
     filter_group_name = "CATI"
     
@@ -214,11 +215,11 @@ class CaseReport(CaseListReport, CustomProjectReport, HSPHSiteDataMixin,
     slug = 'case_report'
     
     fields = (
-        'corehq.apps.reports.fields.FilterUsersField',
-        'corehq.apps.reports.fields.DatespanField',
+        'corehq.apps.reports.filters.users.UserTypeFilter',
+        'corehq.apps.reports.filters.dates.DatespanFilter',
         'hsph.fields.SiteField',
         #'hsph.fields.AllocatedToFilter',
-        'corehq.apps.reports.fields.SelectOpenCloseField',
+        'corehq.apps.reports.filters.select.SelectOpenCloseFilter',
     )
 
     default_case_type = 'birth'
@@ -352,7 +353,7 @@ class CallCenterFollowUpSummaryReport(GenericTabularReport,
     name = "Call Center Follow Up Summary"
     slug = "hsph_dcc_followup_summary"
 
-    fields = ['corehq.apps.reports.fields.DatespanField',
+    fields = ['corehq.apps.reports.filters.dates.DatespanFilter',
               'hsph.fields.SiteField']
 
     @property

@@ -1,7 +1,7 @@
 from django.utils.translation import ugettext_noop
 from dimagi.utils.couch.database import get_db
 from corehq.apps.reports.filters.base import BaseReportFilter
-from phonelog.models import Log
+from phonelog.models import DeviceReportEntry
 import settings
 
 
@@ -19,7 +19,7 @@ class DeviceLogTagFilter(BaseReportFilter):
         show_all = bool(not selected_tags)
         tags = [dict(name=l['type'],
                     show=bool(show_all or l['type'] in selected_tags))
-                    for l in Log.objects.values('type').distinct()]
+                    for l in DeviceReportEntry.objects.values('type').distinct()]
         context = {
             'errors_only_slug': self.errors_only_slug,
             'default_on': show_all,
@@ -39,7 +39,7 @@ class BaseDeviceLogFilter(BaseReportFilter):
 
     def get_filters(self, selected):
         show_all = bool(not selected)
-        it = Log.objects.filter(domain__exact=self.domain).values(self.field).distinct()
+        it = DeviceReportEntry.objects.filter(domain__exact=self.domain).values(self.field).distinct()
         return [dict(name=f[self.field],
                     show=bool(show_all or f[self.field] in selected))
                     for f in it]

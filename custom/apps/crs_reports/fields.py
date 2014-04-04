@@ -1,4 +1,4 @@
-from corehq.apps.reports.fields import ReportSelectField, SelectCaseOwnerField
+from corehq.apps.reports.dont_use.fields import ReportSelectField, SelectCaseOwnerField
 from django.utils.translation import ugettext_noop
 from corehq.apps.groups.models import Group
 from dimagi.utils.couch.database import get_db

@@ -1,7 +1,7 @@
 from django.utils.translation import ugettext as _
 
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, NumericColumn
-from corehq.apps.reports.fields import AsyncLocationField
+from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin
 from corehq.apps.reports.standard.cases.basic import CaseListReport
@@ -22,7 +22,7 @@ class AggregateFacilityWebHmisReport(MonthYearMixin, CustomProjectReport, CaseLi
     default_rows = 25
 
     fields = [
-        AsyncLocationField,
+        AsyncLocationFilter,
         MonthFilter,
         YearFilter,
         FacilityHmisFilter
