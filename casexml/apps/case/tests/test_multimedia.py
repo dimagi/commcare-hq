@@ -180,25 +180,20 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
         case = CommCareCase.get(TEST_CASE_ID)
         case_xml = case.to_xml(V2)
         root_node = lxml.etree.fromstring(case_xml)
-        output = lxml.etree.tostring(root_node, pretty_print=True)
         attaches = root_node.find('{http://commcarehq.org/case/transaction/v2}attachment')
         self.assertEqual(len(restore_attachments), len(attaches))
-        restore_attachments_filenames = [os.path.split(MEDIA_FILES[k])[-1] for k in restore_attachments]
 
         for attach in attaches:
             url = attach.values()[1]
-            case_id = url.split('/')[-3]
-            attach_key_from_url = url.split('/')[-2]
-            attach_filename = url.split('/')[-1]
+            case_id = url.split('/')[-2]
+            attach_key_from_url = url.split('/')[-1]
             tag = attach.tag
             clean_tag = tag.replace('{http://commcarehq.org/case/transaction/v2}', '')
-
             self.assertEqual(clean_tag, attach_key_from_url)
             self.assertEqual(case_id, TEST_CASE_ID)
-
             self.assertIn(attach_key_from_url, restore_attachments)
-            self.assertIn(attach_filename, restore_attachments_filenames)
             restore_attachments.remove(clean_tag)
+
         self.assertEqual(0, len(restore_attachments))
 
     def testAttachInUpdate(self, new_attachments=['commcare_logo_file', 'dimagi_logo_file']):
