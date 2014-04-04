@@ -113,9 +113,11 @@ requires imports/proptable.html to be included in the main template
                     <span class="help_popover" data-help-key="{% trans "Archiving Forms" %}">
                         <i class="icon icon-question-sign"></i>
                     </span>
-                    <input type="submit" class="btn btn-danger" value="{% trans "Archive this form" %}"
-                            id="archive-form-btn"
-                            onclick="document.getElementById('archive-form-btn').disabled = true;document.getElementById('archive-form').submit();">
+                    <button type="submit" class="btn btn-danger" id="archive-form-btn"
+                            onclick="document.getElementById('archive-form-btn').disabled = true;document.getElementById('archive-form').submit();document.getElementById('archive-spinner').style.display='inline-block';">
+                        {% trans "Archive this form" %}
+                        <i class="icon-refresh icon-spin" id="archive-spinner" style="display:none"></i>
+                    </button>
                 </form>
                 {% else %}
                 <form action="{% url "unarchive_form" domain instance.get_id %}" method="POST"
@@ -123,9 +125,11 @@ requires imports/proptable.html to be included in the main template
                     <span class="help_popover" data-help-key="{% trans "Restoring Forms" %}">
                         <i class="icon icon-question-sign"></i>
                     </span>
-                    <input type="submit" class="btn btn-primary" value="{% trans "Restore this form" %}"
-                           id="unarchive-form-btn"
-                           onclick="document.getElementById('unarchive-form-btn').disabled = true;document.getElementById('unarchive-form').submit();">
+                    <button type="submit" class="btn btn-primary" id="unarchive-form-btn"
+                            onclick="document.getElementById('unarchive-form-btn').disabled = true;document.getElementById('unarchive-form').submit();document.getElementById('unarchive-spinner').style.display='inline-block';">
+                        {% trans "Restore this form" %}
+                        <i class="icon-refresh icon-spin" id="unarchive-spinner" style="display:none"></i>
+                   </button>
                 </form>
                 {% endif %}
             </p>
