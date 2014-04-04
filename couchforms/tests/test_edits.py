@@ -3,13 +3,22 @@ from django.test import TestCase
 from couchforms.models import XFormDeprecated
 from couchforms.util import post_xform_to_couch
 
+
 class EditFormTest(TestCase):
-    
-    def setUp(self):
-        for form in XFormDeprecated.view('couchforms/edits', include_docs=True).all():
+
+    def tearDown(self):
+        try:
+            XFormInstance.get_db().delete_doc("7H46J37FGH3")
+        except:
+            pass
+        deprecated_xforms = XFormDeprecated.view(
+            'couchforms/edits',
+            include_docs=True,
+        ).all()
+        for form in deprecated_xforms:
             form.delete()
-            
-    def testBasicEdit(self):
+
+    def test_basic_edit(self):
         first_file = os.path.join(os.path.dirname(__file__), "data", "duplicate.xml")
         edit_file = os.path.join(os.path.dirname(__file__), "data", "edit.xml")
 
