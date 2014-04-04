@@ -272,7 +272,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             res = es_query(
                 es_url=ES_URLS["users"],
                 q=q,
-                fields = ['_id', 'username', 'first_name', 'last_name'],
+                fields = ['_id', 'username', 'first_name', 'last_name', 'doc_type'],
             )
             selected += [user_tuple(hit['fields']) for hit in res['hits']['hits']]
 

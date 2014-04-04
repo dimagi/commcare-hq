@@ -189,8 +189,9 @@ def get_username_from_forms(domain, user_id):
 
 def _report_user_dict(user):
     """
-    Accepts a user object or a dict such as that returned from elasticsearch
-    via CommCareUser.es_fakes
+    Accepts a user object or a dict such as that returned from elasticsearch.
+    Make sure the following fields are available:
+    ['_id', 'username', 'first_name', 'last_name', 'doc_type', 'is_active']
     """
     if not isinstance(user, dict):
         user_report_attrs = ['user_id', 'username_in_report', 'raw_username', 'is_active']
