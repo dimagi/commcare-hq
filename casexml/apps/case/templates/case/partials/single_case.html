@@ -95,10 +95,10 @@
                 {% if attachment.is_image %}
                     <dt>{% trans "Image" %}</dt>
                     {# Note to devs, the api_case_attachment url is a named url not implemented by the casexml app - an external app must implement this URL #}
-                    <dd><img src="{% url "api_case_attachment" domain=case.domain case_id=case.get_id attachment_id=attach_key attachment_src=attachment.attachment_src %}?img&size=large_square"></dd>
+                    <dd><img src="{% url "api_case_attachment" domain=case.domain case_id=case.get_id attachment_id=attach_key %}?img&size=large_square"></dd>
                 {% else %}
                     <dt>{% trans "Link" %}</dt>
-                    <dd><a href="{% url "api_case_attachment" domain=case.domain case_id=case.get_id attachment_id=attach_key attachment_src=attachment.attachment_src %}">Download</a></dd>
+                    <dd><a href="{% url "api_case_attachment" domain=case.domain case_id=case.get_id attachment_id=attach_key %}">Download</a></dd>
                 {% endif %}
             </dl>
             </td></tr>

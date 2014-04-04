@@ -512,8 +512,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin,
                                  "domain": self.domain,
                                  "case_id": self._id,
                                  "attachment_id": attachment_key,
-                                 "attachment_src": http.urlquote(self.case_attachments[attachment_key]['attachment_src'])}
-                             )
+                             })
             )
         else:
             return None
@@ -535,7 +534,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin,
 
 
     @classmethod
-    def fetch_case_image(cls, case_id, attachment_key, attachment_filename, filesize_limit=0, width_limit=0, height_limit=0, fixed_size=None):
+    def fetch_case_image(cls, case_id, attachment_key, filesize_limit=0, width_limit=0, height_limit=0, fixed_size=None):
         """
         Return (metadata, stream) information of best matching image attachment.
         attachment_key is the case property of the attachment
@@ -557,17 +556,16 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin,
             constraint_dict['width'] = width_limit
         do_constrain = bool(constraint_dict)
 
-        #if size key is None, then one of the limit criteria are set
+        # if size key is None, then one of the limit criteria are set
         attachment_cache_key = "%(case_id)s_%(attachment)s_%(filename)s" % {
             "case_id": case_id,
             "attachment": attachment_key,
-            "filename": attachment_filename
         }
 
         cached_image = CachedImage(attachment_cache_key)
         meta, stream = cls.cache_and_get_object(cached_image, case_id, attachment_key, size_key=size_key)
 
-        #now that we got it cached, let's check for size constraints
+        # now that we got it cached, let's check for size constraints
 
         if do_constrain:
             #check this size first
@@ -612,7 +610,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin,
         if fixed_size is not None and fixed_size in OBJECT_SIZE_MAP:
             size_key = fixed_size
 
-        #if size key is None, then one of the limit criteria are set
+        # if size key is None, then one of the limit criteria are set
         attachment_cache_key = "%(case_id)s_%(attachment)s" % {
             "case_id": case_id,
             "attachment": attachment_key
