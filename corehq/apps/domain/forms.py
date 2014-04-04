@@ -433,8 +433,8 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         initial=None,
         required=False,
         choices=(
-            ('stars', _('Latest starred build')),
-            ('nostars', _('Every build (not recommended)')),
+            ('stars', _('Latest starred version')),
+            ('nostars', _('Every version (not recommended)')),
         ),
         help_text=_("Choose whether CloudCare should use the latest "
                     "starred build or every build in your application.")
@@ -522,11 +522,15 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
                 domain.call_center_config.case_type = self.cleaned_data.get('call_center_case_type', None)
             domain.restrict_superusers = self.cleaned_data.get('restrict_superusers', False)
             domain.ota_restore_caching = self.cleaned_data.get('ota_restore_caching', False)
-            domain.cloudcare_releases = self.cleaned_data.get('cloudcare_releases')
+            cloudcare_releases = self.cleaned_data.get('cloudcare_releases')
+            if cloudcare_releases and domain.cloudcare_releases != 'default':
+                # you're never allowed to change from default
+                domain.cloudcare_releases = cloudcare_releases
             domain.secure_submissions = self.cleaned_data.get('secure_submissions', False)
             domain.save()
             return True
-        except Exception:
+        except Exception, e:
+            logging.exception("couldn't save project settings - error is %s" % e)
             return False
 
 class DomainDeploymentForm(forms.Form):

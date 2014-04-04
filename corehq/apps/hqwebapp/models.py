@@ -1002,9 +1002,7 @@ class ProjectSettingsTab(UITab):
                             'url': reverse(EditExistingBillingAccountView.urlname, args=[self.domain]),
                         },
                     )
-                if ((toggles.ACCOUNTING_PREVIEW.enabled(self.couch_user.username)
-                     or toggles.ACCOUNTING_PREVIEW.enabled(self.domain))
-                    and billing_account is not None
+                if (billing_account is not None
                     and Invoice.exists_for_domain(self.domain)
                 ):
                     subscription.append(

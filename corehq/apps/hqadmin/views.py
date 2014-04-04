@@ -62,7 +62,7 @@ from dimagi.utils.decorators.view import get_file
 from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.django.email import send_HTML_email
 from pillowtop import get_all_pillows_json
-from phonelog.models import Log
+from phonelog.models import DeviceReportEntry
 from phonelog.reports import TAGS
 
 from .multimech import GlobalConfig
@@ -357,7 +357,7 @@ def submissions_errors(request, template="hqadmin/submissions_errors_report.html
         ).all()
         num_forms_submitted = data[0].get('value', 0) if data else 0
 
-        phonelogs = Log.objects.filter(domain__exact=domain.name,
+        phonelogs = DeviceReportEntry.objects.filter(domain__exact=domain.name,
             date__range=[datespan.startdate_param_utc, datespan.enddate_param_utc])
         num_errors = phonelogs.filter(type__in=TAGS["error"]).count()
         num_warnings = phonelogs.filter(type__in=TAGS["warning"]).count()
@@ -394,13 +394,13 @@ def mobile_user_reports(request):
 
     rows = []
 
-    logs = Log.objects.filter(type__exact="user-report").order_by('domain')
+    logs = DeviceReportEntry.objects.filter(type__exact="user-report").order_by('domain')
     for log in logs:
         seconds_since_epoch = int(time.mktime(log.date.timetuple()) * 1000)
         rows.append(dict(domain=log.domain,
                          time=format_datatables_data(text=log.date, sort_key=seconds_since_epoch),
                          user=log.username,
-                         device_users=[u.username for u in log.device_users.all()],
+                         device_users=log.device_users,
                          message=log.msg,
                          version=(log.app_version or 'unknown').split(' ')[0],
                          detailed_version=html.escape(log.app_version or 'unknown'),

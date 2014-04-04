@@ -10,7 +10,8 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
     slug = "stockstatus_map"
 
     fields = ['corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
-              'corehq.apps.reports.dont_use.fields.SelectProgramField']
+              'corehq.apps.reports.dont_use.fields.SelectProgramField',
+              'corehq.apps.reports.filters.dates.DatespanFilter',]
 
     data_source = {
         'adapter': 'report',
@@ -152,8 +153,7 @@ class ReportingStatusMapReport(GenericMapReport, CommtrackReportMixin):
         },
         'enum_captions': {
             'reporting_status': {
-                'ontime': 'On-time',
-                'late': 'Late',
+                'reporting': 'Reporting',
                 'nonreporting': 'Non-reporting',
             },
         },
@@ -168,8 +168,7 @@ class ReportingStatusMapReport(GenericMapReport, CommtrackReportMixin):
                 'color': {
                     'column': 'reporting_status',
                     'categories': {
-                        'ontime': 'rgba(0, 200, 0, .8)',
-                        'late': 'rgba(255, 255, 0, .8)',
+                        'reporting': 'rgba(0, 200, 0, .8)',
                         'nonreporting': 'rgba(255, 0, 0, .8)',
                     },
                 },

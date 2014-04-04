@@ -13,7 +13,8 @@ from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.search import SearchFilter
 from corehq.apps.reports.filters.select import SelectOpenCloseFilter
-from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter, SelectMobileWorkerFilter
+from corehq.apps.reports.filters.users import (ExpandedMobileWorkerFilter,
+        SelectMobileWorkerFilter)
 from corehq.apps.reports.generic import ElasticProjectInspectionReport
 from corehq.apps.reports.standard import ProjectReportParametersMixin
 from corehq.apps.reports.standard.inspect import ProjectInspectionReport
@@ -155,10 +156,6 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
 
     name = ugettext_noop('Case List')
     slug = 'case_list'
-
-    @property
-    def user_filter(self):
-        return super(CaseListReport, self).user_filter
 
     @property
     @memoized

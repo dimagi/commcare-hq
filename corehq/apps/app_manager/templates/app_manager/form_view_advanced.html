@@ -195,7 +195,7 @@
     <div id="build_errors"></div>
     {% if edit and not is_user_registration %}
         <div class="delete-me">
-            <form action="{% url "delete_form" domain app.id module.id form.id %}" method="post">
+            <form action="{% url "delete_form" domain app.id module.unique_id form.unique_id %}" method="post">
                 <h3>
                     <button type="submit" class="disable-on-submit btn btn-danger">
                         <i class="icon-trash"></i>

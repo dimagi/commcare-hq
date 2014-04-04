@@ -69,6 +69,20 @@ def fetch_remote(base_config):
     print "All branches fetched"
 
 
+def has_local(git, branch):
+    """Return true if the named branch exists"""
+    ref = "refs/heads/{}".format(branch)
+    try:
+        out = git("show-ref", "--verify", "--quiet", ref)
+    except sh.ErrorReturnCode:
+        return False
+    return out.exit_code == 0
+
+
+def origin(branch):
+    return "origin/{}".format(branch)
+
+
 def sync_local_copies(config):
     base_config = config
     unpushed_branches = []
@@ -80,6 +94,8 @@ def sync_local_copies(config):
         git = get_git(path)
         with OriginalBranch(git):
             for branch in [config.trunk] + config.branches:
+                if not has_local(git, branch):
+                    continue
                 git.checkout(branch)
                 unpushed = _count_commits('origin/{0}..{0}'.format(branch))
                 unpulled = _count_commits('{0}..origin/{0}'.format(branch))
@@ -100,7 +116,7 @@ def sync_local_copies(config):
                     unpushed_branches.append((path, branch))
                 elif unpulled:
                     print "  Fastforwarding your branch to origin"
-                    git.merge('--ff-only', 'origin/{0}'.format(branch))
+                    git.merge('--ff-only', origin(branch))
     if unpushed_branches:
         print "The following branches have commits that need to be pushed:"
         for path, branch in unpushed_branches:
@@ -116,16 +132,18 @@ def check_merges(config):
     for path, config in base_config.span_configs():
         git = get_git(path)
         with OriginalBranch(git):
-            git.checkout(config.trunk)
+            git.checkout("-B", config.name, origin(config.trunk))
             for branch in config.branches:
+                if not has_local(git, branch):
+                    branch = origin(branch)
                 git.checkout(branch)
                 print "  [{cwd}] {trunk} => {branch}".format(
                     cwd=format_cwd(path),
-                    trunk=config.trunk,
+                    trunk=config.name,
                     branch=branch,
                 ),
-                if not git_check_merge(config.trunk, branch, git=git):
-                    merge_conflicts.append((path, config.trunk, branch))
+                if not git_check_merge(config.name, branch, git=git):
+                    merge_conflicts.append((path, origin(config.trunk), branch))
                     print "FAIL"
                 else:
                     print "ok"
@@ -151,9 +169,10 @@ def rebuild_staging(config):
     with context_manager:
         for path, config in all_configs:
             git = get_git(path)
-            git.checkout(config.trunk)
-            git.checkout('-B', config.name, config.trunk)
+            git.checkout('-B', config.name, origin(config.trunk))
             for branch in config.branches:
+                if not has_local(git, branch):
+                    branch = origin(branch)
                 print "  [{cwd}] Merging {branch} into {name}".format(
                     cwd=path,
                     branch=branch,

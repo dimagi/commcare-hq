@@ -109,6 +109,11 @@ def partial_escape(xpath):
 class ModuleNotFoundException(Exception):
     pass
 
+
+class FormNotFoundException(Exception):
+    pass
+
+
 class IncompatibleFormTypeException(Exception):
     pass
 
@@ -2701,7 +2706,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     # take the previous version's compiled form as-is
                     # (generation code may have changed since last build)
                     previous_source = previous_version.fetch_attachment(filename)
-                except (ResourceNotFound, KeyError):
+                except (ResourceNotFound, FormNotFoundException):
                     pass
                 else:
                     previous_hash = _hash(previous_source)
@@ -2866,7 +2871,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         for obj in self.get_modules():
             if matches(obj):
                 return obj
-        raise KeyError("Module in app '%s' with unique id '%s' not found" % (self.id, unique_id))
+        raise ModuleNotFoundException(
+            ("Module in app '%s' with unique id '%s' not found"
+             % (self.id, unique_id)))
 
     def get_forms(self, bare=True):
         if self.show_user_registration:
@@ -2888,7 +2895,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         for obj in self.get_forms(bare):
             if matches(obj if bare else obj['form']):
                 return obj
-        raise KeyError("Form in app '%s' with unique id '%s' not found" % (self.id, unique_form_id))
+        raise FormNotFoundException(
+            ("Form in app '%s' with unique id '%s' not found"
+             % (self.id, unique_form_id)))
 
     def get_form_location(self, unique_form_id):
         for m_index, module in enumerate(self.get_modules()):
@@ -2906,17 +2915,19 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         self.modules.append(module)
         return self.get_module(-1)
 
-    @parse_int([1])
-    def delete_module(self, module_id):
-        module = self.get_module(module_id)
+    def delete_module(self, module_unique_id):
+        try:
+            module = self.get_module_by_unique_id(module_unique_id)
+        except ModuleNotFoundException:
+            return None
         record = DeleteModuleRecord(
             domain=self.domain,
             app_id=self.id,
-            module_id=module_id,
+            module_id=module.id,
             module=module,
             datetime=datetime.utcnow()
         )
-        del self.modules[module_id]
+        del self.modules[module.id]
         record.save()
         return record
 
@@ -2924,20 +2935,23 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         module = self.get_module(module_id)
         return module.new_form(name, lang, attachment)
 
-    @parse_int([1, 2])
-    def delete_form(self, module_id, form_id):
-        module = self.get_module(module_id)
-        form = module['forms'][form_id]
+    def delete_form(self, module_unique_id, form_unique_id):
+        try:
+            module = self.get_module_by_unique_id(module_unique_id)
+            form = self.get_form(form_unique_id)
+        except (ModuleNotFoundException, FormNotFoundException):
+            return None
+
         record = DeleteFormRecord(
             domain=self.domain,
             app_id=self.id,
-            module_id=module_id,
-            form_id=form_id,
+            module_unique_id=module_unique_id,
+            form_id=form.id,
             form=form,
-            datetime=datetime.utcnow()
+            datetime=datetime.utcnow(),
         )
         record.save()
-        del module['forms'][form_id]
+        del module['forms'][form.id]
         return record
 
     def rename_lang(self, old_lang, new_lang):
@@ -3377,14 +3391,19 @@ class DeleteFormRecord(DeleteRecord):
 
     app_id = StringProperty()
     module_id = IntegerProperty()
+    module_unique_id = StringProperty()
     form_id = IntegerProperty()
     form = SchemaProperty(FormBase)
 
     def undo(self):
         app = Application.get(self.app_id)
-        forms = app.modules[self.module_id].forms
+        if self.module_unique_id is not None:
+            module = app.get_module_by_unique_id(self.module_unique_id)
+        else:
+            module = app.modules[self.module_id]
+        forms = module.forms
         forms.insert(self.form_id, self.form)
-        app.modules[self.module_id].forms = forms
+        module.forms = forms
         app.save()
 
 

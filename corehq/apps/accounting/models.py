@@ -1176,16 +1176,15 @@ class BillingRecord(models.Model):
             context['can_view_statement'] = can_view_statement
             email_html = render_to_string('accounting/invoice_email.html', context)
             email_plaintext = render_to_string('accounting/invoice_email_plaintext.html', context)
-            if toggles.ACCOUNTING_PREVIEW.enabled(email):
-                send_HTML_email(
-                    title, email, email_html,
-                    text_content=email_plaintext,
-                    email_from="Dimagi %(product)s Accounts <%(email)s>" % {
-                        'product': self.invoice.subscription.plan_version.core_product,
-                        'email': settings.INVOICING_CONTACT_EMAIL,
-                    },
-                    file_attachments=[pdf_attachment]
-                )
+            send_HTML_email(
+                title, email, email_html,
+                text_content=email_plaintext,
+                email_from="Dimagi %(product)s Accounts <%(email)s>" % {
+                    'product': self.invoice.subscription.plan_version.core_product,
+                    'email': settings.INVOICING_CONTACT_EMAIL,
+                },
+                file_attachments=[pdf_attachment]
+            )
         self.emailed_to = ",".join(contact_emails)
         self.save()
         logger.info(
@@ -1211,8 +1210,13 @@ class InvoicePdf(SafeSaveDocument):
             pdf_data.name,
             invoice_number=invoice.invoice_number,
             to_address=Address(
-                name=("%s %s" %
-                      (contact_info.first_name, contact_info.last_name)),
+                name=(
+                    "%s %s" %
+                    (contact_info.first_name
+                     if contact_info.first_name is not None else "",
+                     contact_info.last_name
+                     if contact_info.last_name is not None else "")
+                ),
                 first_line=contact_info.first_line,
                 second_line=contact_info.second_line,
                 city=contact_info.city,
