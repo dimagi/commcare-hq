@@ -233,7 +233,7 @@ class BasicPillow(object):
                         self.get_name(),
                         change['id'],
                         ex,
-                        error.get_id
+                        error.id
                     )
                 )
             else:

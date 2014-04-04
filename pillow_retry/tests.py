@@ -23,7 +23,7 @@ class PillowRetryTestCase(TestCase):
     def test_id(self):
         id = '12345'
         error = create_error(id)
-        self.assertEqual(error.original_id, id)
+        self.assertEqual(error.doc_id, id)
         self.assertEqual(error.pillow, 'pillow_retry.tests.FakePillow')
 
     def test_attempts(self):
@@ -54,14 +54,7 @@ class PillowRetryTestCase(TestCase):
 
 class ViewTests(TestCase):
     def setUp(self):
-        self.db = PillowError.get_db()
-        for row in self.db.view(
-                "pillow_retry/pillow_errors",
-                startkey=['created'],
-                endkey=['created', {}],
-                reduce=False
-            ).all():
-            self.db.delete_doc(row['id'])
+        PillowError.objects.all().delete()
 
     def test_get_errors_to_process(self):
         date = datetime.utcnow()
@@ -72,58 +65,17 @@ class ViewTests(TestCase):
 
         errors = PillowError.get_errors_to_process(
             date.replace(day=1),
-            include_docs=True
         ).all()
         self.assertEqual(len(errors), 1)
 
         errors = PillowError.get_errors_to_process(
             date.replace(day=3),
-            include_docs=True
         ).all()
         self.assertEqual(len(errors), 3)
-
-    def test_get_errors(self):
-        date = datetime.now()
-        for i in range(0, 5):
-            pillow = FakePillow() if i < 2 else FakePillow1()
-            ex = ExceptionA if i < 3 else ExceptionB
-            error = create_error(id=i, attempts=i+1, pillow=pillow, ex_class=ex)
-            error.date_created = date.replace(day=i+1)
-            error.save()
-
-        errors = PillowError.get_errors(pillow=FakePillow(), include_docs=True)
-        self.assertEqual(len(errors), 2)
-
-        # query by pillow
-        errors = PillowError.get_errors(pillow=FakePillow1(), startdate=date.replace(day=1),
-                                     enddate=date.replace(day=4), include_docs=True)
-        self.assertEqual(len(errors), 2)
-
-        # query by error type
-        errors = PillowError.get_errors(error_type=ExceptionA(), startdate=date.replace(day=2),
-                                     enddate=date.replace(day=4), include_docs=True)
-        self.assertEqual(len(errors), 2)
-
-        # query by date
-        errors = PillowError.get_errors(startdate=date.replace(day=2), enddate=date.replace(day=4), include_docs=True)
-        self.assertEqual(len(errors), 3)
-
-        # query by pillow and error
-        errors = PillowError.get_errors(pillow=FakePillow1(), error_type=ExceptionA(), startdate=date.replace(day=1),
-                                     enddate=date.replace(day=5), include_docs=True)
-        self.assertEqual(len(errors), 1)
-
-
 
 
 class FakePillow(BasicPillow):
     pass
 
-class FakePillow1(BasicPillow):
-    pass
-
 class ExceptionA(Exception):
-    pass
-
-class ExceptionB(Exception):
     pass

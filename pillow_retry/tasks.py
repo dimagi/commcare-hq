@@ -22,8 +22,12 @@ def process_pillow_retry(error_doc_id):
     )
 
     if lock.acquire(blocking=False):
-        error_doc = PillowError.get(error_doc_id)
-        doc_id = error_doc.original_id
+        try:
+            error_doc = PillowError.objects.get(id=error_doc_id)
+        except PillowError.DoesNotExist:
+            return
+        
+        doc_id = error_doc.doc_id
         pillow_class = error_doc.pillow
         try:
             pillow = import_pillow_string(pillow_class)
