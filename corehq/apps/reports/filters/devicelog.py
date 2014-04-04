@@ -1,8 +1,36 @@
 from django.utils.translation import ugettext_noop
-from dimagi.utils.couch.database import get_db
 from corehq.apps.reports.filters.base import BaseReportFilter
 from phonelog.models import DeviceReportEntry
-import settings
+
+
+def fast_distict(model_cls, column):
+    """
+    Use a loose indexscan http://wiki.postgresql.org/wiki/Loose_indexscan
+    to get all distinct values for a given column
+
+    Functionally equivalent to
+    model_cls.distinct(column).values_list(column, flat=True)
+    """
+    table = model_cls._meta.db_table
+    assert column in [field.name for field in model_cls._meta.fields]
+    command = """
+    WITH RECURSIVE t AS (
+        SELECT min({column}) AS col FROM {table}
+        UNION ALL
+        SELECT (SELECT min({column}) FROM {table} WHERE {column} > t.col)
+        FROM t WHERE t.col IS NOT NULL
+    )
+    SELECT col FROM t WHERE col IS NOT NULL
+    UNION ALL
+    SELECT NULL WHERE EXISTS(SELECT * FROM {table} WHERE {column} IS NULL);
+    """.format(column=column, table=table)
+    from django.db import connection
+    cursor = connection.cursor()
+    cursor.execute(command)
+    result = []
+    for value, in cursor.fetchall():
+        result.append(value)
+    return result
 
 
 class DeviceLogTagFilter(BaseReportFilter):
@@ -17,16 +45,18 @@ class DeviceLogTagFilter(BaseReportFilter):
         errors_only = bool(self.request.GET.get(self.errors_only_slug, False))
         selected_tags = self.request.GET.getlist(self.slug)
         show_all = bool(not selected_tags)
-        tags = [dict(name=l['type'],
-                    show=bool(show_all or l['type'] in selected_tags))
-                    for l in DeviceReportEntry.objects.values('type').distinct()]
+        values = fast_distict(DeviceReportEntry, 'type')
+        tags = [{
+            'name': value,
+            'show': bool(show_all or value in selected_tags)
+        } for value in values]
         context = {
             'errors_only_slug': self.errors_only_slug,
             'default_on': show_all,
             'logtags': tags,
-            'errors_css_id': 'device_log_errors_only_checkbox'
+            'errors_css_id': 'device_log_errors_only_checkbox',
+            self.errors_only_slug: errors_only,
         }
-        context[self.errors_only_slug] = errors_only
         return context
 
 
@@ -41,7 +71,8 @@ class BaseDeviceLogFilter(BaseReportFilter):
     def get_filters(self, selected):
         show_all = bool(not selected)
         values = (DeviceReportEntry.objects.filter(domain=self.domain)
-                  .distinct(self.field).values_list(self.field, flat=True))
+                  .values(self.field).distinct()
+                  .values_list(self.field, flat=True))
         return [{
             'name': self.value_to_param(value),
             'show': bool(show_all or value in selected)
@@ -52,7 +83,7 @@ class BaseDeviceLogFilter(BaseReportFilter):
         selected = self.get_selected(self.request)
         return {
             'filters': self.get_filters(selected),
-            'default_on': bool(not selected)
+            'default_on': bool(not selected),
         }
 
     @classmethod
