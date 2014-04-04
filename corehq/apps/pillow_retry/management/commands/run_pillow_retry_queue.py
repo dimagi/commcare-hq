@@ -1,7 +1,7 @@
 from django.conf import settings
-from corehq.apps.pillow_retry.tasks import process_pillow_retry
 from hqscripts.generic_queue import GenericEnqueuingOperation
 from pillow_retry.models import PillowError
+from pillow_retry.tasks import process_pillow_retry
 
 
 class PillowRetryEnqueuingOperation(GenericEnqueuingOperation):
