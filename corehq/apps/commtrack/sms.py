@@ -17,6 +17,7 @@ from corehq.apps.locations.models import Location
 from xml.etree import ElementTree
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
+from corehq.apps.commtrack.exceptions import NotAUserClassError
 
 import uuid
 
@@ -35,6 +36,8 @@ def handle(verified_contact, text, msg=None):
         data = StockReportParser(domain, verified_contact).parse(text.lower())
         if not data:
             return False
+    except NotAUserClassError:
+        return False
     except Exception, e: # todo: should we only trap SMSErrors?
         if settings.UNIT_TESTING or settings.DEBUG:
             raise
@@ -66,7 +69,6 @@ class StockReportParser(object):
     def __init__(self, domain, v):
         self.domain = domain
         self.v = v
-        self.failed_init = False
 
         self.location = None
         u = v.owner
@@ -74,8 +76,7 @@ class StockReportParser(object):
         if domain.commtrack_enabled:
             # if user is not actually a user, we let someone else process
             if not isinstance(u, CouchUser):
-                self.failed_init = True
-                return
+                raise NotAUserClassError
 
             # currently only support one location on the UI
             linked_loc = CommTrackUser.wrap(u.to_json()).location
@@ -100,7 +101,7 @@ class StockReportParser(object):
         """take in a text and return the parsed stock transactions"""
         args = text.split()
 
-        if self.failed_init or len(args) == 0:
+        if len(args) == 0:
             # we'll allow blank messages to propagate further in case some
             # other handler cares about them.
             return None
