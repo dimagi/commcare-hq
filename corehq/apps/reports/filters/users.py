@@ -229,7 +229,6 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
 
     @classmethod
     def matching_ids(cls, request):
-        # TODO: verify that this all works as expected
         """
         returns a dict of user_ids, user_types, and group_ids,
         where user_types are defined as:
@@ -346,8 +345,23 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         return es_query(es_url=ES_URLS["users"], q=q, **kwargs)
 
     @classmethod
+    def other_users(cls, domain, request, simplified=False,
+            CommCareUser=CommCareUser):
+        user_types = cls.matching_ids(request)['user_types']
+        user_type_ids = [int(t[3:]) for t in user_types]
+        user_filter = tuple([HQUserToggle(id, id in user_type_ids)
+            for id in range(4)])
+        return util.get_all_users_by_domain(
+                domain=domain,
+                user_filter=user_filter,
+                simplified=simplified,
+                CommCareUser=CommCareUser,
+        )
+
+    @classmethod
     @memoized
-    def pull_users_and_groups(cls, domain, request, simplified_users=False, combined=False, CommCareUser=CommCareUser):
+    def pull_users_and_groups(cls, domain, request, simplified_users=False,
+            combined=False, CommCareUser=CommCareUser):
         matching = cls.matching_ids(request)
         user_ids = matching['user_ids']
         user_types = matching['user_types']
@@ -355,14 +369,15 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
 
         users = []
         if user_ids or "t__0" in user_types:
-            users = util.get_all_users_by_domain(domain=domain, user_ids=user_ids, simplified=simplified_users,
-                                                 CommCareUser=CommCareUser)
+            users = util.get_all_users_by_domain(
+                domain=domain,
+                user_ids=user_ids,
+                simplified=simplified_users,
+                CommCareUser=CommCareUser,
+            )
 
-        user_type_ids = [int(t[3:]) for t in user_types]
-        user_filter = tuple([HQUserToggle(id, id in user_type_ids) for id in range(4)])
-        other_users = util.get_all_users_by_domain(domain=domain, user_filter=user_filter, simplified=simplified_users,
-                                                   CommCareUser=CommCareUser)
-
+        other_users = cls.other_users(domain, request, simplified=simplified_users,
+                CommCareUser=CommCareUser)
         groups = [Group.get(g) for g in group_ids]
 
         ret = {
