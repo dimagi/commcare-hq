@@ -119,7 +119,9 @@ requires imports/proptable.html to be included in the main template
                     <span class="help_popover" data-help-key="{% trans "Restoring Forms" %}">
                         <i class="icon icon-question-sign"></i>
                     </span>
-                    <input type="submit" class="btn btn-primary" value="{% trans "Restore this form" %}">
+                    <input type="submit" class="btn btn-primary" value="{% trans "Restore this form" %}"
+                            id="nick"
+                            onclick="document.getElementById('nick').disabled = true;">
                 </form>
                 {% endif %}
             </p>
