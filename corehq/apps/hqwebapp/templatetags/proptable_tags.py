@@ -119,7 +119,7 @@ def to_html(key, val, level=0, datetime_fmt="%b %d, %Y %H:%M %Z",
         ret = mark_safe("<time %s title='%s' datetime='%s'>%s</time>" % (
             "class='timeago'" if timeago else "", iso, iso, safe_strftime(val, fmt)))
     else:
-        if val is None:
+        if val is None or val == '':
             val = '---'
 
         ret = escape(val)
@@ -166,7 +166,6 @@ def get_display_data(data, prop_def, processors=None, timezone=pytz.utc):
         val = mark_safe(to_html(None, val, 
             timezone=timezone, key_format=format_key, collapse_lists=True,
             **prop_def))
-
     if format:
         val = mark_safe(format.format(val))
 
