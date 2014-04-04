@@ -1,6 +1,6 @@
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqadmin.reports import AdminUserReport, AdminAppReport
-from corehq.apps.pillow_retry.views import PillowErrorsReport
+from corehq.apps.hqpillow_retry.views import PillowErrorsReport
 from corehq.apps.reports.standard import (monitoring, inspect, export,
     deployments, sms, ivr)
 from corehq.apps.receiverwrapper import reports as receiverwrapper

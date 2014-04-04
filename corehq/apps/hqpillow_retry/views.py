@@ -7,7 +7,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop as _
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.hqwebapp.views import BasePageView
-from corehq.apps.pillow_retry.filters import PillowFilter, ErrorTypeFilter
+from corehq.apps.hqpillow_retry.filters import PillowFilter, ErrorTypeFilter
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
@@ -32,11 +32,11 @@ class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
 
     fields = (
         'corehq.apps.reports.filters.dates.DatespanFilter',
-        'corehq.apps.pillow_retry.filters.PillowFilter',
-        'corehq.apps.pillow_retry.filters.ErrorTypeFilter',
+        'corehq.apps.hqpillow_retry.filters.PillowFilter',
+        'corehq.apps.hqpillow_retry.filters.ErrorTypeFilter',
     )
 
-    report_template_path = 'pillow_retry/pillow_errors.html'
+    report_template_path = 'hqpillow_retry/pillow_errors.html'
 
     @property
     def headers(self):
@@ -120,7 +120,7 @@ class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
         return '<a href="{0}?error={1}" target="_blank">{2}</a>'.format(
             reverse(EditPillowError.urlname),
             error.get_id,
-            error.original_id
+            error.doc_id
         )
 
     def make_checkbox(self, error):

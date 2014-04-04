@@ -242,7 +242,7 @@ HQ_APPS = (
     'corehq.apps.cachehq',
     'corehq.apps.toggle_ui',
     'corehq.apps.sofabed',
-    'corehq.apps.pillow_retry',
+    'corehq.apps.hqpillow_retry',
     'corehq.couchapps',
     'custom.apps.wisepill',
     'custom.fri',
