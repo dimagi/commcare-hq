@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='dimagi-utils',
-    version='1.0.11',
+    version='1.1.0',
     description='Dimagi Shared Utilities',
     author='Dimagi',
     author_email='dev@dimagi.com',
@@ -12,7 +12,7 @@ setup(
     test_suite='dimagi.test_utils',
     test_loader='unittest2:TestLoader',
     install_requires=[
-        'couchdbkit',
+        'jsonobject-couchdbkit',
         'django',
         'django_redis',
         'mock>=0.8.0',
