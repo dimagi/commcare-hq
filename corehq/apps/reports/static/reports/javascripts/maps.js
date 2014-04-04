@@ -416,7 +416,7 @@ function initTable(data, config) {
     $.each(data.features, function(i, e) {
         var ctx = infoContext(e, config, 'table');
         e.$tr = row($('#tabular'), false, ctx.info, function($cell, e) {
-            $cell.text(e.value);
+            $cell.html(e.value);
             var $sortkey = $('<span>');
             $sortkey.attr('title', e.raw);
             $cell.append($sortkey);
