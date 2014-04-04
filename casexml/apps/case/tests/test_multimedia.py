@@ -20,21 +20,16 @@ CREATE_XFORM_ID = "6RGAZTETE3Z2QC0PE2DKM88MO"
 media_path = os.path.join(os.path.dirname(__file__), "data", "attachments")
 
 MEDIA_FILES = {
-    "fruity_file": os.path.join(media_path, "fruity.jpg"), #first
-
+    "fruity_file": os.path.join(media_path, "fruity.jpg"),  # first
     "dimagi_logo_file": os.path.join(media_path, "dimagi_logo.jpg"),
     "commcare_logo_file": os.path.join(media_path, "commcare-logo.png"),
     "globe_file": os.path.join(media_path, "globe.pdf"),
     "house_file": os.path.join(media_path, "house.jpg"),
     "escape_file": os.path.join(media_path, "13.15.20 hrs __[0000233].jpg")
-
 }
 
-
-
-
-
 TEST_DOMAIN = "test-domain"
+
 
 class BaseCaseMultimediaTest(TestCase):
     def setUp(self):
@@ -222,7 +217,3 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
         for attach_name in new_attachments:
             self.assertTrue(attach_name in case.case_attachments)
             self.assertEqual(self._calc_file_hash(attach_name), hashlib.md5(case.get_attachment(attach_name)).hexdigest())
-
-
-
-

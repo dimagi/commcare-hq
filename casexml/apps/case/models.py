@@ -819,14 +819,14 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin,
                 self[item] = value
 
     def apply_attachments(self, attachment_action):
-        #the actions and _attachment must be added before the first saves canhappen
-        #todo attach cached attachment info
+        # the actions and _attachment must be added before the first saves can happen
+        # todo attach cached attachment info
 
         stream_dict = {}
-        #cache all attachment streams from xform
+        # cache all attachment streams from xform
         for k, v in attachment_action.attachments.items():
             if v.is_present:
-                #fetch attachment, update metadata, get the stream
+                # fetch attachment, update metadata, get the stream
                 attach_data = XFormInstance.get_db().fetch_attachment(attachment_action.xform_id, v.identifier)
                 stream_dict[k] = attach_data
                 v.attachment_size = len(attach_data)
