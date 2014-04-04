@@ -827,7 +827,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin,
         for k, v in attachment_action.attachments.items():
             if v.is_present:
                 # fetch attachment, update metadata, get the stream
-                attach_data = XFormInstance.get_db().fetch_attachment(attachment_action.xform_id, v.identifier)
+                attach_data = XFormInstance.get_db().fetch_attachment(attachment_action.xform_id, v.attachment_src)
                 stream_dict[k] = attach_data
                 v.attachment_size = len(attach_data)
 

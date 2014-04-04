@@ -57,7 +57,7 @@ class BaseCaseMultimediaTest(TestCase):
 
     def _prepAttachments(self, new_attachments, removes=[]):
         attachment_block = ''.join([self._singleAttachBlock(x) for x in new_attachments] + [self._singleAttachRemoveBlock(x) for x in removes])
-        dict_attachments = dict((attach_name, self._attachmentFileStream(attach_name)) for attach_name in new_attachments)
+        dict_attachments = dict((MEDIA_FILES[attach_name], self._attachmentFileStream(attach_name)) for attach_name in new_attachments)
         return attachment_block, dict_attachments
 
     def _singleAttachBlock(self, key):
