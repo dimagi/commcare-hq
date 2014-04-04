@@ -3,6 +3,7 @@ from django.test import TestCase
 from couchforms.models import XFormInstance
 from couchforms.util import post_xform_to_couch
 
+
 class DuplicateFormTest(TestCase):
 
     def setUp(self):
@@ -20,15 +21,15 @@ class DuplicateFormTest(TestCase):
         doc = post_xform_to_couch(xml_data)
         self.assertEqual("7H46J37FGH3", doc.get_id)
         self.assertEqual("XFormInstance", doc.doc_type)
+        doc.domain = 'test-domain'
+        doc.save()
 
-        doc = post_xform_to_couch(xml_data)
+        doc = post_xform_to_couch(xml_data, domain='test-domain')
         self.assertNotEqual("7H46J37FGH3", doc.get_id)
         self.assertEqual("XFormDuplicate", doc.doc_type)
         self.assertTrue("7H46J37FGH3" in doc.problem)
 
         dupe_id = doc.get_id
 
-
         XFormInstance.get_db().delete_doc("7H46J37FGH3")
         XFormInstance.get_db().delete_doc(dupe_id)
-        

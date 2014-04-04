@@ -156,7 +156,7 @@ def create_xform_from_xml(xml_string, _id=None, process=None):
     return LockManager(xform.get_id, lock)
 
 
-def post_xform_to_couch(instance, attachments=None, process=None):
+def post_xform_to_couch(instance, attachments=None, process=None, domain=None):
     """
     create a new xform and releases the lock
 
@@ -164,12 +164,13 @@ def post_xform_to_couch(instance, attachments=None, process=None):
 
     """
     xform_lock = create_and_lock_xform(instance, attachments=attachments,
-                                       process=process)
+                                       process=process, domain=domain)
     with xform_lock as xform:
         return xform
 
 
-def create_and_lock_xform(instance, attachments=None, process=None):
+def create_and_lock_xform(instance, attachments=None, process=None,
+                          domain=None, _id=None):
     """
     Save a new xform to couchdb in a thread-safe manner
     Returns a LockManager containing the new XFormInstance and its lock,
@@ -182,12 +183,14 @@ def create_and_lock_xform(instance, attachments=None, process=None):
     attachments = attachments or {}
 
     try:
-        doc_id, lock = create_xform_from_xml(instance, process=process)
+        doc_id, lock = create_xform_from_xml(instance, process=process,
+                                             _id=_id)
     except couchforms.XMLSyntaxError as e:
         doc = _log_hard_failure(instance, attachments, e)
         raise SubmissionError(doc)
     except DuplicateError:
-        return _handle_id_conflict(instance, attachments, process=process)
+        return _handle_id_conflict(instance, attachments, process=process,
+                                   domain=domain)
 
     try:
         xform = XFormInstance.get(doc_id)
@@ -220,7 +223,7 @@ def _extract_id_from_raw_xml(xml):
     return _extract_meta_instance_id(json_form) or ''
 
 
-def _handle_id_conflict(instance, attachments, process):
+def _handle_id_conflict(instance, attachments, process, domain):
     """
     For id conflicts, we check if the files contain exactly the same content,
     If they do, we just log this as a dupe. If they don't, we deprecate the
@@ -230,8 +233,26 @@ def _handle_id_conflict(instance, attachments, process):
     conflict_id = _extract_id_from_raw_xml(instance)
 
     # get old document
-    existing_doc = XFormInstance.get(conflict_id)
+    existing_doc = XFormInstance.get_db().get(conflict_id)
+    assert domain
+    if existing_doc.get('domain') != domain\
+            or existing_doc.get('doc_type') not in doc_types():
+        # exit early
+        return create_and_lock_xform(instance, attachments=attachments,
+                                     process=process, _id=uid.new())
+    else:
+        existing_doc = XFormInstance.wrap(existing_doc)
+        return _handle_duplicate(existing_doc, instance, attachments, process)
 
+
+def _handle_duplicate(existing_doc, instance, attachments, process):
+    """
+    Handle duplicate xforms and xform editing ('deprecation')
+
+    existing doc *must* be validated as an XFormInstance in the right domain
+
+    """
+    conflict_id = existing_doc.get_id
     # compare md5s
     existing_md5 = existing_doc.xml_md5()
     new_md5 = hashlib.md5(instance).hexdigest()

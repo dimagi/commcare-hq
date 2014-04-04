@@ -25,8 +25,10 @@ class EditFormTest(TestCase):
         self.assertEqual("XFormInstance", doc.doc_type)
         self.assertEqual("", doc.form['vitals']['height'])
         self.assertEqual("other", doc.form['assessment']['categories'])
+        doc.domain = 'test-domain'
+        doc.save()
 
-        doc = post_xform_to_couch(xml_data2)
+        doc = post_xform_to_couch(xml_data2, domain='test-domain')
         self.assertEqual("7H46J37FGH3", doc.get_id)
         self.assertEqual("XFormInstance", doc.doc_type)
         self.assertEqual("100", doc.form['vitals']['height'])
