@@ -769,14 +769,12 @@ cloudCare.AppMainView = Backbone.View.extend({
             self.selectApp(null);
         });
         cloudCare.dispatch.on(
-            'app:selected app:deselected module:selected module:deselected form:selected form:deselected session:selected session:deselected form:submitted',
-            function () {
-                cloudCare.dispatch.trigger('cloudcare:context-changed')
+            'app:selected app:deselected module:selected module:deselected form:selected form:deselected form:submitted',
+            function (e, f) {
+                console.log('resetting', e, f);
+                self.sessionListView.reset();
             }
         );
-        cloudCare.dispatch.on('cloudcare:context-changed', function () {
-            self.sessionListView.reset();
-        });
 
         // utilities
         var selectApp = function (appId) {
