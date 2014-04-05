@@ -768,7 +768,13 @@ cloudCare.AppMainView = Backbone.View.extend({
             self.navigate("");
             self.selectApp(null);
         });
-        cloudCare.dispatch.on("form:submitted", function (app) {
+        cloudCare.dispatch.on(
+            'app:selected app:deselected module:selected module:deselected form:selected form:deselected session:selected session:deselected form:submitted',
+            function () {
+                cloudCare.dispatch.trigger('cloudcare:context-changed')
+            }
+        );
+        cloudCare.dispatch.on('cloudcare:context-changed', function () {
             self.sessionListView.reset();
         });
 
