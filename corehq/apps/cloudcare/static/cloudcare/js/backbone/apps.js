@@ -184,7 +184,11 @@ cloudCare.SessionView = Selectable.extend({
         deleteEl.appendTo($(this.el));
         deleteEl.click(function (e) {
             e.stopPropagation();
-            self.model.destroy();
+            var dialog = confirm("Permanently delete this form? You will not be able to return to it later.");
+            if (dialog == true) {
+                self.model.destroy();
+                showSuccess('Form was deleted.', $("#cloudcare-notifications"), 1000);
+            }
         });
         $("<a />").text(this.model.get("name") + ' (' + this.model.get('last_activity_date') + ')').appendTo($(this.el));
         return this;
