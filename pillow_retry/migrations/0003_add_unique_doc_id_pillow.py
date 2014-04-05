@@ -8,35 +8,23 @@ class Migration(SchemaMigration):
 
     def forwards(self, orm):
         
-        # Adding index on 'PillowError', fields ['current_attempt']
-        db.create_index(u'pillow_retry_pillowerror', ['current_attempt'])
-
-        # Adding index on 'PillowError', fields ['date_next_attempt']
-        db.create_index(u'pillow_retry_pillowerror', ['date_next_attempt'])
-
-        # Adding index on 'PillowError', fields ['doc_id']
-        db.create_index(u'pillow_retry_pillowerror', ['doc_id'])
+        # Adding unique constraint on 'PillowError', fields ['doc_id', 'pillow']
+        db.create_unique(u'pillow_retry_pillowerror', ['doc_id', 'pillow'])
 
 
     def backwards(self, orm):
         
-        # Removing index on 'PillowError', fields ['doc_id']
-        db.delete_index(u'pillow_retry_pillowerror', ['doc_id'])
-
-        # Removing index on 'PillowError', fields ['date_next_attempt']
-        db.delete_index(u'pillow_retry_pillowerror', ['date_next_attempt'])
-
-        # Removing index on 'PillowError', fields ['current_attempt']
-        db.delete_index(u'pillow_retry_pillowerror', ['current_attempt'])
+        # Removing unique constraint on 'PillowError', fields ['doc_id', 'pillow']
+        db.delete_unique(u'pillow_retry_pillowerror', ['doc_id', 'pillow'])
 
 
     models = {
         u'pillow_retry.pillowerror': {
-            'Meta': {'object_name': 'PillowError'},
+            'Meta': {'unique_together': "(('doc_id', 'pillow'),)", 'object_name': 'PillowError'},
             'current_attempt': ('django.db.models.fields.IntegerField', [], {'default': '0', 'db_index': 'True'}),
             'date_created': ('django.db.models.fields.DateTimeField', [], {}),
             'date_last_attempt': ('django.db.models.fields.DateTimeField', [], {}),
-            'date_next_attempt': ('django.db.models.fields.DateTimeField', [], {'db_index': 'True', 'null': 'True'}),
+            'date_next_attempt': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'db_index': 'True'}),
             'doc_id': ('django.db.models.fields.CharField', [], {'max_length': '255', 'db_index': 'True'}),
             'error_message': ('django.db.models.fields.CharField', [], {'max_length': '512', 'null': 'True'}),
             'error_traceback': ('django.db.models.fields.TextField', [], {'null': 'True'}),

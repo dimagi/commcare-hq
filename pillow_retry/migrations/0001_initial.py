@@ -18,7 +18,7 @@ class Migration(SchemaMigration):
             ('date_next_attempt', self.gf('django.db.models.fields.DateTimeField')(null=True)),
             ('total_attempts', self.gf('django.db.models.fields.IntegerField')(default=0)),
             ('current_attempt', self.gf('django.db.models.fields.IntegerField')(default=0)),
-            ('error_message', self.gf('django.db.models.fields.TextField')(null=True)),
+            ('error_message', self.gf('django.db.models.fields.CharField')(max_length=512, null=True)),
             ('error_type', self.gf('django.db.models.fields.CharField')(max_length=255, null=True)),
             ('error_traceback', self.gf('django.db.models.fields.TextField')(null=True)),
         ))
@@ -41,7 +41,7 @@ class Migration(SchemaMigration):
             'doc_id': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'error_message': ('django.db.models.fields.TextField', [], {'null': 'True'}),
             'error_traceback': ('django.db.models.fields.TextField', [], {'null': 'True'}),
-            'error_type': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True'}),
+            'error_type': ('django.db.models.fields.CharField', [], {'max_length': '512', 'null': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'pillow': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'total_attempts': ('django.db.models.fields.IntegerField', [], {'default': '0'})

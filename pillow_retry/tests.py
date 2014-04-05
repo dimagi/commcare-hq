@@ -1,6 +1,6 @@
 import sys
 from datetime import datetime
-from pillow_retry.models import PillowError, name_path_from_object
+from pillow_retry.models import PillowError, path_from_object
 from django.test import TestCase
 from pillowtop.listener import BasicPillow
 
@@ -20,6 +20,9 @@ def create_error(id='123', message='message', attempts=0, pillow=None, ex_class=
 
 
 class PillowRetryTestCase(TestCase):
+    def setUp(self):
+        PillowError.objects.all().delete()
+
     def test_id(self):
         id = '12345'
         error = create_error(id)
@@ -51,10 +54,9 @@ class PillowRetryTestCase(TestCase):
         self.assertEqual(get.current_attempt, 2)
         self.assertEqual(get.error_message, message)
 
-
-class ViewTests(TestCase):
-    def setUp(self):
-        PillowError.objects.all().delete()
+        new = PillowError.get_or_create({'id': id}, FakePillow1())
+        self.assertIsNone(new.id)
+        self.assertEqual(new.current_attempt, 0)
 
     def test_get_errors_to_process(self):
         date = datetime.utcnow()
@@ -75,6 +77,9 @@ class ViewTests(TestCase):
 
 
 class FakePillow(BasicPillow):
+    pass
+
+class FakePillow1(BasicPillow):
     pass
 
 class ExceptionA(Exception):

@@ -15,10 +15,9 @@ def _get_extra_args(limit, reduce, skip):
             )
     return extra_args
 
-def name_path_from_object(obj):
-        name = obj.__class__.__name__
-        path = "{0}.{1}".format(obj.__class__.__module__, name)
-        return name, path
+def path_from_object(obj):
+    path = "{0}.{1}".format(obj.__class__.__module__, obj.__class__.__name__)
+    return path
 
 
 class PillowError(models.Model):
@@ -29,16 +28,19 @@ class PillowError(models.Model):
     date_next_attempt = models.DateTimeField(db_index=True, null=True)
     total_attempts = models.IntegerField(default=0)
     current_attempt = models.IntegerField(default=0, db_index=True)
-    error_message = models.CharField(max_length=255, null=True)
-    error_type = models.TextField(max_length=255, null=True)
+    error_message = models.CharField(max_length=512, null=True)
+    error_type = models.CharField(max_length=255, null=True)
     error_traceback = models.TextField(null=True)
+
+    class Meta:
+        unique_together = ('doc_id', 'pillow',)
 
     def add_attempt(self, exception, traceb, date=None):
         self.current_attempt += 1
         self.total_attempts += 1
         self.date_last_attempt = date or datetime.utcnow()
         self.error_message = exception.message
-        self.error_type = name_path_from_object(exception)[1]
+        self.error_type = path_from_object(exception)
         self.error_traceback = "".join(traceback.format_tb(traceb))
 
         if self.current_attempt <= settings.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS:
@@ -53,11 +55,11 @@ class PillowError(models.Model):
 
     @classmethod
     def get_or_create(cls, change, pillow):
-        pillow_name, pillow_path = name_path_from_object(pillow)
+        pillow_path = path_from_object(pillow)
 
         doc_id = change['id']
         try:
-            error = cls.objects.get(doc_id=doc_id)
+            error = cls.objects.get(doc_id=doc_id, pillow=pillow_path)
         except cls.DoesNotExist:
             now = datetime.utcnow()
             error = PillowError(
