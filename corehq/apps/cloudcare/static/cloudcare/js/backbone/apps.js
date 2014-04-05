@@ -237,7 +237,7 @@ cloudCare.SessionListView = Backbone.View.extend({
         $(self.el).html('');
         if (self.sessionList.length) {
             var ul = $("<ul />").addClass("nav nav-list").appendTo($(self.el));
-            $("<li />").addClass("nav-header").text("Incomlete Forms").appendTo(ul);
+            $("<li />").addClass("nav-header").text("Incomplete Forms").appendTo(ul);
             _(self.sessionList.models).each(function(item){
                 self.appendItem(item);
             });
