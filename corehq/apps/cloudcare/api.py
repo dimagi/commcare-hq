@@ -1,5 +1,6 @@
 import json
 from couchdbkit.exceptions import ResourceNotFound
+from django.contrib.humanize.templatetags.humanize import naturaltime
 from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase, CASE_STATUS_ALL, CASE_STATUS_CLOSED, CASE_STATUS_OPEN
 from corehq.apps.locations.models import Location
@@ -364,12 +365,13 @@ def get_cloudcare_app(domain, app_name):
         raise ResourceNotFound(_("Not found application by name: %s") % app_name)
 
 
-def get_open_form_sessions(user):
+def get_open_form_sessions(user, limit=10):
     def session_to_json(sess):
         return {
             'id': sess.session_id,
             'app_id': sess.app_id,
             'name': sess.session_name,
+            'display': '{name} ({when})'.format(name=sess.session_name, when=naturaltime(sess.last_activity_date)),
             'created_date': sess.created_date.strftime('%Y-%m-%dT%H:%M:%S'),
             'last_activity_date': sess.last_activity_date.strftime('%Y-%m-%dT%H:%M:%S'),
             'expiration_date': (sess.last_activity_date +
@@ -378,4 +380,4 @@ def get_open_form_sessions(user):
     return [session_to_json(sess) for sess in EntrySession.objects.filter(
         last_activity_date__isnull=False,
         user=user,
-    )]
+    ).order_by('-last_activity_date')[:limit]]

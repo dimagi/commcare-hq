@@ -190,7 +190,7 @@ cloudCare.SessionView = Selectable.extend({
                 showSuccess('Form was deleted.', $("#cloudcare-notifications"), 1000);
             }
         });
-        $("<a />").text(this.model.get("name") + ' (' + this.model.get('last_activity_date') + ')').appendTo($(this.el));
+        $("<a />").text(this.model.get('display')).appendTo($(this.el));
         return this;
     }
 });
