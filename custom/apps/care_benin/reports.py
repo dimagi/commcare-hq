@@ -5,7 +5,7 @@ from corehq.apps.reports.basic import BasicTabularReport, Column, GenericTabular
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumnGroup, \
     DataTablesColumn, DTSortType
 from corehq.apps.reports.standard import ProjectReportParametersMixin, CustomProjectReport, DatespanMixin
-from corehq.apps.reports.fields import DatespanField
+from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.groups.models import Group
 from couchdbkit_aggregate import KeyView, AggregateKeyView, fn
 from dimagi.utils.couch.loosechange import map_reduce
@@ -13,6 +13,7 @@ from dimagi.utils.decorators.memoized import memoized
 from couchdbkit_aggregate.fn import NO_VALUE
 from dimagi.utils.couch.database import get_db
 from corehq.apps.reports.util import format_datatables_data as fdd
+from corehq.apps.reports import util
 
 RELAIS_GROUP = "relais"
 
@@ -35,7 +36,7 @@ def combine_indicator(num, denom):
 
 
 class CareGroupReport(BasicTabularReport, CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
-    field_classes = (DatespanField,)
+    field_classes = (DatespanFilter,)
     datespan_default_days = 30
     exportable = True
 
@@ -320,7 +321,7 @@ class MandE(CareGroupReport):
 class Relais(BasicTabularReport, CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
     name = "Relais"
     slug = "cb_relais"
-    field_classes = (DatespanField,)
+    field_classes = (DatespanFilter,)
     datespan_default_days = 30
     exportable = True
     filter_group_name = RELAIS_GROUP
@@ -352,7 +353,7 @@ class Relais(BasicTabularReport, CustomProjectReport, ProjectReportParametersMix
 class Nurse(BasicTabularReport, CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
     name = "Nurse"
     slug = "cb_nurse"
-    field_classes = (DatespanField,)
+    field_classes = (DatespanFilter,)
     datespan_default_days = 30
     exportable = True
     filter_group_name = AGENTS_DE_SANTE_GROUP
@@ -519,7 +520,7 @@ class Referrals(CareGroupReport):
 class Outcomes(GenericTabularReport, CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
     name = "Outcomes"
     slug = "cb_outcomes"
-    fields = ('corehq.apps.reports.fields.DatespanField',)
+    fields = ('corehq.apps.reports.filters.dates.DatespanFilter',)
     datespan_default_days = 30
     exportable = True
 
@@ -603,7 +604,7 @@ class Outcomes(GenericTabularReport, CustomProjectReport, ProjectReportParameter
 class DangerSigns(GenericTabularReport, CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
     name = "Danger sign distribution"
     slug = "cb_danger"
-    fields = ('corehq.apps.reports.fields.DatespanField',)
+    fields = ('corehq.apps.reports.filters.dates.DatespanFilter',)
     datespan_default_days = 30
     exportable = True
 
@@ -675,7 +676,7 @@ def health_center_name(key, report):
 class HealthCenter(BasicTabularReport, CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
     name = "Health Center"
     slug = "health_center"
-    field_classes = (DatespanField,)
+    field_classes = (DatespanFilter,)
     datespan_default_days = 30
     exportable = True
     filter_group_name = AGENTS_DE_SANTE_GROUP
@@ -708,10 +709,21 @@ class HealthCenter(BasicTabularReport, CustomProjectReport, ProjectReportParamet
 
     pregnant_anemia = Column("Number of pregnant women with anemia", key='pregnant_anemia')
 
+    @memoized
+    def get_all_users_by_domain(self, group=None, user_ids=None, user_filter=None, simplified=False):
+        return list(util.get_all_users_by_domain(
+            domain=self.domain,
+            group=group,
+            user_ids=user_ids,
+            user_filter=user_filter,
+            simplified=False,  # override simplified to False
+            CommCareUser=self.CommCareUser
+        ))
+
     @property
     @memoized
     def hc(self):
-        return dict([(user['_id'], user.user_data.get('CS')) for user in self.users])
+        return dict([(user.get_id, user.user_data.get('CS')) for user in self.users])
 
     @property
     def start_and_end_keys(self):
@@ -720,7 +732,7 @@ class HealthCenter(BasicTabularReport, CustomProjectReport, ProjectReportParamet
 
     @property
     def keys(self):
-        return [[user['_id']] for user in self.users]
+        return [[user.get_id] for user in self.users]
 
     @property
     def rows(self):

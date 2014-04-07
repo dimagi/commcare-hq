@@ -19,8 +19,8 @@ import pytz
 class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
     name = ugettext_noop('SMS Usage')
     slug = 'messages'
-    fields = ['corehq.apps.reports.fields.GroupField',
-              'corehq.apps.reports.fields.DatespanField']
+    fields = ['corehq.apps.reports.filters.select.GroupFilter',
+              'corehq.apps.reports.filters.dates.DatespanFilter']
 
     special_notice = ugettext_noop(
         "This report will only show data for users whose phone numbers have "
@@ -105,7 +105,7 @@ the domain to the list in settings.MESSAGE_LOG_OPTIONS["abbreviated_phone_number
 class MessageLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
     name = ugettext_noop('Message Log')
     slug = 'message_log'
-    fields = ['corehq.apps.reports.fields.DatespanField']
+    fields = ['corehq.apps.reports.filters.dates.DatespanFilter']
     exportable = True
     
     @property

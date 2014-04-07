@@ -1,5 +1,5 @@
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
-from corehq.apps.reports.fields import ReportSelectField
+from corehq.apps.reports.dont_use.fields import ReportSelectField
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.filters.fixtures import MultiLocationFilter

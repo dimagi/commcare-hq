@@ -238,6 +238,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     case_sharing = BooleanProperty(default=False)
     secure_submissions = BooleanProperty(default=False)
     ota_restore_caching = BooleanProperty(default=False)
+    cloudcare_releases = StringProperty(choices=['stars', 'nostars', 'default'], default='default')
     organization = StringProperty()
     hr_name = StringProperty() # the human-readable name for this project within an organization
     creating_user = StringProperty() # username of the user who created this domain
@@ -375,6 +376,9 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             data["is_test"] = "true" if data["is_test"] else "false"
             should_save = True
 
+        if 'cloudcare_releases' not in data:
+            data['cloudcare_releases'] = 'nostars'  # legacy default setting
+
         self = super(Domain, cls).wrap(data)
         if self.deployment is None:
             self.deployment = Deployment()
@@ -492,6 +496,10 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             if app.doc_type == 'Application' and app.has_media():
                 return True
         return False
+
+    @property
+    def use_cloudcare_releases(self):
+        return self.cloudcare_releases != 'nostars'
 
     def all_users(self):
         from corehq.apps.users.models import CouchUser

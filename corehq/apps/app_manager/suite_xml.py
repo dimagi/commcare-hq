@@ -786,6 +786,7 @@ class SuiteGenerator(object):
                 if module_id == module.unique_id:
                     return module
 
+                from corehq.apps.app_manager.models import ModuleNotFoundException
                 try:
                     target = module.get_app().get_module_by_unique_id(module_id)
                     if target.case_type != case_type:
@@ -797,7 +798,7 @@ class SuiteGenerator(object):
                             "Module with ID %s has no product details configuration" % module_id
                         )
                     return target
-                except KeyError as ex:
+                except ModuleNotFoundException as ex:
                     raise ParentModuleReferenceError(ex.message)
             else:
                 if case_type == module.case_type:

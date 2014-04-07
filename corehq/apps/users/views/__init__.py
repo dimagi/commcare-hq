@@ -28,7 +28,6 @@ from django_digest.decorators import httpdigest
 from dimagi.utils.web import json_response
 
 from corehq.apps.registration.forms import AdminInvitesUserForm
-from corehq.apps.prescriptions.models import Prescription
 from corehq.apps.hqwebapp.utils import InvitationView
 from corehq.apps.users.forms import (UpdateUserRoleForm, BaseUserInfoForm, UpdateMyAccountInfoForm, CommtrackUserForm)
 from corehq.apps.users.models import (CouchUser, CommCareUser, WebUser,

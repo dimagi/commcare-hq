@@ -37,7 +37,7 @@ Example Custom Report Scaffolding
     class MyBasicReport(GenericTabularReport, CustomProjectReport):
         name = "My Basic Report"
         slug = "my_basic_report"
-        fields = ('corehq.apps.reports.fields.DatespanField',)
+        fields = ('corehq.apps.reports.filters.dates.DatespanFilter',)
 
         @property
         def headers(self):
@@ -113,7 +113,7 @@ e.g.
     class DemoReport(SqlTabularReport, CustomProjectReport):
         name = "SQL Demo"
         slug = "sql_demo"
-        fields = ('corehq.apps.reports.fields.DatespanField',)
+        fields = ('corehq.apps.reports.filters.dates.DatespanFilter',)
 
         # The columns to include the the 'group by' clause
         group_by = ["user"]

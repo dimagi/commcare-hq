@@ -46,17 +46,12 @@ def deactivate_subscriptions(based_on_date=None):
         subscription.save()
 
 
-@periodic_task(run_every=crontab(hour=0, minute=0, day_of_month='30'))
-def generate_invoices(based_on_date=None, as_test=False):
+@periodic_task(run_every=crontab(hour=13, minute=0, day_of_month='1'))
+def generate_invoices(based_on_date=None):
     """
     Generates all invoices for the past month.
     """
-
-    if not as_test:
-        # the extra timedelta is for the TRIAL RUN todo: remove
-        today = based_on_date or datetime.date.today() + datetime.timedelta(days=2)
-    else:
-        today = based_on_date or datetime.date.today()
+    today = based_on_date or datetime.date.today()
     invoice_start, invoice_end = utils.get_previous_month_date_range(today)
     logger.info("[Billing] Starting up invoices for %(start)s - %(end)s" % {
         'start': invoice_start.strftime("%d %B %Y"),
@@ -64,26 +59,23 @@ def generate_invoices(based_on_date=None, as_test=False):
     })
     all_domain_ids = [d['id'] for d in Domain.get_all(include_docs=False)]
     for domain_doc in iter_docs(Domain.get_db(), all_domain_ids):
-        if (toggles.ACCOUNTING_PREVIEW.enabled(domain_doc.get('name'))
-            or as_test
-        ):
-            domain = Domain.wrap(domain_doc)
-            try:
-                invoice_factory = DomainInvoiceFactory(
-                    invoice_start, invoice_end, domain)
-                invoice_factory.create_invoices()
-                logger.info("[BILLING] Sent invoices for domain %s"
-                            % domain.name)
-            except CreditLineError as e:
-                logger.error(
-                    "[BILLING] There was an error utilizing credits for "
-                    "domain %s: %s" % (domain.name, e)
-                )
-            except InvoiceError as e:
-                logger.error(
-                    "[BILLING] Could not create invoice for domain %s: %s" % (
-                    domain.name, e
-                ))
+        domain = Domain.wrap(domain_doc)
+        try:
+            invoice_factory = DomainInvoiceFactory(
+                invoice_start, invoice_end, domain)
+            invoice_factory.create_invoices()
+            logger.info("[BILLING] Sent invoices for domain %s"
+                        % domain.name)
+        except CreditLineError as e:
+            logger.error(
+                "[BILLING] There was an error utilizing credits for "
+                "domain %s: %s" % (domain.name, e)
+            )
+        except InvoiceError as e:
+            logger.error(
+                "[BILLING] Could not create invoice for domain %s: %s" % (
+                domain.name, e
+            ))
     # And finally...
     send_bookkeeper_email()
 

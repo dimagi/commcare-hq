@@ -57,7 +57,7 @@ class AsyncDrillableFilter(BaseReportFilter):
 
         if index is None:
             raise Exception(
-                "Could not generate lineage for AsyncDrillableField due to a nonexistent leaf_type (%s)" % leaf_type)
+                "Could not generate lineage for AsyncDrillableFilter due to a nonexistent leaf_type (%s)" % leaf_type)
 
         lineage = [leaf_fdi]
         for i, h in enumerate(self.full_hierarchy[::-1]):

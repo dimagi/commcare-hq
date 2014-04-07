@@ -17,7 +17,7 @@ from ..util import _report_user_dict
 def user_tuple(u):
     user = _report_user_dict(u)
     uid = "u__%s" % user['user_id']
-    name = "%s [user]" % user['username_in_report'].split('@')[0]
+    name = "%s [user]" % user['username_in_report']
     return (uid, name)
 
 
@@ -94,7 +94,7 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
         return es_wrapper('users', domain=self.domain, q=self.user_query, **kwargs)
 
     def get_users(self, start, size):
-        fields = ['_id', 'username', 'first_name', 'last_name']
+        fields = ['_id', 'username', 'first_name', 'last_name', 'doc_type']
         users = self.user_es_call(fields=fields, start_at=start, size=size,
             sort_by='username.exact', order='asc')
         return [user_tuple(u) for u in users]

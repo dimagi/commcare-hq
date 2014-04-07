@@ -98,8 +98,8 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
 class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Stock Status by Product')
     slug = 'current_stock_status'
-    fields = ['corehq.apps.reports.fields.AsyncLocationField',
-              'corehq.apps.reports.fields.SelectProgramField',
+    fields = ['corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
+              'corehq.apps.reports.dont_use.fields.SelectProgramField',
               'corehq.apps.reports.filters.dates.DatespanFilter']
     exportable = True
     emailable = True
@@ -205,8 +205,8 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
 class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Inventory')
     slug = StockStatusDataSource.slug
-    fields = ['corehq.apps.reports.fields.AsyncLocationField',
-              'corehq.apps.reports.fields.SelectProgramField',
+    fields = ['corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
+              'corehq.apps.reports.dont_use.fields.SelectProgramField',
               'corehq.apps.reports.filters.dates.DatespanFilter',]
     exportable = True
     emailable = True
@@ -279,8 +279,8 @@ class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
 class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Reporting Rate')
     slug = 'reporting_rate'
-    fields = ['corehq.apps.reports.fields.AsyncLocationField',
-              'corehq.apps.reports.fields.SelectProgramField',
+    fields = ['corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
+              'corehq.apps.reports.dont_use.fields.SelectProgramField',
               'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
               'corehq.apps.reports.filters.dates.DatespanFilter',]
     exportable = True
@@ -296,8 +296,7 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
         return DataTablesHeader(*(DataTablesColumn(text) for text in [
                     _('Location'),
                     _('# Sites'),
-                    _('On-time'),
-                    _('Late'),
+                    _('Reporting'),
                     _('Non-reporting'),
                 ]))
 
@@ -349,7 +348,7 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
         def _rows():
             for loc in locs:
                 num_sites = len(sites_by_agg_site[loc._id])
-                yield [loc.name, len(sites_by_agg_site[loc._id])] + [fmt_col(loc, k) for k in ('ontime', 'late', 'nonreporting')]
+                yield [loc.name, len(sites_by_agg_site[loc._id])] + [fmt_col(loc, k) for k in ('reporting', 'nonreporting')]
 
         return master_tally, _rows()
 
@@ -360,11 +359,10 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
     def master_pie_chart_data(self):
         tally = self._data[0]
         labels = {
-            'ontime': _('On-time'),
-            'late': _('Late'),
+            'reporting': _('Reporting'),
             'nonreporting': _('Non-reporting'),
         }
-        return [{'label': labels[k], 'value': tally.get(k, {'count': 0.})['count']} for k in ('ontime', 'late', 'nonreporting')]
+        return [{'label': labels[k], 'value': tally.get(k, {'count': 0.})['count']} for k in ('reporting', 'nonreporting')]
 
     @property
     def charts(self):
@@ -375,7 +373,8 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
 class RequisitionReport(CaseListReport):
     name = ugettext_noop('Requisition Report')
     slug = 'requisition_report'
-    fields = ['corehq.apps.reports.fields.AsyncLocationField', 'corehq.apps.reports.fields.SelectOpenCloseField']
+    fields = ['corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
+              'corehq.apps.reports.filters.select.SelectOpenCloseFilter']
     exportable = True
     emailable = True
     asynchronous = True

@@ -105,6 +105,7 @@ class ReportDispatcher(View):
     def _slug_alias(self, slug):
         return self.slug_aliases.get(slug)
 
+    @datespan_default
     def dispatch(self, request, domain=None, report_slug=None, render_as=None,
                  *args, **kwargs):
         render_as = render_as or 'view'
@@ -215,7 +216,6 @@ class ProjectReportDispatcher(ReportDispatcher):
         }
 
     @cls_to_view_login_and_domain
-    @datespan_default
     def dispatch(self, request, *args, **kwargs):
         return super(ProjectReportDispatcher, self).dispatch(request, *args, **kwargs)
 

@@ -1,5 +1,5 @@
-from corehq.apps.reports.fields import ReportField, ReportSelectField
-from corehq.apps.reports.fields import SelectFilteredMobileWorkerField
+from corehq.apps.reports.dont_use.fields import ReportField, ReportSelectField
+from corehq.apps.reports.dont_use.fields import SelectFilteredMobileWorkerField
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 from corehq.apps.reports.filters.base import (BaseSingleOptionFilter,
     BaseDrilldownOptionFilter)

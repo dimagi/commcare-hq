@@ -1038,9 +1038,7 @@ class ProjectSettingsTab(UITab):
                             'url': reverse(EditExistingBillingAccountView.urlname, args=[self.domain]),
                         },
                     )
-                if ((toggles.ACCOUNTING_PREVIEW.enabled(self.couch_user.username)
-                     or toggles.ACCOUNTING_PREVIEW.enabled(self.domain))
-                    and billing_account is not None
+                if (billing_account is not None
                     and Invoice.exists_for_domain(self.domain)
                 ):
                     subscription.append(
@@ -1116,10 +1114,12 @@ class AdminReportsTab(UITab):
         ]
 
         if self.couch_user and self.couch_user.is_staff:
-            admin_operations.append(
+            admin_operations.extend([
                 {'title': _('Mass Email Users'),
-                 'url': reverse('mass_email')}
-            )
+                 'url': reverse('mass_email')},
+                {'title': _('PillowTop Errors'),
+                'url': reverse('admin_report_dispatcher', args=('pillow_errors',))},
+            ])
         return [
             (_('Administrative Reports'), [
                 {'title': _('Project Space List'),

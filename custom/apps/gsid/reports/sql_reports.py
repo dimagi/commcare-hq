@@ -27,7 +27,7 @@ class StaticColumn(AliasColumn):
 
 class GSIDSQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin):
     fields = ['custom.apps.gsid.reports.TestField', 
-              'custom.apps.gsid.reports.RelativeDatespanField', 
+              'corehq.apps.reports.filters.dates.DatespanFilter', 
               'custom.apps.gsid.reports.AsyncClinicField',
               'custom.apps.gsid.reports.AggregateAtField']
 
@@ -700,7 +700,7 @@ class PatientMapReport(GenericMapReport, CustomProjectReport):
     slug = "patient_summary_map"
 
     fields = ['custom.apps.gsid.reports.TestField', 
-              'custom.apps.gsid.reports.RelativeDatespanField', 
+              'corehq.apps.reports.filters.dates.DatespanFilter', 
               'custom.apps.gsid.reports.AsyncClinicField',
               'custom.apps.gsid.reports.AggregateAtField']
 

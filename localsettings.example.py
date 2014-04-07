@@ -119,6 +119,10 @@ TOUCHFORMS_API_PASSWORD = 'password'
 DEFAULT_PROTOCOL = "http" # or https
 OVERRIDE_LOCATION="https://www.commcarehq.org"
 
+# Set to something like "192.168.1.5:8000" (with your IP address).
+# See corehq/apps/builds/README.md for more information.
+BASE_ADDRESS = None
+
 #Set your analytics IDs here for GA and pingdom RUM
 ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_ID': '*******',
