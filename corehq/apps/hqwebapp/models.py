@@ -1027,6 +1027,7 @@ class ProjectSettingsTab(UITab):
                         'subpages': [
                             {
                                 'title': ConfirmSubscriptionRenewalView.page_title,
+                                'urlname': ConfirmSubscriptionRenewalView.urlname,
                                 'url': reverse(ConfirmSubscriptionRenewalView.urlname, args=[self.domain]),
                             }
                         ]
