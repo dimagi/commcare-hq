@@ -158,7 +158,7 @@ class SubscriptionUpgradeRequiredView(LoginAndDomainMixin, BasePageView,
     @property
     def required_plan_name(self):
         return DefaultProductPlan.get_lowest_edition_by_domain(
-            self.domain_object, self.missing_privilege
+            self.domain_object, [self.missing_privilege]
         )
 
     def get(self, request, *args, **kwargs):

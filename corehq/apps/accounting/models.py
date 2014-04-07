@@ -515,8 +515,6 @@ class DefaultProductPlan(models.Model):
     @classmethod
     def get_lowest_edition_by_domain(cls, domain, requested_privileges,
                                      return_plan=False):
-        if not isinstance(requested_privileges, list):
-            requested_privileges = [requested_privileges]
         for edition in SoftwarePlanEdition.ORDER:
             plan_version = cls.get_default_plan_by_domain(
                 domain, edition=edition
