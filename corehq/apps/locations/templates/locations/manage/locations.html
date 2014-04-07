@@ -44,6 +44,16 @@ $(function() {
     </div>
 </header>
 
+<div class="row-fluid">
+    <div class="span12">
+        <div class="btn-toolbar">
+            <a class="btn btn-info" href="{% url "location_import" domain %}">
+                <i class="icon-upload"></i> {% trans 'Bulk Import Locations' %}
+            </a>
+        </div>
+    </div>
+</div>
+
 <script type="text/html" id="location-template">
 
   <!-- header bar -->

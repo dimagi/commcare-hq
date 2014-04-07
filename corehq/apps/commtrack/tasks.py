@@ -44,7 +44,7 @@ def import_products_async(domain, file_ref_id):
     task = import_products_async
     DownloadBase.set_progress(task, 0, 100)
     download_ref = DownloadBase.get(file_ref_id)
-    results = list(import_products(domain, download_ref, task))
+    results = import_products(domain, download_ref, task)
     DownloadBase.set_progress(task, 100, 100)
     return {
         'messages': results

@@ -2,8 +2,16 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
+{% block js %}{{ block.super }}
+<script src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
+<script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
+<script src="{% static 'commtrack/ko/lmis.js' %}"></script>
+{% endblock %}
+
 {% block js-inline %}{{ block.super }}
 <script>
+    var settings = {{ settings|JSON }};
+
     $(function () {
         var _post = function (elem, url, options) {
             var options = options || {};
@@ -21,10 +29,6 @@
                 }
             });
         };
-        $("#sync_facilities").click(function() {
-            var url = '{% url "sync_facilities_with_locations" domain %}';
-            _post(this, url);
-        });
         $("#sync_lmis").click(function() {
             var url = '{% url "sync_openlmis" domain %}';
             var successMessage = '{% trans "Sync started" %}';
@@ -35,38 +39,84 @@
 {% endblock %}
 
 {% block main_column %}
-<header>
+
+    {% if request.couch_user.is_previewer %}
+    <form id="settings" class="form form-horizontal" method="post">
+        <h3>{% trans "OpenLMIS Integration" %}</h3>
+
+        <fieldset>
+            <div class="control-group" >
+                <label class="control-label" for="openlmis_enabled">
+                    {% trans "Enable OpenLMIS Integration?" %}
+                </label>
+                <div class="controls">
+                  <input id="openlmis_enabled" type="checkbox" data-bind="checked: openlmis_config().enabled">
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset data-bind="with: openlmis_config(), visible: openlmis_config().enabled">
+            <div class="control-group" >
+                <label class="control-label" for="openlmis_url">
+                    {% trans "API URL" %}
+                </label>
+                <div class="controls">
+                  <input id="openlmis_url" type="text" data-bind="value: url">
+                </div>
+            </div>
+            <div class="control-group" >
+                <label class="control-label" for="openlmis_username">
+                    {% trans "Username" %}
+                </label>
+                <div class="controls">
+                  <input id="openlmis_username" type="text" data-bind="value: username">
+                </div>
+            </div>
+            <div class="control-group" >
+                <label class="control-label" for="openlmis_password">
+                    {% trans "Password" %}
+                </label>
+                <div class="controls">
+                  <input id="openlmis_password" type="password" data-bind="value: password">
+                </div>
+            </div>
+            <div class="control-group" >
+                <label class="control-label" for="openlmis_using_requisitions">
+                    {% trans "Use OpenLMIS for Requisitions?" %}
+                </label>
+                <div class="controls">
+                  <input id="openlmis_using_requisitions" type="checkbox" data-bind="checked: using_requisitions">
+                </div>
+            </div>
+        </fieldset>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+                {% trans "Save Settings" %}
+            </button>
+        </div>
+
+        <input name="json" type="hidden" data-bind="value: json_payload" />
+    </form>
+
+    {% if settings.openlmis_config.enabled %}
+    <header>
+        <div class="row-fluid">
+            <div class="span8">
+                <h2>{% trans "Sync with OpenLMIS" %}</h2>
+            </div>
+        </div>
+    </header>
     <div class="row-fluid">
-        <div class="span8">
-            <h2>{% trans "Sync Locations with Facility Registry" %}</h2>
+        <div class="span12">
+            <div class="btn-toolbar">
+                <a class="btn" id="sync_lmis">
+                    {% trans "Sync Now" %}
+                </a>
+            </div>
         </div>
     </div>
-</header>
-<div class="row-fluid">
-    <div class="span12">
-        <div class="btn-toolbar">
-            <a class="btn" id="sync_facilities">
-                {% trans "Sync Now" %}
-            </a>
-        </div>
-    </div>
-</div>
-{% if lmis_config %}
-<header>
-    <div class="row-fluid">
-        <div class="span8">
-            <h2>{% trans "Sync with OpenLMIS" %}</h2>
-        </div>
-    </div>
-</header>
-<div class="row-fluid">
-    <div class="span12">
-        <div class="btn-toolbar">
-            <a class="btn" id="sync_lmis">
-                {% trans "Sync Now" %}
-            </a>
-        </div>
-    </div>
-</div>
-{% endif %}
+    {% endif %}
+    {% endif %}
+
 {% endblock %}

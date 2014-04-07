@@ -3,7 +3,7 @@ from custom.reports.mc.models import WEEKLY_SUMMARY_XMLNS
 
 HF_MONTHLY_REPORT = [
     {
-        'section': _('Home Visits'),
+        'section': _('mc_section_home_visits'),
         'columns': [
             _('home_visits_pregnant'),
             _('home_visits_postpartem'),
@@ -15,7 +15,7 @@ HF_MONTHLY_REPORT = [
     },
 
     {
-        'section': _('RDT'),
+        'section': _('mc_section_rdt'),
         'columns': [
             _('rdt_positive_children'),
             _('rdt_positive_adults'),
@@ -25,7 +25,7 @@ HF_MONTHLY_REPORT = [
     },
 
     {
-        'section': _('Diagnosed Cases'),
+        'section': _('mc_section_diagnosed_cases'),
         'columns': [
             _('diagnosed_malaria_child'),
             _('diagnosed_malaria_adult'),
@@ -36,7 +36,7 @@ HF_MONTHLY_REPORT = [
     },
 
     {
-        'section': _('Treated Cases'),
+        'section': _('mc_section_treated_cases'),
         'columns': [
             _('treated_malaria'),
             _('treated_diarrhea'),
@@ -46,7 +46,7 @@ HF_MONTHLY_REPORT = [
     },
 
     {
-        'section': _('Transfers'),
+        'section': _('mc_section_transfers'),
         'columns': [
             _('transfer_malnutrition'),
             _('transfer_incomplete_vaccination'),
@@ -59,7 +59,7 @@ HF_MONTHLY_REPORT = [
     },
 
     {
-        'section': _('Deaths'),
+        'section': _('mc_section_deaths'),
         'columns': [
             _('deaths_newborn'),
             _('deaths_children'),
@@ -69,7 +69,7 @@ HF_MONTHLY_REPORT = [
         ]
     },
     {
-        'section': _('Health Education'),
+        'section': _('mc_section_health_ed'),
         'columns': [
             _('heath_ed_talks'),
             _('heath_ed_participants'),
@@ -80,7 +80,7 @@ HF_MONTHLY_REPORT = [
 # todo: need to add additional columns for district report
 DISTRICT_MONTHLY_REPORT = HF_MONTHLY_REPORT + [
     {
-        'section': _('Stock Balance'),
+        'section': _('mc_section_stock_balance'),
         'type': 'form_lookup',
         'xmlns': WEEKLY_SUMMARY_XMLNS,
         'columns': [
@@ -104,7 +104,7 @@ DISTRICT_MONTHLY_REPORT = HF_MONTHLY_REPORT + [
 
 DISTRICT_WEEKLY_REPORT = [
     {
-        'section': _('Home Visits'),
+        'section': _('mc_section_home_visits'),
         'columns': [
             _('home_visits_newborn'),
             _('home_visits_children'),
@@ -115,13 +115,13 @@ DISTRICT_WEEKLY_REPORT = [
         ]
     },
     {
-        'section': _('Deaths in the Community'),
+        'section': _('mc_section_deaths_in_community'),
         'columns': [
             _('deaths_children'),
         ]
     },
     {
-        'section': _('Stock Balance'),
+        'section': _('mc_section_stock_balance'),
         'type': 'form_lookup',
         'xmlns': WEEKLY_SUMMARY_XMLNS,
         'columns': [
@@ -130,7 +130,7 @@ DISTRICT_WEEKLY_REPORT = [
         ]
     },
     {
-        'section': _('Validation of Diagnosis and Treatment'),
+        'section': _('mc_section_validation'),
         'columns': [
             {
                 'slug': _('patients_given_pneumonia_meds'),
@@ -158,7 +158,7 @@ DISTRICT_WEEKLY_REPORT = [
 
 HF_WEEKLY_REPORT = [
     {
-        'section': _('Home Visits'),
+        'section': _('mc_section_home_visits'),
         'columns': [
             _('home_visits_newborn'),
             _('home_visits_children'),
@@ -167,7 +167,7 @@ HF_WEEKLY_REPORT = [
         ]
     },
     {
-        'section': _('Transferred Cases'),
+        'section': _('mc_section_transfers'),
         'columns': [
             _('cases_transferred'),
             _('home_visits_followup'),

@@ -1,7 +1,8 @@
 from couchdbkit import ResourceNotFound
 from corehq.apps.users.models import CommCareUser
 
-def update_value_for_date(date, dates):
+def update_value_for_date(datetime, dates):
+    date = datetime.date()
     if date not in dates:
         dates[date] = 1
     else:
@@ -54,3 +55,10 @@ def case_passes_filter_date_delivery(case):
 
 def case_passes_filter_date_modified(case):
     return (hasattr(case, "modified_on") and get_case_date_modified(case) is not None)
+
+
+def string_to_int(string):
+    try:
+        return int(string)
+    except ValueError:
+        return 0

@@ -273,6 +273,7 @@ class CaseExportReport(ExportReport):
             group_exports=[group.case_exports for group in groups
                 if group.case_exports],
         )
+        context['case_format'] = self.request.GET.get('case_format') or 'csv'
         return context
 
     @classmethod

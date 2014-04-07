@@ -5,7 +5,7 @@ from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.commtrack.helpers import psi_one_time_setup
-from corehq.apps.commtrack.util import get_or_make_def_program
+from corehq.apps.commtrack.util import get_or_make_def_program, all_sms_codes
 
 from corehq.apps.domain.decorators import require_superuser, domain_admin_required, require_previewer, login_and_domain_required
 from corehq.apps.domain.models import Domain
@@ -48,7 +48,7 @@ class BaseCommTrackManageView(BaseDomainView):
 class DefaultConsumptionView(BaseCommTrackManageView):
     urlname = 'update_default_consumption'
     template_name = 'commtrack/manage/default_consumption.html'
-    page_title = ugettext_noop("Manage Default Consumption")
+    page_title = ugettext_noop("Default Consumption")
 
     @property
     @memoized
@@ -77,7 +77,7 @@ class ProductListView(BaseCommTrackManageView):
     # todo mobile workers shares this type of view too---maybe there should be a class for this?
     urlname = 'commtrack_product_list'
     template_name = 'commtrack/manage/products.html'
-    page_title = ugettext_noop("Manage Products")
+    page_title = ugettext_noop("Products")
 
     DEFAULT_LIMIT = 10
 
@@ -449,7 +449,7 @@ def api_query_supply_point(request, domain):
 class ProgramListView(BaseCommTrackManageView):
     urlname = 'commtrack_program_list'
     template_name = 'commtrack/manage/programs.html'
-    page_title = ugettext_noop("Manage Programs")
+    page_title = ugettext_noop("Programs")
 
 
 class FetchProgramListView(ProgramListView):
@@ -586,3 +586,66 @@ class FetchProductForProgramListView(EditProgramView):
             'current_page': self.page,
             'data_list': self.product_data,
         }), 'text/json')
+
+
+class SMSSettingsView(BaseCommTrackManageView):
+    urlname = 'commtrack_sms_settings'
+    page_title = ugettext_noop("SMS")
+    template_name = 'domain/admin/sms_settings.html'
+
+    @property
+    def page_context(self):
+        return {
+            'other_sms_codes': dict(self.get_other_sms_codes()),
+            'settings': self.settings_context,
+        }
+
+    @property
+    def settings_context(self):
+        return {
+            'keyword': self.domain_object.commtrack_settings.multiaction_keyword,
+            'actions': [self._get_action_info(a) for a in self.domain_object.commtrack_settings.actions],
+            'requisition_config': {
+                'enabled': self.domain_object.commtrack_settings.requisition_config.enabled,
+                'actions': [self._get_action_info(a) for a in self.domain_object.commtrack_settings.requisition_config.actions],
+            },
+        }
+
+    # FIXME
+    def _get_action_info(self, action):
+        return {
+            'type': action.action,
+            'keyword': action.keyword,
+            'name': action.subaction,
+            'caption': action.caption,
+        }
+
+    def get_other_sms_codes(self):
+        for k, v in all_sms_codes(self.domain).iteritems():
+            if v[0] == 'product':
+                yield (k, (v[0], v[1].name))
+
+    def post(self, request, *args, **kwargs):
+        from corehq.apps.commtrack.models import CommtrackActionConfig
+
+        payload = json.loads(request.POST.get('json'))
+
+        self.domain_object.commtrack_settings.multiaction_keyword = payload['keyword']
+
+        def mk_action(action):
+            return CommtrackActionConfig(**{
+                    'action': action['type'],
+                    'subaction': action['caption'],
+                    'keyword': action['keyword'],
+                    'caption': action['caption'],
+                })
+
+        #TODO add server-side input validation here (currently validated on client)
+
+        self.domain_object.commtrack_settings.actions = [mk_action(a) for a in payload['actions']]
+        self.domain_object.commtrack_settings.requisition_config.enabled = payload['requisition_config']['enabled']
+        self.domain_object.commtrack_settings.requisition_config.actions = [mk_action(a) for a in payload['requisition_config']['actions']]
+
+        self.domain_object.commtrack_settings.save()
+
+        return self.get(request, *args, **kwargs)

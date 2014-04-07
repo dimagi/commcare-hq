@@ -29,7 +29,6 @@ class CaseAttachmentAPI(View):
             raise Http404
 
         attachment_key = kwargs.get('attachment_id', None)
-        attachment_src = kwargs.get('attachment_src', None)
 
         if img is not None:
             if size == "debug_all":
@@ -38,7 +37,7 @@ class CaseAttachmentAPI(View):
                 r.write('<html><body>')
                 r.write('<ul>')
                 for fsize in IMAGE_SIZE_ORDERING:
-                    meta, stream = CommCareCase.fetch_case_image(case_id, attachment_key, attachment_src, filesize_limit=max_filesize, width_limit=max_width, height_limit=max_height, fixed_size=fsize)
+                    meta, stream = CommCareCase.fetch_case_image(case_id, attachment_key, filesize_limit=max_filesize, width_limit=max_width, height_limit=max_height, fixed_size=fsize)
 
                     r.write('<li>')
                     r.write('Size: %s<br>' % fsize)
@@ -57,7 +56,6 @@ class CaseAttachmentAPI(View):
                                         "domain": self.request.domain,
                                         "case_id": case_id,
                                         "attachment_id": attachment_key,
-                                        "attachment_src": attachment_src
                                     }),
                                     "domain": case_doc.domain, "case_id": case_id,
                                     "attachment_key": attachment_key,
@@ -73,11 +71,11 @@ class CaseAttachmentAPI(View):
                 r.write('</ul></body></html>')
                 return r
             else:
-                #image workflow
-                attachment_meta, attachment_stream = CommCareCase.fetch_case_image(case_id, attachment_key, attachment_src, filesize_limit=max_filesize, width_limit=max_width, height_limit=max_height, fixed_size=size)
+                # image workflow
+                attachment_meta, attachment_stream = CommCareCase.fetch_case_image(case_id, attachment_key, filesize_limit=max_filesize, width_limit=max_width, height_limit=max_height, fixed_size=size)
         else:
-            #default stream
-            attachment_meta, attachment_stream = CommCareCase.fetch_case_attachment(case_id, attachment_key, attachment_src)#, filesize_limit=max_size, width_limit=max_width, height_limit=max_height)
+            # default stream
+            attachment_meta, attachment_stream = CommCareCase.fetch_case_attachment(case_id, attachment_key)
 
         if attachment_meta is not None:
             mime_type = attachment_meta['content_type']

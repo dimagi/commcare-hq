@@ -1,0 +1,37 @@
+{% extends "reports/async/tabular.html" %}
+{% load hq_shared_tags %}
+{% load report_tags %}
+{% load i18n %}
+
+{% block js-inline %} {{ block.super }}
+    <script type="text/javascript">
+        $(function() {
+            $('#check_all').click( function() {
+                var oTable = $('#report_table_{{ report.slug }}').dataTable();
+                $('input', oTable.fnGetNodes()).attr('checked',this.checked);
+            });
+        });
+    </script>
+{% endblock %}
+
+
+{% block reporttable %}
+{% if not report.needs_filters %}
+    <form class="form-inline" action="{% url "pillow_errors" %}" method="post">
+    <div style="text-align:right;">
+        <select name="action">
+            <option value="">{% trans "Select Action..." %}</option>
+            <option value="delete">{% trans "Delete" %}</option>
+            <option value="reset">{% trans "Reset Attempts" %}</option>
+        </select>
+        <label class="checkbox">
+            <input id="check_all" type="checkbox" name="check_all">{% trans "Select All" %}
+        </label>
+        <button type="submit">{% trans "Go" %}</button>
+    </div>
+{% endif %}
+{{ block.super }}
+{% if not report.needs_filters %}
+</form>
+{% endif %}
+{% endblock %}
