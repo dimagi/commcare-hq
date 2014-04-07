@@ -1,0 +1,21 @@
+{% load i18n %}
+{% blocktrans %}
+Dear {{ domain }} administrator,
+
+Your {{ plan_name }} subscription for {{ domain }} ends soon! If you do not
+renew your subscription before then, you will automatically be subscribed
+to the {{ product }} Community plan and lose access to all pay-only
+features {{ ending_on }}
+
+To change or renew your subscription, please log into your project on
+{{ product }} HQ and and navigate to the subscription page in your project
+settings: {{ subscription_url }}
+
+If you have any questions, please don’t hesitate to contact accounts@dimagi.com.
+Thank you for your use and support of {{ product }}.
+
+Best regards,
+
+The {{ product }} HQ Team
+{{ base_url }}
+{% endblocktrans %}
