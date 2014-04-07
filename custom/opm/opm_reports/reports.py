@@ -642,7 +642,7 @@ class HealthMapSource(HealthStatusReport):
             for cell in row[1:]:
                 # _unformat_row([<html>] => ["N - f%"])
                 percent = re.findall(pattern, _unformat_row([cell])[0])
-                html_cell = {"html": cell, "sort_key": int(percent[0])}
+                html_cell = {"html": cell, "sort_key": int(percent[0] if percent else 0)}
                 escaped_row.append(html_cell)
             new_rows.append(extra_columns + escaped_row)
         return new_rows
@@ -662,6 +662,20 @@ class HealthMapReport(GenericMapReport, CustomProjectReport):
 
     @property
     def display_config(self):
+        colorstops = [
+            [40, 'rgba(255, 0, 0, .8)'],
+            [70, 'rgba(255, 255, 0, .8)'],
+            [100, 'rgba(0, 255, 0, .8)']
+        ]
+        title_mapping = {
+                "AWC": "AWC",
+                "# of Pregnant Women Registered": "Pregnant Women Registered",
+                "# of Children Whose Birth Was Registered": "Children Whose Birth Was Registered",
+                "# of Beneficiaries Attending VHND Monthly": "Beneficiaries Attending VHND Monthly",
+                '# of Children Whose Nutritional Status is "SAM"': 'Children Whose Nutritional Status is "SAM"',
+                '# of Children Whose Nutritional Status is "MAM"': 'Children Whose Nutritional Status is "MAM"',
+                '# of Children Whose Nutritional Status is Normal': 'Children Whose Nutritional Status is Normal'
+        }
         columns = ["AWW", "Block", "GP"] + [
             "AWC",
             "# of Pregnant Women Registered",
@@ -674,14 +688,9 @@ class HealthMapReport(GenericMapReport, CustomProjectReport):
         return {
             "detail_columns": columns[0:5],
             "table_columns": columns,
-            "column_titles": {
-                "AWC": "AWC",
-                "# of Pregnant Women Registered": "Pregnant Women Registered",
-                "# of Children Whose Birth Was Registered": "Children Whose Birth Was Registered",
-                "# of Beneficiaries Attending VHND Monthly": "Beneficiaries Attending VHND Monthly",
-                '# of Children Whose Nutritional Status is "SAM"': 'Children Whose Nutritional Status is "SAM"',
-                '# of Children Whose Nutritional Status is "MAM"': 'Children Whose Nutritional Status is "MAM"',
-                '# of Children Whose Nutritional Status is Normal': 'Children Whose Nutritional Status is Normal'
-            }
+            "column_titles": title_mapping,
+            "metrics": [{"color": {"column": column}} for column in columns[:4]] + [
+                {"color": {"column": column, "colorstops": colorstops}} for column in columns[4:]
+            ]
         }
 
