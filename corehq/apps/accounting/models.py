@@ -736,7 +736,7 @@ class Subscription(models.Model):
     @property
     def next_subscription(self):
         try:
-            Subscription.objects.filter(
+            return Subscription.objects.filter(
                 subscriber=self.subscriber, date_start__gt=self.date_start
             ).exclude(pk=self.pk).order_by('date_start')[0]
         except (Subscription.DoesNotExist, IndexError):
