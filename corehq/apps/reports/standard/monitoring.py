@@ -410,12 +410,20 @@ class DailyFormStatsReport(ElasticProjectInspectionReport, WorkerMonitoringRepor
         then the number of forms filled out per day for the datespan,
         and finally the total forms filled out in the datespan.
         """
+        tz_offset = self.timezone.localize(self.datespan.enddate).strftime("%z")
+        offset_string = '%s:%s' % (tz_offset[:3], tz_offset[3:])
         facets = {"date": {"date_histogram": {
             "field": self.date_field,
-            "interval": "day"
+            "interval": "day",
+            "time_zone": offset_string,
         }}}
-        gte = self.datespan.startdate_param
-        lte = self.datespan.enddate_param
+
+        if self.by_submission_time:
+            gte = self.datespan.startdate_param_utc
+            lte = self.datespan.enddate_param_utc
+        else:
+            gte = self.datespan.startdate_param
+            lte = self.datespan.enddate_param
         filters = [
             {"range": {
                 self.date_field: {
