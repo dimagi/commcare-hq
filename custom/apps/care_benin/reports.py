@@ -13,6 +13,7 @@ from dimagi.utils.decorators.memoized import memoized
 from couchdbkit_aggregate.fn import NO_VALUE
 from dimagi.utils.couch.database import get_db
 from corehq.apps.reports.util import format_datatables_data as fdd
+from corehq.apps.reports import util
 
 RELAIS_GROUP = "relais"
 
@@ -708,10 +709,21 @@ class HealthCenter(BasicTabularReport, CustomProjectReport, ProjectReportParamet
 
     pregnant_anemia = Column("Number of pregnant women with anemia", key='pregnant_anemia')
 
+    @memoized
+    def get_all_users_by_domain(self, group=None, user_ids=None, user_filter=None, simplified=False):
+        return list(util.get_all_users_by_domain(
+            domain=self.domain,
+            group=group,
+            user_ids=user_ids,
+            user_filter=user_filter,
+            simplified=False,  # override simplified to False
+            CommCareUser=self.CommCareUser
+        ))
+
     @property
     @memoized
     def hc(self):
-        return dict([(user['_id'], user.user_data.get('CS')) for user in self.users])
+        return dict([(user.get_id, user.user_data.get('CS')) for user in self.users])
 
     @property
     def start_and_end_keys(self):
@@ -720,7 +732,7 @@ class HealthCenter(BasicTabularReport, CustomProjectReport, ProjectReportParamet
 
     @property
     def keys(self):
-        return [[user['_id']] for user in self.users]
+        return [[user.get_id] for user in self.users]
 
     @property
     def rows(self):
