@@ -10,9 +10,7 @@ import socket
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_POST, require_GET
-from pytz import timezone
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, HttpResponseNotFound
 from django.core.urlresolvers import reverse
 from django.shortcuts import render
@@ -22,7 +20,6 @@ from django.template.defaultfilters import yesno
 from django.contrib import messages
 from django.conf import settings
 from restkit import Resource
-from django.core import cache
 from django.utils import html
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
@@ -50,8 +47,9 @@ from corehq.apps.users.util import format_username
 from corehq.elastic import get_stats_data, parse_args_for_es, es_query, ES_URLS, ES_MAX_CLAUSE_COUNT
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db, is_bigcouch
-from corehq.apps.domain.decorators import  require_superuser
+from corehq.apps.domain.decorators import require_superuser
 from dimagi.utils.decorators.datespan import datespan_in_request
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime, string_to_datetime
 from dimagi.utils.web import json_response, get_url_base
 from couchexport.export import export_raw, export_from_tables
@@ -59,8 +57,8 @@ from couchexport.shortcuts import export_response
 from couchexport.models import Format
 from dimagi.utils.excel import WorkbookJSONReader
 from dimagi.utils.decorators.view import get_file
-from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.django.email import send_HTML_email
+from phonelog.utils import device_users_by_xform
 from pillowtop import get_all_pillows_json
 from phonelog.models import DeviceReportEntry
 from phonelog.reports import TAGS
@@ -388,9 +386,11 @@ def submissions_errors(request, template="hqadmin/submissions_errors_report.html
 
     return render(request, template, context)
 
+
 @require_superuser
 def mobile_user_reports(request):
     template = "hqadmin/mobile_user_reports.html"
+    _device_users_by_xform = memoized(device_users_by_xform)
 
     rows = []
 
@@ -400,7 +400,7 @@ def mobile_user_reports(request):
         rows.append(dict(domain=log.domain,
                          time=format_datatables_data(text=log.date, sort_key=seconds_since_epoch),
                          user=log.username,
-                         device_users=log.device_users,
+                         device_users=_device_users_by_xform(log.xform_id),
                          message=log.msg,
                          version=(log.app_version or 'unknown').split(' ')[0],
                          detailed_version=html.escape(log.app_version or 'unknown'),

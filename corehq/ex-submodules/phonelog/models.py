@@ -20,14 +20,6 @@ class DeviceReportEntry(models.Model):
     class Meta:
         unique_together = [('xform_id', 'i')]
 
-    @property
-    @memoized
-    def device_users(self):
-        return list(
-            UserEntry.objects.filter(xform_id__exact=self.xform_id)
-            .distinct('username').values_list('username', flat=True)
-        )
-
 
 class UserEntry(models.Model):
     xform_id = models.CharField(max_length=COUCH_UUID_MAX_LEN, db_index=True)
