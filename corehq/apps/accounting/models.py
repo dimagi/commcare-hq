@@ -919,6 +919,10 @@ class Subscription(models.Model):
                 "This reminder email does not yet handle organization "
                 "subscribers."
             )
+        if self.is_renewed:
+            # no need to send a reminder email if the subscription
+            # is already renewed
+            return
         today = datetime.date.today()
         num_days_left = (self.date_end - today).days
         if num_days_left == 1:
