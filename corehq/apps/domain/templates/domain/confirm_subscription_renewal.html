@@ -1,6 +1,10 @@
 {% extends 'domain/confirm_billing_info.html' %}
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
 
 {% block main_column %}
+    <h2>{% trans "Renew Plan" %}</h2>
     <p class="lead">
         {% blocktrans with next_plan.name as p_name %}
             You are renewing your plan to the {{ p_name }} plan,
@@ -21,11 +25,7 @@
         </dl>
     </div>
     <p>{{ next_plan.description }}</p>
-    <h2>{% trans 'Confirm Billing Information' %}</h2>
-    <p>
-        {% blocktrans %}
-            Before continuing, please enter your billing information below.
-        {% endblocktrans %}
-    </p>
+    <hr />
+    <h3>{% trans 'Confirm Billing Information' %}</h3>
     {% crispy confirm_form %}
 {% endblock %}
