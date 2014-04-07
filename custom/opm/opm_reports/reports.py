@@ -625,6 +625,7 @@ class HealthMapSource(HealthStatusReport):
 
     @property
     def rows(self):
+        pattern = re.compile("(\d+)%")
         gps_mapping = self.gps_mapping
         ret = super(HealthMapSource, self).rows
         new_rows = []
@@ -640,7 +641,8 @@ class HealthMapSource(HealthStatusReport):
             escaped_row = [row[0]]
             for cell in row[1:]:
                 # _unformat_row([<html>] => ["N - f%"])
-                html_cell = {"html": cell, "sort_key": int(_unformat_row([cell])[0][-2])}
+                percent = re.findall(pattern, _unformat_row([cell])[0])
+                html_cell = {"html": cell, "sort_key": int(percent[0])}
                 escaped_row.append(html_cell)
             new_rows.append(extra_columns + escaped_row)
         return new_rows
