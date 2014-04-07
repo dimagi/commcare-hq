@@ -22,6 +22,7 @@ from crispy_forms import layout as crispy
 from django_countries.countries import COUNTRIES
 from corehq import privileges, toggles
 from corehq.apps.accounting.invoicing import DomainInvoiceFactory
+from corehq.apps.accounting.tasks import send_subscription_reminder_emails
 
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.email import send_HTML_email
@@ -1412,6 +1413,47 @@ class TriggerBookkeeperEmailForm(forms.Form):
             year=int(self.cleaned_data['year']),
             emails=self.cleaned_data['emails'].split(',')
         )
+
+
+class TestReminderEmailFrom(forms.Form):
+    days = forms.ChoiceField(
+        label="Days Until Subscription Ends",
+        choices=(
+            (1, 1),
+            (10, 10),
+            (30, 30),
+        )
+    )
+
+    def __int__(self, *args, **kwargs):
+        super(TestReminderEmailFrom, self).__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.form_class = 'form form-horizontal'
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                "Test Subscription Reminder Emails",
+                'days'
+            ),
+            crispy.Div(
+                crispy.HTML(
+                    "Note that this will ONLY send emails to a billing admin "
+                    "for a domain IF the billing admin is an Accounting "
+                    "Previewer."
+                ),
+                css_class="alert alert-info"
+            ),
+            FormActions(
+                StrictButton(
+                    "Send Reminder Emails",
+                    type="submit",
+                    css_class='btn-primary'
+                )
+            )
+        )
+
+    def send_emails(self):
+        send_subscription_reminder_emails(int(self.cleaned_data['days']))
 
 
 class AdjustBalanceForm(forms.Form):

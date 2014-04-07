@@ -19,6 +19,7 @@ from corehq.apps.accounting.forms import (
     PlanInformationForm, SoftwarePlanVersionForm, FeatureRateForm,
     ProductRateForm, TriggerInvoiceForm, InvoiceInfoForm, AdjustBalanceForm,
     ResendEmailForm, ChangeSubscriptionForm, TriggerBookkeeperEmailForm,
+    TestReminderEmailFrom,
 )
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError, InvoiceError, CreditLineError
@@ -538,6 +539,40 @@ class TriggerBookkeeperEmailView(AccountingSectionView):
         if self.trigger_email_form.is_valid():
             self.trigger_email_form.trigger_email()
             messages.success(request, "Sent the Bookkeeper email!")
+            return HttpResponseRedirect(reverse(self.urlname))
+        return self.get(request, *args, **kwargs)
+
+
+class TestRenewalEmailView(AccountingSectionView):
+    urlname = 'accocunting_test_renewal_email'
+    page_title = "Test Renewal Reminder Email"
+    template_name = 'accounting/test_reminder_emails.html'
+
+    @method_decorator(toggles.INVOICE_TRIGGER.required_decorator())
+    def dispatch(self, request, *args, **kwargs):
+        return super(TestRenewalEmailView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    @memoized
+    def reminder_email_form(self):
+        if self.request.method == 'POST':
+            return TestReminderEmailFrom(self.request.POST)
+        return TestReminderEmailFrom()
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname)
+
+    @property
+    def page_context(self):
+        return {
+            'reminder_email_form': self.reminder_email_form,
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.reminder_email_form.is_valid():
+            self.reminder_email_form.send_emails()
+            messages.success(request, "Sent the Reminder emails!")
             return HttpResponseRedirect(reverse(self.urlname))
         return self.get(request, *args, **kwargs)
 

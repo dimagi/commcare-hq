@@ -1191,7 +1191,8 @@ class AccountingTab(UITab):
 
         if toggles.INVOICE_TRIGGER.enabled(self.couch_user.username):
             from corehq.apps.accounting.views import (
-                TriggerInvoiceView, TriggerBookkeeperEmailView
+                TriggerInvoiceView, TriggerBookkeeperEmailView,
+                TestRenewalEmailView,
             )
             items.append(('Other Actions', (
                 {
@@ -1201,6 +1202,10 @@ class AccountingTab(UITab):
                 {
                     'title': TriggerBookkeeperEmailView.page_title,
                     'url': reverse(TriggerBookkeeperEmailView.urlname),
+                },
+                {
+                    'title': TestRenewalEmailView.page_title,
+                    'url': reverse(TestRenewalEmailView.urlname),
                 }
             )))
         return items
