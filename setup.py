@@ -11,7 +11,7 @@ setup(
     install_requires=[
         'celery==3.0.15',
         'jsonobject-couchdbkit>=0.6.5.2',
-        'couchforms==3.0.0',
+        'couchforms==3.0.1',
         'couchexport',
         'decorator',
         'dimagi-utils>=1.0.9',
