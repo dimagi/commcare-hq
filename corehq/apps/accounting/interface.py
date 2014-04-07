@@ -407,9 +407,9 @@ class InvoiceInterface(GenericTabularReport):
 
         if not self.is_rendered_as_email:
             header.add_column(DataTablesColumn("Action"))
+            header.add_column(DataTablesColumn("View Invoice"))
         else:
             header.add_column(DataTablesColumn("Contact info"))
-        header.add_column(DataTablesColumn("View Invoice"))
         return header
 
     @property
@@ -502,11 +502,11 @@ class InvoiceInterface(GenericTabularReport):
                         '   class="btn">Adjust Balance</a>' % {
                             'invoice_id': invoice.id
                         }))
+                column.append(mark_safe(
+                    '<a href="%s" class="btn">Go to Invoice</a>'
+                    % reverse(InvoiceSummaryView.urlname, args=(invoice.id,))))
             else:
                 column.append(get_address_from_invoice(invoice))
-            column.append(mark_safe(
-                '<a href="%s" class="btn">Go to Invoice</a>'
-                % reverse(InvoiceSummaryView.urlname, args=(invoice.id,))))
             rows.append(column)
         return rows
 
