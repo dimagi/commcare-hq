@@ -4,6 +4,7 @@ import datetime
 import logging
 
 from StringIO import StringIO
+from django.conf import settings
 from django.test.client import Client
 
 from couchdbkit import ResourceConflict, ResourceNotFound, resource
@@ -156,13 +157,15 @@ def create_xform_from_xml(xml_string, _id=None, process=None):
     return LockManager(xform.get_id, lock)
 
 
-def post_xform_to_couch(instance, attachments=None, process=None, domain=None):
+def post_xform_to_couch(instance, attachments=None, process=None,
+                        domain='test-domain'):
     """
     create a new xform and releases the lock
 
-    good for testing but not to be used in active code
+    this is a testing entry point only and is not to be used in real code
 
     """
+    assert getattr(settings, 'UNIT_TESTING', False)
     xform_lock = create_and_lock_xform(instance, attachments=attachments,
                                        process=process, domain=domain)
     with xform_lock as xform:
