@@ -20,21 +20,15 @@ CREATE_XFORM_ID = "6RGAZTETE3Z2QC0PE2DKM88MO"
 media_path = os.path.join(os.path.dirname(__file__), "data", "attachments")
 
 MEDIA_FILES = {
-    "fruity_file": os.path.join(media_path, "fruity.jpg"), #first
-
+    "fruity_file": os.path.join(media_path, "fruity.jpg"),  # first
     "dimagi_logo_file": os.path.join(media_path, "dimagi_logo.jpg"),
     "commcare_logo_file": os.path.join(media_path, "commcare-logo.png"),
     "globe_file": os.path.join(media_path, "globe.pdf"),
     "house_file": os.path.join(media_path, "house.jpg"),
-    "escape_file": os.path.join(media_path, "13.15.20 hrs __[0000233].jpg")
-
 }
 
-
-
-
-
 TEST_DOMAIN = "test-domain"
+
 
 class BaseCaseMultimediaTest(TestCase):
     def setUp(self):
@@ -62,7 +56,7 @@ class BaseCaseMultimediaTest(TestCase):
 
     def _prepAttachments(self, new_attachments, removes=[]):
         attachment_block = ''.join([self._singleAttachBlock(x) for x in new_attachments] + [self._singleAttachRemoveBlock(x) for x in removes])
-        dict_attachments = dict((attach_name, self._attachmentFileStream(attach_name)) for attach_name in new_attachments)
+        dict_attachments = dict((MEDIA_FILES[attach_name], self._attachmentFileStream(attach_name)) for attach_name in new_attachments)
         return attachment_block, dict_attachments
 
     def _singleAttachBlock(self, key):
@@ -110,7 +104,7 @@ class BaseCaseMultimediaTest(TestCase):
         xml_data = self._getXFormString('multimedia_create.xml')
         attachment_block, dict_attachments = self._prepAttachments(attachments)
         final_xml = self._formatXForm(CREATE_XFORM_ID, xml_data, attachment_block)
-        form = self._submit_and_verify(CREATE_XFORM_ID, final_xml, dict_attachments)
+        self._submit_and_verify(CREATE_XFORM_ID, final_xml, dict_attachments)
 
     def _doSubmitUpdateWithMultimedia(self, new_attachments=['commcare_logo_file', 'dimagi_logo_file'],
                                       removes=['fruity_file']):
@@ -185,25 +179,20 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
         case = CommCareCase.get(TEST_CASE_ID)
         case_xml = case.to_xml(V2)
         root_node = lxml.etree.fromstring(case_xml)
-        output = lxml.etree.tostring(root_node, pretty_print=True)
         attaches = root_node.find('{http://commcarehq.org/case/transaction/v2}attachment')
         self.assertEqual(len(restore_attachments), len(attaches))
-        restore_attachments_filenames = [os.path.split(MEDIA_FILES[k])[-1] for k in restore_attachments]
 
         for attach in attaches:
             url = attach.values()[1]
-            case_id = url.split('/')[-3]
-            attach_key_from_url = url.split('/')[-2]
-            attach_filename = url.split('/')[-1]
+            case_id = url.split('/')[-2]
+            attach_key_from_url = url.split('/')[-1]
             tag = attach.tag
             clean_tag = tag.replace('{http://commcarehq.org/case/transaction/v2}', '')
-
             self.assertEqual(clean_tag, attach_key_from_url)
             self.assertEqual(case_id, TEST_CASE_ID)
-
             self.assertIn(attach_key_from_url, restore_attachments)
-            self.assertIn(attach_filename, restore_attachments_filenames)
             restore_attachments.remove(clean_tag)
+
         self.assertEqual(0, len(restore_attachments))
 
     def testAttachInUpdate(self, new_attachments=['commcare_logo_file', 'dimagi_logo_file']):
@@ -222,7 +211,3 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
         for attach_name in new_attachments:
             self.assertTrue(attach_name in case.case_attachments)
             self.assertEqual(self._calc_file_hash(attach_name), hashlib.md5(case.get_attachment(attach_name)).hexdigest())
-
-
-
-

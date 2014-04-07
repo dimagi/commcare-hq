@@ -193,7 +193,6 @@ class V2CaseXMLGenerator(CaseXMLGeneratorBase):
 
     def add_attachments(self, element):
         if self.case.case_attachments:
-            attachments = []
             attachment_elem = safe_element("attachment")
             for k, a in self.case.case_attachments.items():
                 aroot = safe_element(k)
