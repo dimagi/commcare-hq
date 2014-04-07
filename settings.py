@@ -1,6 +1,13 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
 
+try:
+    import sys
+    UNIT_TESTING = 'test' == sys.argv[1]
+except IndexError:
+    UNIT_TESTING = False
+
+
 SECRET_KEY = 'this is not a secret key'
 
 INSTALLED_APPS = (
