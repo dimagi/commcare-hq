@@ -1,8 +1,6 @@
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
-from corehq.apps.groups.models import Group
-from corehq.apps.reports import util
 
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser
@@ -227,6 +225,25 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         " You can select multiple users and groups.")
     is_cacheable = False
 
+    @classmethod
+    def matching_ids(cls, request):
+        """
+        returns a dict of user_ids, user_types, and group_ids,
+        where user_types are defined as:
+            t__0 - all mobile workers
+            t__1 - demo users
+            t__2 - admin users
+            t__3 - unknown users
+        """
+        emws = request.GET.getlist(cls.slug)
+        user_ids = [u[3:] for u in filter(lambda s: s.startswith("u__"), emws)]
+        user_types = filter(lambda s: s.startswith("t__"), emws)
+        return {
+            'user_ids': user_ids,
+            'user_types': user_types,
+            'group_ids': [g[3:] for g in filter(lambda s: s.startswith("g__"), emws)],
+        }
+
     @property
     @memoized
     def selected(self):
@@ -237,24 +254,12 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
                 'text': _("[All mobile workers]"),
             }]
 
-        basics = dict(self.basics)
-        selected = []
-        user_ids = []
-        group_ids = []
-        for s_id in selected_ids:
-            if s_id in basics:
-                selected.append((s_id, basics.get(s_id)))
-            else:
-                try:
-                    kind, key = s_id.split('__')
-                except ValueError:
-                    # badly formatted
-                    continue
-                if kind == 'u':
-                    user_ids.append(key)
-                elif kind == 'g':
-                    group_ids.append(key)
+        matching = self.matching_ids(self.request)
+        user_ids = matching['user_ids']
+        user_types = matching['user_types']
+        group_ids = matching['group_ids']
 
+        selected = [b for b in self.basics if b[0] in user_types]
         if group_ids:
             q = {"query": {"filtered": {"filter": {
                 "ids": {"values": group_ids}
@@ -291,32 +296,32 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
 
     @classmethod
     def pull_groups(cls, domain, request):
-        emws = request.GET.getlist(cls.slug)
-        group_ids = [g[3:] for g in filter(lambda s: s.startswith("g__"), emws)]
+        group_ids = cls.matching_ids(request)['group_ids']
         if not group_ids:
             return Group.get_reporting_groups(domain)
         return [Group.get(g) for g in group_ids]
 
     @classmethod
     def pull_users_from_es(cls, domain, request, initial_query=None, **kwargs):
-        emws = request.GET.getlist(cls.slug)
-        user_ids = [u[3:] for u in filter(lambda s: s.startswith("u__"), emws)]
-        group_ids = [g[3:] for g in filter(lambda s: s.startswith("g__"), emws)]
+        matching = cls.matching_ids(request)
+        user_ids = matching['user_ids']
+        user_types = matching['user_types']
+        group_ids = matching['group_ids']
 
         if initial_query is None:
             initial_query = {"match_all": {}}
         q = {"query": initial_query}
         doc_types_to_include = ["CommCareUser"]
-        if "t__2" in emws:  # Admin users selected
+        if "t__2" in user_types:  # Admin users selected
             doc_types_to_include.append("AdminUser")
-        if "t__3" in emws:  # Unknown users selected
+        if "t__3" in user_types:  # Unknown users selected
             doc_types_to_include.append("UnknownUser")
 
         query_filter = {"and": [
             {"terms": {"doc_type": doc_types_to_include}},
-            {"term": {"domain": domain}},
+            {"term": {"domain.exact": domain}},
         ]}
-        if "t__0" not in emws:
+        if "t__0" not in user_types:
             or_filter = {"or": [
                 {"terms": {"_id": user_ids}},
                 {"terms": {"__group_ids": group_ids}},
@@ -331,29 +336,45 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
 
             query_filter["and"].append(or_filter)
 
-        if "t__1" in emws:  # Demo user selected
+        if "t__1" in user_types:  # Demo user selected
             query_filter = {"or": [{"term": {"username": "demo_user"}}, query_filter]}
 
         q["filter"] = query_filter
         return es_query(es_url=ES_URLS["users"], q=q, **kwargs)
 
     @classmethod
+    def other_users(cls, domain, user_types, simplified=False,
+            CommCareUser=CommCareUser):
+        user_type_ids = [int(t[3:]) for t in user_types]
+        user_filter = tuple([HQUserToggle(id, id in user_type_ids)
+            for id in range(4)])
+        return util.get_all_users_by_domain(
+                domain=domain,
+                user_filter=user_filter,
+                simplified=simplified,
+                CommCareUser=CommCareUser,
+        )
+
+    @classmethod
     @memoized
-    def pull_users_and_groups(cls, domain, request, simplified_users=False, combined=False, CommCareUser=CommCareUser):
-        emws = request.GET.getlist(cls.slug)
+    def pull_users_and_groups(cls, domain, request, simplified_users=False,
+            combined=False, CommCareUser=CommCareUser):
+        matching = cls.matching_ids(request)
+        user_ids = matching['user_ids']
+        user_types = matching['user_types']
+        group_ids = matching['group_ids']
 
         users = []
-        user_ids = [u[3:] for u in filter(lambda s: s.startswith("u__"), emws)]
-        if user_ids or "t__0" in emws:
-            users = util.get_all_users_by_domain(domain=domain, user_ids=user_ids, simplified=simplified_users,
-                                                 CommCareUser=CommCareUser)
+        if user_ids or "t__0" in user_types:
+            users = util.get_all_users_by_domain(
+                domain=domain,
+                user_ids=user_ids,
+                simplified=simplified_users,
+                CommCareUser=CommCareUser,
+            )
 
-        user_type_ids = [int(t[3:]) for t in filter(lambda s: s.startswith("t__"), emws)]
-        user_filter = tuple([HQUserToggle(id, id in user_type_ids) for id in range(4)])
-        other_users = util.get_all_users_by_domain(domain=domain, user_filter=user_filter, simplified=simplified_users,
-                                                   CommCareUser=CommCareUser)
-
-        group_ids = [g[3:] for g in filter(lambda s: s.startswith("g__"), emws)]
+        other_users = cls.other_users(domain, user_types, simplified=simplified_users,
+                CommCareUser=CommCareUser)
         groups = [Group.get(g) for g in group_ids]
 
         ret = {
