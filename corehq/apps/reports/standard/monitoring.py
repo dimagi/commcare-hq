@@ -8,6 +8,7 @@ from django.db.models.aggregates import Max, Min, Avg, StdDev, Count
 import numpy
 import operator
 import pytz
+from corehq import toggles
 from corehq.apps.reports import util
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.reports.standard import ProjectReportParametersMixin, \
@@ -376,6 +377,58 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
             headers.add_column(DataTablesColumn(d.strftime(DATE_FORMAT), sort_type=DTSortType.NUMERIC))
         headers.add_column(DataTablesColumn(_("Total"), sort_type=DTSortType.NUMERIC))
         return headers
+
+    @property
+    def rows(self):
+        key = make_form_couch_key(self.domain, by_submission_time=self.by_submission_time)
+        results = get_db().view("reports_forms/all_forms",
+            reduce=False,
+            startkey=key+[self.datespan.startdate_param_utc if self.by_submission_time else self.datespan.startdate_param],
+            endkey=key+[self.datespan.enddate_param_utc if self.by_submission_time else self.datespan.enddate_param]
+        ).all()
+
+        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
+        user_map = dict([(user.get('user_id'), i) for (i, user) in enumerate(users_data["combined_users"])])
+        date_map = dict([(date.strftime(DATE_FORMAT), i+1) for (i,date) in enumerate(self.dates)])
+        rows = [[0]*(2+len(date_map)) for _tmp in range(len(users_data["combined_users"]))]
+        total_row = [0]*(2+len(date_map))
+
+        user_ids = [user.get('user_id') for user in users_data["combined_users"]]
+        for result in results:
+            _tmp, _domain, date = result['key']
+            date = dateutil.parser.parse(date)
+            tz_offset = self.timezone.localize(self.datespan.enddate).strftime("%z")
+            date = date + datetime.timedelta(hours=int(tz_offset[0:3]), minutes=int(tz_offset[0]+tz_offset[3:5]))
+            date = date.isoformat()
+            val = result['value']
+            user_id = val.get("user_id")
+            if user_id in user_ids:
+                date_key = date_map.get(date[0:10], None)
+                if date_key:
+                    rows[user_map[user_id]][date_key] += 1
+
+        for i, user in enumerate(users_data["combined_users"]):
+            rows[i][0] = self.get_user_link(user)
+            total = sum(rows[i][1:-1])
+            rows[i][-1] = total
+            total_row[1:-1] = [total_row[ind+1]+val for ind, val in enumerate(rows[i][1:-1])]
+            total_row[-1] += total
+
+        total_row[0] = _("All Users")
+        self.total_row = total_row
+
+        for row in rows:
+            row[1:] = [self.table_cell(val) for val in row[1:]]
+        return rows
+
+
+class DailyFormStatsReportSQL(DailyFormStatsReport):
+    slug = "daily_form_stats_sql"
+    name = ugettext_noop("Daily Form Activity (SQL)")
+
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return user and user.is_previewer()
 
     @property
     def rows(self):
