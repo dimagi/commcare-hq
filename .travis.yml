@@ -3,9 +3,12 @@ python:
  - "2.6"
  - "2.7"
 install:
- - "sudo apt-get install libevent-dev"
- - "pip install -e . --use-mirrors"
- - "pip install coverage coveralls --use-mirrors"
-script: coverage run setup.py test
+ - "uname -a"
+ - "lsb_release -a"
+ - "bash -ex .travis/upgrade-couchdb.sh"
+ - "curl http://127.0.0.1:5984/"
+ - "pip install -e ."
+ - "pip install coverage coveralls"
+script: coverage run `which django-admin.py` test --settings settings
 after_success:
  - coveralls

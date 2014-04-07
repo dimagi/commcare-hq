@@ -13,9 +13,11 @@ from requests import ConnectionError
 import simplejson
 import rawes
 from django.conf import settings
+import sys
 
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.couch import LockManager
+from pillow_retry.models import PillowError
 from pillowtop.couchdb import CachedCouchDB
 from .utils import import_settings
 
@@ -214,7 +216,7 @@ class BasicPillow(object):
         """
         self.processor(simplejson.loads(change))
 
-    def process_change(self, change):
+    def process_change(self, change, is_retry_attempt=False):
         try:
             with lock_manager(self.change_trigger(change)) as t:
                 if t is not None:
@@ -222,13 +224,20 @@ class BasicPillow(object):
                     if tr is not None:
                         self.change_transport(tr)
         except Exception, ex:
-            pillow_logging.exception(
-                "[%s] Error on change: %s, %s" % (
-                    self.get_name(),
-                    change['id'],
-                    ex
+            if not is_retry_attempt:
+                error = PillowError.get_or_create(change, self)
+                error.add_attempt(ex, sys.exc_info()[2])
+                error.save()
+                pillow_logging.exception(
+                    "[%s] Error on change: %s, %s. Logged as: %s" % (
+                        self.get_name(),
+                        change['id'],
+                        ex,
+                        error.id
+                    )
                 )
-            )
+            else:
+                raise
 
     def processor(self, change, do_set_checkpoint=True):
         """
@@ -849,17 +858,24 @@ class SQLPillow(BasicPillow):
         try:
             self.process_sql(doc_dict)
         except Exception, e:
-            logging.exception("problem in form listener for line: %s\n%s" % (doc_dict, e))
             if isinstance(e, db.utils.DatabaseError):
                 # we have to do this manually to avoid issues with
                 # open transactions and already closed connections
                 db.transaction.rollback()
+                # re raise the exception for additional error handling
+                raise
             elif isinstance(e, InterfaceError):
                 # force closing the connection to prevent Django from trying to reuse it.
                 # http://www.tryolabs.com/Blog/2014/02/12/long-time-running-process-and-django-orm/
                 db.connection.close()
                 if retry:
                     self.change_transport(doc_dict, retry=False)
+                else:
+                    # re raise the exception for additional error handling
+                    raise
+            else:
+                # re raise the exception for additional error handling
+                raise
 
     def process_sql(self, doc_dict):
         pass

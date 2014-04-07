@@ -21,7 +21,9 @@ setup(
         "greenlet",
         "rawes",
         'django>=1.3.1',
-        'dimagi-utils>=1.0.10'
+        'dimagi-utils>=1.0.10',
+        'psycopg2==2.5.2',
+        'south==0.7.3',
     ],
     tests_require=[
         'unittest2',
