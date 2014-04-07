@@ -867,7 +867,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
             'target="_blank">Software Product Agreement</a>.'
         ) % {
             'pa_url': reverse("product_agreement"),
-        }),
+        })
 
         from corehq.apps.domain.views import DomainSubscriptionView
         self.helper.layout = crispy.Layout(
