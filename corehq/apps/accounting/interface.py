@@ -15,6 +15,7 @@ from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.util import format_datatables_data
+from couchexport.models import Format
 
 
 class AddItemInterface(GenericTabularReport):
@@ -367,6 +368,7 @@ class InvoiceInterface(GenericTabularReport):
     description = "List of all invoices"
     slug = "invoices"
     exportable = True
+    export_format_override = Format.CSV
     fields = [
         'corehq.apps.accounting.interface.NameFilter',
         'corehq.apps.accounting.interface.SubscriberFilter',
