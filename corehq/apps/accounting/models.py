@@ -877,6 +877,7 @@ class Subscription(models.Model):
         current_privileges = get_privileges(self.plan_version)
         new_version = DefaultProductPlan.get_lowest_edition_by_domain(
             self.subscriber.domain, current_privileges,
+            return_plan=True,
         )
         if new_version is None:
             # this should NEVER happen, but on the off-chance that it does...
