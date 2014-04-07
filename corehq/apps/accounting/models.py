@@ -714,8 +714,10 @@ class Subscription(models.Model):
 
     @property
     def allowed_attr_changes(self):
-        # These are the attributes of a Subscription that can always be
-        # changed while the subscription is active (or reactivated):
+        """
+        These are the attributes of a Subscription that can always be
+        changed while the subscription is active (or reactivated)
+        """
         return ['do_not_invoice', 'salesforce_contract_id']
 
     def cancel_subscription(self, adjustment_method=None, web_user=None, note=None):
@@ -804,9 +806,11 @@ class Subscription(models.Model):
 
     def reactivate_subscription(self, date_end=None, note=None, web_user=None,
                                 adjustment_method=None, **kwargs):
-        # This assumes that a subscription was cancelled then recreated the
-        # same day as the cancellation (with no other subscriptions
-        # created in between).
+        """
+        This assumes that a subscription was cancelled then recreated the
+        same day as the cancellation (with no other subscriptions
+        created in between).
+        """
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
         today = datetime.date.today()
         if self.date_end is not None and today > self.date_end:
