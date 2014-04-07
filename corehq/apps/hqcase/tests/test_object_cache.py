@@ -83,26 +83,3 @@ class CaseObjectCacheTest(BaseCaseMultimediaTest):
             content = rebuild_stream(data.streaming_content)
             self.assertEqual(hashlib.md5(self._attachmentFileStream(a).read()).hexdigest(),
                              hashlib.md5(content.read()).hexdigest())
-
-    def testUrlQuotes(self):
-        attachments = ['escape_file',]
-
-        self._doCreateCaseWithMultimedia(attachments=attachments)
-        case = CommCareCase.get(TEST_CASE_ID)
-        case.domain = TEST_DOMAIN
-        self.assertEqual(1, len(case.case_attachments))
-        client = Client()
-        client.login(username=TEST_USER, password=TEST_PASSWORD)
-        for a in attachments:
-            url = '/%s' % hack_local_url(case.get_attachment_server_url(a))
-            data = client.get(url, follow=True)
-            content = rebuild_stream(data.streaming_content)
-            self.assertEqual(hashlib.md5(self._attachmentFileStream(a).read()).hexdigest(),
-                             hashlib.md5(content.read()).hexdigest())
-
-            orig_filename = os.path.split(MEDIA_FILES[a])[-1]
-            self.assertNotEqual(orig_filename, os.path.split(url[-1]))
-
-            #verify that the url filename is escaped
-            self.assertEqual(http.urlquote(orig_filename), os.path.split(url)[-1])
-
