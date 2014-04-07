@@ -18,7 +18,7 @@ from corehq import toggles
 from corehq.apps.accounting.invoice_pdf import InvoiceTemplate
 from corehq.apps.accounting.utils import (
     get_privileges, get_first_last_days,
-    get_address_from_invoice,
+    get_address_from_invoice, get_dimagi_from_email_by_product,
 )
 from corehq.apps.accounting.subscription_changes import (
     DomainDowngradeActionHandler, DomainUpgradeActionHandler,
