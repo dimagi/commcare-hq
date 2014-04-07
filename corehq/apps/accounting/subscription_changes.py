@@ -170,16 +170,22 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         """
         if not toggles.ACCOUNTING_PREVIEW.enabled(self.web_user):
             return True
-        from corehq.apps.accounting.models import Subscription
+        from corehq.apps.accounting.models import (
+            Subscription, SubscriptionAdjustment, SubscriptionAdjustmentReason
+        )
         try:
             for later_subscription in Subscription.objects.filter(
                 subscriber__domain=self.domain.name,
                 date_start__gt=self.date_start
             ).order_by('date_start').all():
                 later_subscription.date_start = datetime.date.today()
-                later_subscription.cancel_subscription(
+                later_subscription.date_end = datetime.date.today()
+                later_subscription.save()
+                SubscriptionAdjustment.record_adjustment(
+                    later_subscription,
+                    reason=SubscriptionAdjustmentReason.CANCEL,
                     web_user=self.web_user,
-                    note="Cancelled during change subscription.",
+                    note="Cancelled due to changing subscription",
                 )
         except Subscription.DoesNotExist:
             pass
@@ -479,11 +485,12 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             subscriber__domain=self.domain.name,
             date_start__gt=self.date_start
         ).order_by('date_start')
+        print "later subs?", later_subs.count()
         if later_subs.exists():
             next_subscription = later_subs[0]
             plan_desc = next_subscription.plan_version.user_facing_description
             return self._fmt_alert(_(
-                "You have a subscription SCHEDULE TO START on %(date_start)s. "
+                "You have a subscription SCHEDULED TO START on %(date_start)s. "
                 "Changing this plan will CANCEL that %(plan_name)s "
                 "subscription."
             ) % {
