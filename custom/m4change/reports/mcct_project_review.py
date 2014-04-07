@@ -33,34 +33,25 @@ def _get_date_range(range):
     return None
 
 
-def _get_case_form_script_filter(filtered_case_ids):
+def _get_report_query(start_date, end_date, filtered_case_ids):
     return {
-        "script": {
-            "script": """
-                ids_passed = false;
-                foreach (id : ids) {
-                    if (!ids_passed && id.equals(_source.?form.?case.get('@case_id'))) {
-                        ids_passed = true;
-                    }
-                }
-                if (!ids_passed) {
-                    return false;
-                }
-                foreach (form : forms) {
-                    if (form.equals(_source.xmlns)) {
-                        return true;
-                    }
-                }
-                if (_source.form != null && _source.form.visits != null &&
-                        _source.form.visits >= 1 && _source.form.visits <= 4) {
-                    return true;
-                }
-                return false;
-            """,
-            "params": {
-                "ids": filtered_case_ids,
-                "forms": CASE_FORM_SCRIPT_FILTER_NAMESPACES
+        "query": {
+            "bool": {
+                "must": [
+                    {"range": {"form.meta.timeEnd": {"from": start_date, "to": end_date, "include_upper": False}}},
+                    {"term": {"doc_type": "xforminstance"}},
+                ],
+                "should": [
+                    {"terms": {"xmlns.exact": CASE_FORM_SCRIPT_FILTER_NAMESPACES}},
+                    {"range": {"form.visits": {"gte": 1, "lte": 4}}}
+                ]
             }
+        },
+        "filter": {
+            "and": [
+                {"not": {"missing": {"field": "form.case.@case_id"}}},
+                {"terms": {"form.case.@case_id": filtered_case_ids}}
+            ]
         }
     }
 
@@ -145,9 +136,10 @@ class BaseReport(CustomProjectReport, ElasticProjectInspectionReport, ProjectRep
             all_users = CommCareUser.by_domain(self.domain)
             matching_user_ids = []
             for user in all_users:
-                user_location_id = get_commtrack_location_id(user, domain)
-                if user_location_id in location_ids:
-                    matching_user_ids.append(user._id)
+                if hasattr(user, "user_data") and user.user_data.get("CCT", None) == "true":
+                    user_location_id = get_commtrack_location_id(user, domain)
+                    if user_location_id in location_ids:
+                        matching_user_ids.append(user._id)
 
             query = {
                 "query": {
@@ -158,45 +150,21 @@ class BaseReport(CustomProjectReport, ElasticProjectInspectionReport, ProjectRep
                             "include_upper": False
                         }
                     }
+                },
+                "filter": {
+                    "and": [
+                        {"terms": {"user_id": matching_user_ids}}
+                    ]
                 }
             }
+
             case_search = self.request.GET.get("case_search", "")
-            if len(case_search) == 0:
-                query["filter"] = {
-                    "script": {
-                        "script": """
-                                foreach (id : ids) {
-                                    if (_source.user_id == id) {
-                                        return true;
-                                    }
-                                }
-                                return false;
-                            """,
-                        "params": {
-                            "ids": matching_user_ids
-                        }
+            if len(case_search) > 0:
+                query["filter"]["and"].append({
+                    "regexp": {
+                        "name.exact": ".*?%s.*?" % case_search
                     }
-                }
-            else:
-                query["filter"] = {
-                    "script": {
-                        "script": """
-                                if (!(_source.name contains name)) {
-                                    return false;
-                                }
-                                foreach (id : ids) {
-                                    if (_source.user_id == id) {
-                                        return true;
-                                    }
-                                }
-                                return false;
-                            """,
-                        "params": {
-                            "name": case_search,
-                            "ids": matching_user_ids
-                        }
-                    }
-                }
+                })
 
             es_response = es_query(params={"domain.exact": self.domain}, q=query, es_url=ES_URLS.get('cases'))
             return [res['_source']['_id'] for res in es_response.get('hits', {}).get('hits', [])]
@@ -237,25 +205,7 @@ class McctProjectReview(BaseReport):
                 end_date = dates[1]
             filtered_case_ids = self._get_filtered_cases(start_date, end_date)
             exclude_form_ids = [mcct_status.form_id for mcct_status in McctStatus.objects.filter(domain=self.domain)]
-            q = {
-                "query": {
-                    "range": {
-                        "form.meta.timeEnd": {
-                            "from": start_date,
-                            "to": end_date,
-                            "include_upper": False
-                        }
-                    }
-                },
-                "filter": {
-                    "and": [
-                        {"term": {"doc_type": "xforminstance"}},
-                        {"not": {"missing": {"field": "xmlns"}}},
-                        {"not": {"missing": {"field": "form.meta.userID"}}},
-                        _get_case_form_script_filter(filtered_case_ids)
-                    ]
-                }
-            }
+            q = _get_report_query(start_date, end_date, filtered_case_ids)
 
             if len(exclude_form_ids) > 0:
                 q["filter"]["and"].append({"not": {"ids": {"values": exclude_form_ids}}})
@@ -307,37 +257,10 @@ class McctClientApprovalPage(McctProjectReview):
             if not getattr(self, 'es_response', None):
                 date_tuple = _get_date_range(self.request_params.get('range', None))
                 filtered_case_ids = self._get_filtered_cases(date_tuple[0], date_tuple[1])
-                q = {
-                    "query": {
-                        "range": {
-                            "form.meta.timeEnd": {
-                                "from": date_tuple[0],
-                                "to": date_tuple[1],
-                                "include_upper": False
-                            }
-                        }
-                    },
-                    "filter": {
-                        "and": [
-                            {"ids": {"values": reviewed_form_ids}},
-                            {
-                                "script": {
-                                    "script": """
-                                        foreach (case_id : case_ids) {
-                                            if (case_id.equals(_source.?form.?case.get('@case_id'))) {
-                                                return true;
-                                            }
-                                        }
-                                        return false;
-                                    """,
-                                    "params": {
-                                        "case_ids": filtered_case_ids
-                                    }
-                                }
-                            }
-                        ]
-                    }
-                }
+                q = _get_report_query(date_tuple[0], date_tuple[1], filtered_case_ids)
+
+                if len(reviewed_form_ids) > 0:
+                    q["filter"]["and"].append({"ids": {"values": reviewed_form_ids}})
 
                 q["sort"] = self.get_sorting_block() if self.get_sorting_block() else [{"form.meta.timeEnd" : {"order": "desc"}}]
                 self.es_response = es_query(params={"domain.exact": self.domain}, q=q, es_url=ES_URLS.get('forms'),
@@ -385,25 +308,7 @@ class McctClientLogPage(McctProjectReview):
         if not getattr(self, 'es_response', None):
             date_tuple = _get_date_range(self.request_params.get('range', None))
             filtered_case_ids = self._get_filtered_cases(date_tuple[0], date_tuple[1])
-            q = {
-                "query": {
-                    "range": {
-                        "form.meta.timeEnd": {
-                            "from": date_tuple[0],
-                            "to": date_tuple[1],
-                            "include_upper": False
-                        }
-                    }
-                },
-                "filter": {
-                    "and": [
-                        {"term": {"doc_type": "xforminstance"}},
-                        {"not": {"missing": {"field": "xmlns"}}},
-                        {"not": {"missing": {"field": "form.meta.userID"}}},
-                        _get_case_form_script_filter(filtered_case_ids)
-                    ]
-                }
-            }
+            q = _get_report_query(date_tuple[0], date_tuple[1], filtered_case_ids)
 
             allforms = BOOKING_FORMS + FOLLOW_UP_FORMS + BOOKED_AND_UNBOOKED_DELIVERY_FORMS + IMMUNIZATION_FORMS
             xmlnss = filter(None, [form for form in allforms])
@@ -426,11 +331,9 @@ class McctClientLogPage(McctProjectReview):
         for form in submissions:
             data = calculate_form_data(self, form)
             try:
-                status = McctStatus.objects.filter(domain=self.domain, form_id=data.get('form_id'))[:1].get()
-                status = status.status
+                status = McctStatus.objects.filter(domain=self.domain, form_id=data.get('form_id'))[:1].get().status
             except McctStatus.DoesNotExist:
                 status = 'eligible'
-
             yield [
                 DateTimeProperty().wrap(form["form"]["meta"]["timeEnd"]).strftime("%Y-%m-%d %H:%M"),
                 get_property(data.get('case'), "full_name", EMPTY_FIELD),
