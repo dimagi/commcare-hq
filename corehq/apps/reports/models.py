@@ -656,6 +656,8 @@ class FormExportSchema(HQExportSchema):
         return {'#': self.question_order}
 
     def uses_cases(self):
+        if not self.app:
+            return False
         form = self.app.get_form_by_xmlns(self.xmlns)
         if form and isinstance(form, Form):
             return bool(form.active_actions())
