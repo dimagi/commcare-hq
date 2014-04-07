@@ -1050,7 +1050,7 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
 class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin):
     template_name = 'domain/confirm_subscription_renewal.html'
     urlname = 'domain_subscription_renewal'
-    page_title = ugettext_noop("Confirm Subscription Renewal")
+    page_title = ugettext_noop("Renew Plan")
     async_handlers = [
         Select2BillingInfoHandler,
     ]
