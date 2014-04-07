@@ -1,9 +1,10 @@
 import json
 import logging
+import datetime
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _, ungettext
-from corehq import privileges, Domain
+from corehq import privileges, Domain, toggles
 from corehq.apps.app_manager.models import Application
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.orgs.models import Organization
@@ -15,13 +16,18 @@ from dimagi.utils.decorators.memoized import memoized
 
 logger = logging.getLogger('accounting')
 
+LATER_SUBSCRIPTION_NOTIFICATION = 'later_subscription'
+
 
 class BaseModifySubscriptionHandler(object):
     supported_privileges = []
     action_type = "base"
 
-    def __init__(self, domain, new_plan_version, changed_privs, verbose=False):
+    def __init__(self, domain, new_plan_version, changed_privs, verbose=False,
+                 date_start=None, web_user=None):
+        self.web_user = web_user
         self.verbose = verbose
+        self.date_start = date_start or datetime.date.today()
         if isinstance(changed_privs, set):
             changed_privs = list(changed_privs)
         if not isinstance(domain, Domain):
@@ -30,6 +36,10 @@ class BaseModifySubscriptionHandler(object):
 
         # plan dependent privilege
         changed_privs.append(privileges.MOBILE_WORKER_CREATION)
+
+        # check to make sure that no subscriptions are scheduled to
+        # start in the future
+        changed_privs.append(LATER_SUBSCRIPTION_NOTIFICATION)
 
         self.privileges = filter(lambda x: x in self.supported_privileges, changed_privs)
         self.new_plan_version = new_plan_version
@@ -61,6 +71,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         privileges.OUTBOUND_SMS,
         privileges.INBOUND_SMS,
         privileges.ROLE_BASED_ACCESS,
+        LATER_SUBSCRIPTION_NOTIFICATION,
     ]
     action_type = "downgrade"
 
@@ -152,6 +163,28 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         UserRole.reset_initial_roles_for_domain(self.domain.name)
         return True
 
+    @property
+    def response_later_subscription(self):
+        """
+        Makes sure that subscriptions beginning in the future are ended.
+        """
+        if not toggles.ACCOUNTING_PREVIEW.enabled(self.web_user):
+            return True
+        from corehq.apps.accounting.models import Subscription
+        try:
+            for later_subscription in Subscription.objects.filter(
+                subscriber__domain=self.domain.name,
+                date_start__gt=self.date_start
+            ).order_by('date_start').all():
+                later_subscription.date_start = datetime.date.today()
+                later_subscription.cancel_subscription(
+                    web_user=self.web_user,
+                    note="Cancelled during change subscription.",
+                )
+        except Subscription.DoesNotExist:
+            pass
+        return True
+
 
 class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
     """
@@ -195,6 +228,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         privileges.DEIDENTIFIED_DATA,
         privileges.MOBILE_WORKER_CREATION,
         privileges.ROLE_BASED_ACCESS,
+        LATER_SUBSCRIPTION_NOTIFICATION,
     ]
     action_type = "notification"
 
@@ -431,3 +465,28 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                 ) % {
                     'num_roles': num_roles,
                 }, custom_roles)
+
+    @property
+    def response_later_subscription(self):
+        """
+        Alert the user if they have subscriptions scheduled to start
+        in the future.
+        """
+        if not toggles.ACCOUNTING_PREVIEW.enabled(self.web_user):
+            return None
+        from corehq.apps.accounting.models import Subscription
+        later_subs = Subscription.objects.filter(
+            subscriber__domain=self.domain.name,
+            date_start__gt=self.date_start
+        ).order_by('date_start')
+        if later_subs.exists():
+            next_subscription = later_subs[0]
+            plan_desc = next_subscription.plan_version.user_facing_description
+            return self._fmt_alert(_(
+                "You have a subscription SCHEDULE TO START on %(date_start)s. "
+                "Changing this plan will CANCEL that %(plan_name)s "
+                "subscription."
+            ) % {
+                'date_start': next_subscription.date_start.strftime("%d %B %Y"),
+                'plan_name': plan_desc['name'],
+            })
