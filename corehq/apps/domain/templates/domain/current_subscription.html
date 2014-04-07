@@ -41,6 +41,23 @@
                         <label class="control-label">{% trans 'Date Ending' %}</label>
                         <div class="controls">
                             <p class="control-group-text">{{ plan.date_end }}</p>
+                            {% if plan.next_subscription.can_renew %}
+                                <a href="#" class="btn btn-success">
+                                    {% trans "Renew Plan" %}
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+                {% if plan.next_subscription.exists %}
+                    <div class="control-group">
+                        <label class="control-label">
+                            {% trans "Next Subscription Begins" %}
+                        </label>
+                        <div class="controls">
+                            <p class="control-group-text">
+                                {{ plan.next_sbuscription.date_start }}
+                            </p>
                         </div>
                     </div>
                 {% endif %}

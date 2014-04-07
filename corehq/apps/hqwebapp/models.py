@@ -1018,12 +1018,18 @@ class ProjectSettingsTab(UITab):
             if user_is_billing_admin or self.couch_user.is_superuser:
                 from corehq.apps.domain.views import (
                     DomainSubscriptionView, EditExistingBillingAccountView,
-                    DomainBillingStatementsView,
+                    DomainBillingStatementsView, ConfirmSubscriptionRenewalView,
                 )
                 subscription = [
                     {
                         'title': DomainSubscriptionView.page_title,
                         'url': reverse(DomainSubscriptionView.urlname, args=[self.domain]),
+                        'subpages': [
+                            {
+                                'title': ConfirmSubscriptionRenewalView.page_title,
+                                'url': reverse(ConfirmSubscriptionRenewalView.urlname, args=[self.domain]),
+                            }
+                        ]
                     },
                 ]
                 if billing_account is not None:
