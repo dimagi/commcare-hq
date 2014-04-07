@@ -31,8 +31,11 @@ from dimagi.utils.django.email import send_HTML_email
 from django_prbac.models import Role
 from dimagi.utils.couch.database import SafeSaveDocument
 
-from corehq.apps.accounting.exceptions import (CreditLineError, AccountingError, SubscriptionAdjustmentError,
-                                               SubscriptionChangeError, NewSubscriptionError, InvoiceEmailThrottledError)
+from corehq.apps.accounting.exceptions import (
+    CreditLineError, AccountingError, SubscriptionAdjustmentError,
+    SubscriptionChangeError, NewSubscriptionError, InvoiceEmailThrottledError,
+    SubscriptionReminderError, SubscriptionRenewalError,
+)
 from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES, ensure_domain_instance, get_change_status
 
 logger = logging.getLogger('accounting')
