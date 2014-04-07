@@ -135,3 +135,34 @@ def send_bookkeeper_email(month=None, year=None, emails=None):
         })
 
 
+@periodic_task(run_every=crontab(minute=0, hour=0))
+def remind_subscription_ending_30_days():
+    """
+    Sends reminder emails for subscriptions ending 30 days from now.
+    """
+    send_subscription_reminder_emails(30)
+
+
+@periodic_task(run_every=crontab(minute=0, hour=0))
+def remind_subscription_ending_30_days(based_on_date=None):
+    """
+    Sends reminder emails for subscriptions ending 10 days from now.
+    """
+    send_subscription_reminder_emails(10)
+
+
+@periodic_task(run_every=crontab(minute=0, hour=0))
+def remind_subscription_ending_30_days(based_on_date=None):
+    """
+    Sends reminder emails for subscriptions ending tomorrow.
+    """
+    send_subscription_reminder_emails(1)
+
+
+def send_subscription_reminder_emails(num_days):
+    today = datetime.date.today()
+    date_in_n_days = today + datetime.timedelta(days=num_days)
+    ending_subscriptions = Subscription.objects.filter(date_end=date_in_n_days)
+    for subscription in ending_subscriptions:
+        subscription.send_ending_reminder_email()
+
