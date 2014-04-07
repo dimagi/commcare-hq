@@ -1,0 +1,48 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>{{ current_page.page_title }}</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <link rel="stylesheet" media="screen" href="{% static 'hqstyle/css/core/hqstyle-core.css' %}"/>
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            {% if messages %}{% for message in messages %}
+                <div {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</div>
+            {% endfor %}{% endif %}
+        </div>
+        <div class="row">
+            <h3>{{ current_page.page_name }}</h3>
+            <div>
+                <form class="form-inline" action="{% url "pillow_errors" %}" method="post">
+                    <input type="hidden" name="source" value="single" />
+                    <input type="hidden" name="PillowError_{{ error.id }}" value="1" />
+                    <select name="action">
+                        <option value="">{% trans "Select Action..." %}</option>
+                        <option value="delete">{% trans "Delete" %}</option>
+                        <option value="reset">{% trans "Reset Attempts" %}</option>
+                    </select>
+                    <button type="submit">{% trans "Go" %}</button>
+                </form>
+            </div>
+        </div>
+        <div class="row">
+          <table class="table table-striped">
+            <tr><td>{% trans "Doc ID:" %}</td><td><a href="{% url "global_quick_find" %}?q={{ error.doc_id }}" target="_blank">{{ error.doc_id }}</a></td></tr>
+            <tr><td>{% trans "Date Created:" %}</td><td>{{ error.date_created|date:"d M Y H:i"}}</td></tr>
+            <tr><td>{% trans "Date of Last Attempt:" %}</td><td>{{ error.date_last_attempt|date:"d M Y H:i" }}</td></tr>
+            <tr><td>{% trans "Date of Next Attempt:" %}</td><td>{{ error.date_next_attempt|date:"d M Y H:i" }}</td></tr>
+            <tr><td>{% trans "Pillow:" %}</td><td>{{ error.pillow }}</td></tr>
+            <tr><td>{% trans "Total Attempts:" %}</td><td>{{ error.total_attempts }}</td></tr>
+            <tr><td>{% trans "Current Attempt:" %}</td><td>{{ error.current_attempt }}</td></tr>
+            <tr><td>{% trans "Error Type:" %}</td><td>{{ error.error_type }}</td></tr>
+            <tr><td>{% trans "Error Message:" %}</td><td>{{ error.error_message }}</td></tr>
+            <tr><td>{% trans "Stack Trace:" %}</td><td>{{ error.error_traceback|linebreaksbr }}</td></tr>
+          </table>
+        </div>
+    </div>
+</body>
+</html>
