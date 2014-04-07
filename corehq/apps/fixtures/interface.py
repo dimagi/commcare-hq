@@ -1,7 +1,6 @@
 from couchdbkit import ResourceNotFound
 
 from corehq.apps.reports.generic import GenericReportView, GenericTabularReport
-from corehq.apps.reports.fields import ReportSelectField
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.fixtures.dispatcher import FixtureInterfaceDispatcher
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem, _id_from_doc, FieldList, FixtureTypeField, FixtureItemField
@@ -19,29 +18,6 @@ class FixtureInterface(GenericReportView):
     dispatcher = FixtureInterfaceDispatcher
     exportable = False
     needs_filters = False
-
-
-class FixtureSelectField(ReportSelectField):
-    slug = "table_id"
-    name = ugettext_noop("Select a Table")
-    cssId = "select_table"
-    cssClasses = "span2"
-
-    @property
-    def field_opts(self):
-        fdts = list(FixtureDataType.by_domain(self.domain))
-        return fdts
-
-    @property
-    def default_option(self):
-        if not self.field_opts:
-            return "NO TABLE"
-        return "Default: " + self.field_opts[0].tag
-
-    def update_params(self):
-        self.selected = self.request.GET.get(self.slug, '')
-        unselected_list = [fo for fo in self.field_opts if fo != self.selected]
-        self.options = [{'val': _id_from_doc(f), 'text': f.tag} for f in unselected_list]
 
 
 class FixtureSelectFilter(BaseSingleOptionFilter):
