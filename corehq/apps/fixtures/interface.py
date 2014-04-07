@@ -1,3 +1,5 @@
+from couchdbkit import ResourceNotFound
+
 from corehq.apps.reports.generic import GenericReportView, GenericTabularReport
 from corehq.apps.reports.fields import ReportSelectField
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
@@ -75,16 +77,29 @@ class FixtureViewInterface(GenericTabularReport, FixtureInterface):
 
     @property
     def report_context(self):
-        context = super(FixtureViewInterface, self).report_context
-        if not context["report_table"].get("rows"):
+        if not self.has_tables():
             self.report_template_path = 'fixtures/no_table.html'
+            return {"selected_table": self.table.get("table_id", "")}
+        if not self.request.GET.get("table_id", None):
+            return {"table_not_selected": True}
+        try:
+            context = super(FixtureViewInterface, self).report_context
+        except ResourceNotFound:
+            return {"table_not_selected": True}
         context.update({"selected_table": self.table.get("table_id", "")})
         return context
+
+    @memoized
+    def has_tables(self):
+        return True if list(FixtureDataType.by_domain(self.domain)) else False
 
     @property
     @memoized
     def table(self):
-        return data_table(self.request, self.domain)
+        if self.has_tables() and self.request.GET.get("table_id", None):
+            return data_table(self.request, self.domain)
+        else:
+            return {"headers": None, "rows": None}
 
     @property
     def headers(self):
