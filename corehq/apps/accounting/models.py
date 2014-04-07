@@ -928,7 +928,7 @@ class Subscription(models.Model):
 
         user_desc = self.plan_version.user_facing_description
         plan_name = user_desc['name']
-        domain_name = self.suscriber.domain.capitalized()
+        domain_name = self.subscriber.domain.title()
         product = self.plan_version.core_product
         subject = _("%(product)s Alert: %(domain)s's subscription to "
                     "%(plan_name)s ends %(ending_on)s") % {
