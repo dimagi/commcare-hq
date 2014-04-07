@@ -41,11 +41,11 @@ class DateRangeField(ReportField):
 
 
 class CaseSearchField(ReportField):
-    name = ugettext_noop("Search")
+    name = ugettext_noop("Case Search")
     slug = "case_search"
     template = "reports/filters/search.html"
 
     def update_context(self):
         self.search_query = self.request.GET.get("case_search", "")
         self.context["search_query"] = self.search_query
-        self.context["label"] = _("Search")
+        self.context["label"] = _("Case Search")

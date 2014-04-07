@@ -9,6 +9,7 @@ from custom.m4change.models import McctStatus
 def get_case_by_id(case_id):
     return CommCareCase.get(case_id)
 
+
 @memoized
 def get_user_by_id(user_id):
     return CommCareUser.get(user_id)
@@ -24,5 +25,5 @@ def get_property(dict_obj, name, default=None):
 
 
 def get_form_ids_by_status(domain, status):
-    return [mcct_status.form_id for mcct_status in McctStatus.objects.filter(domain=domain, status=status)]
+    return [item.form_id for item in McctStatus.objects.filter(domain=domain, status=status)]
 
