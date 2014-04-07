@@ -329,6 +329,13 @@ class SoftwarePlanInterface(AddItemInterface):
     crud_item_type = "Software_Plan"
 
 
+def get_exportable_column(amount):
+    return format_datatables_data(
+        text=get_money_str(amount),
+        sort_key=amount,
+    )
+
+
 def get_exportable_column_cost(subtotal, deduction):
     return format_datatables_data(
         text=get_column_formatted_str(subtotal, deduction),
@@ -478,18 +485,15 @@ class InvoiceInterface(GenericTabularReport):
                     )
                 )
             else:
-                column.append(get_money_str(plan_subtotal))
-                column.append(get_money_str(plan_deduction))
-                column.append(get_money_str(sms_subtotal))
-                column.append(get_money_str(sms_deduction))
-                column.append(get_money_str(user_subtotal))
-                column.append(get_money_str(user_deduction))
-                column.append(get_money_str(invoice.subtotal))
-                column.append(get_money_str(invoice.applied_credit))
-            column.append(format_datatables_data(
-                text=get_money_str(invoice.balance),
-                sort_key=invoice.balance,
-            ))
+                column.append(get_exportable_column(plan_subtotal))
+                column.append(get_exportable_column(plan_deduction))
+                column.append(get_exportable_column(sms_subtotal))
+                column.append(get_exportable_column(sms_deduction))
+                column.append(get_exportable_column(user_subtotal))
+                column.append(get_exportable_column(user_deduction))
+                column.append(get_exportable_column(invoice.subtotal))
+                column.append(get_exportable_column(invoice.applied_credit))
+            column.append(get_exportable_column(invoice.balance))
             column.append("Paid" if invoice.date_paid else "Not paid")
             column.append("YES" if invoice.is_hidden else "no")
             if not self.is_rendered_as_email:
