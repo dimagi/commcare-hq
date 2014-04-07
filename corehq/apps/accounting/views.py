@@ -508,7 +508,7 @@ class TriggerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
         return self.get(request, *args, **kwargs)
 
 
-class TriggerBookkeeperEmailView(AccountingSectionView, AsyncHandlerMixin):
+class TriggerBookkeeperEmailView(AccountingSectionView):
     urlname = 'accounting_trigger_bookkeeper_email'
     page_title = "Trigger Bookkeeper Email"
     template_name = 'accounting/trigger_bookkeeper.html'
@@ -535,8 +535,6 @@ class TriggerBookkeeperEmailView(AccountingSectionView, AsyncHandlerMixin):
         }
 
     def post(self, request, *args, **kwargs):
-        if self.async_response is not None:
-            return self.async_response
         if self.trigger_email_form.is_valid():
             self.trigger_email_form.trigger_email()
             messages.success(request, "Sent the Bookkeeper email!")
