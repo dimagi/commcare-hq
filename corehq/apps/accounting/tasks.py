@@ -97,6 +97,7 @@ def send_bookkeeper_email(month=None, year=None, emails=None):
         username="admin@dimagi.com",
     )
     invoice = InvoiceInterface(request)
+    invoice.is_rendered_as_email = True
     first_of_month = datetime.date(year, month, 1)
     email_context = {
         'month': first_of_month.strftime("%B"),
