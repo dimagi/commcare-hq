@@ -667,6 +667,11 @@ class HealthMapReport(GenericMapReport, CustomProjectReport):
             [70, 'rgba(255, 255, 0, .8)'],
             [100, 'rgba(0, 255, 0, .8)']
         ]
+        reverse_colorstops = [
+            [100, 'rgba(255, 0, 0, .8)'],
+            [70, 'rgba(255, 255, 0, .8)'],
+            [40, 'rgba(0, 255, 0, .8)']
+        ]
         title_mapping = {
                 "AWC": "AWC",
                 "# of Pregnant Women Registered": "Pregnant Women Registered",
@@ -676,6 +681,30 @@ class HealthMapReport(GenericMapReport, CustomProjectReport):
                 '# of Children Whose Nutritional Status is "MAM"': 'Children Whose Nutritional Status is "MAM"',
                 '# of Children Whose Nutritional Status is Normal': 'Children Whose Nutritional Status is Normal'
         }
+        additional_columns = [
+            "Total # of Beneficiaries Registered",
+            "# of Mothers of Children Aged 3 Years and Below Registered",
+            "# of Children Between 0 and 3 Years of Age Registered",
+            "# of Pregnant Women Who Have Received at least 30 IFA Tablets",
+            "# of Pregnant Women Whose Weight Gain Was Monitored At Least Once",
+            "# of Pregnant Women Whose Weight Gain Was Monitored Twice",
+            "# of Children Whose Weight Was Monitored at Birth",
+            "# of Children Who Have Attended At Least 1 Growth Monitoring Session",
+            "# of Children Who Have Attended At Least 2 Growth Monitoring Sessions",
+            "# of Children Who Have Attended At Least 3 Growth Monitoring Sessions",
+            "# of Children Who Have Attended At Least 4 Growth Monitoring Sessions",
+            '# of Children Who Have Attended At Least 5 Growth Monitoring Sessions',
+            '# of Children Who Have Attended At Least 6 Growth Monitoring Sessions',
+            '# of Children Who Have Attended At Least 7 Growth Monitoring Sessions',
+            '# of Children Who Have Attended At Least 8 Growth Monitoring Sessions',
+            '# of Children Who Have Attended At Least 9 Growth Monitoring Sessions',
+            '# of Children Who Have Attended At Least 10 Growth Monitoring Sessions',
+            '# of Children Who Have Attended At Least 11 Growth Monitoring Sessions',
+            '# of Children Who Have Attended At Least 12 Growth Monitoring Sessions',
+            '# of Children Who Have Received ORS and Zinc Treatment if He/She Contracts Diarrhea',
+            '# of Mothers of Children Aged 3 Years and Below Who Reported to Have Exclusively Breastfed Their Children for First 6 Months',
+            '# of Children Who Received Measles Vaccine',
+        ]
         columns = ["AWW", "Block", "GP"] + [
             "AWC",
             "# of Pregnant Women Registered",
@@ -690,7 +719,11 @@ class HealthMapReport(GenericMapReport, CustomProjectReport):
             "table_columns": columns,
             "column_titles": title_mapping,
             "metrics": [{"color": {"column": column}} for column in columns[:4]] + [
-                {"color": {"column": column, "colorstops": colorstops}} for column in columns[4:]
+                {"color": {"column": column, "colorstops": colorstops}} for column in columns[4:-3] + columns[-1:0]
+            ] + [
+                {"color": {"column": column, "colorstops": reverse_colorstops}} for column in columns[-3:-1]
+            ] + [
+                {"color": {"column": column, "colorstops": colorstops}} for column in additional_columns
             ]
         }
 
