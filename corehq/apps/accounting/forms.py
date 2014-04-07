@@ -1425,7 +1425,7 @@ class TestReminderEmailFrom(forms.Form):
         )
     )
 
-    def __int__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super(TestReminderEmailFrom, self).__init__(*args, **kwargs)
 
         self.helper = FormHelper()
@@ -1433,7 +1433,7 @@ class TestReminderEmailFrom(forms.Form):
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 "Test Subscription Reminder Emails",
-                'days'
+                'days',
             ),
             crispy.Div(
                 crispy.HTML(
