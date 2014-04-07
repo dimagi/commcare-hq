@@ -42,7 +42,8 @@
                         <div class="controls">
                             <p class="control-group-text">{{ plan.date_end }}</p>
                             {% if plan.next_subscription.can_renew %}
-                                <a href="#" class="btn btn-success">
+                                <a href="{{ plan.next_subscription.renew_url }}"
+                                   class="btn btn-success">
                                     {% trans "Renew Plan" %}
                                 </a>
                             {% endif %}
@@ -56,7 +57,7 @@
                         </label>
                         <div class="controls">
                             <p class="control-group-text">
-                                {{ plan.next_sbuscription.date_start }}
+                                {{ plan.next_subscription.date_start }}
                             </p>
                         </div>
                     </div>

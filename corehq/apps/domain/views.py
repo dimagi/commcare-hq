@@ -551,8 +551,11 @@ class DomainSubscriptionView(DomainAccountingSettings):
                         'date_start': subscription.next_subscription.date_start.strftime("%d %B %Y"),
                     })
                 else:
-                    days_left = (datetime.date.today() - subscription.date_end).days
-                    next_subscription['can_renew'] = days_left <= 30
+                    days_left = (subscription.date_end - datetime.date.today()).days
+                    next_subscription.update({
+                        'can_renew': days_left <= 30,
+                        'renew_url': reverse(ConfirmSubscriptionRenewalView.urlname, args=[self.domain]),
+                    })
         info = {
             'products': products,
             'is_multiproduct': len(products) > 1,
