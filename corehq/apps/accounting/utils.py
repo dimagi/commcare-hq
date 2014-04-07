@@ -126,3 +126,25 @@ def get_money_str(amount):
             fmt = "$%0.2f"
         return fmt % amount
     return ""
+
+
+def get_address_from_invoice(invoice):
+    from corehq.apps.accounting.invoice_pdf import Address
+    from corehq.apps.accounting.models import BillingContactInfo
+    contact_info = BillingContactInfo.objects.get(
+        account=invoice.subscription.account,
+    )
+    return Address(
+        name=(
+            "%s %s" %
+            (contact_info.first_name
+             if contact_info.first_name is not None else "",
+             contact_info.last_name
+             if contact_info.last_name is not None else "")
+        ),
+        first_line=contact_info.first_line,
+        second_line=contact_info.second_line,
+        city=contact_info.city,
+        region=contact_info.state_province_region,
+        country=contact_info.country,
+    )
