@@ -16,6 +16,8 @@ MSG_STRUCTURED_SMS_QUESTION_REQUIRED = "SS_QUESTION_REQUIRED"
 MSG_EXPECTED_NAMED_ARGS_SEPARATOR = "SS_NAMED_ARGS_SEPARATOR"
 MSG_MULTIPLE_ANSWERS_FOUND = "SS_MULTIPLE_ANSWERS_FOUND"
 MSG_MULTIPLE_QUESTIONS_MATCH = "SS_MULTIPLE_QUESTIONS_MATCH"
+MSG_MISSING_EXTERNAL_ID = "MISSING_EXTERNAL_ID"
+MSG_CASE_NOT_FOUND = "CASE_NOT_FOUND"
 
 _MESSAGES = {
     MSG_MULTIPLE_SESSIONS: "An error has occurred. Please try restarting the survey.",
@@ -36,6 +38,8 @@ _MESSAGES = {
     MSG_EXPECTED_NAMED_ARGS_SEPARATOR: "Expected name and value to be joined by '%(separator)s'.",
     MSG_MULTIPLE_ANSWERS_FOUND: "More than one answer found for '%(arg_name)s'",
     MSG_MULTIPLE_QUESTIONS_MATCH: "More than one question matches '%(answer)s'",
+    MSG_MISSING_EXTERNAL_ID: "Expected case external id.",
+    MSG_CASE_NOT_FOUND: "Case with the given external id was not found."
 }
 
 def get_message(msg_id, verified_number=None, context=None):

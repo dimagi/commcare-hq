@@ -21,6 +21,9 @@ from corehq.apps.reminders.util import create_immediate_reminder
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.groups.models import Group
 from touchforms.formplayer.api import current_question
+from corehq.apps.app_manager.models import Form
+from casexml.apps.case.models import CommCareCase
+from couchdbkit.exceptions import MultipleResultsFound
 
 class StructuredSMSException(Exception):
     def __init__(self, *args, **kwargs):
@@ -102,12 +105,8 @@ def global_keyword_unknown(v, text, msg, text_words, open_sessions):
 def handle_domain_keywords(v, text, msg, text_words, sessions):
     any_session_open = len(sessions) > 0
     for survey_keyword in SurveyKeyword.get_all(v.domain):
-        if survey_keyword.delimiter is not None:
-            args = text.split(survey_keyword.delimiter)
-        else:
-            args = text.split()
-
-        keyword = args[0].strip().upper()
+        args = split_args(text, survey_keyword)
+        keyword = args[0].upper()
         if keyword == survey_keyword.keyword.upper():
             if any_session_open and not survey_keyword.override_open_sessions:
                 # We don't want to override any open sessions, so just pass and
@@ -249,14 +248,19 @@ def split_args(text, survey_keyword):
     return args
 
 def handle_structured_sms(survey_keyword, survey_keyword_action, contact,
-    verified_number, text, send_response=False, msg=None):
+    verified_number, text, send_response=False, msg=None, case=None,
+    text_args=None):
 
     domain = contact.domain
     contact_doc_type = contact.doc_type
     contact_id = contact._id
 
-    args = split_args(text, survey_keyword)
-    keyword = args[0].upper()
+    if text_args:
+        args = text_args
+    else:
+        args = split_args(text, survey_keyword)
+        args = args[1:]
+    keyword = survey_keyword.keyword.upper()
 
     error_occurred = False
     error_msg = None
@@ -264,14 +268,14 @@ def handle_structured_sms(survey_keyword, survey_keyword_action, contact,
 
     try:
         # Start the session
-        form = Form.get_form(survey_keyword_action.form_unique_id)
-        app = form.get_app()
-        module = form.get_module()
+        app, module, form = get_app_module_form(
+            survey_keyword_action.form_unique_id, include_app_module=True)
 
-        if contact_doc_type == "CommCareCase":
+        if case:
+            case_id = case._id
+        elif contact_doc_type == "CommCareCase":
             case_id = contact_id
         else:
-            #TODO: Need a way to choose the case when it's a user that's playing the form
             case_id = None
 
         session, responses = start_session(domain, contact, app, module,
@@ -284,14 +288,14 @@ def handle_structured_sms(survey_keyword, survey_keyword_action, contact,
         if not is_form_complete(first_question):
             if survey_keyword_action.use_named_args:
                 # Arguments in the sms are named
-                xpath_answer = parse_structured_sms_named_args(args[1:],
+                xpath_answer = parse_structured_sms_named_args(args,
                     survey_keyword_action)
-                _handle_structured_sms(domain, args[1:], contact_id, session,
+                _handle_structured_sms(domain, args, contact_id, session,
                     first_question, verified_number, xpath_answer)
             else:
                 # Arguments in the sms are not named; pass each argument to
                 # each question in order
-                _handle_structured_sms(domain, args[1:], contact_id, session,
+                _handle_structured_sms(domain, args, contact_id, session,
                     first_question, verified_number)
 
     except StructuredSMSException as sse:
@@ -334,12 +338,68 @@ def is_form_complete(current_question):
     else:
         return False
 
+def get_form(form_unique_id, include_app_module=False):
+    form = Form.get_form(form_unique_id)
+    if include_app_module:
+        app = form.get_app()
+        module = form.get_module()
+        return (app, module, form)
+    else:
+        return form
+
+def keyword_uses_form_that_requires_case(survey_keyword):
+    for action in survey_keyword.actions:
+        if action.action in [METHOD_SMS_SURVEY, METHOD_STRUCTURED_SMS]:
+            form = get_app_module_form(action.form_unique_id)
+            if form.requires_case():
+                return True
+    return False
+
+def get_case_by_external_id(domain, external_id):
+    case = None
+    try:
+        case = CommCareCase.get("hqcase/by_domain_external_id",
+            key=[domain, external_id],
+            include_docs=True,
+            reduce=False,
+        ).one()
+    except MultipleResultsFound:
+        pass
+    return case
+
+def user_can_access_case(user, case):
+    #TODO: For now, a placeholder
+    return True
+
+def send_keyword_response(vn, message_id):
+    metadata = MessageMetadata(
+        workflow=WORKFLOW_KEYWORD,
+    )
+    message = get_message(message_id, vn)
+    send_sms_to_verified_number(vn, message, metadata=metadata)
+
 def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
     sender = verified_number.owner
+    case = None
+    args = split_args(text, survey_keyword)
     if sender.doc_type == "CommCareCase":
         case = sender
-    else:
-        case = None
+        args = args[1:]
+    elif sender.doc_type == "CommCareUser":
+        if keyword_uses_form_that_requires_case(survey_keyword):
+            if len(args) > 1:
+                external_id = args[1]
+                case = get_case_by_external_id(verified_number.domain,
+                    external_id)
+                if case is None or not user_case_access_case(sender, case):
+                    send_keyword_response(verified_number, MSG_CASE_NOT_FOUND)
+                    return
+            else:
+                send_keyword_response(verified_number, MSG_MISSING_EXTERNAL_ID)
+                return
+            args = args[2:]
+        else:
+            args = args[1:]
     for survey_keyword_action in survey_keyword.actions:
         if survey_keyword_action.recipient == RECIPIENT_SENDER:
             contact = sender
@@ -373,5 +433,6 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
                 case=case)
         elif survey_keyword_action.action == METHOD_STRUCTURED_SMS:
             handle_structured_sms(survey_keyword, survey_keyword_action,
-                sender, verified_number, text, send_response=True, msg=msg)
+                sender, verified_number, text, send_response=True, msg=msg
+                case=case, text_args=args)
 
