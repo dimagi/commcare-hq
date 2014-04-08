@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-04-07 12:27+0000\n"
+"POT-Creation-Date: 2014-04-07 13:28+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -14915,7 +14915,7 @@ msgstr ""
 #: custom/reports/mc/reports/definitions.py:6
 #: custom/reports/mc/reports/definitions.py:107
 #: custom/reports/mc/reports/definitions.py:161
-msgid "Home Visits"
+msgid "mc_section_home_visits"
 msgstr "Visitas Domiciliáres"
 
 #: custom/reports/mc/reports/definitions.py:8
@@ -14950,7 +14950,7 @@ msgid "home_visits_total"
 msgstr "Total Visitas"
 
 #: custom/reports/mc/reports/definitions.py:18
-msgid "RDT"
+msgid "mc_section_rdt"
 msgstr "Total de TDR para Malária Realizados"
 
 #: custom/reports/mc/reports/definitions.py:20
@@ -14970,7 +14970,7 @@ msgid "rdt_total"
 msgstr "Total Testes Realizados"
 
 #: custom/reports/mc/reports/definitions.py:28
-msgid "Diagnosed Cases"
+msgid "mc_section_diagnosed_cases"
 msgstr "Diagnóstico de Casos"
 
 #: custom/reports/mc/reports/definitions.py:30
@@ -14994,7 +14994,7 @@ msgid "diagnosed_total"
 msgstr "Total Casos Diagnosticados no mês"
 
 #: custom/reports/mc/reports/definitions.py:39
-msgid "Treated Cases"
+msgid "mc_section_treated_cases"
 msgstr "Manejo de Casos"
 
 #: custom/reports/mc/reports/definitions.py:41
@@ -15014,7 +15014,8 @@ msgid "treated_total"
 msgstr "  Total Casos Tratados no mês"
 
 #: custom/reports/mc/reports/definitions.py:49
-msgid "Transfers"
+#: custom/reports/mc/reports/definitions.py:170
+msgid "mc_section_transfers"
 msgstr "Transferências a Unidade Sanitária"
 
 #: custom/reports/mc/reports/definitions.py:51
@@ -15046,7 +15047,7 @@ msgid "transfer_total"
 msgstr " Total transferidos no mês"
 
 #: custom/reports/mc/reports/definitions.py:62
-msgid "Deaths"
+msgid "mc_section_deaths"
 msgstr "Mortes na Comunidade"
 
 #: custom/reports/mc/reports/definitions.py:64
@@ -15071,7 +15072,7 @@ msgid "deaths_total"
 msgstr "Total mortes na comunidade"
 
 #: custom/reports/mc/reports/definitions.py:72
-msgid "Health Education"
+msgid "mc_section_health_ed"
 msgstr "Palestras na Comunidade"
 
 #: custom/reports/mc/reports/definitions.py:74
@@ -15084,7 +15085,7 @@ msgstr "Número de participantes no mês"
 
 #: custom/reports/mc/reports/definitions.py:83
 #: custom/reports/mc/reports/definitions.py:124
-msgid "Stock Balance"
+msgid "mc_section_stock_balance"
 msgstr "Balanço do Stock"
 
 #: custom/reports/mc/reports/definitions.py:87
@@ -15155,11 +15156,11 @@ msgid "home_visits_followup"
 msgstr "Visitas de seguimento por casos transferidos "
 
 #: custom/reports/mc/reports/definitions.py:118
-msgid "Deaths in the Community"
+msgid "mc_section_deaths_in_community"
 msgstr "Mortes na Comunidade"
 
 #: custom/reports/mc/reports/definitions.py:133
-msgid "Validation of Diagnosis and Treatment"
+msgid "mc_section_validation"
 msgstr ""
 "Porcentagem de pacientes observados que foram prescritos medicamentos "
 "correctos para a pneumonia"
@@ -15207,10 +15208,6 @@ msgstr ""
 #: custom/reports/mc/reports/definitions.py:165
 msgid "home_visits_adult"
 msgstr "Adultos"
-
-#: custom/reports/mc/reports/definitions.py:170
-msgid "Transferred Cases"
-msgstr "Transferências a Unidade Sanitária"
 
 #: custom/reports/mc/reports/definitions.py:172
 msgid "cases_transferred"
@@ -15287,23 +15284,23 @@ msgstr ""
 "quando fazer teste rapido para diagnosticar a malaria."
 
 #: custom/reports/mc/reports/sql.py:331
-msgid "Indicator"
-msgstr ""
+msgid "mc_header_indicator"
+msgstr "Indicador"
 
 #: custom/reports/mc/reports/sql.py:388
-msgid "Health Facility Monthly Report"
+msgid "mc_report_hf_monthly"
 msgstr "Relatorio Mensal aos Supervisores dos APEs"
 
 #: custom/reports/mc/reports/sql.py:398
-msgid "District Monthly Report"
+msgid "mc_report_dist_monthly"
 msgstr "Relatorio Mensal aos Coordinadores do Distrito e os NEDs"
 
 #: custom/reports/mc/reports/sql.py:408
-msgid "District Weekly Report"
+msgid "mc_report_dist_weekly"
 msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #: custom/reports/mc/reports/sql.py:475
-msgid "Health Facility Weekly Report"
+msgid "mc_report_hf_weekly"
 msgstr "Relatorio Semanal aos Supervisores dos APEs"
 
 #: custom/reports/mc/templates/mc/reports/hf_weekly.html:5
@@ -16195,9 +16192,3 @@ msgstr ""
 #: submodules/payments/hqbilling/templates/hqbilling/domain/forms/billing_info.html:13
 msgid "Update Billing Info"
 msgstr ""
-
-#~ msgid "home_visits_newborn_reg"
-#~ msgstr "Recém Nacidos (0 - 1 mes)"
-
-#~ msgid "home_visits_child_reg"
-#~ msgstr "Crianças (2 - 59 meses)"

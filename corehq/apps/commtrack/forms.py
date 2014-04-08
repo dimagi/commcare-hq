@@ -82,7 +82,7 @@ class ProductForm(forms.Form):
         return product
 
 
-class AdvancedSettingsForm(forms.Form):
+class CommTrackSettingsForm(forms.Form):
     use_auto_emergency_levels = forms.BooleanField(
         label=ugettext_noop("Use default emergency levels"), required=False)
 
@@ -113,7 +113,7 @@ class AdvancedSettingsForm(forms.Form):
         label=ugettext_lazy("Sync consumption fixtures"), required=False)
 
     def clean(self):
-        cleaned_data = super(AdvancedSettingsForm, self).clean()
+        cleaned_data = super(CommTrackSettingsForm, self).clean()
 
         if cleaned_data.get('use_auto_consumption'):
             consumption_keys = [

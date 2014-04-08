@@ -12,14 +12,11 @@ $(function() {
 function CommtrackSettingsViewModel() {
     this.keyword = ko.observable();
     this.actions = ko.observableArray();
-    this.loc_types = ko.observableArray();
     this.requisition_config = ko.observable();
-    this.openlmis_config = ko.observable();
 
     this.json_payload = ko.observable();
 
     this.keyword_error = ko.observable();
-    this.loc_types_error = ko.observable();
 
     // TODO: sort out possibly removing this redundant declaration in js
     this.action_types = [
@@ -34,11 +31,7 @@ function CommtrackSettingsViewModel() {
         this.actions($.map(data.actions, function(e) {
             return new ActionModel(e);
         }));
-        this.loc_types($.map(data.loc_types, function(e) {
-            return new LocationTypeModel(e);
-        }));
         this.requisition_config(new RequisitionConfigModel(data.requisition_config));
-        this.openlmis_config(new OpenLMISConfigModel(data.openlmis_config));
     };
 
     var settings = this;
@@ -51,23 +44,8 @@ function CommtrackSettingsViewModel() {
         settings.actions.push(new ActionModel({}));
     };
 
-    this.remove_loctype = function(loc_type) {
-        settings.loc_types.remove(loc_type);
-    };
-
-    this.new_loctype = function() {
-        var new_loctype = new LocationTypeModel({}, this);
-        new_loctype.onBind = function() {
-            var $inp = $(this.$e).find('.loctype_name');
-            $inp.focus();
-            setTimeout(function() { $inp.select(); }, 0);
-        };
-        settings.loc_types.push(new_loctype);
-    };
-
     this.validate = function() {
         this.keyword_error(null);
-        this.loc_types_error(null);
 
         var that = this;
         var valid = true;
@@ -85,23 +63,7 @@ function CommtrackSettingsViewModel() {
                     valid = false;
                 }
             });
-        $.each(this.loc_types(), function(i, e) {
-                if (!e.validate()) {
-                    valid = false;
-                }
-            });
 
-        var top_level_loc = false;
-        $.each(this.loc_types(), function(i, e) {
-                if (e.allowed_parents().indexOf(undefined) != -1) {
-                    top_level_loc = true;
-                }
-            });
-        if (!top_level_loc) {
-            this.loc_types_error('at least one location type must have "top level" as an allowed parent type');
-            valid = false;
-        }
-        
         return valid;
     };
 
@@ -109,7 +71,7 @@ function CommtrackSettingsViewModel() {
         if (!this.validate()) {
             return false;
         }
-        
+
         payload = this.to_json();
         this.json_payload(JSON.stringify(payload));
     };
@@ -154,9 +116,7 @@ function CommtrackSettingsViewModel() {
         return {
             keyword: this.keyword(),
             actions: $.map(this.actions(), function(e) { return e.to_json(); }),
-            loc_types: $.map(this.loc_types(), function(e) { return e.to_json(); }),
             requisition_config: this.requisition_config().to_json(),
-            openlmis_config: this.openlmis_config().to_json()
         };
     };
 }
@@ -202,75 +162,6 @@ function ActionModel(data) {
     };
 }
 
-function LocationTypeModel(data, root) {
-    var name = data.name || '\u2014';
-    var self = this;
-    this.name = ko.observable(name);
-    this.code = ko.observable(data.code || name);
-    var code_autoset = this.name() == this.code();
-
-    // sync code to name if it looks autoset
-    this.name.subscribe(function (newValue) {
-        if (code_autoset) {
-            self.code(newValue);
-        }
-    });
-
-    // clear autoset if we explicitly change the code
-    this.code.subscribe(function (newValue) {
-        self.name() != self.code();
-        code_autoset = false;
-    });
-
-    var allowed_parents = data.allowed_parents || [];
-    $.each(allowed_parents, function(i, e) {
-        if (e === null) {
-            allowed_parents[i] = undefined;
-        }
-    });
-    if (allowed_parents.length == 0) {
-        var last = root.loc_types.slice(-1)[0];
-        allowed_parents = [last ? last.name() : undefined];
-    }
-    this.allowed_parents = ko.observableArray(allowed_parents);
-    this.administrative = ko.observable(data.administrative);
-
-    this.name_error = ko.observable();
-    this.code_error = ko.observable();
-    this.allowed_parents_error = ko.observable();
-
-    this.validate = function() {
-        this.name_error(null);
-        this.allowed_parents_error(null);
-
-        valid = true;
-
-        if (!this.name()) {
-            this.name_error('required');
-            valid = false;
-        }
-        if (!this.code()) {
-            this.code_error('required');
-            valid = false;
-        }
-        if (this.allowed_parents().length == 0) {
-            this.allowed_parents_error('choose at least one parent type');
-            valid = false;
-        }
-
-        return valid;
-    };
-
-    this.to_json = function() {
-        return {
-            name: this.name(),
-            code: this.code(),
-            allowed_parents: this.allowed_parents(),
-            administrative: this.administrative()
-        };
-    };
-}
-
 function RequisitionConfigModel(data) {
     // TODO: sort out possibly removing this redundant declaration in js
     this.action_types = [
@@ -301,26 +192,6 @@ function RequisitionConfigModel(data) {
         };
     };
 }
-
-
-function OpenLMISConfigModel(data) {
-    this.enabled = ko.observable(data.enabled);
-    this.url = ko.observable(data.url);
-    this.username = ko.observable(data.username);
-    this.password = ko.observable(data.password);
-    this.using_requisitions = ko.observable(data.using_requisitions);
-
-    this.to_json = function() {
-        return {
-            enabled: this.enabled(),
-            url: this.url(),
-            username: this.username(),
-            password: this.password(),
-            using_requisitions: this.using_requisitions()
-        };
-    };
-}
-
 
 
 // TODO move to shared library

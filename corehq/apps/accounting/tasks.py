@@ -97,6 +97,7 @@ def send_bookkeeper_email(month=None, year=None, emails=None):
         username="admin@dimagi.com",
     )
     invoice = InvoiceInterface(request)
+    invoice.is_rendered_as_email = True
     first_of_month = datetime.date(year, month, 1)
     email_context = {
         'month': first_of_month.strftime("%B"),
@@ -105,9 +106,13 @@ def send_bookkeeper_email(month=None, year=None, emails=None):
         'accounting/bookkeeper_email.html', email_context)
     email_content_plaintext = render_to_string(
         'accounting/bookkeeper_email_plaintext.html', email_context)
+    format_dict = Format.FORMAT_DICT[Format.CSV]
     excel_attachment = {
-        'title': 'Invoices_%s.xlsx' % first_of_month.strftime('%B_%Y'),
-        'mimetype': Format.FORMAT_DICT[Format.XLS_2007]['mimetype'],
+        'title': 'Invoices_%(period)s.%(extension)s' % {
+            'period': first_of_month.strftime('%B_%Y'),
+            'extension': format_dict['extension'],
+        },
+        'mimetype': format_dict['mimetype'],
         'file_obj': invoice.excel_response,
     }
 

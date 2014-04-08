@@ -15,9 +15,10 @@ from django.db import models
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 from corehq import toggles
-from corehq.apps.accounting.invoice_pdf import Address, InvoiceTemplate
+from corehq.apps.accounting.invoice_pdf import InvoiceTemplate
 from corehq.apps.accounting.utils import (
-    get_privileges, get_first_last_days
+    get_privileges, get_first_last_days,
+    get_address_from_invoice,
 )
 from corehq.apps.accounting.subscription_changes import (
     DomainDowngradeActionHandler, DomainUpgradeActionHandler,
@@ -1203,26 +1204,10 @@ class InvoicePdf(SafeSaveDocument):
     def generate_pdf(self, invoice):
         self.save()
         pdf_data = NamedTemporaryFile()
-        contact_info = BillingContactInfo.objects.get(
-            account=invoice.subscription.account,
-        )
         template = InvoiceTemplate(
             pdf_data.name,
             invoice_number=invoice.invoice_number,
-            to_address=Address(
-                name=(
-                    "%s %s" %
-                    (contact_info.first_name
-                     if contact_info.first_name is not None else "",
-                     contact_info.last_name
-                     if contact_info.last_name is not None else "")
-                ),
-                first_line=contact_info.first_line,
-                second_line=contact_info.second_line,
-                city=contact_info.city,
-                region=contact_info.state_province_region,
-                country=contact_info.country,
-            ),
+            to_address=get_address_from_invoice(invoice),
             project_name=invoice.subscription.subscriber.domain,
             invoice_date=invoice.date_created.date(),
             due_date=invoice.date_due,

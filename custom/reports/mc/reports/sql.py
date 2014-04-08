@@ -328,7 +328,7 @@ class MCSectionedDataProvider(DataProvider):
 
 
     def headers(self):
-        return DataTablesHeader(DataTablesColumn(_('Indicator')),
+        return DataTablesHeader(DataTablesColumn(_('mc_header_indicator')),
                                 *[DataTablesColumn(header) for header in self.sqldata.get_headers()])
 
     @memoized
@@ -385,7 +385,7 @@ class HeathFacilityMonthly(MCBase):
         'corehq.apps.reports.filters.dates.DatespanFilter',
         'custom.reports.mc.reports.fields.HealthFacilityField',
     ]
-    name = ugettext_noop("Health Facility Monthly Report")
+    name = ugettext_noop("mc_report_hf_monthly")
     SECTIONS = HF_MONTHLY_REPORT
     format_class = UserDataFormat
 
@@ -395,7 +395,7 @@ class DistrictMonthly(MCBase):
         'custom.reports.mc.reports.fields.DistrictField',
     ]
     slug = 'district_monthly'
-    name = ugettext_noop("District Monthly Report")
+    name = ugettext_noop("mc_report_dist_monthly")
     SECTIONS = DISTRICT_MONTHLY_REPORT
     format_class = FacilityDataFormat
 
@@ -405,7 +405,7 @@ class DistrictWeekly(MCBase):
         'custom.reports.mc.reports.fields.DistrictField',
     ]
     slug = 'district_weekly'
-    name = ugettext_noop("District Weekly Report")
+    name = ugettext_noop("mc_report_dist_weekly")
     SECTIONS = DISTRICT_WEEKLY_REPORT
     format_class = FacilityDataFormat
 
@@ -472,6 +472,6 @@ class HealthFacilityWeekly(MCBase):
         'custom.reports.mc.reports.fields.HealthFacilityField',
     ]
     slug = 'hf_weekly'
-    name = ugettext_noop("Health Facility Weekly Report")
+    name = ugettext_noop("mc_report_hf_weekly")
     SECTIONS = HF_WEEKLY_REPORT
     format_class = UserDataFormat
