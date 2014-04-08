@@ -1018,12 +1018,19 @@ class ProjectSettingsTab(UITab):
             if user_is_billing_admin or self.couch_user.is_superuser:
                 from corehq.apps.domain.views import (
                     DomainSubscriptionView, EditExistingBillingAccountView,
-                    DomainBillingStatementsView,
+                    DomainBillingStatementsView, ConfirmSubscriptionRenewalView,
                 )
                 subscription = [
                     {
                         'title': DomainSubscriptionView.page_title,
                         'url': reverse(DomainSubscriptionView.urlname, args=[self.domain]),
+                        'subpages': [
+                            {
+                                'title': ConfirmSubscriptionRenewalView.page_title,
+                                'urlname': ConfirmSubscriptionRenewalView.urlname,
+                                'url': reverse(ConfirmSubscriptionRenewalView.urlname, args=[self.domain]),
+                            }
+                        ]
                     },
                 ]
                 if billing_account is not None:
@@ -1191,7 +1198,8 @@ class AccountingTab(UITab):
 
         if toggles.INVOICE_TRIGGER.enabled(self.couch_user.username):
             from corehq.apps.accounting.views import (
-                TriggerInvoiceView, TriggerBookkeeperEmailView
+                TriggerInvoiceView, TriggerBookkeeperEmailView,
+                TestRenewalEmailView,
             )
             items.append(('Other Actions', (
                 {
@@ -1201,6 +1209,10 @@ class AccountingTab(UITab):
                 {
                     'title': TriggerBookkeeperEmailView.page_title,
                     'url': reverse(TriggerBookkeeperEmailView.urlname),
+                },
+                {
+                    'title': TestRenewalEmailView.page_title,
+                    'url': reverse(TestRenewalEmailView.urlname),
                 }
             )))
         return items

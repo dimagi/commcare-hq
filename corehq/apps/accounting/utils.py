@@ -1,5 +1,6 @@
 import calendar
 import datetime
+from django.conf import settings
 from corehq import Domain, privileges
 from corehq.apps.accounting.exceptions import AccountingError
 from dimagi.utils.dates import add_months
@@ -148,3 +149,10 @@ def get_address_from_invoice(invoice):
         region=contact_info.state_province_region,
         country=contact_info.country,
     )
+
+
+def get_dimagi_from_email_by_product(product):
+    return ("Dimagi %(product)s Accounts <%(email)s>" % {
+        'product': product,
+        'email': settings.INVOICING_CONTACT_EMAIL,
+    })
