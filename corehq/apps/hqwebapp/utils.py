@@ -1,19 +1,36 @@
 import logging
 from couchdbkit.exceptions import ResourceNotFound
+from dimagi.utils.django.email import send_HTML_email
 from django.contrib import messages
 from django.contrib.auth.views import redirect_to_login
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
+from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from django.views.generic import TemplateView
 
 from corehq.apps.hqwebapp.views import logout
 from corehq.apps.registration.forms import NewWebUserRegistrationForm
 from corehq.apps.registration.utils import activate_new_user
-from corehq.apps.users.models import Invitation, CouchUser
+from corehq.apps.users.models import Invitation, CouchUser, WebUser
 
 logger = logging.getLogger(__name__)
+
+
+def send_confirmation_email(invitation):
+    invited_user = invitation.email
+    subject = '%s accepted your invitation to CommCare HQ' % invited_user
+    recipient = WebUser.get_by_user_id(invitation.invited_by).get_email()
+    context = {
+        'invited_user': invited_user,
+    }
+    html_content = render_to_string('domain/email/invite_confirmation.html',
+                                    context)
+    text_content = render_to_string('domain/email/invite_confirmation.txt',
+                                    context)
+    send_HTML_email(subject, recipient, html_content,
+                    text_content=text_content)
 
 
 class InvitationView():
@@ -51,6 +68,7 @@ class InvitationView():
         invitation.is_accepted = True
         invitation.save()
         messages.success(self.request, self.success_msg)
+        send_confirmation_email(invitation)
 
     def __call__(self, request, invitation_id, **kwargs):
         logging.warning("Don't use this view in more apps until it gets cleaned up.")
