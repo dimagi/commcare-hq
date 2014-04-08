@@ -187,7 +187,7 @@ cloudCare.SessionView = Selectable.extend({
             var dialog = confirm("Permanently delete this form? You will not be able to return to it later.");
             if (dialog == true) {
                 self.model.destroy();
-                showSuccess('Form was deleted.', $("#cloudcare-notifications"));
+                showSuccess('Form was deleted.', $("#cloudcare-notifications"), 10000);
             }
         });
         $("<a />").text(this.model.get('display')).appendTo($(this.el));
