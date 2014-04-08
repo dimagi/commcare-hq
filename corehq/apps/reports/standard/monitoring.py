@@ -8,7 +8,7 @@ from django.db.models.aggregates import Max, Min, Avg, StdDev, Count
 import numpy
 import operator
 import pytz
-from corehq import toggles
+from corehq.apps.groups.models import Group
 from corehq.apps.reports import util
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.reports.standard import ProjectReportParametersMixin, \
@@ -469,6 +469,23 @@ class DailyFormStatsReportES(ElasticProjectInspectionReport, WorkerMonitoringRep
         return ("received_on" if self.by_submission_time
                 else "form.meta.timeStart")
 
+    def es_user_filter(self):
+        matching = ExpandedMobileWorkerFilter.matching_ids(self.request)
+        user_ids = matching['user_ids']
+        user_types = matching['user_types']
+        group_ids = matching['group_ids']
+        if 't__0' in user_types:
+            return {"match_all": {}}
+
+        other_user_ids = [u['user_id'] for u in ExpandedMobileWorkerFilter.other_users(
+            self.domain, user_types, simplified=True)]
+        group_user_ids = []
+        for group in [Group.get(g) for g in group_ids]:
+            group_user_ids.extend([user['user_id'] for user in
+                util.get_all_users_by_domain(group=group, simplified=True)])
+        all_ids = filter(None, list(set(user_ids + other_user_ids + group_user_ids)))
+        return {"terms": {"xform.form.meta.userID": all_ids}}
+
     def get_row(self, user=None):
         """
         Assemble a row for a given user.
@@ -476,21 +493,34 @@ class DailyFormStatsReportES(ElasticProjectInspectionReport, WorkerMonitoringRep
         then the number of forms filled out per day for the datespan,
         and finally the total forms filled out in the datespan.
         """
+        tz_offset = self.timezone.localize(self.datespan.enddate).strftime("%z")
+        offset_string = '%s:%s' % (tz_offset[:3], tz_offset[3:])
         facets = {"date": {"date_histogram": {
             "field": self.date_field,
-            "interval": "day"
+            "interval": "day",
+            "time_zone": offset_string,
         }}}
-        gte = self.datespan.startdate_param
-        lte = self.datespan.enddate_param
-        query = {"filter": {"range": {
-                    self.date_field: {
-                        "gte": gte,
-                        "lte": lte}
-                }}}
-        params = {'xform.form.meta.userID': user.get('user_id')} if user else None
+
+        if self.by_submission_time:
+            gte = self.datespan.startdate_param_utc
+            lte = self.datespan.enddate_param_utc
+        else:
+            gte = self.datespan.startdate_param
+            lte = self.datespan.enddate_param
+        filters = [
+            {"range": {
+                self.date_field: {
+                    "gte": gte,
+                    "lte": lte}
+            }},
+            {"term": {"domain.exact": self.domain}},
+        ]
+        if user:
+            filters.append({"term": {"xform.form.meta.userID": user.get('user_id')}})
+        else:
+            filters.append(self.es_user_filter())
         res = es_query(
-            q=query,
-            params=params,
+            q={"filter": {"and": filters}},
             facets=facets,
             es_url=ES_URLS["forms"],
             size=0,
