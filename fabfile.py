@@ -294,10 +294,9 @@ def production():
 @task
 def staging():
     """staging.commcarehq.org"""
-    if not hasattr(env, 'code_branch') or env.code_branch == 'master':
-        print ("You must specify a code branch"
-               "(not 'master') with --set code_branch=<branch>")
-        sys.exit()
+    if env.code_branch == 'master':
+        env.code_branch = 'autostaging'
+        print ("using default branch of autostaging. you can override this with --set code_branch=<branch>")
 
     env.sudo_user = 'cchq'
     env.environment = 'staging'
