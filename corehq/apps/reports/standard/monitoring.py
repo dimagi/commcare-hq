@@ -349,10 +349,88 @@ class SubmissionsByFormReport(WorkerMonitoringReportTableBase, MultiFormDrilldow
         return data['value'] if data else 0
 
 
-class DailyFormStatsReport(ElasticProjectInspectionReport, WorkerMonitoringReportTableBase,
-        CompletionOrSubmissionTimeMixin, DatespanMixin):
+class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissionTimeMixin, DatespanMixin):
     slug = "daily_form_stats"
     name = ugettext_noop("Daily Form Activity")
+
+    fields = [
+        'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
+        'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
+        'corehq.apps.reports.filters.dates.DatespanFilter',
+    ]
+
+    description = ugettext_noop("Number of submissions per day.")
+
+    fix_left_col = True
+    emailable = True
+    is_cacheable = True
+
+    # todo: get mike to handle deleted reports gracefully
+
+    @property
+    @memoized
+    def dates(self):
+        date_list = [self.datespan.startdate]
+        while date_list[-1] < self.datespan.enddate:
+            date_list.append(date_list[-1] + datetime.timedelta(days=1))
+        return date_list
+
+    @property
+    def headers(self):
+        headers = DataTablesHeader(DataTablesColumn(_("Username"), span=3))
+        for d in self.dates:
+            headers.add_column(DataTablesColumn(d.strftime(DATE_FORMAT), sort_type=DTSortType.NUMERIC))
+        headers.add_column(DataTablesColumn(_("Total"), sort_type=DTSortType.NUMERIC))
+        return headers
+
+    @property
+    def rows(self):
+        key = make_form_couch_key(self.domain, by_submission_time=self.by_submission_time)
+        results = get_db().view("reports_forms/all_forms",
+            reduce=False,
+            startkey=key+[self.datespan.startdate_param_utc if self.by_submission_time else self.datespan.startdate_param],
+            endkey=key+[self.datespan.enddate_param_utc if self.by_submission_time else self.datespan.enddate_param]
+        ).all()
+
+        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
+        user_map = dict([(user.get('user_id'), i) for (i, user) in enumerate(users_data["combined_users"])])
+        date_map = dict([(date.strftime(DATE_FORMAT), i+1) for (i,date) in enumerate(self.dates)])
+        rows = [[0]*(2+len(date_map)) for _tmp in range(len(users_data["combined_users"]))]
+        total_row = [0]*(2+len(date_map))
+
+        user_ids = [user.get('user_id') for user in users_data["combined_users"]]
+        for result in results:
+            _tmp, _domain, date = result['key']
+            date = dateutil.parser.parse(date)
+            tz_offset = self.timezone.localize(self.datespan.enddate).strftime("%z")
+            date = date + datetime.timedelta(hours=int(tz_offset[0:3]), minutes=int(tz_offset[0]+tz_offset[3:5]))
+            date = date.isoformat()
+            val = result['value']
+            user_id = val.get("user_id")
+            if user_id in user_ids:
+                date_key = date_map.get(date[0:10], None)
+                if date_key:
+                    rows[user_map[user_id]][date_key] += 1
+
+        for i, user in enumerate(users_data["combined_users"]):
+            rows[i][0] = self.get_user_link(user)
+            total = sum(rows[i][1:-1])
+            rows[i][-1] = total
+            total_row[1:-1] = [total_row[ind+1]+val for ind, val in enumerate(rows[i][1:-1])]
+            total_row[-1] += total
+
+        total_row[0] = _("All Users")
+        self.total_row = total_row
+
+        for row in rows:
+            row[1:] = [self.table_cell(val) for val in row[1:]]
+        return rows
+
+
+class DailyFormStatsReportES(ElasticProjectInspectionReport, WorkerMonitoringReportTableBase,
+        CompletionOrSubmissionTimeMixin, DatespanMixin):
+    slug = "daily_form_stats_es"
+    name = ugettext_noop("Daily Form Activity (ES)")
 
     fields = [
         'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
@@ -365,6 +443,10 @@ class DailyFormStatsReport(ElasticProjectInspectionReport, WorkerMonitoringRepor
     ajax_pagination = True
     emailable = True
     is_cacheable = False
+
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return user and user.is_previewer()
 
     @property
     @memoized
@@ -464,8 +546,7 @@ class DailyFormStatsReport(ElasticProjectInspectionReport, WorkerMonitoringRepor
             es_url=ES_URLS["forms"],
             size=0,
         )
-        assert('error' not in res), "Bad ES query for user %s" % user.get('user_id')
-        total = res['facets'][uid_param]['total']
+        assert('error' not in res), "Bad ES query"
         count_dict = dict((user['term'], user['count'])
                 for user in res['facets'][uid_param]['terms'])
         return self.users_sorted_by_count(count_dict, order)
@@ -518,12 +599,38 @@ class DailyFormStatsReport(ElasticProjectInspectionReport, WorkerMonitoringRepor
         return rows
 
 
-class DailyFormStatsReportSQL(DailyFormStatsReport):
+class DailyFormStatsReportSQL(WorkerMonitoringReportTableBase, CompletionOrSubmissionTimeMixin, DatespanMixin):
     slug = "daily_form_stats_sql"
     name = ugettext_noop("Daily Form Activity (SQL)")
 
+    fields = [
+        'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
+        'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
+        'corehq.apps.reports.filters.dates.DatespanFilter',
+    ]
+
+    description = ugettext_noop("Number of submissions per day.")
+
     fix_left_col = False
+    emailable = True
+    is_cacheable = False
     ajax_pagination = True
+
+    @property
+    @memoized
+    def dates(self):
+        date_list = [self.datespan.startdate]
+        while date_list[-1] < self.datespan.enddate:
+            date_list.append(date_list[-1] + datetime.timedelta(days=1))
+        return date_list
+
+    @property
+    def headers(self):
+        headers = DataTablesHeader(DataTablesColumn(_("Username"), span=3))
+        for d in self.dates:
+            headers.add_column(DataTablesColumn(d.strftime(DATE_FORMAT), sort_type=DTSortType.NUMERIC))
+        headers.add_column(DataTablesColumn(_("Total"), sort_type=DTSortType.NUMERIC))
+        return headers
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
@@ -661,56 +768,6 @@ class DailyFormStatsReportSQL(DailyFormStatsReport):
         ]
         first_col = self.get_raw_user_link(user) if user else _("Total")
         return [first_col] + date_cols + [sum(date_cols)]
-
-
-class DailyFormStatsReportSQL(DailyFormStatsReport):
-    slug = "daily_form_stats_sql"
-    name = ugettext_noop("Daily Form Activity (SQL)")
-
-    @classmethod
-    def show_in_navigation(cls, domain=None, project=None, user=None):
-        return user and user.is_previewer()
-
-    @property
-    def rows(self):
-        startdate = self.datespan.startdate_utc if self.by_submission_time else self.datespan.startdate
-        enddate = self.datespan.enddate_utc if self.by_submission_time else self.datespan.enddate_adjusted
-        date_field = 'received_on' if self.by_submission_time else 'time_end'
-        date_filter = {'%s__range' % date_field: (startdate, enddate)}
-
-        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
-        user_ids = [user.get('user_id') for user in users_data["combined_users"]]
-        results = FormData.objects \
-            .filter(doc_type='XFormInstance') \
-            .filter(**date_filter) \
-            .filter(user_id__in=user_ids) \
-            .extra({'date': "date(%s)" % date_field}) \
-            .values('user_id', 'date') \
-            .annotate(Count('user_id'))
-
-        user_map = dict([(user.get('user_id'), i) for (i, user) in enumerate(users_data["combined_users"])])
-        date_map = dict([(date.strftime(DATE_FORMAT), i+1) for (i,date) in enumerate(self.dates)])
-        rows = [[0]*(2+len(date_map)) for _tmp in range(len(users_data["combined_users"]))]
-        total_row = [0]*(2+len(date_map))
-
-        for result in results:
-            date = result['date'].isoformat()
-            date_key = date_map.get(date, None)
-            rows[user_map[result['user_id']]][date_key] = result['user_id__count']
-
-        for i, user in enumerate(users_data["combined_users"]):
-            rows[i][0] = self.get_user_link(user)
-            total = sum(rows[i][1:-1])
-            rows[i][-1] = total
-            total_row[1:-1] = [total_row[ind+1]+val for ind, val in enumerate(rows[i][1:-1])]
-            total_row[-1] += total
-
-        total_row[0] = _("All Users")
-        self.total_row = total_row
-
-        for row in rows:
-            row[1:] = [self.table_cell(val) for val in row[1:]]
-        return rows
 
 
 class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin):
