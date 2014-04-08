@@ -323,7 +323,9 @@ def get_fixtures(request, domain, user_id, fixture_id=None):
 @cloudcare_api
 def get_sessions(request, domain):
     # is it ok to pull user from the request? other api calls seem to have an explicit 'user' param
-    return json_response(get_open_form_sessions(request.user))
+    skip = request.GET.get('skip') or 0
+    limit = request.GET.get('limit') or 10
+    return json_response(get_open_form_sessions(request.user, skip=skip, limit=limit))
 
 
 @cloudcare_api

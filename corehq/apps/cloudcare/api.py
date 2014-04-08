@@ -365,7 +365,7 @@ def get_cloudcare_app(domain, app_name):
         raise ResourceNotFound(_("Not found application by name: %s") % app_name)
 
 
-def get_open_form_sessions(user, limit=10):
+def get_open_form_sessions(user, skip=0, limit=10):
     def session_to_json(sess):
         return {
             'id': sess.session_id,
@@ -380,4 +380,4 @@ def get_open_form_sessions(user, limit=10):
     return [session_to_json(sess) for sess in EntrySession.objects.filter(
         last_activity_date__isnull=False,
         user=user,
-    ).order_by('-last_activity_date')[:limit]]
+    ).order_by('-last_activity_date')[skip:limit]]
