@@ -173,7 +173,7 @@ def export_data(req, domain):
     else:
         try:
             resp = export_data_shared([domain, export_tag], **kwargs)
-        except UnsupportedExportFormat as e:
+        except Exception as e:
             return HttpResponseBadRequest(e)
     if resp:
         return resp
