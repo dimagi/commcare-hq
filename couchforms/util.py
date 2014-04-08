@@ -418,7 +418,8 @@ class SubmissionPost(object):
         try:
             lock_manager = create_and_lock_xform(self.instance,
                                                  attachments=self.attachments,
-                                                 process=process)
+                                                 process=process,
+                                                 domain=self.domain)
         except SubmissionError as e:
             logging.exception(
                 u"Problem receiving submission to %s. %s" % (
