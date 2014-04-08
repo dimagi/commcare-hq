@@ -1340,7 +1340,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         self.user_data              = old_couch_user.default_account.user_data
 
     @classmethod
-    def create(cls, domain, username, password, email=None, uuid='', date='', phone_number=None, **kwargs):
+    def create(cls, domain, username, password, email=None, uuid='', date='', phone_number=None, commit=True,
+               **kwargs):
         """
         used to be a function called `create_hq_user_from_commcare_registration_info`
 
@@ -1359,7 +1360,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         commcare_user.domain_membership = DomainMembership(domain=domain, **kwargs)
 
-        commcare_user.save(**get_safe_write_kwargs())
+        if commit:
+            commcare_user.save(**get_safe_write_kwargs())
 
         return commcare_user
 
