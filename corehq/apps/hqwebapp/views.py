@@ -293,6 +293,8 @@ def _login(req, domain, domain_type, template_name, domain_context=None):
     req.base_template = settings.BASE_TEMPLATE
     context = domain_context or get_domain_context(domain_type)
     context['domain'] = domain
+    if domain:
+        context['next'] = req.REQUEST.get('next', '/a/%s/' % domain)
 
     return django_login(req, template_name=template_name,
                         authentication_form=EmailAuthenticationForm if not domain else CloudCareAuthenticationForm,
