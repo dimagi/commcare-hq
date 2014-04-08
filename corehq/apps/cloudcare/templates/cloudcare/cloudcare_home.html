@@ -51,6 +51,7 @@
         var apps = {{ apps|JSON }};
         var initialApp = {{ app|JSON }};
         var initialCase = {{ case|JSON }};
+        var sessionsEnabled = {{ sessions_enabled|JSON }};
         window.mainView = new cloudCare.AppMainView({
 			apps: apps,
 			language: language,
@@ -60,7 +61,8 @@
 			sessionUrlRoot: sessionUrlRoot,
 			submitUrlRoot: submitUrlRoot,
 			initialApp: initialApp,
-			initialCase: initialCase
+			initialCase: initialCase,
+            sessionsEnabled: sessionsEnabled
         });
         // TODO: when we figure out what to do about get params, use this
         Backbone.history.start({pushState: true, root: urlRoot});
@@ -91,13 +93,16 @@
 {% endblock %}
 
 {% block sidebar %}
+{% if sessions_enabled %}
     <div id="save-indicator" class="alert" style="display: none;"></div>
+{% endif %}
     <section id="app-main" >
         <nav id="app-list" ></nav>
         <nav id="module-list" ></nav>
         <nav id="form-list" ></nav>
+{% if sessions_enabled %}
         <nav id="sessions"></nav>
-
+{% endif %}
         <!-- keep this well-hidden for now -->
         <nav id="debug-opts" style="display: none;">
           <ul class="nav nav-list">

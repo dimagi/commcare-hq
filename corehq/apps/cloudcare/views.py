@@ -137,6 +137,7 @@ def cloudcare_main(request, domain, urlPath):
        "preview": preview,
        "maps_api_key": settings.GMAPS_API_KEY,
        'offline_enabled': toggles.OFFLINE_CLOUDCARE.enabled(request.user.username),
+       'sessions_enabled': request.couch_user.is_commcare_user()
     }
     context.update(_url_context())
     return render(request, "cloudcare/cloudcare_home.html", context)

@@ -733,6 +733,7 @@ cloudCare.AppMainView = Backbone.View.extend({
         self._selectedCase = null;
         self._navEnabled = true;
         self.router = new cloudCare.AppNavigation();
+        self._sessionsEnabled = self.options.sessionsEnabled;
 
         // set initial data, if any
         if (self.options.initialApp) {
@@ -758,10 +759,19 @@ cloudCare.AppMainView = Backbone.View.extend({
         });
 
         // fetch session list here
-        self.sessionListView = new cloudCare.SessionListView({
-            sessionUrl: self.options.sessionUrlRoot
-        });
+        if (self._sessionsEnabled) {
+            self.sessionListView = new cloudCare.SessionListView({
+                sessionUrl: self.options.sessionUrlRoot
+            });
+            cloudCare.dispatch.on(
+                'app:selected app:deselected module:selected module:deselected form:selected form:deselected form:submitted',
+                function (e, f) {
+                    self.sessionListView.reset();
+                }
+            );
 
+
+        }
         cloudCare.dispatch.on("app:selected", function (app) {
             self.navigate("view/" + app.model.id);
             self.selectApp(app.model.id);
@@ -771,14 +781,6 @@ cloudCare.AppMainView = Backbone.View.extend({
             self.navigate("");
             self.selectApp(null);
         });
-        cloudCare.dispatch.on(
-            'app:selected app:deselected module:selected module:deselected form:selected form:deselected form:submitted',
-            function (e, f) {
-                console.log('resetting', e, f);
-                self.sessionListView.reset();
-            }
-        );
-
         // utilities
         var selectApp = function (appId) {
             self.appListView.getAppView(appId).select();
