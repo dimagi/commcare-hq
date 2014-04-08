@@ -771,18 +771,20 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         return couch_user
 
     @classmethod
-    def es_fakes(cls, domain, fields=None, start_at=None, size=None, wrap=True):
+    def es_fakes(cls, domain, fields=None, start_at=None, size=None, wrap=True, order=None):
         """
         Get users from ES.  Use instead of by_domain()
         This is faster than big db calls, but only returns partial data.
         Set wrap to False to get a raw dict object (much faster).
         This raw dict can be passed to _report_user_dict.
         The save method has been disabled.
+        sort_order accepts "asc" or "desc"
         """
         fields = fields or ['_id', 'username', 'first_name', 'last_name',
                 'doc_type', 'is_active', 'email']
+        sort_params = {'sort_by': 'username.exact', 'order': order} if order else {}
         raw = es_wrapper('users', domain=domain, doc_type=cls.__name__,
-                fields=fields, start_at=start_at, size=size)
+                fields=fields, start_at=start_at, size=size, **sort_params)
         if not wrap:
             return raw
         def save(*args, **kwargs):
