@@ -208,9 +208,6 @@ cloudCare.SessionList = Backbone.Collection.extend({
     setUrl: function (url) {
         this.sessionUrl = url;
     }
-    // TODO need to filter by form id
-    // a) what is the best way to identify a form? it has to be with
-    //    information available to touchforms
 });
 
 cloudCare.SessionListView = Backbone.View.extend({
