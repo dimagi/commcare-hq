@@ -3,7 +3,7 @@ django-devserver>=0.7.0
 coverage
 guppy
 werkzeug
-line_profiler
+line_profiler==1.0b3
 git+git://github.com/dimagi/couchdbkit-debugpanel.git
 Fabric==1.4.3
 Sphinx==1.2b1
