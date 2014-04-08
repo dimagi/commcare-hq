@@ -485,7 +485,6 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             subscriber__domain=self.domain.name,
             date_start__gt=self.date_start
         ).order_by('date_start')
-        print "later subs?", later_subs.count()
         if later_subs.exists():
             next_subscription = later_subs[0]
             plan_desc = next_subscription.plan_version.user_facing_description
