@@ -12,7 +12,7 @@ install:
  - "lsb_release -a"
  - "sudo apt-get install moreutils libblas-dev liblapack-dev"
  - "bash -ex .travis/upgrade-couchdb.sh | ts"
- - "git clone https://github.com/dimagi/commcarehq-venv.git"
+ - "git clone https://github.com/dimagi/commcarehq-venv.git --branch update-venv"
  - "cp -r commcarehq-venv/hq_env/* ~/virtualenv/"
  - "source ~/virtualenv/bin/activate"
  - "time (bash -e scripts/uninstall-requirements.sh | ts)"
