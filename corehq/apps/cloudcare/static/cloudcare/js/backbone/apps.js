@@ -1009,6 +1009,7 @@ cloudCare.AppMainView = Backbone.View.extend({
     },
     playSession: function (session) {
         var self = this;
+        self.clearForms()
         self.selectApp(session.get('app_id'), {async: false});
         self.appView.playSession(session);
     },
