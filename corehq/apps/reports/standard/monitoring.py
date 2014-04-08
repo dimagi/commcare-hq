@@ -663,6 +663,56 @@ class DailyFormStatsReportSQL(DailyFormStatsReport):
         return [first_col] + date_cols + [sum(date_cols)]
 
 
+class DailyFormStatsReportSQL(DailyFormStatsReport):
+    slug = "daily_form_stats_sql"
+    name = ugettext_noop("Daily Form Activity (SQL)")
+
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return user and user.is_previewer()
+
+    @property
+    def rows(self):
+        startdate = self.datespan.startdate_utc if self.by_submission_time else self.datespan.startdate
+        enddate = self.datespan.enddate_utc if self.by_submission_time else self.datespan.enddate_adjusted
+        date_field = 'received_on' if self.by_submission_time else 'time_end'
+        date_filter = {'%s__range' % date_field: (startdate, enddate)}
+
+        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
+        user_ids = [user.get('user_id') for user in users_data["combined_users"]]
+        results = FormData.objects \
+            .filter(doc_type='XFormInstance') \
+            .filter(**date_filter) \
+            .filter(user_id__in=user_ids) \
+            .extra({'date': "date(%s)" % date_field}) \
+            .values('user_id', 'date') \
+            .annotate(Count('user_id'))
+
+        user_map = dict([(user.get('user_id'), i) for (i, user) in enumerate(users_data["combined_users"])])
+        date_map = dict([(date.strftime(DATE_FORMAT), i+1) for (i,date) in enumerate(self.dates)])
+        rows = [[0]*(2+len(date_map)) for _tmp in range(len(users_data["combined_users"]))]
+        total_row = [0]*(2+len(date_map))
+
+        for result in results:
+            date = result['date'].isoformat()
+            date_key = date_map.get(date, None)
+            rows[user_map[result['user_id']]][date_key] = result['user_id__count']
+
+        for i, user in enumerate(users_data["combined_users"]):
+            rows[i][0] = self.get_user_link(user)
+            total = sum(rows[i][1:-1])
+            rows[i][-1] = total
+            total_row[1:-1] = [total_row[ind+1]+val for ind, val in enumerate(rows[i][1:-1])]
+            total_row[-1] += total
+
+        total_row[0] = _("All Users")
+        self.total_row = total_row
+
+        for row in rows:
+            row[1:] = [self.table_cell(val) for val in row[1:]]
+        return rows
+
+
 class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin):
     name = ugettext_noop("Form Completion Time")
     slug = "completion_times"
