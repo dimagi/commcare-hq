@@ -53,15 +53,15 @@
         var initialCase = {{ case|JSON }};
         var sessionsEnabled = {{ sessions_enabled|JSON }};
         window.mainView = new cloudCare.AppMainView({
-			apps: apps,
-			language: language,
-			urlRoot: urlRoot,
-			appUrlRoot: appUrlRoot,
-			caseUrlRoot: caseUrlRoot,
-			sessionUrlRoot: sessionUrlRoot,
-			submitUrlRoot: submitUrlRoot,
-			initialApp: initialApp,
-			initialCase: initialCase,
+            apps: apps,
+            language: language,
+            urlRoot: urlRoot,
+            appUrlRoot: appUrlRoot,
+            caseUrlRoot: caseUrlRoot,
+            sessionUrlRoot: sessionUrlRoot,
+            submitUrlRoot: submitUrlRoot,
+            initialApp: initialApp,
+            initialCase: initialCase,
             sessionsEnabled: sessionsEnabled
         });
         // TODO: when we figure out what to do about get params, use this
