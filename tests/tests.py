@@ -464,7 +464,6 @@ class Test(TestCase):
         expected = [
             (u'123', date(1, 1, 1), u'mock', u'test_owner', None, None, None, None, None, 2, None, 1),
             (u'123', date(2013, 1, 1), u'abc', u'123', None, None, 2, None, 1, None, None, None),
-            (u'123', date(2012, 9, 24), u'mock', u'test_owner', 3, None, None, None, None, None, 1, None),
             (u'123', date(2012, 9, 23), u'mock', u'test_owner', 5, None, None, None, None, None, 1, None),
             (u'123', date(1, 1, 1), u'abc', u'xyz', None, None, None, 1, None, None, None, None),
             (u'123', date(2013, 1, 1), u'abc', u'xyz', None, 3, None, None, None, None, None, None),

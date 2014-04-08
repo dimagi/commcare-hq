@@ -588,12 +588,17 @@ class IndicatorDocument(schema.Document):
         names = ['doc_id'] + self.get_group_names() + ['date']
         connection = engine.connect()
         try:
+            # delete all existing rows for this doc to ensure we aren't left with stale data
+            delete = self._table.delete(self._table.c.doc_id == self.id)
+            connection.execute(delete)
+
             for key, columns in rows.items():
                 key_columns = dict(zip(names, key))
                 for name, value in key_columns.items():
                     if value is None:
                         key_columns[name] = util.default_null_value_placeholder(types[name])
                 all_columns = dict(key_columns.items() + columns.items())
+
                 try:
                     insert = self._table.insert().values(**all_columns)
                     connection.execute(insert)
