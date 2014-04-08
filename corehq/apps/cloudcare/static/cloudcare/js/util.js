@@ -104,6 +104,26 @@ var showLoading = function (selector) {
     $(selector).show();
 };
 
+var tfLoading = function (selector) {
+    showLoading();
+    $('#save-indicator').text('saving...').removeClass('alert-success alert-error').addClass('alert-warning');
+}
+
+var hideLoading = function (selector) {
+    selector = selector || "#loading";
+    $(selector).hide();
+};
+
+var tfLoadingComplete = function (isError) {
+    hideLoading();
+    if (isError) {
+        $('#save-indicator').text('error saving!').removeClass('alert-warning alert-success').addClass('alert-error');
+    } else {
+        $('#save-indicator').text('all changes saved!').removeClass('alert-warning alert-error').addClass('alert-success');
+    }
+
+}
+
 var hideLoading = function (selector) {
     selector = selector || "#loading";
     $(selector).hide();

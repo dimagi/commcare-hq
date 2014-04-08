@@ -637,7 +637,10 @@ cloudCare.AppView = Backbone.View.extend({
         var loadSession = function() {
             var sess = new WebFormSession(data);
             // TODO: probably shouldn't hard code these divs
-            sess.load($('#webforms'), $('#loading'), self.options.language);
+            sess.load($('#webforms'), self.options.language, {
+                onLoading: tfLoading,
+                onLoadingComplete: tfLoadingComplete
+            });
         };
         var promptForOffline = function(show) {
             $('#offline-prompt')[show ? 'show' : 'hide']();

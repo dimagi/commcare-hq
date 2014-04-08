@@ -20,6 +20,12 @@ $.fn.inlineTouchform = function (options) {
         dataType: "json",
         success: function (data) {
             var loading = $("<div>Loading...</div>").appendTo($target);
+            var onLoading = function () {
+                loading.show();
+            };
+            var onLoadingComplete = function () {
+                loading.hide();
+            };
             $target.show();
             
             data.session_data = $.extend(data.session_data, options.sessionData);
@@ -45,7 +51,10 @@ $.fn.inlineTouchform = function (options) {
                 }
             });
             var sess = new WebFormSession(data);
-            sess.load($target, loading, options.lang);
+            sess.load($target, options.lang, {
+                onLoading: onLoading,
+                onLoadingComplete: onLoadingComplete
+            });
         }
     });
 };
