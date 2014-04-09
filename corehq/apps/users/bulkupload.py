@@ -17,6 +17,7 @@ from dimagi.utils.excel import flatten_json, json_to_headers, \
     alphanumeric_sort_key
 from corehq.apps.commtrack.util import get_supply_point, submit_mapping_case_block
 from corehq.apps.commtrack.models import CommTrackUser, SupplyPointCase
+from soil import DownloadBase
 
 
 class UserUploadError(Exception):
@@ -232,17 +233,24 @@ def create_or_update_groups(domain, group_specs, log):
     return group_memoizer
 
 
-def create_or_update_users_and_groups(domain, user_specs, group_specs, location_specs):
+def create_or_update_users_and_groups(domain, user_specs, group_specs, location_specs, task=None):
     ret = {"errors": [], "rows": []}
+    total = len(user_specs) + len(group_specs) + len(location_specs)
+    def _set_progress(progress):
+        if task is not None:
+            DownloadBase.set_progress(task, progress, total)
+
     group_memoizer = create_or_update_groups(domain, group_specs, log=ret)
+    current = len(group_specs)
+
     usernames = set()
     user_ids = set()
-
     allowed_groups = set(group_memoizer.groups)
     allowed_group_names = [group.name for group in allowed_groups]
-
     try:
         for row in user_specs:
+            _set_progress(current)
+            current += 1
             data, email, group_names, language, name, password, phone_number, user_id, username = (
                 row.get(k) for k in sorted(allowed_headers)
             )
@@ -361,7 +369,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
             ret['errors'].append(_error_message)
 
     create_or_update_locations(domain, location_specs, log=ret)
-
+    _set_progress(total)
     return ret
 
 
