@@ -1057,6 +1057,15 @@ class SoftwarePlanVersionForm(forms.Form):
                 rate_instances.append(self._retrieve_feature_rate(rate_form))
         if errors:
             self._errors.setdefault('feature_rates', errors)
+
+        required_types = dict(FeatureType.CHOICES).keys()
+        feature_types = [r.feature.feature_type for r in rate_instances]
+        if any([feature_types.count(t) != 1 for t in required_types]):
+            raise ValidationError(
+                "You must specify exactly one rate per feature type "
+                "(SMS, USER, etc.)"
+            )
+
         self.new_feature_rates = rate_instances
         rate_ids = lambda x: set([r.id for r in x])
         if (not self.is_update
@@ -1070,6 +1079,8 @@ class SoftwarePlanVersionForm(forms.Form):
         rates = json.loads(original_data)
         rate_instances = []
         errors = ErrorList()
+        if not rates:
+            raise ValidationError("You must specify at least one product rate.")
         for rate_data in rates:
             rate_form = ProductRateForm(rate_data)
             if not rate_form.is_valid():
@@ -1078,6 +1089,15 @@ class SoftwarePlanVersionForm(forms.Form):
                 rate_instances.append(self._retrieve_product_rate(rate_form))
         if errors:
             self._errors.setdefault('product_rates', errors)
+
+        available_types = dict(SoftwareProductType.CHOICES).keys()
+        product_types = [r.product.product_type for r in rate_instances]
+        if any([product_types.count(p) > 1 for p in available_types]):
+            raise ValidationError(
+                "You may have at most ONE rate per product type "
+                "(CommCare, CommTrack, etc.)"
+            )
+        
         self.new_product_rates = rate_instances
         rate_ids = lambda x: set([r.id for r in x])
         if (not self.is_update
