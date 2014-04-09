@@ -1,5 +1,7 @@
-from django.db.models import signals
+from couchdbkit.ext.django import syncdb
+from django.db.models import signals, get_app
 import os
+from south.signals import post_migrate
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch import sync_docs
 
@@ -29,4 +31,8 @@ def copy_designs(db=None, temp='tmp', delete=True):
         sync_docs.copy_designs(db, app_label, temp=temp, delete=delete)
 
 
+def sync_south_app(app, **kwargs):
+    syncdb(get_app(app), None, **kwargs)
+
 signals.post_syncdb.connect(catch_signal)
+post_migrate.connect(sync_south_app)
