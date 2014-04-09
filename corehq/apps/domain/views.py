@@ -4,6 +4,7 @@ import logging
 import uuid
 from couchdbkit import ResourceNotFound
 import dateutil
+from django.core.paginator import Paginator
 from django.utils.dates import MONTHS
 from django.views.generic import View
 from casexml.apps.case.mock import CaseBlock
@@ -688,12 +689,6 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
     loading_message = ugettext_noop("Loading statements...")
 
     @property
-    def page_context(self):
-        return {
-            'statements': list(self.statements),
-        }
-
-    @property
     def parameters(self):
         return self.request.POST if self.request.method == 'POST' else self.request.GET
 
@@ -708,13 +703,16 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
         invoices = Invoice.objects.filter(subscription__subscriber__domain=self.domain)
         if not self.show_hidden:
             invoices = invoices.filter(is_hidden=False)
-        return invoices.order_by('-date_start', '-date_end').all()
+        return invoices.order_by('-date_start', '-date_end')
 
     @property
     def total(self):
-        return Invoice.objects.filter(
-            subscription__subscriber__domain=self.domain, is_hidden=False
-        ).count()
+        return self.paginated_invoices.count
+
+    @property
+    @memoized
+    def paginated_invoices(self):
+        return Paginator(self.invoices, self.limit)
 
     @property
     def column_names(self):
@@ -733,7 +731,7 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
 
     @property
     def paginated_list(self):
-        for invoice in self.invoices:
+        for invoice in self.paginated_invoices.page(self.page).object_list:
             try:
                 last_billing_record = BillingRecord.objects.filter(
                     invoice=invoice
