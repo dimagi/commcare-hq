@@ -43,7 +43,7 @@ class XFormInstanceResource(SimpleSortableResourceMixin, v0_3.XFormInstanceResou
     domain = fields.CharField(attribute='domain')
 
     cases = UseIfRequested(ToManyDocumentsField('corehq.apps.api.resources.v0_4.CommCareCaseResource',
-                                                attribute=lambda xform: [dict_object(case.get_json()) for case in casexml_xform.cases_referenced_by_xform(xform)]))
+                                                attribute=lambda xform: casexml_xform.cases_referenced_by_xform(xform)))
 
     is_phone_submission = fields.BooleanField(readonly=True)
 
