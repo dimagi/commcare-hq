@@ -20,3 +20,5 @@ CT_LEDGER_PREFIX = 'ledger:'
 CT_LEDGER_STOCK = 'stock'
 CT_LEDGER_REQUESTED = 'ct-requested'
 CT_LEDGER_APPROVED = 'ct-approved'
+
+ATTACHMENT_PREFIX = 'attachment:'

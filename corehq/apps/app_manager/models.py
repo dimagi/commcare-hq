@@ -917,7 +917,18 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
 
     def get_case_updates(self, case_type):
         if self.get_module().case_type == case_type:
-            return self.actions.update_case.update.keys()
+            try:
+                valid_paths = dict((question['value'], question['tag'])
+                                   for question in self.get_questions(langs=[]))
+            except XFormError as e:
+                # punt on invalid xml (sorry, no rich attachments)
+                valid_paths = {}
+            def format_key(key, path):
+                if valid_paths.get(path) == "upload":
+                    return u"{}{}".format(ATTACHMENT_PREFIX, key)
+                return key
+            return [format_key(*item)
+                    for item in self.actions.update_case.update.items()]
 
         return []
 
