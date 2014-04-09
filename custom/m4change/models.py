@@ -385,6 +385,7 @@ class FixtureReportResult(Document, QueryMixin):
     end_date = DateProperty()
     report_slug = StringProperty()
     rows = DictProperty()
+    name = StringProperty()
 
     class Meta:
         app_label = "m4change"
@@ -410,10 +411,10 @@ class FixtureReportResult(Document, QueryMixin):
         return True
 
     @classmethod
-    def save_result(cls, domain, location_id, start_date, end_date, report_slug, rows):
+    def save_result(cls, domain, location_id, start_date, end_date, report_slug, rows, name):
         if not cls._validate_params([domain, location_id, report_slug]) \
                 or not isinstance(rows, dict) or len(rows) == 0 \
                 or not isinstance(start_date, date) or not isinstance(end_date, date):
             return
         FixtureReportResult(domain=domain, location_id=location_id, start_date=start_date, end_date=end_date,
-                            report_slug=report_slug, rows=rows).save()
+                            report_slug=report_slug, rows=rows, name=name).save()

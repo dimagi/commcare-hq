@@ -13,7 +13,6 @@ import settings
 
 @periodic_task(run_every=crontab(hour="0", minute="0", day_of_week="*"), queue=getattr(settings, "CELERY_PERIODIC_QUEUE", "celery"))
 def generate_fixtures():
-    print("run")
 
     # A hack to get around the fact that syncdb does not work on South-enabled apps
     dir = os.path.abspath(os.path.dirname(__file__))
@@ -52,5 +51,5 @@ def generate_fixtures():
 
                 for report_slug in report_data:
                     rows = report_data[report_slug].get("data", [])
-                    FixtureReportResult.save_result(domain, location_id, date[0].date(), date[1].date(), report_slug, rows)
-    print("ran")
+                    name = report_data[report_slug].get("name")
+                    FixtureReportResult.save_result(domain, location_id, date[0].date(), date[1].date(), report_slug, rows, name)
