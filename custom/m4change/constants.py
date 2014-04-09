@@ -1,3 +1,4 @@
+from django.utils.translation import ugettext_lazy as _
 
 M4CHANGE_DOMAINS = ('m4change', 'test-pathfinder')
 
@@ -60,3 +61,9 @@ PNC_CHILD_IMMUNIZATION_AND_REG_HOME_DELIVERED_FORMS = PNC_CHILD_IMMUNIZATION_FOR
                                                       REG_HOME_DELIVERED_INFANT_FORM_XMLNS
 
 EMPTY_FIELD = "---"
+
+REJECTION_REASON_DISPLAY_NAMES = {
+    "phone_number": _("Incorrect phone number"),
+    "double": _("Double entry"),
+    "other": _("Other errors")
+}
