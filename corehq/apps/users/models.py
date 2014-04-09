@@ -28,7 +28,7 @@ from casexml.apps.phone.models import User as CaseXMLUser
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.domain.utils import normalize_domain_name, domain_restricts_superusers
 from corehq.apps.domain.models import LicenseAgreement
-from corehq.apps.users.util import normalize_username, user_data_from_registration_form, format_username, raw_username
+from corehq.apps.users.util import normalize_username, user_data_from_registration_form
 from corehq.apps.users.xml import group_fixture
 from corehq.apps.users.tasks import tag_docs_as_deleted
 from corehq.apps.sms.mixin import CommCareMobileContactMixin, VerifiedNumber, PhoneNumberInUseException, InvalidFormatException
@@ -824,9 +824,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         return self._id
 
     user_id = userID
-
-    class Meta:
-        app_label = 'users'
 
     def __unicode__(self):
         return "<%s '%s'>" % (self.__class__.__name__, self.get_id)
