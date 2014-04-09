@@ -1155,6 +1155,11 @@ class StockReport(object):
 
 
 class CommTrackUser(CommCareUser):
+    class Meta:
+        # This is necessary otherwise syncdb will confuse this app with users
+        app_label = "commtrack"
+
+
     @classmethod
     def wrap(cls, data):
         # lazy migration from commtrack_location to locations
