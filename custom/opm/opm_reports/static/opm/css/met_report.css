@@ -1,13 +1,2 @@
-.table tr {
-    line-height: 40px !important;
-    font-size: 30px;
-}
-
-.table td {
-    line-height: 40px !important;
-}
-
-.img-report {
-    display: block;
-    max-width: 100px !important;
-}
+th { font-size: 26px; }
+td { font-size: 24px; }

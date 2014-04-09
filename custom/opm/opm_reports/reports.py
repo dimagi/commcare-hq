@@ -10,6 +10,8 @@ import datetime
 import re
 from couchdbkit.exceptions import ResourceNotFound
 from dateutil import parser
+from django.utils.translation import ugettext_noop
+import simplejson
 from sqlagg.columns import SimpleColumn, SumColumn
 from corehq.apps.reports.cache import request_cache
 from django.http import HttpResponse
@@ -18,10 +20,13 @@ from corehq.apps.reports.filters.dates import DatespanFilter
 
 from corehq.apps.reports.sqlreport import SqlTabularReport, DatabaseColumn, SqlData, SummingSqlTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin, DatespanMixin
-from corehq.apps.reports.filters.select import SelectOpenCloseFilter
-from corehq.apps.reports.standard.cases.basic import CaseListReport
-from corehq.apps.users.models import CommCareCase
+from corehq.apps.reports.filters.select import SelectOpenCloseFilter, MonthFilter, YearFilter
+from corehq.apps.users.models import CommCareCase, CouchUser
 from dimagi.utils.dates import DateSpan
+from corehq.elastic import es_query
+from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
+from custom.opm.opm_reports.conditions_met import ConditionsMet
+from custom.opm.opm_reports.filters import SelectBlockFilter, GramPanchayatFilter
 from custom.opm.opm_reports.health_status import HealthStatus
 
 from ..opm_tasks.models import OpmReportSnapshot
@@ -29,6 +34,7 @@ from .beneficiary import Beneficiary
 from .incentive import Worker
 from .constants import *
 from .filters import BlockFilter, AWCFilter
+import logging
 
 
 class OpmCaseSqlData(SqlData):
@@ -304,7 +310,7 @@ class BaseReport(MonthYearMixin, SqlTabularReport, CustomProjectReport):
         if filter_fields is None:
             filter_fields = [('awc_name', 'awcs'), ('block', 'blocks')]
         for key, field in filter_fields:
-            keys = self.filter_data.get(field, []) 
+            keys = self.filter_data.get(field, [])
             if keys and fn(key) not in keys:
                 raise InvalidRow
 
@@ -469,7 +475,7 @@ def get_report(ReportClass, month=None, year=None):
         @property
         def month(self):
             return month
-            
+
         @property
         def year(self):
             return year
@@ -590,4 +596,101 @@ def calculate_total_row(rows):
                     total_row.append('')
 
     return total_row
+
+class MetReport(BaseReport):
+    name = ugettext_noop("Conditions Met Report")
+    report_template_path = "opm/met_report.html"
+    slug = "met_report"
+    model = ConditionsMet
+    exportable = False
+    default_case_type = "Pregnancy"
+
+    @property
+    def block(self):
+        block = self.request_params.get("block")
+        if block:
+            return block
+        else:
+            return 'atri'
+
+
+    @property
+    def fields(self):
+        return [
+            SelectBlockFilter,
+            AWCFilter,
+            GramPanchayatFilter,
+            MonthFilter,
+            YearFilter,
+            SelectOpenCloseFilter
+        ]
+
+    @property
+    def headers(self):
+        if self.snapshot is not None:
+            return DataTablesHeader(*[
+                DataTablesColumn(header) for header in self.snapshot.headers
+            ])
+        return DataTablesHeader(*[
+            DataTablesColumn(header) for method, header in self.model.method_map[self.block.lower()]
+        ])
+
+    @property
+    def rows(self):
+        if self.snapshot is not None:
+            return self.snapshot.rows
+        rows = []
+        for row in self.row_objects:
+            rows.append([getattr(row, method) for
+                method, header in self.model.method_map[self.block.lower()]])
+        return rows
+
+    def filter(self, fn, filter_fields=None):
+        for key, field in filter_fields:
+            case_key = fn(key)['#value'] if isinstance(fn(key), dict) else fn(key)
+            keys = self.filter_data.get(field, [])
+            if keys and field == 'is_open':
+                if case_key != (keys == 'closed'):
+                    raise InvalidRow
+            else:
+                if keys and field == 'gp':
+                    gps = keys
+                    users = CouchUser.by_domain(self.domain)
+                    keys = [user._id for user in users if 'user_data' in user and 'gp' in user.user_data and user.user_data['gp'] in gps]
+                if keys and case_key not in keys:
+                    raise InvalidRow
+
+    def get_rows(self, datespan):
+        block = self.block
+        q = {
+            "query": {
+                "bool": {
+                    "must": [
+                        {"match": {"domain.exact": self.domain}},
+                        {'match': {'block_name.#value': block}}
+                    ],
+                    "must_not": []
+                }
+            }
+        }
+        query = q['query']['bool']['must']
+        if self.default_case_type:
+            query.append({"match": {"type.exact": self.default_case_type}})
+        logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, simplejson.dumps(q)))
+        return es_query(q=q, es_url=REPORT_CASE_INDEX + '/_search', dict_only=False)['hits'].get('hits', [])
+
+
+    def get_row_data(self, row):
+        return self.model(row, self)
+
+    @property
+    @request_cache("raw")
+    def print_response(self):
+        """
+        Returns the report for printing.
+        """
+        self.is_rendered_as_email = True
+        self.use_datatables = False
+        self.override_template = "opm/print_report.html"
+        return HttpResponse(self._async_context()['report'])
 

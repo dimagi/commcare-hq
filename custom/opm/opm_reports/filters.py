@@ -30,7 +30,7 @@ class SelectBlockFilter(BaseSingleOptionFilter):
 
     @property
     def options(self):
-        return [('atri', 'Atri'), ('wazirganj', 'Wazirganj')]
+        return [('Atri', 'Atri'), ('Wazirganj', 'Wazirganj')]
 
 
 class GramPanchayatFilter(BaseSingleOptionFilter):

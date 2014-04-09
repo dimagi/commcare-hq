@@ -6,6 +6,7 @@ import logging
 from celery.task import periodic_task
 from celery.schedules import crontab
 from django.conf import settings
+from custom.opm.opm_reports.reports import MetReport
 
 from ..opm_reports.reports import (BeneficiaryPaymentReport,
     IncentivePaymentReport, get_report, last_if_none)
@@ -41,7 +42,7 @@ def save_report(ReportClass, month=None, year=None):
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery')
 )
 def snapshot():
-    for report in [IncentivePaymentReport, BeneficiaryPaymentReport]:
+    for report in [IncentivePaymentReport, BeneficiaryPaymentReport, MetReport]:
         snapshot = save_report(report)
         msg = "Saving {0} to doc {1}".format(report.__name__, snapshot._id)
         logging.info(msg)
