@@ -221,7 +221,7 @@ class RepeatRecord(Document, LockableMixIn):
 
     @classmethod
     def wrap(cls, data):
-        for attr in ('last_checked', 'next_checked'):
+        for attr in ('last_checked', 'next_check'):
             value = data.get(attr)
             if not value:
                 continue
