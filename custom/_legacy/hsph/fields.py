@@ -28,17 +28,17 @@ class SiteField(ReportField):
         cls.domain = domain or cls.domain
         facs = dict()
         data_type = FixtureDataType.by_domain_tag(cls.domain, 'site').first()
-        fixtures = FixtureDataItem.by_data_type(cls.domain, data_type.get_id)
+        fixtures = FixtureDataItem.by_data_type(cls.domain, data_type.get_id_without_attributes)
         for fix in fixtures:
-            region = fix.fields.get("region_id")
-            district = fix.fields.get("district_id")
-            site = fix.fields.get("site_number")
+            region = fix.fields_without_attributes.get("region_id")
+            district = fix.fields_without_attributes.get("district_id")
+            site = fix.fields_without_attributes.get("site_number")
             if region not in facs:
-                facs[region] = dict(name=fix.fields.get("region_name"), districts=dict())
+                facs[region] = dict(name=fix.fields_without_attributes.get("region_name"), districts=dict())
             if district not in facs[region]["districts"]:
-                facs[region]["districts"][district] = dict(name=fix.fields.get("district_name"), sites=dict())
+                facs[region]["districts"][district] = dict(name=fix.fields_without_attributes.get("district_name"), sites=dict())
             if site not in facs[region]["districts"][district]["sites"]:
-                facs[region]["districts"][district]["sites"][site] = dict(name=fix.fields.get("site_name"))
+                facs[region]["districts"][district]["sites"][site] = dict(name=fix.fields_without_attributes.get("site_name"))
         return facs
 
 
@@ -98,7 +98,7 @@ class NameOfDCTLField(ReportSelectField):
     def get_dctl_list(cls):
         data_type = FixtureDataType.by_domain_tag(cls.domain, 'dctl').first()
         data_items = FixtureDataItem.by_data_type(cls.domain, data_type.get_id if data_type else None)
-        return [dict(text=item.fields.get("name"), val=item.fields.get("id")) for item in data_items]
+        return [dict(text=item.fields_without_attributes.get("name"), val=item.fields_without_attributes.get("id")) for item in data_items]
 
     @classmethod
     def get_users_per_dctl(cls):
@@ -106,7 +106,7 @@ class NameOfDCTLField(ReportSelectField):
         data_type = FixtureDataType.by_domain_tag(cls.domain, 'dctl').first()
         data_items = FixtureDataItem.by_data_type(cls.domain, data_type.get_id if data_type else None)
         for item in data_items:
-            dctls[item.fields.get("id")] = item.get_users(wrap=False)
+            dctls[item.fields_without_attributes.get("id")] = item.get_users(wrap=False)
         return dctls
 
 
@@ -163,12 +163,12 @@ class IHForCHFField(ReportSelectField):
         data_type = FixtureDataType.by_domain_tag(domain, 'site').first()
         data_items = FixtureDataItem.by_data_type(domain, data_type.get_id)
         for item in data_items:
-            ihf_chf = item.fields.get("ihf_chf", "").lower()
+            ihf_chf = item.fields_without_attributes.get("ihf_chf", "").lower()
             if ihf_chf == 'ifh':  # typo in some test data
                 ihf_chf = 'ihf'
 
             try:
-                facilities[ihf_chf].append(item.fields)
+                facilities[ihf_chf].append(item.fields_without_attributes)
             except KeyError:
                 # there's a site fixture item without an IHF/CHF value
                 pass
@@ -237,4 +237,4 @@ class FacilityField(ReportSelectField):
         domain = domain or cls.domain
         data_type = FixtureDataType.by_domain_tag(domain, 'site').first()
         data_items = FixtureDataItem.by_data_type(domain, data_type.get_id)
-        return [dict(text=item.fields.get("site_name"), val=item.fields.get("site_id")) for item in data_items]
+        return [dict(text=item.fields_without_attributes.get("site_name"), val=item.fields_without_attributes.get("site_id")) for item in data_items]

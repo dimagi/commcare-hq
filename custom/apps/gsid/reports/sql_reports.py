@@ -55,15 +55,15 @@ class GSIDSQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin)
         subtitles = ["Date range: %s" % self.daterange_display]
         if self.selected_fixture():
             tag, id = self.selected_fixture()
-            location = FixtureDataItem.get(id).fields['%s_name' % tag]
+            location = FixtureDataItem.get(id).fields_without_attributes['%s_name' % tag]
             subtitles.append('Location: %s' % location)
 
         if self.disease:
-            location = FixtureDataItem.get(self.disease[1]).fields['disease_name']
+            location = FixtureDataItem.get(self.disease[1]).fields_without_attributes['disease_name']
             subtitles.append('Disease: %s' % location)
 
         if self.test_version:
-            test_version = FixtureDataItem.get(self.test_version[1]).fields['visible_test_name']
+            test_version = FixtureDataItem.get(self.test_version[1]).fields_without_attributes['visible_test_name']
             subtitles.append('Test Version: %s' % test_version)
 
         return subtitles
@@ -76,8 +76,8 @@ class GSIDSQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin)
             FixtureDataType.by_domain_tag(self.domain, "diseases").one()
         )
         return {
-            "ids": [d.fields["disease_id"] for d in disease_fixtures],
-            "names": [d.fields["disease_name"] for d in disease_fixtures]
+            "ids": [d.fields_without_attributes["disease_id"] for d in disease_fixtures],
+            "names": [d.fields_without_attributes["disease_name"] for d in disease_fixtures]
         }
 
     @property
@@ -86,7 +86,7 @@ class GSIDSQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin)
             self.domain, 
             FixtureDataType.by_domain_tag(self.domain, "test").one()
         )
-        return [t.fields["test_name"] for t in test_fixtures]
+        return [t.fields_without_attributes["test_name"] for t in test_fixtures]
 
     @property
     def filter_values(self):
@@ -299,7 +299,7 @@ class GSIDSQLPatientReport(GSIDSQLReport):
 
         if self.is_map:
             columns.append(DatabaseColumn("gps", MaxColumn(self.gps_key), format_fn=lambda x: x))
-            disease = FixtureDataItem.get(self.disease[1]).fields['disease_name'] if self.disease else 'All diseases'
+            disease = FixtureDataItem.get(self.disease[1]).fields_without_attributes['disease_name'] if self.disease else 'All diseases'
             columns.append(DatabaseColumn('disease', StaticColumn('disease', disease)))
 
         return columns
@@ -499,7 +499,7 @@ class GSIDSQLTestLotsReport(GSIDSQLReport):
                 "disease_id",
                 disease[0]
             )
-            return [t.fields["test_name"] for t in test_fixtures]
+            return [t.fields_without_attributes["test_name"] for t in test_fixtures]
         else:
             return self.test_types         
 
