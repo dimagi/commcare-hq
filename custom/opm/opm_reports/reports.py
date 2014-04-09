@@ -668,9 +668,9 @@ class HealthMapReport(GenericMapReport, CustomProjectReport):
             [100, 'rgba(0, 255, 0, .8)']
         ]
         reverse_colorstops = [
-            [100, 'rgba(255, 0, 0, .8)'],
+            [40, 'rgba(0, 255, 0, .8)'],
             [70, 'rgba(255, 255, 0, .8)'],
-            [40, 'rgba(0, 255, 0, .8)']
+            [100, 'rgba(255, 0, 0, .8)'],
         ]
         title_mapping = {
                 "AWC": "AWC",
@@ -724,6 +724,9 @@ class HealthMapReport(GenericMapReport, CustomProjectReport):
                 {"color": {"column": column, "colorstops": reverse_colorstops}} for column in columns[-3:-1]
             ] + [
                 {"color": {"column": column, "colorstops": colorstops}} for column in additional_columns
-            ]
+            ],
+            "numeric_format": {
+                title: "return x + ' \%'" for title in additional_columns + columns[4:]
+            }
         }
 
