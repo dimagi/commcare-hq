@@ -129,7 +129,8 @@ class MCHMotherDisplay(MCHDisplay):
                 setattr(self, "_discharge_date", get_property(form_dict, "discharge_date"))
                 setattr(self, "_jsy_money_date", get_property(form_dict, "jsy_money_date"))
                 setattr(self, "_delivery_complications", get_property(form_dict, "delivery_complications"))
-                setattr(self, "_family_planning_type", get_property(form_dict['case']['update'], "family_planning_type"))
+                if 'case' in form_dict and 'update' in form_dict['case']:
+                    setattr(self, "_family_planning_type", get_property(form_dict['case']['update'], "family_planning_type"))
 
                 jsy_money = get_property(form_dict, "jsy_money")
                 children_count = int(get_property(form_dict, "cast_num_children", 0))
