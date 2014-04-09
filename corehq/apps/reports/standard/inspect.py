@@ -7,6 +7,7 @@ from jsonobject import DateTimeProperty
 from corehq.apps.reports import util
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 
+from corehq import feature_previews, privileges
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
@@ -46,6 +47,23 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
     ajax_pagination = True
     filter_users_field_class = StrongFilterUsersField
     include_inactive = True
+
+    # Feature preview flag for Submit History Filters
+    def __init__(self, request, **kwargs):
+        if feature_previews.SUBMIT_HISTORY_FILTERS.enabled(request.domain):
+            # TODO: delete? or do we need to check privileges?
+            # try:
+                # ensure_request_has_privilege(request, privileges.BETA_FEATURE)
+            # except PermissionDenied:
+                # pass
+            # else:
+            # create a new instance attribute instead of modifying the
+            # class attribute
+            self.fields = self.fields + [
+                'corehq.apps.reports.filters.forms.CustomPropsFilter',
+                'corehq.apps.reports.filters.forms.CustomFieldFilter',
+            ]
+        super(SubmitHistory, self).__init__(request, **kwargs)
 
     @property
     def other_fields(self):
@@ -145,18 +163,6 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
                 return form["form"].get(field)
             init_cells.extend([cell(field) for field in self.other_fields])
             yield init_cells
-
-class SubmitHistoryNew(SubmitHistory):
-    """
-    This is Submit History along with the new filters
-    """
-    fields = [
-        'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
-        'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
-        'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
-        'corehq.apps.reports.filters.dates.DatespanFilter',
-        'corehq.apps.reports.filters.forms.CustomPropsFilter',
-        'corehq.apps.reports.filters.forms.CustomFieldFilter']
 
 
 class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):
