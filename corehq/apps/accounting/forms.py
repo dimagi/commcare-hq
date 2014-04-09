@@ -1094,7 +1094,7 @@ class SoftwarePlanVersionForm(forms.Form):
         product_types = [r.product.product_type for r in rate_instances]
         if any([product_types.count(p) > 1 for p in available_types]):
             raise ValidationError(
-                "You may have exactly ONE rate per product type "
+                "You may have at most ONE rate per product type "
                 "(CommCare, CommTrack, etc.)"
             )
         
