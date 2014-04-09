@@ -39,7 +39,7 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
         self.domain = domain
         self.q = self.request.GET.get('q', None)
         if self.q:
-            tokens = self.q.split(' ')
+            tokens = self.q.split()
             queries = ['%s*' % tokens.pop()] + tokens
             self.user_query = {"bool": {"must": [
                 {"query_string": {
