@@ -13,6 +13,8 @@ try:
 except ImportError:
     URL_TEMPLATE = '/a/{domain}/receiver/secure/'
 
+REQUEST_TIMEOUT = 100
+
 SUBMIT_TEMPLATE = """<?xml version='1.0'?>
 <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://www.commcarehq.org/loadtest">
     <meta>
@@ -113,13 +115,25 @@ class Transaction(HQTransaction):
         super(Transaction, self).__init__()
 
     def _normal_submit(self, url, data):
-        return requests.post(url, data=data, headers={
+        headers = {
             'content-type': 'text/xml',
             'content-length': len(data),
-        }, auth=HTTPDigestAuth(self.submissions_username, self.submissions_password))
+        }
+        return requests.post(
+            url,
+            data=data,
+            headers=headers,
+            auth=HTTPDigestAuth(self.submissions_username, self.submissions_password),
+            timeout=REQUEST_TIMEOUT,
+        )
 
     def _media_submit(self, url, data_dict):
-        return requests.post(url, files=data_dict, auth=HTTPDigestAuth(self.submissions_username, self.submissions_password))
+        return requests.post(
+            url,
+            files=data_dict,
+            auth=HTTPDigestAuth(self.submissions_username, self.submissions_password),
+            timeout=REQUEST_TIMEOUT,
+        )
 
     def do_submission(self, url, include_image, case_action):
         extras = LONG_FORM_DATA  # 5k filler

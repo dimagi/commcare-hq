@@ -28,20 +28,20 @@ class TestField(BaseDrilldownOptionFilter):
         )
         for d in disease_fixtures:
             disease = dict(
-                val="%(name)s:%(uid)s" % {'name': d.fields["disease_id"], 'uid': d.get_id}, 
-                text=d.fields["disease_name"]
+                val="%(name)s:%(uid)s" % {'name': d.fields_without_attributes["disease_id"], 'uid': d.get_id}, 
+                text=d.fields_without_attributes["disease_name"]
             )
             tests = []
             test_fixtures = FixtureDataItem.by_field_value(
                 self.domain, 
                 FixtureDataType.by_domain_tag(self.domain, "test").one(),
                 "disease_id",
-                d.fields["disease_id"]
+                d.fields_without_attributes["disease_id"]
             )
             for t in test_fixtures:
                 tests.append(dict(
-                    val="%(name)s:%(uid)s" % {'name': t.fields["test_name"], 'uid': t.get_id}, 
-                    text=t.fields["visible_test_name"])
+                    val="%(name)s:%(uid)s" % {'name': t.fields_without_attributes["test_name"], 'uid': t.get_id}, 
+                    text=t.fields_without_attributes["visible_test_name"])
                 )
             disease['next'] = tests
             diseases.append(disease)

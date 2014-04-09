@@ -14,7 +14,7 @@ from corehq.apps.accounting.decorators import (
 )
 from corehq.apps.accounting.subscription_changes import DomainDowngradeStatusHandler
 from corehq.apps.accounting.forms import EnterprisePlanContactForm
-from corehq.apps.accounting.utils import get_change_status
+from corehq.apps.accounting.utils import get_change_status, get_privileges
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from dimagi.utils.couch.resource_conflict import retry_resource
 from django.conf import settings
@@ -45,9 +45,12 @@ from corehq.apps.domain.calculations import CALCS, CALC_FNS, CALC_ORDER, dom_cal
 
 from corehq.apps.domain.decorators import (domain_admin_required,
     login_required, require_superuser, login_and_domain_required)
-from corehq.apps.domain.forms import (DomainGlobalSettingsForm, DomainMetadataForm, SnapshotSettingsForm,
-                                      SnapshotApplicationForm, DomainDeploymentForm, DomainInternalForm,
-                                      ConfirmNewSubscriptionForm, ProBonoForm, EditBillingAccountInfoForm)
+from corehq.apps.domain.forms import (
+    DomainGlobalSettingsForm, DomainMetadataForm, SnapshotSettingsForm,
+    SnapshotApplicationForm, DomainDeploymentForm, DomainInternalForm,
+    ConfirmNewSubscriptionForm, ProBonoForm, EditBillingAccountInfoForm,
+    ConfirmSubscriptionRenewalForm,
+)
 from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.hqwebapp.views import BaseSectionPageView, BasePageView, CRUDPaginatedViewMixin
@@ -154,8 +157,8 @@ class SubscriptionUpgradeRequiredView(LoginAndDomainMixin, BasePageView,
 
     @property
     def required_plan_name(self):
-        return DefaultProductPlan.get_lowest_edition_for_privilege_by_domain(
-            self.domain_object, self.missing_privilege
+        return DefaultProductPlan.get_lowest_edition_by_domain(
+            self.domain_object, [self.missing_privilege]
         )
 
     def get(self, request, *args, **kwargs):
@@ -533,9 +536,26 @@ class DomainSubscriptionView(DomainAccountingSettings):
         plan_version, subscription = Subscription.get_subscribed_plan_by_domain(self.domain_object)
         products = self.get_product_summary(plan_version, subscription)
         date_end = None
+        next_subscription = {
+            'exists': False,
+            'can_renew': False,
+        }
         if subscription:
             date_end = (subscription.date_end.strftime("%d %B %Y")
                         if subscription.date_end is not None else "--")
+            if (subscription.date_end is not None
+                and toggles.ACCOUNTING_PREVIEW.enabled(self.request.user.username)):
+                if subscription.is_renewed:
+                    next_subscription.update({
+                        'exists': True,
+                        'date_start': subscription.next_subscription.date_start.strftime("%d %B %Y"),
+                    })
+                else:
+                    days_left = (subscription.date_end - datetime.date.today()).days
+                    next_subscription.update({
+                        'can_renew': days_left <= 30,
+                        'renew_url': reverse(ConfirmSubscriptionRenewalView.urlname, args=[self.domain]),
+                    })
         info = {
             'products': products,
             'is_multiproduct': len(products) > 1,
@@ -546,6 +566,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'date_start': (subscription.date_start.strftime("%d %B %Y")
                            if subscription is not None else None),
             'date_end': date_end,
+            'next_subscription': next_subscription,
         }
         info.update(plan_version.user_facing_description)
         if subscription is not None:
@@ -912,7 +933,10 @@ class ConfirmSelectedPlanView(SelectPlanView):
         if subscription is None:
             current_plan_version = None
         downgrades = get_change_status(current_plan_version, self.selected_plan_version)[1]
-        downgrade_handler = DomainDowngradeStatusHandler(self.domain_object, self.selected_plan_version, downgrades)
+        downgrade_handler = DomainDowngradeStatusHandler(
+            self.domain_object, self.selected_plan_version, downgrades,
+            web_user=self.request.user.username
+        )
         return downgrade_handler.get_response()
 
     @property
@@ -1024,6 +1048,91 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
                 )
                 return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
         return super(ConfirmBillingAccountInfoView, self).post(request, *args, **kwargs)
+
+
+class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin):
+    template_name = 'domain/confirm_subscription_renewal.html'
+    urlname = 'domain_subscription_renewal'
+    page_title = ugettext_noop("Renew Plan")
+    async_handlers = [
+        Select2BillingInfoHandler,
+    ]
+
+    @property
+    @memoized
+    def subscription(self):
+        subscription = Subscription.get_subscribed_plan_by_domain(self.domain_object)[1]
+        if subscription is None:
+            raise Http404
+        if subscription.is_renewed:
+            raise Http404
+        return subscription
+
+    @property
+    @memoized
+    def next_plan_version(self):
+        current_privs = get_privileges(self.subscription.plan_version)
+        plan_version = DefaultProductPlan.get_lowest_edition_by_domain(
+            self.domain, current_privs, return_plan=True,
+        )
+        if plan_version is None:
+            logging.error("[BILLING] Could not find a matching renwabled plan "
+                          "for %(domain)s, subscription number %(sub_pk)s." % {
+                'domain': self.domain,
+                'sub_pk': self.subscription.pk
+            })
+            raise Http404
+        return plan_version
+
+    @property
+    @memoized
+    def confirm_form(self):
+        if self.request.method == 'POST':
+            return ConfirmSubscriptionRenewalForm(
+                self.account, self.domain, self.request.couch_user.username,
+                self.subscription, self.next_plan_version,
+                data=self.request.POST,
+            )
+        return ConfirmSubscriptionRenewalForm(
+            self.account, self.domain, self.request.couch_user.username,
+            self.subscription, self.next_plan_version,
+        )
+
+    @property
+    def page_context(self):
+        return {
+            'subscription': self.subscription,
+            'plan': self.subscription.plan_version.user_facing_description,
+            'confirm_form': self.confirm_form,
+            'next_plan': self.next_plan_version.user_facing_description,
+        }
+
+    @method_decorator(toggles.ACCOUNTING_PREVIEW.required_decorator())
+    def dispatch(self, request, *args, **kwargs):
+        return super(ConfirmSubscriptionRenewalView, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        if self.async_response is not None:
+            return self.async_response
+        if self.confirm_form.is_valid():
+            is_saved = self.confirm_form.save()
+            if not is_saved:
+                messages.error(
+                    request, _(
+                        "There was an issue renewing your subscription. We "
+                        "have been notified of the issue. Please try "
+                        "submitting again, and if the problem persists, "
+                        "please try in a few hours."
+                    )
+                )
+            else:
+                messages.success(
+                    request, _("Your subscription was successfully renewed!")
+                )
+                return HttpResponseRedirect(
+                    reverse(DomainSubscriptionView.urlname, args=[self.domain])
+                )
+        return self.get(request, *args, **kwargs)
 
 
 class ExchangeSnapshotsView(BaseAdminProjectSettingsView):

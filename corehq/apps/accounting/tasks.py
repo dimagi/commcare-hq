@@ -97,6 +97,7 @@ def send_bookkeeper_email(month=None, year=None, emails=None):
         username="admin@dimagi.com",
     )
     invoice = InvoiceInterface(request)
+    invoice.is_rendered_as_email = True
     first_of_month = datetime.date(year, month, 1)
     email_context = {
         'month': first_of_month.strftime("%B"),
@@ -105,9 +106,13 @@ def send_bookkeeper_email(month=None, year=None, emails=None):
         'accounting/bookkeeper_email.html', email_context)
     email_content_plaintext = render_to_string(
         'accounting/bookkeeper_email_plaintext.html', email_context)
+    format_dict = Format.FORMAT_DICT[Format.CSV]
     excel_attachment = {
-        'title': 'Invoices_%s.xlsx' % first_of_month.strftime('%B_%Y'),
-        'mimetype': Format.FORMAT_DICT[Format.XLS_2007]['mimetype'],
+        'title': 'Invoices_%(period)s.%(extension)s' % {
+            'period': first_of_month.strftime('%B_%Y'),
+            'extension': format_dict['extension'],
+        },
+        'mimetype': format_dict['mimetype'],
         'file_obj': invoice.excel_response,
     }
 
@@ -129,4 +134,35 @@ def send_bookkeeper_email(month=None, year=None, emails=None):
             'emails': ", ".join(emails)
         })
 
+
+@periodic_task(run_every=crontab(minute=0, hour=0))
+def remind_subscription_ending_30_days():
+    """
+    Sends reminder emails for subscriptions ending 30 days from now.
+    """
+    send_subscription_reminder_emails(30)
+
+
+@periodic_task(run_every=crontab(minute=0, hour=0))
+def remind_subscription_ending_30_days(based_on_date=None):
+    """
+    Sends reminder emails for subscriptions ending 10 days from now.
+    """
+    send_subscription_reminder_emails(10)
+
+
+@periodic_task(run_every=crontab(minute=0, hour=0))
+def remind_subscription_ending_30_days(based_on_date=None):
+    """
+    Sends reminder emails for subscriptions ending tomorrow.
+    """
+    send_subscription_reminder_emails(1)
+
+
+def send_subscription_reminder_emails(num_days):
+    today = datetime.date.today()
+    date_in_n_days = today + datetime.timedelta(days=num_days)
+    ending_subscriptions = Subscription.objects.filter(date_end=date_in_n_days)
+    for subscription in ending_subscriptions:
+        subscription.send_ending_reminder_email()
 
