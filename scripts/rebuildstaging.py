@@ -132,7 +132,7 @@ def check_merges(config):
     for path, config in base_config.span_configs():
         git = get_git(path)
         with OriginalBranch(git):
-            git.checkout("-B", config.name, origin(config.trunk))
+            git.checkout('-B', config.name, origin(config.trunk), '--no-track')
             for branch in config.branches:
                 if not has_local(git, branch):
                     branch = origin(branch)
@@ -169,7 +169,7 @@ def rebuild_staging(config):
     with context_manager:
         for path, config in all_configs:
             git = get_git(path)
-            git.checkout('-B', config.name, origin(config.trunk))
+            git.checkout('-B', config.name, origin(config.trunk), '--no-track')
             for branch in config.branches:
                 if not has_local(git, branch):
                     branch = origin(branch)
