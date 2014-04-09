@@ -196,6 +196,32 @@ def format_cwd(cwd):
     return os.path.join(cwd) if cwd else '.'
 
 
+class DisableGitHooks(object):
+    already_disabled = None
+
+    def __init__(self, path='.git/hooks'):
+        import uuid
+        self.path = path
+        self.guid = uuid.uuid4().hex
+
+    @property
+    def hidden_path(self):
+        return self.path + '-' + self.guid
+
+    def __enter__(self):
+        try:
+            sh.test('-d', self.path)
+            self.already_disabled = False
+        except sh.ErrorReturnCode_1:
+            self.already_disabled = True
+        else:
+            sh.mv(self.path, self.hidden_path)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if not self.already_disabled:
+            sh.mv(self.hidden_path, self.path)
+
+
 if __name__ == '__main__':
     from sys import stdin
     import yaml
@@ -207,7 +233,7 @@ if __name__ == '__main__':
     args.discard('-v')
     if not args:
         args = set('fetch sync check rebuild'.split())
-    with ShVerbose(verbose):
+    with DisableGitHooks(), ShVerbose(verbose):
         if 'fetch' in args:
             fetch_remote(config)
         if 'sync' in args:
