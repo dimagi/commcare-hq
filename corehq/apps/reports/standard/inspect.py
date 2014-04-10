@@ -51,16 +51,10 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
     # Feature preview flag for Submit History Filters
     def __init__(self, request, **kwargs):
         if feature_previews.SUBMIT_HISTORY_FILTERS.enabled(request.domain):
-            # TODO: delete? or do we need to check privileges?
-            # try:
-                # ensure_request_has_privilege(request, privileges.BETA_FEATURE)
-            # except PermissionDenied:
-                # pass
-            # else:
             # create a new instance attribute instead of modifying the
             # class attribute
             self.fields = self.fields + [
-                'corehq.apps.reports.filters.forms.CustomPropsFilter',
+                'corehq.apps.reports.filters.forms.FormDataFilter',
                 'corehq.apps.reports.filters.forms.CustomFieldFilter',
             ]
         super(SubmitHistory, self).__init__(request, **kwargs)
@@ -119,7 +113,7 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
                 ids = filter(None, [user['user_id'] for user in negated_ids])
                 q["filter"]["and"].append({"not": {"terms": {"form.meta.userID": ids}}})
 
-            for cp in filter(None, self.request.GET.get('custom_props', "").split(",")):
+            for cp in filter(None, self.request.GET.get('form_data', "").split(",")):
                 q["filter"]["and"].append({"term": {"__props_for_querying": cp.lower()}})
 
             q["sort"] = self.get_sorting_block() if self.get_sorting_block() else [{self.time_field : {"order": "desc"}}]

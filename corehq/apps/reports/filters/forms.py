@@ -717,16 +717,17 @@ class CompletionOrSubmissionTimeFilter(BaseSingleOptionFilter):
         ]
 
 
-class CustomPropsFilter(BaseTagsFilter):
-    slug = "custom_props"
-    label = "Custom Property"
+class FormDataFilter(BaseTagsFilter):
+    slug = 'form_data'
+    label = "Form Data"
     advanced = True
-    help_text = "Filter by the exact match of a property. Formatted as followed: <property>:<value_to_filter>"
-    placeholder = ugettext_noop('<property>:<value_to_filter>')
+    help_text = "Filter by the value of a question in the form. Exact matches only."
+    placeholder = ugettext_noop("question id:value")
+
 
 class CustomFieldFilter(BaseTagsFilter):
-    slug = "custom_field"
+    slug = 'custom_field'
     label = "Columns"
     advanced = True
-    help_text = "Each property entered here will show up as a column in the report."
-    placeholder = ugettext_noop('<name_of_column>')
+    help_text = "Question ids entered here will appear as additonal columns in the report."
+    placeholder = ugettext_noop("question id")
