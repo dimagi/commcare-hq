@@ -1,8 +1,8 @@
 from django.http import HttpResponse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
-
 from jsonobject import DateTimeProperty
+
 from corehq import Domain
 from corehq.apps.commtrack.util import get_commtrack_location_id
 from corehq.apps.locations.models import Location
@@ -10,7 +10,6 @@ from corehq.apps.reports.cache import request_cache
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import ES_URLS
-
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
@@ -24,7 +23,7 @@ from custom.m4change.models import McctStatus
 from custom.m4change.reports import get_location_hierarchy_by_id
 from custom.m4change.utils import get_case_by_id, get_user_by_id, get_property, get_form_ids_by_status
 from custom.m4change.constants import EMPTY_FIELD
-from custom.m4change.reports.tasks import m4change_all_rows_task
+from corehq.apps.reports.tasks import export_all_rows_task
 
 
 CASE_FORM_SCRIPT_FILTER_NAMESPACES = BOOKED_AND_UNBOOKED_DELIVERY_FORMS + IMMUNIZATION_FORMS
@@ -284,7 +283,7 @@ class McctProjectReview(BaseReport):
     @request_cache("export")
     def export_response(self):
         self.request.datespan = None
-        m4change_all_rows_task.delay(self.__class__, self.__getstate__())
+        export_all_rows_task.delay(self.__class__, self.__getstate__())
 
         return HttpResponse()
 
