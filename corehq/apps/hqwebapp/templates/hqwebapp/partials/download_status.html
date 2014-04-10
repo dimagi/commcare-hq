@@ -5,12 +5,14 @@
         <script type="text/javascript">
             $("#export-download-status .loading-indicator").addClass('hide');
         </script>
+{% block results %}
         <div class="alert alert-success">
             <h3>{{ on_complete_long }}</h3>
             {% for r in result %}
             <p>{{ r }}</p>
             {% endfor %}
         </div>
+{% endblock results %}
     </div>
 {% else %}
     <legend>

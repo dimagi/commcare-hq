@@ -39,7 +39,7 @@ function (doc) {
                     var cur_muac_under5 = parseFloat(indicators.cur_muac.value);
                     visit_indicators["active_gam"] = {
                         "_id": case_id,
-                        "value": (cur_muac_under5 < 125.0) ? 1 : 0
+                        "value": (cur_muac_under5 < 125.0 && cur_muac_under5 > 49.0) ? 1 : 0 || (cur_muac_under5 < 12.5) ? 1 : 0
                     }
                 } catch (e) {
                     // do nothing

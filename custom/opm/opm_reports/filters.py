@@ -22,3 +22,23 @@ class AWCFilter(BaseMultipleOptionFilter):
     @property
     def options(self):
         return [(awc, awc) for awc in get_user_data_set()['awcs']]
+
+class SelectBlockFilter(BaseSingleOptionFilter):
+    slug = "block"
+    label = "Block"
+    default_text = None
+
+    @property
+    def options(self):
+        return [('Atri', 'Atri'), ('Wazirganj', 'Wazirganj')]
+
+
+class GramPanchayatFilter(BaseSingleOptionFilter):
+    slug = 'gp'
+    label = "Gram Panchayat"
+    default_text = None
+
+    @property
+    def options(self):
+        return [(awc, awc) for awc in get_user_data_set()['gp']]
+

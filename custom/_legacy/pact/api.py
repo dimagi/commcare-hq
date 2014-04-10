@@ -344,20 +344,20 @@ class PactAPI(DomainAPI):
             providers = get_all_providers()
 
             #providers = sorted(providers, key=lambda x: (x.fields['facility_name'], x.fields['last_name']))
-            providers = sorted(providers, key=lambda x: x.fields['last_name'])
-            providers_by_id = dict((x.fields['id'], x.fields) for x in providers)
+            providers = sorted(providers, key=lambda x: x.fields_without_attributes['last_name'])
+            providers_by_id = dict((x.fields_without_attributes['id'], x.fields_without_attributes) for x in providers)
 
             case_providers = [providers_by_id.get(x, None) for x in case.get_provider_ids()]
 
             facilities = set()
 
             for prov in providers:
-                facility = prov.fields['facility_name']
+                facility = prov.fields_without_attributes['facility_name']
                 if facility is None:
                     facility = 'N/A'
                 facilities.add(facility)
             ret = {'facilities': ['All Facilities'] + sorted(list(facilities)),
-                   "providers": [x['fields'] for x in providers],
+                   "providers": [x['fields_without_attributes'] for x in providers],
                    "case_providers": case_providers,
                     }
             resp = HttpResponse(simplejson.dumps(ret), content_type='application/json')

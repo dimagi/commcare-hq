@@ -35,14 +35,13 @@ command -v apt-get > /dev/null 2>&1
 if [ $? -eq 0 ]; then
     PM=apt-ubuntu
 
-    sudo apt-get install -y python-software-properties
     ## PPA to get latest versions of nodejs and npm
     if [[ ! $(sudo grep -r "chris-lea/node\.js" /etc/apt/) ]]; then
         sudo add-apt-repository -y ppa:chris-lea/node.js
     fi
     sudo apt-get update
 
-    cat requirements/apt-package.txt | sed 's/#.*$//g' | xargs sudo apt-get install -y
+    cat requirements/apt-packages.txt | sed 's/#.*$//g' | xargs sudo apt-get install -y
 
 else
     command -v yum > /dev/null 2>&1

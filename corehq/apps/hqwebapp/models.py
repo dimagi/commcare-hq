@@ -473,7 +473,7 @@ class ProjectDataTab(UITab):
                 })
 
             items.extend(edit_section)
-
+            
         return items
 
 
