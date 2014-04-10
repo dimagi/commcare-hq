@@ -460,7 +460,7 @@ def last_if_none(month, year):
         return last_month.month, last_month.year
 
 
-def get_report(ReportClass, month=None, year=None):
+def get_report(ReportClass, month=None, year=None, block=None):
     """
     Utility method to run a report for an arbitrary month without a request
     """
@@ -468,9 +468,14 @@ def get_report(ReportClass, month=None, year=None):
     class Report(ReportClass):
         snapshot = None
         report_class = ReportClass
+        domain = DOMAIN
+        visible_cols = []
 
         def __init__(self, *args, **kwargs):
-            self.slugs, self._headers = [list(tup) for tup in zip(*self.model.method_map)]
+            if ReportClass.__name__ == "MetReport":
+                self.slugs, self._headers, self.visible_cols = [list(tup) for tup in zip(*self.model.method_map[self.block])]
+            else:
+                self.slugs, self._headers = [list(tup) for tup in zip(*self.model.method_map)]
 
         @property
         def month(self):
@@ -479,6 +484,10 @@ def get_report(ReportClass, month=None, year=None):
         @property
         def year(self):
             return year
+
+        @property
+        def block(self):
+            return block
 
         @property
         def headers(self):
@@ -629,10 +638,10 @@ class MetReport(BaseReport):
     def headers(self):
         if self.snapshot is not None:
             return DataTablesHeader(*[
-                DataTablesColumn(header) for header in self.snapshot.headers
+                DataTablesColumn(name=header[0], visible=header[1]) for header in zip(self.snapshot.headers, self.snapshot.visible_cols)
             ])
         return DataTablesHeader(*[
-            DataTablesColumn(header) for method, header in self.model.method_map[self.block.lower()]
+            DataTablesColumn(name=header, visible=visible) for method, header, visible in self.model.method_map[self.block.lower()]
         ])
 
     @property
@@ -642,10 +651,12 @@ class MetReport(BaseReport):
         rows = []
         for row in self.row_objects:
             rows.append([getattr(row, method) for
-                method, header in self.model.method_map[self.block.lower()]])
+                method, header, visible in self.model.method_map[self.block.lower()]])
         return rows
 
     def filter(self, fn, filter_fields=None):
+        if filter_fields is None:
+            filter_fields = [('awc_name', 'awcs'), ('block_name', 'block'), ('owner_id', 'gp'), ('closed', 'is_open')]
         for key, field in filter_fields:
             case_key = fn(key)['#value'] if isinstance(fn(key), dict) else fn(key)
             keys = self.filter_data.get(field, [])

@@ -36,29 +36,35 @@ class ConditionsMet(object):
 
     method_map = {
         "atri": [
-            ('name', "List of Beneficiary"),
-            ('awc_name', "AWC Name"),
-            ('husband_name', "Husband Name"),
-            ('month', "Month"),
-            ('window', "Window"),
-            ('one', "1"),
-            ('two', "2"),
-            ('three', "3"),
-            ('four', "4"),
-            ('five', "5"),
-            ('cash', "Cash to be transferred"),
+            ('name', "List of Beneficiary", True),
+            ('awc_name', "AWC Name", True),
+            ('husband_name', "Husband Name", True),
+            ('month', "Month", True),
+            ('window', "Window", True),
+            ('one', "1", True),
+            ('two', "2", True),
+            ('three', "3", True),
+            ('four', "4", True),
+            ('five', "5", True),
+            ('cash', "Cash to be transferred", True),
+            ('owner_id', "Owner Id", False),
+            ('block_name', "Block Name", False),
+            ('closed', 'Closed', False)
         ],
         'wazirganj': [
-            ('name', "List of Beneficiary"),
-            ('awc_name', "AWC Name"),
-            ('status', "Current status"),
-            ('month', "Month"),
-            ('window', "Window"),
-            ('one', "1"),
-            ('two', "2"),
-            ('four', "3"),
-            ('five', "4"),
-            ('cash', "Cash to be transferred")
+            ('name', "List of Beneficiary", True),
+            ('awc_name', "AWC Name", True),
+            ('status', "Current status", True),
+            ('month', "Month", True),
+            ('window', "Window", True),
+            ('one', "1", True),
+            ('two', "2", True),
+            ('four', "3", True),
+            ('five', "4", True),
+            ('cash', "Cash to be transferred", True),
+            ('owner_id', "Owner Id", False),
+            ('block_name', "Block Name", False),
+            ('closed', 'Closed', False)
         ]
     }
 
@@ -68,7 +74,6 @@ class ConditionsMet(object):
             # case.awc_name, case.block_name
             [('awc_name', 'awcs'), ('block_name', 'block'), ('owner_id', 'gp'), ('closed', 'is_open')],
         )
-
         img_elem = '<div style="width:100px !important;"><img src="/static/opm/img/%s"></div>'
 
         met = {
@@ -121,6 +126,9 @@ class ConditionsMet(object):
             return met_properties
 
         case_obj = CommCareCase.get(case['_source']['_id'])
+        self.block_name = get_property(case_obj, 'block_name', '')
+        self.owner_id = get_property(case_obj, 'owner_id', '')
+        self.closed = get_property(case_obj, 'closed', False)
         forms = case_obj.get_forms()
         birth_spacing_prompt = []
         for form in forms:

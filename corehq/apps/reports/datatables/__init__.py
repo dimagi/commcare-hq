@@ -7,7 +7,7 @@ class DataTablesColumn(object):
 
     def __init__(self, name, span=0, sort_type=None, sort_direction=None,
                  help_text=None, sortable=True, rotate=False,
-                 expected=None, prop_name=None):
+                 expected=None, prop_name=None, visible=True):
         self.html = name
         self.css_span = span
         self.sort_type = sort_type
@@ -16,6 +16,7 @@ class DataTablesColumn(object):
         self.sortable = sortable
         self.rotate = rotate
         self.prop_name = prop_name
+        self.visible = visible
         if isinstance(expected, int):
             expected = "%d" % expected
         self.expected = expected
@@ -47,6 +48,8 @@ class DataTablesColumn(object):
             aoColumns["bSortable"] = self.sortable
         if self.rotate:
             aoColumns["sWidth"] = '10px'
+        if not self.visible:
+            aoColumns["bVisible"] = self.visible
         return aoColumns
 
 
