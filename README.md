@@ -92,7 +92,8 @@ Once all the dependencies are in order, please do the following:
     cd commcare-hq
     git submodule update --init --recursive
     source ~/.virtualenvs/commcare-hq/bin/activate      # enter your virtualenv if you have one
-    pip install -r requirements/requirements.txt -r requirements/prod-requirements.txt
+    mkdir pip_cache
+    pip install --download-cache pip_cache -r requirements/requirements.txt -r requirements/prod-requirements.txt
     cp localsettings.example.py localsettings.py
 
 Then, edit localsettings.py and ensure that your Postgres, CouchDB, email, and
