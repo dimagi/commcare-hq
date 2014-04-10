@@ -1,5 +1,6 @@
 from couchdbkit.client import Database
 from django.conf import settings
+from couchexport.exceptions import SchemaInferenceError
 from couchexport.models import ExportSchema
 
 
@@ -28,10 +29,6 @@ def build_latest_schema(schema_index):
         return None
     updated_checkpoint = config.create_new_checkpoint()
     return updated_checkpoint
-
-
-class SchemaInferenceError(Exception):
-    pass
 
 
 def get_kind(doc):

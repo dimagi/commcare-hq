@@ -1,4 +1,6 @@
 import itertools
+from couchexport.exceptions import SchemaMismatchException,\
+    UnsupportedExportFormat
 from couchexport.schema import extend_schema
 from django.conf import settings
 from couchexport.models import ExportSchema, Format
@@ -102,11 +104,6 @@ class ExportConfiguration(object):
         checkpoint.save()
         return checkpoint
 
-class UnsupportedExportFormat(Exception):
-    pass
-
-class SchemaMismatchException(Exception):
-    pass
 
 def get_writer(format):
     if format == Format.CSV:
