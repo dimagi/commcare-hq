@@ -170,6 +170,9 @@ if [ ! "$MINIMAL_INSTALL" ] && ! -f /etc/init.d/couchdb-lucene ]; then
         wget https://github.com/rnewson/couchdb-lucene/archive/v0.8.0.zip
     fi
 
+    if [[ ! $(command -v unzip) ]]; then
+        sudo apt-get install unzip
+    fi
     unzip v0.8.0.zip
     sudo mv couchdb-lucene-0.8.0 /usr/local
     sudo cp /usr/local/couchdb-lucene-0.8.0/tools/etc/init.d/couchdb-lucene/couchdb-lucene /etc/init.d/
