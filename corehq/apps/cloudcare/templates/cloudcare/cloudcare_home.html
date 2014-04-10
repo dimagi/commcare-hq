@@ -108,14 +108,8 @@
 {% endblock %}
 
 {% block main_column %}
-	{% if preview %}
-        <div class="alert fade in alert-block alert-full alert-info">
-            <a class="close" data-dismiss="alert" href="#">&times;</a>
-            {% trans "CloudCare submits REAL DATA that will create cases and show up in reports!" %}
-        </div>
-    {% endif %}
     {% if request.couch_user.is_web_user %}
-        <div class="alert fade in alert-block alert-full alert-info">
+        <div class="alert fade in alert-block alert-full alert-warning ">
             <a class="close" data-dismiss="alert" href="#">&times;</a>
                 {% blocktrans %}
                     You are using CloudCare as a Web User!
