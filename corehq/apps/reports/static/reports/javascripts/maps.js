@@ -517,9 +517,9 @@ function initMetrics(map, table, data, config) {
         autoConfiguration(config, data);
     }
 
-    if (config.metrics)
-    config.metrics = ([]).concat([{title: 'Auto', group: true, children: config.metrics}]);
-    
+    if (config.metrics) {
+        config.metrics = ([]).concat([{title: 'Auto', group: true, children: config.metrics}]);
+    }
     // set sensible defaults for metric parameters (if omitted)
     forEachMetric(config.metrics, function(metric) {
         setMetricDefaults(metric, data, config);
