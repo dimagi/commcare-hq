@@ -22,7 +22,7 @@ function(doc) {
 
         if (isChildWelfareForm(doc) && indicators.vaccination_status && indicators.vaccination_status.value === 'yes') {
             // special case for Bonsaaso
-            indicator_entries['child under1 immunized'] = case_id;
+            indicator_entries['child under1 not_immunized'] = case_id;
         }
 
         if (isChildVisitForm(doc) && indicators.child_dob && indicators.child_dob.value) {
@@ -53,7 +53,7 @@ function(doc) {
                         }
 
                         if (!is_immunized) {
-                            indicator_entries['child under1 immunized'] = case_id;
+                            indicator_entries['child under1 not_immunized'] = case_id;
                         }
                     }
 
@@ -76,7 +76,7 @@ function(doc) {
                         }
 
                         if (not_immunized) {
-                            indicator_entries['child under1 immunized'] = case_id;
+                            indicator_entries['child under1 not_immunized'] = case_id;
                         }
                     }
 
