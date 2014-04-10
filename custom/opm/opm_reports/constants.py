@@ -27,6 +27,7 @@ def get_user_data_set():
     return {
         'blocks': sorted(list(set(u.user_data.get('block') for u in users))),
         'awcs': sorted(list(set(u.user_data.get('awc') for u in users))),
+        'gp': sorted(list(set(u.user_data.get('gp') for u in users))),
     }
 
 class InvalidRow(Exception):
