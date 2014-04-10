@@ -1,6 +1,6 @@
 from django.utils.translation import ugettext_noop
 from corehq.apps.groups.models import Group
-from corehq.apps.reports.fields import ReportSelectField
+from corehq.apps.reports.dont_use.fields import ReportSelectField
 from corehq.apps.users.models import CouchUser, WebUser
 from custom.succeed.utils import _is_succeed_admin, CONFIG, _is_pm_or_pi
 

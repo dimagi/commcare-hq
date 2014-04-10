@@ -1,5 +1,6 @@
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqadmin.reports import AdminUserReport, AdminAppReport
+from corehq.apps.hqpillow_retry.views import PillowErrorsReport
 from corehq.apps.reports.standard import (monitoring, inspect, export,
     deployments, sms, ivr)
 from corehq.apps.receiverwrapper import reports as receiverwrapper
@@ -7,6 +8,7 @@ import phonelog.reports as phonelog
 from corehq.apps.reports.commtrack import standard as commtrack_reports
 from corehq.apps.reports.commtrack import maps as commtrack_maps
 from corehq.apps.reports.commconnect import system_overview
+from corehq.apps.fixtures.interface import FixtureViewInterface, FixtureEditInterface
 import hashlib
 from dimagi.utils.modules import to_function
 import logging
@@ -148,6 +150,13 @@ EDIT_DATA_INTERFACES = (
     )),
 )
 
+FIXTURE_INTERFACES = (
+    (_('Lookup Tables'), (
+        FixtureEditInterface,
+        FixtureViewInterface,
+    )),
+)
+
 
 from corehq.apps.adm.reports.supervisor import SupervisorReportsADMSection
 
@@ -241,6 +250,7 @@ ADMIN_REPORTS = (
         AdminDomainStatsReport,
         AdminUserReport,
         AdminAppReport,
+        PillowErrorsReport
     )),
 )
 

@@ -19,7 +19,7 @@ COUCH_MAX_LIMIT = 1000
 
 class PactDOTAdminReport(GenericTabularReport, CustomProjectReport):
     fields = ['pact.reports.admin_dot_reports.PactDOTAdminPatientField',
-              'corehq.apps.reports.fields.DatespanField']
+              'corehq.apps.reports.filters.dates.DatespanFilter']
     name = "PACT DOT Admin"
     slug = "pactdotadmin"
     emailable = True

@@ -6,6 +6,10 @@ def get_git(path=None):
     return sh.git.bake('--no-pager', _cwd=path)
 
 
+def get_grep():
+    return sh.grep.bake(color='never')
+
+
 class OriginalBranch(object):
     def __init__(self, git=None):
         self.git = git or get_git()
@@ -21,7 +25,8 @@ class OriginalBranch(object):
 
 def git_current_branch(git=None):
     git = git or get_git()
-    branch = sh.grep(git.branch('--no-color'), '^* ').strip()[2:]
+    grep = get_grep()
+    branch = grep(git.branch('--no-color'), '^* ').strip()[2:]
     if branch.startswith('('):
         branch = git.log(
             '--no-color', '--pretty=oneline', n=1
@@ -64,6 +69,7 @@ def git_bisect_merge_conflict(branch1, branch2, git=None):
 
     """
     git = git or get_git()
+    grep = get_grep()
     with OriginalBranch(git):
         try:
             base = git('merge-base', branch1, branch2).strip()
@@ -78,7 +84,7 @@ def git_bisect_merge_conflict(branch1, branch2, git=None):
                     txt = git.bisect('good')
                 else:
                     txt = git.bisect('bad')
-            return sh.grep(txt, '^commit ').strip().split(' ')[-1]
+            return grep(txt, '^commit ').strip().split(' ')[-1]
         finally:
             git.bisect('reset')
 

@@ -30,3 +30,10 @@ class InvoiceEmailThrottledError(Exception):
     pass
 
 
+class SubscriptionReminderError(Exception):
+    pass
+
+
+class SubscriptionRenewalError(Exception):
+    pass
+

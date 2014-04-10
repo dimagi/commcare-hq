@@ -1,6 +1,6 @@
 import json
 import logging
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.utils import html
 from corehq.apps.reports.datatables.DTSortType import DATE
 from corehq.apps.reports.filters.devicelog import (
@@ -23,7 +23,8 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.timezones import utils as tz_utils
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop
-from phonelog.models import DeviceReportEntry
+from .models import DeviceReportEntry
+from .utils import device_users_by_xform
 
 logger = logging.getLogger(__name__)
 
@@ -40,9 +41,9 @@ TAGS = {
 
 class PhonelogReport(GetParamsMixin, DeploymentsReport, DatespanMixin,
                      PaginatedReportMixin):
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.GroupField',
-              'corehq.apps.reports.fields.DatespanField']
+    fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
+              'corehq.apps.reports.filters.select.GroupFilter',
+              'corehq.apps.reports.filters.dates.DatespanFilter']
 
     special_notice = DATA_NOTICE
     ajax_pagination = True
@@ -52,9 +53,9 @@ class PhonelogReport(GetParamsMixin, DeploymentsReport, DatespanMixin,
 class FormErrorReport(PhonelogReport):
     name = ugettext_noop("Errors & Warnings Summary")
     slug = "form_errors"
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.GroupField',
-              'corehq.apps.reports.fields.DatespanField']
+    fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
+              'corehq.apps.reports.filters.select.GroupFilter',
+              'corehq.apps.reports.filters.dates.DatespanFilter']
 
     special_notice = DATA_NOTICE
     is_cacheable = False
@@ -160,7 +161,7 @@ class FormErrorReport(PhonelogReport):
 class DeviceLogDetailsReport(PhonelogReport):
     name = ugettext_noop("Device Log Details")
     slug = "log_details"
-    fields = ['corehq.apps.reports.fields.DatespanField',
+    fields = ['corehq.apps.reports.filters.dates.DatespanFilter',
               'corehq.apps.reports.filters.devicelog.DeviceLogTagFilter',
               'corehq.apps.reports.filters.devicelog.DeviceLogUsersFilter',
               'corehq.apps.reports.filters.devicelog.DeviceLogDevicesFilter']
@@ -199,7 +200,7 @@ class DeviceLogDetailsReport(PhonelogReport):
     @property
     @memoized
     def device_log_users(self):
-        return self.request.GET.getlist(DeviceLogUsersFilter.slug)
+        return DeviceLogUsersFilter.get_selected(self.request)
 
     @property
     @memoized
@@ -295,7 +296,10 @@ class DeviceLogDetailsReport(PhonelogReport):
                 logs = logs.filter(type__in=self.selected_tags)
 
             if 'user' in self.filters:
-                logs = logs.filter(username__in=self.device_log_users)
+                user_q = Q(username__in=self.device_log_users)
+                if None in self.device_log_users:
+                    user_q |= Q(username=None)
+                logs = logs.filter(user_q)
             if 'device' in self.filters:
                 logs = logs.filter(device_id__in=self.selected_devices)
             return self._create_rows(logs)
@@ -306,27 +310,34 @@ class DeviceLogDetailsReport(PhonelogReport):
         return '-' + by if direction == 'desc' else by
 
     def _create_rows(self, logs, matching_id=None):
+        _device_users_by_xform = memoized(device_users_by_xform)
         row_set = []
         user_query = self._filter_query_by_slug(DeviceLogUsersFilter.slug)
         device_query = self._filter_query_by_slug(DeviceLogDevicesFilter.slug)
         paged = slice(self.pagination.start,
                       self.pagination.start + self.pagination.count + 1)
+
         self.total_records = logs.count()
         for log in logs.order_by(self.ordering)[paged]:
             date = str(log.date)
             date_fmt = tz_utils.string_to_prertty_time(
                 date, self.timezone, fmt="%b %d, %Y %H:%M:%S")
 
-            username = log.username or 'unknown'
+            username = log.username
             username_fmt = '<a href="%(url)s">%(username)s</a>' % {
-                "url": "%s?%s=%s&%s" % (self.get_url(domain=self.domain),
-                                        DeviceLogUsersFilter.slug,
-                                        username,
-                                        user_query),
-                "username": username
+                "url": "%s?%s=%s&%s" % (
+                    self.get_url(domain=self.domain),
+                    DeviceLogUsersFilter.slug,
+                    DeviceLogUsersFilter.value_to_param(username),
+                    user_query,
+                ),
+                "username": (
+                    username if username
+                    else '<span class="label label-info">Unknown</span>'
+                )
             }
 
-            device_users = log.device_users
+            device_users = _device_users_by_xform(log.xform_id)
             device_users_fmt = ', '.join([
                 '<a href="%(url)s">%(username)s</a>' % {
                     "url": "%s?%s=%s&%s" % (self.get_url(domain=self.domain),

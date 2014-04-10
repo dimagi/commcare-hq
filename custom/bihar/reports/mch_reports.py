@@ -28,8 +28,8 @@ class MCHBaseReport(CustomProjectReport, CaseListReport):
     model = None
 
     fields = [
-        'corehq.apps.reports.fields.GroupField',
-        'corehq.apps.reports.fields.SelectOpenCloseField',
+        'corehq.apps.reports.filters.select.GroupFilter',
+        'corehq.apps.reports.filters.select.SelectOpenCloseFilter',
     ]
 
     @property
@@ -94,8 +94,6 @@ class MCHBaseReport(CustomProjectReport, CaseListReport):
                          for case in self.es_results['hits'].get('hits', []))
         return self.get_cases(case_displays)
 
-
-
 class MotherMCHRegister(MCHBaseReport):
     name = "Mother MCH register"
     slug = "mother_mch_register"
@@ -105,9 +103,9 @@ class MotherMCHRegister(MCHBaseReport):
     @property
     def headers(self):
         headers = DataTablesHeader(DataTablesColumn(_("CHW Name")),
+                                   DataTablesColumn(_("Mother Name"), sortable=False),
                                    DataTablesColumnGroup(
                                        _("Beneficiary Information"),
-                                       DataTablesColumn(_("Mother Name"), sortable=False),
                                        DataTablesColumn(_("Husband Name"), sortable=False),
                                        DataTablesColumn(_("City/ward/village"), sortable=False),
                                        DataTablesColumn(_("Full address"), sortable=False),
@@ -275,6 +273,10 @@ class MotherMCHRegister(MCHBaseReport):
                 disp.status
             ]
 
+    @property
+    def fixed_cols_spec(self):
+        return dict(num=2, width=350)
+
 class ChildMCHRegister(MCHBaseReport):
     name = "Child MCH register"
     slug = "child_mch_register"
@@ -284,10 +286,10 @@ class ChildMCHRegister(MCHBaseReport):
     @property
     def headers(self):
         headers = DataTablesHeader(DataTablesColumn(_("CHW Name")),
+                                   DataTablesColumn(_("Child Name"), sortable=False),
+                                   DataTablesColumn(_("Father and Mother Name"), sortable=False),
                                    DataTablesColumnGroup(
                                        _("Beneficiary Information"),
-                                       DataTablesColumn(_("Child Name"), sortable=False),
-                                       DataTablesColumn(_("Father and Mother Name"), sortable=False),
                                        DataTablesColumn(_("Mother's MCTS ID"), sortable=False),
                                        DataTablesColumn(_("Gender"), sortable=False),
                                        DataTablesColumn(_("City/ward/village"), sortable=False),
@@ -385,3 +387,7 @@ class ChildMCHRegister(MCHBaseReport):
                 disp.vit_a_3_date,
                 disp.date_je
             ]
+
+    @property
+    def fixed_cols_spec(self):
+        return dict(num=3, width=450)

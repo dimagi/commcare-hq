@@ -43,11 +43,20 @@ class XFormInstanceResource(SimpleSortableResourceMixin, v0_3.XFormInstanceResou
     domain = fields.CharField(attribute='domain')
 
     cases = UseIfRequested(ToManyDocumentsField('corehq.apps.api.resources.v0_4.CommCareCaseResource',
-                                                attribute=lambda xform: [dict_object(case.get_json()) for case in casexml_xform.cases_referenced_by_xform(xform)]))
+                                                attribute=lambda xform: casexml_xform.cases_referenced_by_xform(xform)))
+
+    is_phone_submission = fields.BooleanField(readonly=True)
+
+    def dehydrate_is_phone_submission(self, bundle):
+        return (
+            getattr(bundle.obj, 'openrosa_headers', None)
+            and bundle.obj.openrosa_headers.get('HTTP_X_OPENROSA_VERSION')
+        )
 
     # Prevent hitting Couch to md5 the attachment. However, there is no way to
     # eliminate a tastypie field defined in a parent class.
     md5 = fields.CharField(attribute='uiversion', blank=True, null=True)
+
     def dehydrate_md5(self, bundle):
         return 'OBSOLETED'
 

@@ -14,7 +14,7 @@ class DataSummaryReport(CustomProjectReport, ProjectReportParametersMixin, Dates
 class PrimaryOutcomeReport(GenericTabularReport, DataSummaryReport, HSPHSiteDataMixin):
     name = "Primary Outcome Report"
     slug = "hsph_primary_outcome_old"
-    fields = ['corehq.apps.reports.fields.DatespanField',
+    fields = ['corehq.apps.reports.filters.dates.DatespanFilter',
               'hsph.fields.SelectReferredInStatusField',
               'hsph.fields.SiteField']
 
@@ -134,7 +134,7 @@ class PrimaryOutcomeReport(GenericTabularReport, DataSummaryReport, HSPHSiteData
 class SecondaryOutcomeReport(DataSummaryReport, HSPHSiteDataMixin):
     name = "Secondary Outcome Report"
     slug = "hsph_secondary_outcome_old"
-    fields = ['corehq.apps.reports.fields.DatespanField',
+    fields = ['corehq.apps.reports.filters.dates.DatespanFilter',
               'hsph.fields.SiteField']
     report_template_path = 'hsph/reports/comparative_data_summary_old.html'
     flush_layout = True

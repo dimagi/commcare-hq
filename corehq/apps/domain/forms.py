@@ -7,6 +7,7 @@ import io
 from PIL import Image
 import uuid
 from corehq import privileges
+from corehq.apps.accounting.exceptions import SubscriptionRenewalError
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 import settings
@@ -843,6 +844,90 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
             logger.exception("There was an error subscribing the domain '%s' to plan '%s'. "
                              "Go quickly!" % (self.domain, self.plan_version.plan.name))
         return False
+
+
+class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
+    plan_edition = forms.CharField(
+        widget=forms.HiddenInput,
+    )
+    confirm_legal = forms.BooleanField(
+        required=True,
+    )
+
+    def __init__(self, account, domain, creating_user, current_subscription,
+                 renewed_version, data=None, *args, **kwargs):
+        self.current_subscription = current_subscription
+        super(ConfirmSubscriptionRenewalForm, self).__init__(
+            account, domain, creating_user, data=data, *args, **kwargs
+        )
+
+        self.fields['plan_edition'].initial = renewed_version.plan.edition
+        self.fields['confirm_legal'].label = mark_safe(ugettext_noop(
+            'I have read and agree to the <a href="%(pa_url)s" '
+            'target="_blank">Software Product Agreement</a>.'
+        ) % {
+            'pa_url': reverse("product_agreement"),
+        })
+
+        from corehq.apps.domain.views import DomainSubscriptionView
+        self.helper.layout = crispy.Layout(
+            'plan_edition',
+            crispy.Fieldset(
+                _("Billing Administrators"),
+                crispy.Field('billing_admins', css_class='input-xxlarge'),
+            ),
+            crispy.Fieldset(
+                _("Basic Information"),
+                'company_name',
+                'first_name',
+                'last_name',
+                crispy.Field('emails', css_class='input-xxlarge'),
+                'phone_number',
+            ),
+            crispy.Fieldset(
+                 _("Mailing Address"),
+                'first_line',
+                'second_line',
+                'city',
+                'state_province_region',
+                'postal_code',
+                crispy.Field('country', css_class="input-large",
+                             data_countryname=dict(COUNTRIES).get(self.current_country, ''))
+            ),
+            crispy.Fieldset(
+                _("Re-Confirm Product Agreement"),
+                'confirm_legal',
+            ),
+            FormActions(
+                crispy.HTML('<a href="%(url)s" style="margin-right:5px;" class="btn">%(title)s</a>' % {
+                    'url': reverse(DomainSubscriptionView.urlname, args=[self.domain]),
+                    'title': _("Cancel"),
+                }),
+                StrictButton(
+                    _("Renew Plan"),
+                    type="submit",
+                    css_class='btn btn-success',
+                ),
+            ),
+        )
+
+    def save(self, commit=True):
+        account_save_success = super(ConfirmSubscriptionRenewalForm, self).save(commit=False)
+        if not account_save_success:
+            return False
+
+        try:
+            self.current_subscription.renew_subscription(
+                web_user=self.creating_user,
+                adjustment_method=SubscriptionAdjustmentMethod.USER,
+            )
+        except SubscriptionRenewalError as e:
+            logger.error("[BILLING] Subscription for %(domain)s failed to "
+                         "renew due to: %(error)s." % {
+                             'domain': self.domain,
+                             'error': e,
+                         })
+        return True
 
 
 class ProBonoForm(forms.Form):

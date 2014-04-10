@@ -18,7 +18,7 @@ class ProjectManagementReport(CustomProjectReport, ProjectReportParametersMixin,
 class ProjectStatusDashboardReport(ProjectManagementReport):
     name = "Project Status Dashboard"
     slug = "hsph_project_status"
-    fields = ['corehq.apps.reports.fields.DatespanField',
+    fields = ['corehq.apps.reports.filters.dates.DatespanFilter',
               'hsph.fields.SiteField']
     report_template_path = "hsph/reports/project_status.html"
     flush_layout = True
@@ -125,7 +125,7 @@ class ProjectStatusDashboardReport(ProjectManagementReport):
 class ImplementationStatusDashboardReport(GenericTabularReport, ProjectManagementReport, HSPHSiteDataMixin):
     name = "Implementation Status Dashboard"
     slug = "hsph_implementation_status"
-    fields = ['corehq.apps.reports.fields.DatespanField',
+    fields = ['corehq.apps.reports.filters.dates.DatespanFilter',
               'hsph.fields.IHForCHFField',
               'hsph.fields.FacilityStatusField',
               'hsph.fields.NameOfCITLField',

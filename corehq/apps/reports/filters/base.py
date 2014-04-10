@@ -71,6 +71,24 @@ class BaseReportFilter(CacheableRequestMixIn):   # (CacheableRequestMixIn):
         return request.GET.get(cls.slug)
 
 
+class CheckboxFilter(BaseReportFilter):
+    slug = "checkbox"
+    label = "hello"
+    template = "reports/filters/checkbox.html"
+
+    @property
+    def filter_context(self):
+        return {'checked': self.request.GET.get(self.slug, False)}
+
+    @classmethod
+    def get_value(cls, request, domain):
+        val = request.GET.get(cls.slug, False)
+        if not val:
+            return False
+        else:
+            return val is True or val == 'True' or val == 'true'
+
+
 class BaseSingleOptionFilter(BaseReportFilter):
     """
         Displays a select field.

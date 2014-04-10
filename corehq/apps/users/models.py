@@ -28,7 +28,7 @@ from casexml.apps.phone.models import User as CaseXMLUser
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.domain.utils import normalize_domain_name, domain_restricts_superusers
 from corehq.apps.domain.models import LicenseAgreement
-from corehq.apps.users.util import normalize_username, user_data_from_registration_form, format_username, raw_username
+from corehq.apps.users.util import normalize_username, user_data_from_registration_form
 from corehq.apps.users.xml import group_fixture
 from corehq.apps.users.tasks import tag_docs_as_deleted
 from corehq.apps.sms.mixin import CommCareMobileContactMixin, VerifiedNumber, PhoneNumberInUseException, InvalidFormatException
@@ -825,9 +825,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     user_id = userID
 
-    class Meta:
-        app_label = 'users'
-
     def __unicode__(self):
         return "<%s '%s'>" % (self.__class__.__name__, self.get_id)
 
@@ -1340,7 +1337,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         self.user_data              = old_couch_user.default_account.user_data
 
     @classmethod
-    def create(cls, domain, username, password, email=None, uuid='', date='', phone_number=None, **kwargs):
+    def create(cls, domain, username, password, email=None, uuid='', date='', phone_number=None, commit=True,
+               **kwargs):
         """
         used to be a function called `create_hq_user_from_commcare_registration_info`
 
@@ -1359,7 +1357,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         commcare_user.domain_membership = DomainMembership(domain=domain, **kwargs)
 
-        commcare_user.save(**get_safe_write_kwargs())
+        if commit:
+            commcare_user.save(**get_safe_write_kwargs())
 
         return commcare_user
 

@@ -22,6 +22,7 @@ from crispy_forms import layout as crispy
 from django_countries.countries import COUNTRIES
 from corehq import privileges, toggles
 from corehq.apps.accounting.invoicing import DomainInvoiceFactory
+from corehq.apps.accounting.tasks import send_subscription_reminder_emails
 
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.email import send_HTML_email
@@ -1056,6 +1057,15 @@ class SoftwarePlanVersionForm(forms.Form):
                 rate_instances.append(self._retrieve_feature_rate(rate_form))
         if errors:
             self._errors.setdefault('feature_rates', errors)
+
+        required_types = dict(FeatureType.CHOICES).keys()
+        feature_types = [r.feature.feature_type for r in rate_instances]
+        if any([feature_types.count(t) != 1 for t in required_types]):
+            raise ValidationError(
+                "You must specify exactly one rate per feature type "
+                "(SMS, USER, etc.)"
+            )
+
         self.new_feature_rates = rate_instances
         rate_ids = lambda x: set([r.id for r in x])
         if (not self.is_update
@@ -1069,6 +1079,8 @@ class SoftwarePlanVersionForm(forms.Form):
         rates = json.loads(original_data)
         rate_instances = []
         errors = ErrorList()
+        if not rates:
+            raise ValidationError("You must specify at least one product rate.")
         for rate_data in rates:
             rate_form = ProductRateForm(rate_data)
             if not rate_form.is_valid():
@@ -1077,6 +1089,15 @@ class SoftwarePlanVersionForm(forms.Form):
                 rate_instances.append(self._retrieve_product_rate(rate_form))
         if errors:
             self._errors.setdefault('product_rates', errors)
+
+        available_types = dict(SoftwareProductType.CHOICES).keys()
+        product_types = [r.product.product_type for r in rate_instances]
+        if any([product_types.count(p) > 1 for p in available_types]):
+            raise ValidationError(
+                "You may have at most ONE rate per product type "
+                "(CommCare, CommTrack, etc.)"
+            )
+        
         self.new_product_rates = rate_instances
         rate_ids = lambda x: set([r.id for r in x])
         if (not self.is_update
@@ -1412,6 +1433,47 @@ class TriggerBookkeeperEmailForm(forms.Form):
             year=int(self.cleaned_data['year']),
             emails=self.cleaned_data['emails'].split(',')
         )
+
+
+class TestReminderEmailFrom(forms.Form):
+    days = forms.ChoiceField(
+        label="Days Until Subscription Ends",
+        choices=(
+            (1, 1),
+            (10, 10),
+            (30, 30),
+        )
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(TestReminderEmailFrom, self).__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.form_class = 'form form-horizontal'
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                "Test Subscription Reminder Emails",
+                'days',
+            ),
+            crispy.Div(
+                crispy.HTML(
+                    "Note that this will ONLY send emails to a billing admin "
+                    "for a domain IF the billing admin is an Accounting "
+                    "Previewer."
+                ),
+                css_class="alert alert-info"
+            ),
+            FormActions(
+                StrictButton(
+                    "Send Reminder Emails",
+                    type="submit",
+                    css_class='btn-primary'
+                )
+            )
+        )
+
+    def send_emails(self):
+        send_subscription_reminder_emails(int(self.cleaned_data['days']))
 
 
 class AdjustBalanceForm(forms.Form):

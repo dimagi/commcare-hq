@@ -10,7 +10,11 @@ from django.test import TestCase
 from django.test.client import Client
 
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.receiverwrapper.models import RepeatRecord, CaseRepeater, FormRepeater
+from corehq.apps.receiverwrapper.models import (
+    CaseRepeater,
+    FormRepeater,
+    RepeatRecord,
+)
 from couchforms.models import XFormInstance
 
 case_id = "ABC123CASEID"
@@ -65,9 +69,16 @@ class RepeaterTest(TestCase):
         self.client = Client()
         self.domain = "test-domain"
         create_domain(self.domain)
-        self.case_repeater = CaseRepeater(domain=self.domain, url='case-repeater-url', version=V1, next_check=datetime.utcnow() - timedelta(seconds=5))
+        self.case_repeater = CaseRepeater(
+            domain=self.domain,
+            url='case-repeater-url',
+            version=V1,
+        )
         self.case_repeater.save()
-        self.form_repeater = FormRepeater(domain=self.domain, url='form-repeater-url', next_check=datetime.utcnow() - timedelta(seconds=10))
+        self.form_repeater = FormRepeater(
+            domain=self.domain,
+            url='form-repeater-url',
+        )
         self.form_repeater.save()
         self.log = []
         self.post_xml(xform_xml)
@@ -86,12 +97,15 @@ class RepeaterTest(TestCase):
 
     def make_post_fn(self, status_codes):
         status_codes = iter(status_codes)
+
         def post_fn(data, url, headers=None):
             status_code = status_codes.next()
             self.log.append((url, status_code, data, headers))
+
             class resp:
                 status = status_code
             return resp
+
         return post_fn
 
     def tearDown(self):
@@ -125,25 +139,46 @@ class RepeaterTest(TestCase):
 
         next_check_time = now() + timedelta(minutes=60)
 
-        repeat_records = RepeatRecord.all(domain=self.domain, due_before=now() + timedelta(minutes=15))
+        repeat_records = RepeatRecord.all(
+            domain=self.domain,
+            due_before=now() + timedelta(minutes=15),
+        )
         self.assertEqual(len(repeat_records), 0)
 
-        repeat_records = RepeatRecord.all(domain=self.domain, due_before=next_check_time + timedelta(seconds=2))
+        repeat_records = RepeatRecord.all(
+            domain=self.domain,
+            due_before=next_check_time + timedelta(seconds=2),
+        )
         self.assertEqual(len(repeat_records), 2)
 
-        for repeat_record in sorted(repeat_records, key=lambda rr: rr.next_check):
-            self.assertLess(abs(next_check_time - repeat_record.next_check), timedelta(seconds=2))
+        for repeat_record in repeat_records:
+            self.assertLess(abs(next_check_time - repeat_record.next_check),
+                            timedelta(seconds=2))
             repeat_record.fire(post_fn=self.make_post_fn([404, 200]))
             repeat_record.save()
 
         self.assertEqual(len(self.log), 4)
-        self.assertEqual(self.log[1][:3], (self.form_repeater.url, 200, xform_xml))
-        self.assertIn('received-on', self.log[1][3])
-        self.assertEqual(self.log[3][:2], (self.case_repeater.url, 200))
-        self.assertIn('server-modified-on', self.log[3][3])
-        check_xml_line_by_line(self, self.log[3][2], case_block)
 
-        repeat_records = RepeatRecord.all(domain=self.domain, due_before=next_check_time)
+        # The following is pretty fickle and depends on which of
+        #   - corehq.apps.receiverwrapper.signals
+        #   - casexml.apps.case.signals
+        # gets loaded first.
+        # This is deterministic but easily affected by minor code changes
+
+        # check case stuff
+        self.assertEqual(self.log[1][:2], (self.case_repeater.url, 200))
+        self.assertIn('server-modified-on', self.log[1][3])
+        check_xml_line_by_line(self, self.log[1][2], case_block)
+
+        # check form stuff
+        self.assertEqual(self.log[3][:3],
+                         (self.form_repeater.url, 200, xform_xml))
+        self.assertIn('received-on', self.log[3][3])
+
+        repeat_records = RepeatRecord.all(
+            domain=self.domain,
+            due_before=next_check_time,
+        )
         for repeat_record in repeat_records:
             self.assertEqual(repeat_record.succeeded, True)
             self.assertEqual(repeat_record.next_check, None)

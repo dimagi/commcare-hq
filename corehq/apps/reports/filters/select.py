@@ -1,9 +1,13 @@
 import datetime
 import calendar
+
 from django.conf import settings
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
+
 from casexml.apps.case.models import CommCareCase, CommCareCaseGroup
+from dimagi.utils.couch.database import get_db
+
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.groups.models import Group
@@ -58,6 +62,7 @@ class SelectOrganizationFilter(BaseSingleOptionFilter):
     def options(self):
         return [(o.name, o.title) for o in  Organization.get_all()]
 
+
 class GroupFilterMixin(object):
     slug = "group"
     label = ugettext_noop("Group")
@@ -67,11 +72,14 @@ class GroupFilterMixin(object):
     def options(self):
         return [(group.get_id, group.name) for group in Group.get_reporting_groups(self.domain)]
 
+
 class GroupFilter(GroupFilterMixin, BaseSingleOptionFilter):
     placeholder = ugettext_noop('Click to select a group')
 
+
 class MultiGroupFilter(GroupFilterMixin, BaseMultipleOptionFilter):
     placeholder = ugettext_noop('Click to select groups')
+
 
 class YearFilter(BaseSingleOptionFilter):
     slug = "year"
@@ -109,11 +117,12 @@ class CaseTypeMixin(object):
     @classmethod
     def get_case_types(cls, domain):
         key = ['all type', domain]
-
-        for r in CommCareCase.get_db().view('case/all_cases',
-                      startkey=key,
-                      endkey=key + [{}],
-                      group_level=3).all():
+        for r in get_db().view(
+            'case/all_cases',
+            startkey=key,
+            endkey=key + [{}],
+            group_level=3,
+        ).all():
             _, _, case_type = r['key']
             if case_type:
                 yield case_type
@@ -127,12 +136,18 @@ class CaseTypeMixin(object):
         for status in ('all', 'open'):
             def individual_counts():
                 for user_id in user_ids:
-                    key = CommCareCase.get_all_cases_key(domain, case_type=case_type, owner_id=user_id, status=status)
+                    key = CommCareCase.get_all_cases_key(
+                        domain,
+                        case_type=case_type,
+                        owner_id=user_id,
+                        status=status,
+                    )
                     try:
-                        yield CommCareCase.get_db().view('case/all_cases',
+                        yield get_db().view(
+                            'case/all_cases',
                             startkey=key,
                             endkey=key + [{}],
-                            reduce=True
+                            reduce=True,
                         ).one()['value']
                     except TypeError:
                         yield 0
@@ -155,6 +170,7 @@ class SelectOpenCloseFilter(BaseSingleOptionFilter):
             ('open', _("Only Open")),
             ('closed', _("Only Closed")),
         ]
+
 
 class SelectApplicationFilter(BaseSingleOptionFilter):
     slug = "app"

@@ -11,7 +11,7 @@ from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.display import xmlns_to_name
-from corehq.apps.reports.fields import StrongFilterUsersField
+from corehq.apps.reports.dont_use.fields import StrongFilterUsersField
 from corehq.apps.reports.generic import GenericTabularReport, ProjectInspectionReportParamsMixin, ElasticProjectInspectionReport
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin, CompletionOrSubmissionTimeMixin
 from corehq.apps.reports.util import datespan_from_beginning
@@ -30,8 +30,8 @@ class ProjectInspectionReport(ProjectInspectionReportParamsMixin, GenericTabular
     exportable = False
     asynchronous = False
     ajax_pagination = True
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.SelectMobileWorkerField']
+    fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
+              'corehq.apps.reports.filters.users.SelectMobileWorkerFilter']
 
 
 class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReportParametersMixin, CompletionOrSubmissionTimeMixin, 
@@ -42,7 +42,7 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
               'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
               'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
               'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
-              'corehq.apps.reports.fields.DatespanField',]
+              'corehq.apps.reports.filters.dates.DatespanFilter']
     ajax_pagination = True
     filter_users_field_class = StrongFilterUsersField
     include_inactive = True
@@ -154,7 +154,7 @@ class SubmitHistoryNew(SubmitHistory):
         'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
         'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
         'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
-        'corehq.apps.reports.fields.DatespanField',
+        'corehq.apps.reports.filters.dates.DatespanFilter',
         'corehq.apps.reports.filters.forms.CustomPropsFilter',
         'corehq.apps.reports.filters.forms.CustomFieldFilter']
 
@@ -175,8 +175,8 @@ class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):
 
     name = ugettext_noop('Generic Pie Chart (sandbox)')
     slug = 'generic_pie'
-    fields = ['corehq.apps.reports.fields.DatespanField',
-              'corehq.apps.reports.fields.AsyncLocationField']
+    fields = ['corehq.apps.reports.filters.dates.DatespanFilter',
+              'corehq.apps.reports.filters.fixtures.AsyncLocationFilter']
     # define in subclass
     #mode = 'case' or 'form'
     #submission_type = <case type> or <xform xmlns>

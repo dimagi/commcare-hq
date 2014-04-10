@@ -1,6 +1,6 @@
 # coding=utf-8
 from numbers import Number
-from corehq.apps.reports.fields import DatespanField
+from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.standard import DatespanMixin, CustomProjectReport
 from corehq.apps.reports.util import format_datatables_data
 from dimagi.utils.decorators.memoized import memoized
@@ -43,7 +43,7 @@ def test_report(report, keys=None, filters=None, group_by=None):
 class UserTestReport(SqlTabularReport, CustomProjectReport, DatespanMixin):
     name = "SQL Demo"
     slug = "sql_demo"
-    fields = [DatespanMixin.datespan_field]
+    field_classes = (DatespanFilter,)
     table_name = "user_report_data"
 
     @property
@@ -88,7 +88,7 @@ class UserTestReport(SqlTabularReport, CustomProjectReport, DatespanMixin):
 class RegionTestReport(SqlTabularReport, CustomProjectReport, DatespanMixin):
     name = "SQL Demo"
     slug = "sql_demo"
-    fields = [DatespanMixin.datespan_field]
+    field_classes = (DatespanFilter,)
     table_name = "region_report_data"
 
     @property

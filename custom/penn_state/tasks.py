@@ -70,6 +70,7 @@ class Site(object):
             "reports_forms/all_forms",
             startkey=key + [str(self.week[0])],
             endkey=key + [str(self.week[-1] + datetime.timedelta(days=1))],
+            reduce=False,
             include_docs=True
         ).all()
         for form in forms:
