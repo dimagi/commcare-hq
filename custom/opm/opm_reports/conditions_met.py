@@ -158,7 +158,7 @@ class ConditionsMet(object):
         met_three = False
         met_four = False
         met_five = False
-        preg_month = get_property(case_obj, 'pregnancy_month', 0)
+        preg_month = get_property(case_obj, 'pregnancy_month', 0) or 0
         if self.status == 'pregnant':
             if '1' in [met['window_1_1'], met['window_1_2'], met['window_2_1'], met['window_2_2'], met['attendance_vhnd_3'], met['attendance_vhnd_6']]:
                 met_one = True
