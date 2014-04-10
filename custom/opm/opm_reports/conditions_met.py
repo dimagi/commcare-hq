@@ -30,8 +30,6 @@ SPACING_PROMPT_Y = 'birth_spacing_prompt_y.png'
 SPACING_PROMPT_N = 'birth_spacing_prompt_n.png'
 
 
-
-
 class ConditionsMet(object):
 
     method_map = {

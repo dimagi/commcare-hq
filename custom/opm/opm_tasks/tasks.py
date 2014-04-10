@@ -5,7 +5,6 @@ import logging
 
 from celery.task import periodic_task
 from celery.schedules import crontab
-from datetime import timedelta
 from django.conf import settings
 
 from ..opm_reports.reports import (BeneficiaryPaymentReport,
@@ -49,7 +48,7 @@ def save_report(ReportClass, month=None, year=None):
 
 
 @periodic_task(
-    run_every=timedelta(minutes=1),
+    run_every=crontab(hour=10, minute=1, day_of_month=1),
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery')
 )
 def snapshot():
