@@ -8,7 +8,8 @@ from couchdbkit.ext.django.schema import Document, DictProperty,\
     StringListProperty, DateTimeProperty, SchemaProperty, BooleanProperty
 import json
 import couchexport
-from couchexport.exceptions import CustomExportValidationError
+from couchexport.exceptions import CustomExportValidationError,\
+    ExportBadStateException
 from couchexport.files import ExportFiles
 from couchexport.transforms import identity
 from couchexport.util import SerializableFunctionProperty,\
@@ -122,7 +123,9 @@ class ExportSchema(Document, UnicodeMixIn):
                 # seqs likely weren't ints (e.g. bigcouch)
                 # this should never be possible (anything on bigcouch should
                 # have a timestamp) so let's fail hard
-                raise Exception('export %s is in a bad state (no timestamp or integer seq)' % ret._id)
+                raise ExportBadStateException(
+                    'export %s is in a bad state (no timestamp or integer seq)'
+                    % ret._id)
         # TODO? handle seq -> datetime migration
         return ret
 
