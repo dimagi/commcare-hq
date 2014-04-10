@@ -1,8 +1,24 @@
 
 
-class CustomExportValidationError(Exception):
+class CouchExportException(Exception):
     pass
 
 
-class ExportBadStateException(Exception):
+class CustomExportValidationError(CouchExportException):
+    pass
+
+
+class ExportBadStateException(CouchExportException):
+    pass
+
+
+class SchemaInferenceError(CouchExportException):
+    pass
+
+
+class SchemaMismatchException(CouchExportException):
+    pass
+
+
+class UnsupportedExportFormat(CouchExportException):
     pass

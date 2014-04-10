@@ -1,10 +1,10 @@
+from couchexport.exceptions import SchemaMismatchException
 from couchexport.models import GroupExportConfiguration, SavedBasicExport
 from couchdbkit.exceptions import ResourceNotFound
 from datetime import datetime
 import os
 import json
 from couchexport.tasks import rebuild_schemas
-from couchexport.export import SchemaMismatchException
 
 
 def export_for_group(export_id_or_group, output_dir):
