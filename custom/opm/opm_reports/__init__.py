@@ -6,6 +6,7 @@ CUSTOM_REPORTS = (
         reports.IncentivePaymentReport,
         reports.HealthStatusReport,
         reports.MetReport
+        reports.HealthMapReport,
     )),
 
 )

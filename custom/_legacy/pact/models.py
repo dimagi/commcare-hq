@@ -114,7 +114,7 @@ class PactPatientCase(CommCareCase):
         #filtered= filter(lambda x: x.fields['id'] in pt_providers, all_providers)
         #return [x.fields for x in filtered]
 
-        return [providers_dict[x] for x in pt_providers]
+        return [providers_dict[x] for x in pt_providers if x in providers_dict]
 
 
     def _get_display_string(self, attr, display_dict):
