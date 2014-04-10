@@ -37,6 +37,13 @@ if [ $? -eq 0 ]; then
 
     ## PPA to get latest versions of nodejs and npm
     if [[ ! $(sudo grep -r "chris-lea/node\.js" /etc/apt/) ]]; then
+    
+        # Checks if add-apt-repository is available
+        # add-apt-repository is provided by the python-software-properties package
+        if [[ ! $(command -v add-apt-repository) ]]; then
+            sudo apt-get install python-software-properties
+        fi
+
         sudo add-apt-repository -y ppa:chris-lea/node.js
     fi
     sudo apt-get update
