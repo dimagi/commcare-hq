@@ -27,8 +27,10 @@ from corehq.apps.export.exceptions import BadExportConfiguration
 from corehq.apps.reports.exportfilters import default_form_filter
 import couchexport
 from couchexport import views as couchexport_views
-from couchexport.export import SchemaMismatchException
-from couchexport.export import UnsupportedExportFormat
+from couchexport.exceptions import (
+    CouchExportException,
+    SchemaMismatchException
+)
 from couchexport.models import Format, FakeSavedExportSchema, SavedBasicExport
 from couchexport.shortcuts import (export_data_shared, export_raw_data,
     export_response)
@@ -173,7 +175,7 @@ def export_data(req, domain):
     else:
         try:
             resp = export_data_shared([domain, export_tag], **kwargs)
-        except UnsupportedExportFormat as e:
+        except CouchExportException as e:
             return HttpResponseBadRequest(e)
     if resp:
         return resp
