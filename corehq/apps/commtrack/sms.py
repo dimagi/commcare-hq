@@ -11,11 +11,13 @@ from datetime import datetime
 from corehq.apps.commtrack.util import get_supply_point
 from corehq.apps.commtrack.xmlutil import XML
 from corehq.apps.commtrack.models import Product, CommtrackConfig, StockTransaction, CommTrackUser, RequisitionTransaction, RequisitionCase
+from corehq.apps.users.models import CouchUser
 from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.apps.locations.models import Location
 from xml.etree import ElementTree
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
+from corehq.apps.commtrack.exceptions import NotAUserClassError
 
 import uuid
 
@@ -34,6 +36,8 @@ def handle(verified_contact, text, msg=None):
         data = StockReportParser(domain, verified_contact).parse(text.lower())
         if not data:
             return False
+    except NotAUserClassError:
+        return False
     except Exception, e: # todo: should we only trap SMSErrors?
         if settings.UNIT_TESTING or settings.DEBUG:
             raise
@@ -68,7 +72,12 @@ class StockReportParser(object):
 
         self.location = None
         u = v.owner
+
         if domain.commtrack_enabled:
+            # if user is not actually a user, we let someone else process
+            if not isinstance(u, CouchUser):
+                raise NotAUserClassError
+
             # currently only support one location on the UI
             linked_loc = CommTrackUser.wrap(u.to_json()).location
             if linked_loc:

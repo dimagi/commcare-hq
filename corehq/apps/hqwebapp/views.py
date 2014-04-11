@@ -71,7 +71,7 @@ def couch_check():
     # work, and if other error handling allows the request to get this far.
 
     try:
-        xforms = XFormInstance.view('couchforms/by_user', limit=1).all()
+        xforms = XFormInstance.view('reports_forms/all_forms', limit=1).all()
     except:
         xforms = None
     return isinstance(xforms, list)
@@ -293,6 +293,8 @@ def _login(req, domain, domain_type, template_name, domain_context=None):
     req.base_template = settings.BASE_TEMPLATE
     context = domain_context or get_domain_context(domain_type)
     context['domain'] = domain
+    if domain:
+        context['next'] = req.REQUEST.get('next', '/a/%s/' % domain)
 
     return django_login(req, template_name=template_name,
                         authentication_form=EmailAuthenticationForm if not domain else CloudCareAuthenticationForm,
@@ -372,14 +374,22 @@ def bug_report(req):
     try:
         couch_user = CouchUser.get_by_username(report['username'])
         full_name = couch_user.full_name
+        email = couch_user.get_email()
     except Exception:
         full_name = None
+        email = None
     report['full_name'] = full_name
+    report['email'] = email or report['username']
 
-    report['software_plan'] = Subscription.objects.get(
+    matching_subscriptions = Subscription.objects.filter(
         is_active=True,
         subscriber__domain=report['domain'],
-    ).plan_version
+    )
+
+    if len(matching_subscriptions) >= 1:
+        report['software_plan'] = matching_subscriptions[0].plan_version
+    else:
+        report['software_plan'] = u'domain has no active subscription'
 
     subject = u'{subject} ({domain})'.format(**report)
     message = (
@@ -398,9 +408,9 @@ def bug_report(req):
     cc = filter(None, cc)
 
     if full_name and not any([c in full_name for c in '<>"']):
-        reply_to = u'"{full_name}" <{username}>'.format(**report)
+        reply_to = u'"{full_name}" <{email}>'.format(**report)
     else:
-        reply_to = report['username']
+        reply_to = report['email']
 
     # if the person looks like a commcare user, fogbugz can't reply
     # to their email, so just use the default

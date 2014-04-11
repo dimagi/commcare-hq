@@ -1,7 +1,9 @@
 from django.db import models
 from corehq.apps.sofabed.exceptions import InvalidMetaBlockException, InvalidFormUpdateException
 
-        
+MISSING_APP_ID = '_MISSING_APP_ID'
+
+
 class FormData(models.Model):
     """
     Data about a form submission.
@@ -15,11 +17,11 @@ class FormData(models.Model):
     time_start = models.DateTimeField()
     time_end = models.DateTimeField(db_index=True)
     duration = models.IntegerField()
-    device_id = models.CharField(max_length=255, blank=True)
-    user_id = models.CharField(max_length=255, blank=True, db_index=True)
-    username = models.CharField(max_length=255, blank=True)
-    app_id = models.CharField(max_length=255, blank=True, db_index=True)
-    xmlns = models.CharField(max_length=1000, blank=True, db_index=True)
+    device_id = models.CharField(max_length=255, null=True)
+    user_id = models.CharField(max_length=255, null=True, db_index=True)
+    username = models.CharField(max_length=255, null=True)
+    app_id = models.CharField(max_length=255, null=True, db_index=True)
+    xmlns = models.CharField(max_length=1000, null=True, db_index=True)
 
     def __unicode__(self):
         return "FormData: %s" % self.instance_id
@@ -64,15 +66,14 @@ class FormData(models.Model):
         self.device_id = instance.metadata.deviceID
         self.user_id = instance.metadata.userID
         self.username = instance.metadata.username
-        missing = '_MISSING_APP_ID'
         try:
-            self.app_id = instance.app_id or missing
+            self.app_id = instance.app_id or MISSING_APP_ID
         except AttributeError:
-            self.app_id = missing
+            self.app_id = MISSING_APP_ID
         self.xmlns = instance.xmlns
 
     def matches_exact(self, instance):
-        return self.doc_type == instance.doc_type and \
+        match = self.doc_type == instance.doc_type and \
                self.domain == instance.domain and \
                self.instance_id == instance.get_id and \
                self.time_start == instance.metadata.timeStart and \
@@ -81,9 +82,17 @@ class FormData(models.Model):
                self.user_id == instance.metadata.userID and \
                self.username == instance.metadata.username and \
                self.xmlns == instance.xmlns and \
-               self.app_id == instance.app_id and \
                self.received_on == instance.received_on
-        
+
+        if match:
+            try:
+                app_id = instance.app_id or MISSING_APP_ID
+            except AttributeError:
+                app_id = MISSING_APP_ID
+
+            match = self.app_id == app_id
+
+        return match
     @classmethod
     def from_xforminstance(cls, instance):
         """

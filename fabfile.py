@@ -294,10 +294,9 @@ def production():
 @task
 def staging():
     """staging.commcarehq.org"""
-    if not hasattr(env, 'code_branch') or env.code_branch == 'master':
-        print ("You must specify a code branch"
-               "(not 'master') with --set code_branch=<branch>")
-        sys.exit()
+    if env.code_branch == 'master':
+        env.code_branch = 'autostaging'
+        print ("using default branch of autostaging. you can override this with --set code_branch=<branch>")
 
     env.sudo_user = 'cchq'
     env.environment = 'staging'
@@ -305,7 +304,10 @@ def staging():
     env.django_port = '9010'
 
     env.should_migrate = True
-    env.sms_queue_enabled = True
+    # We should not enable the sms queue on staging because replication
+    # can cause sms to be processed again if an sms is replicated in its
+    # queued state.
+    env.sms_queue_enabled = False
 
     env.roledefs = {
         'couch': ['hqdb0-staging.internal.commcarehq.org'],

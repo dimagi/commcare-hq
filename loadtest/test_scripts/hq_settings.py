@@ -9,6 +9,10 @@ PASSWORD = "***"
 MOBILE_USERNAME = "user@demo.commcarehq.org"
 MOBILE_PASSWORD = "***"
 
+# set the following two to use a different user for OTA restore
+OTA_USERNAME = None
+OTA_PASSWORD = None
+
 try:
     from localsettings import *
 except ImportError:
@@ -33,8 +37,12 @@ class HQTransaction(object):
         self.domain = DOMAIN
         self.username = USERNAME
         self.password = PASSWORD
-        self.mobile_username = MOBILE_USERNAME
-        self.mobile_password = MOBILE_PASSWORD
+        self.submissions_username = MOBILE_USERNAME
+        self.submissions_password = MOBILE_PASSWORD
+        self.ota_username = (OTA_USERNAME if OTA_USERNAME is not None
+                else MOBILE_USERNAME)
+        self.ota_password = (OTA_PASSWORD if OTA_PASSWORD is not None
+                else MOBILE_PASSWORD)
 
 class User(object):
     def __init__(self, username, password, browser):

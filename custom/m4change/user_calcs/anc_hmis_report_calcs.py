@@ -1,8 +1,8 @@
-from . import update_value_for_date
+from . import update_value_for_date, string_to_int
 from datetime import datetime
 import fluff
 from custom.m4change.constants import BOOKING_FORMS, FOLLOW_UP_FORMS, BOOKING_AND_FOLLOW_UP_FORMS, \
-    PNC_CHILD_IMMUNIZATION_AND_REG_HOME_DELIVERED_FORMS
+    PNC_CHILD_IMMUNIZATION_AND_REG_HOME_DELIVERED_FORMS, BOOKING_FOLLOW_UP_AND_LAB_RESULTS_FORMS
 
 
 class AncAntenatalAttendanceCalculator(fluff.Calculator):
@@ -51,7 +51,7 @@ class AncAttendanceGreaterEqual4VisitsCalculator(fluff.Calculator):
     def total(self, case):
         dates = dict()
         for form in case.get_forms():
-            if form.xmlns in FOLLOW_UP_FORMS and form.form.get("visits", 0) >= 4:
+            if form.xmlns in FOLLOW_UP_FORMS and string_to_int(form.form.get("visits", "0")) >= 4:
                 update_value_for_date(form.received_on, dates)
         for date in dates:
             yield [date, dates[date]]
@@ -63,7 +63,8 @@ class AncSyphilisTestDoneCalculator(fluff.Calculator):
     def total(self, case):
         dates = dict()
         for form in case.get_forms():
-            if form.xmlns in FOLLOW_UP_FORMS and "syphilis" in form.form.get("tests_conducted", ""):
+            if form.xmlns in BOOKING_FOLLOW_UP_AND_LAB_RESULTS_FORMS \
+                    and "syphilis" in form.form.get("tests_conducted", ""):
                 update_value_for_date(form.received_on, dates)
         for date in dates:
             yield [date, dates[date]]
@@ -75,7 +76,8 @@ class AncSyphilisPositiveCalculator(fluff.Calculator):
     def total(self, case):
         dates = dict()
         for form in case.get_forms():
-            if form.xmlns in FOLLOW_UP_FORMS and form.form.get("syphilis_result", "") == "positive":
+            if form.xmlns in BOOKING_FOLLOW_UP_AND_LAB_RESULTS_FORMS \
+                    and form.form.get("syphilis_result", "") == "positive":
                 update_value_for_date(form.received_on, dates)
         for date in dates:
             yield [date, dates[date]]
@@ -87,8 +89,9 @@ class AncSyphilisCaseTreatedCalculator(fluff.Calculator):
     def total(self, case):
         dates = dict()
         for form in case.get_forms():
-            if form.xmlns in FOLLOW_UP_FORMS and form.form.get("syphilis_result", "") == "positive"\
-                    and form.form.get("client_diagnosis", "") == "treated":
+            if form.xmlns in BOOKING_FOLLOW_UP_AND_LAB_RESULTS_FORMS \
+                    and form.form.get("syphilis_result", "") == "positive" \
+                    and form.form.get("client_status", "") == "treated":
                 update_value_for_date(form.received_on, dates)
         for date in dates:
             yield [date, dates[date]]
@@ -100,9 +103,8 @@ class PregnantMothersReceivingIpt1Calculator(fluff.Calculator):
     def total(self, case):
         dates = dict()
         for form in case.get_forms():
-            if form.xmlns in BOOKING_AND_FOLLOW_UP_FORMS:
-                if "IPT" in form.form.get("drugs_given", ""):
-                    update_value_for_date(form.received_on, dates)
+            if form.xmlns in BOOKING_AND_FOLLOW_UP_FORMS and "ipt_1" in form.form.get("items_given", ""):
+                update_value_for_date(form.received_on, dates)
         for date in dates:
             yield [date, dates[date]]
 
@@ -113,7 +115,7 @@ class PregnantMothersReceivingIpt2Calculator(fluff.Calculator):
     def total(self, case):
         dates = dict()
         for form in case.get_forms():
-            if form.xmlns in FOLLOW_UP_FORMS and "ipt" in form.form.get("drugs_given", ""):
+            if form.xmlns in BOOKING_AND_FOLLOW_UP_FORMS and "ipt_2" in form.form.get("items_given", ""):
                 update_value_for_date(form.received_on, dates)
         for date in dates:
             yield [date, dates[date]]
@@ -125,7 +127,7 @@ class PregnantMothersReceivingLlinCalculator(fluff.Calculator):
     def total(self, case):
         dates = dict()
         for form in case.get_forms():
-            if form.xmlns in BOOKING_AND_FOLLOW_UP_FORMS and "llin" in form.form.get("drugs_given", ""):
+            if form.xmlns in BOOKING_AND_FOLLOW_UP_FORMS and "llin" in form.form.get("items_given", ""):
                 update_value_for_date(form.received_on, dates)
         for date in dates:
             yield [date, dates[date]]
@@ -137,7 +139,7 @@ class PregnantMothersReceivingIfaCalculator(fluff.Calculator):
     def total(self, case):
         dates = dict()
         for form in case.get_forms():
-            if form.xmlns in BOOKING_AND_FOLLOW_UP_FORMS and "ifa" in form.form.get("drugs_given", ""):
+            if form.xmlns in BOOKING_AND_FOLLOW_UP_FORMS and "ifa" in form.form.get("items_given", ""):
                 update_value_for_date(form.received_on, dates)
         for date in dates:
             yield [date, dates[date]]

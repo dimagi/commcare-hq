@@ -3,7 +3,7 @@ from corehq.apps.reports.standard import CustomProjectReport
 
 
 class PactAdminReport(GenericTabularReport, CustomProjectReport):
-    fields = ['corehq.apps.reports.fields.DatespanField']
+    fields = ['corehq.apps.reports.filters.dates.DatespanFilter']
     name = "PACT Admin Reports"
     slug = "pactadmin"
     emailable = True

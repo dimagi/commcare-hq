@@ -119,6 +119,10 @@ TOUCHFORMS_API_PASSWORD = 'password'
 DEFAULT_PROTOCOL = "http" # or https
 OVERRIDE_LOCATION="https://www.commcarehq.org"
 
+# Set to something like "192.168.1.5:8000" (with your IP address).
+# See corehq/apps/builds/README.md for more information.
+BASE_ADDRESS = None
+
 #Set your analytics IDs here for GA and pingdom RUM
 ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_ID': '*******',
@@ -200,7 +204,10 @@ ES_XFORM_CHECK_DIRECT_DOC_ID = None
 
 ####### API throttling #####
 
-CCHQ_API_THROTTLE_REQUESTS = 20  # number of requests allowed per timeframe
+CCHQ_API_THROTTLE_REQUESTS = 200  # number of requests allowed per timeframe
+                                  # Use a lower value in production. This is set
+                                  # to 200 to prevent AssertionError: 429 != 200
+                                  # test failures in development environsments.
 CCHQ_API_THROTTLE_TIMEFRAME = 10  # seconds
 
 ####### django-coverage config ########

@@ -2,47 +2,76 @@ from xml.etree import ElementTree
 from casexml.apps.case.tests.util import check_xml_line_by_line
 from casexml.apps.case.xml import V2
 from corehq.apps.fixtures import fixturegenerators
-from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType, FixtureOwnership
+from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType, FixtureOwnership, FixtureTypeField, \
+    FixtureItemField, FieldList
+from corehq.apps.fixtures.views import update_tables
+from corehq.apps.fixtures.exceptions import FixtureVersionError
 from corehq.apps.users.models import CommCareUser
 from django.test import TestCase
-
 
 class FixtureDataTest(TestCase):
     def setUp(self):
         self.domain = 'qwerty'
-        self.tag = "contact"
+        self.tag = "district"
 
         self.data_type = FixtureDataType(
             domain=self.domain,
             tag=self.tag,
-            name="Contact",
-            fields=['name', 'number']
+            name="Districts",
+            fields=[
+                FixtureTypeField(
+                    field_name="state_name",
+                    properties=[]
+                ),
+                FixtureTypeField(
+                    field_name="district_name",
+                    properties=["lang"]
+                ),
+                FixtureTypeField(
+                    field_name="district_id",
+                    properties=[]
+                )            
+            ]
         )
         self.data_type.save()
 
         self.data_item = FixtureDataItem(
             domain=self.domain,
             data_type_id=self.data_type.get_id,
-            fields={
-                'name': 'John',
-                'number': '+15555555555'
+            fields= {
+                "state_name": FieldList(
+                    field_list=[
+                        FixtureItemField(
+                            field_value="Delhi_state",
+                            properties={}
+                        )
+                    ]
+                ),
+                "district_name": FieldList(
+                    field_list=[
+                        FixtureItemField(
+                            field_value="Delhi_in_HIN",
+                            properties={"lang": "hin"}
+                        ),
+                        FixtureItemField(
+                            field_value="Delhi_in_ENG",
+                            properties={"lang": "eng"}
+                        )
+                    ]
+                ),
+                "district_id": FieldList(
+                    field_list=[
+                        FixtureItemField(
+                            field_value="Delhi_id",
+                            properties={}
+                        )
+                    ]
+                )
             }
         )
         self.data_item.save()
 
-        for name, number in [('Michael', '+16666666666'),
-            ('Eric', '+17777777777')]:
-            data_item = FixtureDataItem(
-                domain=self.domain,
-                data_type_id=self.data_type.get_id,
-                fields={
-                    'name': name,
-                    'number': number,
-                }
-            )
-            data_item.save()
-
-        self.user = CommCareUser.create(self.domain, 'rudolph', '***')
+        self.user = CommCareUser.create(self.domain, 'to_delete', '***')
 
         self.fixture_ownership = FixtureOwnership(
             domain=self.domain,
@@ -60,10 +89,12 @@ class FixtureDataTest(TestCase):
 
     def test_xml(self):
         check_xml_line_by_line(self, """
-        <contact>
-            <name>John</name>
-            <number>+15555555555</number>
-        </contact>
+        <district>
+            <state_name>Delhi_state</state_name>
+            <district_name lang="hin">Delhi_in_HIN</district_name>
+            <district_name lang="eng">Delhi_in_ENG</district_name>
+            <district_id>Delhi_id</district_id>
+        </district>
         """, ElementTree.tostring(self.data_item.to_xml()))
 
     def test_ownership(self):
@@ -73,13 +104,15 @@ class FixtureDataTest(TestCase):
         fixture, = fixturegenerators.item_lists(self.user, version=V2, last_sync=None)
 
         check_xml_line_by_line(self, """
-        <fixture id="item-list:contact" user_id="%s">
-            <contact_list>
-                <contact>
-                    <name>John</name>
-                    <number>+15555555555</number>
-                </contact>
-            </contact_list>
+        <fixture id="item-list:district" user_id="%s">
+            <district_list>
+                <district>
+                    <state_name>Delhi_state</state_name>
+                    <district_name lang="hin">Delhi_in_HIN</district_name>
+                    <district_name lang="eng">Delhi_in_ENG</district_name>
+                    <district_id>Delhi_id</district_id>
+                </district>
+            </district_list>            
         </fixture>
         """ % self.user.user_id, ElementTree.tostring(fixture))
 
@@ -90,7 +123,9 @@ class FixtureDataTest(TestCase):
         self.assertItemsEqual([self.user.get_id], self.data_item.get_all_users(wrap=False))
 
     def test_get_indexed_items(self):
-        fixtures = FixtureDataItem.get_indexed_items(self.domain,
-            self.tag, 'name')
-        john_num = fixtures['John']['number']
-        self.assertEqual(john_num, '+15555555555')
+        with self.assertRaises(FixtureVersionError):
+            fixtures = FixtureDataItem.get_indexed_items(self.domain,
+                self.tag, 'state_name')
+            delhi_id = fixtures['Delhi_state']['district_id']
+            self.assertEqual(delhi_id, 'Delhi_id')
+

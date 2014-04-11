@@ -32,7 +32,7 @@
                 </dd>
                 {% if media.license.type %}
                     <dt>{% trans "License" %}</dt>
-                    <dd><a href="http://creativecommons.org/licenses/#licenses">{{ media.license.display_name }}</a></dd>
+                    <dd><a href="{{ media.license.deed_link }}">{{ media.license.display_name }}</a></dd>
                 {% endif %}
                 {% if media.license.author %}
                     <dt>{% trans "Author" %}</dt>

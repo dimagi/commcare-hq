@@ -12,7 +12,9 @@ CUSTOM_REPORTS = (
         mcct_project_review.McctProjectReview,
         mcct_project_review.McctClientApprovalPage,
         mcct_project_review.McctClientPaymentPage,
+        mcct_project_review.McctPaidClientsPage,
         mcct_project_review.McctRejectedClientPage,
+        mcct_project_review.McctClientLogPage,
         mcct_monthly_aggregate_report.McctMonthlyAggregateReport
     )),
 )

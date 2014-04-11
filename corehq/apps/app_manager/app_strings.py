@@ -57,9 +57,10 @@ def _create_custom_app_strings(app, lang):
                         yield id_strings.detail_column_enum_variable(module, detail_type, column, item.key), trans(item.value)
 
         yield id_strings.module_locale(module), maybe_add_index(trans(module.name))
-        if isinstance(module, Module):
+        if hasattr(module, 'case_list'):
             if module.case_list.show:
                 yield id_strings.case_list_locale(module), trans(module.case_list.label) or "Case List"
+        if hasattr(module, 'referral_list'):
             if module.referral_list.show:
                 yield id_strings.referral_list_locale(module), trans(module.referral_list.label)
         for form in module.get_forms():

@@ -7,6 +7,7 @@ from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.cloudcare.api import get_cloudcare_app
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
+from corehq.apps.reports.filters.search import SearchFilter
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
@@ -59,7 +60,7 @@ class PatientListReportDisplay(CaseDisplay):
 
     @property
     def case_name(self):
-        return self.case["full_name"]
+        return self.get_property("full_name")
 
     @property
     def case_link(self):
@@ -166,10 +167,12 @@ class PatientListReport(CustomProjectReport, CaseListReport):
     name = ugettext_noop('Patient List')
     slug = 'patient_list'
     default_sort = {'target_date': 'asc'}
+    base_template_filters = 'succeed/report.html'
 
     fields = ['custom.succeed.fields.CareSite',
               'custom.succeed.fields.ResponsibleParty',
-              'custom.succeed.fields.PatientStatus']
+              'custom.succeed.fields.PatientStatus',
+              'corehq.apps.reports.standard.cases.filters.CaseSearchFilter']
 
     @property
     @memoized
@@ -207,13 +210,18 @@ class PatientListReport(CustomProjectReport, CaseListReport):
     @property
     @memoized
     def es_results(self):
-        q = {
-            "query": {
-                "bool": {
-                    "must": [
-                        {"match": {"domain.exact": self.domain}}
-                    ],
-                    "must_not": []
+        q = { "query": {
+                "filtered": {
+                    "query": {
+                    },
+                    "filter": {
+                        "bool": {
+                            "must": [
+                                {"term": {"domain.exact": self.domain}}
+                            ],
+                            "must_not": []
+                        }
+                    }
                 }
             },
             'sort': self.get_sorting_block(),
@@ -222,8 +230,8 @@ class PatientListReport(CustomProjectReport, CaseListReport):
         }
         sorting_block = self.get_sorting_block()[0].keys()[0] if len(self.get_sorting_block()) != 0 else None
         order = self.get_sorting_block()[0].values()[0] if len(self.get_sorting_block()) != 0 else None
-
-
+        search_string = SearchFilter.get_value(self.request, self.domain)
+        es_filters = q["query"]["filtered"]["filter"]
         if sorting_block == 'last_interaction':
             sort = {
                 "_script": {
@@ -318,7 +326,7 @@ class PatientListReport(CustomProjectReport, CaseListReport):
 
         care_site = self.request_params.get('care_site', '')
         if care_site != '':
-            q["query"]["bool"]["must"].append({"match": {"care_site.#value": care_site}})
+            es_filters["bool"]["must"].append({"term": {"care_site.#value": care_site}})
         else:
             if not isinstance(self.request.couch_user, WebUser) or _is_succeed_admin(self.request.couch_user):
                 groups = self.request.couch_user.get_group_ids()
@@ -328,7 +336,7 @@ class PatientListReport(CustomProjectReport, CaseListReport):
                     for grp in CONFIG['groups']:
                         if group.name == grp['text']:
                             party.append(grp['val'])
-                q["query"]["bool"]["must"].append({"terms": {"care_site.#value": party, "minimum_should_match": 1}})
+                es_filters["bool"]["must"].append({"terms": {"care_site.#value": party, "minimum_should_match": 1}})
 
         patient_status = self.request_params.get('patient_status', '')
         if patient_status != '':
@@ -338,18 +346,24 @@ class PatientListReport(CustomProjectReport, CaseListReport):
                     "match": {
                         "actions.xform_xmlns": PM3}}}}
             if patient_status == "active":
-                q["query"]["bool"]["must_not"].append(active_dict)
+                es_filters["bool"]["must_not"].append(active_dict)
             else:
-                q["query"]["bool"]["must"].append(active_dict)
+                es_filters["bool"]["must"].append(active_dict)
 
         responsible_party = self.request_params.get('responsible_party', '')
         if responsible_party != '':
             users = [user.get_id for user in CommCareUser.by_domain(domain=self.domain) if 'role' in user.user_data and user.user_data['role'] == responsible_party.upper()]
             terms = {"terms": {"user_id": users, "minimum_should_match": 1}}
-            q["query"]["bool"]["must"].append(terms)
+            es_filters["bool"]["must"].append(terms)
 
         if self.case_type:
-            q["query"]["bool"]["must"].append({"match": {"type.exact": 'participant'}})
+            es_filters["bool"]["must"].append({"term": {"type.exact": 'participant'}})
+        if search_string:
+            query_block = {"queryString": {"default_field": "full_name.#value", "query": "*" + search_string + "*"}}
+            q["query"]["filtered"]["query"] = query_block
+        else:
+            q["query"]["filtered"]["query"] = {"match_all": {}}
+
         logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, simplejson.dumps(q)))
         return es_query(q=q, es_url=REPORT_CASE_INDEX + '/_search', dict_only=False)
 

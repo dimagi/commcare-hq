@@ -1,4 +1,7 @@
 import re
+from couchdbkit import ResourceNotFound
+from django.core.cache import cache
+from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from couchforms.models import DefaultAuthContext
 import couchforms
@@ -62,3 +65,29 @@ def get_build_version(xform):
     xform_version = xform.version
     if xform_version and xform_version != '1':
         return int(xform_version)
+
+
+def get_app_and_build_ids(domain, build_or_app_id):
+    if build_or_app_id:
+        cache_key = 'build_to_app_id' + build_or_app_id
+        cache_value = cache.get(cache_key)
+        if cache_value is None:
+            cache_value = _get_app_and_build_ids(domain, build_or_app_id)
+            cache.set(cache_key, cache_value, 24*60*60)
+        return cache_value
+    else:
+        app_id, build_id = build_or_app_id, None
+    return app_id, build_id
+
+
+def _get_app_and_build_ids(domain, build_or_app_id):
+    try:
+        app_json = ApplicationBase.get_db().get(build_or_app_id)
+    except ResourceNotFound:
+        pass
+    else:
+        if domain == app_json.get('domain'):
+            copy_of = app_json.get('copy_of')
+            if copy_of:
+                return copy_of, build_or_app_id
+    return build_or_app_id, None

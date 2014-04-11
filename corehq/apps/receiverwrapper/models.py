@@ -195,10 +195,13 @@ class ShortFormRepeater(Repeater):
     def __unicode__(self):
         return "forwarding short form to: %s" % self.url
 
+
 @register_repeater_type
 class AppStructureRepeater(Repeater):
     def get_payload(self, repeat_record):
-        return repeat_record.payload_id # This is the id of the application, currently all we forward
+        # This is the id of the application, currently all we forward
+        return repeat_record.payload_id
+
 
 class RepeatRecord(Document, LockableMixIn):
     """
@@ -210,11 +213,25 @@ class RepeatRecord(Document, LockableMixIn):
     repeater_type = StringProperty()
     domain = StringProperty()
 
-    last_checked = DateTimeProperty()
-    next_check = DateTimeProperty()
+    last_checked = DateTimeProperty(exact=True)
+    next_check = DateTimeProperty(exact=True)
     succeeded = BooleanProperty(default=False)
 
     payload_id = StringProperty()
+
+    @classmethod
+    def wrap(cls, data):
+        for attr in ('last_checked', 'next_check'):
+            value = data.get(attr)
+            if not value:
+                continue
+            try:
+                dt = datetime.strptime(value, '%Y-%m-%dT%H:%M:%SZ')
+                data[attr] = dt.isoformat() + '.000000Z'
+                print data[attr]
+            except ValueError:
+                pass
+        return super(RepeatRecord, cls).wrap(data)
 
     @property
     @memoized

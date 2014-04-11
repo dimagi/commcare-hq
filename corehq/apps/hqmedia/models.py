@@ -15,7 +15,7 @@ from corehq.apps.app_manager.xform import XFormValidationError
 from couchforms.models import XFormError
 from dimagi.utils.decorators.memoized import memoized
 from hutch.models import AuxMedia
-from corehq.apps.domain.models import LICENSES
+from corehq.apps.domain.models import LICENSES, LICENSE_LINKS
 from dimagi.utils.couch.database import get_db, SafeSaveDocument, get_safe_read_kwargs, iter_docs
 from django.utils.translation import ugettext as _
 
@@ -38,6 +38,10 @@ class HQMediaLicense(DocumentSchema):
     @property
     def display_name(self):
         return LICENSES.get(self.type, "Improper License")
+
+    @property
+    def deed_link(self):
+        return LICENSE_LINKS.get(self.type)
 
 
 class CommCareMultimedia(SafeSaveDocument):

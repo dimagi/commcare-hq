@@ -1,18 +1,6 @@
 import fluff
 from custom.m4change.constants import BOOKED_AND_UNBOOKED_DELIVERY_FORMS
-
-
-def _get_date_delivery(form):
-    return form.form.get("date_delivery", None)
-
-def _get_date_modified(form):
-    return form.form.get("case", {}).get("@date_modified", None)
-
-def form_passes_filter_date_delivery(form, namespaces):
-    return (form.xmlns in namespaces and _get_date_delivery(form) is not None)
-
-def form_passes_filter_date_modified(form, namespaces):
-    return (form.xmlns in namespaces and _get_date_modified(form) is not None)
+from custom.m4change.user_calcs import get_date_delivery, get_date_modified, form_passes_filter_date_delivery
 
 
 class LdKeyValueDictCalculator(fluff.Calculator):
@@ -21,7 +9,7 @@ class LdKeyValueDictCalculator(fluff.Calculator):
         self.key_value_dict = key_value_dict
         self.namespaces = namespaces
         self.filter_function = filter_function
-        self.get_date_function = _get_date_delivery if self.filter_function is _get_date_delivery else _get_date_modified
+        self.get_date_function = get_date_delivery if self.filter_function is form_passes_filter_date_delivery else get_date_modified
         super(LdKeyValueDictCalculator, self).__init__(*args, **kwargs)
 
     @fluff.date_emitter
@@ -45,7 +33,7 @@ class DeliveriesComplicationsCalculator(fluff.Calculator):
         for form in case.get_forms():
             if form_passes_filter_date_delivery(form, BOOKED_AND_UNBOOKED_DELIVERY_FORMS) and\
                             len(form.form.get("delivery_type", "")) > 0:
-                yield [_get_date_delivery(form), 1]
+                yield [get_date_delivery(form), 1]
 
 
 class ChildSexWeightCalculator(fluff.Calculator):
@@ -71,4 +59,4 @@ class ChildSexWeightCalculator(fluff.Calculator):
                         or (float(form.form.get("baby_weight", 0.0) < self.weight)):
                     passed_all_filters = False
                 if passed_all_filters:
-                    yield [_get_date_delivery(form), 1]
+                    yield [get_date_delivery(form), 1]

@@ -3,7 +3,7 @@ from django.utils import html
 
 from corehq.apps.api.es import ReportCaseES, ReportXFormES
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.fields import  ReportSelectField
+from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.decorators.memoized import memoized
 from pact.enums import PACT_DOMAIN, PACT_HP_CHOICES, PACT_DOT_CHOICES, PACT_CASE_TYPE
@@ -13,15 +13,15 @@ from pact.reports.patient import PactPatientInfoReport
 from pact.utils import query_per_case_submissions_facet
 
 
-class PactPrimaryHPField(ReportSelectField):
+class PactPrimaryHPField(BaseSingleOptionFilter):
     slug = "primary_hp"
-    name = "PACT HPs"
-    default_option = "All CHWs"
-    cssId = "primary_hp_select"
+    label = "PACT HPs"
+    default_text = "All CHWs"
 
-    def update_params(self):
-        self.selected = self.request.GET.get(self.slug, '')
-        self.options = list(self.get_chws())
+    @property
+    def options(self):
+        chws = list(self.get_chws())
+        return [(c['val'], c['text']) for c in chws]
 
 
     @classmethod
@@ -33,31 +33,30 @@ class PactPrimaryHPField(ReportSelectField):
 #        self.options = [dict(val=case['_id'], text="(%s) - %s" % (case['pactid'], case['name'])) for case in patient_cases]
 
 
-class HPStatusField(ReportSelectField):
+class HPStatusField(BaseSingleOptionFilter):
     slug = "hp_status"
-    name = "HP Status"
-    default_option = "All Active HP"
-    cssId = "hp_status_select"
+    label = "HP Status"
+    default_text = "All Active HP"
     ANY_HP = "any_hp"
 
-    def update_params(self):
-        self.selected = self.request.GET.get(self.slug, "")
-        self.options.insert(0, dict(val=self.ANY_HP, text="All Active HP"))
-        self.options = [dict(val=x[0], text=x[1]) for x in PACT_HP_CHOICES]
+    @property
+    def options(self):
+        options = [(self.ANY_HP, "All Active HP")]
+        options.extend(PACT_HP_CHOICES)
+        return options
 
 
-class DOTStatus(ReportSelectField):
+class DOTStatus(BaseSingleOptionFilter):
     slug = "dot_status"
-    name = "DOT Status"
-    default_option = "All"
-    cssId = "dot_status_select"
+    label = "DOT Status"
+    default_text = "All"
     ANY_DOT = "any_dot"
 
-
-    def update_params(self):
-        self.selected = self.request.GET.get(self.slug, None)
-        self.options = [dict(val=x[0], text=x[1]) for x in PACT_DOT_CHOICES[:3]]
-        self.options.insert(0, dict(val=self.ANY_DOT, text="Any DOT"))
+    @property
+    def options(self):
+        options = [(self.ANY_DOT, "Any DOT")]
+        options.extend(PACT_DOT_CHOICES[:3])
+        return options
 
 
 class PatientListDashboardReport(PactElasticTabularReportMixin):

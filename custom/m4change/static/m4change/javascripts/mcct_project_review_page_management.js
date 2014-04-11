@@ -24,7 +24,7 @@ var McctProjectReviewPageManagement = function (o) {
             }
             self.clearSelection();
             ignore = false;
-        }
+        };
     };
 
     self.updateSelection = function (data, event) {

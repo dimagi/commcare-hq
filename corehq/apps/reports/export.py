@@ -204,7 +204,7 @@ class CustomBulkExportHelper(BulkExportHelper):
         bulk_export.domain = self.domain
         self.bulk_files = [bulk_export]
 
-def save_metadata_export_to_tempfile(domain, datespan=None, user_ids=None):
+def save_metadata_export_to_tempfile(domain, format, datespan=None, user_ids=None):
     """
     Saves the domain's form metadata to a file. Returns the filename.
     """
@@ -249,6 +249,6 @@ def save_metadata_export_to_tempfile(domain, datespan=None, user_ids=None):
     data = (_form_data_to_row(res["_source"]) for res in results)
 
     with os.fdopen(fd, 'w') as temp:
-        export_raw((("forms", headers),), (("forms", data),), temp)
+        export_raw((("forms", headers),), (("forms", data),), temp, format=format)
 
     return path

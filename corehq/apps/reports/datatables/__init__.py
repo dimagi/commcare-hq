@@ -7,7 +7,7 @@ class DataTablesColumn(object):
 
     def __init__(self, name, span=0, sort_type=None, sort_direction=None,
                  help_text=None, sortable=True, rotate=False,
-                 expected=None, prop_name=None):
+                 expected=None, prop_name=None, visible=True):
         self.html = name
         self.css_span = span
         self.sort_type = sort_type
@@ -16,6 +16,7 @@ class DataTablesColumn(object):
         self.sortable = sortable
         self.rotate = rotate
         self.prop_name = prop_name
+        self.visible = visible
         if isinstance(expected, int):
             expected = "%d" % expected
         self.expected = expected
@@ -47,6 +48,8 @@ class DataTablesColumn(object):
             aoColumns["bSortable"] = self.sortable
         if self.rotate:
             aoColumns["sWidth"] = '10px'
+        if not self.visible:
+            aoColumns["bVisible"] = self.visible
         return aoColumns
 
 
@@ -162,7 +165,12 @@ class DataTablesHeader(object):
                 head.append(column.html)
                 groups.append(" ")
 
-        head = map(lambda h: h.decode('utf-8'), head)
+        def unicodify(h):
+            # HACK ideally we would not have to guess at the encoding of `h`
+            # (when it is not unicode). Hopefully all byte strings that come
+            # through here are encoded as UTF-8. If not, .decode() may blow up.
+            return h if isinstance(h, unicode) else h.decode("utf-8")
+        head = map(unicodify, head)
         if use_groups:
             return [groups, head]
         else:

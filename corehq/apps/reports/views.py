@@ -27,8 +27,10 @@ from corehq.apps.export.exceptions import BadExportConfiguration
 from corehq.apps.reports.exportfilters import default_form_filter
 import couchexport
 from couchexport import views as couchexport_views
-from couchexport.export import SchemaMismatchException
-from couchexport.export import UnsupportedExportFormat
+from couchexport.exceptions import (
+    CouchExportException,
+    SchemaMismatchException
+)
 from couchexport.models import Format, FakeSavedExportSchema, SavedBasicExport
 from couchexport.shortcuts import (export_data_shared, export_raw_data,
     export_response)
@@ -45,7 +47,7 @@ from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.export import WorkBook
 from dimagi.utils.parsing import json_format_datetime, string_to_boolean
 from dimagi.utils.web import json_request, json_response
-from fields import FilterUsersField
+from filters.users import UserTypeFilter
 from soil import DownloadBase
 from soil.tasks import prepare_download
 
@@ -151,7 +153,7 @@ def export_data(req, domain):
               "max_column_size": int(req.GET.get("max_column_size", 2000)),
               "separator": req.GET.get("separator", "|")}
 
-    user_filter, _ = FilterUsersField.get_user_filter(req)
+    user_filter, _ = UserTypeFilter.get_user_filter(req)
 
     if user_filter:
         users_matching_filter = map(lambda x: x.get('user_id'),
@@ -173,7 +175,7 @@ def export_data(req, domain):
     else:
         try:
             resp = export_data_shared([domain, export_tag], **kwargs)
-        except UnsupportedExportFormat as e:
+        except CouchExportException as e:
             return HttpResponseBadRequest(e)
     if resp:
         return resp
@@ -233,6 +235,7 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
     previous_export_id = request.GET.get("previous_export", None)
     filename = request.GET.get("filename", None)
     max_column_size = int(request.GET.get("max_column_size", 2000))
+    limit = int(request.GET.get("limit", 0))
 
     filter = util.create_export_filter(request, domain, export_type=export_type)
     if bulk_export:
@@ -241,7 +244,6 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
             export_tags = json.loads(request.GET.get("export_tags", "null") or "null")
         except ValueError:
             return HttpResponseBadRequest()
-
 
         export_helper = (CustomBulkExportHelper if is_custom else ApplicationBulkExportHelper)(
             domain=domain,
@@ -304,7 +306,7 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
         if not next:
             next = export.ExcelExportReport.get_url(domain=domain)
         try:
-            resp = export_object.download_data(format, filter=filter)
+            resp = export_object.download_data(format, filter=filter, limit=limit)
         except SchemaMismatchException, e:
             rebuild_schemas.delay(export_object.index)
             messages.error(
@@ -337,7 +339,7 @@ def export_all_form_metadata(req, domain):
     Export metadata for _all_ forms in a domain.
     """
     format = req.GET.get("format", Format.XLS_2007)
-    tmp_path = save_metadata_export_to_tempfile(domain)
+    tmp_path = save_metadata_export_to_tempfile(domain, format=format)
 
     return export_response(open(tmp_path), format, "%s_forms" % domain)
 
@@ -348,7 +350,7 @@ def export_all_form_metadata(req, domain):
 def export_all_form_metadata_async(req, domain):
     datespan = req.datespan if req.GET.get("startdate") and req.GET.get("enddate") else None
     group_id = req.GET.get("group")
-    ufilter =  FilterUsersField.get_user_filter(req)[0]
+    ufilter =  UserTypeFilter.get_user_filter(req)[0]
     users = list(util.get_all_users_by_domain(domain=domain, group=group_id, user_filter=ufilter, simplified=True))
     user_ids = filter(None, [u["user_id"] for u in users])
     format = req.GET.get("format", Format.XLS_2007)
@@ -799,7 +801,7 @@ def download_cases(request, domain):
     except URLError as e:
         return HttpResponseBadRequest(e.reason)
     group = request.GET.get('group', None)
-    user_filter, _ = FilterUsersField.get_user_filter(request)
+    user_filter, _ = UserTypeFilter.get_user_filter(request)
 
     async = request.GET.get('async') == 'true'
 

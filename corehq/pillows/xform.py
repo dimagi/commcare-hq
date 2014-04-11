@@ -1,7 +1,9 @@
+import collections
 import copy
 from casexml.apps.case.xform import extract_case_blocks, get_case_ids_from_form
 from corehq.pillows.mappings.xform_mapping import XFORM_MAPPING, XFORM_INDEX
 from .base import HQPillow
+from couchforms.const import RESERVED_WORDS
 from couchforms.models import XFormInstance
 from dateutil import parser
 
@@ -16,6 +18,22 @@ def is_valid_date(txt):
     except Exception:
         pass
     return False
+
+RESERVED = RESERVED_WORDS[:]
+RESERVED.remove('case')
+
+# modified from: http://stackoverflow.com/questions/6027558/flatten-nested-python-dictionaries-compressing-keys
+def flatten(d, parent_key='', delimiter='/'):
+    items = []
+    for k, v in d.items():
+        if k in RESERVED:
+            continue
+        new_key = parent_key + delimiter + k if parent_key else k
+        if isinstance(v, collections.MutableMapping):
+            items.extend(flatten(v, new_key, delimiter).items())
+        else:
+            items.append((new_key, v))
+    return dict(items)
 
 class XFormPillow(HQPillow):
     document_class = XFormInstance
@@ -32,7 +50,7 @@ class XFormPillow(HQPillow):
     #type level mapping
     default_mapping = XFORM_MAPPING
 
-    def change_transform(self, doc_dict):
+    def change_transform(self, doc_dict, include_props=True):
         if self.get_domain(doc_dict) is None:
             #If the domain is still None (especially when doing updates via the _changes feed)
             #skip and do nothing
@@ -68,6 +86,9 @@ class XFormPillow(HQPillow):
                         case_dict[object_key] = None
 
             doc_ret["__retrieved_case_ids"] = list(get_case_ids_from_form(doc_dict))
+            if include_props:
+                form_props = ["%s:%s" % (k, v) for k, v in flatten(doc_ret['form']).iteritems()]
+                doc_ret["__props_for_querying"] = form_props
             return doc_ret
 
 

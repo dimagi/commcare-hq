@@ -1,4 +1,5 @@
 import csv
+import logging
 import xlrd
 
 from django.core.management.base import LabelCommand
@@ -7,6 +8,9 @@ from corehq.apps.accounting.models import Currency
 from corehq.apps.twilio.models import TwilioBackend
 from corehq.apps.sms.models import OUTGOING
 from corehq.apps.smsbillables.models import SmsGatewayFee
+
+logger = logging.getLogger('accounting')
+
 
 class Command(LabelCommand):
     help = "bootstrap Twilio gateway fees"
@@ -34,7 +38,7 @@ class Command(LabelCommand):
                             twilio_data[iso] = {}
                         twilio_data[iso][provider] = rate
                     except IndexError:
-                        print row
+                        logger.info("Twilio index error %s:" % row)
             twilio_file.close()
             return twilio_data
 
@@ -54,7 +58,7 @@ class Command(LabelCommand):
                     try:
                         subscribers = int(mach_table.cell_value(row, 10).replace('.', ''))
                     except ValueError:
-                        print "Incomplete subscriber data for country code %d" % country_code
+                        logger.info("Incomplete subscriber data for country code %d" % country_code)
                     if not(iso in mach_data):
                         mach_data[iso] = {}
                     mach_data[iso][network] = (country_code, subscribers)
@@ -95,9 +99,9 @@ class Command(LabelCommand):
                     SmsGatewayFee.create_new(TwilioBackend.get_api_id(), OUTGOING, weighted_price,
                                              country_code=country_code, currency=Currency.objects.get(code="USD"))
             else:
-                print "%s not in mach_data" % iso
+                logger.info("%s not in mach_data" % iso)
 
         # https://www.twilio.com/help/faq/sms/will-i-be-charged-if-twilio-encounters-an-error-when-sending-an-sms
         SmsGatewayFee.create_new(TwilioBackend.get_api_id(), OUTGOING, 0.00, country_code=None)
 
-        print "Updated Twilio gateway fees."
+        logger.info("Updated Twilio gateway fees.")

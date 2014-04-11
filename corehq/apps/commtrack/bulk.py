@@ -78,6 +78,7 @@ def import_products(domain, download, task):
         messages.insert(0, _('Successfullly updated {products} products with {errors} errors.').format(
             products=len(products), errors=len(messages))
         )
+    return messages
 
 
 def validate_headers(domain, headers):

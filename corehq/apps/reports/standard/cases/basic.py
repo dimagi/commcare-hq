@@ -11,9 +11,10 @@ from corehq.apps.api.es import CaseES
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.fields import SelectMobileWorkerField, SelectOpenCloseField
 from corehq.apps.reports.filters.search import SearchFilter
-from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
+from corehq.apps.reports.filters.select import SelectOpenCloseFilter
+from corehq.apps.reports.filters.users import (ExpandedMobileWorkerFilter,
+        SelectMobileWorkerFilter)
 from corehq.apps.reports.generic import ElasticProjectInspectionReport
 from corehq.apps.reports.standard import ProjectReportParametersMixin
 from corehq.apps.reports.standard.inspect import ProjectInspectionReport
@@ -24,8 +25,8 @@ from .data_sources import CaseInfo, CaseDisplay
 class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin):
     fields = [
         'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
-        'corehq.apps.reports.fields.CaseTypeField',
-        'corehq.apps.reports.fields.SelectOpenCloseField',
+        'corehq.apps.reports.filters.select.CaseTypeFilter',
+        'corehq.apps.reports.filters.select.SelectOpenCloseFilter',
         'corehq.apps.reports.standard.cases.filters.CaseSearchFilter',
     ]
 
@@ -141,8 +142,8 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     def shared_pagination_GET_params(self):
         shared_params = super(CaseListMixin, self).shared_pagination_GET_params
         shared_params.append(dict(
-            name=SelectOpenCloseField.slug,
-            value=self.request.GET.get(SelectOpenCloseField.slug, '')
+            name=SelectOpenCloseFilter.slug,
+            value=self.request.GET.get(SelectOpenCloseFilter.slug, '')
         ))
         return shared_params
 
@@ -157,15 +158,11 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
     slug = 'case_list'
 
     @property
-    def user_filter(self):
-        return super(CaseListReport, self).user_filter
-
-    @property
     @memoized
     def rendered_report_title(self):
         self.name = _("%(report_name)s for %(worker_type)s") % {
             "report_name": _(self.name),
-            "worker_type": _(SelectMobileWorkerField.get_default_text(self.user_filter))
+            "worker_type": _(SelectMobileWorkerFilter.get_default_text(self.user_filter))
         }
         return self.name
 

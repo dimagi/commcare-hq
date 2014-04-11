@@ -1,6 +1,8 @@
 from sqlagg.columns import *
 from corehq.apps.reports.sqlreport import SqlTabularReport, DatabaseColumn
-from corehq.apps.reports.fields import AsyncDrillableField, GroupField, BooleanField
+from corehq.apps.reports.filters.fixtures import AsyncDrillableFilter
+from corehq.apps.reports.filters.select import GroupFilter
+from corehq.apps.reports.dont_use.fields import BooleanField
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
@@ -10,7 +12,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from copy import copy
 
 
-class ProvinceField(AsyncDrillableField):
+class ProvinceField(AsyncDrillableFilter):
     label = "Province"
     slug = "province"
     hierarchy = [{"type": "province", "display": "name"}]
@@ -25,7 +27,7 @@ class ShowGenderField(BooleanField):
     slug = "show_gender_field"
     template = "care_sa/reports/partials/checkbox.html"
 
-class CBOField(GroupField):
+class CBOField(GroupFilter):
     name = 'CBO'
     default_option = 'All'
 
@@ -39,7 +41,7 @@ class CareReport(SqlTabularReport,
     report_template_path = "care_sa/reports/grouped.html"
 
     fields = [
-        'corehq.apps.reports.fields.DatespanField',
+        'corehq.apps.reports.filters.dates.DatespanFilter',
         'custom.reports.care_sa.reports.sql.ProvinceField',
         'custom.reports.care_sa.reports.sql.CBOField',
         'custom.reports.care_sa.reports.sql.ShowAgeField',
@@ -349,7 +351,7 @@ class CareReport(SqlTabularReport,
         Get the name of province/cbo/user (depending on what is selected)
         """
         if not self.selected_province():
-            return FixtureDataItem.get(user).fields['name']
+            return FixtureDataItem.get(user).fields_without_attributes['name']
         elif not self.selected_cbo():
             return Group.get(user).name
         else:

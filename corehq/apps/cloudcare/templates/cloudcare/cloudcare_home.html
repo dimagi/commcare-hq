@@ -108,20 +108,15 @@
 {% endblock %}
 
 {% block main_column %}
-	{% if preview %}
-        <div class="alert fade in alert-block alert-full alert-info">
-            <a class="close" data-dismiss="alert" href="#">&times;</a>
-            {% trans "CloudCare submits REAL DATA that will create cases and show up in reports!" %}
-        </div>
-    {% endif %}
     {% if request.couch_user.is_web_user %}
-        <div class="alert fade in alert-block alert-full alert-info">
+        <div class="alert fade in alert-block alert-full alert-warning ">
             <a class="close" data-dismiss="alert" href="#">&times;</a>
                 {% blocktrans %}
-                    You are using CloudCare as a Web User! Any data you submit
-                    might confuse your reports, and not everything may work
-                    properly. For the best experience please logout and
-                    login as a Mobile Worker.
+                    You are using CloudCare as a Web User!
+                    Any data you submit will show up in reports as submitted by "Unknown User".
+                    Features that rely on mobile workers, like case sharing and lookup tables, will not work properly.
+                    For the best experience please logout and login as a Mobile Worker.
+                    More information on CloudCare can be found at the <a href="https://help.commcarehq.org/display/commcarepublic/CloudCare+-+Web+Data+Entry">CommCare Help Site</a>.
                 {% endblocktrans %}
         </div>
     {% endif %}

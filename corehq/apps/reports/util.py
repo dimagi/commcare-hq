@@ -69,11 +69,12 @@ def all_xmlns_in_domain(domain):
 
 def user_list(domain):
     #todo cleanup
-    #referenced in fields -> SelectMobileWorkerField
+    #referenced in filters.users.SelectMobileWorkerFilter
     users = list(CommCareUser.by_domain(domain))
     users.extend(CommCareUser.by_domain(domain, is_active=False))
     users.sort(key=lambda user: (not user.is_active, user.username))
     return users
+
 
 def get_group_params(domain, group='', users=None, user_id_only=False, **kwargs):
     # refrenced in reports/views and create_export_filter below
@@ -189,8 +190,9 @@ def get_username_from_forms(domain, user_id):
 
 def _report_user_dict(user):
     """
-    Accepts a user object or a dict such as that returned from elasticsearch
-    via CommCareUser.es_fakes
+    Accepts a user object or a dict such as that returned from elasticsearch.
+    Make sure the following fields are available:
+    ['_id', 'username', 'first_name', 'last_name', 'doc_type', 'is_active']
     """
     if not isinstance(user, dict):
         user_report_attrs = ['user_id', 'username_in_report', 'raw_username', 'is_active']
@@ -298,13 +300,14 @@ def group_filter(doc, group):
     else:
         return True
 
+
 def create_export_filter(request, domain, export_type='form'):
-    from corehq.apps.reports.fields import FilterUsersField
+    from corehq.apps.reports.filters.users import UserTypeFilter
     app_id = request.GET.get('app_id', None)
 
     group, users = get_group_params(domain, **json_request(request.GET))
 
-    user_filters, use_user_filters = FilterUsersField.get_user_filter(request)
+    user_filters, use_user_filters = UserTypeFilter.get_user_filter(request)
 
     if export_type == 'case':
         if user_filters and use_user_filters:
@@ -328,23 +331,25 @@ def create_export_filter(request, domain, export_type='form'):
     return filter
 
 
-def get_possible_reports(domain):
+def get_possible_reports(domain_name):
     from corehq.apps.reports.dispatcher import (ProjectReportDispatcher, CustomProjectReportDispatcher)
     from corehq.apps.adm.dispatcher import ADMSectionDispatcher
     from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 
     # todo: exports should be its own permission at some point?
-    report_map = (ProjectReportDispatcher().get_reports(domain) +
-                  CustomProjectReportDispatcher().get_reports(domain) +
-                  ADMSectionDispatcher().get_reports(domain) +
-                  DataInterfaceDispatcher().get_reports(domain))
+    report_map = (ProjectReportDispatcher().get_reports(domain_name) +
+                  CustomProjectReportDispatcher().get_reports(domain_name) +
+                  ADMSectionDispatcher().get_reports(domain_name) +
+                  DataInterfaceDispatcher().get_reports(domain_name))
     reports = []
+    domain = Domain.get_by_name(domain_name)
     for heading, models in report_map:
         for model in models:
-            reports.append({
-                'path': model.__module__ + '.' + model.__name__,
-                'name': model.name
-            })
+            if model.show_in_navigation(domain=domain_name, project=domain):
+                reports.append({
+                    'path': model.__module__ + '.' + model.__name__,
+                    'name': model.name
+                })
     return reports
 
 
