@@ -20,7 +20,7 @@ from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 from custom.succeed.reports import VISIT_SCHEDULE, LAST_INTERACTION_LIST, EMPTY_FIELD, CM7, PM3, CM_MODULE, \
     OUTPUT_DATE_FORMAT, INPUT_DATE_FORMAT
 from custom.succeed.reports.patient_details import PatientInfoReport
-from custom.succeed.utils import CONFIG, _is_succeed_admin, SUCCEED_CLOUD_APPNAME
+from custom.succeed.utils import CONFIG, _is_succeed_admin, SUCCEED_CLOUD_APPNAME, _has_any_role
 import logging
 import simplejson
 from casexml.apps.case.models import CommCareCase
@@ -173,6 +173,13 @@ class PatientListReport(CustomProjectReport, CaseListReport):
               'custom.succeed.fields.ResponsibleParty',
               'custom.succeed.fields.PatientStatus',
               'corehq.apps.reports.standard.cases.filters.CaseSearchFilter']
+
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        if user and (_is_succeed_admin(user) or _has_any_role(user)):
+            return True
+        return False
+
 
     @property
     @memoized
