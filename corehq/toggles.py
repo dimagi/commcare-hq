@@ -89,9 +89,3 @@ CALC_XPATHS = StaticToggle(
     'Enabling custom calculated xpaths',
     namespaces=[NAMESPACE_DOMAIN],
 )
-
-SUBMIT_HISTORY_FILTERS = StaticToggle(
-    'submit_history_filters',
-    'Enabling new submit history filters',
-    namespaces=[NAMESPACE_DOMAIN],
-)
