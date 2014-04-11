@@ -1619,6 +1619,26 @@ class CreditLine(models.Model):
             raise ValueError("Amount must be a Decimal.")
 
 
+class PaymentMethod(models.Model):
+    """A link to a particular payment method for an account.
+    Right now the only payment methods are via Stripe, but leaving that
+    open for future changes.
+
+    :customer_id: is used by the API of the payment method we're using that
+    uniquely identifies the payer on their end.
+    """
+    account = models.ForeignKey(BillingAccount, on_delete=models.PROTECT,
+                                db_index=True)
+    billing_admin = models.ForeignKey(BillingAccountAdmin,
+                                      on_delete=models.PROTECT, db_index=True)
+    method_type = models.CharField(max_length=50,
+                                   default=PaymentMethodType.STRIPE,
+                                   choices=PaymentMethodType.CHOICES,
+                                   db_index=True)
+    customer_id = models.CharField(max_length=255, null=True, blank=True)
+    date_created = models.DateTimeField(auto_now_add=True)
+
+
 class CreditAdjustment(models.Model):
     """
     A record of any addition (positive amounts) s or deductions (negative amounts) that contributed to the
