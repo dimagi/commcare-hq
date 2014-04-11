@@ -3,6 +3,7 @@ import json
 import re
 import urllib
 from django.utils.decorators import method_decorator
+from django.views.decorators.debug import sensitive_post_parameters
 from corehq import Domain, privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.views import BaseDomainView
@@ -467,6 +468,7 @@ class UserInvitationView(InvitationView):
         user.save()
 
 
+@sensitive_post_parameters('password')
 def accept_invitation(request, domain, invitation_id):
     return UserInvitationView()(request, invitation_id, domain=domain)
 
