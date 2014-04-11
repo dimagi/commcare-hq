@@ -1519,6 +1519,8 @@ class CreditLine(models.Model):
                 reason = CreditAdjustmentReason.LINE_ITEM
             if invoice is not None:
                 reason = CreditAdjustmentReason.INVOICE
+            if related_credit is not None:
+                reason = CreditAdjustmentReason.TRANSFER
         if is_new:
             note = "Initialization of credit line. %s" % note
         credit_adjustment = CreditAdjustment(
@@ -1529,6 +1531,7 @@ class CreditLine(models.Model):
             payment_record=payment_record,
             line_item=line_item,
             invoice=invoice,
+            related_credit=related_credit,
         )
         credit_adjustment.save()
         self.balance += amount
@@ -1685,6 +1688,8 @@ class CreditAdjustment(models.Model):
     invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT, null=True)
     payment_record = models.ForeignKey(PaymentRecord,
                                        on_delete=models.PROTECT, null=True)
+    related_credit = models.ForeignKey(CreditLine, on_delete=models.PROTECT,
+                                       null=True, related_name='creditadjustment_related')
     date_created = models.DateTimeField(auto_now_add=True)
     web_user = models.CharField(max_length=80, null=True)
 
