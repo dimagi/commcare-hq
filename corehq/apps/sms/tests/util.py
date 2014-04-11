@@ -223,6 +223,12 @@ class TouchformsTestCase(LiveServerTestCase):
         self.assertEqual(sms.text, message)
         return sms
 
+    def assertMetadataEqual(self, sms, xforms_session_couch_id=None, workflow=None):
+        if xforms_session_couch_id:
+            self.assertEqual(sms.xforms_session_couch_id, xforms_session_couch_id)
+        if workflow:
+            self.assertEqual(sms.workflow, workflow)
+
     def setUp(self):
         self.users = []
         self.apps = []

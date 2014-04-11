@@ -1,4 +1,5 @@
 from corehq.apps.sms.api import incoming
+from corehq.apps.sms.models import WORKFLOW_KEYWORD
 from corehq.apps.sms.tests.util import TouchformsTestCase, time_parser
 from corehq.apps.reminders.models import (RECIPIENT_SENDER, RECIPIENT_OWNER,
     RECIPIENT_USER_GROUP)
@@ -137,46 +138,132 @@ class KeywordTestCase(TouchformsTestCase):
 
         # Test validation on all fields
         incoming("999123", "Validation_Test", "TEST")
-        self.assertLastOutboundSMSEquals(self.user1, "text")
-        incoming("999123", "ab", "TEST")
-        self.assertLastOutboundSMSEquals(self.user1, 'Expected "abc"')
-        incoming("999123", "abc", "TEST")
-        self.assertLastOutboundSMSEquals(self.user1, "single select 1:a, 2:b, 3:c, 4:d.")
-        incoming("999123", "x", "TEST")
-        self.assertLastOutboundSMSEquals(self.user1, "%s single select 1:a, 2:b, 3:c, 4:d." % get_message(MSG_INVALID_CHOICE))
-        incoming("999123", "5", "TEST")
-        self.assertLastOutboundSMSEquals(self.user1, "%s single select 1:a, 2:b, 3:c, 4:d." % get_message(MSG_CHOICE_OUT_OF_RANGE))
-        incoming("999123", "2", "TEST")
-        self.assertLastOutboundSMSEquals(self.user1, "multi select 1:a, 2:b, 3:c, 4:d.")
-        incoming("999123", "", "TEST")
-        self.assertLastOutboundSMSEquals(self.user1, "%s multi select 1:a, 2:b, 3:c, 4:d." % get_message(MSG_FIELD_REQUIRED))
-        incoming("999123", "2 x", "TEST")
-        self.assertLastOutboundSMSEquals(self.user1, "%s multi select 1:a, 2:b, 3:c, 4:d." % get_message(MSG_INVALID_CHOICE))
-        incoming("999123", "1 5", "TEST")
-        self.assertLastOutboundSMSEquals(self.user1, "%s multi select 1:a, 2:b, 3:c, 4:d." % get_message(MSG_INVALID_CHOICE))
-        incoming("999123", "1 c", "TEST")
-        self.assertLastOutboundSMSEquals(self.user1, "int")
-        incoming("999123", "x", "TEST")
-        self.assertLastOutboundSMSEquals(self.user1, "%s int" % get_message(MSG_INVALID_INT))
-        incoming("999123", "50", "TEST")
-        self.assertLastOutboundSMSEquals(self.user1, "float")
-        incoming("999123", "x", "TEST")
-        self.assertLastOutboundSMSEquals(self.user1, "%s float" % get_message(MSG_INVALID_FLOAT))
-        incoming("999123", "21.3", "TEST")
-        self.assertLastOutboundSMSEquals(self.user1, "long")
-        incoming("999123", "x", "TEST")
-        self.assertLastOutboundSMSEquals(self.user1, "%s long" % get_message(MSG_INVALID_LONG))
-        incoming("999123", "-100", "TEST")
-        self.assertLastOutboundSMSEquals(self.user1, "date")
-        incoming("999123", "x", "TEST")
-        self.assertLastOutboundSMSEquals(self.user1, "%s date" % get_message(MSG_INVALID_DATE))
-        incoming("999123", "20140101", "TEST")
-        self.assertLastOutboundSMSEquals(self.user1, "time")
-        incoming("999123", "x", "TEST")
-        self.assertLastOutboundSMSEquals(self.user1, "%s time" % get_message(MSG_INVALID_TIME))
-        incoming("999123", "2500", "TEST")
-        self.assertLastOutboundSMSEquals(self.user1, "%s time" % get_message(MSG_INVALID_TIME))
-        incoming("999123", "2345", "TEST")
+        session = self.get_open_session(self.user1)
+        
+        sms = self.assertLastOutboundSMSEquals(self.user1, "text")
+        self.assertMetadataEqual(sms, session._id, WORKFLOW_KEYWORD)
+
+        sms = incoming("999123", "ab", "TEST")
+        self.assertTrue(sms.invalid_survey_response)
+        self.assertMetadataEqual(sms, session._id, WORKFLOW_KEYWORD)
+
+        sms = self.assertLastOutboundSMSEquals(self.user1, 'Expected "abc"')
+        self.assertMetadataEqual(sms, session._id, WORKFLOW_KEYWORD)
+
+        sms = incoming("999123", "abc", "TEST")
+        self.assertFalse(sms.invalid_survey_response)
+        self.assertMetadataEqual(sms, session._id, WORKFLOW_KEYWORD)
+
+        sms = self.assertLastOutboundSMSEquals(self.user1, "single select 1:a, 2:b, 3:c, 4:d.")
+        self.assertMetadataEqual(sms, session._id, WORKFLOW_KEYWORD)
+
+        sms = incoming("999123", "x", "TEST")
+        self.assertTrue(sms.invalid_survey_response)
+        self.assertMetadataEqual(sms, session._id, WORKFLOW_KEYWORD)
+
+        sms = self.assertLastOutboundSMSEquals(self.user1, "%s single select 1:a, 2:b, 3:c, 4:d." % get_message(MSG_INVALID_CHOICE))
+        self.assertMetadataEqual(sms, session._id, WORKFLOW_KEYWORD)
+
+        sms = incoming("999123", "5", "TEST")
+        self.assertMetadataEqual(sms, session._id, WORKFLOW_KEYWORD)
+
+        sms = self.assertLastOutboundSMSEquals(self.user1, "%s single select 1:a, 2:b, 3:c, 4:d." % get_message(MSG_CHOICE_OUT_OF_RANGE))
+        self.assertMetadataEqual(sms, session._id, WORKFLOW_KEYWORD)
+
+        sms = incoming("999123", "2", "TEST")
+        self.assertFalse(sms.invalid_survey_response)
+        self.assertMetadataEqual(sms, session._id, WORKFLOW_KEYWORD)
+
+        sms = self.assertLastOutboundSMSEquals(self.user1, "multi select 1:a, 2:b, 3:c, 4:d.")
+        self.assertMetadataEqual(sms, session._id, WORKFLOW_KEYWORD)
+
+        sms = incoming("999123", "", "TEST")
+        self.assertMetadataEqual(sms, session._id, WORKFLOW_KEYWORD)
+
+        sms = self.assertLastOutboundSMSEquals(self.user1, "%s multi select 1:a, 2:b, 3:c, 4:d." % get_message(MSG_FIELD_REQUIRED))
+        self.assertMetadataEqual(sms, session._id, WORKFLOW_KEYWORD)
+
+        sms = incoming("999123", "2 x", "TEST")
+        self.assertMetadataEqual(sms, session._id, WORKFLOW_KEYWORD)
+
+        sms = self.assertLastOutboundSMSEquals(self.user1, "%s multi select 1:a, 2:b, 3:c, 4:d." % get_message(MSG_INVALID_CHOICE))
+        self.assertMetadataEqual(sms, session._id, WORKFLOW_KEYWORD)
+
+        sms = incoming("999123", "1 5", "TEST")
+        self.assertMetadataEqual(sms, session._id, WORKFLOW_KEYWORD)
+
+        sms = self.assertLastOutboundSMSEquals(self.user1, "%s multi select 1:a, 2:b, 3:c, 4:d." % get_message(MSG_INVALID_CHOICE))
+        self.assertMetadataEqual(sms, session._id, WORKFLOW_KEYWORD)
+
+        sms = incoming("999123", "1 c", "TEST")
+        self.assertMetadataEqual(sms, session._id, WORKFLOW_KEYWORD)
+
+        sms = self.assertLastOutboundSMSEquals(self.user1, "int")
+        self.assertMetadataEqual(sms, session._id, WORKFLOW_KEYWORD)
+
+        sms = incoming("999123", "x", "TEST")
+        self.assertMetadataEqual(sms, session._id, WORKFLOW_KEYWORD)
+
+        sms = self.assertLastOutboundSMSEquals(self.user1, "%s int" % get_message(MSG_INVALID_INT))
+        self.assertMetadataEqual(sms, session._id, WORKFLOW_KEYWORD)
+
+        sms = incoming("999123", "50", "TEST")
+        self.assertMetadataEqual(sms, session._id, WORKFLOW_KEYWORD)
+
+        sms = self.assertLastOutboundSMSEquals(self.user1, "float")
+        self.assertMetadataEqual(sms, session._id, WORKFLOW_KEYWORD)
+
+        sms = incoming("999123", "x", "TEST")
+        self.assertMetadataEqual(sms, session._id, WORKFLOW_KEYWORD)
+
+        sms = self.assertLastOutboundSMSEquals(self.user1, "%s float" % get_message(MSG_INVALID_FLOAT))
+        self.assertMetadataEqual(sms, session._id, WORKFLOW_KEYWORD)
+
+        sms = incoming("999123", "21.3", "TEST")
+        self.assertMetadataEqual(sms, session._id, WORKFLOW_KEYWORD)
+        
+        sms = self.assertLastOutboundSMSEquals(self.user1, "long")
+        self.assertMetadataEqual(sms, session._id, WORKFLOW_KEYWORD)
+
+        sms = incoming("999123", "x", "TEST")
+        self.assertMetadataEqual(sms, session._id, WORKFLOW_KEYWORD)
+
+        sms = self.assertLastOutboundSMSEquals(self.user1, "%s long" % get_message(MSG_INVALID_LONG))
+        self.assertMetadataEqual(sms, session._id, WORKFLOW_KEYWORD)
+
+        sms = incoming("999123", "-100", "TEST")
+        self.assertMetadataEqual(sms, session._id, WORKFLOW_KEYWORD)
+
+        sms = self.assertLastOutboundSMSEquals(self.user1, "date")
+        self.assertMetadataEqual(sms, session._id, WORKFLOW_KEYWORD)
+
+        sms = incoming("999123", "x", "TEST")
+        self.assertMetadataEqual(sms, session._id, WORKFLOW_KEYWORD)
+
+        sms = self.assertLastOutboundSMSEquals(self.user1, "%s date" % get_message(MSG_INVALID_DATE))
+        self.assertMetadataEqual(sms, session._id, WORKFLOW_KEYWORD)
+
+        sms = incoming("999123", "20140101", "TEST")
+        self.assertMetadataEqual(sms, session._id, WORKFLOW_KEYWORD)
+
+        sms = self.assertLastOutboundSMSEquals(self.user1, "time")
+        self.assertMetadataEqual(sms, session._id, WORKFLOW_KEYWORD)
+
+        sms = incoming("999123", "x", "TEST")
+        self.assertMetadataEqual(sms, session._id, WORKFLOW_KEYWORD)
+
+        sms = self.assertLastOutboundSMSEquals(self.user1, "%s time" % get_message(MSG_INVALID_TIME))
+        self.assertMetadataEqual(sms, session._id, WORKFLOW_KEYWORD)
+
+        sms = incoming("999123", "2500", "TEST")
+        self.assertMetadataEqual(sms, session._id, WORKFLOW_KEYWORD)
+
+        sms = self.assertLastOutboundSMSEquals(self.user1, "%s time" % get_message(MSG_INVALID_TIME))
+        self.assertMetadataEqual(sms, session._id, WORKFLOW_KEYWORD)
+
+        sms = incoming("999123", "2345", "TEST")
+        self.assertMetadataEqual(sms, session._id, WORKFLOW_KEYWORD)
+
         form = self.get_last_form_submission()
         self.assertFormQuestionEquals(form, "q_text", "abc")
         self.assertFormQuestionEquals(form, "q_single_select", "b")
@@ -608,4 +695,12 @@ class KeywordTestCase(TouchformsTestCase):
         self.assertLastOutboundSMSEquals(self.user1, "This message is for the case owner")
         self.assertLastOutboundSMSEquals(self.user2, "This message is for the case owner")
 
+        # Test case sharing auth
+        incoming("999122", "mod pid1237", "TEST")
+        self.assertLastOutboundSMSEquals(self.user2, "Enter Study Arm 1:a, 2:b.")
+        incoming("999122", "1", "TEST")
+        form = self.get_last_form_submission()
+        self.assertFormQuestionEquals(form, "arm", "arm_a")
+        case = self.get_case("pid1237")
+        self.assertCasePropertyEquals(case, "arm", "arm_a")
 
