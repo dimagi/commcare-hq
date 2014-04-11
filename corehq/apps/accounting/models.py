@@ -1490,6 +1490,7 @@ class CreditLine(models.Model):
                                     choices=FeatureType.CHOICES)
     date_created = models.DateTimeField(auto_now_add=True)
     balance = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
+    is_active = models.BooleanField(default=True)
 
     def __str__(self):
         credit_level = ("Account-Level" if self.subscription is None
