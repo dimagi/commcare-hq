@@ -93,7 +93,7 @@ var CRUDPaginatedListModel = function (
                 self.paginatedList(_.map(
                     data.paginatedList,
                     function (listItem) {
-                        return new PaginatedItem(listItem);
+                        return new PaginatedItem(listItem, self.initRow);
                     }
                 ));
                 self.deletedList([]);
@@ -141,7 +141,7 @@ var CRUDPaginatedListModel = function (
                     $("#create-item-form")[0].reset();
                     self.createItemForm($(data.form).html());
                     if (data.newItem) {
-                        self.newList.push(new PaginatedItem(data.newItem));
+                        self.newList.push(new PaginatedItem(data.newItem, self.initRow));
                     }
                 }
             });
@@ -223,9 +223,15 @@ var CRUDPaginatedListModel = function (
     self.getAdditionalData = function () {
         return null;
     };
+
+    self.initRow = function (rowElems) {
+        // Intended to be overridden with additional initialization for
+        // each row in the paginated list.
+        console.log('init default');
+    };
 };
 
-var PaginatedItem = function (itemSpec) {
+var PaginatedItem = function (itemSpec, initRow) {
     'use strict';
     var self = this;
     self.itemId = itemSpec.itemData.id;
@@ -233,6 +239,7 @@ var PaginatedItem = function (itemSpec) {
     self.itemData = ko.observable(itemSpec.itemData);
     self.template = ko.observable(itemSpec.template);
     self.rowClass = ko.observable(itemSpec.rowClass);
+    self.initRow = initRow;
 
     self.getItemRow = function () {
         return $('#' + self.itemRowId);
@@ -297,6 +304,7 @@ var PaginatedItem = function (itemSpec) {
                 self.getItemRow().trigger('refreshList');
             });
         }
+        self.initRow(elems);
     };
 };
 
