@@ -133,13 +133,13 @@ class FixtureDataItem(Document):
         is_of_new_type = False
         fields_dict = {}        
         for field in obj['fields']:
-            if obj['fields'][field] is not None and not isinstance(obj['fields'][field], basestring):
+            if obj['fields'][field] is not None and not isinstance(obj['fields'][field], basestring) and not isinstance(obj['fields'][field], int):
                 is_of_new_type = True
                 break
             fields_dict[field] = {
                 "field_list": [
                     {
-                        'field_value': obj['fields'][field],
+                        'field_value': obj['fields'][field] if not isinstance(obj['fields'][field], int) else str(obj['fields'][field]),
                         'properties': {}
                     }
                 ]
