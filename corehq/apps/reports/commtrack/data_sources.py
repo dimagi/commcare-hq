@@ -305,3 +305,16 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
                             ),
                             'geo': loc._geopoint,
                         }
+                else:
+                    yield {
+                        'loc_id': loc._id,
+                        'loc_path': loc.path,
+                        'name': loc.name,
+                        'type': loc.location_type,
+                        'reporting_status': reporting_status(
+                            None,
+                            self.start_date,
+                            self.end_date
+                        ),
+                        'geo': loc._geopoint,
+                    }
