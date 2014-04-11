@@ -1,6 +1,7 @@
 from corehq.apps.sms.api import (
     MessageMetadata,
     add_msg_tags,
+    send_sms_to_verified_number,
 )
 from corehq.apps.sms.messages import *
 from corehq.apps.sms.util import format_message_list
@@ -11,6 +12,7 @@ from corehq.apps.smsforms.app import (
     start_session,
 )
 from dateutil.parser import parse
+from corehq.apps.smsforms.models import XFormsSession
 import logging
 
 def form_session_handler(v, text, msg):
@@ -20,10 +22,9 @@ def form_session_handler(v, text, msg):
     the handler passes. If multiple sessions are open, they are all closed and an
     error message is displayed to the user.
     """
-
-    multiple, session = get_open_session(v.domain, v.owner_id)
+    multiple, session = get_single_open_session(v.domain, v.owner_id)
     if multiple:
-        send_sms_to_verified_number(v, get_message(v, MSG_MULTIPLE_SESSIONS))
+        send_sms_to_verified_number(v, get_message(MSG_MULTIPLE_SESSIONS, v))
         return True
 
     if session:
@@ -41,7 +42,7 @@ def form_session_handler(v, text, msg):
             # Catch any touchforms errors
             msg_id = msg._id if msg else ""
             logging.exception("Exception in form_session_handler for message id %s." % msg_id)
-            send_sms_to_verified_number(v, get_message(v, MSG_TOUCHFORMS_DOWN))
+            send_sms_to_verified_number(v, get_message(MSG_TOUCHFORMS_DOWN, v))
         return True
     else:
         return False
@@ -63,7 +64,7 @@ def get_single_open_session(domain, contact_id):
         return (True, None)
 
     session = sessions[0] if len(sessions) == 1 else None
-    return (False, None)
+    return (False, session)
 
 def answer_next_question(v, text, msg, session):
     resp = current_question(session.session_id)
@@ -100,7 +101,9 @@ def validate_answer(event, text, v):
     upper_text = text.upper()
     valid = False
     error_msg = ""
-    
+    if text == "" and event._dict.get("required", False):
+        return (False, text, get_message(MSG_FIELD_REQUIRED, v))
+
     # Validate select
     if event.datatype == "select":
         # Try to match on phrase (i.e., "Yes" or "No")
@@ -114,9 +117,9 @@ def validate_answer(event, text, v):
                 if answer >= 1 and answer <= len(event._dict["choices"]):
                     valid = True
                 else:
-                    error_msg = get_message(v, MSG_CHOICE_OUT_OF_RANGE)
+                    error_msg = get_message(MSG_CHOICE_OUT_OF_RANGE, v)
             except ValueError:
-                error_msg = get_message(v, MSG_INVALID_CHOICE)
+                error_msg = get_message(MSG_INVALID_CHOICE, v)
 
     # Validate multiselect
     elif event.datatype == "multiselect":
@@ -125,22 +128,19 @@ def validate_answer(event, text, v):
         proposed_answers = text.split()
         final_answers = {}
 
-        if event._dict.get("required", True) and len(proposed_answers) == 0:
-            error_msg = get_message(v, MSG_CHOICE_REQUIRED)
-        else:
-            try:
-                for answer in proposed_answers:
-                    upper_answer = answer.upper()
-                    if upper_answer in choices:
-                        final_answers[str(choices[upper_answer])] = ""
-                    else:
-                        int_answer = int(answer)
-                        assert int_answer >= 1 and int_answer <= max_index
-                        final_answers[str(int_answer)] = ""
-                text = " ".join(final_answers.keys())
-                valid = True
-            except Exception:
-                error_msg = get_message(v, MSG_INVALID_CHOICE)
+        try:
+            for answer in proposed_answers:
+                upper_answer = answer.upper()
+                if upper_answer in choices:
+                    final_answers[str(choices[upper_answer])] = ""
+                else:
+                    int_answer = int(answer)
+                    assert int_answer >= 1 and int_answer <= max_index
+                    final_answers[str(int_answer)] = ""
+            text = " ".join(final_answers.keys())
+            valid = True
+        except Exception:
+            error_msg = get_message(MSG_INVALID_CHOICE, v)
 
     # Validate int
     elif event.datatype == "int":
@@ -148,7 +148,7 @@ def validate_answer(event, text, v):
             int(text)
             valid = True
         except ValueError:
-            error_msg = get_message(v, MSG_INVALID_INT)
+            error_msg = get_message(MSG_INVALID_INT, v)
     
     # Validate float
     elif event.datatype == "float":
@@ -156,7 +156,7 @@ def validate_answer(event, text, v):
             float(text)
             valid = True
         except ValueError:
-            error_msg = get_message(v, MSG_INVALID_FLOAT)
+            error_msg = get_message(MSG_INVALID_FLOAT, v)
     
     # Validate longint
     elif event.datatype == "longint":
@@ -164,7 +164,7 @@ def validate_answer(event, text, v):
             long(text)
             valid = True
         except ValueError:
-            error_msg = get_message(v, MSG_INVALID_LONG)
+            error_msg = get_message(MSG_INVALID_LONG, v)
     
     # Validate date (Format: YYYYMMDD)
     elif event.datatype == "date":
@@ -175,7 +175,7 @@ def validate_answer(event, text, v):
             parse(text)
             valid = True
         except Exception:
-            error_msg = get_message(v, MSG_INVALID_DATE)
+            error_msg = get_message(MSG_INVALID_DATE, v)
 
     # Validate time (Format: HHMM, 24-hour)
     elif event.datatype == "time":
@@ -188,7 +188,7 @@ def validate_answer(event, text, v):
             text = "%s:%s" % (hour, str(minute).zfill(2))
             valid = True
         except Exception:
-            error_msg = get_message(v, MSG_INVALID_TIME)
+            error_msg = get_message(MSG_INVALID_TIME, v)
 
     # Other question types pass
     else:
