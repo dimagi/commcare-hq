@@ -467,6 +467,7 @@ cloudCare.AppView = Backbone.View.extend({
         });
         resp.done(function (data) {
             data.onsubmit = function (xml) {
+                window.mainView.router.view.dirty = false;
                 // post to receiver
                 $.ajax({
                     type: 'POST',
