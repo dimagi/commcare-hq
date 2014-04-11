@@ -167,6 +167,13 @@ class SubscriptionAdjustmentMethod(object):
     )
 
 
+class PaymentMethodType(object):
+    STRIPE = "Stripe"
+    CHOICES = (
+        (STRIPE, STRIPE),
+    )
+
+
 class Currency(models.Model):
     """
     Keeps track of the current conversion rates so that we don't have to poll the free, but rate limited API
