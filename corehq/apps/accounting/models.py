@@ -1506,7 +1506,9 @@ class CreditLine(models.Model):
                 })
 
     def adjust_credit_balance(self, amount, is_new=False, note=None,
-                              line_item=None, invoice=None, reason=None):
+                              line_item=None, invoice=None,
+                              payment_record=None, related_credit=None,
+                              reason=None):
         note = note or ""
         if line_item is not None and invoice is not None:
             raise CreditLineError("You may only have an invoice OR a line item making this adjustment.")
@@ -1523,6 +1525,7 @@ class CreditLine(models.Model):
             note=note,
             amount=amount,
             reason=reason,
+            payment_record=payment_record,
             line_item=line_item,
             invoice=invoice,
         )
@@ -1649,6 +1652,24 @@ class PaymentMethod(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
 
 
+class PaymentRecord(models.Model):
+    """Records the transaction with external payment APIs.
+    """
+    payment_method = models.ForeignKey(PaymentMethod, on_delete=models.PROTECT,
+                                       db_index=True)
+    date_created = models.DateTimeField(auto_now_add=True)
+    transaction_id = models.CharField(max_length=255)
+
+    @classmethod
+    def create_record(cls, payment_method, transaction_id):
+        record = cls(
+            payment_method=payment_method,
+            transaction_id=transaction_id
+        )
+        record.save()
+        return record
+
+
 class CreditAdjustment(models.Model):
     """
     A record of any addition (positive amounts) s or deductions (negative amounts) that contributed to the
@@ -1661,7 +1682,8 @@ class CreditAdjustment(models.Model):
     amount = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
     line_item = models.ForeignKey(LineItem, on_delete=models.PROTECT, null=True)
     invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT, null=True)
-    # todo payment_method = models.ForeignKey(PaymentMethod)
+    payment_record = models.ForeignKey(PaymentRecord,
+                                       on_delete=models.PROTECT, null=True)
     date_created = models.DateTimeField(auto_now_add=True)
     web_user = models.CharField(max_length=80, null=True)
 
