@@ -1563,56 +1563,62 @@ class CreditLine(models.Model):
         ).all()
 
     @classmethod
-    def add_account_credit(cls, amount, account, note=None):
-        cls._validate_add_amount(amount)
-        credit_line, is_created = cls.objects.get_or_create(
-            account=account,
-            subscription__exact=None,
-            product_type__exact=None,
-            feature_type__exact=None,
-        )
-        credit_line.adjust_credit_balance(amount, is_new=is_created, note=note)
-        return credit_line
-
-    @classmethod
-    def add_subscription_credit(cls, amount, subscription, note=None,
-                                invoice=None,
-                                reason=None):
-        cls._validate_add_amount(amount)
-        credit_line, is_created = cls.objects.get_or_create(
-            account=subscription.account,
-            subscription=subscription,
-            product_type__exact=None,
-            feature_type__exact=None,
-        )
-        credit_line.adjust_credit_balance(amount, is_new=is_created, note=note,
-                                          invoice=invoice, reason=reason)
-        return credit_line
-
-    @classmethod
-    def add_product_credit(cls, amount, account, product_type,
-                           subscription=None, note=None):
-        cls._validate_add_amount(amount)
-        credit_line, is_created = cls.objects.get_or_create(
-            account=account,
-            subscription=subscription,
-            product_type=product_type,
-            feature_type__exact=None,
-        )
-        credit_line.adjust_credit_balance(amount, is_new=is_created, note=note)
-        return credit_line
-
-    @classmethod
-    def add_feature_credit(cls, amount, account, feature_type,
-                           subscription=None, note=None):
-        cls._validate_add_amount(amount)
-        credit_line, is_created = cls.objects.get_or_create(
-            account=account,
-            subscription=subscription,
-            product_type__exact=None,
-            feature_type=feature_type,
-        )
-        credit_line.adjust_credit_balance(amount, is_new=is_created, note=note)
+    def add_credit(cls, amount, account=None, subscription=None,
+                   product_type=None, feature_type=None, payment_record=None,
+                   invoice=None, line_item=None, related_credit=None,
+                   note=None, reason=None):
+        if account is None and subscription is None:
+            raise CreditLineError(
+                "You must specify either a subscription "
+                "or account to add this credit to."
+            )
+        if feature_type is not None and product_type is not None:
+            raise CreditLineError(
+                "Can only add credit for a product OR a feature, but not both."
+            )
+        account = account or subscription.account
+        try:
+            credit_line = cls.objects.get(
+                account__exact=account,
+                subscription__exact=subscription,
+                product_type__exact=product_type,
+                feature_type__exact=feature_type,
+            )
+            if not credit_line.is_active:
+                raise CreditLineError(
+                    "Could not add credit to CreditLine %s because it is "
+                    "inactive." % credit_line.__str__()
+                )
+            is_new = False
+        except cls.MultipleObjectsReturned as e:
+            raise CreditLineError(
+                "Could not find a unique credit line for %(account)s"
+                "%(subscription)s%(feature)s%(product)s. %(error)s"
+                "instead." %{
+                    'account': "Account ID %d" % account.id,
+                    'subscription': (" | Subscription ID %d" % subscription.id
+                                     if subscription is not None else ""),
+                    'feature': (" | Feature %s" % feature_type
+                                if feature_type is not None else ""),
+                    'product': (" | Product %s" % product_type
+                                if product_type is not None else ""),
+                    'error': e.message,
+                }
+            )
+        except cls.DoesNotExist:
+            credit_line = cls(
+                account=account,
+                subscription=subscription,
+                product_type=product_type,
+                feature_type=feature_type,
+            )
+            credit_line.save()
+            is_new = True
+        credit_line.adjust_credit_balance(amount, is_new=is_new, note=note,
+                                          payment_record=payment_record,
+                                          invoice=invoice, line_item=line_item,
+                                          related_credit=related_credit,
+                                          reason=reason)
         return credit_line
 
     @classmethod
