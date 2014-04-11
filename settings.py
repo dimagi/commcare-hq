@@ -763,6 +763,9 @@ BANK_ACCOUNT_NUMBER = ''
 BANK_ROUTING_NUMBER = ''
 BANK_SWIFT_CODE = ''
 
+STRIPE_PUBLIC_KEY = ''
+STRIPE_PRIVATE_KEY = ''
+
 try:
     # try to see if there's an environmental variable set for local_settings
     if os.environ.get('CUSTOMSETTINGS', None) == "demo":
