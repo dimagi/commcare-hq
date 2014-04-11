@@ -224,10 +224,9 @@ var CRUDPaginatedListModel = function (
         return null;
     };
 
-    self.initRow = function (rowElems) {
+    self.initRow = function (rowElems, paginatedItem) {
         // Intended to be overridden with additional initialization for
         // each row in the paginated list.
-        console.log('init default');
     };
 };
 
@@ -304,7 +303,7 @@ var PaginatedItem = function (itemSpec, initRow) {
                 self.getItemRow().trigger('refreshList');
             });
         }
-        self.initRow(elems);
+        self.initRow(elems, self);
     };
 };
 

@@ -1531,6 +1531,8 @@ class CreditLine(models.Model):
                 reason = CreditAdjustmentReason.INVOICE
             if related_credit is not None:
                 reason = CreditAdjustmentReason.TRANSFER
+            if payment_record is not None:
+                reason = CreditAdjustmentReason.DIRECT_PAYMENT
         if is_new:
             note = "Initialization of credit line. %s" % note
         credit_adjustment = CreditAdjustment(

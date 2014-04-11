@@ -2,15 +2,40 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% block js-inline %} {{ block.super }}
+{% block js %}{{ block.super }}
+    <script type="text/javascript" src="{% static 'accounting/ko/accounting.payment_method_handler.js' %}"></script>
+    <script type="text/javascript" src="https://js.stripe.com/v2/"></script>
+{% endblock %}
+
+{% block js-paginated %}
     <script type="text/javascript">
+        Stripe.setPublishableKey('{{ stripe_public_key }}');
+
+        var paymentHandler = new PaymentMethodHandler(paginatedListModel);
+        $(function () {
+            ko.applyBindings(paymentHandler, $('#paymentModal').get(0));
+        });
+
+
         paginatedListModel.getAdditionalData = function () {
             if (window.location.href.split('?').length < 2)
                 return null;
             return {
                 'show_hidden': _(window.location.href.split('?')[1].split('&')).contains('show_hidden=true')
             }
-        }
+        };
+        paginatedListModel.initRow = function (rowElems, paginatedItem) {
+            var paymentButton = $(rowElems).find('.payment-button');
+            if (paymentButton) {
+                paymentButton.click(function (e) {
+                    var balance = paymentButton.data('balance'),
+                        invoiceId = paymentButton.data('invoice'),
+                        statementNo = paymentButton.data('statement');
+                    paymentHandler.update(invoiceId, statementNo, balance, paginatedItem);
+                    e.preventDefault();
+                });
+            }
+        };
     </script>
 {% endblock %}
 
@@ -24,10 +49,208 @@
         <td class="span2" data-bind="text: plan.name"></td>
         <td class="span2" data-bind="text: start"></td>
         <td class="span2" data-bind="text: end"></td>
-        <td class="span2" data-bind="text: payment_status"></td>
+        <td class="span2">
+            <!-- ko if: canMakePayment -->
+            <p class="alert alert-info"
+               style="margin-bottom: 2px;"
+               data-bind="text: payment_status"></p>
+            <button type="button"
+                    class="btn btn-success payment-button"
+                    data-bind="attr: {
+                        'data-balance': balance,
+                        'data-invoice': id,
+                        'data-statement': invoice_number
+                     }"
+                    data-toggle="modal"
+                    data-target="#paymentModal">
+                {% trans 'Make Payment' %}
+            </button>
+            <div class="hide" class="payment-due-data">
+                <div class="control-group">
+                    <label class="control-label">
+                        {% trans 'Payment Amount' %}
+                    </label>
+                </div>
+            </div>
+            <!-- /ko -->
+            <!-- ko ifnot: canMakePayment -->
+            <p data-bind="text: payment_status"></p>
+            <!-- /ko -->
+        </td>
         <td class="span2">
             <a class="btn btn-primary"
                data-bind="attr: { href: pdfUrl }">{% trans 'Download' %}</a>
         </td>
     </script>
+{% endblock %}
+
+{% block modals %}{{ block.super }}
+    <div class="modal hide fade" id="paymentModal">
+        <div class="modal-header">
+            <a class="close" data-dismiss="modal">&times;</a>
+            <h2>
+                {% blocktrans %}
+                Payment for Statement No. <span data-bind="text: statementNo"></span>
+                {% endblocktrans %}
+            </h2>
+        </div>
+        <form action="{{ process_payment_url }}"
+              method="POST"
+              class="form form-horizontal"
+              id="payment-form">
+            <div class="modal-body">
+                <div class="alert alert-error"
+                     data-bind="visible: showServerError">
+                    {% blocktrans %}
+                    There was an error processing your request. We're working
+                    quickly to fix the issue. Please try back shortly.
+                    {% endblocktrans %}
+                </div>
+                <!-- ko ifnot: displayThankYou -->
+                <div class="control-group">
+                    <input type="hidden"
+                           name="invoice_id"
+                           data-bind="value: invoiceId" />
+                    <input type="hidden"
+                           name="stripeToken"
+                           data-bind="value: stripeToken" />
+                    <label class="control-label">
+                        {% trans 'Payment Amount' %}
+                    </label>
+                    <div class="controls">
+                        <label class="radio">
+                            <input type="radio"
+                                   name="paymentAmount"
+                                   id="payment-amount-full"
+                                   data-bind="checked: paymentAmountType"
+                                   value="full">
+                            {% blocktrans %}
+                            Pay the full balance: $<span data-bind="text: currentBalance"></span>
+                            {% endblocktrans %}
+                        </label>
+                        <label class="radio">
+                            <input type="radio"
+                                   name="paymentAmount"
+                                   id="payment-amount-custom"
+                                   data-bind="checked: paymentAmountType"
+                                   value="partial">
+                            {% blocktrans %}
+                            Pay a portion of the balance:
+                            {% endblocktrans %}
+                            <div class="input-prepend">
+                                <span class="add-on">$</span>
+                                <input type="text"
+                                       class="input-small"
+                                       name="customPaymentAmount"
+                                       data-bind="value: customPaymentAmount" />
+                            </div>
+                            <div class="alert alert-error"
+                                 data-bind="visible: showCustomAmountError">
+                                <i class="icon-warning-sign"></i>
+                                {% blocktrans %}
+                                    Please enter an amount that's between $0.50 and $<span data-bind="text: currentBalance"></span>.
+                                {% endblocktrans %}
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                <fieldset>
+                    <legend>{% trans 'Card Information' %}</legend>
+                    <p id="payment-errors"
+                          class="alert alert-error"
+                          data-bind="visible: showStripeErrors">
+                        <i class="icon-warning-sign"></i>
+                        <span data-bind="text: stripeErrorMsg"></span>
+                    </p>
+
+                    <div class="control-group">
+                        <label class="control-label">
+                            {% trans 'Card Number' %}
+                        </label>
+                        <div class="controls">
+                            <input type="text"
+                                   size="20"
+                                   placeholder="xxxx-xxxx-xxxx-xxxx"
+                                   data-stripe="number"/>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label">
+                            {% trans 'CVC' %}
+                        </label>
+                        <div class="controls">
+                            <input type="text"
+                                   size="4"
+                                   class="input-small"
+                                   data-stripe="cvc"
+                                   placeholder="xxxx"/>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label">
+                            {% trans 'Expiration' %}
+                        </label>
+                        <div class="controls">
+                            <div class="control-row">
+                                <input type="text"
+                                   size="2"
+                                   class="span1"
+                                   placeholder="MM"
+                                   data-stripe="exp-month"/>
+                                <input type="text"
+                                       size="4"
+                                       class="span2"
+                                       placeholder="YYYY"
+                                       data-stripe="exp-year"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <div class="controls">
+{#                            <label class="checkbox">#}
+{#                                <input type="checkbox" name="store-data" />#}
+{#                                {% blocktrans %}#}
+{#                                Save this information for later.#}
+{#                                {% endblocktrans %}#}
+{#                            </label>#}
+                            <span class="help-block">
+                                <i class="icon-info-sign"></i>
+                                {% blocktrans %}
+                                    We use <a href="http://www.stripe.com/">Stripe</a>
+                                    to process this transaction.
+                                {% endblocktrans %}
+                            </span>
+                        </div>
+                    </div>
+                </fieldset>
+                <!-- /ko -->
+                <!-- ko if: displayThankYou -->
+                <div class="alert alert-success">
+                    {% blocktrans %}
+                    Thank you for your payment!
+                    {% endblocktrans %}
+                </div>
+                <!-- /ko -->
+            </div>
+            <div class="modal-footer">
+                <!-- ko ifnot: displayThankYou -->
+                <button type="button" class="btn" data-dismiss="modal">
+                    {% trans "Cancel" %}
+                </button>
+                <button type="submit"
+                        class="btn btn-success"
+                        data-bind="click: processPayment">
+                    {% trans 'Submit Payment' %}
+                </button>
+                <!-- /ko -->
+                <!-- ko if: displayThankYou -->
+                <button type="button" class="btn" data-dismiss="modal">
+                    {% trans "Close" %}
+                </button>
+                <!-- /ko -->
+            </div>
+        </form>
+    </div>
 {% endblock %}
