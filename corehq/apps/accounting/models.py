@@ -1,8 +1,8 @@
 from StringIO import StringIO
 import datetime
-from decimal import Decimal
 import logging
 from tempfile import NamedTemporaryFile
+from decimal import Decimal
 from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django.schema import DateTimeProperty, StringProperty
 
@@ -14,29 +14,32 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
-from corehq import toggles
-from corehq.apps.accounting.invoice_pdf import InvoiceTemplate
-from corehq.apps.accounting.utils import (
-    get_privileges, get_first_last_days,
-    get_address_from_invoice, get_dimagi_from_email_by_product,
-)
-from corehq.apps.accounting.subscription_changes import (
-    DomainDowngradeActionHandler, DomainUpgradeActionHandler,
-)
-from corehq.apps.users.models import WebUser
+
+from django_prbac.models import Role
+
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.cached_object import CachedObject
 from dimagi.utils.django.email import send_HTML_email
-
-from django_prbac.models import Role
 from dimagi.utils.couch.database import SafeSaveDocument
+
+from corehq import toggles
+from corehq.apps.users.models import WebUser
 
 from corehq.apps.accounting.exceptions import (
     CreditLineError, AccountingError, SubscriptionAdjustmentError,
     SubscriptionChangeError, NewSubscriptionError, InvoiceEmailThrottledError,
     SubscriptionReminderError, SubscriptionRenewalError,
 )
-from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES, ensure_domain_instance, get_change_status
+from corehq.apps.accounting.invoice_pdf import InvoiceTemplate
+from corehq.apps.accounting.utils import (
+    get_privileges, get_first_last_days,
+    get_address_from_invoice, get_dimagi_from_email_by_product,
+    fmt_dollar_amount, EXCHANGE_RATE_DECIMAL_PLACES,
+    ensure_domain_instance, get_change_status,
+)
+from corehq.apps.accounting.subscription_changes import (
+    DomainDowngradeActionHandler, DomainUpgradeActionHandler,
+)
 
 logger = logging.getLogger('accounting')
 integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
