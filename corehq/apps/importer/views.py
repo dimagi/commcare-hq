@@ -2,8 +2,7 @@ import os.path
 from django.http import HttpResponseRedirect, HttpResponseServerError
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.importer import base
-from corehq.apps.importer.util import ExcelFile, ImporterConfig
-import corehq.apps.importer.util as importer_util
+from corehq.apps.importer import util as importer_util
 from corehq.apps.importer.tasks import bulk_import_async
 from django.views.decorators.http import require_POST
 from corehq.apps.users.decorators import require_permission
@@ -44,7 +43,7 @@ def excel_config(request, domain):
     # views if your worker changes, so we have to store it elsewhere
     # using the soil framework.
 
-    if extension not in ExcelFile.ALLOWED_EXTENSIONS:
+    if extension not in importer_util.ExcelFile.ALLOWED_EXTENSIONS:
         return render_error(request, domain,
                             'The Excel file you chose could not be processed. '
                             'Please check that it is saved as a Microsoft '
@@ -185,7 +184,7 @@ def excel_fields(request, domain):
 @require_POST
 @require_can_edit_data
 def excel_commit(request, domain):
-    config = ImporterConfig.from_request(request)
+    config = importer_util.ImporterConfig.from_request(request)
 
     excel_id = request.session.get(EXCEL_SESSION_ID)
 
