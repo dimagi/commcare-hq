@@ -89,3 +89,8 @@ CALC_XPATHS = StaticToggle(
     'Enabling custom calculated xpaths',
     namespaces=[NAMESPACE_DOMAIN],
 )
+
+FEATURE_PREVIEWS = StaticToggle(
+    'feature_previews',
+    'Feature Previews',
+)
