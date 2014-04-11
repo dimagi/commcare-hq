@@ -714,6 +714,11 @@ def _unformat_row(row):
 class HealthMapSource(HealthStatusReport):
 
     @property
+    def snapshot(self):
+        # Don't attempt to load a snapshot
+        return None
+
+    @property
     def gps_mapping(self):
         users = self.get_users
         mapping = {}
