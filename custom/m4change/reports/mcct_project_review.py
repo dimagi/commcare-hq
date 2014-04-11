@@ -1,3 +1,4 @@
+from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
@@ -182,10 +183,25 @@ class BaseReport(CustomProjectReport, ElasticProjectInspectionReport, ProjectRep
         def total_records(self):
             return int(self.es_results['hits']['total'])
 
+        def _make_link(self, url, label):
+            return '<a href="%s" target="_blank">%s</a>' % (url, label)
+
+        def _get_case_name_html(self, case, add_link):
+            case_name = get_property(case, "full_name", EMPTY_FIELD)
+            return self._make_link(
+                reverse('corehq.apps.reports.views.case_details', args=[self.domain, case._id]), case_name
+            ) if add_link else case_name
+
+        def _get_service_type_html(self, form, service_type, add_link):
+            return self._make_link(
+                reverse('corehq.apps.reports.views.form_data', args=[self.domain, form['_id']]), service_type
+            ) if add_link else service_type
+
 
 class McctProjectReview(BaseReport):
     name = 'mCCT Project Review Page'
     slug = 'mcct_project_review_page'
+    report_template_path = 'reports/reviewStatus.html'
     display_status = 'eligible'
 
     @property
@@ -251,8 +267,8 @@ class McctProjectReview(BaseReport):
             data = calculate_form_data(self, form)
             row = [
                 DateTimeProperty().wrap(form["form"]["meta"]["timeEnd"]).strftime("%Y-%m-%d"),
-                get_property(data.get('case'), "full_name", EMPTY_FIELD),
-                data.get('service_type'),
+                self._get_case_name_html(data.get('case'), with_checkbox),
+                self._get_service_type_html(form, data.get('service_type'), with_checkbox),
                 data.get('location_name'),
                 get_property(data.get('case'), "card_number", EMPTY_FIELD),
                 data.get('location_parent_name'),
@@ -342,7 +358,10 @@ class McctRejectedClientPage(McctClientApprovalPage):
             DataTablesColumn(_("Phone No."), sortable=False),
             DataTablesColumn(_("Amount"), sortable=False),
             DataTablesColumn(_("Comment"), sortable=False),
-            DataTablesColumn(_("User"), sortable=False))
+            DataTablesColumn(_("User"), sortable=False),
+            DataTablesColumn(mark_safe('Status/Action  <a href="#" class="select-all btn btn-mini btn-inverse">all</a> '
+                                       '<a href="#" class="select-none btn btn-mini btn-warning">none</a>'),
+                             sortable=False, span=3))
         return headers
 
     def make_rows(self, es_results, with_checkbox):
@@ -356,8 +375,8 @@ class McctRejectedClientPage(McctClientApprovalPage):
                 reason = None
             row = [
                 DateTimeProperty().wrap(form["form"]["meta"]["timeEnd"]).strftime("%Y-%m-%d %H:%M"),
-                get_property(data.get('case'), "full_name", EMPTY_FIELD),
-                data.get('service_type'),
+                self._get_case_name_html(data.get('case'), with_checkbox),
+                self._get_service_type_html(form, data.get('service_type'), with_checkbox),
                 data.get('location_name'),
                 get_property(data.get('case'), "card_number", EMPTY_FIELD),
                 data.get('location_parent_name'),
@@ -366,7 +385,13 @@ class McctRejectedClientPage(McctClientApprovalPage):
                 REJECTION_REASON_DISPLAY_NAMES[reason] if reason is not None else '',
                 form["form"]["meta"]["username"]
             ]
-            if not with_checkbox:
+            if with_checkbox:
+                checkbox = mark_safe('<input type="checkbox" class="selected-element" '
+                                     'data-bind="event: {change: updateSelection}" data-formid="%(form_id)s" '
+                                     'data-caseid="%(case_id)s" data-servicetype="%(service_type)s"/>')
+                row.append(checkbox % dict(form_id=data.get('form_id'), case_id=data.get('case_id'),
+                                           service_type=data.get('service_type')))
+            else:
                 row.insert(8, self.display_status)
             yield row
 
@@ -374,6 +399,7 @@ class McctRejectedClientPage(McctClientApprovalPage):
     def export_table(self):
         headers = self.headers
         headers.header.insert(8, DataTablesColumn("Status", sortable=False))
+        headers.header.pop()
         table = headers.as_export_table
         export_rows = self.get_all_rows
         table.extend(export_rows)
@@ -435,8 +461,8 @@ class McctClientLogPage(McctProjectReview):
                 status, reason = ('eligible', None)
             row = [
                 DateTimeProperty().wrap(form["form"]["meta"]["timeEnd"]).strftime("%Y-%m-%d %H:%M"),
-                get_property(data.get('case'), "full_name", EMPTY_FIELD),
-                data.get('service_type'),
+                self._get_case_name_html(data.get('case'), with_checkbox),
+                self._get_service_type_html(form, data.get('service_type'), with_checkbox),
                 data.get('location_name'),
                 get_property(data.get('case'), "card_number", EMPTY_FIELD),
                 data.get('location_parent_name'),

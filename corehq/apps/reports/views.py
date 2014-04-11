@@ -11,20 +11,15 @@ from django.contrib.auth.decorators import permission_required
 from django.core.cache import cache
 from django.core.servers.basehttp import FileWrapper
 from django.core.urlresolvers import reverse
-from django.http import (HttpResponseRedirect, HttpResponse,
+from django.http import (HttpResponseRedirect,
     HttpResponseBadRequest, Http404, HttpResponseForbidden)
 from django.shortcuts import render
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import (require_http_methods,
-    require_POST, require_GET)
+    require_POST)
 
-from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.templatetags.case_tags import case_inline_display
 from couchdbkit.exceptions import ResourceNotFound
-from casexml.apps.case.xml import V2
-from corehq.apps.export.exceptions import BadExportConfiguration
-from corehq.apps.reports.exportfilters import default_form_filter
 import couchexport
 from couchexport import views as couchexport_views
 from couchexport.exceptions import (
@@ -36,10 +31,6 @@ from couchexport.shortcuts import (export_data_shared, export_raw_data,
     export_response)
 from couchexport.tasks import rebuild_schemas
 from couchexport.util import SerializableFunction
-import couchforms.views as couchforms_views
-from couchforms.filters import instances
-from couchforms.models import XFormInstance, doc_types
-from couchforms.templatetags.xform_tags import render_form
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import wrapped_docs
 from dimagi.utils.couch.loosechange import parse_date
@@ -47,7 +38,6 @@ from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.export import WorkBook
 from dimagi.utils.parsing import json_format_datetime, string_to_boolean
 from dimagi.utils.web import json_request, json_response
-from filters.users import UserTypeFilter
 from soil import DownloadBase
 from soil.tasks import prepare_download
 from django.core.files.base import ContentFile

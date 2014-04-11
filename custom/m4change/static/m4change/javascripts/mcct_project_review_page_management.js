@@ -20,7 +20,7 @@ var McctProjectReviewPageManagement = function (o) {
                 $checkbox.attr("checked", false).change();
                 $selectedRow = $checkbox.parent().parent();
                 $selectedRow.removeClass('active');
-                $row.find('td:nth-child(9)').html(' <span class="label label-info">updated</span>');
+                $row.find('input[type="checkbox"].selected-element').parent().html(' <span class="label label-info">updated</span>');
             }
             self.clearSelection();
             ignore = false;
@@ -77,11 +77,7 @@ var McctProjectReviewPageManagement = function (o) {
 ko.bindingHandlers.mcctProjectReviewPage = {
     update: function(element, valueAccessor) {
         var value = valueAccessor()();
-        if (value.length > 0) {
-            $(element).slideDown();
-        } else {
-            $(element).slideUp();
-        }
+        $("#mcct_project_review_page_management").find("button, select").prop("disabled", value.length === 0);
     }
 };
 
