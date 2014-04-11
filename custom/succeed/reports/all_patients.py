@@ -176,7 +176,7 @@ class PatientListReport(CustomProjectReport, CaseListReport):
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        if _is_succeed_admin(user) or _has_any_role(user):
+        if user and (_is_succeed_admin(user) or _has_any_role(user)):
             return True
         return False
 
