@@ -1689,7 +1689,8 @@ class CreditLine(models.Model):
                 return
             if balance <= Decimal('0.0000'):
                 raise CreditLineError(
-                    "A balance went below zero dollars when applying credits."
+                    "A balance went below zero dollars when applying credits "
+                    "to credit line %d." % credit_line.pk
                 )
             adjustment_amount = min(credit_line.balance, balance)
             if adjustment_amount > Decimal('0.0000'):
