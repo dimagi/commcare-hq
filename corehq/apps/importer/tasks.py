@@ -6,7 +6,7 @@ from casexml.apps.case.mock import CaseBlock, CaseBlockError
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.importer.const import LookupErrors
-import corehq.apps.importer.util as importer_util
+from corehq.apps.importer import util as importer_util
 from corehq.apps.users.models import CouchUser
 from soil import DownloadBase
 from casexml.apps.case.xml import V2
