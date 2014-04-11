@@ -228,9 +228,9 @@ def download_item_lists(request, domain, html_response=False):
         try:
             data_types_view = [FixtureDataType.get(id) for id in request.GET.getlist("table_id")]
         except ResourceNotFound as Ex:
-            messages.info(request, _("Sorry, we couldn't find that table. If you think this is a mistake please report an issue."))
             if html_response:
                 raise Ex
+            messages.info(request, _("Sorry, we couldn't find that table. If you think this is a mistake please report an issue."))
             data_types_view = FixtureDataType.by_domain(domain)
     else:
         data_types_view = FixtureDataType.by_domain(domain)

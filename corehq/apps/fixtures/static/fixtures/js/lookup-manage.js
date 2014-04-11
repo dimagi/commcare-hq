@@ -242,10 +242,17 @@ $(function () {
                 $.ajax({
                     url: FixtureUrl,
                     dataType: 'json',
-                }).success(function (response) {
-                    $("#downloading").hide();
-                    $("#download-complete").show();
-                    $("#file-download-url").attr("href", FixtureFileDownloadUrl + "download_id=" + response.download_id);
+                    success: function (response) {
+                        $("#downloading").hide();
+                        $("#download-complete").show();
+                        $("#file-download-url").attr("href", FixtureFileDownloadUrl + "download_id=" + response.download_id);
+                    },
+                    error: function (response) {
+                        var error_message = "Sorry, something went wrong with the download. If you see this repeatedly please report an issue."
+                        $("#fixture-download").modal("hide");
+                        $("#FailText").text(error_message);
+                        $("#editFailure").show();
+                    }
                 });
             }
             
