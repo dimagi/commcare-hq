@@ -1304,7 +1304,7 @@ class BillingRecord(models.Model):
             'statement_number': self.invoice.invoice_number,
             'payment_status': (_("Paid") if self.invoice.date_paid is not None
                                else _("Payment Required")),
-            'amount_due': _("USD %s") % self.invoice.balance.quantize(Decimal(10) ** -2),
+            'amount_due': fmt_dollar_amount(self.invoice.balance),
             'statements_url': "http://%s%s" % (
                 Site.objects.get_current().domain,
                 reverse(DomainBillingStatementsView.urlname,args=[domain])
