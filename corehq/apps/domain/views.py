@@ -827,6 +827,17 @@ class SelectPlanView(DomainAccountingSettings):
             return DESC_BY_EDITION[self.edition]['name'].encode('utf-8')
 
     @property
+    def is_non_ops_superuser(self):
+        if not self.request.couch_user.is_superuser:
+            return False
+        try:
+            ensure_request_has_privilege(
+                self.request, privileges.ACCOUNTING_ADMIN)
+            return False
+        except PermissionDenied:
+            return True
+
+    @property
     def parent_pages(self):
         return [
             {
@@ -858,7 +869,8 @@ class SelectPlanView(DomainAccountingSettings):
         return {
             'pricing_table': PricingTable.get_table_by_product(self.product, domain=self.domain),
             'current_edition': (self.current_subscription.plan_version.plan.edition.lower()
-                                if self.current_subscription is not None else "")
+                                if self.current_subscription is not None else ""),
+            'is_non_ops_superuser': self.is_non_ops_superuser,
         }
 
 

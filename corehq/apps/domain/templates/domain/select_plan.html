@@ -13,7 +13,7 @@
 
 {% block js-inline %}{{ block.super }}
     <script>
-        var pricingTable = new PricingTable({{ pricing_table|JSON }}, '{{ current_edition }}');
+        var pricingTable = new PricingTable({{ pricing_table|JSON }}, '{{ current_edition }}', {{ is_non_ops_superuser|BOOL }});
         ko.applyBindings(pricingTable, $('#pricing-table').get(0));
         pricingTable.init();
     </script>
@@ -40,6 +40,29 @@
                 <div class="form-actions" data-bind="visible: isSubmitVisible">
                     <button type="submit" class="btn btn-primary btn-large">{% trans 'Next' %}</button>
                 </div>
+                {% if is_non_ops_superuser %}
+                <div class="alert alert-info" data-bind="visible: isSuperuserNoticeVisible">
+                    {% blocktrans %}
+                        <p>
+                            <strong>Hey there, Dimagi!</strong>
+                        </p>
+                        <p>
+                            Sorry, but you can only sign up projects for
+                            Community or the Dimagi Enterprise Plan
+                            <strong>(internal projects only, please!)</strong>.
+                        </p>
+                        <p>
+                            If you want to sign this project space up for a
+                            different plan, please have one of the non-Dimagi
+                            project admins sign up or talk to someone on
+                            the Operations Team to deal with contracts.
+                        </p>
+                        <p>
+                            Thanks! <3
+                        </p>
+                    {% endblocktrans %}
+                </div>
+                {% endif %}
                 <table class="table-pricing">
                 <thead>
                     <tr>
