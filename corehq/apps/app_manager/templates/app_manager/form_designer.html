@@ -35,6 +35,7 @@
     <script src="{% static 'formdesigner/js/controller.js' %}"></script>
     <script src="{% static 'formdesigner/js/ui.js' %}"></script>
     <script src="{% static 'formdesigner/js/window.js' %}"></script>
+    <script src="{% static 'cloudcare/js/util.js' %}"></script>
 
     {% include 'hqmedia/partials/multimedia_js.html' %} {# todo We should have a discussion at some point how we'd like to organize this in the future. #}
 {% endblock %}
@@ -84,7 +85,12 @@
                 langs: {{ app.langs|JSON }},
                 formName: "{{ form.name|trans:app.langs }}",
                 displayLanguage: {{ lang|JSON }},
-                sessionid: {{ sessionid|JSON }}
+                sessionid: {{ sessionid|JSON }},
+                {% if app.application_version == '2.0' %}
+                    {% if form.source and not is_user_registration %}
+                        cloudCareUrl: getCloudCareUrl("{% url "cloudcare_main" domain '' %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}") + "?preview=true"
+                    {% endif %}
+                {% endif %}
             });
             formdesigner.on('form-saved', function (args) {
                 var response = args.response;
