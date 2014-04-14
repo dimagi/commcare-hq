@@ -1,4 +1,3 @@
-import os
 from celery.schedules import crontab
 from celery.task import periodic_task
 from dimagi.utils.couch import sync_docs
@@ -11,16 +10,13 @@ from custom.m4change.reports.reports import M4ChangeReportDataSource
 import settings
 
 
-@periodic_task(run_every=crontab(hour="0", minute="0", day_of_week="*"), queue=getattr(settings, "CELERY_PERIODIC_QUEUE", "celery"))
+@periodic_task(run_every=crontab(hour="3", minute="0", day_of_week="*"), queue=getattr(settings, "CELERY_PERIODIC_QUEUE", "celery"))
 def generate_fixtures():
 
-    # A hack to get around the fact that syncdb does not work on South-enabled apps
-    dir = os.path.abspath(os.path.dirname(__file__))
     db = FixtureReportResult.get_db()
-    sync_docs.sync_design_docs(db, os.path.join(dir, "_design"), FixtureReportResult.Meta.app_label, temp=None)
-
     data_source = M4ChangeReportDataSource()
     report_slugs = data_source.get_report_slugs()
+
     for domain in M4CHANGE_DOMAINS:
         # Remove all FixtureReportResult instances, as they would either be deleted or replaced anyway
         db.delete_docs(FixtureReportResult.by_domain(domain=domain))

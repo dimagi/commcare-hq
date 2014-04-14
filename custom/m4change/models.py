@@ -401,7 +401,7 @@ class FixtureReportResult(Document, QueryMixin):
 
     @classmethod
     def by_domain(cls, domain):
-        return cls.view("m4change/by_doc_type", key=[domain, "FixtureReportResult"], include_docs=True).all()
+        return cls.view("m4change/fixture_by_composite_key", startkey=[domain], endkey=[domain, {}], include_docs=True).all()
 
     @classmethod
     def _validate_params(cls, params):
