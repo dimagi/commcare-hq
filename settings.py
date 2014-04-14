@@ -284,7 +284,9 @@ HQ_APPS = (
     'custom.hope',
     'custom.openlmis',
     'custom.m4change',
-    'custom.succeed'
+    'custom.succeed',
+
+    'custom.uth',
 )
 
 TEST_APPS = ()

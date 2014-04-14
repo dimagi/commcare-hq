@@ -56,6 +56,7 @@ domain_specific = patterns('',
     (r'^sqlextract/', include('ctable_view.urls')),
     (r'^fri/', include('custom.fri.urls')),
     (r'^', include('custom.m4change.urls')),
+    (r'^', include('custom.uth.urls')),
 )
 
 urlpatterns = patterns('',
