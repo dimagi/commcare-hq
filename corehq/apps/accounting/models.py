@@ -1646,13 +1646,12 @@ class CreditLine(models.Model):
                 }
             )
         except cls.DoesNotExist:
-            credit_line = cls(
+            credit_line = cls.objects.create(
                 account=account,
                 subscription=subscription,
                 product_type=product_type,
                 feature_type=feature_type,
             )
-            credit_line.save()
             is_new = True
         credit_line.adjust_credit_balance(amount, is_new=is_new, note=note,
                                           payment_record=payment_record,
