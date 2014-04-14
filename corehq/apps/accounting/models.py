@@ -1712,12 +1712,10 @@ class PaymentRecord(models.Model):
 
     @classmethod
     def create_record(cls, payment_method, transaction_id):
-        record = cls(
+        return cls.objects.create(
             payment_method=payment_method,
             transaction_id=transaction_id
         )
-        record.save()
-        return record
 
 
 class CreditAdjustment(models.Model):
