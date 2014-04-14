@@ -8,9 +8,10 @@ from corehq.apps.reports.graph_models import MultiBarChart, LineChart, Axis
 from corehq.apps.reports.sqlreport import DatabaseColumn, SummingSqlTabularReport, AggregateColumn, calculate_total_row
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.reports.standard.maps import GenericMapReport
-from corehq.apps.reports.util import format_datatables_data
+from corehq.apps.reports.util import format_datatables_data, make_ctable_table_name
 from dimagi.utils.decorators.memoized import memoized
 from util import get_unique_combinations,  capitalize_fn
+from django.conf import settings
 
 from datetime import datetime, timedelta
 
@@ -33,7 +34,7 @@ class GSIDSQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin)
 
     exportable = True
     emailable = True
-    table_name = "gsid_patient_summary"
+    table_name = make_ctable_table_name("gsid_patient_summary")
     default_aggregation = "clinic"
 
     def __init__(self, request, base_context=None, domain=None, **kwargs):
