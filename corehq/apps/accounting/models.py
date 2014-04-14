@@ -763,7 +763,7 @@ class Subscription(models.Model):
         self.save()
 
         # transfer existing credit lines to the account
-        CreditLine.transfer_credits_to_account(self)
+        self.transfer_credits_to_account()
 
         SubscriptionAdjustment.record_adjustment(
             self, reason=SubscriptionAdjustmentReason.CANCEL, method=adjustment_method, note=note, web_user=web_user,
@@ -833,7 +833,7 @@ class Subscription(models.Model):
         self.save()
 
         # transfer existing credit lines to the new subscription
-        CreditLine.transfer_credits_to_subscription(self, new_subscription)
+        self.transfer_credits_to_subscription(new_subscription)
 
         # record transfer from old subscription
         SubscriptionAdjustment.record_adjustment(
@@ -915,7 +915,7 @@ class Subscription(models.Model):
         renewed_subscription.save()
 
         # transfer existing credit lines to the renewed subscription
-        CreditLine.transfer_credits_to_subscription(self, renewed_subscription)
+        self.transfer_credits_to_subscription(renewed_subscription)
 
         # record renewal from old subscription
         SubscriptionAdjustment.record_adjustment(
@@ -924,6 +924,55 @@ class Subscription(models.Model):
         )
 
         return renewed_subscription
+
+    def transfer_credits_to_account(self):
+        """Transfers all credit balances related to a subscription
+        to the account level.
+        """
+        source_credits = CreditLine.objects.filter(
+            account=self.account,
+            subscription=self
+        ).all()
+        for credit_line in source_credits:
+            transferred_credit = CreditLine.add_credit(
+                credit_line.balance,
+                account=self.account,
+                feature_type=credit_line.feature_type,
+                product_type=credit_line.product_type,
+                related_credit=credit_line
+            )
+            credit_line.is_active = False
+            credit_line.adjust_credit_balance(
+                credit_line.balance * Decimal('-1.0'),
+                related_credit=transferred_credit,
+            )
+
+    def transfer_credits_to_subscription(self, subscription):
+        """Transfers all credit balances related to this subscription
+        to the destination subscription.
+        """
+        if self.account.pk != subscription.account.pk:
+            raise CreditLineError(
+                "Can only transfer subscription credits under the same "
+                "Billing Account."
+            )
+        source_credits = CreditLine.objects.filter(
+            account=self.account,
+            subscription=self,
+        ).all()
+        for credit_line in source_credits:
+            transferred_credit = CreditLine.add_credit(
+                credit_line.balance,
+                subscription=subscription,
+                feature_type=credit_line.feature_type,
+                product_type=credit_line.product_type,
+                related_credit=credit_line
+            )
+            credit_line.is_active = False
+            credit_line.adjust_credit_balance(
+                credit_line.balance * Decimal('-1.0'),
+                related_credit=transferred_credit,
+            )
 
     def send_ending_reminder_email(self):
         """
@@ -1548,57 +1597,6 @@ class CreditLine(models.Model):
         credit_adjustment.save()
         self.balance += amount
         self.save()
-
-    @classmethod
-    def transfer_credits_to_account(cls, subscription):
-        """Transfers all credit balances related to a subscription
-        to the account level.
-        """
-        source_credits = cls.objects.filter(
-            account=subscription.account,
-            subscription=subscription
-        ).all()
-        for credit_line in source_credits:
-            transferred_credit = CreditLine.add_credit(
-                credit_line.balance,
-                account=subscription.account,
-                feature_type=credit_line.feature_type,
-                product_type=credit_line.product_type,
-                related_credit=credit_line
-            )
-            credit_line.is_active = False
-            credit_line.adjust_credit_balance(
-                credit_line.balance * Decimal('-1.0'),
-                related_credit=transferred_credit,
-            )
-
-    @classmethod
-    def transfer_credits_to_subscription(cls, from_sub, to_sub):
-        """Transfers all credit balances related to a subscription
-        to the destination subscription.
-        """
-        if from_sub.account.pk != to_sub.account.pk:
-            raise CreditLineError(
-                "Can only transfer subscription credits under the same "
-                "Billing Account."
-            )
-        source_credits = cls.objects.filter(
-            account=from_sub.account,
-            subscription=from_sub,
-        ).all()
-        for credit_line in source_credits:
-            transferred_credit = CreditLine.add_credit(
-                credit_line.balance,
-                subscription=to_sub,
-                feature_type=credit_line.feature_type,
-                product_type=credit_line.product_type,
-                related_credit=credit_line
-            )
-            credit_line.is_active = False
-            credit_line.adjust_credit_balance(
-                credit_line.balance * Decimal('-1.0'),
-                related_credit=transferred_credit,
-            )
 
     @classmethod
     def get_credits_for_line_item(cls, line_item):
