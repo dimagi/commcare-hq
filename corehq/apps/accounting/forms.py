@@ -583,14 +583,10 @@ class CreditForm(forms.Form):
     def adjust_credit(self):
         amount = self.cleaned_data['amount']
         note = self.cleaned_data['note']
-
-        feature_type = None
-        product_type = None
-
-        if self.cleaned_data['rate_type'] == 'Product':
-            product_type = self.cleaned_data['product_type']
-        if self.cleaned_data['rate_type'] == 'Feature':
-            feature_type = self.cleaned_data['feature_type']
+        product_type = (self.cleaned_data['product_type']
+                        if self.cleaned_data['rate_type'] == 'Product' else None)
+        feature_type = (self.cleaned_data['feature_type']
+                        if self.cleaned_data['rate_type'] == 'Feature' else None)
         CreditLine.add_credit(
             amount,
             account=self.account,
