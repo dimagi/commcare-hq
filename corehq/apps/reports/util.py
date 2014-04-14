@@ -464,3 +464,9 @@ def get_installed_custom_modules():
 
     return [import_module(module) for module in settings.CUSTOM_MODULES]
 
+
+def make_ctable_table_name(name):
+    if getattr(settings, 'CTABLE_PREFIX', None):
+        return '{0}_{1}'.format(settings.CTABLE_PREFIX, name)
+
+    return name
