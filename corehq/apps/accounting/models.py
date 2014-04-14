@@ -1525,14 +1525,14 @@ class CreditLine(models.Model):
             raise CreditLineError("You may only have an invoice OR a line item making this adjustment.")
         if reason is None:
             reason = CreditAdjustmentReason.MANUAL
-            if line_item is not None:
-                reason = CreditAdjustmentReason.LINE_ITEM
-            if invoice is not None:
-                reason = CreditAdjustmentReason.INVOICE
-            if related_credit is not None:
-                reason = CreditAdjustmentReason.TRANSFER
             if payment_record is not None:
                 reason = CreditAdjustmentReason.DIRECT_PAYMENT
+            elif related_credit is not None:
+                reason = CreditAdjustmentReason.TRANSFER
+            elif invoice is not None:
+                reason = CreditAdjustmentReason.INVOICE
+            elif line_item is not None:
+                reason = CreditAdjustmentReason.LINE_ITEM
         if is_new:
             note = "Initialization of credit line. %s" % note
         credit_adjustment = CreditAdjustment(
