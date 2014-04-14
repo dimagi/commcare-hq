@@ -35,6 +35,7 @@
     <script src="{% static 'formdesigner/js/controller.js' %}"></script>
     <script src="{% static 'formdesigner/js/ui.js' %}"></script>
     <script src="{% static 'formdesigner/js/window.js' %}"></script>
+    <script src="{% static 'cloudcare/js/util.js' %}"></script>
 
     {% include 'hqmedia/partials/multimedia_js.html' %} {# todo We should have a discussion at some point how we'd like to organize this in the future. #}
 {% endblock %}
@@ -90,6 +91,14 @@
                 var response = args.response;
                 COMMCAREHQ.app_manager.updateDOM(response.update);
             });
+
+            {% if app.application_version == '2.0' %}
+                {% if form.source and not is_user_registration %}
+                    var cloudCareUrl = getCloudCareUrl("{% url "cloudcare_main" domain '' %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}") + "?preview=true";
+                    var cloudcare_item = '<li><a id="cloudcare-preview-url" href="'+ cloudCareUrl +'" target="_blank" class="btni class="icon-play"></i>{% trans "Try in CloudCare" %}</a></li>';
+                    $("#fd-tools-menu").append(cloudcare_item);
+                {% endif %}
+            {% endif %}
         });
     </script>
 {% endblock %}
