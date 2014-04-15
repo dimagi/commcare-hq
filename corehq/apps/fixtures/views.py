@@ -12,31 +12,29 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 from django.views.generic.base import TemplateView
-from django.shortcuts import render
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 
 from corehq.apps.domain.decorators import login_or_digest
 from corehq.apps.fixtures.exceptions import ExcelMalformatException, FixtureAPIException, DuplicateFixtureTagException
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem, _id_from_doc, FieldList, FixtureTypeField, FixtureItemField
-from corehq.apps.groups.models import Group
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
+from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.bulkupload import GroupMemoizer
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CommCareUser, Permissions
 from corehq.apps.users.util import normalize_username
-from couchexport.export import UnsupportedExportFormat, export_raw
+from couchexport.export import export_raw
 from couchexport.models import Format
-from couchexport.shortcuts import export_response
 from dimagi.utils.couch.bulk import CouchTransaction
+from dimagi.utils.decorators.profile import profile
 from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 from dimagi.utils.decorators.view import get_file
 
 from copy import deepcopy
-from soil import CachedDownload, DownloadBase
+from soil import CachedDownload
 from soil.util import expose_download
 
 
@@ -239,7 +237,7 @@ def download_item_lists(request, domain, html_response=False):
         data_types_view = list(data_types_view)[0:1]
     # book-keeping data from view_results for repeated use
     data_types_book = []
-    data_items_boook_by_type = {}
+    data_items_book_by_type = {}
     item_helpers_by_type = {}
     """
         Contains all excel sheets in following format
@@ -293,15 +291,15 @@ def download_item_lists(request, domain, html_response=False):
                     prop_key = get_field_prop_format(index + 1, prop_index + 1)
                     type_field_properties[data_type.tag][prop_key] = property
         # Helpers to generate item-sheets
-        data_items_boook_by_type[data_type.tag] = []
+        data_items_book_by_type[data_type.tag] = []
         max_users = 0
         max_groups = 0
         max_field_prop_combos = {field_name: 0 for field_name in data_type.fields_without_attributes}
         for item_row in FixtureDataItem.by_data_type(domain, data_type.get_id):
-            data_items_boook_by_type[data_type.tag].append(item_row)
-            group_len = len(item_row.get_groups())
+            data_items_book_by_type[data_type.tag].append(item_row)
+            group_len = len(item_row.groups)
             max_groups = group_len if group_len > max_groups else max_groups
-            user_len = len(item_row.get_users())
+            user_len = len(item_row.users)
             max_users = user_len if user_len > max_users else max_users
             for field_key in item_row.fields:
                 max_combos = max_field_prop_combos[field_key]
@@ -373,10 +371,10 @@ def download_item_lists(request, domain, html_response=False):
             common_headers[2 if html_response else 0:] + field_headers + user_headers + group_headers
         )
         excel_sheets[data_type.tag] = item_sheet
-        for item_row in data_items_boook_by_type[data_type.tag]:
+        for item_row in data_items_book_by_type[data_type.tag]:
             common_vals = [str(_id_from_doc(item_row)), "N"]
-            user_vals = [user.raw_username for user in item_row.get_users()] + empty_padding_list(max_users - len(item_row.get_users()))
-            group_vals = [group.name for group in item_row.get_groups()] + empty_padding_list(max_groups - len(item_row.get_groups()))
+            user_vals = [user.raw_username for user in item_row.users] + empty_padding_list(max_users - len(item_row.users))
+            group_vals = [group.name for group in item_row.groups] + empty_padding_list(max_groups - len(item_row.groups))
             field_vals = []
             for field in data_type.fields:
                 if len(field.properties) == 0:
@@ -805,35 +803,35 @@ def run_upload(request, domain, workbook, replace=False):
                     if di[DELETE_HEADER] == "Y" or di[DELETE_HEADER] == "y":
                         old_data_item.recursive_delete(transaction)
                         continue               
-                except (ResourceNotFound, KeyError) as e:
+                except (ResourceNotFound, KeyError):
                     old_data_item = new_data_item
                 transaction.save(old_data_item)
 
-                old_groups = old_data_item.get_groups()
+                old_groups = old_data_item.groups
                 for group in old_groups:
                     old_data_item.remove_group(group)
-                old_users = old_data_item.get_users()
+                old_users = old_data_item.users
                 for user in old_users:
                     old_data_item.remove_user(user)
 
                 for group_name in di.get('group', []):
-                        group = group_memoizer.by_name(group_name)
-                        if group:
-                            old_data_item.add_group(group, transaction=transaction)
-                        else:
-                            messages.error(request, _("Unknown group: '%(name)s'. But the row is successfully added") % {'name': group_name})
+                    group = group_memoizer.by_name(group_name)
+                    if group:
+                        old_data_item.add_group(group, transaction=transaction)
+                    else:
+                        messages.error(request, _("Unknown group: '%(name)s'. But the row is successfully added") % {'name': group_name})
 
                 for raw_username in di.get('user', []):
-                        try:
-                            username = normalize_username(raw_username, domain)
-                        except ValidationError:
-                            messages.error(request, _("Invalid username: '%(name)s'. Row is not added") % {'name': raw_username})
-                            continue
-                        user = CommCareUser.get_by_username(username)
-                        if user:
-                            old_data_item.add_user(user)
-                        else:
-                            messages.error(request, _("Unknown user: '%(name)s'. But the row is successfully added") % {'name': raw_username})
+                    try:
+                        username = normalize_username(raw_username, domain)
+                    except ValidationError:
+                        messages.error(request, _("Invalid username: '%(name)s'. Row is not added") % {'name': raw_username})
+                        continue
+                    user = CommCareUser.get_by_username(username)
+                    if user:
+                        old_data_item.add_user(user)
+                    else:
+                        messages.error(request, _("Unknown user: '%(name)s'. But the row is successfully added") % {'name': raw_username})
 
     return_val["number_of_fixtures"] = number_of_fixtures + 1
     return return_val

@@ -1,15 +1,13 @@
-import warnings 
-
 from xml.etree import ElementTree
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
-from corehq.apps.fixtures.exceptions import FixtureException
+from corehq.apps.fixtures.exceptions import FixtureException, FixtureTypeCheckError
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.fixtures.exceptions import FixtureVersionError
 from couchdbkit.ext.django.schema import Document, DocumentSchema, DictProperty, StringProperty, StringListProperty, SchemaListProperty, IntegerProperty, BooleanProperty
 from corehq.apps.groups.models import Group
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 from dimagi.utils.couch.bulk import CouchTransaction
 from dimagi.utils.couch.database import get_db
+from dimagi.utils.decorators.memoized import memoized
 
 
 class FixtureTypeField(DocumentSchema):
@@ -243,6 +241,11 @@ class FixtureDataItem(Document):
         else:
             return group_ids
 
+    @property
+    @memoized
+    def groups(self):
+        return self.get_groups()
+
     def get_users(self, wrap=True, include_groups=False):
         user_ids = set(
             get_db().view('fixtures/ownership',
@@ -266,6 +269,11 @@ class FixtureDataItem(Document):
 
     def get_all_users(self, wrap=True):
         return self.get_users(wrap=wrap, include_groups=True)
+
+    @property
+    @memoized
+    def users(self):
+        return self.get_users()
 
     @classmethod
     def by_user(cls, user, wrap=True, domain=None):
