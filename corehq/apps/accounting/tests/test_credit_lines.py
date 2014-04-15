@@ -1,8 +1,13 @@
 from decimal import Decimal
 import random
+import datetime
 from corehq.apps.accounting import tasks, utils, generator
-from corehq.apps.accounting.models import CreditLine, CreditAdjustment, FeatureType
-from corehq.apps.accounting.tests import BaseInvoiceTestCase
+from corehq.apps.accounting.models import (
+    CreditLine, CreditAdjustment, FeatureType, SoftwareProductType,
+    SoftwarePlanEdition, DefaultProductPlan, BillingAccount, Subscription,
+    CreditAdjustmentReason,
+)
+from corehq.apps.accounting.tests import BaseInvoiceTestCase, BaseAccountingTest
 
 
 class TestCreditLines(BaseInvoiceTestCase):
@@ -254,3 +259,83 @@ class TestCreditLines(BaseInvoiceTestCase):
     def _clean_credits(self):
         CreditAdjustment.objects.all().delete()
         CreditLine.objects.all().delete()
+
+
+class TestCreditTransfers(BaseAccountingTest):
+
+    def setUp(self):
+        super(TestCreditTransfers, self).setUp()
+        self.product_credit_amt = Decimal('500.00')
+        self.feature_credit_amt = Decimal('200.00')
+        self.subscription_credit_amt = Decimal('600.00')
+        self.domain = generator.arbitrary_domain()
+        self.account = BillingAccount.get_or_create_account_by_domain(
+            self.domain, created_by="biyeun@dimagi.com",
+        )[0]
+
+    def _ensure_transfer(self, original_credits):
+        transferred_credits = []
+        for credit_line in original_credits:
+            refreshed_credit = CreditLine.objects.get(pk=credit_line.pk)
+            self.assertFalse(refreshed_credit.is_active)
+            self.assertEqual(credit_line.feature_type, refreshed_credit.feature_type)
+            self.assertEqual(credit_line.product_type, refreshed_credit.product_type)
+            self.assertEqual(credit_line.account, refreshed_credit.account)
+            self.assertEqual(refreshed_credit.balance, Decimal('0.0000'))
+            adjustments = refreshed_credit.creditadjustment_set.filter(
+                reason=CreditAdjustmentReason.TRANSFER
+            )
+            self.assertTrue(adjustments.exists())
+            transfer_adjustment = adjustments.latest('date_created')
+            transferred_credits.append(transfer_adjustment.related_credit)
+            self.assertEqual(
+                transfer_adjustment.related_credit.balance,
+                credit_line.balance
+            )
+        return transferred_credits
+
+    def test_transfers(self):
+        advanced_plan = DefaultProductPlan.get_default_plan_by_domain(
+            self.domain, edition=SoftwarePlanEdition.ADVANCED
+        )
+        standard_plan = DefaultProductPlan.get_default_plan_by_domain(
+            self.domain, edition=SoftwarePlanEdition.STANDARD
+        )
+        first_sub = Subscription.new_domain_subscription(
+            self.account, self.domain, advanced_plan
+        )
+
+        product_credit = CreditLine.add_credit(
+            self.product_credit_amt, subscription=first_sub,
+            product_type=SoftwareProductType.COMMCARE,
+        )
+        feature_credit = CreditLine.add_credit(
+            self.feature_credit_amt, subscription=first_sub,
+            feature_type=FeatureType.USER,
+        )
+        subscription_credit = CreditLine.add_credit(
+            self.subscription_credit_amt, subscription=first_sub,
+        )
+        original_credits = [
+            product_credit, feature_credit, subscription_credit,
+        ]
+
+        second_sub = first_sub.change_plan(standard_plan)
+
+        second_credits = self._ensure_transfer(original_credits)
+        for credit_line in second_credits:
+            self.assertEqual(credit_line.subscription.pk, second_sub.pk)
+
+        second_sub.date_end = datetime.date.today() + datetime.timedelta(days=5)
+        second_sub.save()
+
+        third_sub = second_sub.renew_subscription()
+        third_credits = self._ensure_transfer(second_credits)
+        for credit_line in third_credits:
+            self.assertEqual(credit_line.subscription.pk, third_sub.pk)
+
+        third_sub.cancel_subscription()
+        account_credits = self._ensure_transfer(third_credits)
+        for credit_line in account_credits:
+            self.assertIsNone(credit_line.subscription)
+            self.assertEqual(credit_line.account.pk, self.account.pk)
