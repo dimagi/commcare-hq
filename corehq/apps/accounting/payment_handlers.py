@@ -72,9 +72,11 @@ class StripePaymentHandler(PaymentHandler):
             card=card_token,
             amount=self.get_amount_in_cents(amount),
             currency=settings.DEFAULT_CURRENCY,
+            description="Payment for Invoice %s" % self.invoice.invoice_number,
         )
-        payment_record = PaymentRecord.create_record(self.payment_method,
-                                                     charge.id)
+        payment_record = PaymentRecord.create_record(
+            self.payment_method, charge.id
+        )
         # record the credit to the account
         CreditLine.add_credit(
             amount, account=self.invoice.subscription.account,
