@@ -49,7 +49,7 @@ def start_session(domain, contact, app, module, form, case_id=None, yield_respon
     else:
         session_data["additional_filters"] = {
             "user_id": contact.get_id,
-            "footprint": True
+            "footprint": "True"
         }
     
     language = contact.get_language_code()
