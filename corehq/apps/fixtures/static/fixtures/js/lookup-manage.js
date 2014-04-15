@@ -119,7 +119,7 @@ $(function () {
                         self._id(data._id);
                     }
                     self.original_visibility = self.is_global();
-                    self.original_tag = self.tag()
+                    self.original_tag = self.tag();
                     var indicesToRemoveAt = [];
                     for (var i = 0; i < self.fields().length; i += 1) {
                         var field = self.fields()[i];
@@ -141,7 +141,7 @@ $(function () {
             var indicesToRemoveAt = [];
             self.tag(self.original_tag);
             self.is_global(self.original_visibility);
-            if (!o._id()){ 
+            if (!o._id()) { 
                 app.data_types.remove(self);
                 return;
             }

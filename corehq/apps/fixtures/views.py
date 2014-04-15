@@ -230,7 +230,7 @@ def download_item_lists(request, domain, html_response=False):
         except ResourceNotFound as Ex:
             if html_response:
                 messages.info(request, _("Sorry, we couldn't find that table. If you think this is a mistake please report an issue."))
-                raise Ex
+                raise
             data_types_view = FixtureDataType.by_domain(domain)
     else:
         data_types_view = FixtureDataType.by_domain(domain)
