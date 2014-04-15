@@ -43,18 +43,27 @@ def _get_report_query(start_date, end_date, filtered_case_ids):
             "bool": {
                 "must": [
                     {"range": {"form.meta.timeEnd": {"from": start_date, "to": end_date, "include_upper": True}}},
-                    {"term": {"doc_type": "xforminstance"}},
-                ],
-                "should": [
-                    {"terms": {"xmlns.exact": CASE_FORM_SCRIPT_FILTER_NAMESPACES}},
-                    {"range": {"form.visits": {"gte": 1, "lte": 4}}}
+                    {"term": {"doc_type": "xforminstance"}}
                 ]
             }
         },
         "filter": {
             "and": [
                 {"not": {"missing": {"field": "form.case.@case_id"}}},
-                {"terms": {"form.case.@case_id": filtered_case_ids}}
+                {"terms": {"form.case.@case_id": filtered_case_ids}},
+                {"script":{
+                    "script": """
+                    if (namespaces contains _source.xmlns) {
+                        return true;
+                    } else if (_source.form.?visits >= 1 && _source.form.?visits <= 4) {
+                        return true;
+                    }
+                    return false;
+                    """,
+                    "params": {
+                        "namespaces": CASE_FORM_SCRIPT_FILTER_NAMESPACES
+                    }
+                }}
             ]
         }
     }
