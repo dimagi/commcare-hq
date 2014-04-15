@@ -815,23 +815,23 @@ def run_upload(request, domain, workbook, replace=False):
                     old_data_item.remove_user(user)
 
                 for group_name in di.get('group', []):
-                        group = group_memoizer.by_name(group_name)
-                        if group:
-                            old_data_item.add_group(group, transaction=transaction)
-                        else:
-                            messages.error(request, _("Unknown group: '%(name)s'. But the row is successfully added") % {'name': group_name})
+                    group = group_memoizer.by_name(group_name)
+                    if group:
+                        old_data_item.add_group(group, transaction=transaction)
+                    else:
+                        messages.error(request, _("Unknown group: '%(name)s'. But the row is successfully added") % {'name': group_name})
 
                 for raw_username in di.get('user', []):
-                        try:
-                            username = normalize_username(raw_username, domain)
-                        except ValidationError:
-                            messages.error(request, _("Invalid username: '%(name)s'. Row is not added") % {'name': raw_username})
-                            continue
-                        user = CommCareUser.get_by_username(username)
-                        if user:
-                            old_data_item.add_user(user)
-                        else:
-                            messages.error(request, _("Unknown user: '%(name)s'. But the row is successfully added") % {'name': raw_username})
+                    try:
+                        username = normalize_username(raw_username, domain)
+                    except ValidationError:
+                        messages.error(request, _("Invalid username: '%(name)s'. Row is not added") % {'name': raw_username})
+                        continue
+                    user = CommCareUser.get_by_username(username)
+                    if user:
+                        old_data_item.add_user(user)
+                    else:
+                        messages.error(request, _("Unknown user: '%(name)s'. But the row is successfully added") % {'name': raw_username})
 
     return_val["number_of_fixtures"] = number_of_fixtures + 1
     return return_val
