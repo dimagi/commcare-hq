@@ -209,7 +209,7 @@ var CRUDPaginatedListModel = function (
             data: {
                 action: 'refresh',
                 itemId: paginatedItem.itemId,
-                page: 1,
+                page: self.currentPage(),
                 limit: self.pageLimit(),
                 sortBy: self.sortBy
             },
@@ -217,7 +217,7 @@ var CRUDPaginatedListModel = function (
             success: function (data) {
                 self.utils.reloadList(data);
             }
-        })
+        });
     };
 
     self.getAdditionalData = function () {
