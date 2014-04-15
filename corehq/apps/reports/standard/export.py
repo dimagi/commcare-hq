@@ -6,7 +6,7 @@ from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.http import Http404
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
-from corehq import toggles, privileges
+from corehq import privileges
 
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 
