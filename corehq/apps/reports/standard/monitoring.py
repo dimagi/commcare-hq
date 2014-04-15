@@ -799,7 +799,7 @@ class DailyFormStatsReportSQL(WorkerMonitoringReportTableBase, CompletionOrSubmi
             user_ids = [user.get('user_id') for user in self.all_users]
             results = results.filter(user_id__in=user_ids)
 
-        results = results.extra({'date': "date(%s)" % self.date_field}) \
+        results = results.extra({'date': "date(%s AT TIME ZONE '%s')" % (self.date_field, self.timezone)}) \
             .values(*values) \
             .annotate(Count(self.date_field))
 
