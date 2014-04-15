@@ -477,7 +477,6 @@ class ReportNotification(Document):
         Access the notification's associated configs as a list, transparently
         returning an appropriate dummy for old notifications which have
         `report_slug` instead of `config_ids`.
-
         """
         if self.config_ids:
             configs = ReportConfig.view('_all_docs', keys=self.config_ids,
