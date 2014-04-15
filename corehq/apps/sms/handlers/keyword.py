@@ -393,7 +393,10 @@ def user_can_access_case(user, case):
     groups = user.get_case_sharing_groups()
     group_ids = [group._id for group in groups]
     case_is_shared = (case.owner_id in group_ids)
-    return (user_is_owner or case_is_shared)
+    access_via_subcases = any(
+        [user_can_access_case(user, subcase) for subcase in case.get_subcases()]
+    )
+    return (user_is_owner or case_is_shared or access_via_subcases)
 
 def send_keyword_response(vn, message_id):
     metadata = MessageMetadata(
