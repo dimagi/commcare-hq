@@ -1,8 +1,9 @@
-var PricingTable = function (pricing_table, current_edition) {
+var PricingTable = function (pricing_table, current_edition, isNonAccountingSuperuser) {
     'use strict';
     var self = this;
 
     self.currentEdition = current_edition;
+    self.isNonAccountingSuperuser = isNonAccountingSuperuser;
     self.title = ko.observable(pricing_table.title);
     self.editions = ko.observableArray(_.map(pricing_table.editions, function (edition) {
         return new PricingTableEdition(edition, self.currentEdition);
@@ -19,8 +20,14 @@ var PricingTable = function (pricing_table, current_edition) {
     self.visit_wiki_text = ko.observable(pricing_table.visit_wiki_text);
 
     self.selected_edition = ko.observable();
+    self.isEditionSelectable = ko.computed(function () {
+        return !self.isNonAccountingSuperuser || ['community', 'enterprise'].indexOf(self.selected_edition()) >= 0;
+    });
     self.isSubmitVisible = ko.computed(function () {
-        return !! self.selected_edition() && !(self.selected_edition() === self.currentEdition);
+        return !! self.selected_edition() && !(self.selected_edition() === self.currentEdition) && self.isEditionSelectable();
+    });
+    self.isSuperuserNoticeVisible = ko.computed(function () {
+        return !(self.selected_edition() === self.currentEdition) && !self.isEditionSelectable() && !! self.selected_edition();
     });
 
     self.init = function () {
