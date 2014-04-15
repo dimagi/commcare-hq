@@ -74,6 +74,7 @@ class GroupMemoizer(object):
         if not self.groups_by_name.has_key(group_name):
             group = Group.by_name(self.domain, group_name)
             if not group:
+                self.groups_by_name[group_name] = None
                 return None
             self.add_group(group)
         return self.groups_by_name[group_name]
