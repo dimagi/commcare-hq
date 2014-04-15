@@ -105,7 +105,7 @@
                     Pay the full balance: $<span data-bind="text: balance"></span>
                     {% endblocktrans %}
                 </label>
-                <label class="radio">
+                <label class="radio" data-bind="visible: showCustomOption">
                     <input type="radio"
                            name="paymentAmount"
                            id="payment-amount-custom"
@@ -123,10 +123,19 @@
                                event: { click: selectPartialPayment }" />
                     </div>
                     <div class="alert alert-error"
-                         data-bind="visible: showAmountError">
+                         data-bind="visible: showAmountRangeError">
                         <i class="icon-warning-sign"></i>
                         {% blocktrans %}
                             Please enter an amount that's between $0.50 and $<span data-bind="text: balance"></span>.
+                        {% endblocktrans %}
+                    </div>
+                    <div class="alert alert-error"
+                         data-bind="visible: showAmountLeftoverError">
+                        <i class="icon-warning-sign"></i>
+                        {% blocktrans %}
+                            You can't enter an amount between $<span data-bind="text: maxPartialAmount"></span>
+                            and $<span data-bind="text: balance"></span> because
+                            the next transfer will be below the minimum amount of $0.50.
                         {% endblocktrans %}
                     </div>
                 </label>

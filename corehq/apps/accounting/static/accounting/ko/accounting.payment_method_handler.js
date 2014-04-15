@@ -87,7 +87,20 @@ var Invoice = function (initData) {
     self.customPaymentAmount = ko.observable(self.balance());
     self.paymentAmountType = ko.observable('full');
 
-    self.isAmountValid = ko.computed(function () {
+    self.isBalanceAtMinimum = ko.computed(function () {
+        try {
+            var balance = parseFloat(self.balance());
+            return balance - 0.5 <= 0.0;
+        } catch (e) {
+            return false;
+        }
+    });
+
+    self.showCustomOption = ko.computed(function () {
+        return ! self.isBalanceAtMinimum();
+    });
+
+    self.isAmountWithinRange = ko.computed(function () {
         try {
             var balance = parseFloat(self.balance()),
                 customAmount = parseFloat(self.customPaymentAmount());
@@ -97,8 +110,27 @@ var Invoice = function (initData) {
         }
     });
 
-    self.showAmountError = ko.computed(function () {
-        return ! self.isAmountValid();
+    self.maxPartialAmount = ko.computed(function () {
+        return self.balance() - 0.5;
+    });
+
+    self.isLeftoverAmountEnough = ko.computed(function () {
+        try {
+            var balance = parseFloat(self.balance()),
+                maxPartial = parseFloat(self.maxPartialAmount()),
+                customAmount = parseFloat(self.customPaymentAmount());
+            return customAmount == balance || customAmount <= maxPartial;
+        } catch (e) {
+            return false;
+        }
+    });
+
+    self.showAmountRangeError = ko.computed(function () {
+        return ! self.isAmountWithinRange();
+    });
+
+    self.showAmountLeftoverError = ko.computed(function () {
+        return ! self.isLeftoverAmountEnough();
     });
 
     self.selectPartialPayment = function () {
@@ -111,9 +143,9 @@ var Invoice = function (initData) {
         self.paginatedList.refreshList(self.paginatedItem);
     };
 
-    self.isValid = function () {
-        return self.isAmountValid();
-    };
+    self.isValid = ko.computed(function () {
+        return self.isLeftoverAmountEnough() && self.isAmountWithinRange();
+    });
 };
 
 Invoice.prototype = Object.create( BaseCostItem.prototype );
