@@ -16,11 +16,8 @@ def add_cases_to_case_group(domain, case_group_id, uploaded_data):
         return response
 
     for row in uploaded_data:
-        try:
-            identifier = row.get('case_identifier')
-            case = get_case_by_identifier(domain, identifier)
-        except AttributeError:
-            case = None
+        identifier = str(row.get('case_identifier'))
+        case = get_case_by_identifier(domain, identifier)
         if not case:
             response['errors'].append(_("Could not find case with identifier '%s'." % identifier))
         elif case.doc_type != 'CommCareCase':
