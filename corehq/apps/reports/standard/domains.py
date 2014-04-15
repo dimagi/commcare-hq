@@ -225,7 +225,7 @@ def es_domain_query(params=None, facets=None, domains=None, start_at=None, size=
                     "match" : {
                         "_all" : {
                             "query" : search_query,
-                            "operator" : "or", }}}}}
+                            "operator" : "and", }}}}}
 
     q["facets"] = {}
     if show_stats:
