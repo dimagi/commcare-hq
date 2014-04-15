@@ -33,9 +33,9 @@ class PaymentHandler(object):
 
 class StripePaymentHandler(PaymentHandler):
 
-    @property
-    @memoized
-    def stripe_customer(self):
+    def get_or_create_stripe_customer(self):
+        """Used for saving credit card info (todo)
+        """
         customer = None
         if self.payment_method.customer_id is not None:
             try:
