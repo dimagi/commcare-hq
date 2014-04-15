@@ -147,7 +147,10 @@ function CommcareSettings(options) {
                     var names = _(condition.settings).map(function (setting) {
                         return setting.name;
                     });
-                    return 'Auto-set by ' + names.join(', ')
+                    uniqueNames = names.filter(function(elem, pos) {
+                        return names.indexOf(elem) == pos;
+                    })
+                    return 'Auto-set by ' + uniqueNames.join(', ')
                 }
             } else {
                 return '';
