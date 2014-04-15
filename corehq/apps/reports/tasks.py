@@ -1,3 +1,4 @@
+from django.utils.translation import ugettext as _
 from datetime import datetime, timedelta
 import os
 from tempfile import NamedTemporaryFile
@@ -207,16 +208,13 @@ def _send_email(to, report, hash_id):
     domain = Site.objects.get_current().domain
     link = "http://%s%s" % (domain, reverse("export_report", args=[report.domain, str(hash_id)]))
 
-    title = "%s: Requested export excel data" % report.name
-    body = "You have requested generating excel export file from '%s' report for selected filters '%s': %s <br><br>" \
-           "If download link is not working, please copy and paste following link in your browse: " \
-           "<br>" \
-           "%s" \
-           "<br>" \
-           "Please remind that link will be active by 24 hours." \
-           % (report.name, report.request.GET, "<a href='%s'>%s</a>" % (link, 'download link'), link)
+    title = "%s: Requested export excel data"
+    body = "The export you requested for the '%s' report is ready.<br>" \
+           "You can download the data at the following link: %s<br><br>" \
+           "Please remember that this link will only be active for 24 hours."
 
-    send_HTML_email(title, to, body, email_from=settings.DEFAULT_FROM_EMAIL)
+    send_HTML_email(_(title) % report.name, to, _(body) % (report.name, "<a href='%s'>%s</a>" % (link, link)),
+                    email_from=settings.DEFAULT_FROM_EMAIL)
 
 def _store_excel_in_redis(file):
     hash_id = uuid.uuid4().hex

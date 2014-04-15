@@ -1022,4 +1022,5 @@ def export_report(request, domain, export_hash):
         )
         return response
     else:
-        return HttpResponseNotFound("Bad request, or response not found.")
+        return HttpResponseNotFound(_("That report was not found. Please remember"
+                                      " that download links expire after 24 hours."))
