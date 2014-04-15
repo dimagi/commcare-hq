@@ -17,6 +17,12 @@ from casexml.apps.case.models import CommCareCase
 from couchforms.models import XFormInstance
 from time import sleep
 from dateutil.parser import parse
+import uuid
+from casexml.apps.case.util import post_case_blocks
+from casexml.apps.case.mock import CaseBlock
+from dimagi.utils.parsing import json_format_datetime
+from casexml.apps.case.xml import V2
+
 
 def time_parser(value):
     return parse(value).time()
@@ -51,6 +57,28 @@ class TouchformsTestCase(LiveServerTestCase):
         user.save_verified_number(self.domain, phone_number, True, None)
         self.users.append(user)
         return user
+
+    def update_case_owner(self, case, owner):
+        case_block = CaseBlock(
+            create=False,
+            case_id=case._id,
+            case_type='participant',
+            owner_id=owner._id,
+            user_id=owner._id,
+            version=V2
+        ).as_xml(format_datetime=json_format_datetime)
+        post_case_blocks([case_block], {'domain': self.domain})
+
+    def add_parent_access(self, user, case):
+        case_block = CaseBlock(
+            create=True,
+            case_id=uuid.uuid4().hex,
+            case_type='magic_map',
+            owner_id=user._id,
+            version=V2,
+            index={'parent': ('participant', case._id)}
+        ).as_xml(format_datetime=json_format_datetime)
+        post_case_blocks([case_block], {'domain': self.domain})
 
     def create_web_user(self, username, password):
         user = WebUser.create(self.domain, username, password)

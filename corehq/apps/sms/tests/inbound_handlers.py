@@ -93,6 +93,7 @@ class KeywordTestCase(TouchformsTestCase):
             initiator_filter=["CommCareCase"])
         self.user1 = self.create_mobile_worker("abcd", "123", "999123")
         self.user2 = self.create_mobile_worker("efgh", "122", "999122")
+        self.user3 = self.create_mobile_worker("xyz", "121", "999121")
         self.group1 = self.create_group("group1", [self.user1, self.user2])
         self.create_sms_keyword("FOR_OWNER", "This message is for the case owner",
             initiator_filter=["CommCareCase"], recipient=RECIPIENT_OWNER)
@@ -125,6 +126,27 @@ class KeywordTestCase(TouchformsTestCase):
         case = self.get_case("pid1234")
         self.assertIsNotNone(case)
         self.assertCasePropertyEquals(case, "arm", "arm_b")
+
+        # now take the case away from the user
+        self.update_case_owner(case, self.user3)
+        case = self.get_case("pid1234")
+
+        # then they should no longer have access
+        incoming("999123", "mod pid1234", "TEST")
+        self.assertLastOutboundSMSEquals(self.user1, get_message(MSG_CASE_NOT_FOUND))
+
+        # now add access back via parent connection
+        self.add_parent_access(self.user1, case)
+        incoming("999123", "mod pid1234", "TEST")
+        self.assertLastOutboundSMSEquals(self.user1, "Enter Study Arm 1:a, 2:b.")
+        incoming("999123", "a", "TEST")
+        form = self.get_last_form_submission()
+        self.assertFormQuestionEquals(form, "arm", "arm_a")
+        case = self.get_case("pid1234")
+        self.assertIsNotNone(case)
+        self.assertCasePropertyEquals(case, "arm", "arm_a")
+
+        form = self.get_last_form_submission()
 
         # Bad external id
         incoming("999123", "mod pid1235", "TEST")
