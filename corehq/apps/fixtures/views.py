@@ -237,7 +237,7 @@ def download_item_lists(request, domain, html_response=False):
         data_types_view = list(data_types_view)[0:1]
     # book-keeping data from view_results for repeated use
     data_types_book = []
-    data_items_boook_by_type = {}
+    data_items_book_by_type = {}
     item_helpers_by_type = {}
     """
         Contains all excel sheets in following format
@@ -291,12 +291,12 @@ def download_item_lists(request, domain, html_response=False):
                     prop_key = get_field_prop_format(index + 1, prop_index + 1)
                     type_field_properties[data_type.tag][prop_key] = property
         # Helpers to generate item-sheets
-        data_items_boook_by_type[data_type.tag] = []
+        data_items_book_by_type[data_type.tag] = []
         max_users = 0
         max_groups = 0
         max_field_prop_combos = {field_name: 0 for field_name in data_type.fields_without_attributes}
         for item_row in FixtureDataItem.by_data_type(domain, data_type.get_id):
-            data_items_boook_by_type[data_type.tag].append(item_row)
+            data_items_book_by_type[data_type.tag].append(item_row)
             group_len = len(item_row.get_groups())
             max_groups = group_len if group_len > max_groups else max_groups
             user_len = len(item_row.get_users())
@@ -371,7 +371,7 @@ def download_item_lists(request, domain, html_response=False):
             common_headers[2 if html_response else 0:] + field_headers + user_headers + group_headers
         )
         excel_sheets[data_type.tag] = item_sheet
-        for item_row in data_items_boook_by_type[data_type.tag]:
+        for item_row in data_items_book_by_type[data_type.tag]:
             common_vals = [str(_id_from_doc(item_row)), "N"]
             user_vals = [user.raw_username for user in item_row.get_users()] + empty_padding_list(max_users - len(item_row.get_users()))
             group_vals = [group.name for group in item_row.get_groups()] + empty_padding_list(max_groups - len(item_row.get_groups()))
