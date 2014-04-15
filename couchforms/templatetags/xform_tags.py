@@ -90,8 +90,10 @@ def render_form(form, domain, options):
     Change to kwargs when we're on a version of Django that does.
     
     """
-    timezone = options.get('timezone', pytz.utc)
-    #display = options.get('display')
+    # don't actually use the passed in timezone since we assume form submissions already come
+    # in in local time.
+    # todo: we should revisit this when we properly handle timezones in form processing.
+    timezone = pytz.utc
     case_id = options.get('case_id')
 
     case_id_attr = "@%s" % const.CASE_TAG_ID
