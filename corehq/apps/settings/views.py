@@ -1,3 +1,4 @@
+from django.views.decorators.debug import sensitive_post_parameters
 from dimagi.utils.couch.resource_conflict import retry_resource
 from django.contrib import messages
 from django.contrib.auth.forms import PasswordChangeForm
@@ -173,6 +174,7 @@ class ChangeMyPasswordView(BaseMyAccountView):
             'form': self.password_change_form,
         }
 
+    @method_decorator(sensitive_post_parameters())
     def post(self, request, *args, **kwargs):
         if self.password_change_form.is_valid():
             self.password_change_form.save()
