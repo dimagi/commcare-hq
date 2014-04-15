@@ -469,6 +469,16 @@ class DailyFormStatsReportES(ElasticProjectInspectionReport, WorkerMonitoringRep
         return ("received_on" if self.by_submission_time
                 else "form.meta.timeStart")
 
+    @property
+    def shared_pagination_GET_params(self):
+        params = [
+            dict(name=ExpandedMobileWorkerFilter.slug, value=ExpandedMobileWorkerFilter.get_value(self.request, self.domain)),
+            dict(name=CompletionOrSubmissionTimeFilter.slug, value=CompletionOrSubmissionTimeFilter.get_value(self.request, self.domain)),
+            dict(name='startdate', value=self.datespan.startdate_display),
+            dict(name='enddate', value=self.datespan.enddate_display),
+        ]
+        return params
+
     def es_user_filter(self):
         matching = ExpandedMobileWorkerFilter.matching_ids(self.request)
         user_ids = matching['user_ids']
