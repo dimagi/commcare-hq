@@ -652,6 +652,8 @@ def add_domain_membership(request, domain, couch_user_id, domain_name):
         user.save()
     return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id)))
 
+
+@sensitive_post_parameters('new_password1', 'new_password2')
 @login_and_domain_required
 def change_password(request, domain, login_id, template="users/partial/reset_password.html"):
     # copied from auth's password_change
