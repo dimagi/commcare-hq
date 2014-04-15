@@ -2,10 +2,12 @@ from django.db import models
 from casexml.apps.case.models import CommCareCase
 from couchforms.models import XFormInstance
 import fluff
+from fluff.filters import ORFilter
 import operator
 from corehq import Domain
 from corehq.apps.commtrack.util import get_commtrack_location_id
 from corehq.apps.users.models import CommCareUser
+from corehq.fluff.calculators import case as ccalc
 from custom.m4change.user_calcs import anc_hmis_report_calcs, ld_hmis_report_calcs, immunization_hmis_report_calcs,\
     all_hmis_report_calcs, project_indicators_report_calcs, mcct_monthly_aggregate_report_calcs, is_valid_user_by_case, \
     form_passes_filter_date_delivery, form_passes_filter_date_modified, case_passes_filter_date_modified, \
@@ -34,11 +36,18 @@ def _get_form_location_id(form):
     return NO_LOCATION_VALUE_STRING
 
 
-class AncHmisCaseFluff(fluff.IndicatorDocument):
+class BaseM4ChangeCaseFluff(fluff.IndicatorDocument):
     document_class = CommCareCase
+    document_filter = ORFilter([
+        ccalc.CasePropertyFilter(type='pregnant_mother'),
+        ccalc.CasePropertyFilter(type='child')
+    ])
     domains = M4CHANGE_DOMAINS
-    group_by = ("domain",)
     save_direct_to_sql = True
+
+
+class AncHmisCaseFluff(BaseM4ChangeCaseFluff):
+    group_by = ("domain",)
 
     location_id = fluff.FlatField(_get_case_location_id)
     attendance = anc_hmis_report_calcs.AncAntenatalAttendanceCalculator()
@@ -61,11 +70,8 @@ class AncHmisCaseFluff(fluff.IndicatorDocument):
 AncHmisCaseFluffPillow = AncHmisCaseFluff.pillow()
 
 
-class LdHmisCaseFluff(fluff.IndicatorDocument):
-    document_class = CommCareCase
-    domains = M4CHANGE_DOMAINS
+class LdHmisCaseFluff(BaseM4ChangeCaseFluff):
     group_by = ("domain",)
-    save_direct_to_sql = True
 
     location_id = fluff.FlatField(_get_case_location_id)
     deliveries = ld_hmis_report_calcs.LdKeyValueDictCalculator(
@@ -199,11 +205,8 @@ class LdHmisCaseFluff(fluff.IndicatorDocument):
 LdHmisCaseFluffPillow = LdHmisCaseFluff.pillow()
 
 
-class ImmunizationHmisCaseFluff(fluff.IndicatorDocument):
-    document_class = CommCareCase
-    domains = M4CHANGE_DOMAINS
+class ImmunizationHmisCaseFluff(BaseM4ChangeCaseFluff):
     group_by = ("domain",)
-    save_direct_to_sql = True
 
     location_id = fluff.FlatField(_get_case_location_id)
     opv_0 = immunization_hmis_report_calcs.PncImmunizationCalculator("opv_0")
@@ -239,14 +242,11 @@ def _get_case_mother_id(case):
         return case._id
 
 
-class ProjectIndicatorsCaseFluff(fluff.IndicatorDocument):
-    document_class = CommCareCase
-    domains = M4CHANGE_DOMAINS
+class ProjectIndicatorsCaseFluff(BaseM4ChangeCaseFluff):
     group_by = (
         "domain",
         fluff.AttributeGetter("mother_id", getter_function=_get_case_mother_id),
     )
-    save_direct_to_sql = True
 
     location_id = fluff.FlatField(_get_case_location_id)
     women_registered_anc = project_indicators_report_calcs.AncRegistrationCalculator()
@@ -298,11 +298,8 @@ class McctMonthlyAggregateFormFluff(fluff.IndicatorDocument):
 McctMonthlyAggregateFormFluffPillow = McctMonthlyAggregateFormFluff.pillow()
 
 
-class AllHmisCaseFluff(fluff.IndicatorDocument):
-    document_class = CommCareCase
-    domains = M4CHANGE_DOMAINS
+class AllHmisCaseFluff(BaseM4ChangeCaseFluff):
     group_by = ("domain",)
-    save_direct_to_sql = True
 
     location_id = fluff.FlatField(_get_case_location_id)
     pregnant_mothers_referred_out = all_hmis_report_calcs.CaseComparisonCalculator(
