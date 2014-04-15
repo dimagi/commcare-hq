@@ -786,8 +786,7 @@ class DailyFormStatsReportSQL(WorkerMonitoringReportTableBase, CompletionOrSubmi
             results = results.filter(user_id=user.get('user_id'))
             values.append('user_id')
         else:
-            users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
-            user_ids = [user.get('user_id') for user in users_data["combined_users"]]
+            user_ids = [user.get('user_id') for user in self.all_users]
             results = results.filter(user_id__in=user_ids)
 
         results = results.extra({'date': "date(%s)" % self.date_field}) \
