@@ -107,6 +107,13 @@ class IndexHoldingMixIn(object):
             return found[0]
         return None
     
+    def get_index_by_ref_id(self, doc_id):
+        found = filter(lambda i: i.referenced_id == doc_id, self.indices)
+        if found:
+            assert(len(found) == 1)
+            return found[0]
+        return None
+
     def update_indices(self, index_update_list):
         for index_update in index_update_list:
             if index_update.referenced_id:
@@ -129,3 +136,8 @@ class IndexHoldingMixIn(object):
                                                           referenced_type=index_update.referenced_type,
                                                           referenced_id=index_update.referenced_id))
 
+    def remove_index_by_ref_id(self, doc_id):
+        index = self.get_index_by_ref_id(doc_id)
+        if not index:
+            raise ValueError('index with id %s not found in doc %s' % (id, self._id))
+        self.indices.remove(index)
