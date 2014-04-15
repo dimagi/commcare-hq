@@ -297,9 +297,9 @@ def download_item_lists(request, domain, html_response=False):
         max_field_prop_combos = {field_name: 0 for field_name in data_type.fields_without_attributes}
         for item_row in FixtureDataItem.by_data_type(domain, data_type.get_id):
             data_items_book_by_type[data_type.tag].append(item_row)
-            group_len = len(item_row.get_groups())
+            group_len = len(item_row.groups)
             max_groups = group_len if group_len > max_groups else max_groups
-            user_len = len(item_row.get_users())
+            user_len = len(item_row.users)
             max_users = user_len if user_len > max_users else max_users
             for field_key in item_row.fields:
                 max_combos = max_field_prop_combos[field_key]
@@ -373,8 +373,8 @@ def download_item_lists(request, domain, html_response=False):
         excel_sheets[data_type.tag] = item_sheet
         for item_row in data_items_book_by_type[data_type.tag]:
             common_vals = [str(_id_from_doc(item_row)), "N"]
-            user_vals = [user.raw_username for user in item_row.get_users()] + empty_padding_list(max_users - len(item_row.get_users()))
-            group_vals = [group.name for group in item_row.get_groups()] + empty_padding_list(max_groups - len(item_row.get_groups()))
+            user_vals = [user.raw_username for user in item_row.users] + empty_padding_list(max_users - len(item_row.users))
+            group_vals = [group.name for group in item_row.groups] + empty_padding_list(max_groups - len(item_row.groups))
             field_vals = []
             for field in data_type.fields:
                 if len(field.properties) == 0:
@@ -803,14 +803,14 @@ def run_upload(request, domain, workbook, replace=False):
                     if di[DELETE_HEADER] == "Y" or di[DELETE_HEADER] == "y":
                         old_data_item.recursive_delete(transaction)
                         continue               
-                except (ResourceNotFound, KeyError) as e:
+                except (ResourceNotFound, KeyError):
                     old_data_item = new_data_item
                 transaction.save(old_data_item)
 
-                old_groups = old_data_item.get_groups()
+                old_groups = old_data_item.groups
                 for group in old_groups:
                     old_data_item.remove_group(group)
-                old_users = old_data_item.get_users()
+                old_users = old_data_item.users
                 for user in old_users:
                     old_data_item.remove_user(user)
 
