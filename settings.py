@@ -894,6 +894,7 @@ COUCHDB_APPS = [
     ('care_sa', 'fluff-care_sa'),
     ('cvsu', 'fluff-cvsu'),
     ('mc', 'fluff-mc'),
+    ('m4change', 'm4change'),
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS

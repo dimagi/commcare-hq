@@ -1,3 +1,6 @@
+from datetime import date
+from couchdbkit import NoResultFound, MultipleResultsFound, ResourceNotFound, QueryMixin
+from couchdbkit.ext.django.schema import StringProperty, DateProperty, DictProperty, Document
 from django.db import models
 from casexml.apps.case.models import CommCareCase
 from couchforms.models import XFormInstance
@@ -370,3 +373,45 @@ class AllHmisCaseFluff(BaseM4ChangeCaseFluff):
     )
 
 AllHmisCaseFluffPillow = AllHmisCaseFluff.pillow()
+
+
+class FixtureReportResult(Document, QueryMixin):
+    domain = StringProperty()
+    location_id = StringProperty()
+    start_date = DateProperty()
+    end_date = DateProperty()
+    report_slug = StringProperty()
+    rows = DictProperty()
+    name = StringProperty()
+
+    class Meta:
+        app_label = "m4change"
+
+    @classmethod
+    def by_composite_key(cls, domain, location_id, start_date, end_date, report_slug):
+        try:
+            return cls.view("m4change/fixture_by_composite_key",
+                             key=[domain, location_id, start_date, end_date, report_slug],
+                             include_docs=True).one(except_all=True)
+        except (NoResultFound, ResourceNotFound, MultipleResultsFound):
+            return None
+
+    @classmethod
+    def by_domain(cls, domain):
+        return cls.view("m4change/fixture_by_composite_key", startkey=[domain], endkey=[domain, {}], include_docs=True).all()
+
+    @classmethod
+    def _validate_params(cls, params):
+        for param in params:
+            if param is None or len(param) == 0:
+                return False
+        return True
+
+    @classmethod
+    def save_result(cls, domain, location_id, start_date, end_date, report_slug, rows, name):
+        if not cls._validate_params([domain, location_id, report_slug]) \
+                or not isinstance(rows, dict) or len(rows) == 0 \
+                or not isinstance(start_date, date) or not isinstance(end_date, date):
+            return
+        FixtureReportResult(domain=domain, location_id=location_id, start_date=start_date, end_date=end_date,
+                            report_slug=report_slug, rows=rows, name=name).save()
