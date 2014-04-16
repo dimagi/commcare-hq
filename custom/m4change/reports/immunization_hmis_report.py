@@ -96,7 +96,7 @@ class ImmunizationHmisReport(MonthYearMixin, CustomProjectReport, CaseListReport
             "opv_3_total": {
                 "hmis_code": 60, "label": _("OPV3"), "value": 0
             },
-            "penta_3": {
+            "penta_3_total": {
                 "hmis_code": 61, "label": _("Penta.3"), "value": 0 
             },
             "dpt_3_total": {
