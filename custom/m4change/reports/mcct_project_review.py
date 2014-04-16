@@ -42,7 +42,7 @@ def _get_report_query(start_date, end_date, filtered_case_ids):
         "query": {
             "bool": {
                 "must": [
-                    {"range": {"form.meta.timeEnd": {"from": start_date, "to": end_date, "include_upper": False}}},
+                    {"range": {"form.meta.timeEnd": {"from": start_date, "to": end_date, "include_upper": True}}},
                     {"term": {"doc_type": "xforminstance"}},
                 ],
                 "should": [
@@ -157,7 +157,7 @@ class BaseReport(CustomProjectReport, ElasticProjectInspectionReport, ProjectRep
                         "modified_on": {
                             "from": start_date,
                             "to": end_date,
-                            "include_upper": False
+                            "include_upper": True
                         }
                     }
                 },
