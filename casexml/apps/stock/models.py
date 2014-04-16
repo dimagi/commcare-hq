@@ -62,6 +62,17 @@ class StockTransaction(models.Model):
             case_id=case_id, product_id=product_id, section_id=section_id).order_by('-report__date', '-pk')
 
 
+class DocDomainMapping(models.Model):
+    """
+    Used to store the relationship between a doc and the
+    domain it belongs to for efficient lookup
+    """
+    doc_id = models.CharField(max_length=100, db_index=True, primary_key=True)
+    doc_type = models.CharField(max_length=100, db_index=True)
+    domain_name = models.CharField(max_length=100)
+
+
+# signal catchers
 @receiver(pre_save, sender=StockTransaction)
 def create_reconciliation_transaction(sender, instance, *args, **kwargs):
     creating = instance.pk is None
@@ -80,13 +91,3 @@ def create_reconciliation_transaction(sender, instance, *args, **kwargs):
                 stock_on_hand=instance.stock_on_hand,
                 subtype=const.TRANSACTION_SUBTYPE_INFERRED,
             )
-
-
-class DocDomainMapping(models.Model):
-    """
-    Used to store the relationship between a doc and the
-    domain it belongs to for efficient lookup
-    """
-    doc_id = models.CharField(max_length=100, db_index=True, primary_key=True)
-    doc_type = models.CharField(max_length=100, db_index=True)
-    domain_name = models.CharField(max_length=100)
