@@ -1,5 +1,6 @@
 import json
 from couchdbkit.exceptions import ResourceNotFound
+from django.contrib.humanize.templatetags.humanize import naturaltime
 from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase, CASE_STATUS_ALL, CASE_STATUS_CLOSED, CASE_STATUS_OPEN
 from corehq.apps.locations.models import Location
@@ -7,12 +8,14 @@ from corehq.apps.app_manager.models import ApplicationBase, Application
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.decorators import inline
 from casexml.apps.phone.caselogic import get_footprint, get_related_cases
-from datetime import datetime
+from datetime import datetime, timedelta
 from corehq.elastic import get_es
 import urllib
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.chunked import chunked
 from django.utils.translation import ugettext as _
+from touchforms.formplayer.models import EntrySession
+from django.conf import settings
 
 def api_closed_to_status(closed_string):
     # legacy api support
@@ -360,3 +363,19 @@ def get_cloudcare_app(domain, app_name):
         return look_up_app_json(domain, app[0]['_id'])
     else:
         raise ResourceNotFound(_("Not found application by name: %s") % app_name)
+
+
+def get_open_form_sessions(user, skip=0, limit=10):
+    def session_to_json(sess):
+        return {
+            'id': sess.session_id,
+            'app_id': sess.app_id,
+            'name': sess.session_name,
+            'display': '{name} ({when})'.format(name=sess.session_name, when=naturaltime(sess.last_activity_date)),
+            'created_date': sess.created_date.strftime('%Y-%m-%dT%H:%M:%S'),
+            'last_activity_date': sess.last_activity_date.strftime('%Y-%m-%dT%H:%M:%S'),
+        }
+    return [session_to_json(sess) for sess in EntrySession.objects.filter(
+        last_activity_date__isnull=False,
+        user=user,
+    ).order_by('-last_activity_date')[skip:limit]]
