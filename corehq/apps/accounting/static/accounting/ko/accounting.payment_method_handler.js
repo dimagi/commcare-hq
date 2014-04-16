@@ -43,7 +43,7 @@ var PaymentMethodHandler = function (errorMessages) {
                     self.stripeCard().reset();
                     self.paymentIsComplete(true);
                 } else {
-                    self.serverErrorMsg(response);
+                    self.serverErrorMsg(response.error.message);
                 }
                 self.stripeCard().isProcessing(false);
             },

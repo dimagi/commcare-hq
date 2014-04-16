@@ -855,12 +855,10 @@ class InvoiceStripePaymentView(DomainAccountingSettings):
         return super(InvoiceStripePaymentView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        # todo handle errors better
         try:
             payment_handler = PaymentHandler.create(self.payment_method,
                                                     self.invoice)
             response = payment_handler.process_request(request)
-            success = True
         except PaymentRequestError as e:
             accounting_logger.error(
                 "[BILLING] Failed to process Stripe Payment due to bad "
@@ -871,12 +869,16 @@ class InvoiceStripePaymentView(DomainAccountingSettings):
                     'error': e,
                 }
             )
-            success = False
-            response = None
-        return json_response({
-            'success': success,
-            'response': response,
-        })
+            response = {
+                'error': {
+                    'message': _(
+                        "There was an issue processing your payment. No "
+                        "charges were made. We're looking into the issue "
+                        "as quickly as possible. Sorry for the inconvenience."
+                    )
+                }
+            }
+        return json_response(response)
 
 
 class BillingStatementPdfView(View):
