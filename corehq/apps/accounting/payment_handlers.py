@@ -104,7 +104,6 @@ class StripePaymentHandler(PaymentHandler):
             self.invoice.save()
         except stripe.error.CardError as e:
             # card was declined
-            print "card was declined"
             return e.json_body
         except (
             stripe.error.AuthenticationError,
