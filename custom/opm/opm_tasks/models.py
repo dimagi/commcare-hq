@@ -45,9 +45,12 @@ class OpmReportSnapshot(Document):
 
     @classmethod
     def from_view(cls, report):
+        block = None
+        if report.block:
+            block = report.block.lower
         snapshot = cls.view(
             'opm_tasks/opm_snapshots',
-            key=[DOMAIN, report.month, report.year, report.__class__.__name__, report.block.lower()],
+            key=[DOMAIN, report.month, report.year, report.__class__.__name__, None],
             reduce=False,
             include_docs=True
         ).first()
