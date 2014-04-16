@@ -683,6 +683,24 @@ class FormBase(DocumentSchema):
     def get_questions(self, langs, **kwargs):
         return XForm(self.source).get_questions(langs, **kwargs)
 
+    def get_case_property_name_formatter(self):
+        """Get a function that formats case property names
+
+        The returned function requires two arguments
+        `(case_property_name, data_path)` and returns a string.
+        """
+        try:
+            valid_paths = dict((question['value'], question['tag'])
+                               for question in self.get_questions(langs=[]))
+        except XFormError as e:
+            # punt on invalid xml (sorry, no rich attachments)
+            valid_paths = {}
+        def format_key(key, path):
+            if valid_paths.get(path) == "upload":
+                return u"{}{}".format(ATTACHMENT_PREFIX, key)
+            return key
+        return format_key
+
     def export_json(self, dump_json=True):
         source = self.to_json()
         del source['unique_id']
@@ -917,16 +935,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
 
     def get_case_updates(self, case_type):
         if self.get_module().case_type == case_type:
-            try:
-                valid_paths = dict((question['value'], question['tag'])
-                                   for question in self.get_questions(langs=[]))
-            except XFormError as e:
-                # punt on invalid xml (sorry, no rich attachments)
-                valid_paths = {}
-            def format_key(key, path):
-                if valid_paths.get(path) == "upload":
-                    return u"{}{}".format(ATTACHMENT_PREFIX, key)
-                return key
+            format_key = self.get_case_property_name_formatter()
             return [format_key(*item)
                     for item in self.actions.update_case.update.items()]
 
@@ -1527,9 +1536,11 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
 
     def get_case_updates(self, case_type):
         updates = set()
+        format_key = self.get_case_property_name_formatter()
         for action in self.actions.get_all_actions():
             if action.case_type == case_type:
-                updates.update(action.case_properties.keys())
+                updates.update(format_key(*item)
+                               for item in action.case_properties.iteritems())
         return updates
 
     @memoized
@@ -1745,7 +1756,8 @@ class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):
 
     def get_case_updates(self, case_type):
         if case_type == self.case_type:
-            return self.case_updates().keys()
+            format_key = self.get_case_property_name_formatter()
+            return [format_key(*item) for item in self.case_updates().iteritems()]
         else:
             return []
 
