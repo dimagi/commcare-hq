@@ -1,9 +1,8 @@
-from django.test import TestCase
-from casexml.apps.stock.consumption import ConsumptionConfiguration, compute_consumption_from_transactions
-from casexml.apps.stock.tests.mock_consumption import mock_consumption as consumption, mock_transaction as _tx, now
+from django.test import SimpleTestCase
+from casexml.apps.stock.tests.mock_consumption import mock_consumption as consumption, mock_transaction as _tx
 
 
-class ConsumptionCalcTest(TestCase):
+class ConsumptionCalcTest(SimpleTestCase):
 
     def test_one_period(self):
         self.assertAlmostEqual(consumption([
