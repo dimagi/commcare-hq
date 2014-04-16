@@ -278,6 +278,7 @@ class BaseReport(MonthYearMixin, SqlTabularReport, CustomProjectReport):
     printable = True
     exportable = True
     export_format_override = "csv"
+    block = ''
 
     @property
     def fields(self):
