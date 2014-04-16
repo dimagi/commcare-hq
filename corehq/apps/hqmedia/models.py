@@ -293,6 +293,10 @@ class CommCareMultimedia(SafeSaveDocument):
         return "icon-desktop"
 
 
+class ImageThumbnailError(Exception):
+    pass
+
+
 class CommCareImage(CommCareMultimedia):
 
     class Config(object):
@@ -320,7 +324,10 @@ class CommCareImage(CommCareMultimedia):
         if image.mode != "RGB":
             image = image.convert("RGB")
         o = StringIO()
-        image.thumbnail(size, Image.ANTIALIAS)
+        try:
+            image.thumbnail(size, Image.ANTIALIAS)
+        except IndexError:
+            raise ImageThumbnailError()
         image.save(o, format="JPEG")
         return o.getvalue()
 
@@ -334,7 +341,7 @@ class CommCareImage(CommCareMultimedia):
     def get_thumbnail_data(cls, data, size):
         try:
             data = cls._get_resized_image(cls.get_image_object(data), size)
-        except (ImportError, IOError):
+        except (ImageThumbnailError, ImportError, IOError):
             data = cls._get_resized_image(cls.get_invalid_image_data(), size)
         return data
 
