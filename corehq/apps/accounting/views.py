@@ -1,4 +1,5 @@
 import json
+import logging
 
 from django.conf import settings
 from django.contrib import messages
@@ -45,6 +46,8 @@ from corehq.apps.accounting.utils import (
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq import privileges, toggles
 from django_prbac.decorators import requires_privilege_raise404
+
+logger = logging.getLogger('accounting')
 
 
 @requires_privilege_raise404(privileges.ACCOUNTING_ADMIN)
@@ -172,9 +175,15 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
             return HttpResponseRedirect(self.page_url)
         elif ('adjust_credit' in self.request.POST
               and self.credit_form.is_valid()):
-            if self.credit_form.adjust_credit():
-                return HttpResponseRedirect(self.page_url)
-
+            try:
+                if self.credit_form.adjust_credit():
+                    return HttpResponseRedirect(self.page_url)
+            except CreditLineError as e:
+                logger.error(
+                    "[BILLING] failed to add credit in admin UI due to: %s"
+                    % e
+                )
+                messages.error(request, "Issue adding credit: %s" % e)
         return self.get(request, *args, **kwargs)
 
 

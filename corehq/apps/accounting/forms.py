@@ -583,21 +583,18 @@ class CreditForm(forms.Form):
     def adjust_credit(self):
         amount = self.cleaned_data['amount']
         note = self.cleaned_data['note']
-
-        if self.cleaned_data['rate_type'] == 'Product':
-            CreditLine.add_product_credit(
-                amount, self.account, self.cleaned_data['product_type'],
-                subscription=self.subscription, note=note,
-            )
-        elif self.cleaned_data['rate_type'] == 'Feature':
-            CreditLine.add_feature_credit(
-                amount, self.account, self.cleaned_data['feature_type'],
-                subscription=self.subscription, note=note,
-            )
-        elif self.subscription is not None:
-            CreditLine.add_subscription_credit(amount, self.subscription, note=note)
-        else:
-            CreditLine.add_account_credit(amount, self.account, note=note)
+        product_type = (self.cleaned_data['product_type']
+                        if self.cleaned_data['rate_type'] == 'Product' else None)
+        feature_type = (self.cleaned_data['feature_type']
+                        if self.cleaned_data['rate_type'] == 'Feature' else None)
+        CreditLine.add_credit(
+            amount,
+            account=self.account,
+            subscription=self.subscription,
+            feature_type=feature_type,
+            product_type=product_type,
+            note=note,
+        )
         return True
 
 
@@ -1567,8 +1564,10 @@ class AdjustBalanceForm(forms.Form):
                                   % adjustment_type)
 
     def adjust_balance(self):
-        CreditLine.add_subscription_credit(
-            -self.amount, self.invoice.subscription,
+        CreditLine.add_credit(
+            -self.amount,
+            account=self.invoice.subscription.account,
+            subscription=self.invoice.subscription,
             note=self.cleaned_data['note'],
             invoice=self.invoice,
             reason=self.cleaned_data['method'],

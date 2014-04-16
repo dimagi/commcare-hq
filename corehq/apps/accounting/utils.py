@@ -1,6 +1,9 @@
 import calendar
 import datetime
+from decimal import Decimal
 from django.conf import settings
+from django.utils.translation import ugettext_lazy as _
+
 from corehq import Domain, privileges
 from corehq.apps.accounting.exceptions import AccountingError
 from dimagi.utils.dates import add_months
@@ -156,3 +159,11 @@ def get_dimagi_from_email_by_product(product):
         'product': product,
         'email': settings.INVOICING_CONTACT_EMAIL,
     })
+
+
+def quantize_accounting_decimal(decimal_value):
+    return decimal_value.quantize(Decimal(10) ** -2)
+
+
+def fmt_dollar_amount(decimal_value):
+    return _("USD %s") % quantize_accounting_decimal(decimal_value)
