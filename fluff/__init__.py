@@ -9,7 +9,10 @@ from dimagi.utils.read_only import ReadOnlyObject
 from fluff import exceptions
 from pillowtop.listener import PythonPillow
 from .signals import indicator_document_updated
-import fluff.sync_couchdb
+try:
+    import fluff.sync_couchdb
+except ImportError:
+    pass
 import fluff.util
 
 
