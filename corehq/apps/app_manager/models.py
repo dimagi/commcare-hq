@@ -36,7 +36,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 
 from corehq.apps.app_manager.commcare_settings import check_condition
 from corehq.apps.app_manager.const import *
-from corehq.apps.app_manager.xpath import dot_interpolate
+from corehq.apps.app_manager.xpath import dot_interpolate, LocationXpath
 from corehq.apps.builds import get_default_build_spec
 from corehq.util.hash_compat import make_password
 from dimagi.utils.couch.cache import cache_core
@@ -69,7 +69,7 @@ from .exceptions import (
     XFormError,
     XFormIdNotUnique,
     XFormValidationError,
-)
+    LocationXpathValidationError)
 
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 
@@ -1151,6 +1151,9 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
         )
 
     def validate_detail_columns(self, columns):
+        from corehq.apps.app_manager.suite_xml import FIELD_TYPE_LOCATION
+        from corehq.apps.locations.util import parent_child
+        hierarchy = None
         for column in columns:
             if column.format in ('enum', 'enum-image'):
                 for item in column.enum:
@@ -1167,6 +1170,17 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
                 except etree.XPathSyntaxError:
                     yield {
                         'type': 'invalid filter xpath',
+                        'module': self.get_module_info(),
+                        'column': column,
+                    }
+            elif column.field_type == FIELD_TYPE_LOCATION:
+                hierarchy = hierarchy or parent_child(self.get_app().domain)
+                try:
+                    LocationXpath('').validate(column.field_property, hierarchy)
+                except LocationXpathValidationError, e:
+                    yield {
+                        'type': 'invalid location xpath',
+                        'details': unicode(e),
                         'module': self.get_module_info(),
                         'column': column,
                     }
