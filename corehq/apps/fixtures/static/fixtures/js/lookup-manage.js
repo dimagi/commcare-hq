@@ -112,7 +112,6 @@ $(function () {
                     $("#editFailure").show();
                     self.cancel();
                     self.saveState('saved');
-                    console.log(data.responseText);
                     },
                 success: function (data) {
                     self.saveState('saved');
@@ -120,6 +119,7 @@ $(function () {
                         self._id(data._id);
                     }
                     self.original_visibility = self.is_global();
+                    self.original_tag = self.tag();
                     var indicesToRemoveAt = [];
                     for (var i = 0; i < self.fields().length; i += 1) {
                         var field = self.fields()[i];
@@ -141,7 +141,7 @@ $(function () {
             var indicesToRemoveAt = [];
             self.tag(self.original_tag);
             self.is_global(self.original_visibility);
-            if (!o._id){ 
+            if (!o._id()) { 
                 app.data_types.remove(self);
                 return;
             }
@@ -242,10 +242,17 @@ $(function () {
                 $.ajax({
                     url: FixtureUrl,
                     dataType: 'json',
-                }).success(function (response) {
-                    $("#downloading").hide();
-                    $("#download-complete").show();
-                    $("#file-download-url").attr("href", FixtureFileDownloadUrl + "download_id=" + response.download_id);
+                    success: function (response) {
+                        $("#downloading").hide();
+                        $("#download-complete").show();
+                        $("#file-download-url").attr("href", FixtureFileDownloadUrl + "download_id=" + response.download_id);
+                    },
+                    error: function (response) {
+                        var error_message = "Sorry, something went wrong with the download. If you see this repeatedly please report an issue."
+                        $("#fixture-download").modal("hide");
+                        $("#FailText").text(error_message);
+                        $("#editFailure").show();
+                    }
                 });
             }
             

@@ -6,11 +6,17 @@ from corehq.apps.smsforms.app import submit_unfinished_form
 from corehq.apps.smsforms.models import XFormsSession
 from corehq.apps.sms.mixin import VerifiedNumber
 from touchforms.formplayer.api import current_question
-from corehq.apps.sms.api import send_sms, send_sms_to_verified_number
+from corehq.apps.sms.api import (
+    send_sms, send_sms_to_verified_number, MessageMetadata
+)
 from corehq.apps.smsforms.app import start_session
 from corehq.apps.sms.util import format_message_list
 from corehq.apps.users.models import CouchUser
-from corehq.apps.sms.models import CallLog, ExpectedCallbackEventLog, CALLBACK_PENDING, CALLBACK_RECEIVED, CALLBACK_MISSED, WORKFLOW_REMINDER, WORKFLOW_KEYWORD, WORKFLOW_BROADCAST, WORKFLOW_CALLBACK
+from corehq.apps.sms.models import (
+    CallLog, ExpectedCallbackEventLog, CALLBACK_PENDING, CALLBACK_RECEIVED,
+    CALLBACK_MISSED, WORKFLOW_REMINDER, WORKFLOW_KEYWORD, WORKFLOW_BROADCAST,
+    WORKFLOW_CALLBACK,
+)
 from django.conf import settings
 from corehq.apps.app_manager.models import Form
 from corehq.apps.ivr.api import initiate_outbound_call
@@ -68,10 +74,10 @@ def get_workflow(handler):
         return WORKFLOW_REMINDER
 
 def fire_sms_event(reminder, handler, recipients, verified_numbers, workflow=None):
-    message_tags = {
-        "workflow" : workflow or get_workflow(handler),
-        "reminder_id" : reminder._id,
-    }
+    metadata = MessageMetadata(
+        workflow=workflow or get_workflow(handler),
+        reminder_id=reminder._id,
+    )
     current_event = reminder.current_event
     if handler.method in [METHOD_SMS, METHOD_SMS_CALLBACK]:
         template_params = {}
@@ -113,7 +119,7 @@ def fire_sms_event(reminder, handler, recipients, verified_numbers, workflow=Non
             
             verified_number = verified_numbers[recipient.get_id]
             if verified_number is not None:
-                result = send_sms_to_verified_number(verified_number, message, **message_tags)
+                result = send_sms_to_verified_number(verified_number, message, metadata)
                 if not result:
                     raise_warning() # Could not send SMS
             elif isinstance(recipient, CouchUser):
@@ -130,7 +136,7 @@ def fire_sms_event(reminder, handler, recipients, verified_numbers, workflow=Non
                     else:
                         raise_warning() # ERROR_NO_OTHER_NUMBERS
                 else:
-                    result = send_sms(reminder.domain, recipient, phone_number, message, **message_tags)
+                    result = send_sms(reminder.domain, recipient, phone_number, message, metadata)
                     if not result:
                         raise_warning() # Could not send SMS
             else:
@@ -198,10 +204,6 @@ def fire_sms_callback_event(reminder, handler, recipients, verified_numbers):
         return False
 
 def fire_sms_survey_event(reminder, handler, recipients, verified_numbers):
-    message_tags = {
-        "workflow" : get_workflow(handler),
-        "reminder_id" : reminder._id,
-    }
     if reminder.callback_try_count > 0:
         # Handle timeouts
         if handler.submit_partial_forms and (reminder.callback_try_count == len(reminder.current_event.callback_timeout_intervals)):
@@ -220,8 +222,13 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers):
                                              key=session.connection_id,
                                              include_docs=True).first()
                     if vn is not None:
+                        metadata = MessageMetadata(
+                            workflow=get_workflow(handler),
+                            reminder_id=reminder._id,
+                            xforms_session_couch_id=session._id,
+                        )
                         resp = current_question(session_id)
-                        send_sms_to_verified_number(vn, resp.event.text_prompt, xforms_session_couch_id=session._id, **message_tags)
+                        send_sms_to_verified_number(vn, resp.event.text_prompt, metadata)
         return True
     else:
         reminder.xforms_session_ids = []
@@ -257,7 +264,7 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers):
                 case_id = reminder.case_id
             session, responses = start_session(reminder.domain, recipient, app, module, form, case_id, case_for_case_submission=handler.force_surveys_to_use_triggered_case)
             session.survey_incentive = handler.survey_incentive
-            session.workflow = message_tags["workflow"]
+            session.workflow = get_workflow(handler)
             session.reminder_id = reminder._id
             session.save()
             reminder.xforms_session_ids.append(session.session_id)
@@ -265,7 +272,12 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers):
             # Send out first message
             if len(responses) > 0:
                 message = format_message_list(responses)
-                result = send_sms_to_verified_number(verified_number, message, xforms_session_couch_id=session._id, **message_tags)
+                metadata = MessageMetadata(
+                    workflow=get_workflow(handler),
+                    reminder_id=reminder._id,
+                    xforms_session_couch_id=session._id,
+                )
+                result = send_sms_to_verified_number(verified_number, message, metadata)
                 if not result:
                     raise_warning() # Could not send SMS
                 

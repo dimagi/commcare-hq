@@ -149,6 +149,9 @@
 
 .metrics-container {
     margin-left: -1.5em;
+    max-width: 30em;
+    max-height: 20em;
+    overflow-y: auto;
 }
 
 .metric-group {

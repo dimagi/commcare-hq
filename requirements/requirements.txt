@@ -2,7 +2,7 @@
 Cython==0.17.4
 restkit==4.2.0
 jsonobject-couchdbkit==0.6.5.5
-jsonobject==0.4.2
+jsonobject==0.4.3
 celery==3.0.24
 decorator==3.3.2
 django==1.5.5
@@ -67,6 +67,7 @@ fakecouch==0.0.5
 twilio==3.6.4
 django-countries==1.5
 reportlab==3.0
+stripe==1.12.2
 
 # required by ctable
 SQLAlchemy==0.8.2

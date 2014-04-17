@@ -37,8 +37,8 @@ function CommcareSettings(options) {
     };
 
     self.parseCondition = function (condition) {
-        var parts = condition ? condition.split('&&') : [],
-            parse_part = /\{([\$\w]+)\.([\w\-]+)\}=('([\w\-]*)'|(true)|(false))/,
+        var parts = condition ? condition.split('||') : [],
+            parse_part = /\{([\$\w]+)\.([\w\-]+)\}=('([\w\-\/]*)'|(true)|(false))/,
             result,
             type,
             setting,
@@ -67,13 +67,29 @@ function CommcareSettings(options) {
         }
         return {
             check: function () {
-                var i, c;
+                var i, c, results = [];
+
                 for (i = 0; i < conditions.length; i += 1) {
                     c = conditions[i];
                     if (c.setting.visibleValue() !== c.value) {
-                        return false;
+                        results.push(false);
+                    } else {
+                        results.push(true);
                     }
                 }
+                function isInArray(array, search) {
+                    return (array.indexOf(search) >= 0) ? true : false;
+                }
+                if (results && results.length > 0) {
+                    if (isInArray(results, true)) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                } else {
+                    return true
+                }
+
                 return true;
             },
             settings: conditions.map(function (p) { return p.setting; })
@@ -131,7 +147,10 @@ function CommcareSettings(options) {
                     var names = _(condition.settings).map(function (setting) {
                         return setting.name;
                     });
-                    return 'Auto-set by ' + names.join(', ')
+                    uniqueNames = names.filter(function(elem, pos) {
+                        return names.indexOf(elem) == pos;
+                    })
+                    return 'Auto-set by ' + uniqueNames.join(', ')
                 }
             } else {
                 return '';

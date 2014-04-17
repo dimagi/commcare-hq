@@ -13,6 +13,7 @@ try:
     from corehq.apps.app_manager.tests.test_views import *
     from corehq.apps.app_manager.tests.test_commcare_settings import *
     from corehq.apps.app_manager.tests.test_brief_view import *
+    from .test_location_xpath import *
     from .test_get_questions import *
     from .test_repeater import *
 except ImportError, e:

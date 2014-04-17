@@ -37,3 +37,10 @@ class SubscriptionReminderError(Exception):
 class SubscriptionRenewalError(Exception):
     pass
 
+
+class PaymentRequestError(Exception):
+    pass
+
+
+class PaymentHandlerError(Exception):
+    pass

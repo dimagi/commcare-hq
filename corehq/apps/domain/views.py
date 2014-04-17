@@ -4,7 +4,7 @@ import logging
 import uuid
 from couchdbkit import ResourceNotFound
 import dateutil
-from django.utils.dates import MONTHS
+from django.core.paginator import Paginator
 from django.views.generic import View
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
@@ -12,9 +12,11 @@ from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.decorators import (
     require_billing_admin, requires_privilege_with_fallback,
 )
+from corehq.apps.accounting.exceptions import PaymentRequestError
+from corehq.apps.accounting.payment_handlers import PaymentHandler
 from corehq.apps.accounting.subscription_changes import DomainDowngradeStatusHandler
 from corehq.apps.accounting.forms import EnterprisePlanContactForm
-from corehq.apps.accounting.utils import get_change_status, get_privileges
+from corehq.apps.accounting.utils import get_change_status, get_privileges, fmt_dollar_amount, quantize_accounting_decimal
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.toggles import NAMESPACE_DOMAIN
 from dimagi.utils.couch.resource_conflict import retry_resource
@@ -32,7 +34,8 @@ from corehq.apps.accounting.models import (
     Subscription, CreditLine, SoftwareProductType,
     DefaultProductPlan, SoftwarePlanEdition, BillingAccount,
     BillingAccountType, BillingAccountAdmin,
-    Invoice, BillingRecord, InvoicePdf
+    Invoice, BillingRecord, InvoicePdf, PaymentMethodType,
+    PaymentMethod,
 )
 from corehq.apps.accounting.usage import FeatureUsageCalculator
 from corehq.apps.accounting.user_text import get_feature_name, PricingTable, DESC_BY_EDITION, PricingTableFeatures
@@ -75,6 +78,8 @@ from django.core.cache import cache
 from toggle.models import Toggle, generate_toggle_id
 from toggle.shortcuts import get_toggle_cache_key
 
+
+accounting_logger = logging.getLogger('accounting')
 
 # Domain not required here - we could be selecting it for the first time. See notes domain.decorators
 # about why we need this custom login_required decorator
@@ -584,7 +589,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
                 'amount': "--",
             }
         return {
-            'amount': _("USD %s") % credit_amount.quantize(Decimal(10) ** -2),
+            'amount': fmt_dollar_amount(credit_amount),
             'is_visible': credit_amount != Decimal('0.0'),
         }
 
@@ -688,12 +693,6 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
     loading_message = ugettext_noop("Loading statements...")
 
     @property
-    def page_context(self):
-        return {
-            'statements': list(self.statements),
-        }
-
-    @property
     def parameters(self):
         return self.request.POST if self.request.method == 'POST' else self.request.GET
 
@@ -708,13 +707,16 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
         invoices = Invoice.objects.filter(subscription__subscriber__domain=self.domain)
         if not self.show_hidden:
             invoices = invoices.filter(is_hidden=False)
-        return invoices.order_by('-date_start', '-date_end').all()
+        return invoices.order_by('-date_start', '-date_end')
 
     @property
     def total(self):
-        return Invoice.objects.filter(
-            subscription__subscriber__domain=self.domain, is_hidden=False
-        ).count()
+        return self.paginated_invoices.count
+
+    @property
+    @memoized
+    def paginated_invoices(self):
+        return Paginator(self.invoices, self.limit)
 
     @property
     def column_names(self):
@@ -723,21 +725,42 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
             _("Plan"),
             _("Start Date"),
             _("End Date"),
-            _("Payment Received"),
+            _("Payment Status"),
             _("PDF"),
         ]
 
     @property
     def page_context(self):
-        return self.pagination_context
+        pagination_context = self.pagination_context
+        pagination_context.update({
+            'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
+            'process_payment_url': reverse(InvoiceStripePaymentView.urlname,
+                                           args=[self.domain]),
+        })
+        return pagination_context
+
+    @property
+    def is_accounting_preview(self):
+        return (toggles.ACCOUNTING_PREVIEW.enabled(self.request.user.username)
+                or toggles.ACCOUNTING_PREVIEW.enabled(self.domain))
 
     @property
     def paginated_list(self):
-        for invoice in self.invoices:
+        for invoice in self.paginated_invoices.page(self.page).object_list:
             try:
                 last_billing_record = BillingRecord.objects.filter(
                     invoice=invoice
                 ).latest('date_created')
+                if invoice.date_paid is not None:
+                    payment_status = (_("Paid on %s.")
+                                      % invoice.date_paid.strftime("%d %B %Y"))
+                else:
+                    payment_status = (
+                        _("%(balance)s due %(date_due)s.") % {
+                            'balance': fmt_dollar_amount(invoice.balance),
+                            'date_due': invoice.date_due.strftime("%d %B %Y"),
+                        }
+                    )
                 yield {
                     'itemData': {
                         'id': invoice.id,
@@ -745,12 +768,14 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                         'start': invoice.date_start.strftime("%d %B %Y"),
                         'end': invoice.date_end.strftime("%d %B %Y"),
                         'plan': invoice.subscription.plan_version.user_facing_description,
-                        'payment_status': (_("YES (%s)") % invoice.date_paid.strftime("%d %B %Y")
-                                           if invoice.date_paid is not None else _("NO")),
+                        'payment_status': payment_status,
                         'pdfUrl': reverse(
                             BillingStatementPdfView.urlname,
                             args=[self.domain, last_billing_record.pdf_data_id]
                         ),
+                        'canMakePayment': (invoice.date_paid is None
+                                           and self.is_accounting_preview),
+                        'balance': "%s" % quantize_accounting_decimal(invoice.balance),
                     },
                     'template': 'statement-row-template',
                 }
@@ -762,6 +787,9 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                         'domain': self.domain,
                     })
 
+    def refresh_item(self, item_id):
+        pass
+
     def post(self, *args, **kwargs):
         return self.paginate_crud_response
 
@@ -769,6 +797,88 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
         if self.account is None:
             raise Http404()
         return super(DomainBillingStatementsView, self).dispatch(request, *args, **kwargs)
+
+
+class InvoiceStripePaymentView(DomainAccountingSettings):
+    urlname = 'domain_invoice_payment'
+    http_method_names = ['post']
+    payment_method_type = PaymentMethodType.STRIPE
+
+    @property
+    @memoized
+    def invoice(self):
+        try:
+            invoice_id = self.request.POST['invoice_id']
+        except IndexError:
+            raise PaymentRequestError("invoice_id is required")
+        try:
+            return Invoice.objects.get(pk=invoice_id)
+        except Invoice.DoesNotExist:
+            raise PaymentRequestError(
+                "Could not find a matching invoice for invoice_id '%s'"
+                % invoice_id
+            )
+
+    @property
+    @memoized
+    def billing_admin(self):
+        try:
+            admin = BillingAccountAdmin.objects.get(
+                web_user=self.request.user.username, domain=self.domain
+            )
+            # verify that this admin is still tied to the account for
+            # the invoice
+            if not self.invoice.subscription.account.billing_admins.filter(
+                    pk=admin.pk).exists():
+                raise PaymentRequestError(
+                    "The billing admin provided is not an account admin for "
+                    "the account this invoice is tied to."
+                )
+            return admin
+        except BillingAccountAdmin.DoesNotExist:
+            raise PaymentRequestError(
+                "Could not find an appropriate billing admin for the "
+                "logged in user."
+            )
+
+    @property
+    @memoized
+    def payment_method(self):
+        return PaymentMethod.objects.get_or_create(
+            account=self.invoice.subscription.account,
+            billing_admin=self.billing_admin,
+            method_type=self.payment_method_type,
+        )[0]
+
+    @method_decorator(toggles.ACCOUNTING_PREVIEW.required_decorator())
+    def dispatch(self, request, *args, **kwargs):
+        return super(InvoiceStripePaymentView, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        try:
+            payment_handler = PaymentHandler.create(self.payment_method,
+                                                    self.invoice)
+            response = payment_handler.process_request(request)
+        except PaymentRequestError as e:
+            accounting_logger.error(
+                "[BILLING] Failed to process Stripe Payment due to bad "
+                "request for domain %(domain)s user %(web_user)s: "
+                "%(error)s" % {
+                    'domain': self.domain,
+                    'web_user': self.request.user.username,
+                    'error': e,
+                }
+            )
+            response = {
+                'error': {
+                    'message': _(
+                        "There was an issue processing your payment. No "
+                        "charges were made. We're looking into the issue "
+                        "as quickly as possible. Sorry for the inconvenience."
+                    )
+                }
+            }
+        return json_response(response)
 
 
 class BillingStatementPdfView(View):
@@ -827,6 +937,17 @@ class SelectPlanView(DomainAccountingSettings):
             return DESC_BY_EDITION[self.edition]['name'].encode('utf-8')
 
     @property
+    def is_non_ops_superuser(self):
+        if not self.request.couch_user.is_superuser:
+            return False
+        try:
+            ensure_request_has_privilege(
+                self.request, privileges.ACCOUNTING_ADMIN)
+            return False
+        except PermissionDenied:
+            return True
+
+    @property
     def parent_pages(self):
         return [
             {
@@ -858,7 +979,8 @@ class SelectPlanView(DomainAccountingSettings):
         return {
             'pricing_table': PricingTable.get_table_by_product(self.product, domain=self.domain),
             'current_edition': (self.current_subscription.plan_version.plan.edition.lower()
-                                if self.current_subscription is not None else "")
+                                if self.current_subscription is not None else ""),
+            'is_non_ops_superuser': self.is_non_ops_superuser,
         }
 
 

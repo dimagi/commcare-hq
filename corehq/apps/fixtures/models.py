@@ -1,15 +1,13 @@
-import warnings 
-
 from xml.etree import ElementTree
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
-from corehq.apps.fixtures.exceptions import FixtureException
+from corehq.apps.fixtures.exceptions import FixtureException, FixtureTypeCheckError
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.fixtures.exceptions import FixtureVersionError
 from couchdbkit.ext.django.schema import Document, DocumentSchema, DictProperty, StringProperty, StringListProperty, SchemaListProperty, IntegerProperty, BooleanProperty
 from corehq.apps.groups.models import Group
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 from dimagi.utils.couch.bulk import CouchTransaction
 from dimagi.utils.couch.database import get_db
+from dimagi.utils.decorators.memoized import memoized
 
 
 class FixtureTypeField(DocumentSchema):
@@ -133,13 +131,13 @@ class FixtureDataItem(Document):
         is_of_new_type = False
         fields_dict = {}        
         for field in obj['fields']:
-            if obj['fields'][field] is not None and not isinstance(obj['fields'][field], basestring):
+            if obj['fields'][field] is not None and not isinstance(obj['fields'][field], basestring) and not isinstance(obj['fields'][field], int):
                 is_of_new_type = True
                 break
             fields_dict[field] = {
                 "field_list": [
                     {
-                        'field_value': obj['fields'][field],
+                        'field_value': obj['fields'][field] if not isinstance(obj['fields'][field], int) else str(obj['fields'][field]),
                         'properties': {}
                     }
                 ]
@@ -243,6 +241,11 @@ class FixtureDataItem(Document):
         else:
             return group_ids
 
+    @property
+    @memoized
+    def groups(self):
+        return self.get_groups()
+
     def get_users(self, wrap=True, include_groups=False):
         user_ids = set(
             get_db().view('fixtures/ownership',
@@ -266,6 +269,11 @@ class FixtureDataItem(Document):
 
     def get_all_users(self, wrap=True):
         return self.get_users(wrap=wrap, include_groups=True)
+
+    @property
+    @memoized
+    def users(self):
+        return self.get_users()
 
     @classmethod
     def by_user(cls, user, wrap=True, domain=None):

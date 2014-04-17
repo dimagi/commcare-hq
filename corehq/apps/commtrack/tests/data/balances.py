@@ -24,7 +24,7 @@ def balance_ota_block(sp, section_id, product_amounts, datestring):
     )
 
 
-def submission_wrap(products, user, sp, sp2, insides):
+def submission_wrap(instance_id, products, user, sp, sp2, insides):
     insides = insides() if callable(insides) else insides
     return ("""<?xml version="1.0" ?>
         <data uiVersion="1" version="33" name="New Form" xmlns="http://commtrack.org/test_form_submission">
@@ -49,7 +49,7 @@ def submission_wrap(products, user, sp, sp2, insides):
         product1=products[1]._id,
         product2=products[2]._id,
         user_id=user._id,
-        instance_id=uuid.uuid4().hex,
+        instance_id=instance_id,
         username=user.username,
         long_date=long_date(),
     )

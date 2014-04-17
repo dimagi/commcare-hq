@@ -58,7 +58,7 @@ def pg_check():
         user_count = User.objects.count()
     except:
         user_count = None
-    return user_count is not None
+    return (user_count is not None, None)
 
 
 def couch_check():
@@ -74,7 +74,7 @@ def couch_check():
         xforms = XFormInstance.view('reports_forms/all_forms', limit=1).all()
     except:
         xforms = None
-    return isinstance(xforms, list)
+    return (isinstance(xforms, list), None)
 
 
 def hb_check():
@@ -89,9 +89,9 @@ def hb_check():
                 if not w['status']:
                     bad_workers.append('* {} celery worker down'.format(hostname))
             if bad_workers:
-                return '\n'.join(bad_workers)
+                return (False, '\n'.join(bad_workers))
             else:
-                hb = True
+                hb = heartbeat.is_alive()
         except:
             hb = False
     else:
@@ -99,28 +99,28 @@ def hb_check():
             hb = heartbeat.is_alive()
         except:
             hb = False
-    return hb
+    return (hb, None)
 
 
 def redis_check():
     try:
         redis = cache.get_cache('redis')
-        return redis.set('serverup_check_key', 'test')
+        result = redis.set('serverup_check_key', 'test')
     except (InvalidCacheBackendError, ValueError):
-        return True  # redis not in use, ignore
+        result = True  # redis not in use, ignore
     except:
-        return False
-
+        result = False
+    return (result, None)
 
 def memcached_check():
     try:
         memcached = cache.get_cache('default')
         uuid_val = uuid.uuid1()
         memcached.set('serverup_check_key', uuid_val)
-        return memcached.get('serverup_check_key') == uuid_val
+        result = memcached.get('serverup_check_key') == uuid_val
     except:
-        return False
-
+        result = False
+    return (result, None)
 
 def server_error(request, template_name='500.html'):
     """
@@ -253,11 +253,11 @@ def server_up(req):
     message = ['Problems with HQ (%s):' % os.uname()[1]]
     for check, check_info in checkers.items():
         if check_info['always_check'] or req.GET.get(check, None) is not None:
-            check_results = check_info['check_func']()
+            check_results, custom_msg = check_info['check_func']()
             if not check_results:
                 failed = True
-                if isinstance(check_results, basestring):
-                    message.append(check_results)
+                if custom_msg:
+                    message.append(custom_msg)
                 else:
                     message.append(check_info['message'])
     if failed:
@@ -374,9 +374,12 @@ def bug_report(req):
     try:
         couch_user = CouchUser.get_by_username(report['username'])
         full_name = couch_user.full_name
+        email = couch_user.get_email()
     except Exception:
         full_name = None
+        email = None
     report['full_name'] = full_name
+    report['email'] = email or report['username']
 
     matching_subscriptions = Subscription.objects.filter(
         is_active=True,
@@ -405,9 +408,9 @@ def bug_report(req):
     cc = filter(None, cc)
 
     if full_name and not any([c in full_name for c in '<>"']):
-        reply_to = u'"{full_name}" <{username}>'.format(**report)
+        reply_to = u'"{full_name}" <{email}>'.format(**report)
     else:
-        reply_to = report['username']
+        reply_to = report['email']
 
     # if the person looks like a commcare user, fogbugz can't reply
     # to their email, so just use the default

@@ -1,7 +1,14 @@
-from corehq import privileges
+"""
+Feature Previews are built on top of toggle, so if you migrate a toggle to
+a feature preview, you shouldn't need to migrate the data, as long as the
+slug is kept intact.
+"""
+from django.utils.translation import ugettext_lazy as _
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
-from toggles import StaticToggle, NAMESPACE_DOMAIN
+
+from . import privileges
+from .toggles import StaticToggle, NAMESPACE_DOMAIN
 
 
 class FeaturePreview(StaticToggle):
@@ -35,22 +42,20 @@ class FeaturePreview(StaticToggle):
         except PermissionDenied:
             return False
 
-DEMO_FEATURE_PREVIEW = FeaturePreview(
-    'demo_preview',
-    'Demo preview',
-    'desciption'
+
+SUBMIT_HISTORY_FILTERS = FeaturePreview(
+    slug='submit_history_filters',
+    label=_("Advanced Submit History Filters"),
+    description=_("Filter the forms in the Submit History report by data in"
+        "the form submissions. Add extra columns to the report that represent"
+        "data in the forms."),
+    # privilege=privileges.
+    # help_link='https://confluence.dimagi.com/display/SPEC/Feature+Preiview+aka+Labs+Specification'
 )
 
-DEMO_FEATURE_PREVIEW1 = FeaturePreview(
-    'demo_preview1',
-    'Demo preview with long description',
-    'Phasellus sollicitudin magna sed velit semper volutpat. Etiam commodo nisl id luctus fringilla. '
-    'Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. '
-    'Morbi varius eu quam vel euismod. Praesent a lacus in mauris cursus sagittis sit amet non ante. '
-    'Praesent ullamcorper elit sed nunc luctus malesuada. Praesent ornare mi sapien, quis pretium dui vehicula ut. '
-    'Duis ac laoreet ligula, vel hendrerit mauris. Nulla at nisl at ligula aliquam pretium et et augue. '
-    'Sed at tincidunt sem, in consequat odio. Proin et quam commodo, ornare quam id, mattis arcu. '
-    'Aenean mattis urna quis enim lobortis porta. Duis.',
-    privilege=privileges.LOOKUP_TABLES,
-    help_link='https://confluence.dimagi.com/display/SPEC/Feature+Preiview+aka+Labs+Specification'
+CALC_XPATHS = FeaturePreview(
+    slug='calc_xpaths',
+    label=_('Custom Calculations in Case List'),
+    description=_("Specify a custom xpath expression to calculate a value"
+        "in the case list or case detail screen."),
 )

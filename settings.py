@@ -763,6 +763,9 @@ BANK_ACCOUNT_NUMBER = ''
 BANK_ROUTING_NUMBER = ''
 BANK_SWIFT_CODE = ''
 
+STRIPE_PUBLIC_KEY = ''
+STRIPE_PRIVATE_KEY = ''
+
 try:
     # try to see if there's an environmental variable set for local_settings
     if os.environ.get('CUSTOMSETTINGS', None) == "demo":
@@ -894,6 +897,7 @@ COUCHDB_APPS = [
     ('care_sa', 'fluff-care_sa'),
     ('cvsu', 'fluff-cvsu'),
     ('mc', 'fluff-mc'),
+    ('m4change', 'm4change'),
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
@@ -938,11 +942,11 @@ DEFAULT_CURRENCY = "USD"
 DEFAULT_CURRENCY_SYMBOL = "$"
 
 SMS_HANDLERS = [
-    'corehq.apps.sms.api.forwarding_handler',
+    'corehq.apps.sms.handlers.forwarding.forwarding_handler',
     'corehq.apps.commtrack.sms.handle',
-    'corehq.apps.sms.api.sms_keyword_handler',
-    'corehq.apps.sms.api.form_session_handler',
-    'corehq.apps.sms.api.fallback_handler',
+    'corehq.apps.sms.handlers.keyword.sms_keyword_handler',
+    'corehq.apps.sms.handlers.form_session.form_session_handler',
+    'corehq.apps.sms.handlers.fallback.fallback_handler',
 ]
 
 SMS_LOADED_BACKENDS = [

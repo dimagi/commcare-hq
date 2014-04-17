@@ -14,7 +14,7 @@
       <bind id="question1" nodeset="/data/question1" type="xsd:string"/>
       <bind id="question2" nodeset="/data/question2" type="xsd:string"/>
       <bind id="question3" nodeset="/data/question3" type="xsd:string"/>
-      <bind id="question4" nodeset="/data/question4" type="xsd:string"/>
+      <bind id="question4" nodeset="/data/question4" type="xsd:string" jr:constraintMsg="jr:itext('question3')"/>
       <itext>
         <translation lang="en">
           <text id="question1">

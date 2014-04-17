@@ -90,3 +90,7 @@ class SuiteValidationError(SuiteError):
 
 class XFormIdNotUnique(AppManagerException, couchdbkit.MultipleResultsFound):
     pass
+
+
+class LocationXpathValidationError(AppManagerException):
+    pass

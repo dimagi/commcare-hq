@@ -433,7 +433,7 @@ class XForm(WrappedNode):
         """
         try:
             itext = self.itext_node
-        except:
+        except Exception:
             return
         node_groups = {}
         translations = {}
@@ -454,6 +454,11 @@ class XForm(WrappedNode):
         for g in node_groups.values():
             duplicate_dict[g].append(g)
 
+        def replace_ref(old_xpath, attrib_name, new):
+            for ref in self.findall(old_xpath):
+                if ref.xml is not None:
+                    ref.attrib[attrib_name] = new
+
         duplicates = [g for g in duplicate_dict.values() if len(g) > 1]
         for d in duplicates:
             d = sorted(d, key=lambda ng: ng.id)
@@ -467,10 +472,11 @@ class XForm(WrappedNode):
                     node = translation.find(itext_ref)
                     translation.remove(node.xml)
 
-                old_ref_xpath = u'.//*[@ref="jr:itext(\'{0}\')"]'.format(group.id)
-                for ref in self.findall(old_ref_xpath):
-                    if ref.xml is not None:
-                        ref.attrib['ref'] = new_ref
+                ref_path = u'.//*[@ref="jr:itext(\'{0}\')"]'.format(group.id)
+                replace_ref(ref_path, 'ref', new_ref)
+
+                constraint_path = u'.//*[@{{jr}}constraintMsg="jr:itext(\'{0}\')"]'.format(group.id)
+                replace_ref(constraint_path, '{jr}constraintMsg', new_ref)
 
     def rename_language(self, old_code, new_code):
         trans_node = self.itext_node.find('{f}translation[@lang="%s"]' % old_code)

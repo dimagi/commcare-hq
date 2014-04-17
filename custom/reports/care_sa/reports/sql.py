@@ -4,6 +4,7 @@ from corehq.apps.reports.filters.fixtures import AsyncDrillableFilter
 from corehq.apps.reports.filters.select import GroupFilter
 from corehq.apps.reports.dont_use.fields import BooleanField
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
+from corehq.apps.reports.util import make_ctable_table_name
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 from corehq.apps.fixtures.models import FixtureDataItem
@@ -37,7 +38,7 @@ class CareReport(SqlTabularReport,
                  DatespanMixin):
     exportable = True
     emailable = True
-    table_name = "care-ihapc-live_CareSAFluff"
+    table_name = make_ctable_table_name("care-ihapc-live_CareSAFluff")
     report_template_path = "care_sa/reports/grouped.html"
 
     fields = [

@@ -76,7 +76,7 @@ class AdminFacetedReport(AdminReport, ElasticTabularReport):
                         "match" : {
                             "_all" : {
                                 "query" : search_query,
-                                "operator" : "or", }}}}}
+                                "operator" : "and", }}}}}
 
         q["facets"] = {}
 
