@@ -40,8 +40,8 @@ class AllHmisReport(MonthYearMixin, CustomProjectReport, CaseListReport, M4Chang
     name = "Facility ALL HMIS Report"
     slug = "facility_all_hmis_report"
     default_rows = 25
-    base_template = "reports/report.html"
-    report_template_path = "reports/report_content.html"
+    base_template = "m4change/report.html"
+    report_template_path = "m4change/report_content.html"
 
     fields = [
         AsyncLocationFilter,
