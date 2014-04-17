@@ -177,6 +177,7 @@ if [ ! "$MINIMAL_INSTALL" ] && ! -f /etc/init.d/couchdb-lucene ]; then
     unzip v0.8.0.zip
     sudo mv couchdb-lucene-0.8.0 /usr/local
     sudo cp /usr/local/couchdb-lucene-0.8.0/src/main/tools/etc/init.d/couchdb-lucene /etc/init.d/
+    sudo chmod 755 /etc/init.d/couchdb-lucene
 fi
 
 if [ -e /usr/local/etc/couchdb/local.ini ] && [[ ! $(grep _fti /usr/local/etc/couchdb/local.ini) ]]; then
