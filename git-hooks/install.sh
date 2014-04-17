@@ -40,7 +40,7 @@ function git-submodule-list() {
 for hook in 'pre-commit' 'post-checkout'
 do
 
-    cp git-hooks/$hook.sh .git/hooks/$hook
+    cp $CP_OPT git-hooks/$hook.sh .git/hooks/$hook
     for submodule in $(git-submodule-list)
     do
         cp $CP_OPT git-hooks/$hook.sh .git/modules/$submodule/hooks/$hook
