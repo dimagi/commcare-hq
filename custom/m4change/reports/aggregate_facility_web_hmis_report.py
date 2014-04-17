@@ -20,6 +20,8 @@ class AggregateFacilityWebHmisReport(MonthYearMixin, CustomProjectReport, CaseLi
     name = "Aggregate Facility Web HMIS Report"
     slug = "aggregate_facility_web_hmis_report"
     default_rows = 25
+    base_template = "reports/report.html"
+    report_template_path = "reports/report_content.html"
 
     fields = [
         AsyncLocationFilter,

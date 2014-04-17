@@ -106,7 +106,6 @@ def calculate_form_data(self, form):
 
 class BaseReport(CustomProjectReport, ElasticProjectInspectionReport, ProjectReport,
                  ProjectReportParametersMixin, MultiFormDrilldownMixin, DatespanMixin):
-
         emailable = False
         exportable = True
         asynchronous = True
@@ -288,6 +287,7 @@ class McctRejectedClientPage(McctClientApprovalPage):
 class McctClientLogPage(McctProjectReview):
     name = 'mCCT client Log Page'
     slug = 'mcct_client_log_page'
+    report_template_path = 'reports/report_content.html'
 
     @property
     def headers(self):

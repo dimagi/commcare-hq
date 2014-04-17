@@ -58,6 +58,8 @@ class McctMonthlyAggregateReport(MonthYearMixin, CustomProjectReport, CaseListRe
     name = "mCCT Monthly Aggregate Report"
     slug = "mcct_monthly_aggregate_report"
     default_rows = 50
+    base_template = "reports/report.html"
+    report_template_path = "reports/report_content.html"
 
     fields = [
         AsyncLocationFilter,

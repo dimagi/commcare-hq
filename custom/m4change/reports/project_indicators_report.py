@@ -17,6 +17,8 @@ class ProjectIndicatorsReport(MonthYearMixin, CustomProjectReport, CaseListRepor
     name = "Project Indicators Report"
     slug = "project_indicators_report"
     default_rows = 25
+    base_template = "reports/report.html"
+    report_template_path = "reports/report_content.html"
 
     fields = [
         AsyncLocationFilter,

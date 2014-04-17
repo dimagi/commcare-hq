@@ -56,14 +56,27 @@
 
 {% block reportcontent %}
     <div id="mcct_project_review_page_management">
-        <div class="row-fluid">
-            <form class="well form-inline" style="margin: 1em; display: none;" data-bind="mcctProjectReviewPage: selected_forms">
+        {{ block.super }}
+    </div>
+{% endblock %}
+
+{% block pretable %}
+    <div id="logo-top" class="row-fluid">
+        <div class="span3">
+            <img src="{% static 'm4change/images/SurePLogo.jpg' %}" alt="sure_p_logo"/>
+        </div>
+        <div class="span6 buttons">
+            {{ block.super }}
+            <form class="well form-inline" style="margin: 1em; display: none;"
+                  data-bind="mcctProjectReviewPage: selected_forms">
                 {% block status_button %}
-                    <button class="btn" data-bind="click: updateStatus.bind(undefined, 'reviewed'), mcctProjectReviewPage: selected_forms">{% trans 'Review' %}</button>
+                    <button class="btn"
+                            data-bind="click: updateStatus.bind(undefined, 'reviewed'), mcctProjectReviewPage: selected_forms">{% trans 'Review' %}</button>
                 {% endblock %}
                 <a class="btn" href="{% url 'corehq.apps.reports.views.default' domain %}">{% trans 'Cancel' %}</a>
-                {%  block reject_button %}
-                    <button id="reject_button" class="btn" data-bind="click: updateStatus.bind(undefined, 'rejected'), mcctProjectReviewPage: selected_forms">{% trans 'Reject' %}</button>
+                {% block reject_button %}
+                    <button id="reject_button" class="btn"
+                            data-bind="click: updateStatus.bind(undefined, 'rejected'), mcctProjectReviewPage: selected_forms">{% trans 'Reject' %}</button>
                     <label for="reject_reason">{% trans 'Reason' %}:</label>
                     <select id="reject_reason" data-bind="value: reject_reason">
                         <option value="phone_number">{% trans 'Incorrect phone number' %}</option>
@@ -73,6 +86,17 @@
                 {% endblock %}
             </form>
         </div>
-        {{ block.super }}
+        <div class="span3">
+            <img src="{% static 'm4change/images/NigeriaCoatofArms.png' %}" alt="nigeria_coat_of_arms"/>
+        </div>
+    </div>
+{% endblock %}
+
+{% block posttable %}
+    <div id="logo-bottom" class="row-fluid">
+        <div class="span12">
+            <img src="{% static 'm4change/images/PathfinderInternationalLogo.jpg' %}"
+                 alt="pathfinder_international_logo"/>
+        </div>
     </div>
 {% endblock %}
