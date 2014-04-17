@@ -162,6 +162,7 @@ if [ ! -f /etc/init.d/couchdb ]; then
     sudo chown -R couchdb:couchdb /usr/local/var/log/couchdb
     sudo chown -R couchdb:couchdb /usr/local/var/lib/couchdb
     sudo chown -R couchdb:couchdb /usr/local/var/run/couchdb
+    sudo chown -R couchdb:couchdb /usr/local/etc/couchdb
 fi
 
 ## Install couchdb-lucene
