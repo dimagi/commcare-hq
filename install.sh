@@ -12,11 +12,11 @@
 
 # Database settings; change these if desired
 
-POSTGRES_DB="foodb"
-POSTGRES_USER="django"
-POSTGRES_PW="django"
+POSTGRES_DB="commcarehq"
+POSTGRES_USER="postgres"
+POSTGRES_PW="postgres"
 
-COUCHDB_DB="foodb"
+COUCHDB_DB="commcarehq"
 
 ## Misc settings
 
