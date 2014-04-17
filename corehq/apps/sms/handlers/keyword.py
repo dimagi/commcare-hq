@@ -388,15 +388,25 @@ def get_case_by_external_id(domain, external_id):
         pass
     return case
 
-def user_can_access_case(user, case):
-    user_is_owner = (case.owner_id == user._id)
+def user_is_owner(user, case):
+    return case.owner_id == user._id
+
+def case_is_shared(user, case):
     groups = user.get_case_sharing_groups()
     group_ids = [group._id for group in groups]
-    case_is_shared = (case.owner_id in group_ids)
-    access_via_subcases = any(
+    return case.owner_id in group_ids
+
+def access_through_subcases(user, case):
+    return any(
         [user_can_access_case(user, subcase) for subcase in case.get_subcases()]
     )
-    return (user_is_owner or case_is_shared or access_via_subcases)
+
+def user_can_access_case(user, case):
+    return (
+        user_is_owner(user, case) or
+        case_is_shared(user, case) or
+        access_through_subcases(user, case)
+    )
 
 def send_keyword_response(vn, message_id):
     metadata = MessageMetadata(
