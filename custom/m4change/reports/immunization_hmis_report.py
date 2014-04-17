@@ -26,6 +26,8 @@ class ImmunizationHmisReport(MonthYearMixin, CustomProjectReport, CaseListReport
     name = "Facility Immunization HMIS Report"
     slug = "facility_immunization_hmis_report"
     default_rows = 25
+    base_template = "m4change/report.html"
+    report_template_path = "m4change/report_content.html"
 
     fields = [
         AsyncLocationFilter,
