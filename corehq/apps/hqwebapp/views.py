@@ -253,7 +253,7 @@ def server_up(req):
     message = ['Problems with HQ (%s):' % os.uname()[1]]
     for check, check_info in checkers.items():
         if check_info['always_check'] or req.GET.get(check, None) is not None:
-            (check_results, custom_msg) = check_info['check_func']()
+            check_results, custom_msg = check_info['check_func']()
             if not check_results:
                 failed = True
                 if custom_msg:
