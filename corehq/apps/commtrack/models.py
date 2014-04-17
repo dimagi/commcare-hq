@@ -1459,6 +1459,12 @@ def stock_state_deleted(sender, instance, *args, **kwargs):
     ).order_by('-report__date')
     if qs:
         update_stock_state(sender, qs[0])
+    else:
+        StockState.objects.filter(
+            section_id=instance.section_id,
+            case_id=instance.case_id,
+            product_id=instance.product_id,
+        ).delete()
 
 
 @receiver(post_save, sender=StockState)
@@ -1486,6 +1492,7 @@ def post_loc_created(sender, loc=None, **kwargs):
 @receiver(xform_archived)
 def remove_data(sender, xform, *args, **kwargs):
     DbStockReport.objects.filter(form_id=xform._id).delete()
+
 
 @receiver(xform_unarchived)
 def reprocess_form(sender, xform, *args, **kwargs):
