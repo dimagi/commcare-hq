@@ -244,6 +244,7 @@ HQ_APPS = (
     'corehq.apps.sofabed',
     'corehq.apps.hqpillow_retry',
     'corehq.couchapps',
+    'corehq.preindex',
     'custom.apps.wisepill',
     'custom.fri',
     'fluff',
