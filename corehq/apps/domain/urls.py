@@ -16,6 +16,8 @@ from corehq.apps.domain.views import (
     SelectedEnterprisePlanView, ConfirmBillingAccountInfoView, ProBonoView,
     EditExistingBillingAccountView, DomainBillingStatementsView,
     BillingStatementPdfView, CommTrackSettingsView, OrgSettingsView,
+    FeaturePreviewsView, ConfirmSubscriptionRenewalView,
+    InvoiceStripePaymentView,
 )
 
 #
@@ -96,7 +98,11 @@ domain_settings = patterns(
     ),
     url(r'^billing/statements/$', DomainBillingStatementsView.as_view(),
         name=DomainBillingStatementsView.urlname),
+    url(r'^billing/make_payment/$', InvoiceStripePaymentView.as_view(),
+        name=InvoiceStripePaymentView.urlname),
     url(r'^subscription/$', DomainSubscriptionView.as_view(), name=DomainSubscriptionView.urlname),
+    url(r'^subscription/renew/$', ConfirmSubscriptionRenewalView.as_view(),
+        name=ConfirmSubscriptionRenewalView.urlname),
     url(r'^billing_information/$', EditExistingBillingAccountView.as_view(), name=EditExistingBillingAccountView.urlname),
     url(r'^deployment/$', EditDeploymentProjectInfoView.as_view(), name=EditDeploymentProjectInfoView.urlname),
     url(r'^forwarding/$', DomainForwardingOptionsView.as_view(), name=DomainForwardingOptionsView.urlname),
@@ -114,4 +120,5 @@ domain_settings = patterns(
     url(r'^internal/info/$', EditInternalDomainInfoView.as_view(), name=EditInternalDomainInfoView.urlname),
     url(r'^internal/calculations/$', EditInternalCalculationsView.as_view(), name=EditInternalCalculationsView.urlname),
     url(r'^internal/calculated_properties/$', 'calculated_properties', name='calculated_properties'),
+    url(r'^previews/$', FeaturePreviewsView.as_view(), name=FeaturePreviewsView.urlname),
 )

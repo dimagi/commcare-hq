@@ -125,7 +125,7 @@ var DetailScreenConfig = (function () {
     "use strict";
     var DetailScreenConfig, Screen, Column, sortRows;
     var word = '[a-zA-Z][\\w_-]*';
-    var field_val_re = RegExp('^('+word+':)?'+word+'(\\/'+word+')*$');
+    var field_val_re = RegExp('^('+word+':)*'+word+'(\\/'+word+')*$');
     var field_format_warning = $('<span/>').addClass('help-inline')
         .text("Must begin with a letter and contain only letters, numbers, '-', and '_'");
 
@@ -164,7 +164,7 @@ var DetailScreenConfig = (function () {
             this.includeInLong = uiElement.checkbox().val(orDefault(this.original.includeInLong, true));
 
             this.model = uiElement.select([
-                {label: "Case", value: "case"},
+                {label: "Case", value: "case"}
             ]).val(this.original.model);
             this.field = uiElement.input().val(this.original.field);
             this.format_warning = field_format_warning.clone().hide();
@@ -218,7 +218,7 @@ var DetailScreenConfig = (function () {
                 {label: DetailScreenConfig.message.TIME_AGO_INTERVAL.DAYS, value: DetailScreenConfig.TIME_AGO.day},
                 {label: DetailScreenConfig.message.TIME_AGO_INTERVAL.DAYS_UNTIL, value: -DetailScreenConfig.TIME_AGO.day},
                 {label: DetailScreenConfig.message.TIME_AGO_INTERVAL.WEEKS_UNTIL, value: -DetailScreenConfig.TIME_AGO.week},
-                {label: DetailScreenConfig.message.TIME_AGO_INTERVAL.MONTHS_UNTIL, value: -DetailScreenConfig.TIME_AGO.month},
+                {label: DetailScreenConfig.message.TIME_AGO_INTERVAL.MONTHS_UNTIL, value: -DetailScreenConfig.TIME_AGO.month}
             ]).val(this.original.time_ago_interval.toString());
             this.time_ago_extra.ui.prepend($('<div/>').text(DetailScreenConfig.message.TIME_AGO_EXTRA_LABEL));
 

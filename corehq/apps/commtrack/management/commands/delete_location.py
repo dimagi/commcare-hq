@@ -1,5 +1,6 @@
 from optparse import make_option
 from django.core.management.base import BaseCommand
+from casexml.apps.case.models import CommCareCase
 from corehq.apps.locations.models import Location
 from dimagi.utils.couch.database import get_db
 
@@ -94,6 +95,17 @@ class Command(BaseCommand):
             )
             if not self.dryrun:
                 self.db.delete_doc(id)
+
+            # if it's a case we also have to remove any index references to this
+            # important for the user ownership case
+            if _get('doc_type') == 'CommCareCase':
+                casedoc = CommCareCase.wrap(doc)
+                for related_case in casedoc.get_subcases():
+                    related_case.remove_index_by_ref_id(doc['_id'])
+                    print 'removing index from case %s (%s)' % (related_case._id, related_case.name)
+                    if not self.dryrun:
+                        related_case.save()
+
             return True
         else:
             self.stderr.write('sanity check failed (%s)!\n' % id)

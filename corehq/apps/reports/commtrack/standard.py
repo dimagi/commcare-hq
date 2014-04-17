@@ -296,7 +296,9 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
         return DataTablesHeader(*(DataTablesColumn(text) for text in [
                     _('Location'),
                     _('# Sites'),
+                    _('# Reporting'),
                     _('Reporting'),
+                    _('# Non-reporting'),
                     _('Non-reporting'),
                 ]))
 
@@ -341,14 +343,24 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
 
         locs = sorted(Location.view('_all_docs', keys=status_counts.keys(), include_docs=True),
                       key=lambda loc: loc.name)
+
         def fmt(pct):
             return '%.1f%%' % (100. * pct)
-        def fmt_col(loc, col_type):
+
+        def fmt_pct_col(loc, col_type):
             return fmt(status_counts[loc._id].get(col_type, {'pct': 0.})['pct'])
+
+        def fmt_count_col(loc, col_type):
+            return status_counts[loc._id].get(col_type, {'count': 0})['count']
+
         def _rows():
             for loc in locs:
-                num_sites = len(sites_by_agg_site[loc._id])
-                yield [loc.name, len(sites_by_agg_site[loc._id])] + [fmt_col(loc, k) for k in ('reporting', 'nonreporting')]
+                row = [loc.name, len(sites_by_agg_site[loc._id])]
+                for k in ('reporting', 'nonreporting'):
+                    row.append(fmt_count_col(loc, k))
+                    row.append(fmt_pct_col(loc, k))
+
+                yield row
 
         return master_tally, _rows()
 

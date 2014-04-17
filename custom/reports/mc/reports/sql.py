@@ -1,4 +1,5 @@
 from collections import defaultdict
+from corehq.apps.reports.util import make_ctable_table_name
 from dimagi.utils.decorators.memoized import memoized
 from sqlagg.columns import *
 from django.utils.translation import ugettext as _, ugettext_noop
@@ -220,7 +221,7 @@ class FormPropertySection(Section):
 
 class McSqlData(SqlData):
 
-    table_name = "mc-inscale_MalariaConsortiumFluff"
+    table_name = make_ctable_table_name("mc-inscale_MalariaConsortiumFluff")
 
     def __init__(self, sections, format_class, domain, datespan, fixture_type, fixture_item):
         self.format_class = format_class
@@ -255,7 +256,7 @@ class McSqlData(SqlData):
                 }.get(tag) or tag
 
             if self.fixture_type and self.fixture_item:
-                return user.user_data.get(_tag_to_user_data(self.fixture_type.tag), None) == self.fixture_item.fields.get('name')
+                return user.user_data.get(_tag_to_user_data(self.fixture_type.tag), None) == self.fixture_item.fields_without_attributes.get('name')
             else:
                 return True
 

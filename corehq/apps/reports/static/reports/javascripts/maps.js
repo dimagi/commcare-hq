@@ -416,7 +416,7 @@ function initTable(data, config) {
     $.each(data.features, function(i, e) {
         var ctx = infoContext(e, config, 'table');
         e.$tr = row($('#tabular'), false, ctx.info, function($cell, e) {
-            $cell.text(e.value);
+            $cell.html(e.value);
             var $sortkey = $('<span>');
             $sortkey.attr('title', e.raw);
             $cell.append($sortkey);
@@ -517,6 +517,9 @@ function initMetrics(map, table, data, config) {
         autoConfiguration(config, data);
     }
 
+    if (config.metrics) {
+        config.metrics = ([]).concat([{title: 'Auto', group: true, children: config.metrics}]);
+    }
     // set sensible defaults for metric parameters (if omitted)
     forEachMetric(config.metrics, function(metric) {
         setMetricDefaults(metric, data, config);

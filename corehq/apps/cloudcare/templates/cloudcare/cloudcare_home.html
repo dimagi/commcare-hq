@@ -46,19 +46,23 @@
         var appUrlRoot = "{% url "cloudcare_get_apps" domain %}";
         var caseUrlRoot = "{% url "cloudcare_get_cases" domain %}";
         var submitUrlRoot = "{% url "receiver_post" domain %}";
+        var sessionUrlRoot = "{% url "cloudcare_get_sessions" domain %}";
         var language = "{{ language }}";
         var apps = {{ apps|JSON }};
         var initialApp = {{ app|JSON }};
         var initialCase = {{ case|JSON }};
+        var sessionsEnabled = {{ sessions_enabled|JSON }};
         window.mainView = new cloudCare.AppMainView({
-			apps: apps,
-			language: language,
-			urlRoot: urlRoot,
-			appUrlRoot: appUrlRoot,
-			caseUrlRoot: caseUrlRoot,
-			submitUrlRoot: submitUrlRoot,
-			initialApp: initialApp,
-			initialCase: initialCase
+            apps: apps,
+            language: language,
+            urlRoot: urlRoot,
+            appUrlRoot: appUrlRoot,
+            caseUrlRoot: caseUrlRoot,
+            sessionUrlRoot: sessionUrlRoot,
+            submitUrlRoot: submitUrlRoot,
+            initialApp: initialApp,
+            initialCase: initialCase,
+            sessionsEnabled: sessionsEnabled
         });
         // TODO: when we figure out what to do about get params, use this
         Backbone.history.start({pushState: true, root: urlRoot});
@@ -81,7 +85,7 @@
         $(function() {
            window.onbeforeunload = function() {
                if (window.mainView.router.view.dirty) {
-                   return "You have unsaved changes. To stay on the page, press cancel. To discard changes and leave the page, press OK";
+                   return "You have not submitted this form. Click 'Cancel' to continue working on this form. If you click 'OK' you can resume work on this form later.";
                }
            }
         }())
@@ -89,11 +93,16 @@
 {% endblock %}
 
 {% block sidebar %}
+{% if sessions_enabled %}
+    <div id="save-indicator" class="alert" style="display: none;"></div>
+{% endif %}
     <section id="app-main" >
         <nav id="app-list" ></nav>
         <nav id="module-list" ></nav>
         <nav id="form-list" ></nav>
-
+{% if sessions_enabled %}
+        <nav id="sessions"></nav>
+{% endif %}
         <!-- keep this well-hidden for now -->
         <nav id="debug-opts" style="display: none;">
           <ul class="nav nav-list">
@@ -108,20 +117,15 @@
 {% endblock %}
 
 {% block main_column %}
-	{% if preview %}
-        <div class="alert fade in alert-block alert-full alert-info">
-            <a class="close" data-dismiss="alert" href="#">&times;</a>
-            {% trans "CloudCare submits REAL DATA that will create cases and show up in reports!" %}
-        </div>
-    {% endif %}
     {% if request.couch_user.is_web_user %}
-        <div class="alert fade in alert-block alert-full alert-info">
+        <div class="alert fade in alert-block alert-full alert-warning ">
             <a class="close" data-dismiss="alert" href="#">&times;</a>
                 {% blocktrans %}
-                    You are using CloudCare as a Web User! Any data you submit
-                    might confuse your reports, and not everything may work
-                    properly. For the best experience please logout and
-                    login as a Mobile Worker.
+                    You are using CloudCare as a Web User!
+                    Any data you submit will show up in reports as submitted by "Unknown User".
+                    Features that rely on mobile workers, like case sharing and lookup tables, will not work properly.
+                    For the best experience please logout and login as a Mobile Worker.
+                    More information on CloudCare can be found at the <a href="https://help.commcarehq.org/display/commcarepublic/CloudCare+-+Web+Data+Entry">CommCare Help Site</a>.
                 {% endblocktrans %}
         </div>
     {% endif %}
@@ -149,8 +153,7 @@
             <img width="32" height="32" alt="Loading" src="{% static 'formplayer/img/loading_transparent.gif' %}" />
             {% trans "Loading" %}...
         </div>
-        <section id="cases">
-        </section>
+        <section id="cases"></section>
         <section id="webforms" style="min-width: 800px;"></section>
     </div>
 {% endblock %}

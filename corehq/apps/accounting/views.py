@@ -1,4 +1,5 @@
 import json
+import logging
 
 from django.conf import settings
 from django.contrib import messages
@@ -19,6 +20,7 @@ from corehq.apps.accounting.forms import (
     PlanInformationForm, SoftwarePlanVersionForm, FeatureRateForm,
     ProductRateForm, TriggerInvoiceForm, InvoiceInfoForm, AdjustBalanceForm,
     ResendEmailForm, ChangeSubscriptionForm, TriggerBookkeeperEmailForm,
+    TestReminderEmailFrom,
 )
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError, InvoiceError, CreditLineError
@@ -44,6 +46,8 @@ from corehq.apps.accounting.utils import (
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq import privileges, toggles
 from django_prbac.decorators import requires_privilege_raise404
+
+logger = logging.getLogger('accounting')
 
 
 @requires_privilege_raise404(privileges.ACCOUNTING_ADMIN)
@@ -171,9 +175,15 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
             return HttpResponseRedirect(self.page_url)
         elif ('adjust_credit' in self.request.POST
               and self.credit_form.is_valid()):
-            if self.credit_form.adjust_credit():
-                return HttpResponseRedirect(self.page_url)
-
+            try:
+                if self.credit_form.adjust_credit():
+                    return HttpResponseRedirect(self.page_url)
+            except CreditLineError as e:
+                logger.error(
+                    "[BILLING] failed to add credit in admin UI due to: %s"
+                    % e
+                )
+                messages.error(request, "Issue adding credit: %s" % e)
         return self.get(request, *args, **kwargs)
 
 
@@ -508,7 +518,7 @@ class TriggerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
         return self.get(request, *args, **kwargs)
 
 
-class TriggerBookkeeperEmailView(AccountingSectionView, AsyncHandlerMixin):
+class TriggerBookkeeperEmailView(AccountingSectionView):
     urlname = 'accounting_trigger_bookkeeper_email'
     page_title = "Trigger Bookkeeper Email"
     template_name = 'accounting/trigger_bookkeeper.html'
@@ -535,11 +545,43 @@ class TriggerBookkeeperEmailView(AccountingSectionView, AsyncHandlerMixin):
         }
 
     def post(self, request, *args, **kwargs):
-        if self.async_response is not None:
-            return self.async_response
         if self.trigger_email_form.is_valid():
             self.trigger_email_form.trigger_email()
             messages.success(request, "Sent the Bookkeeper email!")
+            return HttpResponseRedirect(reverse(self.urlname))
+        return self.get(request, *args, **kwargs)
+
+
+class TestRenewalEmailView(AccountingSectionView):
+    urlname = 'accocunting_test_renewal_email'
+    page_title = "Test Renewal Reminder Email"
+    template_name = 'accounting/test_reminder_emails.html'
+
+    @method_decorator(toggles.INVOICE_TRIGGER.required_decorator())
+    def dispatch(self, request, *args, **kwargs):
+        return super(TestRenewalEmailView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    @memoized
+    def reminder_email_form(self):
+        if self.request.method == 'POST':
+            return TestReminderEmailFrom(self.request.POST)
+        return TestReminderEmailFrom()
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname)
+
+    @property
+    def page_context(self):
+        return {
+            'reminder_email_form': self.reminder_email_form,
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.reminder_email_form.is_valid():
+            self.reminder_email_form.send_emails()
+            messages.success(request, "Sent the Reminder emails!")
             return HttpResponseRedirect(reverse(self.urlname))
         return self.get(request, *args, **kwargs)
 

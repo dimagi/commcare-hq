@@ -21,6 +21,7 @@ from corehq.apps.sms.api import (
     send_sms_with_backend_name,
     send_sms_to_verified_number,
     DomainScopeValidationError,
+    MessageMetadata,
 )
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
@@ -357,12 +358,15 @@ def api_send_sms(request, domain):
         else:
             chat_user_id = None
 
+        metadata = MessageMetadata(
+            chat_user_id=chat_user_id
+        )
         if backend_id is not None:
-            success = send_sms_with_backend_name(domain, phone_number, text, backend_id, chat_user_id=chat_user_id)
+            success = send_sms_with_backend_name(domain, phone_number, text, backend_id, metadata)
         elif vn is not None:
-            success = send_sms_to_verified_number(vn, text, chat_user_id=chat_user_id)
+            success = send_sms_to_verified_number(vn, text, metadata)
         else:
-            success = send_sms(domain, None, phone_number, text, chat_user_id=chat_user_id)
+            success = send_sms(domain, None, phone_number, text, metadata)
 
         if success:
             return HttpResponse("OK")

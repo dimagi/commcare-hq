@@ -1,4 +1,5 @@
-from django.test import TestCase
+# coding=utf-8
+from unittest2.case import TestCase
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.xform import XForm, XFormError
 

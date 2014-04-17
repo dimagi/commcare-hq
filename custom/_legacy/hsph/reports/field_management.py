@@ -45,7 +45,7 @@ def get_user_site_map(domain):
     fixtures = FixtureDataItem.by_data_type(domain, data_type.get_id)
     for fixture in fixtures:
         for user in fixture.get_users():
-            user_site_map[user._id].append(fixture.fields['site_id'])
+            user_site_map[user._id].append(fixture.fields_without_attributes['site_id'])
     return user_site_map
 
 

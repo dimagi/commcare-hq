@@ -15,12 +15,14 @@ class OpmReportSnapshot(Document):
     headers = StringListProperty()
     slugs = StringListProperty()
     rows = ListProperty()
+    block = StringProperty()
+    visible_cols = ListProperty()
 
     @classmethod
-    def by_month(cls, month, year, report_class):
+    def by_month(cls, month, year, report_class, block=None):
         return cls.view(
             'opm_tasks/opm_snapshots',
-            key=[DOMAIN, month, year, report_class],
+            key=[DOMAIN, month, year, report_class, block],
             reduce=False,
             include_docs=True
         ).first()
@@ -43,9 +45,12 @@ class OpmReportSnapshot(Document):
 
     @classmethod
     def from_view(cls, report):
+        block = None
+        if report.block:
+            block = report.block.lower()
         snapshot = cls.view(
             'opm_tasks/opm_snapshots',
-            key=[DOMAIN, report.month, report.year, report.__class__.__name__],
+            key=[DOMAIN, report.month, report.year, report.__class__.__name__, block],
             reduce=False,
             include_docs=True
         ).first()

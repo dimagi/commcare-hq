@@ -219,6 +219,20 @@ class RepeatRecord(Document, LockableMixIn):
 
     payload_id = StringProperty()
 
+    @classmethod
+    def wrap(cls, data):
+        for attr in ('last_checked', 'next_check'):
+            value = data.get(attr)
+            if not value:
+                continue
+            try:
+                dt = datetime.strptime(value, '%Y-%m-%dT%H:%M:%SZ')
+                data[attr] = dt.isoformat() + '.000000Z'
+                print data[attr]
+            except ValueError:
+                pass
+        return super(RepeatRecord, cls).wrap(data)
+
     @property
     @memoized
     def repeater(self):

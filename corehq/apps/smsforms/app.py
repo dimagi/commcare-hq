@@ -47,7 +47,10 @@ def start_session(domain, contact, app, module, form, case_id=None, yield_respon
             "include_children" : "True" if case_for_case_submission else "False",
         }
     else:
-        session_data["additional_filters"] = { "user_id": contact.get_id }
+        session_data["additional_filters"] = {
+            "user_id": contact.get_id,
+            "footprint": "True"
+        }
     
     language = contact.get_language_code()
     config = XFormsConfig(form_content=form.render_xform(),

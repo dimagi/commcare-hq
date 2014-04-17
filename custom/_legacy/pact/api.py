@@ -337,34 +337,26 @@ class PactAPI(DomainAPI):
             response = HttpResponse(payload, content_type="application/json")
             return response
         elif self.method == 'providers':
-            provider_type = FixtureDataType.by_domain_tag(PACT_DOMAIN, PACT_PROVIDER_FIXTURE_TAG).first()
-            fixture_type = provider_type._id
-
-
             providers = get_all_providers()
-
-            #providers = sorted(providers, key=lambda x: (x.fields['facility_name'], x.fields['last_name']))
-            providers = sorted(providers, key=lambda x: x.fields['last_name'])
-            providers_by_id = dict((x.fields['id'], x.fields) for x in providers)
-
+            providers = sorted(providers, key=lambda x: x.fields_without_attributes['last_name'])
+            providers_by_id = dict(
+                (x.fields_without_attributes['id'], x.fields_without_attributes)
+                for x in providers
+            )
             case_providers = [providers_by_id.get(x, None) for x in case.get_provider_ids()]
-
             facilities = set()
-
             for prov in providers:
-                facility = prov.fields['facility_name']
+                facility = prov.fields_without_attributes['facility_name']
                 if facility is None:
                     facility = 'N/A'
                 facilities.add(facility)
-            ret = {'facilities': ['All Facilities'] + sorted(list(facilities)),
-                   "providers": [x['fields'] for x in providers],
-                   "case_providers": case_providers,
-                    }
+            ret = {
+                'facilities': ['All Facilities'] + sorted(list(facilities)),
+                "providers": [x.fields_without_attributes for x in providers],
+                "case_providers": case_providers,
+            }
             resp = HttpResponse(simplejson.dumps(ret), content_type='application/json')
             return resp
-
-
-
         else:
             return HttpResponse("API Method unknown", status=400)
 

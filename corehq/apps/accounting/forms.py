@@ -22,6 +22,7 @@ from crispy_forms import layout as crispy
 from django_countries.countries import COUNTRIES
 from corehq import privileges, toggles
 from corehq.apps.accounting.invoicing import DomainInvoiceFactory
+from corehq.apps.accounting.tasks import send_subscription_reminder_emails
 
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.email import send_HTML_email
@@ -582,21 +583,18 @@ class CreditForm(forms.Form):
     def adjust_credit(self):
         amount = self.cleaned_data['amount']
         note = self.cleaned_data['note']
-
-        if self.cleaned_data['rate_type'] == 'Product':
-            CreditLine.add_product_credit(
-                amount, self.account, self.cleaned_data['product_type'],
-                subscription=self.subscription, note=note,
-            )
-        elif self.cleaned_data['rate_type'] == 'Feature':
-            CreditLine.add_feature_credit(
-                amount, self.account, self.cleaned_data['feature_type'],
-                subscription=self.subscription, note=note,
-            )
-        elif self.subscription is not None:
-            CreditLine.add_subscription_credit(amount, self.subscription, note=note)
-        else:
-            CreditLine.add_account_credit(amount, self.account, note=note)
+        product_type = (self.cleaned_data['product_type']
+                        if self.cleaned_data['rate_type'] == 'Product' else None)
+        feature_type = (self.cleaned_data['feature_type']
+                        if self.cleaned_data['rate_type'] == 'Feature' else None)
+        CreditLine.add_credit(
+            amount,
+            account=self.account,
+            subscription=self.subscription,
+            feature_type=feature_type,
+            product_type=product_type,
+            note=note,
+        )
         return True
 
 
@@ -1056,6 +1054,15 @@ class SoftwarePlanVersionForm(forms.Form):
                 rate_instances.append(self._retrieve_feature_rate(rate_form))
         if errors:
             self._errors.setdefault('feature_rates', errors)
+
+        required_types = dict(FeatureType.CHOICES).keys()
+        feature_types = [r.feature.feature_type for r in rate_instances]
+        if any([feature_types.count(t) != 1 for t in required_types]):
+            raise ValidationError(
+                "You must specify exactly one rate per feature type "
+                "(SMS, USER, etc.)"
+            )
+
         self.new_feature_rates = rate_instances
         rate_ids = lambda x: set([r.id for r in x])
         if (not self.is_update
@@ -1069,6 +1076,8 @@ class SoftwarePlanVersionForm(forms.Form):
         rates = json.loads(original_data)
         rate_instances = []
         errors = ErrorList()
+        if not rates:
+            raise ValidationError("You must specify at least one product rate.")
         for rate_data in rates:
             rate_form = ProductRateForm(rate_data)
             if not rate_form.is_valid():
@@ -1077,6 +1086,15 @@ class SoftwarePlanVersionForm(forms.Form):
                 rate_instances.append(self._retrieve_product_rate(rate_form))
         if errors:
             self._errors.setdefault('product_rates', errors)
+
+        available_types = dict(SoftwareProductType.CHOICES).keys()
+        product_types = [r.product.product_type for r in rate_instances]
+        if any([product_types.count(p) > 1 for p in available_types]):
+            raise ValidationError(
+                "You may have at most ONE rate per product type "
+                "(CommCare, CommTrack, etc.)"
+            )
+        
         self.new_product_rates = rate_instances
         rate_ids = lambda x: set([r.id for r in x])
         if (not self.is_update
@@ -1414,6 +1432,47 @@ class TriggerBookkeeperEmailForm(forms.Form):
         )
 
 
+class TestReminderEmailFrom(forms.Form):
+    days = forms.ChoiceField(
+        label="Days Until Subscription Ends",
+        choices=(
+            (1, 1),
+            (10, 10),
+            (30, 30),
+        )
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(TestReminderEmailFrom, self).__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.form_class = 'form form-horizontal'
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                "Test Subscription Reminder Emails",
+                'days',
+            ),
+            crispy.Div(
+                crispy.HTML(
+                    "Note that this will ONLY send emails to a billing admin "
+                    "for a domain IF the billing admin is an Accounting "
+                    "Previewer."
+                ),
+                css_class="alert alert-info"
+            ),
+            FormActions(
+                StrictButton(
+                    "Send Reminder Emails",
+                    type="submit",
+                    css_class='btn-primary'
+                )
+            )
+        )
+
+    def send_emails(self):
+        send_subscription_reminder_emails(int(self.cleaned_data['days']))
+
+
 class AdjustBalanceForm(forms.Form):
     adjustment_type = forms.ChoiceField(
         widget=forms.RadioSelect,
@@ -1505,8 +1564,10 @@ class AdjustBalanceForm(forms.Form):
                                   % adjustment_type)
 
     def adjust_balance(self):
-        CreditLine.add_subscription_credit(
-            -self.amount, self.invoice.subscription,
+        CreditLine.add_credit(
+            -self.amount,
+            account=self.invoice.subscription.account,
+            subscription=self.invoice.subscription,
             note=self.cleaned_data['note'],
             invoice=self.invoice,
             reason=self.cleaned_data['method'],

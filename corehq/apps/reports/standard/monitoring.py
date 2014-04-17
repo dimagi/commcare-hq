@@ -1191,7 +1191,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
     @property
     @memoized
     def case_types_filter(self):
-        case_types = self.request.GET.getlist('case_type')
+        case_types = filter(None, self.request.GET.getlist('case_type'))
         if case_types:
             return {"terms": {"type.exact": case_types}}
         return {}

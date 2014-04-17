@@ -1,17 +1,22 @@
 """
 API endpoints for filter options
 """
+import logging
+
 from django.utils.translation import ugettext as _
 from django.views.generic import View
 
 from braces.views import JSONResponseMixin
 
 from corehq.apps.domain.decorators import LoginAndDomainMixin
-from corehq.elastic import es_wrapper
+from corehq.elastic import es_wrapper, ESError
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.logging import notify_exception
 
 from ..models import HQUserType
 from ..util import _report_user_dict
+
+logger = logging.getLogger(__name__)
 
 
 def user_tuple(u):
@@ -34,7 +39,7 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
         self.domain = domain
         self.q = self.request.GET.get('q', None)
         if self.q:
-            tokens = self.q.split(' ')
+            tokens = self.q.split()
             queries = ['%s*' % tokens.pop()] + tokens
             self.user_query = {"bool": {"must": [
                 {"query_string": {
@@ -51,10 +56,28 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
         else:
             self.user_query = None
             self.group_query = None
-        self._init_counts()
+        try:
+            self._init_counts()
+            return self.render_json_response({
+                'results': self.get_options(),
+                'total': self.total_results,
+            })
+        except ESError as e:
+            if self.q:
+                # Likely caused by an invalid user query
+                # A query that causes this error immediately follows a very
+                # similar query that should be caught by the else clause if it
+                # errors.  If that error didn't happen, the error was probably
+                # introduced by the addition of the query_string query, which
+                # contains the user's input.
+                logger.info('ElasticSearch error caused by query "%s": %s',
+                    self.q, e)
+            else:
+                # The error was our fault
+                notify_exception(request, e)
         return self.render_json_response({
-            'results': self.get_options(),
-            'total': self.total_results,
+            'results': [],
+            'total': 0,
         })
 
     def _init_counts(self):

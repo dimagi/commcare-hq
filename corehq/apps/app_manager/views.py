@@ -13,7 +13,7 @@ from django.core.cache import cache
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _, get_language
 from django.views.decorators.cache import cache_control
-from corehq import ApplicationsTab, toggles, privileges
+from corehq import ApplicationsTab, toggles, privileges, feature_previews
 from corehq.apps.app_manager import commcare_settings
 from corehq.apps.app_manager.exceptions import (
     AppManagerException,
@@ -73,7 +73,7 @@ from corehq.apps.domain.decorators import login_and_domain_required, login_or_di
 from corehq.apps.app_manager.models import Application, get_app, DetailColumn, Form, FormActions,\
     AppEditingError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, \
     DeleteApplicationRecord, str_to_cls, SavedAppBuild, ParentSelect, Module, CareplanModule, CareplanForm, AdvancedModule, AdvancedForm, AdvancedFormActions, \
-    IncompatibleFormTypeException, ModuleNotFoundException
+    IncompatibleFormTypeException, ModuleNotFoundException, FormNotFoundException
 from corehq.apps.app_manager.models import import_app as import_app_util, SortElement
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST
@@ -779,7 +779,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         context.update(form_context)
     elif module:
         template, module_context = get_module_view_context_and_template(app, module)
-        module_context["enable_calc_xpaths"] = toggles.CALC_XPATHS.enabled(getattr(req, 'domain', None))
+        module_context["enable_calc_xpaths"] = feature_previews.CALC_XPATHS.enabled(getattr(req, 'domain', None))
         context.update(module_context)
     else:
         template = "app_manager/app_view.html"

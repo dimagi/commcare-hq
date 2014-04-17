@@ -1,5 +1,4 @@
 from optparse import make_option
-from datetime import datetime
 from django.core.management import call_command
 
 from django.core.management.base import BaseCommand
@@ -15,11 +14,11 @@ class Command(BaseCommand):
     help = 'Super preindex management command to do our bidding'
 
     option_list = BaseCommand.option_list + (
-        make_option('--mail', help='Mail confirmation', action='store_true', default=False),
+        make_option('--mail', help='Mail confirmation', action='store_true',
+                    default=False),
     )
 
     def handle(self, *args, **options):
-        start = datetime.utcnow()
         if len(args) == 0:
             num_pool = POOL_SIZE
         else:
@@ -33,22 +32,29 @@ class Command(BaseCommand):
         email = options['mail']
 
         root_dir = settings.FILEPATH
-        git_snapshot = gitinfo.get_project_snapshot(root_dir, submodules=False, log_count=1)
+        git_snapshot = gitinfo.get_project_snapshot(
+            root_dir,
+            submodules=False,
+            log_count=1,
+        )
         head = git_snapshot['commits'][0]
 
-        commit_info = "\nCommit Info:\nOn Branch %s, SHA: %s" % (git_snapshot['current_branch'], head['sha'])
+        commit_info = "\nCommit Info:\nOn Branch %s, SHA: %s" % (
+            git_snapshot['current_branch'], head['sha'])
 
         pre_message = list()
         pre_message.append("Heads up, %s has started preindexing" % username)
         pre_message.append(commit_info)
 
         if email:
-            mail_admins(" HQAdmin preindex_everything started", '\n'.join(pre_message))
+            mail_admins(
+                " HQAdmin preindex_everything started", '\n'.join(pre_message)
+            )
 
         def couch_preindex():
-            call_command('sync_prepare_couchdb_multi', num_pool, username, **{'no_mail': True})
+            call_command('sync_prepare_couchdb_multi', num_pool, username,
+                         **{'no_mail': True})
             print "Couch preindex done"
-
 
         def pillow_preindex():
             call_command('ptop_preindex')

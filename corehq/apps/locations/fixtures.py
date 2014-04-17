@@ -54,6 +54,7 @@ def _location_to_fixture(location, type_lookup_function):
         'external_id',
         'latitude',
         'longitude',
+        'location_type',
     ]
     for field in fixture_fields:
         field_node = ElementTree.Element(field)

@@ -26,3 +26,9 @@
     text-align: center;
     margin: 60px;
 }
+
+#opm-logo-inline {
+    display: inline;
+    top: 20px;
+    right: 20px;
+}

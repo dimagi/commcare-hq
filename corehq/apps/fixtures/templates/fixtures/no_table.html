@@ -1,0 +1,40 @@
+{% extends 'fixtures/fixtures_base.html' %}
+{% load url from future %}
+{% load hq_shared_tags %}
+{% load report_tags %}
+{% load i18n %}
+
+
+{% block reportcontent %}
+<header>
+    <div class="row-fluid">
+        <div class="span8">
+            <h2>
+                {% blocktrans %}
+                    View Tables
+                {% endblocktrans %}
+            </h2>
+            <p>
+                {% blocktrans %}
+                    Lookup tables are used in applications to provide data that is not directly stored in the application and may change over time. For example, you can use them for a list of villages that changes over the time of your project. They also allow you to assign certain data (ex. villages) to certain users
+                {% endblocktrans %}
+            </p>
+            <p class="alert alert-info">
+                {% blocktrans %}
+                    Currently you have not uploaded any tables. Go to 
+                {% endblocktrans %}
+                    <a href="{% url 'fixture_interface_dispatcher' domain 'edit_lookup_tables'%}"><strong>Manage Table Data</strong></a>
+                {% blocktrans %}
+                    to upload tables.
+                {% endblocktrans %}
+            </p>
+            <p class="help-block">
+            <i class="icon icon-info-sign"></i>
+                {% blocktrans %}
+                    For more info see the <a href='https://confluence.dimagi.com/pages/viewpage.action?pageId=12222793' target='_blank'>Lookup Tables</a> help page
+                {% endblocktrans %}
+            </p>
+        </div>
+    </div>
+</header>
+{% endblock %}

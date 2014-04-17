@@ -84,14 +84,7 @@ REMINDERS_UI_PREVIEW = StaticToggle(
     'New reminders UI'
 )
 
-CALC_XPATHS = StaticToggle(
-    'calc_xpaths',
-    'Enabling custom calculated xpaths',
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
-SUBMIT_HISTORY_FILTERS = StaticToggle(
-    'submit_history_filters',
-    'Enabling new submit history filters',
-    namespaces=[NAMESPACE_DOMAIN],
+FEATURE_PREVIEWS = StaticToggle(
+    'feature_previews',
+    'Feature Previews',
 )
