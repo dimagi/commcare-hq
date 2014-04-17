@@ -155,7 +155,7 @@ that you have a 32bit version of Python installed.
     # Next, set the aliases of the elastic indices. These can be set by a management command
     # that sets the stored index names to the aliases.
 
-    python manage.py ptop_es_manage --flip_all_aliases
+    ./manage.py ptop_es_manage --flip_all_aliases
 
 
 To enable CloudCare, ensure that `TOUCHFORMS_API_USER` and
@@ -221,7 +221,7 @@ Then run the following separately:
     ./manage.py run_ptop --all
 
     # run the Django server
-    ./manage.py runserver
+    ./manage.py runserver 0.0.0.0:8000
 
     #
     # if you want to use CloudCare you will also need to run the Touchforms server and be running a multi-threaded
