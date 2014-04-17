@@ -17,6 +17,8 @@ POSTGRES_USER="commcarehq"
 POSTGRES_PW="commcarehq"
 
 COUCHDB_DB="commcarehq"
+COUCHDB_USER="commcarehq"
+COUCHDB_PW="commcarehq"
 
 ## Misc settings
 
@@ -278,4 +280,5 @@ sudo -u postgres createdb $DB
 echo "CREATE USER $USER WITH PASSWORD '$PW'; ALTER USER $USER CREATEDB;" | sudo -u postgres psql $DB
 
 curl -X PUT "http://localhost:5984/$COUCHDB_DB"
+curl -X PUT "http://localhost:5984/_config/admins/$COUCHDB_USER" -d \"$COUCHDB_PW\"
 
