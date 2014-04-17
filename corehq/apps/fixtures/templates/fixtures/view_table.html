@@ -3,6 +3,12 @@
 {% load report_tags %}
 {% load i18n %}
 
+{% if not table_not_selected %}
+{% block title %}
+    {% blocktrans %}Viewing Table {% endblocktrans %}'{{ selected_table }}'
+{% endblock %}
+{% endif %}
+
 {% block main_column %}
 <header>
     <div class="row-fluid">
