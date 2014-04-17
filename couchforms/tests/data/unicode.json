@@ -1,5 +1,4 @@
 {
-    "#export_tag": "xmlns",
     "_attachments": {
         "form.xml": {
             "content_type": "text/xml",
@@ -23,5 +22,15 @@
     "initial_processing_complete": false,
     "partial_submission": false,
     "received_on": "2014-01-06T21:30:43Z",
-    "xmlns": "http://openrosa.org/app/unicode"
+    "xmlns": "http://openrosa.org/app/unicode",
+    "#export_tag": null,
+    "app_id": null,
+    "auth_context": {},
+    "build_id": null,
+    "date_header": null,
+    "domain": null,
+    "last_sync_token": null,
+    "openrosa_headers": {},
+    "path": null,
+    "submit_ip": null
 }
