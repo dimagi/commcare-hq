@@ -223,10 +223,7 @@ Then run the following separately:
     # run the Django server
     ./manage.py runserver 0.0.0.0:8000
 
-    #
-    # if you want to use CloudCare you will also need to run the Touchforms server and be running a multi-threaded
-    # Django server as follows:
-    #
+If you want to use CloudCare you will also need to run the Touchforms server and be running a multi-threaded
 
     # run Touchforms server
     > jython submodules/touchforms-src/touchforms/backend/xformserver.py
