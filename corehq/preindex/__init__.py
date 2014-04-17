@@ -36,6 +36,12 @@ class PreindexPlugin(object):
     def copy_designs(self, temp=None, delete=True):
         raise NotImplementedError()
 
+    def __repr__(self):
+        return '{cls.__name__}({self.app_label!r}, {self.dir!r})'.format(
+            cls=self.__class__,
+            self=self,
+        )
+
 
 class CouchAppsPreindexPlugin(PreindexPlugin):
     def __init__(self, app_label, dir):
