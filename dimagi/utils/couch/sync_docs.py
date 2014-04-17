@@ -3,6 +3,15 @@ from couchdbkit.exceptions import ResourceNotFound
 
 
 def sync_design_docs(db, design_dir, design_name, temp=None):
+    """
+    pushes design documents and brings new index up to date if temp
+
+    for example it can be used to push new changes to the myapp design doc to
+    _design/myapp-tmp
+
+    and then trigger an index of _design/myapp-tmp
+
+    """
     design_name_ = '%s-%s' % (design_name, temp) if temp else design_name
     docid = "_design/%s" % design_name_
     push(design_dir, db, force=True, docid=docid)
@@ -13,7 +22,7 @@ def sync_design_docs(db, design_dir, design_name, temp=None):
             view_names = db[docid].get('views', {}).keys()
             if len(view_names) > 0:
                 print 'Triggering view rebuild'
-                view = '%s/%s' % (design_name, view_names[0])
+                view = '%s/%s' % (design_name_, view_names[0])
                 list(db.view(view, limit=0))
         except Exception, ex:
             print "\tError trying to sync couchapp %s, but ignoring %s" % (docid, ex)
