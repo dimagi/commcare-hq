@@ -13,6 +13,7 @@
 # Database settings; change these if desired
 
 POSTGRES_DB="commcarehq"
+POSTGRES_REPORTING_DB="commcarehq_reporting"
 POSTGRES_USER="commcarehq"
 POSTGRES_PW="commcarehq"
 
@@ -274,9 +275,12 @@ fi
 
 ## Configure databases ##
 DB=$POSTGRES_DB
+REPORTING_DB=$POSTGRES_REPORTING_DB
 USER=$POSTGRES_USER
 PW=$POSTGRES_PW
+
 sudo -u postgres createdb $DB
+sudo -u postgres createdb $REPORTING_DB
 echo "CREATE USER $USER WITH PASSWORD '$PW'; ALTER USER $USER CREATEDB;" | sudo -u postgres psql $DB
 
 curl -X PUT "http://localhost:5984/$COUCHDB_DB"
