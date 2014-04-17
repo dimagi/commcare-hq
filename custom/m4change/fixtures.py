@@ -151,14 +151,18 @@ class ReportFixtureProvider(object):
             'user_id': self.user._id
         })
 
+        months_element = ElementTree.Element('monthly-reports')
+
         user_location = Location.get(self.location_id)
         locations = [user_location] + [descendant for descendant in user_location.descendants]
         for date_tuple in self.dates:
             monthly_element = _month_to_fixture(date_tuple, locations)
             if monthly_element:
-                root.append(monthly_element)
+                months_element.append(monthly_element)
             else:
                 return None
+
+        root.append(months_element)
         return root
 
     def to_string(self):
