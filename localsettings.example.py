@@ -5,8 +5,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'commcarehq',
-        'USER': 'postgres',
-        'PASSWORD': 'postgres',
+        'USER': 'commcarehq',
+        'PASSWORD': 'commcarehq',
         'HOST': 'localhost',
         'PORT': '5432'
     }
