@@ -18,25 +18,35 @@ from custom.m4change.user_calcs import anc_hmis_report_calcs, ld_hmis_report_cal
 from custom.m4change.constants import M4CHANGE_DOMAINS, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, BOOKED_DELIVERY_FORMS, \
     UNBOOKED_DELIVERY_FORMS
 
-NO_LOCATION_VALUE_STRING = "None"
+NO_VALUE_STRING = "None"
 
 def _get_location_by_user_id(user_id, domain):
     user = CommCareUser.get(user_id)
     if user is not None:
         location_id = get_commtrack_location_id(user, Domain.get_by_name(domain))
-        return str(location_id) if location_id is not None else NO_LOCATION_VALUE_STRING
-    return NO_LOCATION_VALUE_STRING
+        return str(location_id) if location_id is not None else NO_VALUE_STRING
+    return NO_VALUE_STRING
 
 def _get_case_location_id(case):
     if is_valid_user_by_case(case):
         return _get_location_by_user_id(case.user_id, case.domain)
-    return NO_LOCATION_VALUE_STRING
+    return NO_VALUE_STRING
 
 def _get_form_location_id(form):
     user_id = form.form.get("meta", {}).get("userID", None)
     if user_id not in [None, "", "demo_user"]:
         return _get_location_by_user_id(user_id, form.domain)
-    return NO_LOCATION_VALUE_STRING
+    return NO_VALUE_STRING
+
+def _get_user_id_by_case(case):
+    if hasattr(case, "user_id") and case.user_id not in [None, "", "demo_user"]:
+        return str(case.user_id)
+    else:
+        return NO_VALUE_STRING
+
+def _get_user_id_by_form(form):
+    user_id = form.form.get("meta", {}).get("userID", None)
+    return str(user_id) if user_id not in [None, "", "demo_user"] else NO_VALUE_STRING
 
 
 class BaseM4ChangeCaseFluff(fluff.IndicatorDocument):
@@ -252,6 +262,7 @@ class ProjectIndicatorsCaseFluff(BaseM4ChangeCaseFluff):
     )
 
     location_id = fluff.FlatField(_get_case_location_id)
+    user_id = fluff.FlatField(_get_user_id_by_case)
     women_registered_anc = project_indicators_report_calcs.AncRegistrationCalculator()
     women_having_4_anc_visits = project_indicators_report_calcs.Anc4VisitsCalculator()
     women_delivering_at_facility_cct = project_indicators_report_calcs.FacilityDeliveryCctCalculator()
@@ -292,6 +303,7 @@ class McctMonthlyAggregateFormFluff(fluff.IndicatorDocument):
     save_direct_to_sql = True
 
     location_id = fluff.FlatField(_get_form_location_id)
+    user_id = fluff.FlatField(_get_user_id_by_form)
     eligible_due_to_registration = mcct_monthly_aggregate_report_calcs.EligibleDueToRegistrationCalculator()
     eligible_due_to_4th_visit = mcct_monthly_aggregate_report_calcs.EligibleDueTo4thVisitCalculator()
     eligible_due_to_delivery = mcct_monthly_aggregate_report_calcs.EligibleDueToDeliveryCalculator()

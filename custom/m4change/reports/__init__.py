@@ -1,5 +1,6 @@
 from django.utils.translation import ugettext as _
 from corehq.apps.locations.models import Location
+from corehq.apps.users.models import CommCareUser
 
 
 def validate_report_parameters(parameters, config):
@@ -15,3 +16,9 @@ def get_location_hierarchy_by_id(location_id, domain):
     else:
         user_location = Location.get(location_id)
         return [location_id] + [descendant.get_id for descendant in user_location.descendants]
+
+
+def get_CCT_user_ids(domain):
+    users = CommCareUser.by_domain(domain=domain)
+    return tuple(user["_id"] for user in users if hasattr(user, "user_data") and
+                                                  user.user_data.get("CCT", "").lower() == "true")

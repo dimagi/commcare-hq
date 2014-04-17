@@ -1,6 +1,7 @@
 from django.utils.translation import ugettext as _
 from sqlagg import SumColumn
 from sqlagg.columns import SimpleColumn
+from sqlagg.filters import IN
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
 
 
@@ -58,23 +59,26 @@ class ProjectIndicatorsCaseSqlData(SqlData):
 
     table_name = "fluff_ProjectIndicatorsCaseFluff"
 
-    def __init__(self, domain, datespan):
+    def __init__(self, domain, datespan, user_ids):
         self.domain = domain
         self.datespan = datespan
+        self.user_ids = user_ids
 
     @property
     def filter_values(self):
         return dict(
             domain=self.domain,
             startdate=self.datespan.startdate_utc.date(),
-            enddate=self.datespan.enddate_utc.date()
+            enddate=self.datespan.enddate_utc.date(),
+            user_ids=self.user_ids
         )
 
     @property
     def filters(self):
         return [
             "domain = :domain",
-            "date between :startdate and :enddate"
+            "date between :startdate and :enddate",
+            IN("user_id", "user_ids")
         ]
 
     @property
@@ -233,23 +237,26 @@ class McctMonthlyAggregateFormSqlData(SqlData):
 
     table_name = "fluff_McctMonthlyAggregateFormFluff"
 
-    def __init__(self, domain, datespan):
+    def __init__(self, domain, datespan, user_ids):
         self.domain = domain
         self.datespan = datespan
+        self.user_ids = user_ids
 
     @property
     def filter_values(self):
         return dict(
             domain=self.domain,
             startdate=self.datespan.startdate_utc.date(),
-            enddate=self.datespan.enddate_utc.date()
+            enddate=self.datespan.enddate_utc.date(),
+            user_ids=self.user_ids
         )
 
     @property
     def filters(self):
         return [
             "domain = :domain",
-            "date between :startdate and :enddate"
+            "date between :startdate and :enddate",
+            IN("user_id", "user_ids")
         ]
 
     @property
