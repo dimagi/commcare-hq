@@ -18,8 +18,8 @@ SQL_REPORTING_DATABASE_URL = "postgresql://%(USER)s:%(PASSWORD)s@%(HOST)s:%(PORT
 ####### Couch Config ######
 COUCH_HTTPS = False # recommended production value is True if enabling https
 COUCH_SERVER_ROOT = '127.0.0.1:5984' #6984 for https couch
-COUCH_USERNAME = 'admin'
-COUCH_PASSWORD = '********'
+COUCH_USERNAME = 'commcarehq'
+COUCH_PASSWORD = 'commcarehq'
 COUCH_DATABASE_NAME = 'commcarehq'
 
 ### Staging Replication Setup for Production/Staging
