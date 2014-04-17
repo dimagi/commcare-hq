@@ -3,9 +3,23 @@ from pillowtop.listener import AliasedElasticPillow
 
 
 def get_pillow_states(pillows):
+    """
+    return tuple: (mapped_masters, unmapped_masters, stale_indices)
+
+    mapped masters: ES indices as known in the current running code state that
+    correctly have the alias applied to them
+
+    unmapped masters: ES indices as known in the current running code state
+    that do not have the alias applied to them
+
+    stale indices: ES indices running on ES that are not part of the current
+    source control.
+
+    """
     aliased_pillows = filter(lambda x: isinstance(x, AliasedElasticPillow), pillows)
-    #make tuples of (index, alias)
-    #this maybe problematic in the future if we have multiple pillows pointing to the same alias or indices
+    # make tuples of (index, alias)
+    # this maybe problematic in the future if we have multiple pillows
+    # pointing to the same alias or indices
     master_aliases = dict((x.es_index, x.es_alias) for x in aliased_pillows)
     print master_aliases
 
