@@ -13,8 +13,8 @@
 # Database settings; change these if desired
 
 POSTGRES_DB="commcarehq"
-POSTGRES_USER="postgres"
-POSTGRES_PW="postgres"
+POSTGRES_USER="commcarehq"
+POSTGRES_PW="commcarehq"
 
 COUCHDB_DB="commcarehq"
 
