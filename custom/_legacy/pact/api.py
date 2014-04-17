@@ -352,7 +352,7 @@ class PactAPI(DomainAPI):
                 facilities.add(facility)
             ret = {
                 'facilities': ['All Facilities'] + sorted(list(facilities)),
-                "providers": [x['fields_without_attributes'] for x in providers],
+                "providers": [x.fields_without_attributes for x in providers],
                 "case_providers": case_providers,
             }
             resp = HttpResponse(simplejson.dumps(ret), content_type='application/json')
