@@ -3,7 +3,7 @@ import sys
 from django.conf import settings
 from dimagi.utils.couch.cache import cache_core
 from pillow_retry.models import PillowError
-from pillowtop.utils import import_pillow_string
+from pillowtop.utils import import_pillow_string, get_pillow_by_name
 
 
 @task
@@ -31,6 +31,14 @@ def process_pillow_retry(error_doc_id):
         pillow_class = error_doc.pillow
         try:
             pillow = import_pillow_string(pillow_class)
+        except ValueError:
+            # all fluff pillows have module path of 'fluff' so can't be imported directly
+            _, pillow_class_name = pillow_class.rsplit('.', 1)
+            pillow = get_pillow_by_name(pillow_class_name)
+
+        try:
+            if not pillow:
+                raise ValueError("Could not find pillowtop class '%s'" % pillow_class)
             pillow.process_change({'id': doc_id}, is_retry_attempt=True)
         except Exception:
             ex_type, ex_value, ex_tb = sys.exc_info()
