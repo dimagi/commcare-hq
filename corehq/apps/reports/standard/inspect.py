@@ -61,7 +61,7 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
 
     @property
     def other_fields(self):
-        return self.request.GET.get('custom_field', "").split(",")
+        return filter(None, self.request.GET.get('custom_field', "").split(","))
 
     @property
     def headers(self):
