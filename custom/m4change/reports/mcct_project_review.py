@@ -210,7 +210,7 @@ class BaseReport(CustomProjectReport, ElasticProjectInspectionReport, ProjectRep
 class McctProjectReview(BaseReport):
     name = 'mCCT Project Review Page'
     slug = 'mcct_project_review_page'
-    report_template_path = 'reports/reviewStatus.html'
+    report_template_path = 'm4change/reviewStatus.html'
     display_status = 'eligible'
 
     @property

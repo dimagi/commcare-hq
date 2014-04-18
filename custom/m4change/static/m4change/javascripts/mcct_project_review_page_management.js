@@ -77,7 +77,7 @@ var McctProjectReviewPageManagement = function (o) {
 ko.bindingHandlers.mcctProjectReviewPage = {
     update: function(element, valueAccessor) {
         var value = valueAccessor()();
-        $("#mcct_project_review_page_management").find("button, select").prop("disabled", value.length === 0);
+        $("#report_buttons").find("button, select").prop("disabled", value.length === 0);
     }
 };
 

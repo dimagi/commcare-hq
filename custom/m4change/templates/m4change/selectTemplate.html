@@ -42,8 +42,6 @@
                 ko.cleanNode($mcctProjectReviewPageManagement.find('table tbody')[0]);
                 ko.applyBindings(managementModel, $mcctProjectReviewPageManagement.find('table tbody')[0]);
             }
-
-            $mcctProjectReviewPageManagement.find("i[data-toggle='popover']").popover();
         }
         var keepTrying = setInterval(function () {
             if (window.reportTables !== undefined) {
@@ -60,17 +58,21 @@
     <div id="mcct_project_review_page_management">
         {{ block.super }}
     </div>
+    <script type="text/javascript">
+        $("i[data-toggle='popover']").popover({
+            template: '<div class="popover popover-medium"><div class="arrow"></div><div class="popover-inner"><h3 class="popover-title"></h3><div class="popover-content"><p></p></div></div></div>'
+        });
+    </script>
 {% endblock %}
 
 {% block pretable %}
     <div id="logo-top" class="row-fluid">
-        <div class="span3">
+        <div class="span3" id="logo-top-left">
             <img src="{% static 'm4change/images/SurePLogo.jpg' %}" alt="sure_p_logo"/>
         </div>
-        <div class="span6 buttons">
+        <div class="span6 buttons" id="logo-title">
             {{ block.super }}
-            <form class="well form-inline" style="margin: 1em; display: none;"
-                  data-bind="mcctProjectReviewPage: selected_forms">
+            <form id="report_buttons" class="well form-inline" style="margin: 1em;">
                 {% block status_button %}
                     <button class="btn" disabled="disabled" data-bind="click: updateStatus.bind(undefined, 'reviewed'), mcctProjectReviewPage: selected_forms">{% trans 'Review' %}</button>
                 {% endblock %}
@@ -85,11 +87,11 @@
                     </select>
                 {% endblock %}
                 <span>
-                    <a href="#" class="hq-help no-click"><i class="icon-question-sign" data-toggle="popover" data-placement="right" data-trigger="hover" data-title="Help" data-content="{% block help_content %}{% endblock %}" data-html="true"></i></a>
+                    <a href="#" class="hq-help no-click"><i class="icon-question-sign" data-toggle="popover" data-placement="top" data-trigger="hover" data-title="{% trans 'Help' %}" data-content="{% block help_content %}{% endblock %}" data-html="true"></i></a>
                 </span>
             </form>
         </div>
-        <div class="span3">
+        <div class="span3" id="logo-top-right">
             <img src="{% static 'm4change/images/NigeriaCoatofArms.png' %}" alt="nigeria_coat_of_arms"/>
         </div>
     </div>

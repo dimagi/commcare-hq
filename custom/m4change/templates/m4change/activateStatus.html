@@ -5,7 +5,7 @@
 {% load i18n %}
 
 {% block status_button %}
-    <button class="btn" data-bind="click: updateStatus.bind(undefined, 'eligible'), mcctProjectReviewPage: selected_forms">{% trans 'Activate' %}</button>
+    <button class="btn" disabled="disabled" data-bind="click: updateStatus.bind(undefined, 'eligible'), mcctProjectReviewPage: selected_forms">{% trans 'Activate' %}</button>
 {% endblock %}
 
 {% block reject_button %}
