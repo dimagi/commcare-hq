@@ -32,6 +32,7 @@ from unidecode import unidecode
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse, RegexURLResolver
 from django.shortcuts import render
+from corehq.apps.translations.models import Translation
 from dimagi.utils.django.cached_object import CachedObject
 from django.utils.http import urlencode
 from django.views.decorators.http import require_GET
@@ -1571,6 +1572,19 @@ def edit_app_translations(request, domain, app_id):
     response = {}
     app.save(response)
     return json_response(response)
+
+
+@require_GET
+def get_app_translations(request, domain):
+    params = json_request(request.GET)
+    lang = params.get('lang', 'en')
+    key = params.get('key', None)
+    one = params.get('one', False)
+    translations = Translation.get_translations(lang, key, one)
+
+    translations = {k: v for k, v in translations.items()
+                    if not id_strings.is_custom_app_string(k)}
+    return json_response(translations)
 
 
 @no_conflict_require_POST
