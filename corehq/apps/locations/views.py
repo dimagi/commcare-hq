@@ -252,15 +252,19 @@ class LocationImportStatusView(BaseLocationView):
     template_name = 'hqwebapp/soil_status_full.html'
 
     def get(self, request, *args, **kwargs):
-        context = {
+        context = super(LocationImportStatusView, self).main_context
+        context.update({
             'domain': self.domain,
             'download_id': kwargs['download_id'],
             'poll_url': reverse('location_importer_job_poll', args=[self.domain, kwargs['download_id']]),
             'title': _("Location Import Status"),
             'progress_text': _("Importing your data. This may take some time..."),
             'error_text': _("Problem importing data! Please try again or report an issue."),
-        }
+        })
         return render(request, self.template_name, context)
+
+    def page_url(self):
+        return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
 
 
 class LocationImportView(BaseLocationView):
