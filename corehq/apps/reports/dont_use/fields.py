@@ -303,3 +303,12 @@ class MultiSelectGroupField(GroupFieldMixin, ReportMultiSelectField):
         opts = [dict(val=group.get_id, text=group.name) for group in self.groups]
         opts.insert(0, {'text': 'All', 'val': '_all'})
         return opts
+
+
+class SelectCaseOwnerField(SelectMobileWorkerField):
+    name = ugettext_noop("Select Case Owner")
+    default_option = ugettext_noop("All Case Owners")
+
+    def update_params(self):
+        case_sharing_groups = Group.get_case_sharing_groups(self.domain)
+        self.context["groups"] = [dict(group_id=group._id, name=group.name) for group in case_sharing_groups]
