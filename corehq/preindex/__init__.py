@@ -46,7 +46,10 @@ class PreindexPlugin(object):
 class CouchAppsPreindexPlugin(PreindexPlugin):
     def __init__(self, app_label, dir):
         super(CouchAppsPreindexPlugin, self).__init__(app_label, dir)
-        self.db = get_db()
+
+    @property
+    def db(self):
+        return get_db()
 
     def get_couchapps(self):
         return [d for d in os.listdir(self.dir)
