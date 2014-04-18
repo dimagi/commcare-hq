@@ -11,20 +11,15 @@ from django.contrib.auth.decorators import permission_required
 from django.core.cache import cache
 from django.core.servers.basehttp import FileWrapper
 from django.core.urlresolvers import reverse
-from django.http import (HttpResponseRedirect, HttpResponse,
+from django.http import (HttpResponseRedirect,
     HttpResponseBadRequest, Http404, HttpResponseForbidden)
 from django.shortcuts import render
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import (require_http_methods,
-    require_POST, require_GET)
+    require_POST)
 
-from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.templatetags.case_tags import case_inline_display
 from couchdbkit.exceptions import ResourceNotFound
-from casexml.apps.case.xml import V2
-from corehq.apps.export.exceptions import BadExportConfiguration
-from corehq.apps.reports.exportfilters import default_form_filter
 import couchexport
 from couchexport import views as couchexport_views
 from couchexport.exceptions import (
@@ -36,10 +31,6 @@ from couchexport.shortcuts import (export_data_shared, export_raw_data,
     export_response)
 from couchexport.tasks import rebuild_schemas
 from couchexport.util import SerializableFunction
-import couchforms.views as couchforms_views
-from couchforms.filters import instances
-from couchforms.models import XFormInstance, doc_types
-from couchforms.templatetags.xform_tags import render_form
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import wrapped_docs
 from dimagi.utils.couch.loosechange import parse_date
@@ -47,12 +38,25 @@ from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.export import WorkBook
 from dimagi.utils.parsing import json_format_datetime, string_to_boolean
 from dimagi.utils.web import json_request, json_response
-from filters.users import UserTypeFilter
 from soil import DownloadBase
 from soil.tasks import prepare_download
+from django.core.files.base import ContentFile
+from django.http.response import HttpResponse, HttpResponseNotFound
+from django.views.decorators.http import require_GET
+from dimagi.utils.couch.cache.cache_core import get_redis_client
+from couchexport.export import Format
 
-from corehq.apps.domain.decorators import (login_and_domain_required,
-    login_or_digest)
+from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.templatetags.case_tags import case_inline_display
+from casexml.apps.case.xml import V2
+from corehq.apps.export.exceptions import BadExportConfiguration
+from corehq.apps.reports.exportfilters import default_form_filter
+import couchforms.views as couchforms_views
+from couchforms.filters import instances
+from couchforms.models import XFormInstance, doc_types
+from couchforms.templatetags.xform_tags import render_form
+from filters.users import UserTypeFilter
+from corehq.apps.domain.decorators import (login_or_digest)
 from corehq.apps.export.custom_export_helpers import CustomExportHelper
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.export import export_cases_and_referrals
@@ -69,6 +73,8 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.export import export_users
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.models import Permissions
+from corehq.apps.domain.decorators import login_and_domain_required
+
 
 
 DATE_FORMAT = "%Y-%m-%d"
@@ -995,3 +1001,26 @@ def clear_report_caches(request, domain):
     print "CLEARING CACHE FOR DOMAIN", domain
     print "ALL CACHES", cache.all()
     return HttpResponse("TESTING")
+
+
+@require_case_view_permission
+@login_and_domain_required
+@require_GET
+def export_report(request, domain, export_hash):
+    cache = get_redis_client()
+
+    if cache.exists(export_hash):
+        with open(cache.get(export_hash), 'r') as content_file:
+            content = content_file.read()
+
+        file = ContentFile(content)
+        response = HttpResponse(file, 'application/vnd.ms-excel')
+        response['Content-Length'] = file.size
+        response['Content-Disposition'] = 'attachment; filename="{filename}.{extension}"'.format(
+            filename=export_hash,
+            extension=Format.XLS
+        )
+        return response
+    else:
+        return HttpResponseNotFound(_("That report was not found. Please remember"
+                                      " that download links expire after 24 hours."))
