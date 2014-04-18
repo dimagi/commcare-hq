@@ -22,6 +22,7 @@ from corehq.apps.app_manager.exceptions import (
     RearrangeError,
 )
 from corehq.apps.app_manager.forms import CopyApplicationForm
+from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from django.utils.http import urlencode as django_urlencode

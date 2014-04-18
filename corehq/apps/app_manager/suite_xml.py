@@ -1,5 +1,6 @@
 from collections import namedtuple
 from distutils.version import LooseVersion
+from corehq.apps.app_manager import id_strings
 import urllib
 from django.core.urlresolvers import reverse
 from lxml import etree
@@ -329,78 +330,6 @@ class Suite(XmlObject):
     descriptor = StringField('@descriptor')
 
 
-class IdStrings(object):
-
-    def homescreen_title(self):
-        return 'homescreen.title'
-
-    def app_display_name(self):
-        return "app.display.name"
-
-    def xform_resource(self, form):
-        return form.unique_id
-
-    def locale_resource(self, lang):
-        return u'app_{lang}_strings'.format(lang=lang)
-
-    def media_resource(self, multimedia_id, name):
-        return u'media-{id}-{name}'.format(id=multimedia_id, name=name)
-
-    def detail(self, module, detail_type):
-        return u"m{module.id}_{detail_type}".format(module=module, detail_type=detail_type)
-
-    def detail_title_locale(self, module, detail_type):
-        return u"m{module.id}.{detail_type}.title".format(module=module, detail_type=detail_type)
-
-    def detail_column_header_locale(self, module, detail_type, column):
-
-        return u"m{module.id}.{detail_type}.{d.model}_{d.field}_{d_id}.header".format(
-            detail_type=detail_type,
-            module=module,
-            d=column,
-            d_id=column.id + 1
-        )
-
-    def detail_column_enum_variable(self, module, detail_type, column, key):
-        return u"m{module.id}.{detail_type}.{d.model}_{d.field}_{d_id}.enum.k{key}".format(
-            module=module,
-            detail_type=detail_type,
-            d=column,
-            d_id=column.id + 1,
-            key=key,
-        )
-
-    def menu(self, module):
-        put_in_root = getattr(module, 'put_in_root', False)
-        return 'root' if put_in_root else u"m{module.id}".format(module=module)
-
-    def module_locale(self, module):
-        return module.get_locale_id()
-
-    def form_locale(self, form):
-        return form.get_locale_id()
-
-    def form_command(self, form):
-        return form.get_command_id()
-
-    def case_list_command(self, module):
-        return module.get_case_list_command_id()
-
-    def case_list_locale(self, module):
-        return module.get_case_list_locale_id()
-
-    def referral_list_command(self, module):
-        """1.0 holdover"""
-        return module.get_referral_list_command_id()
-
-    def referral_list_locale(self, module):
-        """1.0 holdover"""
-        return module.get_referral_list_locale_id()
-
-    def indicator_instance(self, indicator_set_name):
-        return u"indicators_%s" % indicator_set_name
-
-
 def get_detail_column_infos(detail, include_sort):
     """
     This is not intented to be a widely used format
@@ -448,7 +377,7 @@ class SuiteGenerator(object):
         self.app = app
         # this is actually so slow it's worth caching
         self.modules = list(self.app.get_modules())
-        self.id_strings = IdStrings()
+        self.id_strings = id_strings
 
     @property
     def xform_resources(self):

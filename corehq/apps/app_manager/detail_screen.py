@@ -1,4 +1,4 @@
-from corehq import Domain
+from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager import suite_xml as sx
 from corehq.apps.app_manager.util import is_sort_only_column
 from corehq.apps.app_manager.xpath import dot_interpolate, CaseXPath, IndicatorXpath, LedgerdbXpath, LocationXpath
@@ -61,7 +61,7 @@ class BaseXpathGenerator(object):
         self.module = module
         self.detail = detail
         self.column = column
-        self.id_strings = sx.IdStrings()
+        self.id_strings = id_strings
 
     @property
     def xpath(self):
@@ -83,7 +83,7 @@ class FormattedDetailColumn(object):
         self.column = column
         self.sort_element = sort_element
         self.order = order
-        self.id_strings = sx.IdStrings()
+        self.id_strings = id_strings
 
     @property
     def locale_id(self):

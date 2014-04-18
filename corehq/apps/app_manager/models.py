@@ -70,6 +70,7 @@ from .exceptions import (
     XFormIdNotUnique,
     XFormValidationError,
     LocationXpathValidationError)
+from corehq.apps.app_manager import id_strings
 
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 
@@ -3450,14 +3451,15 @@ class CareplanConfig(Document):
 
         return result
 
-FormBase.get_command_id = lambda self: "m{module.id}-f{form.id}".format(module=self.get_module(), form=self)
-FormBase.get_locale_id = lambda self: "forms.m{module.id}f{form.id}".format(module=self.get_module(), form=self)
 
-ModuleBase.get_locale_id = lambda self: "modules.m{module.id}".format(module=self)
+# backwards compatibility with suite-1.0.xml
+FormBase.get_command_id = lambda self: id_strings.form_command(self)
+FormBase.get_locale_id = lambda self: id_strings.form_locale(self)
 
-ModuleBase.get_case_list_command_id = lambda self: "m{module.id}-case-list".format(module=self)
-ModuleBase.get_case_list_locale_id = lambda self: "case_lists.m{module.id}".format(module=self)
+ModuleBase.get_locale_id = lambda self: id_strings.module_locale(self)
 
-Module.get_referral_list_command_id = lambda self: "m{module.id}-referral-list".format(module=self)
-Module.get_referral_list_locale_id = lambda self: "referral_lists.m{module.id}".format(module=self)
+ModuleBase.get_case_list_command_id = lambda self: id_strings.case_list_command(self)
+ModuleBase.get_case_list_locale_id = lambda self: id_strings.case_list_locale(self)
 
+Module.get_referral_list_command_id = lambda self: id_strings.referral_list_command(self)
+Module.get_referral_list_locale_id = lambda self: id_strings.referral_list_locale(self)
