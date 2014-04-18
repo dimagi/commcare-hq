@@ -80,7 +80,7 @@ def catch_signal(app, **kwargs):
     app_name = app.__name__.rsplit('.', 1)[0]
     app_label = app_name.split('.')[-1]
     if app_label in PREINDEX_PLUGINS:
-        PREINDEX_PLUGINS[app_label].sync_design_docs(get_db())
+        PREINDEX_PLUGINS[app_label].sync_design_docs()
 
 
 signals.post_syncdb.connect(catch_signal)
