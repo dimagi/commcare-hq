@@ -92,7 +92,8 @@ Once all the dependencies are in order, please do the following:
     cd commcare-hq
     git submodule update --init --recursive
     source ~/.virtualenvs/commcare-hq/bin/activate      # enter your virtualenv if you have one
-    pip install -r requirements/requirements.txt -r requirements/prod-requirements.txt
+    mkdir pip_cache
+    pip install --download-cache pip_cache -r requirements/requirements.txt -r requirements/prod-requirements.txt
     cp localsettings.example.py localsettings.py
 
 Then, edit localsettings.py and ensure that your Postgres, CouchDB, email, and
@@ -154,7 +155,7 @@ that you have a 32bit version of Python installed.
     # Next, set the aliases of the elastic indices. These can be set by a management command
     # that sets the stored index names to the aliases.
 
-    python manage.py ptop_es_manage --flip_all_aliases
+    ./manage.py ptop_es_manage --flip_all_aliases
 
 
 To enable CloudCare, ensure that `TOUCHFORMS_API_USER` and
@@ -220,18 +221,15 @@ Then run the following separately:
     ./manage.py run_ptop --all
 
     # run the Django server
-    ./manage.py runserver
+    ./manage.py runserver 0.0.0.0:8000
 
-    #
-    # if you want to use CloudCare you will also need to run the Touchforms server and be running a multi-threaded
-    # Django server as follows:
-    #
+If you want to use CloudCare you will also need to run the Touchforms server and be running a multi-threaded
 
     # run Touchforms server
     > jython submodules/touchforms-src/touchforms/backend/xformserver.py
 
     # On Mac / Linux use Gunicorn as the multi-threaded server
-    ./manage.py run_gunicorn -w 3
+    ./manage.py run_gunicorn -w 3 --bind 0.0.0.0:8000
 
     # on Windows use CherryPy
     > manage.py runcpserver port=8000

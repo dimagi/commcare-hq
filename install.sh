@@ -12,11 +12,14 @@
 
 # Database settings; change these if desired
 
-POSTGRES_DB="foodb"
-POSTGRES_USER="django"
-POSTGRES_PW="django"
+POSTGRES_DB="commcarehq"
+POSTGRES_REPORTING_DB="commcarehq_reporting"
+POSTGRES_USER="commcarehq"
+POSTGRES_PW="commcarehq"
 
-COUCHDB_DB="foodb"
+COUCHDB_DB="commcarehq"
+COUCHDB_USER="commcarehq"
+COUCHDB_PW="commcarehq"
 
 ## Misc settings
 
@@ -37,6 +40,13 @@ if [ $? -eq 0 ]; then
 
     ## PPA to get latest versions of nodejs and npm
     if [[ ! $(sudo grep -r "chris-lea/node\.js" /etc/apt/) ]]; then
+    
+        # Checks if add-apt-repository is available
+        # add-apt-repository is provided by the python-software-properties package
+        if [[ ! $(command -v add-apt-repository) ]]; then
+            sudo apt-get install python-software-properties
+        fi
+
         sudo add-apt-repository -y ppa:chris-lea/node.js
     fi
     sudo apt-get update
@@ -155,6 +165,7 @@ if [ ! -f /etc/init.d/couchdb ]; then
     sudo chown -R couchdb:couchdb /usr/local/var/log/couchdb
     sudo chown -R couchdb:couchdb /usr/local/var/lib/couchdb
     sudo chown -R couchdb:couchdb /usr/local/var/run/couchdb
+    sudo chown -R couchdb:couchdb /usr/local/etc/couchdb
 fi
 
 ## Install couchdb-lucene
@@ -163,9 +174,13 @@ if [ ! "$MINIMAL_INSTALL" ] && ! -f /etc/init.d/couchdb-lucene ]; then
         wget https://github.com/rnewson/couchdb-lucene/archive/v0.8.0.zip
     fi
 
+    if [[ ! $(command -v unzip) ]]; then
+        sudo apt-get install unzip
+    fi
     unzip v0.8.0.zip
     sudo mv couchdb-lucene-0.8.0 /usr/local
-    sudo cp /usr/local/couchdb-lucene-0.8.0/tools/etc/init.d/couchdb-lucene/couchdb-lucene /etc/init.d/
+    sudo cp /usr/local/couchdb-lucene-0.8.0/src/main/tools/etc/init.d/couchdb-lucene /etc/init.d/
+    sudo chmod 755 /etc/init.d/couchdb-lucene
 fi
 
 if [ -e /usr/local/etc/couchdb/local.ini ] && [[ ! $(grep _fti /usr/local/etc/couchdb/local.ini) ]]; then
@@ -260,10 +275,14 @@ fi
 
 ## Configure databases ##
 DB=$POSTGRES_DB
+REPORTING_DB=$POSTGRES_REPORTING_DB
 USER=$POSTGRES_USER
 PW=$POSTGRES_PW
+
 sudo -u postgres createdb $DB
+sudo -u postgres createdb $REPORTING_DB
 echo "CREATE USER $USER WITH PASSWORD '$PW'; ALTER USER $USER CREATEDB;" | sudo -u postgres psql $DB
 
 curl -X PUT "http://localhost:5984/$COUCHDB_DB"
+curl -X PUT "http://localhost:5984/_config/admins/$COUCHDB_USER" -d \"$COUCHDB_PW\"
 

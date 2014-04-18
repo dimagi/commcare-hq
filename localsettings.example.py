@@ -5,21 +5,21 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'commcarehq',
-        'USER': 'postgres',
-        'PASSWORD': '******',
+        'USER': 'commcarehq',
+        'PASSWORD': 'commcarehq',
         'HOST': 'localhost',
         'PORT': '5432'
     }
 }
 
 ### Reporting database
-SQL_REPORTING_DATABASE_URL = "postgresql://username:****@localhost:5432/commcarehq_reporting"
+SQL_REPORTING_DATABASE_URL = "postgresql://%(USER)s:%(PASSWORD)s@%(HOST)s:%(PORT)s/commcarehq_reporting" % DATABASES['default']
 
 ####### Couch Config ######
 COUCH_HTTPS = False # recommended production value is True if enabling https
 COUCH_SERVER_ROOT = '127.0.0.1:5984' #6984 for https couch
-COUCH_USERNAME = 'admin'
-COUCH_PASSWORD = '********'
+COUCH_USERNAME = 'commcarehq'
+COUCH_PASSWORD = 'commcarehq'
 COUCH_DATABASE_NAME = 'commcarehq'
 
 ### Staging Replication Setup for Production/Staging
