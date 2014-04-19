@@ -380,6 +380,18 @@ class MCBase(ComposedTabularReport, CustomProjectReport, DatespanMixin):
     def sections(self):
         return self.data_provider.sections
 
+    @property
+    def export_rows(self):
+        """
+        The rows that will be used in an export. Useful if you want to apply any additional
+        custom formatting to mirror something that would be done in a template.
+        """
+        for section in self.sections:
+            yield [section.title]
+            for row in section.rows:
+                yield row
+
+
 class HeathFacilityMonthly(MCBase):
     slug = 'hf_monthly'
     fields = [
