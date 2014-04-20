@@ -1169,7 +1169,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             return
 
         if User.objects.filter(username=username).exists():
-            raise self.Inconsistent("User with username %s already exists" % self.username)
+            raise self.Inconsistent("User with username %s already exists" % username)
 
         django_user = self.get_django_user()
         django_user.DO_NOT_SAVE_COUCH_USER = True

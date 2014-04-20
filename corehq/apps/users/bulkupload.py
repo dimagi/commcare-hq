@@ -441,6 +441,7 @@ def dump_users_and_groups(response, domain):
             'email': user.email,
             'username': user.raw_username,
             'language': user.language,
+            'user_id': user._id,
         })
         user_data_keys.update(user.user_data.keys() if user.user_data else {})
         user_groups_length = max(user_groups_length, len(group_names))
@@ -457,7 +458,7 @@ def dump_users_and_groups(response, domain):
         group_data_keys.update(group.metadata.keys() if group.metadata else {})
 
     # include obscured password column for adding new users
-    user_headers = ['username', 'password', 'name', 'phone-number', 'email', 'language']
+    user_headers = ['username', 'password', 'name', 'phone-number', 'email', 'language', 'user_id']
     user_headers.extend(json_to_headers(
         {'data': dict([(key, None) for key in user_data_keys])}
     ))
