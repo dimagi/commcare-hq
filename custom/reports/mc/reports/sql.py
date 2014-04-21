@@ -382,14 +382,12 @@ class MCBase(ComposedTabularReport, CustomProjectReport, DatespanMixin):
 
     @property
     def export_rows(self):
-        """
-        The rows that will be used in an export. Useful if you want to apply any additional
-        custom formatting to mirror something that would be done in a template.
-        """
-        for section in self.sections:
-            yield [section.title]
-            for row in section.rows:
-                yield row
+        def _gen():
+            for section in self.sections:
+                yield [section.title]
+                for row in section.rows:
+                    yield row
+        return list(_gen())
 
 
 class HeathFacilityMonthly(MCBase):
