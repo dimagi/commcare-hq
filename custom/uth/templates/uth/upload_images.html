@@ -1,5 +1,89 @@
 {% extends "settings/base_template.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% block js-inline  %}{{ block.super }}
+    <script src="{% static 'uth/js/jszip.js' %}"></script>
+
+    <script type="text/javascript">
+        function purge(e) {
+            var files = e.target.files;
+            var zip = new JSZip();
+            debugger;
+
+            for (var i = 0, f; f = files[i]; ++i) {
+                console.debug(files[i].webkitRelativePath);
+                zip.file(files[i].name, 'banana');
+                debugger;
+            }
+
+            var content = zip.generate();
+            location.href = "data:application/zip;base64," + content;
+        }
+
+        function uploadFiles(files) {
+            // Create a new HTTP requests, Form data item (data we will send to the server) and an empty string for the file paths.
+            xhr = new XMLHttpRequest();
+            data = new FormData();
+            paths = "";
+
+            // Set how to handle the response text from the server
+            xhr.onreadystatechange = function(ev){
+                console.debug(xhr.responseText);
+            };
+
+            // Loop through the file list
+            for (var i in files){
+                // Append the current file path to the paths variable (delimited by tripple hash signs - ###)
+                console.debug(files[i].name);
+                paths += files[i].webkitRelativePath+"###";
+                // Append current file to our FormData with the index of i
+                data.append(i, files[i]);
+            };
+            // Append the paths variable to our FormData to be sent to the server
+            // Currently, As far as I know, HTTP requests do not natively carry the path data
+            // So we must add it to the request manually.
+            data.append('paths', paths);
+
+            // Open and send HHTP requests to upload.php
+            xhr.open('POST', $('#uploader').attr('action'), true);
+            xhr.send(this.data);
+        }
+
+        //$('#files').change(uploadFiles($('#files')[0].files));
+        $('#files').change(purge);
+
+        $('#upload').click(function () {
+            uploadFiles($('#files')[0].files);
+        });
+    </script>
+{% endblock %}
 
 {% block main_column %}
-Hi
+    <form id="uploader"
+          class="form-horizontal form-report"
+          action="{% url "upload_images" domain %}"
+          method="post"
+          enctype="multipart/form-data">
+        <fieldset>
+            <legend>
+                {% trans "Upload it here" %}
+            </legend>
+
+            <div class="control-group">
+                <label class="control-label" for="file">
+                    {% trans "Select a file to upload" %}
+                </label>
+                <div class="controls">
+                    <input class="input-small" name="files" id="files" type="file" directory="" webkitdirectory="" multiple="" mozdirectory=""/>
+                </div>
+            </div>
+        </fieldset>
+
+        <div class="form-actions">
+            <button id="upload" type="submit" class="btn btn-primary">
+                <i class="icon-forward icon-white"></i> {% trans "Go!" %}
+            </button>
+        </div>
+    </form>
 {% endblock %}
