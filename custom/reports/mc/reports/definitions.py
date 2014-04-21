@@ -77,7 +77,7 @@ HF_MONTHLY_REPORT = [
     },
 ]
 
-# todo: need to add additional columns for district report
+
 DISTRICT_MONTHLY_REPORT = HF_MONTHLY_REPORT + [
     {
         'section': _('mc_section_stock_balance'),

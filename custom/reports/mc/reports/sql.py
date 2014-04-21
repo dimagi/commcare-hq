@@ -380,6 +380,16 @@ class MCBase(ComposedTabularReport, CustomProjectReport, DatespanMixin):
     def sections(self):
         return self.data_provider.sections
 
+    @property
+    def export_rows(self):
+        def _gen():
+            for section in self.sections:
+                yield [section.title]
+                for row in section.rows:
+                    yield row
+        return list(_gen())
+
+
 class HeathFacilityMonthly(MCBase):
     slug = 'hf_monthly'
     fields = [
