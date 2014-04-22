@@ -55,7 +55,7 @@ def _get_report_query(start_date, end_date, filtered_case_ids):
                     "script": """
                     if (namespaces contains _source.xmlns) {
                         return true;
-                    } else if (_source.form.?visits >= 1 && _source.form.?visits <= 4) {
+                    } else if (_source.form.?visits != "" && _source.form.?visits >= 1 && _source.form.?visits <= 4) {
                         return true;
                     }
                     return false;
@@ -162,12 +162,11 @@ class BaseReport(CustomProjectReport, ElasticProjectInspectionReport, ProjectRep
 
             query = {
                 "query": {
-                    "range": {
-                        "modified_on": {
-                            "from": start_date,
-                            "to": end_date,
-                            "include_upper": True
-                        }
+                    "bool": {
+                        "must_not": [
+                            {"range": {"modified_on.date": {"lt": start_date}}},
+                            {"range": {"opened_on.date": {"gt": end_date}}}
+                        ]
                     }
                 },
                 "filter": {
@@ -255,6 +254,7 @@ class McctProjectReview(BaseReport):
 
             q["sort"] = self.get_sorting_block() \
                 if self.get_sorting_block() else [{"form.meta.timeEnd" : {"order": "desc"}}]
+
             if paginated:
                 self.es_response = es_query(params={"domain.exact": self.domain}, q=q, es_url=ES_URLS.get('forms'),
                                             start_at=self.pagination.start, size=self.pagination.count)
