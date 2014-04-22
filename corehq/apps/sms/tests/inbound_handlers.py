@@ -726,3 +726,11 @@ class KeywordTestCase(TouchformsTestCase):
         case = self.get_case("pid1237")
         self.assertCasePropertyEquals(case, "arm", "arm_a")
 
+        # Test closing open sessions on an sms reply
+        incoming("999122", "reg", "TEST")
+        self.assertLastOutboundSMSEquals(self.user2, "Enter Participant ID")
+        incoming("999122", "for_user", "TEST")
+        self.assertLastOutboundSMSEquals(self.user2, "This message is for users")
+        incoming("999122", "null", "TEST")
+        self.assertLastOutboundSMSEquals(self.user2, "Default SMS Response")
+

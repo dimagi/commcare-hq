@@ -419,6 +419,12 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
     sender = verified_number.owner
     case = None
     args = split_args(text, survey_keyword)
+
+    # Close any open sessions even if it's just an sms that we're
+    # responding with.
+    XFormsSession.close_all_open_sms_sessions(verified_number.domain,
+        verified_number.owner_id)
+
     if sender.doc_type == "CommCareCase":
         case = sender
         args = args[1:]
