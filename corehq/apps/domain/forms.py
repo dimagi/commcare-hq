@@ -269,14 +269,6 @@ class SubAreaMixin():
 class DomainGlobalSettingsForm(forms.Form):
     default_timezone = TimeZoneChoiceField(label=ugettext_noop("Default Timezone"), initial="UTC")
 
-    commtrack_enabled = BooleanField(
-        label=_("CommTrack Enabled"),
-        required=False,
-        help_text=_("CommTrack is a CommCareHQ module for logistics, inventory "
-                    "tracking, and supply chain management. It is still under "
-                    "active development. Do not enable for your domain unless "
-                    "you\'re actively piloting it.")
-    )
     logo = ImageField(
         label=_("Custom Logo"),
         required=False,
@@ -322,7 +314,6 @@ class DomainGlobalSettingsForm(forms.Form):
                     domain.delete_attachment(LOGO_ATTACHMENT)
 
             global_tz = self.cleaned_data['default_timezone']
-            domain.commtrack_enabled = self.cleaned_data.get('commtrack_enabled', False)
             domain.default_timezone = global_tz
             users = WebUser.by_domain(domain.name)
             for user in users:
