@@ -71,6 +71,10 @@ from .exceptions import (
     XFormValidationError,
     LocationXpathValidationError)
 
+AUTO_SELECT_USER = 'user'
+AUTO_SELECT_FIXTURE = 'fixture'
+AUTO_SELECT_CASE = 'case'
+
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 
 FIELD_SEPARATOR = ':'
@@ -290,9 +294,27 @@ class AdvancedAction(DocumentSchema):
         return 'case_id_{0}'.format(self.case_tag)
 
 
+class AutoSelectCase(DocumentSchema):
+    """
+    Configuration for auto-selecting a case.
+    Attributes:
+        value_source    Reference to the source of the value. For mode = fixture,
+                        this represents the FixtureDataType ID. For mode = case
+                        this represents the 'case_tag' for the case.
+                        The mode 'user' doesn't require a value_source.
+        value_key       The actual field that contains the case ID. Can be a case
+                        property or a user data key or a fixture field name.
+
+    """
+    mode = StringProperty(choices=[AUTO_SELECT_USER, AUTO_SELECT_FIXTURE, AUTO_SELECT_CASE])
+    value_source = StringProperty()
+    value_key = StringProperty()
+
+
 class LoadUpdateAction(AdvancedAction):
     details_module = StringProperty()
     preload = DictProperty()
+    auto_select = SchemaProperty(AutoSelectCase, default=None)
     show_product_stock = BooleanProperty(default=False)
 
     def get_paths(self):
