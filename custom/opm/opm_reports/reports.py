@@ -390,6 +390,7 @@ class BaseReport(MonthYearMixin, SqlTabularReport, CustomProjectReport):
 class BeneficiaryPaymentReport(BaseReport):
     name = "Beneficiary Payment Report"
     slug = 'beneficiary_payment_report'
+    report_template_path = "opm/beneficiary_report.html"
     model = Beneficiary
 
     @property
