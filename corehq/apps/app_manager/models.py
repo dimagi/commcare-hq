@@ -384,7 +384,7 @@ class AdvancedFormActions(DocumentSchema):
             if parent:
                 if parent in hierarchy:
                     circular = [a.case_tag for a in hierarchy + [parent]]
-                    raise ValueError("Circular reference in subcase hierarchy: {}".format(circular))
+                    raise ValueError("Circular reference in subcase hierarchy: {0}".format(circular))
                 hierarchy.append(parent)
 
         return hierarchy
@@ -1461,6 +1461,11 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 self.actions.get_action_hierarchy(action)
             except ValueError:
                 errors.append({'type': 'circular ref', 'case_tag': action.case_tag})
+
+            if action.auto_select and action.auto_select.mode == AUTO_SELECT_CASE:
+                case_tag = action.auto_select.value_source
+                if not self.actions.get_action_from_tag(case_tag):
+                    errors.append({'type': 'auto select ref', 'case_tag': action.case_tag})
 
             errors.extend(self.check_case_properties(
                 subcase_names=action.get_property_names(),
