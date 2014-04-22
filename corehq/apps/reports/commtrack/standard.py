@@ -294,13 +294,13 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
     @property
     def headers(self):
         return DataTablesHeader(*(DataTablesColumn(text) for text in [
-                    _('Location'),
-                    _('# Sites'),
-                    _('# Reporting'),
-                    _('Reporting'),
-                    _('# Non-reporting'),
-                    _('Non-reporting'),
-                ]))
+            _('Location'),
+            _('# Sites'),
+            _('# Reporting'),
+            _('Reporting Rate'),
+            _('# Non-reporting'),
+            _('Non-reporting Rate'),
+        ]))
 
     @property
     @memoized
