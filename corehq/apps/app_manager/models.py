@@ -329,6 +329,10 @@ class LoadUpdateAction(AdvancedAction):
         names.update(self.preload.keys())
         return names
 
+    @property
+    def requires_casedb(self):
+        return not self.auto_select or AUTO_SELECT_CASE in self.auto_select
+
 
 class AdvancedOpenCaseAction(AdvancedAction):
     name_path = StringProperty()
@@ -385,11 +389,20 @@ class AdvancedFormActions(DocumentSchema):
 
         return hierarchy
 
+    @property
+    def auto_select_actions(self):
+        return self._action_meta()['by_auto_select_mode']
+
     @memoized
     def _action_meta(self):
         meta = {
             'by_tag': {},
-            'by_parent_tag': {}
+            'by_parent_tag': {},
+            'by_auto_select_mode': {
+                AUTO_SELECT_USER: [],
+                AUTO_SELECT_CASE: [],
+                AUTO_SELECT_FIXTURE: []
+            }
         }
 
         def add_actions(type, action_list):
@@ -403,6 +416,8 @@ class AdvancedFormActions(DocumentSchema):
                         'type': type,
                         'action': action
                     }
+                if type == 'load' and action.auto_select and action.auto_select.mode:
+                    meta['by_auto_select_mode'][action.auto_select.mode].append(action)
 
         add_actions('load', self.load_update_cases)
         add_actions('open', self.open_cases)
@@ -2190,6 +2205,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
 
         if should_save:
             self.save()
+
         return self
 
     @classmethod
