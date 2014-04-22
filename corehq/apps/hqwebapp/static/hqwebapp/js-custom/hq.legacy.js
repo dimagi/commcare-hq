@@ -32,7 +32,8 @@ var COMMCAREHQ = (function () {
                 }
             }
         },
-        SaveButton: SaveButton
+        SaveButton: SaveButton,
+        DeleteButton: DeleteButton
     };
 }());
 
@@ -168,6 +169,119 @@ var SaveButton = {
         SAVED: 'Saved',
         RETRY: 'Try Again',
         ERROR_SAVING: 'There was an error saving'
+    }
+};
+
+var DeleteButton = {
+    /*
+     options: {
+     remove: "Function to call when the user clicks Delete",
+     undeletedMessage: "Message to display when there are undeleted changes and the user leaves the page"
+     }
+     */
+    init: function (options) {
+        var button = {
+            $delete: $('<span/>').text(DeleteButton.message.DELETE).click(function () {
+                button.fire('delete');
+            }).addClass('btn btn-danger'),
+            $retry: $('<span/>').text(DeleteButton.message.RETRY).click(function () {
+                button.fire('delete');
+            }).addClass('btn btn-danger'),
+            $deleting: $('<span/>').text(DeleteButton.message.DELETING).addClass('btn disabled'),
+            $deleted: $('<span/>').text(DeleteButton.message.DELETED).addClass('btn disabled'),
+            ui: $('<div/>').css({float: 'right'}),
+            setStateWhenReady: function (state) {
+                if (this.state === 'deleting') {
+                    this.nextState = state;
+                } else {
+                    this.setState(state);
+                }
+            },
+            setState: function (state) {
+                if (this.state === state) {
+                    return;
+                }
+                this.state = state;
+                this.$delete.detach();
+                this.$deleting.detach();
+                this.$deleted.detach();
+                this.$retry.detach();
+                if (state === 'delete') {
+                    this.ui.append(this.$delete);
+                } else if (state === 'deleting') {
+                    this.ui.append(this.$deleting);
+                } else if (state === 'deleted') {
+                    this.ui.append(this.$deleted);
+                } else if (state === 'retry') {
+                    this.ui.append(this.$retry);
+                }
+            },
+            ajax: function (options) {
+                var beforeSend = options.beforeSend || function () {},
+                    success = options.success || function () {},
+                    error = options.error || function () {},
+                    that = this;
+                options.beforeSend = function () {
+                    that.setState('deleting');
+                    that.nextState = 'deleted';
+                    beforeSend.apply(this, arguments);
+                };
+                options.success = function (data) {
+                    that.setState(that.nextState);
+                    success.apply(this, arguments);
+                };
+                options.error = function (data) {
+                    that.nextState = null;
+                    that.setState('retry');
+                    alert(DeleteButton.message.ERROR_DELETING);
+                    error.apply(this, arguments);
+                };
+                $.ajax(options);
+            }
+        };
+        eventize(button);
+        button.setState('deleted');
+        button.on('change', function () {
+            this.setStateWhenReady('delete');
+        });
+        if (options.remove) {
+            button.on('delete', options.remove);
+        }
+        $(window).bind('beforeunload', function () {
+            var stillAttached = button.ui.parents()[button.ui.parents().length - 1].tagName.toLowerCase() == 'html';
+            if (button.state !== 'deleted' && stillAttached) {
+                return options.undeletedMessage || "";
+            }
+        });
+        return button;
+    },
+    initForm: function ($form, options) {
+        var url = $form.attr('action'),
+            button = DeleteButton.init({
+                undeletedMessage: options.undeletedMessage,
+                remove: function () {
+                    this.ajax({
+                        url: url,
+                        type: 'POST',
+                        dataType: 'json',
+                        data: $form.serialize(),
+                        success: options.success
+                    });
+                }
+            }),
+            fireChange = function () {
+                button.fire('change');
+            };
+        $form.find('*').change(fireChange);
+        $form.find('input, textarea').bind('textchange', fireChange);
+        return button;
+    },
+    message: {
+        DELETE: 'Delete',
+        DELETING: 'Deleting...',
+        DELETED: 'Deleted',
+        RETRY: 'Try Again',
+        ERROR_DELETING: 'There was an error deleting'
     }
 };
 

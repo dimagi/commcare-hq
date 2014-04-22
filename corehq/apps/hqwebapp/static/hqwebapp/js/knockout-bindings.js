@@ -185,6 +185,27 @@ ko.bindingHandlers.saveButton2 = {
     }
 };
 
+ko.bindingHandlers.deleteButton = {
+    init: function (element, valueAccessor, allBindingsAccessor) {
+        var deleteOptions = allBindingsAccessor().deleteOptions,
+            state = valueAccessor(),
+            deleteButton = DeleteButton.init({
+                remove: function () {
+                    deleteButton.ajax(deleteOptions());
+                }
+            });
+        deleteButton.ui.appendTo(element);
+        element.deleteButton = deleteButton;
+        deleteButton.on('state:change', function () {
+            state(deleteButton.state);
+        });
+    },
+    update: function (element, valueAccessor) {
+        var state = ko.utils.unwrapObservable(valueAccessor());
+        element.deleteButton.setStateWhenReady(state);
+    }
+};
+
 ko.bindingHandlers.modal = {
     init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
         $(element).addClass('modal fade').modal({

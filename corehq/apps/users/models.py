@@ -319,6 +319,17 @@ class UserRole(Document):
     def commcareuser_role_choices(cls, domain):
         return [('none','(none)')] + [(role.get_qualified_id(), role.name or '(No Name)') for role in list(cls.by_domain(domain))]
 
+    @property
+    def ids_of_assigned_users(self):
+        key = [self.domain, self.get_id]
+        return [r['id'] for r in self.get_db().view("users/by_domain_and_role",
+            reduce=False,
+            startkey=key,
+            endkey=key + [{}],
+            include_docs=False,
+        )]
+
+
 PERMISSIONS_PRESETS = {
     'edit-apps': {'name': 'App Editor', 'permissions': Permissions(edit_apps=True, view_reports=True)},
     'field-implementer': {'name': 'Field Implementer', 'permissions': Permissions(edit_commcare_users=True, view_reports=True)},
