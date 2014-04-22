@@ -11,8 +11,15 @@ def _format_to_regex(pattern):
 
     everything else gets `re.escape`d
 
-    >>> _format_to_regex('%shello %%sam %s, you are %d years old.')
-    '.*hello\\ %sam\\ .*\\,\\ you\\ are\\ [0-9]+\\ years\\ old\\.'
+    >>> import re
+    >>> format = '%shello %%sam %s, you are %d years old.'
+    >>> regex = _format_to_regex(format)
+    >>> print regex
+    .*hello\ %sam\ .*\,\ you\ are\ [0-9]+\ years\ old\.
+    >>> bool(re.match(regex, format % ("Oh ", "i am", 6)))
+    True
+    >>> bool(re.match(regex, format))
+    False
 
     """
     formatting_re = r'%[%sd]'
