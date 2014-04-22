@@ -692,7 +692,7 @@ class SuiteGenerator(object):
                     if indicator_set not in indicator_sets:
                         indicator_sets.append(indicator_set)
                         yield Instance(id=self.id_strings.indicator_instance(indicator_set),
-                               src='jr://fixture/indicators:%s' % indicator_set)
+                                       src='jr://fixture/indicators:%s' % indicator_set)
 
     def get_location_instances(self, module, form=None):
         # will return an empty list or a list containing the one location instance
