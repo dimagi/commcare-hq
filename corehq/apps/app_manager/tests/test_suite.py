@@ -1,6 +1,6 @@
 from django.test import TestCase, SimpleTestCase
 from corehq.apps.app_manager.models import Application, AutoSelectCase, AUTO_SELECT_USER, AUTO_SELECT_CASE, \
-    LoadUpdateAction, AUTO_SELECT_FIXTURE
+    LoadUpdateAction, AUTO_SELECT_FIXTURE, AUTO_SELECT_RAW
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.suite_xml import dot_interpolate
 
@@ -82,7 +82,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         )
         self.assertXmlEqual(self.get_xml('suite-advanced-autoselect-user'), app.create_suite())
 
-    def test_advanced_suite_auto_select_case_fixture(self):
+    def test_advanced_suite_auto_select_fixture(self):
         app = Application.wrap(self.get_json('suite-advanced'))
         app.get_module(1).get_form(0).actions.load_update_cases[0].auto_select = AutoSelectCase(
             mode=AUTO_SELECT_FIXTURE,
@@ -90,6 +90,14 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
             value_key='field_name'
         )
         self.assertXmlEqual(self.get_xml('suite-advanced-autoselect-fixture'), app.create_suite())
+
+    def test_advanced_suite_auto_select_raw(self):
+        app = Application.wrap(self.get_json('suite-advanced'))
+        app.get_module(1).get_form(0).actions.load_update_cases[0].auto_select = AutoSelectCase(
+            mode=AUTO_SELECT_RAW,
+            value_key='some xpath expression'
+        )
+        self.assertXmlEqual(self.get_xml('suite-advanced-autoselect-raw'), app.create_suite())
 
     def test_advanced_suite_auto_select_case(self):
         app = Application.wrap(self.get_json('suite-advanced'))

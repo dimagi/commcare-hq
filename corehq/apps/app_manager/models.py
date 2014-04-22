@@ -74,6 +74,7 @@ from .exceptions import (
 AUTO_SELECT_USER = 'user'
 AUTO_SELECT_FIXTURE = 'fixture'
 AUTO_SELECT_CASE = 'case'
+AUTO_SELECT_RAW = 'raw'
 
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 
@@ -303,10 +304,11 @@ class AutoSelectCase(DocumentSchema):
                         this represents the 'case_tag' for the case.
                         The mode 'user' doesn't require a value_source.
         value_key       The actual field that contains the case ID. Can be a case
-                        property or a user data key or a fixture field name.
+                        property or a user data key or a fixture field name or the raw
+                        xpath expression.
 
     """
-    mode = StringProperty(choices=[AUTO_SELECT_USER, AUTO_SELECT_FIXTURE, AUTO_SELECT_CASE])
+    mode = StringProperty(choices=[AUTO_SELECT_USER, AUTO_SELECT_FIXTURE, AUTO_SELECT_CASE, AUTO_SELECT_RAW])
     value_source = StringProperty()
     value_key = StringProperty()
 
@@ -331,7 +333,7 @@ class LoadUpdateAction(AdvancedAction):
 
     @property
     def requires_casedb(self):
-        return not self.auto_select or AUTO_SELECT_CASE in self.auto_select
+        return not self.auto_select or self.auto_select.mode in [AUTO_SELECT_CASE, AUTO_SELECT_RAW]
 
 
 class AdvancedOpenCaseAction(AdvancedAction):
@@ -401,7 +403,8 @@ class AdvancedFormActions(DocumentSchema):
             'by_auto_select_mode': {
                 AUTO_SELECT_USER: [],
                 AUTO_SELECT_CASE: [],
-                AUTO_SELECT_FIXTURE: []
+                AUTO_SELECT_FIXTURE: [],
+                AUTO_SELECT_RAW: [],
             }
         }
 

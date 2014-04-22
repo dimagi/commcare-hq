@@ -787,7 +787,8 @@ class SuiteGenerator(object):
             ))
 
     def configure_entry_advanced_form(self, module, e, form, **kwargs):
-        from corehq.apps.app_manager.models import AUTO_SELECT_USER, AUTO_SELECT_CASE, AUTO_SELECT_FIXTURE
+        from corehq.apps.app_manager.models import AUTO_SELECT_USER, AUTO_SELECT_CASE, \
+            AUTO_SELECT_FIXTURE, AUTO_SELECT_RAW
 
         def case_sharing_requires_assertion(form):
             actions = form.actions.open_cases
@@ -804,7 +805,8 @@ class SuiteGenerator(object):
             form_filter = any(form.form_filter for form in module.get_forms())
             if parent_select or (form_filter and module.all_forms_require_a_case()) or \
                     form.actions.auto_select_actions[AUTO_SELECT_USER] or \
-                    form.actions.auto_select_actions[AUTO_SELECT_CASE]:
+                    form.actions.auto_select_actions[AUTO_SELECT_CASE] or \
+                    form.actions.auto_select_actions[AUTO_SELECT_RAW]:
                 yield Instance(id='commcaresession', src='jr://instance/session')
             elif module.get_app().commtrack_enabled:
                 try:
@@ -877,6 +879,11 @@ class SuiteGenerator(object):
                         function=xpath_base.slash(auto_select.value_key)
                     ))
                     self.add_fixture_auto_select_assertion(e, "{0} = 1".format(xpath_base.count()))
+                elif auto_select.mode == AUTO_SELECT_RAW:
+                    e.datums.append(SessionDatum(
+                        id=action.case_session_var,
+                        function=auto_select.value_key
+                    ))
             else:
                 if action.parent_tag:
                     parent_action = form.actions.actions_meta_by_tag[action.parent_tag]['action']
