@@ -71,4 +71,4 @@ stripe==1.12.2
 
 # required by ctable
 SQLAlchemy==0.8.2
-alembic==0.6.0
+alembic==0.6.4
