@@ -330,7 +330,7 @@ class BaseReport(MonthYearMixin, SqlTabularReport, CustomProjectReport):
     def headers(self):
         if self.snapshot is not None:
             return DataTablesHeader(*[
-                DataTablesColumn(header) for header in self.snapshot.headers
+                DataTablesColumn(header) for header in self.snapshot.headers if header != 'Bank Branch Name' # needed to support old snapshots
             ])
         return DataTablesHeader(*[
             DataTablesColumn(header) for method, header in self.model.method_map
@@ -341,6 +341,12 @@ class BaseReport(MonthYearMixin, SqlTabularReport, CustomProjectReport):
         # is it worth noting whether or not the data being displayed is pulled
         # from an old snapshot?
         if self.snapshot is not None:
+            # needed to support old snapshots
+            if isinstance(self, BeneficiaryPaymentReport):
+                for i, val in enumerate(self.snapshot.rows):
+                    if 'bank_branch_name' in self.snapshot.slugs:
+                        index = self.snapshot.slugs.index('bank_branch_name')
+                        del self.snapshot.rows[i][index]
             return self.snapshot.rows
         rows = []
         for row in self.row_objects:
@@ -385,6 +391,17 @@ class BaseReport(MonthYearMixin, SqlTabularReport, CustomProjectReport):
         row constructor
         """
         return {}
+
+    @property
+    @request_cache("raw")
+    def print_response(self):
+        """
+        Returns the report for printing.
+        """
+        self.is_rendered_as_email = True
+        self.use_datatables = False
+        self.override_template = "opm/print_report.html"
+        return HttpResponse(self._async_context()['report'])
 
 
 class BeneficiaryPaymentReport(BaseReport):
@@ -570,17 +587,6 @@ class HealthStatusReport(DatespanMixin, BaseReport, SummingSqlTabularReport):
             table.extend([_unformat_row(row) for row in self.statistics_rows])
 
         return [[self.export_sheet_name, table]]
-
-    @property
-    @request_cache("raw")
-    def print_response(self):
-        """
-        Returns the report for printing.
-        """
-        self.is_rendered_as_email = True
-        self.use_datatables = False
-        self.override_template = "opm/print_report.html"
-        return HttpResponse(self._async_context()['report'])
 
 def calculate_total_row(rows):
     regexp = re.compile('(.*?)>([0-9]+)<.*')

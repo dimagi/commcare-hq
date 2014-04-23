@@ -102,12 +102,13 @@ class OPMTestBase(object):
         for i, snapshot_row in enumerate(sorted(snapshot.rows, key=stringify)):
             report_row = report_rows[i]
             for snapshot_index, slug in enumerate(snapshot.slugs):
-                report_index = report.slugs.index(slug)
-                snapshot_item = snapshot_row[snapshot_index] or ""
-                report_item = report_row[report_index] or ""
-                if not self.the_same(snapshot_item, report_item):
-                    errors.append('%s \t"%s" != "%s" \t%s' %
-                        (slug, snapshot_item, report_item, report_row[name_index]))
+                if slug != 'bank_branch_name':
+                    report_index = report.slugs.index(slug)
+                    snapshot_item = snapshot_row[snapshot_index] or ""
+                    report_item = report_row[report_index] or ""
+                    if not self.the_same(snapshot_item, report_item):
+                        errors.append('%s \t"%s" != "%s" \t%s' %
+                            (slug, snapshot_item, report_item, report_row[name_index]))
         self.assertEquals(errors, [], "\n\n" + '\n'.join(errors))
 
 
