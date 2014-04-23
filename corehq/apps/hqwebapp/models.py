@@ -1015,11 +1015,10 @@ class ProjectSettingsTab(UITab):
                  ]}
             ])
 
-            if toggles.FEATURE_PREVIEWS.enabled(self.couch_user.username):
-                administration.append({
-                        'title': _('Feature Previews'),
-                        'url': reverse('feature_previews', args=[self.domain])
-                })
+            administration.append({
+                    'title': _('Feature Previews'),
+                    'url': reverse('feature_previews', args=[self.domain])
+            })
             items.append((_('Project Administration'), administration))
 
         from corehq.apps.users.models import WebUser
