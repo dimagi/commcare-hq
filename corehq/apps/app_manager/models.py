@@ -3363,6 +3363,9 @@ def import_app(app_id_or_source, domain, name=None, validate_source_domain=None)
     if name:
         source['name'] = name
     cls = str_to_cls[source['doc_type']]
+    # Allow the wrapper to update to the current default build_spec
+    if 'build_spec' in source:
+        del source['build_spec']
     app = cls.from_source(source, domain)
     app.save()
 
