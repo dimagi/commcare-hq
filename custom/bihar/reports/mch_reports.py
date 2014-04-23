@@ -94,6 +94,14 @@ class MCHBaseReport(CustomProjectReport, CaseListReport):
                          for case in self.es_results['hits'].get('hits', []))
         return self.get_cases(case_displays)
 
+    @property
+    def export_table(self):
+        table = super(MCHBaseReport, self).export_table
+        #  remove first row from table headers
+        table[0][1].pop(0)
+        return table
+
+
 class MotherMCHRegister(MCHBaseReport):
     name = "Mother MCH register"
     slug = "mother_mch_register"
