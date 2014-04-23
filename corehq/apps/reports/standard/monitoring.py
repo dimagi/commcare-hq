@@ -796,7 +796,7 @@ class DailyFormStatsReportSQL(WorkerMonitoringReportTableBase, CompletionOrSubmi
             results = results.filter(user_id=user.get('user_id'))
             values.append('user_id')
         else:
-            user_ids = [user.get('user_id') for user in self.all_users]
+            user_ids = [user_a.get('user_id') for user_a in self.all_users]
             results = results.filter(user_id__in=user_ids)
 
         results = results.extra({'date': "date(%s AT TIME ZONE '%s')" % (self.date_field, self.timezone)}) \
