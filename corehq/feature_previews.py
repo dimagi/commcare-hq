@@ -71,11 +71,11 @@ def commtrackify(domain_name, checked):
 
 COMMTRACK = FeaturePreview(
     slug='commtrack',
-    label=_("CommTrack Enabled"),
-    description=_("CommTrack is a logistics and supply chain management "
-        "module. It is designed to improve the management, transport, and "
-        "resupply of a variety of goods and materials, from medication to "
-        "food to bednets."),
-    help_link='http://www.commtrack.org/home/',
+    label=_("CommTrack"),
+    description=_('<a href="http://www.commtrack.org/home/">CommTrack</a> '
+        "is a logistics and supply chain management module. It is designed "
+        "to improve the management, transport, and resupply of a variety of "
+        "goods and materials, from medication to food to bednets."),
+    help_link='https://confluence.dimagi.com/display/commtrack/CommTrack+Home',
     save_fn=commtrackify,
 )

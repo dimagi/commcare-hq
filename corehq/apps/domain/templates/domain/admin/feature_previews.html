@@ -36,7 +36,7 @@
                         <tr>
                             <td>{{ feature.label }}</td>
                             <td>
-                                {{ feature.description }}<br/>
+                                {{ feature.description|safe }}<br/>
                                 {% if feature.help_link %}
                                 <a href="{{ feature.help_link }}" target="_blank">{% trans "More information" %}</a>
                                 {% endif %}
