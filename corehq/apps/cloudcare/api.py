@@ -8,14 +8,14 @@ from corehq.apps.app_manager.models import ApplicationBase, Application
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.decorators import inline
 from casexml.apps.phone.caselogic import get_footprint, get_related_cases
-from datetime import datetime, timedelta
+from datetime import datetime
 from corehq.elastic import get_es
 import urllib
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.chunked import chunked
 from django.utils.translation import ugettext as _
 from touchforms.formplayer.models import EntrySession
-from django.conf import settings
+
 
 def api_closed_to_status(closed_string):
     # legacy api support
@@ -25,10 +25,12 @@ def api_closed_to_status(closed_string):
         'false': CASE_STATUS_OPEN,
     }[closed_string]
 
+
 def closed_to_status(closed_bool):
     return {None: CASE_STATUS_ALL,
             True: CASE_STATUS_CLOSED,
             False: CASE_STATUS_OPEN}[closed_bool]
+
 
 def status_to_closed_flags(status):
     return {CASE_STATUS_ALL: [True, False],
@@ -371,7 +373,7 @@ def get_open_form_sessions(user, skip=0, limit=10):
             'id': sess.session_id,
             'app_id': sess.app_id,
             'name': sess.session_name,
-            'display': '{name} ({when})'.format(name=sess.session_name, when=naturaltime(sess.last_activity_date)),
+            'display': u'{name} ({when})'.format(name=sess.session_name, when=naturaltime(sess.last_activity_date)),
             'created_date': sess.created_date.strftime('%Y-%m-%dT%H:%M:%S'),
             'last_activity_date': sess.last_activity_date.strftime('%Y-%m-%dT%H:%M:%S'),
         }

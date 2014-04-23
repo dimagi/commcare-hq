@@ -1,5 +1,4 @@
 from xml.etree import ElementTree
-from django.utils import translation
 from django.utils.translation import ugettext as _
 from corehq.apps.groups.models import Group
 from corehq.util.translation import localize
