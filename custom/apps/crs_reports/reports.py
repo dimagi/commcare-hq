@@ -17,13 +17,16 @@ from dimagi.utils.timezones import utils as tz_utils
 
 
 def visit_completion_counter(case):
-    counter = 0
-
+    mother_counter = 0
+    child_counter = 0
+    baby_case = [c for c in case.get_subcases().all() if c.type == 'baby']
     for i in range(1, 8):
-        if "case_pp_%s_done" % i in case and case["case_pp_%s_done" % i].upper() == "YES":
-            counter += 1
+        if "pp_%s_done" % i in case and case["pp_%s_done" % i] == 1:
+            mother_counter += 1
+        if baby_case and "bb_pp_%s_done" % i in baby_case[0] and baby_case[0]["bb_pp_%s_done" % i] == 1:
+            child_counter += 1
 
-    return counter
+    return mother_counter if mother_counter > child_counter else child_counter
 
 
 class HNBCReportDisplay(CaseDisplay):
@@ -73,13 +76,6 @@ class HNBCReportDisplay(CaseDisplay):
         else:
             return '---'
 
-    @property
-    def pnc_status(self):
-        if visit_completion_counter(self.case) == 7:
-            return _("On Time")
-        else:
-            return _("Late")
-
 class BaseHNBCReport(CustomProjectReport, CaseListReport):
 
     fields = ['custom.apps.crs_reports.fields.SelectBlockField',
@@ -106,7 +102,6 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
             DataTablesColumn(_("Date of Delivery"),  prop_name="date_birth"),
             DataTablesColumn(_("PNC Visit Completion"), sortable=False),
             DataTablesColumn(_("Delivery"), prop_name="place_birth"),
-            DataTablesColumn(_("Case/PNC Status"), sortable=False)
         )
         return headers
 
@@ -123,7 +118,6 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
                 disp.dob,
                 disp.visit_completion,
                 disp.delivery,
-                disp.pnc_status,
             ]
 
     @property
