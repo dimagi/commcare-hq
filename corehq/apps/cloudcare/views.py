@@ -237,7 +237,10 @@ def filter_cases(request, domain, app_id, module_id):
     delegation = request.GET.get('task-list') == 'true'
     auth_cookie = request.COOKIES.get('sessionid')
 
-    xpath = SuiteGenerator(app).get_filter_xpath(module, delegation=delegation)
+    suite_gen = SuiteGenerator(app)
+    xpath = suite_gen.get_filter_xpath(module, delegation=delegation)
+    extra_instances = [{'id': inst.id, 'src': inst.src}
+                       for inst in suite_gen.get_extra_instances(module)]
 
     # touchforms doesn't like this to be escaped
     xpath = HTMLParser.HTMLParser().unescape(xpath)
@@ -253,9 +256,9 @@ def filter_cases(request, domain, app_id, module_id):
             "footprint": True
         }
 
-        result = touchforms_api.filter_cases(domain, request.couch_user,
-                                             xpath, additional_filters,
-                                             auth=DjangoAuth(auth_cookie))
+        helper = SessionDataHelper(domain, request.couch_user)
+        result = helper.filter_cases(xpath, additional_filters, DjangoAuth(auth_cookie),
+                                     extra_instances=extra_instances)
         if result.get('status', None) == 'error':
             return HttpResponseServerError(
                 result.get("message", _("Something went wrong filtering your cases.")))

@@ -62,12 +62,13 @@ class SessionDataHelper(object):
 
         return session_data
 
-    def filter_cases(self, xpath, additional_filters=None, auth=None):
+    def filter_cases(self, xpath, additional_filters=None, auth=None, extra_instances=None):
         """
         Filter a list of cases by an xpath expression + additional filters
         """
         session_data = self.get_session_data()
         session_data["additional_filters"] = additional_filters or {}
+        session_data['extra_instances'] = extra_instances or []
 
         data = {
             "action": "touchcare-filter-cases",
