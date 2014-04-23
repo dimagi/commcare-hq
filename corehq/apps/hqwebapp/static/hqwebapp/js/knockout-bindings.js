@@ -187,11 +187,11 @@ ko.bindingHandlers.saveButton2 = {
 
 ko.bindingHandlers.deleteButton = {
     init: function (element, valueAccessor, allBindingsAccessor) {
-        var deleteOptions = allBindingsAccessor().deleteOptions,
+        var saveOptions = allBindingsAccessor().saveOptions,
             state = valueAccessor(),
             deleteButton = DeleteButton.init({
-                remove: function () {
-                    deleteButton.ajax(deleteOptions());
+                save: function () {
+                    deleteButton.ajax(saveOptions());
                 }
             });
         deleteButton.ui.appendTo(element);

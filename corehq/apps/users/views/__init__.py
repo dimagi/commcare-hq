@@ -350,10 +350,11 @@ class ListWebUsersView(BaseUserSettingsView):
         user_roles.extend(sorted(UserRole.by_domain(self.domain),
                                  key=lambda role: role.name if role.name else u'\uFFFF'))
 
-        #indicate if user has assigned users, skip admin role
+        #  indicate if a role has assigned users, skip admin role
         for i in range(1, len(user_roles)):
             role = user_roles[i]
-            role.__setattr__('hasUsersAssigned', True if len(role.ids_of_assigned_users) > 0 else False)
+            role.__setattr__('hasUsersAssigned',
+                             True if len(role.ids_of_assigned_users) > 0 else False)
         return user_roles
 
     @property
@@ -434,7 +435,10 @@ def post_user_role(request, domain):
         assert(old_role.doc_type == UserRole.__name__)
         assert(old_role.domain == domain)
     role.save()
+    role.__setattr__('hasUsersAssigned',
+                     True if len(role.ids_of_assigned_users) > 0 else False)
     return json_response(role)
+
 
 @domain_admin_required
 @require_POST

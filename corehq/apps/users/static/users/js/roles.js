@@ -103,7 +103,7 @@ $(function () {
                 roleCopy.modalTitle = title;
                 roleCopy.modalConfirmation = modalConfirmation;
                 self.roleBeingDeleted(roleCopy);
-                self.modalDeleteButton.state('delete');
+                self.modalDeleteButton.state('save');
             }
         };
         self.unsetRoleBeingDeleted = function () {
@@ -126,7 +126,7 @@ $(function () {
         }
         self.modalDeleteButton = {
             state: ko.observable(),
-            deleteOptions: function () {
+            saveOptions: function () {
                 return {
                     url: o.deleteUrl,
                     type: 'post',
