@@ -24,6 +24,9 @@ except ImportError, e:
     raise
 
 from corehq.apps.app_manager.util import is_valid_case_type
+from corehq.apps.app_manager.id_strings import _format_to_regex
+
 __test__ = {
-    'is_valid_case_type': is_valid_case_type
+    'is_valid_case_type': is_valid_case_type,
+    '_format_to_regex': _format_to_regex,
 }

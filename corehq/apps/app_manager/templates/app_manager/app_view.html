@@ -159,7 +159,7 @@
                 mk_translation_ui({
                     translations: {{ translations|JSON }},
                     url: "{% url "edit_app_translations" domain app.id %}",
-                    suggestion_url: "{% url "get_translations" %}",
+                    suggestion_url: "{% url "get_app_translations" domain %}",
                     lang: "{{ lang }}",
                     edit: {{ edit|yesno:"true,false" }},
                     allow_autofill: "{{ lang }}" !== 'en',

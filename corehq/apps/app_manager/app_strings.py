@@ -1,10 +1,11 @@
 from distutils.version import LooseVersion
 import functools
+from corehq.apps.app_manager import id_strings
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.app_manager.util import is_sort_only_column
 import langcodes
 import commcare_translations
-from corehq.apps.app_manager.suite_xml import IdStrings, get_detail_column_infos
+from corehq.apps.app_manager.suite_xml import get_detail_column_infos
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
 
 
@@ -25,7 +26,6 @@ def _create_custom_app_strings(app, lang):
                 text = "${0} %s" % (text,) if not (text and text[0].isdigit()) else text
         return text
 
-    id_strings = IdStrings()
     langs = [lang] + app.langs
     yield id_strings.homescreen_title(), app.name
     yield id_strings.app_display_name(), app.name
