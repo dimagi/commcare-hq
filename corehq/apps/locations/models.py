@@ -11,6 +11,7 @@ class Location(Document):
     site_code = StringProperty() # should be unique, not yet enforced
     # unique id from some external data source
     external_id = StringProperty()
+    metadata = DictProperty()
 
     latitude = FloatProperty()
     longitude = FloatProperty()
