@@ -15,6 +15,7 @@ from dimagi.utils.web import get_url_base
 from .xpath import dot_interpolate, CaseIDXPath, session_var, CaseTypeXpath
 
 FIELD_TYPE_INDICATOR = 'indicator'
+FIELD_TYPE_LOCATION = 'location'
 FIELD_TYPE_PROPERTY = 'property'
 FIELD_TYPE_LEDGER = 'ledger'
 
@@ -352,6 +353,7 @@ class IdStrings(object):
         return u"m{module.id}.{detail_type}.title".format(module=module, detail_type=detail_type)
 
     def detail_column_header_locale(self, module, detail_type, column):
+
         return u"m{module.id}.{detail_type}.{d.model}_{d.field}_{d_id}.header".format(
             detail_type=detail_type,
             module=module,
@@ -692,6 +694,21 @@ class SuiteGenerator(object):
                         yield Instance(id=self.id_strings.indicator_instance(indicator_set),
                                src='jr://fixture/indicators:%s' % indicator_set)
 
+    def get_location_instances(self, module):
+        # will return an empty list or a list containing the one location instance
+        for _, detail, _ in module.get_details():
+            for column in detail.get_columns():
+                if column.field_type == FIELD_TYPE_LOCATION:
+                    return [Instance(id='commtrack:locations',
+                                     src='jr://fixture/commtrack:locations')]
+        return []
+
+    def get_extra_instances(self, module):
+        for instance in self.get_indicator_instances(module):
+            yield instance
+        for instance in self.get_location_instances(module):
+            yield instance
+
     def add_case_sharing_assertion(self, entry):
         entry.instances.append(Instance(id='groups', src='jr://fixture/user-groups'))
         assertion = Assertion(test="count(instance('groups')/groups/group) = 1")
@@ -724,7 +741,7 @@ class SuiteGenerator(object):
                 yield Instance(id='commcaresession',
                                src='jr://instance/session')
 
-            for instance in self.get_indicator_instances(module):
+            for instance in self.get_extra_instances(module):
                 yield instance
 
         e.instances.extend(get_instances())
@@ -776,7 +793,7 @@ class SuiteGenerator(object):
                 except IndexError:
                     pass
 
-            for instance in self.get_indicator_instances(module):
+            for instance in self.get_extra_instances(module):
                 yield instance
 
         e.instances.extend(get_instances())

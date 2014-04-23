@@ -1,0 +1,152 @@
+{% extends 'fixtures/fixtures_base.html' %}
+{% load hq_shared_tags %}
+{% load report_tags %}
+{% load i18n %}
+
+{% if not table_not_selected %}
+{% block title %}
+    {% blocktrans %}Viewing Table {% endblocktrans %}'{{ selected_table }}'
+{% endblock %}
+{% endif %}
+
+{% block main_column %}
+<header>
+    <div class="row-fluid">
+        <div class="span8">
+            <h3>
+                {% if not table_not_selected %}
+                {% blocktrans %}
+                    Viewing Table 
+                {% endblocktrans %}
+                <strong>'{{ selected_table }}'</strong>
+                {% else %}
+                {% blocktrans %}
+                    View Tables
+                {% endblocktrans %}
+                {% endif%}
+            </h3>
+        </div>
+    </div>
+</header>
+{% block reportcontent %}
+{% block reporttable %}
+<form>
+    {% for field in report_filters %}
+        <fieldset id="fieldset_{{ field.slug }}">
+            <div id="group_{{ field.slug }}" class="control-group">
+                {{ field.field|safe }}
+            </div>
+        </fieldset>
+    {% endfor %}
+    {% block report_filter_actions %}
+    <button type="submit" class="btn btn-primary" style="margin-top: 5px" data-standard-text="Apply">
+        {% trans "Apply" %}
+    </button>
+    {% endblock %}
+</form>
+{% if not table_not_selected %}
+<table id="report_table_{{ report.slug }}" class="table table-striped datatable" {% if pagination.filter %} data-filter="true"{% endif %}>
+    <thead>
+    {%  if report_table.headers.complex %}
+        {{ report_table.headers.render_html|safe }}
+    {% else %}
+        {# This method is depricated and will likely be removed once Legacy Custom Reports are moved over. #}
+        <tr>
+            {% for header in report_table.headers %}
+                <th {% if not report_table.pagination.is_on %}data-sort="{{ header.sort_type }}" data-sortdir="{{ header.sort_direction }}"{% endif %} {% if header.css_class %}class="{{ header.css_class }}"{% endif %}>
+                    <i class="icon-white"></i>
+                    {% if header.html %}{{ header.html }}{% else %}{{ header|linebreaksbr }}{% endif %}
+                    {% if header.help_text %}
+                        <i class="icon-white icon-question-sign header-tooltip" title="{{ header.help_text }}"></i>
+                    {% endif %}
+                </th>
+            {% endfor %}
+        </tr>
+    {% endif %}
+    </thead>
+    <tbody>
+    {% block tabular-body %}
+    {% if report_table.pagination.is_on %}
+        <tr>
+            <td colspan="{{ report_table.headers.header|length }}" class="dataTables_empty">
+                {% trans "Fetching additional data, please wait..." %}
+            </td>
+        </tr>
+    {% endif %}
+    {% for row in report_table.rows %}
+        <tr>
+            {% for col in row %}
+                {% include 'reports/async/partials/tabular_cell.html' %}
+            {% endfor %}
+        </tr>
+    {% endfor %}
+    {% endblock %}
+    </tbody>
+    {% if report_table.total_row and report_table.rows %}
+        <tfoot>
+        <tr>
+            {% for col in report_table.total_row %}
+                <td>{% if col.html != None %}{{ col.html|safe }}{% else %}{{ col|safe }}{% endif %}</td>
+            {% endfor %}
+        </tr>
+        </tfoot>
+    {% endif %}
+    {% if report_table.statistics_rows and report_table.rows %}
+        <tfoot>
+            {% for stats in report_table.statistics_rows %}
+                <tr>
+                {% for col in stats %}
+                    {% ifequal forloop.counter0 0 %}<th>{% else %}<td{% if col.css_class %} class="{{ col.css_class }}"{% endif %}>{% endifequal %}
+                        {% if col.html != None %}{{ col.html|safe }}{% else %}{{ col|safe }}{% endif %}
+                    {% ifequal forloop.counter0 0 %}</th>{% else %}</td>{% endifequal %}
+                {% endfor %}
+                </tr>
+            {% endfor %}
+        </tfoot>
+    {% endif %}
+</table>
+{% endif %}
+{% endblock %}
+{% block posttable %}{% endblock %}
+{% endblock %}
+{% endblock %}
+
+{% block js-inline %} {{ block.super }}
+    <script type="text/javascript">
+
+        {% if report_table and report_table.datatables %}
+            var reportTables = new HQReportDataTables({
+                dataTableElem: '#report_table_{{ report.slug }}',
+                defaultRows: {{ report_table.default_rows|default:10 }},
+                startAtRowNum: {{ report_table.start_at_row|default:0 }},
+                showAllRowsOption: {{ report_table.show_all_rows|JSON }},
+
+                {% if report_table.headers.render_aoColumns %}aoColumns: {{ report_table.headers.render_aoColumns|JSON }},{% endif %}
+                autoWidth: {{ report_table.headers.auto_width|JSON }},
+                {% if report_table.headers.custom_sort %}customSort: {{ report_table.headers.custom_sort|JSON }},{% endif %}
+
+                {% if report_table.pagination.is_on %}
+                    ajaxSource: '{{ report_table.pagination.source }}',
+                    ajaxParams: {{ report_table.pagination.params|JSON }},
+                {% endif %}
+
+                {% if report_table.left_col.is_fixed %}
+                    fixColumns: true,
+                    fixColsNumLeft: {{ report_table.left_col.fixed.num }},
+                    fixColsWidth: {{ report_table.left_col.fixed.width }},
+                {% endif %}
+            });
+            if (typeof standardHQReport !== 'undefined') {
+                standardHQReport.handleTabularReportCookies(reportTables);
+            }
+            reportTables.render();
+        {% endif %}
+
+        $(function() {
+            $('.header-popover').popout({
+                trigger: 'hover',
+                placement: 'bottom'
+            });
+        });
+    </script>
+{% endblock %}

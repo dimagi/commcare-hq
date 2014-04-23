@@ -3,7 +3,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block title %}{{ form.name|html_trans:langs|safe }}{% endblock %}
+{% block title %}{{ form.name|clean_trans:langs }}{% endblock %}
 
 
 {% block js %}{{ block.super }}

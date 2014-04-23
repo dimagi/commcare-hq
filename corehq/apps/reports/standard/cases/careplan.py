@@ -166,9 +166,9 @@ def make_careplan_reports(config):
     Creates new report classes based of the database config. These classes must have unique names
     in order to work with the permissions framework correctly.
     """
-    for conf in config.app_configs.values():
+    for app_id, conf in config.app_configs.items():
         params = dict(
-            slug='{0}_{1}'.format(CareplanReport.slug, conf.latest_release),
+            slug='{0}_{1}'.format(CareplanReport.slug, app_id),
             careplan_app_id=conf.latest_release,
             config=conf,
         )
@@ -177,7 +177,7 @@ def make_careplan_reports(config):
 
         params = dict(
             name=conf.name,
-            slug='{0}_{1}'.format(CareplanCaseListReport.slug, conf.latest_release),
+            slug='{0}_{1}'.format(CareplanCaseListReport.slug, app_id),
             default_case_type=conf.case_type,
             sub_report=AppCareplanReport,
         )

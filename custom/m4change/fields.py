@@ -8,7 +8,7 @@ from corehq.apps.reports.dont_use.fields import ReportField
 class DateRangeField(ReportField):
     name = ugettext_noop("Date Range")
     slug = "datespan"
-    template = "reports/fields/daterange.html"
+    template = "m4change/fields/daterange.html"
     inclusive = True
     default_days = 30
 

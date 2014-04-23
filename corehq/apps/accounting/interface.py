@@ -15,6 +15,7 @@ from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.util import format_datatables_data
+from couchexport.models import Format
 
 
 class AddItemInterface(GenericTabularReport):
@@ -329,6 +330,13 @@ class SoftwarePlanInterface(AddItemInterface):
     crud_item_type = "Software_Plan"
 
 
+def get_exportable_column(amount):
+    return format_datatables_data(
+        text=get_money_str(amount),
+        sort_key=amount,
+    )
+
+
 def get_exportable_column_cost(subtotal, deduction):
     return format_datatables_data(
         text=get_column_formatted_str(subtotal, deduction),
@@ -343,13 +351,13 @@ def get_column_formatted_str(subtotal, deduction):
     )
 
 
-def get_column_cost_str(line_items):
+def get_subtotal_and_deduction(line_items):
     subtotal = 0
     deduction = 0
     for line_item in line_items:
         subtotal += line_item.subtotal
         deduction += line_item.applied_credit
-    return get_exportable_column_cost(subtotal, deduction)
+    return subtotal, deduction
 
 
 class InvoiceInterface(GenericTabularReport):
@@ -360,6 +368,7 @@ class InvoiceInterface(GenericTabularReport):
     description = "List of all invoices"
     slug = "invoices"
     exportable = True
+    export_format_override = Format.CSV
     fields = [
         'corehq.apps.accounting.interface.NameFilter',
         'corehq.apps.accounting.interface.SubscriberFilter',
@@ -385,17 +394,31 @@ class InvoiceInterface(GenericTabularReport):
                                   DataTablesColumn("Start"),
                                   DataTablesColumn("End")),
             DataTablesColumn("Date Due"),
-            DataTablesColumn("Plan Cost (Credits)"),
-            DataTablesColumn("SMS Cost (Credits)"),
-            DataTablesColumn("User Cost (Credits)"),
-            DataTablesColumn("Total (Credits)"),
-            DataTablesColumn("Amount Due"),
-            DataTablesColumn("Payment Status"),
-            DataTablesColumn("Hidden"),
         )
         if not self.is_rendered_as_email:
+            header.add_column(DataTablesColumn("Plan Cost (Credits)"))
+            header.add_column(DataTablesColumn("SMS Cost (Credits)"))
+            header.add_column(DataTablesColumn("User Cost (Credits)"))
+            header.add_column(DataTablesColumn("Total (Credits)"))
+        else:
+            header.add_column(DataTablesColumn("Plan Cost"))
+            header.add_column(DataTablesColumn("Plan Credits"))
+            header.add_column(DataTablesColumn("SMS Cost"))
+            header.add_column(DataTablesColumn("SMS Credits"))
+            header.add_column(DataTablesColumn("User Cost"))
+            header.add_column(DataTablesColumn("User Credits"))
+            header.add_column(DataTablesColumn("Total"))
+            header.add_column(DataTablesColumn("Total Credits"))
+
+        header.add_column(DataTablesColumn("Amount Due"))
+        header.add_column(DataTablesColumn("Payment Status"))
+        header.add_column(DataTablesColumn("Hidden"))
+
+        if not self.is_rendered_as_email:
             header.add_column(DataTablesColumn("Action"))
-        header.add_column(DataTablesColumn("View Invoice"))
+            header.add_column(DataTablesColumn("View Invoice"))
+        else:
+            header.add_column(DataTablesColumn("Contact info"))
         return header
 
     @property
@@ -435,22 +458,46 @@ class InvoiceInterface(GenericTabularReport):
                 invoice.date_start.strftime("%d %B %Y"),
                 invoice.date_end.strftime("%d %B %Y"),
                 invoice.date_due.strftime("%d %B %Y"),
-                get_column_cost_str(invoice.lineitem_set.get_products().all()),
-                get_column_cost_str(invoice.lineitem_set.get_feature_by_type(
-                    FeatureType.SMS).all()),
-                get_column_cost_str(invoice.lineitem_set.get_feature_by_type(
-                    FeatureType.USER).all()),
-                get_exportable_column_cost(
-                    invoice.subtotal,
-                    invoice.applied_credit
-                ),
-                format_datatables_data(
-                    text=get_money_str(invoice.balance),
-                    sort_key=invoice.balance,
-                ),
-                "Paid" if invoice.date_paid else "Not paid",
-                "YES" if invoice.is_hidden else "no",
             ]
+            plan_subtotal, plan_deduction = get_subtotal_and_deduction(
+                invoice.lineitem_set.get_products().all()
+            )
+            sms_subtotal, sms_deduction = get_subtotal_and_deduction(
+                invoice.lineitem_set.get_feature_by_type(FeatureType.SMS).all()
+            )
+            user_subtotal, user_deduction = get_subtotal_and_deduction(
+                invoice.lineitem_set.get_feature_by_type(
+                    FeatureType.USER
+                ).all()
+            )
+            if not self.is_rendered_as_email:
+                column.append(
+                    get_exportable_column_cost(plan_subtotal, plan_deduction)
+                )
+                column.append(
+                    get_exportable_column_cost(sms_subtotal, sms_deduction)
+                )
+                column.append(
+                    get_exportable_column_cost(user_subtotal, user_deduction)
+                )
+                column.append(
+                    get_exportable_column_cost(
+                        invoice.subtotal,
+                        invoice.applied_credit
+                    )
+                )
+            else:
+                column.append(get_exportable_column(plan_subtotal))
+                column.append(get_exportable_column(plan_deduction))
+                column.append(get_exportable_column(sms_subtotal))
+                column.append(get_exportable_column(sms_deduction))
+                column.append(get_exportable_column(user_subtotal))
+                column.append(get_exportable_column(user_deduction))
+                column.append(get_exportable_column(invoice.subtotal))
+                column.append(get_exportable_column(invoice.applied_credit))
+            column.append(get_exportable_column(invoice.balance))
+            column.append("Paid" if invoice.date_paid else "Not paid")
+            column.append("YES" if invoice.is_hidden else "no")
             if not self.is_rendered_as_email:
                 # TODO - Create helper function for action button HTML
                 column.append(
@@ -461,9 +508,11 @@ class InvoiceInterface(GenericTabularReport):
                         '   class="btn">Adjust Balance</a>' % {
                             'invoice_id': invoice.id
                         }))
-            column.append(mark_safe(
-                '<a href="%s" class="btn">Go to Invoice</a>'
-                % reverse(InvoiceSummaryView.urlname, args=(invoice.id,))))
+                column.append(mark_safe(
+                    '<a href="%s" class="btn">Go to Invoice</a>'
+                    % reverse(InvoiceSummaryView.urlname, args=(invoice.id,))))
+            else:
+                column.append(get_address_from_invoice(invoice))
             rows.append(column)
         return rows
 

@@ -7,6 +7,7 @@ from jsonobject import DateTimeProperty
 from corehq.apps.reports import util
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 
+from corehq import feature_previews, privileges
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
@@ -47,9 +48,20 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
     filter_users_field_class = StrongFilterUsersField
     include_inactive = True
 
+    # Feature preview flag for Submit History Filters
+    def __init__(self, request, **kwargs):
+        if feature_previews.SUBMIT_HISTORY_FILTERS.enabled(request.domain):
+            # create a new instance attribute instead of modifying the
+            # class attribute
+            self.fields = self.fields + [
+                'corehq.apps.reports.filters.forms.FormDataFilter',
+                'corehq.apps.reports.filters.forms.CustomFieldFilter',
+            ]
+        super(SubmitHistory, self).__init__(request, **kwargs)
+
     @property
     def other_fields(self):
-        return self.request.GET.get('custom_field', "").split(",")
+        return filter(None, self.request.GET.get('custom_field', "").split(","))
 
     @property
     def headers(self):
@@ -101,7 +113,7 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
                 ids = filter(None, [user['user_id'] for user in negated_ids])
                 q["filter"]["and"].append({"not": {"terms": {"form.meta.userID": ids}}})
 
-            for cp in filter(None, self.request.GET.get('custom_props', "").split(",")):
+            for cp in filter(None, self.request.GET.get('form_data', "").split(",")):
                 q["filter"]["and"].append({"term": {"__props_for_querying": cp.lower()}})
 
             q["sort"] = self.get_sorting_block() if self.get_sorting_block() else [{self.time_field : {"order": "desc"}}]
@@ -145,18 +157,6 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
                 return form["form"].get(field)
             init_cells.extend([cell(field) for field in self.other_fields])
             yield init_cells
-
-class SubmitHistoryNew(SubmitHistory):
-    """
-    This is Submit History along with the new filters
-    """
-    fields = [
-        'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
-        'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
-        'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
-        'corehq.apps.reports.filters.dates.DatespanFilter',
-        'corehq.apps.reports.filters.forms.CustomPropsFilter',
-        'corehq.apps.reports.filters.forms.CustomFieldFilter']
 
 
 class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):

@@ -106,7 +106,6 @@ def calculate_form_data(self, form):
 
 class BaseReport(CustomProjectReport, ElasticProjectInspectionReport, ProjectReport,
                  ProjectReportParametersMixin, MultiFormDrilldownMixin, DatespanMixin):
-
         emailable = False
         exportable = True
         asynchronous = True
@@ -119,8 +118,8 @@ class BaseReport(CustomProjectReport, ElasticProjectInspectionReport, ProjectRep
             'custom.m4change.fields.CaseSearchField'
         ]
 
-        base_template = 'reports/report.html'
-        report_template_path = 'reports/selectTemplate.html'
+        base_template = 'm4change/report.html'
+        report_template_path = 'm4change/selectTemplate.html'
         filter_users_field_class = StrongFilterUsersField
 
         @property
@@ -248,7 +247,7 @@ class McctProjectReview(BaseReport):
 class McctClientApprovalPage(McctProjectReview):
     name = 'mCCT client Approval Page'
     slug = 'mcct_client_approval_page'
-    report_template_path = 'reports/approveStatus.html'
+    report_template_path = 'm4change/approveStatus.html'
     display_status = 'reviewed'
 
     def es_query(self):
@@ -274,20 +273,21 @@ class McctClientApprovalPage(McctProjectReview):
 class McctClientPaymentPage(McctClientApprovalPage):
     name = 'mCCT client Payment Page'
     slug = 'mcct_client_payment_page'
-    report_template_path = 'reports/paidStatus.html'
+    report_template_path = 'm4change/paidStatus.html'
     display_status = 'approved'
 
 
 class McctRejectedClientPage(McctClientApprovalPage):
     name = 'mCCT Rejected clients Page'
     slug = 'mcct_rejected_clients_page'
-    report_template_path = 'reports/activateStatus.html'
+    report_template_path = 'm4change/activateStatus.html'
     display_status = 'rejected'
 
 
 class McctClientLogPage(McctProjectReview):
     name = 'mCCT client Log Page'
     slug = 'mcct_client_log_page'
+    report_template_path = 'm4change/report_content.html'
 
     @property
     def headers(self):
@@ -351,5 +351,5 @@ class McctClientLogPage(McctProjectReview):
 class McctPaidClientsPage(McctClientApprovalPage):
     name = 'mCCT Paid clients Page'
     slug = 'mcct_paid_clients_page'
-    report_template_path = 'reports/activateStatus.html'
+    report_template_path = 'm4change/activateStatus.html'
     display_status = 'paid'

@@ -9,6 +9,22 @@ function merge_options(obj1, obj2) {
     return obj3;
 }
 
+// adapted from http://stackoverflow.com/questions/901115/
+function getUrlParams(a) {
+    // takes a string of the form "foo=bar&bat=&fizz=bang"
+    // and returns {"foo": "bar", "bat": "", "fizz": "bang"}
+    a = a.split('&')
+    if (a == "") return {};
+    var b = {};
+    for (var i = 0; i < a.length; ++i)
+    {
+        var p=a[i].split('=');
+        if (p.length != 2) continue;
+        b[p[0]] = decodeURIComponent(p[1].replace(/\+/g, " "));
+    }
+    return b;
+}
+
 var HQVisualizations = function (options) {
     var self = this;
     self.chart_name = options.chart_name;
@@ -57,8 +73,13 @@ var HQVisualizations = function (options) {
                 self.loadChartData(update_active_chart, startdate, enddate);
 
                 if (self.should_update_url) {
-                    datefield = datefield || "";
-                    var new_url = "?datefield=" + datefield + "&interval=" + self.interval + "&startdate=" + startdate + "&enddate=" + enddate + window.location.hash;
+                    params = getUrlParams($(location).attr('search').substr(1));
+                    params['datefield'] = datefield || "";
+                    params['interval'] = interval;
+                    params['startdate'] = startdate;
+                    params['enddate'] = enddate;
+
+                    var new_url = '?' + $.param(params) + window.location.hash;
                     History.pushState(null, "Reloaded Chart", new_url);
 
                     // keep the urls for the other data visualizations consistent with this datespan

@@ -5,17 +5,39 @@
 
 {% block js-inline %} {{ block.super }}
     <script type="text/javascript">
-        $(function() {
+        $(document).ready(function () {
             var reportFilters = $('.hq-accordion-control');
-            var scrollContent = $('.dataTables_scrollBody');
             var reportContent = $('#report-content');
 
             // a bit hackish, but allows to display table content with sticky headers and vertical
             // and horizontal content scrolls, without need to scroll entire page
-            reportContent.height(0.65 * ($('.row-fluid').height() - reportFilters.height()));
-            scrollContent.height(reportContent.height());
-            $('.dataTables_wrapper').height(reportContent.height());
+            reportContent.height(0.60 * ($('.row-fluid').height() - reportFilters.height()));
+            $('.dataTables_scrollBody').height(reportContent.height());
         });
+
+        $(document).ajaxStop(function () {
+            // Solution to fix innaprobiate widths of fixed columns
+            var widths = [];
+
+            // first fix widths on tbody ...
+            $('.DTFC_LeftBodyWrapper thead th').each(
+                function(){
+                    $(this).css('width', $(this).width());
+            });
+
+            // ... now save the actual widths on array
+            $('.DTFC_LeftBodyWrapper thead th').each(
+                function(){
+                    widths.push($(this).width());
+            });
+
+            // ... and now update widths on thead
+            $('.DTFC_LeftHeadWrapper thead th').each(
+                function(i, val){
+                    $(this).css('width', widths[i]);
+            });
+        });
+
     </script>
 
 {% endblock %}

@@ -8,6 +8,7 @@ import phonelog.reports as phonelog
 from corehq.apps.reports.commtrack import standard as commtrack_reports
 from corehq.apps.reports.commtrack import maps as commtrack_maps
 from corehq.apps.reports.commconnect import system_overview
+from corehq.apps.fixtures.interface import FixtureViewInterface, FixtureEditInterface
 import hashlib
 from dimagi.utils.modules import to_function
 import logging
@@ -18,10 +19,6 @@ def REPORTS(project):
     from corehq.apps.reports.standard.cases.basic import CaseListReport
     from corehq.apps.reports.standard.cases.careplan import make_careplan_reports
     from corehq.apps.reports.standard.maps import DemoMapReport, DemoMapReport2, DemoMapCaseList
-
-    submit_history_report = inspect.SubmitHistory
-    if toggles.SUBMIT_HISTORY_FILTERS.enabled(project.name):
-        submit_history_report = inspect.SubmitHistoryNew
 
     reports = [
         (ugettext_lazy("Monitor Workers"), (
@@ -36,7 +33,7 @@ def REPORTS(project):
             monitoring.WorkerActivityTimes,
         )),
         (ugettext_lazy("Inspect Data"), (
-            submit_history_report, CaseListReport,
+            inspect.SubmitHistory, CaseListReport,
         )),
         (ugettext_lazy("Manage Deployments"), (
             deployments.ApplicationStatusReport,
@@ -48,7 +45,7 @@ def REPORTS(project):
             DemoMapReport, DemoMapReport2, DemoMapCaseList,
         )),
     ]
-    
+
     if project.commtrack_enabled:
         reports.insert(0, (ugettext_lazy("Commtrack"), (
             commtrack_reports.CurrentStockStatusReport,
@@ -148,6 +145,13 @@ EDIT_DATA_INTERFACES = (
     (ugettext_lazy('Edit Data'), (
         CaseReassignmentInterface,
         ImportCases
+    )),
+)
+
+FIXTURE_INTERFACES = (
+    (_('Lookup Tables'), (
+        FixtureEditInterface,
+        FixtureViewInterface,
     )),
 )
 

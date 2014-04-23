@@ -22,7 +22,7 @@ function(doc) {
 
         if (isChildWelfareForm(doc) && indicators.vaccination_status && indicators.vaccination_status.value === 'yes') {
             // special case for Bonsaaso
-            indicator_entries['child under1 immunized'] = case_id;
+            indicator_entries['child under1 not_immunized'] = case_id;
         }
 
         if (isChildVisitForm(doc) && indicators.child_dob && indicators.child_dob.value) {
@@ -37,23 +37,46 @@ function(doc) {
                         var is_immunized = (indicators.vaccination_status.value === 'yes');
                         if (is_immunized && indicators.vaccination_status_6weeks) {
                             // start looking at timelines for vaccinations too.
-                            if (age >= 6*7*MS_IN_DAY) {
+                            if (age > 75 * MS_IN_DAY) {
                                 // at least 6 weeks old
                                 is_immunized = is_immunized && (indicators.vaccination_status_6weeks.value === 'yes');
                             }
-                            if (age >= 10*7*MS_IN_DAY && indicators.vaccination_status_10weeks) {
+                            if (age > 105 * MS_IN_DAY && indicators.vaccination_status_10weeks) {
                                 is_immunized = is_immunized && (indicators.vaccination_status_10weeks.value === 'yes');
                             }
-                            if (age >= 14*7*MS_IN_DAY && indicators.vaccination_status_14weeks) {
+                            if (age > 135 * MS_IN_DAY && indicators.vaccination_status_14weeks) {
                                 is_immunized = is_immunized && (indicators.vaccination_status_14weeks.value === 'yes');
                             }
-                            if (age >= 36*7*MS_IN_DAY && indicators.vaccination_status_36weeks) {
+                            if (age > 300 * MS_IN_DAY && indicators.vaccination_status_36weeks) {
                                 is_immunized = is_immunized && (indicators.vaccination_status_36weeks.value === 'yes');
                             }
                         }
 
-                        if (is_immunized) {
-                            indicator_entries['child under1 immunized'] = case_id;
+                        if (!is_immunized) {
+                            indicator_entries['child under1 not_immunized'] = case_id;
+                        }
+                    }
+
+                    if (!indicators.emergency_danger_sign) {
+                        var not_immunized = false;
+                        if (age > 45 * MS_IN_DAY && (indicators.prev_vaccination_birth.value === 'no' || indicators.vaccination_birth.value === 'no')) {
+                            not_immunized = true;
+                        }
+                        if (age > 75 * MS_IN_DAY && (indicators.prev_vaccination_6week.value === 'no' || indicators.vaccination_6week.value === 'no')) {
+                            not_immunized = true;
+                        }
+                        if (age > 105 * MS_IN_DAY && (indicators.prev_vaccination_10week.value === 'no' || indicators.vaccination_10week.value === 'no')) {
+                            not_immunized = true;
+                        }
+                        if (age > 135 * MS_IN_DAY && (indicators.prev_vaccination_14week.value === 'no' || indicators.vaccination_14week.value === 'no')) {
+                            not_immunized = true;
+                        }
+                        if (age > 300 * MS_IN_DAY && (indicators.prev_vaccination_36week.value === 'no' || indicators.vaccination_36week.value === 'no')) {
+                            not_immunized = true;
+                        }
+
+                        if (not_immunized) {
+                            indicator_entries['child under1 not_immunized'] = case_id;
                         }
                     }
 

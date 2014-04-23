@@ -470,6 +470,16 @@ class DailyFormStatsReportES(ElasticProjectInspectionReport, WorkerMonitoringRep
                 else "form.meta.timeStart")
 
     @property
+    def startdate(self):
+        return (self.datespan.startdate_utc if self.by_submission_time
+                else self.datespan.startdate)
+
+    @property
+    def enddate(self):
+        return (self.datespan.enddate_utc if self.by_submission_time
+                else self.datespan.enddate_adjusted)
+
+    @property
     def shared_pagination_GET_params(self):
         params = [
             dict(name=ExpandedMobileWorkerFilter.slug, value=ExpandedMobileWorkerFilter.get_value(self.request, self.domain)),
@@ -479,13 +489,40 @@ class DailyFormStatsReportES(ElasticProjectInspectionReport, WorkerMonitoringRep
         ]
         return params
 
+    def ids_by_doc_type(self, doc_types):
+        q = {
+            "fields": [],
+            "query": {"match_all": {}},
+            "filter": {"and": [
+                {"terms": {"doc_type": doc_types}},
+                {"term": {"domain.exact": self.domain}}
+            ]}
+        }
+        res = es_query(es_url=ES_URLS['users'], q=q)
+        return [hit['_id'] for hit in res['hits']['hits']]
+
     def es_user_filter(self):
         matching = ExpandedMobileWorkerFilter.matching_ids(self.request)
         user_ids = matching['user_ids']
         user_types = matching['user_types']
         group_ids = matching['group_ids']
         if 't__0' in user_types:
-            return {"match_all": {}}
+            # exclude demo users, admin users, and unknown users as necessary
+            exclude_docs = []
+            exclude_ids = []
+            if "t__1" not in user_types:
+                exclude_ids.append("demo_user")
+            if "t__2" not in user_types:
+                exclude_docs.append("AdminUser")
+            if "t__3" not in user_types:
+                exclude_docs.append("UnknownUser")
+                exclude_ids.append('')
+            if exclude_docs:
+                exclude_ids.extend(self.ids_by_doc_type(exclude_docs))
+            if exclude_ids:
+                return {"not": {"terms": {"xform.form.meta.userID": exclude_ids}}}
+            else:
+                return {"match_all": {}}
 
         other_user_ids = [u['user_id'] for u in ExpandedMobileWorkerFilter.other_users(
             self.domain, user_types, simplified=True)]
@@ -503,7 +540,7 @@ class DailyFormStatsReportES(ElasticProjectInspectionReport, WorkerMonitoringRep
         then the number of forms filled out per day for the datespan,
         and finally the total forms filled out in the datespan.
         """
-        tz_offset = self.timezone.localize(self.datespan.enddate).strftime("%z")
+        tz_offset = self.timezone.localize(self.enddate).strftime("%z")
         offset_string = '%s:%s' % (tz_offset[:3], tz_offset[3:])
         facets = {"date": {"date_histogram": {
             "field": self.date_field,
@@ -511,12 +548,9 @@ class DailyFormStatsReportES(ElasticProjectInspectionReport, WorkerMonitoringRep
             "time_zone": offset_string,
         }}}
 
-        if self.by_submission_time:
-            gte = self.datespan.startdate_param_utc
-            lte = self.datespan.enddate_param_utc
-        else:
-            gte = self.datespan.startdate_param
-            lte = self.datespan.enddate_param
+        date_format = "%Y-%m-%d"
+        gte = self.startdate.strftime(date_format)
+        lte = self.enddate.strftime(date_format)
         filters = [
             {"range": {
                 self.date_field: {
@@ -1191,7 +1225,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
     @property
     @memoized
     def case_types_filter(self):
-        case_types = self.request.GET.getlist('case_type')
+        case_types = filter(None, self.request.GET.getlist('case_type'))
         if case_types:
             return {"terms": {"type.exact": case_types}}
         return {}

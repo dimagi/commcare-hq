@@ -1,6 +1,7 @@
 from datetime import date, timedelta
 import re
 import dateutil
+from jsonobject.base import JsonArray
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
 from casexml.apps.case.models import CommCareCase
 from django.utils.translation import ugettext as _
@@ -110,6 +111,7 @@ class MCHMotherDisplay(MCHDisplay):
 
         jsy_beneficiary = None
         jsy_money = None
+        pnc_on_time_statuses = []
 
         for form in forms:
             form_dict = form.form
@@ -127,7 +129,8 @@ class MCHMotherDisplay(MCHDisplay):
                 setattr(self, "_discharge_date", get_property(form_dict, "discharge_date"))
                 setattr(self, "_jsy_money_date", get_property(form_dict, "jsy_money_date"))
                 setattr(self, "_delivery_complications", get_property(form_dict, "delivery_complications"))
-                setattr(self, "_family_planning_type", get_property(form_dict, "family_planning_type"))
+                if 'case' in form_dict and 'update' in form_dict['case']:
+                    setattr(self, "_family_planning_type", get_property(form_dict['case']['update'], "family_planning_type"))
 
                 jsy_money = get_property(form_dict, "jsy_money")
                 children_count = int(get_property(form_dict, "cast_num_children", 0))
@@ -155,8 +158,20 @@ class MCHMotherDisplay(MCHDisplay):
             elif REGISTRATION in form_xmlns:
                 jsy_beneficiary = get_property(form_dict, "jsy_beneficiary")
             elif PNC in form_xmlns:
-                setattr(self, "_all_pnc_on_time", get_property(form_dict['case']['update'], "all_pnc_on_time"))
 
+                child_list = []
+                if type(form_dict["child_info"]) is JsonArray:
+                    child_list.extend(form_dict["child_info"])
+                else:
+                    child_list.append(form_dict["child_info"])
+
+                for child in child_list:
+                    pnc_on_time_status = None
+                    if (get_property(child, 'skin_to_skin') == 'yes' or get_property(child, 'wrapped') == 'yes') and get_property(child, 'warm_to_touch') == 'yes':
+                        pnc_on_time_status = 'yes'
+                    else:
+                        pnc_on_time_status = 'no'
+                    pnc_on_time_statuses.append(pnc_on_time_status)
             elif BP in form_xmlns:
                 if "bp1" in form_dict:
                     bp = form_dict["bp1"]
@@ -186,6 +201,13 @@ class MCHMotherDisplay(MCHDisplay):
             setattr(self, "_jsy_beneficiary", jsy_beneficiary)
         else:
             setattr(self, "_jsy_beneficiary", jsy_money)
+
+        if len(pnc_on_time_statuses) > 0:
+            if 'yes' in pnc_on_time_statuses:
+                setattr(self, "_all_pnc_on_time", 'yes')
+            else:
+                setattr(self, "_all_pnc_on_time", 'no')
+
         super(MCHMotherDisplay, self).__init__(report, case_dict)
 
     @property
