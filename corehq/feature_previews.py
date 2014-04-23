@@ -72,10 +72,10 @@ def commtrackify(domain_name, checked):
 COMMTRACK = FeaturePreview(
     slug='commtrack',
     label=_("CommTrack Enabled"),
-    description=_("CommTrack is a CommCareHQ module for logistics, inventory "
-                "tracking, and supply chain management. It is still under "
-                "active development. Do not enable for your domain unless "
-                "you\'re actively piloting it."),
+    description=_("CommTrack is a logistics and supply chain management "
+        "module. It is designed to improve the management, transport, and "
+        "resupply of a variety of goods and materials, from medication to "
+        "food to bednets."),
     help_link='http://www.commtrack.org/home/',
     save_fn=commtrackify,
 )
