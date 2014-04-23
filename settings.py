@@ -244,6 +244,7 @@ HQ_APPS = (
     'corehq.apps.sofabed',
     'corehq.apps.hqpillow_retry',
     'corehq.couchapps',
+    'corehq.preindex',
     'custom.apps.wisepill',
     'custom.fri',
     'fluff',
@@ -1089,8 +1090,6 @@ ES_XFORM_FULL_INDEX_DOMAINS = [
 
 CUSTOM_MODULES = [
     'custom.apps.crs_reports',
-    'custom.bihar',
-
 ]
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"

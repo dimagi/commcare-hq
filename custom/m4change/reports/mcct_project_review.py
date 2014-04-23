@@ -1,14 +1,16 @@
+from django.core.urlresolvers import reverse
+from django.http import HttpResponse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
-
 from jsonobject import DateTimeProperty
+
 from corehq import Domain
 from corehq.apps.commtrack.util import get_commtrack_location_id
 from corehq.apps.locations.models import Location
+from corehq.apps.reports.cache import request_cache
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import ES_URLS
-
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
@@ -16,11 +18,13 @@ from corehq.apps.reports.dont_use.fields import StrongFilterUsersField
 from corehq.apps.reports.generic import ElasticProjectInspectionReport
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
 from corehq.elastic import es_query
-from custom.m4change.constants import BOOKING_FORMS, FOLLOW_UP_FORMS, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, IMMUNIZATION_FORMS
+from custom.m4change.constants import BOOKING_FORMS, FOLLOW_UP_FORMS, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, IMMUNIZATION_FORMS, \
+    REJECTION_REASON_DISPLAY_NAMES
 from custom.m4change.models import McctStatus
 from custom.m4change.reports import get_location_hierarchy_by_id
 from custom.m4change.utils import get_case_by_id, get_user_by_id, get_property, get_form_ids_by_status
 from custom.m4change.constants import EMPTY_FIELD
+from corehq.apps.reports.tasks import export_all_rows_task
 
 
 CASE_FORM_SCRIPT_FILTER_NAMESPACES = BOOKED_AND_UNBOOKED_DELIVERY_FORMS + IMMUNIZATION_FORMS
@@ -38,19 +42,28 @@ def _get_report_query(start_date, end_date, filtered_case_ids):
         "query": {
             "bool": {
                 "must": [
-                    {"range": {"form.meta.timeEnd": {"from": start_date, "to": end_date, "include_upper": False}}},
-                    {"term": {"doc_type": "xforminstance"}},
-                ],
-                "should": [
-                    {"terms": {"xmlns.exact": CASE_FORM_SCRIPT_FILTER_NAMESPACES}},
-                    {"range": {"form.visits": {"gte": 1, "lte": 4}}}
+                    {"range": {"form.meta.timeEnd": {"from": start_date, "to": end_date, "include_upper": True}}},
+                    {"term": {"doc_type": "xforminstance"}}
                 ]
             }
         },
         "filter": {
             "and": [
                 {"not": {"missing": {"field": "form.case.@case_id"}}},
-                {"terms": {"form.case.@case_id": filtered_case_ids}}
+                {"terms": {"form.case.@case_id": filtered_case_ids}},
+                {"script":{
+                    "script": """
+                    if (namespaces contains _source.xmlns) {
+                        return true;
+                    } else if (_source.form.?visits != "" && _source.form.?visits >= 1 && _source.form.?visits <= 4) {
+                        return true;
+                    }
+                    return false;
+                    """,
+                    "params": {
+                        "namespaces": CASE_FORM_SCRIPT_FILTER_NAMESPACES
+                    }
+                }}
             ]
         }
     }
@@ -108,6 +121,7 @@ class BaseReport(CustomProjectReport, ElasticProjectInspectionReport, ProjectRep
                  ProjectReportParametersMixin, MultiFormDrilldownMixin, DatespanMixin):
         emailable = False
         exportable = True
+        exportable_all = True
         asynchronous = True
         ajax_pagination = True
         include_inactive = True
@@ -125,7 +139,13 @@ class BaseReport(CustomProjectReport, ElasticProjectInspectionReport, ProjectRep
         @property
         def es_results(self):
             if not getattr(self, 'es_response', None):
-                self.es_query()
+                self.es_query(paginated=True)
+            return self.es_response
+
+        @property
+        def es_all_results(self):
+            if not getattr(self, 'es_response', None):
+                self.es_query(paginated=False)
             return self.es_response
 
         def _get_filtered_cases(self, start_date, end_date):
@@ -142,12 +162,11 @@ class BaseReport(CustomProjectReport, ElasticProjectInspectionReport, ProjectRep
 
             query = {
                 "query": {
-                    "range": {
-                        "modified_on": {
-                            "from": start_date,
-                            "to": end_date,
-                            "include_upper": False
-                        }
+                    "bool": {
+                        "must_not": [
+                            {"range": {"modified_on.date": {"lt": start_date}}},
+                            {"range": {"opened_on.date": {"gt": end_date}}}
+                        ]
                     }
                 },
                 "filter": {
@@ -172,10 +191,26 @@ class BaseReport(CustomProjectReport, ElasticProjectInspectionReport, ProjectRep
         def total_records(self):
             return int(self.es_results['hits']['total'])
 
+        def _make_link(self, url, label):
+            return '<a href="%s" target="_blank">%s</a>' % (url, label)
+
+        def _get_case_name_html(self, case, add_link):
+            case_name = get_property(case, "full_name", EMPTY_FIELD)
+            return self._make_link(
+                reverse('corehq.apps.reports.views.case_details', args=[self.domain, case._id]), case_name
+            ) if add_link else case_name
+
+        def _get_service_type_html(self, form, service_type, add_link):
+            return self._make_link(
+                reverse('corehq.apps.reports.views.form_data', args=[self.domain, form['_id']]), service_type
+            ) if add_link else service_type
+
 
 class McctProjectReview(BaseReport):
     name = 'mCCT Project Review Page'
     slug = 'mcct_project_review_page'
+    report_template_path = 'm4change/reviewStatus.html'
+    display_status = 'eligible'
 
     @property
     def headers(self):
@@ -193,7 +228,7 @@ class McctProjectReview(BaseReport):
                                         sortable=False, span=3))
         return headers
 
-    def es_query(self):
+    def es_query(self, paginated):
         if not getattr(self, 'es_response', None):
             range = self.request_params.get('range', None)
             start_date = None
@@ -219,30 +254,64 @@ class McctProjectReview(BaseReport):
 
             q["sort"] = self.get_sorting_block() \
                 if self.get_sorting_block() else [{"form.meta.timeEnd" : {"order": "desc"}}]
-            self.es_response = es_query(params={"domain.exact": self.domain}, q=q, es_url=ES_URLS.get('forms'),
-                                        start_at=self.pagination.start, size=self.pagination.count)
+
+            if paginated:
+                self.es_response = es_query(params={"domain.exact": self.domain}, q=q, es_url=ES_URLS.get('forms'),
+                                            start_at=self.pagination.start, size=self.pagination.count)
+            else:
+                self.es_response = es_query(params={"domain.exact": self.domain}, q=q, es_url=ES_URLS.get('forms'))
         return self.es_response
 
     @property
     def rows(self):
-            submissions = [res['_source'] for res in self.es_results.get('hits', {}).get('hits', [])]
-            for form in submissions:
-                data = calculate_form_data(self, form)
+        return self.make_rows(self.es_results, with_checkbox=True)
+
+    @property
+    def get_all_rows(self):
+        return self.make_rows(self.es_all_results, with_checkbox=False)
+
+    def make_rows(self, es_results, with_checkbox):
+        submissions = [res['_source'] for res in self.es_results.get('hits', {}).get('hits', [])]
+        for form in submissions:
+            data = calculate_form_data(self, form)
+            row = [
+                DateTimeProperty().wrap(form["form"]["meta"]["timeEnd"]).strftime("%Y-%m-%d"),
+                self._get_case_name_html(data.get('case'), with_checkbox),
+                self._get_service_type_html(form, data.get('service_type'), with_checkbox),
+                data.get('location_name'),
+                get_property(data.get('case'), "card_number", EMPTY_FIELD),
+                data.get('location_parent_name'),
+                get_property(data.get('case'), "phone_number", EMPTY_FIELD),
+                data.get('amount_due')
+            ]
+            if with_checkbox:
                 checkbox = mark_safe('<input type="checkbox" class="selected-element" '
                                      'data-bind="event: {change: updateSelection}" data-formid="%(form_id)s" '
                                      'data-caseid="%(case_id)s" data-servicetype="%(service_type)s"/>')
+                row.append(checkbox % dict(form_id=data.get('form_id'), case_id=data.get('case_id'),
+                                           service_type=data.get('service_type')))
+            else:
+                row.append(self.display_status)
+            yield row
 
-                yield [
-                    DateTimeProperty().wrap(form["form"]["meta"]["timeEnd"]).strftime("%Y-%m-%d"),
-                    get_property(data.get('case'), "full_name", EMPTY_FIELD),
-                    data.get('service_type'),
-                    data.get('location_name'),
-                    get_property(data.get('case'), "card_number", EMPTY_FIELD),
-                    data.get('location_parent_name'),
-                    get_property(data.get('case'), "phone_number", EMPTY_FIELD),
-                    data.get('amount_due'),
-                    checkbox % dict(form_id=data.get('form_id'), case_id=data.get('case_id'), service_type=data.get('service_type'))
-                ]
+    @property
+    def export_table(self):
+        headers = self.headers
+        headers.header.pop()
+        headers.header.append(DataTablesColumn(_("Status"), sortable=False))
+        table = headers.as_export_table
+        export_rows = self.get_all_rows
+        table.extend(export_rows)
+        return [[self.export_sheet_name, table]]
+
+    @property
+    @request_cache("export")
+    def export_response(self):
+        self.request.datespan = None
+        export_all_rows_task.delay(self.__class__, self.__getstate__())
+
+        return HttpResponse()
+
 
 class McctClientApprovalPage(McctProjectReview):
     name = 'mCCT client Approval Page'
@@ -250,7 +319,7 @@ class McctClientApprovalPage(McctProjectReview):
     report_template_path = 'm4change/approveStatus.html'
     display_status = 'reviewed'
 
-    def es_query(self):
+    def es_query(self, paginated):
         reviewed_form_ids = get_form_ids_by_status(self.domain, getattr(self, 'display_status', None))
         if len(reviewed_form_ids) > 0:
             if not getattr(self, 'es_response', None):
@@ -262,8 +331,11 @@ class McctClientApprovalPage(McctProjectReview):
                     q["filter"]["and"].append({"ids": {"values": reviewed_form_ids}})
 
                 q["sort"] = self.get_sorting_block() if self.get_sorting_block() else [{"form.meta.timeEnd" : {"order": "desc"}}]
-                self.es_response = es_query(params={"domain.exact": self.domain}, q=q, es_url=ES_URLS.get('forms'),
-                                            start_at=self.pagination.start, size=self.pagination.count)
+                if paginated:
+                    self.es_response = es_query(params={"domain.exact": self.domain}, q=q, es_url=ES_URLS.get('forms'),
+                                                start_at=self.pagination.start, size=self.pagination.count)
+                else:
+                    self.es_response = es_query(params={"domain.exact": self.domain}, q=q, es_url=ES_URLS.get('forms'))
         else:
             self.es_response = {'hits': {'total': 0}}
 
@@ -283,6 +355,65 @@ class McctRejectedClientPage(McctClientApprovalPage):
     report_template_path = 'm4change/activateStatus.html'
     display_status = 'rejected'
 
+    @property
+    def headers(self):
+        headers = DataTablesHeader(
+            DataTablesColumn(_("Date of service"), prop_name="form.meta.timeEnd"),
+            DataTablesColumn(_("Client Name"), sortable=False),
+            DataTablesColumn(_("Service Type"), sortable=False),
+            DataTablesColumn(_("Health Facility"), sortable=False),
+            DataTablesColumn(_("Card No."), sortable=False),
+            DataTablesColumn(_("LGA"), sortable=False),
+            DataTablesColumn(_("Phone No."), sortable=False),
+            DataTablesColumn(_("Amount"), sortable=False),
+            DataTablesColumn(_("Comment"), sortable=False),
+            DataTablesColumn(_("User"), sortable=False),
+            DataTablesColumn(mark_safe('Status/Action  <a href="#" class="select-all btn btn-mini btn-inverse">all</a> '
+                                       '<a href="#" class="select-none btn btn-mini btn-warning">none</a>'),
+                             sortable=False, span=3))
+        return headers
+
+    def make_rows(self, es_results, with_checkbox):
+        submissions = [res['_source'] for res in self.es_results.get('hits', {}).get('hits', [])]
+        for form in submissions:
+            data = calculate_form_data(self, form)
+            try:
+                status_data = McctStatus.objects.get(domain=self.domain, form_id=data.get('form_id'))
+                reason = status_data.reason
+            except McctStatus.DoesNotExist:
+                reason = None
+            row = [
+                DateTimeProperty().wrap(form["form"]["meta"]["timeEnd"]).strftime("%Y-%m-%d %H:%M"),
+                self._get_case_name_html(data.get('case'), with_checkbox),
+                self._get_service_type_html(form, data.get('service_type'), with_checkbox),
+                data.get('location_name'),
+                get_property(data.get('case'), "card_number", EMPTY_FIELD),
+                data.get('location_parent_name'),
+                get_property(data.get('case'), "phone_number", EMPTY_FIELD),
+                data.get('amount_due'),
+                REJECTION_REASON_DISPLAY_NAMES[reason] if reason is not None else '',
+                form["form"]["meta"]["username"]
+            ]
+            if with_checkbox:
+                checkbox = mark_safe('<input type="checkbox" class="selected-element" '
+                                     'data-bind="event: {change: updateSelection}" data-formid="%(form_id)s" '
+                                     'data-caseid="%(case_id)s" data-servicetype="%(service_type)s"/>')
+                row.append(checkbox % dict(form_id=data.get('form_id'), case_id=data.get('case_id'),
+                                           service_type=data.get('service_type')))
+            else:
+                row.insert(8, self.display_status)
+            yield row
+
+    @property
+    def export_table(self):
+        headers = self.headers
+        headers.header.insert(8, DataTablesColumn("Status", sortable=False))
+        headers.header.pop()
+        table = headers.as_export_table
+        export_rows = self.get_all_rows
+        table.extend(export_rows)
+        return [[self.export_sheet_name, table]]
+
 
 class McctClientLogPage(McctProjectReview):
     name = 'mCCT client Log Page'
@@ -301,10 +432,11 @@ class McctClientLogPage(McctProjectReview):
             DataTablesColumn(_("Phone No."), sortable=False),
             DataTablesColumn(_("Amount"), sortable=False),
             DataTablesColumn(_("Status"), sortable=False),
+            DataTablesColumn(_("Comment"), sortable=False),
             DataTablesColumn(_("User"), sortable=False))
         return headers
 
-    def es_query(self):
+    def es_query(self, paginated):
         if not getattr(self, 'es_response', None):
             date_tuple = _get_date_range(self.request_params.get('range', None))
             filtered_case_ids = self._get_filtered_cases(date_tuple[0], date_tuple[1])
@@ -320,32 +452,43 @@ class McctClientLogPage(McctProjectReview):
 
             q["sort"] = self.get_sorting_block() \
                 if self.get_sorting_block() else [{"form.meta.timeEnd": {"order": "desc"}}]
-            self.es_response = es_query(params={"domain.exact": self.domain}, q=q, es_url=ES_URLS.get('forms'),
-                                        start_at=self.pagination.start, size=self.pagination.count)
+            if paginated:
+                self.es_response = es_query(params={"domain.exact": self.domain}, q=q, es_url=ES_URLS.get('forms'),
+                                            start_at=self.pagination.start, size=self.pagination.count)
+            else:
+                self.es_response = es_query(params={"domain.exact": self.domain}, q=q, es_url=ES_URLS.get('forms'))
         return self.es_response
 
-    @property
-    def rows(self):
+    def make_rows(self, es_results, with_checkbox):
         submissions = [res['_source'] for res in self.es_results.get('hits', {}).get('hits', [])]
-
         for form in submissions:
             data = calculate_form_data(self, form)
             try:
-                status = McctStatus.objects.filter(domain=self.domain, form_id=data.get('form_id'))[:1].get().status
+                status_data = McctStatus.objects.get(domain=self.domain, form_id=data.get('form_id'))
+                status, reason = (status_data.status, status_data.reason)
             except McctStatus.DoesNotExist:
-                status = 'eligible'
-            yield [
+                status, reason = ('eligible', None)
+            row = [
                 DateTimeProperty().wrap(form["form"]["meta"]["timeEnd"]).strftime("%Y-%m-%d %H:%M"),
-                get_property(data.get('case'), "full_name", EMPTY_FIELD),
-                data.get('service_type'),
+                self._get_case_name_html(data.get('case'), with_checkbox),
+                self._get_service_type_html(form, data.get('service_type'), with_checkbox),
                 data.get('location_name'),
                 get_property(data.get('case'), "card_number", EMPTY_FIELD),
                 data.get('location_parent_name'),
                 get_property(data.get('case'), "phone_number", EMPTY_FIELD),
                 data.get('amount_due'),
                 status,
+                REJECTION_REASON_DISPLAY_NAMES[reason] if reason is not None else '',
                 form["form"]["meta"]["username"]
             ]
+            yield row
+
+    @property
+    def export_table(self):
+        table = self.headers.as_export_table
+        export_rows = self.get_all_rows
+        table.extend(export_rows)
+        return [[self.export_sheet_name, table]]
 
 
 class McctPaidClientsPage(McctClientApprovalPage):

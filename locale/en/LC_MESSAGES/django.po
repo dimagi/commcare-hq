@@ -15270,7 +15270,6 @@ msgstr ""
 "transferencia correcta."
 
 #: custom/reports/mc/reports/definitions.py:204
-#, fuzzy
 msgid ""
 "This APE did not perform a RDT on {number} patients with fever this week. "
 "Please contact them and find out why and provide supportive supervision on "

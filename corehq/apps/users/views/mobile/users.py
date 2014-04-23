@@ -745,15 +745,19 @@ class UserUploadStatusView(BaseManageCommCareUserView):
     page_title = ugettext_noop('Mobile Worker Upload Status')
 
     def get(self, request, *args, **kwargs):
-        context = {
+        context = super(UserUploadStatusView, self).main_context
+        context.update({
             'domain': self.domain,
             'download_id': kwargs['download_id'],
             'poll_url': reverse('user_upload_job_poll', args=[self.domain, kwargs['download_id']]),
             'title': _("Mobile Worker Upload Status"),
             'progress_text': _("Importing your data. This may take some time..."),
             'error_text': _("Problem importing data! Please try again or report an issue."),
-        }
+        })
         return render(request, 'hqwebapp/soil_status_full.html', context)
+
+    def page_url(self):
+        return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
 
 
 @require_can_edit_commcare_users

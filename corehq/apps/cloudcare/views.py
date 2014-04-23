@@ -150,12 +150,12 @@ def form_context(request, domain, app_id, module_id, form_id):
     case_id = request.GET.get('case_id')
 
     # make the name for the session we will use with the case and form
-    session_name = '{app} > {form}'.format(
+    session_name = u'{app} > {form}'.format(
         app=app.name,
         form=app.get_module(module_id).forms[int(form_id)].name.values()[0]
     )
     if case_id:
-        session_name = '{0} - {1}'.format(session_name, CommCareCase.get(case_id).name)
+        session_name = u'{0} - {1}'.format(session_name, CommCareCase.get(case_id).name)
 
     delegation = request.GET.get('task-list') == 'true'
     offline = request.GET.get('offline') == 'true'

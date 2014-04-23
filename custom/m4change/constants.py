@@ -1,5 +1,9 @@
+from django.utils.translation import ugettext_lazy as _
 
 M4CHANGE_DOMAINS = ('m4change', 'test-pathfinder')
+
+MOTHER_CASE_TYPE = "pregnant_mother"
+CHILD_CASE_TYPE = "child"
 
 M4CHANGE_LIVE_FOLLOW_UP_FORM_XMLNS = 'http://openrosa.org/formdesigner/56189892f7d8b3087d98b7599e0574f8e2031da6'
 M4CHANGE_LIVE_BOOKING_FORM_XMLNS = 'http://openrosa.org/formdesigner/B4FD1933-C925-4FD3-A17A-9FB4A8727BA7'
@@ -60,3 +64,9 @@ PNC_CHILD_IMMUNIZATION_AND_REG_HOME_DELIVERED_FORMS = PNC_CHILD_IMMUNIZATION_FOR
                                                       REG_HOME_DELIVERED_INFANT_FORM_XMLNS
 
 EMPTY_FIELD = "---"
+
+REJECTION_REASON_DISPLAY_NAMES = {
+    "phone_number": _("Incorrect phone number"),
+    "double": _("Double entry"),
+    "other": _("Other errors")
+}

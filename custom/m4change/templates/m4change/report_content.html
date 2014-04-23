@@ -6,13 +6,13 @@
 
 {% block pretable %}
     <div id="logo-top" class="row-fluid">
-        <div class="span3">
+        <div class="span3" id="logo-top-left">
             <img src="{% static 'm4change/images/SurePLogo.jpg' %}" alt="sure_p_logo"/>
         </div>
-        <div class="span6">
+        <div class="span6" id="logo-title">
             {{ block.super }}
         </div>
-        <div class="span3">
+        <div class="span3" id="logo-top-right">
             <img src="{% static 'm4change/images/NigeriaCoatofArms.png' %}" alt="nigeria_coat_of_arms"/>
         </div>
     </div>
