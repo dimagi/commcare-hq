@@ -2,7 +2,7 @@ from django.conf import settings
 settings.configure(DEBUG=True, SQL_REPORTING_DATABASE_URL="postgresql://postgres:postgres@localhost/fluff_test")
 
 import sqlalchemy
-from fluff.signals import create_update_indicator_table
+from fluff.signals import rebuild_table
 
 if not settings.configured:
     settings.configure(DEBUG=True)
@@ -83,8 +83,8 @@ class Test(TestCase):
         MockIndicatorsWithGetters.set_db(self.fakedb)
         MockDoc.set_db(self.fakedb)
 
-        create_update_indicator_table(MockIndicatorsSql, None)
-        create_update_indicator_table(MockIndicatorsSqlWithFlatFields, None)
+        rebuild_table(None, MockIndicatorsSql)
+        rebuild_table(None, MockIndicatorsSqlWithFlatFields)
 
     def tearDown(self):
         with self.engine.begin() as connection:
