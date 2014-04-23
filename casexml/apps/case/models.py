@@ -1046,13 +1046,13 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin,
                         },
                         {
                             "expr": "user_id",
-                            "name": _("User ID"),
-                            "format": '<span data-field="user_id">{0}</span>',
+                            "name": _("Last Submitter"),
+                            "process": 'doc_info',
                         },
                         {
                             "expr": "owner_id",
-                            "name": _("Owner ID"),
-                            "format": '<span data-field="owner_id">{0}</span>',
+                            "name": _("Owner"),
+                            "process": 'doc_info',
                         },
                         {
                             "expr": "_id",
