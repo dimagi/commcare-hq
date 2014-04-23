@@ -1,3 +1,4 @@
+from functools import partial
 import pprint
 import sqlalchemy
 import logging
@@ -8,6 +9,7 @@ from django.db.models import signals
 from pillowtop.utils import import_pillow_string
 from alembic.migration import MigrationContext
 from alembic.autogenerate import compare_metadata
+from fluff.util import metadata as fluff_metadata
 
 logger = logging.getLogger('fluff')
 
@@ -21,40 +23,47 @@ def catch_signal(app, **kwargs):
     app_name = app.__name__.rsplit('.', 1)[0]
     if app_name == 'fluff':
         from fluff import FluffPillow
-
+        table_pillow_map = {}
         pillows = list(chain.from_iterable(settings.PILLOWTOPS.values()))
         for pillow_string in pillows:
             pillow_class = import_pillow_string(pillow_string, instantiate=False)
             if issubclass(pillow_class, FluffPillow):
-                doc_class = pillow_class.indicator_class
-                create_update_indicator_table(doc_class, pillow_class)
+                doc = pillow_class.indicator_class()
+                if doc.save_direct_to_sql:
+                    table_pillow_map[doc._table.name] = {
+                        'doc': doc,
+                        'pillow': pillow_class
+                    }
+
+        print '\tchecking fluff SQL tables for schema changes'
+        migration_context = get_migration_context(table_pillow_map.keys())
+        diffs = compare_metadata(migration_context, fluff_metadata)
+        tables_to_rebuild = get_tables_to_rebuild(diffs, table_pillow_map)
+
+        for table in tables_to_rebuild:
+            info = table_pillow_map[table]
+            rebuild_table(info['pillow'], info['doc'])
 
 
-def create_update_indicator_table(doc_class, pillow_class):
-    doc = doc_class()
-    if doc.save_direct_to_sql:
-        try:
-            check_table(doc)
-        except RebuildTableException:
-            rebuild_table(pillow_class, doc)
+def get_tables_to_rebuild(diffs, table_pillow_map):
+    table_names = table_pillow_map.keys()
 
-
-def check_table(indicator_doc):
     def check_diff(diff):
         if diff[0] in ('add_table', 'remove_table'):
-            if diff[1].name == table_name:
-                raise RebuildTableException()
-        elif diff[2] == table_name:
-            raise RebuildTableException()
+            if diff[1].name in table_names:
+                return diff[1].name
+        elif diff[2] in table_names:
+            return diff[2]
 
-    table_name = indicator_doc._table.name
-    diffs = compare_metadata(get_migration_context(), indicator_doc._table.metadata)
-    for diff in diffs:
-        if isinstance(diff, list):
-            for d in diff:
-                check_diff(d)
-        else:
-            check_diff(diff)
+    def yield_diffs(diff_list):
+        for diff in diffs:
+            if isinstance(diff, list):
+                for d in diff:
+                    yield check_diff(d)
+            else:
+                yield check_diff(diff)
+
+    return [table for table in yield_diffs(diffs) if table]
 
 
 def rebuild_table(pillow_class, indicator_doc):
@@ -70,10 +79,15 @@ def rebuild_table(pillow_class, indicator_doc):
         pillow_class().reset_checkpoint()
 
 
-def get_migration_context():
-    if not hasattr(get_migration_context, '_mc') or get_migration_context._mc is None:
-        get_migration_context._mc = MigrationContext.configure(get_engine().connect())
-    return get_migration_context._mc
+def get_migration_context(table_names):
+    opts = {
+        'include_symbol': partial(include_symbol, table_names),
+    }
+    return MigrationContext.configure(get_engine().connect(), opts=opts)
+
+
+def include_symbol(names_to_include, table_name, schema):
+    return table_name in names_to_include
 
 
 def get_engine():
