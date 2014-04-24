@@ -2014,6 +2014,8 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
 
     def update_feature(self, feature, current_state, new_state):
         if current_state != new_state:
+            if feature.save_fn is not None:
+                feature.save_fn(self.domain, new_state)
             slug = feature.slug
             toggle = self.get_toggle(slug)
             item = '{0}:{1}'.format(NAMESPACE_DOMAIN, self.domain)
