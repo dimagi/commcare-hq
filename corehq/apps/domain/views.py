@@ -543,6 +543,11 @@ class DomainSubscriptionView(DomainAccountingSettings):
     page_title = ugettext_noop("Current Subscription")
 
     @property
+    def can_purchase_credits(self):
+        return (toggles.ACCOUNTING_PREVIEW.enabled(self.request.user.username)
+                or toggles.ACCOUNTING_PREVIEW.enabled(self.domain))
+
+    @property
     def plan(self):
         plan_version, subscription = Subscription.get_subscribed_plan_by_domain(self.domain_object)
         products = self.get_product_summary(plan_version, subscription)
@@ -605,6 +610,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
                 'name': product_rate.product.product_type,
                 'monthly_fee': _("USD %s /month") % product_rate.monthly_fee,
                 'credit': None,
+                'type': product_rate.product.product_type,
             }
             if subscription is not None:
                 credit_lines = CreditLine.get_credits_by_subscription_and_features(
@@ -622,6 +628,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
                 'usage': usage,
                 'remaining': feature_rate.monthly_limit - usage,
                 'credit': self._fmt_credit(),
+                'type': feature_rate.feature.feature_type,
             }
             if subscription is not None:
                 credit_lines = CreditLine.get_credits_by_subscription_and_features(
@@ -636,6 +643,10 @@ class DomainSubscriptionView(DomainAccountingSettings):
         return {
             'plan': self.plan,
             'change_plan_url': reverse(SelectPlanView.urlname, args=[self.domain]),
+            'can_purchase_credits': self.can_purchase_credits,
+            'process_payment_url': reverse(CreditsStripePaymentView.urlname,
+                                           args=[self.domain]),
+            'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
         }
 
 
