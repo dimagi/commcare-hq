@@ -139,6 +139,10 @@
                             The case tag referenced in the auto-select expression of "{{ error.case_tag }}" was not found
                             {% if not not_actual_build %}in form {% include "app_manager/partials/form_error_message.html" %}{% endif %}
                         {% endif %}
+                        {% if error.type == "no case type in action" %}
+                            The form action "{{ error.case_tag }}" does not have a case type selected
+                            {% if not not_actual_build %}in form {% include "app_manager/partials/form_error_message.html" %}{% endif %}
+                        {% endif %}
                         {# And then show the optional `message` regardless #}
                         <span>{{ error.message }}</span>
                     </span>

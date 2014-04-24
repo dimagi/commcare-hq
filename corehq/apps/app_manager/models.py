@@ -1476,6 +1476,9 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             ))
 
         for action in self.actions.get_all_actions():
+            if not action.case_type and (not isinstance(action, LoadUpdateAction) or not action.auto_select):
+                errors.append({'type': "no case type in action", 'case_tag': action.case_tag})
+
             errors.extend(self.check_case_properties(
                 all_names=action.get_property_names(),
                 case_tag=action.case_tag

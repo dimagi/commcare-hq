@@ -1081,7 +1081,6 @@ class XForm(WrappedNode):
                 raise CaseError("Case type (%s) for form (%s) does not exist" % (action.case_type, form.default_name()))
 
         for action in form.actions.load_update_cases:
-            check_case_type(action)
             session_case_id = CaseIDXPath(session_var(action.case_session_var))
             if action.preload:
                 self.add_casedb()
