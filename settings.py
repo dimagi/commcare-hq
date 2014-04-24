@@ -869,6 +869,7 @@ COUCHDB_APPS = [
     'fri',
     'crs_reports',
     'grapevine',
+    'uth',
 
     # custom reports
     'penn_state',

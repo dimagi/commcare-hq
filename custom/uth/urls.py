@@ -4,5 +4,5 @@ from custom.uth.views import ImageUploadView
 
 urlpatterns = patterns(
     'custom.uth.views',
-    url(r'^upload_images/$', ImageUploadView.as_view(), name=ImageUploadView.urlname)
+    url(r'^vscan_upload', ImageUploadView.as_view(), name='vscan_upload'),
 )
