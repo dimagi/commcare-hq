@@ -1,4 +1,5 @@
 from numbers import Number
+from custom.opm.opm_reports.constants import InvalidRow
 
 
 def calc_percentage(num, denom):
@@ -69,16 +70,15 @@ class HealthStatus(object):
 
 
 
-    def __init__(self, worker, report, basic_info=None, sql_data=None):
+    def __init__(self, user, report, basic_info=None, sql_data=None):
 
-        # make sure worker passes the filters
-        report.filter(
-            lambda key: worker.user_data.get(key),
-            # user.awc, user.block
-            [('awc', 'awcs'), ('block', 'blocks')]
-        )
-
-        self.awc = worker.user_data.get('awc', "Invalid AWC name")
+        # # make sure worker passes the filters
+        # report.filter(
+        #     lambda key: user.user_data.get(key),
+        #     # user.awc, user.block
+        #     [('awc', 'awcs'), ('block', 'blocks')]
+        # )
+        self.awc = user['user_data']['awc']
         if basic_info:
             ben = basic_info.get('beneficiaries_registered_total', 0)
             child_num = basic_info.get('children_total', 0)
