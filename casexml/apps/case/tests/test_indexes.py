@@ -1,4 +1,5 @@
 from xml.etree import ElementTree
+import datetime
 from casexml.apps.case import settings
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
@@ -83,11 +84,13 @@ class IndexTest(TestCase):
 
         # Step 2. Update the case to delete <mom> and create <dad>
 
+        now = datetime.datetime.utcnow()
         update_index = CaseBlock(
             case_id=CASE_ID,
             user_id=USER_ID,
             index={'mom': ('mother-case', ''), 'dad': ('father-case', FATHER_CASE_ID)},
-            version=V2
+            version=V2,
+            date_modified=now,
         ).as_xml(format_datetime=json_format_datetime)
 
         update_index_expected = CaseBlock(
@@ -96,7 +99,8 @@ class IndexTest(TestCase):
             owner_id=USER_ID,
             create=True,
             index={'dad': ('father-case', FATHER_CASE_ID)},
-            version=V2
+            version=V2,
+            date_modified=now,
         ).as_xml(format_datetime=json_format_datetime)
 
         post_case_blocks([update_index])
@@ -105,11 +109,13 @@ class IndexTest(TestCase):
 
         # Step 3. Put <mom> back
 
+        now = datetime.datetime.utcnow()
         update_index = CaseBlock(
             case_id=CASE_ID,
             user_id=USER_ID,
             index={'mom': ('mother-case', MOTHER_CASE_ID)},
-            version=V2
+            version=V2,
+            date_modified=now,
         ).as_xml(format_datetime=json_format_datetime)
 
         update_index_expected = CaseBlock(
@@ -119,7 +125,8 @@ class IndexTest(TestCase):
             create=True,
             index={'mom': ('mother-case', MOTHER_CASE_ID),
                    'dad': ('father-case', FATHER_CASE_ID)},
-            version=V2
+            version=V2,
+            date_modified=now,
         ).as_xml(format_datetime=json_format_datetime)
 
         post_case_blocks([update_index])
