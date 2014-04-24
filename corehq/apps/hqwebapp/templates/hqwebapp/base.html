@@ -173,7 +173,7 @@
                     <a class="close" data-dismiss="modal">&times;</a>
                     <h3>{% trans "Report an Issue with CommCare HQ" %}</h3>
                 </div>
-                <form id="hqwebapp-bugReportForm" class="form-horizontal" action="{% url "bug_report" %}" method="post">
+                <form id="hqwebapp-bugReportForm" class="form-horizontal" action="{% url "bug_report" %}" method="post" enctype="multipart/form-data">
                     <input type="hidden" id="bug-report-url" name="url"/>
                     <input type="hidden" id="bug-report-username" name="username" value="{{ user.username }}"/>
                     <input type="hidden" id="bug-report-domain" name="domain" value="{{ domain }}"/>
@@ -204,6 +204,12 @@
                                     <div class="alert fade in page-level-alert alert-error">
                                         <a class="close" data-dismiss="alert" href="#">×</a>{% trans "Please enter valid comma-separated email-list." %}
                                     </div>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label for="file" class="control-label">{% trans 'Upload file' %}</label>
+                                <div class="controls">
+                                    <input type="file" name="report_issue"/>
                                 </div>
                             </div>
                         </fieldset>
