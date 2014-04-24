@@ -83,8 +83,3 @@ REMINDERS_UI_PREVIEW = StaticToggle(
     'reminders_ui_preview',
     'New reminders UI'
 )
-
-FEATURE_PREVIEWS = StaticToggle(
-    'feature_previews',
-    'Feature Previews',
-)
