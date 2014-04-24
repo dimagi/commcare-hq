@@ -17,7 +17,7 @@ from corehq.apps.domain.views import (
     EditExistingBillingAccountView, DomainBillingStatementsView,
     BillingStatementPdfView, CommTrackSettingsView, OrgSettingsView,
     FeaturePreviewsView, ConfirmSubscriptionRenewalView,
-    InvoiceStripePaymentView,
+    InvoiceStripePaymentView, CreditsStripePaymentView,
 )
 
 #
@@ -92,6 +92,8 @@ domain_settings = patterns(
     url(r'^subscription/change/account/$', ConfirmBillingAccountInfoView.as_view(),
         name=ConfirmBillingAccountInfoView.urlname),
     url(r'^subscription/pro_bono/$', ProBonoView.as_view(), name=ProBonoView.urlname),
+    url(r'^subscription/credits/make_payment/$', CreditsStripePaymentView.as_view(),
+        name=CreditsStripePaymentView.urlname),
     url(r'^billing/statements/download/(?P<statement_id>[\w-]+).pdf$',
         BillingStatementPdfView.as_view(),
         name=BillingStatementPdfView.urlname

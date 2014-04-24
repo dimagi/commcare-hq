@@ -13,7 +13,9 @@ from corehq.apps.accounting.decorators import (
     require_billing_admin, requires_privilege_with_fallback,
 )
 from corehq.apps.accounting.exceptions import PaymentRequestError
-from corehq.apps.accounting.payment_handlers import PaymentHandler
+from corehq.apps.accounting.payment_handlers import (
+    InvoiceStripePaymentHandler, CreditStripePaymentHandler,
+)
 from corehq.apps.accounting.subscription_changes import DomainDowngradeStatusHandler
 from corehq.apps.accounting.forms import EnterprisePlanContactForm
 from corehq.apps.accounting.utils import get_change_status, get_privileges, fmt_dollar_amount, quantize_accounting_decimal
@@ -799,25 +801,12 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
         return super(DomainBillingStatementsView, self).dispatch(request, *args, **kwargs)
 
 
-class InvoiceStripePaymentView(DomainAccountingSettings):
-    urlname = 'domain_invoice_payment'
+class BaseStripePaymentView(DomainAccountingSettings):
     http_method_names = ['post']
-    payment_method_type = PaymentMethodType.STRIPE
 
     @property
-    @memoized
-    def invoice(self):
-        try:
-            invoice_id = self.request.POST['invoice_id']
-        except IndexError:
-            raise PaymentRequestError("invoice_id is required")
-        try:
-            return Invoice.objects.get(pk=invoice_id)
-        except Invoice.DoesNotExist:
-            raise PaymentRequestError(
-                "Could not find a matching invoice for invoice_id '%s'"
-                % invoice_id
-            )
+    def account(self):
+        raise NotImplementedError("you must impmement the property account")
 
     @property
     @memoized
@@ -828,7 +817,7 @@ class InvoiceStripePaymentView(DomainAccountingSettings):
             )
             # verify that this admin is still tied to the account for
             # the invoice
-            if not self.invoice.subscription.account.billing_admins.filter(
+            if not self.account.billing_admins.filter(
                     pk=admin.pk).exists():
                 raise PaymentRequestError(
                     "The billing admin provided is not an account admin for "
@@ -841,23 +830,25 @@ class InvoiceStripePaymentView(DomainAccountingSettings):
                 "logged in user."
             )
 
-    @property
-    @memoized
-    def payment_method(self):
+    def get_or_create_payment_method(self):
         return PaymentMethod.objects.get_or_create(
-            account=self.invoice.subscription.account,
+            account=self.account,
             billing_admin=self.billing_admin,
-            method_type=self.payment_method_type,
+            method_type=PaymentMethodType.STRIPE,
         )[0]
+
+    def get_payment_handler(self):
+        """Returns a StripePaymentHandler object
+        """
+        raise NotImplementedError("You must impmenent get_payment_handler()")
 
     @method_decorator(toggles.ACCOUNTING_PREVIEW.required_decorator())
     def dispatch(self, request, *args, **kwargs):
-        return super(InvoiceStripePaymentView, self).dispatch(request, *args, **kwargs)
+        return super(BaseStripePaymentView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         try:
-            payment_handler = PaymentHandler.create(self.payment_method,
-                                                    self.invoice)
+            payment_handler = self.get_payment_handler()
             response = payment_handler.process_request(request)
         except PaymentRequestError as e:
             accounting_logger.error(
@@ -879,6 +870,55 @@ class InvoiceStripePaymentView(DomainAccountingSettings):
                 }
             }
         return json_response(response)
+
+
+class CreditsStripePaymentView(BaseStripePaymentView):
+    urlname = 'domain_credits_payment'
+
+    @property
+    @memoized
+    def account(self):
+        return BillingAccount.get_or_create_account_by_domain(
+            self.domain, created_by=self.request.user.username,
+            account_type=BillingAccountType.USER_CREATED,
+        )[0]
+
+    def get_payment_handler(self):
+        return CreditStripePaymentHandler(
+            self.get_or_create_payment_method(),
+            self.account,
+            subscription=Subscription.get_subscribed_plan_by_domain(self.domain_object)[1],
+            product_type=self.request.POST.get('product'),
+            feature_type=self.request.POST.get('feature'),
+        )
+
+
+class InvoiceStripePaymentView(BaseStripePaymentView):
+    urlname = 'domain_invoice_payment'
+
+    @property
+    @memoized
+    def invoice(self):
+        try:
+            invoice_id = self.request.POST['invoice_id']
+        except IndexError:
+            raise PaymentRequestError("invoice_id is required")
+        try:
+            return Invoice.objects.get(pk=invoice_id)
+        except Invoice.DoesNotExist:
+            raise PaymentRequestError(
+                "Could not find a matching invoice for invoice_id '%s'"
+                % invoice_id
+            )
+
+    @property
+    def account(self):
+        return self.invoice.subscription.account
+
+    def get_payment_handler(self):
+        return InvoiceStripePaymentHandler(
+            self.get_or_create_payment_method(), self.invoice
+        )
 
 
 class BillingStatementPdfView(View):
