@@ -13,7 +13,9 @@ from corehq.apps.accounting.exceptions import LineItemError, InvoiceError, Invoi
 from corehq.apps.accounting.models import (
     LineItem, FeatureType, Invoice, DefaultProductPlan, Subscriber,
     Subscription, BillingAccount, SubscriptionAdjustment,
-    SubscriptionAdjustmentMethod, BillingRecord, InvoicePdf, BillingContactInfo, SoftwarePlanEdition)
+    SubscriptionAdjustmentMethod, BillingRecord,
+    BillingContactInfo, SoftwarePlanEdition, CreditLine,
+)
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.users.models import CommCareUser
 
@@ -136,6 +138,14 @@ class DomainInvoiceFactory(object):
             self.create_invoice_for_subscription(subscription)
 
     def create_invoice_for_subscription(self, subscription):
+        if subscription.auto_generate_credits:
+            for product_rate in subscription.plan_version.product_rates:
+                CreditLine.add_credit(
+                    product_rate.monthly_fee,
+                    subscription=subscription,
+                    product_type=product_rate.product.product_type,
+                )
+
         days_until_due = DEFAULT_DAYS_UNTIL_DUE
         if subscription.date_delay_invoicing is not None:
             td = subscription.date_delay_invoicing - self.date_end

@@ -703,6 +703,7 @@ class Subscription(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=False)
     do_not_invoice = models.BooleanField(default=False)
+    auto_generate_credits = models.BooleanField(default=False)
 
     def __str__(self):
         return ("Subscription to %(plan_version)s for %(subscriber)s. "
@@ -771,6 +772,7 @@ class Subscription(models.Model):
 
     def update_subscription(self, date_end=None, date_delay_invoicing=None,
                             do_not_invoice=False, salesforce_contract_id=None,
+                            auto_generate_credits=False,
                             web_user=None, note=None, adjustment_method=None):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
@@ -782,6 +784,7 @@ class Subscription(models.Model):
             self.date_delay_invoicing = date_delay_invoicing
 
         self.do_not_invoice = do_not_invoice
+        self.auto_generate_credits = auto_generate_credits
         self.salesforce_contract_id = salesforce_contract_id
         self.save()
 

@@ -270,6 +270,9 @@ class SubscriptionForm(forms.Form):
     do_not_invoice = forms.BooleanField(
         label=_("Do Not Invoice"), required=False
     )
+    auto_generate_credits = forms.BooleanField(
+        label=_("Auto-generate Plan Credits"), required=False
+    )
 
     def __init__(self, subscription, account_id, web_user, *args, **kwargs):
         # account_id is not referenced if subscription is not None
@@ -349,6 +352,7 @@ class SubscriptionForm(forms.Form):
             self.fields['domain'].initial = subscription.subscriber.domain
             self.fields['salesforce_contract_id'].initial = subscription.salesforce_contract_id
             self.fields['do_not_invoice'].initial = subscription.do_not_invoice
+            self.fields['auto_generate_credits'].initial = subscription.auto_generate_credits
 
             if (subscription.date_start is not None
                 and subscription.date_start <= today):
@@ -409,6 +413,7 @@ class SubscriptionForm(forms.Form):
                 domain_field,
                 'salesforce_contract_id',
                 'do_not_invoice',
+                'auto_generate_credits',
             ),
             FormActions(
                 crispy.ButtonHolder(
@@ -444,6 +449,7 @@ class SubscriptionForm(forms.Form):
         salesforce_contract_id = self.cleaned_data['salesforce_contract_id']
         is_active = is_active_subscription(date_start, date_end)
         do_not_invoice = self.cleaned_data['do_not_invoice']
+        auto_generate_credits = self.cleaned_data['auto_generate_credits']
         return Subscription.new_domain_subscription(
             account, domain, plan_version,
             date_start=date_start,
@@ -452,6 +458,7 @@ class SubscriptionForm(forms.Form):
             salesforce_contract_id=salesforce_contract_id,
             is_active=is_active,
             do_not_invoice=do_not_invoice,
+            auto_generate_credits=auto_generate_credits,
             web_user=self.web_user,
         )
 
@@ -460,6 +467,7 @@ class SubscriptionForm(forms.Form):
             date_end=self.cleaned_data['end_date'],
             date_delay_invoicing=self.cleaned_data['delay_invoice_until'],
             do_not_invoice=self.cleaned_data['do_not_invoice'],
+            auto_generate_credits=self.cleaned_data['auto_generate_credits'],
             salesforce_contract_id=self.cleaned_data['salesforce_contract_id'],
             web_user=self.web_user
         )
