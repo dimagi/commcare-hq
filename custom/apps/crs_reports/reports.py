@@ -1,4 +1,3 @@
-from couchdbkit import ResourceNotFound
 from django.utils.translation import ugettext_noop
 from django.utils import html
 from casexml.apps.case.models import CommCareCase
@@ -19,12 +18,27 @@ from dimagi.utils.timezones import utils as tz_utils
 def visit_completion_counter(case):
     mother_counter = 0
     child_counter = 0
-    baby_case = [c for c in case.get_subcases().all() if c.type == 'baby']
+    case_obj = CommCareCase.get(case['_id'])
+    baby_case = [c for c in case_obj.get_subcases().all() if c.type == 'baby']
     for i in range(1, 8):
-        if "pp_%s_done" % i in case and case["pp_%s_done" % i] == 1:
-            mother_counter += 1
-        if baby_case and "bb_pp_%s_done" % i in baby_case[0] and baby_case[0]["bb_pp_%s_done" % i] == 1:
-            child_counter += 1
+        if "pp_%s_done" % i in case:
+            val = case["pp_%s_done" % i]
+            try:
+                if val.lower() == 'yes':
+                    mother_counter += 1
+                elif int(float(val)) == 1:
+                    mother_counter += 1
+            except ValueError:
+                pass
+        if baby_case and "bb_pp_%s_done" % i in baby_case[0]:
+            val = baby_case[0]["bb_pp_%s_done" % i]
+            try:
+                if val.lower() == 'yes':
+                    child_counter += 1
+                elif int(float(val)) == 1:
+                    child_counter += 1
+            except ValueError:
+                pass
 
     return mother_counter if mother_counter > child_counter else child_counter
 
@@ -57,7 +71,7 @@ class HNBCReportDisplay(CaseDisplay):
 
     @property
     def case_link(self):
-        case_id, case_name = self.case['_id'], self.case['name']
+        case_id, case_name = self.case['_id'], self.case['mother_name']
         try:
             return html.mark_safe("<a class='ajax_dialog' href='%s'>%s</a>" % (
                 html.escape(reverse('crs_details_report', args=[self.report.domain, case_id, self.report.slug])),
@@ -96,10 +110,10 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
     @property
     def headers(self):
         headers = DataTablesHeader(
-            DataTablesColumn(_("Mother Name"), prop_name="name.exact"),
+            DataTablesColumn(_("Mother Name"), prop_name="mother_name.#value"),
             DataTablesColumn(_("Baby Name"), sortable=False),
             DataTablesColumn(_("CHW Name"), prop_name="owner_display", sortable=False),
-            DataTablesColumn(_("Date of Delivery"),  prop_name="date_birth"),
+            DataTablesColumn(_("Date of Delivery"),  prop_name="date_birth.#value"),
             DataTablesColumn(_("PNC Visit Completion"), sortable=False),
             DataTablesColumn(_("Delivery"), prop_name="place_birth"),
         )
