@@ -8,21 +8,23 @@ from django.utils.translation import ugettext as _
 from corehq import Domain
 from corehq.apps.commtrack.util import get_commtrack_location_id
 from corehq.apps.locations.models import Location
-from custom.m4change.constants import M4CHANGE_DOMAINS
+from custom.m4change.constants import M4CHANGE_DOMAINS, NUMBER_OF_MONTHS_FOR_FIXTURES
 from custom.m4change.models import FixtureReportResult
 from custom.m4change.reports.reports import M4ChangeReportDataSource
 
 
-def get_last_n_full_months(months):
+def get_last_n_months(months):
     ranges = []
     today = datetime.utcnow()
-    for month in range(1, months + 1):
+    for month in range(months):
         month_start = datetime(today.year, today.month, 1) - relativedelta(months=month)
-        last_day_of_month = calendar.monthrange(month_start.year, month_start.month)[1]
+        last_day_of_month = get_last_day_of_month(month_start, today)
         month_end = datetime(month_start.year, month_start.month, last_day_of_month)
         ranges.insert(0, (month_start, month_end))
     return ranges
 
+def get_last_day_of_month(month_start, today):
+    return today.day if month_start.month == today.month else calendar.monthrange(month_start.year, month_start.month)[1]
 
 def generator(user, version, last_sync):
     if user.domain in M4CHANGE_DOMAINS:
@@ -44,7 +46,7 @@ class ReportFixtureProvider(object):
     def __init__(self, id, user, domain, location_id):
         self.id = id
         self.user = user
-        self.dates = get_last_n_full_months(2)
+        self.dates = get_last_n_months(NUMBER_OF_MONTHS_FOR_FIXTURES)
         self.domain = domain
         self.location_id = location_id
 
@@ -52,28 +54,30 @@ class ReportFixtureProvider(object):
         """
         Generate a fixture representation of the indicator set. Something like the following:
         <fixture id="indicators:m4change-mobile" user_id="4ce8b1611c38e953d3b3b84dd3a7ac18">
-            <monthly-report startdate="2013-02-01" enddate="2013-03-01">
-                <facility id="4ce8b1611c38e953d3b3b84dd3a7ac19" name="Facility 1">
-                    <report id="facility_anc_hmis_report" name="Facility ANC HMIS Report">
-                        <columns>
-                            <column name="HMIS Code" />
-                            <column name="Data Point" />
-                            <column name="Total" />
-                        </columns>
-                        <rows>
-                            <row>
-                                <field value="03" />
-                                <field value="Antenatal Attendance - Total" />
-                                <field value="0" />
-                            </row>
-                            <!-- ... -->
-                        </rows>
-                    </report>
+            <monthly-reports>
+                <monthly-report startdate="2014-03-01" enddate="2014-03-31" month_year_label="Mar 2014">
+                    <facility id="4ce8b1611c38e953d3b3b84dd3a7ac19" name="Facility 1">
+                        <report id="facility_anc_hmis_report" name="Facility ANC HMIS Report">
+                            <columns>
+                                <column name="HMIS Code" />
+                                <column name="Data Point" />
+                                <column name="Total" />
+                            </columns>
+                            <rows>
+                                <row>
+                                    <field value="03" />
+                                    <field value="Antenatal Attendance - Total" />
+                                    <field value="0" />
+                                </row>
+                                <!-- ... -->
+                            </rows>
+                        </report>
+                        <!-- ... -->
+                    </facility>
                     <!-- ... -->
-                </facility>
+                </monthly-report>
                 <!-- ... -->
-            </monthly-report>
-            <!-- ... -->
+            </monthly-reports>
         </fixture>
         """
         def _reports_to_fixture(data, facility_element):
