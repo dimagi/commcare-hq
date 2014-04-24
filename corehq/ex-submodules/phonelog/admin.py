@@ -25,3 +25,4 @@ class DeviceReportEntryAdmin(admin.ModelAdmin):
 
 
 admin.site.register(DeviceReportEntry, DeviceReportEntryAdmin)
+admin.site.register(UserEntry)
