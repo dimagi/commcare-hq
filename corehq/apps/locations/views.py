@@ -1,3 +1,4 @@
+import copy
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_POST
@@ -135,6 +136,11 @@ class NewLocationView(BaseLocationView):
 
     @property
     @memoized
+    def metadata(self):
+        return copy.copy(dict(self.location.metadata))
+
+    @property
+    @memoized
     def location_form(self):
         if self.request.method == 'POST':
             return LocationForm(self.location, self.request.POST)
@@ -146,6 +152,7 @@ class NewLocationView(BaseLocationView):
             'form': self.location_form,
             'location': self.location,
             'consumption': self.consumption,
+            'metadata': self.metadata
         }
 
     def post(self, request, *args, **kwargs):
