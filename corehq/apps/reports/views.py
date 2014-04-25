@@ -18,15 +18,18 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import (require_http_methods,
     require_POST)
-
 from couchdbkit.exceptions import ResourceNotFound
+from django.core.files.base import ContentFile
+from django.http.response import HttpResponse, HttpResponseNotFound
+from django.views.decorators.http import require_GET
+
 import couchexport
 from couchexport import views as couchexport_views
 from couchexport.exceptions import (
     CouchExportException,
     SchemaMismatchException
 )
-from couchexport.models import Format, FakeSavedExportSchema, SavedBasicExport
+from couchexport.models import FakeSavedExportSchema, SavedBasicExport
 from couchexport.shortcuts import (export_data_shared, export_raw_data,
     export_response)
 from couchexport.tasks import rebuild_schemas
@@ -40,12 +43,8 @@ from dimagi.utils.parsing import json_format_datetime, string_to_boolean
 from dimagi.utils.web import json_request, json_response
 from soil import DownloadBase
 from soil.tasks import prepare_download
-from django.core.files.base import ContentFile
-from django.http.response import HttpResponse, HttpResponseNotFound
-from django.views.decorators.http import require_GET
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from couchexport.export import Format
-
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.templatetags.case_tags import case_inline_display
 from casexml.apps.case.xml import V2
@@ -54,7 +53,7 @@ from corehq.apps.reports.exportfilters import default_form_filter
 import couchforms.views as couchforms_views
 from couchforms.filters import instances
 from couchforms.models import XFormInstance, doc_types
-from couchforms.templatetags.xform_tags import render_form
+from corehq.apps.reports.templatetags.xform_tags import render_form
 from filters.users import UserTypeFilter
 from corehq.apps.domain.decorators import (login_or_digest)
 from corehq.apps.export.custom_export_helpers import CustomExportHelper
@@ -74,7 +73,6 @@ from corehq.apps.users.export import export_users
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.models import Permissions
 from corehq.apps.domain.decorators import login_and_domain_required
-
 
 
 DATE_FORMAT = "%Y-%m-%d"
