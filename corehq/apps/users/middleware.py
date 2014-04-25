@@ -44,10 +44,14 @@ class UsersMiddleware(object):
 
                 # disable session based couch user caching - to be enabled later.
                 if cached_user_doc_id not in (MISSING, INTERRUPTED):
-                    #cache hit
-                    couch_user = CouchUser.wrap_correctly(cache_core.cached_open_doc(CouchUser.get_db(), cached_user_doc_id))
+                    # cache hit
+                    couch_user = CouchUser.wrap_correctly(
+                        cache_core.cached_open_doc(
+                            CouchUser.get_db(), cached_user_doc_id
+                        )
+                    )
                 else:
-                    #cache miss, write to cache
+                    # cache miss, write to cache
                     couch_user = CouchUser.from_django_user(request.user)
                     if couch_user:
                         cache_core.do_cache_doc(couch_user.to_json())
