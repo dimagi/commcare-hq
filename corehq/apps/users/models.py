@@ -17,6 +17,7 @@ from django.template.loader import render_to_string
 from couchdbkit.ext.django.schema import *
 from couchdbkit.resource import ResourceNotFound
 from dimagi.utils.chunked import chunked
+from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import get_safe_write_kwargs, iter_docs
 from dimagi.utils.logging import notify_exception
 
@@ -1119,10 +1120,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         """
         if domain is given, checks to make sure the user is a member of that domain
         returns None if there's no user found or if the domain check fails
-
         """
         try:
-            couch_user = cls.wrap_correctly(cls.get_db().get(userID))
+            couch_user = cls.wrap_correctly(cache_core.cached_open_doc(cls.get_db(), userID))
         except ResourceNotFound:
             return None
         if couch_user.doc_type != cls.__name__ and cls.__name__ != "CouchUser":
