@@ -563,8 +563,8 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             return res
         else:
             domain = cls._get_by_name(name, strict)
-            # basically a permacache since we do manual invalidation
-            cache.set(cache_key, domain, 24*60*60)
+            # 30 mins, so any unforeseen invalidation bugs aren't too bad.
+            cache.set(cache_key, domain, 30*60)
             return domain
 
     @classmethod
