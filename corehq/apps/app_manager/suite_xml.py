@@ -603,7 +603,7 @@ class SuiteGenerator(object):
                     ))
                     if self.app.commtrack_enabled:
                         e.datums.append(SessionDatum(
-                            id='throwaway',
+                            id='product_id',
                             nodeset="instance('products')/products/product",
                             value="./@id",
                             detail_select=self.get_detail_id_safe(module, 'product_short')
@@ -787,7 +787,7 @@ class SuiteGenerator(object):
                 if last_action.show_product_stock:
                     target_module = get_target_module(action.case_type, last_action.details_module, True)
                     e.datums.append(SessionDatum(
-                        id='throwaway',
+                        id='product_id',
                         nodeset="instance('products')/products/product",
                         value="./@id",
                         detail_select=self.get_detail_id_safe(target_module, 'product_short')
