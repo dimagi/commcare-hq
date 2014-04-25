@@ -83,3 +83,9 @@ REMINDERS_UI_PREVIEW = StaticToggle(
     'reminders_ui_preview',
     'New reminders UI'
 )
+
+READABLE_FORM_DATA = StaticToggle(
+    'readable_form_data',
+    'Readable Form Data Page',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)

@@ -10,6 +10,10 @@ from couchdbkit.exceptions import ResourceNotFound
 
 from corehq.apps.receiverwrapper.auth import AuthContext
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id, DocInfo
+from corehq.apps.reports.formdetails.exceptions import QuestionListNotFound
+from corehq.apps.reports.formdetails.readable import get_readable_form_data, \
+    form_key_filter
+from corehq.toggles import READABLE_FORM_DATA
 from couchforms.models import XFormInstance
 from dimagi.utils.timezones import utils as tz_utils
 from casexml.apps.case.xform import extract_case_blocks
@@ -19,11 +23,6 @@ from casexml.apps.case.templatetags.case_tags import case_inline_display
 from corehq.apps.hqwebapp.templatetags.proptable_tags import (
     get_tables_as_columns, get_definition)
 
-
-SYSTEM_FIELD_NAMES = (
-    "drugs_prescribed", "case", "meta", "clinic_ids", "drug_drill_down", "tmp",
-    "info_hack_done"
-)
 
 register = template.Library()
 
@@ -73,16 +72,6 @@ def sorted_form_metadata_keys(keys):
     return sorted(keys, cmp=mycmp)
 
 
-def form_key_filter(key):
-    if key in SYSTEM_FIELD_NAMES:
-        return False
-
-    if key.startswith(('#', '@', '_')):
-        return False
-
-    return True
-
-
 @register.simple_tag
 def render_form(form, domain, options):
     """
@@ -96,15 +85,24 @@ def render_form(form, domain, options):
     timezone = pytz.utc
     case_id = options.get('case_id')
 
+    readable_form_data = READABLE_FORM_DATA.enabled(domain)
+
     case_id_attr = "@%s" % const.CASE_TAG_ID
 
     _get_tables_as_columns = partial(get_tables_as_columns, timezone=timezone)
 
-    # Form Data tab
     form_dict = form.top_level_tags()
     form_dict.pop('change', None)  # this data already in Case Changes tab
-    form_keys = [k for k in form_dict.keys() if form_key_filter(k)]
-    form_data = _get_tables_as_columns(form_dict, get_definition(form_keys))
+    # Form Data tab
+    if readable_form_data:
+        try:
+            form_data = get_readable_form_data(form)
+        except QuestionListNotFound:
+            readable_form_data = False
+
+    if not readable_form_data:
+        form_keys = [k for k in form_dict.keys() if form_key_filter(k)]
+        form_data = _get_tables_as_columns(form_dict, get_definition(form_keys))
 
     # Case Changes tab
     case_blocks = extract_case_blocks(form)
@@ -172,6 +170,7 @@ def render_form(form, domain, options):
         "instance": form,
         "is_archived": form.doc_type == "XFormArchived",
         "domain": domain,
+        'readable_form_data': readable_form_data,
         "form_data": form_data,
         "cases": cases,
         "form_table_options": {
@@ -183,5 +182,3 @@ def render_form(form, domain, options):
         "auth_user_info": auth_user_info,
         "user_info": user_info,
     })
-
-
