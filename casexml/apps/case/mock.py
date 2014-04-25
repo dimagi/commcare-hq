@@ -232,6 +232,8 @@ class CaseBlock(dict):
                 return 1, word
 
         def fmt(value):
+            if value is None:
+                return ''
             if isinstance(value, datetime):
                 return unicode(format_datetime(value))
             elif isinstance(value, (basestring, int)):
