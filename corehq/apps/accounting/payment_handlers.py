@@ -149,7 +149,7 @@ class InvoiceStripePaymentHandler(BaseStripePaymentHandler):
             payment_record=payment_record,
         )
         CreditLine.add_credit(
-            amount * Decimal('-1.0'),
+            -amount,
             account=self.invoice.subscription.account,
             invoice=self.invoice,
         )
