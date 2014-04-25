@@ -373,7 +373,7 @@ class SubmissionPost(object):
         self.date_header = date_header
         self.submit_ip = submit_ip
         self.last_sync_token = last_sync_token
-        self.openrosa_headers = openrosa_headers
+        self.openrosa_headers = openrosa_headers or {}
         self.instance = instance
         self.attachments = attachments or {}
         self.auth_context = auth_context or DefaultAuthContext()
