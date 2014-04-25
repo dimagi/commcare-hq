@@ -1,3 +1,4 @@
+from corehq import Domain
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.accounting import generator
 from corehq.apps.accounting.models import (
@@ -13,7 +14,11 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
 
     def setUp(self):
         super(TestUserRoleSubscriptionChanges, self).setUp()
-        self.domain = generator.arbitrary_domain()
+        self.domain = Domain(
+            name="test-sub-changes",
+            is_active=True,
+        )
+        self.domain.save()
         UserRole.init_domain_with_presets(self.domain.name)
         self.user_roles = UserRole.by_domain(self.domain.name)
         self.custom_role = UserRole.get_or_create_with_permissions(
@@ -70,8 +75,8 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         #     custom_commcare_user.get_domain_membership(self.domain.name).role_id
         # )
         
-        self.assertInitialRoles()
-        self.assertStdUsers()
+        self._assertInitialRoles()
+        self._assertStdUsers()
 
     def test_resubscription(self):
         subscription = Subscription.new_domain_subscription(
@@ -101,8 +106,8 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         #     custom_commcare_user.get_domain_membership(self.domain.name).role_id
         # )
 
-        self.assertInitialRoles()
-        self.assertStdUsers()
+        self._assertInitialRoles()
+        self._assertStdUsers()
         subscription.cancel_subscription(web_user=self.admin_user.username)
 
     def _change_std_roles(self):
@@ -114,7 +119,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
             )
             user_role.save()
 
-    def assertInitialRoles(self):
+    def _assertInitialRoles(self):
         for u in self.user_roles:
             user_role = UserRole.get(u.get_id)
             self.assertEqual(
@@ -122,7 +127,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
                 UserRolePresets.get_permissions(user_role.name)
             )
 
-    def assertStdUsers(self):
+    def _assertStdUsers(self):
         for ind, wu in enumerate(self.web_users[1:]):
             web_user = WebUser.get(wu.get_id)
             self.assertEqual(

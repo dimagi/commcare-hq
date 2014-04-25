@@ -39,13 +39,15 @@ var PaymentMethodHandler = function (errorMessages) {
         $('#payment-form').ajaxSubmit({
             success: function (response) {
                 if (response.success) {
-                    self.costItem().reset();
+                    self.costItem().reset(response);
                     self.stripeCard().reset();
                     self.paymentIsComplete(true);
+                    self.serverErrorMsg('');
                 } else {
                     self.serverErrorMsg(response.error.message);
                 }
                 self.stripeCard().isProcessing(false);
+
             },
             error: function (response, textStatus, errorThrown) {
                 errorThrown = errorThrown || 500;
@@ -60,13 +62,14 @@ var BaseCostItem = function (initData) {
     'use strict';
     var self = this;
 
-    self.reset = function () {
+    self.reset = function (response) {
         throw new Error("Missing implementation for reset");
     };
 
     self.isValid = function () {
         throw new Error("missing implementation for isValid");
     };
+
 };
 
 var Invoice = function (initData) {
@@ -137,7 +140,7 @@ var Invoice = function (initData) {
         self.paymentAmountType('partial');
     };
 
-    self.reset =  function () {
+    self.reset =  function (response) {
         self.customPaymentAmount(self.balance());
         self.paymentAmountType('full');
         self.paginatedList.refreshList(self.paginatedItem);
@@ -150,6 +153,40 @@ var Invoice = function (initData) {
 
 Invoice.prototype = Object.create( BaseCostItem.prototype );
 Invoice.prototype.constructor = Invoice;
+
+var CreditCostItem = function (initData) {
+   'use strict';
+    BaseCostItem.call(this, initData);
+    var self = this;
+
+    self.creditType = ko.observable(initData.creditType);
+    self.category = ko.observable(initData.category);
+    self.creditItem = initData.creditItem;
+    self.amount = ko.observable(0.5);
+
+    self.isPlanCredit = ko.computed(function () {
+        return self.category() == 'product';
+    });
+
+    self.isSMSCredit = ko.computed(function () {
+        return self.category() == 'feature' && self.creditType() == 'SMS';
+    });
+
+    self.isUserCredit = ko.computed(function () {
+        return self.category() == 'feature' && self.creditType() == 'User';
+    });
+
+    self.reset = function (response) {
+        self.creditItem.amount(response.balance);
+    };
+
+    self.isValid = function () {
+        return self.amount() >= 0.5;
+    };
+};
+
+CreditCostItem.ptotoptye = Object.create( BaseCostItem.prototype );
+CreditCostItem.prototype.constructor = CreditCostItem;
 
 var StripeCard = function () {
     'use strict';

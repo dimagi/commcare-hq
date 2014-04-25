@@ -3,10 +3,43 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
+{% block js %}{{ block.super }}
+    <script type="text/javascript" src="{% static 'accounting/ko/accounting.payment_method_handler.js' %}"></script>
+    <script type="text/javascript" src="{% static 'accounting/ko/accounting.credits.js' %}"></script>
+    <script type="text/javascript" src="https://js.stripe.com/v2/"></script>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+    <script type="text/javascript">
+        Stripe.setPublishableKey('{{ stripe_public_key }}');
+
+        var paymentHandler = new PaymentMethodHandler({
+            400: "{% trans "Your request was not formatted properly." %}",
+            403: "{% trans "Forbidden." %}",
+            404: "{% trans 'Page not found.' %}",
+            500: "{% blocktrans %}There was an error processing your request. We're working quickly to fix the issue. Please try back shortly.{% endblocktrans %}"
+        });
+        $(function () {
+            ko.applyBindings(paymentHandler, $('#paymentModal').get(0));
+        });
+
+        var creditsHandler = new CreditsManager(
+            {{ plan.products|JSON }}, {{ plan.features|JSON }},
+            paymentHandler, {{ can_purchase_credits|BOOL }}
+        );
+        $(function () {
+            ko.applyBindings(creditsHandler, $('#subscriptionSummary').get(0));
+            creditsHandler.init();
+        });
+
+
+    </script>
+{% endblock %}
+
 {% block main_column %}
 <div class="row">
     <div class="span12">
-        <article>
+        <article id="subscriptionSummary">
             <h2>{% trans 'Current Subscription' %}</h2>
             <div class="form form-horizontal">
                 <div class="control-group">
@@ -62,23 +95,31 @@
                         </div>
                     </div>
                 {% endif %}
-                {% for product in plan.products %}
-                    {# todo handle multiproducts #}
+                 <div data-bind="foreach: products">
                     <div class="control-group">
                         <label class="control-label">{% trans 'Price' %}</label>
                         <div class="controls">
-                            <p class="control-group-text">{{ product.monthly_fee }}</p>
+                            <p class="control-group-text"
+                               data-bind="text: monthlyFee"></p>
                         </div>
                     </div>
-                    {% if product.credit and product.credit.is_visible %}
-                        <div class="control-group">
-                            <label class="control-label">{% trans 'Plan Credit' %}</label>
-                            <div class="controls">
-                                <p class="control-group-text">{{ product.credit.amount }}</p>
-                            </div>
+                    <div class="control-group" data-bind="visible: isVisible">
+                        <label class="control-label">{% trans 'Plan Credit' %}</label>
+                        <div class="controls">
+                            <span class="help-inline"
+                                  style="margin-right: 10px;"
+                                  data-bind="text: amount"></span>
+                            <button type="button"
+                                    class="btn add-credit-button"
+                                    data-toggle="modal"
+                                    data-target="#paymentModal"
+                                    data-bind="click: triggerPayment, visible: canPurchaseCredits">
+                                <i class="icon-plus"></i>
+                                {% trans 'Add Credit' %}
+                            </button>
                         </div>
-                    {% endif %}
-                {% endfor %}
+                    </div>
+                </div>
                 {% if plan.subscription_credit and plan.subscription_credit.is_visible %}
                     <div class="control-group">
                         <label class="control-label">{% trans 'General Credit' %}</label>
@@ -96,20 +137,170 @@
                         <th>{% trans "Current Use" %}</th>
                         <th>{% trans "Remaining" %}</th>
                         <th>{% trans "Credits Available" %}</th>
+                        {% if can_purchase_credits %}
+                        <th>{% trans "Add Credit" %}</th>
+                        {% endif %}
                     </tr>
                 </thead>
-                <tbody>
-                    {% for feature in plan.features %}
-                        <tr>
-                            <td>{{ feature.name }}</td>
-                            <td>{{ feature.usage }}</td>
-                            <td>{{ feature.remaining }}</td>
-                            <td>{{ feature.credit.amount }}</td>
-                        </tr>
-                    {% endfor %}
+                <tbody data-bind="foreach: features">
+                    <tr>
+                        <td data-bind="text: name"></td>
+                        <td data-bind="text: usage"></td>
+                        <td data-bind="text: remaining"></td>
+                        <td data-bind="text: amount"></td>
+                        <td data-bind="visible: canPurchaseCredits">
+                            <button type="button"
+                                    class="btn"
+                                    data-toggle="modal"
+                                    data-target="#paymentModal"
+                                    data-bind="click: triggerPayment">
+                                <i class="icon-plus"></i>
+                                {% trans 'Add Credit' %}
+                            </button>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </article>
     </div>
 </div>
+
+    {% include 'accounting/partials/stripe_card_ko_template.html' %}
+
+    <script type="text/html" id="credit-cost-item-template">
+        <p class="lead" data-bind="visible: isPlanCredit">
+            {% blocktrans %}
+            <strong>Plan Credits</strong> must be purchased with a credit card.
+            One credit is equivalent to one USD.
+            {% endblocktrans %}
+        </p>
+        <p data-bind="visible: isPlanCredit">
+            {% blocktrans %}
+            Plan Credits are only applied toward the monthly fee of your plan.
+            They are not used toward charges related to SMS or User usage fees.
+            {% endblocktrans %}
+        </p>
+        <p class="lead" data-bind="visible: isSMSCredit">
+            {% blocktrans %}
+            <strong>SMS Credits</strong> must be purchased with a credit card. One credit is
+            equivalent to one USD.
+            {% endblocktrans %}
+        </p>
+        <p data-bind="visible: isSMSCredit">
+            {% blocktrans %}
+            SMS rates vary depending on country,
+            cellular network, and whether you are using a Dimagi gateway.
+            <a href="#">Read more about our SMS charges.</a>
+            {% endblocktrans %}
+        </p>
+        <p class="lead" data-bind="visible: isUserCredit">
+            {% blocktrans %}
+            <strong>Mobile Worker Credits</strong> must be purchased with a credit card.
+            One credit is equivalent to one USD, which is the monthly cost of
+            a CommCare Mobile Worker.
+            {% endblocktrans %}
+        </p>
+        <p data-bind="visible: isUserCredit">
+            {% blocktrans %}
+            For example, if you purchase 50 Mobile Worker Credits, you will
+            cover an additional 50 users for one month, or 25 users
+            for two months, etc.
+            {% endblocktrans %}
+        </p>
+        <div class="control-group">
+            <input type="hidden"
+                   data-bind="attr: {name: category}, value: creditType" />
+            <label class="control-label">
+                {% trans 'Credit Amount' %}
+            </label>
+            <div class="controls">
+                <div class="input-prepend">
+                    <span class="add-on">$</span>
+                    <input type="text"
+                           class="input-small"
+                           name="amount"
+                           data-bind="value: amount" />
+                </div>
+            </div>
+        </div>
+    </script>
+
+    <script type="text/html" id="payment-method-modal-title">
+        <h3>
+            <span data-bind="visible: isPlanCredit">
+                {% trans 'Add Plan Credit' %}
+            </span>
+            <span data-bind="visible: isSMSCredit">
+                {% trans 'Add SMS Credit' %}
+            </span>
+            <span data-bind="visible: isUserCredit">
+                {% trans 'Add Mobile Worker Credit' %}
+            </span>
+        </h3>
+    </script>
+{% endblock %}
+
+{% block modals %}{{ block.super }}
+    <div class="modal hide fade" id="paymentModal">
+        <div class="modal-header">
+            <a class="close" data-dismiss="modal">&times;</a>
+            <div data-bind="template: {
+                data: costItem,
+                name: 'payment-method-modal-title',
+                if: hasCostItem
+            }"></div>
+        </div>
+        <form action="{{ process_payment_url }}"
+              method="POST"
+              class="form form-horizontal"
+              id="payment-form">
+            <div class="modal-body">
+                <p class="alert alert-error"
+                     data-bind="visible: showServerErrorMsg">
+                    <i class="icon-warning-sign"></i>
+                    <span data-bind="text: serverErrorMsg"></span>
+                </p>
+
+                <div data-bind="template: {
+                    data: costItem,
+                    name: 'credit-cost-item-template',
+                    if: hasCostItem
+                }, visible: paymentIsNotComplete"></div>
+
+                <div data-bind="template: {
+                    data: stripeCard,
+                    name: 'stripe-card-ko-template',
+                }, visible: paymentIsNotComplete"></div>
+
+                <p class="alert alert-success"
+                     data-bind="visible: paymentIsComplete">
+                    {% blocktrans %}
+                    Thank you for your payment!
+                    {% endblocktrans %}
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button"
+                        data-bind="visible: paymentIsNotComplete"
+                        class="btn"
+                        data-dismiss="modal">
+                    {% trans "Cancel" %}
+                </button>
+                <button type="submit"
+                        data-bind="
+                            visible: paymentIsNotComplete,
+                            disable: isSubmitDisabled,
+                            click: processPayment"
+                        class="btn btn-success">
+                    {% trans 'Buy Credits' %}
+                </button>
+                <button type="button"
+                        data-bind="visible: paymentIsComplete"
+                        class="btn"
+                        data-dismiss="modal">
+                    {% trans "Close" %}
+                </button>
+            </div>
+        </form>
+    </div>
 {% endblock %}
