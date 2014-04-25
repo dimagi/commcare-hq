@@ -138,6 +138,12 @@ class DomainInvoiceFactory(object):
             self.create_invoice_for_subscription(subscription)
 
     def create_invoice_for_subscription(self, subscription):
+        if subscription.is_trial:
+            # Don't create invoices for trial subscriptions
+            logger.info("[BILLING] Skipping invoicing for Subscription "
+                        "%s because it's a trial." % subscription.pk)
+            return
+
         if subscription.auto_generate_credits:
             for product_rate in subscription.plan_version.product_rates:
                 CreditLine.add_credit(
