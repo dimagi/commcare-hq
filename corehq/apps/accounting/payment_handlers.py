@@ -125,7 +125,7 @@ class InvoiceStripePaymentHandler(BaseStripePaymentHandler):
 
     @property
     def cost_item_name(self):
-        return "Invoice #%s" % self.invoice.id
+        return _("Invoice #%s") % self.invoice.id
 
     def create_charge(self, amount, card_token):
         return stripe.Charge.create(
