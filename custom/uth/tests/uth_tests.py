@@ -13,30 +13,75 @@ from custom.uth.utils import match_case
 
 class UTHTests(TestCase):
 
-    def setUp(self):
-        self.domain = create_domain('vscan_domain')
-        self.vscan_user = CommCareUser.create(
-            'vscan_domain',
-            format_username('vscan_user', 'vscan_domain'),
-            'secret'
-        )
-
-        self.case_id = uuid.uuid4().hex
+    def create_scan_case(self, user_id, serial, scan_id, scan_uploaded=False):
+        case_id = uuid.uuid4().hex
         case_block = CaseBlock(
             create=True,
-            case_id=self.case_id,
+            case_id=case_id,
             case_name='scan',
             case_type='magic_vscan_type',
-            user_id=self.vscan_user._id,
-            owner_id=self.vscan_user._id,
+            user_id=user_id,
+            owner_id=user_id,
             version=V2,
             update={
-                'scan_id': '123123',
-                'vscan_serial': 'VH014466XK',
+                'scan_id': scan_id,
+                'vscan_serial': serial,
+                'scan_uploaded': scan_uploaded
             }
         ).as_xml(format_datetime=json_format_datetime)
         post_case_blocks([case_block], {'domain': 'vscan_domain'})
 
+        return case_id
+
+    def setUp(self):
+        self.domain = create_domain('vscan_domain')
+
+        username = format_username('vscan_user', 'vscan_domain')
+
+        self.vscan_user = CommCareUser.get_by_username(username) or CommCareUser.create(
+            'vscan_domain',
+            username,
+            'secret'
+        )
+
+        self.case_id = self.create_scan_case(
+            self.vscan_user._id,
+            'VH014466XK',
+            '123123'
+        )
+
     def testFindsCorrectCase(self):
+        case = match_case('vscan_domain', 'VH014466XK', '123123', '')
+        self.assertEqual(self.case_id, case._id)
+
+    def testWrongScanID(self):
+        case = match_case('vscan_domain', 'VH014466XK', 'wrong', '')
+        self.assertIsNone(case)
+
+    def testWrongSerial(self):
+        case = match_case('vscan_domain', 'wrong', '123123', '')
+        self.assertIsNone(case)
+
+    def testGetsNewestWithTwoCases(self):
+        case_2_id = self.create_scan_case(
+            self.vscan_user._id,
+            'VH014466XK',
+            '123123'
+        )
+
+        case = match_case('vscan_domain', 'VH014466XK', '123123', '')
+        self.assertEqual(case_2_id, case._id)
+
+    def testGetsNewestBasedOnScanProperty(self):
+        pass
+
+    def testGetsOnlyUnmarkedCases(self):
+        self.create_scan_case(
+            self.vscan_user._id,
+            'VH014466XK',
+            '123123',
+            scan_uploaded=True
+        )
+
         case = match_case('vscan_domain', 'VH014466XK', '123123', '')
         self.assertEqual(self.case_id, case._id)

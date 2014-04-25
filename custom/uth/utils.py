@@ -7,6 +7,9 @@ def match_case(domain, scanner_serial, scan_id, date):
         'uth/uth_lookup',
         startkey=[domain, scanner_serial, scan_id],
         endkey=[domain, scanner_serial, scan_id, {}],
-    ).one()
+    ).all()
 
-    return CommCareCase.get(results['value'])
+    if results:
+        return CommCareCase.get(results[-1]['value'])
+    else:
+        return None
