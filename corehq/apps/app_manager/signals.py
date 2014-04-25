@@ -31,7 +31,7 @@ def get_custom_response_message(sender, xform, **kwargs):
         if app and hasattr(app, 'langs'):
             try:
                 lang = xform.openrosa_headers[OPENROSA_ACCEPT_LANGUAGE]
-            except (AttributeError, KeyError):
+            except (AttributeError, KeyError, TypeError):
                 lang = "default"
             if lang == "default":
                 lang = app.build_langs[0] if app.build_langs else None
