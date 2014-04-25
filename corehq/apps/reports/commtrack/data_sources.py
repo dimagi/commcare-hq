@@ -52,27 +52,11 @@ class CommtrackDataSourceMixin(object):
 
     @property
     def start_date(self):
-        # dates come differently depending on report type
-        date = self.config.get('start_date') or self.request.GET.get('startdate')
-        if date:
-            return datetime.strptime(date, '%Y-%m-%d').date()
-        else:
-            return (datetime.now() - timedelta(30)).date()
+        return self.config.get('start_date') or (datetime.now() - timedelta(30)).date()
 
     @property
     def end_date(self):
-        # dates come differently depending on report type
-        date = self.config.get('end_date') or self.request.GET.get('enddate')
-        if date:
-            return datetime.strptime(date, '%Y-%m-%d').date()
-        else:
-            return datetime.now().date()
-
-    @property
-    def request(self):
-        request = self.config.get('request')
-        if request:
-            return request
+        return self.config.get('end_date') or datetime.now().date()
 
 
 class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
