@@ -30,7 +30,6 @@ def generate_fixtures_for_domain(domain, db, data_source):
     dates = get_last_n_months(NUMBER_OF_MONTHS_FOR_FIXTURES)
 
     for date in dates:
-        print date
         for location_id in location_ids:
             data_source.configure(config={
                 "startdate": date[0],
