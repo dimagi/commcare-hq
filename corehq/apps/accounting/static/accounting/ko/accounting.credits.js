@@ -25,8 +25,8 @@ var CreditItem = function (category, data, paymentHandler, can_purchase_credits)
     self.usage = ko.observable(data.usage);
     self.remaining = ko.observable(data.remaining);
     self.monthlyFee = ko.observable(data.monthly_fee);
-    self.amount = ko.observable(data.credit.amount);
-    self.hasAmount = ko.observable(data.credit.is_visible);
+    self.amount = ko.observable((data.credit) ? data.credit.amount : 0);
+    self.hasAmount = ko.observable(data.credit && data.credit.is_visible);
     self.canPurchaseCredits = ko.observable(can_purchase_credits);
     self.paymentHandler = paymentHandler;
 
