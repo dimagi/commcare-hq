@@ -2,6 +2,8 @@ from django.utils.translation import ugettext_lazy as _
 
 M4CHANGE_DOMAINS = ('m4change', 'test-pathfinder')
 
+NUMBER_OF_MONTHS_FOR_FIXTURES = 6
+
 MOTHER_CASE_TYPE = "pregnant_mother"
 CHILD_CASE_TYPE = "child"
 
