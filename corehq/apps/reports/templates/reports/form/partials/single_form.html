@@ -135,7 +135,28 @@ requires imports/proptable.html to be included in the main template
             </p>
         </div>
 
-        {% render_tables form_data form_table_options %}
+        {% if readable_form_data %}
+        <div class="row-fluid">
+            <table class="table table-bordered span6">
+                <tr>
+                    <th class="span2"></th>
+                    <th class="span5">{% trans "Question" %}</th>
+                    <th class="span5">{% trans "Response" %}</th>
+                </tr>
+                {% for question in form_data %}
+                <tr>
+                    <td>{% if question.response == None %}{% trans "Skipped" %}{% endif %}</td>
+                    <td><ins class="jstree-icon {{ question.icon }}" style="color: #2787d0;"></ins>
+                        {{ question.label }}
+                    </td>
+                    <td>{% if question.response %}{{ question.response }}{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        {% else %}
+            {% render_tables form_data form_table_options %}
+        {% endif %}
     </div>
 
     {% if cases %}
