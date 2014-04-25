@@ -66,7 +66,7 @@ if not hasattr(settings, 'AUDIT_MODEL_SAVE'):
 if hasattr(settings, 'AUDIT_DJANGO_USER'):
     do_audit_django_user = settings.AUDIT_DJANGO_USER
 else:
-    do_audit_django_user = True
+    do_audit_django_user = False
 
 if do_audit_django_user:
     settings.AUDIT_MODEL_SAVE.append('django.contrib.auth.models.User')
