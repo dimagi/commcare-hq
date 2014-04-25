@@ -334,16 +334,6 @@ class PatientListReport(CustomProjectReport, CaseListReport):
         care_site = self.request_params.get('care_site', '')
         if care_site != '':
             es_filters["bool"]["must"].append({"term": {"care_site.#value": care_site}})
-        else:
-            if not isinstance(self.request.couch_user, WebUser) or _is_succeed_admin(self.request.couch_user):
-                groups = self.request.couch_user.get_group_ids()
-                party = []
-                for group_id in groups:
-                    group = Group.get(group_id)
-                    for grp in CONFIG['groups']:
-                        if group.name == grp['text']:
-                            party.append(grp['val'])
-                es_filters["bool"]["must"].append({"terms": {"care_site.#value": party, "minimum_should_match": 1}})
 
         patient_status = self.request_params.get('patient_status', '')
         if patient_status != '':
