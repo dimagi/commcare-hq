@@ -77,7 +77,11 @@ USER_MAPPING={'_all': {'analyzer': 'standard'},
                 'password': {'type': 'string'},
                 'registering_device_id': {'type': 'string'},
                 'status': {'type': 'string'},
-                'user_data': {'dynamic': True, 'type': 'object'},
+                'user_data': {'dynamic': True,
+                    'properties': {
+                        'awc': {'index': 'not_analyzed', 'type': 'string'}
+                    }
+                },
                 'username': {'fields': {'exact': {'include_in_all': False,
                                                   'index': 'not_analyzed',
                                                   'type': 'string'},

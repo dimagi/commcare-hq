@@ -546,21 +546,17 @@ class HealthStatusReport(DatespanMixin, BaseReport, SummingSqlTabularReport):
     def fields(self):
         return [BlockFilter, AWCFilter, SelectOpenCloseFilter, DatespanFilter]
 
-    @property
-    @memoized
-    def get_users(self):
-        return CommCareUser.by_domain(DOMAIN)
-
     def get_rows(self, dataspan):
         q = {
             "query": {
                 "filtered": {
                     "query": {
-                        "term": {"domain.exact": self.domain},
+                        "match_all": {}
                     },
                     "filter": {
                         "bool": {
                             "must": [
+                                {"term": {"domain.exact": self.domain}},
                             ]
                         }
                     }
@@ -574,12 +570,7 @@ class HealthStatusReport(DatespanMixin, BaseReport, SummingSqlTabularReport):
             es_filters["bool"]["must"].append({"terms": {"user_data.block": block_lower}})
         awcs = self.request.GET.getlist('awcs')
         if awcs:
-            string_query = ""
-            for awc in awcs:
-                string_query += "\""+awc.lower()+"\"|"
-
-            query_block = {"queryString": {"default_field": "user_data.awc", "query": string_query}}
-            q["query"]["filtered"]["query"] = query_block
+            es_filters["bool"]["must"].append({"terms": {"user_data.awc": awcs}})
         logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, simplejson.dumps(q)))
         return es_query(q=q, es_url=USER_INDEX + '/_search', dict_only=False)['hits'].get('hits', [])
 

@@ -1,5 +1,4 @@
 from numbers import Number
-from custom.opm.opm_reports.constants import InvalidRow
 
 
 def calc_percentage(num, denom):
