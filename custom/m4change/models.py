@@ -472,3 +472,6 @@ class FixtureReportResult(Document, QueryMixin):
             return
         FixtureReportResult(domain=domain, location_id=location_id, start_date=start_date, end_date=end_date,
                             report_slug=report_slug, rows=rows, name=name).save()
+
+
+from .signals import *
