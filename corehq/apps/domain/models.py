@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import hashlib
 import json
 import logging
 from couchdbkit.exceptions import ResourceConflict
@@ -557,7 +558,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
                     notify_exception(None, '%r is not a valid domain name' % name)
                     return None
         cache_key = _domain_cache_key(name)
-        MISSING = 'domain not found'
+        MISSING = object()
         res = cache.get(cache_key, MISSING)
         if res != MISSING:
             return res
@@ -1091,4 +1092,4 @@ class DomainCounter(Document):
 
 
 def _domain_cache_key(name):
-    return u'cchq:domain:{name}'.format(name=name)
+    return hashlib.md5(u'cchq:domain:{name}'.format(name=name)).hexdigest()
