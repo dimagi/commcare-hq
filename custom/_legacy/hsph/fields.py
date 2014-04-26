@@ -28,7 +28,7 @@ class SiteField(ReportField):
         cls.domain = domain or cls.domain
         facs = dict()
         data_type = FixtureDataType.by_domain_tag(cls.domain, 'site').first()
-        fixtures = FixtureDataItem.by_data_type(cls.domain, data_type.get_id_without_attributes)
+        fixtures = FixtureDataItem.by_data_type(cls.domain, data_type.get_id)
         for fix in fixtures:
             region = fix.fields_without_attributes.get("region_id")
             district = fix.fields_without_attributes.get("district_id")
