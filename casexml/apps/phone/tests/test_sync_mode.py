@@ -61,10 +61,10 @@ class SyncBaseTest(TestCase):
         form.last_sync_token = token_id
         process_cases(form)
         return form
-    
+
     def _postFakeWithSyncToken(self, caseblock, token_id):
-        post_case_blocks([caseblock], form_extras={"last_sync_token": token_id})
-        
+        return post_case_blocks([caseblock], form_extras={"last_sync_token": token_id})
+
     def _checkLists(self, l1, l2):
         self.assertEqual(len(l1), len(l2))
         for i in l1:
@@ -128,12 +128,11 @@ class SyncTokenUpdateTest(SyncBaseTest):
 
     def testMultipleUpdates(self):
         """
-        Test that multiple update submissions don't update the case lists 
+        Test that multiple update submissions don't update the case lists
         and don't create duplicates in them
         """
-        
         [sync_log] = SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all()
-        
+
         self._postWithSyncToken("create_short.xml", sync_log.get_id)
         self._postWithSyncToken("update_short.xml", sync_log.get_id)
         self._testUpdate(sync_log.get_id, {"asdf": []})
@@ -346,7 +345,39 @@ class SyncTokenUpdateTest(SyncBaseTest):
         # should be moved
         self._testUpdate(self.sync_log.get_id, {parent_id: []},
                          {child_id: [index_ref]})
-        
+
+    def testArchiveUpdates(self):
+        """
+        Tests that archiving a form (and changing a case) causes the
+        case to be included in the next sync.
+        """
+        case_id = "archive_syncs"
+        self._createCaseStubs([case_id])
+        case_block = CaseBlock(
+            create=True,
+            case_id=case_id,
+            user_id=USER_ID,
+            version=V2,
+        ).as_xml()
+        check_user_has_case(self, self.user, case_block, should_have=False,
+                            restore_id=self.sync_log.get_id, version=V2)
+
+        update_block = CaseBlock(
+            create=False,
+            case_id=case_id,
+            user_id=USER_ID,
+            version=V2,
+            update={"greeting": "hello"}
+        ).as_xml()
+        form = self._postFakeWithSyncToken(update_block, self.sync_log.get_id)
+        check_user_has_case(self, self.user, update_block, should_have=False,
+                            restore_id=self.sync_log.get_id, version=V2)
+
+        form.archive()
+        check_user_has_case(self, self.user, case_block, should_have=True,
+                            line_by_line=False, restore_id=self.sync_log.get_id,
+                            version=V2)
+
 
 class SyncTokenCachingTest(SyncBaseTest):
 

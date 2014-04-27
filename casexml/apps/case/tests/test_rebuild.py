@@ -1,17 +1,21 @@
 from couchdbkit.exceptions import ResourceNotFound
 from django.test import TestCase
+from casexml.apps.case import const
 from casexml.apps.case.cleanup import rebuild_case
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from datetime import datetime, timedelta
 from copy import deepcopy
 from casexml.apps.case.tests.util import post_util as real_post_util, delete_all_cases
+from casexml.apps.case.util import primary_actions
 from couchforms.models import XFormInstance
+
 
 def post_util(**kwargs):
     form_extras = kwargs.get('form_extras', {})
     form_extras['domain'] = 'rebuild-test'
     kwargs['form_extras'] = form_extras
     return real_post_util(**kwargs)
+
 
 class CaseRebuildTest(TestCase):
 
@@ -159,7 +163,7 @@ class CaseRebuildTest(TestCase):
         case = rebuild_case(case_id)
         self.assertEqual(case.p1, 'p1')
         self.assertEqual(case.p2, 'p2')
-        self.assertEqual(2, len(case.actions))  # create + update
+        self.assertEqual(2, len(primary_actions(case)))  # create + update
 
         case.delete()
         try:
@@ -217,7 +221,7 @@ class CaseRebuildTest(TestCase):
 
         # test clean slate rebuild
         case = rebuild_case(case_id)
-        self._assertListEqual(original_actions, case.actions)
+        self._assertListEqual(original_actions, primary_actions(case))
         self._assertListEqual(original_form_ids, case.xform_ids)
 
     def testArchivingOnlyForm(self):
@@ -237,13 +241,15 @@ class CaseRebuildTest(TestCase):
         case = CommCareCase.get(case_id)
 
         self.assertEqual('CommCareCase-Deleted', case._doc['doc_type'])
-        self.assertEqual(0, len(case.actions))
+        # should just have the 'rebuild' action
+        self.assertEqual(1, len(case.actions))
+        self.assertEqual(const.CASE_ACTION_REBUILD, case.actions[0].action_type)
 
         form.unarchive()
         case = CommCareCase.get(case_id)
         self.assertEqual('CommCareCase', case._doc['doc_type'])
-        self.assertEqual(2, len(case.actions))
-
+        self.assertEqual(3, len(case.actions))
+        self.assertEqual(const.CASE_ACTION_REBUILD, case.actions[-1].action_type)
 
     def testFormArchiving(self):
         now = datetime.utcnow()
@@ -265,13 +271,12 @@ class CaseRebuildTest(TestCase):
             self.assertTrue(case.closed)
             self.assertEqual(closed_by, case.closed_by)
             self.assertEqual(closed_on, case.closed_on)
-            self.assertEqual(case.p1, 'p1-1') # original
-            self.assertEqual(case.p2, 'p2-2') # updated in second post
-            self.assertEqual(case.p3, 'p3-2') # new in second post
-            self.assertEqual(case.p4, 'p4-3') # updated in third post
-            self.assertEqual(case.p5, 'p5-3') # new in third post
-            self.assertEqual(5, len(case.actions)) # create + 3 updates + close
-
+            self.assertEqual(case.p1, 'p1-1')  # original
+            self.assertEqual(case.p2, 'p2-2')  # updated in second post
+            self.assertEqual(case.p3, 'p3-2')  # new in second post
+            self.assertEqual(case.p4, 'p4-3')  # updated in third post
+            self.assertEqual(case.p5, 'p5-3')  # new in third post
+            self.assertEqual(5, len(primary_actions(case)))  # create + 3 updates + close
 
         _check_initial_state(case)
 
@@ -288,7 +293,7 @@ class CaseRebuildTest(TestCase):
         f1_doc.archive()
         case = CommCareCase.get(case_id)
 
-        self.assertEqual(3, len(case.actions))
+        self.assertEqual(3, len(primary_actions(case)))
         [u2, u3] = case.xform_ids
         self.assertEqual(f2, u2)
         self.assertEqual(f3, u3)
@@ -312,7 +317,7 @@ class CaseRebuildTest(TestCase):
         f2_doc.archive()
         case = CommCareCase.get(case_id)
 
-        self.assertEqual(4, len(case.actions))
+        self.assertEqual(4, len(primary_actions(case)))
         [u1, u3] = case.xform_ids
         self.assertEqual(f1, u1)
         self.assertEqual(f3, u3)
@@ -330,7 +335,7 @@ class CaseRebuildTest(TestCase):
         f3_doc.archive()
         case = CommCareCase.get(case_id)
 
-        self.assertEqual(3, len(case.actions))
+        self.assertEqual(3, len(primary_actions(case)))
         [u1, u2] = case.xform_ids
         self.assertEqual(f1, u1)
         self.assertEqual(f2, u2)
@@ -363,7 +368,6 @@ class CaseRebuildTest(TestCase):
         f2_doc.archive()
         case = CommCareCase.get(case_id)
         self.assertEqual(case.doc_type, 'CommCareCase-Deleted')
-
 
 
 class TestCheckActionOrder(TestCase):
