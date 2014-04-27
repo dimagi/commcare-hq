@@ -1,4 +1,4 @@
-from dimagi.utils.logging import log_exception
+import logging
 from casexml.apps.case.mock import CaseBlock, CaseBlockError
 
 try:
@@ -19,8 +19,8 @@ try:
 except ImportError, e:
     # for some reason the test harness squashes these so log them here for clarity
     # otherwise debugging is a pain
-    log_exception(e)
-    raise e
+    logging.exception(str(e))
+    raise
 
 # need all imports used by the doc tests here
 from datetime import datetime
