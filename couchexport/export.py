@@ -26,7 +26,6 @@ class ExportConfiguration(object):
         self.schema_index = schema_index
         self.previous_export = previous_export
         self.filter = filter
-        self.current_seq = self.database.info()["update_seq"]
         self.timestamp = datetime.utcnow()
         self.potentially_relevant_ids = self._potentially_relevant_ids()
         self.disable_checkpoints = disable_checkpoints
@@ -99,8 +98,10 @@ class ExportConfiguration(object):
 
     def create_new_checkpoint(self):
         checkpoint = ExportSchema(
-            seq=str(self.current_seq), schema=self.get_latest_schema(),
-            timestamp=self.timestamp, index=self.schema_index)
+            schema=self.get_latest_schema(),
+            timestamp=self.timestamp,
+            index=self.schema_index,
+        )
         checkpoint.save()
         return checkpoint
 

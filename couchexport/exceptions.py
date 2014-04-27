@@ -8,10 +8,6 @@ class CustomExportValidationError(CouchExportException):
     pass
 
 
-class ExportBadStateException(CouchExportException):
-    pass
-
-
 class SchemaInferenceError(CouchExportException):
     pass
 
