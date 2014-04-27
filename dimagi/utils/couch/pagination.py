@@ -211,7 +211,6 @@ class LucenePaginator(object):
         # on cloudant: /[db]/_design/[ddoc]/_search/[search view]
         # this magic combination of args makes it work for each one in couchdbkit
         if is_bigcouch():
-            # todo
             ddoc, view = self._search_view.split("/")
             return {
                 'view_name': '%s/_search/%s' % (ddoc, view),
