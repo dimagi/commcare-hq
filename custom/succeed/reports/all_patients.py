@@ -17,10 +17,10 @@ from corehq.pillows.base import restore_property_dict
 from django.utils import html
 import dateutil
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
-from custom.succeed.reports import VISIT_SCHEDULE, LAST_INTERACTION_LIST, EMPTY_FIELD, CM7, PM3, CM_MODULE, \
+from custom.succeed.reports import VISIT_SCHEDULE, LAST_INTERACTION_LIST, EMPTY_FIELD, CM7, PM3, CM_APP_CM_MODULE, \
     OUTPUT_DATE_FORMAT, INPUT_DATE_FORMAT
 from custom.succeed.reports.patient_details import PatientInfoReport
-from custom.succeed.utils import CONFIG, _is_succeed_admin, SUCCEED_CLOUD_APPNAME, _has_any_role
+from custom.succeed.utils import CONFIG, _is_succeed_admin, SUCCEED_CM_APPNAME, _has_any_role
 import logging
 import simplejson
 from casexml.apps.case.models import CommCareCase
@@ -47,7 +47,7 @@ class PatientListReportDisplay(CaseDisplay):
         self.next_visit = next_visit
         if last_inter:
             self.last_interaction = last_inter['date']
-        self.app_dict = get_cloudcare_app(report.domain, SUCCEED_CLOUD_APPNAME)
+        self.app_dict = get_cloudcare_app(report.domain, SUCCEED_CM_APPNAME)
         self.latest_build = ApplicationBase.get_latest_build(report.domain, self.app_dict['_id'])['_id']
         super(PatientListReportDisplay, self).__init__(report, case_dict)
         self.update_target_date_case_properties()
@@ -86,7 +86,7 @@ class PatientListReportDisplay(CaseDisplay):
     @property
     def edit_link(self):
         base_url = '/a/%(domain)s/cloudcare/apps/view/%(build_id)s/%(module_id)s/%(form_id)s/case/%(case_id)s/enter/'
-        module = self.app_dict['modules'][CM_MODULE]
+        module = self.app_dict['modules'][CM_APP_CM_MODULE]
         form_idx = [ix for (ix, f) in enumerate(module['forms']) if f['xmlns'] == CM7][0]
         return html.mark_safe("<a class='ajax_dialog' href='%s'>Edit</a>") \
             % html.escape(base_url % dict(
@@ -94,7 +94,7 @@ class PatientListReportDisplay(CaseDisplay):
                 case_id=self.case_id,
                 domain=self.app_dict['domain'],
                 build_id=self.latest_build,
-                module_id=CM_MODULE
+                module_id=CM_APP_CM_MODULE
             )
         )
 
@@ -334,16 +334,6 @@ class PatientListReport(CustomProjectReport, CaseListReport):
         care_site = self.request_params.get('care_site', '')
         if care_site != '':
             es_filters["bool"]["must"].append({"term": {"care_site.#value": care_site}})
-        else:
-            if not isinstance(self.request.couch_user, WebUser) or _is_succeed_admin(self.request.couch_user):
-                groups = self.request.couch_user.get_group_ids()
-                party = []
-                for group_id in groups:
-                    group = Group.get(group_id)
-                    for grp in CONFIG['groups']:
-                        if group.name == grp['text']:
-                            party.append(grp['val'])
-                es_filters["bool"]["must"].append({"terms": {"care_site.#value": party, "minimum_should_match": 1}})
 
         patient_status = self.request_params.get('patient_status', '')
         if patient_status != '':
