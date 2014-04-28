@@ -591,13 +591,14 @@ class XForm(WrappedNode):
         repeat_contexts = set()
         excluded_paths = set()
 
-        control_nodes = self.get_control_nodes(
-            exclude_tags=('trigger',) if not include_triggers else (),
-        )
+        control_nodes = self.get_control_nodes()
 
         for node, path, repeat, group, items, is_leaf, data_type in control_nodes:
             excluded_paths.add(path)
             if not is_leaf and not include_groups:
+                continue
+
+            if node.tag_name == 'trigger' and not include_triggers:
                 continue
 
             if repeat is not None:
@@ -648,7 +649,7 @@ class XForm(WrappedNode):
 
         return questions
 
-    def get_control_nodes(self, exclude_tags=()):
+    def get_control_nodes(self):
         if not self.exists():
             return []
 
@@ -670,7 +671,7 @@ class XForm(WrappedNode):
                     path = self.resolve_path(self.get_path(node), path_context)
                     bind = self.get_bind(path)
                     data_type = infer_vellum_type(node, bind)
-                    skip = tag in exclude_tags
+                    skip = False
 
                     if tag == "group":
                         if node.find('{f}repeat').exists():
