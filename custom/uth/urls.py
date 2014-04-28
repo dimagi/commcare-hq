@@ -1,8 +1,8 @@
 from django.conf.urls.defaults import *
 
-from custom.uth.views import ImageUploadView
+from custom.uth.views import vscan_upload
 
 urlpatterns = patterns(
     'custom.uth.views',
-    url(r'^vscan_upload', ImageUploadView.as_view(), name='vscan_upload'),
+    url(r'^vscan_upload', vscan_upload, name='vscan_upload'),
 )

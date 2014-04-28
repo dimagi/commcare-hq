@@ -14,7 +14,6 @@ from casexml.apps.case.tests import delete_all_xforms, delete_all_cases
 
 
 class UTHTests(TestCase):
-
     def create_scan_case(self, user_id, serial, scan_id, scan_time, scan_uploaded=False):
         case_id = uuid.uuid4().hex
         case_block = CaseBlock(
@@ -49,6 +48,11 @@ class UTHTests(TestCase):
             username,
             'secret'
         )
+
+
+class ScanLookupTests(UTHTests):
+    def setUp(self):
+        super(ScanLookupTests, self).setUp()
 
         self.case_id = self.create_scan_case(
             self.vscan_user._id,
