@@ -155,6 +155,10 @@ requires imports/proptable.html to be included in the main template
             </table>
         </div>
         {% else %}
+            {% if use_old_reason %}
+                {% comment %}This is for debugging{% endcomment %}
+                <div class="alert alert-info">{{ use_old_reason }}. Showing old view instead</div>
+            {% endif %}
             {% render_tables form_data form_table_options %}
         {% endif %}
     </div>

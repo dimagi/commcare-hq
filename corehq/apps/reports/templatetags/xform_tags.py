@@ -86,6 +86,7 @@ def render_form(form, domain, options):
     case_id = options.get('case_id')
 
     readable_form_data = READABLE_FORM_DATA.enabled(domain)
+    use_old_reason = ''
 
     case_id_attr = "@%s" % const.CASE_TAG_ID
 
@@ -97,8 +98,9 @@ def render_form(form, domain, options):
     if readable_form_data:
         try:
             form_data = get_readable_form_data(form)
-        except QuestionListNotFound:
+        except QuestionListNotFound as e:
             readable_form_data = False
+            use_old_reason = e.message
 
     if not readable_form_data:
         form_keys = [k for k in form_dict.keys() if form_key_filter(k)]
@@ -171,6 +173,7 @@ def render_form(form, domain, options):
         "is_archived": form.doc_type == "XFormArchived",
         "domain": domain,
         'readable_form_data': readable_form_data,
+        'use_old_reason': use_old_reason,
         "form_data": form_data,
         "cases": cases,
         "form_table_options": {
