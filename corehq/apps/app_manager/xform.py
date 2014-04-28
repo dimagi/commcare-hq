@@ -1832,7 +1832,7 @@ def _index_on_fields(dicts, fields):
         if not isinstance(values, (tuple, list)):
             values = [values]
         for value in values:
-            if value:
+            if value is not None:
                 partition[value].append(dct)
             else:
                 left_over.append(dct)
@@ -1843,7 +1843,10 @@ def _index_on_fields(dicts, fields):
     # but <group appearance="field-list"> is a FieldList. Here, "poodles" is
     # not recognized so it continues searching through dicts that don't care
     # about the "appearance" field
-    index = defaultdict(lambda: _index_on_fields(left_over, other_fields))
+    default = _index_on_fields(left_over, other_fields)
+    index = defaultdict(lambda: default)
+    # This line makes the return value more printable for debugging
+    index[None] = default
     for key in partition:
         index[key] = _index_on_fields(partition[key], other_fields)
     return index
