@@ -579,6 +579,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'subscription_credit': None,
             'css_class': "label-plan %s" % plan_version.plan.edition.lower(),
             'is_dimagi_subscription': subscription.do_not_invoice if subscription is not None else False,
+            'is_trial': subscription.is_trial if subscription is not None else False,
             'date_start': (subscription.date_start.strftime("%d %B %Y")
                            if subscription is not None else None),
             'date_end': date_end,

@@ -162,7 +162,9 @@ def remind_subscription_ending_30_days(based_on_date=None):
 def send_subscription_reminder_emails(num_days):
     today = datetime.date.today()
     date_in_n_days = today + datetime.timedelta(days=num_days)
-    ending_subscriptions = Subscription.objects.filter(date_end=date_in_n_days)
+    ending_subscriptions = Subscription.objects.filter(
+        is_trial=False, date_end=date_in_n_days
+    )
     for subscription in ending_subscriptions:
         subscription.send_ending_reminder_email()
 
