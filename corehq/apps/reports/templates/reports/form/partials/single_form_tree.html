@@ -2,10 +2,10 @@
 {% for question in questions %}
 <tr class="{% if question.response == None %}muted{% endif %}">
     {% if question.children %}
-        <td colspan="2">
+        <td colspan="2" title="{{ question.value }}">
             <table class="table table-bordered">
                 <caption>
-                    <ins class="jstree-icon {{ question.icon }}" style="color: #2787d0;"></ins>
+                    <i class="jstree-icon {{ question.icon }}" style="color: #2787d0;"></i>
                     {{ question.label }}
                 </caption>
                 {% with template_name='reports/form/partials/single_form_tree.html' questions=question.children %}
@@ -14,11 +14,21 @@
             </table>
         </td>
     {% else %}
-        <td class="span6">
-            <ins class="jstree-icon {{ question.icon }}" style="color: #2787d0;"></ins>
+        <td class="span6" title="{{ question.value }}">
+            <i class="jstree-icon {{ question.icon }}" style="color: #2787d0;"></i>
             {{ question.label }}
         </td>
-        <td class="span6">{% if question.response %}{{ question.response }}{% endif %}</td>
+        <td class="span6" title="{{ question.response }}">
+            {% if question.options %}
+                {% for option in question.options %}
+                    {% if option.value == question.response %}
+                        {{ option.label }}
+                    {% endif %}
+                {% endfor %}
+            {% else %}
+                {% if question.response %}{{ question.response }}{% endif %}
+            {% endif %}
+        </td>
     {% endif %}
 </tr>
 {% endfor %}
