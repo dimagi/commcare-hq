@@ -1,5 +1,6 @@
 import datetime
 from calendar import month_name
+import logging
 
 try:
     # < 3.0
@@ -9,7 +10,6 @@ except ImportError:
     from celery.utils.log import get_task_logger
 import dateutil
 import pytz
-from dimagi.utils.logging import log_exception
 from dimagi.utils.parsing import string_to_datetime
 from dateutil.rrule import *
 
@@ -52,7 +52,7 @@ def safe_date_add(startdate, days, force_to_date_flag=True):
         else:
             return val
     except OverflowError, e:
-        log_exception(e) 
+        logging.exception(str(e))
         return None
 
 
