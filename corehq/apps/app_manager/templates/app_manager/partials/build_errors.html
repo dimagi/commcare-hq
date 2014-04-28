@@ -73,6 +73,11 @@
                             {% endif %}
                             <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
                         {% endif %}
+                        {% if error.type == "invalid location xpath" %}
+                            Case List has invalid location reference <code>{{ error.column.field_property}}</code>.
+                            Details: {{ error.details }}
+                            <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
+                        {% endif %}
                         {% if error.type == "subcase has no case type" %}
                             Child case specifies no module
                             in form {% include "app_manager/partials/form_error_message.html" %}

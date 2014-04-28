@@ -851,10 +851,6 @@ class GenericTabularReport(GenericReportView):
         3. str(cell)
         """
         headers = self.headers
-        if self.exportable_all:
-            formatted_rows = self.get_all_rows
-        else:
-            formatted_rows = self.rows
 
         def _unformat_row(row):
             def _unformat_val(val):
@@ -865,7 +861,7 @@ class GenericTabularReport(GenericReportView):
             return [_unformat_val(val) for val in row]
 
         table = headers.as_export_table
-        rows = [_unformat_row(row) for row in formatted_rows]
+        rows = [_unformat_row(row) for row in self.export_rows]
         table.extend(rows)
         if self.total_row:
             table.append(_unformat_row(self.total_row))
@@ -873,6 +869,17 @@ class GenericTabularReport(GenericReportView):
             table.extend([_unformat_row(row) for row in self.statistics_rows])
 
         return [[self.export_sheet_name, table]]
+
+    @property
+    def export_rows(self):
+        """
+        The rows that will be used in an export. Useful if you want to apply any additional
+        custom formatting to mirror something that would be done in a template.
+        """
+        if self.exportable_all:
+            return self.get_all_rows
+        else:
+            return self.rows
 
     @property
     def report_context(self):

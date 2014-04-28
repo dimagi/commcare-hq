@@ -27,6 +27,7 @@ def submit_form_locally(instance, domain, **kwargs):
             response.status_code,
             response.content,
         ))
+    return response
 
 
 def get_meta_appversion_text(xform):

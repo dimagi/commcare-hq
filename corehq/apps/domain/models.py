@@ -1,12 +1,16 @@
 from datetime import datetime, timedelta
+import hashlib
 import json
 import logging
 from couchdbkit.exceptions import ResourceConflict
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
-from couchdbkit.ext.django.schema import (Document, StringProperty, BooleanProperty, DateTimeProperty, IntegerProperty,
-                                          DocumentSchema, SchemaProperty, DictProperty, ListProperty,
-                                          StringListProperty, SchemaListProperty, SchemaDictProperty, TimeProperty, DecimalProperty)
+from couchdbkit.ext.django.schema import (
+    Document, StringProperty, BooleanProperty, DateTimeProperty, IntegerProperty,
+    DocumentSchema, SchemaProperty, DictProperty, ListProperty,
+    StringListProperty, SchemaListProperty, TimeProperty, DecimalProperty
+)
+from django.core.cache import cache
 from django.utils.safestring import mark_safe
 from corehq.apps.appstore.models import Review, SnapshotMixin
 from dimagi.utils.couch.cache import cache_core
@@ -436,9 +440,9 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         if couch_user:
             domain_names = couch_user.get_domains()
             return Domain.view("domain/domains",
-                                    keys=domain_names,
-                                    reduce=False,
-                                    include_docs=True).all()
+                keys=domain_names,
+                reduce=False,
+                include_docs=True).all()
         else:
             return []
 
@@ -553,6 +557,19 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
                 else:
                     notify_exception(None, '%r is not a valid domain name' % name)
                     return None
+        cache_key = _domain_cache_key(name)
+        MISSING = object()
+        res = cache.get(cache_key, MISSING)
+        if res != MISSING:
+            return res
+        else:
+            domain = cls._get_by_name(name, strict)
+            # 30 mins, so any unforeseen invalidation bugs aren't too bad.
+            cache.set(cache_key, domain, 30*60)
+            return domain
+
+    @classmethod
+    def _get_by_name(cls, name, strict=False):
         extra_args = {'stale': settings.COUCH_STALE_QUERY} if not strict else {}
 
         db = cls.get_db()
@@ -611,18 +628,13 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     def password_format(self):
         """
         This was a performance hit, so for now we'll just return 'a' no matter what
-#        If a single application is alphanumeric, return alphanumeric; otherwise, return numeric
+        If a single application is alphanumeric, return alphanumeric; otherwise, return numeric
         """
-#        for app in self.full_applications():
-#            if hasattr(app, 'profile'):
-#                format = app.profile.get('properties', {}).get('password_format', 'n')
-#                if format == 'a':
-#                    return 'a'
-#        return 'n'
         return 'a'
 
     @classmethod
     def get_all(cls, include_docs=True):
+        # todo: this should use iter_docs
         return Domain.view("domain/not_snapshots",
                             include_docs=include_docs).all()
 
@@ -631,6 +643,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
 
     def save(self, **params):
         super(Domain, self).save(**params)
+        cache.delete(_domain_cache_key(self.name))
 
         from corehq.apps.domain.signals import commcare_domain_post_save
         results = commcare_domain_post_save.send_robust(sender='domain', domain=self)
@@ -1077,3 +1090,6 @@ class DomainCounter(Document):
                     raise
         return (range_start, range_end)
 
+
+def _domain_cache_key(name):
+    return hashlib.md5(u'cchq:domain:{name}'.format(name=name)).hexdigest()

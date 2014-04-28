@@ -17,6 +17,7 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
 from casexml.apps.stock.utils import months_of_stock_remaining, state_stock_category
 from corehq.apps.domain.models import Domain
+from couchforms.signals import xform_archived, xform_unarchived
 from dimagi.utils.couch.loosechange import map_reduce
 from couchforms.models import XFormInstance
 from dimagi.utils import parsing as dateparse
@@ -31,8 +32,7 @@ from corehq.apps.commtrack.exceptions import LinkedSupplyPointNotFoundError
 from couchexport.models import register_column_type, ComplexExportColumn
 from dimagi.utils.dates import force_to_datetime
 from django.db import models
-from django.db.models.signals import post_save
-from corehq.apps.domain.models import Domain
+from django.db.models.signals import post_save, post_delete
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -1450,6 +1450,23 @@ def update_stock_state(sender, instance, *args, **kwargs):
     state.save()
 
 
+@receiver(post_delete, sender=DbStockTransaction)
+def stock_state_deleted(sender, instance, *args, **kwargs):
+    qs = DbStockTransaction.objects.filter(
+        section_id=instance.section_id,
+        case_id=instance.case_id,
+        product_id=instance.product_id,
+    ).order_by('-report__date')
+    if qs:
+        update_stock_state(sender, qs[0])
+    else:
+        StockState.objects.filter(
+            section_id=instance.section_id,
+            case_id=instance.case_id,
+            product_id=instance.product_id,
+        ).delete()
+
+
 @receiver(post_save, sender=StockState)
 def update_domain_mapping(sender, instance, *args, **kwargs):
     case_id = unicode(instance.case_id)
@@ -1470,6 +1487,17 @@ def post_loc_edited(sender, loc=None, **kwargs):
 @receiver(location_created)
 def post_loc_created(sender, loc=None, **kwargs):
     sync_location_supply_point(loc)
+
+
+@receiver(xform_archived)
+def remove_data(sender, xform, *args, **kwargs):
+    DbStockReport.objects.filter(form_id=xform._id).delete()
+
+
+@receiver(xform_unarchived)
+def reprocess_form(sender, xform, *args, **kwargs):
+    from corehq.apps.commtrack.processing import process_stock
+    process_stock(xform)
 
 # import signals
 from . import signals

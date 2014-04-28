@@ -7,11 +7,13 @@ def form_matches_users(form, users):
     except KeyError:
         return False
 
+
 def is_commconnect_form(form):
     """
     Checks if something is a commconnect form, by manually inspecting the deviceID property
     """
     return form.get('form', {}).get('meta', {}).get('deviceID', None) == 'commconnect'
+
 
 def default_form_filter(form, filter):
     # hack: all the other filters we use completely break on device logs
@@ -19,3 +21,7 @@ def default_form_filter(form, filter):
     # to be accepted, since the only time they are relevant is when they're
     # explicitly wanted
     return is_device_report(form) or filter(form)
+
+
+def default_case_filter(doc):
+    return doc["doc_type"] == "CommCareCase"

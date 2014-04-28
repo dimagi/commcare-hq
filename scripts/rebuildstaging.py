@@ -132,14 +132,15 @@ def check_merges(config):
     for path, config in base_config.span_configs():
         git = get_git(path)
         with OriginalBranch(git):
-            git.checkout('-B', config.name, origin(config.trunk), '--no-track')
+            trunk = origin(config.trunk)
+            git.checkout('-B', config.name, trunk, '--no-track')
             for branch in config.branches:
                 if not has_local(git, branch):
                     branch = origin(branch)
                 git.checkout(branch)
                 print "  [{cwd}] {trunk} => {branch}".format(
                     cwd=format_cwd(path),
-                    trunk=config.name,
+                    trunk=trunk,
                     branch=branch,
                 ),
                 if not git_check_merge(config.name, branch, git=git):

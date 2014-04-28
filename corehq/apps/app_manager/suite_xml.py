@@ -1,5 +1,6 @@
 from collections import namedtuple
 from distutils.version import LooseVersion
+from corehq.apps.app_manager import id_strings
 import urllib
 from django.core.urlresolvers import reverse
 from lxml import etree
@@ -15,6 +16,7 @@ from dimagi.utils.web import get_url_base
 from .xpath import dot_interpolate, CaseIDXPath, session_var, CaseTypeXpath
 
 FIELD_TYPE_INDICATOR = 'indicator'
+FIELD_TYPE_LOCATION = 'location'
 FIELD_TYPE_PROPERTY = 'property'
 FIELD_TYPE_LEDGER = 'ledger'
 
@@ -328,77 +330,6 @@ class Suite(XmlObject):
     descriptor = StringField('@descriptor')
 
 
-class IdStrings(object):
-
-    def homescreen_title(self):
-        return 'homescreen.title'
-
-    def app_display_name(self):
-        return "app.display.name"
-
-    def xform_resource(self, form):
-        return form.unique_id
-
-    def locale_resource(self, lang):
-        return u'app_{lang}_strings'.format(lang=lang)
-
-    def media_resource(self, multimedia_id, name):
-        return u'media-{id}-{name}'.format(id=multimedia_id, name=name)
-
-    def detail(self, module, detail_type):
-        return u"m{module.id}_{detail_type}".format(module=module, detail_type=detail_type)
-
-    def detail_title_locale(self, module, detail_type):
-        return u"m{module.id}.{detail_type}.title".format(module=module, detail_type=detail_type)
-
-    def detail_column_header_locale(self, module, detail_type, column):
-        return u"m{module.id}.{detail_type}.{d.model}_{d.field}_{d_id}.header".format(
-            detail_type=detail_type,
-            module=module,
-            d=column,
-            d_id=column.id + 1
-        )
-
-    def detail_column_enum_variable(self, module, detail_type, column, key):
-        return u"m{module.id}.{detail_type}.{d.model}_{d.field}_{d_id}.enum.k{key}".format(
-            module=module,
-            detail_type=detail_type,
-            d=column,
-            d_id=column.id + 1,
-            key=key,
-        )
-
-    def menu(self, module):
-        put_in_root = getattr(module, 'put_in_root', False)
-        return 'root' if put_in_root else u"m{module.id}".format(module=module)
-
-    def module_locale(self, module):
-        return module.get_locale_id()
-
-    def form_locale(self, form):
-        return form.get_locale_id()
-
-    def form_command(self, form):
-        return form.get_command_id()
-
-    def case_list_command(self, module):
-        return module.get_case_list_command_id()
-
-    def case_list_locale(self, module):
-        return module.get_case_list_locale_id()
-
-    def referral_list_command(self, module):
-        """1.0 holdover"""
-        return module.get_referral_list_command_id()
-
-    def referral_list_locale(self, module):
-        """1.0 holdover"""
-        return module.get_referral_list_locale_id()
-
-    def indicator_instance(self, indicator_set_name):
-        return u"indicators_%s" % indicator_set_name
-
-
 def get_detail_column_infos(detail, include_sort):
     """
     This is not intented to be a widely used format
@@ -446,7 +377,7 @@ class SuiteGenerator(object):
         self.app = app
         # this is actually so slow it's worth caching
         self.modules = list(self.app.get_modules())
-        self.id_strings = IdStrings()
+        self.id_strings = id_strings
 
     @property
     def xform_resources(self):
@@ -672,7 +603,7 @@ class SuiteGenerator(object):
                     ))
                     if self.app.commtrack_enabled:
                         e.datums.append(SessionDatum(
-                            id='throwaway',
+                            id='product_id',
                             nodeset="instance('products')/products/product",
                             value="./@id",
                             detail_select=self.get_detail_id_safe(module, 'product_short')
@@ -691,6 +622,21 @@ class SuiteGenerator(object):
                         indicator_sets.append(indicator_set)
                         yield Instance(id=self.id_strings.indicator_instance(indicator_set),
                                src='jr://fixture/indicators:%s' % indicator_set)
+
+    def get_location_instances(self, module):
+        # will return an empty list or a list containing the one location instance
+        for _, detail, _ in module.get_details():
+            for column in detail.get_columns():
+                if column.field_type == FIELD_TYPE_LOCATION:
+                    return [Instance(id='commtrack:locations',
+                                     src='jr://fixture/commtrack:locations')]
+        return []
+
+    def get_extra_instances(self, module):
+        for instance in self.get_indicator_instances(module):
+            yield instance
+        for instance in self.get_location_instances(module):
+            yield instance
 
     def add_case_sharing_assertion(self, entry):
         entry.instances.append(Instance(id='groups', src='jr://fixture/user-groups'))
@@ -724,7 +670,7 @@ class SuiteGenerator(object):
                 yield Instance(id='commcaresession',
                                src='jr://instance/session')
 
-            for instance in self.get_indicator_instances(module):
+            for instance in self.get_extra_instances(module):
                 yield instance
 
         e.instances.extend(get_instances())
@@ -776,7 +722,7 @@ class SuiteGenerator(object):
                 except IndexError:
                     pass
 
-            for instance in self.get_indicator_instances(module):
+            for instance in self.get_extra_instances(module):
                 yield instance
 
         e.instances.extend(get_instances())
@@ -841,7 +787,7 @@ class SuiteGenerator(object):
                 if last_action.show_product_stock:
                     target_module = get_target_module(action.case_type, last_action.details_module, True)
                     e.datums.append(SessionDatum(
-                        id='throwaway',
+                        id='product_id',
                         nodeset="instance('products')/products/product",
                         value="./@id",
                         detail_select=self.get_detail_id_safe(target_module, 'product_short')

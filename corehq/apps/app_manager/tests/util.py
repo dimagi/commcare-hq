@@ -1,6 +1,8 @@
 import json
 import os
-from corehq.apps.builds.models import CommCareBuild
+import mock
+from corehq.apps.builds.models import CommCareBuild, CommCareBuildConfig, \
+    BuildSpec
 from lxml.doctestcompare import LXMLOutputChecker
 import difflib
 
@@ -37,3 +39,21 @@ def add_build(version, build_number):
     path = os.path.join(os.path.dirname(__file__), "jadjar")
     jad_path = os.path.join(path, 'CommCare_%s_%s.zip' % (version, build_number))
     CommCareBuild.create_from_zip(jad_path, version, build_number)
+
+
+def _get_default(self, application_version):
+    if application_version == '1.0':
+        return BuildSpec({
+            "version": "1.2.1",
+            "build_number": None,
+            "latest": True
+        })
+    else:
+        return BuildSpec({
+            "version": "2.7.0",
+            "build_number": None,
+            "latest": True
+        })
+
+patch_default_builds = mock.patch.object(CommCareBuildConfig, 'get_default',
+                                         _get_default)

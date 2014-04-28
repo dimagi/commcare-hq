@@ -29,7 +29,7 @@
             ko.applyBindings(managementModel, element);
 
             $mcctProjectReviewPageManagement.find('a.select-all').click(function () {
-                $mcctProjectReviewPageManagement.find('input.selected-element').attr('checked', true).change();
+                $mcctProjectReviewPageManagement.find('input.selected-element').prop('checked', true).change();
                 return false;
             });
 
@@ -38,7 +38,7 @@
             $mcctProjectReviewPageManagement.find('.dataTables_length select').change(selectNone);
 
             function selectNone() {
-                $mcctProjectReviewPageManagement.find('input.selected-element:checked').attr('checked', false).change();
+                $mcctProjectReviewPageManagement.find('input.selected-element:checked').prop('checked', false).change();
                 ko.cleanNode($mcctProjectReviewPageManagement.find('table tbody')[0]);
                 ko.applyBindings(managementModel, $mcctProjectReviewPageManagement.find('table tbody')[0]);
             }
@@ -56,23 +56,52 @@
 
 {% block reportcontent %}
     <div id="mcct_project_review_page_management">
-        <div class="row-fluid">
-            <form class="well form-inline" style="margin: 1em; display: none;" data-bind="mcctProjectReviewPage: selected_forms">
+        {{ block.super }}
+    </div>
+    <script type="text/javascript">
+        $("i[data-toggle='popover']").popover({
+            template: '<div class="popover popover-medium"><div class="arrow"></div><div class="popover-inner"><h3 class="popover-title"></h3><div class="popover-content"><p></p></div></div></div>'
+        });
+    </script>
+{% endblock %}
+
+{% block pretable %}
+    <div id="logo-top" class="row-fluid">
+        <div class="span3" id="logo-top-left">
+            <img src="{% static 'm4change/images/SurePLogo.jpg' %}" alt="sure_p_logo"/>
+        </div>
+        <div class="span6 buttons" id="logo-title">
+            {{ block.super }}
+            <form id="report_buttons" class="well form-inline" style="margin: 1em;">
                 {% block status_button %}
-                    <button class="btn" data-bind="click: updateStatus.bind(undefined, 'reviewed'), mcctProjectReviewPage: selected_forms">{% trans 'Review' %}</button>
+                    <button class="btn" disabled="disabled" data-bind="click: updateStatus.bind(undefined, 'reviewed'), mcctProjectReviewPage: selected_forms">{% trans 'Review' %}</button>
                 {% endblock %}
                 <a class="btn" href="{% url 'corehq.apps.reports.views.default' domain %}">{% trans 'Cancel' %}</a>
                 {%  block reject_button %}
-                    <button id="reject_button" class="btn" data-bind="click: updateStatus.bind(undefined, 'rejected'), mcctProjectReviewPage: selected_forms">{% trans 'Reject' %}</button>
+                    <button id="reject_button" class="btn" disabled="disabled" data-bind="click: updateStatus.bind(undefined, 'rejected'), mcctProjectReviewPage: selected_forms">{% trans 'Reject' %}</button>
                     <label for="reject_reason">{% trans 'Reason' %}:</label>
-                    <select id="reject_reason" data-bind="value: reject_reason">
+                    <select id="reject_reason" disabled="disabled" data-bind="value: reject_reason">
                         <option value="phone_number">{% trans 'Incorrect phone number' %}</option>
                         <option value="double">{% trans 'Double entry' %}</option>
                         <option value="other">{% trans 'Other errors' %}</option>
                     </select>
                 {% endblock %}
+                <span>
+                    <a href="#" class="hq-help no-click"><i class="icon-question-sign" data-toggle="popover" data-placement="top" data-trigger="hover" data-title="{% trans 'Help' %}" data-content="{% block help_content %}{% endblock %}" data-html="true"></i></a>
+                </span>
             </form>
         </div>
-        {{ block.super }}
+        <div class="span3" id="logo-top-right">
+            <img src="{% static 'm4change/images/NigeriaCoatofArms.png' %}" alt="nigeria_coat_of_arms"/>
+        </div>
+    </div>
+{% endblock %}
+
+{% block posttable %}
+    <div id="logo-bottom" class="row-fluid">
+        <div class="span12">
+            <img src="{% static 'm4change/images/PathfinderInternationalLogo.jpg' %}"
+                 alt="pathfinder_international_logo"/>
+        </div>
     </div>
 {% endblock %}

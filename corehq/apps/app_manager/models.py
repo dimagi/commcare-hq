@@ -36,7 +36,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 
 from corehq.apps.app_manager.commcare_settings import check_condition
 from corehq.apps.app_manager.const import *
-from corehq.apps.app_manager.xpath import dot_interpolate
+from corehq.apps.app_manager.xpath import dot_interpolate, LocationXpath
 from corehq.apps.builds import get_default_build_spec
 from corehq.util.hash_compat import make_password
 from dimagi.utils.couch.cache import cache_core
@@ -69,7 +69,8 @@ from .exceptions import (
     XFormError,
     XFormIdNotUnique,
     XFormValidationError,
-)
+    LocationXpathValidationError)
+from corehq.apps.app_manager import id_strings
 
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 
@@ -1151,6 +1152,9 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
         )
 
     def validate_detail_columns(self, columns):
+        from corehq.apps.app_manager.suite_xml import FIELD_TYPE_LOCATION
+        from corehq.apps.locations.util import parent_child
+        hierarchy = None
         for column in columns:
             if column.format in ('enum', 'enum-image'):
                 for item in column.enum:
@@ -1167,6 +1171,17 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
                 except etree.XPathSyntaxError:
                     yield {
                         'type': 'invalid filter xpath',
+                        'module': self.get_module_info(),
+                        'column': column,
+                    }
+            elif column.field_type == FIELD_TYPE_LOCATION:
+                hierarchy = hierarchy or parent_child(self.get_app().domain)
+                try:
+                    LocationXpath('').validate(column.field_property, hierarchy)
+                except LocationXpathValidationError, e:
+                    yield {
+                        'type': 'invalid location xpath',
+                        'details': unicode(e),
                         'module': self.get_module_info(),
                         'column': column,
                     }
@@ -3348,6 +3363,9 @@ def import_app(app_id_or_source, domain, name=None, validate_source_domain=None)
     if name:
         source['name'] = name
     cls = str_to_cls[source['doc_type']]
+    # Allow the wrapper to update to the current default build_spec
+    if 'build_spec' in source:
+        del source['build_spec']
     app = cls.from_source(source, domain)
     app.save()
 
@@ -3436,14 +3454,15 @@ class CareplanConfig(Document):
 
         return result
 
-FormBase.get_command_id = lambda self: "m{module.id}-f{form.id}".format(module=self.get_module(), form=self)
-FormBase.get_locale_id = lambda self: "forms.m{module.id}f{form.id}".format(module=self.get_module(), form=self)
 
-ModuleBase.get_locale_id = lambda self: "modules.m{module.id}".format(module=self)
+# backwards compatibility with suite-1.0.xml
+FormBase.get_command_id = lambda self: id_strings.form_command(self)
+FormBase.get_locale_id = lambda self: id_strings.form_locale(self)
 
-ModuleBase.get_case_list_command_id = lambda self: "m{module.id}-case-list".format(module=self)
-ModuleBase.get_case_list_locale_id = lambda self: "case_lists.m{module.id}".format(module=self)
+ModuleBase.get_locale_id = lambda self: id_strings.module_locale(self)
 
-Module.get_referral_list_command_id = lambda self: "m{module.id}-referral-list".format(module=self)
-Module.get_referral_list_locale_id = lambda self: "referral_lists.m{module.id}".format(module=self)
+ModuleBase.get_case_list_command_id = lambda self: id_strings.case_list_command(self)
+ModuleBase.get_case_list_locale_id = lambda self: id_strings.case_list_locale(self)
 
+Module.get_referral_list_command_id = lambda self: id_strings.referral_list_command(self)
+Module.get_referral_list_locale_id = lambda self: id_strings.referral_list_locale(self)

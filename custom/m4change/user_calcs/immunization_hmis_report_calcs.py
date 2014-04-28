@@ -1,5 +1,4 @@
 import fluff
-from custom.m4change.constants import PNC_CHILD_IMMUNIZATION_AND_REG_HOME_DELIVERED_FORMS
 
 
 class PncImmunizationCalculator(fluff.Calculator):
@@ -10,14 +9,9 @@ class PncImmunizationCalculator(fluff.Calculator):
     @fluff.date_emitter
     def total(self, case):
         if case.type == "child":
-            if case.get_case_property("immunization_given") is not None and\
-                            self.immunization_given_value in case.get_case_property("immunization_given"):
-                yield[case.modified_on, 1]
-            else:
-                for form in case.get_forms():
-                    if form.xmlns in PNC_CHILD_IMMUNIZATION_AND_REG_HOME_DELIVERED_FORMS and\
-                                    self.immunization_given_value in form.form.get("immunization_given", ""):
-                        yield[case.modified_on, 1]
+            for form in case.get_forms():
+                if self.immunization_given_value in form.form.get("immunization_given", ""):
+                    yield[form.received_on, 1]
 
 
 class PncFullImmunizationCalculator(fluff.Calculator):

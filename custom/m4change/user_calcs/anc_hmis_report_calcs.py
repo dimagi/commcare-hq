@@ -170,11 +170,9 @@ class PostnatalClinicVisitWithin1DayOfDeliveryCalculator(fluff.Calculator):
     def total(self, case):
         dates = dict()
         if case.type == "child":
-            date_modified = case.modified_on
-            date_delivery = case.date_delivery
-            dt = date_modified - datetime.combine(date_delivery, datetime.min.time())
             for form in case.get_forms():
-                if form.xmlns in PNC_CHILD_IMMUNIZATION_AND_REG_HOME_DELIVERED_FORMS and dt.days <= 1:
+                days_after_delivery = (form.received_on.date() - case.date_delivery).days
+                if form.xmlns in PNC_CHILD_IMMUNIZATION_AND_REG_HOME_DELIVERED_FORMS and days_after_delivery <= 1:
                     update_value_for_date(form.received_on, dates)
             for date in dates:
                 yield [date, dates[date]]
@@ -186,11 +184,9 @@ class PostnatalClinicVisitWithin3DaysOfDeliveryCalculator(fluff.Calculator):
     def total(self, case):
         dates = dict()
         if case.type == "child":
-            date_modified = case.modified_on
-            date_delivery = case.date_delivery
-            dt = date_modified - datetime.combine(date_delivery, datetime.min.time())
             for form in case.get_forms():
-                if form.xmlns in PNC_CHILD_IMMUNIZATION_AND_REG_HOME_DELIVERED_FORMS and dt.days <= 3:
+                days_after_delivery = (form.received_on.date() - case.date_delivery).days
+                if form.xmlns in PNC_CHILD_IMMUNIZATION_AND_REG_HOME_DELIVERED_FORMS and days_after_delivery <= 3:
                     update_value_for_date(form.received_on, dates)
             for date in dates:
                 yield [date, dates[date]]
@@ -202,11 +198,9 @@ class PostnatalClinicVisitGreaterEqual7DaysOfDeliveryCalculator(fluff.Calculator
     def total(self, case):
         dates = dict()
         if case.type == "child":
-            date_modified = case.modified_on
-            date_delivery = case.date_delivery
-            dt = date_modified - datetime.combine(date_delivery, datetime.min.time())
             for form in case.get_forms():
-                if form.xmlns in PNC_CHILD_IMMUNIZATION_AND_REG_HOME_DELIVERED_FORMS and dt.days >= 7:
+                days_after_delivery = (form.received_on.date() - case.date_delivery).days
+                if form.xmlns in PNC_CHILD_IMMUNIZATION_AND_REG_HOME_DELIVERED_FORMS and days_after_delivery >= 7:
                     update_value_for_date(form.received_on, dates)
             for date in dates:
                 yield [date, dates[date]]

@@ -1,3 +1,6 @@
+from datetime import date
+from couchdbkit import NoResultFound, MultipleResultsFound, ResourceNotFound, QueryMixin
+from couchdbkit.ext.django.schema import StringProperty, DateProperty, DictProperty, Document
 from django.db import models
 from casexml.apps.case.models import CommCareCase
 from couchforms.models import XFormInstance
@@ -12,35 +15,46 @@ from custom.m4change.user_calcs import anc_hmis_report_calcs, ld_hmis_report_cal
     all_hmis_report_calcs, project_indicators_report_calcs, mcct_monthly_aggregate_report_calcs, is_valid_user_by_case, \
     form_passes_filter_date_delivery, form_passes_filter_date_modified, case_passes_filter_date_modified, \
     case_passes_filter_date_delivery
-from custom.m4change.constants import M4CHANGE_DOMAINS, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, BOOKED_DELIVERY_FORMS, \
-    UNBOOKED_DELIVERY_FORMS
+from custom.m4change.constants import M4CHANGE_DOMAINS, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, MOTHER_CASE_TYPE, \
+    CHILD_CASE_TYPE, BOOKED_DELIVERY_FORMS, UNBOOKED_DELIVERY_FORMS
+from operator import contains, eq
 
-NO_LOCATION_VALUE_STRING = "None"
+NO_VALUE_STRING = "None"
 
 def _get_location_by_user_id(user_id, domain):
     user = CommCareUser.get(user_id)
     if user is not None:
         location_id = get_commtrack_location_id(user, Domain.get_by_name(domain))
-        return str(location_id) if location_id is not None else NO_LOCATION_VALUE_STRING
-    return NO_LOCATION_VALUE_STRING
+        return str(location_id) if location_id is not None else NO_VALUE_STRING
+    return NO_VALUE_STRING
 
 def _get_case_location_id(case):
     if is_valid_user_by_case(case):
         return _get_location_by_user_id(case.user_id, case.domain)
-    return NO_LOCATION_VALUE_STRING
+    return NO_VALUE_STRING
 
 def _get_form_location_id(form):
     user_id = form.form.get("meta", {}).get("userID", None)
     if user_id not in [None, "", "demo_user"]:
         return _get_location_by_user_id(user_id, form.domain)
-    return NO_LOCATION_VALUE_STRING
+    return NO_VALUE_STRING
+
+def _get_user_id_by_case(case):
+    if hasattr(case, "user_id") and case.user_id not in [None, "", "demo_user"]:
+        return str(case.user_id)
+    else:
+        return NO_VALUE_STRING
+
+def _get_user_id_by_form(form):
+    user_id = form.form.get("meta", {}).get("userID", None)
+    return str(user_id) if user_id not in [None, "", "demo_user"] else NO_VALUE_STRING
 
 
 class BaseM4ChangeCaseFluff(fluff.IndicatorDocument):
     document_class = CommCareCase
     document_filter = ORFilter([
-        ccalc.CasePropertyFilter(type='pregnant_mother'),
-        ccalc.CasePropertyFilter(type='child')
+        ccalc.CasePropertyFilter(type=MOTHER_CASE_TYPE),
+        ccalc.CasePropertyFilter(type=CHILD_CASE_TYPE)
     ])
     domains = M4CHANGE_DOMAINS
     save_direct_to_sql = True
@@ -75,32 +89,42 @@ class LdHmisCaseFluff(BaseM4ChangeCaseFluff):
 
     location_id = fluff.FlatField(_get_case_location_id)
     deliveries = ld_hmis_report_calcs.LdKeyValueDictCalculator(
-        {"pregnancy_outcome": "live_birth"}, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
+        {"pregnancy_outcome": {"value": "live_birth", "comparator": eq}},
+        BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery, MOTHER_CASE_TYPE
     )
     deliveries_svd = ld_hmis_report_calcs.LdKeyValueDictCalculator(
-        {"delivery_type": "svd"}, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
+        {"delivery_type": {"value": "svd", "comparator": eq}},
+        BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery, MOTHER_CASE_TYPE
     )
     deliveries_assisted = ld_hmis_report_calcs.LdKeyValueDictCalculator(
-        {"delivery_type": "assisted"}, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
+        {"delivery_type": {"value": "assisted", "comparator": eq}},
+        BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery, MOTHER_CASE_TYPE
     )
     deliveries_caesarean_section = ld_hmis_report_calcs.LdKeyValueDictCalculator(
-        {"delivery_type": "cs"}, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
+        {"delivery_type": {"value": "cs", "comparator": eq}},
+        BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery, MOTHER_CASE_TYPE
     )
     deliveries_complications = ld_hmis_report_calcs.DeliveriesComplicationsCalculator()
     deliveries_preterm = ld_hmis_report_calcs.LdKeyValueDictCalculator(
-        {"term_status": "pre_term"}, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
+        {"term_status": {"value": "pre_term", "comparator": eq}},
+        BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery, MOTHER_CASE_TYPE
     )
     deliveries_hiv_positive_women = ld_hmis_report_calcs.LdKeyValueDictCalculator(
-        {"delivery_type": "svd"}, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
+        {"hiv_test_result": {"value": "positive", "comparator": eq}},
+        BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery, MOTHER_CASE_TYPE
     )
     live_birth_hiv_positive_women = ld_hmis_report_calcs.LdKeyValueDictCalculator(
-        {"hiv_test_result": "positive", "pregnancy_outcome": "live_birth"}, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
+        {"hiv_test_result": {"value": "positive", "comparator": eq},
+         "pregnancy_outcome": {"value": "live_birth", "comparator": eq}},
+        BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery, MOTHER_CASE_TYPE
     )
     deliveries_hiv_positive_booked_women = ld_hmis_report_calcs.LdKeyValueDictCalculator(
-        {"hiv_test_result": "positive"}, BOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
+        {"hiv_test_result": {"value": "positive", "comparator": eq}},
+        BOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery, MOTHER_CASE_TYPE
     )
     deliveries_hiv_positive_unbooked_women = ld_hmis_report_calcs.LdKeyValueDictCalculator(
-        {"hiv_test_result": "positive"}, UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
+        {"hiv_test_result": {"value": "positive", "comparator": eq}},
+        UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery, MOTHER_CASE_TYPE
     )
     # deliveries_monitored_using_partograph = ld_hmis_report_calcs.LdKeyValueDictCalculator(
     #     {"": ""}, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, _form_passes_filter_date_delivery
@@ -109,13 +133,16 @@ class LdHmisCaseFluff(BaseM4ChangeCaseFluff):
     #     {"": ""}, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, _form_passes_filter_date_delivery
     # )
     tt1 = ld_hmis_report_calcs.LdKeyValueDictCalculator(
-        {"tt1": "yes"}, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_modified
+        {"tt1": {"value": "yes", "comparator": eq}},
+        BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_modified, MOTHER_CASE_TYPE
     )
     tt2 = ld_hmis_report_calcs.LdKeyValueDictCalculator(
-        {"tt2": "yes"}, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_modified
+        {"tt2": {"value": "yes", "comparator": eq}},
+        BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_modified, MOTHER_CASE_TYPE
     )
     live_births_male_female = ld_hmis_report_calcs.LdKeyValueDictCalculator(
-        {"pregnancy_outcome": "live_birth"}, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
+        {"pregnancy_outcome": {"value": "live_birth", "comparator": eq}},
+        BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery, CHILD_CASE_TYPE
     )
     male_lt_2_5kg = ld_hmis_report_calcs.ChildSexWeightCalculator(
         {"baby_sex": "male"}, 2.5, '<', BOOKED_AND_UNBOOKED_DELIVERY_FORMS
@@ -130,67 +157,98 @@ class LdHmisCaseFluff(BaseM4ChangeCaseFluff):
         {"baby_sex": "female"}, 2.5, '>=', BOOKED_AND_UNBOOKED_DELIVERY_FORMS
     )
     still_births = ld_hmis_report_calcs.LdKeyValueDictCalculator(
-        {"pregnancy_outcome": "still_birth"}, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
+        {"pregnancy_outcome": {"value": "still_birth", "comparator": eq}},
+        BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery, CHILD_CASE_TYPE
     )
     fresh_still_births = ld_hmis_report_calcs.LdKeyValueDictCalculator(
-        {"type_still_birth": "fresh_still_birth"}, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
+        {"type_still_birth": {"value": "fresh_still_birth", "comparator": eq}},
+        BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery, CHILD_CASE_TYPE
     )
     other_still_births = ld_hmis_report_calcs.LdKeyValueDictCalculator(
-        {"type_still_birth": "other_still_birth"}, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
+        {"type_still_birth": {"value": "other_still_birth", "comparator": eq}},
+        BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery, CHILD_CASE_TYPE
     )
     abortion_induced = ld_hmis_report_calcs.LdKeyValueDictCalculator(
-        {"abortion_type": "induced_abortion"}, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
+        {"abortion_type": {"value": "induced_abortion", "comparator": eq}},
+        BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery, CHILD_CASE_TYPE
     )
     other_abortions = ld_hmis_report_calcs.LdKeyValueDictCalculator(
-        {"abortion_type": "nn_other_abortion"}, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
+        {"abortion_type": {"value": "no_other_abortion", "comparator": eq}},
+        BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery, CHILD_CASE_TYPE
     )
     total_abortions = ld_hmis_report_calcs.LdKeyValueDictCalculator(
-        {"pregnancy_outcome": "abortion"}, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
+        {"pregnancy_outcome": {"value": "abortion", "comparator": eq}},
+        BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery, CHILD_CASE_TYPE
     )
     birth_asphyxia = ld_hmis_report_calcs.LdKeyValueDictCalculator(
-        {"birth_complication": "neonatal_birth_asphyxia"}, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
+        {"birth_complication": {"value": "neonatal_birth_asphyxia", "comparator": contains}},
+        BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery, CHILD_CASE_TYPE
     )
     birth_asphyxia_male = ld_hmis_report_calcs.LdKeyValueDictCalculator(
-        {"birth_complication": "neonatal_birth_asphyxia", "baby_sex": "male"}, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
+        {"birth_complication": {"value": "neonatal_birth_asphyxia", "comparator": contains},
+         "baby_sex": {"value": "male", "comparator": eq}},
+        BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery, CHILD_CASE_TYPE
     )
     birth_asphyxia_female = ld_hmis_report_calcs.LdKeyValueDictCalculator(
-        {"birth_complication": "neonatal_birth_asphyxia", "baby_sex": "female"}, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
+        {"birth_complication": {"value": "neonatal_birth_asphyxia", "comparator": contains},
+         "baby_sex": {"value": "female", "comparator": eq}},
+        BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery, CHILD_CASE_TYPE
     )
     neonatal_sepsis = ld_hmis_report_calcs.LdKeyValueDictCalculator(
-        {"birth_complication": "neonatal_sepsis"}, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
+        {"birth_complication": {"value": "neonatal_sepsis", "comparator": contains}},
+        BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery, CHILD_CASE_TYPE
     )
     neonatal_sepsis_male = ld_hmis_report_calcs.LdKeyValueDictCalculator(
-        {"birth_complication": "neonatal_sepsis", "baby_sex": "male"}, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
+        {"birth_complication": {"value": "neonatal_sepsis", "comparator": contains},
+         "baby_sex": {"value": "male", "comparator": eq}},
+        BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery, CHILD_CASE_TYPE
     )
     neonatal_sepsis_female = ld_hmis_report_calcs.LdKeyValueDictCalculator(
-        {"birth_complication": "neonatal_sepsis", "baby_sex": "female"}, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
+        {"birth_complication": {"value": "neonatal_sepsis", "comparator": contains},
+         "baby_sex": {"value": "female", "comparator": eq}},
+        BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery, CHILD_CASE_TYPE
     )
     neonatal_tetanus = ld_hmis_report_calcs.LdKeyValueDictCalculator(
-        {"birth_complication": "neonatal_tetanus"}, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
+        {"birth_complication": {"value": "neonatal_tetanus", "comparator": contains}},
+        BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery, CHILD_CASE_TYPE
     )
     neonatal_tetanus_male = ld_hmis_report_calcs.LdKeyValueDictCalculator(
-        {"birth_complication": "neonatal_tetanus", "baby_sex": "male"}, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
+        {"birth_complication": {"value": "neonatal_tetanus", "comparator": contains},
+         "baby_sex": {"value": "male", "comparator": eq}},
+        BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery, CHILD_CASE_TYPE
     )
     neonatal_tetanus_female = ld_hmis_report_calcs.LdKeyValueDictCalculator(
-        {"birth_complication": "neonatal_tetanus", "baby_sex": "female"}, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
+        {"birth_complication": {"value": "neonatal_tetanus", "comparator": contains},
+         "baby_sex": {"value": "female", "comparator": eq}},
+        BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery, CHILD_CASE_TYPE
     )
     neonatal_jaundice = ld_hmis_report_calcs.LdKeyValueDictCalculator(
-        {"birth_complication": "neonatal_jaundice"}, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
+        {"birth_complication": {"value": "neonatal_jaundice", "comparator": contains}},
+        BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery, CHILD_CASE_TYPE
     )
     neonatal_jaundice_male = ld_hmis_report_calcs.LdKeyValueDictCalculator(
-        {"birth_complication": "neonatal_jaundice", "baby_sex": "male"}, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
+        {"birth_complication": {"value": "neonatal_jaundice", "comparator": contains},
+         "baby_sex": {"value": "male", "comparator": eq}},
+        BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery, CHILD_CASE_TYPE
     )
     neonatal_jaundice_female = ld_hmis_report_calcs.LdKeyValueDictCalculator(
-        {"birth_complication": "neonatal_jaundice", "baby_sex": "female"}, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
+        {"birth_complication": {"value": "neonatal_jaundice", "comparator": contains},
+         "baby_sex": {"value": "female", "comparator": eq}},
+        BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery, CHILD_CASE_TYPE
     )
     low_birth_weight_babies_in_kmc = ld_hmis_report_calcs.LdKeyValueDictCalculator(
-        {"birth_complication": "kmc"}, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
+        {"birth_complication": {"value": "kmc", "comparator": contains}},
+        BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery, CHILD_CASE_TYPE
     )
     low_birth_weight_babies_in_kmc_male = ld_hmis_report_calcs.LdKeyValueDictCalculator(
-        {"birth_complication": "kmc", "baby_sex": "male"}, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
+        {"birth_complication": {"value": "kmc", "comparator": contains},
+         "baby_sex": {"value": "male", "comparator": eq}},
+        BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery, CHILD_CASE_TYPE
     )
     low_birth_weight_babies_in_kmc_female = ld_hmis_report_calcs.LdKeyValueDictCalculator(
-        {"birth_complication": "kmc", "baby_sex": "female"}, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
+        {"birth_complication": {"value": "kmc", "comparator": contains},
+         "baby_sex": {"value": "female", "comparator": eq}},
+        BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery, CHILD_CASE_TYPE
     )
     # newborns_low_birth_weight_discharged = ld_hmis_report_calcs.LdKeyValueDictCalculator(
     #     {"": ""}, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, _form_passes_filter_date_delivery
@@ -249,6 +307,7 @@ class ProjectIndicatorsCaseFluff(BaseM4ChangeCaseFluff):
     )
 
     location_id = fluff.FlatField(_get_case_location_id)
+    user_id = fluff.FlatField(_get_user_id_by_case)
     women_registered_anc = project_indicators_report_calcs.AncRegistrationCalculator()
     women_having_4_anc_visits = project_indicators_report_calcs.Anc4VisitsCalculator()
     women_delivering_at_facility_cct = project_indicators_report_calcs.FacilityDeliveryCctCalculator()
@@ -289,6 +348,7 @@ class McctMonthlyAggregateFormFluff(fluff.IndicatorDocument):
     save_direct_to_sql = True
 
     location_id = fluff.FlatField(_get_form_location_id)
+    user_id = fluff.FlatField(_get_user_id_by_form)
     eligible_due_to_registration = mcct_monthly_aggregate_report_calcs.EligibleDueToRegistrationCalculator()
     eligible_due_to_4th_visit = mcct_monthly_aggregate_report_calcs.EligibleDueTo4thVisitCalculator()
     eligible_due_to_delivery = mcct_monthly_aggregate_report_calcs.EligibleDueToDeliveryCalculator()
@@ -370,3 +430,48 @@ class AllHmisCaseFluff(BaseM4ChangeCaseFluff):
     )
 
 AllHmisCaseFluffPillow = AllHmisCaseFluff.pillow()
+
+
+class FixtureReportResult(Document, QueryMixin):
+    domain = StringProperty()
+    location_id = StringProperty()
+    start_date = DateProperty()
+    end_date = DateProperty()
+    report_slug = StringProperty()
+    rows = DictProperty()
+    name = StringProperty()
+
+    class Meta:
+        app_label = "m4change"
+
+    @classmethod
+    def by_composite_key(cls, domain, location_id, start_date, end_date, report_slug):
+        try:
+            return cls.view("m4change/fixture_by_composite_key",
+                             key=[domain, location_id, start_date, end_date, report_slug],
+                             include_docs=True).one(except_all=True)
+        except (NoResultFound, ResourceNotFound, MultipleResultsFound):
+            return None
+
+    @classmethod
+    def by_domain(cls, domain):
+        return cls.view("m4change/fixture_by_composite_key", startkey=[domain], endkey=[domain, {}], include_docs=True).all()
+
+    @classmethod
+    def _validate_params(cls, params):
+        for param in params:
+            if param is None or len(param) == 0:
+                return False
+        return True
+
+    @classmethod
+    def save_result(cls, domain, location_id, start_date, end_date, report_slug, rows, name):
+        if not cls._validate_params([domain, location_id, report_slug]) \
+                or not isinstance(rows, dict) or len(rows) == 0 \
+                or not isinstance(start_date, date) or not isinstance(end_date, date):
+            return
+        FixtureReportResult(domain=domain, location_id=location_id, start_date=start_date, end_date=end_date,
+                            report_slug=report_slug, rows=rows, name=name).save()
+
+
+from .signals import *

@@ -1,8 +1,8 @@
 from StringIO import StringIO
 import datetime
-from decimal import Decimal
 import logging
 from tempfile import NamedTemporaryFile
+from decimal import Decimal
 from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django.schema import DateTimeProperty, StringProperty
 
@@ -14,29 +14,32 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
-from corehq import toggles
-from corehq.apps.accounting.invoice_pdf import InvoiceTemplate
-from corehq.apps.accounting.utils import (
-    get_privileges, get_first_last_days,
-    get_address_from_invoice, get_dimagi_from_email_by_product,
-)
-from corehq.apps.accounting.subscription_changes import (
-    DomainDowngradeActionHandler, DomainUpgradeActionHandler,
-)
-from corehq.apps.users.models import WebUser
+
+from django_prbac.models import Role
+
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.cached_object import CachedObject
 from dimagi.utils.django.email import send_HTML_email
-
-from django_prbac.models import Role
 from dimagi.utils.couch.database import SafeSaveDocument
+
+from corehq import toggles
+from corehq.apps.users.models import WebUser
 
 from corehq.apps.accounting.exceptions import (
     CreditLineError, AccountingError, SubscriptionAdjustmentError,
     SubscriptionChangeError, NewSubscriptionError, InvoiceEmailThrottledError,
     SubscriptionReminderError, SubscriptionRenewalError,
 )
-from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES, ensure_domain_instance, get_change_status
+from corehq.apps.accounting.invoice_pdf import InvoiceTemplate
+from corehq.apps.accounting.utils import (
+    get_privileges, get_first_last_days,
+    get_address_from_invoice, get_dimagi_from_email_by_product,
+    fmt_dollar_amount, EXCHANGE_RATE_DECIMAL_PLACES,
+    ensure_domain_instance, get_change_status,
+)
+from corehq.apps.accounting.subscription_changes import (
+    DomainDowngradeActionHandler, DomainUpgradeActionHandler,
+)
 
 logger = logging.getLogger('accounting')
 integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
@@ -161,6 +164,13 @@ class SubscriptionAdjustmentMethod(object):
         (USER, "User"),
         (INTERNAL, "Ops"),
         (TASK, "Task (Invoicing)"),
+    )
+
+
+class PaymentMethodType(object):
+    STRIPE = "Stripe"
+    CHOICES = (
+        (STRIPE, STRIPE),
     )
 
 
@@ -693,6 +703,7 @@ class Subscription(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=False)
     do_not_invoice = models.BooleanField(default=False)
+    auto_generate_credits = models.BooleanField(default=False)
 
     def __str__(self):
         return ("Subscription to %(plan_version)s for %(subscriber)s. "
@@ -751,12 +762,17 @@ class Subscription(models.Model):
         self.date_end = today
         self.is_active = False
         self.save()
+
+        # transfer existing credit lines to the account
+        self.transfer_credits()
+
         SubscriptionAdjustment.record_adjustment(
             self, reason=SubscriptionAdjustmentReason.CANCEL, method=adjustment_method, note=note, web_user=web_user,
         )
 
     def update_subscription(self, date_end=None, date_delay_invoicing=None,
                             do_not_invoice=False, salesforce_contract_id=None,
+                            auto_generate_credits=False,
                             web_user=None, note=None, adjustment_method=None):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
@@ -768,6 +784,7 @@ class Subscription(models.Model):
             self.date_delay_invoicing = date_delay_invoicing
 
         self.do_not_invoice = do_not_invoice
+        self.auto_generate_credits = auto_generate_credits
         self.salesforce_contract_id = salesforce_contract_id
         self.save()
 
@@ -817,6 +834,9 @@ class Subscription(models.Model):
             self.date_delay_invoicing = today
         self.is_active = False
         self.save()
+
+        # transfer existing credit lines to the new subscription
+        self.transfer_credits(new_subscription)
 
         # record transfer from old subscription
         SubscriptionAdjustment.record_adjustment(
@@ -897,6 +917,9 @@ class Subscription(models.Model):
             renewed_subscription.is_active = True
         renewed_subscription.save()
 
+        # transfer existing credit lines to the renewed subscription
+        self.transfer_credits(renewed_subscription)
+
         # record renewal from old subscription
         SubscriptionAdjustment.record_adjustment(
             self, method=adjustment_method, note=note, web_user=web_user,
@@ -904,6 +927,34 @@ class Subscription(models.Model):
         )
 
         return renewed_subscription
+
+    def transfer_credits(self, subscription=None):
+        """Transfers all credit balances related to an account or subscription
+        (if specified).
+        """
+        if subscription is not None and self.account.pk != subscription.account.pk:
+            raise CreditLineError(
+                "Can only transfer subscription credits under the same "
+                "Billing Account."
+            )
+        source_credits = CreditLine.objects.filter(
+            account=self.account,
+            subscription=self,
+        ).all()
+        for credit_line in source_credits:
+            transferred_credit = CreditLine.add_credit(
+                credit_line.balance,
+                account=self.account,
+                subscription=subscription,
+                feature_type=credit_line.feature_type,
+                product_type=credit_line.product_type,
+                related_credit=credit_line
+            )
+            credit_line.is_active = False
+            credit_line.adjust_credit_balance(
+                credit_line.balance * Decimal('-1.0'),
+                related_credit=transferred_credit,
+            )
 
     def send_ending_reminder_email(self):
         """
@@ -1294,7 +1345,7 @@ class BillingRecord(models.Model):
             'statement_number': self.invoice.invoice_number,
             'payment_status': (_("Paid") if self.invoice.date_paid is not None
                                else _("Payment Required")),
-            'amount_due': _("USD %s") % self.invoice.balance.quantize(Decimal(10) ** -2),
+            'amount_due': fmt_dollar_amount(self.invoice.balance),
             'statements_url': "http://%s%s" % (
                 Site.objects.get_current().domain,
                 reverse(DomainBillingStatementsView.urlname,args=[domain])
@@ -1480,6 +1531,7 @@ class CreditLine(models.Model):
                                     choices=FeatureType.CHOICES)
     date_created = models.DateTimeField(auto_now_add=True)
     balance = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
+    is_active = models.BooleanField(default=True)
 
     def __str__(self):
         credit_level = ("Account-Level" if self.subscription is None
@@ -1496,16 +1548,22 @@ class CreditLine(models.Model):
                 })
 
     def adjust_credit_balance(self, amount, is_new=False, note=None,
-                              line_item=None, invoice=None, reason=None):
+                              line_item=None, invoice=None,
+                              payment_record=None, related_credit=None,
+                              reason=None):
         note = note or ""
         if line_item is not None and invoice is not None:
             raise CreditLineError("You may only have an invoice OR a line item making this adjustment.")
         if reason is None:
             reason = CreditAdjustmentReason.MANUAL
-            if line_item is not None:
-                reason = CreditAdjustmentReason.LINE_ITEM
-            if invoice is not None:
+            if payment_record is not None:
+                reason = CreditAdjustmentReason.DIRECT_PAYMENT
+            elif related_credit is not None:
+                reason = CreditAdjustmentReason.TRANSFER
+            elif invoice is not None:
                 reason = CreditAdjustmentReason.INVOICE
+            elif line_item is not None:
+                reason = CreditAdjustmentReason.LINE_ITEM
         if is_new:
             note = "Initialization of credit line. %s" % note
         credit_adjustment = CreditAdjustment(
@@ -1513,8 +1571,10 @@ class CreditLine(models.Model):
             note=note,
             amount=amount,
             reason=reason,
+            payment_record=payment_record,
             line_item=line_item,
             invoice=invoice,
+            related_credit=related_credit,
         )
         credit_adjustment.save()
         self.balance += amount
@@ -1546,56 +1606,61 @@ class CreditLine(models.Model):
         ).all()
 
     @classmethod
-    def add_account_credit(cls, amount, account, note=None):
-        cls._validate_add_amount(amount)
-        credit_line, is_created = cls.objects.get_or_create(
-            account=account,
-            subscription__exact=None,
-            product_type__exact=None,
-            feature_type__exact=None,
-        )
-        credit_line.adjust_credit_balance(amount, is_new=is_created, note=note)
-        return credit_line
-
-    @classmethod
-    def add_subscription_credit(cls, amount, subscription, note=None,
-                                invoice=None,
-                                reason=None):
-        cls._validate_add_amount(amount)
-        credit_line, is_created = cls.objects.get_or_create(
-            account=subscription.account,
-            subscription=subscription,
-            product_type__exact=None,
-            feature_type__exact=None,
-        )
-        credit_line.adjust_credit_balance(amount, is_new=is_created, note=note,
-                                          invoice=invoice, reason=reason)
-        return credit_line
-
-    @classmethod
-    def add_product_credit(cls, amount, account, product_type,
-                           subscription=None, note=None):
-        cls._validate_add_amount(amount)
-        credit_line, is_created = cls.objects.get_or_create(
-            account=account,
-            subscription=subscription,
-            product_type=product_type,
-            feature_type__exact=None,
-        )
-        credit_line.adjust_credit_balance(amount, is_new=is_created, note=note)
-        return credit_line
-
-    @classmethod
-    def add_feature_credit(cls, amount, account, feature_type,
-                           subscription=None, note=None):
-        cls._validate_add_amount(amount)
-        credit_line, is_created = cls.objects.get_or_create(
-            account=account,
-            subscription=subscription,
-            product_type__exact=None,
-            feature_type=feature_type,
-        )
-        credit_line.adjust_credit_balance(amount, is_new=is_created, note=note)
+    def add_credit(cls, amount, account=None, subscription=None,
+                   product_type=None, feature_type=None, payment_record=None,
+                   invoice=None, line_item=None, related_credit=None,
+                   note=None, reason=None):
+        if account is None and subscription is None:
+            raise CreditLineError(
+                "You must specify either a subscription "
+                "or account to add this credit to."
+            )
+        if feature_type is not None and product_type is not None:
+            raise CreditLineError(
+                "Can only add credit for a product OR a feature, but not both."
+            )
+        account = account or subscription.account
+        try:
+            credit_line = cls.objects.get(
+                account__exact=account,
+                subscription__exact=subscription,
+                product_type__exact=product_type,
+                feature_type__exact=feature_type,
+            )
+            if not credit_line.is_active:
+                raise CreditLineError(
+                    "Could not add credit to CreditLine %s because it is "
+                    "inactive." % credit_line.__str__()
+                )
+            is_new = False
+        except cls.MultipleObjectsReturned as e:
+            raise CreditLineError(
+                "Could not find a unique credit line for %(account)s"
+                "%(subscription)s%(feature)s%(product)s. %(error)s"
+                "instead." %{
+                    'account': "Account ID %d" % account.id,
+                    'subscription': (" | Subscription ID %d" % subscription.id
+                                     if subscription is not None else ""),
+                    'feature': (" | Feature %s" % feature_type
+                                if feature_type is not None else ""),
+                    'product': (" | Product %s" % product_type
+                                if product_type is not None else ""),
+                    'error': e.message,
+                }
+            )
+        except cls.DoesNotExist:
+            credit_line = cls.objects.create(
+                account=account,
+                subscription=subscription,
+                product_type=product_type,
+                feature_type=feature_type,
+            )
+            is_new = True
+        credit_line.adjust_credit_balance(amount, is_new=is_new, note=note,
+                                          payment_record=payment_record,
+                                          invoice=invoice, line_item=line_item,
+                                          related_credit=related_credit,
+                                          reason=reason)
         return credit_line
 
     @classmethod
@@ -1605,7 +1670,8 @@ class CreditLine(models.Model):
                 return
             if balance <= Decimal('0.0000'):
                 raise CreditLineError(
-                    "A balance went below zero dollars when applying credits."
+                    "A balance went below zero dollars when applying credits "
+                    "to credit line %d." % credit_line.pk
                 )
             adjustment_amount = min(credit_line.balance, balance)
             if adjustment_amount > Decimal('0.0000'):
@@ -1617,6 +1683,42 @@ class CreditLine(models.Model):
     def _validate_add_amount(amount):
         if not isinstance(amount, Decimal):
             raise ValueError("Amount must be a Decimal.")
+
+
+class PaymentMethod(models.Model):
+    """A link to a particular payment method for an account.
+    Right now the only payment methods are via Stripe, but leaving that
+    open for future changes.
+
+    :customer_id: is used by the API of the payment method we're using that
+    uniquely identifies the payer on their end.
+    """
+    account = models.ForeignKey(BillingAccount, on_delete=models.PROTECT,
+                                db_index=True)
+    billing_admin = models.ForeignKey(BillingAccountAdmin,
+                                      on_delete=models.PROTECT, db_index=True)
+    method_type = models.CharField(max_length=50,
+                                   default=PaymentMethodType.STRIPE,
+                                   choices=PaymentMethodType.CHOICES,
+                                   db_index=True)
+    customer_id = models.CharField(max_length=255, null=True, blank=True)
+    date_created = models.DateTimeField(auto_now_add=True)
+
+
+class PaymentRecord(models.Model):
+    """Records the transaction with external payment APIs.
+    """
+    payment_method = models.ForeignKey(PaymentMethod, on_delete=models.PROTECT,
+                                       db_index=True)
+    date_created = models.DateTimeField(auto_now_add=True)
+    transaction_id = models.CharField(max_length=255)
+
+    @classmethod
+    def create_record(cls, payment_method, transaction_id):
+        return cls.objects.create(
+            payment_method=payment_method,
+            transaction_id=transaction_id
+        )
 
 
 class CreditAdjustment(models.Model):
@@ -1631,7 +1733,10 @@ class CreditAdjustment(models.Model):
     amount = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
     line_item = models.ForeignKey(LineItem, on_delete=models.PROTECT, null=True)
     invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT, null=True)
-    # todo payment_method = models.ForeignKey(PaymentMethod)
+    payment_record = models.ForeignKey(PaymentRecord,
+                                       on_delete=models.PROTECT, null=True)
+    related_credit = models.ForeignKey(CreditLine, on_delete=models.PROTECT,
+                                       null=True, related_name='creditadjustment_related')
     date_created = models.DateTimeField(auto_now_add=True)
     web_user = models.CharField(max_length=80, null=True)
 

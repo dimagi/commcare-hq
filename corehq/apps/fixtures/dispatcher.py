@@ -4,9 +4,9 @@ from django.utils.decorators import method_decorator
 
 
 class FixtureInterfaceDispatcher(ProjectReportDispatcher):
-	prefix = 'fixture_interface'
-	map_name = 'FIXTURE_INTERFACES'
+    prefix = 'fixture_interface'
+    map_name = 'FIXTURE_INTERFACES'
 
-	@method_decorator(require_can_edit_fixtures)
-	def dispatch(self, request, *args, **kwargs):
-		return super(FixtureInterfaceDispatcher, self).dispatch(request, *args, **kwargs)
+    @method_decorator(require_can_edit_fixtures)
+    def dispatch(self, request, *args, **kwargs):
+        return super(FixtureInterfaceDispatcher, self).dispatch(request, *args, **kwargs)

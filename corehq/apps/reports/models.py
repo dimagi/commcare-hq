@@ -12,7 +12,8 @@ from corehq.apps.app_manager.util import ParentCasePropertyBuilder
 from corehq.apps.domain.middleware import CCHQPRBACMiddleware
 from corehq.apps.reports.display import xmlns_to_name
 from couchdbkit.ext.django.schema import *
-from corehq.apps.reports.exportfilters import form_matches_users, is_commconnect_form, default_form_filter
+from corehq.apps.reports.exportfilters import form_matches_users, is_commconnect_form, default_form_filter, \
+    default_case_filter
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
 from couchexport.models import SavedExportSchema, GroupExportConfiguration, FakeSavedExportSchema
 from couchexport.transforms import couch_to_excel_datetime, identity
@@ -477,7 +478,6 @@ class ReportNotification(Document):
         Access the notification's associated configs as a list, transparently
         returning an appropriate dummy for old notifications which have
         `report_slug` instead of `config_ids`.
-
         """
         if self.config_ids:
             configs = ReportConfig.view('_all_docs', keys=self.config_ids,
@@ -678,6 +678,10 @@ class CaseExportSchema(HQExportSchema):
     doc_type = 'SavedExportSchema'
 
     @property
+    def filter(self):
+        return SerializableFunction(default_case_filter)
+
+    @property
     def domain(self):
         return self.index[0]
 
@@ -737,6 +741,7 @@ class HQGroupExportConfiguration(GroupExportConfiguration):
             try:
                 return {
                     'form': FormExportSchema,
+                    'case': CaseExportSchema,
                 }[export.type].wrap(export._doc)
             except KeyError:
                 return export

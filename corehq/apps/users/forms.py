@@ -210,7 +210,10 @@ class CommCareAccountForm(forms.Form):
             ),
             FormActions(
                 ButtonHolder(
-                    Submit('submit', 'Create Mobile Worker')
+                    Submit(
+                        'create', 'Create Mobile Worker',
+                        css_id='submit_mobile_worker',
+                    )
                 )
             )
         )

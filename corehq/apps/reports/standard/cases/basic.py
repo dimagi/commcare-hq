@@ -39,23 +39,14 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     def case_es(self):
         return CaseES(self.domain)
 
-
     def build_query(self, case_type=None, afilter=None, status=None, owner_ids=None, user_ids=None, search_string=None):
-        # there's no point doing filters that are like owner_id:(x1 OR x2 OR ... OR x612)
-        # so past a certain number just exclude
         owner_ids = owner_ids or []
         user_ids = user_ids or []
-        MAX_IDS = 50
 
         def _filter_gen(key, flist):
-            if flist and len(flist) < MAX_IDS:
-                return {"terms": {
-                    key: [item.lower() if item else "" for item in flist]
-                }}
-
-            # demo user hack
-            elif flist and "demo_user" not in flist:
-                return {"not": {"term": {key: "demo_user"}}}
+            return {"terms": {
+                key: [item.lower() if item else "" for item in flist]
+            }}
 
         def _domain_term():
             return {"term": {"domain.exact": self.domain}}
@@ -120,11 +111,16 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     @property
     @memoized
     def case_users_and_owners(self):
-        users_data = ExpandedMobileWorkerFilter.pull_users_from_es(self.domain, self.request, fields=[])
+        users_data = ExpandedMobileWorkerFilter.pull_users_from_es(
+            self.domain, self.request, fields=[])
         user_ids = filter(None, [u["_id"] for u in users_data["hits"]["hits"]])
         group_owner_ids = []
         for user_id in user_ids:
-            group_owner_ids.extend([group._id for group in Group.by_user(user_id) if group.case_sharing])
+            group_owner_ids.extend([
+                group._id
+                for group in Group.by_user(user_id)
+                if group.case_sharing
+            ])
         return user_ids, filter(None, group_owner_ids)
 
     def get_case(self, row):

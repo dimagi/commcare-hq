@@ -1,3 +1,4 @@
+import copy
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_POST
@@ -135,6 +136,11 @@ class NewLocationView(BaseLocationView):
 
     @property
     @memoized
+    def metadata(self):
+        return copy.copy(dict(self.location.metadata))
+
+    @property
+    @memoized
     def location_form(self):
         if self.request.method == 'POST':
             return LocationForm(self.location, self.request.POST)
@@ -146,6 +152,7 @@ class NewLocationView(BaseLocationView):
             'form': self.location_form,
             'location': self.location,
             'consumption': self.consumption,
+            'metadata': self.metadata
         }
 
     def post(self, request, *args, **kwargs):
@@ -252,15 +259,19 @@ class LocationImportStatusView(BaseLocationView):
     template_name = 'hqwebapp/soil_status_full.html'
 
     def get(self, request, *args, **kwargs):
-        context = {
+        context = super(LocationImportStatusView, self).main_context
+        context.update({
             'domain': self.domain,
             'download_id': kwargs['download_id'],
             'poll_url': reverse('location_importer_job_poll', args=[self.domain, kwargs['download_id']]),
             'title': _("Location Import Status"),
             'progress_text': _("Importing your data. This may take some time..."),
             'error_text': _("Problem importing data! Please try again or report an issue."),
-        }
+        })
         return render(request, self.template_name, context)
+
+    def page_url(self):
+        return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
 
 
 class LocationImportView(BaseLocationView):

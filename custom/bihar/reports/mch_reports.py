@@ -13,7 +13,7 @@ from corehq.elastic import stream_es_query, ES_URLS
 from custom.bihar.reports.display import MCHMotherDisplay, MCHChildDisplay
 from dimagi.utils.timezones import utils as tz_utils
 import pytz
-from custom.bihar.reports.tasks import bihar_all_rows_task
+from corehq.apps.reports.tasks import export_all_rows_task
 from custom.bihar.utils import get_all_owner_ids_from_group
 
 
@@ -84,7 +84,7 @@ class MCHBaseReport(CustomProjectReport, CaseListReport):
     @request_cache("export")
     def export_response(self):
         self.request.datespan = None
-        bihar_all_rows_task.delay(self.__class__, self.__getstate__())
+        export_all_rows_task.delay(self.__class__, self.__getstate__())
 
         return HttpResponse()
 
@@ -93,6 +93,14 @@ class MCHBaseReport(CustomProjectReport, CaseListReport):
         case_displays = (self.model(self, self.get_case(case))
                          for case in self.es_results['hits'].get('hits', []))
         return self.get_cases(case_displays)
+
+    @property
+    def export_table(self):
+        table = super(MCHBaseReport, self).export_table
+        #  remove first row from table headers
+        table[0][1].pop(0)
+        return table
+
 
 class MotherMCHRegister(MCHBaseReport):
     name = "Mother MCH register"

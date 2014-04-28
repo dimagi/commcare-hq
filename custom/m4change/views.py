@@ -1,5 +1,6 @@
-from django.http import HttpResponse
 from django.views.decorators.http import require_POST
+from django.http.response import HttpResponse
+
 from custom.m4change.models import McctStatus
 
 

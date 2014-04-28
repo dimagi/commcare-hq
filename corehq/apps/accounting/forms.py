@@ -270,6 +270,9 @@ class SubscriptionForm(forms.Form):
     do_not_invoice = forms.BooleanField(
         label=_("Do Not Invoice"), required=False
     )
+    auto_generate_credits = forms.BooleanField(
+        label=_("Auto-generate Plan Credits"), required=False
+    )
 
     def __init__(self, subscription, account_id, web_user, *args, **kwargs):
         # account_id is not referenced if subscription is not None
@@ -349,6 +352,7 @@ class SubscriptionForm(forms.Form):
             self.fields['domain'].initial = subscription.subscriber.domain
             self.fields['salesforce_contract_id'].initial = subscription.salesforce_contract_id
             self.fields['do_not_invoice'].initial = subscription.do_not_invoice
+            self.fields['auto_generate_credits'].initial = subscription.auto_generate_credits
 
             if (subscription.date_start is not None
                 and subscription.date_start <= today):
@@ -409,6 +413,7 @@ class SubscriptionForm(forms.Form):
                 domain_field,
                 'salesforce_contract_id',
                 'do_not_invoice',
+                'auto_generate_credits',
             ),
             FormActions(
                 crispy.ButtonHolder(
@@ -444,6 +449,7 @@ class SubscriptionForm(forms.Form):
         salesforce_contract_id = self.cleaned_data['salesforce_contract_id']
         is_active = is_active_subscription(date_start, date_end)
         do_not_invoice = self.cleaned_data['do_not_invoice']
+        auto_generate_credits = self.cleaned_data['auto_generate_credits']
         return Subscription.new_domain_subscription(
             account, domain, plan_version,
             date_start=date_start,
@@ -452,6 +458,7 @@ class SubscriptionForm(forms.Form):
             salesforce_contract_id=salesforce_contract_id,
             is_active=is_active,
             do_not_invoice=do_not_invoice,
+            auto_generate_credits=auto_generate_credits,
             web_user=self.web_user,
         )
 
@@ -460,6 +467,7 @@ class SubscriptionForm(forms.Form):
             date_end=self.cleaned_data['end_date'],
             date_delay_invoicing=self.cleaned_data['delay_invoice_until'],
             do_not_invoice=self.cleaned_data['do_not_invoice'],
+            auto_generate_credits=self.cleaned_data['auto_generate_credits'],
             salesforce_contract_id=self.cleaned_data['salesforce_contract_id'],
             web_user=self.web_user
         )
@@ -583,21 +591,18 @@ class CreditForm(forms.Form):
     def adjust_credit(self):
         amount = self.cleaned_data['amount']
         note = self.cleaned_data['note']
-
-        if self.cleaned_data['rate_type'] == 'Product':
-            CreditLine.add_product_credit(
-                amount, self.account, self.cleaned_data['product_type'],
-                subscription=self.subscription, note=note,
-            )
-        elif self.cleaned_data['rate_type'] == 'Feature':
-            CreditLine.add_feature_credit(
-                amount, self.account, self.cleaned_data['feature_type'],
-                subscription=self.subscription, note=note,
-            )
-        elif self.subscription is not None:
-            CreditLine.add_subscription_credit(amount, self.subscription, note=note)
-        else:
-            CreditLine.add_account_credit(amount, self.account, note=note)
+        product_type = (self.cleaned_data['product_type']
+                        if self.cleaned_data['rate_type'] == 'Product' else None)
+        feature_type = (self.cleaned_data['feature_type']
+                        if self.cleaned_data['rate_type'] == 'Feature' else None)
+        CreditLine.add_credit(
+            amount,
+            account=self.account,
+            subscription=self.subscription,
+            feature_type=feature_type,
+            product_type=product_type,
+            note=note,
+        )
         return True
 
 
@@ -1567,8 +1572,10 @@ class AdjustBalanceForm(forms.Form):
                                   % adjustment_type)
 
     def adjust_balance(self):
-        CreditLine.add_subscription_credit(
-            -self.amount, self.invoice.subscription,
+        CreditLine.add_credit(
+            -self.amount,
+            account=self.invoice.subscription.account,
+            subscription=self.invoice.subscription,
             note=self.cleaned_data['note'],
             invoice=self.invoice,
             reason=self.cleaned_data['method'],

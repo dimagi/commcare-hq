@@ -26,11 +26,11 @@ def is_user_in_CCT_by_case(case):
 
 
 def get_date_delivery(form):
-    return form.get("form", {}).get("date_delivery", None)
+    return form.form.get("date_delivery", None)
 
 
 def get_date_modified(form):
-    return form.get("form", {}).get("case", {}).get("@date_modified", None)
+    return form.form.get("case", {}).get("@date_modified", None)
 
 
 def get_case_date_delivery(case):

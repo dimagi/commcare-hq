@@ -6,6 +6,7 @@ try:
     from corehq.apps.reports.tests.test_form_export import *
     from corehq.apps.reports.tests.test_report_api import *
     from corehq.apps.reports.tests.test_data_sources import *
+    from corehq.apps.reports.tests.test_readable_formdata import *
     from .test_pillows_xforms import *
     from .test_pillows_cases import *
 except ImportError, e:

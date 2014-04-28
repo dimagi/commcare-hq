@@ -244,6 +244,7 @@ HQ_APPS = (
     'corehq.apps.sofabed',
     'corehq.apps.hqpillow_retry',
     'corehq.couchapps',
+    'corehq.preindex',
     'custom.apps.wisepill',
     'custom.fri',
     'fluff',
@@ -765,6 +766,9 @@ BANK_ACCOUNT_NUMBER = ''
 BANK_ROUTING_NUMBER = ''
 BANK_SWIFT_CODE = ''
 
+STRIPE_PUBLIC_KEY = ''
+STRIPE_PRIVATE_KEY = ''
+
 try:
     # try to see if there's an environmental variable set for local_settings
     if os.environ.get('CUSTOMSETTINGS', None) == "demo":
@@ -897,6 +901,7 @@ COUCHDB_APPS = [
     ('care_sa', 'fluff-care_sa'),
     ('cvsu', 'fluff-cvsu'),
     ('mc', 'fluff-mc'),
+    ('m4change', 'm4change'),
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
@@ -1088,8 +1093,6 @@ ES_XFORM_FULL_INDEX_DOMAINS = [
 
 CUSTOM_MODULES = [
     'custom.apps.crs_reports',
-    'custom.bihar',
-
 ]
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"

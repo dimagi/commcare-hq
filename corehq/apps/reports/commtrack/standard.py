@@ -5,7 +5,7 @@ from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.commtrack.models import Product, CommtrackConfig, CommtrackActionConfig, StockState
 from corehq.apps.reports.graph_models import PieChart, MultiBarChart, Axis
-from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin
+from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
 from dimagi.utils.couch.loosechange import map_reduce
 from datetime import datetime, timedelta
 from corehq.apps.locations.models import Location
@@ -20,7 +20,8 @@ from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 def _enabled_hack(domain):
     return not is_psi_domain(domain)
 
-class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
+
+class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin, DatespanMixin):
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
@@ -78,22 +79,6 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
     def aggregate_by(self):
         return self.request.GET.get('agg_type')
 
-    @property
-    def start_date(self):
-        date = self.request.GET.get('startdate')
-        if date:
-            return datetime.strptime(date, '%Y-%m-%d').date()
-        else:
-            return (datetime.now() - timedelta(30)).date()
-
-    @property
-    def end_date(self):
-        date = self.request.GET.get('enddate')
-        if date:
-            return datetime.strptime(date, '%Y-%m-%d').date()
-        else:
-            return datetime.now().date()
-
 
 class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Stock Status by Product')
@@ -128,8 +113,8 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
 
         stock_states = StockState.objects.filter(
             case_id__in=sp_ids,
-            last_modified_date__lte=self.end_date,
-            last_modified_date__gte=self.start_date,
+            last_modified_date__lte=self.datespan.enddate_utc,
+            last_modified_date__gte=self.datespan.startdate_utc,
             section_id=STOCK_SECTION_TYPE
         ).order_by('product_id')
 
@@ -245,8 +230,8 @@ class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
                 'domain': self.domain,
                 'location_id': self.request.GET.get('location_id'),
                 'program_id': self.request.GET.get('program'),
-                'start_date': self.request.GET.get('startdate'),
-                'end_date': self.request.GET.get('enddate'),
+                'start_date': self.datespan.startdate_utc,
+                'end_date': self.datespan.enddate_utc,
                 'aggregate': True
             }
             self.prod_data = self.prod_data + list(StockStatusDataSource(config).get_data())
@@ -294,13 +279,13 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
     @property
     def headers(self):
         return DataTablesHeader(*(DataTablesColumn(text) for text in [
-                    _('Location'),
-                    _('# Sites'),
-                    _('# Reporting'),
-                    _('Reporting'),
-                    _('# Non-reporting'),
-                    _('Non-reporting'),
-                ]))
+            _('Location'),
+            _('# Sites'),
+            _('# Reporting'),
+            _('Reporting Rate'),
+            _('# Non-reporting'),
+            _('Non-reporting Rate'),
+        ]))
 
     @property
     @memoized
@@ -309,11 +294,11 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
             'domain': self.domain,
             'location_id': self.request.GET.get('location_id'),
             'program_id': self.request.GET.get('program'),
-            'start_date': self.request.GET.get('startdate'),
-            'end_date': self.request.GET.get('enddate'),
-            'request': self.request
+            'start_date': self.datespan.startdate_utc,
+            'end_date': self.datespan.enddate_utc,
         }
         statuses = list(ReportingStatusDataSource(config).get_data())
+
         def child_loc(path):
             root = self.active_location
             ix = path.index(root._id) if root else -1
@@ -321,6 +306,7 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
                 return path[ix + 1]
             except IndexError:
                 return None
+
         def case_iter():
             for site in statuses:
                 if child_loc(site['loc_path']) is not None:
