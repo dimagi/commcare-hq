@@ -8,12 +8,14 @@ from corehq.apps.domain.shortcuts import create_domain
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.util import post_case_blocks
 
-from custom.uth.utils import match_case
+from custom.uth.utils import match_case, all_scan_cases
+
+from casexml.apps.case.tests import delete_all_xforms, delete_all_cases
 
 
 class UTHTests(TestCase):
 
-    def create_scan_case(self, user_id, serial, scan_id, scan_uploaded=False):
+    def create_scan_case(self, user_id, serial, scan_id, scan_time, scan_uploaded=False):
         case_id = uuid.uuid4().hex
         case_block = CaseBlock(
             create=True,
@@ -26,7 +28,8 @@ class UTHTests(TestCase):
             update={
                 'scan_id': scan_id,
                 'vscan_serial': serial,
-                'scan_uploaded': scan_uploaded
+                'scan_uploaded': scan_uploaded,
+                'scan_time': scan_time
             }
         ).as_xml(format_datetime=json_format_datetime)
         post_case_blocks([case_block], {'domain': 'vscan_domain'})
@@ -34,6 +37,9 @@ class UTHTests(TestCase):
         return case_id
 
     def setUp(self):
+        delete_all_xforms()
+        delete_all_cases()
+
         self.domain = create_domain('vscan_domain')
 
         username = format_username('vscan_user', 'vscan_domain')
@@ -47,7 +53,8 @@ class UTHTests(TestCase):
         self.case_id = self.create_scan_case(
             self.vscan_user._id,
             'VH014466XK',
-            '123123'
+            '123123',
+            '2014-03-28T10:48:49Z'
         )
 
     def testFindsCorrectCase(self):
@@ -63,10 +70,19 @@ class UTHTests(TestCase):
         self.assertIsNone(case)
 
     def testGetsNewestWithTwoCases(self):
+        # newest by date loaded date
         case_2_id = self.create_scan_case(
             self.vscan_user._id,
             'VH014466XK',
-            '123123'
+            '123123',
+            '2014-03-29T10:48:49Z'
+        )
+        # newest by creation time
+        self.create_scan_case(
+            self.vscan_user._id,
+            'VH014466XK',
+            '123123',
+            '2014-03-22T10:48:49Z'
         )
 
         case = match_case('vscan_domain', 'VH014466XK', '123123', '')
@@ -80,8 +96,12 @@ class UTHTests(TestCase):
             self.vscan_user._id,
             'VH014466XK',
             '123123',
+            '2014-03-30T10:48:49Z',
             scan_uploaded=True
         )
+
+        case_count = len(all_scan_cases('vscan_domain', 'VH014466XK', '123123'))
+        self.assertEqual(1, case_count)
 
         case = match_case('vscan_domain', 'VH014466XK', '123123', '')
         self.assertEqual(self.case_id, case._id)
