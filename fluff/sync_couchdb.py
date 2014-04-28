@@ -12,16 +12,20 @@ from dimagi.utils.couch import sync_docs
 
 class FluffPreindexPlugin(PreindexPlugin):
     def sync_design_docs(self, temp=None):
+        synced = set()
         for pillow in get_all_pillows(instantiate=False):
             if hasattr(pillow, 'indicator_class'):
                 app_label = pillow.indicator_class._meta.app_label
                 db = get_db(app_label)
-                sync_docs.sync_design_docs(
-                    db=db,
-                    design_dir=os.path.join(self.dir, "_design"),
-                    design_name=self.app_label,
-                    temp=temp,
-                )
+                key = (self.dir, app_label, db)
+                if key not in synced:
+                    sync_docs.sync_design_docs(
+                        db=db,
+                        design_dir=os.path.join(self.dir, "_design"),
+                        design_name=self.app_label,
+                        temp=temp,
+                    )
+                    synced.add(key)
 
     def copy_designs(self, temp=None, delete=True):
         for pillow in get_all_pillows(instantiate=False):
