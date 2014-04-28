@@ -551,7 +551,6 @@ class HealthStatusReport(DatespanMixin, BaseReport, SummingSqlTabularReport):
             "query": {
                 "filtered": {
                     "query": {
-                        "match_all": {}
                     },
                     "filter": {
                         "bool": {
@@ -570,7 +569,10 @@ class HealthStatusReport(DatespanMixin, BaseReport, SummingSqlTabularReport):
             es_filters["bool"]["must"].append({"terms": {"user_data.block": block_lower}})
         awcs = self.request.GET.getlist('awcs')
         if awcs:
-            es_filters["bool"]["must"].append({"terms": {"user_data.awc": awcs}})
+            awcs_lower = [awc.lower() for awc in awcs]
+            q["query"]["filtered"]["query"].update({"match":{"_all": {"query": "|".join(awcs_lower)}}})
+        else:
+            q["query"]["filtered"]["query"].update({"match_all": {}})
         logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, simplejson.dumps(q)))
         return es_query(q=q, es_url=USER_INDEX + '/_search', dict_only=False)['hits'].get('hits', [])
 
