@@ -2301,7 +2301,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
             url_name = 'receiver_secure_post_with_app_id'
         else:
             url_name = 'receiver_post_with_app_id'
-        return reverse(url_name, args=[self.domain, self.copy_of or self.get_id])
+        return reverse(url_name, args=[self.domain, self.get_id])
 
     @absolute_url_property
     def key_server_url(self):
