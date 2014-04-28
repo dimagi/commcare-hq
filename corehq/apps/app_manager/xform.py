@@ -861,13 +861,16 @@ class XForm(WrappedNode):
         """set the form's version attribute"""
         self.data_node.set('version', "%s" % version)
 
+    def get_bind(self, path):
+        return self.model_node.find('{f}bind[@nodeset="%s"]' % path)
+
     def add_bind(self, **d):
         if d.get('relevant') == 'true()':
             del d['relevant']
         d['nodeset'] = self.resolve_path(d['nodeset'])
         if len(d) > 1:
             bind = _make_elem('bind', d)
-            conflicting = self.model_node.find('{f}bind[@nodeset="%s"]' % bind.attrib['nodeset'])
+            conflicting = self.get_bind(bind.attrib['nodeset'])
             if conflicting.exists():
                 for a in bind.attrib:
                     conflicting.attrib[a] = bind.attrib[a]
@@ -1312,7 +1315,7 @@ class XForm(WrappedNode):
                     if not name_path:
                         raise CaseError("Please set 'Name according to question'. "
                                         "This will give each case a 'name' attribute")
-                    name_bind = self.model_node.find('{f}bind[@nodeset="%s"]' % name_path)
+                    name_bind = self.get_bind(name_path)
 
                     if name_bind.exists():
                         name_bind.attrib['required'] = "true()"
@@ -1476,7 +1479,7 @@ class XForm(WrappedNode):
             }))
 
             # add required="true()" to binds of required elements
-            bind = self.model_node.find('{f}bind[@nodeset="%s"]' % self.resolve_path(path))
+            bind = self.get_bind(self.resolve_path(path))
             if not bind.exists():
                 bind = _make_elem('{f}bind', {
                     'nodeset': self.resolve_path(path),
