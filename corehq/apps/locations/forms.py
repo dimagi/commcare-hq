@@ -127,8 +127,9 @@ class LocationForm(forms.Form):
             if not subform.is_valid():
                 raise forms.ValidationError('Error in location properties')
             self.cleaned_data.update(('prop:%s' % k, v) for k, v in subform.cleaned_data.iteritems())
-        self.cleaned_data['metadata'] = json.loads(self.data['metadata'])\
-            if self.data.get('metadata', None) is not None else {}
+
+        self.cleaned_data['metadata'] = json.loads(self.data['metadata']) \
+            if self.data.get('metadata', None) else {}
 
         return self.cleaned_data
 
