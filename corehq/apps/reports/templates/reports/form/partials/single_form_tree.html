@@ -1,0 +1,24 @@
+{% load i18n %}
+{% for question in questions %}
+<tr class="{% if question.response == None %}muted{% endif %}">
+    {% if question.children %}
+        <td colspan="2">
+            <table class="table table-bordered">
+                <caption>
+                    <ins class="jstree-icon {{ question.icon }}" style="color: #2787d0;"></ins>
+                    {{ question.label }}
+                </caption>
+                {% with template_name='reports/form/partials/single_form_tree.html' questions=question.children %}
+                    {% include template_name %}
+                {% endwith %}
+            </table>
+        </td>
+    {% else %}
+        <td class="span6">
+            <ins class="jstree-icon {{ question.icon }}" style="color: #2787d0;"></ins>
+            {{ question.label }}
+        </td>
+        <td class="span6">{% if question.response %}{{ question.response }}{% endif %}</td>
+    {% endif %}
+</tr>
+{% endfor %}
