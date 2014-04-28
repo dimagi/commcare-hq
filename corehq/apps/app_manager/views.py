@@ -24,6 +24,7 @@ from corehq.apps.app_manager.exceptions import (
 from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
+from corehq.apps.reports.formdetails.readable import questions_in_hierarchy
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from django.utils.http import urlencode as django_urlencode
 from couchdbkit.exceptions import ResourceConflict
@@ -232,8 +233,9 @@ def xform_display(req, domain, form_unique_id):
     if req.GET.get('format') == 'html':
         for question in questions:
             question['icon'] = VELLUM_TYPES[question['type']]['icon']
+
         return render(req, 'app_manager/xform_display.html', {
-            'questions': questions
+            'questions': questions_in_hierarchy(questions)
         })
     else:
         return json_response(questions)

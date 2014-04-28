@@ -1,3 +1,4 @@
+from collections import defaultdict
 from django.http import Http404
 from jsonobject import *
 from jsonobject.base import DefaultProperty
@@ -109,3 +110,13 @@ def zip_form_data_and_questions(data, questions):
             FormQuestionResponse(response=response, **question)
         )
     return result
+
+
+def questions_in_hierarchy(questions):
+    partition = defaultdict(list)
+    for question in questions:
+        partition[question['group']].append(question)
+    for question in questions:
+        if question['type'] in ('Group', 'Repeat'):
+            question['children'] = partition.pop(question['value'])
+    return partition[None]

@@ -1,22 +1,5 @@
 {% extends 'hqwebapp/base.html' %}
 {% load i18n %}
 {% block content %}
-<div class="row-fluid">
-    <table class="table table-bordered span6">
-        <tr>
-            <th class="span2">{% trans "Type" %}</th>
-            <th class="span5">{% trans "Question" %}</th>
-            <th class="span5">{% trans "Path" %}</th>
-        </tr>
-        {% for question in questions %}
-        <tr>
-            <td><ins class="jstree-icon {{ question.icon }}" style="color: #2787d0;"></ins></td>
-            <td>
-                {{ question.label }}
-            </td>
-            <td>{{ question.value }}</td>
-        </tr>
-        {% endfor %}
-    </table>
-</div>
+    {% include 'app_manager/xform_display_tree.html' %}
 {% endblock %}

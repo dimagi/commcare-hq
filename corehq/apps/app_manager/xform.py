@@ -642,6 +642,8 @@ class XForm(WrappedNode):
                     "tag": "hidden",
                     "value": path,
                     "repeat": matching_repeat_context,
+                    "group": matching_repeat_context,
+                    "type": "DataBindOnly",
                 })
 
         return questions
