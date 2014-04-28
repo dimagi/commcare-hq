@@ -1,6 +1,6 @@
 from corehq.apps.commtrack.psi_hacks import is_psi_domain
 from corehq.apps.commtrack.models import Product, SupplyPointCase
-from corehq.apps.locations.models import Location, root_locations, CustomProperty
+from corehq.apps.locations.models import Location, root_locations, CustomProperty, root_locations_for_user
 from corehq.apps.domain.models import Domain
 from couchdbkit import ResourceNotFound
 from django.utils.translation import ugettext as _
@@ -9,7 +9,7 @@ from couchexport.writers import Excel2007ExportWriter
 from StringIO import StringIO
 from corehq.apps.consumption.shortcuts import get_default_consumption
 
-def load_locs_json(domain, selected_loc_id=None):
+def load_locs_json(domain, selected_loc_id=None, user=None):
     """initialize a json location tree for drill-down controls on
     the client. tree is only partially initialized and branches
     will be filled in on the client via ajax.
@@ -25,7 +25,7 @@ def load_locs_json(domain, selected_loc_id=None):
             'location_type': loc.location_type,
             'uuid': loc._id,
         }
-    loc_json = [loc_to_json(loc) for loc in root_locations(domain)]
+    loc_json = [loc_to_json(loc) for loc in get_root_locations(domain, user)]
 
     # if a location is selected, we need to pre-populate its location hierarchy
     # so that the data is available client-side to pre-populate the drop-downs
@@ -37,10 +37,16 @@ def load_locs_json(domain, selected_loc_id=None):
         for loc in lineage:
             # find existing entry in the json tree that corresponds to this loc
             this_loc = [k for k in parent['children'] if k['uuid'] == loc._id][0]
-            this_loc['children'] = [loc_to_json(loc) for loc in loc.children]
+            this_loc['children'] = [loc_to_json(loc) for loc in get_location_children(loc, domain, user)]
             parent = this_loc
 
     return loc_json
+
+def get_root_locations(domain, user):
+    return root_locations(domain) if user is None else root_locations_for_user(domain, user)
+
+def get_location_children(location, domain, user):
+    return location.children if user is None else location.children_available_for_user(user, domain)
 
 def location_hierarchy_config(domain):
     return [(loc_type.name, [p or None for p in loc_type.allowed_parents]) for loc_type in Domain.get_by_name(domain).commtrack_settings.location_types]

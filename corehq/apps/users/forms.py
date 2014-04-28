@@ -286,7 +286,7 @@ class MultipleSelectionForm(forms.Form):
 
 
 class SupplyPointSelectWidget(forms.Widget):
-    def __init__(self, attrs=None, domain=None, id='supply-point'):
+    def __init__(self, attrs=None, domain=None, id='supply-points'):
         super(SupplyPointSelectWidget, self).__init__(attrs)
         self.domain = domain
         self.id = id
@@ -305,7 +305,7 @@ class SupplyPointSelectWidget(forms.Widget):
                 }))
 
 class CommtrackUserForm(forms.Form):
-    supply_point = forms.CharField(label='Supply Point:', required=False)
+    supply_points = forms.CharField(label='Supply Points:', required=False)
     program_id = forms.ChoiceField(label="Program", choices=(), required=False)
 
     def __init__(self, *args, **kwargs):
@@ -319,19 +319,25 @@ class CommtrackUserForm(forms.Form):
         else:
             attrs = {'is_admin': False}
         super(CommtrackUserForm, self).__init__(*args, **kwargs)
-        self.fields['supply_point'].widget = SupplyPointSelectWidget(domain=domain, attrs=attrs)
+        self.fields['supply_points'].widget = SupplyPointSelectWidget(domain=domain, attrs=attrs)
         programs = Program.by_domain(domain, wrap=False)
         choices = list((prog['_id'], prog['name']) for prog in programs)
         choices.insert(0, ('', ''))
         self.fields['program_id'].choices = choices
 
+    def clean_supply_points(self):
+        supply_points = self.cleaned_data['supply_points']
+        if supply_points:
+            return [supply_point.strip() for supply_point in supply_points.split(',')]
+
     def save(self, user):
         commtrack_user = CommTrackUser.wrap(user.to_json())
-        location_id = self.cleaned_data['supply_point']
-        if location_id:
-            loc = Location.get(location_id)
+        location_ids = self.cleaned_data['supply_points']
+        if location_ids:
             commtrack_user.clear_locations()
-            commtrack_user.add_location(loc, create_sp_if_missing=True)
+            for location_id in location_ids:
+                loc = Location.get(location_id)
+                commtrack_user.add_location(loc, create_sp_if_missing=True)
 
 
 class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):

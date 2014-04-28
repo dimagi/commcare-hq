@@ -33,7 +33,8 @@ def handle(verified_contact, text, msg=None):
         return False
 
     try:
-        data = StockReportParser(domain, verified_contact).parse(text.lower())
+        stock_report_parsers = get_stock_report_parsers(domain, verified_contact)
+        data = [parser.parse(text.lower()) for parser in stock_report_parsers]
         if not data:
             return False
     except NotAUserClassError:
@@ -44,9 +45,29 @@ def handle(verified_contact, text, msg=None):
         send_sms_to_verified_number(verified_contact, 'problem with stock report: %s' % str(e))
         return True
 
-    process(domain.name, data)
-    send_confirmation(verified_contact, data)
+    for report in data:
+        process(domain.name, report)
+        send_confirmation(verified_contact, report)
     return True
+
+
+def get_stock_report_parsers(domain, verified_contact):
+    user = verified_contact.owner
+
+    # if user is not actually a user, we let someone else process
+    if not isinstance(user, CouchUser):
+        raise NotAUserClassError
+
+    stock_report_parsers = []
+    linked_locs = CommTrackUser.wrap(user.to_json()).locations
+    if linked_locs:
+        for linked_loc in linked_locs:
+            location = get_supply_point(domain.name, loc=linked_loc)
+            stock_report_parsers.append(StockReportParser(domain, verified_contact, location))
+    else:
+        stock_report_parsers = [StockReportParser(domain, verified_contact, None)]
+
+    return stock_report_parsers
 
 
 def process(domain, data):
@@ -66,22 +87,12 @@ def process(domain, data):
 class StockReportParser(object):
     """a helper object for parsing raw stock report texts"""
 
-    def __init__(self, domain, v):
+    def __init__(self, domain, v, location):
         self.domain = domain
         self.v = v
 
-        self.location = None
+        self.location = location
         u = v.owner
-
-        if domain.commtrack_enabled:
-            # if user is not actually a user, we let someone else process
-            if not isinstance(u, CouchUser):
-                raise NotAUserClassError
-
-            # currently only support one location on the UI
-            linked_loc = CommTrackUser.wrap(u.to_json()).location
-            if linked_loc:
-                self.location = get_supply_point(self.domain.name, loc=linked_loc)
 
         self.C = domain.commtrack_settings
 

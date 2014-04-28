@@ -1,9 +1,11 @@
 import json
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext_noop
+from corehq import Domain
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 from corehq.apps.locations.util import load_locs_json, location_hierarchy_config
 from corehq.apps.reports.filters.base import BaseReportFilter
+from corehq.apps.users.models import WebUser
 
 
 class AsyncDrillableFilter(BaseReportFilter):
@@ -110,15 +112,25 @@ class AsyncLocationFilter(BaseReportFilter):
                                                         'resource_name': 'location',
                                                         'api_name': 'v0.3'})
         selected_loc_id = self.request.GET.get('location_id')
+        context_locations = self.get_context_locations(selected_loc_id)
 
         return {
             'api_root': api_root,
             'control_name': self.label, # todo: cleanup, don't follow this structure
             'control_slug': self.slug, # todo: cleanup, don't follow this structure
             'loc_id': selected_loc_id,
-            'locations': json.dumps(load_locs_json(self.domain, selected_loc_id)),
+            'locations': json.dumps(context_locations),
             'hierarchy': location_hierarchy_config(self.domain),
         }
+
+    def get_context_locations(self, selected_loc_id):
+        user = WebUser.get_by_username(str(self.request.user))
+        domain = Domain.get_by_name(self.domain)
+        if user.get_domain_membership(self.domain).location_ids and domain.location_restriction_for_users:
+            return load_locs_json(self.domain, selected_loc_id, user)
+        else:
+            return load_locs_json(self.domain, selected_loc_id)
+
 
 class MultiLocationFilter(AsyncDrillableFilter):
     template = "reports/filters/multi_location.html"
