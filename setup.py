@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='couchforms',
-    version='3.0.1',
+    version='3.0.2',
     description='Dimagi Couch Forms for Django',
     author='Dimagi',
     author_email='dev@dimagi.com',
