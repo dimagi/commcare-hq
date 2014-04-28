@@ -533,6 +533,8 @@ class XForm(WrappedNode):
         return text
 
     def get_label_text(self, prompt, langs, form=None):
+        if prompt.tag_name == 'repeat':
+            return self.get_label_text(prompt.find('..'), langs, form)
         label_node = prompt.find('{f}label')
         label = ""
         if label_node.exists():
@@ -666,14 +668,24 @@ class XForm(WrappedNode):
                     path = self.resolve_path(self.get_path(node), path_context)
                     bind = self.get_bind(path)
                     data_type = infer_vellum_type(node, bind)
+                    skip = tag in exclude_tags
 
                     if tag == "group":
-                        recursive_kwargs = dict(
-                            group=node,
-                            path_context=path,
-                            repeat_context=repeat_context,
-                            group_context=path,
-                        )
+                        if node.find('{f}repeat').exists():
+                            skip = True
+                            recursive_kwargs = dict(
+                                group=node,
+                                path_context=path,
+                                repeat_context=repeat_context,
+                                group_context=group_context,
+                            )
+                        else:
+                            recursive_kwargs = dict(
+                                group=node,
+                                path_context=path,
+                                repeat_context=repeat_context,
+                                group_context=path,
+                            )
                     elif tag == "repeat":
                         recursive_kwargs = dict(
                             group=node,
@@ -687,7 +699,7 @@ class XForm(WrappedNode):
                         if tag in ("select1", "select"):
                             items = node.findall('{f}item')
 
-                    if tag not in exclude_tags:
+                    if not skip:
                         control_nodes.append((node, path, repeat_context,
                                               group_context, items, is_leaf,
                                               data_type))
