@@ -96,10 +96,10 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         return self._meta.serializer.serialize(data, format, options)
 
     def get_resource_uri(self, bundle_or_obj=None, url_name='api_dispatch_detail'):
-        if isinstance(bundle_or_obj, Bundle):
+        if bundle_or_obj is None:
+            return super(CommCareUserResource, self).get_resource_uri(bundle_or_obj, url_name)
+        elif isinstance(bundle_or_obj, Bundle):
             obj = bundle_or_obj.obj
-        elif bundle_or_obj is None:
-            return None
         else:
             obj = bundle_or_obj
 
