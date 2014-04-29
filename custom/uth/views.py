@@ -2,7 +2,8 @@ from corehq.apps.domain.decorators import login_or_digest
 from django.views.decorators.http import require_POST
 import json
 from django.http import HttpResponse
-from custom.uth.utils import match_case
+from custom.uth.utils import match_case, get_case_id, get_study_id
+import zipfile
 
 
 @require_POST
@@ -31,7 +32,25 @@ def vscan_upload(request, domain, **kwargs):
 @login_or_digest
 def sonosite_upload(request, domain, **kwargs):
     response_data = {}
-    response_data['result'] = 'success'
-    response_data['message'] = ''
 
+    zip_file = zipfile.ZipFile(request.FILES['file'])
+
+    # find patient config
+    try:
+        config = [f for f in zip_file.namelist() if 'PT_PPS.XML' in f][0]
+    except Exception as e:
+        response_data['result'] = 'failed'
+        response_data['message'] = 'Could not load config file: %s' % (e.message)
+        return HttpResponse(json.dumps(response_data), content_type="application/json")
+
+
+    case_id = get_case_id(zip_file.read(config))
+    study_id = get_study_id(zip_file.read(config))
+
+    # get case
+
+    # attach images to case
+
+    response_data['result'] = 'uploaded'
+    response_data['message'] = 'uploaded'
     return HttpResponse(json.dumps(response_data), content_type="application/json")
