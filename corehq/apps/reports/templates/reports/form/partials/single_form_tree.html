@@ -1,13 +1,15 @@
 {% load i18n %}
 {% for question in questions %}
-<tr class="{% if question.response == None %}muted{% endif %}">
+<tr class="{% if question.response == None and not question.children %}muted{% endif %}">
     {% if question.children %}
         <td colspan="2" title="{{ question.value }}">
             <table class="table table-bordered">
+                {% if question.type %}
                 <caption>
                     <i class="{{ question.icon }}" style="color: #2787d0;"></i>
                     {{ question.label }}
                 </caption>
+                {% endif %}
                 {% with template_name='reports/form/partials/single_form_tree.html' questions=question.children %}
                     {% include template_name %}
                 {% endwith %}

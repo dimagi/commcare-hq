@@ -29,13 +29,10 @@ class FormQuestion(JsonObject):
             return 'icon-question-sign'
 
 
-class HierarchicalFormQuestion(FormQuestion):
-    children = ListProperty(lambda: HierarchicalFormQuestion,
-                            exclude_if_none=True)
-
-
-class FormQuestionResponse(HierarchicalFormQuestion):
+class FormQuestionResponse(FormQuestion):
     response = DefaultProperty()
+    children = ListProperty(lambda: FormQuestionResponse, exclude_if_none=True)
+
 
 SYSTEM_FIELD_NAMES = (
     "drugs_prescribed", "case", "meta", "clinic_ids", "drug_drill_down", "tmp",
@@ -71,10 +68,104 @@ def get_readable_form_data(xform):
     form = app.get_form_by_xmlns(xmlns)
     questions = form.wrapped_xform().get_questions(
         app.langs, include_triggers=True, include_groups=True)
-    questions = [FormQuestion(q) for q in questions]
-    return questions_in_hierarchy(
-        zip_form_data_and_questions(xform.form, questions)
+    questions = [FormQuestionResponse(q) for q in questions]
+    return zip_form_data_and_questions(
+        strip_form_data(xform.form),
+        questions_in_hierarchy(questions),
+        path_context='/%s/' % xform.form.get('#type', 'data'),
     )
+
+
+def strip_form_data(data):
+    data = data.copy()
+    # remove all case, meta, attribute nodes from the top level
+    for key in data.keys():
+        if not form_key_filter(key) or key in ('meta', 'case'):
+            data.pop(key)
+    return data
+
+
+def pop_from_form_data(data, path):
+    path = path.split('/')
+    while path and data:
+        key, path = path[0], path[1:]
+        try:
+            if path:
+                data = data[key]
+            else:
+                return data.pop(key)
+        except KeyError:
+            return None
+
+
+def path_relative_to_context(path, path_context):
+    assert path_context.endswith('/')
+    if path.startswith(path_context):
+        return path[len(path_context):]
+    else:
+        raise ValueError('{path} does not start with {path_context}'.format(
+            path=path,
+            path_context=path_context,
+        ))
+
+
+def zip_form_data_and_questions(data, questions, path_context=''):
+    """
+    The strategy here is to loop through the questions, and at every point
+    pull in the corresponding piece of data, removing it from data
+    and adding it to the question. At the end, any remain piece of data are
+    added to the end as unknown questions.
+
+    Repeats are matched up with their entry node in the data,
+    and then this function is applied recursively to each of the elements in
+    the list, using the repeat's children as the question list.
+
+    """
+    if not path_context.endswith('/'):
+        path_context += '/'
+    result = []
+    for question in questions:
+        path = path_relative_to_context(question.value, path_context)
+        node = pop_from_form_data(data, path)
+        question_data = dict(question)
+        question_data.pop('response')
+        if question.type == 'Group':
+            children = question_data.pop('children')
+            form_question = FormQuestionResponse(
+                children=zip_form_data_and_questions(
+                    node, children, path_context=question.value),
+                **question_data
+            )
+        elif question.type == 'Repeat':
+            if not isinstance(node, list):
+                node = [node]
+            children = question_data.pop('children')
+            form_question = FormQuestionResponse(
+                children=[
+                    FormQuestionResponse(
+                        children=zip_form_data_and_questions(
+                            entry, children, path_context=question.value)
+                    )
+                    for entry in node
+                ],
+                **question_data
+            )
+        else:
+            form_question = FormQuestionResponse(response=node,
+                                                 **question_data)
+        result.append(form_question)
+
+    if data:
+        for key, response in sorted(_flatten_json(data).items()):
+            result.append(
+                FormQuestionResponse(
+                    label='/'.join(key),
+                    value='%s%s' % (path_context, '/'.join(key)),
+                    response=response,
+                )
+            )
+
+    return result
 
 
 def _flatten_json(json, result=None, path=()):
@@ -88,40 +179,6 @@ def _flatten_json(json, result=None, path=()):
             _flatten_json(value, result, path + (i,))
     else:
         result[path] = json
-    return result
-
-
-def zip_form_data_and_questions(data, questions):
-    prefix = data.get('#type')
-    data = data.copy()
-    result = []
-    # remove all case, meta, attribute nodes from the top level
-    for key in data.keys():
-        if key.startswith(('#', '@')) or key in ('meta', 'case'):
-            data.pop(key)
-    flat_data = _flatten_json(data)
-    for question in questions:
-        # value.split('/') will always look like
-        # ('', 'data', 'question1', ...)
-        # so strip off first two items
-        key = tuple(question.value.split('/')[2:])
-        if question.tag == 'hidden':
-            question.label = '/'.join(key)
-        try:
-            response = flat_data.pop(key) or ''
-        except KeyError:
-            response = None
-        result.append(
-            FormQuestionResponse(response=response, **question)
-        )
-    for key, response in flat_data.items():
-        result.append(
-            FormQuestionResponse(
-                label='/'.join(key),
-                value='/%s/%s' % (prefix, '/'.join(key)),
-                response=response,
-            )
-        )
     return result
 
 
