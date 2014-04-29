@@ -16,6 +16,7 @@ from corehq.apps.reports.filters.select import SelectOpenCloseFilter
 from corehq.apps.reports.filters.users import (ExpandedMobileWorkerFilter,
         SelectMobileWorkerFilter)
 from corehq.apps.reports.generic import ElasticProjectInspectionReport
+from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReportParametersMixin
 from corehq.apps.reports.standard.inspect import ProjectInspectionReport
 
@@ -121,6 +122,8 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
                 for group in Group.by_user(user_id)
                 if group.case_sharing
             ])
+        if HQUserType.COMMTRACK in ExpandedMobileWorkerFilter.user_types(self.request):
+            user_ids.append("commtrack-user")
         return user_ids, filter(None, group_owner_ids)
 
     def get_case(self, row):
