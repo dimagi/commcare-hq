@@ -10,8 +10,10 @@ class ReadableFormdataTest(TestCase):
         questions_json = [{
             "tag": "input",
             "repeat": None,
+            "group": None,
             "value": "/data/question4",
             "label": "Question 4",
+            "type": "Text",
         }]
         form_data = {
             "@uiVersion": "1",
@@ -53,8 +55,10 @@ class ReadableFormdataTest(TestCase):
             [{
                 "tag": "input",
                 "repeat": None,
+                "group": None,
                 "value": "/data/question4",
                 "label": "Question 4",
                 "response": "foo",
+                "type": "Text",
             }]
         )
