@@ -936,8 +936,9 @@ def archive_form(request, domain, instance_id):
         "url": reverse('unarchive_form', args=[domain, instance_id]),
         "id": "restore-%s" % instance_id
     }
-    msg_template = """{notif} <a href="javascript:document.getElementById('{id}').submit();">{undo}</a>
-        <form id="{id}" action="{url}" method="POST"></form>""" if instance.doc_type == "XFormArchived" else '%(notif)s'
+    msg_template = u"""{notif} <a href="javascript:document.getElementById('{id}').submit();">{undo}</a>
+        <form id="{id}" action="{url}" method="POST"></form>""" if instance.doc_type == "XFormArchived" \
+        else u'%(notif)s'
     msg = msg_template.format(**params)
     messages.success(request, mark_safe(msg), extra_tags='html')
 
