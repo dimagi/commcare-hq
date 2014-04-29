@@ -1,3 +1,4 @@
+from datetime import datetime
 import hashlib
 from itertools import islice
 import os
@@ -8,8 +9,7 @@ from couchdbkit.ext.django.schema import Document, DictProperty,\
     StringListProperty, DateTimeProperty, SchemaProperty, BooleanProperty
 import json
 import couchexport
-from couchexport.exceptions import CustomExportValidationError,\
-    ExportBadStateException
+from couchexport.exceptions import CustomExportValidationError
 from couchexport.files import ExportFiles
 from couchexport.transforms import identity
 from couchexport.util import SerializableFunctionProperty,\
@@ -20,7 +20,6 @@ from dimagi.utils.couch.database import get_db, iter_docs
 from soil import DownloadBase
 from couchdbkit.exceptions import ResourceNotFound
 from couchexport.properties import TimeStampProperty, JsonProperty
-from couchdbkit.consumer import Consumer
 from dimagi.utils.logging import notify_exception
 
 column_types = {}
@@ -83,84 +82,47 @@ class ExportSchema(Document, UnicodeMixIn):
     that the entire doc list doesn't have to be used to generate the export
     """
     index = JsonProperty()
-    seq = StringProperty() # semi-deprecated
     schema = DictProperty()
     timestamp = TimeStampProperty()
 
     def __unicode__(self):
-        return "%s: %s" % (json.dumps(self.index), self.seq)
-
-    @property
-    def is_bigcouch(self):
-        try:
-            int(self.seq)
-            return False
-        except ValueError:
-            return True
+        return "%s: %s" % (json.dumps(self.index), self.timestamp)
 
     @classmethod
     def wrap(cls, data):
-        if isinstance(data.get('seq'), (int, long)):
-            data['seq'] = unicode(data['seq'])
         ret = super(ExportSchema, cls).wrap(data)
         if not ret.timestamp:
-            # these won't work on bigcouch so we want to know if this happens
+            # this is a very old export. notify that something weird happened,
+            # but just start from the beginning of time.
             notify_exception(
                 None,
                 'an export without a timestamp was accessed! %s (%s)' % (ret.index, ret._id)
             )
-            # this isn't the cleanest nor is it perfect but in the event
-            # this doc traversed databases somehow and now has a bad seq
-            # id, make sure to just reset it to 0.
-            # This won't catch if the seq is bad but not greater than the
-            # current one).
-            current_seq = cls.get_db().info()["update_seq"]
-            try:
-                if int(current_seq) < int(ret.seq):
-                    ret.seq = "0"
-                    ret.save()
-            except ValueError:
-                # seqs likely weren't ints (e.g. bigcouch)
-                # this should never be possible (anything on bigcouch should
-                # have a timestamp) so let's fail hard
-                raise ExportBadStateException(
-                    'export %s is in a bad state (no timestamp or integer seq)'
-                    % ret._id)
-        # TODO? handle seq -> datetime migration
+            ret.timestamp = datetime.min
+            ret.save()
+
         return ret
 
     @classmethod
     def last(cls, index):
-        # search first by timestamp, then fall back to seq id
-        shared_kwargs = {
-            'descending': True,
-            'limit': 1,
-            'include_docs': True,
-            'reduce': False,
-        }
-        ret = cls.view("couchexport/schema_checkpoints",
-                       startkey=['by_timestamp', json.dumps(index), {}],
-                       endkey=['by_timestamp', json.dumps(index)],
-                       **shared_kwargs).one()
-        if ret and not ret.timestamp:
-            # we found a bunch of old checkpoints but they only
-            # had seq ids, so use those instead
-            ret = cls.view("couchexport/schema_checkpoints",
-                           startkey=['by_seq', json.dumps(index), {}],
-                           endkey=['by_seq', json.dumps(index)],
-                           **shared_kwargs).one()
-        return ret
+        return cls.view("couchexport/schema_checkpoints",
+            startkey=[json.dumps(index), {}],
+            endkey=[json.dumps(index)],
+            descending=True,
+            limit=1,
+            include_docs=True,
+            reduce=False,
+        ).one()
 
     @classmethod
     def get_all_indices(cls):
         ret = cls.get_db().view("couchexport/schema_checkpoints",
-                                startkey=['by_timestamp'],
-                                endkey=['by_timestamp', {}],
-                                reduce=True,
-                                group=True,
-                                group_level=2)
+            reduce=True,
+            group=True,
+            group_level=1,
+        )
         for row in ret:
-            index = row['key'][1]
+            index = row['key'][0]
             try:
                 yield json.loads(index)
             except ValueError:
@@ -171,10 +133,11 @@ class ExportSchema(Document, UnicodeMixIn):
     @classmethod
     def get_all_checkpoints(cls, index):
         return cls.view("couchexport/schema_checkpoints",
-                        startkey=['by_timestamp', json.dumps(index)],
-                        endkey=['by_timestamp', json.dumps(index), {}],
-                        include_docs=True,
-                        reduce=False)
+            startkey=[json.dumps(index)],
+            endkey=[json.dumps(index), {}],
+            include_docs=True,
+            reduce=False,
+        )
 
     _tables = None
     @property
@@ -201,29 +164,8 @@ class ExportSchema(Document, UnicodeMixIn):
                         **get_schema_index_view_keys(self.index)).all()])
 
     def get_new_ids(self, database=None):
-        # TODO: deprecate/remove old way of doing this
         database = database or self.get_db()
-        if self.timestamp:
-            return self._ids_by_timestamp(database)
-        else:
-            return self._ids_by_seq(database)
-
-    def _ids_by_seq(self, database):
-        if self.seq == "0" or self.seq is None:
-            return self.get_all_ids()
-
-        consumer = Consumer(database)
-        view_results = consumer.fetch(since=self.seq)
-        if view_results:
-            include_ids = set([res["id"] for res in view_results["results"]])
-            return include_ids.intersection(self.get_all_ids())
-        else:
-            # sometimes this comes back empty. I think it might be a bug
-            # in couchdbkit, but it's impossible to consistently reproduce.
-            # For now, just assume this is fine.
-            return set()
-
-    def _ids_by_timestamp(self, database):
+        assert self.timestamp, 'exports without timestamps are no longer supported.'
         tag_as_list = force_tag_to_list(self.index)
         startkey = tag_as_list + [self.timestamp.isoformat()]
         endkey = tag_as_list + [{}]

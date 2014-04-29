@@ -11,17 +11,6 @@ def build_latest_schema(schema_index):
     from couchexport.export import ExportConfiguration
     db = Database(settings.COUCH_DATABASE)
     previous_export = ExportSchema.last(schema_index)
-    try:
-        current_seq = int(db.info()["update_seq"])
-    except ValueError:
-        pass # we must be on bigcouch, so comparing seqs is useless
-    else:
-        if previous_export and not previous_export.is_bigcouch \
-                           and int(previous_export.seq) > current_seq:
-            # something weird happened (like the couch database changing)
-            # better rebuild from scratch
-            previous_export = None
-
     config = ExportConfiguration(db, schema_index,
                                  previous_export=previous_export)
     schema = config.get_latest_schema()
