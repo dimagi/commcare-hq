@@ -1,6 +1,8 @@
 from couchdbkit.exceptions import ResourceNotFound
-from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.util import get_case_xform_ids
+from datetime import datetime
+from casexml.apps.case.const import CASE_ACTION_REBUILD
+from casexml.apps.case.models import CommCareCase, CommCareCaseAction
+from casexml.apps.case.util import get_case_xform_ids, primary_actions
 from casexml.apps.case.xform import get_case_updates
 from couchforms import fetch_and_wrap_form
 
@@ -29,7 +31,7 @@ def rebuild_case(case_id):
 
     # already deleted means it was explicitly set to "deleted",
     # as opposed to getting set to that because it has no actions
-    already_deleted = case.doc_type == 'CommCareCase-Deleted' and case.actions
+    already_deleted = case.doc_type == 'CommCareCase-Deleted' and primary_actions(case)
     if not already_deleted:
         case.doc_type = 'CommCareCase'
     case.xform_ids = []
@@ -58,5 +60,17 @@ def rebuild_case(case_id):
             return None
         # there were no more forms. 'delete' the case
         case.doc_type = 'CommCareCase-Deleted'
+
+    # add a "rebuild" action
+    case.actions.append(_rebuild_action())
     case.save()
     return case
+
+
+def _rebuild_action():
+    now = datetime.utcnow()
+    return CommCareCaseAction(
+        action_type=CASE_ACTION_REBUILD,
+        date=now,
+        server_date=now,
+    )

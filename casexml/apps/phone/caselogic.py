@@ -194,7 +194,7 @@ def filter_cases_modified_elsewhere_since_sync(cases, last_sync):
         def case_modified_elsewhere_since_sync(case):
             # NOTE: uses closures
             return any([row['date'] >= last_sync.date and row['token'] != last_sync._id
-                        for row in  all_case_updates_by_sync_token[case._id]])
+                        for row in all_case_updates_by_sync_token[case._id]])
 
         def relevant(case):
             return case_modified_elsewhere_since_sync(case) or not last_sync.phone_is_holding_case(case.get_id)
