@@ -23,6 +23,8 @@ from corehq.apps.accounting.utils import (
     quantize_accounting_decimal, get_customer_cards,
 )
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
+from corehq.apps.smsbillables.async_handlers import SMSRatesAsyncHandler, SMSRatesSelect2AsyncHandler
+from corehq.apps.smsbillables.forms import SMSRateCalculatorForm
 from corehq.toggles import NAMESPACE_DOMAIN
 from dimagi.utils.couch.resource_conflict import retry_resource
 from django.conf import settings
@@ -658,6 +660,8 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'process_payment_url': reverse(CreditsStripePaymentView.urlname,
                                            args=[self.domain]),
             'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
+            'sms_rate_calc_url': reverse(SMSRatesView.urlname,
+                                         args=[self.domain])
         }
 
 
@@ -2098,6 +2102,34 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
             toggle.save()
             cache_key = get_toggle_cache_key(slug, item)
             cache.set(cache_key, new_state)
+
+
+class SMSRatesView(BaseAdminProjectSettingsView, AsyncHandlerMixin):
+    urlname = 'domain_sms_rates_view'
+    page_title = ugettext_noop("SMS Rate Calculator")
+    template_name = 'domain/admin/sms_rates.html'
+    async_handlers = [
+        SMSRatesAsyncHandler,
+        SMSRatesSelect2AsyncHandler,
+    ]
+
+    @property
+    @memoized
+    def rate_calc_form(self):
+        if self.request.method == 'POST':
+            return SMSRateCalculatorForm(self.domain, self.request.POST)
+        return SMSRateCalculatorForm(self.domain)
+
+    @property
+    def page_context(self):
+        return {
+            'rate_calc_form': self.rate_calc_form,
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.async_response is not None:
+            return self.async_response
+        return self.get(request, *args, **kwargs)
 
 
 @require_POST
