@@ -5,7 +5,7 @@
         <td colspan="2" title="{{ question.value }}">
             <table class="table table-bordered">
                 <caption>
-                    <i class="jstree-icon {{ question.icon }}" style="color: #2787d0;"></i>
+                    <i class="{{ question.icon }}" style="color: #2787d0;"></i>
                     {{ question.label }}
                 </caption>
                 {% with template_name='reports/form/partials/single_form_tree.html' questions=question.children %}
@@ -15,7 +15,7 @@
         </td>
     {% else %}
         <td class="span6" title="{{ question.value }}">
-            <i class="jstree-icon {{ question.icon }}" style="color: #2787d0;"></i>
+            <i class="{{ question.icon }}" style="color: #2787d0;"></i>
             {{ question.label }}
         </td>
         <td class="span6" title="{{ question.response }}">

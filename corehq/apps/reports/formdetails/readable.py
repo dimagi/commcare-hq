@@ -23,7 +23,10 @@ class FormQuestion(JsonObject):
 
     @property
     def icon(self):
-        return VELLUM_TYPES[self.type]['icon']
+        try:
+            return VELLUM_TYPES[self.type]['icon']
+        except KeyError:
+            return 'icon-question-sign'
 
 
 class HierarchicalFormQuestion(FormQuestion):
@@ -89,6 +92,8 @@ def _flatten_json(json, result=None, path=()):
 
 
 def zip_form_data_and_questions(data, questions):
+    prefix = data.get('#type')
+    data = data.copy()
     result = []
     # remove all case, meta, attribute nodes from the top level
     for key in data.keys():
@@ -108,6 +113,14 @@ def zip_form_data_and_questions(data, questions):
             response = None
         result.append(
             FormQuestionResponse(response=response, **question)
+        )
+    for key, response in flat_data.items():
+        result.append(
+            FormQuestionResponse(
+                label='/'.join(key),
+                value='/%s/%s' % (prefix, '/'.join(key)),
+                response=response,
+            )
         )
     return result
 
