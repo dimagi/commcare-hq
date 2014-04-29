@@ -1,5 +1,20 @@
 {% load i18n %}
 {% for question in questions %}
+    {% ifchanged %}
+        {% if question.type == 'DataBindOnly' %}
+            <tr class="info">
+                <td colspan="2">
+                    <strong>{% trans "Hidden Values (Form Calculations)" %}</strong>
+                </td>
+            </tr>
+        {% elif not question.type and not question.children %}
+            <tr class="info">
+                <td colspan="2">
+                    <strong>{% trans "Unrecognized Data" %}</strong>
+                </td>
+            </tr>
+        {% endif %}
+    {% endifchanged %}
 <tr class="{% if question.response == None and not question.children %}muted{% endif %}">
     {% if question.children %}
         <td colspan="2" title="{{ question.value }}">
