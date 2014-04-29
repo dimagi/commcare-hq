@@ -36,6 +36,32 @@ from corehq.apps.announcements.dispatcher import (
 from corehq.toggles import IS_DEVELOPER
 
 
+def sidebar_to_dropdown(sidebar_items=[]):
+    # sidebar_items = [(<django.utils.functional.__proxy__ object at 0x7361c90>, [{'subpages': [{'urlname': 'custom_export_form', 'title': <django.utils.functional.__proxy__ object at 0x7f358cd9e6d0>}, {'urlname': 'edit_custom_export_form', 'title': 'Edit Form Custom Export'}], 'description': None, 'title': u'Export Forms', 'url': '/a/hqtest/data/excel_export_data/', 'is_active': False, 'icon': 'icon-list-alt'}, {'subpages': [{'urlname': 'custom_export_case', 'title': <django.utils.functional.__proxy__ object at 0x7f358cd9e710>}, {'urlname': 'edit_custom_export_case', 'title': 'Edit Case Custom Export'}], 'description': None, 'title': u'Export Cases', 'url': '/a/hqtest/data/case_export/', 'is_active': False, 'icon': 'icon-share'}]), (<django.utils.functional.__proxy__ object at 0x7361cd0>, [{'subpages': [], 'description': None, 'title': u'Reassign Cases', 'url': '/a/hqtest/data/edit/reassign_cases/', 'is_active': False, 'icon': None}, {'subpages': [], 'description': u'Import case data from an external Excel file', 'title': u'Import Cases from Excel', 'url': '/a/hqtest/data/edit/import_cases/', 'is_active': False, 'icon': None}, {'url': '/a/hqtest/data/edit/case_groups/', 'subpages': [{'urlname': 'manage_case_groups', 'title': 'Manage Case Group'}], 'title': <django.utils.functional.__proxy__ object at 0x7f358cd92990>}])]
+    dropdown_items = []
+    for side_header, side_list in sidebar_items:
+        dropdown_header = {
+            'data_id': None,
+            'url': None,
+            'is_header': True,
+            'title': side_header,
+            'is_divider': False,
+            'html': None
+        }
+        dropdown_items.append(dropdown_header)
+        for side_item in side_list:
+            dropdown_item = {
+                'data_id': None,
+                'url': side_item["url"],
+                'is_header': False,
+                'title': side_item["title"],
+                'is_divider': False,
+                'html': None
+            }
+            dropdown_items.append(dropdown_item)
+    return dropdown_items
+
+
 def format_submenu_context(title, url=None, html=None,
                            is_header=False, is_divider=False, data_id=None):
     return {
@@ -101,7 +127,7 @@ class UITab(object):
         # todo: add default implementation which looks at sidebar_items and
         # sees which ones have is_dropdown_visible or something like that.
         # Also make it work for tabs with subtabs.
-        return []
+        return sidebar_to_dropdown(sidebar_items=self.sidebar_items)
 
     @property
     @memoized
@@ -916,18 +942,12 @@ class MessagingTab(UITab):
 
         return items
 
-    @property
-    def dropdown_items(self):
-        return []
 
 
 class ProjectUsersTab(UITab):
     title = ugettext_noop("Users")
     view = "users_default"
 
-    @property
-    def dropdown_items(self):
-        return []
 
     @property
     def is_viewable(self):
@@ -1047,9 +1067,6 @@ class ProjectSettingsTab(UITab):
     title = ugettext_noop("Project Settings")
     view = 'domain_settings_default'
 
-    @property
-    def dropdown_items(self):
-        return []
 
     @property
     def is_viewable(self):
@@ -1201,9 +1218,6 @@ class MySettingsTab(UITab):
     title = ugettext_noop("My Settings")
     view = 'default_my_settings'
 
-    @property
-    def dropdown_items(self):
-        return []
 
     @property
     def is_viewable(self):
