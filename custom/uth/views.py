@@ -18,10 +18,20 @@ def vscan_upload(request, domain, **kwargs):
         response_data['message'] = 'Missing required parameters'
     else:
         case = match_case(scanner_serial, scan_id, date)
-        attach_images_to_case(case, [])
+        # attach_images_to_case(case, [])
 
         response_data = {}
         response_data['result'] = 'success'
         response_data['message'] = ''
+
+    return HttpResponse(json.dumps(response_data), content_type="application/json")
+
+
+@require_POST
+@login_or_digest
+def sonosite_upload(request, domain, **kwargs):
+    response_data = {}
+    response_data['result'] = 'success'
+    response_data['message'] = ''
 
     return HttpResponse(json.dumps(response_data), content_type="application/json")
