@@ -13,24 +13,12 @@ from corehq.elastic import es_wrapper, ESError
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
 
-from ..models import HQUserType
-from ..util import _report_user_dict
+from corehq.apps.reports.filters.users import EmwfMixin
 
 logger = logging.getLogger(__name__)
 
 
-def user_tuple(u):
-    user = _report_user_dict(u)
-    uid = "u__%s" % user['user_id']
-    name = "%s [user]" % user['username_in_report']
-    return (uid, name)
-
-
-def group_tuple(g):
-    return ("g__%s" % g['_id'], "%s [group]" % g['name'])
-
-
-class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
+class EmwfOptionsView(LoginAndDomainMixin, EmwfMixin, JSONResponseMixin, View):
     """
     Paginated options for the ExpandedMobileWorkerFilter
     """
@@ -108,10 +96,10 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
     @property
     @memoized
     def basics(self):
-        basics = [("t__0", _("[All mobile workers]"))] + \
-            [("t__%s" % (i+1), "[%s]" % name)
-                for i, name in enumerate(HQUserType.human_readable[1:])]
-        return filter(lambda basic: self.q.lower() in basic[1].lower(), basics)
+        return filter(
+            lambda basic: self.q.lower() in basic[1].lower(),
+            super(EmwfOptionsView, self).basics
+        )
 
     def user_es_call(self, **kwargs):
         return es_wrapper('users', domain=self.domain, q=self.user_query, **kwargs)
@@ -120,7 +108,7 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
         fields = ['_id', 'username', 'first_name', 'last_name', 'doc_type']
         users = self.user_es_call(fields=fields, start_at=start, size=size,
             sort_by='username.exact', order='asc')
-        return [user_tuple(u) for u in users]
+        return [self.user_tuple(u) for u in users]
 
     def group_es_call(self, **kwargs):
         reporting_filter = {"term": {"reporting": "true"}}
@@ -131,4 +119,4 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
         fields = ['_id', 'name']
         groups = self.group_es_call(fields=fields, sort_by='name.exact',
             order='asc', start_at=start, size=size)
-        return [group_tuple(g) for g in groups]
+        return [self.group_tuple(g) for g in groups]

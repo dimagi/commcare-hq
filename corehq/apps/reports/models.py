@@ -41,11 +41,13 @@ class HQUserType(object):
     DEMO_USER = 1
     ADMIN = 2
     UNKNOWN = 3
+    COMMTRACK = 4
     human_readable = [settings.COMMCARE_USER_TERM,
                       ugettext_noop("demo_user"),
                       ugettext_noop("admin"),
-                      ugettext_noop("Unknown Users")]
-    toggle_defaults = [True, False, False, False]
+                      ugettext_noop("Unknown Users"),
+                      ugettext_noop("CommTrack")]
+    toggle_defaults = [True, False, False, False, False]
 
     @classmethod
     def use_defaults(cls, show_all=False):
