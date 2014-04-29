@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
+from StringIO import StringIO
 import logging
 from datetime import datetime, timedelta, time
 import re
@@ -36,6 +37,7 @@ from corehq.apps.sms.models import (
 from corehq.apps.sms.mixin import SMSBackend, BackendMapping, VerifiedNumber
 from corehq.apps.sms.forms import ForwardingRuleForm, BackendMapForm, InitiateAddSMSBackendForm, SMSSettingsForm, SubscribeSMSForm
 from corehq.apps.sms.util import get_available_backends, get_contact
+from corehq.apps.sms.messages import _MESSAGES
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest, domain_admin_required, require_superuser
 from corehq.apps.translations.models import StandaloneTranslationDoc
@@ -49,9 +51,15 @@ from django.utils.translation import ugettext as _, ugettext_noop
 from dimagi.utils.parsing import json_format_datetime, string_to_boolean
 from dateutil.parser import parse
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.decorators.view import get_file
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
+from dimagi.utils.excel import WorkbookJSONReader
 from django.conf import settings
+from couchexport.models import Format
+from couchexport.export import export_raw
+from couchexport.shortcuts import export_response
+
 
 DEFAULT_MESSAGE_COUNT_THRESHOLD = 50
 
@@ -1054,13 +1062,57 @@ def edit_sms_languages(request, domain):
 @domain_admin_required
 @requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
 def download_sms_translations(request, domain):
-    pass
+    tdoc = StandaloneTranslationDoc.get_obj(domain, "sms")
+    columns = ["property"] + tdoc.langs + ["default"]
+
+    msg_ids = sorted(_MESSAGES.keys())
+    rows = []
+    for msg_id in msg_ids:
+        rows.append([msg_id])
+
+    for lang in tdoc.langs:
+        for row in rows:
+            row.append(tdoc.translations[lang].get(row[0], ""))
+
+    for row in rows:
+        row.append(_MESSAGES.get(row[0]))
+
+    temp = StringIO()
+    headers = (("translations", tuple(columns)),)
+    data = (("translations", tuple(rows)),)
+    export_raw(headers, data, temp)
+    return export_response(temp, Format.XLS_2007, "translations")
 
 
 @domain_admin_required
 @requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
+@get_file("file")
 def upload_sms_translations(request, domain):
-    pass
+    try:
+        workbook = WorkbookJSONReader(request.file)
+        translations = workbook.get_worksheet(title='translations')
+
+        with StandaloneTranslationDoc.get_locked_obj(domain, "sms") as tdoc:
+            msg_ids = sorted(_MESSAGES.keys())
+            result = {}
+            for lang in tdoc.langs:
+                result[lang] = {}
+
+            for row in translations:
+                for lang in tdoc.langs:
+                    if row.get(lang):
+                        msg_id = row["property"]
+                        if msg_id in msg_ids:
+                            result[lang][msg_id] = str(row[lang]).strip()
+
+            tdoc.translations = result
+            tdoc.save()
+        messages.success(request, _("SMS Translations Updated."))
+    except Exception:
+        notify_exception(request, 'SMS Upload Translations Error')
+        messages.error(request, _("Update failed. We're looking into it."))
+
+    return HttpResponseRedirect(reverse('sms_languages', args=[domain]))
 
 
 @domain_admin_required
