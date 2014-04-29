@@ -165,7 +165,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                 'months_remaining': state.months_remaining,
                 'location_id': SupplyPointCase.get(state.case_id).location_id,
                 'product_name': product.name,
-                'current_stock': state.stock_on_hand,
+                'current_stock': int(state.stock_on_hand) if state.stock_on_hand is not None else None,
                 'location_lineage': None,
                 'resupply_quantity_needed': state.resupply_quantity_needed
             }
@@ -184,7 +184,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                 'months_remaining': months_of_stock_remaining(state['total_stock'], state['avg_consumption']),
                 'location_id': None,
                 'product_name': product.name,
-                'current_stock': state['total_stock'],
+                'current_stock': int(state['total_stock']) if state['total_stock'] is not None else None,
                 'location_lineage': None,
                 'resupply_quantity_needed': None
             }
