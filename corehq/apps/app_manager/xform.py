@@ -182,6 +182,50 @@ class ItextNode(object):
         return self.id
 
 
+class ItextOutput(object):
+    def __init__(self, ref):
+        self.ref = ref
+
+    def render(self, context):
+        return context.get(self.ref)
+
+
+class ItextValue(unicode):
+    def __new__(cls, parts):
+        return super(ItextValue, cls).__new__(cls, cls._render(parts))
+
+    def __init__(self, parts):
+        super(ItextValue, self).__init__()
+        self.parts = parts
+        self.context = {}
+
+    def with_refs(self, context, processor=None, escape=None):
+        return self._render(self.parts, context, processor=processor,
+                            escape=escape)
+
+    @classmethod
+    def from_node(cls, node):
+        parts = [node.text]
+        for sub in node.findall('*'):
+            if sub.tag_name == 'output':
+                ref = sub.attrib.get('ref') or sub.attrib.get('value')
+                if ref:
+                    parts.append(ItextOutput(ref=ref))
+            parts.append(sub.tail or '')
+        return cls(parts)
+
+    @classmethod
+    def _render(cls, parts, context=None, processor=None, escape=None):
+        escape = escape or (lambda x: x)
+        processor = processor or (lambda x: x if x is not None else '____')
+        context = context or {}
+        return ''.join(
+            processor(part.render(context)) if hasattr(part, 'render')
+            else escape(part)
+            for part in parts
+        )
+
+
 def raise_if_none(message):
     """
     raise_if_none("message") is a decorator that turns a function that returns a WrappedNode
@@ -522,9 +566,8 @@ class XForm(WrappedNode):
             search_tag += '[@form="%s"]' % form
         value_node = text_node.find(search_tag)
 
-        _safe_strip = lambda x: x if isinstance(x, unicode) else str.strip(x)
         if value_node:
-            text = " ____ ".join([t for t in map(_safe_strip, value_node.itertext()) if t])
+            text = ItextValue.from_node(value_node)
         else:
             raise XFormError('<translation lang="%s"><text id="%s"> node has no <value>' % (
                 trans_node.attrib.get('lang'), id
