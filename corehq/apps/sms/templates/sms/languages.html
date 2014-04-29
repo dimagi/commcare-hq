@@ -1,0 +1,116 @@
+{% extends 'hqwebapp/two_column.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% block title %}
+    {% trans "SMS Languages" %}
+{% endblock %}
+
+{% block page-title %}
+    <ul class="breadcrumb">
+        <li>
+            <a href="{% url "messaging" domain %}"><strong>{% trans "Messaging" %}</strong></a> <span class="divider">&gt;</span>
+        </li>
+        <li class="active">
+            <a href="{% url "sms_languages" domain %}"><strong>{% trans "Languages" %}</strong></a>
+        </li>
+    </ul>
+{% endblock %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/main.js' %}"></script>
+    <script src="{% static 'langcodes/js/langcodes.js' %}"></script>
+    <script src="{% static 'app_manager/js/supported-languages.js' %}"></script>
+{% endblock %}
+
+{% block head %}{{ block.super }}
+    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-redmond-1.8.16.css' %}"/>
+    <style>
+        .sortable-handle {
+            cursor: move;
+        }
+    </style>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+<script>
+    $(function () {
+        var langs = {{ sms_langs|JSON }};
+        var buildLangs = {{ sms_langs|JSON }};
+        var saveURL = "{% url "edit_sms_languages" domain %}";
+        var edit = true;
+        var validate = true;
+        var sl = new SupportedLanguages({
+            langs: langs,
+            buildLangs: buildLangs,
+            saveURL: saveURL,
+            edit: edit,
+            validate: validate
+        });
+        ko.applyBindings(sl, $("#supported-languages").get(0));
+        ko.applyBindings({file: ko.observable(null)}, $("#translations-upload-form").get(0));
+    });
+</script>
+{% endblock %}
+
+{% block main_column %}
+    <div class="tab-pane">
+        <div class="tabbable">
+            <ul class="nav nav-tabs">
+                <li class="active"><a href="#supported-languages" data-toggle="tab">{% trans "Language List" %}</a></li>
+                <li><a href="#translations-tab" data-toggle="tab">{% trans "Messaging Translations" %}</a></li>
+            </ul>
+        </div>
+        <div class="tab-content">
+            <div id="supported-languages" class="tab-pane active">
+                {% include "app_manager/partials/supported-languages.html" %}
+            </div>
+            <div id="translations-tab" class="tab-pane">
+                <div>
+                    <section>
+                        <h2>{% trans "Bulk Download/Upload Messaging Translations" %}</h2>
+                        <p>
+                            <ol>
+                                <li>
+                                    {% trans "Download your translations" %}:
+                                    <a href="{% url "download_sms_translations" domain %}">translations.xls</a>
+                                </li>
+                                <li>
+                                    {% trans "Update it with new information." %}
+                                </li>
+                                <li>
+                                    {% trans "Use the form below to upload your completed file." %}
+                                </li>
+                            </ol>
+                        </p>
+                        <p class="alert alert-info">
+                            {% trans "Your translations will be completely replaced with the translations found in this file." %}
+                        </p>
+                        <form id="translations-upload-form" class="form form-horizontal" action="{% url "upload_sms_translations" domain %}" method="post" enctype="multipart/form-data">
+                            <legend>{% trans "Choose a file for upload" %}</legend>
+                            <div class="form-actions" style="padding-left: 1em;">
+                                <fieldset>
+                                    <div class="control-group">
+                                        <label for="bulk_upload_file" class="control-label">{% trans "Translation File" %}</label>
+                                        <div class="controls">
+                                            <input id="bulk_upload_file" type="file" name="file" data-bind="value: file"/>
+                                        </div>
+                                    </div>
+                                    <div class="control-group">
+                                        <div class="controls">
+                                            <button type="submit" class="btn btn-primary" data-bind="visible: file()">
+                                                {% trans "Update Translations" %}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+                        </form>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

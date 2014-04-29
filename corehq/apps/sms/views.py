@@ -38,6 +38,7 @@ from corehq.apps.sms.forms import ForwardingRuleForm, BackendMapForm, InitiateAd
 from corehq.apps.sms.util import get_available_backends, get_contact
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest, domain_admin_required, require_superuser
+from corehq.apps.translations.models import StandaloneTranslationDoc
 from dimagi.utils.couch.database import get_db
 from django.contrib import messages
 from corehq.apps.reports import util as report_utils
@@ -49,6 +50,7 @@ from dimagi.utils.parsing import json_format_datetime, string_to_boolean
 from dateutil.parser import parse
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
+from dimagi.utils.web import json_response
 from django.conf import settings
 
 DEFAULT_MESSAGE_COUNT_THRESHOLD = 50
@@ -998,6 +1000,68 @@ class SubscribeSMSView(BaseMessagingSectionView):
             messages.success(request, _("Updated CommTrack settings."))
             return HttpResponseRedirect(reverse(SubscribeSMSView.urlname, args=[self.domain]))
         return self.get(request, *args, **kwargs)
+
+
+@domain_admin_required
+@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
+def sms_languages(request, domain):
+    with StandaloneTranslationDoc.get_locked_obj(domain, "sms",
+        create=True) as tdoc:
+        if len(tdoc.langs) == 0:
+            tdoc.langs = ["en"]
+            tdoc.translations["en"] = {}
+            tdoc.save()
+    context = {
+        "domain": domain,
+        "always_deploy": True,
+        "sms_langs": tdoc.langs,
+    }
+    return render(request, "sms/languages.html", context)
+
+
+@domain_admin_required
+@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
+def edit_sms_languages(request, domain):
+    """
+    Accepts same post body as corehq.apps.app_manager.views.edit_app_langs
+    """
+    with StandaloneTranslationDoc.get_locked_obj(domain, "sms",
+        create=True) as tdoc:
+        try:
+            from corehq.apps.app_manager.views import validate_langs
+            langs, rename, build = validate_langs(request, tdoc.langs,
+                validate_build=False)
+        except AssertionError:
+            return HttpResponse(status=400)
+
+        for old, new in rename.items():
+            tdoc.translations[new] = tdoc.translations[old]
+            del tdoc.translations[old]
+
+        for lang in langs:
+            if lang not in tdoc.translations:
+                tdoc.translations[lang] = {}
+
+        for lang in tdoc.translations.keys():
+            if lang not in langs:
+                del tdoc.translations[lang]
+
+        tdoc.langs = langs
+        tdoc.save()
+        return json_response(langs)
+
+
+@domain_admin_required
+@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
+def download_sms_translations(request, domain):
+    pass
+
+
+@domain_admin_required
+@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
+def upload_sms_translations(request, domain):
+    pass
+
 
 @domain_admin_required
 @requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
