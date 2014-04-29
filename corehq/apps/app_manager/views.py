@@ -24,6 +24,10 @@ from corehq.apps.app_manager.exceptions import (
 from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
+from corehq.apps.reports.formdetails.readable import (
+    FormQuestionResponse,
+    questions_in_hierarchy,
+)
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from django.utils.http import urlencode as django_urlencode
 from couchdbkit.exceptions import ResourceConflict
@@ -59,7 +63,7 @@ from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.resource_conflict import retry_resource
 from corehq.apps.app_manager.xform import XFormError, XFormValidationError, CaseError,\
-    XForm
+    XForm, VELLUM_TYPES
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
@@ -216,6 +220,7 @@ def get_user_registration_source(req, domain, app_id):
     form = app.get_user_registration()
     return _get_xform_source(req, app, form, filename="User Registration.xml")
 
+
 def xform_display(req, domain, form_unique_id):
     try:
         form, app = Form.get_form(form_unique_id, and_app=True)
@@ -225,9 +230,18 @@ def xform_display(req, domain, form_unique_id):
         raise Http404()
     langs = [req.GET.get('lang')] + app.langs
 
-    questions = form.get_questions(langs)
+    questions = form.get_questions(langs, include_triggers=True,
+                                   include_groups=True)
 
-    return HttpResponse(json.dumps(questions))
+    if req.GET.get('format') == 'html':
+        questions = [FormQuestionResponse(q) for q in questions]
+
+        return render(req, 'app_manager/xform_display.html', {
+            'questions': questions_in_hierarchy(questions)
+        })
+    else:
+        return json_response(questions)
+
 
 @login_and_domain_required
 def form_casexml(req, domain, form_unique_id):

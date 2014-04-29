@@ -640,8 +640,8 @@ class FormBase(DocumentSchema):
         self.add_stuff_to_xform(xform)
         return xform.render()
 
-    def get_questions(self, langs):
-        return XForm(self.source).get_questions(langs)
+    def get_questions(self, langs, **kwargs):
+        return XForm(self.source).get_questions(langs, **kwargs)
 
     def export_json(self, dump_json=True):
         source = self.to_json()

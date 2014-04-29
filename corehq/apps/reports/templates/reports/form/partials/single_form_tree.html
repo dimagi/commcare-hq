@@ -1,0 +1,51 @@
+{% load i18n %}
+{% for question in questions %}
+    {% ifchanged %}
+        {% if question.type == 'DataBindOnly' %}
+            <tr class="info">
+                <td colspan="2">
+                    <strong>{% trans "Hidden Values (Form Calculations)" %}</strong>
+                </td>
+            </tr>
+        {% elif not question.type and not question.children %}
+            <tr class="info">
+                <td colspan="2">
+                    <strong>{% trans "Unrecognized Data" %}</strong>
+                </td>
+            </tr>
+        {% endif %}
+    {% endifchanged %}
+<tr class="{% if question.response == None and not question.children %}muted{% endif %}">
+    {% if question.children %}
+        <td colspan="2" title="{{ question.value }}">
+            <table class="table table-bordered">
+                {% if question.type %}
+                <caption>
+                    <i class="{{ question.icon }}" style="color: #2787d0;"></i>
+                    {{ question.label|linebreaksbr }}
+                </caption>
+                {% endif %}
+                {% with template_name='reports/form/partials/single_form_tree.html' questions=question.children %}
+                    {% include template_name %}
+                {% endwith %}
+            </table>
+        </td>
+    {% else %}
+        <td class="span6" title="{{ question.value }}">
+            <i class="{{ question.icon }}" style="color: #2787d0;"></i>
+            {{ question.label|linebreaksbr }}
+        </td>
+        <td class="span6" title="{{ question.response }}">
+            {% if question.options %}
+                {% for option in question.options %}
+                    {% if option.value == question.response %}
+                        {{ option.label|linebreaksbr }}
+                    {% endif %}
+                {% endfor %}
+            {% else %}
+                {% if question.response %}{{ question.response|linebreaksbr }}{% endif %}
+            {% endif %}
+        </td>
+    {% endif %}
+</tr>
+{% endfor %}

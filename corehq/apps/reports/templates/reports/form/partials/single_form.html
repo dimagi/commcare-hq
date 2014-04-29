@@ -139,19 +139,10 @@ requires imports/proptable.html to be included in the main template
         <div class="row-fluid">
             <table class="table table-bordered span6">
                 <tr>
-                    <th class="span2"></th>
-                    <th class="span5">{% trans "Question" %}</th>
-                    <th class="span5">{% trans "Response" %}</th>
+                    <th class="span6">{% trans "Question" %}</th>
+                    <th class="span6">{% trans "Response" %}</th>
                 </tr>
-                {% for question in form_data %}
-                <tr>
-                    <td>{% if question.response == None %}{% trans "Skipped" %}{% endif %}</td>
-                    <td><ins class="jstree-icon {{ question.icon }}" style="color: #2787d0;"></ins>
-                        {{ question.label }}
-                    </td>
-                    <td>{% if question.response %}{{ question.response }}{% endif %}</td>
-                </tr>
-                {% endfor %}
+                {% include 'reports/form/partials/single_form_tree.html' with questions=form_data %}
             </table>
         </div>
         {% else %}
