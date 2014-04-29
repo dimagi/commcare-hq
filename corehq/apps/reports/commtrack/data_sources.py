@@ -58,6 +58,13 @@ class CommtrackDataSourceMixin(object):
     def end_date(self):
         return self.config.get('end_date') or datetime.now().date()
 
+    @property
+    def request(self):
+        request = self.config.get('request')
+        if request:
+            return request
+
+
 
 class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
     """
