@@ -19,27 +19,25 @@
     {% if question.children %}
         {% if question.type %}
             <td colspan="2">
-            <table class="table table-bordered" style="margin-bottom: 0;">
-                <tr class="success">
-                    <td colspan="2">
-                        <center>
+            <table class="table table-bordered form-data-group-table">
+                <tr class="form-data-group-spacer">
+                    <th colspan="2">
                         <i class="{{ question.icon }}" style="color: #2787d0;"></i>
-                        <strong>{{ question.label|linebreaksbr }}</strong>
-                        </center>
-                    </td>
+                        {{ question.label|linebreaksbr }}
+                    </th>
                 </tr>
         {% endif %}
         {% with template_name='reports/form/partials/single_form_tree.html' questions=question.children %}
             {% include template_name %}
         {% endwith %}
         {% if question.type %}
-                <tr class="success"><td colspan="2"></td></tr>
+                <tr class="form-data-group-spacer"><th colspan="2"></th></tr>
             </table>
             </td>
         {% else %}
             {# This is for separators between repeat chunks #}
             {% if not forloop.last %}
-                <tr class="success"><td colspan="2"></td></tr>
+                <tr class="form-data-group-spacer"><th colspan="2"></th></tr>
             {% endif %}
         {% endif %}
     {% else %}
