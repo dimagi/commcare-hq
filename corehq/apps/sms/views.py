@@ -1043,8 +1043,9 @@ def edit_sms_languages(request, domain):
             return HttpResponse(status=400)
 
         for old, new in rename.items():
-            tdoc.translations[new] = tdoc.translations[old]
-            del tdoc.translations[old]
+            if old != new:
+                tdoc.translations[new] = tdoc.translations[old]
+                del tdoc.translations[old]
 
         for lang in langs:
             if lang not in tdoc.translations:

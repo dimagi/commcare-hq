@@ -1657,12 +1657,11 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         return time_zone
 
     def get_language_code(self):
-        try:
-            lang = self.user_data["language_code"]
-        except Exception as e:
-            # Gracefully handle when user_data is None, or does not have a "language_code" entry
-            lang = None
-        return lang
+        if self.user_data and "language_code" in self.user_data:
+            # Old way
+            return self.user_data["language_code"]
+        else:
+            return self.language
 
     def __repr__(self):
         return ("{class_name}(username={self.username!r})".format(
