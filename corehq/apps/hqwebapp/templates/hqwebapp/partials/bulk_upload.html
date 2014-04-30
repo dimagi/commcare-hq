@@ -9,7 +9,7 @@
                 {% blocktrans with name=bulk_upload.name|lower %}Download your current {{ name }} Excel file.{% endblocktrans %}
             </p>
             <p>
-                <a href="{% url "download_commcare_users" domain %}">
+                <a href="{{ bulk_upload.download_url }}">
                     <button class="btn btn-success">
                         <i class="icon-download-alt"></i> {% blocktrans with name_pluralized=bulk_upload.name_pluralized|title %}Download {{ name_pluralized }}{% endblocktrans %}
                     </button>

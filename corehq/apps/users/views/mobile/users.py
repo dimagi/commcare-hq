@@ -676,6 +676,8 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
                     "address": BULK_MOBILE_HELP_SITE,
                     "name": _("CommCare Help Site"),
                 },
+                "download_url": reverse(
+                    "download_commcare_users", args=(self.domain,)),
                 "name": _("mobile worker"),
                 "name_pluralized": _("mobile workers"),
             },
