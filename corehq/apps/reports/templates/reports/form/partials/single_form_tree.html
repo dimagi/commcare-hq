@@ -17,12 +17,12 @@
     {% endifchanged %}
     {% ifchanged %}
         {% if question.response == None %}
-        <tr class="form-data-question form-data-skipped-spacer muted warning table-condensed">
-            <td colspan="2"><center>{% trans '…' %}</center></td>
+        <tr class="form-data-question form-data-skipped-spacer muted table-condensed">
+            <th colspan="2">{% trans '…' %}</th>
         </tr>
         {% endif %}
     {% endifchanged %}
-<tr class="form-data-question {% if question.response == None %}muted form-data-skipped warning{% endif %}">
+<tr class="form-data-question {% if question.response == None %}muted form-data-skipped{% endif %}">
     {% if question.children %}
         {% if question.type %}
             <td colspan="2">
