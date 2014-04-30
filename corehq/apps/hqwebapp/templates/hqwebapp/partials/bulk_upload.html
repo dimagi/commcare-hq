@@ -33,7 +33,7 @@
             <form id="bulk-upload-form" class="form form-horizontal" action="" method="post" enctype="multipart/form-data">
                 <p>
                     <fieldset>
-                        <input id="bulk_upload_file" type="file" name="file" data-bind="value: file"/>
+                        <input id="bulk_upload_file" type="file"{% if bulk_upload.post_filename %} name="{{ bulk_upload.post_filename }}" {% endif %}data-bind="value: file"/>
                     </fieldset>
                 </p>
                 <p>

@@ -188,6 +188,17 @@ class UploadProductView(BaseCommTrackManageView):
     template_name = 'commtrack/manage/upload_products.html'
 
     @property
+    def page_context(self):
+        return {
+            'bulk_upload': {
+                "download_url": reverse("product_export", args=(self.domain,)),
+                "name": _("product"),
+                "name_pluralized": _("products"),
+                "post_filename": "products",
+            },
+        }
+
+    @property
     def parent_pages(self):
         return [{
             'title': ProductListView.page_title,
