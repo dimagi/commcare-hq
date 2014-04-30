@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import logging
 from time import sleep
 from threading import Thread
