@@ -1,4 +1,5 @@
 import logging
+from time import sleep
 from threading import Thread
 try:
     # Python 2.x
@@ -29,8 +30,6 @@ def worker_thread(q, err, function, *args, **kwargs):
             err.error_occurred = True
             logging.exception("Error in %s" % function.__name__)
 
-        q.task_done()
-
 def process_fast(items, function, num_threads=4, item_goal=None, max_threads=50,
     args=None, kwargs=None):
     """
@@ -59,12 +58,24 @@ def process_fast(items, function, num_threads=4, item_goal=None, max_threads=50,
     err = ErrorObject()
     passed_args = (q, err, function) + (args or ())
     kwargs = kwargs or {}
+    threads = []
     for i in range(num_threads):
         t = Thread(target=worker_thread, args=passed_args, kwargs=kwargs)
         t.start()
+        threads.append(t)
 
-    # Wait until the queue is empty
-    q.join()
+    # Wait until the queue is empty. Don't use q.join() because that could keep
+    # this thread lingering if something goes wrong and the queue's tasks aren't
+    # marked as done.
+    threads_alive = 50
+    while threads_alive > 0:
+        sleep(1)
+        count = 0
+        for thread in threads:
+            if thread.is_alive():
+                count += 1
+        threads_alive = count
+
     if err.error_occurred:
         raise RuntimeError("Error occurred calling process_fast. Check "
             "couchlog for details.")
