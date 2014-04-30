@@ -228,9 +228,7 @@ class ReportConfig(Document):
 
     def get_date_range(self):
         """Duplicated in reports.config.js"""
-
         date_range = self.date_range
-
         # allow old report email notifications to represent themselves as a
         # report config by leaving the default date range up to the report
         # dispatcher
@@ -240,7 +238,6 @@ class ReportConfig(Document):
         import datetime
         from dateutil.relativedelta import relativedelta
         today = datetime.date.today()
-
         if date_range == 'since':
             start_date = self.start_date
             end_date = today
@@ -263,6 +260,11 @@ class ReportConfig(Document):
                 raise Exception("Invalid date range")
 
             start_date = today - datetime.timedelta(days=days)
+
+        if start_date is None or end_date is None:
+            # this is due to bad validation. see: http://manage.dimagi.com/default.asp?110906
+            logging.error('scheduled report %s is in a bad state (no startdate or enddate)' % self._id)
+            return {}
 
         return {'startdate': start_date.isoformat(),
                 'enddate': end_date.isoformat()}
