@@ -18,20 +18,24 @@
 <tr class="{% if question.response == None and not question.children %}muted{% endif %}">
     {% if question.children %}
         {% if question.type %}
-            <tr class="success">
-                <td colspan="2">
-                    <center>
-                    <i class="{{ question.icon }}" style="color: #2787d0;"></i>
-                    <strong>{{ question.label|linebreaksbr }}</strong>
-                    </center>
-                </td>
-            </tr>
+            <td colspan="2">
+            <table class="table table-bordered" style="margin-bottom: 0;">
+                <tr class="success">
+                    <td colspan="2">
+                        <center>
+                        <i class="{{ question.icon }}" style="color: #2787d0;"></i>
+                        <strong>{{ question.label|linebreaksbr }}</strong>
+                        </center>
+                    </td>
+                </tr>
         {% endif %}
         {% with template_name='reports/form/partials/single_form_tree.html' questions=question.children %}
             {% include template_name %}
         {% endwith %}
         {% if question.type %}
-            <tr class="success"><td colspan="2"></td></tr>
+                <tr class="success"><td colspan="2"></td></tr>
+            </table>
+            </td>
         {% else %}
             {# This is for separators between repeat chunks #}
             {% if not forloop.last %}
