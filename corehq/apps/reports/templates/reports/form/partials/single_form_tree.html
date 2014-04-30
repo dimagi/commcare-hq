@@ -2,7 +2,7 @@
 {% for question in questions %}
     {% ifchanged %}
         {% if question.type == 'DataBindOnly' %}
-            <tr class="info">
+            <tr class="info form-data-hidden-values">
                 <td colspan="2">
                     <strong>{% trans "Hidden Values (Form Calculations)" %}</strong>
                 </td>
@@ -15,7 +15,14 @@
             </tr>
         {% endif %}
     {% endifchanged %}
-<tr class="{% if question.response == None and not question.children %}muted{% endif %}">
+    {% ifchanged %}
+        {% if question.response == None %}
+        <tr class="form-data-question form-data-skipped-spacer muted warning table-condensed">
+            <td colspan="2"><center>{% trans '…' %}</center></td>
+        </tr>
+        {% endif %}
+    {% endifchanged %}
+<tr class="form-data-question {% if question.response == None %}muted form-data-skipped warning{% endif %}">
     {% if question.children %}
         <td colspan="2" title="{{ question.value }}">
             <table class="table table-bordered">

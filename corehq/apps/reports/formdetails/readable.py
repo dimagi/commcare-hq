@@ -135,6 +135,9 @@ def zip_form_data_and_questions(data, questions, path_context=''):
     for question in questions:
         path = path_relative_to_context(question.value, path_context)
         node = pop_from_form_data(data, path)
+        # response=True on a question with children indicates that one or more
+        # child has a response, i.e. that the entire group wasn't skipped
+        node_true_or_none = bool(node) or None
         question_data = dict(question)
         question_data.pop('response')
         if question.type == 'Group':
@@ -142,6 +145,7 @@ def zip_form_data_and_questions(data, questions, path_context=''):
             form_question = FormQuestionResponse(
                 children=zip_form_data_and_questions(
                     node, children, path_context=question.value),
+                response=node_true_or_none,
                 **question_data
             )
         elif question.type == 'Repeat':
@@ -152,10 +156,12 @@ def zip_form_data_and_questions(data, questions, path_context=''):
                 children=[
                     FormQuestionResponse(
                         children=zip_form_data_and_questions(
-                            entry, children, path_context=question.value)
+                            entry, children, path_context=question.value),
+                        response=node_true_or_none,
                     )
                     for entry in node
                 ],
+                response=node_true_or_none,
                 **question_data
             )
         else:
