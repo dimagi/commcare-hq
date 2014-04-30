@@ -109,7 +109,7 @@ if [ "$JDK" ] && [ ! -d /usr/lib/jvm/jdk1.7.0 ]; then
     sudo update-alternatives --install "/usr/bin/javac" "javac" "/usr/lib/jvm/jdk1.7.0/bin/javac" 1
     sudo update-alternatives --install "/usr/bin/javaws" "javaws" "/usr/lib/jvm/jdk1.7.0/bin/javaws" 1
 
-    sudo update-alternatives --config java
+    sudo update-alternatives --auto java
 
 fi
 
@@ -240,7 +240,7 @@ if [ ! "$MINIMAL_INSTALL" ]; then
     sudo update-alternatives --install "/usr/bin/javaws" "javaws" "/usr/lib/jvm/jdk1.7.0/bin/javaws" 1
 fi
 
-sudo update-alternatives --config java
+sudo update-alternatives --auto java
 
 ## Ensure services start on startup ##
 if [ ! "$MINIMAL_INSTALL" ]; then
