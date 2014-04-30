@@ -32,9 +32,7 @@ class CommtrackDataSourceMixin(object):
     @property
     @memoized
     def active_location(self):
-        loc_id = self.config.get('location_id')
-        if loc_id:
-            return Location.get(loc_id)
+        return Location.get_in_domain(self.domain, self.config.get('location_id'))
 
     @property
     @memoized
