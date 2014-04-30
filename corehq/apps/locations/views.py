@@ -279,6 +279,18 @@ class LocationImportView(BaseLocationView):
     page_title = ugettext_noop('Upload Locations from Excel')
     template_name = 'locations/manage/import.html'
 
+    @property
+    def page_context(self):
+        return {
+            'bulk_upload': {
+                "download_url": reverse(
+                    "location_export", args=(self.domain,)),
+                "name": _("location"),
+                "name_pluralized": _("locations"),
+                "post_filename": "locs",
+            },
+        }
+
     def post(self, request, *args, **kwargs):
         upload = request.FILES.get('locs')
         if not upload:
