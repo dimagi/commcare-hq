@@ -7,6 +7,17 @@
 requires imports/proptable.html to be included in the main template
 {% endcomment %}
 {% include "imports/fancy-code.html" %}
+<style media="print">
+    header {
+        display: none !important;
+    }
+    .sidebar {
+        display: none !important;
+    }
+    a[href]:after {
+        content: none !important;
+    }
+</style>
 
 <script>
     $(function () {
