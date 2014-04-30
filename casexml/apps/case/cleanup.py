@@ -6,6 +6,7 @@ from casexml.apps.case.util import get_case_xform_ids, primary_actions
 from casexml.apps.case.xform import get_case_updates
 from couchforms import fetch_and_wrap_form
 
+
 def rebuild_case(case_id):
     """
     Given a case ID, rebuild the entire case state based on all existing forms
