@@ -24,18 +24,28 @@
     {% endifchanged %}
 <tr class="form-data-question {% if question.response == None %}muted form-data-skipped warning{% endif %}">
     {% if question.children %}
-        <td colspan="2" title="{{ question.value }}">
-            <table class="table table-bordered">
-                {% if question.type %}
-                <caption>
-                    {% include 'reports/form/partials/single_form_label.html' %}
-                </caption>
-                {% endif %}
-                {% with template_name='reports/form/partials/single_form_tree.html' questions=question.children %}
-                    {% include template_name %}
-                {% endwith %}
+        {% if question.type %}
+            <td colspan="2">
+            <table class="table table-bordered form-data-group-table">
+                <tr class="form-data-group-spacer">
+                    <th colspan="2">
+                        {% include 'reports/form/partials/single_form_label.html' %}
+                    </th>
+                </tr>
+        {% endif %}
+        {% with template_name='reports/form/partials/single_form_tree.html' questions=question.children %}
+            {% include template_name %}
+        {% endwith %}
+        {% if question.type %}
+                <tr class="form-data-group-spacer"><th colspan="2"></th></tr>
             </table>
-        </td>
+            </td>
+        {% else %}
+            {# This is for separators between repeat chunks #}
+            {% if not forloop.last %}
+                <tr class="form-data-group-spacer"><th colspan="2"></th></tr>
+            {% endif %}
+        {% endif %}
     {% else %}
         <td class="span6" title="{{ question.value }}">
             {% include 'reports/form/partials/single_form_label.html' %}
