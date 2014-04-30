@@ -5,6 +5,8 @@ import os
 from datetime import datetime, timedelta
 import uuid
 from casexml.apps.case import process_cases
+import io
+from django.core.files.uploadedfile import UploadedFile
 
 
 def all_scan_cases(domain, scanner_serial, scan_id):
@@ -51,7 +53,7 @@ def get_subdirectories(directory):
     return [d for d in os.listdir(directory) if os.path.isdir(os.path.join(directory, d))]
 
 
-def render_xform(zip_file, exam_uuid, patient_case_id=None):
+def render_xform(file_tuples, exam_uuid, patient_case_id=None):
     xform_template = None
     template_path = os.path.join(
         os.path.dirname(__file__),
@@ -59,18 +61,6 @@ def render_xform(zip_file, exam_uuid, patient_case_id=None):
     )
     with open(template_path, 'r') as fin:
         xform_template = fin.read()
-
-    # TODO boooo don't load from file like this
-    content_dir = os.path.join(os.path.dirname(__file__), 'tests', 'data', 'unzipped', 'create_case')
-    file_tuples = []
-    for subdir in get_subdirectories(content_dir):
-        tup = os.listdir(os.path.join(content_dir, subdir))
-        file_tuples.append((
-            tup[1].split('.')[0],
-            tup[1],
-            os.path.join(content_dir, subdir, tup[1])
-        ))
-
 
     def case_attach_block(key, filename):
         return '<n0:%s src="%s" from="local"/>' % (key, os.path.split(filename)[-1])
@@ -103,26 +93,38 @@ def render_xform(zip_file, exam_uuid, patient_case_id=None):
     }
 
     final_xml = xform_template % format_dict
-    return final_xml, file_tuples
+    return final_xml
 
 
 def create_case(case_id, zip_file):
-    xform, file_tuples = render_xform(zip_file, case_id)
-    print xform
-    from corehq.apps.receiverwrapper import submit_form_locally
-    file_dict = {}
-    for tup in file_tuples:
-        f = open(tup[2], 'r')
-        from django.core.files.uploadedfile import UploadedFile
-        file_dict[tup[1]] = UploadedFile(f, tup[0])
+    file_tuples = []
+    for name in zip_file.namelist():
+        # TODO do better filtering
+        if 'xml' in name or 'XML' in name:
+            continue
 
-    # {'./submodules/casexml-src/casexml/apps/case/tests/data/attachments/fruity.jpg': <UploadedFile: fruity_file (None)>}
+        filename = os.path.basename(name)
+
+        # TODO fix this up so it doesn't rely on the PT_PPS.XML file
+        # having already been filtered
+        scan = os.path.basename(os.path.dirname(name))
+
+        file_tuples.append((
+            scan,
+            filename,
+            io.BytesIO(zip_file.read(name))
+        ))
+
+    xform = render_xform(file_tuples, case_id)
+
+    file_dict = {}
+
+    for tup in file_tuples:
+        # TODO at least make this a named tuple
+        file_dict[tup[1]] = UploadedFile(tup[2], tup[1])
+
+    # TODO post_xform_to_couch is a test only function
     from couchforms.util import post_xform_to_couch
     form = post_xform_to_couch(xform, file_dict)
     form.domain = 'vscan_domain'
-    print "***"
-    print file_dict
-    print form.attachments
-    print "***"
-    import bpdb; bpdb.set_trace()
-    process_cases(form)
+    print process_cases(form)
