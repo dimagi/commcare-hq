@@ -17,19 +17,29 @@
     {% endifchanged %}
 <tr class="{% if question.response == None and not question.children %}muted{% endif %}">
     {% if question.children %}
-        <td colspan="2" title="{{ question.value }}">
-            <table class="table table-bordered">
-                {% if question.type %}
-                <caption>
-                    <i class="{{ question.icon }}" style="color: #2787d0;"></i>
-                    {{ question.label|linebreaksbr }}
-                </caption>
-                {% endif %}
-                {% with template_name='reports/form/partials/single_form_tree.html' questions=question.children %}
-                    {% include template_name %}
-                {% endwith %}
+        {% if question.type %}
+            <td colspan="2">
+            <table class="table table-bordered form-data-group-table">
+                <tr class="form-data-group-spacer">
+                    <th colspan="2">
+                        <i class="{{ question.icon }}" style="color: #2787d0;"></i>
+                        {{ question.label|linebreaksbr }}
+                    </th>
+                </tr>
+        {% endif %}
+        {% with template_name='reports/form/partials/single_form_tree.html' questions=question.children %}
+            {% include template_name %}
+        {% endwith %}
+        {% if question.type %}
+                <tr class="form-data-group-spacer"><th colspan="2"></th></tr>
             </table>
-        </td>
+            </td>
+        {% else %}
+            {# This is for separators between repeat chunks #}
+            {% if not forloop.last %}
+                <tr class="form-data-group-spacer"><th colspan="2"></th></tr>
+            {% endif %}
+        {% endif %}
     {% else %}
         <td class="span6" title="{{ question.value }}">
             <i class="{{ question.icon }}" style="color: #2787d0;"></i>
