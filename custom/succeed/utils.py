@@ -20,22 +20,27 @@ CONFIG = {
 }
 
 
-def _is_succeed_admin(user):
+def is_succeed_admin(user):
     return True if user.get_role()['name'] in [CONFIG['succeed_admin'], 'Admin'] else False
 
-def _is_cm(user):
+
+def is_cm(user):
     return True if 'user_data' in user and 'role' in user.user_data and user.user_data['role'] in [CONFIG['cm_role']] else False
 
-def _is_chw(user):
+
+def is_chw(user):
     return True if 'user_data' in user and 'role' in user.user_data and user.user_data['role'] in [CONFIG['chw_role']] else False
 
-def _is_pm_or_pi(user):
+
+def is_pm_or_pi(user):
     return True if 'user_data' in user and 'role' in user.user_data and user.user_data['role'] in [CONFIG['pm_role'], CONFIG['pi_role']] else False
 
-def _has_any_role(user):
+
+def has_any_role(user):
     return True if 'user_data' in user and 'role' in user.user_data and user.user_data['role'] in [CONFIG['pm_role'], CONFIG['pi_role'], CONFIG['cm_role'], CONFIG['chw_role']] else False
 
-def _get_form_dict(case, form_xmlns):
+
+def get_form_dict(case, form_xmlns):
     forms = case.get_forms()
     for form in forms:
         form_dict = form.form

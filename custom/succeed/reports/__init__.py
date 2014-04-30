@@ -140,61 +140,6 @@ VISIT_SCHEDULE = [
     },
 ]
 
-PATIENT_INFO = [
-    {
-        'general_information' : [
-            {
-                'label': 'MRN'
-            },
-            {
-                'label': 'Gender'
-            },
-            {
-                'label': 'Randomization Date'
-            },
-            {
-                'label': 'Diagnosis'
-            },
-            {
-                'label': 'Age'
-            },
-            {
-                'label': 'Preferred Language'
-            },
-            {
-                'label': 'Primary Care Provider'
-            }
-        ]
-    },
-    {
-        'recent_lab_exams': [
-            {
-                'label': 'Recent Blood Pressure 1',
-                'property': ''
-            },
-            {
-
-            }
-        ]
-    },
-    {
-        'allergies': [
-            {
-                'label': 'Statin',
-                'property': 'allergy_statin'
-            },
-            {
-                'label': 'Aspirin',
-                'property': 'allergy_aspirin'
-            },
-            {
-                'label': 'Other',
-                'property': 'allergy_other_list'
-            }
-        ]
-    }
-]
-
 
 LAST_INTERACTION_LIST = [PM1, PM3, CM1, CM3, CM4, CM5, CM6, CHW1, CHW2, CHW3, CHW4]
 
