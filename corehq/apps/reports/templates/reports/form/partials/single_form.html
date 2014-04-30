@@ -7,7 +7,11 @@
 requires imports/proptable.html to be included in the main template
 {% endcomment %}
 {% include "imports/fancy-code.html" %}
-
+<style>
+.form-data-readable, .form-data-raw {
+    display: none;
+}
+</style>
 <script>
     $(function () {
         var help_text = {
@@ -23,6 +27,23 @@ requires imports/proptable.html to be included in the main template
             content: function () {
                 return help_text[$(this).attr('data-help-key')];
             }
+        });
+    });
+    $(function () {
+        function showReadable() {
+            $('.form-data-raw').hide();
+            $('.form-data-readable').show();
+        }
+        function showRaw() {
+            $('.form-data-readable').hide();
+            $('.form-data-raw').show();
+        }
+        showReadable();
+        $('.showReadable').click(showReadable);
+        $('.showRaw').click(showRaw);
+        $('.formDisplayToggle a').click(function () {
+            $(this).tab('show');
+            return false;
         });
     });
 </script>
@@ -136,10 +157,17 @@ requires imports/proptable.html to be included in the main template
         </div>
 
         {% if readable_form_data %}
+        <ul class="nav nav-pills formDisplayToggle">
+            <li class="active"><a href="#" class="showReadable">{% trans "Labels" %}</a></li>
+            <li><a href="#" class="showRaw">{% trans "Question IDs" %}</a></li>
+        </ul>
         <div class="row-fluid">
             <table class="table table-bordered span6">
                 <tr>
-                    <th class="span6">{% trans "Question" %}</th>
+                    <th class="span6">
+                        <span class="form-data-readable">{% trans "Question" %}</span>
+                        <span class="form-data-raw">{% trans "Question ID" %}</span>
+                    </th>
                     <th class="span6">{% trans "Response" %}</th>
                 </tr>
                 {% include 'reports/form/partials/single_form_tree.html' with questions=form_data %}

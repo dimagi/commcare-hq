@@ -28,6 +28,14 @@ class FormQuestion(JsonObject):
         except KeyError:
             return 'icon-question-sign'
 
+    @property
+    def relative_value(self):
+        if self.group:
+            prefix = self.group + '/'
+            if self.value.startswith(prefix):
+                return self.value[len(prefix):]
+        return '/'.join(self.value.split('/')[2:])
+
 
 class FormQuestionResponse(FormQuestion):
     response = DefaultProperty()

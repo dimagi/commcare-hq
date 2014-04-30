@@ -21,8 +21,7 @@
             <table class="table table-bordered">
                 {% if question.type %}
                 <caption>
-                    <i class="{{ question.icon }}" style="color: #2787d0;"></i>
-                    {{ question.label|linebreaksbr }}
+                    {% include 'reports/form/partials/single_form_label.html' %}
                 </caption>
                 {% endif %}
                 {% with template_name='reports/form/partials/single_form_tree.html' questions=question.children %}
@@ -32,18 +31,24 @@
         </td>
     {% else %}
         <td class="span6" title="{{ question.value }}">
-            <i class="{{ question.icon }}" style="color: #2787d0;"></i>
-            {{ question.label|linebreaksbr }}
+            {% include 'reports/form/partials/single_form_label.html' %}
         </td>
         <td class="span6" title="{{ question.response }}">
             {% if question.options %}
+                <div class="form-data-readable">
                 {% for option in question.options %}
                     {% if option.value == question.response %}
                         {{ option.label|linebreaksbr }}
                     {% endif %}
                 {% endfor %}
+                </div>
+                <div class="form-data-raw">
+                    {% if question.response %}{{ question.response|linebreaksbr }}{% endif %}
+                </div>
             {% else %}
-                {% if question.response %}{{ question.response|linebreaksbr }}{% endif %}
+                <div class="form-data-readable form-data-raw">
+                    {% if question.response %}{{ question.response|linebreaksbr }}{% endif %}
+                </div>
             {% endif %}
         </td>
     {% endif %}
