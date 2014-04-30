@@ -151,6 +151,10 @@ def zip_form_data_and_questions(data, questions, path_context=''):
                 **question_data
             )
         else:
+            if (question.type == 'DataBindOnly'
+                    and question.label == question.value):
+                question_data['label'] = '/'.join(
+                    question.value.split('/')[2:])
             form_question = FormQuestionResponse(response=node,
                                                  **question_data)
         result.append(form_question)
