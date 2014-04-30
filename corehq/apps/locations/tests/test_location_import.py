@@ -183,3 +183,17 @@ class LocationImportTest(CommTrackTest):
             ),
             77
         )
+
+    def test_import_coordinates(self):
+        data = {
+            'name': 'importedloc',
+            'latitude': 55,
+            'longitude': -55,
+        }
+
+        loc_id = import_location(self.domain.name, 'state', data)['id']
+
+        loc = Location.get(loc_id)
+
+        self.assertEqual(data['latitude'], loc.latitude)
+        self.assertEqual(data['longitude'], loc.longitude)
