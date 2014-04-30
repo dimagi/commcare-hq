@@ -1,0 +1,32 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<h2>{% blocktrans %}Upload Mobile Workers Using Excel{% endblocktrans %}</h2>
+<p>
+    <ol>
+        <li>
+            {% trans "Download your current mobile worker Excel file." %}
+            <br />
+            <a href="{% url "download_commcare_users" domain %}"><button class="btn btn-success"><i class="icon-download-alt"></i> {% trans "Download Mobile Workers" %}</button></a>
+        </li>
+        <li>
+            {% blocktrans %}
+            Update the downloaded file.
+            Check the
+            <a href="https://confluence.dimagi.com/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers#CreateandManageCommCareMobileWorkers-B.UseBulkUploadtocreatemultipleusersatonce">
+                CommCare Help Site
+            </a>
+            for instructions.
+            {% endblocktrans%}
+        </li>
+        <li>
+            {% trans "Upload your updated file." %}
+            <form id="bulk-upload-form" class="form form-horizontal" action="" method="post" enctype="multipart/form-data">
+                <fieldset>
+                    <input id="bulk_upload_file" type="file" name="file" data-bind="value: file"/>
+                </fieldset>
+                <button type="submit" class="btn btn-primary" data-bind="visible: file()"><i class="icon-cloud-upload"></i> {% trans 'Upload Mobile Workers' %}</button>
+            </form>
+        </li>
+    </ol>
+</p>
