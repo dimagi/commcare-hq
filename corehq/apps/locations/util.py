@@ -29,8 +29,8 @@ def load_locs_json(domain, selected_loc_id=None):
 
     # if a location is selected, we need to pre-populate its location hierarchy
     # so that the data is available client-side to pre-populate the drop-downs
-    if selected_loc_id:
-        selected = Location.get(selected_loc_id)
+    selected = Location.get_in_domain(domain, selected_loc_id)
+    if selected:
         lineage = list(Location.view('_all_docs', keys=selected.path, include_docs=True))
 
         parent = {'children': loc_json}
