@@ -161,7 +161,7 @@ class ReadableFormdataTest(TestCase):
             'type': 'Repeat',
             'label': 'Repeat',
             'value': '/data/question12',
-            'response': None,
+            'response': True,
             'children': [{
                 'children': [{
                     'tag': 'input',
@@ -171,7 +171,8 @@ class ReadableFormdataTest(TestCase):
                     'repeat': '/data/question12',
                     'group': '/data/question12',
                     'response': 'Jack',
-                }]
+                }],
+                'response': True,
             }, {
                 'children': [{
                     'tag': 'input',
@@ -181,7 +182,8 @@ class ReadableFormdataTest(TestCase):
                     'repeat': '/data/question12',
                     'group': '/data/question12',
                     'response': 'Jill',
-                }]
+                }],
+                'response': True
             }, {
                 'children': [{
                     'tag': 'input',
@@ -191,7 +193,8 @@ class ReadableFormdataTest(TestCase):
                     'repeat': '/data/question12',
                     'group': '/data/question12',
                     'response': 'Up the hill',
-                }]
+                }],
+                'response': True
             }],
         }, {
             'tag': 'trigger',

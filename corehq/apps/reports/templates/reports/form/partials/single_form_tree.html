@@ -2,7 +2,7 @@
 {% for question in questions %}
     {% ifchanged %}
         {% if question.type == 'DataBindOnly' %}
-            <tr class="info">
+            <tr class="info form-data-hidden-values">
                 <td colspan="2">
                     <strong>{% trans "Hidden Values (Form Calculations)" %}</strong>
                 </td>
@@ -15,15 +15,21 @@
             </tr>
         {% endif %}
     {% endifchanged %}
-<tr class="{% if question.response == None and not question.children %}muted{% endif %}">
+    {% ifchanged %}
+        {% if question.response == None %}
+        <tr class="form-data-question form-data-skipped-spacer muted table-condensed">
+            <th colspan="2">{% trans '…' %}</th>
+        </tr>
+        {% endif %}
+    {% endifchanged %}
+<tr class="form-data-question {% if question.response == None %}muted form-data-skipped{% endif %}">
     {% if question.children %}
         {% if question.type %}
             <td colspan="2">
             <table class="table table-bordered form-data-group-table">
                 <tr class="form-data-group-spacer">
                     <th colspan="2">
-                        <i class="{{ question.icon }}" style="color: #2787d0;"></i>
-                        {{ question.label|linebreaksbr }}
+                        {% include 'reports/form/partials/single_form_label.html' %}
                     </th>
                 </tr>
         {% endif %}
@@ -42,18 +48,24 @@
         {% endif %}
     {% else %}
         <td class="span6" title="{{ question.value }}">
-            <i class="{{ question.icon }}" style="color: #2787d0;"></i>
-            {{ question.label|linebreaksbr }}
+            {% include 'reports/form/partials/single_form_label.html' %}
         </td>
         <td class="span6" title="{{ question.response }}">
             {% if question.options %}
+                <div class="form-data-readable">
                 {% for option in question.options %}
                     {% if option.value == question.response %}
                         {{ option.label|linebreaksbr }}
                     {% endif %}
                 {% endfor %}
+                </div>
+                <div class="form-data-raw">
+                    {% if question.response %}{{ question.response|linebreaksbr }}{% endif %}
+                </div>
             {% else %}
-                {% if question.response %}{{ question.response|linebreaksbr }}{% endif %}
+                <div class="form-data-readable form-data-raw">
+                    {% if question.response %}{{ question.response|linebreaksbr }}{% endif %}
+                </div>
             {% endif %}
         </td>
     {% endif %}

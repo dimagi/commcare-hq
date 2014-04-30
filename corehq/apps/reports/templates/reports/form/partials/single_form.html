@@ -19,6 +19,11 @@ requires imports/proptable.html to be included in the main template
     }
 </style>
 
+<style>
+.form-data-readable, .form-data-raw {
+    display: none;
+}
+</style>
 <script>
     $(function () {
         var help_text = {
@@ -36,6 +41,56 @@ requires imports/proptable.html to be included in the main template
             }
         });
     });
+    $(function () {
+        $('.hq-help').hqHelp();
+        function showReadable() {
+            $('.form-data-raw').hide();
+            $('.form-data-readable').show();
+        }
+        function showRaw() {
+            $('.form-data-readable').hide();
+            $('.form-data-raw').show();
+        }
+        showReadable();
+        $('.showReadable').click(showReadable);
+        $('.showRaw').click(showRaw);
+        $('.formDisplayToggle a').click(function () {
+            $(this).tab('show');
+            return false;
+        });
+
+        function showSkipped(show) {
+            if (show) {
+                $('.form-data-skipped').show();
+                $('.form-data-skipped-spacer').hide();
+                $('.form-data-hidden-values').each(function () {
+                    $(this).show();
+                });
+            } else {
+                $('.form-data-skipped').hide();
+                $('.form-data-skipped-spacer').show();
+                $('.form-data-hidden-values').each(function () {
+                    var current = $(this).next();
+                    while (current.is('.form-data-question')) {
+                        console.log(current);
+                        if (!current.is('.form-data-skipped')) {
+                            return;
+                        }
+                        current = current.next();
+                    }
+                    $(this).hide();
+                });
+            }
+        }
+        $('.showSkippedToggle').change(function () {
+            showSkipped($(this).is(':checked'));
+        }).each(function () {
+            if ($('.form-data-skipped').length == 0) {
+                $(this).parent('label').hide();
+            }
+        });
+        showSkipped(false);
+    });
 </script>
 <style>
     .form-data-group-table {
@@ -44,7 +99,17 @@ requires imports/proptable.html to be included in the main template
     .form-data-group-table tr.form-data-group-spacer th {
         text-align: center;
         font-weight: bold;
+        /* same as bootstrap 'success' */
         background-color: #dff0d8;
+    }
+    .form-data-skipped {
+        /* same as bootstrap 'warning' */
+        background-color: #fcf8e3;
+    }
+    tr.form-data-skipped-spacer th {
+        /* same as bootstrap 'warning' */
+        background-color: #fcf8e3;
+        text-align: center;
     }
 
 </style>
@@ -158,10 +223,27 @@ requires imports/proptable.html to be included in the main template
         </div>
 
         {% if readable_form_data %}
+        <ul class="nav nav-pills formDisplayToggle">
+            <li class="active"><a href="#" class="showReadable">{% trans "Labels" %}</a></li>
+            <li><a href="#" class="showRaw">{% trans "Question IDs" %}</a></li>
+        </ul>
+        <label class="checkbox">
+            <input type="checkbox" class="showSkippedToggle"/>
+            {% trans "Show questions in form that were not shown to the user" %}
+            <a href="#" class="hq-help no-click">
+                <i class="icon-question-sign"
+                   data-title="{% trans "Questions not shown to the user" %}"
+                   data-content="{% trans "These questions were not shown to the user because their display conditions were not met." %}"
+                   data-trigger="hover"></i>
+            </a>
+        </label>
         <div class="row-fluid">
             <table class="table table-bordered span6">
                 <tr>
-                    <th class="span6">{% trans "Question" %}</th>
+                    <th class="span6">
+                        <span class="form-data-readable">{% trans "Question" %}</span>
+                        <span class="form-data-raw">{% trans "Question ID" %}</span>
+                    </th>
                     <th class="span6">{% trans "Response" %}</th>
                 </tr>
                 {% include 'reports/form/partials/single_form_tree.html' with questions=form_data %}
