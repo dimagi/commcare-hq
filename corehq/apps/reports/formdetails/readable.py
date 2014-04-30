@@ -1,5 +1,7 @@
 from collections import defaultdict
+from pydoc import html
 from django.http import Http404
+from django.utils.safestring import mark_safe
 from jsonobject import *
 from jsonobject.base import DefaultProperty
 from corehq.apps.app_manager.models import get_app, Application
@@ -69,10 +71,12 @@ def get_readable_form_data(xform):
     questions = form.wrapped_xform().get_questions(
         app.langs, include_triggers=True, include_groups=True)
     questions = [FormQuestionResponse(q) for q in questions]
+
     return zip_form_data_and_questions(
         strip_form_data(xform.form),
         questions_in_hierarchy(questions),
         path_context='/%s/' % xform.form.get('#type', 'data'),
+        process_label=_html_interpolate_output_refs,
     )
 
 
@@ -109,7 +113,26 @@ def path_relative_to_context(path, path_context):
         ))
 
 
-def zip_form_data_and_questions(data, questions, path_context=''):
+def _html_interpolate_output_refs(itext_value, context):
+    if hasattr(itext_value, 'with_refs'):
+        underline_template = u'<u>&nbsp;&nbsp;%s&nbsp;&nbsp;</u>'
+        return mark_safe(
+            itext_value.with_refs(
+                context,
+                processor=lambda x: underline_template % (
+                    html.escape(x)
+                    if x is not None
+                    else u'<i class="icon-question-sign"></i>'
+                ),
+                escape=html.escape,
+            )
+        )
+    else:
+        return itext_value
+
+
+def zip_form_data_and_questions(data, questions, path_context='',
+                                output_context=None, process_label=None):
     """
     The strategy here is to loop through the questions, and at every point
     pull in the corresponding piece of data, removing it from data
@@ -123,6 +146,12 @@ def zip_form_data_and_questions(data, questions, path_context=''):
     """
     if not path_context.endswith('/'):
         path_context += '/'
+    if not output_context:
+        output_context = {
+            '%s%s' % (path_context, '/'.join(map(unicode, key))): value
+            for key, value in _flatten_json(data).items()
+        }
+
     result = []
     for question in questions:
         path = path_relative_to_context(question.value, path_context)
@@ -133,7 +162,12 @@ def zip_form_data_and_questions(data, questions, path_context=''):
             children = question_data.pop('children')
             form_question = FormQuestionResponse(
                 children=zip_form_data_and_questions(
-                    node, children, path_context=question.value),
+                    node,
+                    children,
+                    path_context=question.value,
+                    output_context=output_context,
+                    process_label=process_label,
+                ),
                 **question_data
             )
         elif question.type == 'Repeat':
@@ -144,7 +178,12 @@ def zip_form_data_and_questions(data, questions, path_context=''):
                 children=[
                     FormQuestionResponse(
                         children=zip_form_data_and_questions(
-                            entry, children, path_context=question.value)
+                            entry,
+                            children,
+                            path_context=question.value,
+                            output_context=output_context,
+                            process_label=process_label,
+                        )
                     )
                     for entry in node
                 ],
@@ -155,6 +194,11 @@ def zip_form_data_and_questions(data, questions, path_context=''):
                     and question.label == question.value):
                 question_data['label'] = '/'.join(
                     question.value.split('/')[2:])
+
+            if process_label:
+                question_data['label'] = process_label(question_data['label'],
+                                                       output_context)
+
             form_question = FormQuestionResponse(response=node,
                                                  **question_data)
         result.append(form_question)
