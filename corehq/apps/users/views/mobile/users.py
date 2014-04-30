@@ -44,6 +44,7 @@ from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound, JSONReader
 from corehq.apps.commtrack.models import CommTrackUser
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
+from settings import BULK_MOBILE_HELP_SITE
 from soil.util import get_download_context, expose_download
 
 DEFAULT_USER_LIST_LIMIT = 10
@@ -670,6 +671,14 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
     @property
     def page_context(self):
         return {
+            'bulk_upload': {
+                "help_site": {
+                    "address": BULK_MOBILE_HELP_SITE,
+                    "name": _("CommCare Help Site"),
+                },
+                "name": _("mobile worker"),
+                "name_pluralized": _("mobile workers"),
+            },
             'show_secret_settings': self.request.REQUEST.get("secret", False),
         }
 
