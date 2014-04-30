@@ -63,9 +63,6 @@ def sonosite_upload(request, domain, **kwargs):
         'application/zip'
     )
 
-    # TODO delete this when there's a better way to find them
-    print upload._id
-
     # TODO create subcase with images for it here
 
     response_data['result'] = 'uploaded'
