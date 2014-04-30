@@ -2,7 +2,7 @@ from corehq.apps.domain.decorators import login_or_digest
 from django.views.decorators.http import require_POST
 import json
 from django.http import HttpResponse
-from custom.uth.utils import match_case, get_case_id, get_study_id
+from custom.uth.utils import match_case, get_case_id, get_study_id, create_case
 import zipfile
 from custom.uth.models import SonositeUpload
 
@@ -63,7 +63,9 @@ def sonosite_upload(request, domain, **kwargs):
         'application/zip'
     )
 
-    # TODO create subcase with images for it here
+    # TODO move to celery, pass doc id instead of real file
+    zip_file.fp.seek(0)
+    create_case(case_id, zip_file)
 
     response_data['result'] = 'uploaded'
     response_data['message'] = 'uploaded'

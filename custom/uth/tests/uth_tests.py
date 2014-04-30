@@ -7,9 +7,9 @@ from corehq.apps.users.util import format_username
 from corehq.apps.domain.shortcuts import create_domain
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.util import post_case_blocks
-
-from custom.uth.utils import match_case, all_scan_cases
-
+import os
+import zipfile
+from custom.uth.utils import match_case, all_scan_cases, create_case
 from casexml.apps.case.tests import delete_all_xforms, delete_all_cases
 
 
@@ -49,17 +49,17 @@ class UTHTests(TestCase):
             'secret'
         )
 
-
-class ScanLookupTests(UTHTests):
-    def setUp(self):
-        super(ScanLookupTests, self).setUp()
-
         self.case_id = self.create_scan_case(
             self.vscan_user._id,
             'VH014466XK',
             '123123',
             '2014-03-28T10:48:49Z'
         )
+
+
+class ScanLookupTests(UTHTests):
+    def setUp(self):
+        super(ScanLookupTests, self).setUp()
 
     def testFindsCorrectCase(self):
         case = match_case('vscan_domain', 'VH014466XK', '123123', '')
@@ -109,3 +109,15 @@ class ScanLookupTests(UTHTests):
 
         case = match_case('vscan_domain', 'VH014466XK', '123123', '')
         self.assertEqual(self.case_id, case._id)
+
+
+class ImageUploadTests(UTHTests):
+    def setUp(self):
+        super(ImageUploadTests, self).setUp()
+
+    def testUpload(self):
+        fpath = os.path.join(os.path.dirname(__file__), 'data', 'zips', 'create_case.zip')
+
+        zip_file = zipfile.ZipFile(fpath, 'r')
+
+        create_case(self.case_id, zip_file)
