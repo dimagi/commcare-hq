@@ -72,6 +72,11 @@ from .exceptions import (
     LocationXpathValidationError)
 from corehq.apps.app_manager import id_strings
 
+AUTO_SELECT_USER = 'user'
+AUTO_SELECT_FIXTURE = 'fixture'
+AUTO_SELECT_CASE = 'case'
+AUTO_SELECT_RAW = 'raw'
+
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 
 FIELD_SEPARATOR = ':'
@@ -291,9 +296,28 @@ class AdvancedAction(DocumentSchema):
         return 'case_id_{0}'.format(self.case_tag)
 
 
+class AutoSelectCase(DocumentSchema):
+    """
+    Configuration for auto-selecting a case.
+    Attributes:
+        value_source    Reference to the source of the value. For mode = fixture,
+                        this represents the FixtureDataType ID. For mode = case
+                        this represents the 'case_tag' for the case.
+                        The mode 'user' doesn't require a value_source.
+        value_key       The actual field that contains the case ID. Can be a case
+                        property or a user data key or a fixture field name or the raw
+                        xpath expression.
+
+    """
+    mode = StringProperty(choices=[AUTO_SELECT_USER, AUTO_SELECT_FIXTURE, AUTO_SELECT_CASE, AUTO_SELECT_RAW])
+    value_source = StringProperty()
+    value_key = StringProperty()
+
+
 class LoadUpdateAction(AdvancedAction):
     details_module = StringProperty()
     preload = DictProperty()
+    auto_select = SchemaProperty(AutoSelectCase, default=None)
     show_product_stock = BooleanProperty(default=False)
 
     def get_paths(self):
@@ -307,6 +331,10 @@ class LoadUpdateAction(AdvancedAction):
         names = super(LoadUpdateAction, self).get_property_names()
         names.update(self.preload.keys())
         return names
+
+    @property
+    def requires_casedb(self):
+        return not self.auto_select or self.auto_select.mode in [AUTO_SELECT_CASE, AUTO_SELECT_RAW]
 
 
 class AdvancedOpenCaseAction(AdvancedAction):
@@ -359,16 +387,26 @@ class AdvancedFormActions(DocumentSchema):
             if parent:
                 if parent in hierarchy:
                     circular = [a.case_tag for a in hierarchy + [parent]]
-                    raise ValueError("Circular reference in subcase hierarchy: {}".format(circular))
+                    raise ValueError("Circular reference in subcase hierarchy: {0}".format(circular))
                 hierarchy.append(parent)
 
         return hierarchy
+
+    @property
+    def auto_select_actions(self):
+        return self._action_meta()['by_auto_select_mode']
 
     @memoized
     def _action_meta(self):
         meta = {
             'by_tag': {},
-            'by_parent_tag': {}
+            'by_parent_tag': {},
+            'by_auto_select_mode': {
+                AUTO_SELECT_USER: [],
+                AUTO_SELECT_CASE: [],
+                AUTO_SELECT_FIXTURE: [],
+                AUTO_SELECT_RAW: [],
+            }
         }
 
         def add_actions(type, action_list):
@@ -382,6 +420,8 @@ class AdvancedFormActions(DocumentSchema):
                         'type': type,
                         'action': action
                     }
+                if type == 'load' and action.auto_select and action.auto_select.mode:
+                    meta['by_auto_select_mode'][action.auto_select.mode].append(action)
 
         add_actions('load', self.load_update_cases)
         add_actions('open', self.open_cases)
@@ -640,8 +680,8 @@ class FormBase(DocumentSchema):
         self.add_stuff_to_xform(xform)
         return xform.render()
 
-    def get_questions(self, langs):
-        return XForm(self.source).get_questions(langs)
+    def get_questions(self, langs, **kwargs):
+        return XForm(self.source).get_questions(langs, **kwargs)
 
     def export_json(self, dump_json=True):
         source = self.to_json()
@@ -1426,12 +1466,20 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             except ValueError:
                 errors.append({'type': 'circular ref', 'case_tag': action.case_tag})
 
+            if action.auto_select and action.auto_select.mode == AUTO_SELECT_CASE:
+                case_tag = action.auto_select.value_source
+                if not self.actions.get_action_from_tag(case_tag):
+                    errors.append({'type': 'auto select ref', 'case_tag': action.case_tag})
+
             errors.extend(self.check_case_properties(
                 subcase_names=action.get_property_names(),
                 case_tag=action.case_tag
             ))
 
         for action in self.actions.get_all_actions():
+            if not action.case_type and (not isinstance(action, LoadUpdateAction) or not action.auto_select):
+                errors.append({'type': "no case type in action", 'case_tag': action.case_tag})
+
             errors.extend(self.check_case_properties(
                 all_names=action.get_property_names(),
                 case_tag=action.case_tag
@@ -2169,6 +2217,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
 
         if should_save:
             self.save()
+
         return self
 
     @classmethod

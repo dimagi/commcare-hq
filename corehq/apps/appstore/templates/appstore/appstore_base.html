@@ -257,10 +257,10 @@
         <div class="well">
             <div class="row-fluid">
                 <div class="span5">
-                    <a href="{% url "project_info" app.name %}">
+                    <a href="{% url "project_info" app.get_id %}">
                         {% if app.image_path %}
                             <div style="text-align: center;">
-                                <img class="app-pic" src="{% url "appstore_project_image" app.name %}" />
+                                <img class="app-pic" src="{% url "appstore_project_image" app.get_id %}" />
                             </div>
                         {% else %}
                             <div style="text-align: center;">
@@ -270,21 +270,21 @@
                     </a>
                     <p style="margin-top: .5em;">{% trans "Last updated" %}: {{ app.snapshot_time|date:"N j, Y" }}</p>
                     <a class="btn"
-                       href="{% url "project_info" app.name %}"
-                       onclick="_gaq.push(['_trackEvent', 'Exchange', 'View button', '{{ app.name }}']);">
+                       href="{% url "project_info" app.get_id %}"
+                       onclick="_gaq.push(['_trackEvent', 'Exchange', 'View button', '{{ app.get_id }}']);">
                         {% trans "View" %} &raquo;
                     </a>
                     {% if user.is_superuser %}
                         {% if app.is_approved %}
-                            <a class="btn btn-danger" href="{% url "approve_appstore_app" app.name %}?approve=false">{% trans "Unapprove" %}</a>
+                            <a class="btn btn-danger" href="{% url "approve_appstore_app" app.get_id %}?approve=false">{% trans "Unapprove" %}</a>
                         {% else %}
-                            <a class="btn btn-success" href="{% url "approve_appstore_app" app.name %}?approve=true">{% trans "Approve" %}</a>
+                            <a class="btn btn-success" href="{% url "approve_appstore_app" app.get_id %}?approve=true">{% trans "Approve" %}</a>
                         {% endif %}
                     {% endif %}
                 </div>
                 <div class="span7">
                     <h3>
-                        <a href="{% url "project_info" app.name %}">
+                        <a href="{% url "project_info" app.get_id %}">
                             {{ app.title }}
                         </a>
                         <small style="display: block;">{% trans "By" %}
@@ -299,7 +299,7 @@
                         <h6>{{ app.project_type }}</h6>
                     {% endif %}
                     {% for rating_name, average_rating in average_ratings %}
-                        {% if rating_name == app.name %}
+                        {% if rating_name == app.get_id %}
                             {% if average_rating %}
                                 <span id="rating_container">
                                 {% include "appstore/partials/five_stars.html" with rating_name=rating_name rating=average_rating %}

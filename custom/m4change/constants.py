@@ -1,6 +1,8 @@
 from django.utils.translation import ugettext_lazy as _
 
-M4CHANGE_DOMAINS = ('m4change', 'test-pathfinder')
+PRODUCTION_DOMAIN = 'm4change'
+TEST_DOMAIN = 'test-pathfinder'
+M4CHANGE_DOMAINS = (PRODUCTION_DOMAIN, TEST_DOMAIN)
 
 NUMBER_OF_MONTHS_FOR_FIXTURES = 6
 

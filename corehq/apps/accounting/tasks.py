@@ -76,6 +76,11 @@ def generate_invoices(based_on_date=None):
                 "[BILLING] Could not create invoice for domain %s: %s" % (
                 domain.name, e
             ))
+        except Exception as e:
+            logger.error(
+                "[BILLING] Error occurred while creating invoice for domain "
+                "%s: %s" % (domain.name, e)
+            )
     # And finally...
     send_bookkeeper_email()
 

@@ -23,6 +23,9 @@ def get_last_n_months(months):
         ranges.insert(0, (month_start, month_end))
     return ranges
 
+def get_last_month():
+    return get_last_n_months(1)[0]
+
 def get_last_day_of_month(month_start, today):
     return today.day if month_start.month == today.month else calendar.monthrange(month_start.year, month_start.month)[1]
 

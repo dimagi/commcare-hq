@@ -112,6 +112,11 @@ class AppStringsBase(object):
                 (u'The case sharing settings for your user are incorrect. '
                  u'This user must be in exactly one case sharing group. Please contact your supervisor.')
 
+        if 'case_autoload.exactly_one_fixture' not in messages:
+            messages['case_autoload.exactly_one_fixture'] = \
+                (u'The lookup table settings for your user are incorrect. '
+                 u'This user must have access to exactly one lookup table row.')
+
         return commcare_translations.dumps(messages).encode('utf-8')
 
 
