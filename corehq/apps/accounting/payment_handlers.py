@@ -9,6 +9,27 @@ from corehq.apps.accounting.utils import fmt_dollar_amount
 stripe.api_key = settings.STRIPE_PRIVATE_KEY
 logger = logging.getLogger('accounting')
 
+def get_or_create_stripe_customer(payment_method):
+    customer = None
+    if payment_method.customer_id is not None:
+        try:
+            customer = stripe.Customer.retrieve(payment_method.customer_id)
+        except stripe.InvalidRequestError:
+            pass
+    if customer is None:
+        customer = stripe.Customer.create(
+            description="Account Admin %(web_user)s for %(domain)s, "
+                        "Account %(account_name)s" % {
+                'web_user': payment_method.billing_admin.web_user,
+                'domain': payment_method.billing_admin.domain,
+                'account_name': payment_method.account.name,
+            },
+            email=payment_method.billing_admin.web_user,
+        )
+    payment_method.customer_id = customer.id
+    payment_method.save()
+    return customer
+
 
 class BaseStripePaymentHandler(object):
     """Handler for paying via Stripe's API
@@ -23,7 +44,7 @@ class BaseStripePaymentHandler(object):
         """
         raise NotImplementedError("you must implement cost_item_name")
 
-    def create_charge(self, amount, card_token):
+    def create_charge(self, amount, card=None, customer=None):
         """Process the HTTPRequest used to make this payment
 
         returns a dict to be used as the json response for the request.
@@ -40,36 +61,17 @@ class BaseStripePaymentHandler(object):
         """
         raise NotImplementedError("you must implement update_credits")
 
-    def get_or_create_stripe_customer(self):
-        """Used for saving credit card info (todo)
-        """
-        customer = None
-        if self.payment_method.customer_id is not None:
-            try:
-                customer = stripe.Customer.retrieve(self.payment_method.customer_id)
-            except stripe.InvalidRequestError:
-                pass
-        if customer is None:
-            customer = stripe.Customer.create(
-                description="Account Admin %(web_user)s for %(domain)s, "
-                            "Account %(account_name)s" % {
-                    'web_user': self.payment_method.billing_admin.web_user,
-                    'domain': self.payment_method.billing_admin.domain,
-                    'account_name': self.payment_method.account.name,
-                },
-                email=self.payment_method.billing_admin.web_user,
-            )
-        self.payment_method.customer_id = customer.id
-        self.payment_method.save()
-        return customer
-
     def get_amount_in_cents(self, amount):
         amt_cents = amount * Decimal('100')
         return int(amt_cents.quantize(Decimal(10)))
 
     def process_request(self, request):
-        card_token = request.POST.get('stripeToken')
+        customer = None
         amount = self.get_charge_amount(request)
+        card = request.POST.get('stripeToken')
+        remove_card = request.POST.get('removeCard')
+        is_saved_card = request.POST.get('selectedCardType') == 'saved'
+        save_card = request.POST.get('saveCard') and not is_saved_card
         generic_error = {
             'error': {
                 'message': _(
@@ -80,7 +82,22 @@ class BaseStripePaymentHandler(object):
             },
         }
         try:
-            charge = self.create_charge(amount, card_token)
+            if remove_card:
+                customer = get_or_create_stripe_customer(self.payment_method)
+                customer.cards.retrieve(card).delete()
+                return {
+                    'success': True,
+                    'removedCard': card,
+                }
+            if save_card:
+                customer = get_or_create_stripe_customer(self.payment_method)
+                card = customer.cards.create(card=card)
+                customer.default_card = card
+                customer.save()
+                card = card
+            if is_saved_card:
+                customer = get_or_create_stripe_customer(self.payment_method)
+            charge = self.create_charge(amount, card=card, customer=customer)
             payment_record = PaymentRecord.create_record(
                 self.payment_method, charge.id
             )
@@ -112,6 +129,8 @@ class BaseStripePaymentHandler(object):
             return generic_error
         return {
             'success': True,
+            'card': card,
+            'wasSaved': save_card,
         }
 
 
@@ -125,9 +144,10 @@ class InvoiceStripePaymentHandler(BaseStripePaymentHandler):
     def cost_item_name(self):
         return _("Invoice #%s") % self.invoice.id
 
-    def create_charge(self, amount, card_token):
+    def create_charge(self, amount, card=None, customer=None):
         return stripe.Charge.create(
-            card=card_token,
+            card=card,
+            customer=customer,
             amount=self.get_amount_in_cents(amount),
             currency=settings.DEFAULT_CURRENCY,
             description="Payment for Invoice %s" % self.invoice.invoice_number,
@@ -179,9 +199,10 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
     def get_charge_amount(self, request):
         return Decimal(request.POST['amount'])
 
-    def create_charge(self, amount, card_token):
+    def create_charge(self, amount, card=None, customer=None):
         return stripe.Charge.create(
-            card=card_token,
+            card=card,
+            customer=customer,
             amount=self.get_amount_in_cents(amount),
             currency=settings.DEFAULT_CURRENCY,
             description="Payment for %s" % self.cost_item_name,
@@ -196,7 +217,8 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
 
     def process_request(self, request):
         response = super(CreditStripePaymentHandler, self).process_request(request)
-        response.update({
-            'balance': fmt_dollar_amount(self.credit_line.balance),
-        })
+        if hasattr(self, 'credit_line'):
+            response.update({
+                'balance': fmt_dollar_amount(self.credit_line.balance),
+            })
         return response
