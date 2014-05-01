@@ -769,9 +769,13 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
         return pagination_context
 
     @property
-    def is_accounting_preview(self):
-        return (toggles.ACCOUNTING_PREVIEW.enabled(self.request.user.username)
-                or toggles.ACCOUNTING_PREVIEW.enabled(self.domain))
+    def can_pay_invoices(self):
+        is_registered_billing_admin = BillingAccountAdmin.objects.filter(
+            web_user=self.request.user.username, domain=self.domain
+        ).exists()
+        return ((toggles.ACCOUNTING_PREVIEW.enabled(self.request.user.username)
+                 or toggles.ACCOUNTING_PREVIEW.enabled(self.domain))
+                and is_registered_billing_admin)
 
     @property
     def paginated_list(self):
@@ -803,7 +807,7 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                             args=[self.domain, last_billing_record.pdf_data_id]
                         ),
                         'canMakePayment': (invoice.date_paid is None
-                                           and self.is_accounting_preview),
+                                           and self.can_pay_invoices),
                         'balance': "%s" % quantize_accounting_decimal(invoice.balance),
                     },
                     'template': 'statement-row-template',
