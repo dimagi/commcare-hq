@@ -167,3 +167,24 @@ def quantize_accounting_decimal(decimal_value):
 
 def fmt_dollar_amount(decimal_value):
     return _("USD %s") % quantize_accounting_decimal(decimal_value)
+
+
+def get_customer_cards(account, username, domain):
+    from corehq.apps.accounting.models import (
+        PaymentMethod, BillingAccountAdmin, PaymentMethodType,
+    )
+    from corehq.apps.accounting.payment_handlers import get_or_create_stripe_customer
+    try:
+        payment_method = PaymentMethod.objects.get(
+            account=account,
+            billing_admin=BillingAccountAdmin.objects.get(
+                web_user=username,
+                domain=domain,
+            ),
+            method_type=PaymentMethodType.STRIPE
+        )
+        stripe_customer = get_or_create_stripe_customer(payment_method)
+        return stripe_customer.cards
+    except (PaymentMethod.DoesNotExist, BillingAccountAdmin.DoesNotExist):
+        pass
+    return None

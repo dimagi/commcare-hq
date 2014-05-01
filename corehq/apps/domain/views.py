@@ -18,7 +18,10 @@ from corehq.apps.accounting.payment_handlers import (
 )
 from corehq.apps.accounting.subscription_changes import DomainDowngradeStatusHandler
 from corehq.apps.accounting.forms import EnterprisePlanContactForm
-from corehq.apps.accounting.utils import get_change_status, get_privileges, fmt_dollar_amount, quantize_accounting_decimal
+from corehq.apps.accounting.utils import (
+    get_change_status, get_privileges, fmt_dollar_amount,
+    quantize_accounting_decimal, get_customer_cards,
+)
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.toggles import NAMESPACE_DOMAIN
 from dimagi.utils.couch.resource_conflict import retry_resource
@@ -556,7 +559,9 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'exists': False,
             'can_renew': False,
         }
+        cards = None
         if subscription:
+            cards = get_customer_cards(self.account, self.request.user.username, self.domain)
             date_end = (subscription.date_end.strftime("%d %B %Y")
                         if subscription.date_end is not None else "--")
             if (subscription.date_end is not None
@@ -583,6 +588,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'date_start': (subscription.date_start.strftime("%d %B %Y")
                            if subscription is not None else None),
             'date_end': date_end,
+            'cards': cards,
             'next_subscription': next_subscription,
         }
         info.update(plan_version.user_facing_description)
@@ -711,6 +717,10 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
         return self.request.POST if self.request.method == 'POST' else self.request.GET
 
     @property
+    def stripe_cards(self):
+        return get_customer_cards(self.account, self.request.user.username, self.domain)
+
+    @property
     def show_hidden(self):
         if not self.request.user.is_superuser:
             return False
@@ -750,6 +760,7 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
             'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
             'process_payment_url': reverse(InvoiceStripePaymentView.urlname,
                                            args=[self.domain]),
+            'stripe_cards': self.stripe_cards,
         })
         return pagination_context
 
