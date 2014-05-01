@@ -19,6 +19,9 @@
             404: "{% trans 'Page not found.' %}",
             500: "{% blocktrans %}There was an error processing your request. We're working quickly to fix the issue. Please try back shortly.{% endblocktrans %}"
         });
+        {% if plan.cards %}
+            paymentHandler.loadCards({{ plan.cards|JSON }});
+        {% endif %}
         $(function () {
             ko.applyBindings(paymentHandler, $('#paymentModal').get(0));
         });
@@ -177,43 +180,28 @@
     {% include 'accounting/partials/stripe_card_ko_template.html' %}
 
     <script type="text/html" id="credit-cost-item-template">
-        <p class="lead" data-bind="visible: isPlanCredit">
-            {% blocktrans %}
-            <strong>Plan Credits</strong> must be purchased with a credit card.
-            One credit is equivalent to one USD.
-            {% endblocktrans %}
-        </p>
         <p data-bind="visible: isPlanCredit">
             {% blocktrans %}
-            Plan Credits are only applied toward the monthly fee of your plan.
-            They are not used toward charges related to SMS or User usage fees.
-            {% endblocktrans %}
-        </p>
-        <p class="lead" data-bind="visible: isSMSCredit">
-            {% blocktrans %}
-            <strong>SMS Credits</strong> must be purchased with a credit card. One credit is
-            equivalent to one USD.
+            <strong>Plan Credits</strong> are only applied toward the monthly
+            fee of your plan, and are not used toward charges related to SMS or
+            User usage fees. One credit is equivalent to one USD.
             {% endblocktrans %}
         </p>
         <p data-bind="visible: isSMSCredit">
             {% blocktrans %}
-            SMS rates vary depending on country,
+            <strong>SMS Credits</strong> are applied to SMS fees for messages
+            that exceed your plan's monthly limit. One credit is equivalent
+            to one USD. SMS fees vary depending on country,
             cellular network, and whether you are using a Dimagi gateway.
-            <a href="#">Read more about our SMS charges.</a>
-            {% endblocktrans %}
-        </p>
-        <p class="lead" data-bind="visible: isUserCredit">
-            {% blocktrans %}
-            <strong>Mobile Worker Credits</strong> must be purchased with a credit card.
-            One credit is equivalent to one USD, which is the monthly cost of
-            a CommCare Mobile Worker.
+            <a href="#">Read more about our SMS fees.</a>
             {% endblocktrans %}
         </p>
         <p data-bind="visible: isUserCredit">
             {% blocktrans %}
-            For example, if you purchase 50 Mobile Worker Credits, you will
-            cover an additional 50 users for one month, or 25 users
-            for two months, etc.
+            One <strong>Mobile Worker Credit</strong> is equivalent to one USD,
+            which is the monthly cost of a CommCare Mobile Worker. For example,
+            if you purchase 50 Mobile Worker Credits, you will cover an additional
+            50 users for one month, or 25 users for two months, etc.
             {% endblocktrans %}
         </p>
         <div class="control-group">
@@ -264,6 +252,12 @@
               class="form form-horizontal"
               id="payment-form">
             <div class="modal-body">
+                <div data-bind="template: {
+                    data: costItem,
+                    name: 'credit-cost-item-template',
+                    if: hasCostItem
+                }, visible: paymentIsNotComplete"></div>
+
                 <p class="alert alert-error"
                      data-bind="visible: showServerErrorMsg">
                     <i class="icon-warning-sign"></i>
@@ -271,15 +265,16 @@
                 </p>
 
                 <div data-bind="template: {
-                    data: costItem,
-                    name: 'credit-cost-item-template',
-                    if: hasCostItem
-                }, visible: paymentIsNotComplete"></div>
+                    data: newCard,
+                    name: 'select-new-stripe-card-template',
+                    if: mustCreateNewCard
+                }"></div>
 
                 <div data-bind="template: {
-                    data: stripeCard,
-                    name: 'stripe-card-ko-template',
-                }, visible: paymentIsNotComplete"></div>
+                    data: $data,
+                    name: 'select-stripe-card-template',
+                    if: canSelectCard
+                }"></div>
 
                 <p class="alert alert-success"
                      data-bind="visible: paymentIsComplete">
