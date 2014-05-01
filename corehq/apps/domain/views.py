@@ -547,8 +547,12 @@ class DomainSubscriptionView(DomainAccountingSettings):
 
     @property
     def can_purchase_credits(self):
-        return (toggles.ACCOUNTING_PREVIEW.enabled(self.request.user.username)
-                or toggles.ACCOUNTING_PREVIEW.enabled(self.domain))
+        is_registered_billing_admin = BillingAccountAdmin.objects.filter(
+            web_user=self.request.user.username, domain=self.domain
+        ).exists()
+        return ((toggles.ACCOUNTING_PREVIEW.enabled(self.request.user.username)
+                 or toggles.ACCOUNTING_PREVIEW.enabled(self.domain))
+                and is_registered_billing_admin)
 
     @property
     def plan(self):
