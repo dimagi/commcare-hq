@@ -47,7 +47,7 @@ def deactivate_subscriptions(based_on_date=None):
 
 
 @periodic_task(run_every=crontab(hour=13, minute=0, day_of_month='1'))
-def generate_invoices(based_on_date=None, check_existing=False):
+def generate_invoices(based_on_date=None, check_existing=False, is_test=False):
     """
     Generates all invoices for the past month.
     """
@@ -64,6 +64,10 @@ def generate_invoices(based_on_date=None, check_existing=False):
             Invoice.objects.filter(
                 subscription__subscriber__domain=domain,
                 date_created__gte=today).count() == 0):
+            continue
+        elif is_test:
+            logger.info("[Billing] Ready to create invoice for domain %s"
+                        % domain.name)
             continue
         try:
             invoice_factory = DomainInvoiceFactory(
