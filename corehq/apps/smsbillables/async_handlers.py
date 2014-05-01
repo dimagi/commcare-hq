@@ -1,4 +1,5 @@
 import json
+import logging
 from couchdbkit import ResourceNotFound
 from django.utils.encoding import force_unicode
 from django_countries.countries import COUNTRIES
@@ -9,9 +10,11 @@ from corehq.apps.hqwebapp.async_handler import BaseAsyncHandler
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.sms.mixin import SMSBackend
 from corehq.apps.sms.util import get_backend_by_class_name
+from corehq.apps.smsbillables.exceptions import SMSRateCalculatorError
 from corehq.apps.smsbillables.models import SmsGatewayFeeCriteria, SmsGatewayFee, SmsUsageFee
 
 NONMATCHING_COUNTRY = 'nonmatching'
+logger = logging.getLogger('accounting')
 
 
 class SMSRatesAsyncHandler(BaseAsyncHandler):
@@ -26,8 +29,10 @@ class SMSRatesAsyncHandler(BaseAsyncHandler):
         try:
             backend = SMSBackend.get(gateway)
             backend_api_id = get_backend_by_class_name(backend.doc_type).get_api_id()
-        except Exception:
-            raise Exception("Could not obtain connection information.")
+        except Exception as e:
+            logger.error("Failed to get backend for calculating an sms rate "
+                         "due to: %s" % e)
+            raise SMSRateCalculatorError("Could not obtain connection information.")
 
         country_code = self.data.get('country_code')
         if country_code == NONMATCHING_COUNTRY:
