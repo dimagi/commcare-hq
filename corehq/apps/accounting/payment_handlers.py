@@ -3,10 +3,8 @@ import logging
 import stripe
 from django.conf import settings
 from django.utils.translation import ugettext as _
-from corehq.apps.accounting.exceptions import PaymentHandlerError, PaymentRequestError
-from corehq.apps.accounting.models import PaymentMethodType, PaymentRecord, CreditLine
+from corehq.apps.accounting.models import PaymentRecord, CreditLine
 from corehq.apps.accounting.utils import fmt_dollar_amount
-from dimagi.utils.decorators.memoized import memoized
 
 stripe.api_key = settings.STRIPE_PRIVATE_KEY
 logger = logging.getLogger('accounting')
