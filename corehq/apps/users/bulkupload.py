@@ -10,7 +10,7 @@ from django.utils.translation import ugettext as _
 from corehq.apps.groups.models import Group
 from corehq.apps.users.forms import CommCareAccountForm
 from corehq.apps.users.util import normalize_username, raw_username
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.domain.models import Domain
 from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.excel import flatten_json, json_to_headers, \
@@ -350,7 +350,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
                             ) % group_name)
                         group_memoizer.by_name(group_name).add_user(user, save=False)
 
-                except UserUploadError as e:
+                except (UserUploadError, CouchUser.Inconsistent) as e:
                     status_row['flag'] = '%s' % e
 
             ret["rows"].append(status_row)
