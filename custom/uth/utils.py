@@ -66,40 +66,29 @@ def render_xform(files, exam_uuid, patient_case_id=None):
         return '<n0:%s src="%s" from="local"/>' % (key, os.path.split(filename)[-1])
     case_attachments = [case_attach_block(f['identifier'], f['filename']) for f in files]
 
-    def form_attachment_group(key, filename):
-        return '<n0:%s src="%s" from="local"/>' % (key, os.path.split(filename)[-1])
-    attach_group = [form_attachment_group(f['identifier'], f['filename']) for f in files]
-
-    submit_id = uuid.uuid4().hex
-
-    #we're making a new caseid to subcase this to the patient
-    submit_case_id = uuid.uuid4().hex
-
     format_dict = {
-        "time_start": (datetime.utcnow() - timedelta(seconds=5)).strftime('%Y-%m-%dT%H:%M:%SZ'),
-        "time_end": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
-        "modified_date": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
-        "user_id": 'TODO',
-        "username": 'TODO',
-        "doc_id": submit_id,
-        "case_id": submit_case_id,
-        "patient_case_id": patient_case_id,
-        "case_attachments": ''.join(case_attachments),
-        "attachment_groups": ''.join(attach_group), # TODO this got removed from the form
-        "exam_id": 'TODO',
-        "upload_case_id": 'TODO',
-        "readable_upload_id": 'TODO',
+        'time_start': (datetime.utcnow() - timedelta(seconds=5)).strftime('%Y-%m-%dT%H:%M:%SZ'),
+        'time_end': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
+        'modified_date': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
+        'user_id': 'f72265c0-362a-11e0-9e24-005056aa7fb5',  #TODO
+        'username': 'fakeuser@dimagi.com',  #TODO
+        'doc_id': uuid.uuid4().hex,
+        'case_id': uuid.uuid4().hex,
+        'patient_case_id': patient_case_id,
+        'case_attachments': ''.join(case_attachments),
+        'exam_id': 'TODO',
+        'case_name': 'TODO',
     }
 
     final_xml = xform_template % format_dict
     return final_xml
 
 
-def create_case(case_id, zip_file):
+def create_case(case_id, zip_file, patient_case_id=None):
     files = []
     for name in zip_file.namelist():
-        # TODO do better filtering
-        if 'xml' in name or 'XML' in name:
+        if name[-4:].lower() == '.xml':
+            # we don't need to attach these to the case
             continue
 
         filename = os.path.basename(name)
@@ -114,7 +103,7 @@ def create_case(case_id, zip_file):
             'data': io.BytesIO(zip_file.read(name))
         })
 
-    xform = render_xform(files, case_id)
+    xform = render_xform(files, case_id, patient_case_id)
 
     file_dict = {}
 
@@ -123,6 +112,7 @@ def create_case(case_id, zip_file):
 
     # TODO post_xform_to_couch is a test only function
     from couchforms.util import post_xform_to_couch
+
     form = post_xform_to_couch(xform, file_dict)
     form.domain = 'vscan_domain'
     return process_cases(form)

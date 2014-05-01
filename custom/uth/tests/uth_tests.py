@@ -130,7 +130,7 @@ class ImageUploadTests(UTHTests):
         )
 
     def testUpload(self):
-        result = utils.create_case(self.case_id, self.zip_file)
+        result = utils.create_case(self.case_id, self.zip_file, self.case_id)
 
         self.assertEqual(len(result), 1)
 
@@ -138,4 +138,8 @@ class ImageUploadTests(UTHTests):
 
         self.assertEqual(case.type, 'ultrasound_upload')
         self.assertEqual(len(case.case_attachments), 4)
+        self.assertEqual(case.patient_case_id, self.case_id)
         # TODO assert that this case has parent of the correct case
+        # self.assertEqual(case.user_id, '')
+        # self.assertEqual(case.username, '')
+        # self.assertEqual(case.owner_id, '')
