@@ -71,7 +71,7 @@ class SMSRatesSelect2AsyncHandler(BaseAsyncHandler):
         )
         country_codes = criteria_query.exclude(
             country_code__exact=None
-        ).distinct().values_list('country_code', flat=True)
+        ).values_list('country_code', flat=True).distinct()
         final_codes = []
         countries = dict(COUNTRIES)
         for code in country_codes:
