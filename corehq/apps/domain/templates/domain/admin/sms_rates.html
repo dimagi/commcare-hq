@@ -16,7 +16,12 @@
 
 {% block js-inline %}{{ block.super }}
     <script>
-        var smsRateCalculator = new SMSRateCalculator({{ rate_calc_form.knockout_data|JSON }});
+        var smsRateCalculator = new SMSRateCalculator({
+            country_code: {
+                fieldName: 'country_code',
+                currentValue: ''
+            }
+        });
         ko.applyBindings(smsRateCalculator, $('#sms-rate-calculator').get(0));
         smsRateCalculator.init();
     </script>

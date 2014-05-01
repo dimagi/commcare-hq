@@ -61,12 +61,3 @@ class SMSRateCalculatorForm(forms.Form):
                 placeholder=_("Please Select a Country Code"),
             ),
         )
-
-    @property
-    def knockout_data(self):
-        return {
-            'country_code': {
-                'fieldName': 'country_code',
-                'currentValue': '',
-            },
-        }
