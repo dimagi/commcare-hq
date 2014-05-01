@@ -68,7 +68,10 @@ var BaseSelect2Handler = function (options) {
                 },
                 results: self.processResults,
                 500: function () {
-                    self.error("Server encountered a problem. Please notify a dev.");
+                    self.error(
+                        "There was an issue communicating with the server. " +
+                        "Please try back later."
+                    );
                 }
             },
             createSearchChoice: self.createNewChoice,
