@@ -64,32 +64,32 @@ def generate_invoices(based_on_date=None, check_existing=False, is_test=False):
             Invoice.objects.filter(
                 subscription__subscriber__domain=domain,
                 date_created__gte=today).count() == 0):
-            continue
+            pass
         elif is_test:
             logger.info("[Billing] Ready to create invoice for domain %s"
                         % domain.name)
-            continue
-        try:
-            invoice_factory = DomainInvoiceFactory(
-                invoice_start, invoice_end, domain)
-            invoice_factory.create_invoices()
-            logger.info("[BILLING] Sent invoices for domain %s"
-                        % domain.name)
-        except CreditLineError as e:
-            logger.error(
-                "[BILLING] There was an error utilizing credits for "
-                "domain %s: %s" % (domain.name, e)
-            )
-        except InvoiceError as e:
-            logger.error(
-                "[BILLING] Could not create invoice for domain %s: %s" % (
-                domain.name, e
-            ))
-        except Exception as e:
-            logger.error(
-                "[BILLING] Error occurred while creating invoice for domain "
-                "%s: %s" % (domain.name, e)
-            )
+        else:
+            try:
+                invoice_factory = DomainInvoiceFactory(
+                    invoice_start, invoice_end, domain)
+                invoice_factory.create_invoices()
+                logger.info("[BILLING] Sent invoices for domain %s"
+                            % domain.name)
+            except CreditLineError as e:
+                logger.error(
+                    "[BILLING] There was an error utilizing credits for "
+                    "domain %s: %s" % (domain.name, e)
+                )
+            except InvoiceError as e:
+                logger.error(
+                    "[BILLING] Could not create invoice for domain %s: %s" % (
+                    domain.name, e
+                ))
+            except Exception as e:
+                logger.error(
+                    "[BILLING] Error occurred while creating invoice for "
+                    "domain %s: %s" % (domain.name, e)
+                )
     # And finally...
     send_bookkeeper_email()
 
