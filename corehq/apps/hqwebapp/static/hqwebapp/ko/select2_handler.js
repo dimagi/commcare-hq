@@ -14,11 +14,11 @@ var BaseSelect2Handler = function (options) {
 
     self.getHandlerSlug = function () {
         // This is the slug for the AsyncHandler you'll be using on the server side
-        throw new Error('getHandlerSlug must be implemented;')
+        throw new Error('getHandlerSlug must be implemented');
     };
 
     self.getExtraData = function () {
-        return {}
+        return {};
     };
 
     self.processResults = function (response) {
