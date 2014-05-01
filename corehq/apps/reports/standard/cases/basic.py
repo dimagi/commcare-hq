@@ -123,7 +123,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
                 if group.case_sharing
             ])
         if HQUserType.COMMTRACK in ExpandedMobileWorkerFilter.user_types(self.request):
-            user_ids.append("commtrack-user")
+            user_ids.append("commtrack-system")
         return user_ids, filter(None, group_owner_ids)
 
     def get_case(self, row):
