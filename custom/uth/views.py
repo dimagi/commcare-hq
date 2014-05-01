@@ -2,7 +2,13 @@ from corehq.apps.domain.decorators import login_or_digest
 from django.views.decorators.http import require_POST
 import json
 from django.http import HttpResponse
-from custom.uth.utils import match_case, get_case_id, get_study_id, create_case
+from custom.uth.utils import (
+    match_case,
+    get_case_id,
+    get_study_id,
+    create_case,
+    get_patient_config_from_zip
+)
 import zipfile
 from custom.uth.models import SonositeUpload
 
@@ -38,14 +44,14 @@ def sonosite_upload(request, domain, **kwargs):
 
     # find patient config
     try:
-        config = [f for f in zip_file.namelist() if 'PT_PPS.XML' in f][0]
+        config_file = get_patient_config_from_zip(zip_file)
     except Exception as e:
         response_data['result'] = 'failed'
         response_data['message'] = 'Could not load config file: %s' % (e.message)
         return HttpResponse(json.dumps(response_data), content_type="application/json")
 
-    case_id = get_case_id(zip_file.read(config))
-    study_id = get_study_id(zip_file.read(config))
+    case_id = get_case_id(config_file)
+    study_id = get_study_id(config_file)
 
     upload = SonositeUpload(
         domain=domain,

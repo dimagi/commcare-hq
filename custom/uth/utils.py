@@ -53,7 +53,7 @@ def get_subdirectories(directory):
     return [d for d in os.listdir(directory) if os.path.isdir(os.path.join(directory, d))]
 
 
-def render_xform(file_tuples, exam_uuid, patient_case_id=None):
+def render_xform(files, exam_uuid, patient_case_id=None):
     xform_template = None
     template_path = os.path.join(
         os.path.dirname(__file__),
@@ -64,12 +64,11 @@ def render_xform(file_tuples, exam_uuid, patient_case_id=None):
 
     def case_attach_block(key, filename):
         return '<n0:%s src="%s" from="local"/>' % (key, os.path.split(filename)[-1])
-    case_attachments = [case_attach_block(t[0], t[1]) for t in file_tuples]
+    case_attachments = [case_attach_block(f['identifier'], f['filename']) for f in files]
 
     def form_attachment_group(key, filename):
         return '<n0:%s src="%s" from="local"/>' % (key, os.path.split(filename)[-1])
-    attach_group = [form_attachment_group(t[0], t[1]) for t in file_tuples]
-
+    attach_group = [form_attachment_group(f['identifier'], f['filename']) for f in files]
 
     submit_id = uuid.uuid4().hex
 
@@ -97,7 +96,7 @@ def render_xform(file_tuples, exam_uuid, patient_case_id=None):
 
 
 def create_case(case_id, zip_file):
-    file_tuples = []
+    files = []
     for name in zip_file.namelist():
         # TODO do better filtering
         if 'xml' in name or 'XML' in name:
@@ -109,22 +108,27 @@ def create_case(case_id, zip_file):
         # having already been filtered
         scan = os.path.basename(os.path.dirname(name))
 
-        file_tuples.append((
-            scan,
-            filename,
-            io.BytesIO(zip_file.read(name))
-        ))
+        files.append({
+            'identifier': scan,
+            'filename': filename,
+            'data': io.BytesIO(zip_file.read(name))
+        })
 
-    xform = render_xform(file_tuples, case_id)
+    xform = render_xform(files, case_id)
 
     file_dict = {}
 
-    for tup in file_tuples:
-        # TODO at least make this a named tuple
-        file_dict[tup[1]] = UploadedFile(tup[2], tup[1])
+    for f in files:
+        file_dict[f['filename']] = UploadedFile(f['data'], f['filename'])
 
     # TODO post_xform_to_couch is a test only function
     from couchforms.util import post_xform_to_couch
     form = post_xform_to_couch(xform, file_dict)
     form.domain = 'vscan_domain'
-    print process_cases(form)
+    return process_cases(form)
+
+
+def get_patient_config_from_zip(zip_file):
+    return zip_file.read(
+        [f for f in zip_file.namelist() if 'PT_PPS.XML' in f][0]
+    )

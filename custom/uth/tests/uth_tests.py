@@ -9,7 +9,7 @@ from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.util import post_case_blocks
 import os
 import zipfile
-from custom.uth.utils import match_case, all_scan_cases, create_case
+from custom.uth import utils
 from casexml.apps.case.tests import delete_all_xforms, delete_all_cases
 
 
@@ -62,15 +62,15 @@ class ScanLookupTests(UTHTests):
         super(ScanLookupTests, self).setUp()
 
     def testFindsCorrectCase(self):
-        case = match_case('vscan_domain', 'VH014466XK', '123123', '')
+        case = utils.match_case('vscan_domain', 'VH014466XK', '123123', '')
         self.assertEqual(self.case_id, case._id)
 
     def testWrongScanID(self):
-        case = match_case('vscan_domain', 'VH014466XK', 'wrong', '')
+        case = utils.match_case('vscan_domain', 'VH014466XK', 'wrong', '')
         self.assertIsNone(case)
 
     def testWrongSerial(self):
-        case = match_case('vscan_domain', 'wrong', '123123', '')
+        case = utils.match_case('vscan_domain', 'wrong', '123123', '')
         self.assertIsNone(case)
 
     def testGetsNewestWithTwoCases(self):
@@ -89,7 +89,7 @@ class ScanLookupTests(UTHTests):
             '2014-03-22T10:48:49Z'
         )
 
-        case = match_case('vscan_domain', 'VH014466XK', '123123', '')
+        case = utils.match_case('vscan_domain', 'VH014466XK', '123123', '')
         self.assertEqual(case_2_id, case._id)
 
     def testGetsNewestBasedOnScanProperty(self):
@@ -104,10 +104,10 @@ class ScanLookupTests(UTHTests):
             scan_uploaded=True
         )
 
-        case_count = len(all_scan_cases('vscan_domain', 'VH014466XK', '123123'))
+        case_count = len(utils.all_scan_cases('vscan_domain', 'VH014466XK', '123123'))
         self.assertEqual(1, case_count)
 
-        case = match_case('vscan_domain', 'VH014466XK', '123123', '')
+        case = utils.match_case('vscan_domain', 'VH014466XK', '123123', '')
         self.assertEqual(self.case_id, case._id)
 
 
@@ -115,9 +115,27 @@ class ImageUploadTests(UTHTests):
     def setUp(self):
         super(ImageUploadTests, self).setUp()
 
-    def testUpload(self):
         fpath = os.path.join(os.path.dirname(__file__), 'data', 'zips', 'create_case.zip')
+        self.zip_file = zipfile.ZipFile(fpath, 'r')
 
-        zip_file = zipfile.ZipFile(fpath, 'r')
+    def testRelatedMethods(self):
+        patient_config = utils.get_patient_config_from_zip(self.zip_file)
+        self.assertEqual(
+            'JHUYIIYIUIY',
+            utils.get_case_id(patient_config)
+        )
+        self.assertEqual(
+            '1.2.840.114340.03.000008251017183037.2.20130821.094421.0000080',
+            utils.get_study_id(patient_config)
+        )
 
-        create_case(self.case_id, zip_file)
+    def testUpload(self):
+        result = utils.create_case(self.case_id, self.zip_file)
+
+        self.assertEqual(len(result), 1)
+
+        case = result[0]
+
+        self.assertEqual(case.type, 'ultrasound_upload')
+        self.assertEqual(len(case.case_attachments), 4)
+        # TODO assert that this case has parent of the correct case
