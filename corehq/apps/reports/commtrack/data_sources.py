@@ -12,6 +12,7 @@ from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, pr
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from casexml.apps.stock.utils import months_of_stock_remaining, stock_category
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
+from decimal import Decimal
 
 
 def reporting_status(transaction, start_date, end_date):
@@ -160,6 +161,13 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             else:
                 return self.raw_product_states(stock_states, slugs)
 
+    def format_decimal(self, d):
+        # https://docs.python.org/2/library/decimal.html#decimal-faq
+        if d is not None:
+            return d.quantize(Decimal(1)) if d == d.to_integral() else d.normalize()
+        else:
+            return None
+
     def leaf_node_data(self, stock_states):
         for state in stock_states:
             product = Product.get(state.product_id)
@@ -170,7 +178,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                 'months_remaining': state.months_remaining,
                 'location_id': SupplyPointCase.get(state.case_id).location_id,
                 'product_name': product.name,
-                'current_stock': state.stock_on_hand,
+                'current_stock': self.format_decimal(state.stock_on_hand),
                 'location_lineage': None,
                 'resupply_quantity_needed': state.resupply_quantity_needed
             }
@@ -189,7 +197,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                 'months_remaining': months_of_stock_remaining(state['total_stock'], state['avg_consumption']),
                 'location_id': None,
                 'product_name': product.name,
-                'current_stock': state['total_stock'],
+                'current_stock': self.format_decimal(state['total_stock']),
                 'location_lineage': None,
                 'resupply_quantity_needed': None
             }
