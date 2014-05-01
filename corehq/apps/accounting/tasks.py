@@ -63,7 +63,7 @@ def generate_invoices(based_on_date=None, check_existing=False, is_test=False):
         if (check_existing and
             Invoice.objects.filter(
                 subscription__subscriber__domain=domain,
-                date_created__gte=today).count() == 0):
+                date_created__gte=today).count() != 0):
             pass
         elif is_test:
             logger.info("[Billing] Ready to create invoice for domain %s"
