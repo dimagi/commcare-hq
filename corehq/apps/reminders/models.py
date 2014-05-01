@@ -355,6 +355,7 @@ class CaseReminderHandler(Document):
     ui_type         The type of UI to use for editing this CaseReminderHandler (see UI_CHOICES)
     """
     domain = StringProperty()
+    last_modified = DateTimeProperty()
     active = BooleanProperty(default=True)
     case_type = StringProperty()
     nickname = StringProperty()
@@ -930,6 +931,7 @@ class CaseReminderHandler(Document):
         schedule_changed = params.pop("schedule_changed", False)
         prev_definition = params.pop("prev_definition", None)
         send_immediately = params.pop("send_immediately", False)
+        self.last_modified = datetime.utcnow()
         super(CaseReminderHandler, self).save(**params)
         if not self.deleted():
             if self.start_condition_type == CASE_CRITERIA:
