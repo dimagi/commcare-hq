@@ -69,9 +69,11 @@ def sonosite_upload(request, domain, **kwargs):
         'application/zip'
     )
 
-    # TODO move to celery, pass doc id instead of real file
-    zip_file.fp.seek(0)
-    create_case(case_id, zip_file)
+    from custom.uth.tasks import async_create_case
+    async_create_case(upload._id)
+
+    #zip_file.fp.seek(0)
+    #create_case(case_id, zip_file)
 
     response_data['result'] = 'uploaded'
     response_data['message'] = 'uploaded'
