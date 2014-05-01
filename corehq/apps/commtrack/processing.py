@@ -1,14 +1,13 @@
 import logging
+from casexml.apps.case.const import CASE_ACTION_COMMTRACK
 from casexml.apps.case.xform import is_device_report
-from casexml.apps.stock.const import TRANSACTION_SUBTYPE_INFERRED, COMMTRACK_REPORT_XMLNS
+from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from dimagi.utils.decorators.log_exception import log_exception
-from corehq.apps.commtrack.models import CommtrackConfig, StockTransaction, NewStockReport
+from corehq.apps.commtrack.models import CommtrackConfig, NewStockReport
 from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.commtrack.util import wrap_commtrack_case
 from casexml.apps.case.models import CommCareCaseAction, CommCareCase
 from casexml.apps.case.xml.parser import AbstractAction
-
-from lxml import etree
 
 
 logger = logging.getLogger('commtrack.incoming')
@@ -55,15 +54,14 @@ def process_stock(xform):
 
     # touch every case for proper ota restore logic syncing to be preserved
     for case in relevant_cases:
-        case_action = CommCareCaseAction.from_parsed_action(submit_time, user_id, xform, AbstractAction('commtrack'))
+        case_action = CommCareCaseAction.from_parsed_action(
+            submit_time, user_id, xform, AbstractAction(CASE_ACTION_COMMTRACK)
+        )
         # hack: clear the sync log id so this modification always counts
         # since consumption data could change server-side
         case_action.sync_log_id = ''
         case.actions.append(case_action)
         case.save()
-
-    def _is_stockonhand_txn(txn):
-        return txn.section_id == 'stock'
 
     # create the django models
     for report in stock_reports:

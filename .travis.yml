@@ -1,6 +1,6 @@
 language: python
 python:
- - "2.6"
+ - "2.7"
 env:
  - CFLAGS=-O0
 branches:
@@ -15,6 +15,7 @@ install:
  - "git clone https://github.com/dimagi/commcarehq-venv.git"
  - "cp -r commcarehq-venv/hq_env/* ~/virtualenv/"
  - "source ~/virtualenv/bin/activate"
+ - "time (bash -e scripts/uninstall-requirements.sh | ts)"
  - "time (bash -e .travis/quietly-run-install.sh | ts)"
  - "time (pip install --exists-action w -r requirements/requirements.txt --use-mirrors)"
  - "time (bash -e .travis/misc-setup.sh | ts)"

@@ -28,6 +28,8 @@ loadtest/test_scripts/localsettings.example.py and overriding the following:
     PASSWORD = "***"
     MOBILE_USERNAME = "user@demo.commcarehq.org"
     MOBILE_PASSWORD = "***"
+    OTA_USERNAME = "user@demo.commcarehq.org"
+    OTA_PASSWORD = "***"
 
 Edit config.cfg to tweak number of threads per user profile and length of test.
 See multimechanize docs for more info.

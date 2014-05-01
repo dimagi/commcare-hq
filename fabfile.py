@@ -37,6 +37,7 @@ ROLES_DJANGO = ['django_monolith', 'django_app']
 ROLES_TOUCHFORMS = ['django_monolith', 'formsplayer']
 ROLES_STATIC = ['django_monolith', 'staticfiles']
 ROLES_SMS_QUEUE = ['django_monolith', 'sms_queue']
+ROLES_PILLOW_RETRY_QUEUE = ['django_monolith', 'pillow_retry_queue']
 ROLES_DB_ONLY = ['pg', 'django_monolith']
 
 PROD_PROXIES = ['hqproxy0.internal.commcarehq.org', 'hqproxy2.internal.commcarehq.org']
@@ -70,6 +71,7 @@ env.roledefs = {
     # for now combined with celery
     'django_pillowtop': [],
     'sms_queue': [],
+    'pillow_retry_queue': [],
     # 'django_celery, 'django_app', and 'django_pillowtop' all in one
     # use this ONLY for single server config,
     # otherwise deploy() will run multiple times in parallel causing issues
@@ -89,6 +91,7 @@ env.roledefs = {
 
 env.django_bind = '127.0.0.1'
 env.sms_queue_enabled = False
+env.pillow_retry_queue_enabled = True
 
 def format_env(current_env):
     """
@@ -175,8 +178,10 @@ def india():
     env.should_migrate = True
 
     _setup_path()
-    env.virtualenv_root = posixpath.join(env.home, '.virtualenvs/commcarehq')
-    env.virtualenv_root_preindex = posixpath.join(env.home, '.virtualenvs/commcarehq_preindex')
+    env.virtualenv_root = posixpath.join(
+        env.home, '.virtualenvs/commcarehq27')
+    env.virtualenv_root_preindex = posixpath.join(
+        env.home, '.virtualenvs/commcarehq27_preindex')
 
     env.roledefs = {
         'couch': [],
@@ -184,6 +189,7 @@ def india():
         'rabbitmq': [],
         'django_celery': [],
         'sms_queue': [],
+        'pillow_retry_queue': [],
         'django_app': [],
         'django_pillowtop': [],
         'formsplayer': [],
@@ -218,6 +224,7 @@ def zambia():
         'rabbitmq': [],
         'django_celery': [],
         'sms_queue': [],
+        'pillow_retry_queue': [],
         'django_app': [],
         'django_pillowtop': [],
         'formsplayer': [],
@@ -241,6 +248,7 @@ def production():
     env.django_port = '9010'
     env.should_migrate = True
     env.sms_queue_enabled = True
+    env.pillow_retry_queue_enabled = True
 
     if env.code_branch != 'master':
         branch_message = (
@@ -256,6 +264,7 @@ def production():
         'rabbitmq': ['hqdb0.internal.commcarehq.org'],
         'django_celery': ['hqcelery0.internal.commcarehq.org'],
         'sms_queue': ['hqcelery0.internal.commcarehq.org'],
+        'pillow_retry_queue': ['hqcelery0.internal.commcarehq.org'],
         'django_app': [
             'hqdjango3.internal.commcarehq.org',
             'hqdjango4.internal.commcarehq.org',
@@ -292,10 +301,9 @@ def production():
 @task
 def staging():
     """staging.commcarehq.org"""
-    if not hasattr(env, 'code_branch') or env.code_branch == 'master':
-        print ("You must specify a code branch"
-               "(not 'master') with --set code_branch=<branch>")
-        sys.exit()
+    if env.code_branch == 'master':
+        env.code_branch = 'autostaging'
+        print ("using default branch of autostaging. you can override this with --set code_branch=<branch>")
 
     env.sudo_user = 'cchq'
     env.environment = 'staging'
@@ -303,7 +311,11 @@ def staging():
     env.django_port = '9010'
 
     env.should_migrate = True
-    env.sms_queue_enabled = True
+    # We should not enable the sms queue on staging because replication
+    # can cause sms to be processed again if an sms is replicated in its
+    # queued state.
+    env.sms_queue_enabled = False
+    env.pillow_retry_queue_enabled = True
 
     env.roledefs = {
         'couch': ['hqdb0-staging.internal.commcarehq.org'],
@@ -311,6 +323,7 @@ def staging():
         'rabbitmq': ['hqdb0-staging.internal.commcarehq.org'],
         'django_celery': ['hqdb0-staging.internal.commcarehq.org'],
         'sms_queue': ['hqdb0-staging.internal.commcarehq.org'],
+        'pillow_retry_queue': ['hqdb0-staging.internal.commcarehq.org'],
         'django_app': ['hqdjango0-staging.internal.commcarehq.org','hqdjango1-staging.internal.commcarehq.org'],
         'django_pillowtop': ['hqdb0-staging.internal.commcarehq.org'],
 
@@ -354,12 +367,16 @@ def preview():
     env.django_port = '7999'
     env.should_migrate = False
 
+    env.sms_queue_enabled = False
+    env.pillow_retry_queue_enabled = False
+
     env.roledefs = {
         'couch': [],
         'pg': [],
         'rabbitmq': ['hqdb0-preview.internal.commcarehq.org'],
         'django_celery': ['hqdb0-preview.internal.commcarehq.org'],
         'sms_queue': ['hqdb0-preview.internal.commcarehq.org'],
+        'pillow_retry_queue': ['hqdb0-preview.internal.commcarehq.org'],
         'django_app': [
             'hqdjango0-preview.internal.commcarehq.org',
             'hqdjango1-preview.internal.commcarehq.org'
@@ -403,6 +420,7 @@ def development():
         'rabbitmq': [],
         'django_celery': [],
         'sms_queue': [],
+        'pillow_retry_queue': [],
         'django_app': [],
         'django_pillowtop': [],
         'formsplayer': [],
@@ -1009,6 +1027,11 @@ def set_sms_queue_supervisorconf():
     if env.sms_queue_enabled:
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_sms_queue.conf')
 
+@roles(*ROLES_PILLOW_RETRY_QUEUE)
+def set_pillow_retry_queue_supervisorconf():
+    if env.pillow_retry_queue_enabled:
+        _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_pillow_retry_queue.conf')
+
 @task
 def set_supervisor_config():
     """Upload and link Supervisor configuration from the template."""
@@ -1018,6 +1041,7 @@ def set_supervisor_config():
     execute(set_formsplayer_supervisorconf)
     execute(set_pillowtop_supervisorconf)
     execute(set_sms_queue_supervisorconf)
+    execute(set_pillow_retry_queue_supervisorconf)
 
     # if needing tunneled ES setup, comment this back in
     # execute(set_elasticsearch_supervisorconf)

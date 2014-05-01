@@ -3,9 +3,9 @@ from corehq.apps.commtrack.psi_hacks import is_psi_domain
 from corehq.apps.reports.commtrack.data_sources import StockStatusDataSource, ReportingStatusDataSource
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.commtrack.models import Product, CommtrackConfig, CommtrackActionConfig
+from corehq.apps.commtrack.models import Product, CommtrackConfig, CommtrackActionConfig, StockState
 from corehq.apps.reports.graph_models import PieChart, MultiBarChart, Axis
-from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin
+from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
 from dimagi.utils.couch.loosechange import map_reduce
 from datetime import datetime, timedelta
 from corehq.apps.locations.models import Location
@@ -13,14 +13,15 @@ from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
-from casexml.apps.stock.models import StockState
 from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, product_ids_filtered_by_program
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
+
 
 def _enabled_hack(domain):
     return not is_psi_domain(domain)
 
-class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
+
+class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin, DatespanMixin):
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
@@ -78,28 +79,12 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
     def aggregate_by(self):
         return self.request.GET.get('agg_type')
 
-    @property
-    def start_date(self):
-        date = self.request.GET.get('startdate')
-        if date:
-            return datetime.strptime(date, '%Y-%m-%d').date()
-        else:
-            return (datetime.now() - timedelta(30)).date()
-
-    @property
-    def end_date(self):
-        date = self.request.GET.get('enddate')
-        if date:
-            return datetime.strptime(date, '%Y-%m-%d').date()
-        else:
-            return datetime.now().date()
-
 
 class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Stock Status by Product')
     slug = 'current_stock_status'
-    fields = ['corehq.apps.reports.fields.AsyncLocationField',
-              'corehq.apps.reports.fields.SelectProgramField',
+    fields = ['corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
+              'corehq.apps.reports.dont_use.fields.SelectProgramField',
               'corehq.apps.reports.filters.dates.DatespanFilter']
     exportable = True
     emailable = True
@@ -128,8 +113,8 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
 
         stock_states = StockState.objects.filter(
             case_id__in=sp_ids,
-            last_modified_date__lte=self.end_date,
-            last_modified_date__gte=self.start_date,
+            last_modified_date__lte=self.datespan.enddate_utc,
+            last_modified_date__gte=self.datespan.startdate_utc,
             section_id=STOCK_SECTION_TYPE
         ).order_by('product_id')
 
@@ -205,8 +190,8 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
 class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Inventory')
     slug = StockStatusDataSource.slug
-    fields = ['corehq.apps.reports.fields.AsyncLocationField',
-              'corehq.apps.reports.fields.SelectProgramField',
+    fields = ['corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
+              'corehq.apps.reports.dont_use.fields.SelectProgramField',
               'corehq.apps.reports.filters.dates.DatespanFilter',]
     exportable = True
     emailable = True
@@ -218,14 +203,24 @@ class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
 
     @property
     def headers(self):
-        return DataTablesHeader(*(DataTablesColumn(text) for text in [
-                    _('Product'),
-                    _('Total SOH'),
-                    _('Total AMC'),
-                    _('Remaining MOS'),
-                    _('Stock Status'),
-                    # _('Resupply Quantity Suggested'),
-                ]))
+        columns = [
+            DataTablesColumn(_('Product')),
+            DataTablesColumn(_('Stock on Hand'),
+                help_text=_('Total stock on hand for all locations matching the filters.')),
+            DataTablesColumn(_('Monthly Consumption'),
+                help_text=_('Total average monthly consumption for all locations matching the filters.')),
+            DataTablesColumn(_('Months of Stock'),
+                help_text=_('Number of months of stock remaining for all locations matching the filters. \
+                            Computed by calculating stock on hand divided by monthly consumption.')),
+            DataTablesColumn(_('Stock Status'),
+                help_text=_('Stock status prediction made using calculated consumption \
+                            or project specific default values. "No Data" means that \
+                            there is not enough data to compute consumption and default \
+                            values have not been uploaded yet.')),
+            # DataTablesColumn(_('Resupply Quantity Suggested')),
+        ]
+
+        return DataTablesHeader(*columns)
 
     @property
     def product_data(self):
@@ -235,8 +230,8 @@ class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
                 'domain': self.domain,
                 'location_id': self.request.GET.get('location_id'),
                 'program_id': self.request.GET.get('program'),
-                'start_date': self.request.GET.get('startdate'),
-                'end_date': self.request.GET.get('enddate'),
+                'start_date': self.datespan.startdate_utc,
+                'end_date': self.datespan.enddate_utc,
                 'aggregate': True
             }
             self.prod_data = self.prod_data + list(StockStatusDataSource(config).get_data())
@@ -269,8 +264,9 @@ class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
 class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Reporting Rate')
     slug = 'reporting_rate'
-    fields = ['corehq.apps.reports.fields.AsyncLocationField',
-              'corehq.apps.reports.fields.SelectProgramField',
+    fields = ['corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
+              'corehq.apps.reports.dont_use.fields.SelectProgramField',
+              'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
               'corehq.apps.reports.filters.dates.DatespanFilter',]
     exportable = True
     emailable = True
@@ -283,12 +279,13 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
     @property
     def headers(self):
         return DataTablesHeader(*(DataTablesColumn(text) for text in [
-                    _('Location'),
-                    _('# Sites'),
-                    _('On-time'),
-                    _('Late'),
-                    _('Non-reporting'),
-                ]))
+            _('Location'),
+            _('# Sites'),
+            _('# Reporting'),
+            _('Reporting Rate'),
+            _('# Non-reporting'),
+            _('Non-reporting Rate'),
+        ]))
 
     @property
     @memoized
@@ -297,10 +294,12 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
             'domain': self.domain,
             'location_id': self.request.GET.get('location_id'),
             'program_id': self.request.GET.get('program'),
-            'start_date': self.request.GET.get('startdate'),
-            'end_date': self.request.GET.get('enddate'),
+            'start_date': self.datespan.startdate_utc,
+            'end_date': self.datespan.enddate_utc,
+            'request': self.request,
         }
         statuses = list(ReportingStatusDataSource(config).get_data())
+
         def child_loc(path):
             root = self.active_location
             ix = path.index(root._id) if root else -1
@@ -308,6 +307,7 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
                 return path[ix + 1]
             except IndexError:
                 return None
+
         def case_iter():
             for site in statuses:
                 if child_loc(site['loc_path']) is not None:
@@ -330,14 +330,24 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
 
         locs = sorted(Location.view('_all_docs', keys=status_counts.keys(), include_docs=True),
                       key=lambda loc: loc.name)
+
         def fmt(pct):
             return '%.1f%%' % (100. * pct)
-        def fmt_col(loc, col_type):
+
+        def fmt_pct_col(loc, col_type):
             return fmt(status_counts[loc._id].get(col_type, {'pct': 0.})['pct'])
+
+        def fmt_count_col(loc, col_type):
+            return status_counts[loc._id].get(col_type, {'count': 0})['count']
+
         def _rows():
             for loc in locs:
-                num_sites = len(sites_by_agg_site[loc._id])
-                yield [loc.name, len(sites_by_agg_site[loc._id])] + [fmt_col(loc, k) for k in ('ontime', 'late', 'nonreporting')]
+                row = [loc.name, len(sites_by_agg_site[loc._id])]
+                for k in ('reporting', 'nonreporting'):
+                    row.append(fmt_count_col(loc, k))
+                    row.append(fmt_pct_col(loc, k))
+
+                yield row
 
         return master_tally, _rows()
 
@@ -348,11 +358,10 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
     def master_pie_chart_data(self):
         tally = self._data[0]
         labels = {
-            'ontime': _('On-time'),
-            'late': _('Late'),
+            'reporting': _('Reporting'),
             'nonreporting': _('Non-reporting'),
         }
-        return [{'label': labels[k], 'value': tally.get(k, {'count': 0.})['count']} for k in ('ontime', 'late', 'nonreporting')]
+        return [{'label': labels[k], 'value': tally.get(k, {'count': 0.})['count']} for k in ('reporting', 'nonreporting')]
 
     @property
     def charts(self):
@@ -363,7 +372,8 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
 class RequisitionReport(CaseListReport):
     name = ugettext_noop('Requisition Report')
     slug = 'requisition_report'
-    fields = ['corehq.apps.reports.fields.AsyncLocationField', 'corehq.apps.reports.fields.SelectOpenCloseField']
+    fields = ['corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
+              'corehq.apps.reports.filters.select.SelectOpenCloseFilter']
     exportable = True
     emailable = True
     asynchronous = True

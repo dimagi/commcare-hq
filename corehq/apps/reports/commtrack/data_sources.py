@@ -1,34 +1,24 @@
-from corehq.apps.commtrack.util import num_periods_late
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import Location
-from corehq.apps.commtrack.models import Product, SupplyPointCase
+from corehq.apps.commtrack.models import Product, SupplyPointCase, StockState
+from corehq.apps.domain.models import Domain
 from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.reports.api import ReportDataSource
 from datetime import datetime, timedelta
-from casexml.apps.stock.models import StockState, StockTransaction
+from casexml.apps.stock.models import StockTransaction
+from couchforms.models import XFormInstance
 from django.db.models import Sum, Avg
 from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, product_ids_filtered_by_program
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from casexml.apps.stock.utils import months_of_stock_remaining, stock_category
+from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
 
-# TODO make settings
-REPORTING_PERIOD = 'weekly'
-REPORTING_PERIOD_ARGS = (1,)
-
-
-def is_timely(case, limit=0):
-    return num_periods_late(case, REPORTING_PERIOD, *REPORTING_PERIOD_ARGS) <= limit
 
 def reporting_status(transaction, start_date, end_date):
+    # for now we have decided to remove the "late" distinction
+    # so we are only checking if a time even exists in this period
     if transaction:
-        last_reported = transaction.report.date.date()
-    else:
-        last_reported = None
-
-    if last_reported and last_reported < start_date:
-        return 'ontime'
-    elif last_reported and start_date <= last_reported <= end_date:
-        return 'late'
+        return 'reporting'
     else:
         return 'nonreporting'
 
@@ -42,9 +32,7 @@ class CommtrackDataSourceMixin(object):
     @property
     @memoized
     def active_location(self):
-        loc_id = self.config.get('location_id')
-        if loc_id:
-            return Location.get(loc_id)
+        return Location.get_in_domain(self.domain, self.config.get('location_id'))
 
     @property
     @memoized
@@ -62,19 +50,18 @@ class CommtrackDataSourceMixin(object):
 
     @property
     def start_date(self):
-        date = self.config.get('start_date')
-        if date:
-            return datetime.strptime(date, '%Y-%m-%d').date()
-        else:
-            return (datetime.now() - timedelta(30)).date()
+        return self.config.get('start_date') or (datetime.now() - timedelta(30)).date()
 
     @property
     def end_date(self):
-        date = self.config.get('end_date')
-        if date:
-            return datetime.strptime(date, '%Y-%m-%d').date()
-        else:
-            return datetime.now().date()
+        return self.config.get('end_date') or datetime.now().date()
+
+    @property
+    def request(self):
+        request = self.config.get('request')
+        if request:
+            return request
+
 
 
 class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
@@ -118,7 +105,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
         SLUG_LOCATION_ID: lambda s: SupplyPointCase.get(s.case_id).location_[-1],
         # SLUG_LOCATION_LINEAGE: lambda p: list(reversed(p.location_[:-1])),
         SLUG_CURRENT_STOCK: 'stock_on_hand',
-        SLUG_CONSUMPTION: lambda s: s.daily_consumption * 30 if s.daily_consumption else None,
+        SLUG_CONSUMPTION: lambda s: s.get_consumption() * 30 if s.get_consumption() is not None else None,
         SLUG_MONTHS_REMAINING: 'months_remaining',
         SLUG_CATEGORY: 'stock_category',
         # SLUG_STOCKOUT_SINCE: 'stocked_out_since',
@@ -179,7 +166,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             yield {
                 'category': state.stock_category,
                 'product_id': product._id,
-                'consumption': state.daily_consumption * 30 if state.daily_consumption else None,
+                'consumption': state.get_consumption() * 30 if state.get_consumption() is not None else None,
                 'months_remaining': state.months_remaining,
                 'location_id': SupplyPointCase.get(state.case_id).location_id,
                 'product_name': product.name,
@@ -192,7 +179,11 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
         for state in stock_states:
             product = Product.get(state['product_id'])
             yield {
-                'category': stock_category(state['total_stock'], state['avg_consumption']),
+                'category': stock_category(
+                    state['total_stock'],
+                    state['avg_consumption'],
+                    Domain.get_by_name(self.domain)
+                ),
                 'product_id': product._id,
                 'consumption': state['avg_consumption'],
                 'months_remaining': months_of_stock_remaining(state['total_stock'], state['avg_consumption']),
@@ -247,7 +238,7 @@ class StockStatusBySupplyPointDataSource(StockStatusDataSource):
                                 ('current_stock', 'consumption', 'months_remaining', 'category')))
             yield rec
 
-class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
+class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, MultiFormDrilldownMixin):
     """
     Config:
         domain: The domain to report on.
@@ -270,7 +261,10 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             loc = SupplyPointCase.get(sp_id).location
             transactions = StockTransaction.objects.filter(
                 case_id=sp_id,
-                section_id=STOCK_SECTION_TYPE,
+            ).exclude(
+                report__date__lte=self.start_date
+            ).exclude(
+                report__date__gte=self.end_date
             )
 
             if transactions:
@@ -281,15 +275,35 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             else:
                 last_transaction = None
 
-            yield {
-                'loc_id': loc._id,
-                'loc_path': loc.path,
-                'name': loc.name,
-                'type': loc.location_type,
-                'reporting_status': reporting_status(
-                    last_transaction,
-                    self.start_date,
-                    self.end_date
-                ),
-                'geo': loc._geopoint,
-            }
+            if self.all_relevant_forms:
+                forms_xmlns = []
+                for form in self.all_relevant_forms.values():
+                    forms_xmlns.append(form['xmlns'])
+                if last_transaction:
+                    form = XFormInstance.get(last_transaction.report.form_id)
+                    if form.xmlns in forms_xmlns:
+                        yield {
+                            'loc_id': loc._id,
+                            'loc_path': loc.path,
+                            'name': loc.name,
+                            'type': loc.location_type,
+                            'reporting_status': reporting_status(
+                                last_transaction,
+                                self.start_date,
+                                self.end_date
+                            ),
+                            'geo': loc._geopoint,
+                        }
+                else:
+                    yield {
+                        'loc_id': loc._id,
+                        'loc_path': loc.path,
+                        'name': loc.name,
+                        'type': loc.location_type,
+                        'reporting_status': reporting_status(
+                            None,
+                            self.start_date,
+                            self.end_date
+                        ),
+                        'geo': loc._geopoint,
+                    }

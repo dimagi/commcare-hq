@@ -1,3 +1,4 @@
+import logging
 import xlrd
 
 from django.core.management.base import LabelCommand
@@ -6,6 +7,9 @@ from corehq.apps.accounting.models import Currency
 from corehq.apps.mach.api import MachBackend
 from corehq.apps.sms.models import OUTGOING
 from corehq.apps.smsbillables.models import SmsGatewayFee
+
+logger = logging.getLogger('accounting')
+
 
 class Command(LabelCommand):
     help = "bootstrap MACH/Syniverse gateway fees"
@@ -30,7 +34,7 @@ class Command(LabelCommand):
                         data[country_code].append(
                             (table.cell_value(row, 9), int(subscribers)))
                     except ValueError:
-                        print 'Incomplete data for country code %d' % country_code
+                        logger.info('Incomplete data for country code %d' % country_code)
                 row += 1
         except IndexError:
             pass
@@ -49,4 +53,4 @@ class Command(LabelCommand):
         SmsGatewayFee.create_new(MachBackend.get_api_id(), OUTGOING, 0.0225,
                                  country_code=None, currency=Currency.objects.get(code="EUR"))
 
-        print "Updated MACH/Syniverse gateway fees."
+        logger.info("Updated MACH/Syniverse gateway fees.")

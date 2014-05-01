@@ -1,10 +1,21 @@
-from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
+from corehq.apps.accounting.dispatcher import (
+    AccountingAdminInterfaceDispatcher
+)
 from corehq.apps.accounting.filters import *
-from corehq.apps.accounting.models import BillingAccount, Subscription, SoftwarePlan
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
+from corehq.apps.accounting.forms import AdjustBalanceForm
+from corehq.apps.accounting.models import (
+    BillingAccount, Subscription, SoftwarePlan
+)
+from corehq.apps.accounting.utils import get_money_str
+from corehq.apps.reports.cache import request_cache
+from corehq.apps.reports.datatables import (
+    DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
+)
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from corehq.apps.reports.generic import GenericTabularReport
+from corehq.apps.reports.util import format_datatables_data
+from couchexport.models import Format
 
 
 class AddItemInterface(GenericTabularReport):
@@ -22,6 +33,7 @@ class AddItemInterface(GenericTabularReport):
             new_url_name=reverse(self.new_item_view.urlname),
         )
         return context
+
 
 class AccountingInterface(AddItemInterface):
     section_name = "Accounting"
@@ -118,6 +130,7 @@ class SubscriptionInterface(AddItemInterface):
               'corehq.apps.accounting.interface.SalesforceContractIDFilter',
               'corehq.apps.accounting.interface.ActiveStatusFilter',
               'corehq.apps.accounting.interface.DoNotInvoiceFilter',
+              'corehq.apps.accounting.interface.CreatedSubAdjMethodFilter',
               ]
     hide_filters = False
 
@@ -140,6 +153,7 @@ class SubscriptionInterface(AddItemInterface):
             DataTablesColumn("Start Date"),
             DataTablesColumn("End Date"),
             DataTablesColumn("Do Not Invoice"),
+            DataTablesColumn("Created By"),
             DataTablesColumn("Action"),
         )
 
@@ -185,7 +199,26 @@ class SubscriptionInterface(AddItemInterface):
                 do_not_invoice=(do_not_invoice == DO_NOT_INVOICE),
             )
 
+        filter_created_by = CreatedSubAdjMethodFilter.get_value(
+            self.request, self.domain)
+        if (filter_created_by is not None and filter_created_by in
+            [s[0] for s in SubscriptionAdjustmentMethod.CHOICES]
+        ):
+            filters.update({
+                'subscriptionadjustment__reason': SubscriptionAdjustmentReason.CREATE,
+                'subscriptionadjustment__method': filter_created_by,
+            })
+
         for subscription in Subscription.objects.filter(**filters):
+            try:
+                created_by_adj = SubscriptionAdjustment.objects.filter(
+                    subscription=subscription,
+                    reason=SubscriptionAdjustmentReason.CREATE
+                ).order_by('date_created')[0]
+                created_by = dict(SubscriptionAdjustmentMethod.CHOICES).get(
+                    created_by_adj.method, "Unknown")
+            except (IndexError, SubscriptionAdjustment.DoesNotExist) as e:
+                created_by = "Unknown"
             rows.append([subscription.subscriber.domain,
                          mark_safe('<a href="%s">%s</a>'
                                    % (reverse(ManageBillingAccountView.urlname, args=(subscription.account.id,)),
@@ -196,6 +229,7 @@ class SubscriptionInterface(AddItemInterface):
                          subscription.date_start,
                          subscription.date_end,
                          subscription.do_not_invoice,
+                         created_by,
                          mark_safe('<a href="./%d" class="btn">Edit</a>' % subscription.id)])
 
         return rows
@@ -294,3 +328,320 @@ class SoftwarePlanInterface(AddItemInterface):
     slug = "software_plans"
 
     crud_item_type = "Software_Plan"
+
+
+def get_exportable_column(amount):
+    return format_datatables_data(
+        text=get_money_str(amount),
+        sort_key=amount,
+    )
+
+
+def get_exportable_column_cost(subtotal, deduction):
+    return format_datatables_data(
+        text=get_column_formatted_str(subtotal, deduction),
+        sort_key=subtotal,
+    )
+
+
+def get_column_formatted_str(subtotal, deduction):
+    return mark_safe('%s<br />(%s)') % (
+        get_money_str(subtotal),
+        get_money_str(deduction)
+    )
+
+
+def get_subtotal_and_deduction(line_items):
+    subtotal = 0
+    deduction = 0
+    for line_item in line_items:
+        subtotal += line_item.subtotal
+        deduction += line_item.applied_credit
+    return subtotal, deduction
+
+
+class InvoiceInterface(GenericTabularReport):
+    base_template = "accounting/invoice_list.html"
+    section_name = "Accounting"
+    dispatcher = AccountingAdminInterfaceDispatcher
+    name = "Invoices"
+    description = "List of all invoices"
+    slug = "invoices"
+    exportable = True
+    export_format_override = Format.CSV
+    fields = [
+        'corehq.apps.accounting.interface.NameFilter',
+        'corehq.apps.accounting.interface.SubscriberFilter',
+        'corehq.apps.accounting.interface.PaymentStatusFilter',
+        'corehq.apps.accounting.interface.StatementPeriodFilter',
+        'corehq.apps.accounting.interface.DueDatePeriodFilter',
+        'corehq.apps.accounting.interface.SalesforceAccountIDFilter',
+        'corehq.apps.accounting.interface.SalesforceContractIDFilter',
+        'corehq.apps.accounting.interface.SoftwarePlanNameFilter',
+        'corehq.apps.accounting.interface.BillingContactFilter',
+        'corehq.apps.accounting.interface.IsHiddenFilter',
+    ]
+
+    @property
+    def headers(self):
+        header = DataTablesHeader(
+            DataTablesColumn("Account Name"),
+            DataTablesColumn("Subscription"),
+            DataTablesColumn("Project Space"),
+            DataTablesColumn("Salesforce Account ID"),
+            DataTablesColumn("Salesforce Contract ID"),
+            DataTablesColumnGroup("Statement Period",
+                                  DataTablesColumn("Start"),
+                                  DataTablesColumn("End")),
+            DataTablesColumn("Date Due"),
+        )
+        if not self.is_rendered_as_email:
+            header.add_column(DataTablesColumn("Plan Cost (Credits)"))
+            header.add_column(DataTablesColumn("SMS Cost (Credits)"))
+            header.add_column(DataTablesColumn("User Cost (Credits)"))
+            header.add_column(DataTablesColumn("Total (Credits)"))
+        else:
+            header.add_column(DataTablesColumn("Plan Cost"))
+            header.add_column(DataTablesColumn("Plan Credits"))
+            header.add_column(DataTablesColumn("SMS Cost"))
+            header.add_column(DataTablesColumn("SMS Credits"))
+            header.add_column(DataTablesColumn("User Cost"))
+            header.add_column(DataTablesColumn("User Credits"))
+            header.add_column(DataTablesColumn("Total"))
+            header.add_column(DataTablesColumn("Total Credits"))
+
+        header.add_column(DataTablesColumn("Amount Due"))
+        header.add_column(DataTablesColumn("Payment Status"))
+        header.add_column(DataTablesColumn("Hidden"))
+
+        if not self.is_rendered_as_email:
+            header.add_column(DataTablesColumn("Action"))
+            header.add_column(DataTablesColumn("View Invoice"))
+        else:
+            header.add_column(DataTablesColumn("Contact info"))
+        return header
+
+    @property
+    def rows(self):
+        from corehq.apps.accounting.views import (
+            InvoiceSummaryView, ManageBillingAccountView, EditSubscriptionView,
+        )
+        rows = []
+        for invoice in self.invoices:
+            column = [
+                format_datatables_data(
+                    mark_safe(
+                        '<a href="%(account_url)s">%(name)s</a>' % {
+                            'account_url': reverse(
+                                ManageBillingAccountView.urlname,
+                                args=[invoice.subscription.account.id]),
+                            'name': invoice.subscription.account.name,
+                        }
+                    ),
+                    invoice.subscription.account.name
+                ),
+                format_datatables_data(
+                    mark_safe(
+                        '<a href="%(sub_url)s">%(name)s v%(version)d</a>' % {
+                            'name': invoice.subscription.plan_version.plan.name,
+                            'version': invoice.subscription.plan_version.version,
+                            'sub_url': reverse(
+                                EditSubscriptionView.urlname,
+                                args=[invoice.subscription.id]),
+                            }
+                    ),
+                    invoice.subscription.plan_version.plan.name
+                ),
+                invoice.subscription.subscriber.domain,
+                invoice.subscription.account.salesforce_account_id or "--",
+                invoice.subscription.salesforce_contract_id or "--",
+                invoice.date_start.strftime("%d %B %Y"),
+                invoice.date_end.strftime("%d %B %Y"),
+                invoice.date_due.strftime("%d %B %Y"),
+            ]
+            plan_subtotal, plan_deduction = get_subtotal_and_deduction(
+                invoice.lineitem_set.get_products().all()
+            )
+            sms_subtotal, sms_deduction = get_subtotal_and_deduction(
+                invoice.lineitem_set.get_feature_by_type(FeatureType.SMS).all()
+            )
+            user_subtotal, user_deduction = get_subtotal_and_deduction(
+                invoice.lineitem_set.get_feature_by_type(
+                    FeatureType.USER
+                ).all()
+            )
+            if not self.is_rendered_as_email:
+                column.append(
+                    get_exportable_column_cost(plan_subtotal, plan_deduction)
+                )
+                column.append(
+                    get_exportable_column_cost(sms_subtotal, sms_deduction)
+                )
+                column.append(
+                    get_exportable_column_cost(user_subtotal, user_deduction)
+                )
+                column.append(
+                    get_exportable_column_cost(
+                        invoice.subtotal,
+                        invoice.applied_credit
+                    )
+                )
+            else:
+                column.append(get_exportable_column(plan_subtotal))
+                column.append(get_exportable_column(plan_deduction))
+                column.append(get_exportable_column(sms_subtotal))
+                column.append(get_exportable_column(sms_deduction))
+                column.append(get_exportable_column(user_subtotal))
+                column.append(get_exportable_column(user_deduction))
+                column.append(get_exportable_column(invoice.subtotal))
+                column.append(get_exportable_column(invoice.applied_credit))
+            column.append(get_exportable_column(invoice.balance))
+            column.append("Paid" if invoice.date_paid else "Not paid")
+            column.append("YES" if invoice.is_hidden else "no")
+            if not self.is_rendered_as_email:
+                # TODO - Create helper function for action button HTML
+                column.append(
+                    mark_safe(
+                        '<a data-toggle="modal"'
+                        '   data-target="#adjustBalanceModal-%(invoice_id)d"'
+                        '   href="#adjustBalanceModal-%(invoice_id)d"'
+                        '   class="btn">Adjust Balance</a>' % {
+                            'invoice_id': invoice.id
+                        }))
+                column.append(mark_safe(
+                    '<a href="%s" class="btn">Go to Invoice</a>'
+                    % reverse(InvoiceSummaryView.urlname, args=(invoice.id,))))
+            else:
+                column.append(get_address_from_invoice(invoice))
+            rows.append(column)
+        return rows
+
+    @property
+    @memoized
+    def filters(self):
+        filters = {}
+
+        account_name = NameFilter.get_value(self.request, self.domain)
+        if account_name is not None:
+            filters.update(
+                subscription__account__name=account_name,
+            )
+
+        subscriber_domain = \
+            SubscriberFilter.get_value(self.request, self.domain)
+        if subscriber_domain is not None:
+            filters.update(
+                subscription__subscriber__domain=subscriber_domain,
+            )
+
+        payment_status = \
+            PaymentStatusFilter.get_value(self.request, self.domain)
+        if payment_status is not None:
+            filters.update(
+                date_paid__isnull=(
+                    payment_status == PaymentStatusFilter.NOT_PAID
+                ),
+            )
+
+        statement_period = \
+            StatementPeriodFilter.get_value(self.request, self.domain)
+        if statement_period is not None:
+            filters.update(
+                date_start__gte=statement_period[0],
+                date_start__lte=statement_period[1],
+            )
+
+        due_date_period = \
+            DueDatePeriodFilter.get_value(self.request, self.domain)
+        if due_date_period is not None:
+            filters.update(
+                date_due__gte=due_date_period[0],
+                date_due__lte=due_date_period[1],
+            )
+
+        salesforce_account_id = \
+            SalesforceAccountIDFilter.get_value(self.request, self.domain)
+        if salesforce_account_id is not None:
+            filters.update(
+                subscription__account__salesforce_account_id=
+                salesforce_account_id,
+            )
+
+        salesforce_contract_id = \
+            SalesforceContractIDFilter.get_value(self.request, self.domain)
+        if salesforce_contract_id is not None:
+            filters.update(
+                subscription__salesforce_contract_id=salesforce_contract_id,
+            )
+
+        plan_name = SoftwarePlanNameFilter.get_value(self.request, self.domain)
+        if plan_name is not None:
+            filters.update(
+                subscription__plan_version__plan__name=plan_name,
+            )
+
+        contact_name = \
+            BillingContactFilter.get_value(self.request, self.domain)
+        if contact_name is not None:
+            filters.update(
+                subscription__account__in=[
+                    contact_info.account.id
+                    for contact_info in BillingContactInfo.objects.all()
+                    if contact_name == contact_info.full_name
+                ],
+            )
+
+        is_hidden = IsHiddenFilter.get_value(self.request, self.domain)
+        if is_hidden is not None:
+            filters.update(
+                is_hidden=(is_hidden == IsHiddenFilter.IS_HIDDEN),
+            )
+
+        return filters
+
+    @property
+    @memoized
+    def invoices(self):
+        return Invoice.objects.filter(**self.filters)
+
+    @property
+    @memoized
+    def adjust_balance_forms(self):
+        return [AdjustBalanceForm(invoice) for invoice in self.invoices]
+
+    @property
+    def report_context(self):
+        context = super(InvoiceInterface, self).report_context
+        context.update(
+            adjust_balance_forms=self.adjust_balance_forms,
+        )
+        return context
+
+    @property
+    @memoized
+    def adjust_balance_form(self):
+        return AdjustBalanceForm(
+            Invoice.objects.get(id=int(self.request.POST.get('invoice_id'))),
+            self.request.POST
+        )
+
+    @property
+    @request_cache("default")
+    def view_response(self):
+        if self.request.method == 'POST':
+            if self.adjust_balance_form.is_valid():
+                self.adjust_balance_form.adjust_balance()
+        return super(InvoiceInterface, self).view_response
+
+    @property
+    def email_response(self):
+        self.is_rendered_as_email = True
+        statement_start = StatementPeriodFilter.get_value(
+            self.request, self.domain) or datetime.date.today()
+        return render_to_string('accounting/bookkeeper_email.html',
+            {
+                'headers': self.headers,
+                'month': statement_start.strftime("%B"),
+                'rows': self.rows,
+            }
+        )

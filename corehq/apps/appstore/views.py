@@ -123,6 +123,15 @@ def project_info(request, domain, template="appstore/project_info.html"):
         'display_import': True if getattr(request, "couch_user", "") and request.couch_user.get_domains() else False
     })
 
+def deduplicate(hits):
+    unique_names = set()
+    unique_hits = []
+    for hit in hits:
+        if not hit['_source']['name'] in unique_names:
+            unique_hits.append(hit)
+            unique_names.add(hit['_source']['name'])
+    return unique_hits
+
 def appstore(request, template="appstore/appstore_base.html"):
     page_length = 10
     include_unapproved = True if request.GET.get('is_approved', "") == "false" else False
@@ -132,7 +141,9 @@ def appstore(request, template="appstore/appstore_base.html"):
     page = params.pop('page', 1)
     page = int(page[0] if isinstance(page, list) else page)
     results = es_snapshot_query(params, SNAPSHOT_FACETS)
-    d_results = [Domain.wrap(res['_source']) for res in results.get('hits', {}).get('hits', [])]
+    hits = results.get('hits', {}).get('hits', [])
+    hits = deduplicate(hits)
+    d_results = [Domain.wrap(res['_source']) for res in hits]
 
     sort_by = request.GET.get('sort_by', None)
     if sort_by == 'best':

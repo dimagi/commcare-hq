@@ -7,11 +7,12 @@ from jsonobject import DateTimeProperty
 from corehq.apps.reports import util
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 
+from corehq import feature_previews, privileges
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.display import xmlns_to_name
-from corehq.apps.reports.fields import StrongFilterUsersField
+from corehq.apps.reports.dont_use.fields import StrongFilterUsersField
 from corehq.apps.reports.generic import GenericTabularReport, ProjectInspectionReportParamsMixin, ElasticProjectInspectionReport
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin, CompletionOrSubmissionTimeMixin
 from corehq.apps.reports.util import datespan_from_beginning
@@ -30,8 +31,8 @@ class ProjectInspectionReport(ProjectInspectionReportParamsMixin, GenericTabular
     exportable = False
     asynchronous = False
     ajax_pagination = True
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.SelectMobileWorkerField']
+    fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
+              'corehq.apps.reports.filters.users.SelectMobileWorkerFilter']
 
 
 class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReportParametersMixin, CompletionOrSubmissionTimeMixin, 
@@ -42,21 +43,37 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
               'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
               'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
               'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
-              'corehq.apps.reports.fields.DatespanField']
+              'corehq.apps.reports.filters.dates.DatespanFilter']
     ajax_pagination = True
     filter_users_field_class = StrongFilterUsersField
     include_inactive = True
 
+    # Feature preview flag for Submit History Filters
+    def __init__(self, request, **kwargs):
+        if feature_previews.SUBMIT_HISTORY_FILTERS.enabled(request.domain):
+            # create a new instance attribute instead of modifying the
+            # class attribute
+            self.fields = self.fields + [
+                'corehq.apps.reports.filters.forms.FormDataFilter',
+                'corehq.apps.reports.filters.forms.CustomFieldFilter',
+            ]
+        super(SubmitHistory, self).__init__(request, **kwargs)
+
+    @property
+    def other_fields(self):
+        return filter(None, self.request.GET.get('custom_field', "").split(","))
 
     @property
     def headers(self):
-        headers = DataTablesHeader(DataTablesColumn(_("View Form")),
+        h = [
+            DataTablesColumn(_("View Form")),
             DataTablesColumn(_("Username"), prop_name='form.meta.username'),
             DataTablesColumn(_("Submission Time") if self.by_submission_time else _("Completion Time"),
                              prop_name=self.time_field),
             DataTablesColumn(_("Form"), prop_name='form.@name'),
-        )
-        return headers
+        ]
+        h.extend([DataTablesColumn(field) for field in self.other_fields])
+        return DataTablesHeader(*h)
 
     @property
     def default_datespan(self):
@@ -96,6 +113,9 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
                 ids = filter(None, [user['user_id'] for user in negated_ids])
                 q["filter"]["and"].append({"not": {"terms": {"form.meta.userID": ids}}})
 
+            for cp in filter(None, self.request.GET.get('form_data', "").split(",")):
+                q["filter"]["and"].append({"term": {"__props_for_querying": cp.lower()}})
+
             q["sort"] = self.get_sorting_block() if self.get_sorting_block() else [{self.time_field : {"order": "desc"}}]
             self.es_response = es_query(params={"domain.exact": self.domain}, q=q, es_url=XFORM_INDEX + '/xform/_search',
                 start_at=self.pagination.start, size=self.pagination.count)
@@ -127,12 +147,16 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
             except (ResourceNotFound, IncompatibleDocument):
                 name = "<b>[unregistered]</b>"
 
-            yield [
+            init_cells = [
                 form_data_link(form["_id"]),
                 (username or _('No data for username')) + (" %s" % name if name else ""),
                 DateTimeProperty().wrap(safe_index(form, self.time_field.split('.'))).strftime("%Y-%m-%d %H:%M:%S"),
                 xmlns_to_name(self.domain, form.get("xmlns"), app_id=form.get("app_id")),
             ]
+            def cell(field):
+                return form["form"].get(field)
+            init_cells.extend([cell(field) for field in self.other_fields])
+            yield init_cells
 
 
 class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):
@@ -151,8 +175,8 @@ class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):
 
     name = ugettext_noop('Generic Pie Chart (sandbox)')
     slug = 'generic_pie'
-    fields = ['corehq.apps.reports.fields.DatespanField',
-              'corehq.apps.reports.fields.AsyncLocationField']
+    fields = ['corehq.apps.reports.filters.dates.DatespanFilter',
+              'corehq.apps.reports.filters.fixtures.AsyncLocationFilter']
     # define in subclass
     #mode = 'case' or 'form'
     #submission_type = <case type> or <xform xmlns>

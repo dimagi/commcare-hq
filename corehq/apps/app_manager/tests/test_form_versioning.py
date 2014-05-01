@@ -1,7 +1,7 @@
-from django.utils.unittest.case import TestCase
+from django.test.testcases import TestCase
 from corehq.apps.app_manager import suite_xml
 from corehq.apps.app_manager.models import Application, Module, Form, import_app
-from corehq.apps.app_manager.tests import add_build
+from corehq.apps.app_manager.tests.util import add_build, patch_default_builds
 from corehq.apps.builds.models import BuildSpec
 
 
@@ -36,6 +36,7 @@ BLANK_TEMPLATE = """<?xml version="1.0" encoding="UTF-8" ?>
 
 class FormVersioningTest(TestCase):
 
+    @patch_default_builds
     def test(self):
         add_build(version='2.7.0', build_number=20655)
         domain = 'form-versioning-test'

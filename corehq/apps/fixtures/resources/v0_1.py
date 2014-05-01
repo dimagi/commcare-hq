@@ -11,9 +11,10 @@ def convert_fdt(fdi):
     fdi.fixture_type = fdt.tag
     return fdi
 
+
 class FixtureResource(JsonResource):
     type = "fixture"
-    fields = tp_f.DictField(attribute='fields', readonly=True, unique=True)
+    fields = tp_f.DictField(attribute='fields_without_attributes', readonly=True, unique=True)
     fixture_type = tp_f.CharField(attribute='fixture_type', readonly=True)
     id = tp_f.CharField(attribute='_id', readonly=True, unique=True)
 
@@ -31,7 +32,7 @@ class FixtureResource(JsonResource):
 
         if parent_id and parent_ref_name and child_type and references:
             parent_fdi = FixtureDataItem.get(parent_id)
-            fdis = list(FixtureDataItem.by_field_value(domain, child_type, parent_ref_name, parent_fdi.fields[references]))
+            fdis = list(FixtureDataItem.by_field_value(domain, child_type, parent_ref_name, parent_fdi.fields_without_attributes[references]))
         elif type_id or type_tag:
             type_id = type_id or FixtureDataType.by_domain_tag(domain, type_tag).one()
             fdis = list(FixtureDataItem.by_data_type(domain, type_id))

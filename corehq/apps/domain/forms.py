@@ -6,6 +6,9 @@ import re
 import io
 from PIL import Image
 import uuid
+from corehq import privileges
+from corehq.apps.accounting.exceptions import SubscriptionRenewalError
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 import settings
 
@@ -16,7 +19,7 @@ from crispy_forms import layout as crispy
 from django.core.urlresolvers import reverse
 
 from django.forms.fields import (ChoiceField, CharField, BooleanField,
-    ImageField)
+    ImageField, DecimalField, IntegerField)
 from django.forms.widgets import  Select
 from django.utils.encoding import smart_str
 from django.contrib.auth.forms import PasswordResetForm
@@ -26,7 +29,7 @@ from corehq.apps.accounting.models import BillingContactInfo, BillingAccountAdmi
 from corehq.apps.app_manager.models import Application, FormBase
 
 from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
-    AREA_CHOICES, SUB_AREA_CHOICES)
+    AREA_CHOICES, SUB_AREA_CHOICES, Domain)
 from corehq.apps.reminders.models import CaseReminderHandler
 
 from corehq.apps.users.models import WebUser, CommCareUser
@@ -266,14 +269,6 @@ class SubAreaMixin():
 class DomainGlobalSettingsForm(forms.Form):
     default_timezone = TimeZoneChoiceField(label=ugettext_noop("Default Timezone"), initial="UTC")
 
-    commtrack_enabled = BooleanField(
-        label=_("CommTrack Enabled"),
-        required=False,
-        help_text=_("CommTrack is a CommCareHQ module for logistics, inventory "
-                    "tracking, and supply chain management. It is still under "
-                    "active development. Do not enable for your domain unless "
-                    "you\'re actively piloting it.")
-    )
     logo = ImageField(
         label=_("Custom Logo"),
         required=False,
@@ -319,7 +314,6 @@ class DomainGlobalSettingsForm(forms.Form):
                     domain.delete_attachment(LOGO_ATTACHMENT)
 
             global_tz = self.cleaned_data['default_timezone']
-            domain.commtrack_enabled = self.cleaned_data.get('commtrack_enabled', False)
             domain.default_timezone = global_tz
             users = WebUser.by_domain(domain.name)
             for user in users:
@@ -426,6 +420,17 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
                     "mobile workers. To use, all of your deployed applications "
                     "must be using secure submissions."),
     )
+    cloudcare_releases = ChoiceField(
+        label=_("CloudCare should use"),
+        initial=None,
+        required=False,
+        choices=(
+            ('stars', _('Latest starred version')),
+            ('nostars', _('Every version (not recommended)')),
+        ),
+        help_text=_("Choose whether CloudCare should use the latest "
+                    "starred build or every build in your application.")
+    )
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
@@ -439,6 +444,12 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
 
         if not (user and user.is_staff):
             self.fields['restrict_superusers'].widget = forms.HiddenInput()
+
+        project = Domain.get_by_name(domain)
+        if project.cloudcare_releases == 'default' or not domain_has_privilege(domain, privileges.CLOUDCARE):
+            # if the cloudcare_releases flag was just defaulted, don't bother showing
+            # this setting at all
+            self.fields['cloudcare_releases'].widget = forms.HiddenInput()
 
         if domain is not None:
             groups = Group.get_case_sharing_groups(domain)
@@ -503,10 +514,15 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
                 domain.call_center_config.case_type = self.cleaned_data.get('call_center_case_type', None)
             domain.restrict_superusers = self.cleaned_data.get('restrict_superusers', False)
             domain.ota_restore_caching = self.cleaned_data.get('ota_restore_caching', False)
+            cloudcare_releases = self.cleaned_data.get('cloudcare_releases')
+            if cloudcare_releases and domain.cloudcare_releases != 'default':
+                # you're never allowed to change from default
+                domain.cloudcare_releases = cloudcare_releases
             domain.secure_submissions = self.cleaned_data.get('secure_submissions', False)
             domain.save()
             return True
-        except Exception:
+        except Exception, e:
+            logging.exception("couldn't save project settings - error is %s" % e)
             return False
 
 class DomainDeploymentForm(forms.Form):
@@ -563,6 +579,8 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                                          choices=tuple_of_copies(["java", "android", "cloudcare"], blank=False), required=False)
     phone_model = CharField(label=ugettext_noop("Phone Model"), required=False)
     project_manager = CharField(label=ugettext_noop("Project Manager's Email"), required=False)
+    goal_time_period = IntegerField(label=ugettext_noop("Goal time period (in days)"), required=False)
+    goal_followup_rate = DecimalField(label=ugettext_noop("Goal followup rate (percentage in decimal format. e.g. 70% is .7)"), required=False)
 
     def save(self, domain):
         kw = {"workshop_region": self.cleaned_data["workshop_region"]} if self.cleaned_data["workshop_region"] else {}
@@ -584,6 +602,8 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             platform=self.cleaned_data['platform'],
             project_manager=self.cleaned_data['project_manager'],
             phone_model=self.cleaned_data['phone_model'],
+            goal_time_period=self.cleaned_data['goal_time_period'],
+            goal_followup_rate=self.cleaned_data['goal_followup_rate'],
             **kw
         )
 
@@ -817,6 +837,90 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
         return False
 
 
+class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
+    plan_edition = forms.CharField(
+        widget=forms.HiddenInput,
+    )
+    confirm_legal = forms.BooleanField(
+        required=True,
+    )
+
+    def __init__(self, account, domain, creating_user, current_subscription,
+                 renewed_version, data=None, *args, **kwargs):
+        self.current_subscription = current_subscription
+        super(ConfirmSubscriptionRenewalForm, self).__init__(
+            account, domain, creating_user, data=data, *args, **kwargs
+        )
+
+        self.fields['plan_edition'].initial = renewed_version.plan.edition
+        self.fields['confirm_legal'].label = mark_safe(ugettext_noop(
+            'I have read and agree to the <a href="%(pa_url)s" '
+            'target="_blank">Software Product Agreement</a>.'
+        ) % {
+            'pa_url': reverse("product_agreement"),
+        })
+
+        from corehq.apps.domain.views import DomainSubscriptionView
+        self.helper.layout = crispy.Layout(
+            'plan_edition',
+            crispy.Fieldset(
+                _("Billing Administrators"),
+                crispy.Field('billing_admins', css_class='input-xxlarge'),
+            ),
+            crispy.Fieldset(
+                _("Basic Information"),
+                'company_name',
+                'first_name',
+                'last_name',
+                crispy.Field('emails', css_class='input-xxlarge'),
+                'phone_number',
+            ),
+            crispy.Fieldset(
+                 _("Mailing Address"),
+                'first_line',
+                'second_line',
+                'city',
+                'state_province_region',
+                'postal_code',
+                crispy.Field('country', css_class="input-large",
+                             data_countryname=dict(COUNTRIES).get(self.current_country, ''))
+            ),
+            crispy.Fieldset(
+                _("Re-Confirm Product Agreement"),
+                'confirm_legal',
+            ),
+            FormActions(
+                crispy.HTML('<a href="%(url)s" style="margin-right:5px;" class="btn">%(title)s</a>' % {
+                    'url': reverse(DomainSubscriptionView.urlname, args=[self.domain]),
+                    'title': _("Cancel"),
+                }),
+                StrictButton(
+                    _("Renew Plan"),
+                    type="submit",
+                    css_class='btn btn-success',
+                ),
+            ),
+        )
+
+    def save(self, commit=True):
+        account_save_success = super(ConfirmSubscriptionRenewalForm, self).save(commit=False)
+        if not account_save_success:
+            return False
+
+        try:
+            self.current_subscription.renew_subscription(
+                web_user=self.creating_user,
+                adjustment_method=SubscriptionAdjustmentMethod.USER,
+            )
+        except SubscriptionRenewalError as e:
+            logger.error("[BILLING] Subscription for %(domain)s failed to "
+                         "renew due to: %(error)s." % {
+                             'domain': self.domain,
+                             'error': e,
+                         })
+        return True
+
+
 class ProBonoForm(forms.Form):
     contact_email = forms.CharField(label=_("Contact email"))
     organization = forms.CharField(label=_("Organization"))
@@ -826,9 +930,12 @@ class ProBonoForm(forms.Form):
                                                       "12 months at a time. After 12 months "
                                                       "groups must reapply to renew their "
                                                       "pro-bono subscription."))
+    domain = forms.CharField(label=_("Project Space"))
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, use_domain_field, *args, **kwargs):
         super(ProBonoForm, self).__init__(*args, **kwargs)
+        if not use_domain_field:
+            self.fields['domain'].required = False
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
         self.helper.layout = crispy.Layout(
@@ -836,6 +943,10 @@ class ProBonoForm(forms.Form):
             _('Pro-Bono Application'),
                 'contact_email',
                 'organization',
+                crispy.Div(
+                    'domain',
+                    style=('' if use_domain_field else 'display:none'),
+                ),
                 'project_overview',
                 'pay_only_features_needed',
                 'duration_of_project',

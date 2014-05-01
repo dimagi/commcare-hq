@@ -1,23 +1,37 @@
+from django.utils.translation import ugettext as _
 from datetime import datetime, timedelta
+import os
+from tempfile import NamedTemporaryFile
+import uuid
+
 from celery.schedules import crontab
-from celery.task import periodic_task, task
-from celery.utils.log import get_task_logger
-from corehq.apps.domain.calculations import CALC_FNS, _all_domain_stats, total_distinct_users
-from corehq.apps.hqadmin.escheck import check_es_cluster_health, CLUSTER_HEALTH, check_case_es_index, check_xform_es_index, check_reportcase_es_index, check_reportxform_es_index
-from corehq.apps.reports.export import save_metadata_export_to_tempfile
-from corehq.apps.reports.models import (ReportNotification,
-    UnsupportedScheduledReportError, HQGroupExportConfiguration)
-from corehq.elastic import get_es, ES_URLS, stream_es_query, es_query
-from corehq.pillows.mappings.app_mapping import APP_INDEX
-from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
+from celery.task import periodic_task
 from couchexport.files import Temp
 from couchexport.groupexports import export_for_group
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.logging import notify_exception
 from couchexport.tasks import cache_file_to_be_served
-from django.conf import settings
+from celery.task import task
+from celery.utils.log import get_task_logger
+from dimagi.utils.couch import get_redis_client
+from dimagi.utils.django.email import send_HTML_email
+from django.contrib.sites.models import Site
+from django.core.urlresolvers import reverse
+
+from corehq.apps.domain.calculations import CALC_FNS, _all_domain_stats, total_distinct_users
+from corehq.apps.hqadmin.escheck import check_es_cluster_health, CLUSTER_HEALTH, check_case_es_index, check_xform_es_index, check_reportcase_es_index, check_reportxform_es_index
+from corehq.apps.reports.export import save_metadata_export_to_tempfile
+from corehq.apps.reports.models import (ReportNotification,
+    UnsupportedScheduledReportError, HQGroupExportConfiguration)
+from corehq.elastic import get_es, ES_URLS, stream_es_query
+from corehq.pillows.mappings.app_mapping import APP_INDEX
+from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
+from corehq.apps.users.models import WebUser
+import settings
+
 
 logging = get_task_logger(__name__)
+EXPIRE_TIME = 60 * 60 * 24
 
 @periodic_task(run_every=crontab(hour="*/6", minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def check_es_index():
@@ -66,7 +80,7 @@ def send_report(notification_id):
 
 @task
 def create_metadata_export(download_id, domain, format, filename, datespan=None, user_ids=None):
-    tmp_path = save_metadata_export_to_tempfile(domain, datespan, user_ids)
+    tmp_path = save_metadata_export_to_tempfile(domain, format, datespan, user_ids)
 
     class FakeCheckpoint(object):
         # for some silly reason the export cache function wants an object that looks like this
@@ -170,3 +184,51 @@ def apps_update_calculated_properties():
     for r in results:
         calced_props = {"cp_is_active": is_app_active(r["_id"], r["_source"]["domain"])}
         es.post("%s/app/%s/_update" % (APP_INDEX, r["_id"]), data={"doc": calced_props})
+
+@task
+def export_all_rows_task(ReportClass, report_state):
+    report = object.__new__(ReportClass)
+
+    # Somehow calling generic _init function or __setstate__ is raising AttributeError
+    # on '_update_initial_context' function call...
+    try:
+        report.__setstate__(report_state)
+    except AttributeError:
+        pass
+
+    # need to set request
+    setattr(report.request, 'REQUEST', {})
+
+    file = report.excel_response
+    hash_id = _store_excel_in_redis(file)
+    user = WebUser.get(report_state["request"]["couch_user"])
+    _send_email(user.get_email(), report, hash_id)
+
+def _send_email(to, report, hash_id):
+    domain = Site.objects.get_current().domain
+    link = "http://%s%s" % (domain, reverse("export_report", args=[report.domain, str(hash_id)]))
+
+    title = "%s: Requested export excel data"
+    body = "The export you requested for the '%s' report is ready.<br>" \
+           "You can download the data at the following link: %s<br><br>" \
+           "Please remember that this link will only be active for 24 hours."
+
+    send_HTML_email(_(title) % report.name, to, _(body) % (report.name, "<a href='%s'>%s</a>" % (link, link)),
+                    email_from=settings.DEFAULT_FROM_EMAIL)
+
+def _store_excel_in_redis(file):
+    hash_id = uuid.uuid4().hex
+
+    tmp = NamedTemporaryFile(delete=False)
+    tmp.file.write(file.getvalue())
+
+    r = get_redis_client()
+    r.set(hash_id, tmp.name)
+    r.expire(hash_id, EXPIRE_TIME)
+    _remove_temp_file.apply_async(args=[tmp.name], countdown=EXPIRE_TIME)
+
+    return hash_id
+
+@task
+def _remove_temp_file(temp_file):
+    os.unlink(temp_file)

@@ -1,6 +1,7 @@
 from django.utils.translation import ugettext as _
 from sqlagg import SumColumn
 from sqlagg.columns import SimpleColumn
+from sqlagg.filters import IN
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
 
 
@@ -58,23 +59,26 @@ class ProjectIndicatorsCaseSqlData(SqlData):
 
     table_name = "fluff_ProjectIndicatorsCaseFluff"
 
-    def __init__(self, domain, datespan):
+    def __init__(self, domain, datespan, user_ids):
         self.domain = domain
         self.datespan = datespan
+        self.user_ids = user_ids
 
     @property
     def filter_values(self):
         return dict(
             domain=self.domain,
             startdate=self.datespan.startdate_utc.date(),
-            enddate=self.datespan.enddate_utc.date()
+            enddate=self.datespan.enddate_utc.date(),
+            user_ids=self.user_ids
         )
 
     @property
     def filters(self):
         return [
             "domain = :domain",
-            "date between :startdate and :enddate"
+            "date between :startdate and :enddate",
+            IN("user_id", "user_ids")
         ]
 
     @property
@@ -233,23 +237,26 @@ class McctMonthlyAggregateFormSqlData(SqlData):
 
     table_name = "fluff_McctMonthlyAggregateFormFluff"
 
-    def __init__(self, domain, datespan):
+    def __init__(self, domain, datespan, user_ids):
         self.domain = domain
         self.datespan = datespan
+        self.user_ids = user_ids
 
     @property
     def filter_values(self):
         return dict(
             domain=self.domain,
             startdate=self.datespan.startdate_utc.date(),
-            enddate=self.datespan.enddate_utc.date()
+            enddate=self.datespan.enddate_utc.date(),
+            user_ids=self.user_ids
         )
 
     @property
     def filters(self):
         return [
             "domain = :domain",
-            "date between :startdate and :enddate"
+            "date between :startdate and :enddate",
+            IN("user_id", "user_ids")
         ]
 
     @property
@@ -279,3 +286,76 @@ class McctMonthlyAggregateFormSqlData(SqlData):
     @property
     def group_by(self):
         return ["domain","location_id"]
+
+
+class AllHmisCaseSqlData(SqlData):
+
+    table_name = "fluff_AllHmisCaseFluff"
+
+    def __init__(self, domain, datespan):
+        self.domain = domain
+        self.datespan = datespan
+
+    @property
+    def filter_values(self):
+        return dict(
+            domain=self.domain,
+            startdate=self.datespan.startdate_utc.date(),
+            enddate=self.datespan.enddate_utc.date()
+        )
+
+    @property
+    def filters(self):
+        return [
+            "domain = :domain",
+            "date between :startdate and :enddate"
+        ]
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn(_("Pregnant Mothers Referred out"), SumColumn("pregnant_mothers_referred_out_total")),
+            DatabaseColumn(_("ANC Anemia test done"), SumColumn("anc_anemia_test_done_total")),
+            DatabaseColumn(_("ANC Anemia test positive"), SumColumn("anc_anemia_test_positive_total")),
+            DatabaseColumn(_("ANC Proteinuria Test done"), SumColumn("anc_proteinuria_test_done_total")),
+            DatabaseColumn(_("ANC Proteinuria test positive"), SumColumn("anc_proteinuria_test_positive_total")),
+            DatabaseColumn(_("HIV rapid antibody test done"), SumColumn("hiv_rapid_antibody_test_done_total")),
+            DatabaseColumn(_("Deaths of women related to pregnancy"),
+                           SumColumn("deaths_of_women_related_to_pregnancy_total")),
+            DatabaseColumn(_("Pregnant Mothers tested for HIV"),
+                           SumColumn("pregnant_mothers_tested_for_hiv_total")),
+            DatabaseColumn(_("Pregnant Mothers with confirmed Malaria"),
+                           SumColumn("pregnant_mothers_with_confirmed_malaria_total")),
+            DatabaseColumn(_("Partners of HIV positive women who tested HIV negative"),
+                           SumColumn("partners_of_hiv_positive_women_tested_negative_total")),
+            DatabaseColumn(_("Partners of HIV positive women who tested positive"),
+                           SumColumn("partners_of_hiv_positive_women_tested_positive_total")),
+            DatabaseColumn(_("Assessed for clinical stage eligibility"),
+                           SumColumn("assessed_for_clinical_stage_eligibility_total")),
+            DatabaseColumn(_("Assessed for cd4-count eligibility"),
+                           SumColumn("assessed_for_clinical_cd4_eligibility_total")),
+            DatabaseColumn(_("Pregnant HIV positive women who received ART prophylaxis for PMTCT (Triple)"),
+                           SumColumn("pregnant_hiv_positive_women_received_art_total")),
+            DatabaseColumn(_("Pregnant HIV positive woman who received ARV prophylaxis for PMTCT (AZT)"),
+                           SumColumn("pregnant_hiv_positive_women_received_azt_total")),
+            DatabaseColumn(_("Pregnant positive women who received ARV prophylaxis(SdNvP in Labor + (AZT + 3TC))"),
+                           SumColumn("pregnant_hiv_positive_women_received_mother_sdnvp_total")),
+            DatabaseColumn(_("Infants born to HIV infected women started on cotrimoxazole prophylaxis within 2 months"),
+                           SumColumn("infants_hiv_women_cotrimoxazole_lt_2_months_total")),
+            DatabaseColumn(_("Infants born to HIV infected women started on cotrimoxazole prophylaxis 2 months & above"),
+                           SumColumn("infants_hiv_women_cotrimoxazole_gte_2_months_total")),
+            DatabaseColumn(_("Infants born to HIV infected women who received an HIV test within two months of birth - (DNA -PCR)"),
+                           SumColumn("infants_hiv_women_received_hiv_test_lt_2_months_total")),
+            DatabaseColumn(_("Infants born to HIV infected women who received an HIV test after two months of birth - (DNA - PCR)"),
+                           SumColumn("infants_hiv_women_received_hiv_test_gte_2_months_total")),
+            DatabaseColumn(_("Infants born to HIV infected women who received an HIV test at 18 months - (HIV Rapid test)"),
+                           SumColumn("infants_hiv_women_received_hiv_test_lt_18_months_total")),
+            DatabaseColumn(_("Infant born to HIV infected women who tested negative to HIV Rapid test at 18 months"),
+                           SumColumn("infants_hiv_women_received_hiv_test_gte_18_months_total")),
+            DatabaseColumn(_("HIV exposed infants breast feeding and receiving ARV prophylaxis"),
+                           SumColumn("hiv_exposed_infants_breast_feeding_receiving_arv_total"))
+        ]
+
+    @property
+    def group_by(self):
+        return ["domain", "location_id"]

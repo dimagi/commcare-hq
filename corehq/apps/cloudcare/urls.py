@@ -23,6 +23,9 @@ api_urls = patterns('corehq.apps.cloudcare.views',
     url(r'^fixtures/(?P<user_id>[\w-]*)/$', 'get_fixtures', name='cloudcare_get_fixtures'),
     url(r'^fixtures/(?P<user_id>[\w-]*)/(?P<fixture_id>[:\w-]*)$', 'get_fixtures', 
         name='cloudcare_get_fixtures'),
+    url(r'^sessions/$', 'get_sessions', name='cloudcare_get_sessions'),
+    url(r'^sessions/(?P<session_id>[\w-]*)/$', 'get_session_context', name='cloudcare_get_session_context'),
+
     
 )
 

@@ -29,7 +29,6 @@ def sync_user_cases(commcare_user):
     # fields comes second to prevent custom user data overriding
     fields = dict(commcare_user.user_data, **fields)
 
-    found = False
     try:
         case = get_case_by_domain_hq_user_id(domain.name, commcare_user._id, include_docs=True)
         found = bool(case)

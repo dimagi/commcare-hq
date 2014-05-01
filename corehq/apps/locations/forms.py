@@ -1,3 +1,4 @@
+import json
 from django import forms
 from corehq.apps.locations.models import Location, root_locations
 from django.template.loader import get_template
@@ -42,7 +43,7 @@ class LocationForm(forms.Form):
 
         super(LocationForm, self).__init__(bound_data, *args, **kwargs)
         self.fields['parent_id'].widget.domain = self.location.domain
-        
+
         # custom properties
         self.sub_forms = {}
         # TODO think i need to change this to iterate over all types, since the parent
@@ -127,6 +128,9 @@ class LocationForm(forms.Form):
                 raise forms.ValidationError('Error in location properties')
             self.cleaned_data.update(('prop:%s' % k, v) for k, v in subform.cleaned_data.iteritems())
 
+        self.cleaned_data['metadata'] = json.loads(self.data['metadata']) \
+            if self.data.get('metadata', None) else {}
+
         return self.cleaned_data
 
     def save(self, instance=None, commit=True):
@@ -142,6 +146,7 @@ class LocationForm(forms.Form):
         setattr(location, 'latitude', coords[0] if coords else None)
         setattr(location, 'longitude', coords[1] if coords else None)
         location.lineage = Location(parent=self.cleaned_data['parent_id']).lineage
+        location.metadata = self.cleaned_data.get('metadata', {})
 
         for k, v in self.cleaned_data.iteritems():
             if k.startswith('prop:'):
@@ -193,4 +198,3 @@ class LocationCustomPropertiesSubForm(forms.Form):
                         raise forms.ValidationError(mark_safe(str(e)))
                 return clean_custom
         raise AttributeError
-

@@ -1,11 +1,21 @@
 import logging
 from couchdbkit.ext.django.loading import get_db
-from django.http import HttpResponseBadRequest, HttpResponseForbidden
+from django.core.urlresolvers import reverse
+from django.http import (
+    HttpResponseBadRequest,
+    HttpResponseForbidden,
+    HttpResponseRedirect,
+)
 from casexml.apps.case import get_case_updates
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xform import is_device_report
 from corehq.apps.domain.decorators import login_or_digest_ex
-from corehq.apps.receiverwrapper.auth import AuthContext, WaivedAuthContext
+from corehq.apps.receiverwrapper.auth import (
+    AuthContext,
+    WaivedAuthContext,
+    domain_requires_auth,
+)
+from corehq.apps.receiverwrapper.util import get_app_and_build_ids
 from couchforms import convert_xform_to_json
 import couchforms
 from django.views.decorators.http import require_POST
@@ -15,11 +25,13 @@ from django.views.decorators.csrf import csrf_exempt
 def _process_form(request, domain, app_id, user_id, authenticated,
                   auth_cls=AuthContext):
     instance, attachments = couchforms.get_instance_and_attachment(request)
+    app_id, build_id = get_app_and_build_ids(domain, app_id)
     response = couchforms.SubmissionPost(
         instance=instance,
         attachments=attachments,
         domain=domain,
         app_id=app_id,
+        build_id=build_id,
         auth_context=auth_cls(
             domain=domain,
             user_id=user_id,
@@ -52,6 +64,13 @@ def _process_form(request, domain, app_id, user_id, authenticated,
 @csrf_exempt
 @require_POST
 def post(request, domain, app_id=None):
+    if domain_requires_auth(domain):
+        if app_id:
+            url = reverse('receiver_secure_post_with_app_id',
+                          args=[domain, app_id])
+        else:
+            url = reverse('receiver_secure_post', args=[domain])
+        return HttpResponseRedirect(url)
     return _process_form(
         request=request,
         domain=domain,

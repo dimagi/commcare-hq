@@ -3,11 +3,11 @@ from datetime import datetime, timedelta, time
 
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
+from jsonobject.properties import DateTimeProperty
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.users.util import WEIRD_USER_IDS
 
 from dimagi.utils.couch.database import get_db
-from corehq.couchapps.models import ReportsForm
 from corehq.apps.domain.models import Domain
 from corehq.apps.reminders.models import CaseReminderHandler
 from corehq.apps.reports.util import make_form_couch_key
@@ -108,11 +108,11 @@ def active(domain, *args):
     return True if row else False
 
 def display_time(row, display=True):
+    submission_time = row["key"][2]
     if display:
-        reports_form = ReportsForm(row['value'])
-        return reports_form.submission_time.strftime(DISPLAY_DATE_FORMAT)
+        return DateTimeProperty().wrap(submission_time).strftime(DISPLAY_DATE_FORMAT)
     else:
-        return row["value"]["submission_time"]
+        return submission_time
 
 def first_form_submission(domain, display=True):
     key = make_form_couch_key(domain)

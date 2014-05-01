@@ -4,7 +4,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
 from couchforms.models import XFormInstance
 import django_digest.test
-from django.utils.unittest.case import TestCase
+from django.test import TestCase
 import os
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.shortcuts import create_domain

@@ -62,12 +62,13 @@ class SessionDataHelper(object):
 
         return session_data
 
-    def filter_cases(self, xpath, additional_filters=None, auth=None):
+    def filter_cases(self, xpath, additional_filters=None, auth=None, extra_instances=None):
         """
         Filter a list of cases by an xpath expression + additional filters
         """
         session_data = self.get_session_data()
         session_data["additional_filters"] = additional_filters or {}
+        session_data['extra_instances'] = extra_instances or []
 
         data = {
             "action": "touchcare-filter-cases",
@@ -83,23 +84,24 @@ class SessionDataHelper(object):
 
         return json.loads(response)
 
-    def get_full_context(self, form_url):
+    def get_full_context(self, root_extras=None, session_extras=None):
         """
         Get the entire touchforms context for a given user/app/module/form/case
         """
+        root_extras = root_extras or {}
+        session_extras = session_extras or {}
         session_data = self.get_session_data()
         # always tell touchforms to include footprinted cases in its case db
         session_data["additional_filters"] = {"footprint": True}
-
+        session_data.update(session_extras)
         online_url = reverse("xform_player_proxy")
         offline_url = 'http://localhost:%d' % settings.OFFLINE_TOUCHFORMS_PORT
-
-        return {
-            "form_url": form_url,
+        ret = {
             "session_data": session_data,
             "xform_url": offline_url if self.offline else online_url,
         }
-
+        ret.update(root_extras)
+        return ret
 
 
 def get_session_data(domain, couch_user, case_id=None, device_id=CLOUDCARE_DEVICE_ID, delegation=False):
@@ -107,6 +109,3 @@ def get_session_data(domain, couch_user, case_id=None, device_id=CLOUDCARE_DEVIC
 
 def filter_cases(domain, couch_user, xpath, additional_filters=None, auth=None, delegation=False):
     return SessionDataHelper(domain, couch_user, delegation=delegation).filter_cases(xpath, additional_filters, auth)
-
-def get_full_context(domain, user, app, form_url, case_id=None, delegation=False, offline=False):
-    return SessionDataHelper(domain, user, case_id, delegation=delegation, offline=offline).get_full_context(form_url)

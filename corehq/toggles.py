@@ -84,8 +84,8 @@ REMINDERS_UI_PREVIEW = StaticToggle(
     'New reminders UI'
 )
 
-CALC_XPATHS = StaticToggle(
-    'calc_xpaths',
-    'Enabling custom calculated xpaths',
-    namespaces=[NAMESPACE_DOMAIN],
+READABLE_FORM_DATA = StaticToggle(
+    'readable_form_data',
+    'Readable Form Data Page',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )

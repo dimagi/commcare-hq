@@ -13,6 +13,7 @@ try:
     from corehq.apps.app_manager.tests.test_views import *
     from corehq.apps.app_manager.tests.test_commcare_settings import *
     from corehq.apps.app_manager.tests.test_brief_view import *
+    from .test_location_xpath import *
     from .test_get_questions import *
     from .test_repeater import *
 except ImportError, e:
@@ -23,6 +24,9 @@ except ImportError, e:
     raise
 
 from corehq.apps.app_manager.util import is_valid_case_type
+from corehq.apps.app_manager.id_strings import _format_to_regex
+
 __test__ = {
-    'is_valid_case_type': is_valid_case_type
+    'is_valid_case_type': is_valid_case_type,
+    '_format_to_regex': _format_to_regex,
 }

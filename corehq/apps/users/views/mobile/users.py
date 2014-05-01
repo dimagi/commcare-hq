@@ -1,3 +1,4 @@
+from collections import defaultdict
 import copy
 import json
 import csv
@@ -7,6 +8,7 @@ import uuid
 from couchdbkit import ResourceNotFound
 
 from django.contrib.auth.forms import SetPasswordForm
+from django.shortcuts import render
 from django.utils.safestring import mark_safe
 
 from openpyxl.shared.exc import InvalidFileException
@@ -31,8 +33,7 @@ from corehq.apps.users.forms import (CommCareAccountForm, UpdateCommCareUserInfo
 from corehq.apps.users.models import CommCareUser, UserRole, CouchUser
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.bulkupload import create_or_update_users_and_groups,\
-    check_headers, dump_users_and_groups, GroupNameError, UserUploadError
+from corehq.apps.users.bulkupload import check_headers, dump_users_and_groups, GroupNameError, UserUploadError
 from corehq.apps.users.tasks import bulk_upload_async
 from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.views import BaseFullEditUserView, BaseUserSettingsView
@@ -43,6 +44,7 @@ from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound, JSONReader
 from corehq.apps.commtrack.models import CommTrackUser
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
+from soil.util import get_download_context, expose_download
 
 DEFAULT_USER_LIST_LIMIT = 10
 
@@ -674,8 +676,6 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
     @method_decorator(get_file)
     def post(self, request, *args, **kwargs):
         """View's dispatch method automatically calls this"""
-        redirect = request.POST.get('redirect')
-
         try:
             self.workbook = WorkbookJSONReader(request.file)
         except InvalidFileException:
@@ -692,7 +692,7 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
         except JSONReaderError as e:
             messages.error(request,
                            'Your upload was unsuccessful. %s' % e.message)
-            return HttpResponseRedirect(redirect)
+            return self.get(request, *args, **kwargs)
         except HeaderValueError as e:
             return HttpResponseBadRequest("Upload encountered a data type error: %s"
                                           % e.message)
@@ -724,58 +724,75 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
         except UserUploadError as e:
             return HttpResponseBadRequest(e)
 
-        response = HttpResponse()
-        response_rows = []
-        async = request.REQUEST.get("async", False)
-        if async:
-            download_id = uuid.uuid4().hex
-            bulk_upload_async.delay(
-                download_id,
-                self.domain,
-                list(self.user_specs),
-                list(self.group_specs),
-                list(self.location_specs)
+        task_ref = expose_download(None, expiry=1*60*60)
+        task = bulk_upload_async.delay(
+            self.domain,
+            list(self.user_specs),
+            list(self.group_specs),
+            list(self.location_specs)
+        )
+        task_ref.set_task(task)
+        return HttpResponseRedirect(
+            reverse(
+                UserUploadStatusView.urlname,
+                args=[self.domain, task_ref.download_id]
             )
-            messages.success(request,
-                'Your upload is in progress. You can check the progress <a href="%s">here</a>.' %\
-                reverse('hq_soil_download', kwargs={'domain': self.domain, 'download_id': download_id}),
-                extra_tags="html")
-        else:
-            ret = create_or_update_users_and_groups(
-                self.domain,
-                self.user_specs,
-                self.group_specs,
-                self.location_specs
-            )
-            for error in ret["errors"]:
-                messages.error(request, error)
+        )
 
-            for row in ret["rows"]:
-                response_rows.append(row)
 
-        if redirect:
-            if not async:
-                messages.success(request,
-                                 _('Your bulk user upload is complete!'))
-            problem_rows = []
-            for row in response_rows:
-                if row['flag'] not in ('updated', 'created'):
-                    problem_rows.append(row)
-            if problem_rows:
-                messages.error(
-                    request,
-                    _('However, we ran into problems with the following users:')
-                )
-                for row in problem_rows:
-                    if row['flag'] == 'missing-data':
-                        messages.error(request,
-                                       _('A row with no username was skipped'))
-                    else:
-                        messages.error(request,
-                                       '{username}: {flag}'.format(**row))
-            return HttpResponseRedirect(redirect)
-        else:
-            return response
+class UserUploadStatusView(BaseManageCommCareUserView):
+    urlname = 'user_upload_status'
+    page_title = ugettext_noop('Mobile Worker Upload Status')
+
+    def get(self, request, *args, **kwargs):
+        context = super(UserUploadStatusView, self).main_context
+        context.update({
+            'domain': self.domain,
+            'download_id': kwargs['download_id'],
+            'poll_url': reverse('user_upload_job_poll', args=[self.domain, kwargs['download_id']]),
+            'title': _("Mobile Worker Upload Status"),
+            'progress_text': _("Importing your data. This may take some time..."),
+            'error_text': _("Problem importing data! Please try again or report an issue."),
+        })
+        return render(request, 'hqwebapp/soil_status_full.html', context)
+
+    def page_url(self):
+        return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
+
+
+@require_can_edit_commcare_users
+def user_upload_job_poll(request, domain, download_id, template="users/mobile/partials/user_upload_status.html"):
+    context = get_download_context(download_id, check_state=True)
+    context.update({
+        'on_complete_short': _('Bulk upload complete.'),
+        'on_complete_long': _('Mobile Worker upload has finished'),
+
+    })
+    class _BulkUploadResponseWrapper(object):
+        def __init__(self, context):
+            results = context.get('result', defaultdict(lambda: []))
+            self.response_rows = results['rows']
+            self.response_errors = results['errors']
+            self.problem_rows = [r for r in self.response_rows if r['flag'] not in ('updated', 'created')]
+
+        def success_count(self):
+            return len(self.response_rows) - len(self.problem_rows)
+
+        def has_errors(self):
+            return bool(self.response_errors or self.problem_rows)
+
+        def errors(self):
+            errors = []
+            for row in self.problem_rows:
+                if row['flag'] == 'missing-data':
+                    errors.append(_('A row with no username was skipped'))
+                else:
+                    errors.append('{username}: {flag}'.format(**row))
+            errors.extend(self.response_errors)
+            return errors
+
+    context['result'] = _BulkUploadResponseWrapper(context)
+    return render(request, template, context)
 
 
 @require_can_edit_commcare_users

@@ -6,7 +6,7 @@ from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.http import Http404
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
-from corehq import toggles, privileges
+from corehq import privileges
 
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 
@@ -41,9 +41,9 @@ class ExportReport(DataInterface, ProjectReportParametersMixin):
 
 
 class FormExportReportBase(ExportReport, DatespanMixin):
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.GroupField',
-              'corehq.apps.reports.fields.DatespanField']
+    fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
+              'corehq.apps.reports.filters.select.GroupFilter',
+              'corehq.apps.reports.filters.dates.DatespanFilter']
 
     @property
     def can_view_deid(self):
@@ -241,8 +241,8 @@ class ExcelExportReport(FormExportReportBase):
 class CaseExportReport(ExportReport):
     name = ugettext_lazy("Export Cases")
     slug = "case_export"
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.GroupField']
+    fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
+              'corehq.apps.reports.filters.select.GroupFilter']
     report_template_path = "reports/reportdata/case_export_data.html"
     icon = "icon-share"
 
@@ -273,6 +273,7 @@ class CaseExportReport(ExportReport):
             group_exports=[group.case_exports for group in groups
                 if group.case_exports],
         )
+        context['case_format'] = self.request.GET.get('case_format') or 'csv'
         return context
 
     @classmethod

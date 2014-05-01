@@ -29,6 +29,7 @@ from django.template import loader
 from django.template.context import RequestContext
 from restkit import Resource
 
+from corehq.apps.accounting.models import Subscription
 from corehq.apps.announcements.models import Notification
 from corehq.apps.app_manager.models import BUG_REPORTS_DOMAIN
 from corehq.apps.app_manager.models import import_app
@@ -57,7 +58,7 @@ def pg_check():
         user_count = User.objects.count()
     except:
         user_count = None
-    return user_count is not None
+    return (user_count is not None, None)
 
 
 def couch_check():
@@ -70,10 +71,10 @@ def couch_check():
     # work, and if other error handling allows the request to get this far.
 
     try:
-        xforms = XFormInstance.view('couchforms/by_user', limit=1).all()
+        xforms = XFormInstance.view('reports_forms/all_forms', limit=1).all()
     except:
         xforms = None
-    return isinstance(xforms, list)
+    return (isinstance(xforms, list), None)
 
 
 def hb_check():
@@ -88,9 +89,9 @@ def hb_check():
                 if not w['status']:
                     bad_workers.append('* {} celery worker down'.format(hostname))
             if bad_workers:
-                return '\n'.join(bad_workers)
+                return (False, '\n'.join(bad_workers))
             else:
-                hb = True
+                hb = heartbeat.is_alive()
         except:
             hb = False
     else:
@@ -98,28 +99,28 @@ def hb_check():
             hb = heartbeat.is_alive()
         except:
             hb = False
-    return hb
+    return (hb, None)
 
 
 def redis_check():
     try:
         redis = cache.get_cache('redis')
-        return redis.set('serverup_check_key', 'test')
+        result = redis.set('serverup_check_key', 'test')
     except (InvalidCacheBackendError, ValueError):
-        return True  # redis not in use, ignore
+        result = True  # redis not in use, ignore
     except:
-        return False
-
+        result = False
+    return (result, None)
 
 def memcached_check():
     try:
         memcached = cache.get_cache('default')
         uuid_val = uuid.uuid1()
         memcached.set('serverup_check_key', uuid_val)
-        return memcached.get('serverup_check_key') == uuid_val
+        result = memcached.get('serverup_check_key') == uuid_val
     except:
-        return False
-
+        result = False
+    return (result, None)
 
 def server_error(request, template_name='500.html'):
     """
@@ -252,11 +253,11 @@ def server_up(req):
     message = ['Problems with HQ (%s):' % os.uname()[1]]
     for check, check_info in checkers.items():
         if check_info['always_check'] or req.GET.get(check, None) is not None:
-            check_results = check_info['check_func']()
+            check_results, custom_msg = check_info['check_func']()
             if not check_results:
                 failed = True
-                if isinstance(check_results, basestring):
-                    message.append(check_results)
+                if custom_msg:
+                    message.append(custom_msg)
                 else:
                     message.append(check_info['message'])
     if failed:
@@ -292,6 +293,8 @@ def _login(req, domain, domain_type, template_name, domain_context=None):
     req.base_template = settings.BASE_TEMPLATE
     context = domain_context or get_domain_context(domain_type)
     context['domain'] = domain
+    if domain:
+        context['next'] = req.REQUEST.get('next', '/a/%s/' % domain)
 
     return django_login(req, template_name=template_name,
                         authentication_form=EmailAuthenticationForm if not domain else CloudCareAuthenticationForm,
@@ -371,15 +374,29 @@ def bug_report(req):
     try:
         couch_user = CouchUser.get_by_username(report['username'])
         full_name = couch_user.full_name
+        email = couch_user.get_email()
     except Exception:
         full_name = None
+        email = None
     report['full_name'] = full_name
+    report['email'] = email or report['username']
+
+    matching_subscriptions = Subscription.objects.filter(
+        is_active=True,
+        subscriber__domain=report['domain'],
+    )
+
+    if len(matching_subscriptions) >= 1:
+        report['software_plan'] = matching_subscriptions[0].plan_version
+    else:
+        report['software_plan'] = u'domain has no active subscription'
 
     subject = u'{subject} ({domain})'.format(**report)
     message = (
         u"username: {username}\n"
         u"full name: {full_name}\n"
         u"domain: {domain}\n"
+        u"software plan: {software_plan}\n"
         u"url: {url}\n"
         u"copy url: {copy_url}\n"
         u"datetime: {datetime}\n"
@@ -391,9 +408,9 @@ def bug_report(req):
     cc = filter(None, cc)
 
     if full_name and not any([c in full_name for c in '<>"']):
-        reply_to = u'"{full_name}" <{username}>'.format(**report)
+        reply_to = u'"{full_name}" <{email}>'.format(**report)
     else:
-        reply_to = report['username']
+        reply_to = report['email']
 
     # if the person looks like a commcare user, fogbugz can't reply
     # to their email, so just use the default

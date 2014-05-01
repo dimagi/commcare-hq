@@ -3,6 +3,7 @@ import json
 import re
 import urllib
 from django.utils.decorators import method_decorator
+from django.views.decorators.debug import sensitive_post_parameters
 from corehq import Domain, privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.views import BaseDomainView
@@ -28,7 +29,6 @@ from django_digest.decorators import httpdigest
 from dimagi.utils.web import json_response
 
 from corehq.apps.registration.forms import AdminInvitesUserForm
-from corehq.apps.prescriptions.models import Prescription
 from corehq.apps.hqwebapp.utils import InvitationView
 from corehq.apps.users.forms import (UpdateUserRoleForm, BaseUserInfoForm, UpdateMyAccountInfoForm, CommtrackUserForm)
 from corehq.apps.users.models import (CouchUser, CommCareUser, WebUser,
@@ -190,8 +190,9 @@ class BaseEditUserView(BaseUserSettingsView):
     def commtrack_form(self):
         if self.request.method == "POST" and self.request.POST['form_type'] == "commtrack":
             return CommtrackUserForm(self.request.POST, domain=self.domain)
-        linked_loc = self.editable_user._obj.get('location_id')
-        linked_prog = self.editable_user._obj.get('program_id')
+        user_domain_membership = self.editable_user.get_domain_membership(self.domain)
+        linked_loc = user_domain_membership.location_id
+        linked_prog = user_domain_membership.program_id
         return CommtrackUserForm(domain=self.domain, is_admin=self.request.couch_user.is_domain_admin(self.domain), initial={'supply_point': linked_loc, 'program_id': linked_prog})
 
     def post(self, request, *args, **kwargs):
@@ -468,6 +469,7 @@ class UserInvitationView(InvitationView):
         user.save()
 
 
+@sensitive_post_parameters('password')
 def accept_invitation(request, domain, invitation_id):
     return UserInvitationView()(request, invitation_id, domain=domain)
 
@@ -651,6 +653,8 @@ def add_domain_membership(request, domain, couch_user_id, domain_name):
         user.save()
     return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id)))
 
+
+@sensitive_post_parameters('new_password1', 'new_password2')
 @login_and_domain_required
 def change_password(request, domain, login_id, template="users/partial/reset_password.html"):
     # copied from auth's password_change
@@ -681,47 +685,6 @@ def change_password(request, domain, login_id, template="users/partial/reset_pas
 def test_httpdigest(request, domain):
     return HttpResponse("ok")
 
-
-@Prescription.require('user-domain-transfer')
-@login_and_domain_required
-def user_domain_transfer(request, domain, prescription, template="users/domain_transfer.html"):
-    target_domain = prescription.params['target_domain']
-    if not request.couch_user.is_domain_admin(target_domain):
-        return HttpResponseForbidden()
-    if request.method == "POST":
-        user_ids = request.POST.getlist('user_id')
-        app_id = request.POST['app_id']
-        errors = []
-        for user_id in user_ids:
-            user = CommCareUser.get_by_user_id(user_id, domain)
-            try:
-                user.transfer_to_domain(target_domain, app_id)
-            except Exception as e:
-                errors.append((user_id, user, e))
-            else:
-                messages.success(request, "Successfully transferred {user.username}".format(user=user))
-        if errors:
-            messages.error(request, "Failed to transfer the following users")
-            for user_id, user, e in errors:
-                if user:
-                    messages.error(request, "{user.username} ({user.user_id}): {e}".format(user=user, e=e))
-                else:
-                    messages.error(request, "CommCareUser {user_id} not found".format(user_id=user_id))
-        return HttpResponseRedirect(reverse('commcare_users', args=[target_domain]))
-    else:
-        from corehq.apps.app_manager.models import VersionedDoc
-        # apps from the *target* domain
-        apps = VersionedDoc.view('app_manager/applications_brief', startkey=[target_domain], endkey=[target_domain, {}])
-        # users from the *originating* domain
-        users = list(CommCareUser.by_domain(domain))
-        users.extend(CommCareUser.by_domain(domain, is_active=False))
-        context = _users_context(request, domain)
-        context.update({
-            'apps': apps,
-            'commcare_users': users,
-            'target_domain': target_domain
-        })
-        return render(request, template, context)
 
 @require_superuser
 def audit_logs(request, domain):

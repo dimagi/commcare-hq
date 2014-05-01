@@ -7,12 +7,13 @@ from django.utils.safestring import mark_safe
 import pytz
 from corehq import Domain
 from corehq.apps import reports
-from corehq.apps.app_manager.models import get_app
+from corehq.apps.app_manager.models import get_app, Form
 from corehq.apps.app_manager.util import ParentCasePropertyBuilder
 from corehq.apps.domain.middleware import CCHQPRBACMiddleware
 from corehq.apps.reports.display import xmlns_to_name
 from couchdbkit.ext.django.schema import *
-from corehq.apps.reports.exportfilters import form_matches_users, is_commconnect_form, default_form_filter
+from corehq.apps.reports.exportfilters import form_matches_users, is_commconnect_form, default_form_filter, \
+    default_case_filter
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
 from couchexport.models import SavedExportSchema, GroupExportConfiguration, FakeSavedExportSchema
 from couchexport.transforms import couch_to_excel_datetime, identity
@@ -227,9 +228,7 @@ class ReportConfig(Document):
 
     def get_date_range(self):
         """Duplicated in reports.config.js"""
-
         date_range = self.date_range
-
         # allow old report email notifications to represent themselves as a
         # report config by leaving the default date range up to the report
         # dispatcher
@@ -239,7 +238,6 @@ class ReportConfig(Document):
         import datetime
         from dateutil.relativedelta import relativedelta
         today = datetime.date.today()
-
         if date_range == 'since':
             start_date = self.start_date
             end_date = today
@@ -262,6 +260,11 @@ class ReportConfig(Document):
                 raise Exception("Invalid date range")
 
             start_date = today - datetime.timedelta(days=days)
+
+        if start_date is None or end_date is None:
+            # this is due to bad validation. see: http://manage.dimagi.com/default.asp?110906
+            logging.error('scheduled report %s is in a bad state (no startdate or enddate)' % self._id)
+            return {}
 
         return {'startdate': start_date.isoformat(),
                 'enddate': end_date.isoformat()}
@@ -477,7 +480,6 @@ class ReportNotification(Document):
         Access the notification's associated configs as a list, transparently
         returning an appropriate dummy for old notifications which have
         `report_slug` instead of `config_ids`.
-
         """
         if self.config_ids:
             configs = ReportConfig.view('_all_docs', keys=self.config_ids,
@@ -655,6 +657,14 @@ class FormExportSchema(HQExportSchema):
     def get_default_order(self):
         return {'#': self.question_order}
 
+    def uses_cases(self):
+        if not self.app:
+            return False
+        form = self.app.get_form_by_xmlns(self.xmlns)
+        if form and isinstance(form, Form):
+            return bool(form.active_actions())
+        return False
+
 
 class FormDeidExportSchema(FormExportSchema):
 
@@ -668,6 +678,10 @@ class FormDeidExportSchema(FormExportSchema):
 
 class CaseExportSchema(HQExportSchema):
     doc_type = 'SavedExportSchema'
+
+    @property
+    def filter(self):
+        return SerializableFunction(default_case_filter)
 
     @property
     def domain(self):
@@ -729,6 +743,7 @@ class HQGroupExportConfiguration(GroupExportConfiguration):
             try:
                 return {
                     'form': FormExportSchema,
+                    'case': CaseExportSchema,
                 }[export.type].wrap(export._doc)
             except KeyError:
                 return export

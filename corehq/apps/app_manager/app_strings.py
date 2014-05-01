@@ -1,10 +1,11 @@
 from distutils.version import LooseVersion
 import functools
+from corehq.apps.app_manager import id_strings
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.app_manager.util import is_sort_only_column
 import langcodes
 import commcare_translations
-from corehq.apps.app_manager.suite_xml import IdStrings, get_detail_column_infos
+from corehq.apps.app_manager.suite_xml import get_detail_column_infos
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
 
 
@@ -25,7 +26,6 @@ def _create_custom_app_strings(app, lang):
                 text = "${0} %s" % (text,) if not (text and text[0].isdigit()) else text
         return text
 
-    id_strings = IdStrings()
     langs = [lang] + app.langs
     yield id_strings.homescreen_title(), app.name
     yield id_strings.app_display_name(), app.name
@@ -57,9 +57,10 @@ def _create_custom_app_strings(app, lang):
                         yield id_strings.detail_column_enum_variable(module, detail_type, column, item.key), trans(item.value)
 
         yield id_strings.module_locale(module), maybe_add_index(trans(module.name))
-        if isinstance(module, Module):
+        if hasattr(module, 'case_list'):
             if module.case_list.show:
                 yield id_strings.case_list_locale(module), trans(module.case_list.label) or "Case List"
+        if hasattr(module, 'referral_list'):
             if module.referral_list.show:
                 yield id_strings.referral_list_locale(module), trans(module.referral_list.label)
         for form in module.get_forms():
@@ -110,6 +111,11 @@ class AppStringsBase(object):
             messages['case_sharing.exactly_one_group'] = \
                 (u'The case sharing settings for your user are incorrect. '
                  u'This user must be in exactly one case sharing group. Please contact your supervisor.')
+
+        if 'case_autoload.exactly_one_fixture' not in messages:
+            messages['case_autoload.exactly_one_fixture'] = \
+                (u'The lookup table settings for your user are incorrect. '
+                 u'This user must have access to exactly one lookup table row.')
 
         return commcare_translations.dumps(messages).encode('utf-8')
 

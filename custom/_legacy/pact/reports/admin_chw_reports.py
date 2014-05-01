@@ -7,7 +7,7 @@ from pact.reports import chw_schedule
 
 
 class PactCHWAdminReport(GenericTabularReport, CustomProjectReport):
-    fields = ['corehq.apps.reports.fields.SelectMobileWorkerField',  'corehq.apps.reports.fields.DatespanField']
+    fields = ['corehq.apps.reports.filters.users.SelectMobileWorkerFilter',  'corehq.apps.reports.filters.dates.DatespanFilter']
     name = "PACT CHW Admin"
     slug = "pactchwadmin"
     emailable = True

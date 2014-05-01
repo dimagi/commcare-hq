@@ -45,7 +45,7 @@ def get_user_site_map(domain):
     fixtures = FixtureDataItem.by_data_type(domain, data_type.get_id)
     for fixture in fixtures:
         for user in fixture.get_users():
-            user_site_map[user._id].append(fixture.fields['site_id'])
+            user_site_map[user._id].append(fixture.fields_without_attributes['site_id'])
     return user_site_map
 
 
@@ -66,8 +66,8 @@ class FIDAPerformanceReport(GenericTabularReport, CustomProjectReport,
     slug = "hsph_fida_performance"
     
     fields = [
-        'corehq.apps.reports.fields.FilterUsersField',
-        'corehq.apps.reports.fields.DatespanField',
+        'corehq.apps.reports.filters.users.UserTypeFilter',
+        'corehq.apps.reports.filters.dates.DatespanFilter',
         'hsph.fields.DCTLToFIDAFilter',
     ]
 
@@ -214,8 +214,8 @@ class FacilityRegistrationsReport(GenericTabularReport, CustomProjectReport,
     """
     name = "Facility Registrations"
     slug = "hsph_facility_registrations"
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.DatespanField',
+    fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
+              'corehq.apps.reports.filters.dates.DatespanFilter',
               'hsph.fields.DCTLToFIDAFilter',
               'hsph.fields.SiteField']
 
@@ -396,12 +396,12 @@ class CaseReport(CaseListReport, CustomProjectReport, HSPHSiteDataMixin,
     slug = 'case_report'
     
     fields = (
-        'corehq.apps.reports.fields.FilterUsersField',
-        'corehq.apps.reports.fields.DatespanField',
+        'corehq.apps.reports.filters.users.UserTypeFilter',
+        'corehq.apps.reports.filters.dates.DatespanFilter',
         'hsph.fields.SiteField',
         'hsph.fields.AllocatedToFilter',
         'hsph.fields.DCTLToFIDAFilter',
-        'corehq.apps.reports.fields.SelectOpenCloseField',
+        'corehq.apps.reports.filters.select.SelectOpenCloseFilter',
     )
 
     default_case_type = 'birth'
@@ -532,7 +532,7 @@ class FacilityWiseFollowUpReport(GenericTabularReport, DatespanMixin,
                                  ProjectReportParametersMixin):
     name = "Facility Wise Follow Up Report"
     slug = "hsph_facility_wise_follow_up"
-    fields = ['corehq.apps.reports.fields.DatespanField',
+    fields = ['corehq.apps.reports.filters.dates.DatespanFilter',
               'hsph.fields.DCTLToFIDAFilter',
               'hsph.fields.SiteField']
 

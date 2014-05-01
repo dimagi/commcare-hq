@@ -1,0 +1,48 @@
+{% extends "hqwebapp/two_column.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% block js %}{{ block.super }}
+    {% block reports-js %}
+    {% include "imports/datatables.html" %}
+    <script src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
+    <script src="{% static 'hqwebapp/js-custom/hq.legacy.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/jquery.history.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/knockout.mapping.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
+    {% endblock %}
+{% endblock %}
+
+{% block head %}
+    {{ block.super }}
+    {% block reports-css %}
+    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
+    {% endblock %}
+{% endblock %}
+
+{% block title %}{% trans report.title|default:"Project Reports"|safe %}{% endblock %}
+
+{% block page-title %}
+    <ul class="breadcrumb">
+        <li>
+            <a href="{{ report.default_url }}"><strong>{% trans report.section_name|default:"Reports" %}</strong></a> <span class="divider">&gt;</span>
+        </li>
+        {% if report.breadcrumbs %}
+            {% for crumb in report.breadcrumbs %}
+                <li>
+                    <a href="{{ crumb.link }}">{{ crumb.title }}</a> <span class="divider">&gt;</span>
+                </li>
+            {% endfor %}
+        {% endif %}
+        <li class="active">
+            <div id="report-title"><a href="{{ report.url }}">{% trans report.title|default:"Untitled Report"|safe %}</a></div>
+        </li>
+    </ul>
+{% endblock %}
+
+{% block main_column %}
+    <div id="report-content">
+            {% block reportcontent %}
+            {% endblock %}
+    </div>
+{% endblock %}
+

@@ -1,4 +1,5 @@
 from collections import defaultdict
+from corehq.apps.reports.util import make_ctable_table_name
 from dimagi.utils.decorators.memoized import memoized
 from sqlagg.columns import *
 from django.utils.translation import ugettext as _, ugettext_noop
@@ -220,7 +221,7 @@ class FormPropertySection(Section):
 
 class McSqlData(SqlData):
 
-    table_name = "mc-inscale_MalariaConsortiumFluff"
+    table_name = make_ctable_table_name("mc-inscale_MalariaConsortiumFluff")
 
     def __init__(self, sections, format_class, domain, datespan, fixture_type, fixture_item):
         self.format_class = format_class
@@ -255,7 +256,7 @@ class McSqlData(SqlData):
                 }.get(tag) or tag
 
             if self.fixture_type and self.fixture_item:
-                return user.user_data.get(_tag_to_user_data(self.fixture_type.tag), None) == self.fixture_item.fields.get('name')
+                return user.user_data.get(_tag_to_user_data(self.fixture_type.tag), None) == self.fixture_item.fields_without_attributes.get('name')
             else:
                 return True
 
@@ -328,7 +329,7 @@ class MCSectionedDataProvider(DataProvider):
 
 
     def headers(self):
-        return DataTablesHeader(DataTablesColumn(_('Indicator')),
+        return DataTablesHeader(DataTablesColumn(_('mc_header_indicator')),
                                 *[DataTablesColumn(header) for header in self.sqldata.get_headers()])
 
     @memoized
@@ -352,7 +353,7 @@ class MCBase(ComposedTabularReport, CustomProjectReport, DatespanMixin):
     emailable = True
     report_template_path = "mc/reports/sectioned_tabular.html"
     fields = [
-        'corehq.apps.reports.fields.DatespanField',
+        'corehq.apps.reports.filters.dates.DatespanFilter',
     ]
     SECTIONS = None  # override
     format_class = None # override
@@ -379,33 +380,43 @@ class MCBase(ComposedTabularReport, CustomProjectReport, DatespanMixin):
     def sections(self):
         return self.data_provider.sections
 
+    @property
+    def export_rows(self):
+        def _gen():
+            for section in self.sections:
+                yield [section.title]
+                for row in section.rows:
+                    yield row
+        return list(_gen())
+
+
 class HeathFacilityMonthly(MCBase):
     slug = 'hf_monthly'
     fields = [
-        'corehq.apps.reports.fields.DatespanField',
+        'corehq.apps.reports.filters.dates.DatespanFilter',
         'custom.reports.mc.reports.fields.HealthFacilityField',
     ]
-    name = ugettext_noop("Health Facility Monthly Report")
+    name = ugettext_noop("mc_report_hf_monthly")
     SECTIONS = HF_MONTHLY_REPORT
     format_class = UserDataFormat
 
 class DistrictMonthly(MCBase):
     fields = [
-        'corehq.apps.reports.fields.DatespanField',
+        'corehq.apps.reports.filters.dates.DatespanFilter',
         'custom.reports.mc.reports.fields.DistrictField',
     ]
     slug = 'district_monthly'
-    name = ugettext_noop("District Monthly Report")
+    name = ugettext_noop("mc_report_dist_monthly")
     SECTIONS = DISTRICT_MONTHLY_REPORT
     format_class = FacilityDataFormat
 
 class DistrictWeekly(MCBase):
     fields = [
-        'corehq.apps.reports.fields.DatespanField',
+        'corehq.apps.reports.filters.dates.DatespanFilter',
         'custom.reports.mc.reports.fields.DistrictField',
     ]
     slug = 'district_weekly'
-    name = ugettext_noop("District Weekly Report")
+    name = ugettext_noop("mc_report_dist_weekly")
     SECTIONS = DISTRICT_WEEKLY_REPORT
     format_class = FacilityDataFormat
 
@@ -468,10 +479,10 @@ class HealthFacilityWeekly(MCBase):
     report_template_path = "mc/reports/hf_weekly.html"
     extra_context_providers = [section_context, hf_message_content]
     fields = [
-        'corehq.apps.reports.fields.DatespanField',
+        'corehq.apps.reports.filters.dates.DatespanFilter',
         'custom.reports.mc.reports.fields.HealthFacilityField',
     ]
     slug = 'hf_weekly'
-    name = ugettext_noop("Health Facility Weekly Report")
+    name = ugettext_noop("mc_report_hf_weekly")
     SECTIONS = HF_WEEKLY_REPORT
     format_class = UserDataFormat

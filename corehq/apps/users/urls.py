@@ -1,7 +1,8 @@
 #from django.conf.urls.defaults import patterns, url
 from corehq.apps.users.views import DefaultProjectUserSettingsView, EditWebUserView, EditMyAccountDomainView, ListWebUsersView, InviteWebUserView
 from corehq.apps.users.views.mobile.groups import EditGroupsView, EditGroupMembersView
-from corehq.apps.users.views.mobile.users import UploadCommCareUsers, EditCommCareUserView, ListCommCareUsersView, AsyncListCommCareUsersView, CreateCommCareUserView, ConfirmBillingAccountForExtraUsersView
+from corehq.apps.users.views.mobile.users import UploadCommCareUsers, EditCommCareUserView, ListCommCareUsersView, AsyncListCommCareUsersView, CreateCommCareUserView, ConfirmBillingAccountForExtraUsersView, \
+    UserUploadStatusView
 from django.conf.urls.defaults import *
 from corehq.apps.domain.utils import grandfathered_domain_re
 
@@ -34,7 +35,6 @@ urlpatterns = patterns('corehq.apps.users.views',
 
     url(r'^httpdigest/?$', 'test_httpdigest'),
 
-    url(r'^web/user_domain_transfer/(?P<prescription_id>[\w-]+)/$', 'user_domain_transfer', name='user_domain_transfer'),
     url(r'^audit_logs/$', 'audit_logs', name='user_audit_logs')
 ) + \
 patterns("corehq.apps.users.views.mobile.users",
@@ -48,6 +48,10 @@ patterns("corehq.apps.users.views.mobile.users",
     url(r'^commcare/delete/(?P<user_id>[\w-]+)/$', 'delete_commcare_user', name='delete_commcare_user'),
     url(r'^commcare/restore/(?P<user_id>[\w-]+)/$', 'restore_commcare_user', name='restore_commcare_user'),
     url(r'^commcare/upload/$', UploadCommCareUsers.as_view(), name=UploadCommCareUsers.urlname),
+    url(r'^commcare/upload/status/(?P<download_id>[0-9a-fA-Z]{25,32})/$', UserUploadStatusView.as_view(),
+        name=UserUploadStatusView.urlname),
+    url(r'^commcare/upload/poll/(?P<download_id>[0-9a-fA-Z]{25,32})/$',
+        'user_upload_job_poll', name='user_upload_job_poll'),
     url(r'^commcare/download/$', 'download_commcare_users', name='download_commcare_users'),
     url(r'^commcare/set_group/$', 'set_commcare_user_group', name='set_commcare_user_group'),
     url(r'^commcare/add_commcare_account/$', CreateCommCareUserView.as_view(), name=CreateCommCareUserView.urlname),

@@ -15,7 +15,7 @@ from corehq.apps.app_manager.xform import XFormValidationError
 from couchforms.models import XFormError
 from dimagi.utils.decorators.memoized import memoized
 from hutch.models import AuxMedia
-from corehq.apps.domain.models import LICENSES
+from corehq.apps.domain.models import LICENSES, LICENSE_LINKS
 from dimagi.utils.couch.database import get_db, SafeSaveDocument, get_safe_read_kwargs, iter_docs
 from django.utils.translation import ugettext as _
 
@@ -38,6 +38,10 @@ class HQMediaLicense(DocumentSchema):
     @property
     def display_name(self):
         return LICENSES.get(self.type, "Improper License")
+
+    @property
+    def deed_link(self):
+        return LICENSE_LINKS.get(self.type)
 
 
 class CommCareMultimedia(SafeSaveDocument):
@@ -289,6 +293,10 @@ class CommCareMultimedia(SafeSaveDocument):
         return "icon-desktop"
 
 
+class ImageThumbnailError(Exception):
+    pass
+
+
 class CommCareImage(CommCareMultimedia):
 
     class Config(object):
@@ -316,7 +324,10 @@ class CommCareImage(CommCareMultimedia):
         if image.mode != "RGB":
             image = image.convert("RGB")
         o = StringIO()
-        image.thumbnail(size, Image.ANTIALIAS)
+        try:
+            image.thumbnail(size, Image.ANTIALIAS)
+        except IndexError:
+            raise ImageThumbnailError()
         image.save(o, format="JPEG")
         return o.getvalue()
 
@@ -330,7 +341,7 @@ class CommCareImage(CommCareMultimedia):
     def get_thumbnail_data(cls, data, size):
         try:
             data = cls._get_resized_image(cls.get_image_object(data), size)
-        except (ImportError, IOError):
+        except (ImageThumbnailError, ImportError, IOError):
             data = cls._get_resized_image(cls.get_invalid_image_data(), size)
         return data
 

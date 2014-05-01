@@ -36,6 +36,7 @@
   value_names: [Roman, Native (International), Custom Keys, Full Keyboard]
   default: roman
   since: {qwerty: '2.6', 'custom-keys': '1.3'}
+  requires: "{hq.platform}='nokia/s40'||{hq.platform}='nokia/s60'"
 
 # RemoteApp Only
 - id: profile_url
@@ -139,9 +140,10 @@
   name: 'Translations Strategy'
   values: ['dump-known', 'select-known', 'simple']
   value_names:
-   - 'Version 1 translations (old and reliable)'
-   - 'Version 2 translations (not well tested)'
+   - 'Version 1 translations (old)'
+   - 'Version 2 translations (recommended)'
    - 'Simple (FOR TESTING ONLY: crashes with any unrecognized user-defined translations)'
-  default: 'dump-known'
+  default: 'select-known'
   requires: "{$parent.doc_type}='Application'"
   preview: true
+  disabled: true

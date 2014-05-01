@@ -1,0 +1,54 @@
+{% extends "settings/base_template.html" %}
+{% load i18n %}
+
+{% block main_column %}
+    <div class="row-fluid">
+        <div class="span6">
+            <p>
+                {% blocktrans %}
+                    Feature Preview lets you turn on features that we are still actively developing and are not quite ready yet.
+                    Please only enable a feature if you are sure that you need it in your project and that you understand how to use it.
+                    Preview features will often require more technical expertise than usual.
+                {% endblocktrans %}
+            </p>
+            <p>
+                {% blocktrans %}
+                    We would love to get your feedback as we continue to develop these features!
+                    Please let us know how it goes by reporting any problems through the "Report an Issue" button,
+                    which you can find at the bottom of every page.
+                {% endblocktrans %}
+            </p>
+            <br/>
+        </div>
+    </div>
+    <div class="row-fluid">
+        <div class="span10">
+            <form action="" method="post">
+                <button type="submit" class="btn btn-primary">{% trans "Update previews" %}</button>
+                <table class="table table-striped">
+                    <thead>
+                        <th class="span3">{% trans "Feature Name" %}</th>
+                        <th>{% trans "Description" %}</th>
+                        <th>{% trans "Enable" %}</th>
+                    </thead>
+                    <tbody>
+                        {% for feature, enabled in features %}
+                        <tr>
+                            <td>{{ feature.label }}</td>
+                            <td>
+                                {{ feature.description|safe }}<br/>
+                                {% if feature.help_link %}
+                                <a href="{{ feature.help_link }}" target="_blank">{% trans "More information" %}</a>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <input type="checkbox" name="{{ feature.slug }}" {% if enabled %}checked{% endif %}/>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </form>
+        </div>
+    </div>
+{% endblock %}

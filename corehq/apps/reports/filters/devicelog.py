@@ -1,8 +1,7 @@
 from django.utils.translation import ugettext_noop
-from dimagi.utils.couch.database import get_db
 from corehq.apps.reports.filters.base import BaseReportFilter
-from phonelog.models import Log
-import settings
+from corehq.util.queries import fast_distinct
+from phonelog.models import DeviceReportEntry
 
 
 class DeviceLogTagFilter(BaseReportFilter):
@@ -17,16 +16,18 @@ class DeviceLogTagFilter(BaseReportFilter):
         errors_only = bool(self.request.GET.get(self.errors_only_slug, False))
         selected_tags = self.request.GET.getlist(self.slug)
         show_all = bool(not selected_tags)
-        tags = [dict(name=l['type'],
-                    show=bool(show_all or l['type'] in selected_tags))
-                    for l in Log.objects.values('type').distinct()]
+        values = fast_distinct(DeviceReportEntry, 'type')
+        tags = [{
+            'name': value,
+            'show': bool(show_all or value in selected_tags)
+        } for value in values]
         context = {
             'errors_only_slug': self.errors_only_slug,
             'default_on': show_all,
             'logtags': tags,
-            'errors_css_id': 'device_log_errors_only_checkbox'
+            'errors_css_id': 'device_log_errors_only_checkbox',
+            self.errors_only_slug: errors_only,
         }
-        context[self.errors_only_slug] = errors_only
         return context
 
 
@@ -36,21 +37,41 @@ class BaseDeviceLogFilter(BaseReportFilter):
     template = "reports/filters/devicelog_filter.html"
     field = None
     label = ugettext_noop("Filter Logs By")
+    url_param_map = {'Unknown': None}
 
     def get_filters(self, selected):
         show_all = bool(not selected)
-        it = Log.objects.filter(domain__exact=self.domain).values(self.field).distinct()
-        return [dict(name=f[self.field],
-                    show=bool(show_all or f[self.field] in selected))
-                    for f in it]
+        values = (DeviceReportEntry.objects.filter(domain=self.domain)
+                  .values(self.field).distinct()
+                  .values_list(self.field, flat=True))
+        return [{
+            'name': self.value_to_param(value),
+            'show': bool(show_all or value in selected)
+        } for value in values]
 
     @property
     def filter_context(self):
-        selected = self.request.GET.getlist(self.slug)
+        selected = self.get_selected(self.request)
         return {
             'filters': self.get_filters(selected),
-            'default_on': bool(not selected)
+            'default_on': bool(not selected),
         }
+
+    @classmethod
+    def get_selected(cls, request):
+        return [cls.param_to_value(param)
+                for param in request.GET.getlist(cls.slug)]
+
+    @classmethod
+    def param_to_value(cls, param):
+        return cls.url_param_map.get(param, param)
+
+    @classmethod
+    def value_to_param(cls, value):
+        for param, value_ in cls.url_param_map.items():
+            if value_ == value:
+                return param
+        return value
 
 
 class DeviceLogUsersFilter(BaseDeviceLogFilter):

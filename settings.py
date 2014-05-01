@@ -81,6 +81,7 @@ STATICFILES_DIRS = (
 )
 
 DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
+ACCOUNTING_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.accounting.log")
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
@@ -211,7 +212,6 @@ HQ_APPS = (
     'corehq.apps.fixtures',
     'corehq.apps.importer',
     'corehq.apps.reminders',
-    'corehq.apps.prescriptions',
     'corehq.apps.reportfixtures',
     'corehq.apps.translations',
     'corehq.apps.users',
@@ -242,7 +242,9 @@ HQ_APPS = (
     'corehq.apps.cachehq',
     'corehq.apps.toggle_ui',
     'corehq.apps.sofabed',
+    'corehq.apps.hqpillow_retry',
     'corehq.couchapps',
+    'corehq.preindex',
     'custom.apps.wisepill',
     'custom.fri',
     'fluff',
@@ -254,6 +256,7 @@ HQ_APPS = (
     'phonelog',
     'hutch',
     'pillowtop',
+    'pillow_retry',
     'hqstyle',
     'corehq.apps.grapevine',
 
@@ -403,6 +406,7 @@ SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 CCHQ_BUG_REPORT_EMAIL = 'commcarehq-bug-reports@dimagi.com'
 BILLING_EMAIL = 'billing-comm@dimagi.com'
 INVOICING_CONTACT_EMAIL = 'accounts@dimagi.com'
+BOOKKEEPER_CONTACT_EMAILS = []
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 
 SERVER_ENVIRONMENT = 'localdev'
@@ -444,7 +448,7 @@ CELERY_PERIODIC_QUEUE = 'celery'
 
 SKIP_SOUTH_TESTS = True
 #AUTH_PROFILE_MODULE = 'users.HqUserProfile'
-TEST_RUNNER = 'testrunner.HqTestSuiteRunner'
+TEST_RUNNER = 'testrunner.TwoStageTestRunner'
 # this is what gets appended to @domain after your accounts
 HQ_ACCOUNT_ROOT = "commcarehq.org"
 
@@ -516,6 +520,30 @@ SMS_QUEUE_DOMAIN_RESTRICTED_RETRY_INTERVAL = 15
 # The number of hours to wait before counting a message as stale. Stale
 # messages will not be processed.
 SMS_QUEUE_STALE_MESSAGE_DURATION = 7 * 24
+
+
+####### Pillow Retry Queue Settings #######
+
+# Setting this to False no pillowtop errors will get processed.
+PILLOW_RETRY_QUEUE_ENABLED = False
+
+# If an error still has not been processed in this number of minutes, enqueue it
+# again.
+PILLOW_RETRY_QUEUE_ENQUEUING_TIMEOUT = 60
+
+# Number of minutes a celery task will alot for itself (via lock timeout)
+PILLOW_RETRY_PROCESSING_LOCK_TIMEOUT = 5
+
+# Number of minutes to wait before retrying an unsuccessful processing attempt
+PILLOW_RETRY_REPROCESS_INTERVAL = 5
+
+# Max number of processing attempts before giving up on processing the error
+PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS = 3
+
+# The backoff factor by which to increase re-process intervals by.
+# next_interval = PILLOW_RETRY_REPROCESS_INTERVAL * attempts^PILLOW_RETRY_BACKOFF_FACTOR
+PILLOW_RETRY_BACKOFF_FACTOR = 2
+
 
 ####### auditcare parameters #######
 AUDIT_MODEL_SAVE = [
@@ -630,7 +658,6 @@ LOGGING = {
         'simple': {
             'format': '%(asctime)s %(levelname)s %(message)s'
         },
-
         'pillowtop': {
             'format': '%(asctime)s %(levelname)s %(module)s %(message)s'
         },
@@ -656,6 +683,12 @@ LOGGING = {
             'class': 'logging.FileHandler',
             'formatter': 'verbose',
             'filename': DJANGO_LOG_FILE
+        },
+        'accountinglog': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'formatter': 'verbose',
+            'filename': ACCOUNTING_LOG_FILE
         },
         'couchlog': {
             'level': 'WARNING',
@@ -712,19 +745,27 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
+        'accounting': {
+            'handlers': ['accountinglog', 'sentry', 'console', 'couchlog'],
+            'level': 'INFO',
+            'propagate': False,
+        },
     }
 }
 
 # Invoicing
-STARTING_INVOICE_NUMBER = 0
+INVOICE_STARTING_NUMBER = 0
 INVOICE_PREFIX = ''
-TERMS = ''
-FROM_ADDRESS = {}
+INVOICE_TERMS = ''
+INVOICE_FROM_ADDRESS = {}
 BANK_ADDRESS = {}
 BANK_NAME = ''
-ACCOUNT_NUMBER = ''
-ROUTING_NUMBER = ''
-SWIFT_CODE = ''
+BANK_ACCOUNT_NUMBER = ''
+BANK_ROUTING_NUMBER = ''
+BANK_SWIFT_CODE = ''
+
+STRIPE_PUBLIC_KEY = ''
+STRIPE_PRIVATE_KEY = ''
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -812,7 +853,6 @@ COUCHDB_APPS = [
     'phone',
     'reminders',
     'reportfixtures',
-    'prescriptions',
     'reports',
     'sofabed',
     'sms',
@@ -858,6 +898,7 @@ COUCHDB_APPS = [
     ('care_sa', 'fluff-care_sa'),
     ('cvsu', 'fluff-cvsu'),
     ('mc', 'fluff-mc'),
+    ('m4change', 'm4change'),
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
@@ -902,11 +943,11 @@ DEFAULT_CURRENCY = "USD"
 DEFAULT_CURRENCY_SYMBOL = "$"
 
 SMS_HANDLERS = [
-    'corehq.apps.sms.api.forwarding_handler',
+    'corehq.apps.sms.handlers.forwarding.forwarding_handler',
     'corehq.apps.commtrack.sms.handle',
-    'corehq.apps.sms.api.sms_keyword_handler',
-    'corehq.apps.sms.api.form_session_handler',
-    'corehq.apps.sms.api.fallback_handler',
+    'corehq.apps.sms.handlers.keyword.sms_keyword_handler',
+    'corehq.apps.sms.handlers.form_session.form_session_handler',
+    'corehq.apps.sms.handlers.fallback.fallback_handler',
 ]
 
 SMS_LOADED_BACKENDS = [
@@ -993,7 +1034,8 @@ PILLOWTOPS = {
         'custom.m4change.models.LdHmisCaseFluffPillow',
         'custom.m4change.models.ImmunizationHmisCaseFluffPillow',
         'custom.m4change.models.ProjectIndicatorsCaseFluffPillow',
-        'custom.m4change.models.McctMonthlyAggregateFormFluffPillow'
+        'custom.m4change.models.McctMonthlyAggregateFormFluffPillow',
+        'custom.m4change.models.AllHmisCaseFluffPillow',
     ],
     'mvp': [
         'corehq.apps.indicators.pillows.FormIndicatorPillow',
@@ -1048,8 +1090,6 @@ ES_XFORM_FULL_INDEX_DOMAINS = [
 
 CUSTOM_MODULES = [
     'custom.apps.crs_reports',
-    'custom.bihar',
-
 ]
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"

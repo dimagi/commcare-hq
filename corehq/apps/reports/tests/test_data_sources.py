@@ -1,6 +1,6 @@
 from datetime import datetime
 from django import test as unittest
-from casexml.apps.stock.models import StockState
+from corehq.apps.commtrack.models import StockState
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.reports.commtrack.data_sources import StockStatusDataSource
 from corehq.apps.users.models import WebUser

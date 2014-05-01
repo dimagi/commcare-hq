@@ -1,4 +1,5 @@
-from corehq.apps.reports.fields import ReportSelectField, SelectCaseOwnerField
+from corehq.apps.reports.dont_use.fields import ReportSelectField
+from corehq.apps.reports.filters.users import SelectCaseOwnerFilter
 from django.utils.translation import ugettext_noop
 from corehq.apps.groups.models import Group
 from dimagi.utils.couch.database import get_db
@@ -50,10 +51,6 @@ class SelectSubCenterField(ReportSelectField):
     options = []
 
 
-class SelectASHAField(SelectCaseOwnerField):
+class SelectASHAField(SelectCaseOwnerFilter):
     name = ugettext_noop("ASHA")
     default_option = ugettext_noop("Type ASHA name")
-
-    def update_params(self):
-        case_sharing_groups = Group.get_case_sharing_groups(self.domain)
-        self.context["groups"] = [dict(group_id=group._id, name=group.name) for group in case_sharing_groups]

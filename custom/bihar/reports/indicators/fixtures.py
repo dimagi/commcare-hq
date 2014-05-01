@@ -1,5 +1,4 @@
 from xml.etree import ElementTree
-from django.utils import translation
 from django.utils.translation import ugettext as _
 from corehq.apps.groups.models import Group
 from corehq.util.translation import localize
@@ -97,7 +96,12 @@ class IndicatorFixtureProvider(object):
             )
             root.append(group)
             indicators = ElementTree.Element('indicators')
-            for indicator in self.data_provider.summary_indicators:
+
+            # hack: we have to have something with 'clients' show up first in the list
+            # context: http://manage.dimagi.com/default.asp?107569
+            sorted_indicators = sorted(self.data_provider.summary_indicators,
+                                       key=lambda indicator: -len(self.data_provider.get_case_data(indicator)))
+            for indicator in sorted_indicators:
                 indicators.append(_indicator_to_fixture(indicator))
             group.append(indicators)
             return root

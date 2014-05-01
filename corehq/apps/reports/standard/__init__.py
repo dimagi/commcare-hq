@@ -9,7 +9,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.reports import util
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjectReportDispatcher
 from corehq.apps.reports.exceptions import BadRequestError
-from corehq.apps.reports.fields import FilterUsersField
+from corehq.apps.reports.filters.users import UserTypeFilter
 from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
@@ -64,7 +64,7 @@ class ProjectReportParametersMixin(object):
 
     default_case_type = None
     filter_group_name = None
-    filter_users_field_class = FilterUsersField
+    filter_users_field_class = UserTypeFilter
     include_inactive = False
 
     # set this to set the report's user ids from within the report
@@ -266,8 +266,8 @@ class ProjectReportParametersMixin(object):
 
     @property
     def case_status(self):
-        from corehq.apps.reports.fields import SelectOpenCloseField
-        return self.request_params.get(SelectOpenCloseField.slug, '')
+        from corehq.apps.reports.filters.select import SelectOpenCloseFilter
+        return self.request_params.get(SelectOpenCloseFilter.slug, '')
 
     @property
     def case_group_ids(self):

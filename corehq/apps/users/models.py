@@ -17,6 +17,7 @@ from django.template.loader import render_to_string
 from couchdbkit.ext.django.schema import *
 from couchdbkit.resource import ResourceNotFound
 from dimagi.utils.chunked import chunked
+from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import get_safe_write_kwargs, iter_docs
 from dimagi.utils.logging import notify_exception
 
@@ -28,7 +29,7 @@ from casexml.apps.phone.models import User as CaseXMLUser
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.domain.utils import normalize_domain_name, domain_restricts_superusers
 from corehq.apps.domain.models import LicenseAgreement
-from corehq.apps.users.util import normalize_username, user_data_from_registration_form, format_username, raw_username
+from corehq.apps.users.util import normalize_username, user_data_from_registration_form
 from corehq.apps.users.xml import group_fixture
 from corehq.apps.users.tasks import tag_docs_as_deleted
 from corehq.apps.sms.mixin import CommCareMobileContactMixin, VerifiedNumber, PhoneNumberInUseException, InvalidFormatException
@@ -825,9 +826,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     user_id = userID
 
-    class Meta:
-        app_label = 'users'
-
     def __unicode__(self):
         return "<%s '%s'>" % (self.__class__.__name__, self.get_id)
 
@@ -1122,10 +1120,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         """
         if domain is given, checks to make sure the user is a member of that domain
         returns None if there's no user found or if the domain check fails
-
         """
         try:
-            couch_user = cls.wrap_correctly(cls.get_db().get(userID))
+            couch_user = cls.wrap_correctly(cache_core.cached_open_doc(cls.get_db(), userID))
         except ResourceNotFound:
             return None
         if couch_user.doc_type != cls.__name__ and cls.__name__ != "CouchUser":
@@ -1172,7 +1169,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             return
 
         if User.objects.filter(username=username).exists():
-            raise self.Inconsistent("User with username %s already exists" % self.username)
+            raise self.Inconsistent("User with username %s already exists" % username)
 
         django_user = self.get_django_user()
         django_user.DO_NOT_SAVE_COUCH_USER = True
@@ -1223,30 +1220,36 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     def is_deleted(self):
         return self.base_doc.endswith(DELETED_SUFFIX)
 
-    def get_viewable_reports(self, domain=None, name=True, slug=False):
+    def get_viewable_reports(self, domain=None, name=False, slug=False):
         try:
             domain = domain or self.current_domain
         except AttributeError:
             domain = None
-        try:
-            if self.is_commcare_user():
-                role = self.get_role(domain)
-                if role is None:
-                    models = []
-                else:
-                    models = role.permissions.view_report_list
-            else:
-                models = self.get_domain_membership(domain).viewable_reports()
 
-            if slug:
-                return [to_function(m).slug for m in models]
-            if name:
-                return [to_function(m).name for m in models]
-            return models
-        except AttributeError:
-            # todo: what is this here for? we should really be catching something
-            # more specific and the try/catch should be more isolated.
-            return []
+        if self.is_commcare_user():
+            role = self.get_role(domain)
+            if role is None:
+                models = []
+            else:
+                models = role.permissions.view_report_list
+        else:
+            dm = self.get_domain_membership(domain)
+            models = dm.viewable_reports() if dm else []
+
+        def slug_name(model):
+            try:
+                if slug:
+                    return to_function(model).slug
+                if name:
+                    return to_function(model).name
+            except AttributeError:
+                logging.warning("Unable to load report model: %s", model)
+                return None
+
+        if slug or name:
+            return filter(None, [slug_name(m) for m in models])
+
+        return models
 
     def get_exportable_reports(self, domain=None):
         viewable_reports = self.get_viewable_reports(domain=domain, slug=True)
@@ -1334,7 +1337,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         self.user_data              = old_couch_user.default_account.user_data
 
     @classmethod
-    def create(cls, domain, username, password, email=None, uuid='', date='', phone_number=None, **kwargs):
+    def create(cls, domain, username, password, email=None, uuid='', date='', phone_number=None, commit=True,
+               **kwargs):
         """
         used to be a function called `create_hq_user_from_commcare_registration_info`
 
@@ -1353,7 +1357,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         commcare_user.domain_membership = DomainMembership(domain=domain, **kwargs)
 
-        commcare_user.save(**get_safe_write_kwargs())
+        if commit:
+            commcare_user.save(**get_safe_write_kwargs())
 
         return commcare_user
 
@@ -1489,13 +1494,15 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def get_forms(self, deleted=False, wrap=True, include_docs=False):
         if deleted:
             view_name = 'users/deleted_forms_by_user'
+            startkey = [self.user_id]
         else:
-            view_name = 'couchforms/by_user'
+            view_name = 'reports_forms/all_forms'
+            startkey = ['submission user', self.domain, self.user_id]
 
         db = XFormInstance.get_db()
         doc_ids = [r['id'] for r in db.view(view_name,
-            startkey=[self.user_id],
-            endkey=[self.user_id, {}],
+            startkey=startkey,
+            endkey=startkey + [{}],
             reduce=False,
             include_docs=False,
         )]
@@ -1508,10 +1515,11 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     @property
     def form_count(self):
-        result = XFormInstance.view('couchforms/by_user',
-            startkey=[self.user_id],
-            endkey=[self.user_id, {}],
-                group_level=0
+        key = ["submission user", self.domain, self.user_id]
+        result = XFormInstance.view('reports_forms/all_forms',
+            startkey=key,
+            endkey=key + [{}],
+            reduce=True
         ).one()
         if result:
             return result['value']
@@ -1591,20 +1599,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         for case in self.get_cases(deleted=True):
             case.doc_type = chop_suffix(case.doc_type)
             case.save()
-        self.save()
-
-    def transfer_to_domain(self, domain, app_id):
-        username = format_username(raw_username(self.username), domain)
-        self.change_username(username)
-        self.domain = domain
-        for form in self.get_forms():
-            form.domain = domain
-            form.app_id = app_id
-            form.save()
-        for case in self.get_cases():
-            case.domain = domain
-            case.save()
-        self.domain_membership = DomainMembership(domain=domain)
         self.save()
 
     def get_group_fixture(self):
@@ -1931,6 +1925,10 @@ class FakeUser(WebUser):
     """
     def save(self, **kwargs):
         raise NotImplementedError("You aren't allowed to do that!")
+
+    @property
+    def _id(self):
+        return "fake-user"
 
 
 class PublicUser(FakeUser):

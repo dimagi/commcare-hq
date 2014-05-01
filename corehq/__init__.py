@@ -1,13 +1,14 @@
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqadmin.reports import AdminUserReport, AdminAppReport
+from corehq.apps.hqpillow_retry.views import PillowErrorsReport
 from corehq.apps.reports.standard import (monitoring, inspect, export,
     deployments, sms, ivr)
 from corehq.apps.receiverwrapper import reports as receiverwrapper
 import phonelog.reports as phonelog
-import phonelog.old_reports as old_phonelog
 from corehq.apps.reports.commtrack import standard as commtrack_reports
 from corehq.apps.reports.commtrack import maps as commtrack_maps
 from corehq.apps.reports.commconnect import system_overview
+from corehq.apps.fixtures.interface import FixtureViewInterface, FixtureEditInterface
 import hashlib
 from dimagi.utils.modules import to_function
 import logging
@@ -35,16 +36,14 @@ def REPORTS(project):
         (ugettext_lazy("Manage Deployments"), (
             deployments.ApplicationStatusReport,
             receiverwrapper.SubmissionErrorReport,
-            old_phonelog.FormErrorReport,
-            old_phonelog.DeviceLogDetailsReport
-        )),
-        (ugettext_lazy("Demos for Previewers"), (
-            DemoMapReport, DemoMapReport2, DemoMapCaseList,
             phonelog.FormErrorReport,
             phonelog.DeviceLogDetailsReport
         )),
+        (ugettext_lazy("Demos for Previewers"), (
+            DemoMapReport, DemoMapReport2, DemoMapCaseList,
+        )),
     ]
-    
+
     if project.commtrack_enabled:
         reports.insert(0, (ugettext_lazy("Commtrack"), (
             commtrack_reports.CurrentStockStatusReport,
@@ -147,6 +146,13 @@ EDIT_DATA_INTERFACES = (
     )),
 )
 
+FIXTURE_INTERFACES = (
+    (_('Lookup Tables'), (
+        FixtureEditInterface,
+        FixtureViewInterface,
+    )),
+)
+
 
 from corehq.apps.adm.reports.supervisor import SupervisorReportsADMSection
 
@@ -207,6 +213,7 @@ from corehq.apps.accounting.interface import (
     AccountingInterface,
     SubscriptionInterface,
     SoftwarePlanInterface,
+    InvoiceInterface,
 )
 
 ACCOUNTING_ADMIN_INTERFACES = (
@@ -214,6 +221,7 @@ ACCOUNTING_ADMIN_INTERFACES = (
         AccountingInterface,
         SubscriptionInterface,
         SoftwarePlanInterface,
+        InvoiceInterface,
     )),
 )
 
@@ -238,6 +246,7 @@ ADMIN_REPORTS = (
         AdminDomainStatsReport,
         AdminUserReport,
         AdminAppReport,
+        PillowErrorsReport
     )),
 )
 

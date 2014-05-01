@@ -1,6 +1,7 @@
+from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager import suite_xml as sx
 from corehq.apps.app_manager.util import is_sort_only_column
-from corehq.apps.app_manager.xpath import dot_interpolate, CaseXPath, IndicatorXpath, LedgerdbXpath
+from corehq.apps.app_manager.xpath import dot_interpolate, CaseXPath, IndicatorXpath, LedgerdbXpath, LocationXpath
 
 CASE_PROPERTY_MAP = {
     # IMPORTANT: if you edit this you probably want to also edit
@@ -60,7 +61,7 @@ class BaseXpathGenerator(object):
         self.module = module
         self.detail = detail
         self.column = column
-        self.id_strings = sx.IdStrings()
+        self.id_strings = id_strings
 
     @property
     def xpath(self):
@@ -82,7 +83,7 @@ class FormattedDetailColumn(object):
         self.column = column
         self.sort_element = sort_element
         self.order = order
-        self.id_strings = sx.IdStrings()
+        self.id_strings = id_strings
 
     @property
     def locale_id(self):
@@ -370,6 +371,16 @@ class IndicatorXpathGenerator(BaseXpathGenerator):
         indicator_set, indicator = self.column.field_property.split('/', 1)
         instance_id = self.id_strings.indicator_instance(indicator_set)
         return IndicatorXpath(instance_id).indicator(indicator)
+
+
+@register_type_processor(sx.FIELD_TYPE_LOCATION)
+class LocationXpathGenerator(BaseXpathGenerator):
+    @property
+    def xpath(self):
+        from corehq.apps.locations.util import parent_child
+        hierarchy = parent_child(self.app.domain)
+        return LocationXpath('commtrack:locations').location(self.column.field_property, hierarchy)
+
 
 @register_type_processor(sx.FIELD_TYPE_LEDGER)
 class LedgerXpathGenerator(BaseXpathGenerator):

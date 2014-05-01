@@ -8,8 +8,9 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig
 from casexml.apps.phone.tests.utils import synclog_id_from_restore_payload
-from corehq.apps.commtrack.models import ConsumptionConfig, StockRestoreConfig, RequisitionCase, Product
+from corehq.apps.commtrack.models import ConsumptionConfig, StockRestoreConfig, RequisitionCase, Product, StockState
 from corehq.apps.consumption.shortcuts import set_default_consumption_for_domain
+from couchforms.models import XFormInstance
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.stock import const as stockconst
 from casexml.apps.stock.models import StockReport, StockTransaction
@@ -167,7 +168,9 @@ class CommTrackSubmissionTest(CommTrackTest):
     def submit_xml_form(self, xml_method, **submit_extras):
         from casexml.apps.case import settings
         settings.CASEXML_FORCE_DOMAIN_CHECK = False
+        instance_id = uuid.uuid4().hex
         instance = submission_wrap(
+            instance_id,
             self.products,
             self.user,
             self.sp,
@@ -179,6 +182,7 @@ class CommTrackSubmissionTest(CommTrackTest):
             domain=self.domain.name,
             **submit_extras
         )
+        return instance_id
 
     def check_stock_models(self, case, product_id, expected_soh, expected_qty, section_id):
         if not isinstance(expected_qty, Decimal):
@@ -465,6 +469,71 @@ class CommTrackSyncTest(CommTrackSubmissionTest):
         # now restore should have the case
         check_user_has_case(self, self.casexml_user, self.sp_block, should_have=True,
                             restore_id=self.sync_log_id, version=V2, line_by_line=False)
+
+
+class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
+
+    def testArchiveLastForm(self):
+        initial_amounts = [(p._id, float(100)) for p in self.products]
+        self.submit_xml_form(balance_submission(initial_amounts))
+
+        final_amounts = [(p._id, float(50)) for i, p in enumerate(self.products)]
+        second_form_id = self.submit_xml_form(balance_submission(final_amounts))
+
+        def _assert_initial_state():
+            self.assertEqual(1, StockReport.objects.filter(form_id=second_form_id).count())
+            # 6 = 3 stockonhand and 3 inferred consumption txns
+            self.assertEqual(6, StockTransaction.objects.filter(report__form_id=second_form_id).count())
+            self.assertEqual(3, StockState.objects.filter(case_id=self.sp._id).count())
+            for state in StockState.objects.filter(case_id=self.sp._id):
+                self.assertEqual(Decimal(50), state.stock_on_hand)
+                self.assertIsNotNone(state.daily_consumption)
+
+        # check initial setup
+        _assert_initial_state()
+
+        # archive and confirm commtrack data is deleted
+        form = XFormInstance.get(second_form_id)
+        form.archive()
+        self.assertEqual(0, StockReport.objects.filter(form_id=second_form_id).count())
+        self.assertEqual(0, StockTransaction.objects.filter(report__form_id=second_form_id).count())
+        self.assertEqual(3, StockState.objects.filter(case_id=self.sp._id).count())
+        for state in StockState.objects.filter(case_id=self.sp._id):
+            # balance should be reverted to 100 in the StockState
+            self.assertEqual(Decimal(100), state.stock_on_hand)
+            # consumption should be none since there will only be 1 data point
+            self.assertIsNone(state.daily_consumption)
+
+        # unarchive and confirm commtrack data is restored
+        form.unarchive()
+        _assert_initial_state()
+
+    def testArchiveOnlyForm(self):
+        # check no data in stock states
+        self.assertEqual(0, StockState.objects.filter(case_id=self.sp._id).count())
+
+        initial_amounts = [(p._id, float(100)) for p in self.products]
+        form_id = self.submit_xml_form(balance_submission(initial_amounts))
+
+        # check that we made stuff
+        def _assert_initial_state():
+            self.assertEqual(1, StockReport.objects.filter(form_id=form_id).count())
+            self.assertEqual(3, StockTransaction.objects.filter(report__form_id=form_id).count())
+            self.assertEqual(3, StockState.objects.filter(case_id=self.sp._id).count())
+            for state in StockState.objects.filter(case_id=self.sp._id):
+                self.assertEqual(Decimal(100), state.stock_on_hand)
+        _assert_initial_state()
+
+        # archive and confirm commtrack data is cleared
+        form = XFormInstance.get(form_id)
+        form.archive()
+        self.assertEqual(0, StockReport.objects.filter(form_id=form_id).count())
+        self.assertEqual(0, StockTransaction.objects.filter(report__form_id=form_id).count())
+        self.assertEqual(0, StockState.objects.filter(case_id=self.sp._id).count())
+
+        # unarchive and confirm commtrack data is restored
+        form.unarchive()
+        _assert_initial_state()
 
 
 def _report_soh(amounts, case_id, section_id='stock', report=None):

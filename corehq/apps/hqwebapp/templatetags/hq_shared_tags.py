@@ -4,6 +4,7 @@ from django import template
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
+from django.utils.datastructures import SortedDict
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from corehq.apps.domain.models import Domain
@@ -14,14 +15,17 @@ from dimagi.utils.web import json_handler
 
 register = template.Library()
 
+
 @register.filter
 def JSON(obj):
     return mark_safe(json.dumps(obj, default=json_handler))
+
 
 @register.filter
 def to_javascript_string(obj):
     # seriously: http://stackoverflow.com/a/1068548/8207
     return mark_safe(JSON(obj).replace('</script>', '<" + "/script>'))
+
 
 @register.filter
 def BOOL(obj):
@@ -32,21 +36,25 @@ def BOOL(obj):
 
     return 'true' if obj else 'false'
 
+
 @register.filter
 def dict_lookup(dict, key):
     '''Get an item from a dictionary.'''
     return dict.get(key)
     
+
 @register.filter
 def array_lookup(array, index):
     '''Get an item from an array.'''
     if index < len(array):
         return array[index]
     
+
 @register.simple_tag
 def dict_as_query_string(dict, prefix=""):
     '''Convert a dictionary to a query string, minus the initial ?'''
     return "&".join(["%s%s=%s" % (prefix, key, value) for key, value in dict.items()])
+
 
 @register.filter
 def add_days(date, days=1):
@@ -57,6 +65,7 @@ def add_days(date, days=1):
     except:
         return datetime.strptime(date,'%m/%d/%Y').date() + span 
     
+
 @register.filter
 def concat(str1, str2):
     """Concatenate two strings"""
@@ -66,6 +75,8 @@ try:
     from resource_versions import resource_versions
 except (ImportError, SyntaxError):
     resource_versions = {}
+
+
 @register.simple_tag
 def static(url):
     resource_url = url
@@ -74,6 +85,7 @@ def static(url):
     if version:
         url += "?version=%s" % version
     return url
+
 
 @register.simple_tag
 def get_report_analytics_tag(request):
@@ -87,6 +99,7 @@ def get_report_analytics_tag(request):
 
         return "_gaq.push(['_setCustomVar', 2, 'report', '%s', 3]);\n_gaq.push(['_trackEvent', 'Viewed Report', '%s']);" % (report_name, report_name)
     return ''
+
 
 @register.simple_tag
 def domains_for_user(request, selected_domain=None):
@@ -135,6 +148,7 @@ def domains_for_user(request, selected_domain=None):
     domain_list_str = "".join(lst)
     return domain_list_str
 
+
 @register.simple_tag
 def list_my_domains(request):
     cached_val = cache_core.get_cached_prop(request.couch_user.get_id, 'list_my_domains')
@@ -172,19 +186,21 @@ def list_my_orgs(request):
 def commcare_user():
     return _(settings.COMMCARE_USER_TERM)
 
+
 @register.simple_tag
 def hq_web_user():
     return _(settings.WEB_USER_TERM)
+
 
 @register.filter
 def mod(value, arg):
     return value % arg
 
 
-# This is taken verbatim from https://code.djangoproject.com/ticket/15583
+# This is taken from https://code.djangoproject.com/ticket/15583
 @register.filter(name='sort')
 def listsort(value):
-    if isinstance(value,dict):
+    if isinstance(value, dict):
         new_dict = SortedDict()
         key_list = value.keys()
         key_list.sort()
@@ -198,6 +214,7 @@ def listsort(value):
     else:
         return value
 listsort.is_safe = True
+
 
 @register.filter(name='getattr')
 def get_attribute(obj, arg):

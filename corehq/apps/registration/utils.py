@@ -1,7 +1,12 @@
 import logging
 import uuid
-from datetime import datetime
+from datetime import datetime, date, timedelta
 from django.core.mail import send_mail
+from corehq import toggles
+from corehq.apps.accounting.models import (
+    SoftwarePlanEdition, DefaultProductPlan, BillingAccount,
+    BillingAccountType, Subscription, SubscriptionAdjustmentMethod, Currency,
+)
 from corehq.apps.registration.models import RegistrationRequest
 from dimagi.utils.web import get_ip, get_url_base
 from django.conf import settings
@@ -74,6 +79,29 @@ def request_new_domain(request, form, org, domain_type=None, new_user=True):
     if not new_domain.name:
         new_domain.name = new_domain._id
         new_domain.save() # we need to get the name from the _id
+
+    # Create a 30 Day Trial subscription to the Advanced Plan
+    if (toggles.ACCOUNTING_PREVIEW.enabled(current_user.username)
+        or toggles.ACCOUNTING_PREVIEW.enabled(new_domain.name)
+    ):
+        advanced_plan_version = DefaultProductPlan.get_default_plan_by_domain(
+            new_domain, edition=SoftwarePlanEdition.ADVANCED
+        )
+        expiration_date = date.today() + timedelta(days=30)
+        trial_account = BillingAccount.objects.get_or_create(
+            name="Trial Account for %s" % new_domain.name,
+            currency=Currency.get_default(),
+            created_by_domain=new_domain.name,
+            account_type=BillingAccountType.TRIAL,
+        )[0]
+        trial_subscription = Subscription.new_domain_subscription(
+            trial_account, new_domain.name, advanced_plan_version,
+            date_end=expiration_date,
+            adjustment_method=SubscriptionAdjustmentMethod.TRIAL,
+            is_trial=True,
+        )
+        trial_subscription.is_active = True
+        trial_subscription.save()
 
     dom_req.domain = new_domain.name
 

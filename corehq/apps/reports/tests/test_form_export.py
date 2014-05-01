@@ -1,7 +1,7 @@
 from StringIO import StringIO
 import json
 from django.core.urlresolvers import reverse
-from django.utils.unittest.case import TestCase
+from django.test import TestCase
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.reports.models import FormExportSchema
 from corehq.apps.users.models import CommCareUser

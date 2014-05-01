@@ -2,22 +2,24 @@ import calendar
 from decimal import Decimal
 import datetime
 import logging
-from django.db.models import Q
+from django.db.models import F, Q
 
 from django.utils.translation import ugettext as _
 from corehq.apps.accounting.utils import ensure_domain_instance
 from dimagi.utils.decorators.memoized import memoized
 
 from corehq import Domain
-from corehq.apps.accounting.exceptions import LineItemError, InvoiceError
+from corehq.apps.accounting.exceptions import LineItemError, InvoiceError, InvoiceEmailThrottledError
 from corehq.apps.accounting.models import (
     LineItem, FeatureType, Invoice, DefaultProductPlan, Subscriber,
     Subscription, BillingAccount, SubscriptionAdjustment,
-    SubscriptionAdjustmentMethod, BillingRecord, InvoicePdf, BillingContactInfo, SoftwarePlanEdition)
+    SubscriptionAdjustmentMethod, BillingRecord,
+    BillingContactInfo, SoftwarePlanEdition, CreditLine,
+)
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.users.models import CommCareUser
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('accounting')
 
 
 DEFAULT_DAYS_UNTIL_DUE = 30
@@ -38,6 +40,7 @@ class DomainInvoiceFactory(object):
         self.date_start = date_start
         self.date_end = date_end
         self.domain = ensure_domain_instance(domain)
+        self.logged_throttle_error = False
         if self.domain is None:
             raise InvoiceError("Domain '%s' is not a valid domain on HQ!"
                                % domain)
@@ -49,24 +52,25 @@ class DomainInvoiceFactory(object):
 
     def get_subscriptions(self):
         subscriptions = Subscription.objects.filter(
-            subscriber=self.subscriber, date_start__lt=self.date_end
-        ).filter(Q(date_end=None) | Q(date_end__gte=self.date_start)
-        ).order_by('date_start').all()
+            subscriber=self.subscriber, date_start__lte=self.date_end
+        ).filter(Q(date_end=None) | Q(date_end__gt=self.date_start)
+        ).filter(Q(date_end=None) | Q(date_end__gt=F('date_start'))
+        ).order_by('date_start', 'date_end').all()
         return list(subscriptions)
 
     def get_community_ranges(self, subscriptions):
         community_ranges = []
-        prev_sub_end = self.date_end
         if len(subscriptions) == 0:
             community_ranges.append((self.date_start, self.date_end))
         else:
+            prev_sub_end = self.date_end
             for ind, sub in enumerate(subscriptions):
                 if ind == 0 and sub.date_start > self.date_start:
                     # the first subscription started AFTER the beginning
                     # of the invoicing period
                     community_ranges.append((self.date_start, sub.date_start))
 
-                if prev_sub_end < self.date_end:
+                if prev_sub_end < self.date_end and sub.date_start > prev_sub_end:
                     community_ranges.append((prev_sub_end, sub.date_start))
                 prev_sub_end = sub.date_end
 
@@ -92,10 +96,12 @@ class DomainInvoiceFactory(object):
             return
         do_not_invoice = any([s.do_not_invoice for s in subscriptions])
         account = BillingAccount.get_or_create_account_by_domain(
-            self.domain.name, created_by=self.__class__.__name__)[0]
+            self.domain.name, created_by=self.__class__.__name__,
+            created_by_invoicing=True)[0]
         if account.date_confirmed_extra_charges is None:
             logger.error(
-                "[BILLING] Domain '%s' is going to get charged on "
+                "[BILLING] "
+                "Domain '%s' is going to get charged on "
                 "Community, but they haven't formally acknowledged this. "
                 "Someone on ops should reconcile this soon. To be on the "
                 "safe side, we've marked the invoices as Do Not Invoice."
@@ -132,6 +138,20 @@ class DomainInvoiceFactory(object):
             self.create_invoice_for_subscription(subscription)
 
     def create_invoice_for_subscription(self, subscription):
+        if subscription.is_trial:
+            # Don't create invoices for trial subscriptions
+            logger.info("[BILLING] Skipping invoicing for Subscription "
+                        "%s because it's a trial." % subscription.pk)
+            return
+
+        if subscription.auto_generate_credits:
+            for product_rate in subscription.plan_version.product_rates:
+                CreditLine.add_credit(
+                    product_rate.monthly_fee,
+                    subscription=subscription,
+                    product_type=product_rate.product.product_type,
+                )
+
         days_until_due = DEFAULT_DAYS_UNTIL_DUE
         if subscription.date_delay_invoicing is not None:
             td = subscription.date_delay_invoicing - self.date_end
@@ -173,7 +193,13 @@ class DomainInvoiceFactory(object):
         invoice.update_balance()
         invoice.save()
 
-        BillingRecord.generate_record(invoice)
+        record = BillingRecord.generate_record(invoice)
+        try:
+            record.send_email()
+        except InvoiceEmailThrottledError as e:
+            if not self.logged_throttle_error:
+                logger.error("[BILLING] %s" % e)
+                self.logged_throttle_error = True
 
         return invoice
 

@@ -1,5 +1,6 @@
 from collections import namedtuple
 from distutils.version import LooseVersion
+from corehq.apps.app_manager import id_strings
 import urllib
 from django.core.urlresolvers import reverse
 from lxml import etree
@@ -12,9 +13,10 @@ from corehq.apps.app_manager.util import split_path, create_temp_sort_column, la
 from corehq.apps.app_manager.xform import SESSION_CASE_ID, autoset_owner_id_for_open_case, autoset_owner_id_for_subcase
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_url_base
-from .xpath import dot_interpolate, CaseIDXPath, session_var, CaseTypeXpath
+from .xpath import dot_interpolate, CaseIDXPath, session_var, CaseTypeXpath, FixtureXpath
 
 FIELD_TYPE_INDICATOR = 'indicator'
+FIELD_TYPE_LOCATION = 'location'
 FIELD_TYPE_PROPERTY = 'property'
 FIELD_TYPE_LEDGER = 'ledger'
 
@@ -328,77 +330,6 @@ class Suite(XmlObject):
     descriptor = StringField('@descriptor')
 
 
-class IdStrings(object):
-
-    def homescreen_title(self):
-        return 'homescreen.title'
-
-    def app_display_name(self):
-        return "app.display.name"
-
-    def xform_resource(self, form):
-        return form.unique_id
-
-    def locale_resource(self, lang):
-        return u'app_{lang}_strings'.format(lang=lang)
-
-    def media_resource(self, multimedia_id, name):
-        return u'media-{id}-{name}'.format(id=multimedia_id, name=name)
-
-    def detail(self, module, detail_type):
-        return u"m{module.id}_{detail_type}".format(module=module, detail_type=detail_type)
-
-    def detail_title_locale(self, module, detail_type):
-        return u"m{module.id}.{detail_type}.title".format(module=module, detail_type=detail_type)
-
-    def detail_column_header_locale(self, module, detail_type, column):
-        return u"m{module.id}.{detail_type}.{d.model}_{d.field}_{d_id}.header".format(
-            detail_type=detail_type,
-            module=module,
-            d=column,
-            d_id=column.id + 1
-        )
-
-    def detail_column_enum_variable(self, module, detail_type, column, key):
-        return u"m{module.id}.{detail_type}.{d.model}_{d.field}_{d_id}.enum.k{key}".format(
-            module=module,
-            detail_type=detail_type,
-            d=column,
-            d_id=column.id + 1,
-            key=key,
-        )
-
-    def menu(self, module):
-        put_in_root = getattr(module, 'put_in_root', False)
-        return 'root' if put_in_root else u"m{module.id}".format(module=module)
-
-    def module_locale(self, module):
-        return module.get_locale_id()
-
-    def form_locale(self, form):
-        return form.get_locale_id()
-
-    def form_command(self, form):
-        return form.get_command_id()
-
-    def case_list_command(self, module):
-        return module.get_case_list_command_id()
-
-    def case_list_locale(self, module):
-        return module.get_case_list_locale_id()
-
-    def referral_list_command(self, module):
-        """1.0 holdover"""
-        return module.get_referral_list_command_id()
-
-    def referral_list_locale(self, module):
-        """1.0 holdover"""
-        return module.get_referral_list_locale_id()
-
-    def indicator_instance(self, indicator_set_name):
-        return u"indicators_%s" % indicator_set_name
-
-
 def get_detail_column_infos(detail, include_sort):
     """
     This is not intented to be a widely used format
@@ -446,7 +377,7 @@ class SuiteGenerator(object):
         self.app = app
         # this is actually so slow it's worth caching
         self.modules = list(self.app.get_modules())
-        self.id_strings = IdStrings()
+        self.id_strings = id_strings
 
     @property
     def xform_resources(self):
@@ -672,7 +603,7 @@ class SuiteGenerator(object):
                     ))
                     if self.app.commtrack_enabled:
                         e.datums.append(SessionDatum(
-                            id='throwaway',
+                            id='product_id',
                             nodeset="instance('products')/products/product",
                             value="./@id",
                             detail_select=self.get_detail_id_safe(module, 'product_short')
@@ -681,7 +612,7 @@ class SuiteGenerator(object):
                         e.instances.append(Instance(id='ledgerdb', src='jr://instance/ledgerdb'))
                 yield e
 
-    def get_indicator_instances(self, module):
+    def get_indicator_instances(self, module, form=None):
         indicator_sets = []
         for _, detail, _ in module.get_details():
             for column in detail.get_columns():
@@ -690,12 +621,42 @@ class SuiteGenerator(object):
                     if indicator_set not in indicator_sets:
                         indicator_sets.append(indicator_set)
                         yield Instance(id=self.id_strings.indicator_instance(indicator_set),
-                               src='jr://fixture/indicators:%s' % indicator_set)
+                                       src='jr://fixture/indicators:%s' % indicator_set)
+
+    def get_location_instances(self, module, form=None):
+        # will return an empty list or a list containing the one location instance
+        for _, detail, _ in module.get_details():
+            for column in detail.get_columns():
+                if column.field_type == FIELD_TYPE_LOCATION:
+                    return [Instance(id='commtrack:locations',
+                                     src='jr://fixture/commtrack:locations')]
+        return []
+
+    def get_fixture_instances(self, module, form=None):
+        from corehq.apps.app_manager.models import AUTO_SELECT_FIXTURE
+        if form and hasattr(form, 'actions'):
+            actions = form.actions.auto_select_actions[AUTO_SELECT_FIXTURE]
+            fixtures = set([a.auto_select.value_source for a in actions])
+            for fixture in fixtures:
+                yield Instance(id='{0}s'.format(fixture), src='jr://fixture/item-list:{0}'.format(fixture))
+
+    def get_extra_instances(self, module, form=None):
+        for instance in self.get_indicator_instances(module, form):
+            yield instance
+        for instance in self.get_location_instances(module, form):
+            yield instance
+        for instance in self.get_fixture_instances(module, form):
+            yield instance
 
     def add_case_sharing_assertion(self, entry):
         entry.instances.append(Instance(id='groups', src='jr://fixture/user-groups'))
         assertion = Assertion(test="count(instance('groups')/groups/group) = 1")
         assertion.text.append(Text(locale_id='case_sharing.exactly_one_group'))
+        entry.assertions.append(assertion)
+
+    def add_fixture_auto_select_assertion(self, entry, test):
+        assertion = Assertion(test=test)
+        assertion.text.append(Text(locale_id='case_autoload.exactly_one_fixture'))
         entry.assertions.append(assertion)
 
     def configure_entry_module_form(self, module, e, form=None, use_filter=True, **kwargs):
@@ -724,7 +685,7 @@ class SuiteGenerator(object):
                 yield Instance(id='commcaresession',
                                src='jr://instance/session')
 
-            for instance in self.get_indicator_instances(module):
+            for instance in self.get_extra_instances(module):
                 yield instance
 
         e.instances.extend(get_instances())
@@ -755,6 +716,9 @@ class SuiteGenerator(object):
             ))
 
     def configure_entry_advanced_form(self, module, e, form, **kwargs):
+        from corehq.apps.app_manager.models import AUTO_SELECT_USER, AUTO_SELECT_CASE, \
+            AUTO_SELECT_FIXTURE, AUTO_SELECT_RAW
+
         def case_sharing_requires_assertion(form):
             actions = form.actions.open_cases
             for action in actions:
@@ -763,11 +727,15 @@ class SuiteGenerator(object):
             return False
 
         def get_instances():
-            yield Instance(id='casedb', src='jr://instance/casedb')
+            if any(a.requires_casedb for a in form.actions.load_update_cases):
+                yield Instance(id='casedb', src='jr://instance/casedb')
 
             parent_select = any(action.parent_tag for action in form.actions.load_update_cases)
             form_filter = any(form.form_filter for form in module.get_forms())
-            if parent_select or (form_filter and module.all_forms_require_a_case()):
+            if parent_select or (form_filter and module.all_forms_require_a_case()) or \
+                    form.actions.auto_select_actions[AUTO_SELECT_USER] or \
+                    form.actions.auto_select_actions[AUTO_SELECT_CASE] or \
+                    form.actions.auto_select_actions[AUTO_SELECT_RAW]:
                 yield Instance(id='commcaresession', src='jr://instance/session')
             elif module.get_app().commtrack_enabled:
                 try:
@@ -776,7 +744,7 @@ class SuiteGenerator(object):
                 except IndexError:
                     pass
 
-            for instance in self.get_indicator_instances(module):
+            for instance in self.get_extra_instances(module, form):
                 yield instance
 
         e.instances.extend(get_instances())
@@ -786,6 +754,7 @@ class SuiteGenerator(object):
                 if module_id == module.unique_id:
                     return module
 
+                from corehq.apps.app_manager.models import ModuleNotFoundException
                 try:
                     target = module.get_app().get_module_by_unique_id(module_id)
                     if target.case_type != case_type:
@@ -797,7 +766,7 @@ class SuiteGenerator(object):
                             "Module with ID %s has no product details configuration" % module_id
                         )
                     return target
-                except KeyError as ex:
+                except ModuleNotFoundException as ex:
                     raise ParentModuleReferenceError(ex.message)
             else:
                 if case_type == module.case_type:
@@ -814,25 +783,56 @@ class SuiteGenerator(object):
                     )
 
         for action in form.actions.load_update_cases:
-            if action.parent_tag:
-                parent_action = form.actions.actions_meta_by_tag[action.parent_tag]['action']
-                parent_filter = self.get_parent_filter(parent_action.parent_reference_id, parent_action.case_session_var)
+            auto_select = action.auto_select
+            if auto_select and auto_select.mode:
+                if auto_select.mode == AUTO_SELECT_USER:
+                    e.datums.append(SessionDatum(
+                        id=action.case_session_var,
+                        function=session_var(auto_select.value_key, subref='user')
+                    ))
+                elif auto_select.mode == AUTO_SELECT_CASE:
+                    try:
+                        ref = form.actions.actions_meta_by_tag[auto_select.value_source]['action']
+                        sess_var = ref.case_session_var
+                    except KeyError:
+                        raise ValueError("Case tag not found: %s" % auto_select.value_source)
+
+                    e.datums.append(SessionDatum(
+                        id=action.case_session_var,
+                        function=CaseIDXPath(session_var(sess_var)).case().slash(auto_select.value_key)
+                    ))
+                elif auto_select.mode == AUTO_SELECT_FIXTURE:
+                    xpath_base = FixtureXpath(auto_select.value_source).table()
+                    e.datums.append(SessionDatum(
+                        id=action.case_session_var,
+                        function=xpath_base.slash(auto_select.value_key)
+                    ))
+                    self.add_fixture_auto_select_assertion(e, "{0} = 1".format(xpath_base.count()))
+                elif auto_select.mode == AUTO_SELECT_RAW:
+                    e.datums.append(SessionDatum(
+                        id=action.case_session_var,
+                        function=auto_select.value_key
+                    ))
             else:
-                parent_filter = ''
+                if action.parent_tag:
+                    parent_action = form.actions.actions_meta_by_tag[action.parent_tag]['action']
+                    parent_filter = self.get_parent_filter(parent_action.parent_reference_id, parent_action.case_session_var)
+                else:
+                    parent_filter = ''
 
-            referenced_by = form.actions.actions_meta_by_parent_tag.get(action.case_tag)
+                referenced_by = form.actions.actions_meta_by_parent_tag.get(action.case_tag)
 
-            target_module = get_target_module(action.case_type, action.details_module)
-            e.datums.append(SessionDatum(
-                id=action.case_session_var,
-                nodeset=(self.get_nodeset_xpath(action.case_type, target_module, False) + parent_filter),
-                value="./@case_id",
-                detail_select=self.get_detail_id_safe(target_module, 'case_short'),
-                detail_confirm=(
-                    self.get_detail_id_safe(target_module, 'case_long')
-                    if not referenced_by or referenced_by['type'] != 'load' else None
-                )
-            ))
+                target_module = get_target_module(action.case_type, action.details_module)
+                e.datums.append(SessionDatum(
+                    id=action.case_session_var,
+                    nodeset=(self.get_nodeset_xpath(action.case_type, target_module, False) + parent_filter),
+                    value="./@case_id",
+                    detail_select=self.get_detail_id_safe(target_module, 'case_short'),
+                    detail_confirm=(
+                        self.get_detail_id_safe(target_module, 'case_long')
+                        if not referenced_by or referenced_by['type'] != 'load' else None
+                    )
+                ))
 
         if module.get_app().commtrack_enabled:
             try:
@@ -840,7 +840,7 @@ class SuiteGenerator(object):
                 if last_action.show_product_stock:
                     target_module = get_target_module(action.case_type, last_action.details_module, True)
                     e.datums.append(SessionDatum(
-                        id='throwaway',
+                        id='product_id',
                         nodeset="instance('products')/products/product",
                         value="./@id",
                         detail_select=self.get_detail_id_safe(target_module, 'product_short')

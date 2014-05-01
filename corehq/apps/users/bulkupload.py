@@ -17,6 +17,7 @@ from dimagi.utils.excel import flatten_json, json_to_headers, \
     alphanumeric_sort_key
 from corehq.apps.commtrack.util import get_supply_point, submit_mapping_case_block
 from corehq.apps.commtrack.models import CommTrackUser, SupplyPointCase
+from soil import DownloadBase
 
 
 class UserUploadError(Exception):
@@ -73,6 +74,7 @@ class GroupMemoizer(object):
         if not self.groups_by_name.has_key(group_name):
             group = Group.by_name(self.domain, group_name)
             if not group:
+                self.groups_by_name[group_name] = None
                 return None
             self.add_group(group)
         return self.groups_by_name[group_name]
@@ -232,17 +234,24 @@ def create_or_update_groups(domain, group_specs, log):
     return group_memoizer
 
 
-def create_or_update_users_and_groups(domain, user_specs, group_specs, location_specs):
+def create_or_update_users_and_groups(domain, user_specs, group_specs, location_specs, task=None):
     ret = {"errors": [], "rows": []}
+    total = len(user_specs) + len(group_specs) + len(location_specs)
+    def _set_progress(progress):
+        if task is not None:
+            DownloadBase.set_progress(task, progress, total)
+
     group_memoizer = create_or_update_groups(domain, group_specs, log=ret)
+    current = len(group_specs)
+
     usernames = set()
     user_ids = set()
-
     allowed_groups = set(group_memoizer.groups)
     allowed_group_names = [group.name for group in allowed_groups]
-
     try:
         for row in user_specs:
+            _set_progress(current)
+            current += 1
             data, email, group_names, language, name, password, phone_number, user_id, username = (
                 row.get(k) for k in sorted(allowed_headers)
             )
@@ -309,7 +318,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
                             continue
                         if not is_password(password):
                             raise UserUploadError(_("Cannot create a new user with a blank password"))
-                        user = CommCareUser.create(domain, username, password, uuid=user_id or '')
+                        user = CommCareUser.create(domain, username, password, uuid=user_id or '', commit=False)
                         status_row['flag'] = 'created'
                     if phone_number:
                         user.add_phone_number(_fmt_phone(phone_number), default=True)
@@ -361,7 +370,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
             ret['errors'].append(_error_message)
 
     create_or_update_locations(domain, location_specs, log=ret)
-
+    _set_progress(total)
     return ret
 
 
@@ -432,6 +441,7 @@ def dump_users_and_groups(response, domain):
             'email': user.email,
             'username': user.raw_username,
             'language': user.language,
+            'user_id': user._id,
         })
         user_data_keys.update(user.user_data.keys() if user.user_data else {})
         user_groups_length = max(user_groups_length, len(group_names))
@@ -448,7 +458,7 @@ def dump_users_and_groups(response, domain):
         group_data_keys.update(group.metadata.keys() if group.metadata else {})
 
     # include obscured password column for adding new users
-    user_headers = ['username', 'password', 'name', 'phone-number', 'email', 'language']
+    user_headers = ['username', 'password', 'name', 'phone-number', 'email', 'language', 'user_id']
     user_headers.extend(json_to_headers(
         {'data': dict([(key, None) for key in user_data_keys])}
     ))

@@ -11,33 +11,29 @@ from django.contrib.auth.decorators import permission_required
 from django.core.cache import cache
 from django.core.servers.basehttp import FileWrapper
 from django.core.urlresolvers import reverse
-from django.http import (HttpResponseRedirect, HttpResponse,
+from django.http import (HttpResponseRedirect,
     HttpResponseBadRequest, Http404, HttpResponseForbidden)
 from django.shortcuts import render
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import (require_http_methods,
-    require_POST, require_GET)
-
-from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.templatetags.case_tags import case_inline_display
+    require_POST)
 from couchdbkit.exceptions import ResourceNotFound
-from casexml.apps.case.xml import V2
-from corehq.apps.export.exceptions import BadExportConfiguration
-from corehq.apps.reports.exportfilters import default_form_filter
+from django.core.files.base import ContentFile
+from django.http.response import HttpResponse, HttpResponseNotFound
+from django.views.decorators.http import require_GET
+
 import couchexport
 from couchexport import views as couchexport_views
-from couchexport.export import SchemaMismatchException
-from couchexport.export import UnsupportedExportFormat
-from couchexport.models import Format, FakeSavedExportSchema, SavedBasicExport
+from couchexport.exceptions import (
+    CouchExportException,
+    SchemaMismatchException
+)
+from couchexport.models import FakeSavedExportSchema, SavedBasicExport
 from couchexport.shortcuts import (export_data_shared, export_raw_data,
     export_response)
 from couchexport.tasks import rebuild_schemas
 from couchexport.util import SerializableFunction
-import couchforms.views as couchforms_views
-from couchforms.filters import instances
-from couchforms.models import XFormInstance, doc_types
-from couchforms.templatetags.xform_tags import render_form
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import wrapped_docs
 from dimagi.utils.couch.loosechange import parse_date
@@ -45,12 +41,21 @@ from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.export import WorkBook
 from dimagi.utils.parsing import json_format_datetime, string_to_boolean
 from dimagi.utils.web import json_request, json_response
-from fields import FilterUsersField
 from soil import DownloadBase
 from soil.tasks import prepare_download
-
-from corehq.apps.domain.decorators import (login_and_domain_required,
-    login_or_digest)
+from dimagi.utils.couch.cache.cache_core import get_redis_client
+from couchexport.export import Format
+from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.templatetags.case_tags import case_inline_display
+from casexml.apps.case.xml import V2
+from corehq.apps.export.exceptions import BadExportConfiguration
+from corehq.apps.reports.exportfilters import default_form_filter
+import couchforms.views as couchforms_views
+from couchforms.filters import instances
+from couchforms.models import XFormInstance, doc_types
+from corehq.apps.reports.templatetags.xform_tags import render_form
+from filters.users import UserTypeFilter
+from corehq.apps.domain.decorators import (login_or_digest)
 from corehq.apps.export.custom_export_helpers import CustomExportHelper
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.export import export_cases_and_referrals
@@ -67,6 +72,7 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.export import export_users
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.models import Permissions
+from corehq.apps.domain.decorators import login_and_domain_required
 
 
 DATE_FORMAT = "%Y-%m-%d"
@@ -151,7 +157,7 @@ def export_data(req, domain):
               "max_column_size": int(req.GET.get("max_column_size", 2000)),
               "separator": req.GET.get("separator", "|")}
 
-    user_filter, _ = FilterUsersField.get_user_filter(req)
+    user_filter, _ = UserTypeFilter.get_user_filter(req)
 
     if user_filter:
         users_matching_filter = map(lambda x: x.get('user_id'),
@@ -173,7 +179,7 @@ def export_data(req, domain):
     else:
         try:
             resp = export_data_shared([domain, export_tag], **kwargs)
-        except UnsupportedExportFormat as e:
+        except CouchExportException as e:
             return HttpResponseBadRequest(e)
     if resp:
         return resp
@@ -233,6 +239,7 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
     previous_export_id = request.GET.get("previous_export", None)
     filename = request.GET.get("filename", None)
     max_column_size = int(request.GET.get("max_column_size", 2000))
+    limit = int(request.GET.get("limit", 0))
 
     filter = util.create_export_filter(request, domain, export_type=export_type)
     if bulk_export:
@@ -241,7 +248,6 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
             export_tags = json.loads(request.GET.get("export_tags", "null") or "null")
         except ValueError:
             return HttpResponseBadRequest()
-
 
         export_helper = (CustomBulkExportHelper if is_custom else ApplicationBulkExportHelper)(
             domain=domain,
@@ -304,7 +310,7 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
         if not next:
             next = export.ExcelExportReport.get_url(domain=domain)
         try:
-            resp = export_object.download_data(format, filter=filter)
+            resp = export_object.download_data(format, filter=filter, limit=limit)
         except SchemaMismatchException, e:
             rebuild_schemas.delay(export_object.index)
             messages.error(
@@ -337,7 +343,7 @@ def export_all_form_metadata(req, domain):
     Export metadata for _all_ forms in a domain.
     """
     format = req.GET.get("format", Format.XLS_2007)
-    tmp_path = save_metadata_export_to_tempfile(domain)
+    tmp_path = save_metadata_export_to_tempfile(domain, format=format)
 
     return export_response(open(tmp_path), format, "%s_forms" % domain)
 
@@ -348,7 +354,7 @@ def export_all_form_metadata(req, domain):
 def export_all_form_metadata_async(req, domain):
     datespan = req.datespan if req.GET.get("startdate") and req.GET.get("enddate") else None
     group_id = req.GET.get("group")
-    ufilter =  FilterUsersField.get_user_filter(req)[0]
+    ufilter =  UserTypeFilter.get_user_filter(req)[0]
     users = list(util.get_all_users_by_domain(domain=domain, group=group_id, user_filter=ufilter, simplified=True))
     user_ids = filter(None, [u["user_id"] for u in users])
     format = req.GET.get("format", Format.XLS_2007)
@@ -799,7 +805,7 @@ def download_cases(request, domain):
     except URLError as e:
         return HttpResponseBadRequest(e.reason)
     group = request.GET.get('group', None)
-    user_filter, _ = FilterUsersField.get_user_filter(request)
+    user_filter, _ = UserTypeFilter.get_user_filter(request)
 
     async = request.GET.get('async') == 'true'
 
@@ -889,12 +895,7 @@ def form_data(request, domain, instance_id):
 def case_form_data(request, domain, case_id, xform_id):
     context = _get_form_context(request, domain, xform_id)
     context['case_id'] = case_id
-
-    #todo: additional formatting options
-    #todo: sanity check that xform_id has case_block
-
-    return HttpResponse(render_form(
-            context['instance'], domain, options=context))
+    return HttpResponse(render_form(context['instance'], domain, options=context))
 
 @require_form_view_permission
 @login_and_domain_required
@@ -935,8 +936,9 @@ def archive_form(request, domain, instance_id):
         "url": reverse('unarchive_form', args=[domain, instance_id]),
         "id": "restore-%s" % instance_id
     }
-    msg_template = """{notif} <a href="javascript:document.getElementById('{id}').submit();">{undo}</a>
-        <form id="{id}" action="{url}" method="POST"></form>""" if instance.doc_type == "XFormArchived" else '%(notif)s'
+    msg_template = u"""{notif} <a href="javascript:document.getElementById('{id}').submit();">{undo}</a>
+        <form id="{id}" action="{url}" method="POST"></form>""" if instance.doc_type == "XFormArchived" \
+        else u'%(notif)s'
     msg = msg_template.format(**params)
     messages.success(request, mark_safe(msg), extra_tags='html')
 
@@ -998,3 +1000,26 @@ def clear_report_caches(request, domain):
     print "CLEARING CACHE FOR DOMAIN", domain
     print "ALL CACHES", cache.all()
     return HttpResponse("TESTING")
+
+
+@require_case_view_permission
+@login_and_domain_required
+@require_GET
+def export_report(request, domain, export_hash):
+    cache = get_redis_client()
+
+    if cache.exists(export_hash):
+        with open(cache.get(export_hash), 'r') as content_file:
+            content = content_file.read()
+
+        file = ContentFile(content)
+        response = HttpResponse(file, 'application/vnd.ms-excel')
+        response['Content-Length'] = file.size
+        response['Content-Disposition'] = 'attachment; filename="{filename}.{extension}"'.format(
+            filename=export_hash,
+            extension=Format.XLS
+        )
+        return response
+    else:
+        return HttpResponseNotFound(_("That report was not found. Please remember"
+                                      " that download links expire after 24 hours."))

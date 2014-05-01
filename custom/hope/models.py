@@ -208,11 +208,11 @@ class HOPECase(CommCareCase):
 
     @property
     def _HOPE_mother_bank_id(self):
-        return self.get_case_property('bank_account_number')
+        return self.get_case_property('bank_id')
 
     @property
     def _HOPE_mother_bank_branch_id(self):
-        return self.get_case_property('bank_account_number')
+        return self.get_case_property('bank_branch_id')
 
     @property
     def _HOPE_mother_ifsc_code(self):
@@ -247,13 +247,13 @@ class HOPECase(CommCareCase):
     @property
     def _HOPE_child_parent_bank_id(self):
         if self.parent:
-            return self.parent.get_case_property('bank_account_number')
+            return self.parent.get_case_property('bank_id')
         return None
 
     @property
     def _HOPE_child_parent_bank_branch_id(self):
         if self.parent:
-            return self.parent.get_case_property('bank_account_number')
+            return self.parent.get_case_property('bank_branch_id')
         return None
 
     @property
@@ -272,6 +272,14 @@ class HOPECase(CommCareCase):
     def _HOPE_child_full_child_mcts_id(self):
         return self.get_case_property('full_child_mcts_id')
 
+    @property
+    def _HOPE_agency_cd(self):
+        user = self.user
+
+        if user:
+            return self.user.user_data.get('agency_cd')
+        else:
+            return None
 
     #
     # Begin AHSA properties

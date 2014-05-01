@@ -6,7 +6,7 @@ from south.db import db
 from south.v2 import DataMigration
 from django.db import models
 from corehq.apps.accounting.models import (
-    FeatureType, Subscription, SoftwarePlanEdition, SoftwarePlan, FeatureRate,
+    FeatureType, SoftwarePlanEdition, SoftwarePlan, FeatureRate,
     CreditLine, SoftwareProductRate, DefaultProductPlan
 )
 
@@ -20,7 +20,7 @@ class Migration(DataMigration):
         call_command('cchq_software_plan_bootstrap')
 
         # Reset Subscription plan_version to the latest version for that plan
-        for subscription in Subscription.objects.all():
+        for subscription in orm.Subscription.objects.all():
             software_plan = subscription.plan_version.plan
             latest_version = software_plan.get_version()
             if subscription.plan_version.pk != latest_version.pk:

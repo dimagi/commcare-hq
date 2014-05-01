@@ -1,3 +1,4 @@
+import copy
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_POST
@@ -8,12 +9,14 @@ from corehq.apps.locations.models import Location
 from corehq.apps.locations.forms import LocationForm
 from corehq.apps.locations.util import load_locs_json, location_hierarchy_config, dump_locations
 from corehq.apps.commtrack.models import LocationType, Product, SupplyPointCase
+from corehq.apps.commtrack.util import unicode_slug
 from corehq.apps.facilities.models import FacilityRegistry
 from django.core.urlresolvers import reverse
 from django.shortcuts import render
 from django.contrib import messages
 from couchdbkit import ResourceNotFound
 import urllib
+import json
 
 from django.utils.translation import ugettext as _, ugettext_noop
 from dimagi.utils.decorators.memoized import memoized
@@ -45,7 +48,7 @@ class BaseLocationView(BaseCommTrackManageView):
 
 class LocationsListView(BaseLocationView):
     urlname = 'manage_locations'
-    page_title = ugettext_noop("Manage Locations")
+    page_title = ugettext_noop("Locations")
     template_name = 'locations/manage/locations.html'
 
     @property
@@ -55,6 +58,55 @@ class LocationsListView(BaseLocationView):
             'selected_id': selected_id,
             'locations': load_locs_json(self.domain, selected_id),
         }
+
+
+class LocationSettingsView(BaseCommTrackManageView):
+    urlname = 'location_settings'
+    page_title = ugettext_noop("Locations (Advanced)")
+    template_name = 'locations/settings.html'
+
+    @property
+    def page_context(self):
+        return {
+            'settings': self.settings_context,
+        }
+
+    @property
+    def settings_context(self):
+        return {
+            'loc_types': [self._get_loctype_info(l) for l in self.domain_object.commtrack_settings.location_types],
+        }
+
+    def _get_loctype_info(self, loctype):
+        return {
+            'name': loctype.name,
+            'code': loctype.code,
+            'allowed_parents': [p or None for p in loctype.allowed_parents],
+            'administrative': loctype.administrative,
+        }
+
+    def post(self, request, *args, **kwargs):
+        payload = json.loads(request.POST.get('json'))
+
+        def mk_loctype(loctype):
+            loctype['allowed_parents'] = [p or '' for p in loctype['allowed_parents']]
+            cleaned_code = unicode_slug(loctype['code'])
+            if cleaned_code != loctype['code']:
+                err = _(
+                    'Location type code "{code}" is invalid. No spaces or special characters are allowed. '
+                    'It has been replaced with "{new_code}".'
+                )
+                messages.warning(request, err.format(code=loctype['code'], new_code=cleaned_code))
+                loctype['code'] = cleaned_code
+            return LocationType(**loctype)
+
+        #TODO add server-side input validation here (currently validated on client)
+
+        self.domain_object.commtrack_settings.location_types = [mk_loctype(l) for l in payload['loc_types']]
+
+        self.domain_object.commtrack_settings.save()
+
+        return self.get(request, *args, **kwargs)
 
 
 class NewLocationView(BaseLocationView):
@@ -84,6 +136,11 @@ class NewLocationView(BaseLocationView):
 
     @property
     @memoized
+    def metadata(self):
+        return copy.copy(dict(self.location.metadata))
+
+    @property
+    @memoized
     def location_form(self):
         if self.request.method == 'POST':
             return LocationForm(self.location, self.request.POST)
@@ -95,6 +152,7 @@ class NewLocationView(BaseLocationView):
             'form': self.location_form,
             'location': self.location,
             'consumption': self.consumption,
+            'metadata': self.metadata
         }
 
     def post(self, request, *args, **kwargs):
@@ -156,12 +214,37 @@ class EditLocationView(NewLocationView):
 
 class FacilitySyncView(BaseLocationView):
     urlname = 'sync_facilities'
-    page_title = ugettext_noop("Sync with External Systems")
+    page_title = ugettext_noop("OpenLMIS")
     template_name = 'locations/facility_sync.html'
 
     @property
     def page_context(self):
-        return {'lmis_config': self.domain_object.commtrack_settings.openlmis_config}
+        return {
+            'settings': self.settings_context,
+        }
+
+    @property
+    def settings_context(self):
+        return {
+            'openlmis_config': self.domain_object.commtrack_settings.openlmis_config._doc,
+        }
+
+    def post(self, request, *args, **kwargs):
+        payload = json.loads(request.POST.get('json'))
+
+        #TODO add server-side input validation here (currently validated on client)
+
+        if 'openlmis_config' in payload:
+            for item in payload['openlmis_config']:
+                setattr(
+                    self.domain_object.commtrack_settings.openlmis_config,
+                    item,
+                    payload['openlmis_config'][item]
+                )
+
+        self.domain_object.commtrack_settings.save()
+
+        return self.get(request, *args, **kwargs)
 
 
 class EditLocationHierarchy(BaseLocationView):
@@ -176,15 +259,19 @@ class LocationImportStatusView(BaseLocationView):
     template_name = 'hqwebapp/soil_status_full.html'
 
     def get(self, request, *args, **kwargs):
-        context = {
+        context = super(LocationImportStatusView, self).main_context
+        context.update({
             'domain': self.domain,
             'download_id': kwargs['download_id'],
             'poll_url': reverse('location_importer_job_poll', args=[self.domain, kwargs['download_id']]),
             'title': _("Location Import Status"),
             'progress_text': _("Importing your data. This may take some time..."),
             'error_text': _("Problem importing data! Please try again or report an issue."),
-        }
+        })
         return render(request, self.template_name, context)
+
+    def page_url(self):
+        return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
 
 
 class LocationImportView(BaseLocationView):

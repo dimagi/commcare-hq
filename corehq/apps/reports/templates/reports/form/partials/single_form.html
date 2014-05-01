@@ -1,0 +1,333 @@
+{% load i18n %}
+{% load proptable_tags %}
+{% load xform_tags %}
+{% load hq_shared_tags %}
+
+{% comment %}
+requires imports/proptable.html to be included in the main template
+{% endcomment %}
+{% include "imports/fancy-code.html" %}
+<style media="print">
+    header {
+        display: none !important;
+    }
+    .sidebar {
+        display: none !important;
+    }
+    a[href]:after {
+        content: none !important;
+    }
+</style>
+
+<style>
+.form-data-readable, .form-data-raw {
+    display: none;
+}
+</style>
+<script>
+    $(function () {
+        var help_text = {
+            "{% trans "Archiving Forms" %}": "{% trans "Archived forms will no longer show up in reports and they will be removed from any relevant case histories. " %}",
+            "{% trans "Restoring Forms" %}": "{% trans "Restoring this form will cause it to show up in reports again." %}"
+        };
+        $('.help_popover').popover({
+            placement: 'left',
+            trigger: 'hover',
+            title: function () {
+                return $(this).attr('data-help-key');
+            },
+            content: function () {
+                return help_text[$(this).attr('data-help-key')];
+            }
+        });
+    });
+    $(function () {
+        $('.hq-help').hqHelp();
+        function showReadable() {
+            $('.form-data-raw').hide();
+            $('.form-data-readable').show();
+        }
+        function showRaw() {
+            $('.form-data-readable').hide();
+            $('.form-data-raw').show();
+        }
+        showReadable();
+        $('.showReadable').click(showReadable);
+        $('.showRaw').click(showRaw);
+        $('.formDisplayToggle a').click(function () {
+            $(this).tab('show');
+            return false;
+        });
+
+        function showSkipped(show) {
+            if (show) {
+                $('.form-data-skipped').show();
+                $('.form-data-skipped-spacer').hide();
+                $('.form-data-hidden-values').each(function () {
+                    $(this).show();
+                });
+            } else {
+                $('.form-data-skipped').hide();
+                $('.form-data-skipped-spacer').show();
+                $('.form-data-hidden-values').each(function () {
+                    var current = $(this).next();
+                    while (current.is('.form-data-question')) {
+                        console.log(current);
+                        if (!current.is('.form-data-skipped')) {
+                            return;
+                        }
+                        current = current.next();
+                    }
+                    $(this).hide();
+                });
+            }
+        }
+        $('.showSkippedToggle').change(function () {
+            showSkipped($(this).is(':checked'));
+        }).each(function () {
+            if ($('.form-data-skipped').length == 0) {
+                $(this).parent('label').hide();
+            }
+        });
+        showSkipped(false);
+    });
+</script>
+<style>
+    .form-data-group-table {
+        margin-bottom: 0;
+    }
+    .form-data-group-table tr.form-data-group-spacer th {
+        text-align: center;
+        font-weight: bold;
+        /* same as bootstrap 'success' */
+        background-color: #dff0d8;
+    }
+    .form-data-skipped {
+        /* same as bootstrap 'warning' */
+        background-color: #fcf8e3;
+    }
+    tr.form-data-skipped-spacer th {
+        /* same as bootstrap 'warning' */
+        background-color: #fcf8e3;
+        text-align: center;
+    }
+
+</style>
+
+{% if is_archived %}
+<div class="alert alert-full alert-block">
+    {% blocktrans %}
+    This form is archived and will not be included in reports. 
+    To unarchive this form, click the "Restore" button.
+    This will also restore case data associated with the form.
+    {% endblocktrans %}
+</div>
+{% endif %}
+<div class="pull-right">
+    {% if auth_context.authenticated %}
+        <i class="icon-lock"></i>
+        {% if user_info.id != auth_user_info.id %}
+        {% blocktrans with auth_user=auth_user_info|pretty_doc_info user=user_info|pretty_doc_info %}
+            Submitted by {{ auth_user }} on behalf of {{ user }}
+        {% endblocktrans %}
+        {% endif %}
+        {% if user_info.id == auth_user_info.id %}
+        {% blocktrans with auth_user=auth_user_info|pretty_doc_info %}
+            Submitted by {{ auth_user }}
+        {% endblocktrans %}
+        {% endif %}
+    {% endif %}
+    {% if not auth_context.authenticated %}
+        <i class="icon-unlock"></i>
+        {% blocktrans with user=user_info|pretty_doc_info %}
+        Submitted as {{ user }}
+        {% endblocktrans %}
+    {% endif %}
+</div>
+<ul class="nav nav-tabs clearfix">
+    <li class="active">
+        <a href="#form-data" data-toggle="tab">
+            {% trans "Form Properties" %}
+        </a>
+    </li>
+    {% if cases %}
+    <li>
+        <a href="#form-case-data" data-toggle="tab">
+            {% trans "Case Changes" %}
+        </a>
+    </li>
+    {% endif %}
+
+    {% if form_meta_data %}
+    <li>
+        <a href="#form-metadata" data-toggle="tab">
+            {% trans "Form Metadata" %}
+        </a>
+    </li>
+    {% endif %}
+
+    {% if instance.attachments %}
+    <li>
+        <a href="#form-attachments" data-toggle="tab">
+            {% trans "Attachments" %}
+        </a>
+    </li>
+    {% endif %}
+    
+    <li>
+        <a href="#form-xml" data-toggle="tab">
+            {% trans "Raw XML" %}
+        </a>
+    </li>
+</ul>
+
+<div class="tab-content form-details" style="overflow:visible">
+    <div class="tab-pane active" id="form-data" style="position:relative">
+        <div style="position: absolute; right: 0; top: 0">
+            {% if context_case_id %}
+            <p>
+                <a class="btn"
+                    href="{% url "render_form_data" instance.domain instance.get_id %}">
+                    {% trans "View standalone form" %}
+                </a>
+            </p>
+            {% endif %}
+
+            <p>
+                {% if not is_archived %}
+                <form action="{% url "archive_form" domain instance.get_id %}" method="POST"
+                      id="archive-form">
+                    <span class="help_popover" data-help-key="{% trans "Archiving Forms" %}">
+                        <i class="icon icon-question-sign"></i>
+                    </span>
+                    <button type="submit" class="btn btn-danger" id="archive-form-btn"
+                            onclick="document.getElementById('archive-form-btn').disabled=true;document.getElementById('archive-form').submit();document.getElementById('archive-spinner').style.display='inline-block';">
+                        {% trans "Archive this form" %}
+                        <i class="icon-refresh icon-spin" id="archive-spinner" style="display:none"></i>
+                    </button>
+                </form>
+                {% else %}
+                <form action="{% url "unarchive_form" domain instance.get_id %}" method="POST"
+                      id="unarchive-form">
+                    <span class="help_popover" data-help-key="{% trans "Restoring Forms" %}">
+                        <i class="icon icon-question-sign"></i>
+                    </span>
+                    <button type="submit" class="btn btn-primary" id="unarchive-form-btn"
+                            onclick="document.getElementById('unarchive-form-btn').disabled=true;document.getElementById('unarchive-form').submit();document.getElementById('unarchive-spinner').style.display='inline-block';">
+                        {% trans "Restore this form" %}
+                        <i class="icon-refresh icon-spin" id="unarchive-spinner" style="display:none"></i>
+                   </button>
+                </form>
+                {% endif %}
+            </p>
+        </div>
+
+        {% if readable_form_data %}
+        <ul class="nav nav-pills formDisplayToggle">
+            <li class="active"><a href="#" class="showReadable">{% trans "Labels" %}</a></li>
+            <li><a href="#" class="showRaw">{% trans "Question IDs" %}</a></li>
+        </ul>
+        <label class="checkbox">
+            <input type="checkbox" class="showSkippedToggle"/>
+            {% trans "Show questions in form that were not shown to the user" %}
+            <a href="#" class="hq-help no-click">
+                <i class="icon-question-sign"
+                   data-title="{% trans "Questions not shown to the user" %}"
+                   data-content="{% trans "These questions were not shown to the user because their display conditions were not met." %}"
+                   data-trigger="hover"></i>
+            </a>
+        </label>
+        <div class="row-fluid">
+            <table class="table table-bordered span6">
+                <tr>
+                    <th class="span6">
+                        <span class="form-data-readable">{% trans "Question" %}</span>
+                        <span class="form-data-raw">{% trans "Question ID" %}</span>
+                    </th>
+                    <th class="span6">{% trans "Response" %}</th>
+                </tr>
+                {% include 'reports/form/partials/single_form_tree.html' with questions=form_data %}
+            </table>
+        </div>
+        {% else %}
+            {% if use_old_reason %}
+                {% comment %}This is for debugging{% endcomment %}
+                <div class="alert alert-info">{{ use_old_reason }}. Showing old view instead</div>
+            {% endif %}
+            {% render_tables form_data form_table_options %}
+        {% endif %}
+    </div>
+
+    {% if cases %}
+    <div class="tab-pane" id="form-case-data">
+        <div class="accordion">
+            {% for case_data in cases %}
+            <div class="accordion-group">
+                <div class="accordion-heading">
+                    <span class="accordion-toggle">
+                        <a data-toggle="collapse" 
+                            href="#form-case-acc-{{ forloop.counter }}">
+                            {% if case_data.valid_case %}
+                            {{ case_data.name }}
+                            {% else %}
+                            ({% trans "Unknown/Deleted Case" %})
+                            {% endif %}
+                        </a>
+
+                        {% if case_data.valid_case %}
+                        <span style="float: right">
+                            {% if case_data.is_current_case %}
+                            <strong class="muted">{% trans "(this case)" %}</strong>
+                            {% else %}
+                            <a class="btn-small btn-primary" href="{{ case_data.url }}">
+                                {% trans "View" %}
+                            </a>
+                            {% endif %}
+                        </span>
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="accordion-body collapse 
+                    {% if cases|length == 1 %}in{% endif %}" 
+                    id="form-case-acc-{{ forloop.counter }}">
+                    <div class="accordion-inner">
+                        {% render_tables case_data.table form_table_options %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if form_meta_data %}
+    <div class="tab-pane" id="form-metadata">
+        {% render_tables form_meta_data form_table_options %}
+    </div>
+    {% endif %}
+
+    {% if instance.attachments %}
+    <div class="tab-pane" id="form-attachments">
+        <ul>
+            {% for key, val in instance.attachments.items %}
+            <li>
+                <a href="{% url "download_attachment" domain instance.get_id %}?attachment={{ key }}"
+                   download="{{ key }}">
+                  {{ key }}
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <div class="tab-pane" id="form-xml">
+        <p>
+            <a class="btn" href="{% url "download_form" domain instance.get_id %}" target="_blank">
+                {% trans "Open XML in New Window" %}
+            </a>
+        </p>
+        <p>Double-click code below to select all:</p>
+        {% render_form_xml instance %}
+    </div>
+</div>

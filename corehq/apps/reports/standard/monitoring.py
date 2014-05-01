@@ -81,7 +81,7 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
     name = ugettext_noop('Case Activity')
     slug = 'case_activity'
     fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
-              'corehq.apps.reports.fields.CaseTypeField']
+              'corehq.apps.reports.filters.select.CaseTypeFilter']
     all_users = None
     display_data = ['percent']
     emailable = True
@@ -283,7 +283,7 @@ class SubmissionsByFormReport(WorkerMonitoringReportTableBase, MultiFormDrilldow
     fields = [
         'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
         'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
-        'corehq.apps.reports.fields.DatespanField'
+        'corehq.apps.reports.filters.dates.DatespanFilter'
     ]
     fix_left_col = True
     emailable = True
@@ -345,9 +345,11 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
     slug = "daily_form_stats"
     name = ugettext_noop("Daily Form Activity")
 
-    fields = [  'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
-                'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
-                'corehq.apps.reports.fields.DatespanField']
+    fields = [
+        'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
+        'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
+        'corehq.apps.reports.filters.dates.DatespanFilter',
+    ]
 
     description = ugettext_noop("Number of submissions per day.")
 
@@ -422,7 +424,7 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin):
     slug = "completion_times"
     fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
               'corehq.apps.reports.filters.forms.SingleFormByApplicationFilter',
-              'corehq.apps.reports.fields.DatespanField']
+              'corehq.apps.reports.filters.dates.DatespanFilter']
 
     description = ugettext_noop("Statistics on time spent on a particular form.")
     is_cacheable = True
@@ -564,7 +566,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, Mu
     
     fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
               'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
-              'corehq.apps.reports.fields.DatespanField']
+              'corehq.apps.reports.filters.dates.DatespanFilter']
 
     @property
     def headers(self):
@@ -671,8 +673,8 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, Mu
 
 
 class WorkerMonitoringChartBase(ProjectReport, ProjectReportParametersMixin):
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.SelectMobileWorkerField']
+    fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
+              'corehq.apps.reports.filters.users.SelectMobileWorkerFilter']
     flush_layout = True
     report_template_path = "reports/async/basic.html"
 
@@ -689,7 +691,7 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
         'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
         'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
         'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
-        'corehq.apps.reports.fields.DatespanField']
+        'corehq.apps.reports.filters.dates.DatespanFilter']
 
     report_partial_path = "reports/partials/punchcard.html"
 
@@ -777,13 +779,21 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
     is_cacheable = True
 
     fields = [
-        'corehq.apps.reports.fields.MultiSelectGroupField',
-        'corehq.apps.reports.fields.UserOrGroupField',
-        'corehq.apps.reports.fields.CaseTypeField',
-        'corehq.apps.reports.fields.DatespanField',
+        'corehq.apps.reports.dont_use.fields.MultiSelectGroupField',
+        'corehq.apps.reports.dont_use.fields.UserOrGroupField',
+        'corehq.apps.reports.filters.select.MultiCaseTypeFilter',
+        'corehq.apps.reports.filters.dates.DatespanFilter',
     ]
     fix_left_col = True
     emailable = True
+
+    @property
+    @memoized
+    def case_types_filter(self):
+        case_types = filter(None, self.request.GET.getlist('case_type'))
+        if case_types:
+            return {"terms": {"type.exact": case_types}}
+        return {}
 
     @property
     def view_by(self):
@@ -885,8 +895,9 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                                 "to": datespan.enddate_param,
                                 "include_upper": True}}}
                     ]}}}
-        if self.case_type:
-            q["query"]["bool"]["must"].append({"match": {"type.exact": self.case_type}})
+
+        if self.case_types_filter:
+            q["query"]["bool"]["must"].append(self.case_types_filter)
 
         facets = [user_field]
         return es_query(q=q, facets=facets, es_url=CASE_INDEX + '/case/_search', size=1, dict_only=dict_only)
@@ -908,8 +919,9 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                                         "from": datespan.startdate_param,
                                         "to": datespan.enddate_param,
                                         "include_upper": True}}}}}]}}}
-        if self.case_type:
-            q["query"]["bool"]["must"].append({"match": {"type.exact": self.case_type}})
+
+        if self.case_types_filter:
+            q["query"]["bool"]["must"].append(self.case_types_filter)
 
         facets = ['owner_id']
         return es_query(q=q, facets=facets, es_url=CASE_INDEX + '/case/_search', size=1, dict_only=dict_only)
@@ -923,8 +935,8 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                         {"range": {"opened_on": {"lte": datespan.enddate_param}}}],
                     "must_not": {"range": {"closed_on": {"lt": datespan.startdate_param}}}}}}
 
-        if self.case_type:
-            q["query"]["bool"]["must"].append({"match": {"type.exact": self.case_type}})
+        if self.case_types_filter:
+            q["query"]["bool"]["must"].append(self.case_types_filter)
 
         facets = ['owner_id']
         return es_query(q=q, facets=facets, es_url=CASE_INDEX + '/case/_search', size=1, dict_only=dict_only)

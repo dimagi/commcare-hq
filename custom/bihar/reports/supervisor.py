@@ -350,8 +350,8 @@ class ReferralListReport(GroupReferenceMixIn, MockEmptyReport):
                 "public": _("Public Facility"),
                 "private": _("Private Facility"),
                 "transport": _("Transport")
-            }[f.fields["type"]]
-            return format_html(u"%s: %s<br /># %s" % (title, f.fields.get("name", ""), f.fields.get("number", "")))
+            }[f.fields_without_attributes["type"]]
+            return format_html(u"%s: %s<br /># %s" % (title, f.fields_without_attributes.get("name", ""), f.fields_without_attributes.get("number", "")))
 
         fixtures = FixtureDataItem.by_group(self.group)
         _data = []

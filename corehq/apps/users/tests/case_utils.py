@@ -1,4 +1,4 @@
-from unittest import TestCase
+from django.test import TestCase
 import uuid
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.mock import CaseBlock

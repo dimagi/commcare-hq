@@ -70,6 +70,11 @@ var getCaseFilterUrl = function(urlRoot, appId, moduleId, special) {
     return url
 };
 
+var getSessionContextUrl = function(sessionUrlRoot, session_id) {
+    // TODO: make this cleaner
+    return sessionUrlRoot + session_id;
+};
+
 var showError = function (message, location, autoHideTime) {
     if (message === undefined) {
         message = "sorry, there was an error";
@@ -98,6 +103,26 @@ var showLoading = function (selector) {
     selector = selector || "#loading";
     $(selector).show();
 };
+
+var tfLoading = function (selector) {
+    showLoading();
+    $('#save-indicator').text('Saving...').removeClass('alert-success alert-error').addClass('alert-warning').show();
+}
+
+var hideLoading = function (selector) {
+    selector = selector || "#loading";
+    $(selector).hide();
+};
+
+var tfLoadingComplete = function (isError) {
+    hideLoading();
+    if (isError) {
+        $('#save-indicator').text('Error saving!').removeClass('alert-warning alert-success').addClass('alert-error').show();
+    } else {
+        $('#save-indicator').text('All Changes Saved!').removeClass('alert-warning alert-error').addClass('alert-success').show();
+    }
+
+}
 
 var hideLoading = function (selector) {
     selector = selector || "#loading";
