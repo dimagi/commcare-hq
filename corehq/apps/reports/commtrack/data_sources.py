@@ -153,11 +153,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                 stock_states = self.filter_by_program(stock_states)
 
             if self.config.get('aggregate'):
-                aggregates = stock_states.values('product_id').annotate(
-                    avg_consumption=Avg('daily_consumption'),
-                    total_stock=Sum('stock_on_hand')
-                )
-                return self.aggregated_data(aggregates)
+                return self.aggregated_data(stock_states)
             else:
                 return self.raw_product_states(stock_states, slugs)
 
@@ -184,24 +180,51 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             }
 
     def aggregated_data(self, stock_states):
+        product_aggregation = {}
         for state in stock_states:
-            product = Product.get(state['product_id'])
-            yield {
-                'category': stock_category(
-                    state['total_stock'],
-                    state['avg_consumption'],
-                    Domain.get_by_name(self.domain)
+            if state.product_id in product_aggregation:
+                product = product_aggregation[state.product_id]
+                product['current_stock'] = self.format_decimal(
+                    product['current_stock'] + state.stock_on_hand
                 ),
-                'product_id': product._id,
-                'consumption': state['avg_consumption'],
-                'months_remaining': months_of_stock_remaining(state['total_stock'], state['avg_consumption']),
-                'location_id': None,
-                'product_name': product.name,
-                'current_stock': self.format_decimal(state['total_stock']),
-                'location_lineage': None,
-                'resupply_quantity_needed': None
-            }
+                product['total_consumption'] += state.get_consumption()
+                product['count'] += 1
+                product['consumption'] = product['total_consumption'] / product['count']
+                product['category'] = stock_category(
+                    product['total_stock'],
+                    product['avg_consumption'],
+                    Domain.get_by_name(self.domain)
+                )
+                product['months_remaining'] = months_of_stock_remaining(
+                    product['total_stock'],
+                    product['consumption']
+                )
+            else:
+                product = Product.get(state.product_id)
+                consumption = state.get_consumption()
 
+                product_aggregation[state.product_id] = {
+                    'product_id': product._id,
+                    'location_id': None,
+                    'product_name': product.name,
+                    'location_lineage': None,
+                    'resupply_quantity_needed': None,
+                    'current_stock': self.format_decimal(state.stock_on_hand),
+                    'total_consumption': consumption,
+                    'count': 1,
+                    'consumption': consumption,
+                    'category': stock_category(
+                        state.stock_on_hand,
+                        consumption,
+                        Domain.get_by_name(self.domain)
+                    ),
+                    'months_remaining': months_of_stock_remaining(
+                        state.stock_on_hand,
+                        consumption
+                    )
+                }
+
+        return product_aggregation.values()
 
     def raw_product_states(self, stock_states, slugs):
         def _slug_attrib(slug, attrib, product, output):
