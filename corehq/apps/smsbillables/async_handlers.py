@@ -69,9 +69,9 @@ class SMSRatesSelect2AsyncHandler(BaseAsyncHandler):
         criteria_query = SmsGatewayFeeCriteria.objects.filter(
             direction=direction, backend_api_id=backend_api_id
         )
-        country_codes = list(set([f.country_code for f in criteria_query.exclude(
+        country_codes = criteria_query.exclude(
             country_code__exact=None
-        ).all()]))
+        ).distinct().values_list('country_code', flat=True)
         final_codes = []
         countries = dict(COUNTRIES)
         for code in country_codes:
